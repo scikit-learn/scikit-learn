@@ -10,6 +10,13 @@
 """
 The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
+
+Edited by Nan Li (nanli@odesk.com, nanli@alumni.cs.ucsb.edu)
+
+An LdaVectorizer class and an LsiVectorizer class are added
+to extract topics from text. The topic model implementation is
+based on the LdaModel and LsiModel classes in the gensim.models
+module.
 """
 from __future__ import unicode_literals
 
@@ -20,10 +27,16 @@ from operator import itemgetter
 import re
 import unicodedata
 
+import warnings
+import time
+import codecs
+import logging
+
 import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
+
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
@@ -34,13 +47,26 @@ from ..utils.fixes import frombuffer_empty
 from ..utils.validation import check_is_fitted
 
 
+from .readability import Readability
+
+from gensim import corpora, models
+
+
+
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
            'TfidfTransformer',
            'TfidfVectorizer',
            'strip_accents_ascii',
            'strip_accents_unicode',
-           'strip_tags']
+           'strip_tags',
+           'LdaVectorizer',
+           'LsiVectorizer']
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='''%(asctime)s - %(name)s
+                            - %(levelname)s - %(message)s''')
+logger = logging.getLogger('sklearn.feature_extraction.text')
 
 
 def strip_accents_unicode(s):
@@ -697,7 +723,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         if low is not None:
             mask &= dfs >= low
         if limit is not None and mask.sum() > limit:
-            mask_inds = (-tfs[mask]).argsort()[:limit]
+            # backward compatibility requires us to keep lower indices in ties!
+            # (and hence to reverse the sort by negating dfs)
+            mask_inds = (-dfs[mask]).argsort()[:limit]
             new_mask = np.zeros(len(dfs), dtype=bool)
             new_mask[np.where(mask)[0][mask_inds]] = True
             mask = new_mask
@@ -1293,3 +1321,829 @@ class TfidfVectorizer(CountVectorizer):
 
         X = super(TfidfVectorizer, self).transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
+
+"""
+===============
+Added by Nan Li
+===============
+"""
+
+
+def _generate_gensim_corpus(count_matrix):
+    """Convert a sparse-CSC word count matrix into a gensim corpus,
+    which is a list of lists of tuples
+
+    Parameters
+    ----------
+    count_matrix: sparse-CSC matrix
+        A sparse word count matrix
+
+    Returns
+    ------
+    vectors: list of lists of tuples, [[(word_id, word_count)...]...]
+
+    See Also
+    --------
+    class gensim.matutils.Sparse2Corpus
+
+    """
+
+    # turn the sparse word count matrix into a gensim corpus (list of lists)
+    count_matrix_csr = count_matrix.tocsr()
+    indices = count_matrix_csr.indices
+    indptr = count_matrix_csr.indptr
+    nonzero_entries = count_matrix_csr.data
+
+    corpus = []
+    data_index = 0  # the index of the non-zero entries in count_matrix_csr
+    for ptr in range(1, len(indptr)):
+        # get the number of non-empty elements in this row (doc)
+        non_empty_num_inrow = indptr[ptr] - indptr[ptr-1]
+        # list of (word_id, word_#) tuples for this row (doc)
+        corpus_row = []
+
+        for i in range(non_empty_num_inrow):
+            col_id = indices[data_index + i]
+            corpus_row.append((col_id, nonzero_entries[data_index + i]))
+
+        data_index += non_empty_num_inrow
+        corpus.append(corpus_row)
+
+    return corpus
+
+
+def _convert_gensim_corpus2csr(corpus, num_topics=None,
+                               dtype=np.float64,
+                               num_docs=None, num_nnz=None):
+    """
+    Convert a gensim corpus into a sparse matrix,
+    in scipy.sparse.csr_matrix format, with documents as rows
+
+    If the number of terms, documents and non-zero elements is known,
+    you can pass them here as parameters and a more memory efficient
+    code path will be taken.
+
+    The code in this method is copied and modified from
+    gensim.mathutils.corpus2csc method.
+
+    Parameters
+    ----------
+    corpus: list of lists of tuples
+        [[(word_id, word_count)...]...]
+
+    num_topics: integer
+        Number of topics
+
+    num_docs: integer
+        Number of documents
+
+    num_nnz: integer
+        Number of non-zero entries in the corpus
+
+    Returns
+    ------
+    vectors: sparse matrix (scipy.sparse.csr_matrix), [n_docs, n_topics]
+
+    """
+
+    if (num_topics is not None
+       and num_docs is not None
+       and num_nnz is not None):
+        # faster and much more memory-friendly version
+        # of creating the sparse csc
+        posnow, indptr = 0, [0]
+        # HACK assume feature ids fit in 32bit integer
+        indices = np.empty((num_nnz,), dtype=np.int32)
+        data = np.empty((num_nnz,), dtype=dtype)
+        for _, doc in enumerate(corpus):
+            posnext = posnow + len(doc)
+            indices[posnow: posnext] = [feature_id for feature_id, _ in doc]
+            data[posnow: posnext] = [feature_weight
+                                     for _, feature_weight in doc]
+            indptr.append(posnext)
+            posnow = posnext
+        assert posnow == num_nnz, '''mismatch between supplied
+                                     and computed number of non-zeros'''
+        result = sp.csr_matrix((data, indices, indptr),
+                               shape=(num_docs, num_topics),
+                               dtype=dtype)
+    else:
+        # slower version
+        # determine the sparse matrix parameters during iteration
+        num_nnz, data, indices, indptr = 0, [], [], [0]
+        for _, doc in enumerate(corpus):
+            indices.extend([feature_id for feature_id, _ in doc])
+            data.extend([feature_weight for _, feature_weight in doc])
+            num_nnz += len(doc)
+            indptr.append(num_nnz)
+        if num_topics is None:
+            num_topics = max(indices) + 1 if indices else 0
+        num_docs = len(indptr) - 1
+        # now num_docs, num_topics and num_nnz contain the correct values
+        data = np.asarray(data, dtype=dtype)
+        indices = np.asarray(indices)
+        result = sp.csr_matrix((data, indices, indptr),
+                               shape=(num_docs, num_topics),
+                               dtype=dtype)
+    return result
+
+
+class LdaVectorizer(CountVectorizer):
+    """Convert a collection of raw documents to a matrix of LDA topic features
+
+    Latent dirichlet allocation (LDA) is a widely-used generative model to
+    extract latent topics from a collection of documents.
+    Each document is modeled as a distribution over a set of topics,
+    and each topic is modeled as a distribution over a set of keywords.
+
+    The LdaModel from gensim is used as the LDA implementation.
+
+    Parameters
+    ----------
+    == Parameters related to CountVectorizer ==
+    input : string {'filename', 'file', 'content'}
+        If filename, the sequence passed as an argument to fit is
+        expected to be a list of filenames that need reading to fetch
+        the raw content to analyze.
+
+        If 'file', the sequence items must have 'read' method (file-like
+        object) it is called to fetch the bytes in memory.
+
+        Otherwise the input is expected to be the sequence strings or
+        bytes items are expected to be analyzed directly.
+
+    encoding : string, 'utf-8' by default.
+        If bytes or files are given to analyze, this encoding is used to
+        decode.
+
+    decode_error : {'strict', 'ignore', 'replace'}
+        Instruction on what to do if a byte sequence is given to analyze that
+        contains characters not of the given `encoding`. By default, it is
+        'strict', meaning that a UnicodeDecodeError will be raised. Other
+        values are 'ignore' and 'replace'.
+
+    strip_accents : {'ascii', 'unicode', None}
+        Remove accents during the preprocessing step.
+        'ascii' is a fast method that only works on characters that have
+        an direct ASCII mapping.
+        'unicode' is a slightly slower method that works on any characters.
+        None (default) does nothing.
+
+    analyzer : string, {'word', 'char'} or callable
+        Whether the feature should be made of word or character n-grams.
+
+        If a callable is passed it is used to extract the sequence of features
+        out of the raw, unprocessed input.
+
+    preprocessor : callable or None (default)
+        Override the preprocessing (string transformation) stage while
+        preserving the tokenizing and n-grams generation steps.
+
+    tokenizer : callable or None (default)
+        Override the string tokenization step while preserving the
+        preprocessing and n-grams generation steps.
+
+    ngram_range : tuple (min_n, max_n)
+        The lower and upper boundary of the range of n-values for different
+        n-grams to be extracted. All values of n such that min_n <= n <= max_n
+        will be used.
+
+    stop_words : string {'english'}, list, or None (default)
+        If a string, it is passed to _check_stop_list and the appropriate stop
+        list is returned. 'english' is currently the only supported string
+        value.
+
+        If a list, that list is assumed to contain stop words, all of which
+        will be removed from the resulting tokens.
+
+        If None, no stop words will be used. max_df can be set to a value
+        in the range [0.7, 1.0) to automatically detect and filter stop
+        words based on intra corpus document frequency of terms.
+
+    lowercase : boolean, default True
+        Convert all characters to lowercase befor tokenizing.
+
+    token_pattern : string
+        Regular expression denoting what constitutes a "token", only used
+        if `tokenize == 'word'`. The default regexp select tokens of 2
+        or more letters characters (punctuation is completely ignored
+        and always treated as a token separator).
+
+    max_df : float in range [0.0, 1.0] or int, optional, 1.0 by default
+        When building the vocabulary ignore terms that have a term frequency
+        strictly higher than the given threshold (corpus specific stop words).
+        If float, the parameter represents a proportion of documents, integer
+        absolute counts.
+        This parameter is ignored if vocabulary is not None.
+
+    min_df : float in range [0.0, 1.0] or int, optional, 1 by default
+        When building the vocabulary ignore terms that have a term frequency
+        strictly lower than the given threshold.
+        This value is also called cut-off in the literature.
+        If float, the parameter represents a proportion of documents, integer
+        absolute counts.
+        This parameter is ignored if vocabulary is not None.
+
+    max_features : optional, None by default
+        If not None, build a vocabulary that only consider the top
+        max_features ordered by term frequency across the corpus.
+
+        This parameter is ignored if vocabulary is not None.
+
+    vocabulary : Mapping or iterable, optional
+        Either a Mapping (e.g., a dict) where keys are terms and values are
+        indices in the feature matrix, or an iterable over terms. If not
+        given, a vocabulary is determined from the input documents.
+
+    binary : boolean, False by default.
+        If True, all non zero counts are set to 1. This is useful for discrete
+        probabilistic models that model binary events rather than integer
+        counts.
+
+    dtype : type, optional
+        Type of the matrix returned by fit_transform() or transform().
+
+
+    == Parameters related to LdaVectorizer ==
+    num_topics : integer
+        Number of requested latent topics.
+
+    id2word : gensim.corpora.Dictionary
+        A mapping from word ids (integers) to words (strings). It is
+        used to determine the vocabulary size, as well as
+        for debugging and topic printing.
+
+    alpha : float or vector, optional
+        Hyperpameter for the symmetric Dirichlet prior on the
+        document-topic distribution, or can be set to a vector
+        for asymmetric prior.
+
+    eta : float or vector, optional
+        Hyperparameter for the symmetric Dirichlet prior on the
+        topic-word distribution, or can be set to a vector
+        for asymmetric prior.
+
+    distributed :  boolean, optional
+        Turned on to force distributed computing (see the web tutorial
+        on how to set up a cluster of machines for gensim).
+
+    topic_file : string, optional, 'lda_topics.txt' by default
+        The log file used to record all learned topics
+
+
+    See also
+    --------
+    CountVectorizer
+        Tokenize the documents and count the occurrences of token and return
+        them as a sparse matrix
+
+    gensim.models.LdaModel
+        Encapsulate functionality for the
+        Latent Dirichlet Allocation algorithm
+
+    References
+    ----------
+
+    .. [HoffmanBB10] `Matthew D. Hoffman, David M. Blei, Francis R. Bach:
+    Online Learning for Latent Dirichlet Allocation. NIPS 2010: 856-864`
+
+    """
+
+    def __init__(self, input='content', encoding='utf-8', charset=None,
+                 decode_error='strict', charset_error=None,
+                 strip_accents=None, lowercase=True,
+                 preprocessor=None, tokenizer=None, analyzer='word',
+                 stop_words='english', token_pattern=r"(?u)\b\w\w+\b",
+                 ngram_range=(1, 1), max_df=1.0, min_df=1,
+                 max_features=None, vocabulary=None, binary=False,
+                 dtype=np.int64,
+                 num_topics=100,
+                 distributed=False, chunksize=2000, passes=1, update_every=1,
+                 alpha=None, eta=None,
+                 decay=0.5,
+                 writedown_topics=True,
+                 topic_file='lda_topics.txt'):
+
+        # initialize a CountVectorizer object
+        super(LdaVectorizer, self).__init__(
+            input=input, encoding=encoding, decode_error=decode_error,
+            strip_accents=strip_accents, lowercase=lowercase,
+            preprocessor=preprocessor, tokenizer=tokenizer,
+            stop_words=stop_words, token_pattern=token_pattern,
+            ngram_range=ngram_range, analyzer=analyzer,
+            max_df=max_df, min_df=min_df, max_features=max_features,
+            vocabulary=vocabulary, binary=False, dtype=dtype)
+        self.num_topics = num_topics
+        self.distributed = distributed
+        self.chunksize = chunksize
+        self.passes = passes
+        self.update_every = update_every
+        self.alpha = alpha
+        self.eta = eta
+        self.decay = decay
+        self.writedown_topics = writedown_topics
+        self.topic_file = topic_file
+
+    def fit(self, raw_docs, y=None):
+        """Learn a conversion law from raw documents
+        to array data (topic weights)"""
+
+        # create word-count matrix (sparse csc) using
+        # the parent CountVectorizer
+        count_matrix = super(LdaVectorizer, self).fit_transform(raw_docs)
+        logger.info('Building LDA model: sklearn word count matrix completed!')
+
+        # build a gensim dictionary
+        self._dictionary = corpora.Dictionary([super(LdaVectorizer, self)
+                                              .get_feature_names()])
+        logger.info('Building LDA model: gensim Dictionary generated!')
+
+        self._corpus = _generate_gensim_corpus(count_matrix)
+        logger.info('Building LDA model: gensim corpus generated!')
+
+        # build a gensim tf-idf model
+        #self._model_tfidf = models.TfidfModel(self._corpus)
+        # turn the word count into a normalized tfidf
+        #self._corpus_tfidf = self._model_tfidf[self._corpus]
+        #logger.info('Building LDA model: gensim tf-idf corpus generated!')
+
+        #logger.info('Cleaning up the TFIDF model...')
+        #self._model_tfidf = None
+
+        # build an LDA model
+        # Specifying dictionary is important if we want to output actual words,
+        # not IDs, into the topic log file
+        self._model_lda = models.LdaModel(
+            #corpus=self._corpus_tfidf, id2word=self._dictionary,
+            corpus=self._corpus, id2word=self._dictionary,
+            num_topics=self.num_topics,
+            distributed=self.distributed,
+            chunksize=self.chunksize, passes=self.passes,
+            update_every=self.update_every,
+            alpha=self.alpha, eta=self.eta,
+            decay=self.decay)
+        logger.info('Building LDA model: gensim LDA model generated!')
+
+        #self._corpus_lda = self._model_lda[self._corpus]
+
+        logger.info('Cleaning up gensim corpus...')
+        self._corpus = None
+        #self._corpus_tfidf = None
+        self._dictionary = None
+
+        if self.writedown_topics:
+            lda_topic_file = codecs.open(self.topic_file, 'a', 'utf-8')
+            lda_topic_file.write('\n\n======= '+str(time.ctime())+' =======\n')
+            topic_counter = 0
+            for i in range(0, self.num_topics):
+                lda_topic_file.write('\ntopic #'+str(topic_counter) + ': '
+                                     + self._model_lda.print_topic(i, 20)
+                                     + '\n')
+                topic_counter += 1
+                lda_topic_file.flush()
+            lda_topic_file.flush()
+            logger.info('Finished logging!')
+
+        return self
+
+    def fit_transform(self, raw_docs, y=None):
+        """Learn the LDA model from the raw documents and
+        return the LDA vector representation of the documents
+
+        Parameters
+        ----------
+        raw_docs : iterable
+            A collection of documents, each is represented as a string
+
+        Returns
+        -------
+        vectors : array, [n_samples, n_topics]
+        """
+
+        self.fit(raw_docs)
+        count_matrix = super(LdaVectorizer, self).fit_transform(raw_docs)
+        corpus = _generate_gensim_corpus(count_matrix)
+        return _convert_gensim_corpus2csr(self._model_lda[corpus],
+                                          num_topics=self.num_topics)
+
+        #return _convert_gensim_corpus2csr(self._model_lda[self._corpus])
+        #return _convert_gensim_corpus2csr(self._corpus_lda)
+
+    def transform(self, raw_docs):
+        """Return the LDA vector representation of the new documents
+        using the learned LDA model
+
+        Parameters
+        ----------
+        raw_docs : iterable
+            A collection of documents, each is represented as a string
+
+        Returns
+        -------
+        vectors : array, [n_samples, n_topics]
+        """
+
+        # create word-count matrix (sparse csc) using the
+        # parent CountVectorizer
+        count_matrix = super(LdaVectorizer, self).transform(raw_docs)
+        logger.info('''Transforming new docs:
+                     sklearn word count matrix completed!''')
+
+        corpus = _generate_gensim_corpus(count_matrix)
+        logger.info('Transforming new docs: gensim corpus generated!')
+
+        return _convert_gensim_corpus2csr(self._model_lda[corpus],
+                                          num_topics=self.num_topics)
+
+
+class LsiVectorizer(CountVectorizer):
+    """Convert a collection of raw documents to a matrix of LSI topic features
+
+    Latent semantic analysis/indexing (LSA/LSI) is a widely-used technique to
+    analyze documents and find the unerlying meaning or concepts of
+    those documents. LSA assumes that words that are close in meaning
+    will occur in similar pieces of text. A matrix containing word counts
+    per document is constructed from a corpus of documents and a linear
+    algebra technique called singular value decomposition (SVD) is used to
+    reduce the number of words while preserving the similarity structure
+    among documents.
+
+    The LsiModel from gensim is used as the LSI implementation.
+
+    Parameters
+    ----------
+    == Parameters related to CountVectorizer ==
+    input : string {'filename', 'file', 'content'}
+        If filename, the sequence passed as an argument to fit is
+        expected to be a list of filenames that need reading to fetch
+        the raw content to analyze.
+
+        If 'file', the sequence items must have 'read' method (file-like
+        object) it is called to fetch the bytes in memory.
+
+        Otherwise the input is expected to be the sequence strings or
+        bytes items are expected to be analyzed directly.
+
+    encoding : string, 'utf-8' by default.
+        If bytes or files are given to analyze, this encoding is used to
+        decode.
+
+    decode_error : {'strict', 'ignore', 'replace'}
+        Instruction on what to do if a byte sequence is given to analyze that
+        contains characters not of the given `encoding`. By default, it is
+        'strict', meaning that a UnicodeDecodeError will be raised. Other
+        values are 'ignore' and 'replace'.
+
+    strip_accents : {'ascii', 'unicode', None}
+        Remove accents during the preprocessing step.
+        'ascii' is a fast method that only works on characters that have
+        an direct ASCII mapping.
+        'unicode' is a slightly slower method that works on any characters.
+        None (default) does nothing.
+
+    analyzer : string, {'word', 'char'} or callable
+        Whether the feature should be made of word or character n-grams.
+
+        If a callable is passed it is used to extract the sequence of features
+        out of the raw, unprocessed input.
+
+    preprocessor : callable or None (default)
+        Override the preprocessing (string transformation) stage while
+        preserving the tokenizing and n-grams generation steps.
+
+    tokenizer : callable or None (default)
+        Override the string tokenization step while preserving the
+        preprocessing and n-grams generation steps.
+
+    ngram_range : tuple (min_n, max_n)
+        The lower and upper boundary of the range of n-values for different
+        n-grams to be extracted. All values of n such that min_n <= n <= max_n
+        will be used.
+
+    stop_words : string {'english'}, list, or None (default)
+        If a string, it is passed to _check_stop_list and the appropriate stop
+        list is returned. 'english' is currently the only supported string
+        value.
+
+        If a list, that list is assumed to contain stop words, all of which
+        will be removed from the resulting tokens.
+
+        If None, no stop words will be used. max_df can be set to a value
+        in the range [0.7, 1.0) to automatically detect and filter stop
+        words based on intra corpus document frequency of terms.
+
+    lowercase : boolean, default True
+        Convert all characters to lowercase befor tokenizing.
+
+    token_pattern : string
+        Regular expression denoting what constitutes a "token", only used
+        if `tokenize == 'word'`. The default regexp select tokens of 2
+        or more letters characters (punctuation is completely ignored
+        and always treated as a token separator).
+
+    max_df : float in range [0.0, 1.0] or int, optional, 1.0 by default
+        When building the vocabulary ignore terms that have a term frequency
+        strictly higher than the given threshold (corpus specific stop words).
+        If float, the parameter represents a proportion of documents, integer
+        absolute counts.
+        This parameter is ignored if vocabulary is not None.
+
+    min_df : float in range [0.0, 1.0] or int, optional, 1 by default
+        When building the vocabulary ignore terms that have a term frequency
+        strictly lower than the given threshold.
+        This value is also called cut-off in the literature.
+        If float, the parameter represents a proportion of documents, integer
+        absolute counts.
+        This parameter is ignored if vocabulary is not None.
+
+    max_features : optional, None by default
+        If not None, build a vocabulary that only consider the top
+        max_features ordered by term frequency across the corpus.
+
+        This parameter is ignored if vocabulary is not None.
+
+    vocabulary : Mapping or iterable, optional
+        Either a Mapping (e.g., a dict) where keys are terms and values are
+        indices in the feature matrix, or an iterable over terms. If not
+        given, a vocabulary is determined from the input documents.
+
+    binary : boolean, False by default.
+        If True, all non zero counts are set to 1. This is useful for discrete
+        probabilistic models that model binary events rather than integer
+        counts.
+
+    dtype : type, optional
+        Type of the matrix returned by fit_transform() or transform().
+
+
+    == Parameters related to LsiVectorizer ==
+    num_topics : integer
+        Number of requested latent topics.
+
+    id2word : gensim.corpora.Dictionary
+        A mapping from word ids (integers) to words (strings). It is
+        used to determine the vocabulary size, as well as for debugging
+        and topic printing.
+
+    distributed :  boolean, optional
+        Turned on to force distributed computing (see the web tutorial
+        on how to set up a cluster of machines for gensim).
+
+    onepass : boolean, optional
+        Turned off to force a multi-pass stochastic algorithm.
+
+    power_iters : integer, optional
+        Increasing the number of power iterations improves accuracy,
+        but lowers performance.
+
+    extra_samples : integer, optional
+
+    `power_iters` and `extra_samples` affect the accuracy of the stochastic
+    multi-pass algorithm, which is used either internally (`onepass=True`) or
+    as the front-end algorithm (`onepass=False`).
+
+    topic_file : string, optional, 'lsi_topics.txt' by default
+        The log file used to record all learned topics
+
+    See also
+    --------
+    CountVectorizer
+        Tokenize the documents and count the occurrences of token and return
+        them as a sparse matrix
+
+    gensim.models.LsiModel
+        Encapsulate functionality for the Latent Semantic Indexing algorithm
+
+    """
+
+    def __init__(self, input='content', encoding='utf-8', charset=None,
+                 decode_error='strict', charset_error=None,
+                 strip_accents=None, lowercase=True,
+                 preprocessor=None, tokenizer=None, analyzer='word',
+                 stop_words='english', token_pattern=r"(?u)\b\w\w+\b",
+                 ngram_range=(1, 1), max_df=1.0, min_df=1,
+                 max_features=None, vocabulary=None, binary=False,
+                 dtype=np.int64,
+                 num_topics=100,
+                 distributed=False, chunksize=20000,
+                 onepass=True, power_iters=2, extra_samples=100,
+                 decay=1.0,
+                 writedown_topics=True,
+                 topic_file='lsi_topics.txt'):
+
+        # initialize a CountVectorizer object
+        super(LsiVectorizer, self).__init__(
+            input=input,  encoding=encoding, decode_error=decode_error,
+            strip_accents=strip_accents, lowercase=lowercase,
+            preprocessor=preprocessor, tokenizer=tokenizer,
+            stop_words=stop_words, token_pattern=token_pattern,
+            ngram_range=ngram_range, analyzer=analyzer,
+            max_df=max_df, min_df=min_df, max_features=max_features,
+            vocabulary=vocabulary, binary=False, dtype=dtype)
+        self.num_topics = num_topics
+        self.distributed = distributed
+        self.chunksize = chunksize
+        self.onepass = onepass
+        self.power_iters = power_iters
+        self.extra_samples = extra_samples
+        self.decay = decay
+        self.writedown_topics = writedown_topics
+        self.topic_file = topic_file
+
+    def fit(self, raw_docs, y=None):
+        """Learn a conversion law from raw documents
+        to array data (topic weights)"""
+
+        # create word-count matrix (sparse csc) using
+        # the parent CountVectorizer
+        count_matrix = super(LsiVectorizer, self).fit_transform(raw_docs)
+        logger.info('Building LSI model: sklearn word count matrix completed!')
+
+        # build a gensim dictionary
+        self._dictionary = corpora.Dictionary([super(LsiVectorizer, self)
+                                              .get_feature_names()])
+        logger.info('Building LSI model: gensim Dictionary generated!')
+
+        self._corpus = _generate_gensim_corpus(count_matrix)
+        logger.info('Building LSI model: gensim corpus generated!')
+
+        # build a gensim tf-idf model
+        self._model_tfidf = models.TfidfModel(self._corpus)
+        # turn the word count into a normalized tfidf
+        self._corpus_tfidf = self._model_tfidf[self._corpus]
+        logger.info('Building LSI model: gensim tf-idf corpus generated!')
+
+        #logger.info('Cleaning up the TFIDF model...')
+        #self._model_tfidf = None
+
+        # build an LSI model
+        # Specifying dictionary is important if we want to output actual words,
+        # not IDs, into the topic log file
+        self._model_lsi = models.LsiModel(
+            corpus=self._corpus_tfidf, id2word=self._dictionary,
+            num_topics=self.num_topics,
+            distributed=self.distributed, chunksize=self.chunksize,
+            onepass=self.onepass, power_iters=self.power_iters,
+            extra_samples=self.extra_samples,
+            decay=self.decay)
+        logger.info('Building LSI model: gensim LSI model generated!')
+
+        #self._corpus_lsi = self._model_lsi[self._corpus]
+
+        logger.info('Cleaning up gensim corpus...')
+        self._corpus = None
+        self._corpus_tfidf = None
+        self._dictionary = None
+
+        if self.writedown_topics:
+            lsi_topic_file = codecs.open(self.topic_file, 'a', 'utf-8')
+            lsi_topic_file.write('\n\n======= '+str(time.ctime())+' =======\n')
+            topic_counter = 0
+            # -1 means show all topics
+            for topic in self._model_lsi.show_topics(-1, 20):
+                lsi_topic_file.write('\ntopic #' + str(topic_counter)
+                                     + ': ' + topic + '\n')
+                topic_counter += 1
+                lsi_topic_file.flush()
+            lsi_topic_file.flush()
+            logger.info('Finished logging!')
+
+        return self
+
+    def fit_transform(self, raw_docs, y=None):
+        """Learn the LSI model from the raw documents and
+        return the LSI vector representation of the documents
+
+        Parameters
+        ----------
+        raw_docs : iterable
+            A collection of documents, each is represented as a string
+
+        Returns
+        -------
+        vectors : array, [n_samples, n_topics]
+        """
+
+        self.fit(raw_docs)
+        count_matrix = super(LsiVectorizer, self).fit_transform(raw_docs)
+        corpus = _generate_gensim_corpus(count_matrix)
+        corpus_tfidf = self._model_tfidf[corpus]
+
+        #return _convert_gensim_corpus2csr(self._model_lsi[corpus],
+        #                                  num_topics=self.num_topics)
+        return _convert_gensim_corpus2csr(self._model_lsi[corpus_tfidf],
+                                          num_topics=self.num_topics)
+
+        #return _convert_gensim_corpus2csr(self._model_lsi[self._corpus])
+        #return _convert_gensim_corpus2csr(self._corpus_lsi)
+
+    def transform(self, raw_docs):
+        """Return the LSI vector representation of the new documents
+        using the learned LSI model
+
+        Parameters
+        ----------
+        raw_docs : iterable
+            A collection of documents, each is represented as a string
+
+        Returns
+        -------
+        vectors : array, [n_samples, n_topics]
+        """
+
+        # create word-count matrix (sparse csc) using
+        # the parent CountVectorizer
+        count_matrix = super(LsiVectorizer, self).transform(raw_docs)
+        logger.info('''Transforming new docs:
+                    sklearn word count matrix completed!''')
+
+        corpus = _generate_gensim_corpus(count_matrix)
+        corpus_tfidf = self._model_tfidf[corpus]
+        logger.info('Transforming new docs: gensim corpus generated!')
+
+        #return _convert_gensim_corpus2csr(self._model_lsi[corpus],
+        #                                  num_topics=self.num_topics)
+        return _convert_gensim_corpus2csr(self._model_lsi[corpus_tfidf],
+                                          num_topics=self.num_topics)
+
+
+class ReadabilityTransformer():
+    """Convert a collection of raw documents to a vector of readability scores
+
+    Parameters
+    ----------
+    readability_type : string {'ari', 'flesch_reading_ease',
+                    'flesch_kincaid_grade_level', 'gunning_fog_index',
+                    'smog_index', 'coleman_liau_index', 'lix', 'rix'},
+                    optional, 'smog_index' by default
+        Specify the type of the readability score used for transformation
+
+    """
+
+    def __init__(self, readability_type='smog_index'):
+        self.readability_types = {'ari': self.ari,
+                'flesch_reading_ease': self.flesch_reading_ease,
+                'flesch_kincaid_grade_level': self.flesch_kincaid_grade_level,
+                'gunning_fog_index': self.gunning_fog_index,
+                'smog_index': self.smog_index,
+                'coleman_liau_index': self.coleman_liau_index,
+                'lix': self.lix,
+                'rix': self.rix}
+        if readability_type not in self.readability_types:
+            readability_type = 'smog_index'
+        self.readability_type = readability_type
+
+    def transform(self, raw_docs):
+        """Return the readability scores of the given set of documents
+
+        Parameters
+        ----------
+        raw_docs : iterable
+            A collection of documents, each is represented as a string
+
+        Returns
+        -------
+        vector : array, [n_samples, 1]
+        """
+        scores = []
+        indices = []
+        indptr = []
+        count = 0
+        for doc in raw_docs:
+            r = Readability(doc)
+            score = self.readability_types[self.readability_type](r)
+            scores.append(score)
+            indices.append(0)
+            indptr.append(count)
+            count += 1
+
+        indptr.append(count)
+        num_docs = len(raw_docs)
+        return sp.csr_matrix((np.array(scores),
+                              np.array(indices),
+                              np.array(indptr)),
+                              shape=(num_docs, 1))
+
+    def ari(self, r):
+        return r.ARI()
+
+    def flesch_reading_ease(self, r):
+        return r.FleschReadingEase()
+
+    def flesch_kincaid_grade_level(self, r):
+        return r.FleschKincaidGradeLevel()
+
+    def gunning_fog_index(self, r):
+        return r.GunningFogIndex()
+
+    def smog_index(self, r):
+        return r.SMOGIndex()
+
+    def coleman_liau_index(self, r):
+        return r.ColemanLiauIndex()
+
+    def lix(self, r):
+        return r.LIX()
+
+    def rix(self, r):
+        return r.RIX()

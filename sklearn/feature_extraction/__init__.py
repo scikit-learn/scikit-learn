@@ -9,5 +9,10 @@ from .hashing import FeatureHasher
 from .image import img_to_graph, grid_to_graph
 from . import text
 
+from . import tokenize_utils
+from . import syllables_en
+from . import readability
+
 __all__ = ['DictVectorizer', 'image', 'img_to_graph', 'grid_to_graph', 'text',
-           'FeatureHasher']
+           'FeatureHasher',
+           'tokenize_utils', 'syllables_en', 'readability']

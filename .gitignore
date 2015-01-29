@@ -53,3 +53,9 @@ benchmarks/bench_covertype_data/
 *.prefs
 .pydevproject
 .idea
+
+examples/lda_topics.txt
+examples/lsi_topics.txt
+
+sklearn/feature_extraction/.project
+.project
