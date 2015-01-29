@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from sklearn.utils.testing import assert_array_equal, assert_equal
+from sklearn.utils.testing import assert_array_equal, assert_equal, assert_true
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 from sklearn.utils.testing import assert_less_equal
@@ -169,6 +169,22 @@ def test_nystroem_approximation():
         trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
         X_transformed = trans.fit(X).transform(X)
         assert_equal(X_transformed.shape, (X.shape[0], 2))
+
+
+def test_nystroem_singular_kernel():
+    # test that nystroem works with singular kernel matrix
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 20)
+    X = np.vstack([X] * 2)  # duplicate samples
+
+    gamma = 100
+    N = Nystroem(gamma=gamma, n_components=X.shape[0]).fit(X)
+    X_transformed = N.transform(X)
+
+    K = rbf_kernel(X, gamma=gamma)
+
+    assert_array_almost_equal(K, np.dot(X_transformed, X_transformed.T))
+    assert_true(np.all(np.isfinite(Y)))
 
 
 def test_nystroem_poly_kernel_params():
