@@ -185,6 +185,15 @@ class DPGMM(GMM):
             (`n_components`, `n_features`)                if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
 
+    covars_ : array
+        Covariance parameters for each mixture component.  The shape
+        depends on `covariance_type`::
+
+            (`n_components`, `n_features`)                if 'spherical',
+            (`n_features`, `n_features`)                  if 'tied',
+            (`n_components`, `n_features`)                if 'diag',
+            (`n_components`, `n_features`, `n_features`)  if 'full'
+
     converged_ : bool
         True when convergence was reached in fit(), False otherwise.
 
@@ -584,6 +593,12 @@ class DPGMM(GMM):
 
         self._set_weights()
 
+        # Creat covariance which is used in the sampling function
+        if self.covariance_type in ['diag', 'spherical']:
+	    self.covars_ = [np.reciprocal(cov) for cov in self.precs_]
+	else:
+	    self.covars_ = [pinvh(c) for c in self._get_precisions()]
+
         return self
 
 
@@ -655,6 +670,15 @@ class VBGMM(DPGMM):
         component.  The shape depends on `covariance_type`::
 
             (`n_components`, 'n_features')                if 'spherical',
+            (`n_features`, `n_features`)                  if 'tied',
+            (`n_components`, `n_features`)                if 'diag',
+            (`n_components`, `n_features`, `n_features`)  if 'full'
+
+    covars_ : array
+        Covariance parameters for each mixture component.  The shape
+        depends on `covariance_type`::
+
+            (`n_components`, `n_features`)                if 'spherical',
             (`n_features`, `n_features`)                  if 'tied',
             (`n_components`, `n_features`)                if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
