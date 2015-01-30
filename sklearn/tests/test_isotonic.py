@@ -81,10 +81,21 @@ def test_isotonic_regression():
     assert_array_equal(ir.fit_transform(np.ones(len(x)), y), y)
 
 
-def test_isotonic_regression_ties():
-    # Setup examples with ties
+def test_isotonic_regression_ties_min():
+    # Setup examples with ties on minimum
     x = [0, 1, 1, 2, 3, 4, 5]
     y = [0, 1, 2, 3, 4, 5, 6]
+
+    # Check that we get identical results for fit/transform and fit_transform
+    ir = IsotonicRegression()
+    ir.fit(x, y)
+    assert_array_equal(ir.fit(x, y).transform(x), ir.fit_transform(x, y))
+
+
+def test_isotonic_regression_ties_max():
+    # Setup examples with ties on maximum
+    x = [1, 2, 3, 4, 5, 5]
+    y = [1, 2, 3, 4, 5, 6]
 
     # Check that we get identical results for fit/transform and fit_transform
     ir = IsotonicRegression()
