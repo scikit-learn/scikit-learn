@@ -81,6 +81,17 @@ def test_isotonic_regression():
     assert_array_equal(ir.fit_transform(np.ones(len(x)), y), y)
 
 
+def test_isotonic_regression_ties():
+    # Setup examples with ties
+    x = [0, 1, 1, 2, 3, 4, 5]
+    y = [0, 1, 2, 3, 4, 5, 6]
+
+    # Check that we get identical results for fit/transform and fit_transform
+    ir = IsotonicRegression()
+    ir.fit(x, y)
+    assert_array_equal(ir.fit(x, y).transform(x), ir.fit_transform(x, y))
+
+
 def test_isotonic_regression_reversed():
     y = np.array([10, 9, 10, 7, 6, 6.1, 5])
     y_ = IsotonicRegression(increasing=False).fit_transform(
