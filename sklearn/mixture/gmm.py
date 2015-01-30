@@ -234,9 +234,9 @@ class GMM(BaseEstimator):
             warnings.warn("'thresh' was replaced by 'tol' and will "
                           "be removed in 0.18.",
                           DeprecationWarning)
-        tol = 1e-1 * thresh
         self.n_components = n_components
         self.covariance_type = covariance_type
+        self.thresh = thresh
         self.tol = tol
         self.min_covar = min_covar
         self.random_state = random_state
@@ -460,14 +460,20 @@ class GMM(BaseEstimator):
             log_likelihood = []
             # reset self.converged_ to False
             self.converged_ = False
+
+            # this line should be removed when 'thresh' is deprecated
+            tol = self.tol if self.thresh is None \
+                else self.thresh / float(X.shape[0])
+
             for i in range(self.n_iter):
                 # Expectation step
                 curr_log_likelihood, responsibilities = self.score_samples(X)
                 log_likelihood.append(curr_log_likelihood.mean())
 
                 # Check for convergence.
+                # (should compare to self.tol when 'thresh' is deprecated)
                 if i > 0 and abs(log_likelihood[-1] - log_likelihood[-2]) < \
-                        self.tol:
+                        tol:
                     self.converged_ = True
                     break
 
