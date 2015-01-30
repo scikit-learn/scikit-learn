@@ -595,9 +595,9 @@ class DPGMM(GMM):
 
         # Creat covariance which is used in the sampling function
         if self.covariance_type in ['diag', 'spherical']:
-	    self.covars_ = [np.reciprocal(cov) for cov in self.precs_]
-	else:
-	    self.covars_ = [pinvh(c) for c in self._get_precisions()]
+            self.covars_ = [np.reciprocal(cov) for cov in self.precs_]
+        else:
+            self.covars_ = [pinvh(c) for c in self._get_precisions()]
 
         return self
 
