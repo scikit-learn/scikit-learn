@@ -626,34 +626,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
             return all_proba
 
-    def predict_log_proba(self, X):
-        """Predict class log-probabilities of the input samples X.
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
-
-        Returns
-        -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs
-            such arrays if n_outputs > 1.
-            The class log-probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
-        """
-        proba = self.predict_proba(X)
-
-        if self.n_outputs_ == 1:
-            return np.log(proba)
-
-        else:
-            for k in range(self.n_outputs_):
-                proba[k] = np.log(proba[k])
-
-            return proba
-
 
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     """A decision tree regressor.

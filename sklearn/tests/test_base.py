@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
@@ -228,3 +229,26 @@ def test_score_sample_weight():
                                    sample_weight=sample_weight),
                          msg="Unweighted and weighted scores "
                              "are unexpectedly equal")
+
+
+def test_predict_log_proba():
+
+    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.tree import DecisionTreeRegressor
+    from sklearn.ensemble.forest import RandomForestClassifier
+    from sklearn.ensemble.gradient_boosting import GradientBoostingClassifier
+    from sklearn import datasets
+
+    # test ClassifierMixin
+    estimators = [DecisionTreeClassifier(max_depth=2),
+                  DecisionTreeRegressor(max_depth=2),
+                  RandomForestClassifier(max_depth=2),
+                  GradientBoostingClassifier(max_depth=2)]
+    sets = [datasets.make_classification(n_samples=200)]
+    for est, ds in zip(estimators, sets):
+        X, y = ds
+        est.fit(X, y)
+        # check if log_proba is the log of the result of predict_proba
+        proba = est.predict_proba(X)
+        log_proba = est.predict_log_proba(X)
+        assert_array_almost_equal(np.exp(log_proba), proba)

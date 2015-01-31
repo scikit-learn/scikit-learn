@@ -571,38 +571,6 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         return proba
 
-    def predict_log_proba(self, X):
-        """Predict class log-probabilities for X.
-
-        The predicted class log-probabilities of an input sample is computed as
-        the log of the mean predicted class probabilities of the trees in the
-        forest.
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
-
-        Returns
-        -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs
-            such arrays if n_outputs > 1.
-            The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
-        """
-        proba = self.predict_proba(X)
-
-        if self.n_outputs_ == 1:
-            return np.log(proba)
-
-        else:
-            for k in range(self.n_outputs_):
-                proba[k] = np.log(proba[k])
-
-            return proba
-
 
 class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
     """Base class for forest of trees-based regressors.

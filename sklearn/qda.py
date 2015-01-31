@@ -96,7 +96,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         store_covariances : boolean
             If True the covariance matrices are computed and stored in the
             `self.covariances_` attribute.
-        
+
         tol : float, optional, default 1.0e-4
             Threshold used for rank estimation.
         """
@@ -216,20 +216,3 @@ class QDA(BaseEstimator, ClassifierMixin):
         likelihood = np.exp(values - values.max(axis=1)[:, np.newaxis])
         # compute posterior probabilities
         return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
-
-    def predict_log_proba(self, X):
-        """Return posterior probabilities of classification.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Array of samples/test vectors.
-
-        Returns
-        -------
-        C : array, shape = [n_samples, n_classes]
-            Posterior log-probabilities of classification per class.
-        """
-        # XXX : can do better to avoid precision overflows
-        probas_ = self.predict_proba(X)
-        return np.log(probas_)

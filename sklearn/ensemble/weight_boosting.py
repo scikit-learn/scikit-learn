@@ -750,7 +750,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             outputs is the same of that of the `classes_` attribute.
         """
         check_is_fitted(self, "n_classes_")
-        
+
         n_classes = self.n_classes_
         X = self._validate_X_predict(X)
 
@@ -822,27 +822,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             real_proba /= normalizer
 
             yield real_proba
-
-    def predict_log_proba(self, X):
-        """Predict class log-probabilities for X.
-
-        The predicted class log-probabilities of an input sample is computed as
-        the weighted mean predicted class log-probabilities of the classifiers
-        in the ensemble.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
-            The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. DOK and LIL are converted to CSR.
-
-        Returns
-        -------
-        p : array of shape = [n_samples]
-            The class probabilities of the input samples. The order of
-            outputs is the same of that of the `classes_` attribute.
-        """
-        return np.log(self.predict_proba(X))
 
 
 class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):

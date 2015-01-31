@@ -1094,24 +1094,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         """
         return self._predict_proba_lr(X)
 
-    def predict_log_proba(self, X):
-        """Log of probability estimates.
-
-        The returned estimates for all classes are ordered by the
-        label of classes.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        T : array-like, shape = [n_samples, n_classes]
-            Returns the log-probability of the sample for each class in the
-            model, where classes are ordered as they are in ``self.classes_``.
-        """
-        return np.log(self.predict_proba(X))
-
 
 class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                            LinearClassifierMixin, _LearntSelectorMixin):

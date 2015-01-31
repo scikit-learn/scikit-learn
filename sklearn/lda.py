@@ -486,18 +486,3 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
             # OvR normalization, like LibLinear's predict_probability
             prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
             return prob
-
-    def predict_log_proba(self, X):
-        """Estimate log probability.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            Input data.
-
-        Returns
-        -------
-        C : array, shape (n_samples, n_classes)
-            Estimated log probabilities.
-        """
-        return np.log(self.predict_proba(X))

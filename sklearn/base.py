@@ -294,6 +294,30 @@ class ClassifierMixin(object):
         from .metrics import accuracy_score
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
+    def predict_log_proba(self, X):
+        """Predict class log-probabilities for X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+        -------
+        p : array of shape = [n_samples, n_classes] for single output problems.
+            For multiple output problems, returns a list of n_outputs arrays.
+        """
+
+        proba = self.predict_proba(X)
+
+        # In case of multiple outputs, predict_proba returns a list of n_outputs
+        # arrays of shape [n_samples, n_classes]
+        if isinstance(proba, list):
+            n_outputs = len(proba)
+            for k in range(n_outputs):
+                proba[k] = np.log(proba[k])
+            return proba
+        else:
+        # For one output, predict_proba returns an array of shape [n_samples, n_classes]
+            return np.log(proba)
 
 ###############################################################################
 class RegressorMixin(object):
