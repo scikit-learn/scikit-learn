@@ -119,6 +119,9 @@ def test_isotonic_regression_ties_primary_fit():
     > data("pituitary")
     > res1 <- gpava(pituitary$age, pituitary$size, ties="primary")
     > res1$x
+
+    `isotone` version: 1.0-2, 2014-09-07
+    R version: R version 3.1.1 (2014-07-10)
     """
     x = [8, 8, 8, 10, 10, 10, 12, 12, 12, 14, 14]
     y = [21, 23.5, 23, 24, 21, 25, 21.5, 22, 19, 23.5, 25]
@@ -147,6 +150,9 @@ def test_isotonic_regression_ties_primary_fit_transform():
     > data("pituitary")
     > res1 <- gpava(pituitary$age, pituitary$size, ties="primary")
     > res1$x
+
+    `isotone` version: 1.0-2, 2014-09-07
+    R version: R version 3.1.1 (2014-07-10)
     """
     x = [8, 8, 8, 10, 10, 10, 12, 12, 12, 14, 14]
     y = [21, 23.5, 23, 24, 21, 25, 21.5, 22, 19, 23.5, 25]
