@@ -103,6 +103,61 @@ def test_isotonic_regression_ties_max():
     assert_array_equal(ir.fit(x, y).transform(x), ir.fit_transform(x, y))
 
 
+def test_isotonic_regression_ties_primary_fit():
+    """
+    Test isotonic regression fit, transform against the "primary" ties method
+    and "pituitary" data from R "isotone" package, as detailed in
+    J. d. Leeuw, K. Hornik, P. Mair,
+    Isotone Optimization in R: Pool-Adjacent-Violators Algorithm
+    (PAVA) and Active Set Methods
+    """
+
+    """
+    Set values based on pituitiary example and
+     the following R command detailed in the paper above:
+    > library("isotone")
+    > data("pituitary")
+    > res1 <- gpava(pituitary$age, pituitary$size, ties="primary")
+    > res1$x
+    """
+    x = [8, 8, 8, 10, 10, 10, 12, 12, 12, 14, 14]
+    y = [21, 23.5, 23, 24, 21, 25, 21.5, 22, 19, 23.5, 25]
+    y_true = [21, 22.375, 22.375, 22.375, 22.375, 22.375, 22.375,
+              22.375, 22.375, 23.5, 25]
+
+    # Check fit, transform
+    ir = IsotonicRegression()
+    ir.fit(x, y)
+    assert_array_equal(ir.transform(x), y_true)
+
+
+def test_isotonic_regression_ties_primary_fit_transform():
+    """
+    Test isotonic regression fit_transform  against the "primary" ties method
+    and "pituitary" data from R "isotone" package, as detailed in
+    J. d. Leeuw, K. Hornik, P. Mair,
+    Isotone Optimization in R: Pool-Adjacent-Violators Algorithm
+    (PAVA) and Active Set Methods
+    """
+
+    """
+    Set values based on pituitiary example and
+     the following R command detailed in the paper above:
+    > library("isotone")
+    > data("pituitary")
+    > res1 <- gpava(pituitary$age, pituitary$size, ties="primary")
+    > res1$x
+    """
+    x = [8, 8, 8, 10, 10, 10, 12, 12, 12, 14, 14]
+    y = [21, 23.5, 23, 24, 21, 25, 21.5, 22, 19, 23.5, 25]
+    y_true = [21, 22.375, 22.375, 22.375, 22.375, 22.375, 22.375,
+              22.375, 22.375, 23.5, 25]
+
+    # Check fit_transform against y_true
+    ir = IsotonicRegression()
+    assert_array_equal(ir.fit_transform(x, y), y_true)
+
+
 def test_isotonic_regression_reversed():
     y = np.array([10, 9, 10, 7, 6, 6.1, 5])
     y_ = IsotonicRegression(increasing=False).fit_transform(
