@@ -136,7 +136,7 @@ def test_isotonic_regression_ties_primary_fit():
 
 def test_isotonic_regression_ties_primary_fit_transform():
     """
-    Test isotonic regression fit_transform  against the "primary" ties method
+    Test isotonic regression fit_transform against the "primary" ties method
     and "pituitary" data from R "isotone" package, as detailed in
     J. d. Leeuw, K. Hornik, P. Mair,
     Isotone Optimization in R: Pool-Adjacent-Violators Algorithm
