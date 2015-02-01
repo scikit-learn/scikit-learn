@@ -341,8 +341,7 @@ if np_version < (1, 6, 2):
     # Allow bincount to accept empty arrays
     # https://github.com/numpy/numpy/commit/40f0844846a9d7665616b142407a3d74cb65a040
     def bincount(x, weights=None, minlength=None):
-        x = np.asarray(x, dtype=np.intp)
-        if x.size > 0:
+        if len(x) > 0:
             return np.bincount(x, weights, minlength)
         else:
             if minlength is None:
