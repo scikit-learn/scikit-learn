@@ -59,6 +59,10 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         The random generator used. If an integer is given, it fixes the
         seed. Defaults to the global numpy random number generator.
 
+    cov_computation_method : callable, default empirical_covariance
+        The function which will be used to compute the covariance.
+        Must return shape (n_features, n_features)
+
     Returns
     -------
     location : array-like, shape (n_features,)
@@ -210,10 +214,16 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         Maximum number of iterations for the c_step procedure.
         (2 is enough to be close to the final solution. "Never" exceeds 20).
 
-    random_state : integer or numpy.RandomState, optional
+    random_state : integer or numpy.RandomState, default None
         The random generator used. If an integer is given, it fixes the
         seed. Defaults to the global numpy random number generator.
 
+    cov_computation_method : callable, default empirical_covariance
+        The function which will be used to compute the covariance.
+        Must return shape (n_features, n_features)
+
+    verbose : boolean, default False
+        Control the output verbosity.
 
     See Also
     ---------
@@ -303,6 +313,10 @@ def fast_mcd(X, support_fraction=None,
         The generator used to randomly subsample. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
+
+    cov_computation_method : callable, default empirical_covariance
+        The function which will be used to compute the covariance.
+        Must return shape (n_features, n_features)
 
     Notes
     -----

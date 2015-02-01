@@ -12,6 +12,7 @@ from scipy import linalg, optimize
 from ..base import BaseEstimator, RegressorMixin
 from ..metrics.pairwise import manhattan_distances
 from ..utils import check_random_state, check_array, check_consistent_length
+from ..utils.validation import  check_is_fitted
 from . import regression_models as regression
 from . import correlation_models as correlation
 
@@ -409,6 +410,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             An array with shape (n_eval, ) or (n_eval, n_targets) as with y,
             with the Mean Squared Error at x.
         """
+        check_is_fitted(self, "X")
 
         # Check input shapes
         X = check_array(X)
@@ -472,7 +474,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 if self.beta0 is None:
                     # Universal Kriging
                     u = linalg.solve_triangular(self.G.T,
-                                                np.dot(self.Ft.T, rt) - f.T)
+                                                np.dot(self.Ft.T, rt) - f.T,
+                                                lower=True)
                 else:
                     # Ordinary Kriging
                     u = np.zeros((n_targets, n_eval))
@@ -568,6 +571,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 G
                         QR decomposition of the matrix Ft.
         """
+        check_is_fitted(self, "X")
 
         if theta is None:
             # Use built-in autocorrelation parameters

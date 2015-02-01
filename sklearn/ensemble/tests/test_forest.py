@@ -235,7 +235,6 @@ def test_unfitted_feature_importances():
         yield check_unfitted_feature_importances, name
 
 
-
 def check_oob_score(name, X, y, n_estimators=20):
     """Check that oob prediction is a good estimation of the generalization
        error."""
@@ -712,7 +711,6 @@ def check_memory_layout(name, dtype):
         y = iris.target
         assert_array_equal(est.fit(X, y).predict(X), y)
 
-
     # Strided
     X = np.asarray(iris.data[::3], dtype=dtype)
     y = iris.target[::3]
@@ -745,6 +743,102 @@ def test_1d_input():
 
     for name in FOREST_ESTIMATORS:
         yield check_1d_input, name, X, X_2d, y
+
+
+def check_class_weights(name):
+    """Check class_weights resemble sample_weights behavior."""
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+
+    # Iris is balanced, so no effect expected for using 'auto' weights
+    clf1 = ForestClassifier(random_state=0)
+    clf1.fit(iris.data, iris.target)
+    clf2 = ForestClassifier(class_weight='auto', random_state=0)
+    clf2.fit(iris.data, iris.target)
+    assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+
+    # Make a multi-output problem with three copies of Iris
+    iris_multi = np.vstack((iris.target, iris.target, iris.target)).T
+    # Create user-defined weights that should balance over the outputs
+    clf3 = ForestClassifier(class_weight=[{0: 2., 1: 2., 2: 1.},
+                                          {0: 2., 1: 1., 2: 2.},
+                                          {0: 1., 1: 2., 2: 2.}],
+                            random_state=0)
+    clf3.fit(iris.data, iris_multi)
+    assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
+    # Check against multi-output "auto" which should also have no effect
+    clf4 = ForestClassifier(class_weight='auto', random_state=0)
+    clf4.fit(iris.data, iris_multi)
+    assert_almost_equal(clf3.feature_importances_, clf4.feature_importances_)
+
+    # Inflate importance of class 1, check against user-defined weights
+    sample_weight = np.ones(iris.target.shape)
+    sample_weight[iris.target == 1] *= 100
+    class_weight = {0: 1., 1: 100., 2: 1.}
+    clf1 = ForestClassifier(random_state=0)
+    clf1.fit(iris.data, iris.target, sample_weight)
+    clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
+    clf2.fit(iris.data, iris.target)
+    assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+
+    # Check that sample_weight and class_weight are multiplicative
+    clf1 = ForestClassifier(random_state=0)
+    clf1.fit(iris.data, iris.target, sample_weight**2)
+    clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
+    clf2.fit(iris.data, iris.target, sample_weight)
+    assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+
+
+def test_class_weights():
+    for name in FOREST_CLASSIFIERS:
+        yield check_class_weights, name
+
+
+def check_class_weight_auto_and_bootstrap_multi_output(name):
+    """Test class_weight works for multi-output"""
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    _y = np.vstack((y, np.array(y) * 2)).T
+    clf = ForestClassifier(class_weight='auto', random_state=0)
+    clf.fit(X, _y)
+    clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}, {-2: 1., 2: 1.}],
+                           random_state=0)
+    clf.fit(X, _y)
+    clf = ForestClassifier(class_weight='subsample', random_state=0)
+    clf.fit(X, _y)
+
+
+def test_class_weight_auto_and_bootstrap_multi_output():
+    for name in FOREST_CLASSIFIERS:
+        yield check_class_weight_auto_and_bootstrap_multi_output, name
+
+
+def check_class_weight_errors(name):
+    """Test if class_weight raises errors and warnings when expected."""
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    _y = np.vstack((y, np.array(y) * 2)).T
+
+    # Invalid preset string
+    clf = ForestClassifier(class_weight='the larch', random_state=0)
+    assert_raises(ValueError, clf.fit, X, y)
+    assert_raises(ValueError, clf.fit, X, _y)
+
+    # Warning warm_start with preset
+    clf = ForestClassifier(class_weight='auto', warm_start=True,
+                           random_state=0)
+    assert_warns(UserWarning, clf.fit, X, y)
+    assert_warns(UserWarning, clf.fit, X, _y)
+
+    # Not a list or preset for multi-output
+    clf = ForestClassifier(class_weight=1, random_state=0)
+    assert_raises(ValueError, clf.fit, X, _y)
+
+    # Incorrect length list for multi-output
+    clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}], random_state=0)
+    assert_raises(ValueError, clf.fit, X, _y)
+
+
+def test_class_weight_errors():
+    for name in FOREST_CLASSIFIERS:
+        yield check_class_weight_errors, name
 
 
 def check_warm_start(name, random_state=42):

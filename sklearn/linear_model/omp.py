@@ -526,7 +526,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
 
 
 class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
-    """Orthogonal Mathching Pursuit model (OMP)
+    """Orthogonal Matching Pursuit model (OMP)
 
     Parameters
     ----------
@@ -718,7 +718,7 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 
 
 class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
-    """Cross-validated Orthogonal Mathching Pursuit model (OMP)
+    """Cross-validated Orthogonal Matching Pursuit model (OMP)
 
     Parameters
     ----------

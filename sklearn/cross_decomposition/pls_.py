@@ -14,6 +14,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy import linalg
 from ..utils import arpack
+from ..utils.validation import check_is_fitted
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
@@ -148,7 +149,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
     tol : non-negative real, default 1e-06
         The tolerance used in the iterative algorithm.
 
-    copy : boolean
+    copy : boolean, default True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effects.
 
@@ -358,13 +359,14 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             Training vectors, where n_samples in the number of samples and
             q is the number of response variables.
 
-        copy : boolean
+        copy : boolean, default True
             Whether to copy X and Y, or perform in-place normalization.
 
         Returns
         -------
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
+        check_is_fitted(self, 'x_mean_')
         # Normalize
         if copy:
             Xc = (np.asarray(X) - self.x_mean_) / self.x_std_
@@ -395,7 +397,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             Training vectors, where n_samples in the number of samples and
             p is the number of predictors.
 
-        copy : boolean
+        copy : boolean, default True
             Whether to copy X and Y, or perform in-place normalization.
 
         Notes
@@ -403,6 +405,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         This call requires the estimation of a p x q matrix, which may
         be an issue in high dimensional space.
         """
+        check_is_fitted(self, 'x_mean_')
         # Normalize
         if copy:
             Xc = (np.asarray(X) - self.x_mean_)
@@ -426,13 +429,14 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             Training vectors, where n_samples in the number of samples and
             q is the number of response variables.
 
-        copy : boolean
+        copy : boolean, default True
             Whether to copy X and Y, or perform in-place normalization.
 
         Returns
         -------
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
+        check_is_fitted(self, 'x_mean_')
         return self.fit(X, y, **fit_params).transform(X, y)
 
 
@@ -446,14 +450,6 @@ class PLSRegression(_PLS):
 
     Parameters
     ----------
-    X : array-like of predictors, shape = [n_samples, p]
-        Training vectors, where n_samples in the number of samples and
-        p is the number of predictors.
-
-    Y : array-like of response, shape = [n_samples, q] or [n_samples]
-        Training vectors, where n_samples in the number of samples and
-        q is the number of response variables.
-
     n_components : int, (default 2)
         Number of components to keep.
 
@@ -559,6 +555,7 @@ class PLSRegression(_PLS):
 
     @property
     def coefs(self):
+        check_is_fitted(self, 'coef_')
         DeprecationWarning("'coefs' attribute has been deprecated and will be "
                            "removed in version 0.17. Use 'coef_' instead")
         return self.coef_
@@ -575,16 +572,6 @@ class PLSCanonical(_PLS):
 
     Parameters
     ----------
-    X : array-like of predictors, shape = [n_samples, p]
-        Training vectors, where n_samples is the number of samples and
-        p is the number of predictors.
-
-    Y : array-like of response, shape = [n_samples, q]
-        Training vectors, where n_samples is the number of samples and
-        q is the number of response variables.
-
-    n_components : int, number of components to keep. (default 2).
-
     scale : boolean, scale data? (default True)
 
     algorithm : string, "nipals" or "svd"
@@ -601,6 +588,8 @@ class PLSCanonical(_PLS):
     copy : boolean, default True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effect
+
+    n_components : int, number of components to keep. (default 2).
 
     Attributes
     ----------
@@ -699,20 +688,14 @@ class PLSSVD(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    X : array-like of predictors, shape = [n_samples, p]
-        Training vector, where n_samples is the number of samples and
-        p is the number of predictors. X will be centered before any analysis.
+    n_components : int, default 2
+        Number of components to keep.
 
-    Y : array-like of response, shape = [n_samples, q]
-        Training vector, where n_samples is the number of samples and
-        q is the number of response variables. X will be centered before any
-        analysis.
+    scale : boolean, default True
+        Whether to scale X and Y.
 
-    n_components : int, (default 2).
-        number of components to keep.
-
-    scale : boolean, (default True)
-        whether to scale X and Y.
+    copy : boolean, default True
+        Whether to copy X and Y, or perform in-place computations.
 
     Attributes
     ----------
@@ -773,6 +756,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
 
     def transform(self, X, Y=None):
         """Apply the dimension reduction learned on the train data."""
+        check_is_fitted(self, 'x_mean_')
         Xr = (X - self.x_mean_) / self.x_std_
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:

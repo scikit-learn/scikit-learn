@@ -27,16 +27,36 @@ See :ref:`contributing`.
 Can I add this new algorithm that I (or someone else) just published?
 -------------------------------------------------------------------------
 No. As a rule we only add well-established algorithms. A rule of thumb is at least
-3 years since publications, 1000+ citations and wide use and usefullness. A
+3 years since publications, 200+ citations and wide use and usefullness. A
 technique that provides a clear-cut improvement (e.g. an enhanced  data
 structure or efficient approximation) on a widely-used method will also be
 considered for inclusion.
+Your implementation doesn't need to be in scikit-learn to be used together
+with scikit-learn tools, though. Implement your favorite algorithm
+in a scikit-learn compatible way, upload it to github and we will list
+it under :ref:`related_projects`.
+Also see :selectiveness:
+
 
 Can I add this classical algorithm from the 80s?
 ---------------------------------------------------
 Depends. If there is a common usecase within the scope of scikit-learn, such
 as classification, regression or clustering, where it outperforms methods
 that are already implemented in scikit-learn, we will consider it.
+
+.. _selectiveness:
+
+Why are you so selective on what algorithms you include in scikit-learn?
+------------------------------------------------------------------------
+Code is maintenance cost, and we need to balance the amount of
+code we have with the size of the team (and add to this the fact that
+complexity scales non linearly with the number of features).
+The package relies on core developers using their free time to
+fix bugs, maintain code and review contributions.
+Any algorithm that is added needs future attention by the developers,
+at which point the original author might long have lost interest.
+Also see `this thread on the mailing list
+<http://sourceforge.net/p/scikit-learn/mailman/scikit-learn-general/thread/CAAkaFLWcBG%2BgtsFQzpTLfZoCsHMDv9UG5WaqT0LwUApte0TVzg%40mail.gmail.com/#msg33104380>`_.
 
 Why did you remove HMMs from scikit-learn?
 --------------------------------------------
@@ -46,7 +66,7 @@ See :ref:`adding_graphical_models`.
 
 Will you add graphical models or sequence prediction to scikit-learn?
 ------------------------------------------------------------------------
-Not in the forseeable future. 
+Not in the foreseeable future. 
 scikit-learn tries to provide a unified API for the basic tasks in machine
 learning, with pipelines and meta-algorithms like grid search to tie
 everything together. The required concepts, APIs, algorithms and

@@ -43,7 +43,7 @@ so we can select using the threshold ``.8 * (1 - .8)``::
          [1, 1]])
 
 As expected, ``VarianceThreshold`` has removed the first column,
-which has a probability :math:`p = 5/6 > .8` of containing a one.
+which has a probability :math:`p = 5/6 > .8` of containing a zero.
 
 Univariate feature selection
 ============================

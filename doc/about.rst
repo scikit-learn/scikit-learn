@@ -57,10 +57,10 @@ funded one year for a developer to work on the project full-time
 .. image:: images/cds-logo.png
    :align: center
 
-The following students were sponspored by `Google <http://code.google.com/opensource/>`_
+The following students were sponsored by `Google <http://code.google.com/opensource/>`_
 to work on scikit-learn through the
 `Google Summer of Code <http://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
-programme.
+program.
 
 - 2007 - David Cournapeau
 - 2011 - `Vlad Niculae`_

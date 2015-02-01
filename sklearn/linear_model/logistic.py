@@ -770,6 +770,11 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         the entire probability distribution. Works only for the 'lbfgs'
         solver.
 
+    copy : bool, default True
+        Whether or not to produce a copy of the data. Setting this to
+        True will be useful in cases, when ``_log_reg_scoring_path`` is called
+        repeatedly with the same data, as y is modified along the path.
+
     Returns
     -------
     coefs : ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)

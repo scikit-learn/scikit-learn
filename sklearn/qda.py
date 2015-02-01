@@ -13,6 +13,7 @@ import numpy as np
 from .base import BaseEstimator, ClassifierMixin
 from .externals.six.moves import xrange
 from .utils import check_array, check_X_y
+from .utils.validation import check_is_fitted
 
 __all__ = ['QDA']
 
@@ -95,6 +96,9 @@ class QDA(BaseEstimator, ClassifierMixin):
         store_covariances : boolean
             If True the covariance matrices are computed and stored in the
             `self.covariances_` attribute.
+        
+        tol : float, optional, default 1.0e-4
+            Threshold used for rank estimation.
         """
         X, y = check_X_y(X, y)
         self.classes_, y = np.unique(y, return_inverse=True)
@@ -141,6 +145,8 @@ class QDA(BaseEstimator, ClassifierMixin):
         return self
 
     def _decision_function(self, X):
+        check_is_fitted(self, 'classes_')
+
         X = check_array(X)
         norm2 = []
         for i in range(len(self.classes_)):

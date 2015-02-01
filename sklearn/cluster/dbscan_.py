@@ -140,6 +140,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         # candidates for new core samples in the cluster.
         candidates = [index]
         while len(candidates) > 0:
+            # The tolist() is needed for NumPy 1.6.
             cand_neighbors = np.concatenate(np.take(neighborhoods, candidates,
                                                     axis=0).tolist())
             cand_neighbors = np.unique(cand_neighbors)
@@ -147,7 +148,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
             labels[noise] = label_num
             # A candidate is a core point in the current cluster that has
             # not yet been used to expand the current cluster.
-            candidates = np.intersect1d(noise, core_samples)
+            candidates = np.intersect1d(noise, core_samples,
+                                        assume_unique=True)
         # Current cluster finished.
         # Next core point found will start a new cluster.
         label_num += 1
@@ -178,7 +180,16 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         must be square.
     random_state : numpy.RandomState, optional
         The generator used to shuffle the samples. Defaults to numpy.random.
-
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+        The algorithm to be used by the NearestNeighbors module
+        to compute pointwise distances and find nearest neighbors.
+        See NearestNeighbors module documentation for details.
+    leaf_size : int, optional (default = 30)
+        Leaf size passed to BallTree or cKDTree. This can affect the speed
+        of the construction and query, as well as the memory required
+        to store the tree. The optimal value depends
+        on the nature of the problem.
+ 
     Attributes
     ----------
     core_sample_indices_ : array, shape = [n_core_samples]
@@ -193,7 +204,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     Notes
     -----
-    See examples/plot_dbscan.py for an example.
+    See examples/cluster/plot_dbscan.py for an example.
 
     References
     ----------
@@ -231,7 +242,12 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         X = check_array(X, accept_sparse='csr')
         clust = dbscan(X, sample_weight=sample_weight, **self.get_params())
         self.core_sample_indices_, self.labels_ = clust
-        self.components_ = X[self.core_sample_indices_].copy()
+        if len(self.core_sample_indices_):
+            # fix for scipy sparse indexing issue
+            self.components_ = X[self.core_sample_indices_].copy()
+        else:
+            # no core samples
+            self.components_ = np.empty((0, X.shape[1]))
         return self
 
     def fit_predict(self, X, y=None, sample_weight=None):

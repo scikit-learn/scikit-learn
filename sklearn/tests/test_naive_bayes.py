@@ -3,8 +3,8 @@ from io import BytesIO
 import numpy as np
 import scipy.sparse
 
-from sklearn.datasets import load_digits
-from sklearn.cross_validation import cross_val_score
+from sklearn.datasets import load_digits, load_iris
+from sklearn.cross_validation import cross_val_score, train_test_split
 
 from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_almost_equal
@@ -269,6 +269,26 @@ def test_discretenb_provide_prior():
         assert_raises(ValueError, clf.fit, [[0], [1], [2]], [0, 1, 2])
         assert_raises(ValueError, clf.partial_fit, [[0], [1]], [0, 1],
                       classes=[0, 1, 1])
+
+
+def test_discretenb_provide_prior_with_partial_fit():
+    """Test whether discrete NB classes use provided prior
+       when using partial_fit"""
+
+    iris = load_iris()
+    iris_data1, iris_data2, iris_target1, iris_target2 = train_test_split(
+        iris.data, iris.target, test_size=0.4, random_state=415)
+
+    for cls in [BernoulliNB, MultinomialNB]:
+        for prior in [None, [0.3, 0.3, 0.4]]:
+            clf_full = cls(class_prior=prior)
+            clf_full.fit(iris.data, iris.target)
+            clf_partial = cls(class_prior=prior)
+            clf_partial.partial_fit(iris_data1, iris_target1,
+                                    classes=[0, 1, 2])
+            clf_partial.partial_fit(iris_data2, iris_target2)
+            assert_array_almost_equal(clf_full.class_log_prior_,
+                                      clf_partial.class_log_prior_)
 
 
 def test_sample_weight_multiclass():

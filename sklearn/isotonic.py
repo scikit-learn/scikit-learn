@@ -228,7 +228,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
                              .format(self.out_of_bounds))
 
         bounds_error = self.out_of_bounds == "raise"
-        self.f_ = interpolate.interp1d(X, y, kind='linear',
+        self.f_ = interpolate.interp1d(X, y, kind='slinear',
                                        bounds_error=bounds_error)
 
     def _build_y(self, X, y, sample_weight):
@@ -316,10 +316,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
                              .format(self.out_of_bounds))
 
         if self.out_of_bounds == "clip":
-            # XXX: Address scipy issue 4304 by adding a tiny value to 
-            # self.X_min_ during clipping
-            T = np.clip(T, self.X_min_ + np.finfo(float).resolution,
-                        self.X_max_)
+            T = np.clip(T, self.X_min_, self.X_max_)
         return self.f_(T)
 
     def fit_transform(self, X, y, sample_weight=None):

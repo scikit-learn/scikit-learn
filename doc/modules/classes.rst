@@ -167,6 +167,7 @@ Classes
    cross_validation.LeaveOneOut
    cross_validation.LeavePLabelOut
    cross_validation.LeavePOut
+   cross_validation.PredefinedSplit
    cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
    cross_validation.StratifiedShuffleSplit
@@ -577,6 +578,25 @@ From text
    kernel_approximation.Nystroem
    kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
+
+.. _kernel_ridge_ref:
+
+:mod:`sklearn.kernel_ridge` Kernel Ridge Regression
+========================================================
+
+.. automodule:: sklearn.kernel_ridge
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`kernel_ridge` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   kernel_ridge.KernelRidge
 
 .. _lda_ref:
 

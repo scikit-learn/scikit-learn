@@ -14,6 +14,7 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.extmath import fast_dot
+from ..utils.validation import check_is_fitted
 from ..externals import six
 from abc import ABCMeta, abstractmethod
 
@@ -86,15 +87,16 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples and
             n_features is the number of features.
 
         Returns
         -------
-        self: object
+        self : object
             Returns the instance itself.
         """
+
 
     def transform(self, X, y=None):
         """Apply dimensionality reduction to X.
@@ -123,6 +125,8 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
         IncrementalPCA(batch_size=3, copy=True, n_components=2, whiten=False)
         >>> ipca.transform(X) # doctest: +SKIP
         """
+        check_is_fitted(self, ['mean_', 'components_'], all_or_any=all)
+
         X = check_array(X)
         if self.mean_ is not None:
             X = X - self.mean_

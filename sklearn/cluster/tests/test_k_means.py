@@ -164,13 +164,8 @@ def _check_fitted_model(km):
 
 def test_k_means_plus_plus_init():
     km = KMeans(init="k-means++", n_clusters=n_clusters,
-                     random_state=42).fit(X)
+                random_state=42).fit(X)
     _check_fitted_model(km)
-
-
-def test_k_means_check_fitted():
-    km = KMeans(n_clusters=n_clusters, random_state=42)
-    assert_raises(AttributeError, km._check_fitted)
 
 
 def test_k_means_new_centers():
@@ -182,9 +177,9 @@ def test_k_means_new_centers():
                   [0, 0, 0, 0],
                   [0, 1, 0, 0]])
     labels = [0, 1, 2, 1, 1, 2]
-    bad_centers = np.array([[+0,  1,  0,  0],
-                            [.2,  0, .2, .2],
-                            [+0,  0,  0,  0]])
+    bad_centers = np.array([[+0, 1, 0, 0],
+                            [.2, 0, .2, .2],
+                            [+0, 0, 0, 0]])
 
     km = KMeans(n_clusters=3, init=bad_centers, n_init=1, max_iter=10,
                 random_state=1)
@@ -208,7 +203,7 @@ def test_k_means_plus_plus_init_2_jobs():
         raise SkipTest('Multi-process bug with OpenBLAS (see issue #636)')
 
     km = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
-                     random_state=42).fit(X)
+                random_state=42).fit(X)
     _check_fitted_model(km)
 
 
@@ -239,13 +234,13 @@ def test_k_means_random_init_sparse():
 
 def test_k_means_plus_plus_init_not_precomputed():
     km = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42,
-                     precompute_distances=False).fit(X)
+                precompute_distances=False).fit(X)
     _check_fitted_model(km)
 
 
 def test_k_means_random_init_not_precomputed():
     km = KMeans(init="random", n_clusters=n_clusters, random_state=42,
-                     precompute_distances=False).fit(X)
+                precompute_distances=False).fit(X)
     _check_fitted_model(km)
 
 
@@ -338,14 +333,14 @@ def test_minibatch_sensible_reassign_fit():
                                        cluster_std=1., random_state=42)
     zeroed_X[::2, :] = 0
     mb_k_means = MiniBatchKMeans(n_clusters=20, batch_size=10, random_state=42,
-                                 verbose=10, init="random")
+                                 init="random")
     mb_k_means.fit(zeroed_X)
     # there should not be too many exact zero cluster centers
     assert_greater(mb_k_means.cluster_centers_.any(axis=1).sum(), 10)
 
     # do the same with batch-size > X.shape[0] (regression test)
     mb_k_means = MiniBatchKMeans(n_clusters=20, batch_size=201,
-                                 random_state=42, verbose=10, init="random")
+                                 random_state=42, init="random")
     mb_k_means.fit(zeroed_X)
     # there should not be too many exact zero cluster centers
     assert_greater(mb_k_means.cluster_centers_.any(axis=1).sum(), 10)

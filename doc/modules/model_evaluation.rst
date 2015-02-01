@@ -54,31 +54,31 @@ and mean_squared_error, which measure the distance between the model
 and the data, are negated.
 
 
-======================     =======================================     ==================================
-Scoring                    Function                                              Comment
-======================     =======================================     ==================================
+========================     =======================================     ==================================
+Scoring                      Function                                    Comment
+========================     =======================================     ==================================
 **Classification**
-'accuracy'                 :func:`metrics.accuracy_score`
-'average_precision'        :func:`metrics.average_precision_score`
-'f1'                       :func:`metrics.f1_score`                    for binary targets
-'f1_micro'                 :func:`metrics.f1_score`                    micro-averaged
-'f1_macro'                 :func:`metrics.f1_score`                    macro-averaged
-'f1_weighted'              :func:`metrics.f1_score`                    weighted average
-'f1_samples'               :func:`metrics.f1_score`                    by multilabel sample
-'log_loss'                 :func:`metrics.log_loss`                    requires ``predict_proba`` support
-'precision' etc.           :func:`metrics.precision_score`             suffixes apply as with 'f1'`
-'recall' etc.              :func:`metrics.recall_score`                suffixes apply as with 'f1'
-'roc_auc'                  :func:`metrics.roc_auc_score`
+'accuracy'                   :func:`metrics.accuracy_score`
+'average_precision'          :func:`metrics.average_precision_score`
+'f1'                         :func:`metrics.f1_score`                    for binary targets
+'f1_micro'                   :func:`metrics.f1_score`                    micro-averaged
+'f1_macro'                   :func:`metrics.f1_score`                    macro-averaged
+'f1_weighted'                :func:`metrics.f1_score`                    weighted average
+'f1_samples'                 :func:`metrics.f1_score`                    by multilabel sample
+'log_loss'                   :func:`metrics.log_loss`                    requires ``predict_proba`` support
+'precision' etc.             :func:`metrics.precision_score`             suffixes apply as with 'f1'
+'recall' etc.                :func:`metrics.recall_score`                suffixes apply as with 'f1'
+'roc_auc'                    :func:`metrics.roc_auc_score`
 
 **Clustering**
-'adjusted_rand_score'      :func:`metrics.adjusted_rand_score`
+'adjusted_rand_score'        :func:`metrics.adjusted_rand_score`
 
 **Regression**
-'mean_absolute_error'      :func:`metrics.mean_absolute_error`
-'mean_squared_error'       :func:`metrics.mean_squared_error`
-'median_absolute_error'    :func:`metrics.median_absolute_error`
-'r2'                       :func:`metrics.r2_score`
-======================     =======================================     ==================================
+'mean_absolute_error'        :func:`metrics.mean_absolute_error`
+'mean_squared_error'         :func:`metrics.mean_squared_error`
+'median_absolute_error'      :func:`metrics.median_absolute_error`
+'r2'                         :func:`metrics.r2_score`
+========================     =======================================     ==================================
 
 Usage examples:
 
@@ -285,7 +285,7 @@ Where available, you should select among these using the ``average`` parameter.
   are nonetheless important, macro-averaging may be a means of highlighting
   their performance. On the other hand, the assumption that all classes are
   equally important is often untrue, such that macro-averaging will
-  over-emphasise the typically low performance on an infrequent class.
+  over-emphasize the typically low performance on an infrequent class.
 * ``"weighted"`` accounts for class imbalance by computing the average of
   binary metrics in which each class's score is weighted by its presence in the
   true data sample.
@@ -1004,7 +1004,7 @@ Coverage error
 --------------
 
 The :func:`coverage_error` function computes the average number of labels that
-have to be included in the final prediction such such that all true labels
+have to be included in the final prediction such that all true labels
 are predicted. This is useful if you want to know how many top-scored-labels
 you have to predict in average without missing any true one. The best value
 of this metrics is thus the average number of true labels.

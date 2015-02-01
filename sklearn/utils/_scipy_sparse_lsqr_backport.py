@@ -126,7 +126,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         Right-hand side vector ``b``.
     damp : float
         Damping coefficient.
-    atol, btol : float
+    atol, btol : float, default 1.0e-8
         Stopping tolerances. If both are 1.0e-9 (say), the final
         residual norm should be accurate to about 9 digits.  (The
         final x will usually have fewer correct digits, depending on

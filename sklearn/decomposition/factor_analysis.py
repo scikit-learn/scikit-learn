@@ -29,6 +29,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals.six.moves import xrange
 from ..utils import check_array, check_random_state
 from ..utils.extmath import fast_logdet, fast_dot, randomized_svd, squared_norm
+from ..utils.validation import check_is_fitted
 from ..utils import ConvergenceWarning
 
 
@@ -242,6 +243,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
             The latent variables of X.
         """
+        check_is_fitted(self, 'components_')
+
         X = check_array(X)
         Ih = np.eye(len(self.components_))
 
@@ -264,6 +267,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         cov : array, shape (n_features, n_features)
             Estimated covariance of data.
         """
+        check_is_fitted(self, 'components_')
+
         cov = np.dot(self.components_.T, self.components_)
         cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
         return cov
@@ -276,6 +281,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         precision : array, shape (n_features, n_features)
             Estimated precision of data.
         """
+        check_is_fitted(self, 'components_')
+
         n_features = self.components_.shape[1]
 
         # handle corner cases first
@@ -308,6 +315,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         ll: array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
+        check_is_fitted(self, 'components_')
+        
         Xr = X - self.mean_
         precision = self.get_precision()
         n_features = X.shape[1]

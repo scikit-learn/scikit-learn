@@ -23,7 +23,6 @@ The module structure is the following:
 from __future__ import print_function
 from __future__ import division
 from abc import ABCMeta, abstractmethod
-from warnings import warn
 from time import time
 
 import numbers
@@ -38,7 +37,9 @@ from ..base import RegressorMixin
 from ..utils import check_random_state, check_array, check_X_y, column_or_1d
 from ..utils import check_consistent_length
 from ..utils.extmath import logsumexp
+from ..utils.fixes import expit
 from ..utils.stats import _weighted_percentile
+from ..utils.validation import check_is_fitted, NotFittedError
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
 
@@ -66,6 +67,8 @@ class QuantileEstimator(BaseEstimator):
             self.quantile = _weighted_percentile(y, sample_weight, self.alpha * 100.0)
 
     def predict(self, X):
+        check_is_fitted(self, 'quantile')
+
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.quantile)
         return y
@@ -80,6 +83,8 @@ class MeanEstimator(BaseEstimator):
             self.mean = np.average(y, weights=sample_weight)
 
     def predict(self, X):
+        check_is_fitted(self, 'mean')
+
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.mean)
         return y
@@ -103,6 +108,8 @@ class LogOddsEstimator(BaseEstimator):
         self.prior = self.scale * np.log(pos / neg)
 
     def predict(self, X):
+        check_is_fitted(self, 'prior')
+
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.prior)
         return y
@@ -124,6 +131,8 @@ class PriorProbabilityEstimator(BaseEstimator):
         self.priors = class_counts / class_counts.sum()
 
     def predict(self, X):
+        check_is_fitted(self, 'priors')
+
         y = np.empty((X.shape[0], self.priors.shape[0]), dtype=np.float64)
         y[:] = self.priors
         return y
@@ -143,6 +152,8 @@ class ZeroEstimator(BaseEstimator):
             self.n_classes = 1
 
     def predict(self, X):
+        check_is_fitted(self, 'n_classes')
+
         y = np.empty((X.shape[0], self.n_classes), dtype=np.float64)
         y.fill(0.0)
         return y
@@ -195,16 +206,24 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
         ----------
         tree : tree.Tree
             The tree object.
-        X : np.ndarray, shape=(n, m)
+        X : ndarray, shape=(n, m)
             The data array.
-        y : np.ndarray, shape=(n,)
+        y : ndarray, shape=(n,)
             The target labels.
-        residual : np.ndarray, shape=(n,)
+        residual : ndarray, shape=(n,)
             The residuals (usually the negative gradient).
-        y_pred : np.ndarray, shape=(n,):
+        y_pred : ndarray, shape=(n,)
             The predictions.
-        sample_weight : np.ndarray, shape=(n,):
+        sample_weight : ndarray, shape=(n,)
             The weight of each sample.
+        sample_mask : ndarray, shape=(n,)
+            The sample mask to be used.
+        learning_rate : float, default=0.1
+            learning rate shrinks the contribution of each tree by
+             ``learning_rate``.
+        k : int, default 0
+            The index of the estimator being updated.
+
         """
         # compute leaf for each sample in ``X``.
         terminal_regions = tree.apply(X)
@@ -249,8 +268,8 @@ class LeastSquaresError(RegressionLossFunction):
         if sample_weight is None:
             return np.mean((y - pred.ravel()) ** 2.0)
         else:
-            return (1.0 / sample_weight.sum()) * \
-              np.sum(sample_weight * ((y - pred.ravel()) ** 2.0))
+            return (1.0 / sample_weight.sum() *
+                    np.sum(sample_weight * ((y - pred.ravel()) ** 2.0)))
 
     def negative_gradient(self, y, pred, **kargs):
         return y - pred.ravel()
@@ -279,8 +298,8 @@ class LeastAbsoluteError(RegressionLossFunction):
         if sample_weight is None:
             return np.abs(y - pred.ravel()).mean()
         else:
-            return (1.0 / sample_weight.sum()) * \
-              np.sum(sample_weight * np.abs(y - pred.ravel()))
+            return (1.0 / sample_weight.sum() *
+                    np.sum(sample_weight * np.abs(y - pred.ravel())))
 
     def negative_gradient(self, y, pred, **kargs):
         """1.0 if y - pred > 0.0 else -1.0"""
@@ -301,8 +320,8 @@ class HuberLossFunction(RegressionLossFunction):
 
     M-Regression proposed in Friedman 2001.
 
-    See
-    ---
+    References
+    ----------
     J. Friedman, Greedy Function Approximation: A Gradient Boosting
     Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
     """
@@ -459,7 +478,7 @@ class BinomialDeviance(ClassificationLossFunction):
 
     def negative_gradient(self, y, pred, **kargs):
         """Compute the residual (= negative gradient). """
-        return y - 1.0 / (1.0 + np.exp(-pred.ravel()))
+        return y - expit(pred.ravel())
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred, sample_weight):
@@ -564,8 +583,8 @@ class ExponentialLoss(ClassificationLossFunction):
 
     Same loss as AdaBoost.
 
-    See
-    ---
+    References
+    ----------
     Greg Ridgeway, Generalized Boosted Models: A guide to the gbm package, 2007
     """
     def __init__(self, n_classes):
@@ -583,8 +602,8 @@ class ExponentialLoss(ClassificationLossFunction):
         if sample_weight is None:
             return np.mean(np.exp(-(2. * y - 1.) * pred))
         else:
-            return (1.0 / sample_weight.sum()) * \
-              np.sum(sample_weight * np.exp(-(2 * y - 1) * pred))
+            return (1.0 / sample_weight.sum() *
+                    np.sum(sample_weight * np.exp(-(2 * y - 1) * pred)))
 
     def negative_gradient(self, y, pred, **kargs):
         y_ = -(2. * y - 1.)
@@ -1038,8 +1057,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
     def _init_decision_function(self, X):
         """Check input and compute prediction of ``init``. """
         if self.estimators_ is None or len(self.estimators_) == 0:
-            raise ValueError("Estimator not fitted, call `fit` "
-                             "before making predictions`.")
+            raise NotFittedError("Estimator not fitted, call `fit`"
+                                 " before making predictions`.")
         if X.shape[1] != self.n_features:
             raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
                 self.n_features, X.shape[1]))
@@ -1110,8 +1129,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         feature_importances_ : array, shape = [n_features]
         """
         if self.estimators_ is None or len(self.estimators_) == 0:
-            raise ValueError("Estimator not fitted, "
-                             "call `fit` before `feature_importances_`.")
+            raise NotFittedError("Estimator not fitted, call `fit` before"
+                                 " `feature_importances_`.")
 
         total_sum = np.zeros((self.n_features, ), dtype=np.float64)
         for stage in self.estimators_:
@@ -1127,6 +1146,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         # Default implementation
         return y
+
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
@@ -1144,7 +1164,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         loss function to be optimized. 'deviance' refers to
         deviance (= logistic regression) for classification
         with probabilistic outputs. For loss 'exponential' gradient
-        boosting recoveres the AdaBoost algorithm.
+        boosting recovers the AdaBoost algorithm.
 
     learning_rate : float, optional (default=0.1)
         learning rate shrinks the contribution of each tree by `learning_rate`.
@@ -1314,13 +1334,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : generator of array of shape = [n_samples]
             The predicted value of the input samples.
         """
         for score in self.staged_decision_function(X):
             decisions = self.loss_._score_to_decision(score)
             yield self.classes_.take(decisions, axis=0)
-
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -1344,6 +1363,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         score = self.decision_function(X)
         try:
             return self.loss_._score_to_proba(score)
+        except NotFittedError:
+            raise
         except AttributeError:
             raise AttributeError('loss=%r does not support predict_proba' %
                                  self.loss)
@@ -1361,12 +1382,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : generator of array of shape = [n_samples]
             The predicted value of the input samples.
         """
         try:
             for score in self.staged_decision_function(X):
                 yield self.loss_._score_to_proba(score)
+        except NotFittedError:
+            raise
         except AttributeError:
             raise AttributeError('loss=%r does not support predict_proba' %
                                  self.loss)
@@ -1553,7 +1576,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : generator of array of shape = [n_samples]
             The predicted value of the input samples.
         """
         for y in self.staged_decision_function(X):

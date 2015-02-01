@@ -6,8 +6,8 @@ Several basic tests for hierarchical clustering procedures
 #          Matteo Visconti di Oleggio Castello 2014
 # License: BSD 3 clause
 from tempfile import mkdtemp
+import shutil
 from functools import partial
-import warnings
 
 import numpy as np
 from scipy import sparse
@@ -18,7 +18,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import clean_warning_registry, ignore_warnings
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
@@ -26,7 +26,7 @@ from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
                                           linkage_tree)
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
-    manhattan_distances
+    manhattan_distances, pairwise_distances
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.neighbors.graph import kneighbors_graph
 from sklearn.cluster._hierarchical import average_merge, max_merge
@@ -51,6 +51,7 @@ def test_linkage_misc():
 
     # test hiearchical clustering on a precomputed distances matrix
     dis = cosine_distances(X)
+
     res = linkage_tree(dis, affinity="precomputed")
     assert_array_equal(res[0], linkage_tree(X, affinity="cosine")[0])
 
@@ -138,13 +139,17 @@ def test_agglomerative_clustering():
                                              linkage=linkage)
         clustering.fit(X)
         # test caching
-        clustering = AgglomerativeClustering(
-            n_clusters=10, connectivity=connectivity,
-            memory=mkdtemp(),
-            linkage=linkage)
-        clustering.fit(X)
-        labels = clustering.labels_
-        assert_true(np.size(np.unique(labels)) == 10)
+        try:
+            tempdir = mkdtemp()
+            clustering = AgglomerativeClustering(
+                n_clusters=10, connectivity=connectivity,
+                memory=tempdir,
+                linkage=linkage)
+            clustering.fit(X)
+            labels = clustering.labels_
+            assert_true(np.size(np.unique(labels)) == 10)
+        finally:
+            shutil.rmtree(tempdir)
         # Turn caching off now
         clustering = AgglomerativeClustering(
             n_clusters=10, connectivity=connectivity, linkage=linkage)
@@ -152,8 +157,8 @@ def test_agglomerative_clustering():
         # tree building
         clustering.compute_full_tree = False
         clustering.fit(X)
-        assert_almost_equal(normalized_mutual_info_score(
-                            clustering.labels_, labels), 1)
+        assert_almost_equal(normalized_mutual_info_score(clustering.labels_,
+                                                         labels), 1)
         clustering.connectivity = None
         clustering.fit(X)
         assert_true(np.size(np.unique(clustering.labels_)) == 10)
@@ -189,9 +194,23 @@ def test_agglomerative_clustering():
             affinity=affinity,
             linkage="complete")
         clustering2.fit(X)
-        assert_almost_equal(normalized_mutual_info_score(
-                            clustering2.labels_,
-                            clustering.labels_), 1)
+        assert_almost_equal(normalized_mutual_info_score(clustering2.labels_,
+                                                         clustering.labels_),
+                            1)
+
+    # Test that using a distance matrix (affinity = 'precomputed') has same
+    # results (with connectivity constraints)
+    clustering = AgglomerativeClustering(n_clusters=10,
+                                         connectivity=connectivity,
+                                         linkage="complete")
+    clustering.fit(X)
+    X_dist = pairwise_distances(X)
+    clustering2 = AgglomerativeClustering(n_clusters=10,
+                                          connectivity=connectivity,
+                                          affinity='precomputed',
+                                          linkage="complete")
+    clustering2.fit(X_dist)
+    assert_array_equal(clustering.labels_, clustering2.labels_)
 
 
 def test_ward_agglomeration():
@@ -272,7 +291,7 @@ def test_connectivity_propagation():
                   (.018, .153), (.018, .153), (.018, .153),
                   (.018, .153), (.018, .153), (.018, .153),
                   (.018, .152), (.018, .149), (.018, .144),
-                  ])
+                 ])
     connectivity = kneighbors_graph(X, 10)
     ward = AgglomerativeClustering(
         n_clusters=4, connectivity=connectivity, linkage='ward')
@@ -472,7 +491,8 @@ def test_compute_full_tree():
     n_clusters = 101
     X = rng.randn(200, 2)
     connectivity = kneighbors_graph(X, 10)
-    agc = AgglomerativeClustering(n_clusters=n_clusters, connectivity=connectivity)
+    agc = AgglomerativeClustering(n_clusters=n_clusters,
+                                  connectivity=connectivity)
     agc.fit(X)
     n_samples = X.shape[0]
     n_nodes = agc.children_.shape[0]

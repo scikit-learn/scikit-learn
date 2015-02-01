@@ -43,7 +43,10 @@ from .base import MetaEstimatorMixin
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
-from .utils.validation import _num_samples, check_consistent_length
+from .utils.validation import (
+        _num_samples,
+        check_consistent_length,
+        check_is_fitted)
 from .utils import deprecated
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
@@ -181,12 +184,18 @@ class _ConstantPredictor(BaseEstimator):
         return self
 
     def predict(self, X):
+        check_is_fitted(self, 'y_')
+
         return np.repeat(self.y_, X.shape[0])
 
     def decision_function(self, X):
+        check_is_fitted(self, 'y_')
+
         return np.repeat(self.y_, X.shape[0])
 
     def predict_proba(self, X):
+        check_is_fitted(self, 'y_')
+
         return np.repeat([np.hstack([1 - self.y_, self.y_])],
                          X.shape[0], axis=0)
 
@@ -256,7 +265,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         -------
         self
         """
-        _check_estimator(self.estimator)
         # A sparse LabelBinarizer, with sparse_output=True, has been shown to
         # outpreform or match a dense label binarizer in all cases and has also
         # resulted in less or equal memory consumption in the fit_ovr function
@@ -276,10 +284,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         return self
 
-    def _check_is_fitted(self):
-        if not hasattr(self, "estimators_"):
-            raise ValueError("The object hasn't been fitted yet!")
-
     def predict(self, X):
         """Predict multi-class targets using underlying estimators.
 
@@ -293,7 +297,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         y : (sparse) array-like, shape = [n_samples] or [n_samples, n_classes].
             Predicted multi-class targets.
         """
-        self._check_is_fitted()
+        check_is_fitted(self, 'estimators_')
         if (hasattr(self.estimators_[0], "decision_function") and
                 is_classifier(self.estimators_[0])):
             thresh = 0
@@ -344,6 +348,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in `self.classes_`.
         """
+        check_is_fitted(self, 'estimators_')
         # Y[i,j] gives the probability that sample i has the label j.
         # In the multi-label case, these are not disjoint.
         Y = np.array([e.predict_proba(X)[:, 1] for e in self.estimators_]).T
@@ -372,6 +377,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         -------
         T : array-like, shape = [n_samples, n_classes]
         """
+        check_is_fitted(self, 'estimators_')
         if not hasattr(self.estimators_[0], "decision_function"):
             raise AttributeError(
                 "Base estimator doesn't have a decision_function attribute.")
@@ -389,7 +395,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     @property
     def coef_(self):
-        self._check_is_fitted()
+        check_is_fitted(self, 'estimators_')
         if not hasattr(self.estimators_[0], "coef_"):
             raise AttributeError(
                 "Base estimator doesn't have a coef_ attribute.")
@@ -397,7 +403,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     @property
     def intercept_(self):
-        self._check_is_fitted()
+        check_is_fitted(self, 'estimators_')
         if not hasattr(self.estimators_[0], "intercept_"):
             raise AttributeError(
                 "Base estimator doesn't have an intercept_ attribute.")
@@ -517,9 +523,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         y : numpy array of shape [n_samples]
             Predicted multi-class targets.
         """
-        if not hasattr(self, "estimators_"):
-            raise ValueError("The object hasn't been fitted yet!")
-
+        check_is_fitted(self, 'estimators_')
         n_samples = X.shape[0]
         n_classes = self.classes_.shape[0]
         votes = np.zeros((n_samples, n_classes))
@@ -725,9 +729,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         y : numpy array of shape [n_samples]
             Predicted multi-class targets.
         """
-        if not hasattr(self, "estimators_"):
-            raise ValueError("The object hasn't been fitted yet!")
-
+        check_is_fitted(self, 'estimators_')
         Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
         pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)
         return self.classes_[pred]

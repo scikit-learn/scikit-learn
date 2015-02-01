@@ -10,9 +10,10 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.preprocessing.data import _transform_selected
@@ -411,6 +412,19 @@ def test_scale_sparse_with_mean_raise_exception():
     assert_raises(ValueError, scaler.inverse_transform, X_transformed_csr)
 
 
+def test_scale_input_finiteness_validation():
+    """Check if non finite inputs raise ValueError"""
+    X = [np.nan, 5, 6, 7, 8]
+    assert_raises_regex(ValueError,
+                        "Input contains NaN, infinity or a value too large",
+                        scale, X)
+
+    X = [np.inf, 5, 6, 7, 8]
+    assert_raises_regex(ValueError,
+                        "Input contains NaN, infinity or a value too large",
+                        scale, X)
+
+
 def test_scale_function_without_centering():
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
@@ -446,15 +460,12 @@ def test_warning_scaling_integers():
     X = np.array([[1, 2, 0],
                   [0, 0, 0]], dtype=np.uint8)
 
-    clean_warning_registry()
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("always")
-        assert_warns(UserWarning, StandardScaler().fit, X)
+    w = "assumes floating point values as input, got uint8"
 
     clean_warning_registry()
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("always")
-        assert_warns(UserWarning, MinMaxScaler().fit, X)
+    assert_warns_message(UserWarning, w, scale, X)
+    assert_warns_message(UserWarning, w, StandardScaler().fit, X)
+    assert_warns_message(UserWarning, w, MinMaxScaler().fit, X)
 
 
 def test_normalizer_l1():

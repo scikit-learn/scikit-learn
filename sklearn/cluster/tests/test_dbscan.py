@@ -5,7 +5,6 @@ Tests for DBSCAN clustering algorithm
 import pickle
 
 import numpy as np
-from numpy.testing import assert_raises
 
 from scipy.spatial import distance
 from scipy import sparse
@@ -76,6 +75,18 @@ def test_dbscan_sparse():
                                       random_state=0)
     assert_array_equal(core_dense, core_sparse)
     assert_array_equal(labels_dense, labels_sparse)
+
+
+def test_dbscan_no_core_samples():
+    rng = np.random.RandomState(0)
+    X = rng.rand(40, 10)
+    X[X < .8] = 0
+
+    for X_ in [X, sparse.csr_matrix(X)]:
+        db = DBSCAN().fit(X_)
+        assert_array_equal(db.components_, np.empty((0, X_.shape[1])))
+        assert_array_equal(db.labels_, -1)
+        assert_equal(db.core_sample_indices_.shape, (0,))
 
 
 def test_dbscan_callable():

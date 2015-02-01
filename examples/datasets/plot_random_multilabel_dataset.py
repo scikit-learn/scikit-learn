@@ -31,7 +31,7 @@ Note that this two-dimensional example is very degenerate:
 generally the number of features would be much greater than the
 "document length", while here we have much larger documents than vocabulary.
 Similarly, with ``n_classes > n_features``, it is much less likely that a
-feature distinguishes a particular cluss.
+feature distinguishes a particular class.
 """
 
 from __future__ import print_function

@@ -403,14 +403,22 @@ def fake_mldata(columns_dict, dataname, matfile, ordering=None):
 
     Parameters
     ----------
-    columns_dict: contains data as
-                  columns_dict[column_name] = array of data
-    dataname: name of data set
-    matfile: file-like object or file name
-    ordering: list of column_names, determines the ordering in the data set
+    columns_dict : dict, keys=str, values=ndarray
+        Contains data as columns_dict[column_name] = array of data.
 
-    Note: this function transposes all arrays, while fetch_mldata only
-    transposes 'data', keep that into account in the tests.
+    dataname : string
+        Name of data set.
+
+    matfile : string or file object
+        The file name string or the file-like object of the output file.
+
+    ordering : list, default None
+        List of column_names, determines the ordering in the data set.
+
+    Notes
+    -----
+    This function transposes all arrays, while fetch_mldata only transposes
+    'data', keep that into account in the tests.
     """
     datasets = dict(columns_dict)
 
