@@ -2,6 +2,8 @@
 #          Artem Sobolev
 # License: BSD 3 clause
 
+# TODO: ask MovieLens authors for permission
+
 from io import BytesIO
 from os.path import join, exists
 from zipfile import ZipFile

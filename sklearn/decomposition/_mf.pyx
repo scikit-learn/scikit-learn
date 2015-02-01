@@ -11,7 +11,6 @@ from libc.math cimport sqrt
 ctypedef np.float64_t DOUBLE_t
 ctypedef np.int32_t INTEGER_t
 
-# TODO: declare as a cdef?
 def factorize_matrix(
         np.ndarray[DOUBLE_t, ndim=1] data,
         np.ndarray[INTEGER_t, ndim=1] row,
@@ -27,7 +26,7 @@ def factorize_matrix(
         double regularization,
         double bias_regularization,
         double learning_rate,
-        random_state,
+        object random_state,
         int verbose):
 
     cdef tot_err = 0
