@@ -120,6 +120,7 @@ def test_haversine_metric():
     assert_array_almost_equal(haversine.dist_to_rdist(D1),
                               np.sin(0.5 * D2) ** 2)
 
+
 def test_jensenshannon_metric():
     def entropy(x):
         return -np.nansum(x * np.log2(x))
@@ -141,6 +142,7 @@ def test_jensenshannon_metric():
     assert_array_almost_equal(D1, D2)
     assert_array_almost_equal(jsd.dist_to_rdist(D1),
                               D2 ** 2)
+
 
 def test_pyfunc_metric():
     def dist_func(x1, x2, p):
