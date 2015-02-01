@@ -45,7 +45,7 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
 
 
 # some handy constants
-from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
+from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin, M_LOG2E, log2
 cdef DTYPE_t INF = np.inf
 
 from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
@@ -86,6 +86,8 @@ METRIC_MAPPING = {'euclidean': EuclideanDistance,
                   'sokalmichener': SokalMichenerDistance,
                   'sokalsneath': SokalSneathDistance,
                   'haversine': HaversineDistance,
+                  'jsd': JensenShannonDistance,
+                  'jensenshannon': JensenShannonDistance,
                   'pyfunc': PyFuncDistance}
 
 
@@ -146,7 +148,6 @@ cdef class DistanceMetric:
                                              + cos(x1)cos(x2)sin^2(0.5*dy)))
     ============  ==================  ========================================
 
-
     **Metrics intended for integer-valued vector spaces:**  Though intended
     for integer-valued vectors, these are also valid metrics in the case of
     real-valued vectors.
@@ -182,6 +183,21 @@ cdef class DistanceMetric:
     "russellrao"       RussellRaoDistance       NNZ / N
     "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)
     "sokalsneath"      SokalSneathDistance      NNEQ / (NNEQ + 0.5 * NTT)
+    =================  =======================  ===============================
+
+    **Metrics intended for probability distributions:**  The elements of each
+    vector must be between 0 and 1, inclusive, and should sum to 1. Using these
+    metrics on any other data will give undesirable results. In the listing
+    below, the following abbreviations are used:
+
+     - H : The Shannon entropy, :math:`-\sum_i p(x_i) \log p(x_i)`
+     - mix H : The entropy of the mixture distribution, :math:`H( (x + y) / 2 )`
+     - avg H : The average of the entropies, :math:`( H(x) + H(y) ) / 2`
+
+    =================  =======================  ===============================
+    identifier         class name               distance function
+    -----------------  -----------------------  -------------------------------
+    "jsd"              JensenShannonDistance    sqrt( mix H - avg H )
     =================  =======================  ===============================
 
     **User-defined distance:**
@@ -994,6 +1010,77 @@ cdef class HaversineDistance(DistanceMetric):
     def dist_to_rdist(self, dist):
         tmp = np.sin(0.5 * dist)
         return tmp * tmp
+
+
+#------------------------------------------------------------
+# Jensen-Shannon Distance
+#  d = sqrt( H(x/2 + y/2) - H(x)/2 - H(y)/2 )
+# where H is the entropy.
+cdef class JensenShannonDistance(DistanceMetric):
+    """Jensen-Shannon distance metric
+
+    The Jensen-Shannon distance is the square root of the Jensen-Shannon
+    divergence:
+
+    .. math::
+       D(x, y) = \sqrt{ H\left(\frac{x+y}{2}\right) - \frac{H(x) + H(y)}{2} }
+
+    where H is the Shannon entropy.
+
+    """
+    def __init__(self, base=2):
+        """
+        Initialize Jensen-Shannon distance metric.
+
+        Parameters
+        ----------
+        base : float or 'e'
+            The base used for logarithms. An exception is raised for any base
+            less than or equal to one. Although bases between 0 and 1 are
+            generally valid logarithm bases, the Jensen-Shannon distance is not
+            a distance metric for those bases.
+
+        """
+        self.base = base
+        if base == 'e':
+            self.conversion = M_LOG2E
+        elif base <= 1:
+            raise ValueError("Invalid base: {0}".format(base))
+        else:
+            self.conversion = log2(base)
+
+    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
+                              ITYPE_t size) except -1:
+        cdef DTYPE_t p_mix, H_mix = 0, H_x1 = 0, H_x2 = 0
+        cdef np.intp_t j
+        for j in range(size):
+            p_mix = (x1[j] + x2[j] ) / 2
+            if p_mix > 0:
+                H_mix -= p_mix * log2(p_mix)
+            if x1[j] > 0:
+                H_x1 -= x1[j] * log2(x1[j])
+            if x2[j] > 0:
+                H_x2 -= x2[j] * log2(x2[j])
+
+        jsd = H_mix - (H_x1 + H_x2) / 2
+
+        return jsd / self.conversion
+
+    cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
+                             ITYPE_t size) except -1:
+        return sqrt(self.rdist(x1, x2, size))
+
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+        return sqrt(rdist)
+
+    cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) except -1:
+        return dist * dist
+
+    def rdist_to_dist(self, rdist):
+        return np.sqrt(rdist)
+
+    def dist_to_rdist(self, dist):
+        return dist ** 2
 
 
 #------------------------------------------------------------

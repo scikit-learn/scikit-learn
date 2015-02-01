@@ -73,3 +73,7 @@ cdef class DistanceMetric:
     cdef DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1
 
     cdef DTYPE_t _dist_to_rdist(self, DTYPE_t dist) except -1
+
+cdef class JensenShannonDistance(DistanceMetric):
+    cdef public object base
+    cdef DTYPE_t conversion
