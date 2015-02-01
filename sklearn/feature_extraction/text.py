@@ -30,9 +30,8 @@ from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils import deprecated
-from ..utils.fixes import frombuffer_empty
+from ..utils.fixes import frombuffer_empty, bincount
 from ..utils.validation import check_is_fitted
-from ..utils.fixes import bincount
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
