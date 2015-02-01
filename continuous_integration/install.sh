@@ -52,7 +52,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # virtualenv but we want to used numpy installed through apt-get
     # install.
     deactivate
-    # Create a new venv using system site packages and pip
+    # Create a new virtualenv using system site packages for numpy and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
     pip install nose
