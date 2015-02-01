@@ -113,12 +113,12 @@ def test_compute_sample_weight_with_subsample():
     y = np.asarray([1, 1, 1, 2, 2, 2])
     sample_weight = compute_sample_weight("auto", y, [0, 1, 1, 2, 2, 3])
     expected = np.asarray([1/3., 1/3., 1/3., 5/3., 5/3., 5/3.])
-    assert_array_almost_equal(sample_weight, expected, decimal=3)
+    assert_array_almost_equal(sample_weight, expected)
 
     # Test with a bootstrap subsample for multi-output
     y = np.asarray([[1, 0], [1, 0], [1, 0], [2, 1], [2, 1], [2, 1]])
     sample_weight = compute_sample_weight("auto", y, [0, 1, 1, 2, 2, 3])
-    assert_array_almost_equal(sample_weight, expected ** 2, decimal=3)
+    assert_array_almost_equal(sample_weight, expected ** 2)
 
     # Test with a missing class
     y = np.asarray([1, 1, 1, 2, 2, 2, 3])
