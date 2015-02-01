@@ -1,3 +1,6 @@
+# Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>,
+#          Artem Sobolev
+# License: BSD 3 clause
 
 from io import BytesIO
 from os.path import join, exists
@@ -17,21 +20,27 @@ from .base import get_data_home, Bunch
 from ..externals import joblib
 
 DATASETS = {
-    '100k' : ('http://www.grouplens.org/system/files/ml-100k.zip',
-              'ml-100k/u.data',
-              (943, 1682),
-              '\t',
-              100000,),
-    '1m' : ('http://www.grouplens.org/system/files/ml-1m.zip',
-            'ml-1m/ratings.dat',
-            (6040, 3952),
-            '::',
-            1000209,),
-    '10m' : ('http://www.grouplens.org/sites/www.grouplens.org/external_files/data/ml-10m.zip',
-            'ml-10M100K/ratings.dat',
-            (71567, 65133),
-            '::',
-            10000054,),
+    '100k' : {
+        'url' : 'http://www.grouplens.org/system/files/ml-100k.zip',
+        'data_file' : 'ml-100k/u.data',
+        'shape' : (943, 1682),
+        'separator' : '\t',
+        'nnz' : 100000,
+    },
+    '1m' : {
+        'url' : 'http://www.grouplens.org/system/files/ml-1m.zip',
+        'data_file' : 'ml-1m/ratings.dat',
+        'shape' : (6040, 3952),
+        'separator' : '::',
+        'nnz' : 1000209,
+    },
+    '10m' : {
+        'url' : 'http://www.grouplens.org/sites/www.grouplens.org/external_files/data/ml-10m.zip',
+        'data_file' : 'ml-10M100K/ratings.dat',
+        'shape' : (71567, 65133),
+        'separator' : '::',
+        'nnz' : 10000054,
+    },
 }
 
 def fetch_movielens(dataset='100k', data_home=None, download_if_missing=True):
@@ -39,15 +48,16 @@ def fetch_movielens(dataset='100k', data_home=None, download_if_missing=True):
     data_home = get_data_home(data_home=data_home)
     zip_filename = join(data_home, 'ml-{}.zip'.format(dataset))
     target_filename = join(data_home,'ml-{}.pkz'.format(dataset))
-    data_url = DATASETS[dataset][0]
-    file_in_zip = DATASETS[dataset][1]
-    shape = DATASETS[dataset][2]
-    delimiter = DATASETS[dataset][3]
-    nnz = DATASETS[dataset][4]
 
+    dataset_meta = DATASETS[dataset]
+    data_url = dataset_meta['url']
+    file_in_zip = dataset_meta['data_file']
+    shape = dataset_meta['shape']
+    delimiter = dataset_meta['separator']
+    nnz = dataset_meta['nnz']
 
     if not exists(zip_filename):
-        print('downloading movielens from %s to %s' % (data_url, data_home))
+        print('downloading movielens from {} to {}'.format(data_url, data_home))
         file_content = urlopen(data_url).read()
         with open(zip_filename, 'w') as f:
             f.write(file_content)
@@ -75,8 +85,8 @@ def fetch_movielens(dataset='100k', data_home=None, download_if_missing=True):
                 (data[:, 2],
                  (data[:, 0]-1,
                   data[:, 1]-1)),
-                shape=shape,)
-            bunch = Bunch(data=X)
+                shape=shape, dtype=np.float64_t)
+            bunch = Bunch(data=X, timestamps=timestamps)
             joblib.dump(bunch, join(data_home, target_filename), compress=6)
 
             return bunch

@@ -4,11 +4,14 @@
 import numpy as np
 import scipy.sparse as sparse
 
-from ..utils.validation import array2d, check_random_state
+from ..utils.validation import check_array, check_random_state
 from ..base import BaseEstimator, TransformerMixin
 
 import _mf
+
+
 _rmse = _mf._rmse
+
 
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
@@ -41,9 +44,6 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
     regularization : double, default: TODO
         The regularization coefficient
 
-    bias_learning_rate : double, default: TODO
-        The learning_rate of the sample/features bias
-
     bias_regularization : double, default: TODO
         The regularization coefficient of the sample/features bias
 
@@ -53,11 +53,6 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
     init_R : array, [n_components, n_features]
         An initial guess for the second
 
-    init_bias_samples : array, [n_samples, 1]
-        An initial guess for the bias fo the samples
-
-    init_bias_features : array, [n_features, 1]
-        An initial guess for the bias fo the features
 
     Attributes
     ----------
@@ -79,9 +74,8 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_components=None, n_iter=100, missing_values="NaN",
                  learning_rate=1e-3, regularization=1e-4,
-                 bias_learning_rate=0, bias_regularization=0,
+                 bias_regularization=0,
                  init_L=None, init_R=None,
-                 init_bias_samples=None, init_bias_features=None,
                  random_state=None, verbose=0):
 
         self.n_components = n_components
@@ -90,18 +84,16 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
         self.learning_rate = learning_rate
         self.regularization = regularization
         self.missing_values = missing_values
-        self.bias_learning_rate = bias_learning_rate
         self.bias_regularization = bias_regularization
 
-        self.start_L = init_L
-        self.start_R= init_R
-        self.start_bias_samples = init_bias_samples
-        self.start_bias_features = init_bias_features
+        self.init_L = init_L
+        self.init_R= init_R
 
         self.random_state = random_state
         self.verbose = verbose
 
     def fit_transform(self, X, y=None):
+        # TODO: how come this is more efficient?
         """Factorize the matrix and return the first factor
 
         This is more efficient than calling fit followed by transform.
@@ -128,18 +120,20 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
         # Extract the non-missing values and their indices
         if sparse.issparse(X):
             X = X.tocoo()
-            X_content = np.vstack((X.data, X.row, X.col)).T
+            X_data = X.data
+            X_rows = X.row
+            X_cols = X.col
         else:
-            X = array2d(X, force_all_finite=False)
+            X = check_array(X, force_all_finite=False)
             mask = np.logical_not(_get_mask(X, self.missing_values))
-            X_content = np.vstack([X[mask]] + list(np.where(mask))).T
-        mean = X_content[:, 0].mean()
-        var  = X_content[:, 0].var()
+            X_data = X[mask]
+            X_rows, X_cols = list(np.where(mask))
 
-        print mean
+        mean = X_data.mean()
+        var  = X_data.var()
 
         # Initialize the factors
-        if self.start_L is None or self.start_R is None:
+        if self.init_L is None or self.init_R is None:
 
             # Initialize L and R
             # such that for all i, j: L[i, :] * R[:, j] = X.mean()
@@ -149,37 +143,30 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
             L.fill(initial_value)
             R.fill(initial_value)
 
-            # Add some noise
-            r = np.sqrt(var)
-            L = L + random_state.uniform(
-                -r, r,
-                n_samples * n_components).reshape(L.shape)
-            R = R + random_state.uniform(
-                -r, r,
-                n_components * n_features).reshape(R.shape)
+            # Add some noise with var = var(X)
+            # TODO: shouldn't we add gaussian noise here?
+            r = np.sqrt(var) * np.sqrt(12) / 2.0
+            L += random_state.uniform(-r, r, L.shape)
+            R += random_state.uniform(-r, r, R.shape)
 
         else:
-            L = self.start_L.copy()
-            R = self.start_R.copy()
+            L = self.init_L.copy()
+            R = self.init_R.copy()
 
         # Initialize the bias
-        if self.start_bias_samples is None or self.start_bias_features is None:
-            bias_samples = np.zeros(n_samples)
-            bias_features = np.zeros(n_features)
-        else:
-            bias_samples = self.start_bias_samples.copy()
-            bias_features = self.start_bias_features.copy()
+        bias_samples = np.zeros(n_samples)
+        bias_features = np.zeros(n_features)
 
         # Factorize the matrix
         # TODO: how to handle possible overflows? Should they really happen?
         _mf.factorize_matrix(
-             X_content[:, 0],
-             X_content[:, 1].astype(np.int32),
-             X_content[:, 2].astype(np.int32),
+             X_data,
+             X_rows.astype(np.int32),
+             X_cols.astype(np.int32),
              L, R, bias_samples, bias_features,
-             n_samples, n_features, self.n_iter, n_components,
-             self.learning_rate, self.regularization,
-             self.bias_learning_rate, self.bias_regularization,
+             n_samples, n_features, n_components, self.n_iter,
+             self.regularization, self.bias_regularization,
+             self.learning_rate,
              random_state, self.verbose,
         )
 
@@ -193,8 +180,7 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
             bias_samples.reshape(n_samples, 1),
             L])
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
 
-
-        self.fit_transform(X, **params)
+        self.fit_transform(X)
         return self

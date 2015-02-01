@@ -2,6 +2,7 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
@@ -358,14 +359,18 @@ def test_factorization():
     L = random_state.rand(n_samples, rank)
     R = random_state.rand(rank, n_features)
 
-    # Keep 20% of X to train and test
     X = np.dot(L, R)
+    X_corrupted = X.copy()
+    for i in range(n_samples):
+        for j in range(3):
+            X_corrupted[i, (i % 5) + j * 5] = np.nan
+
     mfi = FactorizationImputer(
         n_iter=2000,
         n_components=rank,
         random_state=random_state)
-    X_imputed = mfi.fit_transform(X)
+    X_imputed = mfi.fit_transform(X_corrupted)
 
     assert_true(X.shape == X_imputed.shape)
     assert_false(sparse.issparse(X_imputed))
-    #assert_array_equal(X, X_imputed)
+    assert_allclose(X, X_imputed)

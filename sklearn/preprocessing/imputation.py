@@ -10,9 +10,6 @@ from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
 from ..decomposition.mf import MatrixFactorization, _rmse
-from ..utils import array2d
-from ..utils import atleast2d_or_csr
-from ..utils import atleast2d_or_csc
 from ..utils import check_array
 from ..utils import as_float_array
 from ..utils.fixes import astype
@@ -374,9 +371,10 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         return X
 
+
 class FactorizationImputer(BaseEstimator, TransformerMixin):
 
-    def __init__(self, n_components=None, n_iter=100, missing_values=np.nan,
+    def __init__(self, n_components=None, n_iter=100, missing_values="NaN",
                  learning_rate=1e-3, regularization=1e-4,
                  bias_learning_rate=0, bias_regularization=0,
                  random_state=None, verbose=0):
@@ -399,10 +397,9 @@ class FactorizationImputer(BaseEstimator, TransformerMixin):
             n_components=self.n_components,
             n_iter=self.n_iter,
             missing_values=self.missing_values,
-            learning_rate=self.learning_rate,
             regularization=self.regularization,
-            bias_learning_rate=self.bias_learning_rate,
             bias_regularization=self.bias_regularization,
+            learning_rate=self.learning_rate,
             random_state=self.random_state,
             verbose=self.verbose
         )
@@ -420,7 +417,7 @@ class FactorizationImputer(BaseEstimator, TransformerMixin):
             X = X.tocoo()
             X_content = np.vstack((X.data, X.row, X.col)).T
         else:
-            X = array2d(X, force_all_finite=False)
+            X = check_array(X, force_all_finite=False)
             mask = np.logical_not(_get_mask(X, self.missing_values))
             X_content = np.vstack([X[mask]] + list(np.where(mask))).T
 
