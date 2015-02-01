@@ -120,6 +120,27 @@ def test_haversine_metric():
     assert_array_almost_equal(haversine.dist_to_rdist(D1),
                               np.sin(0.5 * D2) ** 2)
 
+def test_jensenshannon_metric():
+    def entropy(x):
+        return -np.nansum(x * np.log2(x))
+
+    def jensenshannon_slow(x1, x2):
+        mix = (x1 + x2) / 2
+        return np.sqrt(entropy(mix) - (entropy(x1) + entropy(x2)) / 2)
+
+    X = np.random.dirichlet([1]*10, 10)
+
+    jsd = DistanceMetric.get_metric("jsd")
+
+    D1 = jsd.pairwise(X)
+    D2 = np.zeros_like(D1)
+    for i, x1 in enumerate(X):
+        for j, x2 in enumerate(X):
+            D2[i, j] = jensenshannon_slow(x1, x2)
+
+    assert_array_almost_equal(D1, D2)
+    assert_array_almost_equal(jsd.dist_to_rdist(D1),
+                              D2 ** 2)
 
 def test_pyfunc_metric():
     def dist_func(x1, x2, p):
