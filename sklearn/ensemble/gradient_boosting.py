@@ -37,7 +37,7 @@ from ..base import RegressorMixin
 from ..utils import check_random_state, check_array, check_X_y, column_or_1d
 from ..utils import check_consistent_length
 from ..utils.extmath import logsumexp
-from ..utils.fixes import expit
+from ..utils.fixes import expit, bincount
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted, NotFittedError
 from ..externals import six
@@ -127,7 +127,7 @@ class PriorProbabilityEstimator(BaseEstimator):
     def fit(self, X, y, sample_weight=None):
         if sample_weight is None:
             sample_weight = np.ones_like(y, dtype=np.float)
-        class_counts = np.bincount(y, weights=sample_weight)
+        class_counts = bincount(y, weights=sample_weight)
         self.priors = class_counts / class_counts.sum()
 
     def predict(self, X):

@@ -15,7 +15,8 @@ from ..externals import six
 from ..utils import check_array
 from ..utils import warn_if_not_float
 from ..utils.extmath import row_norms
-from ..utils.fixes import combinations_with_replacement as combinations_w_r
+from ..utils.fixes import (combinations_with_replacement as combinations_w_r,
+                           bincount)
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis)
@@ -465,7 +466,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         start = int(not include_bias)
         combn = chain.from_iterable(comb(range(n_features), i)
                                     for i in range(start, degree + 1))
-        powers = np.vstack(np.bincount(c, minlength=n_features) for c in combn)
+        powers = np.vstack(bincount(c, minlength=n_features) for c in combn)
         return powers
 
     def fit(self, X, y=None):

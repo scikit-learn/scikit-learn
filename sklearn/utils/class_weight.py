@@ -4,6 +4,8 @@
 
 import numpy as np
 
+from .fixes import bincount
+
 
 def compute_class_weight(class_weight, classes, y):
     """Estimate class weights for unbalanced datasets.
@@ -43,7 +45,7 @@ def compute_class_weight(class_weight, classes, y):
             raise ValueError("classes should have valid labels that are in y")
 
         # inversely proportional to the number of samples in the class
-        recip_freq = 1. / np.bincount(y_ind)
+        recip_freq = 1. / bincount(y_ind)
         weight = recip_freq[le.transform(classes)] / np.mean(recip_freq)
     else:
         # user-defined dictionary
