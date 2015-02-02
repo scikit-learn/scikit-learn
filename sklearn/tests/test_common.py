@@ -87,7 +87,7 @@ def test_non_meta_estimators():
     estimators = all_estimators(type_filter=['classifier', 'regressor',
                                              'transformer', 'cluster'])
     for name, Estimator in estimators:
-        if name not in CROSS_DECOMPOSITION + ['Imputer']:
+        if name not in CROSS_DECOMPOSITION and not name.endswith("Imputer"):
             # Test that all estimators check their input for NaN's and infs
             yield check_estimators_nan_inf, name, Estimator
 
