@@ -203,7 +203,7 @@ class GMM(BaseEstimator):
     >>> g.fit(obs) # doctest: +NORMALIZE_WHITESPACE
     GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
-            random_state=None, tol=0.001)
+            random_state=None, thresh=None, tol=0.001)
     >>> np.round(g.weights_, 2)
     array([ 0.75,  0.25])
     >>> np.round(g.means_, 2)
@@ -221,7 +221,7 @@ class GMM(BaseEstimator):
     >>> g.fit(20 * [[0]] +  20 * [[10]]) # doctest: +NORMALIZE_WHITESPACE
     GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
-            random_state=None, tol=0.001)
+            random_state=None, thresh=None, tol=0.001)
     >>> np.round(g.weights_, 2)
     array([ 0.5,  0.5])
 
