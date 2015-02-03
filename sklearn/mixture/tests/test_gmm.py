@@ -316,6 +316,24 @@ def test_n_parameters():
         assert_true(g._n_parameters() == n_params[cv_type])
 
 
+def test_1d_1component():
+    """
+    Test all of the covariance_types return the same BIC score for
+    1-dimensional, 1 component fits.
+    """
+    n_samples, n_dim, n_components = 100, 1, 1
+    X = rng.randn(n_samples, n_dim)
+    g_full = mixture.GMM(n_components=n_components, covariance_type='full',
+                         random_state=rng, min_covar=1e-7, n_iter=1)
+    g_full.fit(X)
+    g_full_bic = g_full.bic(X)
+    for cv_type in ['tied', 'diag', 'spherical']:
+        g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
+                        random_state=rng, min_covar=1e-7, n_iter=1)
+        g.fit(X)
+        assert_array_almost_equal(g.bic(X), g_full_bic)
+
+
 def test_aic():
     """ Test the aic and bic criteria"""
     n_samples, n_dim, n_components = 50, 3, 2

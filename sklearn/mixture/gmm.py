@@ -14,7 +14,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator
 from ..utils import check_random_state
-from ..utils.extmath import logsumexp, pinvh
+from ..utils.extmath import logsumexp
 from ..utils.validation import check_is_fitted
 from .. import cluster
 
@@ -238,7 +238,7 @@ class GMM(BaseEstimator):
         self.params = params
         self.init_params = init_params
 
-        if not covariance_type in ['spherical', 'tied', 'diag', 'full']:
+        if covariance_type not in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('Invalid value for covariance_type: %s' %
                              covariance_type)
 
@@ -578,13 +578,8 @@ def _log_multivariate_normal_density_spherical(X, means, covars):
 
 def _log_multivariate_normal_density_tied(X, means, covars):
     """Compute Gaussian log-density at X for a tied model"""
-    n_samples, n_dim = X.shape
-    icv = pinvh(covars)
-    lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars) + 0.1)
-                  + np.sum(X * np.dot(X, icv), 1)[:, np.newaxis]
-                  - 2 * np.dot(np.dot(X, icv), means.T)
-                  + np.sum(means * np.dot(means, icv), 1))
-    return lpr
+    cv = np.tile(covars, (means.shape[0], 1, 1))
+    return _log_multivariate_normal_density_full(X, means, cv)
 
 
 def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
@@ -702,11 +697,13 @@ def _covar_mstep_full(gmm, X, responsibilities, weighted_X_sum, norm,
 def _covar_mstep_tied(gmm, X, responsibilities, weighted_X_sum, norm,
                       min_covar):
     # Eq. 15 from K. Murphy, "Fitting a Conditional Linear Gaussian
-    n_features = X.shape[1]
+    # Distribution"
     avg_X2 = np.dot(X.T, X)
     avg_means2 = np.dot(gmm.means_.T, weighted_X_sum)
-    return (avg_X2 - avg_means2 + min_covar * np.eye(n_features)) / X.shape[0]
-
+    out = avg_X2 - avg_means2
+    out *= 1. / X.shape[0]
+    out.flat[::len(out) + 1] += min_covar
+    return out
 
 _covar_mstep_funcs = {'spherical': _covar_mstep_spherical,
                       'diag': _covar_mstep_diag,
