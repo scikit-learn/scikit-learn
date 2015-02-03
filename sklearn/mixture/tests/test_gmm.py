@@ -355,23 +355,23 @@ def test_aic():
 def _test_positive_definite_covars(covariance_type):
     """ Test that covariance matrices do not become non positive definite
 
-Due to the accumulation of round-off errors, the computation of the covariance
-matrices during the learning phase could lead to non-positive definite
-covariance matrices. Namely the use of the formula:
+    Due to the accumulation of round-off errors, the computation of the
+    covariance  matrices during the learning phase could lead to non-positive
+    definite covariance matrices. Namely the use of the formula:
 
-.. math:: C = (\\sum_i w_i \\boldsymbol x_i \\boldsymbol x_i^T)
-          - \\boldsymbol \\mu \\boldsymbol \\mu^T
+    .. math:: C = (\\sum_i w_i \\boldsymbol x_i \\boldsymbol x_i^T)
+              - \\boldsymbol \\mu \\boldsymbol \\mu^T
 
-instead of:
+    instead of:
 
-.. math:: C = \\sum_i w_i (\\boldsymbol x_i - \\boldsymbol \\mu)
-              (\\boldsymbol x_i - \\boldsymbol \\mu)^T
+    .. math:: C = \\sum_i w_i (\\boldsymbol x_i - \\boldsymbol \\mu)
+                  (\\boldsymbol x_i - \\boldsymbol \\mu)^T
 
-while mathematically equivalent, was observed a ``LinAlgError`` exception,
-when computing a ``GMM`` with full covariance matrices and fixed mean.
+    while mathematically equivalent, was observed a ``LinAlgError`` exception,
+    when computing a ``GMM`` with full covariance matrices and fixed mean.
 
-This function ensures that some later optimization will not introduce the
-problem again.
+    This function ensures that some later optimization will not introduce the
+    problem again.
 """
     rng = np.random.RandomState(1)
     # we build a dataset with 2 2d component. The components are unbalanced
@@ -417,7 +417,6 @@ def test_positive_definite_covars_diag():
 def test_positive_definite_covars_spherical():
     """ Test that the spherical covariance matrices are positive definite """
     _test_positive_definite_covars("spherical")
-
 
 
 if __name__ == '__main__':
