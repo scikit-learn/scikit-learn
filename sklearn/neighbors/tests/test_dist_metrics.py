@@ -121,15 +121,16 @@ def test_haversine_metric():
                               np.sin(0.5 * D2) ** 2)
 
 
-def test_jensenshannon_metric():
+def test_jensen_shannon_metric():
     def entropy(x):
         return -np.nansum(x * np.log2(x))
 
-    def jensenshannon_slow(x1, x2):
+    def jensen_shannon_slow(x1, x2):
         mix = (x1 + x2) / 2
         return np.sqrt(entropy(mix) - (entropy(x1) + entropy(x2)) / 2)
 
-    X = np.random.dirichlet([1]*10, 10)
+    prng = np.random.RandomState(0)
+    X = prng.dirichlet([1]*10, 10)
 
     jsd = DistanceMetric.get_metric("jsd")
 
@@ -137,11 +138,10 @@ def test_jensenshannon_metric():
     D2 = np.zeros_like(D1)
     for i, x1 in enumerate(X):
         for j, x2 in enumerate(X):
-            D2[i, j] = jensenshannon_slow(x1, x2)
+            D2[i, j] = jensen_shannon_slow(x1, x2)
 
     assert_array_almost_equal(D1, D2)
-    assert_array_almost_equal(jsd.dist_to_rdist(D1),
-                              D2 ** 2)
+    assert_array_almost_equal(jsd.dist_to_rdist(D1), D2 ** 2)
 
 
 def test_pyfunc_metric():
