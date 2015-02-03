@@ -1199,24 +1199,24 @@ cdef class BinaryTree:
             other = self.__class__(np_Xarr, metric=self.dist_metric,
                                    leaf_size=self.leaf_size)
             if breadth_first:
-                self._query_dual_breadthfirst(other, heap, nodeheap)
+                _query_dual_breadthfirst(self, other, heap, nodeheap)
             else:
                 reduced_dist_LB = self.min_rdist_dual(0, other, 0)
                 bounds = np.inf + np.zeros(other.node_data.shape[0])
-                self._query_dual_depthfirst(0, other, 0, bounds,
-                                            heap, reduced_dist_LB)
+                _query_dual_depthfirst(self, 0, other, 0, bounds, heap,
+                                       reduced_dist_LB)
 
         else:
             pt = &Xarr[0, 0]
             if breadth_first:
                 for i in range(Xarr.shape[0]):
-                    self._query_single_breadthfirst(pt, i, heap, nodeheap)
+                    _query_single_breadthfirst(self, pt, i, heap, nodeheap)
                     pt += Xarr.shape[1]
             else:
                 for i in range(Xarr.shape[0]):
                     reduced_dist_LB = self.min_rdist(0, pt)
-                    self._query_single_depthfirst(0, pt, i, heap,
-                                                  reduced_dist_LB)
+                    _query_single_depthfirst(self, 0, pt, i, heap,
+                                             reduced_dist_LB)
                     pt += Xarr.shape[1]
 
         distances, indices = heap.get_arrays(sort=sort_results)
@@ -1347,11 +1347,9 @@ cdef class BinaryTree:
 
         pt = &Xarr[0, 0]
         for i in range(Xarr.shape[0]):
-            counts[i] = self._query_radius_single(0, pt, rarr[i],
-                                                  &idx_arr_i[0],
-                                                  &dist_arr_i[0],
-                                                  0, count_only,
-                                                  return_distance)
+            counts[i] = _query_radius_single(self, 0, pt, rarr[i],
+                                             &idx_arr_i[0], &dist_arr_i[0],
+                                             0, count_only, return_distance)
             pt += n_features
 
             if not count_only:
@@ -1484,7 +1482,7 @@ cdef class BinaryTree:
             node_bound_widths_arr = np.zeros(self.n_nodes)
             node_bound_widths = (node_bound_widths_arr)
             for i in range(Xarr.shape[0]):
-                log_density[i] = self._kde_single_breadthfirst(
+                log_density[i] = _kde_single_breadthfirst(self,
                                             pt, kernel_c, h_c,
                                             log_knorm, log_atol, log_rtol,
                                             nodeheap,
@@ -1502,12 +1500,10 @@ cdef class BinaryTree:
                                  compute_log_kernel(dist_LB,
                                                     h_c, kernel_c))
                 log_bound_spread = logsubexp(log_max_bound, log_min_bound)
-                self._kde_single_depthfirst(0, pt, kernel_c, h_c,
-                                            log_knorm, log_atol, log_rtol,
-                                            log_min_bound,
-                                            log_bound_spread,
-                                            &log_min_bound,
-                                            &log_bound_spread)
+                _kde_single_depthfirst(self, 0, pt, kernel_c, h_c,
+                                       log_knorm, log_atol, log_rtol,
+                                       log_min_bound, log_bound_spread,
+                                       &log_min_bound, &log_bound_spread)
                 log_density[i] = logaddexp(log_min_bound,
                                            log_bound_spread - log(2))
                 pt += n_features
@@ -1587,12 +1583,12 @@ cdef class BinaryTree:
         if dualtree:
             other = self.__class__(Xarr, metric=self.dist_metric,
                                    leaf_size=self.leaf_size)
-            self._two_point_dual(0, other, 0, &rarr[0], &carr[0],
-                                 0, rarr.shape[0])
+            _two_point_dual(self, 0, other, 0, &rarr[0], &carr[0],
+                            0, rarr.shape[0])
         else:
             for i in range(Xarr.shape[0]):
-                self._two_point_single(0, pt, &rarr[0], &carr[0],
-                                       0, rarr.shape[0])
+                _two_point_single(self, 0, pt, &rarr[0], &carr[0],
+                                  0, rarr.shape[0])
                 pt += n_features
 
         return count
@@ -1651,17 +1647,77 @@ cdef class BinaryTree:
         """Compute the maximum distance between two nodes"""
         raise NotImplementedError()
 
-    cdef int _query_single_depthfirst(self, ITYPE_t i_node,
-                                      DTYPE_t* pt, ITYPE_t i_pt,
-                                      NeighborsHeap heap,
-                                      DTYPE_t reduced_dist_LB) except -1:
-        """Recursive Single-tree k-neighbors query, depth-first approach"""
-        cdef NodeData_t node_info = self.node_data[i_node]
+cdef int _query_single_depthfirst(BinaryTree self, ITYPE_t i_node,
+                                  DTYPE_t* pt, ITYPE_t i_pt,
+                                  NeighborsHeap heap,
+                                  DTYPE_t reduced_dist_LB) except -1:
+    """Recursive Single-tree k-neighbors query, depth-first approach"""
+    cdef NodeData_t node_info = self.node_data[i_node]
 
-        cdef DTYPE_t dist_pt, reduced_dist_LB_1, reduced_dist_LB_2
-        cdef ITYPE_t i, i1, i2
+    cdef DTYPE_t dist_pt, reduced_dist_LB_1, reduced_dist_LB_2
+    cdef ITYPE_t i, i1, i2
 
-        cdef DTYPE_t* data = &self.data[0, 0]
+    cdef DTYPE_t* data = &self.data[0, 0]
+
+    #------------------------------------------------------------
+    # Case 1: query point is outside node radius:
+    #         trim it from the query
+    if reduced_dist_LB > heap.largest(i_pt):
+        self.n_trims += 1
+
+    #------------------------------------------------------------
+    # Case 2: this is a leaf node.  Update set of nearby points
+    elif node_info.is_leaf:
+        self.n_leaves += 1
+        for i in range(node_info.idx_start, node_info.idx_end):
+            dist_pt = self.rdist(pt, &self.data[self.idx_array[i], 0],
+                                 self.data.shape[1])
+            if dist_pt < heap.largest(i_pt):
+                heap.push(i_pt, dist_pt, self.idx_array[i])
+
+    #------------------------------------------------------------
+    # Case 3: Node is not a leaf.  Recursively query subnodes
+    #         starting with the closest
+    else:
+        self.n_splits += 1
+        i1 = 2 * i_node + 1
+        i2 = i1 + 1
+        reduced_dist_LB_1 = self.min_rdist(i1, pt)
+        reduced_dist_LB_2 = self.min_rdist(i2, pt)
+
+        # recursively query subnodes
+        if reduced_dist_LB_1 <= reduced_dist_LB_2:
+            _query_single_depthfirst(self, i1, pt, i_pt, heap,
+                                     reduced_dist_LB_1)
+            _query_single_depthfirst(self, i2, pt, i_pt, heap,
+                                     reduced_dist_LB_2)
+        else:
+            _query_single_depthfirst(self, i2, pt, i_pt, heap,
+                                     reduced_dist_LB_2)
+            _query_single_depthfirst(self, i1, pt, i_pt, heap,
+                                     reduced_dist_LB_1)
+    return 0
+
+cdef int _query_single_breadthfirst(BinaryTree self, DTYPE_t* pt, ITYPE_t i_pt,
+                                    NeighborsHeap heap,
+                                    NodeHeap nodeheap) except -1:
+    """Non-recursive single-tree k-neighbors query, breadth-first search"""
+    cdef ITYPE_t i, i_node
+    cdef DTYPE_t dist_pt, reduced_dist_LB
+    cdef NodeData_t* node_data = &self.node_data[0]
+    cdef DTYPE_t* data = &self.data[0, 0]
+
+    # Set up the node heap and push the head node onto it
+    cdef NodeHeapData_t nodeheap_item
+    nodeheap_item.val = self.min_rdist(0, pt)
+    nodeheap_item.i1 = 0
+    nodeheap.push(nodeheap_item)
+
+    while nodeheap.n > 0:
+        nodeheap_item = nodeheap.pop()
+        reduced_dist_LB = nodeheap_item.val
+        i_node = nodeheap_item.i1
+        node_info = node_data[i_node]
 
         #------------------------------------------------------------
         # Case 1: query point is outside node radius:
@@ -1671,106 +1727,151 @@ cdef class BinaryTree:
 
         #------------------------------------------------------------
         # Case 2: this is a leaf node.  Update set of nearby points
-        elif node_info.is_leaf:
+        elif node_data[i_node].is_leaf:
             self.n_leaves += 1
-            for i in range(node_info.idx_start, node_info.idx_end):
-                dist_pt = self.rdist(pt,
-                                     &self.data[self.idx_array[i], 0],
+            for i in range(node_data[i_node].idx_start,
+                           node_data[i_node].idx_end):
+                dist_pt = self.rdist(pt, &self.data[self.idx_array[i], 0],
                                      self.data.shape[1])
                 if dist_pt < heap.largest(i_pt):
                     heap.push(i_pt, dist_pt, self.idx_array[i])
 
         #------------------------------------------------------------
-        # Case 3: Node is not a leaf.  Recursively query subnodes
-        #         starting with the closest
+        # Case 3: Node is not a leaf.  Add subnodes to the node heap
         else:
             self.n_splits += 1
-            i1 = 2 * i_node + 1
-            i2 = i1 + 1
-            reduced_dist_LB_1 = self.min_rdist(i1, pt)
-            reduced_dist_LB_2 = self.min_rdist(i2, pt)
+            for i in range(2 * i_node + 1, 2 * i_node + 3):
+                nodeheap_item.i1 = i
+                nodeheap_item.val = self.min_rdist(i, pt)
+                nodeheap.push(nodeheap_item)
+    return 0
 
-            # recursively query subnodes
-            if reduced_dist_LB_1 <= reduced_dist_LB_2:
-                self._query_single_depthfirst(i1, pt, i_pt, heap,
-                                              reduced_dist_LB_1)
-                self._query_single_depthfirst(i2, pt, i_pt, heap,
-                                              reduced_dist_LB_2)
+cdef int _query_dual_depthfirst(BinaryTree self, ITYPE_t i_node1,
+                                BinaryTree other, ITYPE_t i_node2,
+                                DTYPE_t[::1] bounds, NeighborsHeap heap,
+                                DTYPE_t reduced_dist_LB) except -1:
+    """Recursive dual-tree k-neighbors query, depth-first"""
+    # note that the array `bounds` is maintained such that
+    # bounds[i] is the largest distance among any of the
+    # current neighbors in node i of the other tree.
+    cdef NodeData_t node_info1 = self.node_data[i_node1]
+    cdef NodeData_t node_info2 = other.node_data[i_node2]
+
+    cdef DTYPE_t* data1 = &self.data[0, 0]
+    cdef DTYPE_t* data2 = &other.data[0, 0]
+    cdef ITYPE_t n_features = self.data.shape[1]
+
+    cdef DTYPE_t bound_max, dist_pt, reduced_dist_LB1, reduced_dist_LB2
+    cdef ITYPE_t i1, i2, i_pt, i_parent
+
+    #------------------------------------------------------------
+    # Case 1: nodes are further apart than the current bound:
+    #         trim both from the query
+    if reduced_dist_LB > bounds[i_node2]:
+        pass
+
+    #------------------------------------------------------------
+    # Case 2: both nodes are leaves:
+    #         do a brute-force search comparing all pairs
+    elif node_info1.is_leaf and node_info2.is_leaf:
+        bounds[i_node2] = 0
+
+        for i2 in range(node_info2.idx_start, node_info2.idx_end):
+            i_pt = other.idx_array[i2]
+
+            if heap.largest(i_pt) <= reduced_dist_LB:
+                continue
+
+            for i1 in range(node_info1.idx_start, node_info1.idx_end):
+                dist_pt = self.rdist(data1 + n_features * self.idx_array[i1],
+                                     data2 + n_features * i_pt, n_features)
+                if dist_pt < heap.largest(i_pt):
+                    heap.push(i_pt, dist_pt, self.idx_array[i1])
+
+            # keep track of node bound
+            bounds[i_node2] = fmax(bounds[i_node2],
+                                   heap.largest(i_pt))
+
+        # update bounds up the tree
+        while i_node2 > 0:
+            i_parent = (i_node2 - 1) // 2
+            bound_max = fmax(bounds[2 * i_parent + 1],
+                             bounds[2 * i_parent + 2])
+            if bound_max < bounds[i_parent]:
+                bounds[i_parent] = bound_max
+                i_node2 = i_parent
             else:
-                self._query_single_depthfirst(i2, pt, i_pt, heap,
-                                              reduced_dist_LB_2)
-                self._query_single_depthfirst(i1, pt, i_pt, heap,
-                                              reduced_dist_LB_1)
-        return 0
+                break
 
-    cdef int _query_single_breadthfirst(self, DTYPE_t* pt,
-                                        ITYPE_t i_pt,
-                                        NeighborsHeap heap,
-                                        NodeHeap nodeheap) except -1:
-        """Non-recursive single-tree k-neighbors query, breadth-first search"""
-        cdef ITYPE_t i, i_node
-        cdef DTYPE_t dist_pt, reduced_dist_LB
-        cdef NodeData_t* node_data = &self.node_data[0]
-        cdef DTYPE_t* data = &self.data[0, 0]
+    #------------------------------------------------------------
+    # Case 3a: node 1 is a leaf or is smaller: split node 2 and
+    #          recursively query, starting with the nearest subnode
+    elif node_info1.is_leaf or (not node_info2.is_leaf
+                                and node_info2.radius > node_info1.radius):
+        reduced_dist_LB1 = self.min_rdist_dual(i_node1, other, 2 * i_node2 + 1)
+        reduced_dist_LB2 = self.min_rdist_dual(i_node1, other, 2 * i_node2 + 2)
 
-        # Set up the node heap and push the head node onto it
-        cdef NodeHeapData_t nodeheap_item
-        nodeheap_item.val = self.min_rdist(0, pt)
-        nodeheap_item.i1 = 0
-        nodeheap.push(nodeheap_item)
+        if reduced_dist_LB1 < reduced_dist_LB2:
+            _query_dual_depthfirst(self, i_node1, other, 2 * i_node2 + 1,
+                                   bounds, heap, reduced_dist_LB1)
+            _query_dual_depthfirst(self, i_node1, other, 2 * i_node2 + 2,
+                                   bounds, heap, reduced_dist_LB2)
+        else:
+            _query_dual_depthfirst(self, i_node1, other, 2 * i_node2 + 2,
+                                   bounds, heap, reduced_dist_LB2)
+            _query_dual_depthfirst(self, i_node1, other, 2 * i_node2 + 1,
+                                   bounds, heap, reduced_dist_LB1)
 
-        while nodeheap.n > 0:
-            nodeheap_item = nodeheap.pop()
-            reduced_dist_LB = nodeheap_item.val
-            i_node = nodeheap_item.i1
-            node_info = node_data[i_node]
+    #------------------------------------------------------------
+    # Case 3b: node 2 is a leaf or is smaller: split node 1 and
+    #          recursively query, starting with the nearest subnode
+    else:
+        reduced_dist_LB1 = self.min_rdist_dual(2 * i_node1 + 1,
+                                               other, i_node2)
+        reduced_dist_LB2 = self.min_rdist_dual(2 * i_node1 + 2,
+                                               other, i_node2)
 
-            #------------------------------------------------------------
-            # Case 1: query point is outside node radius:
-            #         trim it from the query
-            if reduced_dist_LB > heap.largest(i_pt):
-                self.n_trims += 1
+        if reduced_dist_LB1 < reduced_dist_LB2:
+            _query_dual_depthfirst(self,2 * i_node1 + 1, other, i_node2,
+                                   bounds, heap, reduced_dist_LB1)
+            _query_dual_depthfirst(self,2 * i_node1 + 2, other, i_node2,
+                                   bounds, heap, reduced_dist_LB2)
+        else:
+            _query_dual_depthfirst(self,2 * i_node1 + 2, other, i_node2,
+                                   bounds, heap, reduced_dist_LB2)
+            _query_dual_depthfirst(self,2 * i_node1 + 1, other, i_node2,
+                                   bounds, heap, reduced_dist_LB1)
+    return 0
 
-            #------------------------------------------------------------
-            # Case 2: this is a leaf node.  Update set of nearby points
-            elif node_data[i_node].is_leaf:
-                self.n_leaves += 1
-                for i in range(node_data[i_node].idx_start,
-                               node_data[i_node].idx_end):
-                    dist_pt = self.rdist(pt,
-                                         &self.data[self.idx_array[i], 0],
-                                         self.data.shape[1])
-                    if dist_pt < heap.largest(i_pt):
-                        heap.push(i_pt, dist_pt, self.idx_array[i])
+cdef int _query_dual_breadthfirst(BinaryTree self, BinaryTree other,
+                                  NeighborsHeap heap,
+                                  NodeHeap nodeheap) except -1:
+    """Non-recursive dual-tree k-neighbors query, breadth-first"""
+    cdef ITYPE_t i, i1, i2, i_node1, i_node2, i_pt
+    cdef DTYPE_t dist_pt, reduced_dist_LB
+    cdef DTYPE_t[::1] bounds = np.inf + np.zeros(other.node_data.shape[0])
+    cdef NodeData_t* node_data1 = &self.node_data[0]
+    cdef NodeData_t* node_data2 = &other.node_data[0]
+    cdef NodeData_t node_info1, node_info2
+    cdef DTYPE_t* data1 = &self.data[0, 0]
+    cdef DTYPE_t* data2 = &other.data[0, 0]
+    cdef ITYPE_t n_features = self.data.shape[1]
 
-            #------------------------------------------------------------
-            # Case 3: Node is not a leaf.  Add subnodes to the node heap
-            else:
-                self.n_splits += 1
-                for i in range(2 * i_node + 1, 2 * i_node + 3):
-                    nodeheap_item.i1 = i
-                    nodeheap_item.val = self.min_rdist(i, pt)
-                    nodeheap.push(nodeheap_item)
-        return 0
+    # Set up the node heap and push the head nodes onto it
+    cdef NodeHeapData_t nodeheap_item
+    nodeheap_item.val = self.min_rdist_dual(0, other, 0)
+    nodeheap_item.i1 = 0
+    nodeheap_item.i2 = 0
+    nodeheap.push(nodeheap_item)
 
-    cdef int _query_dual_depthfirst(self, ITYPE_t i_node1,
-                                    BinaryTree other, ITYPE_t i_node2,
-                                    DTYPE_t[::1] bounds,
-                                    NeighborsHeap heap,
-                                    DTYPE_t reduced_dist_LB) except -1:
-        """Recursive dual-tree k-neighbors query, depth-first"""
-        # note that the array `bounds` is maintained such that
-        # bounds[i] is the largest distance among any of the
-        # current neighbors in node i of the other tree.
-        cdef NodeData_t node_info1 = self.node_data[i_node1]
-        cdef NodeData_t node_info2 = other.node_data[i_node2]
+    while nodeheap.n > 0:
+        nodeheap_item = nodeheap.pop()
+        reduced_dist_LB = nodeheap_item.val
+        i_node1 = nodeheap_item.i1
+        i_node2 = nodeheap_item.i2
 
-        cdef DTYPE_t* data1 = &self.data[0, 0]
-        cdef DTYPE_t* data2 = &other.data[0, 0]
-        cdef ITYPE_t n_features = self.data.shape[1]
-
-        cdef DTYPE_t bound_max, dist_pt, reduced_dist_LB1, reduced_dist_LB2
-        cdef ITYPE_t i1, i2, i_pt, i_parent
+        node_info1 = node_data1[i_node1]
+        node_info2 = node_data2[i_node2]
 
         #------------------------------------------------------------
         # Case 1: nodes are further apart than the current bound:
@@ -1782,7 +1883,7 @@ cdef class BinaryTree:
         # Case 2: both nodes are leaves:
         #         do a brute-force search comparing all pairs
         elif node_info1.is_leaf and node_info2.is_leaf:
-            bounds[i_node2] = 0
+            bounds[i_node2] = -1
 
             for i2 in range(node_info2.idx_start, node_info2.idx_end):
                 i_pt = other.idx_array[i2]
@@ -1802,417 +1903,188 @@ cdef class BinaryTree:
                 bounds[i_node2] = fmax(bounds[i_node2],
                                        heap.largest(i_pt))
 
-            # update bounds up the tree
-            while i_node2 > 0:
-                i_parent = (i_node2 - 1) // 2
-                bound_max = fmax(bounds[2 * i_parent + 1],
-                                 bounds[2 * i_parent + 2])
-                if bound_max < bounds[i_parent]:
-                    bounds[i_parent] = bound_max
-                    i_node2 = i_parent
-                else:
-                    break
-
         #------------------------------------------------------------
         # Case 3a: node 1 is a leaf or is smaller: split node 2 and
         #          recursively query, starting with the nearest subnode
         elif node_info1.is_leaf or (not node_info2.is_leaf
-                                    and node_info2.radius > node_info1.radius):
-            reduced_dist_LB1 = self.min_rdist_dual(i_node1,
-                                                   other, 2 * i_node2 + 1)
-            reduced_dist_LB2 = self.min_rdist_dual(i_node1,
-                                                   other, 2 * i_node2 + 2)
-
-            if reduced_dist_LB1 < reduced_dist_LB2:
-                self._query_dual_depthfirst(i_node1, other, 2 * i_node2 + 1,
-                                            bounds, heap, reduced_dist_LB1)
-                self._query_dual_depthfirst(i_node1, other, 2 * i_node2 + 2,
-                                            bounds, heap, reduced_dist_LB2)
-            else:
-                self._query_dual_depthfirst(i_node1, other, 2 * i_node2 + 2,
-                                            bounds, heap, reduced_dist_LB2)
-                self._query_dual_depthfirst(i_node1, other, 2 * i_node2 + 1,
-                                            bounds, heap, reduced_dist_LB1)
+                                    and (node_info2.radius
+                                         > node_info1.radius)):
+            nodeheap_item.i1 = i_node1
+            for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
+                nodeheap_item.i2 = i2
+                nodeheap_item.val = self.min_rdist_dual(i_node1, other, i2)
+                nodeheap.push(nodeheap_item)
 
         #------------------------------------------------------------
         # Case 3b: node 2 is a leaf or is smaller: split node 1 and
         #          recursively query, starting with the nearest subnode
         else:
-            reduced_dist_LB1 = self.min_rdist_dual(2 * i_node1 + 1,
-                                                   other, i_node2)
-            reduced_dist_LB2 = self.min_rdist_dual(2 * i_node1 + 2,
-                                                   other, i_node2)
+            nodeheap_item.i2 = i_node2
+            for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
+                nodeheap_item.i1 = i1
+                nodeheap_item.val = self.min_rdist_dual(i1, other, i_node2)
+                nodeheap.push(nodeheap_item)
+    return 0
 
-            if reduced_dist_LB1 < reduced_dist_LB2:
-                self._query_dual_depthfirst(2 * i_node1 + 1, other, i_node2,
-                                            bounds, heap, reduced_dist_LB1)
-                self._query_dual_depthfirst(2 * i_node1 + 2, other, i_node2,
-                                            bounds, heap, reduced_dist_LB2)
-            else:
-                self._query_dual_depthfirst(2 * i_node1 + 2, other, i_node2,
-                                            bounds, heap, reduced_dist_LB2)
-                self._query_dual_depthfirst(2 * i_node1 + 1, other, i_node2,
-                                            bounds, heap, reduced_dist_LB1)
-        return 0
+cdef ITYPE_t _query_radius_single(BinaryTree self,
+                                  ITYPE_t i_node, DTYPE_t* pt, DTYPE_t r,
+                                  ITYPE_t* indices, DTYPE_t* distances,
+                                  ITYPE_t count, int count_only,
+                                  int return_distance) except -1:
+    """recursive single-tree radius query, depth-first"""
+    cdef DTYPE_t* data = &self.data[0, 0]
+    cdef ITYPE_t* idx_array = &self.idx_array[0]
+    cdef ITYPE_t n_features = self.data.shape[1]
+    cdef NodeData_t node_info = self.node_data[i_node]
 
-    cdef int _query_dual_breadthfirst(self, BinaryTree other,
-                                      NeighborsHeap heap,
-                                      NodeHeap nodeheap) except -1:
-        """Non-recursive dual-tree k-neighbors query, breadth-first"""
-        cdef ITYPE_t i, i1, i2, i_node1, i_node2, i_pt
-        cdef DTYPE_t dist_pt, reduced_dist_LB
-        cdef DTYPE_t[::1] bounds = np.inf + np.zeros(other.node_data.shape[0])
-        cdef NodeData_t* node_data1 = &self.node_data[0]
-        cdef NodeData_t* node_data2 = &other.node_data[0]
-        cdef NodeData_t node_info1, node_info2
-        cdef DTYPE_t* data1 = &self.data[0, 0]
-        cdef DTYPE_t* data2 = &other.data[0, 0]
-        cdef ITYPE_t n_features = self.data.shape[1]
+    cdef ITYPE_t i
+    cdef DTYPE_t reduced_r
 
-        # Set up the node heap and push the head nodes onto it
-        cdef NodeHeapData_t nodeheap_item
-        nodeheap_item.val = self.min_rdist_dual(0, other, 0)
-        nodeheap_item.i1 = 0
-        nodeheap_item.i2 = 0
-        nodeheap.push(nodeheap_item)
+    cdef DTYPE_t dist_pt, dist_LB = 0, dist_UB = 0
+    self.min_max_dist(i_node, pt, &dist_LB, &dist_UB)
 
-        while nodeheap.n > 0:
-            nodeheap_item = nodeheap.pop()
-            reduced_dist_LB = nodeheap_item.val
-            i_node1 = nodeheap_item.i1
-            i_node2 = nodeheap_item.i2
+    #------------------------------------------------------------
+    # Case 1: all node points are outside distance r.
+    #         prune this branch.
+    if dist_LB > r:
+        pass
 
-            node_info1 = node_data1[i_node1]
-            node_info2 = node_data2[i_node2]
+    #------------------------------------------------------------
+    # Case 2: all node points are within distance r
+    #         add all points to neighbors
+    elif dist_UB <= r:
+        if count_only:
+            count += (node_info.idx_end - node_info.idx_start)
+        else:
+            for i in range(node_info.idx_start, node_info.idx_end):
+                if (count < 0) or (count >= self.data.shape[0]):
+                    raise ValueError("Fatal: count too big: "
+                                     "this should never happen")
+                indices[count] = idx_array[i]
+                if return_distance:
+                    distances[count] = self.dist(pt, (data + n_features
+                                                      * idx_array[i]),
+                                                 n_features)
+                count += 1
 
-            #------------------------------------------------------------
-            # Case 1: nodes are further apart than the current bound:
-            #         trim both from the query
-            if reduced_dist_LB > bounds[i_node2]:
-                pass
+    #------------------------------------------------------------
+    # Case 3: this is a leaf node.  Go through all points to
+    #         determine if they fall within radius
+    elif node_info.is_leaf:
+        reduced_r = self.dist_metric._dist_to_rdist(r)
 
-            #------------------------------------------------------------
-            # Case 2: both nodes are leaves:
-            #         do a brute-force search comparing all pairs
-            elif node_info1.is_leaf and node_info2.is_leaf:
-                bounds[i_node2] = -1
-
-                for i2 in range(node_info2.idx_start, node_info2.idx_end):
-                    i_pt = other.idx_array[i2]
-
-                    if heap.largest(i_pt) <= reduced_dist_LB:
-                        continue
-
-                    for i1 in range(node_info1.idx_start, node_info1.idx_end):
-                        dist_pt = self.rdist(
-                            data1 + n_features * self.idx_array[i1],
-                            data2 + n_features * i_pt,
-                            n_features)
-                        if dist_pt < heap.largest(i_pt):
-                            heap.push(i_pt, dist_pt, self.idx_array[i1])
-
-                    # keep track of node bound
-                    bounds[i_node2] = fmax(bounds[i_node2],
-                                           heap.largest(i_pt))
-
-            #------------------------------------------------------------
-            # Case 3a: node 1 is a leaf or is smaller: split node 2 and
-            #          recursively query, starting with the nearest subnode
-            elif node_info1.is_leaf or (not node_info2.is_leaf
-                                        and (node_info2.radius
-                                             > node_info1.radius)):
-                nodeheap_item.i1 = i_node1
-                for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
-                    nodeheap_item.i2 = i2
-                    nodeheap_item.val = self.min_rdist_dual(i_node1, other, i2)
-                    nodeheap.push(nodeheap_item)
-
-            #------------------------------------------------------------
-            # Case 3b: node 2 is a leaf or is smaller: split node 1 and
-            #          recursively query, starting with the nearest subnode
-            else:
-                nodeheap_item.i2 = i_node2
-                for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
-                    nodeheap_item.i1 = i1
-                    nodeheap_item.val = self.min_rdist_dual(i1, other, i_node2)
-                    nodeheap.push(nodeheap_item)
-        return 0
-
-    cdef ITYPE_t _query_radius_single(self,
-                                      ITYPE_t i_node,
-                                      DTYPE_t* pt, DTYPE_t r,
-                                      ITYPE_t* indices,
-                                      DTYPE_t* distances,
-                                      ITYPE_t count,
-                                      int count_only,
-                                      int return_distance) except -1:
-        """recursive single-tree radius query, depth-first"""
-        cdef DTYPE_t* data = &self.data[0, 0]
-        cdef ITYPE_t* idx_array = &self.idx_array[0]
-        cdef ITYPE_t n_features = self.data.shape[1]
-        cdef NodeData_t node_info = self.node_data[i_node]
-
-        cdef ITYPE_t i
-        cdef DTYPE_t reduced_r
-
-        cdef DTYPE_t dist_pt, dist_LB = 0, dist_UB = 0
-        self.min_max_dist(i_node, pt, &dist_LB, &dist_UB)
-
-        #------------------------------------------------------------
-        # Case 1: all node points are outside distance r.
-        #         prune this branch.
-        if dist_LB > r:
-            pass
-
-        #------------------------------------------------------------
-        # Case 2: all node points are within distance r
-        #         add all points to neighbors
-        elif dist_UB <= r:
-            if count_only:
-                count += (node_info.idx_end - node_info.idx_start)
-            else:
-                for i in range(node_info.idx_start, node_info.idx_end):
-                    if (count < 0) or (count >= self.data.shape[0]):
-                        raise ValueError("Fatal: count too big: "
-                                         "this should never happen")
+        for i in range(node_info.idx_start, node_info.idx_end):
+            dist_pt = self.rdist(pt, (data + n_features * idx_array[i]),
+                                 n_features)
+            if dist_pt <= reduced_r:
+                if (count < 0) or (count >= self.data.shape[0]):
+                    raise ValueError("Fatal: count out of range. "
+                                     "This should never happen.")
+                if count_only:
+                    pass
+                else:
                     indices[count] = idx_array[i]
                     if return_distance:
-                        distances[count] = self.dist(pt, (data + n_features
-                                                          * idx_array[i]),
-                                                     n_features)
-                    count += 1
+                        distances[count] =\
+                            self.dist_metric._rdist_to_dist(dist_pt)
+                count += 1
 
-        #------------------------------------------------------------
-        # Case 3: this is a leaf node.  Go through all points to
-        #         determine if they fall within radius
-        elif node_info.is_leaf:
-            reduced_r = self.dist_metric._dist_to_rdist(r)
+    #------------------------------------------------------------
+    # Case 4: Node is not a leaf.  Recursively query subnodes
+    else:
+        count = _query_radius_single(self, 2 * i_node + 1, pt, r,
+                                     indices, distances, count,
+                                     count_only, return_distance)
+        count = _query_radius_single(self, 2 * i_node + 2, pt, r,
+                                     indices, distances, count,
+                                     count_only, return_distance)
 
-            for i in range(node_info.idx_start, node_info.idx_end):
-                dist_pt = self.rdist(pt, (data + n_features * idx_array[i]),
-                                     n_features)
-                if dist_pt <= reduced_r:
-                    if (count < 0) or (count >= self.data.shape[0]):
-                        raise ValueError("Fatal: count out of range. "
-                                         "This should never happen.")
-                    if count_only:
-                        pass
-                    else:
-                        indices[count] = idx_array[i]
-                        if return_distance:
-                            distances[count] =\
-                                self.dist_metric._rdist_to_dist(dist_pt)
-                    count += 1
+    return count
 
-        #------------------------------------------------------------
-        # Case 4: Node is not a leaf.  Recursively query subnodes
-        else:
-            count = self._query_radius_single(2 * i_node + 1, pt, r,
-                                              indices, distances, count,
-                                              count_only, return_distance)
-            count = self._query_radius_single(2 * i_node + 2, pt, r,
-                                              indices, distances, count,
-                                              count_only, return_distance)
+cdef DTYPE_t _kde_single_breadthfirst(BinaryTree self, DTYPE_t* pt,
+                                      KernelType kernel, DTYPE_t h,
+                                      DTYPE_t log_knorm,
+                                      DTYPE_t log_atol, DTYPE_t log_rtol,
+                                      NodeHeap nodeheap,
+                                      DTYPE_t* node_log_min_bounds,
+                                      DTYPE_t* node_log_bound_spreads):
+    """non-recursive single-tree kernel density estimation"""
+    # For the given point, node_log_min_bounds and node_log_bound_spreads
+    # will encode the current bounds on the density between the point
+    # and the associated node.
+    # The variables global_log_min_bound and global_log_bound_spread
+    # keep track of the global bounds on density.  The procedure here is
+    # to split nodes, updating these bounds, until the bounds are within
+    # atol & rtol.
+    cdef ITYPE_t i, i1, i2, N1, N2, i_node
+    cdef DTYPE_t global_log_min_bound, global_log_bound_spread
+    cdef DTYPE_t global_log_max_bound
 
-        return count
+    cdef DTYPE_t* data = &self.data[0, 0]
+    cdef ITYPE_t* idx_array = &self.idx_array[0]
+    cdef NodeData_t* node_data = &self.node_data[0]
+    cdef ITYPE_t N = self.data.shape[0]
+    cdef ITYPE_t n_features = self.data.shape[1]
 
-    cdef DTYPE_t _kde_single_breadthfirst(self, DTYPE_t* pt,
-                                          KernelType kernel, DTYPE_t h,
-                                          DTYPE_t log_knorm,
-                                          DTYPE_t log_atol, DTYPE_t log_rtol,
-                                          NodeHeap nodeheap,
-                                          DTYPE_t* node_log_min_bounds,
-                                          DTYPE_t* node_log_bound_spreads):
-        """non-recursive single-tree kernel density estimation"""
-        # For the given point, node_log_min_bounds and node_log_bound_spreads
-        # will encode the current bounds on the density between the point
-        # and the associated node.
-        # The variables global_log_min_bound and global_log_bound_spread
-        # keep track of the global bounds on density.  The procedure here is
-        # to split nodes, updating these bounds, until the bounds are within
-        # atol & rtol.
-        cdef ITYPE_t i, i1, i2, N1, N2, i_node
-        cdef DTYPE_t global_log_min_bound, global_log_bound_spread
-        cdef DTYPE_t global_log_max_bound
+    cdef NodeData_t node_info
+    cdef DTYPE_t dist_pt, log_density
+    cdef DTYPE_t dist_LB_1 = 0, dist_LB_2 = 0
+    cdef DTYPE_t dist_UB_1 = 0, dist_UB_2 = 0
 
-        cdef DTYPE_t* data = &self.data[0, 0]
-        cdef ITYPE_t* idx_array = &self.idx_array[0]
-        cdef NodeData_t* node_data = &self.node_data[0]
-        cdef ITYPE_t N = self.data.shape[0]
-        cdef ITYPE_t n_features = self.data.shape[1]
+    cdef DTYPE_t dist_UB, dist_LB
 
-        cdef NodeData_t node_info
-        cdef DTYPE_t dist_pt, log_density
-        cdef DTYPE_t dist_LB_1 = 0, dist_LB_2 = 0
-        cdef DTYPE_t dist_UB_1 = 0, dist_UB_2 = 0
+    # push the top node to the heap
+    cdef NodeHeapData_t nodeheap_item
+    nodeheap_item.val = self.min_dist(0, pt)
+    nodeheap_item.i1 = 0
+    nodeheap.push(nodeheap_item)
 
-        cdef DTYPE_t dist_UB, dist_LB
+    global_log_min_bound = log(N) + compute_log_kernel(self.max_dist(0, pt),
+                                                       h, kernel)
+    global_log_max_bound = log(N) + compute_log_kernel(nodeheap_item.val,
+                                                       h, kernel)
+    global_log_bound_spread = logsubexp(global_log_max_bound,
+                                        global_log_min_bound)
 
-        # push the top node to the heap
-        cdef NodeHeapData_t nodeheap_item
-        nodeheap_item.val = self.min_dist(0, pt)
-        nodeheap_item.i1 = 0
-        nodeheap.push(nodeheap_item)
+    node_log_min_bounds[0] = global_log_min_bound
+    node_log_bound_spreads[0] = global_log_bound_spread
 
-        global_log_min_bound = log(N) + compute_log_kernel(self.max_dist(0, pt),
-                                                           h, kernel)
-        global_log_max_bound = log(N) + compute_log_kernel(nodeheap_item.val,
-                                                           h, kernel)
-        global_log_bound_spread = logsubexp(global_log_max_bound,
-                                            global_log_min_bound)
+    while nodeheap.n > 0:
+        nodeheap_item = nodeheap.pop()
+        i_node = nodeheap_item.i1
 
-        node_log_min_bounds[0] = global_log_min_bound
-        node_log_bound_spreads[0] = global_log_bound_spread
-
-        while nodeheap.n > 0:
-            nodeheap_item = nodeheap.pop()
-            i_node = nodeheap_item.i1
-
-            node_info = node_data[i_node]
-            N1 = node_info.idx_end - node_info.idx_start
-
-            #------------------------------------------------------------
-            # Case 1: local bounds are equal to within per-point tolerance.
-            if (log_knorm + node_log_bound_spreads[i_node] - log(N1) + log(N)
-                <= logaddexp(log_atol, (log_rtol + log_knorm
-                                        + node_log_min_bounds[i_node]))):
-                pass
-
-            #------------------------------------------------------------
-            # Case 2: global bounds are within rtol & atol.
-            elif (log_knorm + global_log_bound_spread
-                  <= logaddexp(log_atol,
-                               log_rtol + log_knorm + global_log_min_bound)):
-                break
-
-            #------------------------------------------------------------
-            # Case 3: node is a leaf. Count contributions from all points
-            elif node_info.is_leaf:
-                global_log_min_bound =\
-                    logsubexp(global_log_min_bound,
-                              node_log_min_bounds[i_node])
-                global_log_bound_spread =\
-                    logsubexp(global_log_bound_spread,
-                              node_log_bound_spreads[i_node])
-                for i in range(node_info.idx_start, node_info.idx_end):
-                    dist_pt = self.dist(pt, data + n_features * idx_array[i],
-                                        n_features)
-                    log_density = compute_log_kernel(dist_pt, h, kernel)
-                    global_log_min_bound = logaddexp(global_log_min_bound,
-                                                     log_density)
-
-            #------------------------------------------------------------
-            # Case 4: split node and query subnodes
-            else:
-                i1 = 2 * i_node + 1
-                i2 = 2 * i_node + 2
-
-                N1 = node_data[i1].idx_end - node_data[i1].idx_start
-                N2 = node_data[i2].idx_end - node_data[i2].idx_start
-
-                self.min_max_dist(i1, pt, &dist_LB_1, &dist_UB_1)
-                self.min_max_dist(i2, pt, &dist_LB_2, &dist_UB_2)
-
-                node_log_min_bounds[i1] = (log(N1) +
-                                           compute_log_kernel(dist_UB_1,
-                                                              h, kernel))
-                node_log_bound_spreads[i1] = (log(N1) +
-                                              compute_log_kernel(dist_LB_1,
-                                                                 h, kernel))
-
-                node_log_min_bounds[i2] = (log(N2) +
-                                           compute_log_kernel(dist_UB_2,
-                                                              h, kernel))
-                node_log_bound_spreads[i2] = (log(N2) +
-                                              compute_log_kernel(dist_LB_2,
-                                                                 h, kernel))
-
-                global_log_min_bound = logsubexp(global_log_min_bound,
-                                                 node_log_min_bounds[i_node])
-                global_log_min_bound = logaddexp(global_log_min_bound,
-                                                 node_log_min_bounds[i1])
-                global_log_min_bound = logaddexp(global_log_min_bound,
-                                                 node_log_min_bounds[i2])
-
-                global_log_bound_spread =\
-                    logsubexp(global_log_bound_spread,
-                              node_log_bound_spreads[i_node])
-                global_log_bound_spread = logaddexp(global_log_bound_spread,
-                                                    node_log_bound_spreads[i1])
-                global_log_bound_spread = logaddexp(global_log_bound_spread,
-                                                    node_log_bound_spreads[i2])
-
-                # TODO: rank by the spread rather than the distance?
-                nodeheap_item.val = dist_LB_1
-                nodeheap_item.i1 = i1
-                nodeheap.push(nodeheap_item)
-
-                nodeheap_item.val = dist_LB_2
-                nodeheap_item.i1 = i2
-                nodeheap.push(nodeheap_item)
-
-        nodeheap.clear()
-        return logaddexp(global_log_min_bound,
-                         global_log_bound_spread - log(2))
-
-    cdef int _kde_single_depthfirst(
-                   self, ITYPE_t i_node, DTYPE_t* pt,
-                   KernelType kernel, DTYPE_t h,
-                   DTYPE_t log_knorm,
-                   DTYPE_t log_atol, DTYPE_t log_rtol,
-                   DTYPE_t local_log_min_bound,
-                   DTYPE_t local_log_bound_spread,
-                   DTYPE_t* global_log_min_bound,
-                   DTYPE_t* global_log_bound_spread) except -1:
-        """recursive single-tree kernel density estimate, depth-first"""
-        # For the given point, local_min_bound and local_max_bound give the
-        # minimum and maximum density for the current node, while
-        # global_min_bound and global_max_bound give the minimum and maximum
-        # density over the entire tree.  We recurse down until global_min_bound
-        # and global_max_bound are within rtol and atol.
-        cdef ITYPE_t i, i1, i2, N1, N2
-
-        cdef DTYPE_t* data = &self.data[0, 0]
-        cdef ITYPE_t* idx_array = &self.idx_array[0]
-        cdef ITYPE_t n_features = self.data.shape[1]
-
-        cdef NodeData_t node_info = self.node_data[i_node]
-        cdef DTYPE_t dist_pt, log_dens_contribution
-
-        cdef DTYPE_t child1_log_min_bound, child2_log_min_bound
-        cdef DTYPE_t child1_log_bound_spread, child2_log_bound_spread
-        cdef DTYPE_t dist_UB = 0, dist_LB = 0
-
+        node_info = node_data[i_node]
         N1 = node_info.idx_end - node_info.idx_start
-        N2 = self.data.shape[0]
 
         #------------------------------------------------------------
-        # Case 1: local bounds are equal to within errors.  Return
-        if (log_knorm + local_log_bound_spread - log(N1) + log(N2)
+        # Case 1: local bounds are equal to within per-point tolerance.
+        if (log_knorm + node_log_bound_spreads[i_node] - log(N1) + log(N)
             <= logaddexp(log_atol, (log_rtol + log_knorm
-                                    + local_log_min_bound))):
+                                    + node_log_min_bounds[i_node]))):
             pass
 
         #------------------------------------------------------------
-        # Case 2: global bounds are within rtol & atol. Return
-        elif (log_knorm + global_log_bound_spread[0]
-            <= logaddexp(log_atol, (log_rtol + log_knorm
-                                    + global_log_min_bound[0]))):
-            pass
+        # Case 2: global bounds are within rtol & atol.
+        elif (log_knorm + global_log_bound_spread
+              <= logaddexp(log_atol,
+                           log_rtol + log_knorm + global_log_min_bound)):
+            break
 
         #------------------------------------------------------------
         # Case 3: node is a leaf. Count contributions from all points
         elif node_info.is_leaf:
-            global_log_min_bound[0] = logsubexp(global_log_min_bound[0],
-                                                local_log_min_bound)
-            global_log_bound_spread[0] = logsubexp(global_log_bound_spread[0],
-                                                   local_log_bound_spread)
+            global_log_min_bound =\
+                logsubexp(global_log_min_bound,
+                          node_log_min_bounds[i_node])
+            global_log_bound_spread =\
+                logsubexp(global_log_bound_spread,
+                          node_log_bound_spreads[i_node])
             for i in range(node_info.idx_start, node_info.idx_end):
-                dist_pt = self.dist(pt, (data + n_features * idx_array[i]),
+                dist_pt = self.dist(pt, data + n_features * idx_array[i],
                                     n_features)
-                log_dens_contribution = compute_log_kernel(dist_pt, h, kernel)
-                global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
-                                                    log_dens_contribution)
+                log_density = compute_log_kernel(dist_pt, h, kernel)
+                global_log_min_bound = logaddexp(global_log_min_bound,
+                                                 log_density)
 
         #------------------------------------------------------------
         # Case 4: split node and query subnodes
@@ -2220,173 +2092,283 @@ cdef class BinaryTree:
             i1 = 2 * i_node + 1
             i2 = 2 * i_node + 2
 
-            N1 = self.node_data[i1].idx_end - self.node_data[i1].idx_start
-            N2 = self.node_data[i2].idx_end - self.node_data[i2].idx_start
+            N1 = node_data[i1].idx_end - node_data[i1].idx_start
+            N2 = node_data[i2].idx_end - node_data[i2].idx_start
 
-            self.min_max_dist(i1, pt, &dist_LB, &dist_UB)
-            child1_log_min_bound = log(N1) + compute_log_kernel(dist_UB, h,
-                                                                kernel)
-            child1_log_bound_spread = logsubexp(log(N1) +
-                                                compute_log_kernel(dist_LB, h,
-                                                                   kernel),
-                                                child1_log_min_bound)
+            self.min_max_dist(i1, pt, &dist_LB_1, &dist_UB_1)
+            self.min_max_dist(i2, pt, &dist_LB_2, &dist_UB_2)
 
-            self.min_max_dist(i2, pt, &dist_LB, &dist_UB)
-            child2_log_min_bound = log(N2) + compute_log_kernel(dist_UB, h,
-                                                                kernel)
-            child2_log_bound_spread = logsubexp(log(N2) +
-                                                compute_log_kernel(dist_LB, h,
-                                                                   kernel),
-                                                child2_log_min_bound)
+            node_log_min_bounds[i1] = (log(N1) +
+                                       compute_log_kernel(dist_UB_1,
+                                                          h, kernel))
+            node_log_bound_spreads[i1] = (log(N1) +
+                                          compute_log_kernel(dist_LB_1,
+                                                             h, kernel))
 
-            global_log_min_bound[0] = logsubexp(global_log_min_bound[0],
-                                                local_log_min_bound)
+            node_log_min_bounds[i2] = (log(N2) +
+                                       compute_log_kernel(dist_UB_2,
+                                                          h, kernel))
+            node_log_bound_spreads[i2] = (log(N2) +
+                                          compute_log_kernel(dist_LB_2,
+                                                             h, kernel))
+
+            global_log_min_bound = logsubexp(global_log_min_bound,
+                                             node_log_min_bounds[i_node])
+            global_log_min_bound = logaddexp(global_log_min_bound,
+                                             node_log_min_bounds[i1])
+            global_log_min_bound = logaddexp(global_log_min_bound,
+                                             node_log_min_bounds[i2])
+
+            global_log_bound_spread =\
+                logsubexp(global_log_bound_spread,
+                          node_log_bound_spreads[i_node])
+            global_log_bound_spread = logaddexp(global_log_bound_spread,
+                                                node_log_bound_spreads[i1])
+            global_log_bound_spread = logaddexp(global_log_bound_spread,
+                                                node_log_bound_spreads[i2])
+
+            # TODO: rank by the spread rather than the distance?
+            nodeheap_item.val = dist_LB_1
+            nodeheap_item.i1 = i1
+            nodeheap.push(nodeheap_item)
+
+            nodeheap_item.val = dist_LB_2
+            nodeheap_item.i1 = i2
+            nodeheap.push(nodeheap_item)
+
+    nodeheap.clear()
+    return logaddexp(global_log_min_bound,
+                     global_log_bound_spread - log(2))
+
+cdef int _kde_single_depthfirst(BinaryTree self, ITYPE_t i_node, DTYPE_t* pt,
+                                KernelType kernel, DTYPE_t h,
+                                DTYPE_t log_knorm,
+                                DTYPE_t log_atol, DTYPE_t log_rtol,
+                                DTYPE_t local_log_min_bound,
+                                DTYPE_t local_log_bound_spread,
+                                DTYPE_t* global_log_min_bound,
+                                DTYPE_t* global_log_bound_spread) except -1:
+    """recursive single-tree kernel density estimate, depth-first"""
+    # For the given point, local_min_bound and local_max_bound give the
+    # minimum and maximum density for the current node, while
+    # global_min_bound and global_max_bound give the minimum and maximum
+    # density over the entire tree.  We recurse down until global_min_bound
+    # and global_max_bound are within rtol and atol.
+    cdef ITYPE_t i, i1, i2, N1, N2
+
+    cdef DTYPE_t* data = &self.data[0, 0]
+    cdef ITYPE_t* idx_array = &self.idx_array[0]
+    cdef ITYPE_t n_features = self.data.shape[1]
+
+    cdef NodeData_t node_info = self.node_data[i_node]
+    cdef DTYPE_t dist_pt, log_dens_contribution
+
+    cdef DTYPE_t child1_log_min_bound, child2_log_min_bound
+    cdef DTYPE_t child1_log_bound_spread, child2_log_bound_spread
+    cdef DTYPE_t dist_UB = 0, dist_LB = 0
+
+    N1 = node_info.idx_end - node_info.idx_start
+    N2 = self.data.shape[0]
+
+    #------------------------------------------------------------
+    # Case 1: local bounds are equal to within errors.  Return
+    if (log_knorm + local_log_bound_spread - log(N1) + log(N2)
+        <= logaddexp(log_atol, (log_rtol + log_knorm
+                                + local_log_min_bound))):
+        pass
+
+    #------------------------------------------------------------
+    # Case 2: global bounds are within rtol & atol. Return
+    elif (log_knorm + global_log_bound_spread[0]
+        <= logaddexp(log_atol, (log_rtol + log_knorm
+                                + global_log_min_bound[0]))):
+        pass
+
+    #------------------------------------------------------------
+    # Case 3: node is a leaf. Count contributions from all points
+    elif node_info.is_leaf:
+        global_log_min_bound[0] = logsubexp(global_log_min_bound[0],
+                                            local_log_min_bound)
+        global_log_bound_spread[0] = logsubexp(global_log_bound_spread[0],
+                                               local_log_bound_spread)
+        for i in range(node_info.idx_start, node_info.idx_end):
+            dist_pt = self.dist(pt, (data + n_features * idx_array[i]),
+                                n_features)
+            log_dens_contribution = compute_log_kernel(dist_pt, h, kernel)
             global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
-                                                child1_log_min_bound)
-            global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
-                                                child2_log_min_bound)
+                                                log_dens_contribution)
 
-            global_log_bound_spread[0] = logsubexp(global_log_bound_spread[0],
-                                                   local_log_bound_spread)
-            global_log_bound_spread[0] = logaddexp(global_log_bound_spread[0],
-                                                   child1_log_bound_spread)
-            global_log_bound_spread[0] = logaddexp(global_log_bound_spread[0],
-                                                   child2_log_bound_spread)
+    #------------------------------------------------------------
+    # Case 4: split node and query subnodes
+    else:
+        i1 = 2 * i_node + 1
+        i2 = 2 * i_node + 2
 
-            self._kde_single_depthfirst(i1, pt, kernel, h, log_knorm,
-                                        log_atol, log_rtol,
-                                        child1_log_min_bound,
-                                        child1_log_bound_spread,
-                                        global_log_min_bound,
-                                        global_log_bound_spread)
-            self._kde_single_depthfirst(i2, pt, kernel, h, log_knorm,
-                                        log_atol, log_rtol,
-                                        child2_log_min_bound,
-                                        child2_log_bound_spread,
-                                        global_log_min_bound,
-                                        global_log_bound_spread)
-        return 0
+        N1 = self.node_data[i1].idx_end - self.node_data[i1].idx_start
+        N2 = self.node_data[i2].idx_end - self.node_data[i2].idx_start
 
-    cdef int _two_point_single(self, ITYPE_t i_node, DTYPE_t* pt, DTYPE_t* r,
-                               ITYPE_t* count, ITYPE_t i_min,
-                               ITYPE_t i_max) except -1:
-        """recursive single-tree two-point correlation function query"""
-        cdef DTYPE_t* data = &self.data[0, 0]
-        cdef ITYPE_t* idx_array = &self.idx_array[0]
-        cdef ITYPE_t n_features = self.data.shape[1]
-        cdef NodeData_t node_info = self.node_data[i_node]
+        self.min_max_dist(i1, pt, &dist_LB, &dist_UB)
+        child1_log_min_bound = log(N1) + compute_log_kernel(dist_UB, h,
+                                                            kernel)
+        child1_log_bound_spread = logsubexp(log(N1) +
+                                            compute_log_kernel(dist_LB, h,
+                                                               kernel),
+                                            child1_log_min_bound)
 
-        cdef ITYPE_t i, j, Npts
-        cdef DTYPE_t reduced_r
+        self.min_max_dist(i2, pt, &dist_LB, &dist_UB)
+        child2_log_min_bound = log(N2) + compute_log_kernel(dist_UB, h,
+                                                            kernel)
+        child2_log_bound_spread = logsubexp(log(N2) +
+                                            compute_log_kernel(dist_LB, h,
+                                                               kernel),
+                                            child2_log_min_bound)
 
-        cdef DTYPE_t dist_pt, dist_LB = 0, dist_UB = 0
-        self.min_max_dist(i_node, pt, &dist_LB, &dist_UB)
+        global_log_min_bound[0] = logsubexp(global_log_min_bound[0],
+                                            local_log_min_bound)
+        global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
+                                            child1_log_min_bound)
+        global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
+                                            child2_log_min_bound)
 
-        #------------------------------------------------------------
-        # Go through bounds and check for cuts
-        while i_min < i_max:
-            if dist_LB > r[i_min]:
-                i_min += 1
-            else:
-                break
+        global_log_bound_spread[0] = logsubexp(global_log_bound_spread[0],
+                                               local_log_bound_spread)
+        global_log_bound_spread[0] = logaddexp(global_log_bound_spread[0],
+                                               child1_log_bound_spread)
+        global_log_bound_spread[0] = logaddexp(global_log_bound_spread[0],
+                                               child2_log_bound_spread)
 
-        while i_max > i_min:
-            Npts = (node_info.idx_end - node_info.idx_start)
-            if dist_UB <= r[i_max - 1]:
-                count[i_max - 1] += Npts
-                i_max -= 1
-            else:
-                break
+        _kde_single_depthfirst(self, i1, pt, kernel, h, log_knorm,
+                               log_atol, log_rtol,
+                               child1_log_min_bound,
+                               child1_log_bound_spread,
+                               global_log_min_bound,
+                               global_log_bound_spread)
+        _kde_single_depthfirst(self, i2, pt, kernel, h, log_knorm,
+                               log_atol, log_rtol,
+                               child2_log_min_bound,
+                               child2_log_bound_spread,
+                               global_log_min_bound,
+                               global_log_bound_spread)
+    return 0
 
-        if i_min < i_max:
-            # If node is a leaf, go through all points
-            if node_info.is_leaf:
-                for i in range(node_info.idx_start, node_info.idx_end):
-                    dist_pt = self.dist(pt, (data + n_features * idx_array[i]),
+cdef int _two_point_single(BinaryTree self, ITYPE_t i_node, DTYPE_t* pt,
+                           DTYPE_t* r, ITYPE_t* count, ITYPE_t i_min,
+                           ITYPE_t i_max) except -1:
+    """recursive single-tree two-point correlation function query"""
+    cdef DTYPE_t* data = &self.data[0, 0]
+    cdef ITYPE_t* idx_array = &self.idx_array[0]
+    cdef ITYPE_t n_features = self.data.shape[1]
+    cdef NodeData_t node_info = self.node_data[i_node]
+
+    cdef ITYPE_t i, j, Npts
+    cdef DTYPE_t reduced_r
+
+    cdef DTYPE_t dist_pt, dist_LB = 0, dist_UB = 0
+    self.min_max_dist(i_node, pt, &dist_LB, &dist_UB)
+
+    #------------------------------------------------------------
+    # Go through bounds and check for cuts
+    while i_min < i_max:
+        if dist_LB > r[i_min]:
+            i_min += 1
+        else:
+            break
+
+    while i_max > i_min:
+        Npts = (node_info.idx_end - node_info.idx_start)
+        if dist_UB <= r[i_max - 1]:
+            count[i_max - 1] += Npts
+            i_max -= 1
+        else:
+            break
+
+    if i_min < i_max:
+        # If node is a leaf, go through all points
+        if node_info.is_leaf:
+            for i in range(node_info.idx_start, node_info.idx_end):
+                dist_pt = self.dist(pt, (data + n_features * idx_array[i]),
+                                    n_features)
+                j = i_max - 1
+                while (j >= i_min) and (dist_pt <= r[j]):
+                    count[j] += 1
+                    j -= 1
+
+        else:
+            _two_point_single(self, 2 * i_node + 1, pt, r, count, i_min, i_max)
+            _two_point_single(self, 2 * i_node + 2, pt, r, count, i_min, i_max)
+    return 0
+
+cdef int _two_point_dual(BinaryTree self, ITYPE_t i_node1,
+                         BinaryTree other, ITYPE_t i_node2,
+                         DTYPE_t* r, ITYPE_t* count,
+                         ITYPE_t i_min, ITYPE_t i_max) except -1:
+    """recursive dual-tree two-point correlation function query"""
+    cdef DTYPE_t* data1 = &self.data[0, 0]
+    cdef DTYPE_t* data2 = &other.data[0, 0]
+    cdef ITYPE_t* idx_array1 = &self.idx_array[0]
+    cdef ITYPE_t* idx_array2 = &other.idx_array[0]
+    cdef NodeData_t node_info1 = self.node_data[i_node1]
+    cdef NodeData_t node_info2 = other.node_data[i_node2]
+
+    cdef ITYPE_t n_features = self.data.shape[1]
+
+    cdef ITYPE_t i1, i2, j, Npts
+    cdef DTYPE_t reduced_r
+
+    cdef DTYPE_t dist_pt, dist_LB = 0, dist_UB = 0
+    dist_LB = self.min_dist_dual(i_node1, other, i_node2)
+    dist_UB = self.max_dist_dual(i_node1, other, i_node2)
+
+    #------------------------------------------------------------
+    # Go through bounds and check for cuts
+    while i_min < i_max:
+        if dist_LB > r[i_min]:
+            i_min += 1
+        else:
+            break
+
+    while i_max > i_min:
+        Npts = ((node_info1.idx_end - node_info1.idx_start)
+                * (node_info2.idx_end - node_info2.idx_start))
+        if dist_UB <= r[i_max - 1]:
+            count[i_max - 1] += Npts
+            i_max -= 1
+        else:
+            break
+
+    if i_min < i_max:
+        if node_info1.is_leaf and node_info2.is_leaf:
+            # If both nodes are leaves, go through all points
+            for i1 in range(node_info1.idx_start, node_info1.idx_end):
+                for i2 in range(node_info2.idx_start, node_info2.idx_end):
+                    dist_pt = self.dist((data1 + n_features
+                                         * idx_array1[i1]),
+                                        (data2 + n_features
+                                         * idx_array2[i2]),
                                         n_features)
                     j = i_max - 1
                     while (j >= i_min) and (dist_pt <= r[j]):
                         count[j] += 1
                         j -= 1
 
-            else:
-                self._two_point_single(2 * i_node + 1, pt, r,
-                                       count, i_min, i_max)
-                self._two_point_single(2 * i_node + 2, pt, r,
-                                       count, i_min, i_max)
-        return 0
+        elif node_info1.is_leaf:
+            # If only one is a leaf, split the other
+            for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
+                _two_point_dual(self, i_node1, other, i2,
+                                r, count, i_min, i_max)
 
-    cdef int _two_point_dual(self, ITYPE_t i_node1,
-                             BinaryTree other, ITYPE_t i_node2,
-                             DTYPE_t* r, ITYPE_t* count,
-                             ITYPE_t i_min, ITYPE_t i_max) except -1:
-        """recursive dual-tree two-point correlation function query"""
-        cdef DTYPE_t* data1 = &self.data[0, 0]
-        cdef DTYPE_t* data2 = &other.data[0, 0]
-        cdef ITYPE_t* idx_array1 = &self.idx_array[0]
-        cdef ITYPE_t* idx_array2 = &other.idx_array[0]
-        cdef NodeData_t node_info1 = self.node_data[i_node1]
-        cdef NodeData_t node_info2 = other.node_data[i_node2]
+        elif node_info2.is_leaf:
+            for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
+                _two_point_dual(self, i1, other, i_node2,
+                                r, count, i_min, i_max)
 
-        cdef ITYPE_t n_features = self.data.shape[1]
-
-        cdef ITYPE_t i1, i2, j, Npts
-        cdef DTYPE_t reduced_r
-
-        cdef DTYPE_t dist_pt, dist_LB = 0, dist_UB = 0
-        dist_LB = self.min_dist_dual(i_node1, other, i_node2)
-        dist_UB = self.max_dist_dual(i_node1, other, i_node2)
-
-        #------------------------------------------------------------
-        # Go through bounds and check for cuts
-        while i_min < i_max:
-            if dist_LB > r[i_min]:
-                i_min += 1
-            else:
-                break
-
-        while i_max > i_min:
-            Npts = ((node_info1.idx_end - node_info1.idx_start)
-                    * (node_info2.idx_end - node_info2.idx_start))
-            if dist_UB <= r[i_max - 1]:
-                count[i_max - 1] += Npts
-                i_max -= 1
-            else:
-                break
-
-        if i_min < i_max:
-            if node_info1.is_leaf and node_info2.is_leaf:
-                # If both nodes are leaves, go through all points
-                for i1 in range(node_info1.idx_start, node_info1.idx_end):
-                    for i2 in range(node_info2.idx_start, node_info2.idx_end):
-                        dist_pt = self.dist((data1 + n_features
-                                             * idx_array1[i1]),
-                                            (data2 + n_features
-                                             * idx_array2[i2]),
-                                            n_features)
-                        j = i_max - 1
-                        while (j >= i_min) and (dist_pt <= r[j]):
-                            count[j] += 1
-                            j -= 1
-
-            elif node_info1.is_leaf:
-                # If only one is a leaf, split the other
+        else:
+             # neither is a leaf: split & query both
+            for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
                 for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
-                    self._two_point_dual(i_node1, other, i2,
-                                         r, count, i_min, i_max)
-
-            elif node_info2.is_leaf:
-                for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
-                    self._two_point_dual(i1, other, i_node2,
-                                         r, count, i_min, i_max)
-
-            else:
-                 # neither is a leaf: split & query both
-                for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
-                    for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
-                        self._two_point_dual(i1, other, i2,
-                                             r, count, i_min, i_max)
-        return 0
+                    _two_point_dual(self, i1, other, i2,
+                                    r, count, i_min, i_max)
+    return 0
 
 
 ######################################################################
