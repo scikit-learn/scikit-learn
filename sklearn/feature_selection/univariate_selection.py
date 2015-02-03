@@ -496,7 +496,8 @@ class SelectFdr(_BaseFilter):
 
         alpha = self.alpha
         sv = np.sort(self.pvalues_)
-        threshold = sv[sv < alpha * np.arange(len(self.pvalues_))].max()
+        m = float(len(self.pvalues_))
+        threshold = sv[sv < alpha / m * np.arange(len(self.pvalues_))].max()
         return self.pvalues_ <= threshold
 
 
