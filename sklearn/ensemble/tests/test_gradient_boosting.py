@@ -340,6 +340,9 @@ def test_check_max_features():
                                     max_features=(len(X[0]) + 1))
     assert_raises(ValueError, clf.fit, X, y)
 
+    clf = GradientBoostingRegressor(n_estimators=100, random_state=1,
+                                    max_features=-0.1)
+    assert_raises(ValueError, clf.fit, X, y)
 
 def test_max_feature_regression():
     """Test to make sure random state is set properly. """
