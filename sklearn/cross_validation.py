@@ -30,6 +30,7 @@ from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
 from .externals.six.moves import zip
 from .metrics.scorer import check_scoring
+from .utils.fixes import bincount
 
 __all__ = ['Bootstrap',
            'KFold',
@@ -406,7 +407,7 @@ class StratifiedKFold(_BaseKFold):
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_labels, y_inversed = np.unique(y, return_inverse=True)
-        label_counts = np.bincount(y_inversed)
+        label_counts = bincount(y_inversed)
         min_labels = np.min(label_counts)
         if self.n_folds > min_labels:
             warnings.warn(("The least populated class in y has only %d"
@@ -1007,7 +1008,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         self.classes, self.y_indices = np.unique(y, return_inverse=True)
         n_cls = self.classes.shape[0]
 
-        if np.min(np.bincount(self.y_indices)) < 2:
+        if np.min(bincount(self.y_indices)) < 2:
             raise ValueError("The least populated class in y has only 1"
                              " member, which is too few. The minimum"
                              " number of labels for any class cannot"
@@ -1024,7 +1025,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self):
         rng = check_random_state(self.random_state)
-        cls_count = np.bincount(self.y_indices)
+        cls_count = bincount(self.y_indices)
         p_i = cls_count / float(self.n)
         n_i = np.round(self.n_train * p_i).astype(int)
         t_i = np.minimum(cls_count - n_i,
@@ -1046,8 +1047,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             # up here with less samples in train and test than asked for.
             if len(train) < self.n_train or len(test) < self.n_test:
                 # We complete by affecting randomly the missing indexes
-                missing_idx = np.where(np.bincount(train + test,
-                                                   minlength=len(self.y)) == 0,
+                missing_idx = np.where(bincount(train + test,
+                                                minlength=len(self.y)) == 0,
                                        )[0]
                 missing_idx = rng.permutation(missing_idx)
                 train.extend(missing_idx[:(self.n_train - len(train))])

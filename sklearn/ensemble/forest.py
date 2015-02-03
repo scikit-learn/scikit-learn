@@ -59,6 +59,7 @@ from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_class_weight
 from ..utils.validation import DataConversionWarning, check_is_fitted
 from .base import BaseEnsemble, _partition_estimators
+from ..utils.fixes import bincount
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
@@ -84,7 +85,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
 
         random_state = check_random_state(tree.random_state)
         indices = random_state.randint(0, n_samples, n_samples)
-        sample_counts = np.bincount(indices, minlength=n_samples)
+        sample_counts = bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
 
         if class_weight == 'subsample':
