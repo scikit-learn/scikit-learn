@@ -352,6 +352,74 @@ def test_aic():
         assert_true(np.abs(g.bic(X) - bic) / n_samples < bound)
 
 
+def _test_positive_definite_covars(covariance_type):
+    """ Test that covariance matrices do not become non positive definite
+
+Due to the accumulation of round-off errors, the computation of the covariance
+matrices during the learning phase could lead to non-positive definite
+covariance matrices. Namely the use of the formula:
+
+.. math:: C = (\\sum_i w_i \\boldsymbol x_i \\boldsymbol x_i^T)
+          - \\boldsymbol \\mu \\boldsymbol \\mu^T
+
+instead of:
+
+.. math:: C = \\sum_i w_i (\\boldsymbol x_i - \\boldsymbol \\mu)
+              (\\boldsymbol x_i - \\boldsymbol \\mu)^T
+
+while mathematically equivalent, was observed a ``LinAlgError`` exception,
+when computing a ``GMM`` with full covariance matrices and fixed mean.
+
+This function ensures that some later optimization will not introduce the
+problem again.
+"""
+    rng = np.random.RandomState(1)
+    # we build a dataset with 2 2d component. The components are unbalanced
+    # (respective weights 0.9 and 0.1)
+    X = rng.randn(100, 2)
+    X[-10:] += (3, 3)  # Shift the 10 last points
+
+    gmm = mixture.GMM(2, params="wc", covariance_type=covariance_type,
+                      min_covar=1e-3)
+
+    # The following line can raise an exception with  full covariance matrices
+    # due to the use of the Cholesky decomposition when computing the density.
+    gmm.fit(X)
+
+    if covariance_type == "diag" or covariance_type == "spherical":
+        assert(gmm.covars_.min() > 0)
+    else:
+        if covariance_type == "tied":
+            covs = [gmm.covars_]
+        else:
+            covs = gmm.covars_
+
+        for c in covs:
+            w, u = np.linalg.eigh(c)
+            assert(w.min() > 0)
+
+
+def test_positive_definite_covars_full():
+    """ Test that the full covariance matrices are positive definite """
+    _test_positive_definite_covars("full")
+
+
+def test_positive_definite_covars_tied():
+    """ Test that the tied covariance matrix is positive definite """
+    _test_positive_definite_covars("tied")
+
+
+def test_positive_definite_covars_diag():
+    """ Test that the diagonal covariance matrices are positive definite """
+    _test_positive_definite_covars("diag")
+
+
+def test_positive_definite_covars_spherical():
+    """ Test that the spherical covariance matrices are positive definite """
+    _test_positive_definite_covars("spherical")
+
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
