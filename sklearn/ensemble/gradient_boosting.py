@@ -841,7 +841,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         elif isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
         else:  # float
-            max_features = int(self.max_features * self.n_features)
+            max_features = max(int(self.max_features * self.n_features), 1)
 
         self.max_features_ = max_features
 

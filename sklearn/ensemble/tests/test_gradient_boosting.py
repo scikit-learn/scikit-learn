@@ -384,6 +384,11 @@ def test_max_feature_auto():
     gbrt.fit(X_train, y_train)
     assert_equal(gbrt.max_features_, int(np.log2(n_features)))
 
+    gbrt = GradientBoostingRegressor(n_estimators=1,
+                                     max_features=0.01 / X.shape[1])
+    gbrt.fit(X_train, y_train)
+    assert_equal(gbrt.max_features_, 1)
+
 
 def test_staged_predict():
     """Test whether staged decision function eventually gives
