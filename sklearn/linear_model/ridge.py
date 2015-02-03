@@ -1073,7 +1073,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         if not self._label_binarizer.y_type_.startswith('multilabel'):
             y = column_or_1d(y, warn=True)
         # modify the sample weights with the corresponding class weight
-        sample_weight *= compute_sample_weight(self.class_weight, y)
+        sample_weight = (sample_weight *
+                         compute_sample_weight(self.class_weight, y))
         _BaseRidgeCV.fit(self, X, Y, sample_weight=sample_weight)
         return self
 
