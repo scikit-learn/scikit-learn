@@ -127,7 +127,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
 
     Returns
     -------
-    children : 2D array, shape (n_nodes, 2)
+    children : 2D array, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf
@@ -145,7 +145,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
 
-    distances : 1D array, shape (n_nodes, )
+    distances : 1D array, shape (n_nodes-1, )
         Only returned if return_distance is set to True (for compatibility).
         The distances between the centers of the nodes. `distances[i]`
         corresponds to a weighted euclidean distance between
@@ -346,7 +346,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
 
     Returns
     -------
-    children : 2D array, shape (n_nodes, 2)
+    children : 2D array, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf
@@ -364,7 +364,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
 
-    distances : ndarray, shape (n_nodes,)
+    distances : ndarray, shape (n_nodes-1,)
         Returned when return_distance is set to True.
 
         distances[i] refers to the distance between children[i][0] and
@@ -659,7 +659,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     n_components_ : int
         The estimated number of connected components in the graph.
 
-    children_ : array-like, shape (n_nodes, 2)
+    children_ : array-like, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf
@@ -822,7 +822,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     n_components_ : int
         The estimated number of connected components in the graph.
 
-    children_ : array-like, shape (n_nodes, 2)
+    children_ : array-like, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_features`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_features` is a non-leaf
@@ -902,7 +902,7 @@ class Ward(AgglomerativeClustering):
     n_components_ : int
         The estimated number of connected components in the graph.
 
-    children_ : array-like, shape (n_nodes, 2)
+    children_ : array-like, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         refer to leaves of the tree. A greater value `i` indicates a node with
         children `children_[i - n_samples]`.
@@ -970,7 +970,7 @@ class WardAgglomeration(AgglomerationTransform, Ward):
 
     Attributes
     ----------
-    children_ : array-like, shape (n_nodes, 2)
+    children_ : array-like, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_features`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_features` is a non-leaf
