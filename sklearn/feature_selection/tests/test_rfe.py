@@ -27,7 +27,7 @@ class MockClassifier(object):
 
     def fit(self, X, Y):
         assert_true(len(X) == len(Y))
-        self.coef_ = np.array([1]*X.shape[1])
+        self.coef_ = np.ones(X.shape[1], dtype=np.float64)
         return self
 
     def predict(self, T):
@@ -94,11 +94,11 @@ def test_rfe():
     assert_equal(rfe.score(X, y), clf.score(iris.data, iris.target))
     assert_array_almost_equal(X_r, X_r_sparse.toarray())
 
+
 def test_rfe_mockclassifier():
     generator = check_random_state(0)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
-    X_sparse = sparse.csr_matrix(X)
     y = iris.target
 
     # dense model
@@ -108,8 +108,8 @@ def test_rfe_mockclassifier():
     X_r = rfe.transform(X)
     clf.fit(X_r, y)
     assert_equal(len(rfe.ranking_), X.shape[1])
-
     assert_equal(X_r.shape, iris.data.shape)
+
 
 def test_rfecv():
     generator = check_random_state(0)
@@ -173,6 +173,7 @@ def test_rfecv():
     X_r_sparse = rfecv_sparse.transform(X_sparse)
     assert_array_equal(X_r_sparse.toarray(), iris.data)
 
+
 def test_rfecv_mockclassifier():
     generator = check_random_state(0)
     iris = load_iris()
@@ -185,6 +186,7 @@ def test_rfecv_mockclassifier():
     # non-regression test for missing worst feature:
     assert_equal(len(rfecv.grid_scores_), X.shape[1])
     assert_equal(len(rfecv.ranking_), X.shape[1])
+
 
 def test_rfe_min_step():
 
