@@ -76,6 +76,10 @@ def test_compute_sample_weight():
     expected = np.asarray([.6, .6, .6, .6, .6, .6, 1.8])
     assert_array_almost_equal(sample_weight, expected)
 
+    # Test with `None` weights
+    sample_weight = compute_sample_weight(None, y)
+    assert_array_almost_equal(sample_weight, [1., 1., 1., 1., 1., 1., 1.])
+
     # Test with multi-output of balanced classes
     y = np.asarray([[1, 0], [1, 0], [1, 0], [2, 1], [2, 1], [2, 1]])
     sample_weight = compute_sample_weight("auto", y)
