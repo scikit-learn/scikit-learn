@@ -28,6 +28,8 @@ Other packages useful for data analysis and machine learning.
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 
+- `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and fitting algorithms.
+
 
 Extensions and Algorithms
 -------------------------
