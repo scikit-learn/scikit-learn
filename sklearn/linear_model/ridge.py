@@ -21,7 +21,7 @@ from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import check_X_y
-from ..utils import compute_class_weight
+from ..utils import compute_sample_weight, compute_class_weight
 from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
@@ -597,10 +597,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             y = column_or_1d(y, warn=True)
 
         if self.class_weight:
-            cw = compute_class_weight(self.class_weight,
-                                      self.classes_, y)
             # get the class weight corresponding to each sample
-            sample_weight = cw[np.searchsorted(self.classes_, y)]
+            sample_weight = compute_sample_weight(self.class_weight, y)
         else:
             sample_weight = None
 
@@ -1074,10 +1072,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.y_type_.startswith('multilabel'):
             y = column_or_1d(y, warn=True)
-        cw = compute_class_weight(self.class_weight,
-                                  self.classes_, Y)
         # modify the sample weights with the corresponding class weight
-        sample_weight *= cw[np.searchsorted(self.classes_, y)]
+        sample_weight = (sample_weight *
+                         compute_sample_weight(self.class_weight, y))
         _BaseRidgeCV.fit(self, X, Y, sample_weight=sample_weight)
         return self
 

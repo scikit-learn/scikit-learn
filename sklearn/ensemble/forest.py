@@ -56,7 +56,7 @@ from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import check_random_state, check_array, compute_class_weight
+from ..utils import check_random_state, check_array, compute_sample_weight
 from ..utils.validation import DataConversionWarning, check_is_fitted
 from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import bincount
@@ -89,30 +89,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         curr_sample_weight *= sample_counts
 
         if class_weight == 'subsample':
-
-            expanded_class_weight = [curr_sample_weight]
-
-            for k in range(y.shape[1]):
-                y_full = y[:, k]
-                classes_full = np.unique(y_full)
-                y_boot = y[indices, k]
-                classes_boot = np.unique(y_boot)
-
-                # Get class weights for the bootstrap sample, covering all
-                # classes in case some were missing from the bootstrap sample
-                weight_k = np.choose(
-                    np.searchsorted(classes_boot, classes_full),
-                    compute_class_weight('auto', classes_boot, y_boot),
-                    mode='clip')
-
-                # Expand weights over the original y for this output
-                weight_k = weight_k[np.searchsorted(classes_full, y_full)]
-                expanded_class_weight.append(weight_k)
-
-            # Multiply all weights by sample & bootstrap weights
-            curr_sample_weight = np.prod(expanded_class_weight,
-                                         axis=0,
-                                         dtype=np.float64)
+            curr_sample_weight *= compute_sample_weight('auto', y, indices)
 
         tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
 
@@ -449,33 +426,14 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                          'properly estimate the class frequency '
                          'distributions. Pass the resulting weights as the '
                          'class_weight parameter.')
-            elif self.n_outputs_ > 1:
-                if not hasattr(self.class_weight, "__iter__"):
-                    raise ValueError("For multi-output, class_weight should "
-                                     "be a list of dicts, or a valid string.")
-                elif len(self.class_weight) != self.n_outputs_:
-                    raise ValueError("For multi-output, number of elements "
-                                     "in class_weight should match number of "
-                                     "outputs.")
 
             if self.class_weight != 'subsample' or not self.bootstrap:
-                expanded_class_weight = []
-                for k in range(self.n_outputs_):
-                    if self.class_weight in valid_presets:
-                        class_weight_k = 'auto'
-                    elif self.n_outputs_ == 1:
-                        class_weight_k = self.class_weight
-                    else:
-                        class_weight_k = self.class_weight[k]
-                    weight_k = compute_class_weight(class_weight_k,
-                                                    self.classes_[k],
-                                                    y_original[:, k])
-                    weight_k = weight_k[np.searchsorted(self.classes_[k],
-                                                        y_original[:, k])]
-                    expanded_class_weight.append(weight_k)
-                expanded_class_weight = np.prod(expanded_class_weight,
-                                                axis=0,
-                                                dtype=np.float64)
+                if self.class_weight == 'subsample':
+                    class_weight = 'auto'
+                else:
+                    class_weight = self.class_weight
+                expanded_class_weight = compute_sample_weight(class_weight,
+                                                              y_original)
 
         return y, expanded_class_weight
 
