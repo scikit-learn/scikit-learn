@@ -307,8 +307,9 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None, copy=Fal
     ensure_min_features : int (default=1)
         Make sure that the 2D array has some minimum number of features
         (columns). The default value of 1 rejects empty datasets.
-        This check is only enforced when ``ensure_2d`` is True and
-        ``allow_nd`` is False. Setting to 0 disables this check.
+        This check is only enforced when the input data has effectively 2
+        dimensions or is originally 1D and ``ensure_2d`` is True. Setting to 0
+        disables this check.
 
     Returns
     -------
@@ -347,7 +348,8 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None, copy=Fal
                              " minimum of %d is required."
                              % (n_samples, shape_repr, ensure_min_samples))
 
-    if ensure_min_features > 0 and ensure_2d and not allow_nd:
+
+    if ensure_min_features > 0 and array.ndim == 2:
         n_features = array.shape[1]
         if n_features < ensure_min_features:
             raise ValueError("Found array with %d feature(s) (shape=%s) while"
@@ -411,13 +413,16 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
         axis (rows for a 2D array).
 
     ensure_min_features : int (default=1)
-        Make sure that the 2D X has some minimum number of features
+        Make sure that the 2D array has some minimum number of features
         (columns). The default value of 1 rejects empty datasets.
-        This check is only enforced when ``ensure_2d`` is True and
-        ``allow_nd`` is False.
+        This check is only enforced when X has effectively 2 dimensions or
+        is originally 1D and ``ensure_2d`` is True. Setting to 0 disables
+        this check.
+
     y_numeric : boolean (default=False)
         Whether to ensure that y has a numeric type. If dtype of y is object,
-        it is converted to float64. Should only be used for regression algorithms.
+        it is converted to float64. Should only be used for regression
+        algorithms.
 
     Returns
     -------
@@ -428,7 +433,8 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
                     ensure_2d, allow_nd, ensure_min_samples,
                     ensure_min_features)
     if multi_output:
-        y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False, dtype=None)
+        y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False,
+                        dtype=None)
     else:
         y = column_or_1d(y, warn=True)
         _assert_all_finite(y)

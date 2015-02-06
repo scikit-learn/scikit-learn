@@ -237,6 +237,11 @@ def test_check_array_min_samples_and_features_messages():
     assert_raise_message(ValueError, msg, check_X_y, X, y,
                          ensure_min_samples=2)
 
+    # The same message is raised if the data has 2 dimensions even if this is
+    # not mandatory
+    assert_raise_message(ValueError, msg, check_X_y, X, y,
+                         ensure_min_samples=2, ensure_2d=False)
+
     # Simulate a model that would require at least 3 features (e.g. SelectKBest
     # with k=3)
     X = np.ones((10, 2))
@@ -244,6 +249,11 @@ def test_check_array_min_samples_and_features_messages():
     msg = "2 feature(s) (shape=(10, 2)) while a minimum of 3 is required."
     assert_raise_message(ValueError, msg, check_X_y, X, y,
                          ensure_min_features=3)
+
+    # Only the feature check is enabled whenever the number of dimensions is 2
+    # even if allow_nd is enabled:
+    assert_raise_message(ValueError, msg, check_X_y, X, y,
+                         ensure_min_features=3, allow_nd=True)
 
     # Simulate a case where a pipeline stage as trimmed all the features of a
     # 2D dataset.

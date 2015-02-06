@@ -437,10 +437,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
         X : array-like, shape=(n_samples, n_feature)
             Training data.
         """
-
+        X = check_array(X, accept_sparse='csr')
         rnd = check_random_state(self.random_state)
-        if not sp.issparse(X):
-            X = np.asarray(X)
         n_samples = X.shape[0]
 
         # get basis vectors
@@ -487,6 +485,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
             Transformed data.
         """
         check_is_fitted(self, 'components_')
+        X = check_array(X, accept_sparse='csr')
 
         kernel_params = self._get_kernel_params()
         embedded = pairwise_kernels(X, self.components_,

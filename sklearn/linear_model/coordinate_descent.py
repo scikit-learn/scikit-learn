@@ -984,6 +984,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             Target values
         """
         y = np.asarray(y, dtype=np.float64)
+        if y.shape[0] == 0:
+            raise ValueError("y has 0 samples: %r" % y)
 
         if hasattr(self, 'l1_ratio'):
             model_str = 'ElasticNet'

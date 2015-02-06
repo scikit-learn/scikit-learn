@@ -12,6 +12,7 @@ import struct
 
 from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
@@ -344,6 +345,24 @@ def check_estimators_dtypes(name, Estimator):
                 # FIXME
                 # non-standard handling of ducktyping in BaggingEstimator
                 pass
+
+
+def check_estimators_empty_data_messages(name, Estimator):
+    e = Estimator()
+    set_fast_parameters(e)
+    set_random_state(e, 1)
+
+    X_zero_samples = np.empty(0).reshape(0, 3)
+    # The precise message can change depending on whether X or y is
+    # validated first. Let us test the type of exception only:
+    assert_raises(ValueError, e.fit, X_zero_samples, [])
+
+    X_zero_features = np.empty(0).reshape(3, 0)
+    # the following y should be accepted by both classifiers and regressors
+    # and ignored by unsupervised models
+    y = multioutput_estimator_convert_y_2d(name, np.array([1, 0, 1]))
+    msg = "0 feature(s) (shape=(3, 0)) while a minimum of 1 is required."
+    assert_raise_message(ValueError, msg, e.fit, X_zero_features, y)
 
 
 def check_estimators_nan_inf(name, Estimator):

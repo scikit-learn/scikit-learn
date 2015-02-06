@@ -191,10 +191,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         self : object
             Returns self.
         """
-        # Convert data
-        # ensure_2d=False because there are actually unit test checking we fail
-        # for 1d. FIXME make this consistent in the future.
-        X = check_array(X, dtype=DTYPE, ensure_2d=False, accept_sparse="csc")
+        # Validate or convert input data
+        X = check_array(X, dtype=DTYPE, accept_sparse="csc")
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -207,7 +205,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         if y.ndim == 2 and y.shape[1] == 1:
             warn("A column-vector y was passed when a 1d array was"
                  " expected. Please change the shape of y to "
-                 "(n_samples, ), for example using ravel().",
+                 "(n_samples,), for example using ravel().",
                  DataConversionWarning, stacklevel=2)
 
         if y.ndim == 1:

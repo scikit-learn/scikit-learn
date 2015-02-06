@@ -22,6 +22,7 @@ from ..utils.fixes import astype
 from ..utils.fixes import in1d
 from ..utils import deprecated, column_or_1d
 from ..utils.validation import check_array
+from ..utils.validation import _num_samples
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 
@@ -315,6 +316,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         if 'multioutput' in self.y_type_:
             raise ValueError("Multioutput target data is not supported with "
                              "label binarization")
+        if _num_samples(y) == 0:
+            raise ValueError('y has 0 samples: %r' % y)
 
         self.sparse_input_ = sp.issparse(y)
         self.classes_ = unique_labels(y)
@@ -465,6 +468,9 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         # XXX Workaround that will be removed when list of list format is
         # dropped
         y = check_array(y, accept_sparse='csr', ensure_2d=False, dtype=None)
+    else:
+        if _num_samples(y) == 0:
+            raise ValueError('y has 0 samples: %r' % y)
     if neg_label >= pos_label:
         raise ValueError("neg_label={0} must be strictly less than "
                          "pos_label={1}.".format(neg_label, pos_label))

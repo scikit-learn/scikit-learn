@@ -401,7 +401,9 @@ API changes summary
     - Estimators will treat input with dtype object as numeric when possible.
       By `Andreas Müller`_
 
-
+    - Estimators now raise `ValueError` consistently when fitted on empty
+      data (less than 1 sample or less than 1 feature for 2D input).
+      By `Olivier Grisel`_.
 
 .. _changes_0_15_2:
 
