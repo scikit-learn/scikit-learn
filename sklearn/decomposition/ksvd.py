@@ -74,7 +74,6 @@ def _atom_update(X, atom_index, dictionary, sparse_codes, approximate_svd):
         dictionary[atom_index, :] = atom
         sparse_codes[atom_usages, atom_index] = atom_codes.T
 
-    # TODO: [optimize] update and return R
     return dictionary, sparse_codes
 
 
@@ -187,7 +186,6 @@ def learn_dictionary_ksvd(X, n_nonzero_coefs, n_components, iteration_count,
             dictionary, sparse_codes = _atom_update(
                 X, atom_index, dictionary, sparse_codes, approximate_svd)
 
-        # TODO: [optimize] add flag for disabling error calculation
         errors.append(_reconstruction_error(X, dictionary, sparse_codes))
 
         if callback is not None:
