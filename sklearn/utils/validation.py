@@ -14,19 +14,18 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..externals import six
-from ..base import BaseEstimator
 from inspect import getargspec
 
 
 class DataConversionWarning(UserWarning):
-    "A warning on implicit data conversions happening in the code"
+    """A warning on implicit data conversions happening in the code"""
     pass
 
 warnings.simplefilter("always", DataConversionWarning)
 
 
 class NonBLASDotWarning(UserWarning):
-    "A warning on implicit dispatch to numpy.dot"
+    """A warning on implicit dispatch to numpy.dot"""
 
 
 class NotFittedError(ValueError, AttributeError):
