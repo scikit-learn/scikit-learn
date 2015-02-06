@@ -320,7 +320,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
         self.cluster_all = cluster_all
         self.min_bin_freq = min_bin_freq
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Perform clustering.
 
         Parameters

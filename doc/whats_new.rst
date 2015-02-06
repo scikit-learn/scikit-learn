@@ -176,6 +176,9 @@ Enhancements
    - Parallelized calculation of :func:`pairwise_distances` is now supported
      for scipy metrics and custom callables. By `Joel Nothman`_.
 
+   - Allow the fitting and scoring of all clustering algorithms in
+     :class:`pipeline.Pipeline`. By `Andreas Müller`_.
+
 Documentation improvements
 ..........................
 
