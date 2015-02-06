@@ -464,6 +464,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
         # sqrt of kernel matrix on basis vectors
         U, S, V = svd(basis_kernel)
+        S = np.maximum(S, 1e-12)
         self.normalization_ = np.dot(U * 1. / np.sqrt(S), V)
         self.components_ = basis
         self.component_indices_ = inds
