@@ -55,7 +55,9 @@ from sklearn.utils.estimator_checks import (
     check_regressor_data_not_an_array,
     check_transformer_data_not_an_array,
     check_transformer_n_iter,
+    check_fit_score_takes_y,
     check_non_transformer_estimators_n_iter,
+    check_pipeline_consistency,
     CROSS_DECOMPOSITION)
 
 
@@ -87,6 +89,9 @@ def test_non_meta_estimators():
     estimators = all_estimators(type_filter=['classifier', 'regressor',
                                              'transformer', 'cluster'])
     for name, Estimator in estimators:
+        if name not in CROSS_DECOMPOSITION:
+            yield check_fit_score_takes_y, name, Estimator
+            yield check_pipeline_consistency, name, Estimator
         if name not in CROSS_DECOMPOSITION + ['Imputer']:
             # Test that all estimators check their input for NaN's and infs
             yield check_estimators_nan_inf, name, Estimator

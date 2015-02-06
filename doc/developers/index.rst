@@ -716,8 +716,11 @@ is not met, an exception of type ``ValueError`` should be raised.
 ``y`` might be ignored in the case of unsupervised learning. However, to
 make it possible to use the estimator as part of a pipeline that can
 mix both supervised and unsupervised transformers, even unsupervised
-estimators are kindly asked to accept a ``y=None`` keyword argument in
+estimators need to accept a ``y=None`` keyword argument in
 the second position that is just ignored by the estimator.
+For the same reason, ``fit_predict``, ``fit_transform``, ``score``
+ and ``partial_fit`` methods need to accept a ``y`` argument in
+the second place if they are implemented.
 
 The method should return the object (``self``). This pattern is useful
 to be able to implement quick one liners in an IPython session such as::
@@ -857,9 +860,10 @@ last step, it needs to provide a ``fit`` or ``fit_transform`` function.
 To be able to evaluate the pipeline on any data but the training set,
 it also needs to provide a ``transform`` function.
 There are no special requirements for the last step in a pipeline, except that
-it has a ``fit`` function.  All ``fit`` and ``fit_transform`` functions must
-take arguments ``X, y``, even if y is not used.
-
+it has a ``fit`` function. All ``fit`` and ``fit_transform`` functions must
+take arguments ``X, y``, even if y is not used. Similarly, for ``score`` to be
+usable, the last step of the pipeline needs to have a ``score`` function that
+accepts an optional ``y``.
 
 Working notes
 -------------

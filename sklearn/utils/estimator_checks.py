@@ -22,15 +22,16 @@ from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_skip_travis
+from sklearn.utils.testing import ignore_warnings
 
-from sklearn.base import (clone, ClusterMixin, ClassifierMixin, RegressorMixin,
-                          TransformerMixin)
+from sklearn.base import clone, ClassifierMixin
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.lda import LDA
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
+from sklearn.pipeline import make_pipeline
 
 from sklearn.utils.validation import DataConversionWarning, NotFittedError
 from sklearn.cross_validation import train_test_split
@@ -42,13 +43,6 @@ from sklearn.datasets import load_iris, load_boston, make_blobs
 
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
-
-
-def is_supervised(estimator):
-    return (isinstance(estimator, ClassifierMixin)
-            or isinstance(estimator, RegressorMixin)
-            # transformers can all take a y
-            or isinstance(estimator, TransformerMixin))
 
 
 def _boston_subset(n_samples=200):
@@ -87,6 +81,10 @@ def set_fast_parameters(estimator):
     if "n_init" in params:
         # K-Means
         estimator.set_params(n_init=2)
+
+    if estimator.__class__.__name__ == "SelectFdr":
+        # avoid not selecting any features
+        estimator.set_params(alpha=.5)
 
     if isinstance(estimator, BaseRandomProjection):
         # Due to the jl lemma and often very few samples, the number
@@ -131,10 +129,7 @@ def check_estimator_sparse_data(name, Estimator):
     set_fast_parameters(estimator)
     # fit and predict
     try:
-        if is_supervised(estimator):
-            estimator.fit(X, y)
-        else:
-            estimator.fit(X)
+        estimator.fit(X, y)
         if hasattr(estimator, "predict"):
             estimator.predict(X)
         if hasattr(estimator, 'predict_proba'):
@@ -252,6 +247,50 @@ def _check_transformer(name, Transformer, X, y):
             assert_raises(ValueError, transformer.transform, X.T)
 
 
+@ignore_warnings
+def check_pipeline_consistency(name, Estimator):
+    # check that make_pipeline(est) gives same score as est
+    X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+                      random_state=0, n_features=2, cluster_std=0.1)
+    X -= X.min()
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    pipeline = make_pipeline(estimator)
+    set_fast_parameters(estimator)
+    set_random_state(estimator)
+    estimator.fit(X, y)
+    pipeline.fit(X, y)
+    funcs = ["score", "fit_transform"]
+    for func_name in funcs:
+        func = getattr(estimator, func_name, None)
+        if func is not None:
+            func_pipeline = getattr(pipeline, func_name)
+            result = func(X, y)
+            result_pipe = func_pipeline(X, y)
+            assert_array_almost_equal(result, result_pipe)
+
+
+@ignore_warnings
+def check_fit_score_takes_y(name, Estimator):
+    # check that all estimators accept an optional y
+    # in fit and score so they can be used in pipelines
+    rnd = np.random.RandomState(0)
+    X = rnd.uniform(size=(10, 3))
+    y = (X[:, 0] * 4).astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+    set_random_state(estimator)
+    funcs = ["fit", "score", "partial_fit", "fit_predict", "fit_transform"]
+
+    for func_name in funcs:
+        func = getattr(estimator, func_name, None)
+        if func is not None:
+            func(X, y)
+            args = inspect.getargspec(func).args
+            assert_true(args[2] in ["y", "Y"])
+
+
 def check_estimators_nan_inf(name, Estimator):
     rnd = np.random.RandomState(0)
     X_train_finite = rnd.uniform(size=(10, 3))
@@ -275,10 +314,7 @@ def check_estimators_nan_inf(name, Estimator):
             set_random_state(estimator, 1)
             # try to fit
             try:
-                if issubclass(Estimator, ClusterMixin):
-                    estimator.fit(X_train)
-                else:
-                    estimator.fit(X_train, y)
+                estimator.fit(X_train, y)
             except ValueError as e:
                 if 'inf' not in repr(e) and 'NaN' not in repr(e):
                     print(error_string_fit, Estimator, e)
@@ -291,12 +327,7 @@ def check_estimators_nan_inf(name, Estimator):
             else:
                 raise AssertionError(error_string_fit, Estimator)
             # actually fit
-            if issubclass(Estimator, ClusterMixin):
-                # All estimators except clustering algorithm
-                # support fitting with (optional) y
-                estimator.fit(X_train_finite)
-            else:
-                estimator.fit(X_train_finite, y)
+            estimator.fit(X_train_finite, y)
 
             # predict
             if hasattr(estimator, "predict"):
@@ -833,10 +864,7 @@ def check_estimators_overwrite_params(name, Estimator):
     set_random_state(estimator)
 
     params = estimator.get_params()
-    if is_supervised(estimator):
-        estimator.fit(X, y)
-    else:
-        estimator.fit(X)
+    estimator.fit(X, y)
     new_params = estimator.get_params()
     for k, v in params.items():
         assert_false(np.any(new_params[k] != v),

@@ -683,7 +683,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.affinity = affinity
         self.pooling_func = pooling_func
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit the hierarchical clustering on the data
 
         Parameters
