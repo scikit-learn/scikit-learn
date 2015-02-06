@@ -435,7 +435,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
             self.constant = check_array(self.constant,
                                         accept_sparse=['csr', 'csc', 'coo'],
-                                        ensure_2d=False)
+                                        ensure_2d=False, ensure_min_samples=0)
 
             if self.output_2d_ and self.constant.shape[0] != y.shape[1]:
                 raise ValueError(
