@@ -108,8 +108,8 @@ time)::
   >>> scores                                              # doctest: +ELLIPSIS
   array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
 
-The mean score and the standard deviation of the score estimate are hence given
-by::
+The mean score and the 95\% confidence interval of the score estimate are hence
+given by::
 
   >>> print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
   Accuracy: 0.98 (+/- 0.03)
