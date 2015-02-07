@@ -179,6 +179,9 @@ Enhancements
    - Allow the fitting and scoring of all clustering algorithms in
      :class:`pipeline.Pipeline`. By `Andreas Müller`_.
 
+   - More robust seeding and improved error messages in :class:`cluster.MeanShift`
+     by `Andreas Müller`_.
+
 Documentation improvements
 ..........................
 
