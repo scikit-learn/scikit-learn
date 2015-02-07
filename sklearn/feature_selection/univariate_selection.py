@@ -496,8 +496,10 @@ class SelectFdr(_BaseFilter):
 
         alpha = self.alpha
         sv = np.sort(self.pvalues_)
-        threshold = sv[sv < alpha * np.arange(len(self.pvalues_))].max()
-        return self.pvalues_ <= threshold
+        selected = sv[sv < alpha * np.arange(len(self.pvalues_))]
+        if selected.size == 0:
+            return np.zeros_like(self.pvalues_, dtype=bool)
+        return self.pvalues_ <= selected.max()
 
 
 class SelectFwe(_BaseFilter):
