@@ -598,9 +598,15 @@ def test_no_feature_selected():
     # rejects all the features
     X = rng.rand(40, 10)
     y = rng.randint(0, 4, size=40)
-    fdr = SelectFdr(alpha=0.00001).fit(X, y)
-    assert_array_equal(fdr.get_support(), np.zeros(10))
-
-    X_selected = assert_warns_message(UserWarning, 'No features were selected',
-                                      fdr.transform, X)
-    assert_equal(X_selected.shape, (40, 0))
+    strict_selectors = [
+        SelectFwe(alpha=0.01).fit(X, y),
+        SelectFdr(alpha=0.01).fit(X, y),
+        SelectFpr(alpha=0.01).fit(X, y),
+        SelectPercentile(percentile=0).fit(X, y),
+        SelectKBest(k=0).fit(X, y),
+    ]
+    for selector in strict_selectors:
+        assert_array_equal(selector.get_support(), np.zeros(10))
+        X_selected = assert_warns_message(
+            UserWarning, 'No features were selected', selector.transform, X)
+        assert_equal(X_selected.shape, (40, 0))
