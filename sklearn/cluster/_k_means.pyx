@@ -34,7 +34,8 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
                                   np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                                   np.ndarray[DOUBLE, ndim=2] centers,
                                   np.ndarray[INT, ndim=1] labels,
-                                  np.ndarray[DOUBLE, ndim=1] distances):
+                                  np.ndarray[DOUBLE, ndim=1] distances,
+                                  np.ndarray[DOUBLE, ndim=1] sample_weight):
     """Compute label assignment and inertia for a dense array
 
     Return the inertia (sum of squared distances to the centers).
@@ -70,6 +71,9 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
             dist *= -2
             dist += center_squared_norms[center_idx]
             dist += x_squared_norms[sample_idx]
+            # weighted euclidean distance:
+            # weight(a) * ||a - b||^2
+            dist *= sample_weight[sample_idx]
             if min_dist == -1 or dist < min_dist:
                 min_dist = dist
                 labels[sample_idx] = center_idx
@@ -87,7 +91,8 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
 cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                                 np.ndarray[DOUBLE, ndim=2] centers,
                                 np.ndarray[INT, ndim=1] labels,
-                                np.ndarray[DOUBLE, ndim=1] distances):
+                                np.ndarray[DOUBLE, ndim=1] distances,
+                                np.ndarray[DOUBLE, ndim=1] sample_weight):
     """Compute label assignment and inertia for a CSR input
 
     Return the inertia (sum of squared distances to the centers).
@@ -126,6 +131,9 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
             dist *= -2
             dist += center_squared_norms[center_idx]
             dist += x_squared_norms[sample_idx]
+            # weighted euclidean distance:
+            # weight(a) * ||a - b||^2
+            dist *= sample_weight[sample_idx]
             if min_dist == -1 or dist < min_dist:
                 min_dist = dist
                 labels[sample_idx] = center_idx
@@ -141,10 +149,11 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 @cython.cdivision(True)
 def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                            np.ndarray[DOUBLE, ndim=2] centers,
-                           np.ndarray[INT, ndim=1] counts,
+                           np.ndarray[DOUBLE, ndim=1] counts,
                            np.ndarray[INT, ndim=1] nearest_center,
                            np.ndarray[DOUBLE, ndim=1] old_center,
-                           int compute_squared_diff):
+                           int compute_squared_diff,
+                           np.ndarray[DOUBLE, ndim=1] sample_weight):
     """Incremental update of the centers for sparse MiniBatchKMeans.
 
     Parameters
@@ -160,6 +169,8 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
          The vector in which we keep track of the numbers of elements in a
          cluster
 
+    ### TODO sample_weight note
+    
     Returns
     -------
     inertia: float
@@ -185,7 +196,7 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 
         unsigned int sample_idx, center_idx, feature_idx
         unsigned int k
-        int old_count, new_count
+        DOUBLE old_count, new_count
         DOUBLE center_diff
         DOUBLE squared_diff = 0.0
 
@@ -197,7 +208,7 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         # count the number of samples assigned to this center
         for sample_idx in range(n_samples):
             if nearest_center[sample_idx] == center_idx:
-                new_count += 1
+                new_count += sample_weight[sample_idx]
 
         if new_count == old_count:
             # no new sample: leave this center as it stands
@@ -219,7 +230,7 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
             # and update of the incremental squared difference update of the
             # center position
             for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
-                centers[center_idx, X_indices[k]] += X_data[k]
+                centers[center_idx, X_indices[k]] += sample_weight[sample_idx] * X_data[k]
 
         # inplace rescale center with updated count
         if new_count > old_count:
@@ -244,7 +255,8 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 @cython.cdivision(True)
 def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
         np.ndarray[INT, ndim=1] labels, int n_clusters,
-        np.ndarray[DOUBLE, ndim=1] distances):
+        np.ndarray[DOUBLE, ndim=1] distances,
+        np.ndarray[DOUBLE, ndim=1] sample_weight):
     """M step of the K-means EM algorithm
 
     Computation of cluster centers / means.
@@ -273,7 +285,8 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
     n_features = X.shape[1]
     cdef int i, j, c
     cdef np.ndarray[DOUBLE, ndim=2] centers = np.zeros((n_clusters, n_features))
-    n_samples_in_cluster = bincount(labels, minlength=n_clusters)
+    cdef np.ndarray[DOUBLE, ndim=1] n_samples_in_cluster = \
+        bincount(labels, weights=sample_weight, minlength=n_clusters)
     empty_clusters = np.where(n_samples_in_cluster == 0)[0]
     # maybe also relocate small clusters?
 
@@ -285,19 +298,20 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
         # XXX two relocated clusters could be close to each other
         new_center = X[far_from_centers[i]]
         centers[cluster_id] = new_center
-        n_samples_in_cluster[cluster_id] = 1
+        n_samples_in_cluster[cluster_id] = sample_weight[far_from_centers[i]]
 
     for i in range(n_samples):
         for j in range(n_features):
-            centers[labels[i], j] += X[i, j]
+            # weighted centroid 
+            centers[labels[i], j] += sample_weight[i] * X[i, j]
 
     centers /= n_samples_in_cluster[:, np.newaxis]
 
     return centers
 
-
 def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
-        np.ndarray[DOUBLE, ndim=1] distances):
+        np.ndarray[DOUBLE, ndim=1] distances,
+        np.ndarray[DOUBLE, ndim=1] sample_weight):
     """M step of the K-means EM algorithm
 
     Computation of cluster centers / means.
@@ -331,8 +345,8 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
     cdef np.ndarray[DOUBLE, ndim=2, mode="c"] centers = \
         np.zeros((n_clusters, n_features))
     cdef np.ndarray[np.npy_intp, ndim=1] far_from_centers
-    cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] n_samples_in_cluster = \
-        bincount(labels, minlength=n_clusters)
+    cdef np.ndarray[DOUBLE, ndim=1, mode="c"] n_samples_in_cluster = \
+        bincount(labels, weights=sample_weight, minlength=n_clusters)
     cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] empty_clusters = \
         np.where(n_samples_in_cluster == 0)[0]
 
@@ -349,10 +363,10 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
         centers[cluster_id] = 0.
         add_row_csr(data, indices, indptr, far_from_centers[i],
                     centers[cluster_id])
-        n_samples_in_cluster[cluster_id] = 1
+        n_samples_in_cluster[cluster_id] = sample_weight[far_from_centers[i]]
 
     for i in range(labels.shape[0]):
-        add_row_csr(data, indices, indptr, i, centers[labels[i]])
+        add_row_csr(data * sample_weight[i], indices, indptr, i, centers[labels[i]])
 
     centers /= n_samples_in_cluster[:, np.newaxis]
 
