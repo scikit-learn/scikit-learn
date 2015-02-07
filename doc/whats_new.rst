@@ -306,6 +306,9 @@ Bug fixes
     - Fix log-density calculation in the :class:`mixture.GMM` with
       tied covariance. By `Will Dawson`_
 
+    - Fixed a scaling error in :class:`feature_selection.SelectFdr`
+      where a factor ``n_features`` was missing. By `Andrew Tulloch`_
+
 API changes summary
 -------------------
 
@@ -3282,3 +3285,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Will Dawson: http://dawsonresearch.com
 
 .. _Balazs Kegl: https://github.com/kegl
+
+.. _Andrew Tulloch: http://tullo.ch/

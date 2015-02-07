@@ -494,10 +494,10 @@ class SelectFdr(_BaseFilter):
     def _get_support_mask(self):
         check_is_fitted(self, 'scores_')
 
-        alpha = self.alpha
+        n_features = len(self.pvalues_)
         sv = np.sort(self.pvalues_)
-        m = float(len(self.pvalues_))
-        selected = sv[sv < alpha / m * np.arange(len(self.pvalues_))]
+        selected = sv[sv <= float(self.alpha) / n_features
+                      * np.arange(n_features)]
         if selected.size == 0:
             return np.zeros_like(self.pvalues_, dtype=bool)
         return self.pvalues_ <= selected.max()

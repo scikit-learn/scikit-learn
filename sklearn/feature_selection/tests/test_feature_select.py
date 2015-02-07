@@ -67,7 +67,7 @@ def test_f_classif():
                                class_sep=10, shuffle=False, random_state=0)
 
     F, pv = f_classif(X, y)
-    F_sparse,  pv_sparse = f_classif(sparse.csr_matrix(X), y)
+    F_sparse, pv_sparse = f_classif(sparse.csr_matrix(X), y)
     assert_true((F > 0).all())
     assert_true((pv > 0).all())
     assert_true((pv < 1).all())
@@ -261,67 +261,11 @@ def test_select_kbest_zero():
     assert_equal(X_selected.shape, (20, 0))
 
 
-def test_select_fpr_classif():
+def test_select_heuristics_classif():
     """
     Test whether the relative univariate feature selection
     gets the correct items in a simple classification problem
-    with the fpr heuristic
-    """
-    X, y = make_classification(n_samples=200, n_features=20,
-                               n_informative=3, n_redundant=2,
-                               n_repeated=0, n_classes=8,
-                               n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, random_state=0)
-
-    univariate_filter = SelectFpr(f_classif, alpha=0.0001)
-    X_r = univariate_filter.fit(X, y).transform(X)
-    X_r2 = GenericUnivariateSelect(
-        f_classif, mode='fpr', param=0.0001).fit(X, y).transform(X)
-    assert_array_equal(X_r, X_r2)
-    support = univariate_filter.get_support()
-    gtruth = np.zeros(20)
-    gtruth[:5] = 1
-    assert_array_equal(support, gtruth)
-
-
-def test_select_fdr_classif():
-    """
-    Test whether the relative univariate feature selection
-    gets the correct items in a simple classification problem
-    with the fpr heuristic
-    """
-    X, y = make_classification(n_samples=200, n_features=20,
-                               n_informative=3, n_redundant=2,
-                               n_repeated=0, n_classes=8,
-                               n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, random_state=0)
-    alpha = 0.01
-    univariate_filter = SelectFdr(f_classif, alpha=alpha)
-    X_r = univariate_filter.fit(X, y).transform(X)
-    X_r2 = GenericUnivariateSelect(
-        f_classif, mode='fdr', param=alpha).fit(X, y).transform(X)
-    assert_array_equal(X_r, X_r2)
-    support = univariate_filter.get_support()
-    gtruth = np.zeros(20)
-    gtruth[:5] = 1
-    assert_array_equal(support, gtruth)
-
-    num_false_positives = np.sum(support[5:] == 1)
-    num_true_positives = np.sum(support[:5] == 1)
-
-    false_discovery_rate = float(num_false_positives) / \
-        (num_true_positives + num_false_positives)
-    # We have that
-    #  FDR = E(num_false_positives / (true_positives + false_positives))
-    #      <= alpha
-    assert(false_discovery_rate < alpha)
-
-
-def test_select_fwe_classif():
-    """
-    Test whether the relative univariate feature selection
-    gets the correct items in a simple classification problem
-    with the fwe heuristic
+    with the fdr, fwe and fpr heuristics
     """
     X, y = make_classification(n_samples=200, n_features=20,
                                n_informative=3, n_redundant=2,
@@ -331,13 +275,14 @@ def test_select_fwe_classif():
 
     univariate_filter = SelectFwe(f_classif, alpha=0.01)
     X_r = univariate_filter.fit(X, y).transform(X)
-    X_r2 = GenericUnivariateSelect(
-        f_classif, mode='fwe', param=0.01).fit(X, y).transform(X)
-    assert_array_equal(X_r, X_r2)
-    support = univariate_filter.get_support()
     gtruth = np.zeros(20)
     gtruth[:5] = 1
-    assert_array_almost_equal(support, gtruth)
+    for mode in ['fdr', 'fpr', 'fwe']:
+        X_r2 = GenericUnivariateSelect(
+            f_classif, mode=mode, param=0.01).fit(X, y).transform(X)
+        assert_array_equal(X_r, X_r2)
+        support = univariate_filter.get_support()
+        assert_array_almost_equal(support, gtruth)
 
 
 ##############################################################################
@@ -415,8 +360,8 @@ def test_select_kbest_regression():
     gets the correct items in a simple regression problem
     with the k best heuristic
     """
-    X, y = make_regression(n_samples=200, n_features=20,
-                           n_informative=5, shuffle=False, random_state=0)
+    X, y = make_regression(n_samples=200, n_features=20, n_informative=5,
+                           shuffle=False, random_state=0, noise=10)
 
     univariate_filter = SelectKBest(f_regression, k=5)
     X_r = univariate_filter.fit(X, y).transform(X)
@@ -430,39 +375,38 @@ def test_select_kbest_regression():
     assert_array_equal(support, gtruth)
 
 
-def test_select_fpr_regression():
+def test_select_heuristics_regression():
     """
     Test whether the relative univariate feature selection
     gets the correct items in a simple regression problem
-    with the fpr heuristic
+    with the fpr, fdr or fwe heuristics
     """
-    X, y = make_regression(n_samples=200, n_features=20,
-                           n_informative=5, shuffle=False, random_state=0)
+    X, y = make_regression(n_samples=200, n_features=20, n_informative=5,
+                           shuffle=False, random_state=0, noise=10)
 
     univariate_filter = SelectFpr(f_regression, alpha=0.01)
     X_r = univariate_filter.fit(X, y).transform(X)
-    X_r2 = GenericUnivariateSelect(
-        f_regression, mode='fpr', param=0.01).fit(X, y).transform(X)
-    assert_array_equal(X_r, X_r2)
-    support = univariate_filter.get_support()
     gtruth = np.zeros(20)
     gtruth[:5] = 1
-    assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))
-    assert_less(np.sum(support[5:] == 1), 3)
+    for mode in ['fdr', 'fpr', 'fwe']:
+        X_r2 = GenericUnivariateSelect(
+            f_regression, mode=mode, param=0.01).fit(X, y).transform(X)
+        assert_array_equal(X_r, X_r2)
+        support = univariate_filter.get_support()
+        assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))
+        assert_less(np.sum(support[5:] == 1), 3)
 
 
 def test_select_fdr_regression():
     """
-    Test whether the relative univariate feature selection
-    gets the correct items in a simple regression problem
-    with the fdr heuristic.
-
-    Tests that the scaling factors
+    Test that fdr heuristic actually has low FDR.
     """
-    def scale_invariance(n_samples, n_features, n_informative, alpha):
-        X, y = make_regression(n_samples=n_samples, n_features=n_features,
+    def single_fdr(alpha, n_informative, random_state):
+        n_features = 5 * n_informative
+
+        X, y = make_regression(n_samples=150, n_features=n_features,
                                n_informative=n_informative, shuffle=False,
-                               random_state=0)
+                               random_state=random_state, noise=10)
 
         univariate_filter = SelectFdr(f_regression, alpha=alpha)
         X_r = univariate_filter.fit(X, y).transform(X)
@@ -475,14 +419,19 @@ def test_select_fdr_regression():
 
         false_discovery_rate = float(num_false_positives) / \
             (num_true_positives + num_false_positives)
-        # We have that
-        #  FDR = E(num_false_positives / (true_positives + false_positives))
-        #      <= alpha
-        assert(false_discovery_rate < alpha)
+        return false_discovery_rate
 
-    feature_scaling_factors = (5, 10, 20)
-    for scale_factor in feature_scaling_factors:
-        scale_invariance(2000, 5 * scale_factor, 1 * scale_factor, 0.05)
+    for alpha in [0.01, 0.05, 0.1, 0.2]:
+        for n_informative in [5, 10, 20]:
+            # We have that
+            #  FDR = E(FP / (TP + FP)) <= alpha
+            false_discovery_rate = np.mean([single_fdr(alpha, n_informative,
+                                                       random_state) for
+                                            random_state in range(40)])
+            assert_true(false_discovery_rate <= alpha)
+            # also FDR is actually goes up with alpha
+            # (for a very small alpha, we might get 0 FDR)
+            assert_true(alpha <= 10 * max(false_discovery_rate, .001))
 
 
 def test_select_fwe_regression():
