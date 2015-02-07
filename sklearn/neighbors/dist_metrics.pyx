@@ -83,7 +83,7 @@ METRIC_MAPPING = {'euclidean': EuclideanDistance,
                   'pyfunc': PyFuncDistance}
 
 
-cdef public list get_valid_metric_ids(list L):
+def get_valid_metric_ids(list L):
     """Given an iterable of metric class names or class identifiers,
     return a list of metric IDs which map to those classes.
 

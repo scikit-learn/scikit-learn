@@ -9,8 +9,7 @@ from scipy.special import gammainc
 from ..base import BaseEstimator
 from ..utils import check_array, check_random_state
 from ..utils.extmath import row_norms
-from .ball_tree import BallTree, DTYPE
-from .kd_tree import KDTree
+from .binary_tree import BallTree, DTYPE, KDTree
 
 
 VALID_KERNELS = ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear',

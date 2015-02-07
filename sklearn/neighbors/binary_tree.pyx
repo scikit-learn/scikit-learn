@@ -1,4 +1,6 @@
-#!python
+#cython: boundscheck=False
+#cython: wraparound=False
+#cython: cdivision=True
 
 # KD Tree and Ball Tree
 # =====================
@@ -85,22 +87,12 @@
 # "reduced distance", which is often faster to compute, and is therefore
 # used in the query architecture whenever possible. (For example, in the
 # case of the standard Euclidean distance, the reduced distance is the
-# squared-distance).
-#
-# Implementation Notes
-# --------------------
-# This implementation uses the common object-oriented approach of having an
-# abstract base class which is extended by the KDTree and BallTree
-# specializations.
-#
-# The BinaryTree "base class" is defined here and then subclassed in the BallTree
-# and KDTree pyx files. These files include implementations of the
-# "abstract" methods.
+# squared distance).
 
 cimport cython
 cimport numpy as np
 from libc.math cimport fabs, sqrt, exp, cos, pow, log
-from numpy.math cimport PI, INFINITY
+from numpy.math cimport PI, INFINITY, isinf
 from sklearn.utils.lgamma cimport lgamma
 
 import numpy as np
@@ -112,6 +104,7 @@ include "typedefs.pxi"
 
 from dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
                            euclidean_dist_to_rdist, euclidean_rdist_to_dist)
+from dist_metrics import get_valid_metric_ids
 
 # some handy constants
 cdef DTYPE_t ROOT_2PI = sqrt(2 * PI)
@@ -143,7 +136,7 @@ NodeData = np.asarray(<NodeData_t[:1]>(&nd_tmp)).dtype
 ######################################################################
 # Define doc strings, substituting the appropriate class name using
 # the DOC_DICT variable defined in the pyx files.
-CLASS_DOC = \
+cdef str CLASS_DOC = \
 """{BinaryTree} for fast generalized N-point problems
 
 {BinaryTree}(X, leaf_size=40, metric='minkowski', **kwargs)
@@ -870,11 +863,6 @@ def newObj(obj):
 
 
 ######################################################################
-# define the reverse mapping of VALID_METRICS
-from dist_metrics cimport get_valid_metric_ids
-
-
-######################################################################
 # Binary Tree class
 cdef class BinaryTree:
 
@@ -884,9 +872,9 @@ cdef class BinaryTree:
     cdef np.ndarray node_bounds_arr
 
     cdef readonly DTYPE_t[:, ::1] data
-    cdef public ITYPE_t[::1] idx_array
-    cdef public NodeData_t[::1] node_data
-    cdef public DTYPE_t[:, :, ::1] node_bounds
+    cdef ITYPE_t[::1] idx_array
+    cdef NodeData_t[::1] node_data
+    cdef DTYPE_t[:, :, ::1] node_bounds
 
     cdef ITYPE_t leaf_size
     cdef ITYPE_t n_levels
@@ -936,7 +924,7 @@ cdef class BinaryTree:
                           == 'EuclideanDistance')
 
         metric = self.dist_metric.__class__.__name__
-        if metric not in self.valid_metrics:
+        if metric not in self.VALID_METRICS:
             raise ValueError('metric {metric} is not valid for {typ}'
                              .format(metric=metric, typ=type(self)))
 
@@ -971,7 +959,7 @@ cdef class BinaryTree:
         """
         reduce method used for pickling
         """
-        return (newObj, (BinaryTree,), self.__getstate__())
+        return (newObj, (type(self),), self.__getstate__())
 
     def __getstate__(self):
         """
@@ -1194,6 +1182,8 @@ cdef class BinaryTree:
         self.n_trims = 0
         self.n_leaves = 0
         self.n_splits = 0
+
+        cdef BinaryTree other
 
         if dualtree:
             other = self.__class__(np_Xarr, metric=self.dist_metric,
@@ -1593,7 +1583,7 @@ cdef class BinaryTree:
 
         return count
 
-    cdef int allocate_date(self, ITYPE_t n_nodes, ITYPE_t n_features) except -1:
+    cdef int allocate_data(self, ITYPE_t n_nodes, ITYPE_t n_features) except -1:
         """Allocate arrays needed for the KD Tree"""
         raise NotImplementedError()
 
@@ -2423,8 +2413,352 @@ def nodeheap_sort(DTYPE_t[::1] vals):
     return np.asarray(vals_sorted), np.asarray(indices)
 
 # Reimplementation for MSVC support
-cdef inline double fmin(double a, double b):
+cdef inline double fmin(double a, double b) nogil:
     return min(a, b)
 
-cdef inline double fmax(double a, double b):
+cdef inline double fmax(double a, double b) nogil:
     return max(a, b)
+
+
+# Concrete subclasses
+
+cdef class BallTree(BinaryTree):
+    __doc__ = CLASS_DOC.format(BinaryTree='BallTree', binary_tree='ball_tree')
+
+    VALID_METRICS = ['EuclideanDistance', 'SEuclideanDistance',
+                     'ManhattanDistance', 'ChebyshevDistance',
+                     'MinkowskiDistance', 'WMinkowskiDistance',
+                     'MahalanobisDistance', 'HammingDistance',
+                     'CanberraDistance', 'BrayCurtisDistance',
+                     'JaccardDistance', 'MatchingDistance', 'DiceDistance',
+                     'KulsinskiDistance', 'RogersTanimotoDistance',
+                     'RussellRaoDistance', 'SokalMichenerDistance',
+                     'SokalSneathDistance', 'PyFuncDistance',
+                     'HaversineDistance']
+    valid_metrics = get_valid_metric_ids(VALID_METRICS)
+
+    # Implementations of abstract methods.
+    #
+    # Note that these functions use the concept of "reduced distance".
+    # The reduced distance, defined for some metrics, is a quantity which
+    # is more efficient to compute than the distance, but preserves the
+    # relative rankings of the true distance.  For example, the reduced
+    # distance for the Euclidean metric is the squared-euclidean distance.
+    # For some metrics, the reduced distance is simply the distance.
+
+    cdef int allocate_data(self, ITYPE_t n_nodes, ITYPE_t n_features) except -1:
+        self.node_bounds_arr = np.zeros((1, n_nodes, n_features), dtype=DTYPE)
+        self.node_bounds = self.node_bounds_arr
+        return 0
+
+    cdef int init_node(self, ITYPE_t i_node,
+                       ITYPE_t idx_start, ITYPE_t idx_end) except -1:
+        cdef ITYPE_t n_features = self.data.shape[1]
+        cdef ITYPE_t n_points = idx_end - idx_start
+
+        cdef ITYPE_t i, j
+        cdef DTYPE_t radius
+        cdef DTYPE_t *this_pt
+
+        cdef ITYPE_t* idx_array = &self.idx_array[0]
+        cdef DTYPE_t* data = &self.data[0, 0]
+        cdef DTYPE_t* centroid = &self.node_bounds[0, i_node, 0]
+
+        # determine Node centroid
+        for j in range(n_features):
+            centroid[j] = 0
+
+        for i in range(idx_start, idx_end):
+            this_pt = data + n_features * idx_array[i]
+            for j from 0 <= j < n_features:
+                centroid[j] += this_pt[j]
+
+        for j in range(n_features):
+            centroid[j] /= n_points
+
+        # determine Node radius
+        radius = 0
+        for i in range(idx_start, idx_end):
+            radius = fmax(radius,
+                          self.rdist(centroid,
+                                     data + n_features * idx_array[i],
+                                     n_features))
+
+        self.node_data[i_node].radius = self.dist_metric._rdist_to_dist(radius)
+        self.node_data[i_node].idx_start = idx_start
+        self.node_data[i_node].idx_end = idx_end
+        return 0
+
+    cdef DTYPE_t min_dist(self, ITYPE_t i_node, DTYPE_t* pt) except -1:
+        cdef DTYPE_t dist_pt = self.dist(pt, &self.node_bounds[0, i_node, 0],
+                                         self.data.shape[1])
+        return fmax(0, dist_pt - self.node_data[i_node].radius)
+
+    cdef DTYPE_t max_dist(self, ITYPE_t i_node, DTYPE_t* pt) except -1:
+        cdef DTYPE_t dist_pt = self.dist(pt, &self.node_bounds[0, i_node, 0],
+                                         self.data.shape[1])
+        return dist_pt + self.node_data[i_node].radius
+
+    cdef int min_max_dist(self, ITYPE_t i_node, DTYPE_t* pt,
+                          DTYPE_t* min_dist, DTYPE_t* max_dist) except -1:
+        cdef DTYPE_t dist_pt = self.dist(pt, &self.node_bounds[0, i_node, 0],
+                                         self.data.shape[1])
+        cdef DTYPE_t rad = self.node_data[i_node].radius
+        min_dist[0] = fmax(0, dist_pt - rad)
+        max_dist[0] = dist_pt + rad
+        return 0
+
+    cdef DTYPE_t min_rdist(self, ITYPE_t i_node, DTYPE_t* pt) except -1:
+        if self.euclidean:
+            return euclidean_dist_to_rdist(self.min_dist(i_node, pt))
+        else:
+            return self.dist_metric._dist_to_rdist(self.min_dist(i_node, pt))
+
+    cdef DTYPE_t max_rdist(self, ITYPE_t i_node, DTYPE_t* pt) except -1:
+        if self.euclidean:
+            return euclidean_dist_to_rdist(self.max_dist(i_node, pt))
+        else:
+            return self.dist_metric._dist_to_rdist(self.max_dist(i_node, pt))
+
+    cdef DTYPE_t min_dist_dual(self, ITYPE_t i_node1,
+                               BinaryTree other, ITYPE_t i_node2) except -1:
+        cdef DTYPE_t dist_pt = self.dist(&other.node_bounds[0, i_node2, 0],
+                                         &self.node_bounds[0, i_node1, 0],
+                                         self.data.shape[1])
+        return fmax(0, (dist_pt - self.node_data[i_node1].radius
+                        - other.node_data[i_node2].radius))
+
+    cdef DTYPE_t max_dist_dual(self, ITYPE_t i_node1,
+                               BinaryTree other, ITYPE_t i_node2) except -1:
+        cdef DTYPE_t dist_pt = self.dist(&other.node_bounds[0, i_node2, 0],
+                                         &self.node_bounds[0, i_node1, 0],
+                                         self.data.shape[1])
+        return (dist_pt + self.node_data[i_node1].radius
+                + other.node_data[i_node2].radius)
+
+    cdef DTYPE_t min_rdist_dual(self, ITYPE_t i_node1,
+                                BinaryTree other, ITYPE_t i_node2) except -1:
+        cdef DTYPE_t d = self.min_dist_dual(i_node1, other, i_node2)
+        if self.euclidean:
+            return euclidean_dist_to_rdist(d)
+        else:
+            return self.dist_metric._dist_to_rdist(d)
+
+    cdef DTYPE_t max_rdist_dual(self, ITYPE_t i_node1,
+                                BinaryTree other, ITYPE_t i_node2) except -1:
+        cdef DTYPE_t d = self.max_dist_dual(i_node1, other, i_node2)
+        if self.euclidean:
+            return euclidean_dist_to_rdist(d)
+        else:
+            return self.dist_metric._dist_to_rdist(d)
+
+
+cdef class KDTree(BinaryTree):
+    __doc__ = CLASS_DOC.format(BinaryTree='KDTree', binary_tree='kd_tree')
+
+    VALID_METRICS = ['EuclideanDistance', 'ManhattanDistance',
+                     'ChebyshevDistance', 'MinkowskiDistance']
+    valid_metrics = get_valid_metric_ids(VALID_METRICS)
+
+    # Implement abstract methods.
+    #
+    # Note that these functions use the concept of "reduced distance".
+    # The reduced distance, defined for some metrics, is a quantity which
+    # is more efficient to compute than the distance, but preserves the
+    # relative rankings of the true distance.  For example, the reduced
+    # distance for the Euclidean metric is the squared-euclidean distance.
+    # For some metrics, the reduced distance is simply the distance.
+
+    cdef int allocate_data(self, ITYPE_t n_nodes, ITYPE_t n_features) except -1:
+        self.node_bounds_arr = np.zeros((2, n_nodes, n_features), dtype=DTYPE)
+        self.node_bounds = self.node_bounds_arr
+        return 0
+
+    cdef int init_node(self, ITYPE_t i_node,
+                       ITYPE_t idx_start, ITYPE_t idx_end) except -1:
+        cdef ITYPE_t n_features = self.data.shape[1]
+        cdef ITYPE_t i, j
+        cdef DTYPE_t rad = 0
+
+        cdef DTYPE_t* lower_bounds = &self.node_bounds[0, i_node, 0]
+        cdef DTYPE_t* upper_bounds = &self.node_bounds[1, i_node, 0]
+        cdef DTYPE_t* data = &self.data[0, 0]
+        cdef ITYPE_t* idx_array = &self.idx_array[0]
+
+        cdef DTYPE_t* data_row
+
+        # determine Node bounds
+        for j in range(n_features):
+            lower_bounds[j] = INFINITY
+            upper_bounds[j] = -INFINITY
+
+        # Compute the actual data range.  At build time, this is slightly
+        # slower than using the previously-computed bounds of the parent node,
+        # but leads to more compact trees and thus faster queries.
+        for i in range(idx_start, idx_end):
+            data_row = data + idx_array[i] * n_features
+            for j in range(n_features):
+                lower_bounds[j] = min(lower_bounds[j], data_row[j])
+                upper_bounds[j] = max(upper_bounds[j], data_row[j])
+            if isinf(self.dist_metric.p) == 1:
+                rad = max(rad, 0.5 * (upper_bounds[j] - lower_bounds[j]))
+            else:
+                rad += pow(0.5 * abs(upper_bounds[j] - lower_bounds[j]),
+                           self.dist_metric.p)
+
+        self.node_data[i_node].idx_start = idx_start
+        self.node_data[i_node].idx_end = idx_end
+
+        # The radius will hold the size of the circumscribed hypersphere
+        # measured with the specified metric: in querying, this is used as a
+        # measure of the size of each node when deciding which nodes to split.
+        self.node_data[i_node].radius = pow(rad, 1. / self.dist_metric.p)
+        return 0
+
+    cdef DTYPE_t min_rdist(self, ITYPE_t i_node, DTYPE_t* pt) except -1:
+        cdef ITYPE_t n_features = self.data.shape[1]
+        cdef DTYPE_t d, d_lo, d_hi, rdist=0.0
+        cdef ITYPE_t j
+
+        if isinf(self.dist_metric.p) == 1:
+            for j in range(n_features):
+                d_lo = self.node_bounds[0, i_node, j] - pt[j]
+                d_hi = pt[j] - self.node_bounds[1, i_node, j]
+                d = (d_lo + fabs(d_lo)) + (d_hi + fabs(d_hi))
+                rdist = max(rdist, 0.5 * d)
+        else:
+            # here we'll use the fact that x + abs(x) = 2 * max(x, 0)
+            for j in range(n_features):
+                d_lo = self.node_bounds[0, i_node, j] - pt[j]
+                d_hi = pt[j] - self.node_bounds[1, i_node, j]
+                d = (d_lo + fabs(d_lo)) + (d_hi + fabs(d_hi))
+                rdist += pow(0.5 * d, self.dist_metric.p)
+
+        return rdist
+
+    cdef DTYPE_t min_dist(self, ITYPE_t i_node, DTYPE_t* pt) except -1:
+        if isinf(self.dist_metric.p) == 1:
+            return self.min_rdist(i_node, pt)
+        else:
+            return pow(self.min_rdist(i_node, pt), 1. / self.dist_metric.p)
+
+    cdef DTYPE_t max_rdist(self, ITYPE_t i_node, DTYPE_t* pt) except -1:
+        cdef ITYPE_t n_features = self.data.shape[1]
+
+        cdef DTYPE_t d, d_lo, d_hi, rdist=0.0
+        cdef ITYPE_t j
+
+        if isinf(self.dist_metric.p) == 1:
+            for j in range(n_features):
+                rdist = max(rdist, fabs(pt[j] - self.node_bounds[0, i_node, j]))
+                rdist = max(rdist, fabs(pt[j] - self.node_bounds[1, i_node, j]))
+        else:
+            for j in range(n_features):
+                d_lo = fabs(pt[j] - self.node_bounds[0, i_node, j])
+                d_hi = fabs(pt[j] - self.node_bounds[1, i_node, j])
+                rdist += pow(max(d_lo, d_hi), self.dist_metric.p)
+
+        return rdist
+
+    cdef DTYPE_t max_dist(self, ITYPE_t i_node, DTYPE_t* pt) except -1:
+        if isinf(self.dist_metric.p) == 1:
+            return self.max_rdist(i_node, pt)
+        else:
+            return pow(self.max_rdist(i_node, pt), 1. / self.dist_metric.p)
+
+    cdef int min_max_dist(self, ITYPE_t i_node, DTYPE_t* pt,
+                          DTYPE_t* min_dist, DTYPE_t* max_dist) except -1:
+        cdef ITYPE_t n_features = self.data.shape[1]
+
+        cdef DTYPE_t d, d_lo, d_hi
+        cdef ITYPE_t j
+
+        min_dist[0] = 0.0
+        max_dist[0] = 0.0
+
+        if isinf(self.dist_metric.p) == 1:
+            for j in range(n_features):
+                d_lo = self.node_bounds[0, i_node, j] - pt[j]
+                d_hi = pt[j] - self.node_bounds[1, i_node, j]
+                d = (d_lo + fabs(d_lo)) + (d_hi + fabs(d_hi))
+                min_dist[0] = max(min_dist[0], 0.5 * d)
+                max_dist[0] = max(max_dist[0],
+                                  fabs(pt[j] - self.node_bounds[0, i_node, j]))
+                max_dist[0] = max(max_dist[0],
+                                  fabs(pt[j] - self.node_bounds[1, i_node, j]))
+        else:
+            # as above, use the fact that x + abs(x) = 2 * max(x, 0)
+            for j in range(n_features):
+                d_lo = self.node_bounds[0, i_node, j] - pt[j]
+                d_hi = pt[j] - self.node_bounds[1, i_node, j]
+                d = (d_lo + fabs(d_lo)) + (d_hi + fabs(d_hi))
+                min_dist[0] += pow(0.5 * d, self.dist_metric.p)
+                max_dist[0] += pow(max(fabs(d_lo), fabs(d_hi)),
+                                   self.dist_metric.p)
+
+            min_dist[0] = pow(min_dist[0], 1. / self.dist_metric.p)
+            max_dist[0] = pow(max_dist[0], 1. / self.dist_metric.p)
+
+        return 0
+
+    cdef DTYPE_t min_rdist_dual(self, ITYPE_t i_node1,
+                                BinaryTree other, ITYPE_t i_node2) except -1:
+        cdef ITYPE_t n_features = self.data.shape[1]
+
+        cdef DTYPE_t d, d1, d2, rdist=0.0
+        cdef ITYPE_t j
+
+        if isinf(self.dist_metric.p) == 1:
+            for j in range(n_features):
+                d1 = (self.node_bounds[0, i_node1, j]
+                     - other.node_bounds[1, i_node2, j])
+                d2 = (other.node_bounds[0, i_node2, j]
+                     - self.node_bounds[1, i_node1, j])
+                d = (d1 + fabs(d1)) + (d2 + fabs(d2))
+
+                rdist = max(rdist, 0.5 * d)
+        else:
+            # here we'll use the fact that x + abs(x) = 2 * max(x, 0)
+            for j in range(n_features):
+                d1 = (self.node_bounds[0, i_node1, j]
+                      - other.node_bounds[1, i_node2, j])
+                d2 = (other.node_bounds[0, i_node2, j]
+                      - self.node_bounds[1, i_node1, j])
+                d = (d1 + fabs(d1)) + (d2 + fabs(d2))
+
+                rdist += pow(0.5 * d, self.dist_metric.p)
+
+        return rdist
+
+    cdef DTYPE_t min_dist_dual(self, ITYPE_t i_node1,
+                               BinaryTree other, ITYPE_t i_node2) except -1:
+        cdef DTYPE_t rd = self.min_rdist_dual(i_node1, other, i_node2)
+        return self.dist_metric._rdist_to_dist(rd)
+
+    cdef DTYPE_t max_rdist_dual(self, ITYPE_t i_node1,
+                                BinaryTree other, ITYPE_t i_node2) except -1:
+        cdef ITYPE_t n_features = self.data.shape[1]
+
+        cdef DTYPE_t d, d1, d2, rdist=0.0
+        cdef ITYPE_t j
+
+        if isinf(self.dist_metric.p) == 1:
+            for j in range(n_features):
+                rdist = max(rdist, fabs(self.node_bounds[0, i_node1, j]
+                                        - other.node_bounds[1, i_node2, j]))
+                rdist = max(rdist, fabs(self.node_bounds[1, i_node1, j]
+                                        - other.node_bounds[0, i_node2, j]))
+        else:
+            for j in range(n_features):
+                d1 = fabs(self.node_bounds[0, i_node1, j]
+                          - other.node_bounds[1, i_node2, j])
+                d2 = fabs(self.node_bounds[1, i_node1, j]
+                          - other.node_bounds[0, i_node2, j])
+                rdist += pow(max(d1, d2), self.dist_metric.p)
+
+        return rdist
+
+    cdef DTYPE_t max_dist_dual(self, ITYPE_t i_node1,
+                               BinaryTree other, ITYPE_t i_node2) except -1:
+        cdef DTYPE_t rd = self.max_rdist_dual(i_node1, other, i_node2)
+        return self.dist_metric._rdist_to_dist(rd)

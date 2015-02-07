@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.utils.testing import (assert_allclose, assert_raises,
                                    assert_equal)
 from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
-from sklearn.neighbors.ball_tree import kernel_norm
+from sklearn.neighbors.binary_tree import kernel_norm
 from sklearn.pipeline import make_pipeline
 from sklearn.datasets import make_blobs
 from sklearn.grid_search import GridSearchCV

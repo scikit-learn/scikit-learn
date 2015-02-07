@@ -1,8 +1,8 @@
 import numpy as np
 from numpy.testing import assert_array_almost_equal
-from sklearn.neighbors.kd_tree import (KDTree, NeighborsHeap,
-                                       simultaneous_sort, kernel_norm,
-                                       nodeheap_sort, DTYPE, ITYPE)
+from sklearn.neighbors.binary_tree import (KDTree, NeighborsHeap,
+                                           simultaneous_sort, kernel_norm,
+                                           nodeheap_sort, DTYPE, ITYPE)
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from sklearn.utils.testing import SkipTest, assert_allclose
 

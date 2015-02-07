@@ -10,13 +10,8 @@ def configuration(parent_package='', top_path=None):
     if os.name == 'posix':
         libraries.append('m')
 
-    config.add_extension('ball_tree',
-                         sources=['ball_tree.c'],
-                         include_dirs=[numpy.get_include()],
-                         libraries=libraries)
-
-    config.add_extension('kd_tree',
-                         sources=['kd_tree.c'],
+    config.add_extension('binary_tree',
+                         sources=['binary_tree.c'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 

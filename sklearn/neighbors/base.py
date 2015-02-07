@@ -12,8 +12,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
 
-from .ball_tree import BallTree
-from .kd_tree import KDTree
+from .binary_tree import BallTree, KDTree
 from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
