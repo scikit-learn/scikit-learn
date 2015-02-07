@@ -22,6 +22,8 @@ from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster.k_means_ import _labels_inertia
+from sklearn.cluster.k_means_ import _kmeans_single
+from sklearn.cluster.k_means_ import _k_init
 from sklearn.cluster.k_means_ import _mini_batch_step
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.externals.six.moves import cStringIO as StringIO
@@ -38,6 +40,103 @@ n_clusters, n_features = centers.shape
 X, true_labels = make_blobs(n_samples=n_samples, centers=centers,
                             cluster_std=1., random_state=42)
 X_csr = sp.csr_matrix(X)
+sample_unweight = np.ones((n_samples,))
+
+
+def test_weighted_kmeans():
+    clf_a = KMeans(random_state=42).fit(X[:75])
+    unweighted_labels = clf_a.predict(X[75:])
+    clf_b = KMeans(random_state=42).fit(
+        X[:75], sample_weight=sample_unweight[:75])
+    weighted_labels = clf_b.predict(X[75:])
+    assert_array_equal(weighted_labels, unweighted_labels)
+
+    clf_c = KMeans(random_state=42).fit(
+        X_csr[:75], sample_weight=sample_unweight[:75])
+    sparse_weighted_labels = clf_b.predict(X[75:])
+    assert_array_equal(sparse_weighted_labels, unweighted_labels)
+
+
+def test_weighted_kmeans_weight_flag():
+    km = KMeans()
+    assert_raises(TypeError, km.fit, X, sample_weight=1)
+    assert_raises(
+        ValueError, km.fit, X, sample_weight=np.ones((n_samples + 1,)))
+    assert_raises(ValueError, km.fit, X, sample_weight=np.ones((n_samples, 1)))
+
+
+def test_weighted_kmeans_single():
+    # Test that given the same initial conditions, a single step of kmeans
+    # gives same center with trivial default weights and non-trivial
+    # constant weight.
+    # Checks that total inertia scales with the weight
+    scale = 2
+    x_squared_norms = row_norms(X, squared=True)
+
+    labels_a, inertia_a, centers_a, _ = _kmeans_single(
+        X, n_clusters, x_squared_norms, init='random',
+        random_state=42, sample_weight=sample_unweight)
+
+    labels_b, inertia_b, centers_b, _ = _kmeans_single(
+        X, n_clusters, x_squared_norms, init='random',
+        random_state=42, sample_weight=scale * sample_unweight)
+    assert_array_equal(labels_a, labels_b)
+    assert_equal(inertia_b, scale * inertia_a)
+    assert_array_almost_equal(centers_a, centers_b)
+
+    # Tests cython implementation of assign_labels
+    labels_c, inertia_c, centers_c, _ = _kmeans_single(
+        X, n_clusters, x_squared_norms,
+        init='random',
+        precompute_distances=False, random_state=42,
+        sample_weight=scale * sample_unweight)
+    assert_array_equal(labels_c, labels_b)
+    assert_array_almost_equal(centers_c, centers_b)
+    assert_almost_equal(inertia_b, inertia_c)
+
+
+def test_weighted_kmeans_single_sparse():
+    # Test that given the same initial conditions, a single step of kmeans
+    # gives same center with trivial default weights and non-trivial
+    # constant weight.
+    # Checks that total inertia scales with the weight
+    scale = 2
+    x_squared_norms = row_norms(X_csr, squared=True)
+
+    labels_a, inertia_a, centers_a, _ = _kmeans_single(
+        X_csr, n_clusters, x_squared_norms, init='random',
+        random_state=42, sample_weight=sample_unweight)
+
+    labels_b, inertia_b, centers_b, _ = _kmeans_single(
+        X_csr, n_clusters, x_squared_norms, init='random',
+        random_state=42, sample_weight=scale * sample_unweight)
+    assert_array_equal(labels_a, labels_b)
+    assert_almost_equal(inertia_b, scale * inertia_a)
+    assert_array_almost_equal(centers_a, centers_b)
+
+    # Tests cython implementation of assign_labels
+    labels_c, inertia_c, centers_c, _ = _kmeans_single(
+        X_csr, n_clusters, x_squared_norms, init='random',
+        precompute_distances=False, random_state=42,
+        sample_weight=scale * sample_unweight)
+    assert_array_equal(labels_c, labels_b)
+    assert_array_almost_equal(centers_c, centers_b)
+    assert_almost_equal(inertia_b, inertia_c)
+
+
+def test_weighted_k_init():
+    # Trivial weight and non-trivial constant weight should give the same
+    # centers under identical seeds
+    seed = 1234
+    x_squared_norms = row_norms(X, squared=True)
+    centers_a = _k_init(X, 2, x_squared_norms,
+                        random_state=np.random.RandomState(seed),
+                        sample_weight=sample_unweight)
+
+    centers_b = _k_init(X, 2, x_squared_norms,
+                        random_state=np.random.RandomState(seed),
+                        sample_weight=sample_unweight * 2)
+    assert_array_almost_equal(centers_a, centers_b)
 
 
 def test_kmeans_dtype():
@@ -68,14 +167,15 @@ def test_labels_assignment_and_inertia():
     # perform label assignment using the dense array input
     x_squared_norms = (X ** 2).sum(axis=1)
     labels_array, inertia_array = _labels_inertia(
-        X, x_squared_norms, noisy_centers)
+        X, x_squared_norms, noisy_centers, sample_weight=sample_unweight)
     assert_array_almost_equal(inertia_array, inertia_gold)
     assert_array_equal(labels_array, labels_gold)
 
     # perform label assignment using the sparse CSR input
     x_squared_norms_from_csr = row_norms(X_csr, squared=True)
     labels_csr, inertia_csr = _labels_inertia(
-        X_csr, x_squared_norms_from_csr, noisy_centers)
+        X_csr, x_squared_norms_from_csr, noisy_centers,
+        sample_weight=sample_unweight)
     assert_array_almost_equal(inertia_csr, inertia_gold)
     assert_array_equal(labels_csr, labels_gold)
 
@@ -88,8 +188,8 @@ def test_minibatch_update_consistency():
     new_centers = old_centers.copy()
     new_centers_csr = old_centers.copy()
 
-    counts = np.zeros(new_centers.shape[0], dtype=np.int32)
-    counts_csr = np.zeros(new_centers.shape[0], dtype=np.int32)
+    counts = np.zeros(new_centers.shape[0], dtype=np.float64)
+    counts_csr = np.zeros(new_centers.shape[0], dtype=np.float64)
 
     x_squared_norms = (X ** 2).sum(axis=1)
     x_squared_norms_csr = row_norms(X_csr, squared=True)
@@ -102,16 +202,19 @@ def test_minibatch_update_consistency():
     X_mb_csr = X_csr[:10]
     x_mb_squared_norms = x_squared_norms[:10]
     x_mb_squared_norms_csr = x_squared_norms_csr[:10]
+    sample_unweight_mb = sample_unweight[:10]
 
     # step 1: compute the dense minibatch update
     old_inertia, incremental_diff = _mini_batch_step(
         X_mb, x_mb_squared_norms, new_centers, counts,
-        buffer, 1, None, random_reassign=False)
+        buffer, 1, None, random_reassign=False,
+        sample_weight=sample_unweight_mb)
     assert_greater(old_inertia, 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
     labels, new_inertia = _labels_inertia(
-        X_mb, x_mb_squared_norms, new_centers)
+        X_mb, x_mb_squared_norms, new_centers,
+        sample_weight=sample_unweight_mb)
     assert_greater(new_inertia, 0.0)
     assert_less(new_inertia, old_inertia)
 
@@ -123,12 +226,14 @@ def test_minibatch_update_consistency():
     # step 2: compute the sparse minibatch update
     old_inertia_csr, incremental_diff_csr = _mini_batch_step(
         X_mb_csr, x_mb_squared_norms_csr, new_centers_csr, counts_csr,
-        buffer_csr, 1, None, random_reassign=False)
+        buffer_csr, 1, None, random_reassign=False,
+        sample_weight=sample_unweight_mb)
     assert_greater(old_inertia_csr, 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
     labels_csr, new_inertia_csr = _labels_inertia(
-        X_mb_csr, x_mb_squared_norms_csr, new_centers_csr)
+        X_mb_csr, x_mb_squared_norms_csr, new_centers_csr,
+        sample_weight=sample_unweight_mb)
     assert_greater(new_inertia_csr, 0.0)
     assert_less(new_inertia_csr, old_inertia_csr)
 
@@ -421,7 +526,7 @@ def test_minibatch_with_many_reassignments():
 
 def test_sparse_mb_k_means_callable_init():
 
-    def test_init(X, k, random_state):
+    def test_init(X, k, random_state, sample_weight=None):
         return centers
 
     # Small test to check that giving the wrong number of centers
@@ -654,8 +759,9 @@ def test_k_means_function():
     old_stdout = sys.stdout
     sys.stdout = StringIO()
     try:
-        cluster_centers, labels, inertia = k_means(X, n_clusters=n_clusters,
-                                                   verbose=True)
+        cluster_centers, labels, inertia = k_means(
+            X, n_clusters=n_clusters, verbose=True,
+            sample_weight=sample_unweight)
     finally:
         sys.stdout = old_stdout
     centers = cluster_centers
@@ -670,7 +776,8 @@ def test_k_means_function():
 
     # check warning when centers are passed
     assert_warns(RuntimeWarning, k_means, X, n_clusters=n_clusters,
-                 init=centers)
+                 init=centers, sample_weight=sample_unweight)
 
     # to many clusters desired
-    assert_raises(ValueError, k_means, X, n_clusters=X.shape[0] + 1)
+    assert_raises(ValueError, k_means, X, n_clusters=X.shape[
+                  0] + 1, sample_weight=sample_unweight)
