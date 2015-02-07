@@ -25,7 +25,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC, SVR
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SelectKBest
-from sklearn.cross_validation import train_test_split
+from sklearn.cross_validation import train_test_split, StratifiedKFold
 from sklearn.datasets import load_boston, load_iris
 from sklearn.utils import check_random_state
 
@@ -482,7 +482,7 @@ def test_parallel_regression():
 def test_gridsearch():
     """Check that bagging ensembles can be grid-searched."""
     # Transform iris into a binary classification task
-    X, y = iris.data, iris.target
+    X, y = iris.data, iris.target.copy()
     y[y == 2] = 1
 
     # Grid search with scoring based on decision_function
@@ -549,6 +549,63 @@ def test_bagging_with_pipeline():
                                                 DecisionTreeClassifier()),
                                   max_features=2)
     estimator.fit(iris.data, iris.target)
+
+
+def test_class_weights():
+    """Check class_weights resemble sample_weights behavior."""
+    for train_index, test_index in StratifiedKFold(iris.target, n_folds=2,
+                                                   random_state=0):
+
+        # Iris is balanced, so no effect expected for using 'auto' weights
+        clf1 = BaggingClassifier(random_state=0)
+        clf1.fit(iris.data[train_index], iris.target[train_index])
+        clf2 = BaggingClassifier(class_weight='auto', random_state=0)
+        clf2.fit(iris.data[train_index], iris.target[train_index])
+        assert_array_almost_equal(clf1.predict(iris.data[test_index]),
+                                  clf2.predict(iris.data[test_index]))
+
+        # Inflate importance of class 1, check against user-defined weights
+        sample_weight = np.ones(iris.target[train_index].shape)
+        sample_weight[iris.target[train_index] == 1] *= 100
+        class_weight = {0: 1., 1: 100., 2: 1.}
+        clf1 = BaggingClassifier(random_state=0)
+        clf1.fit(iris.data[train_index], iris.target[train_index],
+                 sample_weight)
+        clf2 = BaggingClassifier(class_weight=class_weight, random_state=0)
+        clf2.fit(iris.data[train_index], iris.target[train_index])
+        assert_array_almost_equal(clf1.predict(iris.data[test_index]),
+                                  clf2.predict(iris.data[test_index]))
+
+        # Check that sample_weight and class_weight are multiplicative
+        clf1 = BaggingClassifier(random_state=0)
+        clf1.fit(iris.data[train_index], iris.target[train_index],
+                 sample_weight**2)
+        clf2 = BaggingClassifier(class_weight=class_weight, random_state=0)
+        clf2.fit(iris.data[train_index], iris.target[train_index],
+                 sample_weight)
+        assert_array_almost_equal(clf1.predict(iris.data[test_index]),
+                                  clf2.predict(iris.data[test_index]))
+
+
+def check_class_weight_subsample():
+    """Test class_weight works for subsample option"""
+    clf = BaggingClassifier(max_samples=0.8, bootstrap=True,
+                            class_weight='subsample', random_state=0)
+    clf.fit(iris.data, iris.target)
+    clf = BaggingClassifier(max_samples=0.8, bootstrap=False,
+                            class_weight='subsample', random_state=0)
+    clf.fit(iris.data, iris.target)
+    clf = BaggingClassifier(max_samples=1.0, bootstrap=True,
+                            class_weight='subsample', random_state=0)
+    clf.fit(iris.data, iris.target)
+
+
+def check_class_weight_errors():
+    """Test if class_weight raises errors and warnings when expected."""
+
+    # Invalid preset string
+    clf = BaggingClassifier(class_weight='the larch', random_state=0)
+    assert_raises(ValueError, clf.fit, iris.data, iris.target)
 
 
 if __name__ == "__main__":

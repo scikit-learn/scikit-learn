@@ -6,7 +6,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises, assert_raises_regexp
 
-from sklearn.cross_validation import train_test_split
+from sklearn.cross_validation import train_test_split, StratifiedKFold
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
@@ -419,6 +419,50 @@ def test_sparse_regression():
 
         assert all([(t == csc_matrix or t == csr_matrix)
                    for t in types])
+
+
+def test_class_weights():
+    """Check class_weights resemble sample_weights behavior."""
+    for train_index, test_index in StratifiedKFold(iris.target, n_folds=2,
+                                                   random_state=0):
+
+        # Iris is balanced, so no effect expected for using 'auto' weights
+        clf1 = AdaBoostClassifier(random_state=0)
+        clf1.fit(iris.data[train_index], iris.target[train_index])
+        clf2 = AdaBoostClassifier(class_weight='auto', random_state=0)
+        clf2.fit(iris.data[train_index], iris.target[train_index])
+        assert_array_almost_equal(clf1.predict(iris.data[test_index]),
+                                  clf2.predict(iris.data[test_index]))
+
+        # Inflate importance of class 1, check against user-defined weights
+        sample_weight = np.ones(iris.target[train_index].shape)
+        sample_weight[iris.target[train_index] == 1] *= 100
+        class_weight = {0: 1., 1: 100., 2: 1.}
+        clf1 = AdaBoostClassifier(random_state=0)
+        clf1.fit(iris.data[train_index], iris.target[train_index],
+                 sample_weight)
+        clf2 = AdaBoostClassifier(class_weight=class_weight, random_state=0)
+        clf2.fit(iris.data[train_index], iris.target[train_index])
+        assert_array_almost_equal(clf1.predict(iris.data[test_index]),
+                                  clf2.predict(iris.data[test_index]))
+
+        # Check that sample_weight and class_weight are multiplicative
+        clf1 = AdaBoostClassifier(random_state=0)
+        clf1.fit(iris.data[train_index], iris.target[train_index],
+                 sample_weight**2)
+        clf2 = AdaBoostClassifier(class_weight=class_weight, random_state=0)
+        clf2.fit(iris.data[train_index], iris.target[train_index],
+                 sample_weight)
+        assert_array_almost_equal(clf1.predict(iris.data[test_index]),
+                                  clf2.predict(iris.data[test_index]))
+
+
+def check_class_weight_errors():
+    """Test if class_weight raises errors and warnings when expected."""
+
+    # Invalid preset string
+    clf = AdaBoostClassifier(class_weight='the larch', random_state=0)
+    assert_raises(ValueError, clf.fit, iris.data, iris.target)
 
 
 if __name__ == "__main__":
