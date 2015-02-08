@@ -231,8 +231,8 @@ class GMM(BaseEstimator):
                  random_state=None, thresh=None, tol=1e-3, min_covar=1e-3,
                  n_iter=100, n_init=1, params='wmc', init_params='wmc'):
         if thresh is not None:
-            warnings.warn("'thresh' was replaced by 'tol' and will "
-                          "be removed in 0.18.",
+            warnings.warn("'thresh' has been replaced by 'tol' in 0.16 "
+                          " and will be removed in 0.18.",
                           DeprecationWarning)
         self.n_components = n_components
         self.covariance_type = covariance_type
@@ -462,8 +462,8 @@ class GMM(BaseEstimator):
             self.converged_ = False
 
             # this line should be removed when 'thresh' is deprecated
-            tol = self.tol if self.thresh is None \
-                else self.thresh / float(X.shape[0])
+            tol = (self.tol if self.thresh is None
+                   else self.thresh / float(X.shape[0]))
 
             for i in range(self.n_iter):
                 # Expectation step
@@ -472,8 +472,9 @@ class GMM(BaseEstimator):
 
                 # Check for convergence.
                 # (should compare to self.tol when 'thresh' is deprecated)
-                if i > 0 and abs(log_likelihood[-1] - log_likelihood[-2]) < \
-                        tol:
+                log_likelihood_change = abs(log_likelihood[-1] -
+                                            log_likelihood[-2])
+                if i > 0 and log_likelihood_change < tol:
                     self.converged_ = True
                     break
 
