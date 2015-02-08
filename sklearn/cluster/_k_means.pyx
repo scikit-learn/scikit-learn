@@ -341,6 +341,7 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
     cdef np.ndarray[DOUBLE, ndim=1] data = X.data
     cdef np.ndarray[int, ndim=1] indices = X.indices
     cdef np.ndarray[int, ndim=1] indptr = X.indptr
+    cdef int ind, j
 
     cdef np.ndarray[DOUBLE, ndim=2, mode="c"] centers = \
         np.zeros((n_clusters, n_features))
@@ -366,7 +367,9 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
         n_samples_in_cluster[cluster_id] = sample_weight[far_from_centers[i]]
 
     for i in range(labels.shape[0]):
-        add_row_csr(data * sample_weight[i], indices, indptr, i, centers[labels[i]])
+        for ind in range(indptr[i], indptr[i + 1]):
+            j = indices[ind]
+            centers[labels[i], j] += sample_weight[i] * data[ind]
 
     centers /= n_samples_in_cluster[:, np.newaxis]
 

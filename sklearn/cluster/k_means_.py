@@ -36,21 +36,15 @@ from . import _k_means
 
 ###############################################################################
 # Initialization heuristic
-def check_sample_weight(X, sample_weight):
-    n_samples, n_features = X.shape
-    if sample_weight is None:
-        sample_weight = np.ones((n_samples,))
 
-    if not hasattr(sample_weight, '__array__'):
-        raise TypeError("sample_weight must be an array")
-    if sample_weight.ndim > 1:
-        raise ValueError(
-            "sample_weight must be a 1d array of size (n_samples,)")
-    if not n_samples == sample_weight.shape[0]:
-        raise ValueError("Number of weights does not match number of samples."
-                         "Got %d weights and %d samples"
-                         % (sample_weight.shape[0], n_samples))
-    return sample_weight
+def _wgtd_euclidean_distances(X, Y=None, Y_norm_squared=None,
+                              squared=False, sample_weight=None):
+    dists = euclidean_distances(
+        X, Y, Y_norm_squared=Y_norm_squared, squared=squared)
+
+    if sample_weight is None:
+        return dists
+    return np.multiply(sample_weight, dists)
 
 
 def _k_init(X, n_clusters, x_squared_norms, random_state,
@@ -93,8 +87,6 @@ def _k_init(X, n_clusters, x_squared_norms, random_state,
     which is the implementation used in the aforementioned paper.
     """
     n_samples, n_features = X.shape
-    sample_weight = check_sample_weight(X, sample_weight)
-
     centers = np.empty((n_clusters, n_features))
 
     assert x_squared_norms is not None, 'x_squared_norms None in _k_init'
@@ -115,9 +107,9 @@ def _k_init(X, n_clusters, x_squared_norms, random_state,
 
     # Initialize list of closest distances and calculate current potential
     # weighted distance: distance = weight(I) * |X(I) - center(j)|^2
-    closest_dist_sq = euclidean_distances(
-        centers[0], X, Y_norm_squared=x_squared_norms, squared=True)
-    closest_dist_sq = np.multiply(sample_weight, closest_dist_sq)
+    closest_dist_sq = _wgtd_euclidean_distances(
+        centers[0], X, Y_norm_squared=x_squared_norms, squared=True,
+        sample_weight=sample_weight)
     current_pot = closest_dist_sq.sum()
 
     # Pick the remaining n_clusters-1 points
@@ -129,10 +121,9 @@ def _k_init(X, n_clusters, x_squared_norms, random_state,
 
         # Compute distances to center candidates
         # weighted distance: distance = weight(I) * |X(I) - center(j)|^2
-        distance_to_candidates = euclidean_distances(
-            X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
-        distance_to_condidates = np.multiply(
-            sample_weight, distance_to_candidates)
+        distance_to_candidates = _wgtd_euclidean_distances(
+            X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True,
+            sample_weight=sample_weight)
 
         # Decide which candidate is the best
         best_candidate = None
@@ -280,7 +271,6 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         raise ValueError("Invalid number of initializations."
                          " n_init=%d must be bigger than zero." % n_init)
     random_state = check_random_state(random_state)
-    sample_weight = check_sample_weight(X, sample_weight)
     best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
     tol = _tolerance(X, tol)
@@ -438,8 +428,6 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
         Number of iterations run.
     """
     random_state = check_random_state(random_state)
-    sample_weight = check_sample_weight(X, sample_weight)
-
     best_labels, best_inertia, best_centers = None, None, None
     # init
     centers = _init_centroids(X, n_clusters, init, random_state=random_state,
@@ -451,6 +439,8 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
     # Allocate memory to store the distances for each sample to its
     # closer center for reallocation in case of ties
     distances = np.zeros(shape=(X.shape[0],), dtype=np.float64)
+    if sample_weight is None:
+        sample_weight = np.ones(shape=(X.shape[0],), dtype=np.float64)
     # iterations
     for i in range(max_iter):
         centers_old = centers.copy()
@@ -459,8 +449,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
             _labels_inertia(X, x_squared_norms, centers,
                             precompute_distances=precompute_distances,
                             distances=distances, sample_weight=sample_weight)
-
-        # computation of the means is also called the M-step of EM
+        # computation of the means is also called the M-step of
         if sp.issparse(X):
             centers = _k_means._centers_sparse(
                 X, labels, n_clusters, distances, sample_weight=sample_weight)
@@ -518,12 +507,10 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers,
     """
     n_samples = X.shape[0]
     k = centers.shape[0]
-    sample_weight = check_sample_weight(X, sample_weight)
 
-    all_distances = euclidean_distances(centers, X, x_squared_norms,
-                                        squared=True)
-    if sample_weight is not None:
-        all_distances = np.multiply(sample_weight, all_distances)
+    all_distances = _wgtd_euclidean_distances(
+        centers, X, x_squared_norms, squared=True,
+        sample_weight=sample_weight)
 
     labels = np.empty(n_samples, dtype=np.int32)
     labels.fill(-1)
@@ -582,11 +569,12 @@ def _labels_inertia(X, x_squared_norms, centers,
     n_samples = X.shape[0]
     # set the default value of centers to -1 to be able to detect any anomaly
     # easily
-    sample_weight = check_sample_weight(X, sample_weight)
 
     labels = -np.ones(n_samples, np.int32)
     if distances is None:
         distances = np.zeros(shape=(0,), dtype=np.float64)
+    if sample_weight is None:
+        sample_weight = np.ones(shape=(n_samples,), dtype=np.float64)
     # distances will be changed in-place
     if sp.issparse(X):
         inertia = _k_means._assign_labels_csr(
@@ -643,7 +631,6 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     """
     random_state = check_random_state(random_state)
     n_samples = X.shape[0]
-    sample_weight = check_sample_weight(X, sample_weight)
 
     if init_size is not None and init_size < n_samples:
         if init_size < k:
@@ -655,7 +642,8 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         init_indices = random_state.random_integers(
             0, n_samples - 1, init_size)
         X = X[init_indices]
-        sample_weight = sample_weight[init_indices]
+        if sample_weight is not None:
+            sample_weight = sample_weight[init_indices]
         x_squared_norms = x_squared_norms[init_indices]
         n_samples = X.shape[0]
     elif n_samples < k:
@@ -845,6 +833,23 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         return X
 
+    def _check_sample_weight(self, X, sample_weight):
+        n_samples = X.shape[0]
+
+        if sample_weight is None:
+            return np.ones(shape=(n_samples,), dtype=np.float64)
+
+        if not hasattr(sample_weight, '__array__'):
+            raise TypeError("sample_weight must be an array")
+        if sample_weight.ndim > 1:
+            raise ValueError(
+                "sample_weight must be a 1d array of size (n_samples,)")
+        if not n_samples == sample_weight.shape[0]:
+            raise ValueError("Number of weights does not equal to samples."
+                             "Got %d weights and %d samples"
+                             % (sample_weight.shape[0], n_samples))
+        return sample_weight
+
     def fit(self, X, y=None, sample_weight=None):
         """Compute k-means clustering.
 
@@ -858,7 +863,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         """
         random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
-        sample_weight = check_sample_weight(X, sample_weight)
+        sample_weight = self._check_sample_weight(X, sample_weight)
 
         self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \
             k_means(
@@ -1042,8 +1047,6 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
 
     """
     # Perform label assignment to nearest centers
-    sample_weight = check_sample_weight(X, sample_weight)
-
     nearest_center, inertia = _labels_inertia(X, x_squared_norms, centers,
                                               distances=distances,
                                               sample_weight=sample_weight)
@@ -1077,6 +1080,8 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         # also modifies the learning rates.
         counts[to_reassign] = np.min(counts[~to_reassign])
 
+    if sample_weight is None:
+        sample_weight = np.ones(shape=(X.shape[0],), dtype=np.float64)
     # implementation for the sparse CSR representation completely written in
     # cython
     if sp.issparse(X):
@@ -1312,7 +1317,7 @@ class MiniBatchKMeans(KMeans):
         """
         random_state = check_random_state(self.random_state)
         X = check_array(X, accept_sparse="csr", order='C', dtype=np.float64)
-        sample_weight = check_sample_weight(X, sample_weight)
+        sample_weight = self._check_sample_weight(X, sample_weight)
 
         n_samples, n_features = X.shape
         if n_samples < self.n_clusters:
@@ -1463,12 +1468,12 @@ class MiniBatchKMeans(KMeans):
         inertia : float
             Sum of squared distances of points to nearest cluster.
         """
-        sample_weight = check_sample_weight(X, sample_weight)
         if self.verbose:
             print('Computing label assignment and total inertia')
 
         x_squared_norms = row_norms(X, squared=True)
         slices = gen_batches(X.shape[0], self.batch_size)
+        sample_weight = self._check_sample_weight(X, sample_weight)
 
         results = [_labels_inertia(
             X[s], x_squared_norms[s], self.cluster_centers_,
@@ -1491,7 +1496,6 @@ class MiniBatchKMeans(KMeans):
         """
 
         X = check_array(X, accept_sparse="csr")
-        sample_weight = check_sample_weight(X, sample_weight)
         n_samples, n_features = X.shape
 
         if hasattr(self.init, '__array__'):
