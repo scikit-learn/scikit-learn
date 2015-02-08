@@ -9,6 +9,7 @@ of Gaussian Mixture Models.
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
 
+import warnings
 import numpy as np
 from scipy import linalg
 
@@ -135,8 +136,9 @@ class GMM(BaseEstimator):
         Floor on the diagonal of the covariance matrix to prevent
         overfitting.  Defaults to 1e-3.
 
-    thresh : float, optional
-        Convergence threshold.
+    tol : float, optional
+        Convergence threshold. EM iterations will stop when average
+        gain in log-likelihood is below this threshold.  Defaults to 1e-3.
 
     n_iter : int, optional
         Number of EM iterations to perform.
@@ -201,7 +203,7 @@ class GMM(BaseEstimator):
     >>> g.fit(obs) # doctest: +NORMALIZE_WHITESPACE
     GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
-            random_state=None, thresh=0.01)
+            random_state=None, thresh=None, tol=0.001)
     >>> np.round(g.weights_, 2)
     array([ 0.75,  0.25])
     >>> np.round(g.means_, 2)
@@ -219,18 +221,23 @@ class GMM(BaseEstimator):
     >>> g.fit(20 * [[0]] +  20 * [[10]]) # doctest: +NORMALIZE_WHITESPACE
     GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
-            random_state=None, thresh=0.01)
+            random_state=None, thresh=None, tol=0.001)
     >>> np.round(g.weights_, 2)
     array([ 0.5,  0.5])
 
     """
 
     def __init__(self, n_components=1, covariance_type='diag',
-                 random_state=None, thresh=1e-2, min_covar=1e-3,
+                 random_state=None, thresh=None, tol=1e-3, min_covar=1e-3,
                  n_iter=100, n_init=1, params='wmc', init_params='wmc'):
+        if thresh is not None:
+            warnings.warn("'thresh' was replaced by 'tol' and will "
+                          "be removed in 0.18.",
+                          DeprecationWarning)
         self.n_components = n_components
         self.covariance_type = covariance_type
         self.thresh = thresh
+        self.tol = tol
         self.min_covar = min_covar
         self.random_state = random_state
         self.n_iter = n_iter
@@ -453,14 +460,20 @@ class GMM(BaseEstimator):
             log_likelihood = []
             # reset self.converged_ to False
             self.converged_ = False
+
+            # this line should be removed when 'thresh' is deprecated
+            tol = self.tol if self.thresh is None \
+                else self.thresh / float(X.shape[0])
+
             for i in range(self.n_iter):
                 # Expectation step
                 curr_log_likelihood, responsibilities = self.score_samples(X)
-                log_likelihood.append(curr_log_likelihood.sum())
+                log_likelihood.append(curr_log_likelihood.mean())
 
                 # Check for convergence.
+                # (should compare to self.tol when 'thresh' is deprecated)
                 if i > 0 and abs(log_likelihood[-1] - log_likelihood[-2]) < \
-                        self.thresh:
+                        tol:
                     self.converged_ = True
                     break
 
