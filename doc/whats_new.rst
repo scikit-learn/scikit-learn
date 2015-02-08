@@ -182,6 +182,10 @@ Enhancements
    - More robust seeding and improved error messages in :class:`cluster.MeanShift`
      by `Andreas Müller`_.
 
+   - Make the :class:`GMM` stopping criterion less dependent on the number of
+     samples by thresholding the average log-likelihood change instead of its
+     sum over all samples. By `Hervé Bredin`_
+
 Documentation improvements
 ..........................
 
@@ -366,6 +370,10 @@ API changes summary
       and :func:`neighbors.radius_neighbors_graph` which has to be explicitly
       set by the user. If set to True, then the sample itself is considered
       as the first nearest neighbor.
+
+    - `thresh` parameter is deprecated in favor of new `tol` parameter in
+      :class:`GMM`. See `Enhancements` section for details. By `Hervé Bredin`_.
+
 
 .. _changes_0_15_2:
 
