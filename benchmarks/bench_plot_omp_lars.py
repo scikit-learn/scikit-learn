@@ -78,7 +78,7 @@ def compute_bench(samples_range, features_range):
             print("benchmarking orthogonal_mp (with Gram):", end='')
             sys.stdout.flush()
             tstart = time()
-            orthogonal_mp(X, y, precompute_gram=True,
+            orthogonal_mp(X, y, precompute=True,
                           n_nonzero_coefs=n_informative)
             delta = time() - tstart
             print("%0.3fs" % delta)
@@ -88,7 +88,7 @@ def compute_bench(samples_range, features_range):
             print("benchmarking orthogonal_mp (without Gram):", end='')
             sys.stdout.flush()
             tstart = time()
-            orthogonal_mp(X, y, precompute_gram=False,
+            orthogonal_mp(X, y, precompute=False,
                           n_nonzero_coefs=n_informative)
             delta = time() - tstart
             print("%0.3fs" % delta)
