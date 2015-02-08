@@ -29,7 +29,8 @@ from ..externals import six
 from ..metrics.scorer import check_scoring
 
 
-def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
+def _solve_sparse_cg(X, y, alpha, coef_init=None, max_iter=None, tol=1e-3,
+                     verbose=0):
     n_samples, n_features = X.shape
     X1 = sp_linalg.aslinearoperator(X)
     coefs = np.empty((y.shape[1], n_features))
@@ -47,6 +48,10 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
 
     for i in range(y.shape[1]):
         y_column = y[:, i]
+        if coef_init is not None:
+            init = coef_init[:, i]
+        else:
+            init = None
 
         mv = create_mv(alpha[i])
         if n_features > n_samples:
@@ -208,7 +213,7 @@ def _rescale_data(X, y, sample_weight):
 
 
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
-                     max_iter=None, tol=1e-3, verbose=0):
+                     coef_init=None, max_iter=None, tol=1e-3, verbose=0):
     """Solve the ridge equation by the method of normal equations.
 
     Parameters
@@ -224,6 +229,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         shape = [n_targets] if array-like
         The l_2 penalty to be used. If an array is passed, penalties are
         assumed to be specific to targets
+
+    coef_init : None or array, shape = [n_features] or [n_targets, n_features]
+        Initial weight vector used to warm-start the algorithm.
+        Only used when solver='sparse_cg'.
 
     max_iter : int, optional
         Maximum number of iterations for conjugate gradient solver.
@@ -328,7 +337,9 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         raise ValueError('Solver %s not understood' % solver)
 
     if solver == 'sparse_cg':
-        coef = _solve_sparse_cg(X, y, alpha, max_iter, tol, verbose)
+        if coef_init is not None and ravel:
+            coef_init = coef_init.reshape(-1, 1)
+        coef = _solve_sparse_cg(X, y, alpha, coef_init, max_iter, tol, verbose)
 
     elif solver == "lsqr":
         coef = _solve_lsqr(X, y, alpha, max_iter, tol)
@@ -368,7 +379,8 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
 
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=None, tol=1e-3, solver="auto"):
+                 copy_X=True, max_iter=None, tol=1e-3, solver="auto",
+                 warm_start=False):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -376,6 +388,7 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.max_iter = max_iter
         self.tol = tol
         self.solver = solver
+        self.warm_start = warm_start
 
     def fit(self, X, y, sample_weight=None):
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float, multi_output=True)
@@ -389,6 +402,11 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
             sample_weight=sample_weight)
 
         solver = _deprecate_dense_cholesky(self.solver)
+
+        if self.warm_start:
+            coef_init = getattr(self, "coef_", None)
+        else:
+            coef_init = None
 
         self.coef_ = ridge_regression(X, y,
                                       alpha=self.alpha,
@@ -480,13 +498,15 @@ class Ridge(_BaseRidge, RegressorMixin):
     >>> clf = Ridge(alpha=1.0)
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
-          normalize=False, solver='auto', tol=0.001)
+          normalize=False, solver='auto', tol=0.001, warm_start=False)
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=None, tol=1e-3, solver="auto"):
+                 copy_X=True, max_iter=None, tol=1e-3, solver="auto",
+                 warm_start=False):
         super(Ridge, self).__init__(alpha=alpha, fit_intercept=fit_intercept,
                                     normalize=normalize, copy_X=copy_X,
-                                    max_iter=max_iter, tol=tol, solver=solver)
+                                    max_iter=max_iter, tol=tol, solver=solver,
+                                    warm_start=warm_start)
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
@@ -570,10 +590,11 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
-                 solver="auto"):
+                 solver="auto", warm_start=False):
         super(RidgeClassifier, self).__init__(
             alpha=alpha, fit_intercept=fit_intercept, normalize=normalize,
-            copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver)
+            copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver,
+            warm_start=False)
         self.class_weight = class_weight
 
     def fit(self, X, y):
