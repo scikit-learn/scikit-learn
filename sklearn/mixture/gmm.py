@@ -427,7 +427,7 @@ class GMM(BaseEstimator):
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
         """
-        ## initialization step
+        # initialization step
         X = np.asarray(X, dtype=np.float)
         if X.ndim == 1:
             X = X[:, np.newaxis]
@@ -457,7 +457,7 @@ class GMM(BaseEstimator):
                         cv, self.covariance_type, self.n_components)
 
             # EM algorithms
-            log_likelihood = []
+            current_log_likelihood = None
             # reset self.converged_ to False
             self.converged_ = False
 
@@ -466,17 +466,19 @@ class GMM(BaseEstimator):
                    else self.thresh / float(X.shape[0]))
 
             for i in range(self.n_iter):
+                prev_log_likelihood = current_log_likelihood
                 # Expectation step
-                curr_log_likelihood, responsibilities = self.score_samples(X)
-                log_likelihood.append(curr_log_likelihood.mean())
+                log_likelihoods, responsibilities = self.score_samples(X)
+                current_log_likelihood = log_likelihoods.mean()
 
                 # Check for convergence.
-                # (should compare to self.tol when 'thresh' is deprecated)
-                log_likelihood_change = abs(log_likelihood[-1] -
-                                            log_likelihood[-2])
-                if i > 0 and log_likelihood_change < tol:
-                    self.converged_ = True
-                    break
+                # (should compare to self.tol when dreprecated 'thresh' is
+                # removed)
+                if prev_log_likelihood is not None:
+                    change = abs(current_log_likelihood - prev_log_likelihood)
+                    if change < tol:
+                        self.converged_ = True
+                        break
 
                 # Maximization step
                 self._do_mstep(X, responsibilities, self.params,
@@ -484,8 +486,8 @@ class GMM(BaseEstimator):
 
             # if the results are better, keep it
             if self.n_iter:
-                if log_likelihood[-1] > max_log_prob:
-                    max_log_prob = log_likelihood[-1]
+                if current_log_likelihood > max_log_prob:
+                    max_log_prob = current_log_likelihood
                     best_params = {'weights': self.weights_,
                                    'means': self.means_,
                                    'covars': self.covars_}
