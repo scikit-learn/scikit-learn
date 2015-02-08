@@ -108,6 +108,10 @@ Enhancements
      that can give speed improvements by avoiding repeated checking when set to
      False. By `Manoj Kumar`_
 
+   - Make the :class:`GMM` stopping criterion less dependent on the number of 
+     samples by thresholding the average log-likelihood change instead of its 
+     sum over all samples. By `Hervé Bredin`_
+
 Documentation improvements
 ..........................
 
@@ -182,6 +186,9 @@ API changes summary
     - Expose ``positive`` option in :func:`linear_model.enet_path` and
       :func:`linear_model.enet_path` which constrains coefficients to be
       positive. By `Manoj Kumar`_.
+
+    - `thresh` parameter is deprecated in favor of new `tol` parameter in 
+      :class:`GMM`. See `Enhancements` section for details. By `Hervé Bredin`_.
 
 .. _changes_0_15_2:
 
