@@ -413,7 +413,8 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
                                       sample_weight=sample_weight,
                                       max_iter=self.max_iter,
                                       tol=self.tol,
-                                      solver=solver)
+                                      solver=solver,
+                                      coef_init=coef_init)
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
