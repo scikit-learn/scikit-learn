@@ -60,8 +60,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     n_alphas : int, optional
         Number of alphas along the regularization path
 
-    fit_intercept : bool
-        Fit or not an intercept
+    fit_intercept : boolean, default True
+        Whether to fit an intercept or not
 
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
@@ -92,16 +92,23 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
+
     if sparse_center:
         if fit_intercept:
             Xy -= mean_dot[:, np.newaxis]
         if normalize:
             Xy /= X_std[:, np.newaxis]
+
     alpha_max = (np.sqrt(np.sum(Xy ** 2, axis=1)).max() /
                  (n_samples * l1_ratio))
-    alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
-                         num=n_alphas)[::-1]
-    return alphas
+
+    if alpha_max <= np.finfo(float).resolution:
+        alphas = np.empty(n_alphas)
+        alphas.fill(np.finfo(float).min)
+        return alphas
+
+    return np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
+                       num=n_alphas)[::-1]
 
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
@@ -368,7 +375,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     X, y, X_mean, y_mean, X_std, precompute, Xy = \
         _pre_fit(X, y, Xy, precompute, normalize=False, fit_intercept=False,
                  copy=False)
-
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
@@ -389,7 +395,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if selection not in ['random', 'cyclic']:
         raise ValueError("selection should be either random or cyclic.")
     random = (selection == 'random')
-    models = []
 
     if not multi_output:
         coefs = np.empty((n_features, n_alphas), dtype=np.float64)
@@ -1420,6 +1425,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
 ###############################################################################
 # Multi Task ElasticNet and Lasso models (with joint feature selection)
+
 
 class MultiTaskElasticNet(Lasso):
     """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
