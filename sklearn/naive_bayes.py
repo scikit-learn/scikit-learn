@@ -311,9 +311,9 @@ class GaussianNB(BaseNB):
         unique_y_in_classes = in1d(unique_y, classes)
 
         if not np.all(unique_y_in_classes):
-            raise ValueError(
-                    "The target label(s) %s in y do not exist in the "
-                    "initial classes %s" % (y[~unique_y_in_classes], classes))
+            raise ValueError("The target label(s) %s in y do not exist in the "
+                             "initial classes %s" %
+                             (y[~unique_y_in_classes], classes))
 
         for y_i in unique_y:
             i = classes.searchsorted(y_i)
@@ -711,7 +711,7 @@ class BernoulliNB(BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
         check_is_fitted(self, "classes_")
-        
+
         X = check_array(X, accept_sparse='csr')
 
         if self.binarize is not None:
