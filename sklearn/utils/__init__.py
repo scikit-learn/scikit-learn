@@ -20,6 +20,7 @@ from ..externals.joblib import cpu_count
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
            "warn_if_not_float",
+           "get_mask",
            "check_random_state",
            "compute_class_weight",
            "column_or_1d", "safe_indexing",
@@ -416,6 +417,12 @@ def gen_even_slices(n, n_packs, n_samples=None):
             yield slice(start, end, None)
             start = end
 
+def get_mask(X, value_to_mask):
+    """Compute the boolean mask X == value_to_mask."""
+    if value_to_mask == "NaN" or np.isnan(value_to_mask):
+        return np.isnan(X)
+    else:
+        return X == value_to_mask
 
 def _get_n_jobs(n_jobs):
     """Get number of jobs for the computation.
