@@ -910,7 +910,7 @@ class OneClassSVM(BaseLibSVM):
             shrinking, False, cache_size, None, verbose, max_iter,
             random_state)
 
-    def fit(self, X, sample_weight=None, **params):
+    def fit(self, X, y=None, sample_weight=None, **params):
         """
         Detects the soft boundary of the set of samples X.
 

@@ -321,7 +321,7 @@ class GMM(BaseEstimator):
         responsibilities = np.exp(lpr - logprob[:, np.newaxis])
         return logprob, responsibilities
 
-    def score(self, X):
+    def score(self, X, y=None):
         """Compute the log probability under the model.
 
         Parameters
@@ -411,7 +411,7 @@ class GMM(BaseEstimator):
                     num_comp_in_X, random_state=random_state).T
         return X
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Estimate model parameters with the expectation-maximization
         algorithm.
 
@@ -428,9 +428,7 @@ class GMM(BaseEstimator):
             corresponds to a single data point.
         """
         # initialization step
-        X = np.asarray(X, dtype=np.float64)
-        if X.ndim == 1:
-            X = X[:, np.newaxis]
+        X = check_array(X, dtype=np.float64)
         if X.shape[0] < self.n_components:
             raise ValueError(
                 'GMM estimation with %s components, but got only %s samples' %

@@ -357,7 +357,7 @@ class MDS(BaseEstimator):
     def _pairwise(self):
         return self.kernel == "precomputed"
 
-    def fit(self, X, init=None, y=None):
+    def fit(self, X, y=None, init=None):
         """
         Computes the position of the points in the embedding space
 
@@ -374,7 +374,7 @@ class MDS(BaseEstimator):
         self.fit_transform(X, init=init)
         return self
 
-    def fit_transform(self, X, init=None, y=None):
+    def fit_transform(self, X, y=None, init=None):
         """
         Fit the data from X, and returns the embedded coordinates
 

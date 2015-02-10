@@ -483,7 +483,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         else:
             return _array_of_arrays(neighbors)
 
-    def partial_fit(self, X):
+    def partial_fit(self, X, y=None):
         """
         Inserts new data into the already fitted LSH Forest.
         Cost is proportional to new total size, so additions

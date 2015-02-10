@@ -96,6 +96,10 @@ def test_non_meta_estimators():
         if name not in CROSS_DECOMPOSITION:
             yield check_estimators_dtypes, name, Estimator
             yield check_fit_score_takes_y, name, Estimator
+
+        if name not in CROSS_DECOMPOSITION + ['SpectralEmbedding']:
+            # SpectralEmbedding is non-deterministic,
+            # see issue #4236
             yield check_pipeline_consistency, name, Estimator
 
         if name not in CROSS_DECOMPOSITION + ['Imputer']:

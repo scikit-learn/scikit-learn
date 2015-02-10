@@ -256,9 +256,9 @@ def check_pipeline_consistency(name, Estimator):
     X -= X.min()
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()
-    pipeline = make_pipeline(estimator)
     set_fast_parameters(estimator)
     set_random_state(estimator)
+    pipeline = make_pipeline(estimator)
     estimator.fit(X, y)
     pipeline.fit(X, y)
     funcs = ["score", "fit_transform"]
