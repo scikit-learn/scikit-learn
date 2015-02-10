@@ -12,6 +12,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..decomposition.mf import MatrixFactorization, _rmse
 from ..utils import check_array
 from ..utils import as_float_array
+from ..utils import get_mask
 from ..utils.fixes import astype
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
@@ -22,16 +23,9 @@ zip = six.moves.zip
 map = six.moves.map
 
 __all__ = [
+    'FactorizationImputer',
     'Imputer',
 ]
-
-
-def _get_mask(X, value_to_mask):
-    """Compute the boolean mask X == missing_values."""
-    if value_to_mask == "NaN" or np.isnan(value_to_mask):
-        return np.isnan(X)
-    else:
-        return X == value_to_mask
 
 
 def _most_frequent(array, extra_value, n_repeat):
@@ -188,7 +182,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                 n_non_missing = n_zeros_axis
 
                 # Mask the missing elements
-                mask_missing_values = _get_mask(X.data, missing_values)
+                mask_missing_values = get_mask(X.data, missing_values)
                 mask_valids = np.logical_not(mask_missing_values)
 
                 # Sum only the valid elements
@@ -220,7 +214,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         else:
             # Remove the missing values, for each column
             columns_all = np.hsplit(X.data, X.indptr[1:-1])
-            mask_missing_values = _get_mask(X.data, missing_values)
+            mask_missing_values = get_mask(X.data, missing_values)
             mask_valids = np.hsplit(np.logical_not(mask_missing_values),
                                     X.indptr[1:-1])
 
@@ -250,7 +244,7 @@ class Imputer(BaseEstimator, TransformerMixin):
     def _dense_fit(self, X, strategy, missing_values, axis):
         """Fit the transformer on dense data."""
         X = check_array(X, force_all_finite=False)
-        mask = _get_mask(X, missing_values)
+        mask = get_mask(X, missing_values)
         masked_X = ma.masked_array(X, mask=mask)
 
         # Mean
@@ -353,7 +347,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         # Do actual imputation
         if sparse.issparse(X) and self.missing_values != 0:
-            mask = _get_mask(X.data, self.missing_values)
+            mask = get_mask(X.data, self.missing_values)
             indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
                                 np.diff(X.indptr))[mask]
 
@@ -362,7 +356,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             if sparse.issparse(X):
                 X = X.toarray()
 
-            mask = _get_mask(X, self.missing_values)
+            mask = get_mask(X, self.missing_values)
             n_missing = np.sum(mask, axis=self.axis)
             values = np.repeat(valid_statistics, n_missing)
 
@@ -377,11 +371,55 @@ class Imputer(BaseEstimator, TransformerMixin):
 
 
 class FactorizationImputer(BaseEstimator, TransformerMixin):
+    """Factorization-based imputation transformer for completing missing values.
 
-    def __init__(self, n_components=None, n_iter=100, missing_values="NaN",
-                 learning_rate=1e-3, regularization=1e-4,
-                 bias_learning_rate=0, bias_regularization=0,
-                 random_state=None, verbose=0):
+    Parameters
+    ----------
+    missing_values : integer or "NaN", optional (default="NaN")
+        The placeholder for the missing values. All occurrences of
+        `missing_values` will be imputed. For missing values encoded as np.nan,
+        use the string value "NaN".
+
+        Note that for sparse matrices you need explicitly set this parameter to 0
+        if you want to impute all missing values.
+
+    n_components : integer, optional (default=None)
+        Number of components for factorization. If None, then factorization
+        is assumed to be of a full rank, that is, `min(n_features, n_samples)`
+        will be used.
+
+    n_iter : integer, optional (default=100)
+        Number of iterations to perform
+
+    learning_rate : float, optional (default=0.001)
+        Learning rate for Stochastic Gradient Descent algorithm
+
+    verbose : integer, optional (default=0)
+        Controls the verbosity of the imputer.
+
+    ...
+
+    copy : boolean, optional (default=True)
+        If True, a copy of X will be created. If False, imputation will
+        be done in-place whenever possible. Note that, in the following cases,
+        a new copy will always be made, even if `copy=False`:
+
+        - If X is not an array of floating values;
+        - If X is sparse and `missing_values=0`;
+        - If `axis=0` and X is encoded as a CSR matrix;
+        - If `axis=1` and X is encoded as a CSC matrix.
+
+    Attributes
+    ----------
+    statistics_ : array of shape (n_features,)
+        The imputation fill value for each feature if axis == 0.
+
+    """
+    def __init__(self, n_components=None, n_iter=100,
+                 missing_values="NaN", learning_rate=1e-3,
+                 regularization=1e-4, fit_intercept=True,
+                 algorithm='sgd', random_state=None,
+                 copy=True, verbose=0):
 
         self.n_components = n_components
         self.n_iter = n_iter
@@ -389,44 +427,111 @@ class FactorizationImputer(BaseEstimator, TransformerMixin):
         self.learning_rate = learning_rate
         self.regularization = regularization
         self.missing_values = missing_values
-        self.bias_learning_rate = bias_learning_rate
-        self.bias_regularization = bias_regularization
+        self.fit_intercept = fit_intercept
 
         self.random_state = random_state
         self.verbose = verbose
+        self.copy = copy
+        self.algorithm = algorithm
 
     def fit_transform(self, X, y=None):
-
-        mf = MatrixFactorization(
-            n_components=self.n_components,
-            n_iter=self.n_iter,
-            missing_values=self.missing_values,
-            regularization=self.regularization,
-            bias_regularization=self.bias_regularization,
-            learning_rate=self.learning_rate,
-            random_state=self.random_state,
-            verbose=self.verbose
-        )
+        X = as_float_array(X, copy=False, force_all_finite=False)
+        mf = self._get_mf_instance()
 
         L = mf.fit_transform(X)
         R = mf.components_
 
-        return np.dot(L, R)
+        return self._reconstruct(X, L, R)
+
+    def transform(self, X, y=None):
+        X = as_float_array(X, copy=False, force_all_finite=False)
+        check_is_fitted(self, 'feature_vectors_')
+
+        if X.shape[1] != self.feature_vectors_.shape[1]:
+            raise ValueError("X needs to have the same number of features")
+
+        mf = self._get_mf_instance(init_R=self.feature_vectors_,
+                                   init_feature_biases=self.feature_biases_)
+
+        L = mf.fit_transform(X)
+        R = mf.components_
+
+        return self._reconstruct(X, L, R)
+
+    def fit(self, X, y=None):
+        X = as_float_array(X, copy=False, force_all_finite=False)
+
+        mf = self._get_mf_instance()
+        mf.fit(X)
+
+        self.feature_biases_ = mf.components_[0, :]
+        self.feature_vectors_ = mf.components_[2:, :]
+
+        return self
+
+    def _reconstruct(self, X, L, R):
+        X = as_float_array(X, copy=self.copy, force_all_finite=False)
+
+        if sparse.issparse(X) and self.missing_values != 0:
+            X = X.to_csr()
+            mask = get_mask(X.data, self.missing_values)
+            rows = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
+                                np.diff(X.indptr))[mask]
+            cols = X.indices[mask]
+
+            values = (L[rows, :] * R[:, cols].T).sum(axis=1)
+            X.data[mask] = values.astype(X.dtype)
+        else:
+            if sparse.issparse(X):
+                X = X.toarray()
+
+            mask = get_mask(X, self.missing_values)
+            rows, cols = np.where(mask)
+
+            values = (L[rows, :] * R[:, cols].T).sum(axis=1)
+            X[mask] = values.astype(X.dtype)
+
+        return X
+
+    def _get_mf_instance(self, init_L=None, init_R=None,
+                         init_sample_biases=None,
+                         init_feature_biases=None):
+        return MatrixFactorization(
+            n_components=self.n_components,
+            n_iter=self.n_iter,
+            missing_values=self.missing_values,
+            regularization=self.regularization,
+            fit_intercept=self.fit_intercept,
+            learning_rate=self.learning_rate,
+            random_state=self.random_state,
+            verbose=self.verbose,
+            init_L=init_L,
+            init_R=init_R,
+            init_feature_biases=init_feature_biases,
+            init_sample_biases=init_sample_biases,
+            algorithm=self.algorithm
+        )
 
     def score(self, X):
-        # TODO: It's probably not how score should be used. But some version
-        # of this code should be kept to allow a user to have
-        # the score of the estimator on a test matrix
-        if sparse.issparse(X):
-            X = X.tocoo()
-            X_content = np.vstack((X.data, X.row, X.col)).T
-        else:
-            X = check_array(X, force_all_finite=False)
-            mask = np.logical_not(_get_mask(X, self.missing_values))
-            X_content = np.vstack([X[mask]] + list(np.where(mask))).T
+        X = check_array(X, accept_sparse='coo', force_all_finite=False)
+        check_is_fitted(self, 'feature_vectors_')
 
-        return _rmse(
-            X_content[:, 0],
-            X_content[:, 1].astype(np.int32),
-            X_content[:, 2].astype(np.int32),
-            self.L, self.R)
+        if X.shape[1] != self.feature_vectors_.shape[1]:
+            raise ValueError("X needs to have the same number of features")
+
+        if sparse.issparse(X):
+            X_data = X.data
+            X_rows = X.row
+            X_cols = X.col
+        else:
+            mask = np.logical_not(get_mask(X, self.missing_values))
+            X_data = X[mask]
+            X_rows, X_cols = list(np.where(mask))
+
+        mf = self._get_mf_instance(init_R=self.feature_vectors_,
+                                   init_feature_biases=self.feature_biases_)
+
+        L = mf.fit_transform(X)
+        R = mf.components_
+
+        return _rmse(X_data, X_rows, X_cols, L, R)

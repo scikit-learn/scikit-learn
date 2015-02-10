@@ -14,7 +14,6 @@ from sklearn import grid_search
 from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
 
-
 def _check_statistics(X, X_true,
                       strategy, statistics, missing_values):
     """Utility function for testing imputation for a given strategy.
@@ -349,12 +348,13 @@ def test_imputation_copy():
     # made, even if copy=False.
 
 def test_factorization():
+    # TODO: add more test cases, e.g. w/ sparsity
 
     random_state = np.random.RandomState(0)
 
-    n_samples = 10
+    n_samples = 20
     n_features = 15
-    rank = 5
+    rank = 3
 
     L = random_state.rand(n_samples, rank)
     R = random_state.rand(rank, n_features)
@@ -365,12 +365,50 @@ def test_factorization():
         for j in range(3):
             X_corrupted[i, (i % 5) + j * 5] = np.nan
 
-    mfi = FactorizationImputer(
-        n_iter=2000,
-        n_components=rank,
-        random_state=random_state)
-    X_imputed = mfi.fit_transform(X_corrupted)
+    factorizers = [
+        FactorizationImputer(
+            n_iter=100,
+            algorithm='sgd',
+            n_components=rank,
+            learning_rate=0.5,
+            fit_intercept=True,
+            random_state=random_state,
+            verbose=0),
 
-    assert_true(X.shape == X_imputed.shape)
-    assert_false(sparse.issparse(X_imputed))
-    assert_allclose(X, X_imputed)
+        FactorizationImputer(
+            n_iter=100,
+            algorithm='sgd_adagrad',
+            n_components=rank,
+            learning_rate=0.5,
+            fit_intercept=True,
+            random_state=random_state,
+            verbose=0),
+
+        FactorizationImputer(
+            n_iter=100,
+            algorithm='als1',
+            n_components=rank,
+            learning_rate=1,
+            fit_intercept=True,
+            random_state=random_state,
+            verbose=0),
+
+        FactorizationImputer(
+            n_iter=100,
+            algorithm='als',
+            n_components=rank,
+            learning_rate=1,
+            fit_intercept=True,
+            random_state=random_state,
+            verbose=0)
+    ]
+
+    for i, mfi in enumerate(factorizers):
+        X_imputed = mfi.fit_transform(X_corrupted)
+
+        assert_true(X.shape == X_imputed.shape)
+        assert_false(sparse.issparse(X_imputed))
+        assert_allclose(X_imputed, X, atol=1e-2)
+
+        mask = np.logical_not(np.isnan(X_corrupted))
+        assert_allclose(X_imputed[mask], X_corrupted[mask])
