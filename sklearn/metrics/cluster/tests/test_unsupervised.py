@@ -1,9 +1,9 @@
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from .... import datasets
-from ..unsupervised import silhouette_score
-from ... import pairwise_distances
+from sklearn import datasets
+from sklearn.metrics.cluster.unsupervised import silhouette_score
+from sklearn.metrics import pairwise_distances
 from sklearn.utils.testing import assert_false, assert_almost_equal
 from sklearn.utils.testing import assert_raises_regexp
 
