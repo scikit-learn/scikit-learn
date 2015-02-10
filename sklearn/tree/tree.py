@@ -25,7 +25,7 @@ from scipy.sparse import issparse
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import check_array, check_random_state, compute_class_weight
+from ..utils import check_array, check_random_state, compute_sample_weight
 from ..utils.validation import NotFittedError, check_is_fitted
 
 
@@ -172,35 +172,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                 self.n_classes_.append(classes_k.shape[0])
 
             if self.class_weight is not None:
-                if isinstance(self.class_weight, six.string_types):
-                    if self.class_weight != "auto":
-                        raise ValueError('The only supported preset for '
-                                         'class_weight is "auto". Given "%s".'
-                                         % self.class_weight)
-                elif self.n_outputs_ > 1:
-                    if not hasattr(self.class_weight, "__iter__"):
-                        raise ValueError('For multi-output, class_weight '
-                                         'should be a list of dicts, or '
-                                         '"auto".')
-                    elif len(self.class_weight) != self.n_outputs_:
-                        raise ValueError("For multi-output, number of "
-                                         "elements in class_weight should "
-                                         "match number of outputs.")
-                expanded_class_weight = []
-                for k in range(self.n_outputs_):
-                    if self.n_outputs_ == 1 or self.class_weight == 'auto':
-                        class_weight_k = self.class_weight
-                    else:
-                        class_weight_k = self.class_weight[k]
-                    weight_k = compute_class_weight(class_weight_k,
-                                                    self.classes_[k],
-                                                    y_original[:, k])
-                    weight_k = weight_k[np.searchsorted(self.classes_[k],
-                                                        y_original[:, k])]
-                    expanded_class_weight.append(weight_k)
-                expanded_class_weight = np.prod(expanded_class_weight,
-                                                axis=0,
-                                                dtype=np.float64)
+                expanded_class_weight = compute_sample_weight(
+                    self.class_weight, y_original)
 
         else:
             self.classes_ = [None] * self.n_outputs_

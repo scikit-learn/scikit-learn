@@ -176,6 +176,16 @@ Enhancements
    - Parallelized calculation of :func:`pairwise_distances` is now supported
      for scipy metrics and custom callables. By `Joel Nothman`_.
 
+   - Allow the fitting and scoring of all clustering algorithms in
+     :class:`pipeline.Pipeline`. By `Andreas Müller`_.
+
+   - More robust seeding and improved error messages in :class:`cluster.MeanShift`
+     by `Andreas Müller`_.
+
+   - Make the :class:`GMM` stopping criterion less dependent on the number of
+     samples by thresholding the average log-likelihood change instead of its
+     sum over all samples. By `Hervé Bredin`_
+
 Documentation improvements
 ..........................
 
@@ -285,6 +295,9 @@ Bug fixes
       :class:`sklearn.neighbors.NearestNeighbors` and family, when the query
       data is not the same as fit data. By `Manoj Kumar`_.
 
+    - Fix log-density calculation in the :class:`mixture.GMM` with
+      tied covariance. By `Will Dawson`_
+
 API changes summary
 -------------------
 
@@ -357,6 +370,10 @@ API changes summary
       and :func:`neighbors.radius_neighbors_graph` which has to be explicitly
       set by the user. If set to True, then the sample itself is considered
       as the first nearest neighbor.
+
+    - `thresh` parameter is deprecated in favor of new `tol` parameter in
+      :class:`GMM`. See `Enhancements` section for details. By `Hervé Bredin`_.
+
 
 .. _changes_0_15_2:
 
@@ -3253,3 +3270,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Jan Hendrik Metzen: https://jmetzen.github.io/
 
 .. _Cathy Deng: https://github.com/cathydeng
+
+.. _Will Dawson: http://dawsonresearch.com

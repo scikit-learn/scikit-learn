@@ -340,6 +340,9 @@ def test_check_max_features():
                                     max_features=(len(X[0]) + 1))
     assert_raises(ValueError, clf.fit, X, y)
 
+    clf = GradientBoostingRegressor(n_estimators=100, random_state=1,
+                                    max_features=-0.1)
+    assert_raises(ValueError, clf.fit, X, y)
 
 def test_max_feature_regression():
     """Test to make sure random state is set properly. """
@@ -383,6 +386,11 @@ def test_max_feature_auto():
     gbrt = GradientBoostingRegressor(n_estimators=1, max_features='log2')
     gbrt.fit(X_train, y_train)
     assert_equal(gbrt.max_features_, int(np.log2(n_features)))
+
+    gbrt = GradientBoostingRegressor(n_estimators=1,
+                                     max_features=0.01 / X.shape[1])
+    gbrt.fit(X_train, y_train)
+    assert_equal(gbrt.max_features_, 1)
 
 
 def test_staged_predict():

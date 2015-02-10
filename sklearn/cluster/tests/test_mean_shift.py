@@ -4,11 +4,13 @@ Testing for mean shift clustering methods
 """
 
 import numpy as np
+import warnings
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_raise_message
 
 from sklearn.cluster import MeanShift
 from sklearn.cluster import mean_shift
@@ -52,6 +54,13 @@ def test_meanshift_predict():
     assert_array_equal(labels, labels2)
 
 
+def test_meanshift_all_orphans():
+    # init away from the data, crash with a sensible warning
+    ms = MeanShift(bandwidth=0.1, seeds=[[-9, -9], [-10, -10]])
+    msg = "No point was within bandwidth=0.1"
+    assert_raise_message(ValueError, msg, ms.fit, X,)
+
+
 def test_unfitted():
     """Non-regression: before fit, there should be not fitted attributes."""
     ms = MeanShift()
@@ -65,7 +74,7 @@ def test_bin_seeds():
     algorithm
     """
     # Data is just 6 points in the plane
-    X = np.array([[1., 1.], [1.5, 1.5], [1.8, 1.2],
+    X = np.array([[1., 1.], [1.4, 1.4], [1.8, 1.2],
                   [2., 1.], [2.1, 1.1], [0., 0.]])
 
     # With a bin coarseness of 1.0 and min_bin_freq of 1, 3 bins should be
@@ -83,6 +92,13 @@ def test_bin_seeds():
     assert_true(len(ground_truth.symmetric_difference(test_result)) == 0)
 
     # With a bin size of 0.01 and min_bin_freq of 1, 6 bins should be found
-    test_bins = get_bin_seeds(X, 0.01, 1)
-    test_result = set([tuple(p) for p in test_bins])
-    assert_true(len(test_result) == 6)
+    # we bail and use the whole data here.
+    with warnings.catch_warnings(record=True):
+        test_bins = get_bin_seeds(X, 0.01, 1)
+    assert_array_equal(test_bins, X)
+
+    # tight clusters around [0, 0] and [1, 1], only get two bins
+    X, _ = make_blobs(n_samples=100, n_features=2, centers=[[0, 0], [1, 1]],
+                      cluster_std=0.1, random_state=0)
+    test_bins = get_bin_seeds(X, 1)
+    assert_array_equal(test_bins, [[0, 0], [1, 1]])

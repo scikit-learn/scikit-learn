@@ -795,7 +795,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
                 n_jobs=self.n_jobs)
         return self
 
-    def fit_predict(self, X):
+    def fit_predict(self, X, y=None):
         """Compute cluster centers and predict cluster index for each sample.
 
         Convenience method; equivalent to calling fit(X) followed by
@@ -864,7 +864,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         x_squared_norms = row_norms(X, squared=True)
         return _labels_inertia(X, x_squared_norms, self.cluster_centers_)[0]
 
-    def score(self, X):
+    def score(self, X, y=None):
         """Opposite of the value of X on the K-means objective.
 
         Parameters

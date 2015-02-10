@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_not_in
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils import safe_mask
 
 from sklearn.datasets.samples_generator import (make_classification,
@@ -251,10 +252,13 @@ def test_select_kbest_zero():
                                shuffle=False, random_state=0)
 
     univariate_filter = SelectKBest(f_classif, k=0)
-    univariate_filter.fit(X, y).transform(X)
+    univariate_filter.fit(X, y)
     support = univariate_filter.get_support()
     gtruth = np.zeros(10, dtype=bool)
     assert_array_equal(support, gtruth)
+    X_selected = assert_warns_message(UserWarning, 'No features were selected',
+                                      univariate_filter.transform, X)
+    assert_equal(X_selected.shape, (20, 0))
 
 
 def test_select_fpr_classif():
@@ -585,3 +589,24 @@ def test_f_classif_constant_feature():
     X, y = make_classification(n_samples=10, n_features=5)
     X[:, 0] = 2.0
     assert_warns(UserWarning, f_classif, X, y)
+
+
+def test_no_feature_selected():
+    rng = np.random.RandomState(0)
+
+    # Generate random uncorrelated data: a strict univariate test should
+    # rejects all the features
+    X = rng.rand(40, 10)
+    y = rng.randint(0, 4, size=40)
+    strict_selectors = [
+        SelectFwe(alpha=0.01).fit(X, y),
+        SelectFdr(alpha=0.01).fit(X, y),
+        SelectFpr(alpha=0.01).fit(X, y),
+        SelectPercentile(percentile=0).fit(X, y),
+        SelectKBest(k=0).fit(X, y),
+    ]
+    for selector in strict_selectors:
+        assert_array_equal(selector.get_support(), np.zeros(10))
+        X_selected = assert_warns_message(
+            UserWarning, 'No features were selected', selector.transform, X)
+        assert_equal(X_selected.shape, (40, 0))

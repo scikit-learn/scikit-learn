@@ -30,7 +30,7 @@ def _query_include_self(X, include_self, mode):
             warnings.warn(
                 "include_self will be set to False, i.e the first NN of each "
                 "sample will not be the sample itself unless explicitly set "
-                "from version 0.18. Set include_self=True is this is "
+                "from version 0.18. Set include_self=True if this is "
                 "not sought.", DeprecationWarning)
             query = X._fit_X
         else:

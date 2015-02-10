@@ -9,12 +9,13 @@ of Gaussian Mixture Models.
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
 
+import warnings
 import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator
 from ..utils import check_random_state
-from ..utils.extmath import logsumexp, pinvh
+from ..utils.extmath import logsumexp
 from ..utils.validation import check_is_fitted
 from .. import cluster
 
@@ -135,8 +136,9 @@ class GMM(BaseEstimator):
         Floor on the diagonal of the covariance matrix to prevent
         overfitting.  Defaults to 1e-3.
 
-    thresh : float, optional
-        Convergence threshold.
+    tol : float, optional
+        Convergence threshold. EM iterations will stop when average
+        gain in log-likelihood is below this threshold.  Defaults to 1e-3.
 
     n_iter : int, optional
         Number of EM iterations to perform.
@@ -201,7 +203,7 @@ class GMM(BaseEstimator):
     >>> g.fit(obs) # doctest: +NORMALIZE_WHITESPACE
     GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
-            random_state=None, thresh=0.01)
+            random_state=None, thresh=None, tol=0.001)
     >>> np.round(g.weights_, 2)
     array([ 0.75,  0.25])
     >>> np.round(g.means_, 2)
@@ -219,18 +221,23 @@ class GMM(BaseEstimator):
     >>> g.fit(20 * [[0]] +  20 * [[10]]) # doctest: +NORMALIZE_WHITESPACE
     GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
-            random_state=None, thresh=0.01)
+            random_state=None, thresh=None, tol=0.001)
     >>> np.round(g.weights_, 2)
     array([ 0.5,  0.5])
 
     """
 
     def __init__(self, n_components=1, covariance_type='diag',
-                 random_state=None, thresh=1e-2, min_covar=1e-3,
+                 random_state=None, thresh=None, tol=1e-3, min_covar=1e-3,
                  n_iter=100, n_init=1, params='wmc', init_params='wmc'):
+        if thresh is not None:
+            warnings.warn("'thresh' has been replaced by 'tol' in 0.16 "
+                          " and will be removed in 0.18.",
+                          DeprecationWarning)
         self.n_components = n_components
         self.covariance_type = covariance_type
         self.thresh = thresh
+        self.tol = tol
         self.min_covar = min_covar
         self.random_state = random_state
         self.n_iter = n_iter
@@ -238,7 +245,7 @@ class GMM(BaseEstimator):
         self.params = params
         self.init_params = init_params
 
-        if not covariance_type in ['spherical', 'tied', 'diag', 'full']:
+        if covariance_type not in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('Invalid value for covariance_type: %s' %
                              covariance_type)
 
@@ -420,7 +427,7 @@ class GMM(BaseEstimator):
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
         """
-        ## initialization step
+        # initialization step
         X = np.asarray(X, dtype=np.float)
         if X.ndim == 1:
             X = X[:, np.newaxis]
@@ -450,19 +457,28 @@ class GMM(BaseEstimator):
                         cv, self.covariance_type, self.n_components)
 
             # EM algorithms
-            log_likelihood = []
+            current_log_likelihood = None
             # reset self.converged_ to False
             self.converged_ = False
+
+            # this line should be removed when 'thresh' is deprecated
+            tol = (self.tol if self.thresh is None
+                   else self.thresh / float(X.shape[0]))
+
             for i in range(self.n_iter):
+                prev_log_likelihood = current_log_likelihood
                 # Expectation step
-                curr_log_likelihood, responsibilities = self.score_samples(X)
-                log_likelihood.append(curr_log_likelihood.sum())
+                log_likelihoods, responsibilities = self.score_samples(X)
+                current_log_likelihood = log_likelihoods.mean()
 
                 # Check for convergence.
-                if i > 0 and abs(log_likelihood[-1] - log_likelihood[-2]) < \
-                        self.thresh:
-                    self.converged_ = True
-                    break
+                # (should compare to self.tol when dreprecated 'thresh' is
+                # removed)
+                if prev_log_likelihood is not None:
+                    change = abs(current_log_likelihood - prev_log_likelihood)
+                    if change < tol:
+                        self.converged_ = True
+                        break
 
                 # Maximization step
                 self._do_mstep(X, responsibilities, self.params,
@@ -470,8 +486,8 @@ class GMM(BaseEstimator):
 
             # if the results are better, keep it
             if self.n_iter:
-                if log_likelihood[-1] > max_log_prob:
-                    max_log_prob = log_likelihood[-1]
+                if current_log_likelihood > max_log_prob:
+                    max_log_prob = current_log_likelihood
                     best_params = {'weights': self.weights_,
                                    'means': self.means_,
                                    'covars': self.covars_}
@@ -578,13 +594,8 @@ def _log_multivariate_normal_density_spherical(X, means, covars):
 
 def _log_multivariate_normal_density_tied(X, means, covars):
     """Compute Gaussian log-density at X for a tied model"""
-    n_samples, n_dim = X.shape
-    icv = pinvh(covars)
-    lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars) + 0.1)
-                  + np.sum(X * np.dot(X, icv), 1)[:, np.newaxis]
-                  - 2 * np.dot(np.dot(X, icv), means.T)
-                  + np.sum(means * np.dot(means, icv), 1))
-    return lpr
+    cv = np.tile(covars, (means.shape[0], 1, 1))
+    return _log_multivariate_normal_density_full(X, means, cv)
 
 
 def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
@@ -702,11 +713,13 @@ def _covar_mstep_full(gmm, X, responsibilities, weighted_X_sum, norm,
 def _covar_mstep_tied(gmm, X, responsibilities, weighted_X_sum, norm,
                       min_covar):
     # Eq. 15 from K. Murphy, "Fitting a Conditional Linear Gaussian
-    n_features = X.shape[1]
+    # Distribution"
     avg_X2 = np.dot(X.T, X)
     avg_means2 = np.dot(gmm.means_.T, weighted_X_sum)
-    return (avg_X2 - avg_means2 + min_covar * np.eye(n_features)) / X.shape[0]
-
+    out = avg_X2 - avg_means2
+    out *= 1. / X.shape[0]
+    out.flat[::len(out) + 1] += min_covar
+    return out
 
 _covar_mstep_funcs = {'spherical': _covar_mstep_spherical,
                       'diag': _covar_mstep_diag,

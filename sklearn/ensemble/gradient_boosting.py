@@ -37,7 +37,7 @@ from ..base import RegressorMixin
 from ..utils import check_random_state, check_array, check_X_y, column_or_1d
 from ..utils import check_consistent_length
 from ..utils.extmath import logsumexp
-from ..utils.fixes import expit
+from ..utils.fixes import expit, bincount
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted, NotFittedError
 from ..externals import six
@@ -127,7 +127,7 @@ class PriorProbabilityEstimator(BaseEstimator):
     def fit(self, X, y, sample_weight=None):
         if sample_weight is None:
             sample_weight = np.ones_like(y, dtype=np.float)
-        class_counts = np.bincount(y, weights=sample_weight)
+        class_counts = bincount(y, weights=sample_weight)
         self.priors = class_counts / class_counts.sum()
 
     def predict(self, X):
@@ -841,7 +841,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         elif isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
         else:  # float
-            max_features = int(self.max_features * self.n_features)
+            if 0. < self.max_features <= 1.:
+                max_features = max(int(self.max_features * self.n_features), 1)
+            else:
+                raise ValueError("max_features must be in (0, n_features]")
 
         self.max_features_ = max_features
 
@@ -1368,6 +1371,28 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         except AttributeError:
             raise AttributeError('loss=%r does not support predict_proba' %
                                  self.loss)
+
+    def predict_log_proba(self, X):
+        """Predict class log-probabilities for X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Raises
+        ------
+        AttributeError
+            If the ``loss`` does not support probabilities.
+
+        Returns
+        -------
+        p : array of shape = [n_samples]
+            The class log-probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+        """
+        proba = self.predict_proba(X)
+        return np.log(proba)
 
     def staged_predict_proba(self, X):
         """Predict class probabilities at each stage for X.

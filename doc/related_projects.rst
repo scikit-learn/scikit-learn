@@ -16,6 +16,11 @@ Other packages useful for data analysis and machine learning.
 - `sklearn_pandas <https://github.com/paulgb/sklearn-pandas/>`_ bridge for
   scikit-learn pipelines and pandas data frame with dedicated transformers.
 
+- `Scikit-Learn Laboratory
+  <https://skll.readthedocs.org/en/latest/index.html>`_  A command-line
+  wrapper around scikit-learn that makes it easy to run machine learning
+  experiments with multiple learners and large feature sets.
+
 - `theano <http://deeplearning.net/software/theano/>`_ A CPU/GPU array
   processing framework geared towards deep learning research.
 
@@ -23,17 +28,22 @@ Other packages useful for data analysis and machine learning.
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 
+- `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and fitting algorithms.
+
 
 Extensions and Algorithms
 -------------------------
-Libraries that provide a scikit-learn like interface and can be used with scikit-learn tools.
+Libraries that provide a scikit-learn like interface and can be used with
+scikit-learn tools.
 
 - `pylearn2 <http://deeplearning.net/software/pylearn2/>`_ A deep learning and
   neural network library build on theano with scikit-learn like interface.
 
-- `lightning <http://www.mblondel.org/lightning/>`_ Fast state-of-the-art linear model solvers (SDCA, AdaGrad, SVRG, SAG, etc...).
+- `lightning <http://www.mblondel.org/lightning/>`_ Fast state-of-the-art
+  linear model solvers (SDCA, AdaGrad, SVRG, SAG, etc...).
 
-- `Seqlearn <https://github.com/larsmans/seqlearn>`_  Sequence classification using HMMs or structured perceptron.
+- `Seqlearn <https://github.com/larsmans/seqlearn>`_  Sequence classification
+  using HMMs or structured perceptron.
 
 - `HMMLearn <https://github.com/hmmlearn/hmmlearn>`_ Implementation of hidden
   markov models that was previously part of scikit-learn.

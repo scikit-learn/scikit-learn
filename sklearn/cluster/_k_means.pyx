@@ -16,6 +16,7 @@ cimport cython
 
 from ..utils.extmath import norm
 from sklearn.utils.sparsefuncs_fast cimport add_row_csr
+from sklearn.utils.fixes import bincount
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
@@ -272,7 +273,7 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
     n_features = X.shape[1]
     cdef int i, j, c
     cdef np.ndarray[DOUBLE, ndim=2] centers = np.zeros((n_clusters, n_features))
-    n_samples_in_cluster = np.bincount(labels, minlength=n_clusters)
+    n_samples_in_cluster = bincount(labels, minlength=n_clusters)
     empty_clusters = np.where(n_samples_in_cluster == 0)[0]
     # maybe also relocate small clusters?
 
@@ -331,7 +332,7 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
         np.zeros((n_clusters, n_features))
     cdef np.ndarray[np.npy_intp, ndim=1] far_from_centers
     cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] n_samples_in_cluster = \
-        np.bincount(labels, minlength=n_clusters)
+        bincount(labels, minlength=n_clusters)
     cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] empty_clusters = \
         np.where(n_samples_in_cluster == 0)[0]
 
