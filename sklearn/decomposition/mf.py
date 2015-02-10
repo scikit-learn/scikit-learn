@@ -91,7 +91,31 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.algorithm = algorithm
 
-    def fit_transform(self, X, y=None):
+    def _extract_data(self, X):
+        if sparse.issparse(X):
+            X_data = X.data
+            X_rows = X.row
+            X_cols = X.col
+
+            if self.missing_values != 0:
+                mask = np.logical_not(get_mask(X_data, self.missing_values))
+                X_data = X_data[mask]
+                indices = np.where(mask)
+                X_rows = X_rows[indices]
+                X_cols = X_cols[indices]
+        else:
+            mask = np.logical_not(get_mask(X, self.missing_values))
+            X_data = X[mask]
+            X_rows, X_cols = list(np.where(mask))
+
+        # TODO: delme
+        # standardized = sorted(zip(X_data, X_rows, X_cols))
+        # X_data = np.array([x[0] for x in standardized])
+        # X_rows = np.array([x[1] for x in standardized])
+        # X_cols = np.array([x[2] for x in standardized])
+        return X_data, X_rows, X_cols
+
+    def fit_transform(self, X, y=None, update=True):
         """Factorize the matrix and return the first factor
 
         This is more efficient than calling fit followed by transform.
@@ -119,15 +143,9 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
         # TODO: handle rows / columns of missing values only
 
         # Extract the non-missing values and their indices
-        if sparse.issparse(X) and self.missing_values == 0:
-            X = X.tocoo()
-            X_data = X.data
-            X_rows = X.row
-            X_cols = X.col
-        else:
-            mask = np.logical_not(get_mask(X, self.missing_values))
-            X_data = X[mask]
-            X_rows, X_cols = list(np.where(mask))
+        X_data, X_rows, X_cols = self._extract_data(X)
+
+        print X_rows.shape, X_cols.shape, type(X), self.n_components
 
         mean = X_data.mean()
         var  = X_data.var()
@@ -162,8 +180,10 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
             bias_features += correction / 2
             bias_samples += correction / 2
         else:
-            correction = np.sqrt(abs(mean - L.mean() * R.mean()))
-            R += correction
+            v = mean - L.mean() * R.mean()
+            correction = np.sqrt(abs(v))
+            sign = np.sign(v)
+            R += correction * sign
             L += correction
 
         # Factorize the matrix
@@ -193,11 +213,12 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
         else:
             raise ValueError("Unknown algorithm: %s" % self.algorithm)
 
-        self.feature_vectors_ = R
-        self.components_ = np.vstack([
-            bias_features.reshape(1, n_features),
-            np.ones((1, n_features)),
-            R])
+        if update:
+            self.feature_vectors_ = R
+            self.components_ = np.vstack([
+                bias_features.reshape(1, n_features),
+                np.ones((1, n_features)),
+                R])
 
         return np.hstack([
             np.ones((n_samples, 1)),
@@ -220,7 +241,7 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
         old_init_R = self.init_R
 
         self.init_R = self.feature_vectors_
-        res = self.fit_transform(X)
+        res = self.fit_transform(X, update=False)
 
         self.init_R = old_init_R
 

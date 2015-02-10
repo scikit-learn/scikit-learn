@@ -440,6 +440,7 @@ class FactorizationImputer(BaseEstimator, TransformerMixin):
 
         L = mf.fit_transform(X)
         R = mf.components_
+        self.mf_ = mf
 
         return self._reconstruct(X, L, R)
 
@@ -463,6 +464,7 @@ class FactorizationImputer(BaseEstimator, TransformerMixin):
 
         mf = self._get_mf_instance()
         mf.fit(X)
+        self.mf_ = mf
 
         self.feature_biases_ = mf.components_[0, :]
         self.feature_vectors_ = mf.components_[2:, :]
@@ -512,26 +514,17 @@ class FactorizationImputer(BaseEstimator, TransformerMixin):
             algorithm=self.algorithm
         )
 
-    def score(self, X):
+    def score(self, X, y=None):
         X = check_array(X, accept_sparse='coo', force_all_finite=False)
-        check_is_fitted(self, 'feature_vectors_')
+        check_is_fitted(self, 'mf_')
 
         if X.shape[1] != self.feature_vectors_.shape[1]:
             raise ValueError("X needs to have the same number of features")
 
-        if sparse.issparse(X):
-            X_data = X.data
-            X_rows = X.row
-            X_cols = X.col
-        else:
-            mask = np.logical_not(get_mask(X, self.missing_values))
-            X_data = X[mask]
-            X_rows, X_cols = list(np.where(mask))
+        mf = self.mf_
+        X_data, X_rows, X_cols = mf._extract_data(X)
 
-        mf = self._get_mf_instance(init_R=self.feature_vectors_,
-                                   init_feature_biases=self.feature_biases_)
-
-        L = mf.fit_transform(X)
+        L = mf.transform(X)
         R = mf.components_
 
         return _rmse(X_data, X_rows, X_cols, L, R)

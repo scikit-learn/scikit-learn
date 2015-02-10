@@ -11,9 +11,9 @@ from sklearn.utils.testing import assert_false
 
 from sklearn.decomposition.mf import MatrixFactorization
 
-random_state = np.random.mtrand.RandomState(0)
 
 def test_fit_transform():
+    random_state = np.random.mtrand.RandomState(0)
 
     n_samples = 100
     n_features = 25
@@ -26,11 +26,11 @@ def test_fit_transform():
     X = np.dot(L, R)
     X_train = X.copy()
     X_train[random_state.rand(n_samples, n_features) > 0.8] = np.nan
-    X_test = X.copy()
-    X_test[random_state.rand(n_samples, n_features) > 0.8] = np.nan
+    X_train_bak = X_train.copy()
 
     # Test with different numbers of components
     for n_components in [None, 10, 30]:
+        X_train = X_train_bak.copy()
         mf = MatrixFactorization(n_components=n_components, random_state=0)
         L = mf.fit_transform(X_train)
 
@@ -45,26 +45,24 @@ def test_fit_transform():
         L_all = []
         R_all = []
 
-        mf = MatrixFactorization(n_components=n_components,
-                                 random_state=0)
+        mf = MatrixFactorization(n_components=n_components, random_state=0)
         L_all.append(mf.fit_transform(X_train))
         R_all.append(mf.components_)
 
         X_train[np.isnan(X_train)] = 0
-        mf = MatrixFactorization(n_components=n_components,
-                                 random_state=0,
-                                 missing_values = 0)
+        mf = MatrixFactorization(n_components=n_components, random_state=0,
+                                 missing_values=0)
         L_all.append(mf.fit_transform(X_train))
         R_all.append(mf.components_)
 
-        mf = MatrixFactorization(n_components=n_components,
-                                 random_state=0)
+        assert_array_equal(L_all[0], L_all[1])
+        assert_array_equal(R_all[0], R_all[1])
+
+        mf = MatrixFactorization(n_components=n_components, random_state=0)
         L_all.append(mf.fit_transform(sp.coo_matrix(X_train)))
         R_all.append(mf.components_)
 
-        assert_array_equal(L_all[0], L_all[1])
         assert_array_equal(L_all[1], L_all[2])
-        assert_array_equal(R_all[0], R_all[1])
         assert_array_equal(R_all[0], R_all[1])
 
         # Test that no exception is raised with negative parameters
