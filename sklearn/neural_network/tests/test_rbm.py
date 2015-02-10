@@ -131,14 +131,16 @@ def test_fit_gibbs_sparse():
 
 
 def test_gibbs_smoke():
-    """Check if we don't get NaNs sampling the full digits dataset."""
-    rng = np.random.RandomState(42)
+    """Check if we don't get NaNs sampling the full digits dataset.
+    Also check that sampling again will yield different results."""
     X = Xdigits
     rbm1 = BernoulliRBM(n_components=42, batch_size=40,
-                        n_iter=20, random_state=rng)
+                        n_iter=20, random_state=42)
     rbm1.fit(X)
     X_sampled = rbm1.gibbs(X)
     assert_all_finite(X_sampled)
+    X_sampled2 = rbm1.gibbs(X)
+    assert_true(np.all((X_sampled != X_sampled2).max(axis=1)))
 
 
 def test_score_samples():
