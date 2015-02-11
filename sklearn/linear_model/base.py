@@ -25,6 +25,7 @@ from scipy import sparse
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import as_float_array, check_array
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
@@ -113,7 +114,8 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True,
     return X, y, X_mean, y_mean, X_std
 
 
-class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
+class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator),
+                  _LearntSelectorMixin):
     """Base class for Linear Models"""
 
     @abstractmethod

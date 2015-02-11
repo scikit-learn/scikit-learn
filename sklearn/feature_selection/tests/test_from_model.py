@@ -5,10 +5,11 @@ from nose.tools import assert_raises, assert_true
 
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_array_equal
 
 from sklearn.datasets import load_iris
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import (
+    LogisticRegression, SGDClassifier, Lasso, LassoCV)
 from sklearn.svm import LinearSVC
 
 iris = load_iris()
@@ -41,3 +42,17 @@ def test_invalid_input():
     clf.fit(iris.data, iris.target)
     assert_raises(ValueError, clf.transform, iris.data, "gobbledigook")
     assert_raises(ValueError, clf.transform, iris.data, ".5 * gobbledigook")
+
+
+def test_transform_elastic_net_lasso():
+    """Test that default threshold in Lasso Models ~= 0"""
+    rng = np.random.RandomState(0)
+    X, y = rng.rand(5, 5), rng.rand(5)
+    coef = rng.rand(5)
+    coef[[1, 2]] = 0.0
+    for model in [LassoCV(), Lasso()]:
+        model.fit(X, y)
+
+        # Rewrite coefficients just to check that transform works.
+        model.coef_ = coef
+        assert_array_equal(model.transform(X), X[:, [0, 3, 4]])
