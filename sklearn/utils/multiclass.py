@@ -21,8 +21,7 @@ import numpy as np
 from ..externals.six import string_types
 
 from .validation import check_array
-
-from ..utils.fixes import bincount
+from .fixes import in1d, bincount
 
 
 def _unique_multiclass(y):
@@ -96,7 +95,8 @@ def unique_labels(*ys):
 
     # Check consistency for the indicator format
     if (label_type == "multilabel-indicator" and
-            len(set(check_array(y, ['csr', 'csc', 'coo']).shape[1] for y in ys)) > 1):
+            len(set(check_array(y, ['csr', 'csc', 'coo']).shape[1]
+                    for y in ys)) > 1):
         raise ValueError("Multi-label binary indicator input with "
                          "different numbers of labels")
 
@@ -317,7 +317,7 @@ def type_of_target(y):
         return 'multiclass' + suffix
 
 
-def _check_partial_fit_first_call(clf, classes=None):
+def _check_partial_fit_first_call(clf, y=None, classes=None):
     """Private helper function for factorizing common classes param logic
 
     Estimators that implement the ``partial_fit`` API need to be provided with
@@ -328,7 +328,7 @@ def _check_partial_fit_first_call(clf, classes=None):
 
     This function returns True if it detects that this was the first call to
     ``partial_fit`` on ``clf``. In that case the ``classes_`` attribute is also
-    set on ``clf``.
+    set on ``clf`` after validating against unique y labels.
 
     """
     if getattr(clf, 'classes_', None) is None and classes is None:
@@ -344,11 +344,33 @@ def _check_partial_fit_first_call(clf, classes=None):
 
         else:
             # This is the first call to partial_fit
+            if issparse(y):
+                raise ValueError("Sparse y is not supported.")
+
+            # Validate classes against unique labels in y
+            y_, classes_ = np.array(y), np.array(classes)
+            n_outputs = 1 if len(y_.shape) == 1 else y_.shape[1]
+            y_ = y_.reshape(y_.shape[0], n_outputs)
+            classes_ = classes_.reshape(n_outputs, classes_.shape[0])
+
+            for i in range(n_outputs):
+                unique_y = np.unique(y_[:, i])
+                unique_y_in_classes = in1d(unique_y, classes_[i],
+                                           assume_unique=True)
+                if not np.all(unique_y_in_classes):
+                    msg = ("The target label(s) %s in y do not exist in the"
+                           "initial classes %s" %
+                           (unique_y[~unique_y_in_classes], classes_[i]))
+
+                    if n_outputs != 1:
+                        msg += " for output %d" % i
+
+                    raise ValueError(msg)
+
             clf.classes_ = unique_labels(classes)
             return True
 
-    # classes is None and clf.classes_ has already previously been set:
-    # nothing to do
+    # classes is None and clf.classes_ has already previously been set
     return False
 
 
