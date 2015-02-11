@@ -21,6 +21,7 @@ from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..utils import ConvergenceWarning
@@ -935,7 +936,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     return this_mses
 
 
-class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
+class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel), _LearntSelectorMixin):
     """Base class for iterative model fitting along a regularization path"""
 
     @abstractmethod
