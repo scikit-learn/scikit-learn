@@ -53,7 +53,6 @@ from sklearn.utils.estimator_checks import (
     check_class_weight_auto_classifiers,
     check_class_weight_auto_linear_classifier,
     check_estimators_overwrite_params,
-    check_estimators_partial_fit_n_features,
     check_sparsify_coefficients,
     check_classifier_data_not_an_array,
     check_regressor_data_not_an_array,
@@ -63,7 +62,12 @@ from sklearn.utils.estimator_checks import (
     check_non_transformer_estimators_n_iter,
     check_regressors_no_decision_function,
     check_pipeline_consistency,
-    CROSS_DECOMPOSITION)
+    CROSS_DECOMPOSITION,
+    check_partial_fit_clone_consistency,
+    check_partial_fit_n_features,
+    check_partial_fit_reset_when_fit,
+    check_partial_fit_effect,
+    check_partial_fit_classes_arg)
 
 
 def test_all_estimator_no_base_class():
@@ -153,7 +157,6 @@ def test_clustering():
             # this is clustering on the features
             # let's not test that here.
             yield check_clustering, name, Alg
-            yield check_estimators_partial_fit_n_features, name, Alg
 
 
 def test_classifiers():
@@ -166,7 +169,6 @@ def test_classifiers():
         yield check_classifiers_one_label, name, Classifier
         yield check_classifiers_classes, name, Classifier
         yield check_classifiers_pickle, name, Classifier
-        yield check_estimators_partial_fit_n_features, name, Classifier
         # basic consistency testing
         yield check_classifiers_train, name, Classifier
         if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]
@@ -190,7 +192,6 @@ def test_regressors():
         # basic testing
         yield check_regressors_train, name, Regressor
         yield check_regressor_data_not_an_array, name, Regressor
-        yield check_estimators_partial_fit_n_features, name, Regressor
         yield check_regressors_no_decision_function, name, Regressor
         # Test that estimators can be pickled, and once pickled
         # give the same answer as before.
@@ -379,3 +380,23 @@ def test_transformer_n_iter():
 
         if hasattr(estimator, "max_iter") and name not in external_solver:
             yield check_transformer_n_iter, name, estimator
+
+
+def test_partial_fit():
+    # Tests all estimators which support partial_fit
+
+    skiplist = ("HashingVectorizer",)
+
+    for name, Estimator in all_estimators():
+        if (not hasattr(Estimator, 'partial_fit')) or (name in skiplist):
+            continue
+        # General tests for partial_fit method of estimators
+        yield check_partial_fit_clone_consistency, name, Estimator
+        # Test if change in features in 2nd call raises ValueError
+        yield check_partial_fit_n_features, name, Estimator
+        # Test if fit after multiple partial_fits resets the estimator
+        yield check_partial_fit_reset_when_fit, name, Estimator
+        # Check the correct parsing of the classes argument
+        yield check_partial_fit_classes_arg, name, Estimator
+        # Test to assert that partial_fit does not overwrite previous model.
+        yield check_partial_fit_effect, name, Estimator
