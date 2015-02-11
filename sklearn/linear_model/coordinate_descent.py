@@ -104,7 +104,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 
     if alpha_max <= np.finfo(float).resolution:
         alphas = np.empty(n_alphas)
-        alphas.fill(np.finfo(float).min)
+        alphas.fill(np.finfo(float).resolution)
         return alphas
 
     return np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
