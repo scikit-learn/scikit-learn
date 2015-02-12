@@ -369,15 +369,17 @@ def test_uniform_targets():
     y2 = np.empty((10, 2))
 
     for model in models_single_task:
-        for y_values in (0, -5, 5, 4.5, -4.5):
+        for y_values in (0, 5):
             y1.fill(y_values)
             assert_array_equal(model.fit(X_train, y1).predict(X_test), y1)
+            assert_array_equal(model.alphas_, [np.finfo(float).resolution]*3)
 
     for model in models_multi_task:
-        for y_values in (0, -5, 5, 4.5, -4.5):
+        for y_values in (0, 5):
             y2[:, 0].fill(y_values)
             y2[:, 1].fill(2 * y_values)
             assert_array_equal(model.fit(X_train, y2).predict(X_test), y2)
+            assert_array_equal(model.alphas_, [np.finfo(float).resolution]*3)
 
 
 def test_multi_task_lasso_and_enet():
