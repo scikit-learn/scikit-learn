@@ -215,7 +215,7 @@ def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
         update = momentum * update - learning_rate * grad
         p += update
 
-        if verbose >= 2 and (i+1) % 10 == 0:
+        if verbose >= 2 and (i + 1) % 10 == 0:
             print("[t-SNE] Iteration %d: error = %.7f, gradient norm = %.7f"
                   % (i + 1, error, grad_norm))
 
@@ -404,7 +404,7 @@ class TSNE(BaseEstimator):
         self.verbose = verbose
         self.random_state = random_state
 
-    def _fit(self, X):
+    def fit(self, X, y=None):
         """Fit the model using X as training data.
 
         Parameters
@@ -413,7 +413,7 @@ class TSNE(BaseEstimator):
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=np.float64)
         random_state = check_random_state(self.random_state)
 
         if self.early_exaggeration < 1.0:
@@ -507,7 +507,7 @@ class TSNE(BaseEstimator):
 
         return X_embedded
 
-    def fit_transform(self, X):
+    def fit_transform(self, X, y=None):
         """Transform X to the embedded space.
 
         Parameters
@@ -521,5 +521,5 @@ class TSNE(BaseEstimator):
         X_new : array, shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        self._fit(X)
+        self.fit(X)
         return self.embedding_

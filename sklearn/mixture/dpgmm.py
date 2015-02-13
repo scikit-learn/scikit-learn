@@ -16,7 +16,7 @@ from scipy import linalg
 from scipy.spatial.distance import cdist
 
 from ..externals.six.moves import xrange
-from ..utils import check_random_state
+from ..utils import check_random_state, check_array
 from ..utils.extmath import logsumexp, pinvh, squared_norm
 from ..utils.validation import check_is_fitted
 from .. import cluster
@@ -148,12 +148,12 @@ class DPGMM(GMM):
     n_iter : int, default 10
         Maximum number of iterations to perform before convergence.
 
-    params : string, default 'wmc' 
+    params : string, default 'wmc'
         Controls which parameters are updated in the training
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.
 
-    init_params : string, default 'wmc' 
+    init_params : string, default 'wmc'
         Controls which parameters are updated in the initialization
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.  Defaults to 'wmc'.
@@ -250,7 +250,7 @@ class DPGMM(GMM):
         """
         check_is_fitted(self, 'gamma_')
 
-        X = np.asarray(X)
+        X = check_array(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
         z = np.zeros((X.shape[0], self.n_components))
@@ -461,7 +461,7 @@ class DPGMM(GMM):
     def lower_bound(self, X, z):
         """returns a lower bound on model evidence based on X and membership"""
         check_is_fitted(self, 'means_')
-        
+
         if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self.covariance_type)
@@ -480,7 +480,7 @@ class DPGMM(GMM):
                                                     + self.gamma_[i, 2])
         self.weights_ /= np.sum(self.weights_)
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Estimate model parameters with the variational
         algorithm.
 
@@ -501,10 +501,10 @@ class DPGMM(GMM):
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
         """
-        self.random_state = check_random_state(self.random_state)
+        self.random_state_ = check_random_state(self.random_state)
 
         ## initialization step
-        X = np.asarray(X)
+        X = check_array(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
 
@@ -521,7 +521,7 @@ class DPGMM(GMM):
         if 'm' in self.init_params or not hasattr(self, 'means_'):
             self.means_ = cluster.KMeans(
                 n_clusters=self.n_components,
-                random_state=self.random_state).fit(X).cluster_centers_[::-1]
+                random_state=self.random_state_).fit(X).cluster_centers_[::-1]
 
         if 'w' in self.init_params or not hasattr(self, 'weights_'):
             self.weights_ = np.tile(1.0 / self.n_components, self.n_components)
@@ -705,7 +705,7 @@ class VBGMM(DPGMM):
         """
         check_is_fitted(self, 'gamma_')
 
-        X = np.asarray(X)
+        X = check_array(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
         dg = digamma(self.gamma_) - digamma(np.sum(self.gamma_))

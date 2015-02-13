@@ -355,6 +355,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNetCV
     """
     X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
+    if Xy is not None:
+        Xy = check_array(Xy, 'csc', dtype=np.float64, order='F', copy=False,
+                         ensure_2d=False)
     n_samples, n_features = X.shape
 
     multi_output = False
@@ -419,6 +422,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model = cd_fast.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
         elif isinstance(precompute, np.ndarray):
+            precompute = check_array(precompute, 'csc', dtype=np.float64, order='F')
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
                 tol, rng, random, positive)
@@ -1422,6 +1426,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+
 
 ###############################################################################
 # Multi Task ElasticNet and Lasso models (with joint feature selection)

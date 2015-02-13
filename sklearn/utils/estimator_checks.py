@@ -60,7 +60,8 @@ def _boston_subset(n_samples=200):
 def set_fast_parameters(estimator):
     # speed up some estimators
     params = estimator.get_params()
-    if "n_iter" in params:
+    if ("n_iter" in params
+            and estimator.__class__.__name__ != "TSNE"):
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
         # NMF
@@ -83,7 +84,7 @@ def set_fast_parameters(estimator):
         estimator.set_params(n_init=2)
 
     if estimator.__class__.__name__ == "SelectFdr":
-        # avoid not selecting any features
+        # be tolerant of noisy datasets (not actually speed)
         estimator.set_params(alpha=.5)
 
     if isinstance(estimator, BaseRandomProjection):
@@ -255,9 +256,9 @@ def check_pipeline_consistency(name, Estimator):
     X -= X.min()
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()
-    pipeline = make_pipeline(estimator)
     set_fast_parameters(estimator)
     set_random_state(estimator)
+    pipeline = make_pipeline(estimator)
     estimator.fit(X, y)
     pipeline.fit(X, y)
     funcs = ["score", "fit_transform"]
@@ -289,6 +290,32 @@ def check_fit_score_takes_y(name, Estimator):
             func(X, y)
             args = inspect.getargspec(func).args
             assert_true(args[2] in ["y", "Y"])
+
+
+def check_estimators_dtypes(name, Estimator):
+    rnd = np.random.RandomState(0)
+    X_train_32 = 4 * rnd.uniform(size=(10, 3)).astype(np.float32)
+    X_train_64 = X_train_32.astype(np.float64)
+    X_train_int_64 = X_train_32.astype(np.int64)
+    X_train_int_32 = X_train_32.astype(np.int32)
+    y = X_train_int_64[:, 0]
+    y = multioutput_estimator_convert_y_2d(name, y)
+    for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
+        with warnings.catch_warnings(record=True):
+            estimator = Estimator()
+        set_fast_parameters(estimator)
+        set_random_state(estimator, 1)
+        estimator.fit(X_train, y)
+
+        for method in ["predict", "transform", "decision_function",
+                       "predict_proba"]:
+            try:
+                if hasattr(estimator, method):
+                    getattr(estimator, method)(X_train)
+            except NotImplementedError:
+                # FIXME
+                # non-standard handling of ducktyping in BaggingEstimator
+                pass
 
 
 def check_estimators_nan_inf(name, Estimator):
