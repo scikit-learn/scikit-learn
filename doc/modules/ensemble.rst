@@ -199,13 +199,14 @@ greater the reduction of variance, but also the greater the increase in
 bias. Empirical good default values are ``max_features=n_features``
 for regression problems, and ``max_features=sqrt(n_features)`` for
 classification tasks (where ``n_features`` is the number of features
-in the data). The best results are also usually reached when setting
-``max_depth=None`` in combination with ``min_samples_split=1`` (i.e.,
-when fully developing the trees). Bear in mind though that these values
-are usually not optimal. The best parameter values should always be cross-
-validated. In addition, note that bootstrap samples are used by default
-in random forests (``bootstrap=True``) while the default strategy is to
-use the original dataset for building extra-trees (``bootstrap=False``).
+in the data). Good results are often achieved when setting ``max_depth=None``
+in combination with ``min_samples_split=1`` (i.e., when fully developing the
+trees). Bear in mind though that these values are usually not optimal, and
+might result in models that consume a lot of ram. The best parameter values
+should always be cross-validated. In addition, note that in random forests,
+bootstrap samples are used by default (``bootstrap=True``)
+while the default strategy for extra-trees is to use the whole dataset
+(``bootstrap=False``).
 
 Parallelization
 ---------------
