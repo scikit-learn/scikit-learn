@@ -110,7 +110,13 @@ def _num_samples(x):
             x = np.asarray(x)
         else:
             raise TypeError("Expected sequence or array-like, got %r" % x)
-    return x.shape[0] if hasattr(x, 'shape') else len(x)
+    if hasattr(x, 'shape'):
+        if len(x.shape) == 0:
+            raise TypeError("Singleton array %r cannot be considered"
+                            " a valid collection." % x)
+        return x.shape[0]
+    else:
+        return len(x)
 
 
 def check_consistent_length(*arrays):
@@ -222,10 +228,11 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
 
 
 def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
-                force_all_finite=True, ensure_2d=True, allow_nd=False):
+                force_all_finite=True, ensure_2d=True, allow_nd=False,
+                ensure_min_samples=1, ensure_min_features=1):
     """Input validation on an array, list, sparse matrix or similar.
 
-    By default, the input is converted to an at least 2nd numpy array.
+    By default, the input is converted to an at least 2d numpy array.
 
     Parameters
     ----------
@@ -257,6 +264,16 @@ def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
     allow_nd : boolean (default=False)
         Whether to allow X.ndim > 2.
 
+    ensure_min_samples : int (default=1)
+        Make sure that the array has a minimum number of samples in its first
+        axis (rows for a 2D array). Setting to 0 disables this check.
+
+    ensure_min_features : int (default=1)
+        Make sure that the 2D array has some minimum number of features
+        (columns). The default value of 1 rejects empty datasets.
+        This check is only enforced when ``ensure_2d`` is True and
+        ``allow_nd`` is False. Setting to 0 disables this check.
+
     Returns
     -------
     X_converted : object
@@ -278,12 +295,26 @@ def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
         if force_all_finite:
             _assert_all_finite(array)
 
+    if ensure_min_samples > 0:
+        n_samples = _num_samples(array)
+        if n_samples < ensure_min_samples:
+            raise ValueError("Found array with %d sample(s) (shape=%r) while a"
+                             " minimum of %d is required."
+                             % (n_samples, array.shape, ensure_min_samples))
+
+    if ensure_min_features > 0 and ensure_2d and not allow_nd:
+        n_features = array.shape[1]
+        if n_features < ensure_min_features:
+            raise ValueError("Found array with %d feature(s) (shape=%r) while"
+                             " a minimum of %d is required."
+                             % (n_features, array.shape, ensure_min_features))
     return array
 
 
 def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
               force_all_finite=True, ensure_2d=True, allow_nd=False,
-              multi_output=False):
+              multi_output=False, ensure_min_samples=1,
+              ensure_min_features=1):
     """Input validation for standard estimators.
 
     Checks X and y for consistent length, enforces X 2d and y 1d.
@@ -327,13 +358,24 @@ def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
         Whether to allow 2-d y (array or sparse matrix). If false, y will be
         validated as a vector.
 
+    ensure_min_samples : int (default=1)
+        Make sure that X has a minimum number of samples in its first
+        axis (rows for a 2D array).
+
+    ensure_min_features : int (default=1)
+        Make sure that the 2D X has some minimum number of features
+        (columns). The default value of 1 rejects empty datasets.
+        This check is only enforced when ``ensure_2d`` is True and
+        ``allow_nd`` is False.
+
     Returns
     -------
     X_converted : object
         The converted and validated X.
     """
     X = check_array(X, accept_sparse, dtype, order, copy, force_all_finite,
-                    ensure_2d, allow_nd)
+                    ensure_2d, allow_nd, ensure_min_samples,
+                    ensure_min_features)
     if multi_output:
         y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False)
     else:
@@ -353,7 +395,7 @@ def column_or_1d(y, warn=False):
     y : array-like
 
     warn : boolean, default False
-       To control display of warnings. 
+       To control display of warnings.
 
     Returns
     -------
@@ -405,6 +447,7 @@ def check_random_state(seed):
         return seed
     raise ValueError('%r cannot be used to seed a numpy.random.RandomState'
                      ' instance' % seed)
+
 
 def has_fit_parameter(estimator, parameter):
     """Checks whether the estimator's fit method supports the given parameter.
@@ -512,4 +555,4 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
         attributes = [attributes]
 
     if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
-        raise NotFittedError(msg % {'name' : type(estimator).__name__})
+        raise NotFittedError(msg % {'name': type(estimator).__name__})
