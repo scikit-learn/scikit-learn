@@ -627,7 +627,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
                          order='F', copy=self.copy_X and self.fit_intercept,
-                         multi_output=True)
+                         multi_output=True, y_numeric=True)
 
         X, y, X_mean, y_mean, X_std, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,

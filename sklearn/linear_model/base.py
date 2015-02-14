@@ -25,7 +25,7 @@ from scipy import sparse
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..utils import as_float_array, check_array
+from ..utils import as_float_array, check_array, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
@@ -372,8 +372,8 @@ class LinearRegression(LinearModel, RegressorMixin):
             n_jobs_ = n_jobs
         else:
             n_jobs_ = self.n_jobs
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
-        y = np.asarray(y)
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                         y_numeric=True, multi_output=True)
 
         X, y, X_mean, y_mean, X_std = self._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)

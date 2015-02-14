@@ -23,6 +23,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_skip_travis
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_raise_message
 
 from sklearn.base import clone, ClassifierMixin
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
@@ -147,6 +148,32 @@ def check_estimator_sparse_data(name, Estimator):
               "sparse data: it should raise a TypeError if sparse input "
               "is explicitly not supported." % name)
         raise
+
+
+def check_dtype_object(name, Estimator):
+    rng = np.random.RandomState(0)
+    X = rng.rand(40, 10).astype(object)
+    y = (X[:, 0] * 4).astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    with warnings.catch_warnings():
+        estimator = Estimator()
+    set_fast_parameters(estimator)
+
+    estimator.fit(X, y)
+    if hasattr(estimator, "predict"):
+        estimator.predict(X)
+
+    if hasattr(estimator, "transform"):
+        estimator.transform(X)
+
+    try:
+        estimator.fit(X, y.astype(object))
+    except Exception as e:
+        if "Unknown label type" not in str(e):
+            raise
+
+    X[0, 0] = {'foo': 'bar'}
+    assert_raise_message(TypeError, "string or a number", estimator.fit, X, y)
 
 
 def check_transformer(name, Transformer):

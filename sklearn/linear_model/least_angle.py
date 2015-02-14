@@ -21,7 +21,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import arrayfuncs, as_float_array, check_array, check_X_y
+from ..utils import arrayfuncs, as_float_array, check_X_y
 from ..cross_validation import _check_cv as check_cv
 from ..utils import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
@@ -422,7 +422,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 for ii in idx:
                     for i in range(ii, n_active):
                         indices[i], indices[i + 1] = indices[i + 1], indices[i]
-                        Gram[i], Gram[i + 1] = swap(Gram[i], Gram[i+1])
+                        Gram[i], Gram[i + 1] = swap(Gram[i], Gram[i + 1])
                         Gram[:, i], Gram[:, i + 1] = swap(Gram[:, i],
                                                           Gram[:, i + 1])
 
@@ -589,8 +589,7 @@ class Lars(LinearModel, RegressorMixin):
         self : object
             returns an instance of self.
         """
-        X = check_array(X)
-        y = np.asarray(y)
+        X, y = check_X_y(X, y, y_numeric=True, multi_output=True)
         n_features = X.shape[1]
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
@@ -1268,8 +1267,7 @@ class LassoLarsIC(LassoLars):
             returns an instance of self.
         """
         self.fit_path = True
-        X = check_array(X)
-        y = np.asarray(y)
+        X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = LinearModel._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)

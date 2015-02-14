@@ -88,7 +88,7 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         self : object
             Returns an instance of self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], y_numeric=True)
         X = as_float_array(X, copy=False)
         n_samples, n_features = X.shape
 

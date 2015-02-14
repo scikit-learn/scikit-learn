@@ -227,12 +227,14 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
     return spmatrix
 
 
-def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
+def check_array(array, accept_sparse=None, dtype="numeric", order=None, copy=False,
                 force_all_finite=True, ensure_2d=True, allow_nd=False,
                 ensure_min_samples=1, ensure_min_features=1):
     """Input validation on an array, list, sparse matrix or similar.
 
-    By default, the input is converted to an at least 2d numpy array.
+    By default, the input is converted to an at least 2nd numpy array.
+    If the dtype of the array is object, attempt converting to float,
+    raising on failure.
 
     Parameters
     ----------
@@ -245,8 +247,9 @@ def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
         If the input is sparse but not in the allowed format, it will be
         converted to the first listed format.
 
-    dtype : string, type or None (default=none)
+    dtype : string, type or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
+        If "numeric", dtype is preserved unless array.dtype is object.
 
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
@@ -283,11 +286,19 @@ def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
         accept_sparse = [accept_sparse]
 
     if sp.issparse(array):
+        if dtype == "numeric":
+            dtype = None
         array = _ensure_sparse_format(array, accept_sparse, dtype, order,
                                       copy, force_all_finite)
     else:
         if ensure_2d:
             array = np.atleast_2d(array)
+        if dtype == "numeric":
+            if getattr(array, "dtype", None) is np.dtype(object):
+                # if input is object, convert to float.
+                dtype = np.float64
+            else:
+                dtype = None
         array = np.array(array, dtype=dtype, order=order, copy=copy)
         if not allow_nd and array.ndim >= 3:
             raise ValueError("Found array with dim %d. Expected <= 2" %
@@ -311,15 +322,17 @@ def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
     return array
 
 
-def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
+def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
               force_all_finite=True, ensure_2d=True, allow_nd=False,
               multi_output=False, ensure_min_samples=1,
-              ensure_min_features=1):
+              ensure_min_features=1, y_numeric=False):
     """Input validation for standard estimators.
 
     Checks X and y for consistent length, enforces X 2d and y 1d.
     Standard input checks are only applied to y. For multi-label y,
     set multi_output=True to allow 2d and sparse y.
+    If the dtype of X is object, attempt converting to float,
+    raising on failure.
 
     Parameters
     ----------
@@ -335,8 +348,9 @@ def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
         If the input is sparse but not in the allowed format, it will be
         converted to the first listed format.
 
-    dtype : string, type or None (default=none)
+    dtype : string, type or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
+        If "numeric", dtype is preserved unless array.dtype is object.
 
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
@@ -367,6 +381,9 @@ def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
         (columns). The default value of 1 rejects empty datasets.
         This check is only enforced when ``ensure_2d`` is True and
         ``allow_nd`` is False.
+    y_numeric : boolean (default=False)
+        Whether to ensure that y has a numeric type. If dtype of y is object,
+        it is converted to float64. Should only be used for regression algorithms.
 
     Returns
     -------
@@ -377,10 +394,12 @@ def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
                     ensure_2d, allow_nd, ensure_min_samples,
                     ensure_min_features)
     if multi_output:
-        y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False)
+        y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False, dtype=None)
     else:
         y = column_or_1d(y, warn=True)
         _assert_all_finite(y)
+    if y_numeric and y.dtype is np.dtype(object):
+        y = y.astype(np.float64)
 
     check_consistent_length(X, y)
 
@@ -520,7 +539,7 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
 def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
     """Perform is_fitted validation for estimator.
 
-    Checks if the estimator is fitted by verifying the presence of 
+    Checks if the estimator is fitted by verifying the presence of
     "all_or_any" of the passed attributes and raises a NotFittedError with the
     given message.
 
