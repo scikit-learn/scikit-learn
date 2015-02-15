@@ -308,10 +308,10 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
 
     Returns
     -------
-    X : array or sparse CSR matrix of shape [n_samples, n_features]
+    X : array of shape [n_samples, n_features]
         The generated samples.
 
-    Y : tuple of lists or array of shape [n_samples, n_classes]
+    Y : array or sparse CSR matrix of shape [n_samples, n_classes]
         The label sets.
 
     p_c : array, shape [n_classes]
@@ -380,8 +380,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         X = X.toarray()
 
     # return_indicator can be True due to backward compatibility
-    if (return_indicator == True or return_indicator == 'dense'
-                                 or return_indicator == 'sparse'):
+    if return_indicator in (True, 'spare', 'dense'):
         lb = MultiLabelBinarizer(sparse_output=(return_indicator == 'sparse'))
         Y = lb.fit([range(n_classes)]).transform(Y)
     else:
