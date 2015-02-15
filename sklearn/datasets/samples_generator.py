@@ -380,7 +380,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         X = X.toarray()
 
     # return_indicator can be True due to backward compatibility
-    if return_indicator in (True, 'spare', 'dense'):
+    if return_indicator in (True, 'sparse', 'dense'):
         lb = MultiLabelBinarizer(sparse_output=(return_indicator == 'sparse'))
         Y = lb.fit([range(n_classes)]).transform(Y)
     else:
