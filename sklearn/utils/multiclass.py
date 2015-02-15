@@ -341,7 +341,6 @@ def _check_partial_fit_first_call(clf, y=None, classes=None):
                 raise ValueError(
                     "`classes=%r` is not the same as on last call "
                     "to partial_fit, was: %r" % (classes, clf.classes_))
-
         else:
             # This is the first call to partial_fit
             if issparse(y):
@@ -349,24 +348,14 @@ def _check_partial_fit_first_call(clf, y=None, classes=None):
 
             # Validate classes against unique labels in y
             y_, classes_ = np.array(y), np.array(classes)
-            n_outputs = 1 if len(y_.shape) == 1 else y_.shape[1]
-            y_ = y_.reshape(y_.shape[0], n_outputs)
-            classes_ = classes_.reshape(n_outputs, classes_.shape[0])
-
-            for i in range(n_outputs):
-                unique_y = np.unique(y_[:, i])
-                unique_y_in_classes = in1d(unique_y, classes_[i],
-                                           assume_unique=True)
-                if not np.all(unique_y_in_classes):
-                    msg = ("The target label(s) %s in y do not exist in the"
-                           "initial classes %s" %
-                           (unique_y[~unique_y_in_classes], classes_[i]))
-
-                    if n_outputs != 1:
-                        msg += " for output %d" % i
-
-                    raise ValueError(msg)
-
+            unique_y = np.unique(y_)
+            unique_y_in_classes = in1d(unique_y, classes_,
+                                       assume_unique=True)
+            if not np.all(unique_y_in_classes):
+                msg = ("The target label(s) %s in y do not exist in the"
+                       "initial classes %s" %
+                       (unique_y[~unique_y_in_classes], classes_))
+                raise ValueError(msg)
             clf.classes_ = unique_labels(classes)
             return True
 
