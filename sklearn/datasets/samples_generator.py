@@ -383,14 +383,16 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     if return_indicator in (True, 'sparse', 'dense'):
         lb = MultiLabelBinarizer(sparse_output=(return_indicator == 'sparse'))
         Y = lb.fit([range(n_classes)]).transform(Y)
-    else:
+    elif return_indicator is False:
         warnings.warn('Support for the sequence of sequences multilabel '
                       'representation is being deprecated and replaced with '
                       'a sparse indicator matrix. '
                       "return_indicator will default to 'dense' from version "
                       '0.17.',
                       DeprecationWarning)
-
+    else:
+        raise ValueError("return_indicator must be either 'sparse', 'dense' "
+                         'or False.')
     if return_distributions:
         return X, Y, p_c, p_w_c
     return X, Y
