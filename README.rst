@@ -8,6 +8,10 @@
 scikit-learn
 ============
 
+.. image:: https://badges.gitter.im/Join%20Chat.svg
+   :alt: Join the chat at https://gitter.im/scikit-learn/scikit-learn
+   :target: https://gitter.im/scikit-learn/scikit-learn?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
 scikit-learn is a Python module for machine learning built on top of
 SciPy and distributed under the 3-Clause BSD license.
 
