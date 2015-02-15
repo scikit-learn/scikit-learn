@@ -155,10 +155,10 @@ def test_make_multilabel_classification_return_indicator():
         assert_equal(Y.shape, (25, 3), "Y shape mismatch")
         assert_true(np.all(np.sum(Y, axis=0) > min_length))
 
-    # Also test return_distributions
+    # Also test return_distributions and return_indicator with True
     X2, Y2, p_c, p_w_c = make_multilabel_classification(
         n_samples=25, n_features=20, n_classes=3, random_state=0,
-        return_indicator='dense', allow_unlabeled=allow_unlabeled,
+        return_indicator=True, allow_unlabeled=allow_unlabeled,
         return_distributions=True)
 
     assert_array_equal(X, X2)
