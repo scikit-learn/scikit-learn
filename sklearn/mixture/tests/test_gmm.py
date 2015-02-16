@@ -402,7 +402,7 @@ def check_positive_definite_covars(covariance_type):
 def test_positive_definite_covars():
     """Check positive definiteness for all covariance types"""
     for covariance_type in ["full", "tied", "diag", "spherical"]:
-        check_positive_definite_covars(covariance_type)
+        yield check_positive_definite_covars, covariance_type
 
 
 if __name__ == '__main__':
