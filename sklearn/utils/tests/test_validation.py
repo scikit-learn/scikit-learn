@@ -300,7 +300,7 @@ def test_check_symmetric():
 def test_check_is_fitted():
     # Check is ValueError raised when non estimator instance passed
     assert_raises(ValueError, check_is_fitted, ARDRegression, "coef_")
-    assert_raises(ValueError, check_is_fitted, "SVR", "support_")
+    assert_raises(TypeError, check_is_fitted, "SVR", "support_")
 
     ard = ARDRegression()
     svr = SVR()
