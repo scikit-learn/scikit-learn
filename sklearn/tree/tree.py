@@ -545,6 +545,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     def predict_proba(self, X):
         """Predict class probabilities of the input samples X.
 
+        The predicted class probability is the fraction of samples of the same
+        class in a leaf.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]

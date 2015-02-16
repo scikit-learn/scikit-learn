@@ -101,10 +101,16 @@ holding the class labels for the training samples::
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf = clf.fit(X, Y)
 
-After being fitted, the model can then be used to predict new values::
+After being fitted, the model can then be used to predict the class of samples::
 
     >>> clf.predict([[2., 2.]])
     array([1])
+
+Alternatively, the probability of each class can be predicted, which is the
+fraction of training samples of the same class in a leaf::
+
+    >>> clf.predict_proba([[2., 2.]])
+    array([[ 0.,  1.]])
 
 :class:`DecisionTreeClassifier` is capable of both binary (where the
 labels are [-1, 1]) classification and multiclass (where the labels are
@@ -155,10 +161,16 @@ a PDF file (or any other supported file type) directly in Python::
     .. figure:: ../images/iris.pdf
        :align: center
 
-After being fitted, the model can then be used to predict new values::
+After being fitted, the model can then be used to predict the class of samples::
 
     >>> clf.predict(iris.data[:1, :])
     array([0])
+
+Alternatively, the probability of each class can be predicted, which is the
+fraction of training samples of the same class in a leaf::
+
+    >>> clf.predict_proba(iris.data[:1, :])
+    array([[ 1.,  0.,  0.]])
 
 .. figure:: ../auto_examples/tree/images/plot_iris_001.png
    :target: ../auto_examples/tree/plot_iris.html
