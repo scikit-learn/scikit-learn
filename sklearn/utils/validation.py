@@ -549,7 +549,7 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
                "appropriate arguments before using this method.")
 
     if not hasattr(estimator, 'fit'):
-        raise ValueError("%s is not an estimator instance." % (estimator))
+        raise TypeError("%s is not an estimator instance." % (estimator))
 
     if not isinstance(attributes, (list, tuple)):
         attributes = [attributes]
