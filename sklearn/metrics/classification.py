@@ -808,8 +808,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
            Godbole, Sunita Sarawagi
            <http://www.godbole.net/shantanu/pubs/multilabelsvm-pakdd04.pdf>`
 
-    Examples
-    --------
+    First example
+    -------------
     >>> from sklearn.metrics import precision_recall_fscore_support
     >>> y_true = np.array([0, 1, 2, 0, 1, 2])
     >>> y_pred = np.array([0, 2, 1, 0, 0, 1])
@@ -822,6 +822,22 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
     ... # doctest: +ELLIPSIS
     (0.22..., 0.33..., 0.26..., None)
+    >>> precision_recall_fscore_support(y_true, y_pred, average=None)
+    ... # doctest: +ELLIPSIS
+    (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.8,  0. ,  0. ]), array([2, 2, 2]))
+
+    Second example
+    --------------
+    >>> from sklearn.metrics import precision_recall_fscore_support
+    >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
+    >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
+    >>> precision_recall_fscore_support(y_true, y_pred, average=None)
+    ... # doctest: +ELLIPSIS
+    (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.8,  0. ,  0. ]), array([2, 2, 2]))
+    >>> precision_recall_fscore_support(y_true, y_pred, average=None, labels=['pig', 'dog', 'cat'])
+    ... # doctest: +ELLIPSIS
+    (array([ 0.        ,  0.        ,  0.66...]), array([ 0.,  0.,  1.]), array([ 0. ,  0. ,  0.8]), array([2, 2, 2]))
+
 
     """
     average_options = (None, 'micro', 'macro', 'weighted', 'samples')
