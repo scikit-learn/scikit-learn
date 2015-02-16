@@ -6,7 +6,6 @@
 #          Alexandre Gramfort
 #          Nicolas Tresegnie
 # License: BSD 3 clause
-
 import warnings
 import numbers
 
@@ -117,6 +116,40 @@ def _num_samples(x):
         return x.shape[0]
     else:
         return len(x)
+
+
+def _shape_repr(shape):
+    """Return a platform independent reprensentation of an array shape
+
+    Under Python 2, the `long` type introduces an 'L' suffix when using the
+    default %r format for tuples of integers (typically used to store the shape
+    of an array).
+
+    Under Windows 64 bit (and Python 2), the `long` type is used by default
+    in numpy shapes even when the integer dimensions are well below 32 bit.
+    The platform specific type causes string messages or doctests to change
+    from one platform to another which is not desirable.
+
+    Under Python 3, there is no more `long` type so the `L` suffix is never
+    introduced in string representation.
+
+    >>> _shape_repr((1, 2))
+    '(1, 2)'
+    >>> one = 2 ** 64 / 2 ** 64  # force an upcast to `long` under Python 2
+    >>> _shape_repr((one, 2 * one))
+    '(1, 2)'
+    >>> _shape_repr((1,))
+    '(1,)'
+    >>> _shape_repr(())
+    '()'
+    """
+    if len(shape) == 0:
+        return "()"
+    joined = ", ".join("%d" % e for e in shape)
+    if len(shape) == 1:
+        # special notation for singleton tuples
+        joined += ','
+    return "(%s)" % joined
 
 
 def check_consistent_length(*arrays):
@@ -295,19 +328,20 @@ def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
         if force_all_finite:
             _assert_all_finite(array)
 
+    shape_repr = _shape_repr(array.shape)
     if ensure_min_samples > 0:
         n_samples = _num_samples(array)
         if n_samples < ensure_min_samples:
-            raise ValueError("Found array with %d sample(s) (shape=%r) while a"
+            raise ValueError("Found array with %d sample(s) (shape=%s) while a"
                              " minimum of %d is required."
-                             % (n_samples, array.shape, ensure_min_samples))
+                             % (n_samples, shape_repr, ensure_min_samples))
 
     if ensure_min_features > 0 and ensure_2d and not allow_nd:
         n_features = array.shape[1]
         if n_features < ensure_min_features:
-            raise ValueError("Found array with %d feature(s) (shape=%r) while"
+            raise ValueError("Found array with %d feature(s) (shape=%s) while"
                              " a minimum of %d is required."
-                             % (n_features, array.shape, ensure_min_features))
+                             % (n_features, shape_repr, ensure_min_features))
     return array
 
 
@@ -520,7 +554,7 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
 def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
     """Perform is_fitted validation for estimator.
 
-    Checks if the estimator is fitted by verifying the presence of 
+    Checks if the estimator is fitted by verifying the presence of
     "all_or_any" of the passed attributes and raises a NotFittedError with the
     given message.
 
