@@ -7,6 +7,7 @@ from numpy.testing import (assert_array_equal, assert_array_almost_equal,
 from scipy import stats
 from sklearn import mixture
 from sklearn.datasets.samples_generator import make_spd_matrix
+from sklearn.utils.testing import assert_greater
 
 rng = np.random.RandomState(0)
 
@@ -352,20 +353,19 @@ def test_aic():
         assert_true(np.abs(g.bic(X) - bic) / n_samples < bound)
 
 
-def _test_positive_definite_covars(covariance_type):
-    """ Test that covariance matrices do not become non positive definite
+def check_positive_definite_covars(covariance_type):
+    r""" Test that covariance matrices do not become non positive definite
 
     Due to the accumulation of round-off errors, the computation of the
     covariance  matrices during the learning phase could lead to non-positive
     definite covariance matrices. Namely the use of the formula:
 
-    .. math:: C = (\\sum_i w_i \\boldsymbol x_i \\boldsymbol x_i^T)
-              - \\boldsymbol \\mu \\boldsymbol \\mu^T
+    .. math:: C = (\sum_i w_i  x_i x_i^T)
+              - \mu \mu^T
 
     instead of:
 
-    .. math:: C = \\sum_i w_i (\\boldsymbol x_i - \\boldsymbol \\mu)
-                  (\\boldsymbol x_i - \\boldsymbol \\mu)^T
+    .. math:: C = \sum_i w_i (x_i - \mu)(x_i - \mu)^T
 
     while mathematically equivalent, was observed a ``LinAlgError`` exception,
     when computing a ``GMM`` with full covariance matrices and fixed mean.
@@ -382,12 +382,13 @@ def _test_positive_definite_covars(covariance_type):
     gmm = mixture.GMM(2, params="wc", covariance_type=covariance_type,
                       min_covar=1e-3)
 
-    # The following line can raise an exception with  full covariance matrices
-    # due to the use of the Cholesky decomposition when computing the density.
+    # This is a non-regression test for issue #2640. The following call used
+    # to trigger:
+    # numpy.linalg.linalg.LinAlgError: 2-th leading minor not positive definite
     gmm.fit(X)
 
     if covariance_type == "diag" or covariance_type == "spherical":
-        assert(gmm.covars_.min() > 0)
+        assert_greater(gmm.covars_.min(), 0)
     else:
         if covariance_type == "tied":
             covs = [gmm.covars_]
@@ -395,28 +396,13 @@ def _test_positive_definite_covars(covariance_type):
             covs = gmm.covars_
 
         for c in covs:
-            w, u = np.linalg.eigh(c)
-            assert(w.min() > 0)
+            assert_greater(np.linalg.det(c), 0)
 
 
-def test_positive_definite_covars_full():
-    """ Test that the full covariance matrices are positive definite """
-    _test_positive_definite_covars("full")
-
-
-def test_positive_definite_covars_tied():
-    """ Test that the tied covariance matrix is positive definite """
-    _test_positive_definite_covars("tied")
-
-
-def test_positive_definite_covars_diag():
-    """ Test that the diagonal covariance matrices are positive definite """
-    _test_positive_definite_covars("diag")
-
-
-def test_positive_definite_covars_spherical():
-    """ Test that the spherical covariance matrices are positive definite """
-    _test_positive_definite_covars("spherical")
+def test_positive_definite_covars():
+    """Check positive definiteness for all covariance types"""
+    for covariance_type in ["full", "tied", "diag", "spherical"]:
+        check_positive_definite_covars(covariance_type)
 
 
 if __name__ == '__main__':
