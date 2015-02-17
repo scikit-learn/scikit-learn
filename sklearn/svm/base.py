@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractmethod
 
 from . import libsvm, liblinear
 from . import libsvm_sparse
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils import check_array, check_random_state, column_or_1d
 from ..utils import ConvergenceWarning, compute_class_weight
@@ -70,7 +70,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
                  class_weight, verbose, max_iter, random_state):
 
-        if not impl in LIBSVM_IMPL:  # pragma: no cover
+        if impl not in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
 
@@ -384,7 +384,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _validate_for_predict(self, X):
         check_is_fitted(self, 'support_')
-        
+
         X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
@@ -615,10 +615,10 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         'logistic_regression': {
             'l1': {False: 6},
             'l2': {False: 0, True: 7}},
-        'hinge' : {
-            'l2' : {True: 3}},
+        'hinge': {
+            'l2': {True: 3}},
         'squared_hinge': {
-            'l1': {False : 5},
+            'l1': {False: 5},
             'l2': {False: 2, True: 1}},
         'epsilon_insensitive': {
             'l2': {True: 13}},
@@ -652,7 +652,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
                                 % (penalty, loss, dual))
             else:
                 return solver_num
-
+    
     raise ValueError(('Unsupported set of arguments: %s, '
                       'Parameters: penalty=%r, loss=%r, dual=%r')
                      % (error_string, penalty, loss, dual))
@@ -660,7 +660,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
 
 def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                    penalty, dual, verbose, max_iter, tol,
-                   random_state=None, multi_class='ovr', 
+                   random_state=None, multi_class='ovr',
                    loss='logistic_regression', epsilon=0.1):
     """Used by Logistic Regression (and CV) and LinearSVC.
 
@@ -722,7 +722,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         If `crammer_singer` is chosen, the options loss, penalty and dual will
         be ignored.
 
-    loss : str, {'logistic_regression', 'hinge', 'squared_hinge', 
+    loss : str, {'logistic_regression', 'hinge', 'squared_hinge',
                  'epsilon_insensitive', 'squared_epsilon_insensitive}
         The loss function used to fit the model.
 
@@ -788,7 +788,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     # LibLinear wants targets as doubles, even for classification
     y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
     solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)
-    raw_coef_, n_iter_  = liblinear.train_wrap(
+    raw_coef_, n_iter_ = liblinear.train_wrap(
         X, y_ind, sp.isspmatrix(X), solver_type, tol, bias, C,
         class_weight_, max_iter, rnd.randint(np.iinfo('i').max),
         epsilon
