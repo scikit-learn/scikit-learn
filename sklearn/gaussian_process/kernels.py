@@ -204,8 +204,8 @@ class RBF(Kernel):
             return K
 
     def cross_correlation(self, X1, X2):
-        dists = cdist(X1, X2, metric='sqeuclidean')
-        K = np.exp(-dists / (2 * self.l**2))
+        dists = cdist(X1 / self.l, X2 / self.l, metric='sqeuclidean')
+        K = np.exp(-.5 * dists)
         return K
 
 
