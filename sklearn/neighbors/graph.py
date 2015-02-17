@@ -28,17 +28,20 @@ def _query_include_self(X, include_self, mode):
     if include_self is None:
         if mode == "connectivity":
             warnings.warn(
-                "include_self will be set to False, i.e the first NN of each "
-                "sample will not be the sample itself unless explicitly set "
-                "from version 0.18. Set include_self=True if this is "
-                "not sought.", DeprecationWarning)
-            query = X._fit_X
+                "include_self=None was changed to include_self=True due to "
+                "mode='connectivity'. In version 0.18, the default value will "
+                "change to False, and so, the first NN of each sample will not "
+                "be the sample itself. To maintain the current behavior, you "
+                "must explicitly set include_self=True.", DeprecationWarning)
+            include_self = True
         else:
-            query = None
-    elif include_self:
+            include_self = False
+
+    if include_self:
         query = X._fit_X
     else:
         query = None
+
     return query
 
 
@@ -68,9 +71,10 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
 
     include_self: bool, default backward-compatible.
         Whether or not to mark each sample as the first nearest neighbor to
-        itself. This is set to True for mode='connectivity' and False
-        for mode='distance' to preserve backward compatibilty. This will be
-        set to False from version 0.18.
+        itself. If `None`, then True is used for mode='connectivity' and False
+        for mode='distance' as this will preserve backwards compatibilty. In
+        version 0.18, the default value will be False, irrespective of the
+        value of `mode`.
 
     p : int, default 2
         Power parameter for the Minkowski metric. When p = 1, this is
@@ -139,9 +143,10 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
 
     include_self: bool, default None
         Whether or not to mark each sample as the first nearest neighbor to
-        itself. This is set to True for mode='connectivity' and False
-        for mode='distance' to preserve backward compatibilty. This will be
-        set to False from version 0.18.
+        itself. If `None`, then True is used for mode='connectivity' and False
+        for mode='distance' as this will preserve backwards compatibilty. In
+        version 0.18, the default value will be False, irrespective of the
+        value of `mode`.
 
     p : int, default 2
         Power parameter for the Minkowski metric. When p = 1, this is
