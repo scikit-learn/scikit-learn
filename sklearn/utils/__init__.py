@@ -1,6 +1,7 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
+import inspect
 from collections import Sequence
 
 import numpy as np
@@ -47,7 +48,7 @@ class deprecated(object):
     # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary,
     # but with many changes.
 
-    def __init__(self, extra=''):
+    def __init__(self, extra='', msg=None, update_doc=True):
         """
         Parameters
         ----------
@@ -56,46 +57,54 @@ class deprecated(object):
 
         """
         self.extra = extra
+        self.msg = msg
+        self.update_doc = update_doc
 
     def __call__(self, obj):
-        if isinstance(obj, type):
+        if inspect.isclass(obj):
             return self._decorate_class(obj)
         else:
             return self._decorate_fun(obj)
 
     def _decorate_class(self, cls):
-        msg = "Class %s is deprecated" % cls.__name__
-        if self.extra:
-            msg += "; %s" % self.extra
+        if (self.msg is None) or ('Function ' in self.msg):
+            self.msg = ("Class %s is deprecated; " + self.extra)
+        self.msg %= cls.__name__
 
         # FIXME: we should probably reset __new__ for full generality
         init = cls.__init__
 
         def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning)
+            warnings.warn(self.msg, category=DeprecationWarning)
             return init(*args, **kwargs)
         cls.__init__ = wrapped
 
         wrapped.__name__ = '__init__'
-        wrapped.__doc__ = self._update_doc(init.__doc__)
+        if self.update_doc:
+            wrapped.__doc__ = self._update_doc(init.__doc__)
+        else:
+            wrapped.__doc__ = init.__doc__
         wrapped.deprecated_original = init
 
         return cls
 
     def _decorate_fun(self, fun):
         """Decorate function fun"""
-
-        msg = "Function %s is deprecated" % fun.__name__
-        if self.extra:
-            msg += "; %s" % self.extra
+        if (self.msg is None) or ('Class ' in self.msg):
+            self.msg = ("Function %s is deprecated; " + self.extra)
+        self.msg %= fun.__name__
 
         def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning)
+            warnings.warn(self.msg, category=DeprecationWarning)
             return fun(*args, **kwargs)
 
         wrapped.__name__ = fun.__name__
         wrapped.__dict__ = fun.__dict__
-        wrapped.__doc__ = self._update_doc(fun.__doc__)
+        
+        if self.update_doc:
+            wrapped.__doc__ = self._update_doc(fun.__doc__)
+        else:
+            wrapped.__doc__ = fun.__doc__
 
         return wrapped
 
@@ -185,7 +194,7 @@ def resample(*arrays, **options):
     -------
     resampled_arrays : sequence of arrays or scipy.sparse matrices with same \
     shape[0]
-        Sequence of resampled views of the collections. The original arrays are 
+        Sequence of resampled views of the collections. The original arrays are
         not impacted.
 
     Examples
