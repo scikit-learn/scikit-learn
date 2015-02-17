@@ -643,13 +643,13 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         if _solver_dual is None:
             error_string = ("The combination of penalty='%s'"
                             "and loss='%s' is not supported"
-                            % (loss, penalty))
+                            % (penalty, loss))
         else:
             solver_num = _solver_dual.get(dual, None)
             if solver_num is None:
                 error_string = ("loss='%s' and penalty='%s'"
                                 "are not supported when dual=%s"
-                                % (loss, penalty, dual))
+                                % (penalty, loss, dual))
             else:
                 return solver_num
     raise ValueError('Unsupported set of arguments: %s, '

@@ -110,10 +110,10 @@ y_2 = np.sign(.5 - rnd.rand(n_samples))
 X_2 = rnd.randn(n_samples, n_features / 5) + y_2[:, np.newaxis]
 X_2 += 5 * rnd.randn(n_samples, n_features / 5)
 
-clf_sets = [(LinearSVC(penalty='L1', loss='L2', dual=False,
+clf_sets = [(LinearSVC(penalty='L1', loss='squared-hinge', dual=False,
                        tol=1e-3),
              np.logspace(-2.3, -1.3, 10), X_1, y_1),
-            (LinearSVC(penalty='L2', loss='L2', dual=True,
+            (LinearSVC(penalty='L2', loss='squared-hinge', dual=True,
                        tol=1e-4),
              np.logspace(-4.5, -2, 10), X_2, y_2)]
 
