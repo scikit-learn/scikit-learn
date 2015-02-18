@@ -16,7 +16,7 @@ class Kernel(object):
             return
         param_space = np.atleast_2d(param_space)
         if param_space.shape[1] == 1:  # fixed hyperparameter
-            self.params = param_space
+            self.params = param_space[:, 0]
             self.has_bounds = False
         elif param_space.shape[1] == 2:  # lower+upper bound for hyperparameter
             self.bounds = param_space
@@ -195,7 +195,7 @@ class RBF(Kernel):
             elif self.l.shape[0] == X.shape[1]:
                 # We need to recompute the pairwise dimension-wise distances
                 D = (X[:, None, :] - X[None, :, :])**2 / (self.l ** 3)
-                K_gradient = .5 * K[..., None] * D
+                K_gradient = K[..., None] * D
                 return K, K_gradient
             else:
                 raise Exception("Anisotropic kernels require that the number "
@@ -229,4 +229,6 @@ class WhiteKernel(Kernel):
             return K
 
     def cross_correlation(self, X1, X2):
-        return np.zeros((X1.shape[0], X2.shape[1]))
+        K = np.zeros((X1.shape[0], X2.shape[0]))
+        K[cdist(X1, X2) < 1e-10] = 1  # entries which are sufficiently similar
+        return K
