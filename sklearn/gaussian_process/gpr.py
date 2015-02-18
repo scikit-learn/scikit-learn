@@ -71,7 +71,7 @@ class GaussianProcessRegression(BaseEstimator):
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
-        K = self.kernel.auto_correlation(self.X_fit_)
+        K = self.kernel.auto(self.X_fit_)
         K[np.diag_indices_from(K)] += self.y_err
         self.L_ = cholesky(K, lower=True)  # Line 2
         self.alpha_ = cho_solve((self.L_, True), self.y_fit_)  # Line 3
@@ -84,17 +84,17 @@ class GaussianProcessRegression(BaseEstimator):
         if not hasattr(self, "X_fit_"):  # Unfitted; predict based on GP prior
             y_mean = np.zeros(X.shape[0])
             if return_cov:
-                y_cov = self.kernel.auto_correlation(X)
+                y_cov = self.kernel.auto(X)
                 return y_mean, y_cov
             else:
                 return y_mean
         else:  # Predict based on GP posterior
-            K_trans = self.kernel.cross_correlation(X, self.X_fit_)
+            K_trans = self.kernel.cross(X, self.X_fit_)
             y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
                 y_cov = \
-                    self.kernel.auto_correlation(X) - K_trans.dot(v)  # Line 6
+                    self.kernel.auto(X) - K_trans.dot(v)  # Line 6
                 return y_mean, y_cov
             else:
                 return y_mean
@@ -112,9 +112,9 @@ class GaussianProcessRegression(BaseEstimator):
 
         if eval_gradient:
             K, K_gradient = \
-                kernel.auto_correlation(self.X_fit_, eval_gradient=True)
+                kernel.auto(self.X_fit_, eval_gradient=True)
         else:
-            K = kernel.auto_correlation(self.X_fit_)
+            K = kernel.auto(self.X_fit_)
 
         K[np.diag_indices_from(K)] += self.y_err
         L = cholesky(K, lower=True)  # Line 2

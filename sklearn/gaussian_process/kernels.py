@@ -107,17 +107,17 @@ class KernelOperator(Kernel):
 
 class Sum(KernelOperator):
 
-    def auto_correlation(self, X, eval_gradient=False):
+    def auto(self, X, eval_gradient=False):
         if eval_gradient:
-            K1, K1_gradient = self.k1.auto_correlation(X, eval_gradient=True)
-            K2, K2_gradient = self.k2.auto_correlation(X, eval_gradient=True)
+            K1, K1_gradient = self.k1.auto(X, eval_gradient=True)
+            K2, K2_gradient = self.k2.auto(X, eval_gradient=True)
             return K1 + K2, np.dstack((K1_gradient, K2_gradient))
         else:
-            return self.k1.auto_correlation(X) + self.k2.auto_correlation(X)
+            return self.k1.auto(X) + self.k2.auto(X)
 
-    def cross_correlation(self, X1, X2):
-        return self.k1.cross_correlation(X1, X2) \
-            + self.k2.cross_correlation(X1, X2)
+    def cross(self, X1, X2):
+        return self.k1.cross(X1, X2) \
+            + self.k2.cross(X1, X2)
 
     def __repr__(self):
         return "{0} + {1}".format(self.k1, self.k2)
@@ -125,18 +125,18 @@ class Sum(KernelOperator):
 
 class Product(KernelOperator):
 
-    def auto_correlation(self, X, eval_gradient=False):
+    def auto(self, X, eval_gradient=False):
         if eval_gradient:
-            K1, K1_gradient = self.k1.auto_correlation(X, eval_gradient=True)
-            K2, K2_gradient = self.k2.auto_correlation(X, eval_gradient=True)
+            K1, K1_gradient = self.k1.auto(X, eval_gradient=True)
+            K2, K2_gradient = self.k2.auto(X, eval_gradient=True)
             return K1 * K2, np.dstack((K1_gradient * K2[:, :, None],
                                        K2_gradient * K1[:, :, None]))
         else:
-            return self.k1.auto_correlation(X) * self.k2.auto_correlation(X)
+            return self.k1.auto(X) * self.k2.auto(X)
 
-    def cross_correlation(self, X1, X2):
-        return self.k1.cross_correlation(X1, X2) \
-            * self.k2.cross_correlation(X1, X2)
+    def cross(self, X1, X2):
+        return self.k1.cross(X1, X2) \
+            * self.k2.cross(X1, X2)
 
     def __repr__(self):
         return "{0} * {1}".format(self.k1, self.k2)
@@ -156,14 +156,14 @@ class ConstantKernel(Kernel):
         assert len(theta) == 1
         self.value = theta[0]
 
-    def auto_correlation(self, X, eval_gradient=False):
+    def auto(self, X, eval_gradient=False):
         K = self.value * np.ones((X.shape[0], X.shape[0]))
         if eval_gradient:
             return K, np.ones((X.shape[0], X.shape[0], 1))
         else:
             return K
 
-    def cross_correlation(self, X1, X2):
+    def cross(self, X1, X2):
         return self.value * np.ones((X1.shape[0], X2.shape[0]))
 
     def __repr__(self):
@@ -182,7 +182,7 @@ class RBF(Kernel):
     def params(self, theta):
         self.l = theta
 
-    def auto_correlation(self, X, eval_gradient=False):
+    def auto(self, X, eval_gradient=False):
         dists = pdist(X / self.l, metric='sqeuclidean')
         K = np.exp(-.5 * dists)
         # convert from upper-triangular matrix to square matrix
@@ -203,7 +203,7 @@ class RBF(Kernel):
         else:
             return K
 
-    def cross_correlation(self, X1, X2):
+    def cross(self, X1, X2):
         dists = cdist(X1 / self.l, X2 / self.l, metric='sqeuclidean')
         K = np.exp(-.5 * dists)
         return K
@@ -221,14 +221,14 @@ class WhiteKernel(Kernel):
     def params(self, theta):
         self.c = theta[0]
 
-    def auto_correlation(self, X, eval_gradient=False):
+    def auto(self, X, eval_gradient=False):
         K = self.c * np.eye(X.shape[0])
         if eval_gradient:
             return K, np.eye(X.shape[0])[:, :, None]
         else:
             return K
 
-    def cross_correlation(self, X1, X2):
+    def cross(self, X1, X2):
         K = np.zeros((X1.shape[0], X2.shape[0]))
         K[cdist(X1, X2) < 1e-10] = 1  # entries which are sufficiently similar
         return K
