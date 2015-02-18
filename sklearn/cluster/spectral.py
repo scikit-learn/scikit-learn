@@ -184,7 +184,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     n_clusters : integer, optional
         Number of clusters to extract.
 
-    n_components : integer, optional, default is k
+    n_components : integer, optional, default is n_clusters
         Number of eigen vectors to use for the spectral embedding
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
