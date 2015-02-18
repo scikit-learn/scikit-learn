@@ -87,8 +87,7 @@ class Kernel(object):
 
     def __repr__(self):
         return "{0}({1})".format(self.__class__.__name__,
-                                 ", ".join(map("{0}".format,
-                                               self.params)))
+                                 ", ".join(map("{0}".format, self.params)))
 
 
 

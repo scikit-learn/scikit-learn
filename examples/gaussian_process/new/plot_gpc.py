@@ -1,3 +1,15 @@
+"""Gaussian process classification (GPC)
+
+This example illustrates both prediction of the prior GPC and the posterior
+GPC. While the posterior model has a considerably larger
+log-marginal-likelihood, the generated predictions are not optimal. This
+is caused by the Laplace approximations used internally by GPC.
+"""
+print __doc__
+
+# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+#
+# License: BSD 3 clause
 
 import numpy as np
 
@@ -29,14 +41,18 @@ import pylab
 pylab.figure(0)
 pylab.scatter(X[:, 0], y)
 X_ = np.linspace(0, 5, 100)
-pylab.plot(X_, gp_fix.predict_proba(X_[:, None]), 'r', label="Fixed")
-pylab.plot(X_, gp_opt.predict_proba(X_[:, None]), 'b', label="Optimized")
+pylab.plot(X_, gp_fix.predict_proba(X_[:, None]), 'r',
+           label="Initial kernel: %s" % kernel_fix)
+pylab.plot(X_, gp_opt.predict_proba(X_[:, None]), 'b',
+           label="Optimized kernel: %s" % kernel_opt)
 pylab.legend(loc="best")
+pylab.xlabel("Feature")
+pylab.ylabel("Class")
 
 # Plot LML landscape
 pylab.figure(1)
-theta0 = np.logspace(0, 8, 50)
-theta1 = np.logspace(-1, 1, 49)
+theta0 = np.logspace(0, 8, 30)
+theta1 = np.logspace(-1, 1, 29)
 Theta0, Theta1 = np.meshgrid(theta0, theta1)
 LML = [[gp_opt.log_marginal_likelihood([Theta0[i, j], Theta1[i, j]])
         for i in range(Theta0.shape[0])] for j in range(Theta0.shape[1])]
@@ -45,4 +61,8 @@ pylab.pcolor(Theta0, Theta1, LML)
 pylab.xscale("log")
 pylab.yscale("log")
 pylab.colorbar()
+pylab.xlabel("Magnitude")
+pylab.ylabel("Length-scale")
+pylab.title("Log-marginal-likelihood")
+
 pylab.show()

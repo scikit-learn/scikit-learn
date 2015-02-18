@@ -1,3 +1,13 @@
+"""Gaussian process regression (GPR) prior and posterior
+
+This example illustrates the prior and posterior of a GPR. Mean, standard
+deviation, and 10 samples are shown for both prior and posterior.
+"""
+print __doc__
+
+# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+#
+# License: BSD 3 clause
 
 import numpy as np
 import pylab
@@ -25,7 +35,7 @@ y_samples = gp.sample(X_[:, None], 10)
 pylab.plot(X_, y_samples, color='b', lw=1)
 pylab.xlim(0, 5)
 pylab.ylim(-3, 3)
-pylab.title("Prior")
+pylab.title("Prior, kernel:  %s" % kernel)
 
 # Generate data and fit GP
 X = np.random.uniform(0, 5, 10)[:, None]
@@ -46,6 +56,6 @@ pylab.plot(X_, y_samples, color='b', lw=1)
 pylab.scatter(X[:, 0], y, c='r', s=50, zorder=10)
 pylab.xlim(0, 5)
 pylab.ylim(-3, 3)
-pylab.title("Posterior")
+pylab.title("Posterior, kernel: %s" % kernel)
 pylab.tight_layout()
 pylab.show()
