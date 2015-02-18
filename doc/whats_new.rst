@@ -75,6 +75,10 @@ New features
      for fixed user-provided cross-validation folds.
      By `untom <https://github.com/untom>`_.
 
+   - Added :class:`calibration.CalibratedClassifierCV`, an approach for
+     calibrating the predicted probabilities of a classifier.
+     By `Alexandre Gramfort`_ and `Jan Hendrik Metzen`_.
+
 
 Enhancements
 ............
