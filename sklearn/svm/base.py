@@ -15,7 +15,6 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..externals import six
 
-
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
 
@@ -604,8 +603,8 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
       - loss
       - dual
 
-    The same number is internally by LibLinear to determine which
-    solver to use.
+    The same number is also internally used by LibLinear to determine
+    which solver to use.
     """
     # nested dicts containing level 1: available loss functions,
     # level2: available penalties for the given loss functin,
