@@ -29,8 +29,7 @@ def test_calibration():
     # split train and test
     X_train, y_train, sw_train = \
         X[:n_samples], y[:n_samples], sample_weight[:n_samples]
-    X_test, y_test, sw_test = \
-        X[n_samples:], y[n_samples:], sample_weight[n_samples:]
+    X_test, y_test = X[n_samples:], y[n_samples:]
 
     # Naive-Bayes
     clf = MultinomialNB()
@@ -147,10 +146,9 @@ def test_calibration_prefit():
     X_train, y_train, sw_train = \
         X[:n_samples], y[:n_samples], sample_weight[:n_samples]
     X_calib, y_calib, sw_calib = \
-        X[n_samples:2*n_samples], y[n_samples:2*n_samples], \
-        sample_weight[n_samples:2*n_samples]
-    X_test, y_test, sw_test = \
-        X[2*n_samples:], y[2*n_samples:], sample_weight[2*n_samples:]
+        X[n_samples:2 * n_samples], y[n_samples:2 * n_samples], \
+        sample_weight[n_samples:2 * n_samples]
+    X_test, y_test = X[2 * n_samples:], y[2 * n_samples:]
 
     # Naive-Bayes
     clf = MultinomialNB()
