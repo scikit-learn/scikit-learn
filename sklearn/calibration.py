@@ -115,7 +115,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         n_folds = self.cv if isinstance(self.cv, int) \
             else self.cv.n_folds if hasattr(self.cv, "n_folds") else None
         if n_folds and \
-           np.any([np.sum(y==class_) < n_folds for class_ in self.classes_]):
+           np.any([np.sum(y == class_) < n_folds for class_ in self.classes_]):
             raise ValueError("Requesting %d-fold cross-validation but provided"
                              " less than %d examples for at least one class."
                              % (n_folds, n_folds))
@@ -338,7 +338,7 @@ class _CalibratedClassifier(object):
         proba[np.isnan(proba)] = 1. / n_classes
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
-        proba[(1.0 < proba) &  (proba <= 1.0 + 1e-5)] = 1.0
+        proba[(1.0 < proba) & (proba <= 1.0 + 1e-5)] = 1.0
 
         return proba
 

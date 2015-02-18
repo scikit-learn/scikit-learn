@@ -8,8 +8,8 @@ Probability calibration
 
 
 When performing classification you often want not only to predict the class
-label, but also obtain a probability of the respective label.  This probability
-gives you some kind of confidence on the prediction.  Some models can give you
+label, but also obtain a probability of the respective label. This probability
+gives you some kind of confidence on the prediction. Some models can give you
 poor estimates of the class probabilities and some even do not not support
 probability prediction. The calibration module allows you to better calibrate
 the probabilities of a given model, or to add support for probability
@@ -34,8 +34,8 @@ with different biases per method:
  * .. currentmodule:: sklearn.naive_bayes
    :class:`GaussianNB` tends to push probabilties to 0 or 1 (note the
    counts in the histograms). This is mainly because it makes the assumption
-   that  features are conditionally independent given the class, which is not
-   the case in  this dataset which contains 2 redundant features.
+   that features are conditionally independent given the class, which is not
+   the case in this dataset which contains 2 redundant features.
 
  * .. currentmodule:: sklearn.ensemble
    :class:`RandomForestClassifier` shows the opposite behavior: the histograms
@@ -60,8 +60,8 @@ with different biases per method:
 
  * .. currentmodule:: sklearn.svm
    Linear Support Vector Classification (:class:`LinearSVC`) shows an even more sigmoid curve
-   as  the  RandomForestClassifier, which is typical for maximum-margin methods
-   (compare Niculescu-Mizil and Caruana [4]),  which focus on hard samples
+   as the RandomForestClassifier, which is typical for maximum-margin methods
+   (compare Niculescu-Mizil and Caruana [4]), which focus on hard samples
    that are close to the decision boundary (the support vectors).
 
 .. currentmodule:: sklearn.calibration
