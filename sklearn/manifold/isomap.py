@@ -56,6 +56,35 @@ class Isomap(BaseEstimator, TransformerMixin):
         Algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance.
 
+    metric : string or callable, default 'euclidean'
+        The metric to use for distance computation. Any metric from
+        scikit-learn or scipy.spatial.distance can be used.
+
+        If metric is a callable function, it is called on each pair of
+        instances (rows) and the resulting value recorded. The callable
+        should take two arrays as input and return one value indicating the
+        distance between them. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
+
+        Distance matrices are not supported.
+
+        Valid values for metric are:
+
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+          'manhattan']
+
+        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
+          'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+          'sqeuclidean', 'yule']
+
+        See the documentation for scipy.spatial.distance for details on these
+        metrics.
+
+    metric_params: dict, optional (default = None)
+        Additional keyword arguments for the metric function.
+
     Attributes
     ----------
     embedding_ : array-like, shape (n_samples, n_components)
@@ -83,7 +112,8 @@ class Isomap(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',
                  tol=0, max_iter=None, path_method='auto',
-                 neighbors_algorithm='auto'):
+                 neighbors_algorithm='auto',
+                 metric='euclidean', metric_params=None):
 
         self.n_neighbors = n_neighbors
         self.n_components = n_components
@@ -92,8 +122,12 @@ class Isomap(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.path_method = path_method
         self.neighbors_algorithm = neighbors_algorithm
+        self.metric = metric
+        self.metric_params = metric_params
         self.nbrs_ = NearestNeighbors(n_neighbors=n_neighbors,
-                                      algorithm=neighbors_algorithm)
+                                      algorithm=neighbors_algorithm,
+                                      metric=metric,
+                                      metric_params=metric_params)
 
     def _fit_transform(self, X):
         X = check_array(X)
@@ -105,7 +139,9 @@ class Isomap(BaseEstimator, TransformerMixin):
                                      tol=self.tol, max_iter=self.max_iter)
 
         kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
-                               mode='distance')
+                               mode='distance',
+                               metric=self.metric,
+                               metric_params=self.metric_params)
 
         self.dist_matrix_ = graph_shortest_path(kng,
                                                 method=self.path_method,
