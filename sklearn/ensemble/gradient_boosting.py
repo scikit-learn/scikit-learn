@@ -1146,7 +1146,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
     def _validate_y(self, y):
         self.n_classes_ = 1
-        if y.dtype is np.dtype(object):
+        if y.dtype.kind == 'O':
             y = y.astype(np.float64)
         # Default implementation
         return y

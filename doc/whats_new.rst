@@ -377,6 +377,10 @@ API changes summary
     - `thresh` parameter is deprecated in favor of new `tol` parameter in
       :class:`GMM`. See `Enhancements` section for details. By `Hervé Bredin`_.
 
+    - Estimators will treat input with dtype object as numeric when possible.
+      By `Andreas Müller`_
+
+
 
 .. _changes_0_15_2:
 

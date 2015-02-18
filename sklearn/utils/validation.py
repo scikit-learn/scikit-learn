@@ -294,7 +294,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None, copy=Fal
         if ensure_2d:
             array = np.atleast_2d(array)
         if dtype == "numeric":
-            if getattr(array, "dtype", None) is np.dtype(object):
+            if hasattr(array, "dtype") and array.dtype.kind == "O":
                 # if input is object, convert to float.
                 dtype = np.float64
             else:
@@ -398,7 +398,7 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
     else:
         y = column_or_1d(y, warn=True)
         _assert_all_finite(y)
-    if y_numeric and y.dtype is np.dtype(object):
+    if y_numeric and y.dtype.kind == 'O':
         y = y.astype(np.float64)
 
     check_consistent_length(X, y)

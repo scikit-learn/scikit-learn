@@ -151,6 +151,7 @@ def check_estimator_sparse_data(name, Estimator):
 
 
 def check_dtype_object(name, Estimator):
+    # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10).astype(object)
     y = (X[:, 0] * 4).astype(np.int)
