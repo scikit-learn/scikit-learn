@@ -6,11 +6,14 @@ from scipy import sparse
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_greater, assert_almost_equal,
-                                   assert_greater_equal)
+                                   assert_greater_equal,
+                                   assert_array_equal,
+                                   assert_raises)
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
+from sklearn.linear_model import Ridge
 from sklearn.metrics import brier_score_loss, log_loss
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import sigmoid_calibration, _SigmoidCalibration
@@ -35,6 +38,9 @@ def test_calibration():
     clf = MultinomialNB()
     clf.fit(X_train, y_train, sw_train)
     prob_pos_clf = clf.predict_proba(X_test)[:, 1]
+
+    pc_clf = CalibratedClassifierCV(clf, cv=y.size + 1)
+    assert_raises(ValueError, pc_clf.fit, X, y)
 
     # Naive Bayes with calibration
     for this_X_train, this_X_test in [(X_train, X_test),
@@ -77,6 +83,23 @@ def test_calibration():
                 assert_greater(brier_score_loss(y_test, prob_pos_clf),
                                brier_score_loss((y_test + 1) % 2,
                                                 prob_pos_pc_clf_relabeled))
+
+        # check that calibration can also deal with regressors that have
+        # a decision_function
+        clf_base_regressor = CalibratedClassifierCV(Ridge(), method="sigmoid")
+        clf_base_regressor.fit(X_train, y_train)
+        clf_base_regressor.predict(X_test)
+
+        # Check failure cases:
+        # only "isotonic" and "sigmoid" should be accepted as methods
+        clf_invalid_method = CalibratedClassifierCV(clf, method="foo")
+        assert_raises(ValueError, clf_invalid_method.fit, X_train, y_train)
+
+        # base-estimators should provide either decision_function or
+        # predict_proba (most regressors, for instance, should fail)
+        clf_base_regressor = \
+            CalibratedClassifierCV(RandomForestRegressor(), method="sigmoid")
+        assert_raises(RuntimeError, clf_base_regressor.fit, X_train, y_train)
 
 
 def test_calibration_multiclass():
@@ -161,11 +184,17 @@ def test_calibration_prefit():
                                        sparse.csr_matrix(X_test))]:
         for method in ['isotonic', 'sigmoid']:
             pc_clf = CalibratedClassifierCV(clf, method=method, cv="prefit")
-            pc_clf.fit(this_X_calib, y_calib, sample_weight=sw_calib)
-            prob_pos_pc_clf = pc_clf.predict_proba(this_X_test)[:, 1]
 
-            assert_greater(brier_score_loss(y_test, prob_pos_clf),
-                           brier_score_loss(y_test, prob_pos_pc_clf))
+            for sw in [sw_calib, None]:
+                pc_clf.fit(this_X_calib, y_calib, sample_weight=sw)
+                y_prob = pc_clf.predict_proba(this_X_test)
+                y_pred = pc_clf.predict(this_X_test)
+                prob_pos_pc_clf = y_prob[:, 1]
+                assert_array_equal(y_pred,
+                                   np.array([0, 1])[np.argmax(y_prob, axis=1)])
+
+                assert_greater(brier_score_loss(y_test, prob_pos_clf),
+                               brier_score_loss(y_test, prob_pos_pc_clf))
 
 
 def test_sigmoid_calibration():
@@ -178,6 +207,11 @@ def test_sigmoid_calibration():
     lin_prob = 1. / (1. + np.exp(AB_lin_libsvm[0] * exF + AB_lin_libsvm[1]))
     sk_prob = _SigmoidCalibration().fit(exF, exY).predict(exF)
     assert_array_almost_equal(lin_prob, sk_prob, 6)
+
+    # check that _SigmoidCalibration().fit only accepts 1d array or 2d column
+    # arrays
+    assert_raises(ValueError, _SigmoidCalibration().fit,
+                  np.vstack((exF, exF)), exY)
 
 
 def test_calibration_curve():
@@ -193,3 +227,8 @@ def test_calibration_curve():
     assert_almost_equal(prob_pred, [0.1, 0.9])
     assert_almost_equal(prob_true, prob_true_unnormalized)
     assert_almost_equal(prob_pred, prob_pred_unnormalized)
+
+    # probabilities outside [0, 1] should not be accepted when normalize
+    # is set to False
+    assert_raises(ValueError, calibration_curve, [1.1], [-0.1],
+                  normalize=False)

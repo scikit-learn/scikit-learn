@@ -443,9 +443,6 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
         y = column_or_1d(y)
         X, y = indexable(X, y)
 
-        if len(X.shape) != 1:
-            raise ValueError("X should be a 1d array")
-
         self.a_, self.b_ = sigmoid_calibration(X, y, sample_weight)
         return self
 
