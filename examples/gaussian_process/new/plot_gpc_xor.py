@@ -1,11 +1,21 @@
+"""Gaussian process classification (GPC)
+
+This example illustrates GPC on XOR data.
+"""
+print __doc__
+
+# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+#
+# License: BSD 3 clause
+
 import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.gaussian_process import GaussianProcessClassification
 from sklearn.gaussian_process.kernels import RBF
 
-xx, yy = np.meshgrid(np.linspace(-3, 3, 100),
-                     np.linspace(-3, 3, 100))
+xx, yy = np.meshgrid(np.linspace(-3, 3, 50),
+                     np.linspace(-3, 3, 50))
 np.random.seed(0)
 X = np.random.randn(200, 2)
 Y = np.logical_xor(X[:, 0] > 0, X[:, 1] > 0)
