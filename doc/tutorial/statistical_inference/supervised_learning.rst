@@ -95,7 +95,8 @@ Scikit-learn documentation for more information about this type of classifier.)
     >>> knn = KNeighborsClassifier()
     >>> knn.fit(iris_X_train, iris_y_train) # doctest: +NORMALIZE_WHITESPACE
     KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-                   metric_params=None, n_neighbors=5, p=2, weights='uniform')
+               metric_params=None, n_jobs=1, n_neighbors=5, p=2,
+               weights='uniform')
     >>> knn.predict(iris_X_test)
     array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
     >>> iris_y_test

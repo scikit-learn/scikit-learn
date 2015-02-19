@@ -894,7 +894,8 @@ def test_non_euclidean_kneighbors():
         nbrs_graph = neighbors.radius_neighbors_graph(
             X, radius, metric=metric).toarray()
         nbrs1 = neighbors.NearestNeighbors(metric=metric, radius=radius).fit(X)
-        assert_array_equal(nbrs_graph, nbrs1.radius_neighbors_graph(X).toarray())
+        assert_array_equal(nbrs_graph, 
+                           nbrs1.radius_neighbors_graph(X).toarray())
 
     # Raise error when wrong parameters are supplied,
     X_nbrs = neighbors.NearestNeighbors(3, metric='manhattan')
@@ -1032,6 +1033,28 @@ def test_include_self_neighbors_graph():
         X, 5.0, include_self=False).A
     assert_array_equal(rng, [[1., 1.], [1., 1.]])
     assert_array_equal(rng_not_self, [[0., 1.], [1., 0.]])
+
+
+def test_kneighbors_parallel():
+    X, y = datasets.make_classification(n_samples=10, n_features=2,
+                                        n_redundant=0, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    for algorithm in ALGORITHMS:
+        clf = neighbors.KNeighborsClassifier(n_neighbors=3,
+                                             algorithm=algorithm)
+        clf.fit(X_train, y_train)
+        y_1 = clf.predict(X_test)
+        dist_1, ind_1 = clf.kneighbors(X_test)
+        A_1 = clf.kneighbors_graph(X_test, mode='distance').toarray()
+        for n_jobs in [-1, 2, 5]:
+            clf.set_params(n_jobs=n_jobs)
+            y = clf.predict(X_test)
+            dist, ind = clf.kneighbors(X_test)
+            A = clf.kneighbors_graph(X_test, mode='distance').toarray()
+            assert_array_equal(y_1, y)
+            assert_array_almost_equal(dist_1, dist)
+            assert_array_equal(ind_1, ind)
+            assert_array_almost_equal(A_1, A)
 
 
 if __name__ == '__main__':
