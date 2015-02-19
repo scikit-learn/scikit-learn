@@ -78,7 +78,10 @@ class GaussianProcessRegression(BaseEstimator):
 
         return self
 
-    def predict(self, X, return_cov=False):
+    def predict(self, X, return_std=False, return_cov=False):
+        assert not (return_std and return_cov), \
+            "Not returning standard deviation of predictions when " \
+            "returning full covariance."
         X = np.asarray(X)
 
         if not hasattr(self, "X_fit_"):  # Unfitted; predict based on GP prior
@@ -86,6 +89,10 @@ class GaussianProcessRegression(BaseEstimator):
             if return_cov:
                 y_cov = self.kernel.auto(X)
                 return y_mean, y_cov
+            elif return_std:
+                # XXX: Compute y_std more efficiently
+                y_std = np.sqrt(np.diag(self.kernel.auto(X)))
+                return y_mean, y_std
             else:
                 return y_mean
         else:  # Predict based on GP posterior
@@ -96,6 +103,13 @@ class GaussianProcessRegression(BaseEstimator):
                 y_cov = \
                     self.kernel.auto(X) - K_trans.dot(v)  # Line 6
                 return y_mean, y_cov
+            elif return_std:
+                # XXX: Compute y_std more efficiently
+                v = cho_solve((self.L_, True), K_trans.T)  # Line 5
+                y_cov = \
+                    self.kernel.auto(X) - K_trans.dot(v)  # Line 6
+                y_std = np.sqrt(np.diag(y_cov))
+                return y_mean, y_std
             else:
                 return y_mean
 
