@@ -806,6 +806,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
             returns an instance of self.
         """
         X, y = check_X_y(X, y)
+        X = as_float_array(X, copy=False, force_all_finite=False)
         cv = check_cv(self.cv, X, y, classifier=False)
         max_iter = (min(max(int(0.1 * X.shape[1]), 5), X.shape[1])
                     if not self.max_iter

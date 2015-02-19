@@ -8,7 +8,7 @@ from sklearn.mixture import DPGMM, VBGMM
 from sklearn.mixture.dpgmm import log_normalize
 from sklearn.datasets import make_blobs
 from sklearn.utils.testing import assert_array_less
-from .test_gmm import GMMTester
+from sklearn.mixture.tests.test_gmm import GMMTester
 
 np.seterr(all='warn')
 

@@ -43,10 +43,9 @@ from .base import MetaEstimatorMixin
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
-from .utils.validation import (
-        _num_samples,
-        check_consistent_length,
-        check_is_fitted)
+from .utils.validation import _num_samples
+from .utils.validation import check_consistent_length
+from .utils.validation import check_is_fitted
 from .utils import deprecated
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
@@ -120,7 +119,7 @@ def fit_ovr(estimator, X, y, n_jobs=1):
     lb : fitted LabelBinarizer
 
     """
-    ovr =  OneVsRestClassifier(estimator, n_jobs=n_jobs).fit(X, y)
+    ovr = OneVsRestClassifier(estimator, n_jobs=n_jobs).fit(X, y)
     return ovr.estimators_, ovr.label_binarizer_
 
 
@@ -179,6 +178,7 @@ def predict_proba_ovr(estimators, X, is_multilabel):
 
 
 class _ConstantPredictor(BaseEstimator):
+
     def fit(self, X, y):
         self.y_ = y
         return self
@@ -363,7 +363,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Y /= np.sum(Y, axis=1)[:, np.newaxis]
         return Y
 
-
     def decision_function(self, X):
         """Returns the distance of each sample from the decision boundary for
         each class. This can only be used with estimators which implement the
@@ -424,7 +423,7 @@ def _fit_ovo_binary(estimator, X, y, i, j):
 @deprecated("fit_ovo is deprecated and will be removed in 0.18."
             "Use the OneVsOneClassifier instead.")
 def fit_ovo(estimator, X, y, n_jobs=1):
-    ovo =  OneVsOneClassifier(estimator, n_jobs=n_jobs).fit(X, y)
+    ovo = OneVsOneClassifier(estimator, n_jobs=n_jobs).fit(X, y)
     return ovo.estimators_, ovo.classes_
 
 
@@ -511,7 +510,11 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         return self
 
     def predict(self, X):
-        """Predict multi-class targets using underlying estimators.
+        """Estimate the best class label for each sample in X.
+        
+        This is implemented as ``argmax(decision_function(X), axis=1)`` which
+        will return the label of the class with most votes by estimators
+        predicting the outcome of a decision for each possible class pair.
 
         Parameters
         ----------
@@ -523,33 +526,52 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         y : numpy array of shape [n_samples]
             Predicted multi-class targets.
         """
+        Y = self.decision_function(X)
+        return self.classes_[Y.argmax(axis=1)]
+
+    def decision_function(self, X):
+        """Decision function for the OneVsOneClassifier.
+
+        The decision values for the samples are computed by adding the 
+        normalized sum of pair-wise classification confidence levels to the
+        votes in order to disambiguate between the decision values when the
+        votes for all the classes are equal leading to a tie.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        Y : array-like, shape = [n_samples, n_classes]
+        """
         check_is_fitted(self, 'estimators_')
+
         n_samples = X.shape[0]
         n_classes = self.classes_.shape[0]
         votes = np.zeros((n_samples, n_classes))
-        scores = np.zeros((n_samples, n_classes))
+        sum_of_confidences = np.zeros((n_samples, n_classes))
 
         k = 0
         for i in range(n_classes):
             for j in range(i + 1, n_classes):
                 pred = self.estimators_[k].predict(X)
-                score = _predict_binary(self.estimators_[k], X)
-                scores[:, i] -= score
-                scores[:, j] += score
+                confidence_levels_ij = _predict_binary(self.estimators_[k], X)
+                sum_of_confidences[:, i] -= confidence_levels_ij
+                sum_of_confidences[:, j] += confidence_levels_ij
                 votes[pred == 0, i] += 1
                 votes[pred == 1, j] += 1
                 k += 1
 
-        # find all places with maximum votes per sample
-        maxima = votes == np.max(votes, axis=1)[:, np.newaxis]
+        max_confidences = sum_of_confidences.max()
+        min_confidences = sum_of_confidences.min()
 
-        # if there are ties, use scores to break them
-        if np.any(maxima.sum(axis=1) > 1):
-            scores[~maxima] = -np.inf
-            prediction = scores.argmax(axis=1)
-        else:
-            prediction = votes.argmax(axis=1)
-        return self.classes_[prediction]
+        if max_confidences == min_confidences:
+            return votes
+
+        # Scale the sum_of_confidences to [-0.4, 0.4] and add it with votes
+        return votes + sum_of_confidences * \
+               (0.4 / max(abs(max_confidences), abs(min_confidences)))
 
 
 @deprecated("fit_ecoc is deprecated and will be removed in 0.18."
@@ -582,8 +604,8 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
     code_book_ : numpy array of shape [n_classes, code_size]
         Binary array containing the code of each class.
     """
-    ecoc =  OutputCodeClassifier(estimator, random_state=random_state,
-                                 n_jobs=n_jobs).fit(X, y)
+    ecoc = OutputCodeClassifier(estimator, random_state=random_state,
+                                n_jobs=n_jobs).fit(X, y)
     return ecoc.estimators_, ecoc.classes_, ecoc.code_book_
 
 
@@ -591,7 +613,7 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
             "Use the OutputCodeClassifier instead.")
 def predict_ecoc(estimators, classes, code_book, X):
     """Make predictions using the error-correcting output-code strategy."""
-    ecoc =  OutputCodeClassifier(clone(estimators[0]))
+    ecoc = OutputCodeClassifier(clone(estimators[0]))
     ecoc.classes_ = classes
     ecoc.estimators_ = estimators
     ecoc.code_book_ = code_book

@@ -492,19 +492,29 @@ META_ESTIMATORS = ["OneVsOneClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
-OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV"]
+OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV",
+         "RandomizedSearchCV"]
 
 # some trange ones
 DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
-             'LabelBinarizer', 'LabelEncoder', 'MultiLabelBinarizer',
-             'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
-             'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
-             'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures',
-             'GaussianRandomProjectionHash']
+             'LabelBinarizer', 'LabelEncoder',
+             'MultiLabelBinarizer', 'TfidfTransformer',
+             'TfidfVectorizer', 'IsotonicRegression',
+             'OneHotEncoder', 'RandomTreesEmbedding',
+             'FeatureHasher', 'DummyClassifier', 'DummyRegressor',
+             'TruncatedSVD', 'PolynomialFeatures',
+             'GaussianRandomProjectionHash', 'HashingVectorizer',
+             'CheckingClassifier', 'PatchExtractor', 'CountVectorizer',
+             # GradientBoosting base estimators, maybe should
+             # exclude them in another way
+             'ZeroEstimator', 'ScaledLogOddsEstimator',
+             'QuantileEstimator', 'MeanEstimator',
+             'LogOddsEstimator', 'PriorProbabilityEstimator']
 
 
-def all_estimators(include_meta_estimators=False, include_other=False,
-                   type_filter=None, include_dont_test=False):
+def all_estimators(include_meta_estimators=False,
+                   include_other=False, type_filter=None,
+                   include_dont_test=False):
     """Get a list of all estimators from sklearn.
 
     This function crawls the module and gets all classes that inherit

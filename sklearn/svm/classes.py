@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 
 from .base import _fit_liblinear, BaseSVC, BaseLibSVM
@@ -25,9 +26,10 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     C : float, optional (default=1.0)
         Penalty parameter C of the error term.
 
-    loss : string, 'l1' or 'l2' (default='l2')
-        Specifies the loss function. 'l1' is the hinge loss (standard SVM)
-        while 'l2' is the squared hinge loss.
+    loss : string, 'hinge' or 'squared_hinge' (default='squared_hinge')
+        Specifies the loss function. 'hinge' is the standard SVM loss
+        (used e.g. by the SVC class) while 'squared_hinge' is the 
+        square of the hinge loss.
 
     penalty : string, 'l1' or 'l2' (default='l2')
         Specifies the norm used in the penalization. The 'l2'
@@ -141,7 +143,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     """
 
-    def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
+    def __init__(self, penalty='l2', loss='squared_hinge', dual=True, tol=1e-4, C=1.0,
                  multi_class='ovr', fit_intercept=True, intercept_scaling=1,
                  class_weight=None, verbose=0, random_state=None, max_iter=1000):
         self.penalty = penalty
@@ -180,11 +182,20 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
         self.classes_ = np.unique(y)
+
+        if self.loss in ('l1', 'l2'):
+            # convert for backwards compatibility
+            loss = {'l1': 'hinge', 'l2': 'squared_hinge'}.get(self.loss)
+            warnings.warn("loss='l1' (resp. loss='l2') is deprecated and will" +
+                          "be removed before version 1.0. Please use loss='hinge'" +
+                          "(resp. loss='squared_hinge') instead", DeprecationWarning)
+        else:
+            loss = self.loss
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             self.class_weight, self.penalty, self.dual, self.verbose,
             self.max_iter, self.tol, self.random_state, self.multi_class,
-            self.loss
+            loss
             )
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
@@ -212,7 +223,8 @@ class LinearSVR(LinearModel, RegressorMixin):
         Penalty parameter C of the error term. The penalty is a squared
         l2 penalty. The bigger this parameter, the less regularization is used.
 
-    loss : string, 'l1' or 'l2' (default='l2')
+    loss : string, 'epsilon_insensitive' or 'squared_epsilon_insensitive' 
+           (default='epsilon_insensitive')
         Specifies the loss function. 'l1' is the epsilon-insensitive loss
         (standard SVR) while 'l2' is the squared epsilon-insensitive loss.
 
@@ -288,9 +300,9 @@ class LinearSVR(LinearModel, RegressorMixin):
         various loss functions and regularization regimes.
     """
 
-    def __init__(self, epsilon=0.0, tol=1e-4, C=1.0, loss='l1', fit_intercept=True,
-                 intercept_scaling=1., dual=True, verbose=0, random_state=None,
-                 max_iter=1000):
+    def __init__(self, epsilon=0.0, tol=1e-4, C=1.0, loss='epsilon_insensitive', 
+                 fit_intercept=True, intercept_scaling=1., dual=True, verbose=0, 
+                 random_state=None, max_iter=1000):
         self.tol = tol
         self.C = C
         self.epsilon = epsilon
@@ -324,11 +336,11 @@ class LinearSVR(LinearModel, RegressorMixin):
                              % self.C)
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
-        loss = {'l1': 'ei', 'l2': 'se'}.get(self.loss)
+        penalty = 'l2' # SVR only accepts L2 penalty
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
-            None, 'l2', self.dual, self.verbose,
-            self.max_iter, self.tol, self.random_state, loss=loss,
+            None, penalty, self.dual, self.verbose,
+            self.max_iter, self.tol, self.random_state, loss=self.loss,
             epsilon=self.epsilon)
         self.coef_ = self.coef_.ravel()
 
@@ -687,6 +699,9 @@ class SVR(BaseLibSVM, RegressorMixin):
         Support Vector Machine for regression implemented using libsvm
         using a parameter to control the number of support vectors.
 
+    LinearSVR
+        Scalable Linear Support Vector Machine for regression
+        implemented using liblinear.
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0, tol=1e-3,
                  C=1.0, epsilon=0.1, shrinking=True, cache_size=200,
@@ -895,7 +910,7 @@ class OneClassSVM(BaseLibSVM):
             shrinking, False, cache_size, None, verbose, max_iter,
             random_state)
 
-    def fit(self, X, sample_weight=None, **params):
+    def fit(self, X, y=None, sample_weight=None, **params):
         """
         Detects the soft boundary of the set of samples X.
 
