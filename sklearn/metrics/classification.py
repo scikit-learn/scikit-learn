@@ -822,14 +822,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
     ... # doctest: +ELLIPSIS
     (0.22..., 0.33..., 0.26..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average=None)
-    ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
-    (array([ 0.66...,  0. ,  0. ]),
-     array([ 1.,  0.,  0.]),
-     array([ 0.8,  0. ,  0. ]),
-     array([2, 2, 2]))
 
-    You can also specify an order for labels:
+    It is possible to compute per-label precisions, recalls, F1-scores and
+    supports instead of averaging:
     >>> precision_recall_fscore_support(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
     ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
