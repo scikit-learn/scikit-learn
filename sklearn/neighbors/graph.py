@@ -28,11 +28,12 @@ def _query_include_self(X, include_self, mode):
     if include_self is None:
         if mode == "connectivity":
             warnings.warn(
-                "include_self=None was changed to include_self=True due to "
-                "mode='connectivity'. In version 0.18, the default value will "
-                "change to False, and so, the first NN of each sample will not "
-                "be the sample itself. To maintain the current behavior, you "
-                "must explicitly set include_self=True.", DeprecationWarning)
+                "The behavior of 'kneighbors_graph' when mode='connectivity' "
+                "will change in version 0.18. Presently, the nearest neighbor "
+                "of each sample is the sample itself. Beginning in version "
+                "0.18, the default behavior will be to exclude each sample "
+                "from being its own nearest neighbor. To maintain the current "
+                "behavior, set include_self=True.", DeprecationWarning)
             include_self = True
         else:
             include_self = False
