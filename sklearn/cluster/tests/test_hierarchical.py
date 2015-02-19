@@ -499,6 +499,18 @@ def test_compute_full_tree():
     assert_equal(n_nodes, n_samples - n_clusters)
 
 
+def test_n_components():
+    """Test n_components returned by linkage, average and ward tree"""
+    rng = np.random.RandomState(0)
+    X = rng.rand(5, 5)
+
+    # Connectivity matrix having five components.
+    connectivity = np.eye(5)
+
+    for linkage_func in _TREE_BUILDERS.values():
+        assert_equal(ignore_warnings(linkage_func)(X, connectivity)[1], 5)
+
+
 if __name__ == '__main__':
     import nose
     nose.run(argv=['', __file__])
