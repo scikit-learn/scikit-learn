@@ -186,6 +186,87 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
+def balanced_accuracy_score(y_true, y_pred, c=0.5):
+    """Balanced accuracy classification score.
+
+    It supports only binary classification. It returns:
+    c * (TP/P) + (1-c)*(TN/N),
+    where TP is the number of True Positives, P the number of Positives,
+    TN is the number of True Negatives, N the number of Negatives and
+    c is the cost associated with the misclassification of a positive example.
+
+    Parameters
+    ----------
+    y_true : 1d array-like (binary values, 1 for positives, 0 for negatives),
+        or label indicator array / sparse matrix. Ground truth (correct) labels.
+
+    y_pred : 1d array-like (binary values, 1 for positives, 0 for negatives),
+        or label indicator array / sparse matrix Predicted labels, as returned
+        by a classifier.
+
+    c : is the cost associated with the misclassification of a positive example.
+        if 'c == 1', it is the recall_score, TP/P
+        if 'c == 0', it is the specificity_score, TN/N
+
+    Returns
+    -------
+    score : float
+        c * (TP/P) + (1-c)*(TN/N),
+        The best performance is 1, the worst is 0.
+
+    See also
+    --------
+    accuracy_score, precision_score
+
+    Notes
+    -----
+    see http://en.wikipedia.org/wiki/Accuracy_and_precision
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import balanced_accuracy_score
+    >>> y_pred = [0, 1, 1, 1]
+    >>> y_true = [1, 1, 0, 0]
+    >>> balanced_accuracy_score(y_true, y_pred, c = 0.)
+    0.0
+    >>> balanced_accuracy_score(y_true, y_pred, c = 0.5)
+    0.25
+    >>> balanced_accuracy_score(y_true, y_pred, c = 1.)
+    0.5
+    """
+
+    if c > 1. or c < 0.:
+        raise ValueError("c has to be between 0 and 1")
+
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+
+    if y_type != "binary":
+        raise ValueError("%s is not supported" % y_type)
+
+    tp = (y_true == 1) & (y_pred == 1)
+    fp = (y_true == 0) & (y_pred == 1)
+    tn = (y_true == 0) & (y_pred == 0)
+    fn = (y_true == 1) & (y_pred == 0)
+
+    tp_sum = np.bincount(tp, minlength=2)[1]
+    fp_sum = np.bincount(fp, minlength=2)[1]
+    tn_sum = np.bincount(tn, minlength=2)[1]
+    fn_sum = np.bincount(fn, minlength=2)[1]
+
+    p_sum = tp_sum + fn_sum
+    n_sum = fp_sum + tn_sum
+
+    if p_sum == 0:
+        raise ValueError("only positives in the ground truth")
+    if n_sum == 0:
+        raise ValueError("only negatives in the ground truth")
+
+    recall_sc = tp_sum/p_sum
+    specificity_sc = tn_sum/n_sum
+
+    return c*(recall_sc) + (1-c)*specificity_sc
+
 def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
