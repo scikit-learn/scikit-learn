@@ -22,6 +22,13 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
         Estimated rank of the matrix that will be factorized, if it's not
         set, the matrix will be considered to have full rank
 
+    algorithm : {'sgd', 'sgd_adagrad', 'als', 'als1'}, default: 'sgd'
+        Algorithm to perform optimization.
+        sgd and sgd_adagrad are variants of stochastic gradient descent,
+        the later one uses AdaGrad learning rate adjustment.
+        ALS and ALS1 are variants of Alternating Least Squares, the later
+        one avoids inverting matrices, thus should be faster for large n_components
+
     n_iter : int, default: 100
         Number of iterations to compute.
 
@@ -29,14 +36,15 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
         The placeholder for the missing values. If the matrix to factorize
         is sparse, this parameter will be ignored (the placeholder will be 0)
 
-    learning_rate : double, default: TODO
-        The learning_rate
+    learning_rate : double, default: 1e-3
+        The learning_rate for SGD algorithm
 
-    regularization : double, default: TODO
-        The regularization coefficient
+    regularization : double, default: 1e-4
+        The regularization coefficient. Note: bias (if turned on)
+        is not regularized.
 
-    bias_regularization : double, default: TODO
-        The regularization coefficient of the sample/features bias
+    fit_intercept : boolean, default: True
+        Specifies if a bias (a.k.a. intercept) should be added to the factorization.
 
     init_L : array, [n_samples, n_components]
         An initial guess for the first factor
@@ -44,6 +52,16 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
     init_R : array, [n_components, n_features]
         An initial guess for the second
 
+    init_sample_biases : array, [n_samples, n_components]
+        An initial guess for biases for the first (sample) factor
+
+    init_feature_biases : array, [n_components, n_features]
+        An initial guess for the biases for the second (feature) factor
+
+    verbose : int, default: 0
+        Level of verbosity of output. 0 means no output, 1 - output
+        loss each k iterations where k is chosen so that no more than
+        100 messages are outputted.
 
     Attributes
     ----------
@@ -60,7 +78,9 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
     ----------
     This implements
 
-    TODO
+    Istvan Pilaszy, David Zibriczky: ALS and ALS1: Fast als-based matrix factorization
+    for explicit and implicit feedback datasets
+    http://dl.acm.org/citation.cfm?id=1864726
     """
 
     def __init__(self, n_components=None, n_iter=100, missing_values="NaN",
@@ -92,6 +112,11 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
         self.algorithm = algorithm
 
     def _extract_data(self, X):
+        """
+        Converts data matrix into 3 lists of present values.
+        The first list is a list of values, and the last two correspond
+        to lists of row and column indices.
+        """
         if sparse.issparse(X):
             X_data = X.data
             X_rows = X.row
@@ -108,11 +133,12 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
             X_data = X[mask]
             X_rows, X_cols = list(np.where(mask))
 
-        # TODO: delme
-        # standardized = sorted(zip(X_data, X_rows, X_cols))
-        # X_data = np.array([x[0] for x in standardized])
-        # X_rows = np.array([x[1] for x in standardized])
-        # X_cols = np.array([x[2] for x in standardized])
+        # Standardizes data order
+        # TODO: do we really need it?
+        standardized = sorted(zip(X_data, X_rows, X_cols))
+        X_data = np.array([x[0] for x in standardized])
+        X_rows = np.array([x[1] for x in standardized])
+        X_cols = np.array([x[2] for x in standardized])
         return X_data, X_rows, X_cols
 
     def fit_transform(self, X, y=None, update=True):
@@ -131,6 +157,8 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
         data: array, [n_samples, n_components + 2]
             The first factor of the data. The bias of the samples is located in
             the first column. The second column will always be 1
+
+            If fit_intercept is False, the bias column is zero.
         """
         X = check_array(X, force_all_finite=False, accept_sparse='coo')
         n_samples, n_features = X.shape
@@ -140,12 +168,14 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
         if n_components is None:
             n_components = min(n_samples, n_features)
 
-        # TODO: handle rows / columns of missing values only
-
         # Extract the non-missing values and their indices
         X_data, X_rows, X_cols = self._extract_data(X)
 
-        print X_rows.shape, X_cols.shape, type(X), self.n_components
+        if len(set(X_rows)) < n_samples:
+            raise ValueError("X should not have rows of missing values only")
+
+        if len(set(X_cols)) < n_features:
+            raise ValueError("X should not have columns of missing values only")
 
         mean = X_data.mean()
         var  = X_data.var()
@@ -225,13 +255,39 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
             bias_samples.reshape(n_samples, 1),
             L])
 
-
     def fit(self, X, y=None):
+        """Factorize the matrix
+
+        Parameters
+        ----------
+
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Data matrix to be factorized
+        """
         self.fit_transform(X)
         return self
 
-
     def transform(self, X, y=None):
+        """Factorize the matrix and return the first factor
+
+        Due to details of the factorization problem, the factorization
+        needs to be performed on each transform call, so it's not a cheap
+        operation.
+
+        Parameters
+        ----------
+
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Data matrix to be factorized
+
+        Returns
+        -------
+        data: array, [n_samples, n_components + 2]
+            The first factor of the data. The bias of the samples is located in
+            the first column. The second column will always be 1
+
+            If fit_intercept is False, the bias column is zero.
+        """
         X = as_float_array(X, copy=False, force_all_finite=False)
         check_is_fitted(self, 'feature_vectors_')
 
