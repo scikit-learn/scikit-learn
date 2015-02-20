@@ -5,12 +5,14 @@ import sys
 import traceback
 import inspect
 import pickle
+from copy import deepcopy
 
 import numpy as np
 from scipy import sparse
 import struct
 
 from sklearn.externals.six.moves import zip
+from sklearn.externals.joblib import hash
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
@@ -887,17 +889,31 @@ def check_estimators_overwrite_params(name, Estimator):
         estimator.batch_size = 1
 
     set_fast_parameters(estimator)
-
     set_random_state(estimator)
 
+
+    # Make a phisical copy of the estimator parameters. All estimator pa
     params = estimator.get_params()
+    old_params = deepcopy(params)
+
+    # Fit the model
     estimator.fit(X, y)
+
+    # Compare the state of the model parameters with the original parameters
     new_params = estimator.get_params()
-    for k, v in params.items():
-        assert_false(np.any(new_params[k] != v),
-                     "Estimator %s changes its parameter %s"
-                     " from %s to %s during fit."
-                     % (name, k, v, new_params[k]))
+    for param_name, old_value in old_params.items():
+        new_value = new_params[param_name]
+
+        # We should never change or mutate the internal state of input parameters by
+        # default. To check this we use the joblib.hash function that
+        # introspects recursively any subobjects to compute a checksum.
+        # The only exception to this rule of immutable constructor parameters
+        # is possible RandomState instance but in this check we explicitly
+        # fixed the random_state params recursively to be integer seeds.
+        assert_false(hash(new_value) != hash(old_value),
+                     "Estimator %s should not change or mutate "
+                     " the parameter %s from %s to %s during fit."
+                     % (name, param_name, old_value, new_value))
 
 
 def check_sparsify_coefficients(name, Estimator):
