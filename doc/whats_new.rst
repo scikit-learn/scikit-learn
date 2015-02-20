@@ -77,7 +77,8 @@ New features
 
    - Added :class:`calibration.CalibratedClassifierCV`, an approach for
      calibrating the predicted probabilities of a classifier.
-     By `Alexandre Gramfort`_ and `Jan Hendrik Metzen`_.
+     By `Alexandre Gramfort`_, `Jan Hendrik Metzen`_, `Mathieu Blondel`_
+     and `Balazs Kegl`_.
 
 
 Enhancements
@@ -3279,3 +3280,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Cathy Deng: https://github.com/cathydeng
 
 .. _Will Dawson: http://dawsonresearch.com
+
+.. _Balazs Kegl: https://github.com/kegl
