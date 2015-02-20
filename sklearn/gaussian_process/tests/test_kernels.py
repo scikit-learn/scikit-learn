@@ -48,10 +48,8 @@ def test_kernel_gradient():
 def test_auto_vs_cross():
     """ Auto-correlation and cross-correlation should be consistent. """
     for kernel in kernels:
-        print kernel
         K_auto = kernel.auto(X)
         K_cross = kernel.cross(X, X)
-
         assert_almost_equal(K_auto, K_cross, 5)
 
 def test_kernel_operator_commutative():

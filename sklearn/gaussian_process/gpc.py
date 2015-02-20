@@ -10,6 +10,8 @@ from scipy.optimize import fmin_l_bfgs_b
 from scipy.special import erf
 
 from sklearn.base import BaseEstimator
+from sklearn.gaussian_process.kernels import RBF
+from sklearn.utils.validation import check_X_y, check_is_fitted, check_array
 
 
 # Values required for approximating the logistic sigmoid by
@@ -38,14 +40,16 @@ class GaussianProcessClassification(BaseEstimator):
       * binary classification
     """
 
-    def __init__(self, kernel, jitter=0.0):
+    def __init__(self, kernel=RBF(), jitter=0.0):
         self.kernel = kernel
         self.jitter = jitter
 
     def fit(self, X, y):
+        X, y = check_X_y(X, y)
+
         # XXX: Assert that y is binary and labels are {0, 1}
-        self.X_fit_ = np.asarray(X)
-        self.y_fit_ = np.asarray(y)
+        self.X_fit_ = X
+        self.y_fit_ = y
 
         if self.kernel.has_bounds:
             # Choose hyperparameters based on maximizing the log-marginal
@@ -71,16 +75,22 @@ class GaussianProcessClassification(BaseEstimator):
         return self
 
     def predict(self, X):
-        # As discussed on Sectio 3.4.2 of GPML, for making hard binary
+        check_is_fitted(self, ["X_fit_", "y_fit_", "K_", "f_"])
+        X = check_array(X)
+
+        # As discussed on Section 3.4.2 of GPML, for making hard binary
         # decisions, it is enough to compute the MAP of the posterior and
         # pass it through the link function
         K_star = \
             self.kernel.cross(self.X_fit_, X)  # K_star =k(x_star)
-        f_star = K_star.T.dot(self.y_fit_ - self.pi)  # Line 4
+        f_star = K_star.T.dot(self.y_fit_ - self.pi)  # Line 4 (Algorithm 3.2)
 
         return f_star > 0
 
     def predict_proba(self, X):
+        check_is_fitted(self, ["X_fit_", "y_fit_", "K_", "f_"])
+        X = check_array(X)
+
         # Based on Algorithm 3.2 of GPML
         K_star = \
             self.kernel.cross(self.X_fit_, X)  # K_star =k(x_star)
