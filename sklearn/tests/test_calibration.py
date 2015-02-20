@@ -8,7 +8,8 @@ from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_greater, assert_almost_equal,
                                    assert_greater_equal,
                                    assert_array_equal,
-                                   assert_raises)
+                                   assert_raises,
+                                   assert_warns_message)
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -35,8 +36,7 @@ def test_calibration():
     X_test, y_test = X[n_samples:], y[n_samples:]
 
     # Naive-Bayes
-    clf = MultinomialNB()
-    clf.fit(X_train, y_train, sw_train)
+    clf = MultinomialNB().fit(X_train, y_train, sample_weight=sw_train)
     prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
     pc_clf = CalibratedClassifierCV(clf, cv=y.size + 1)
@@ -86,7 +86,7 @@ def test_calibration():
 
         # check that calibration can also deal with regressors that have
         # a decision_function
-        clf_base_regressor = CalibratedClassifierCV(Ridge(), method="sigmoid")
+        clf_base_regressor = CalibratedClassifierCV(Ridge())
         clf_base_regressor.fit(X_train, y_train)
         clf_base_regressor.predict(X_test)
 
@@ -100,6 +100,37 @@ def test_calibration():
         clf_base_regressor = \
             CalibratedClassifierCV(RandomForestRegressor(), method="sigmoid")
         assert_raises(RuntimeError, clf_base_regressor.fit, X_train, y_train)
+
+
+def test_sample_weight_warning():
+    n_samples = 100
+    X, y = make_classification(n_samples=2 * n_samples, n_features=6,
+                               random_state=42)
+
+    sample_weight = np.random.RandomState(seed=42).uniform(size=len(y))
+    X_train, y_train, sw_train = \
+        X[:n_samples], y[:n_samples], sample_weight[:n_samples]
+    X_test = X[n_samples:]
+
+    for method in ['sigmoid', 'isotonic']:
+        base_estimator = LinearSVC(random_state=42)
+        calibrated_clf = CalibratedClassifierCV(base_estimator, method=method,
+                                                random_state=42)
+        # LinearSVC does not currently support sample weights but they
+        # can still be used for the calibration step (with a warning)
+        msg = "LinearSVC does not support sample_weight."
+        assert_warns_message(
+            UserWarning, msg,
+            calibrated_clf.fit, X_train, y_train, sample_weight=sw_train)
+        probs_with_sw = calibrated_clf.predict_proba(X_test)
+
+        # As the weights are used for the calibration, they should still yield
+        # a different predictions
+        calibrated_clf.fit(X_train, y_train)
+        probs_without_sw = calibrated_clf.predict_proba(X_test)
+
+        diff = np.linalg.norm(probs_with_sw - probs_without_sw)
+        assert_greater(diff, 0.1)
 
 
 def test_calibration_multiclass():

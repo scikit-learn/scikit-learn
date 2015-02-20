@@ -9,6 +9,7 @@
 
 from __future__ import division
 import inspect
+import warnings
 
 from math import log
 import numpy as np
@@ -17,10 +18,11 @@ from scipy.optimize import fmin_bfgs
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
 from .preprocessing import LabelBinarizer
+from .utils import check_random_state
 from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted
 from .isotonic import IsotonicRegression
-from .naive_bayes import GaussianNB
+from .svm import LinearSVC
 from .cross_validation import _check_cv
 from .metrics.classification import _check_binary_probabilistic_predictions
 
@@ -57,6 +59,9 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         If "prefit" is passed, it is assumed that base_estimator has been
         fitted already and all data is used for calibration.
 
+    random_state : int, RandomState instance or None (default=None)
+        Used to randomly break ties when method is 'isotonic'.
+
     Attributes
     ----------
     classes_ : array, shape (n_classes)
@@ -81,10 +86,12 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator=GaussianNB(), method='sigmoid', cv=3):
+    def __init__(self, base_estimator=None, method='sigmoid', cv=3,
+                 random_state=None):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
+        self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
         """Fit the calibrated model
@@ -109,6 +116,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         X, y = indexable(X, y)
         lb = LabelBinarizer().fit(y)
         self.classes_ = lb.classes_
+        random_state = check_random_state(self.random_state)
 
         # Check that we each cross-validation fold can have at least one
         # example per class
@@ -121,9 +129,14 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                              % (n_folds, n_folds))
 
         self.calibrated_classifiers_ = []
+        if self.base_estimator is None:
+            base_estimator = LinearSVC()
+        else:
+            base_estimator = self.base_estimator
+
         if self.cv == "prefit":
-            calibrated_classifier = _CalibratedClassifier(self.base_estimator,
-                                                          method=self.method)
+            calibrated_classifier = _CalibratedClassifier(
+                base_estimator, method=self.method, random_state=random_state)
             if sample_weight is not None:
                 calibrated_classifier.fit(X, y, sample_weight)
             else:
@@ -131,18 +144,28 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
             cv = _check_cv(self.cv, X, y, classifier=True)
+            arg_names = inspect.getargspec(base_estimator.fit)[0]
+            estimator_name = type(base_estimator).__name__
+            if (sample_weight is not None
+                    and "sample_weight" not in arg_names):
+                warnings.warn("%s does not support sample_weight. Samples"
+                              " weights are only used for the calibration"
+                              " itself." % estimator_name)
+                base_estimator_sample_weight = None
+            else:
+                base_estimator_sample_weight = sample_weight
             for train, test in cv:
-                this_estimator = clone(self.base_estimator)
-                if sample_weight is not None and \
-                   "sample_weight" in inspect.getargspec(
-                        this_estimator.fit)[0]:
-                    this_estimator.fit(X[train], y[train],
-                                       sample_weight[train])
+                this_estimator = clone(base_estimator)
+                if base_estimator_sample_weight is not None:
+                    this_estimator.fit(
+                        X[train], y[train],
+                        sample_weight=base_estimator_sample_weight[train])
                 else:
                     this_estimator.fit(X[train], y[train])
 
-                calibrated_classifier = \
-                    _CalibratedClassifier(this_estimator, method=self.method)
+                calibrated_classifier = _CalibratedClassifier(
+                    this_estimator, method=self.method,
+                    random_state=random_state)
                 if sample_weight is not None:
                     calibrated_classifier.fit(X[test], y[test],
                                               sample_weight[test])
@@ -219,6 +242,9 @@ class _CalibratedClassifier(object):
         corresponds to Platt's method or 'isotonic' which is a
         non-parameteric approach based on isotonic regression.
 
+    random_state : int, RandomState instance or None (default=None)
+        Used to randomly break ties when method is 'isotonic'.
+
     References
     ----------
     .. [1] Obtaining calibrated probability estimates from decision trees
@@ -233,9 +259,11 @@ class _CalibratedClassifier(object):
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator, method='sigmoid'):
+    def __init__(self, base_estimator, method='sigmoid',
+                 random_state=None):
         self.base_estimator = base_estimator
         self.method = method
+        self.random_state = random_state
 
     def _preproc(self, X):
         n_classes = len(self.classes_)
@@ -289,8 +317,8 @@ class _CalibratedClassifier(object):
                 #      have different outputs. Since this is not untypical
                 #      when calibrating, we add some small random jitter to
                 #      the inputs.
-                this_df = \
-                    this_df + np.random.normal(0, 1e-10, this_df.shape[0])
+                jitter = self.random_state.normal(0, 1e-10, this_df.shape[0])
+                this_df = this_df + jitter
             elif self.method == 'sigmoid':
                 calibrator = _SigmoidCalibration()
             else:
