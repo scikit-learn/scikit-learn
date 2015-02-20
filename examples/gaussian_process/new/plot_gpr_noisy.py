@@ -19,57 +19,58 @@ print __doc__
 # License: BSD 3 clause
 
 import numpy as np
-import pylab
+
+from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm
 
 from sklearn.gaussian_process import GaussianProcessRegression
 from sklearn.gaussian_process.kernels import RBF, WhiteKernel
 
 
-np.random.seed(0)
-X = np.random.uniform(0, 5, 20)[:, None]
-y = 0.5*np.sin(3*X[:, 0]) + np.random.normal(0, 0.5, X.shape[0])
+rng = np.random.RandomState(0)
+X = rng.uniform(0, 5, 20)[:, np.newaxis]
+y = 0.5*np.sin(3*X[:, 0]) + rng.normal(0, 0.5, X.shape[0])
 
 # First run
-pylab.figure(0)
+plt.figure(0)
 kernel = (1e-10, 1.0, None) * RBF(param_space=(1e-10, 100.0, None)) \
     + WhiteKernel(param_space=(1e-10, 1e-5, 1e+1))
 kernel_str = str(kernel)
 gp = GaussianProcessRegression(kernel=kernel,
                                y_err=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)
-y_mean, y_cov = gp.predict(X_[:, None], return_cov=True)
-pylab.plot(X_, y_mean, 'k', lw=3, zorder=9)
-pylab.fill_between(X_, y_mean - np.sqrt(np.diag(y_cov)),
-                   y_mean + np.sqrt(np.diag(y_cov)),
-                   alpha=0.5, color='k')
-pylab.plot(X_, 0.5*np.sin(3*X_), 'r', lw=3, zorder=9)
-pylab.scatter(X[:, 0], y, c='r', s=50, zorder=10)
-pylab.title("Initial: %s\nOptimum: %s\nLog-Marginal-Likelihood: %s"
-            % (kernel_str, kernel, gp.log_marginal_likelihood(kernel.params)))
-pylab.tight_layout()
+y_mean, y_cov = gp.predict(X_[:, np.newaxis], return_cov=True)
+plt.plot(X_, y_mean, 'k', lw=3, zorder=9)
+plt.fill_between(X_, y_mean - np.sqrt(np.diag(y_cov)),
+                 y_mean + np.sqrt(np.diag(y_cov)),
+                 alpha=0.5, color='k')
+plt.plot(X_, 0.5*np.sin(3*X_), 'r', lw=3, zorder=9)
+plt.scatter(X[:, 0], y, c='r', s=50, zorder=10)
+plt.title("Initial: %s\nOptimum: %s\nLog-Marginal-Likelihood: %s"
+          % (kernel_str, kernel, gp.log_marginal_likelihood(kernel.params)))
+plt.tight_layout()
 
 # First run
-pylab.figure(1)
+plt.figure(1)
 kernel = (1e-10, 1.0, None) * RBF(param_space=(1e-10, 1.0, None)) \
     + WhiteKernel(param_space=(1e-10, 1e-5, 1e+1))
 kernel_str = str(kernel)
 gp = GaussianProcessRegression(kernel=kernel,
                                y_err=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)
-y_mean, y_cov = gp.predict(X_[:, None], return_cov=True)
-pylab.plot(X_, y_mean, 'k', lw=3, zorder=9)
-pylab.fill_between(X_, y_mean - np.sqrt(np.diag(y_cov)),
-                   y_mean + np.sqrt(np.diag(y_cov)),
-                   alpha=0.5, color='k')
-pylab.plot(X_, 0.5*np.sin(3*X_), 'r', lw=3, zorder=9)
-pylab.scatter(X[:, 0], y, c='r', s=50, zorder=10)
-pylab.title("Initial: %s\nOptimum: %s\nLog-Marginal-Likelihood: %s"
-            % (kernel_str, kernel, gp.log_marginal_likelihood(kernel.params)))
-pylab.tight_layout()
+y_mean, y_cov = gp.predict(X_[:, np.newaxis], return_cov=True)
+plt.plot(X_, y_mean, 'k', lw=3, zorder=9)
+plt.fill_between(X_, y_mean - np.sqrt(np.diag(y_cov)),
+                 y_mean + np.sqrt(np.diag(y_cov)),
+                 alpha=0.5, color='k')
+plt.plot(X_, 0.5*np.sin(3*X_), 'r', lw=3, zorder=9)
+plt.scatter(X[:, 0], y, c='r', s=50, zorder=10)
+plt.title("Initial: %s\nOptimum: %s\nLog-Marginal-Likelihood: %s"
+          % (kernel_str, kernel, gp.log_marginal_likelihood(kernel.params)))
+plt.tight_layout()
 
 # Plot LML landscape
-pylab.figure(2)
+plt.figure(2)
 theta0 = np.logspace(-2, 3, 49)
 theta1 = np.logspace(-2, 0, 50)
 Theta0, Theta1 = np.meshgrid(theta0, theta1)
@@ -79,15 +80,15 @@ LML = np.array(LML).T
 
 vmin, vmax = (-LML).min(), (-LML).max()
 vmax = 50
-pylab.contour(Theta0, Theta1, -LML,
-              levels=np.logspace(np.log10(vmin), np.log10(vmax), 50),
-              norm=LogNorm(vmin=vmin, vmax=vmax))
-pylab.colorbar()
-pylab.xscale("log")
-pylab.yscale("log")
-pylab.xlabel("Length-scale")
-pylab.ylabel("Noise-level")
-pylab.title("Log-marginal-likelihood")
-pylab.tight_layout()
+plt.contour(Theta0, Theta1, -LML,
+            levels=np.logspace(np.log10(vmin), np.log10(vmax), 50),
+            norm=LogNorm(vmin=vmin, vmax=vmax))
+plt.colorbar()
+plt.xscale("log")
+plt.yscale("log")
+plt.xlabel("Length-scale")
+plt.ylabel("Noise-level")
+plt.title("Log-marginal-likelihood")
+plt.tight_layout()
 
-pylab.show()
+plt.show()

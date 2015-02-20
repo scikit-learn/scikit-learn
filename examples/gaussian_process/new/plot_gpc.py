@@ -13,14 +13,15 @@ print __doc__
 
 import numpy as np
 
+from matplotlib import pyplot as plt
+
 from sklearn.gaussian_process import GaussianProcessClassification
 from sklearn.gaussian_process.kernels import RBF
 
-np.random.seed(0)
-
 
 # Generate data
-X = np.random.uniform(0, 5, 50)[:, None]
+rng = np.random.RandomState(0)
+X = rng.uniform(0, 5, 50)[:, np.newaxis]
 y = np.array(np.sin((X[:, 0] - 2.5) ** 2) > 0.0, dtype=int)
 
 # Specify Gaussian Processes with fixed and optimized hyperparameters
@@ -37,32 +38,31 @@ print "Log Marginal Likelihood (optimized): %.3f" % \
 
 
 # Plot posteriors
-import pylab
-pylab.figure(0)
-pylab.scatter(X[:, 0], y)
+plt.figure(0)
+plt.scatter(X[:, 0], y)
 X_ = np.linspace(0, 5, 100)
-pylab.plot(X_, gp_fix.predict_proba(X_[:, None]), 'r',
-           label="Initial kernel: %s" % kernel_fix)
-pylab.plot(X_, gp_opt.predict_proba(X_[:, None]), 'b',
-           label="Optimized kernel: %s" % kernel_opt)
-pylab.legend(loc="best")
-pylab.xlabel("Feature")
-pylab.ylabel("Class")
+plt.plot(X_, gp_fix.predict_proba(X_[:, np.newaxis]), 'r',
+         label="Initial kernel: %s" % kernel_fix)
+plt.plot(X_, gp_opt.predict_proba(X_[:, np.newaxis]), 'b',
+         label="Optimized kernel: %s" % kernel_opt)
+plt.legend(loc="best")
+plt.xlabel("Feature")
+plt.ylabel("Class")
 
 # Plot LML landscape
-pylab.figure(1)
+plt.figure(1)
 theta0 = np.logspace(0, 8, 30)
 theta1 = np.logspace(-1, 1, 29)
 Theta0, Theta1 = np.meshgrid(theta0, theta1)
 LML = [[gp_opt.log_marginal_likelihood([Theta0[i, j], Theta1[i, j]])
         for i in range(Theta0.shape[0])] for j in range(Theta0.shape[1])]
 LML = np.array(LML).T
-pylab.pcolor(Theta0, Theta1, LML)
-pylab.xscale("log")
-pylab.yscale("log")
-pylab.colorbar()
-pylab.xlabel("Magnitude")
-pylab.ylabel("Length-scale")
-pylab.title("Log-marginal-likelihood")
+plt.pcolor(Theta0, Theta1, LML)
+plt.xscale("log")
+plt.yscale("log")
+plt.colorbar()
+plt.xlabel("Magnitude")
+plt.ylabel("Length-scale")
+plt.title("Log-marginal-likelihood")
 
-pylab.show()
+plt.show()
