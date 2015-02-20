@@ -16,7 +16,8 @@ from sklearn.utils.testing import (assert_true, assert_greater,
                                    assert_almost_equal)
 
 
-f = lambda x: x * np.sin(x)
+def f(x):
+    return x * np.sin(x)
 X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
 X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = f(X).ravel()
