@@ -12,6 +12,17 @@ from scipy.special import erf
 from sklearn.base import BaseEstimator
 
 
+# Values required for approximating the logistic sigmoid by
+# error functions. coefs are obtained via:
+# x = np.array([0, 0.6, 2, 3.5, 4.5, np.inf])
+# b = logistic(x)
+# A = (erf(np.dot(x, self.lambdas)) + 1) / 2
+# coefs = lstsq(A, b)[0]
+LAMBDAS = np.array([0.41, 0.4, 0.37, 0.44, 0.39])[:, np.newaxis]
+COEFS = np.array([-1854.8214151, 3516.89893646, 221.29346712,
+                  128.12323805, -2010.49422654])[:, np.newaxis]
+
+
 class GaussianProcessClassification(BaseEstimator):
     """ Gaussian process classification (GPC).
 
@@ -31,16 +42,6 @@ class GaussianProcessClassification(BaseEstimator):
         self.kernel = kernel
         self.jitter = jitter
 
-        # Values required for approximating the logistic sigmoid by
-        # error functions. coefs are obtained via:
-        # x = np.array([0, 0.6, 2, 3.5, 4.5, np.inf])
-        # b = logistic(x)
-        # A = (erf(np.dot(x, self.lambdas)) + 1) / 2
-        # coefs = lstsq(A, b)[0]
-        self.lambdas = np.array([0.41, 0.4, 0.37, 0.44, 0.39])[:, None]
-        self.coefs = np.array([-1854.8214151, 3516.89893646, 221.29346712,
-                               128.12323805, -2010.49422654])[:, None]
-
     def fit(self, X, y):
         # XXX: Assert that y is binary and labels are {0, 1}
         self.X_fit_ = np.asarray(X)
@@ -53,8 +54,8 @@ class GaussianProcessClassification(BaseEstimator):
                 lml, grad = self.log_marginal_likelihood(theta,
                                                          eval_gradient=True)
                 return -lml, -grad
-            self.theta_, lml, _ = fmin_l_bfgs_b(obj_func, self.kernel.params,
-                                                bounds=self.kernel.bounds)
+            self.theta_, _, _ = fmin_l_bfgs_b(obj_func, self.kernel.params,
+                                              bounds=self.kernel.bounds)
             self.kernel.params = self.theta_
         else:
             self.theta_ = self.kernel.params
@@ -97,11 +98,11 @@ class GaussianProcessClassification(BaseEstimator):
         # blitiri.blogspot.de/2012/11/gaussian-integral-of-error-function.html
         # for information on how this integral can be computed
         alpha = 1 / (2 * np.diag(var_f_star))
-        gamma = self.lambdas * f_star
+        gamma = LAMBDAS * f_star
         integrals = np.sqrt(np.pi / alpha) \
-            * erf(gamma * np.sqrt(alpha / (alpha + self.lambdas**2))) \
+            * erf(gamma * np.sqrt(alpha / (alpha + LAMBDAS**2))) \
             / (2 * np.sqrt(np.diag(var_f_star) * 2 * np.pi))
-        pi_star = (self.coefs * integrals).sum(axis=0) + .5 * self.coefs.sum()
+        pi_star = (COEFS * integrals).sum(axis=0) + .5 * COEFS.sum()
 
         return pi_star
 
@@ -150,13 +151,13 @@ class GaussianProcessClassification(BaseEstimator):
         while True:
             # Line 4
             pi = 1 / (1 + np.exp(-f))
-            W = -np.diag(-pi*(1-pi))  # XXX: avoid creating square matrix?
+            W = pi * (1 - pi)
             # Line 5
-            W_sr = np.sqrt(W)
+            W_sr = np.diag(np.sqrt(W))  # XXX: avoid creating square matrix?
             B = np.eye(W.shape[0]) + W_sr.dot(K).dot(W_sr)
             L = cholesky(B, lower=True)
             # Line 6
-            b = W.dot(f) + (self.y_fit_ - pi)
+            b = W * f + (self.y_fit_ - pi)
             # Line 7
             a = b - W_sr.dot(cho_solve((L, True), W_sr.dot(K).dot(b)))
             # Line 8

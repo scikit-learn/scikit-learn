@@ -4,7 +4,7 @@ The kernels in this module allow kernel-engineering, i.e., they can be
 combined via the "+" and "*" operators. These expressions can also contain
 scalar values, which are automatically converted to a constant kernel.
 
-All kernel allow (analytic) gradient-based hyperparameter optimization.
+All kernels allow (analytic) gradient-based hyperparameter optimization.
 The space of hyperparameters can be specified by giving lower und upper
 boundaries for the value of each hyperparameter (the search space is thus
 rectangular). This can be achieved by using a pair or triple instead of a
@@ -28,28 +28,34 @@ class Kernel(object):
     """ Base class for all kernels."""
 
     def _parse_param_space(self, param_space):
-        if not hasattr(param_space, "__iter__"):  # fixed hyperparameter
+        if not np.iterable(param_space):  # fixed hyperparameter
             self.params = np.array([float(param_space)])
             self.has_bounds = False
             return
         param_space = np.atleast_2d(param_space)
-        if param_space.shape[1] == 1:  # fixed hyperparameter
+        if param_space.shape[1] == 1:
+            # fixed hyperparameter
             self.params = param_space[:, 0]
             self.has_bounds = False
-        elif param_space.shape[1] == 2:  # lower+upper bound for hyperparameter
+        elif param_space.shape[1] == 2:
+            # lower+upper bound for hyperparameter
             self.bounds = param_space
             self.has_bounds = True
             # Use geometric mean of upper and lower boundary as initial
             # hyperparameter value
-            assert not np.any(self.l_bound == None)  # XXX: enforce element-wise comparison to None
-            assert not np.any(self.u_bound == None)
+            if np.any(np.equal(self.l_bound, None)) \
+               or np.any(np.equal(self.u_bound, None)):
+                raise ValueError("Lower or upper bound being None requires "
+                                 "explicitly specifying the initial value.")
             self.params = np.array([np.sqrt(self.l_bound * self.u_bound)])
-        elif param_space.shape[1] == 3:  # lower bound, initial value, upper bound
+        elif param_space.shape[1] == 3:
+            # lower bound, initial value, upper bound
             self.params = param_space[:, 1]
             self.bounds = param_space[:, [0, 2]]
             self.has_bounds = True
         else:
-            raise Exception()
+            raise ValueError("Invalid parameter space given. Must not have "
+                             "more than 3 entries per parameter.")
 
     @property
     def n_params(self):
@@ -88,7 +94,6 @@ class Kernel(object):
     def __repr__(self):
         return "{0}({1})".format(self.__class__.__name__,
                                  ", ".join(map("{0}".format, self.params)))
-
 
 
 class KernelOperator(Kernel):
@@ -229,8 +234,8 @@ class Product(KernelOperator):
         if eval_gradient:
             K1, K1_gradient = self.k1.auto(X, eval_gradient=True)
             K2, K2_gradient = self.k2.auto(X, eval_gradient=True)
-            return K1 * K2, np.dstack((K1_gradient * K2[:, :, None],
-                                       K2_gradient * K1[:, :, None]))
+            return K1 * K2, np.dstack((K1_gradient * K2[:, :, np.newaxis],
+                                       K2_gradient * K1[:, :, np.newaxis]))
         else:
             return self.k1.auto(X) * self.k2.auto(X)
 
@@ -372,12 +377,14 @@ class RBF(Kernel):
         np.fill_diagonal(K, 1)
         if eval_gradient:
             if self.l.shape[0] == 1:
-                K_gradient = (K * squareform(dists) / self.l[0])[:, :, None]
+                K_gradient = \
+                    (K * squareform(dists) / self.l[0])[:, :, np.newaxis]
                 return K, K_gradient
             elif self.l.shape[0] == X.shape[1]:
                 # We need to recompute the pairwise dimension-wise distances
-                D = (X[:, None, :] - X[None, :, :])**2 / (self.l ** 3)
-                K_gradient = K[..., None] * D
+                D = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 \
+                    / (self.l ** 3)
+                K_gradient = K[..., np.newaxis] * D
                 return K, K_gradient
             else:
                 raise Exception("Anisotropic kernels require that the number "
@@ -449,7 +456,7 @@ class WhiteKernel(Kernel):
         """
         K = self.c * np.eye(X.shape[0])
         if eval_gradient:
-            return K, np.eye(X.shape[0])[:, :, None]
+            return K, np.eye(X.shape[0])[:, :, np.newaxis]
         else:
             return K
 

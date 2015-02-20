@@ -9,6 +9,7 @@ from scipy.linalg import cholesky, cho_solve, solve
 from scipy.optimize import fmin_l_bfgs_b
 
 from sklearn.base import BaseEstimator
+from sklearn.utils import check_random_state
 
 
 class GaussianProcessRegression(BaseEstimator):
@@ -79,9 +80,11 @@ class GaussianProcessRegression(BaseEstimator):
         return self
 
     def predict(self, X, return_std=False, return_cov=False):
-        assert not (return_std and return_cov), \
-            "Not returning standard deviation of predictions when " \
-            "returning full covariance."
+        if return_std and return_cov:
+            raise RuntimeError(
+                "Not returning standard deviation of predictions when "
+                "returning full covariance.")
+
         X = np.asarray(X)
 
         if not hasattr(self, "X_fit_"):  # Unfitted; predict based on GP prior
@@ -113,10 +116,11 @@ class GaussianProcessRegression(BaseEstimator):
             else:
                 return y_mean
 
-    def sample(self, X, n_samples=1):
+    def sample(self, X, n_samples=1, random_state=0):
+        rng = check_random_state(random_state)
+
         y_mean, y_cov = self.predict(X, return_cov=True)
-        y_samples = \
-            np.random.multivariate_normal(y_mean, y_cov, n_samples).T
+        y_samples = rng.multivariate_normal(y_mean, y_cov, n_samples).T
         return y_samples
 
     def log_marginal_likelihood(self, theta, eval_gradient=False):
