@@ -25,6 +25,7 @@ from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
+from sklearn.metrics import brier_score_loss
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import coverage_error
 from sklearn.metrics import explained_variance_score
@@ -148,6 +149,8 @@ THRESHOLDED_METRICS = {
 
     "hinge_loss": hinge_loss,
 
+    "brier_score_loss": brier_score_loss,
+
     "roc_auc_score": roc_auc_score,
     "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
     "samples_roc_auc": partial(roc_auc_score, average="samples"),
@@ -197,6 +200,7 @@ METRIC_UNDEFINED_MULTICLASS = [
     "macro_roc_auc",  "samples_roc_auc",
 
     "coverage_error",
+    "brier_score_loss"
 ]
 
 # Metrics with an "average" argument
@@ -211,7 +215,9 @@ THRESHOLDED_METRICS_WITH_AVERAGING = [
 
 # Metrics with a "pos_label" argument
 METRICS_WITH_POS_LABEL = [
-    "roc_curve", "hinge_loss",
+    "roc_curve",
+
+    "brier_score_loss",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
 
@@ -554,9 +560,15 @@ def test_invariance_string_vs_numbers_labels():
                                        "invariance test".format(name))
 
     for name, metric in THRESHOLDED_METRICS.items():
-        if name in ("log_loss", "hinge_loss", "unnormalized_log_loss"):
+        if name in ("log_loss", "hinge_loss", "unnormalized_log_loss",
+                    "brier_score_loss"):
+            # Ugly, but handle case with a pos_label and label
+            metric_str = metric
+            if name in METRICS_WITH_POS_LABEL:
+                metric_str = partial(metric_str, pos_label=pos_label_str)
+
             measure_with_number = metric(y1, y2)
-            measure_with_str = metric(y1_str, y2)
+            measure_with_str = metric_str(y1_str, y2)
             assert_array_equal(measure_with_number, measure_with_str,
                                err_msg="{0} failed string vs number "
                                        "invariance test".format(name))
