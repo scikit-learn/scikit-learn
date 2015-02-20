@@ -9,7 +9,9 @@ from scipy.linalg import cholesky, cho_solve, solve
 from scipy.optimize import fmin_l_bfgs_b
 
 from sklearn.base import BaseEstimator
+from sklearn.gaussian_process.kernels import RBF
 from sklearn.utils import check_random_state
+from sklearn.utils.validation import check_X_y, check_array
 
 
 class GaussianProcessRegression(BaseEstimator):
@@ -49,13 +51,15 @@ class GaussianProcessRegression(BaseEstimator):
     alpha_:
     """
 
-    def __init__(self, kernel, y_err=1e-10):
+    def __init__(self, kernel=RBF(), y_err=1e-10):
         self.kernel = kernel
         self.y_err = y_err
 
     def fit(self, X, y):
-        self.X_fit_ = np.asarray(X)
-        self.y_fit_ = np.asarray(y)
+        X, y = check_X_y(X, y)
+
+        self.X_fit_ = X
+        self.y_fit_ = y
 
         if self.kernel.has_bounds:
             # Choose hyperparameters based on maximizing the log-marginal
@@ -85,7 +89,7 @@ class GaussianProcessRegression(BaseEstimator):
                 "Not returning standard deviation of predictions when "
                 "returning full covariance.")
 
-        X = np.asarray(X)
+        X = check_array(X)
 
         if not hasattr(self, "X_fit_"):  # Unfitted; predict based on GP prior
             y_mean = np.zeros(X.shape[0])
