@@ -16,7 +16,7 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import Ridge
 from sklearn.metrics import brier_score_loss, log_loss
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.calibration import sigmoid_calibration, _SigmoidCalibration
+from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
 
@@ -203,7 +203,8 @@ def test_sigmoid_calibration():
     exY = np.array([1, -1, -1])
     # computed from my python port of the C++ code in LibSVM
     AB_lin_libsvm = np.array([-0.20261354391187855, 0.65236314980010512])
-    assert_array_almost_equal(AB_lin_libsvm, sigmoid_calibration(exF, exY), 3)
+    assert_array_almost_equal(AB_lin_libsvm,
+                              _sigmoid_calibration(exF, exY), 3)
     lin_prob = 1. / (1. + np.exp(AB_lin_libsvm[0] * exF + AB_lin_libsvm[1]))
     sk_prob = _SigmoidCalibration().fit(exF, exY).predict(exF)
     assert_array_almost_equal(lin_prob, sk_prob, 6)

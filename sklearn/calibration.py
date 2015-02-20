@@ -343,7 +343,7 @@ class _CalibratedClassifier(object):
         return proba
 
 
-def sigmoid_calibration(df, y, sample_weight=None):
+def _sigmoid_calibration(df, y, sample_weight=None):
     """Probability Calibration with sigmoid method (Platt 2000)
 
     Parameters
@@ -443,7 +443,7 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
         y = column_or_1d(y)
         X, y = indexable(X, y)
 
-        self.a_, self.b_ = sigmoid_calibration(X, y, sample_weight)
+        self.a_, self.b_ = _sigmoid_calibration(X, y, sample_weight)
         return self
 
     def predict(self, T):
