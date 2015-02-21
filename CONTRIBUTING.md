@@ -42,7 +42,7 @@ GitHub:
 
 Finally, go to the web page of the your fork of the scikit-learn repo,
 and click 'Pull request' to send your changes to the maintainers for
-review. request. This will send an email to the committers.
+review. This will send an email to the committers.
 
 (If any of the above seems like magic to you, then look up the 
 [Git documentation](http://git-scm.com/documentation) on the web.)
