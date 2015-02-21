@@ -180,6 +180,9 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.shape_fit_ = X.shape
 
         self._intercept_ = self.intercept_.copy()
+        # Have to flip intercept sign for backward compatibility
+        if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
+            self.intercept_ *= -1
 
         return self
 
