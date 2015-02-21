@@ -596,7 +596,7 @@ The decision function is:
 This parameters can be accessed through the members ``dual_coef_`
 which holds the product :math:`y_i \alpha_i`, ``support_vectors_`` which
 holds the support vectors, and ``intercept_`` which holds the independent
-term :math:`-\rho` :
+term :math:`\rho` :
 
 .. topic:: References:
 

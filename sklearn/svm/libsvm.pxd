@@ -36,6 +36,7 @@ cdef extern from "svm.h":
     char *svm_check_parameter(svm_problem *, svm_parameter *)
     svm_model *svm_train(svm_problem *, svm_parameter *, int *) nogil
     void svm_free_and_destroy_model(svm_model** model_ptr_ptr)
+    void svm_get_labels(const svm_model* model_ptr, int* label)
     void svm_cross_validation(svm_problem *, svm_parameter *, int nr_fold, double *target) nogil
 
 

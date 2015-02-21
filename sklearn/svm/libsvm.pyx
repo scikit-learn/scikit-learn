@@ -238,11 +238,15 @@ def fit(
         probA = np.empty(0, dtype=np.float64)
         probB = np.empty(0, dtype=np.float64)
 
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] labels
+    labels = np.empty(n_class, dtype=np.int32)
+    svm_get_labels(model, <int*> labels.data)
+
     svm_free_and_destroy_model(&model)
     free(problem.x)
 
     return (support, support_vectors, n_class_SV, sv_coef, intercept,
-           probA, probB, fit_status)
+           probA, probB, fit_status, labels)
 
 
 cdef void set_predict_params(

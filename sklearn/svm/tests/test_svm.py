@@ -39,8 +39,8 @@ def test_libsvm_parameters():
     """
     clf = svm.SVC(kernel='linear').fit(X, Y)
     assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
-    assert_array_equal(clf.support_, [1, 3])
-    assert_array_equal(clf.support_vectors_, (X[1], X[3]))
+    assert_array_equal(clf.support_, [3, 1])
+    assert_array_equal(clf.support_vectors_, (X[3], X[1]))
     assert_array_equal(clf.intercept_, [0.])
     assert_array_equal(clf.predict(X), Y)
 
@@ -57,12 +57,18 @@ def test_libsvm_iris():
 
     # check also the low-level API
     model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64))
+    labels = model[-1]
+    model = model[:-1]
     pred = svm.libsvm.predict(iris.data, *model)
+    pred = np.take(labels, pred.astype(np.int32))
     assert_greater(np.mean(pred == iris.target), .95)
 
     model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64),
                            kernel='linear')
+    labels = model[-1]
+    model = model[:-1]
     pred = svm.libsvm.predict(iris.data, *model, kernel='linear')
+    pred = np.take(labels, pred.astype(np.int32))
     assert_greater(np.mean(pred == iris.target), .95)
 
     pred = svm.libsvm.cross_validation(iris.data,
@@ -110,9 +116,8 @@ def test_precomputed():
     assert_raises(ValueError, clf.predict, KT.T)
 
     assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
-    assert_array_equal(clf.support_, [1, 3])
+    assert_array_equal(clf.support_, [3, 1])
     assert_array_equal(clf.intercept_, [0])
-    assert_array_almost_equal(clf.support_, [1, 3])
     assert_array_equal(pred, true_result)
 
     # Gram matrix for test data but compute KT[i,j]
@@ -135,7 +140,7 @@ def test_precomputed():
 
     assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
     assert_array_equal(clf.intercept_, [0])
-    assert_array_almost_equal(clf.support_, [1, 3])
+    assert_array_almost_equal(clf.support_, [3, 1])
     assert_array_equal(pred, true_result)
 
     # test a precomputed kernel with the iris dataset
