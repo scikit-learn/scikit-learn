@@ -509,7 +509,8 @@ DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
              # exclude them in another way
              'ZeroEstimator', 'ScaledLogOddsEstimator',
              'QuantileEstimator', 'MeanEstimator',
-             'LogOddsEstimator', 'PriorProbabilityEstimator']
+             'LogOddsEstimator', 'PriorProbabilityEstimator',
+             '_SigmoidCalibration']
 
 
 def all_estimators(include_meta_estimators=False,
