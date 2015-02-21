@@ -56,7 +56,7 @@ else:
     from .base import clone
     __check_build  # avoid flakes unused variable error
 
-    __all__ = ['cluster', 'covariance', 'cross_decomposition',
+    __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
                'cross_validation', 'datasets', 'decomposition', 'dummy',
                'ensemble', 'externals', 'feature_extraction',
                'feature_selection', 'gaussian_process', 'grid_search', 'hmm',

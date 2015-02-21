@@ -277,7 +277,7 @@ def check_fit_score_takes_y(name, Estimator):
     # in fit and score so they can be used in pipelines
     rnd = np.random.RandomState(0)
     X = rnd.uniform(size=(10, 3))
-    y = (X[:, 0] * 4).astype(np.int)
+    y = np.arange(10) % 3
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()
     set_fast_parameters(estimator)
@@ -294,7 +294,7 @@ def check_fit_score_takes_y(name, Estimator):
 
 def check_estimators_dtypes(name, Estimator):
     rnd = np.random.RandomState(0)
-    X_train_32 = 4 * rnd.uniform(size=(10, 3)).astype(np.float32)
+    X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
     X_train_64 = X_train_32.astype(np.float64)
     X_train_int_64 = X_train_32.astype(np.int64)
     X_train_int_32 = X_train_32.astype(np.int32)
@@ -634,6 +634,7 @@ def check_classifiers_input_shapes(name, Classifier):
     # raised
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always", DataConversionWarning)
+        warnings.simplefilter("ignore", RuntimeWarning)
         classifier.fit(X, y[:, np.newaxis])
     msg = "expected 1 DataConversionWarning, got: %s" % (
         ", ".join([str(w_x) for w_x in w]))
