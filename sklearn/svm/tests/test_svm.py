@@ -337,7 +337,7 @@ def test_decision_function():
 
     norm = lambda x: np.apply_along_axis(np.linalg.norm, 1, x)
     rbfs = [np.exp(-clf.gamma * norm(clf.support_vectors_ - X[i])**2)
-                for i in xrange(len(X))]
+                for i in range(len(X))]
     dec = np.dot(rbfs, clf.dual_coef_.T) - clf.intercept_
 
     assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
