@@ -331,6 +331,16 @@ def test_decision_function():
     expected = np.array([-1., -0.66, -1., 0.66, 1., 1.])
     assert_array_almost_equal(clf.decision_function(X), expected, 2)
 
+    # kernel binary class:
+    clf = svm.SVC(kernel='rbf', gamma=1).fit(iris.data, iris.target)
+    clf.fit(X, Y)
+
+    rbfs = [np.exp(-clf.gamma * np.linalg.norm(clf.support_vectors_ - X[i], axis=1)**2)
+                for i in xrange(len(X))]
+    dec = np.dot(rbfs, clf.dual_coef_.T) + clf.intercept_
+
+    assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
+
 
 def test_weight():
     """
