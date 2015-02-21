@@ -335,7 +335,8 @@ def test_decision_function():
     clf = svm.SVC(kernel='rbf', gamma=1).fit(iris.data, iris.target)
     clf.fit(X, Y)
 
-    rbfs = [np.exp(-clf.gamma * np.linalg.norm(clf.support_vectors_ - X[i], axis=1)**2)
+    norm = lambda x: np.apply_along_axis(np.linalg.norm, 1, x)
+    rbfs = [np.exp(-clf.gamma * norm(clf.support_vectors_ - X[i])**2)
                 for i in xrange(len(X))]
     dec = np.dot(rbfs, clf.dual_coef_.T) - clf.intercept_
 
