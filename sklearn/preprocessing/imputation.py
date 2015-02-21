@@ -9,7 +9,6 @@ from scipy import sparse
 from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
-from ..decomposition.mf import MatrixFactorization, _rmse
 from ..utils import check_array
 from ..utils import as_float_array
 from ..utils import get_mask
@@ -498,6 +497,7 @@ class FactorizationImputer(BaseEstimator, TransformerMixin):
     def _get_mf_instance(self, init_L=None, init_R=None,
                          init_sample_biases=None,
                          init_feature_biases=None):
+        from ..decomposition.mf import MatrixFactorization
         return MatrixFactorization(
             n_components=self.n_components,
             n_iter=self.n_iter,
@@ -515,6 +515,8 @@ class FactorizationImputer(BaseEstimator, TransformerMixin):
         )
 
     def score(self, X, y=None):
+        from ..decomposition.mf import _rmse
+
         X = check_array(X, accept_sparse='coo', force_all_finite=False)
         check_is_fitted(self, 'mf_')
 

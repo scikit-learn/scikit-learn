@@ -4,6 +4,8 @@
 import numpy as np
 import scipy.sparse as sparse
 
+import warnings
+
 from ..utils import as_float_array, get_mask
 from ..utils.validation import check_array, check_random_state, check_is_fitted
 from ..base import BaseEstimator, TransformerMixin
@@ -172,7 +174,7 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
         X_data, X_rows, X_cols = self._extract_data(X)
 
         if len(set(X_rows)) < n_samples:
-            raise ValueError("X should not have rows of missing values only")
+            warnings.warn("X should not have rows of missing values only")
 
         if len(set(X_cols)) < n_features:
             raise ValueError("X should not have columns of missing values only")
@@ -220,7 +222,7 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
         if self.algorithm in ["als", "als1"]:
             als1 = self.algorithm == "als1"
             _mf.factorize_matrix_als(
-                X_data,
+                X_data.astype(np.float64),
                 X_rows.astype(np.int32),
                 X_cols.astype(np.int32),
                 L, R, bias_samples, bias_features,
@@ -231,7 +233,7 @@ class MatrixFactorization(BaseEstimator, TransformerMixin):
         elif self.algorithm in ["sgd", "sgd_adagrad"]:
             adagrad = self.algorithm == "sgd_adagrad"
             _mf.factorize_matrix_sgd(
-                X_data,
+                X_data.astype(np.float64),
                 X_rows.astype(np.int32),
                 X_cols.astype(np.int32),
                 L, R, bias_samples, bias_features,
