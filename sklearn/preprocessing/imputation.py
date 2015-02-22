@@ -529,4 +529,7 @@ class FactorizationImputer(BaseEstimator, TransformerMixin):
         L = mf.transform(X)
         R = mf.components_
 
-        return _rmse(X_data, X_rows, X_cols, L, R)
+        return _rmse(X_data.astype(np.float64),
+                     X_rows.astype(np.int32),
+                     X_cols.astype(np.int32),
+                     L, R)

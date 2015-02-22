@@ -10,7 +10,7 @@ from ..utils import as_float_array, get_mask
 from ..utils.validation import check_array, check_random_state, check_is_fitted
 from ..base import BaseEstimator, TransformerMixin
 
-import _mf
+from . import _mf
 
 _rmse = _mf._rmse
 
