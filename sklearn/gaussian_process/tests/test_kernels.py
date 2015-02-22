@@ -9,7 +9,9 @@ import numpy as np
 
 from scipy.optimize import approx_fprime
 
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel, WhiteKernel
+from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
+from sklearn.gaussian_process.kernels \
+    import RBF, ConstantKernel, WhiteKernel, PairwiseKernel
 
 from sklearn.utils.testing import assert_equal, assert_almost_equal
 
@@ -19,6 +21,10 @@ X = np.random.normal(0, 1, (10, 2))
 kernels = [RBF(2.0), RBF([[0.5], [2.0]]),
            ConstantKernel(10.0),
            2.0 * RBF(0.5), RBF(2.0) + WhiteKernel(1.0)]
+for metric in PAIRWISE_KERNEL_FUNCTIONS:
+    if metric in ["additive_chi2", "chi2"]:
+        continue
+    kernels.append(PairwiseKernel(1.0, metric=metric))
 
 
 def test_kernel_gradient():
