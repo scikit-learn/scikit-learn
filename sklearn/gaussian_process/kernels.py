@@ -21,10 +21,13 @@ of the parameter during hyperparameter-optimization.
 #       package.
 
 from abc import ABCMeta, abstractmethod
+from functools import partial
 
 import numpy as np
 from scipy.spatial.distance import pdist, cdist, squareform
+from scipy.optimize import approx_fprime
 
+from ..metrics.pairwise import pairwise_kernels
 from ..externals import six
 
 
@@ -434,4 +437,96 @@ class WhiteKernel(Kernel):
             K = np.zeros((X.shape[0], Y.shape[0]))
             # entries which are sufficiently similar to be considered identical
             K[cdist(X, Y) < 1e-10] = self.c
+            return K
+
+
+class PairwiseKernel(Kernel):
+    """ Wrapper for kernels in sklearn.metrics.pairwise.
+
+    A thin wrapper around the functionality of the kernels in
+    sklearn.metrics.pairwise.
+
+    Note: Evaluation of eval_gradient is not analytic but numeric and all
+          kernels support only isotropic distances. The parameter gamma is
+          specified via the param_space and may be optimized. The other
+          kernel parameters are set directly  at initialization and are kept
+          fixed.
+
+    Parameters
+    ----------
+    metric : string, or callable
+        The metric to use when calculating kernel between instances in a
+        feature array. If metric is a string, it must be one of the metrics
+        in pairwise.PAIRWISE_KERNEL_FUNCTIONS.
+        If metric is "precomputed", X is assumed to be a kernel matrix.
+        Alternatively, if metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays from X as input and return a value indicating
+        the distance between them.
+
+    `**kwds` : optional keyword parameters
+        Any further parameters are passed directly to the kernel function.
+    """
+
+    def __init__(self, param_space=1.0, metric="linear", **kwargs):
+        self._parse_param_space(param_space)
+        self.metric = metric
+        self.kwargs = kwargs
+        if "gamma" in kwargs:
+            raise ValueError(
+                "Gamma must not be set directly but via param_space.")
+
+    @property
+    def params(self):
+        return np.asarray([self.gamma])
+
+    @params.setter
+    def params(self, theta):
+        self.gamma = theta[0]
+
+    def __call__(self, X, Y=None, eval_gradient=False):
+        """ Return the kernel k(X, Y) and optionally its gradient.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+            Right argument of the returned kernel k(X, Y). If None, k(X, X)
+            if evaluated instead.
+
+        eval_gradient : bool (optional, default=False)
+            Determines whether the gradient with respect to the kernel
+            hyperparameter is determined. Only supported when Y is None.
+
+        Returns
+        -------
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X, Y)
+
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
+            The gradient of the kernel k(X, X) with repect to the
+            hyperparameter of the kernel. Only returned when eval_gradient
+            is True.
+        """
+        K = pairwise_kernels(X, Y, metric=self.metric, gamma=self.gamma,
+                             filter_params=True, **self.kwargs)
+        if eval_gradient:
+            # approximate gradient numerically
+            K_gradient = np.empty((K.shape[0], K.shape[1], 1))
+
+            def f(gamma, i, j):  # helper function
+                return pairwise_kernels(
+                    X, Y, metric=self.metric, gamma=gamma,
+                    filter_params=True, **self.kwargs)[i, j]
+            # XXX: avoid python for-loops
+            for i in range(K.shape[0]):
+                for j in range(K.shape[0]):
+                    K_gradient[i, j] = \
+                        approx_fprime(np.array([self.gamma]),
+                                      partial(f, i=i, j=j), 1e-10)
+
+            return K, K_gradient
+        else:
             return K
