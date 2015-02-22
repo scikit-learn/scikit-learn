@@ -20,11 +20,15 @@ of the parameter during hyperparameter-optimization.
 # Note: this module is strongly inspired by the kernel module of the george
 #       package.
 
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 from scipy.spatial.distance import pdist, cdist, squareform
 
+from ..externals import six
 
-class Kernel(object):
+
+class Kernel(six.with_metaclass(ABCMeta)):
     """ Base class for all kernels."""
 
     def _parse_param_space(self, param_space):
@@ -95,6 +99,10 @@ class Kernel(object):
         return "{0}({1})".format(self.__class__.__name__,
                                  ", ".join(map("{0}".format, self.params)))
 
+    @abstractmethod
+    def __call__(self, X, Y=None, eval_gradient=False):
+        """Evaluate the kernel."""
+
 
 class KernelOperator(Kernel):
     """ Base class for all kernel operators. """
@@ -129,10 +137,10 @@ class KernelOperator(Kernel):
 
 
 class Sum(KernelOperator):
-    """ Sum-kernel k1+k2 of two kernels k1 and k2.
+    """ Sum-kernel k1 + k2 of two kernels k1 and k2.
 
     The resulting kernel is defined as
-    k_sum(X1, X2) = k1(X1, X2) + k2(X1, X2)
+    k_sum(X, Y) = k1(X, Y) + k2(X, Y)
 
     Parameters
     ----------
@@ -143,13 +151,17 @@ class Sum(KernelOperator):
         The second base-kernel of the sum-kernel
     """
 
-    def auto(self, X, eval_gradient=False):
-        """ Return the auto-kernel k(X, X) and optionally its gradient.
+    def __call__(self, X, Y=None, eval_gradient=False):
+        """ Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features)
-            Data for which the kernel k(X, X) is computed
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+            Right argument of the returned kernel k(X, Y). If None, k(X, X)
+            if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
@@ -157,48 +169,30 @@ class Sum(KernelOperator):
 
         Returns
         -------
-        K : array, shape (n_samples, n_samples)
-            Kernel k(X, X)
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X, Y)
 
-        K_gradient : array (optional), shape (n_samples, n_samples, n_params)
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
             The gradient of the kernel k(X, X) with repect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
         if eval_gradient:
-            K1, K1_gradient = self.k1.auto(X, eval_gradient=True)
-            K2, K2_gradient = self.k2.auto(X, eval_gradient=True)
+            K1, K1_gradient = self.k1(X, Y, eval_gradient=True)
+            K2, K2_gradient = self.k2(X, Y, eval_gradient=True)
             return K1 + K2, np.dstack((K1_gradient, K2_gradient))
         else:
-            return self.k1.auto(X) + self.k2.auto(X)
-
-    def cross(self, X1, X2):
-        """ Return the cross-kernel k(X1, X2).
-
-        Parameters
-        ----------
-        X1 : array, shape (n_samples_1, n_features)
-            Left argument of the returned kernel k(X1, X2)
-
-        X2 : array, shape (n_samples_2, n_features)
-            Right argument of the returned kernel k(X1, X2)
-
-        Returns
-        -------
-        K : array, shape (n_samples_1, n_samples_2)
-            Kernel k(X1, X2)
-        """
-        return self.k1.cross(X1, X2) + self.k2.cross(X1, X2)
+            return self.k1(X, Y) + self.k2(X, Y)
 
     def __repr__(self):
         return "{0} + {1}".format(self.k1, self.k2)
 
 
 class Product(KernelOperator):
-    """ Product-kernel k1*k2 of two kernels k1 and k2.
+    """ Product-kernel k1 * k2 of two kernels k1 and k2.
 
     The resulting kernel is defined as
-    k_prod(X1, X2) = k1(X1, X2) * k2(X1, X2)
+    k_prod(X, Y) = k1(X, Y) * k2(X, Y)
 
     Parameters
     ----------
@@ -209,13 +203,17 @@ class Product(KernelOperator):
         The second base-kernel of the product-kernel
     """
 
-    def auto(self, X, eval_gradient=False):
-        """ Return the auto-kernel k(X, X) and optionally its gradient.
+    def __call__(self, X, Y=None, eval_gradient=False):
+        """ Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features)
-            Data for which the kernel k(X, X) is computed
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+            Right argument of the returned kernel k(X, Y). If None, k(X, X)
+            if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
@@ -223,39 +221,21 @@ class Product(KernelOperator):
 
         Returns
         -------
-        K : array, shape (n_samples, n_samples)
-            Kernel k(X, X)
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X, Y)
 
-        K_gradient : array (optional), shape (n_samples, n_samples, n_params)
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
             The gradient of the kernel k(X, X) with repect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
         if eval_gradient:
-            K1, K1_gradient = self.k1.auto(X, eval_gradient=True)
-            K2, K2_gradient = self.k2.auto(X, eval_gradient=True)
+            K1, K1_gradient = self.k1(X, Y, eval_gradient=True)
+            K2, K2_gradient = self.k2(X, Y, eval_gradient=True)
             return K1 * K2, np.dstack((K1_gradient * K2[:, :, np.newaxis],
                                        K2_gradient * K1[:, :, np.newaxis]))
         else:
-            return self.k1.auto(X) * self.k2.auto(X)
-
-    def cross(self, X1, X2):
-        """ Return the cross-kernel k(X1, X2).
-
-        Parameters
-        ----------
-        X1 : array, shape (n_samples_1, n_features)
-            Left argument of the returned kernel k(X1, X2)
-
-        X2 : array, shape (n_samples_2, n_features)
-            Right argument of the returned kernel k(X1, X2)
-
-        Returns
-        -------
-        K : array, shape (n_samples_1, n_samples_2)
-            Kernel k(X1, X2)
-        """
-        return self.k1.cross(X1, X2) * self.k2.cross(X1, X2)
+            return self.k1(X, Y) * self.k2(X, Y)
 
     def __repr__(self):
         return "{0} * {1}".format(self.k1, self.k2)
@@ -281,51 +261,42 @@ class ConstantKernel(Kernel):
         assert len(theta) == 1
         self.value = theta[0]
 
-    def auto(self, X, eval_gradient=False):
-        """ Return the auto-kernel k(X, X) and optionally its gradient.
+    def __call__(self, X, Y=None, eval_gradient=False):
+        """ Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features)
-            Data for which the kernel k(X, X) is computed
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+            Right argument of the returned kernel k(X, Y). If None, k(X, X)
+            if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
-            hyperparameter is determined.
+            hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
-        K : array, shape (n_samples, n_samples)
-            Kernel k(X, X)
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X, Y)
 
-        K_gradient : array (optional), shape (n_samples, n_samples, n_params)
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
             The gradient of the kernel k(X, X) with repect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-        K = self.value * np.ones((X.shape[0], X.shape[0]))
+        if Y is None:
+            Y = X
+        elif eval_gradient:
+            raise ValueError("Gradient can only be evaluated when Y is None.")
+
+        K = self.value * np.ones((X.shape[0], Y.shape[0]))
         if eval_gradient:
             return K, np.ones((X.shape[0], X.shape[0], 1))
         else:
             return K
-
-    def cross(self, X1, X2):
-        """ Return the cross-kernel k(X1, X2).
-
-        Parameters
-        ----------
-        X1 : array, shape (n_samples_1, n_features)
-            Left argument of the returned kernel k(X1, X2)
-
-        X2 : array, shape (n_samples_2, n_features)
-            Right argument of the returned kernel k(X1, X2)
-
-        Returns
-        -------
-        K : array, shape (n_samples_1, n_samples_2)
-            Kernel k(X1, X2)
-        """
-        return self.value * np.ones((X1.shape[0], X2.shape[0]))
 
     def __repr__(self):
         return "{0}".format(self.value)
@@ -348,33 +319,45 @@ class RBF(Kernel):
     def params(self, theta):
         self.l = theta
 
-    def auto(self, X, eval_gradient=False):
-        """ Return the auto-kernel k(X, X) and optionally its gradient.
+    def __call__(self, X, Y=None, eval_gradient=False):
+        """ Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features)
-            Data for which the kernel k(X, X) is computed
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+            Right argument of the returned kernel k(X, Y). If None, k(X, X)
+            if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
-            hyperparameter is determined.
+            hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
-        K : array, shape (n_samples, n_samples)
-            Kernel k(X, X)
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X, Y)
 
-        K_gradient : array (optional), shape (n_samples, n_samples, n_params)
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
             The gradient of the kernel k(X, X) with repect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-        dists = pdist(X / self.l, metric='sqeuclidean')
-        K = np.exp(-.5 * dists)
-        # convert from upper-triangular matrix to square matrix
-        K = squareform(K)
-        np.fill_diagonal(K, 1)
+        if Y is None:
+            dists = pdist(X / self.l, metric='sqeuclidean')
+            K = np.exp(-.5 * dists)
+            # convert from upper-triangular matrix to square matrix
+            K = squareform(K)
+            np.fill_diagonal(K, 1)
+        else:
+            if eval_gradient:
+                raise ValueError(
+                    "Gradient can only be evaluated when Y is None.")
+            dists = cdist(X / self.l, Y / self.l, metric='sqeuclidean')
+            K = np.exp(-.5 * dists)
+
         if eval_gradient:
             if self.l.shape[0] == 1:
                 K_gradient = \
@@ -391,26 +374,6 @@ class RBF(Kernel):
                                 "of length scales and features match.")
         else:
             return K
-
-    def cross(self, X1, X2):
-        """ Return the cross-kernel k(X1, X2).
-
-        Parameters
-        ----------
-        X1 : array, shape (n_samples_1, n_features)
-            Left argument of the returned kernel k(X1, X2)
-
-        X2 : array, shape (n_samples_2, n_features)
-            Right argument of the returned kernel k(X1, X2)
-
-        Returns
-        -------
-        K : array, shape (n_samples_1, n_samples_2)
-            Kernel k(X1, X2)
-        """
-        dists = cdist(X1 / self.l, X2 / self.l, metric='sqeuclidean')
-        K = np.exp(-.5 * dists)
-        return K
 
 
 class WhiteKernel(Kernel):
@@ -432,51 +395,43 @@ class WhiteKernel(Kernel):
     def params(self, theta):
         self.c = theta[0]
 
-    def auto(self, X, eval_gradient=False):
-        """ Return the auto-kernel k(X, X) and optionally its gradient.
+    def __call__(self, X, Y=None, eval_gradient=False):
+        """ Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features)
-            Data for which the kernel k(X, X) is computed
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+            Right argument of the returned kernel k(X, Y). If None, k(X, X)
+            if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
-            hyperparameter is determined.
+            hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
-        K : array, shape (n_samples, n_samples)
-            Kernel k(X, X)
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X, Y)
 
-        K_gradient : array (optional), shape (n_samples, n_samples, n_params)
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
             The gradient of the kernel k(X, X) with repect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-        K = self.c * np.eye(X.shape[0])
-        if eval_gradient:
-            return K, np.eye(X.shape[0])[:, :, np.newaxis]
+        if Y is not None and eval_gradient:
+            raise ValueError("Gradient can only be evaluated when Y is None.")
+
+        if Y is None:
+            K = self.c * np.eye(X.shape[0])
+            if eval_gradient:
+                return K, np.eye(X.shape[0])[:, :, np.newaxis]
+            else:
+                return K
         else:
+            K = np.zeros((X.shape[0], Y.shape[0]))
+            # entries which are sufficiently similar to be considered identical
+            K[cdist(X, Y) < 1e-10] = self.c
             return K
-
-    def cross(self, X1, X2):
-        """ Return the cross-kernel k(X1, X2).
-
-        Parameters
-        ----------
-        X1 : array, shape (n_samples_1, n_features)
-            Left argument of the returned kernel k(X1, X2)
-
-        X2 : array, shape (n_samples_2, n_features)
-            Right argument of the returned kernel k(X1, X2)
-
-        Returns
-        -------
-        K : array, shape (n_samples_1, n_samples_2)
-            Kernel k(X1, X2)
-        """
-        K = np.zeros((X1.shape[0], X2.shape[0]))
-        # entries which are sufficiently similar to be considered identical
-        K[cdist(X1, X2) < 1e-10] = 1
-        return K
