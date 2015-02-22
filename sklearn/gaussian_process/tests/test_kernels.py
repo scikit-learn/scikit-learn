@@ -17,14 +17,14 @@ from sklearn.utils.testing import assert_equal, assert_almost_equal
 X = np.random.normal(0, 1, (10, 2))
 
 kernels = [RBF(2.0), RBF([[0.5], [2.0]]),
-           2.0*RBF(0.5), RBF(2.0) + WhiteKernel(1.0),
-           ConstantKernel(10.0)]
+           ConstantKernel(10.0),
+           2.0 * RBF(0.5), RBF(2.0) + WhiteKernel(1.0)]
 
 
 def test_kernel_gradient():
     """ Compare analytic and numeric gradient of kernels. """
     for kernel in kernels:
-        K, K_gradient = kernel.auto(X, eval_gradient=True)
+        K, K_gradient = kernel(X, eval_gradient=True)
 
         assert_equal(K_gradient.shape[0], X.shape[0])
         assert_equal(K_gradient.shape[1], X.shape[0])
@@ -36,7 +36,7 @@ def test_kernel_gradient():
                 def eval_kernel_ij_for_theta(theta):
                     kernel_copy = deepcopy(kernel)
                     kernel_copy.params = theta
-                    K = kernel_copy.auto(X, eval_gradient=False)
+                    K = kernel_copy(X, eval_gradient=False)
                     return K[i, j]
                 K_gradient_approx[i, j] = \
                     approx_fprime(kernel.params, eval_kernel_ij_for_theta,
@@ -48,30 +48,30 @@ def test_kernel_gradient():
 def test_auto_vs_cross():
     """ Auto-correlation and cross-correlation should be consistent. """
     for kernel in kernels:
-        K_auto = kernel.auto(X)
-        K_cross = kernel.cross(X, X)
+        K_auto = kernel(X)
+        K_cross = kernel(X, X)
         assert_almost_equal(K_auto, K_cross, 5)
 
 def test_kernel_operator_commutative():
     """ Adding kernels and multiplying kernels should be commutative. """
     # Check addition
-    assert_almost_equal((RBF(2.0) + 1.0).auto(X),
-                        (1.0 + RBF(2.0)).auto(X))
+    assert_almost_equal((RBF(2.0) + 1.0)(X),
+                        (1.0 + RBF(2.0))(X))
 
     # Check multiplication
-    assert_almost_equal((3.0 * RBF(2.0)).auto(X),
-                        (RBF(2.0) * 3.0).auto(X))
+    assert_almost_equal((3.0 * RBF(2.0))(X),
+                        (RBF(2.0) * 3.0)(X))
 
 
 def test_kernel_anisotropic():
     """ Anisotropic kernel should be consistent with isotropic kernels."""
-    K = RBF([[0.5], [2.0]]).auto(X)
+    K = RBF([[0.5], [2.0]])(X)
     X1 = np.array(X)
     X1[:, 0] *= 4
-    K1 = RBF(2.0).auto(X1)
+    K1 = RBF(2.0)(X1)
     assert_almost_equal(K, K1)
 
     X2 = np.array(X)
     X2[:, 1] /= 4
-    K2 = RBF(0.5).auto(X2)
+    K2 = RBF(0.5)(X2)
     assert_almost_equal(K, K2)

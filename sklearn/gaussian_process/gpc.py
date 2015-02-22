@@ -66,7 +66,7 @@ class GaussianProcessClassification(BaseEstimator):
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
-        self.K_ = self.kernel.auto(self.X_fit_)
+        self.K_ = self.kernel(self.X_fit_)
         self.K_[np.diag_indices_from(self.K_)] += self.jitter
 
         self.f_, _, (self.pi, self.W_sr, self.L, _, _) = \
@@ -82,7 +82,7 @@ class GaussianProcessClassification(BaseEstimator):
         # decisions, it is enough to compute the MAP of the posterior and
         # pass it through the link function
         K_star = \
-            self.kernel.cross(self.X_fit_, X)  # K_star =k(x_star)
+            self.kernel(self.X_fit_, X)  # K_star =k(x_star)
         f_star = K_star.T.dot(self.y_fit_ - self.pi)  # Line 4 (Algorithm 3.2)
 
         return f_star > 0
@@ -92,11 +92,10 @@ class GaussianProcessClassification(BaseEstimator):
         X = check_array(X)
 
         # Based on Algorithm 3.2 of GPML
-        K_star = \
-            self.kernel.cross(self.X_fit_, X)  # K_star =k(x_star)
+        K_star = self.kernel(self.X_fit_, X)  # K_star =k(x_star)
         f_star = K_star.T.dot(self.y_fit_ - self.pi)  # Line 4
         v = solve(self.L, self.W_sr.dot(K_star))  # Line 5
-        var_f_star = self.kernel.auto(X) - v.T.dot(v)  # Line 6
+        var_f_star = self.kernel(X) - v.T.dot(v)  # Line 6
 
         # Line 7:
         # Approximate \int log(z) * N(z | f_star, var_f_star)
@@ -122,10 +121,9 @@ class GaussianProcessClassification(BaseEstimator):
         kernel.params = theta
 
         if eval_gradient:
-            K, K_gradient = \
-                kernel.auto(self.X_fit_, eval_gradient=True)
+            K, K_gradient = kernel(self.X_fit_, eval_gradient=True)
         else:
-            K = kernel.auto(self.X_fit_)
+            K = kernel(self.X_fit_)
 
         K[np.diag_indices_from(K)] += self.jitter
 
