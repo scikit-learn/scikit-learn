@@ -45,7 +45,7 @@ def factorize_matrix_sgd(np.ndarray[double, ndim=1] data,
         feature_bias_grad_norms = np.zeros(n_features)
         sample_bias_grad_norms = np.zeros(n_samples)
 
-    indices = range(data.shape[0])
+    indices = np.arange(data.shape[0])
 
     for current_iter in range(n_iter):
         random_state.shuffle(indices)
@@ -54,7 +54,7 @@ def factorize_matrix_sgd(np.ndarray[double, ndim=1] data,
             value = data[value_index]
             i = row[value_index]
             j = col[value_index]
-            
+
             estimation = bias_samples[i] + bias_features[j] + np.dot(L[i, :], R[:, j])
             error = estimation - value
 
