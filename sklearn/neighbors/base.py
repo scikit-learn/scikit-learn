@@ -200,7 +200,9 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
-        X = check_array(X, accept_sparse='csr')
+        nan_restricted = not callable(getattr(self, 'metric', None))
+        X = check_array(X, accept_sparse='csr',
+                        force_all_finite=nan_restricted)
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -327,7 +329,10 @@ class KNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            X = check_array(X, accept_sparse='csr')
+
+            nan_restricted = not callable(getattr(self, 'metric', None))
+            X = check_array(X, accept_sparse='csr',
+                            force_all_finite=nan_restricted)
         else:
             query_is_train = True
             X = self._fit_X
@@ -373,7 +378,7 @@ class KNeighborsMixin(object):
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
                 raise ValueError(
-                    "%s does not work with sparse matrices. Densify the data, "
+                    "%s does not work with sparse metrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
             result = Parallel(n_jobs, backend='threading')(
                 delayed(self._tree.query, check_pickle=False)(
@@ -466,7 +471,8 @@ class KNeighborsMixin(object):
 
         # kneighbors does the None handling.
         if X is not None:
-            X = check_array(X, accept_sparse='csr')
+            nan_restricted = not callable(getattr(self, 'metric', None))
+            X = check_array(X, accept_sparse='csr', force_all_finite=False)
             n_samples1 = X.shape[0]
         else:
             n_samples1 = self._fit_X.shape[0]
@@ -570,7 +576,9 @@ class RadiusNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            X = check_array(X, accept_sparse='csr')
+            nan_restricted = not callable(getattr(self, 'metric', None))
+            X = check_array(X, accept_sparse='csr',
+                            force_all_finite=nan_restricted)
         else:
             query_is_train = True
             X = self._fit_X
@@ -614,7 +622,7 @@ class RadiusNeighborsMixin(object):
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
                 raise ValueError(
-                    "%s does not work with sparse matrices. Densify the data, "
+                    "%s does not work with sparse metrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
             results = self._tree.query_radius(X, radius,
                                               return_distance=return_distance)
@@ -690,7 +698,9 @@ class RadiusNeighborsMixin(object):
         kneighbors_graph
         """
         if X is not None:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+            nan_restricted = not callable(getattr(self, 'metric', None))
+            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                            force_all_finite=nan_restricted)
 
         n_samples2 = self._fit_X.shape[0]
         if radius is None:
@@ -737,6 +747,7 @@ class SupervisedFloatMixin(object):
              or [n_samples, n_outputs]
         """
         if not isinstance(X, (KDTree, BallTree)):
+            nan_restricted = not callable(getattr(self, 'metric', None))
             X, y = check_X_y(X, y, "csr", multi_output=True)
         self._y = y
         return self._fit(X)
@@ -757,6 +768,7 @@ class SupervisedIntegerMixin(object):
 
         """
         if not isinstance(X, (KDTree, BallTree)):
+            nan_restricted = not callable(getattr(self, 'metric', None))
             X, y = check_X_y(X, y, "csr", multi_output=True)
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:

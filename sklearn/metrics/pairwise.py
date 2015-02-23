@@ -54,7 +54,7 @@ def _return_float_dtype(X, Y):
     return X, Y, dtype
 
 
-def check_pairwise_arrays(X, Y, precomputed=False):
+def check_pairwise_arrays(X, Y, precomputed=False, force_all_finite=True):
     """ Set X and Y appropriately and checks inputs
 
     If Y is None, it is set as a pointer to X (i.e. not a copy).
@@ -78,6 +78,9 @@ def check_pairwise_arrays(X, Y, precomputed=False):
         True if X is to be treated as precomputed distances to the samples in
         Y.
 
+    force_all_finite : boolean (default=True)
+        Whether to raise an error on np.inf and np.nan in X.
+
     Returns
     -------
     safe_X : {array-like, sparse matrix}, shape (n_samples_a, n_features)
@@ -91,10 +94,13 @@ def check_pairwise_arrays(X, Y, precomputed=False):
     X, Y, dtype = _return_float_dtype(X, Y)
 
     if Y is X or Y is None:
-        X = Y = check_array(X, accept_sparse='csr', dtype=dtype)
+        X = Y = check_array(X, accept_sparse='csr', dtype=dtype,
+                            force_all_finite=force_all_finite)
     else:
-        X = check_array(X, accept_sparse='csr', dtype=dtype)
-        Y = check_array(Y, accept_sparse='csr', dtype=dtype)
+        X = check_array(X, accept_sparse='csr', dtype=dtype,
+                        force_all_finite=force_all_finite)
+        Y = check_array(Y, accept_sparse='csr', dtype=dtype,
+                        force_all_finite=force_all_finite)
 
     if precomputed:
         if X.shape[1] != Y.shape[0]:
@@ -110,7 +116,7 @@ def check_pairwise_arrays(X, Y, precomputed=False):
     return X, Y
 
 
-def check_paired_arrays(X, Y):
+def check_paired_arrays(X, Y, force_all_finite=True):
     """ Set X and Y appropriately and checks inputs for paired distances
 
     All paired distance metrics should use this function first to assert that
@@ -127,6 +133,9 @@ def check_paired_arrays(X, Y):
 
     Y : {array-like, sparse matrix}, shape (n_samples_b, n_features)
 
+    force_all_finite : boolean (default=True)
+        Whether to raise an error on np.inf and np.nan in X.
+
     Returns
     -------
     safe_X : {array-like, sparse matrix}, shape (n_samples_a, n_features)
@@ -137,7 +146,7 @@ def check_paired_arrays(X, Y):
         If Y was None, safe_Y will be a pointer to X.
 
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
     if X.shape != Y.shape:
         raise ValueError("X and Y should be of same shape. They were "
                          "respectively %r and %r long." % (X.shape, Y.shape))
@@ -1075,7 +1084,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 def _pairwise_callable(X, Y, metric, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y, force_all_finite=False)
 
     if X is Y:
         # Only calculate metric for upper triangle
@@ -1126,24 +1135,6 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     If Y is given (default is None), then the returned matrix is the pairwise
     distance between the arrays from both X and Y.
 
-    Valid values for metric are:
-
-    - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-      'manhattan']. These metrics support sparse matrix inputs.
-
-    - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-      'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
-      'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
-      'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
-      See the documentation for scipy.spatial.distance for details on these
-      metrics. These metrics do not support sparse matrix inputs.
-
-    Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
-    valid scipy.spatial.distance metrics), the scikit-learn implementation
-    will be used, which is faster and has support for sparse matrices (except
-    for 'cityblock'). For a verbose description of the metrics from
-    scikit-learn, see the __doc__ of the sklearn.pairwise.distance_metrics
-    function.
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -1161,11 +1152,34 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter, or
         a metric listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
+
         If metric is "precomputed", X is assumed to be a distance matrix.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
         should take two arrays from X as input and return a value indicating
         the distance between them.
+
+        Valid values for metric are:
+
+        - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+          'manhattan']. These metrics support sparse matrix inputs.
+
+        - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
+          'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+          'sqeuclidean', 'yule']
+
+          See the documentation for scipy.spatial.distance for details on these
+          metrics. These metrics do not support sparse matrix inputs.
+
+        Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which
+        are valid scipy.spatial.distance metrics), the scikit-learn
+        implementation will be used, which is faster and has support for
+        sparse matrices (except for 'cityblock'). For a verbose description of
+        the metrics from scikit-learn, see the __doc__ of the sklearn.pairwise.
+        distance_metrics
+        function.
 
     n_jobs : int
         The number of jobs to use for the computation. This works by breaking

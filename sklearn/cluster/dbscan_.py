@@ -103,7 +103,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     if not eps > 0.0:
         raise ValueError("eps must be positive.")
 
-    X = check_array(X, accept_sparse='csr')
+    X = check_array(X, accept_sparse='csr', force_all_finite=False)
     if sample_weight is not None:
         sample_weight = np.asarray(sample_weight)
         check_consistent_length(X, sample_weight)
@@ -245,7 +245,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr', force_all_finite=False)
         clust = dbscan(X, sample_weight=sample_weight, **self.get_params())
         self.core_sample_indices_, self.labels_ = clust
         if len(self.core_sample_indices_):
