@@ -1593,7 +1593,7 @@ cdef class PresortBestSplitter(BaseDenseSplitter):
 
     cdef void init(self, object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight):
+                   DOUBLE_t* sample_weight) except *:
 
         cdef void* sample_mask = NULL
 
