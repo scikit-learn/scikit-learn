@@ -22,8 +22,8 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import arrayfuncs, as_float_array, check_array, check_X_y
-from ..cross_validation import _check_cv as check_cv
-from ..utils import ConvergenceWarning
+from ..model_selection.partition import _check_cv as check_cv
+from ..utils import ConvergenceWarning, array2d
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
 

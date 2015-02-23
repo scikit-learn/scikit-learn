@@ -21,7 +21,8 @@ from ..utils.extmath import pinvh
 from ..utils.validation import check_random_state, check_array
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
-from ..cross_validation import _check_cv as check_cv, cross_val_score
+from ..model_selection.partition import _check_cv as check_cv
+from ..model_selection import cross_val_score
 from ..externals.joblib import Parallel, delayed
 import collections
 

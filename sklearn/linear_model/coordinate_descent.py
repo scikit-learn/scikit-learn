@@ -17,7 +17,8 @@ from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
-from ..cross_validation import _check_cv as check_cv
+from ..utils import array2d, atleast2d_or_csc
+from ..model_selection.partition import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
