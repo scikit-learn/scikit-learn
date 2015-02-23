@@ -701,9 +701,8 @@ class BernoulliNB(BaseDiscreteNB):
 
     def _update_feature_log_prob(self):
         """Apply smoothing to raw counts and recompute log probabilities"""
-        n_classes = len(self.classes_)
         smoothed_fc = self.feature_count_ + self.alpha
-        smoothed_cc = self.class_count_ + self.alpha * n_classes
+        smoothed_cc = self.class_count_ + self.alpha * 2
 
         self.feature_log_prob_ = (np.log(smoothed_fc)
                                   - np.log(smoothed_cc.reshape(-1, 1)))
