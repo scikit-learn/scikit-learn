@@ -25,7 +25,6 @@ from functools import partial
 
 import numpy as np
 from scipy.spatial.distance import pdist, cdist, squareform
-from scipy.optimize import approx_fprime
 
 from ..metrics.pairwise import pairwise_kernels
 from ..externals import six
@@ -440,6 +439,19 @@ class WhiteKernel(Kernel):
             return K
 
 
+# adapted from scipy/optimize/optimize.py for functions with 2d output
+def _approx_fprime(xk, f, epsilon, args=()):
+    f0 = f(*((xk,) + args))
+    grad = np.zeros((f0.shape[0], f0.shape[1], len(xk)), float)
+    ei = np.zeros((len(xk), ), float)
+    for k in range(len(xk)):
+        ei[k] = 1.0
+        d = epsilon * ei
+        grad[:, :, k] = (f(*((xk + d,) + args)) - f0) / d[k]
+        ei[k] = 0.0
+    return grad
+
+
 class PairwiseKernel(Kernel):
     """ Wrapper for kernels in sklearn.metrics.pairwise.
 
@@ -514,19 +526,10 @@ class PairwiseKernel(Kernel):
                              filter_params=True, **self.kwargs)
         if eval_gradient:
             # approximate gradient numerically
-            K_gradient = np.empty((K.shape[0], K.shape[1], 1))
-
-            def f(gamma, i, j):  # helper function
+            def f(gamma):  # helper function
                 return pairwise_kernels(
                     X, Y, metric=self.metric, gamma=gamma,
-                    filter_params=True, **self.kwargs)[i, j]
-            # XXX: avoid python for-loops
-            for i in range(K.shape[0]):
-                for j in range(K.shape[0]):
-                    K_gradient[i, j] = \
-                        approx_fprime(np.array([self.gamma]),
-                                      partial(f, i=i, j=j), 1e-10)
-
-            return K, K_gradient
+                    filter_params=True, **self.kwargs)
+            return K, _approx_fprime(np.array([self.gamma]), f, 1e-10)
         else:
             return K
