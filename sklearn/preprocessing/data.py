@@ -459,7 +459,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         comb = (combinations if interaction_only else combinations_w_r)
         start = int(not include_bias)
         return chain.from_iterable(comb(range(n_features), i)
-                                   for i in xrange(start, degree + 1))
+                                   for i in range(start, degree + 1))
 
     def fit(self, X, y=None):
         """
