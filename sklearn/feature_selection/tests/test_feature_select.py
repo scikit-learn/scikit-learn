@@ -407,7 +407,7 @@ def test_select_fdr_regression():
     def single_fdr(alpha, n_informative, random_state):
         X, y = make_regression(n_samples=150, n_features=20,
                                n_informative=n_informative, shuffle=False,
-                               random_state=random_state, noise=5)
+                               random_state=random_state, noise=10)
 
         with warnings.catch_warnings(record=True):
             # Warnings can be raised when no features are selected
@@ -428,10 +428,9 @@ def test_select_fdr_regression():
                                 (num_true_positives + num_false_positives))
         return false_discovery_rate
 
-
     for alpha in [0.001, 0.01, 0.1]:
         for n_informative in [1, 5, 10]:
-            # As per Benjamini–Hochberg, the expected false discovery rate
+            # As per Benjamini-Hochberg, the expected false discovery rate
             # should be lower than alpha:
             # FDR = E(FP / (TP + FP)) <= alpha
             false_discovery_rate = np.mean([single_fdr(alpha, n_informative,
