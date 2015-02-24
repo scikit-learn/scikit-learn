@@ -226,6 +226,8 @@ Enhancements
    - The outcome of :func:`manifold.spectral_embedding` was made deterministic
      by flipping the sign of eigen vectors. By `Hasil Sharma`_.
 
+   - Significant performance and memory usage improvements in
+     :class:`preprocessing.PolynomialFeatures`. By `Eric Martin`_.
 
 Documentation improvements
 ..........................
@@ -3372,3 +3374,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Eric Schubert: https://github.com/kno10
 
 .. _Dan Blanchard: https://github.com/dan-blanchard
+
+.. _Eric Martin: http://ericmart.in
