@@ -4,7 +4,7 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
-from itertools import chain, combinations, tee
+from itertools import chain, combinations
 import numbers
 
 import numpy as np
@@ -453,7 +453,23 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         self.interaction_only = interaction_only
         self.include_bias = include_bias
 
+    @staticmethod
+    def _combinations(n_features, degree, interaction_only, include_bias):
+        comb = (combinations if interaction_only else combinations_w_r)
+        start = int(not include_bias)
+        return chain.from_iterable(comb(range(n_features), i)
+                                   for i in xrange(start, degree + 1))
+
     def fit(self, X, y=None):
+        """
+        Compute number of output features.
+        """
+        n_samples, n_features = check_array(X).shape
+        combinations = self._combinations(n_features, self.degree,
+                                          self.interaction_only,
+                                          self.include_bias)
+        self.n_input_features_ = n_features
+        self.n_output_features_ = sum(1 for _ in combinations)
         return self
 
     def transform(self, X, y=None):
@@ -470,24 +486,21 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
         """
+        check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
+
         X = check_array(X)
         n_samples, n_features = X.shape
 
-        comb = (combinations if self.interaction_only else combinations_w_r)
-        start = int(not self.include_bias)
-        combn = chain.from_iterable(comb(range(n_features), i)
-                                    for i in range(start, self.degree + 1))
-
-        # We need to compute n_output_features. We could do this by summing
-        # over some binomials, but its easier and not much overhead just to
-        # iterate over all of the output features and count them
-        combn, combn_counter = tee(combn)
-        n_output_features = sum(1 for _ in combn_counter)
+        if n_features != self.n_input_features_:
+            raise ValueError("X shape does not match training shape")
 
         # allocate output data
-        XP = np.zeros((n_samples, n_output_features), dtype=X.dtype)
+        XP = np.zeros((n_samples, self.n_output_features_), dtype=X.dtype)
 
-        for i, c in enumerate(combn):
+        combinations = self._combinations(n_features, self.degree,
+                                          self.interaction_only,
+                                          self.include_bias)
+        for i, c in enumerate(combinations):
             XP[:, i] = X[:, c].prod(1)
 
         return XP
