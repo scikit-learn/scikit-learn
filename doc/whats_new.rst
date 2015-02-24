@@ -313,6 +313,9 @@ Bug fixes
       classes when using distance weighting and having identical data points.
       By `Garret-R <https://github.com/Garrett-R>`_.
 
+    - Fixed round off errors with non positive-definite covariance matrices
+      in GMM. By `Alexis Mignon`_.
+
 API changes summary
 -------------------
 
@@ -3295,3 +3298,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Balazs Kegl: https://github.com/kegl
 
 .. _Andrew Tulloch: http://tullo.ch/
+
+.. _Alexis Mignon: https://github.com/AlexisMignon
