@@ -309,6 +309,10 @@ Bug fixes
     - Fixed a scaling error in :class:`feature_selection.SelectFdr`
       where a factor ``n_features`` was missing. By `Andrew Tulloch`_
 
+    - Fix zero division in :class:`neighbors.KNeighborsRegressor` and related
+      classes when using distance weighting and having identical data points.
+      By `Garret-R <https://github.com/Garrett-R>`_.
+
 API changes summary
 -------------------
 
