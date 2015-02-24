@@ -1,8 +1,9 @@
 """
 Todo: cross-check the F-value with stats model
 """
-
+from __future__ import division
 import itertools
+import warnings
 import numpy as np
 from scipy import stats, sparse
 
@@ -17,6 +18,8 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils import safe_mask
 
 from sklearn.datasets.samples_generator import (make_classification,
@@ -402,36 +405,44 @@ def test_select_fdr_regression():
     Test that fdr heuristic actually has low FDR.
     """
     def single_fdr(alpha, n_informative, random_state):
-        n_features = 5 * n_informative
-
-        X, y = make_regression(n_samples=150, n_features=n_features,
+        X, y = make_regression(n_samples=150, n_features=20,
                                n_informative=n_informative, shuffle=False,
-                               random_state=random_state, noise=10)
+                               random_state=random_state, noise=5)
 
-        univariate_filter = SelectFdr(f_regression, alpha=alpha)
-        X_r = univariate_filter.fit(X, y).transform(X)
-        X_r2 = GenericUnivariateSelect(
-            f_regression, mode='fdr', param=alpha).fit(X, y).transform(X)
+        with warnings.catch_warnings(record=True):
+            # Warnings can be raised when no features are selected
+            # (low alpha or very noisy data)
+            univariate_filter = SelectFdr(f_regression, alpha=alpha)
+            X_r = univariate_filter.fit(X, y).transform(X)
+            X_r2 = GenericUnivariateSelect(
+                f_regression, mode='fdr', param=alpha).fit(X, y).transform(X)
+
         assert_array_equal(X_r, X_r2)
         support = univariate_filter.get_support()
         num_false_positives = np.sum(support[n_informative:] == 1)
         num_true_positives = np.sum(support[:n_informative] == 1)
 
-        false_discovery_rate = float(num_false_positives) / \
-            (num_true_positives + num_false_positives)
+        if num_false_positives == 0:
+            return 0.
+        false_discovery_rate = (num_false_positives /
+                                (num_true_positives + num_false_positives))
         return false_discovery_rate
 
-    for alpha in [0.01, 0.05, 0.1, 0.2]:
-        for n_informative in [5, 10, 20]:
-            # We have that
-            #  FDR = E(FP / (TP + FP)) <= alpha
+
+    for alpha in [0.001, 0.01, 0.1]:
+        for n_informative in [1, 5, 10]:
+            # As per Benjamini–Hochberg, the expected false discovery rate
+            # should be lower than alpha:
+            # FDR = E(FP / (TP + FP)) <= alpha
             false_discovery_rate = np.mean([single_fdr(alpha, n_informative,
                                                        random_state) for
-                                            random_state in range(40)])
-            assert_true(false_discovery_rate <= alpha)
-            # also FDR is actually goes up with alpha
-            # (for a very small alpha, we might get 0 FDR)
-            assert_true(alpha <= 10 * max(false_discovery_rate, .001))
+                                            random_state in range(30)])
+            assert_greater_equal(alpha, false_discovery_rate)
+
+            # Make sure that the empirical false discovery rate increases
+            # with alpha:
+            if false_discovery_rate != 0:
+                assert_greater(false_discovery_rate, alpha / 10)
 
 
 def test_select_fwe_regression():

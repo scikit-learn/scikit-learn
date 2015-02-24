@@ -465,8 +465,8 @@ class SelectFpr(_BaseFilter):
 class SelectFdr(_BaseFilter):
     """Filter: Select the p-values for an estimated false discovery rate
 
-    This uses the Benjamini-Hochberg procedure. ``alpha`` is the target false
-    discovery rate.
+    This uses the Benjamini-Hochberg procedure. ``alpha`` is an upper bound
+    on the expected false discovery rate.
 
     Parameters
     ----------
@@ -485,6 +485,11 @@ class SelectFdr(_BaseFilter):
 
     pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/False_discovery_rate
+
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
