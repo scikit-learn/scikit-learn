@@ -4,7 +4,7 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
-from itertools import chain, combinations
+from itertools import chain, combinations, tee
 import numbers
 
 import numpy as np
@@ -478,7 +478,19 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         combn = chain.from_iterable(comb(range(n_features), i)
                                     for i in range(start, self.degree + 1))
 
-        return np.hstack(X[:, c].prod(1).reshape((n_samples, 1)) for c in combn)
+        # We need to compute n_output_features. We could do this by summing
+        # over some binomials, but its easier and not much overhead just to
+        # iterate over all of the output features and count them
+        combn, combn_counter = tee(combn)
+        n_output_features = sum(1 for _ in combn_counter)
+
+        # allocate output data
+        XP = np.zeros((n_samples, n_output_features), dtype=X.dtype)
+
+        for i, c in enumerate(combn):
+            XP[:, i] = X[:, c].prod(1)
+
+        return XP
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
