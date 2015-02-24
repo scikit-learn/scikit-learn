@@ -9,7 +9,7 @@ import numpy as np
 
 from scipy.optimize import approx_fprime
 
-from sklearn.gaussian_process import GaussianProcessRegression
+from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
 from sklearn.utils.testing import (assert_true, assert_greater,
@@ -32,7 +32,7 @@ def test_gpr_interpolation():
     """Test the interpolating property for different kernels."""
     for kernel in kernels:
         kernel = deepcopy(kernel)
-        gpr = GaussianProcessRegression(kernel=kernel).fit(X, y)
+        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
         y_pred, y_cov = gpr.predict(X, return_cov=True)
 
         assert_true(np.allclose(y_pred, y))
@@ -46,7 +46,7 @@ def test_lml_improving():
             continue
         kernel = deepcopy(kernel)
         params_initial = kernel.params
-        gpr = GaussianProcessRegression(kernel=kernel).fit(X, y)
+        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
         assert_greater(gpr.log_marginal_likelihood(kernel.params),
                        gpr.log_marginal_likelihood(params_initial))
 
@@ -57,7 +57,7 @@ def test_converged_to_local_maximum():
         if not kernel.has_bounds:
             continue
         kernel = deepcopy(kernel)
-        gpr = GaussianProcessRegression(kernel=kernel).fit(X, y)
+        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
         lml, lml_gradient = gpr.log_marginal_likelihood(kernel.params, True)
 
@@ -69,7 +69,7 @@ def test_lml_gradient():
     for kernel in kernels:
         kernel = deepcopy(kernel)
         params = kernel.params
-        gpr = GaussianProcessRegression(kernel=kernel).fit(X, y)
+        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
         lml, lml_gradient = gpr.log_marginal_likelihood(params, True)
         lml_gradient_approx = \
@@ -85,7 +85,7 @@ def test_prior():
     """ Test that GP prior has mean 0 and identical variances."""
     for kernel in kernels:
         kernel = deepcopy(kernel)
-        gpr = GaussianProcessRegression(kernel=kernel)
+        gpr = GaussianProcessRegressor(kernel=kernel)
 
         y_mean, y_cov = gpr.predict(X, return_cov=True)
 
@@ -101,7 +101,7 @@ def test_sample_statistics():
     """ Test that statistics of samples drawn from GP are correct."""
     for kernel in kernels:
         kernel = deepcopy(kernel)
-        gpr = GaussianProcessRegression(kernel=kernel).fit(
+        gpr = GaussianProcessRegressor(kernel=kernel).fit(
             X, y)
 
         y_mean, y_cov = gpr.predict(X2, return_cov=True)

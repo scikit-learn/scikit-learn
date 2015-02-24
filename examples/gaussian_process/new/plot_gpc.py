@@ -15,7 +15,7 @@ import numpy as np
 
 from matplotlib import pyplot as plt
 
-from sklearn.gaussian_process import GaussianProcessClassification
+from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
 
 
@@ -26,10 +26,10 @@ y = np.array(np.sin((X[:, 0] - 2.5) ** 2) > 0.0, dtype=int)
 
 # Specify Gaussian Processes with fixed and optimized hyperparameters
 kernel_fix = 4.0 * RBF(param_space=[1.0])
-gp_fix = GaussianProcessClassification(kernel=kernel_fix).fit(X, y)
+gp_fix = GaussianProcessClassifier(kernel=kernel_fix).fit(X, y)
 
 kernel_opt = (1e-10, 1.0, 100) * RBF(param_space=(1e-10, 1, 10))
-gp_opt = GaussianProcessClassification(kernel=kernel_opt).fit(X, y)
+gp_opt = GaussianProcessClassifier(kernel=kernel_opt).fit(X, y)
 
 print "Log Marginal Likelihood (initial): %.3f" % \
     gp_fix.log_marginal_likelihood(gp_fix.theta_)

@@ -14,13 +14,13 @@ from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_X_y, check_array
 
 
-class GaussianProcessRegression(BaseEstimator):
+class GaussianProcessRegressor(BaseEstimator):
     """ Gaussian process regression (GPR).
 
     The implementation is based on Algorithm 2.1 of ``Gaussian Processes
     for Machine Learning'' (GPML) by Rasmussen and Williams.
 
-    In addition to standard sklearn estimators, GaussianProcessRegression
+    In addition to standard sklearn estimators, GaussianProcessRegressor
        * allows prediction without prior fitting (based on the GP prior)
        * provides an additional method sample(X), which evaluates samples drawn
          from the GPR (prior or posterior) at given inputs

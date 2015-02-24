@@ -9,8 +9,8 @@ The :mod:`sklearn.gaussian_process` module implements scalar Gaussian Process
 based predictions.
 """
 
-from .gpr import GaussianProcessRegression
-from .gpc import GaussianProcessClassification
+from .gpr import GaussianProcessRegressor
+from .gpc import GaussianProcessClassifier
 from . import kernels
 
 from .gaussian_process import GaussianProcess

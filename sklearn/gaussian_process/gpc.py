@@ -25,7 +25,7 @@ COEFS = np.array([-1854.8214151, 3516.89893646, 221.29346712,
                   128.12323805, -2010.49422654])[:, np.newaxis]
 
 
-class GaussianProcessClassification(BaseEstimator):
+class GaussianProcessClassifier(BaseEstimator):
     """ Gaussian process classification (GPC).
 
     The implementation is based on Algorithm 3.1, 3.2, and 5.1 of
