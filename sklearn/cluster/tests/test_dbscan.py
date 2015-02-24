@@ -18,7 +18,7 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.cluster.dbscan_ import dbscan
 from sklearn.cluster.tests.common import generate_clustered_data
-from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import pairwise_distances, euclidean_distances
 
 
 n_clusters = 3
@@ -175,7 +175,7 @@ def test_dbscan_balltree():
 def test_input_validation():
     # DBSCAN.fit should accept a list of lists.
     X = [[1., 2.], [3., 4.]]
-    DBSCAN().fit(X)             # must not raise exception
+    DBSCAN().fit(X)
 
 
 def test_dbscan_badargs():
@@ -322,3 +322,24 @@ def test_dbscan_precomputed_metric_with_degenerate_input_arrays():
     X = np.zeros((10, 10))
     labels = DBSCAN(eps=0.5, metric='precomputed').fit(X).labels_
     assert_equal(len(set(labels)), 1)
+
+
+def test_dbscan_nan_input():
+    rng = np.random.RandomState(0)
+
+    X, sample_weight = rng.random_sample((20, 4)), rng.randint(-1, 10, (20,))
+    X[0, 0] = np.nan
+
+    # User defined metric which will handle inputs with nan
+    userdefined_metric = lambda X, y : euclidean_distances(np.nan_to_num(X),
+                                                           np.nan_to_num(y))
+    # For user defined metric allow nan without any error
+    # FIXME assert_not_raises after it is introduced
+    DBSCAN(metric=userdefined_metric).fit(X)
+    DBSCAN(metric=userdefined_metric).fit(X, sample_weight=sample_weight)
+
+    # For other metrics raise ValueError when nan is passed
+    assert_raises(ValueError, DBSCAN().fit, X)
+    assert_raises(ValueError, DBSCAN(metric=euclidean_distances).fit, X)
+    assert_raises(ValueError, DBSCAN(metric=euclidean_distances).fit, X,
+                  sample_weight=rng.randint(-1, 10, (20,)))
