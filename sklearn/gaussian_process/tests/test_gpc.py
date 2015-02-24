@@ -9,7 +9,7 @@ import numpy as np
 
 from scipy.optimize import approx_fprime
 
-from sklearn.gaussian_process import GaussianProcessClassification
+from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
 
 from sklearn.utils.testing import (assert_true, assert_greater,
@@ -32,7 +32,7 @@ def test_predict_consistent():
     """
     for kernel in kernels:
         kernel = deepcopy(kernel)
-        gpc = GaussianProcessClassification(kernel=kernel).fit(X, y)
+        gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
         assert_array_equal(gpc.predict(X),
                            gpc.predict_proba(X) >=0.5)
 
@@ -44,7 +44,7 @@ def test_lml_improving():
             continue
         kernel = deepcopy(kernel)
         params_initial = kernel.params
-        gpc = GaussianProcessClassification(kernel=kernel).fit(X, y)
+        gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
         assert_greater(gpc.log_marginal_likelihood(kernel.params),
                        gpc.log_marginal_likelihood(params_initial))
 
@@ -55,7 +55,7 @@ def test_converged_to_local_maximum():
         if not kernel.has_bounds:
             continue
         kernel = deepcopy(kernel)
-        gpc = GaussianProcessClassification(kernel=kernel).fit(X, y)
+        gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
 
         lml, lml_gradient = gpc.log_marginal_likelihood(kernel.params, True)
 
@@ -67,7 +67,7 @@ def test_lml_gradient():
     for kernel in kernels:
         kernel = deepcopy(kernel)
         params = kernel.params
-        gpc = GaussianProcessClassification(kernel=kernel).fit(X, y)
+        gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
 
         lml, lml_gradient = gpc.log_marginal_likelihood(params, True)
         lml_gradient_approx = \

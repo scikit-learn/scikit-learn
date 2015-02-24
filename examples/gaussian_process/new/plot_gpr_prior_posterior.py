@@ -13,13 +13,13 @@ import numpy as np
 
 from matplotlib import pyplot as plt
 
-from sklearn.gaussian_process import GaussianProcessRegression
+from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
 
 # Specify Gaussian Process
 kernel = (1e-10, 1.0, 100) * RBF(param_space=(1e-10, 1.0, None))
-gp = GaussianProcessRegression(kernel=kernel)
+gp = GaussianProcessRegressor(kernel=kernel)
 
 # Plot prior
 plt.figure(0, figsize=(8, 8))

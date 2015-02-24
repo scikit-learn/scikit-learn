@@ -11,7 +11,7 @@ print __doc__
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn.gaussian_process import GaussianProcessClassification
+from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
 
 
@@ -23,7 +23,7 @@ Y = np.logical_xor(X[:, 0] > 0, X[:, 1] > 0)
 
 # fit the model
 kernel = [1e-10, 1.0, 100] * RBF(param_space=(1e-10, 1.0, 10))
-clf = GaussianProcessClassification(kernel=kernel).fit(X, Y)
+clf = GaussianProcessClassifier(kernel=kernel).fit(X, Y)
 
 # plot the decision function for each datapoint on the grid
 Z = clf.predict_proba(np.vstack((xx.ravel(), yy.ravel())).T)

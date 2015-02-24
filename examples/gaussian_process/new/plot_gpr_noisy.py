@@ -23,7 +23,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm
 
-from sklearn.gaussian_process import GaussianProcessRegression
+from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, WhiteKernel
 
 
@@ -36,8 +36,8 @@ plt.figure(0)
 kernel = (1e-10, 1.0, None) * RBF(param_space=(1e-10, 100.0, None)) \
     + WhiteKernel(param_space=(1e-10, 1e-5, 1e+1))
 kernel_str = str(kernel)
-gp = GaussianProcessRegression(kernel=kernel,
-                               y_err=0.0).fit(X, y)
+gp = GaussianProcessRegressor(kernel=kernel,
+                              y_err=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)
 y_mean, y_cov = gp.predict(X_[:, np.newaxis], return_cov=True)
 plt.plot(X_, y_mean, 'k', lw=3, zorder=9)
@@ -55,8 +55,8 @@ plt.figure(1)
 kernel = (1e-10, 1.0, None) * RBF(param_space=(1e-10, 1.0, None)) \
     + WhiteKernel(param_space=(1e-10, 1e-5, 1e+1))
 kernel_str = str(kernel)
-gp = GaussianProcessRegression(kernel=kernel,
-                               y_err=0.0).fit(X, y)
+gp = GaussianProcessRegressor(kernel=kernel,
+                              y_err=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)
 y_mean, y_cov = gp.predict(X_[:, np.newaxis], return_cov=True)
 plt.plot(X_, y_mean, 'k', lw=3, zorder=9)
