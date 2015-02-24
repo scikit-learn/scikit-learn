@@ -529,7 +529,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              "dual=False, got dual=%s" % dual)
     # Preprocessing.
     X = check_array(X, accept_sparse='csr', dtype=np.float64)
-    y = check_array(y, ensure_2d=False, copy=copy)
+    y = check_array(y, ensure_2d=False, copy=copy, dtype=None)
     _, n_features = X.shape
     check_consistent_length(X, y)
     classes = np.unique(y)
@@ -1318,7 +1318,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                                  "the primal form.")
 
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
-        y = check_array(y, ensure_2d=False)
+        y = check_array(y, ensure_2d=False, dtype=None)
 
         if self.multi_class not in ['ovr', 'multinomial']:
             raise ValueError("multi_class backend should be either "

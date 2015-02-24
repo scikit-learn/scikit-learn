@@ -126,7 +126,7 @@ class PriorProbabilityEstimator(BaseEstimator):
     """
     def fit(self, X, y, sample_weight=None):
         if sample_weight is None:
-            sample_weight = np.ones_like(y, dtype=np.float)
+            sample_weight = np.ones_like(y, dtype=np.float64)
         class_counts = bincount(y, weights=sample_weight)
         self.priors = class_counts / class_counts.sum()
 
@@ -1146,7 +1146,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
     def _validate_y(self, y):
         self.n_classes_ = 1
-
+        if y.dtype.kind == 'O':
+            y = y.astype(np.float64)
         # Default implementation
         return y
 

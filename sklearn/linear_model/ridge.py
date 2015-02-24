@@ -378,7 +378,8 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.solver = solver
 
     def fit(self, X, y, sample_weight=None):
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float, multi_output=True)
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float,
+                         multi_output=True, y_numeric=True)
 
         if ((sample_weight is not None) and
                 np.atleast_1d(sample_weight).ndim > 1):
@@ -743,7 +744,8 @@ class _RidgeGCV(LinearModel):
         -------
         self : Returns self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float, multi_output=True)
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float,
+                         multi_output=True, y_numeric=True)
 
         n_samples, n_features = X.shape
 
