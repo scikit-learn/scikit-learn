@@ -5,8 +5,10 @@ TODO: remove hard coded numerical results when possible
 """
 
 import numpy as np
-from numpy.testing import (assert_array_equal, assert_array_almost_equal,
-                           assert_almost_equal)
+import itertools
+
+from numpy.testing import assert_array_equal, assert_array_almost_equal
+from numpy.testing import assert_almost_equal
 from scipy import sparse
 from nose.tools import assert_raises, assert_true, assert_equal, assert_false
 
@@ -17,6 +19,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
+from sklearn.utils.testing import assert_warns_message
 
 
 # toy sample
@@ -75,9 +78,9 @@ def test_libsvm_iris():
     # we should get deteriministic results (assuming that there is no other
     # thread calling this wrapper calling `srand` concurrently).
     pred2 = svm.libsvm.cross_validation(iris.data,
-                                       iris.target.astype(np.float64), 5,
-                                       kernel='linear',
-                                       random_seed=0)
+                                        iris.target.astype(np.float64), 5,
+                                        kernel='linear',
+                                        random_seed=0)
     assert_array_equal(pred, pred2)
 
 
@@ -457,21 +460,91 @@ def test_linearsvc_parameters():
     """
     Test possible parameter combinations in LinearSVC
     """
-    # generate list of possible parameter combinations
-    params = [(dual, loss, penalty) for dual in [True, False]
-              for loss in ['hinge', 'squared_hinge', 'logistic_regression']
-              for penalty in ['l1', 'l2']]
+    # Generate list of possible parameter combinations
+    losses = ['hinge', 'squared_hinge', 'logistic_regression', 'foo']
+    penalties, duals = ['l1', 'l2', 'bar'], [True, False]
 
     X, y = make_classification(n_samples=5, n_features=5)
 
-    for dual, loss, penalty in params:
+    for loss, penalty, dual in itertools.product(losses, penalties, duals):
         clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
-        if (loss == 'hinge' and penalty == 'l1') or (
-            loss == 'hinge' and penalty == 'l2' and not dual) or (
-            penalty == 'l1' and dual):
-            assert_raises(ValueError, clf.fit, X, y)
+        if ((loss, penalty) == ('hinge', 'l1') or
+                (loss, penalty, dual) == ('hinge', 'l2', False) or
+                (penalty, dual) == ('l1', True) or
+                loss == 'foo' or penalty == 'bar'):
+
+            assert_raises_regexp(ValueError,
+                                 "Unsupported set of arguments.*penalty='%s.*"
+                                 "loss='%s.*dual=%s"
+                                 % (penalty, loss, dual),
+                                 clf.fit, X, y)
         else:
             clf.fit(X, y)
+
+    # Incorrect loss value - test if explicit error message is raised
+    assert_raises_regexp(ValueError, ".*loss='L3' is not supported.*",
+                         svm.LinearSVC(loss="L3").fit, X, y)
+
+
+# FIXME remove in 1.0
+def test_linearsvx_loss_penalty_deprecations():
+    X, y = [[0.0], [1.0]], [0, 1]
+
+    msg = ("loss='%s' has been deprecated in favor of "
+           "loss='%s' as of 0.16. Backward compatibility"
+           " for the %s will be removed in %s")
+
+    # LinearSVC
+    # loss l1/L1 --> hinge
+    assert_warns_message(DeprecationWarning,
+                         msg % ("l1", "hinge", "loss='l1'", "1.0"),
+                         svm.LinearSVC(loss="l1").fit, X, y)
+
+    # loss l2/L2 --> squared_hinge
+    assert_warns_message(DeprecationWarning,
+                         msg % ("L2", "squared_hinge", "loss='L2'", "1.0"),
+                         svm.LinearSVC(loss="L2").fit, X, y)
+
+    # LinearSVR
+    # loss l1/L1 --> epsilon_insensitive
+    assert_warns_message(DeprecationWarning,
+                         msg % ("L1", "epsilon_insensitive", "loss='L1'",
+                                "1.0"),
+                         svm.LinearSVR(loss="L1").fit, X, y)
+
+    # loss l2/L2 --> squared_epsilon_insensitive
+    assert_warns_message(DeprecationWarning,
+                         msg % ("l2", "squared_epsilon_insensitive",
+                                "loss='l2'", "1.0"),
+                         svm.LinearSVR(loss="l2").fit, X, y)
+
+
+# FIXME remove in 0.18
+def test_linear_svx_uppercase_loss_penalty():
+    # Check if Upper case notation is supported by _fit_liblinear
+    # which is called by fit
+    X, y = [[0.0], [1.0]], [0, 1]
+
+    msg = ("loss='%s' has been deprecated in favor of "
+           "loss='%s' as of 0.16. Backward compatibility"
+           " for the uppercase notation will be removed in %s")
+
+    # loss SQUARED_hinge --> squared_hinge
+    assert_warns_message(DeprecationWarning,
+                         msg % ("SQUARED_hinge", "squared_hinge", "0.18"),
+                         svm.LinearSVC(loss="SQUARED_hinge").fit, X, y)
+
+    # penalty L2 --> l2
+    assert_warns_message(DeprecationWarning,
+                         msg.replace("loss", "penalty")
+                         % ("L2", "l2", "0.18"),
+                         svm.LinearSVC(penalty="L2").fit, X, y)
+
+    # loss EPSILON_INSENSITIVE --> epsilon_insensitive
+    assert_warns_message(DeprecationWarning,
+                         msg % ("EPSILON_INSENSITIVE", "epsilon_insensitive",
+                                "0.18"),
+                         svm.LinearSVR(loss="EPSILON_INSENSITIVE").fit, X, y)
 
 
 def test_linearsvc():
