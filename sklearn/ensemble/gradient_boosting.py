@@ -1120,7 +1120,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         score = self._init_decision_function(X)
         for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate, score)
-            yield score
+            yield score.copy()
 
     @property
     def feature_importances_(self):
