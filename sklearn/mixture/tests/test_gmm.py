@@ -354,14 +354,13 @@ def test_aic():
 
 
 def check_positive_definite_covars(covariance_type):
-    r""" Test that covariance matrices do not become non positive definite
+    r"""Test that covariance matrices do not become non positive definite
 
     Due to the accumulation of round-off errors, the computation of the
     covariance  matrices during the learning phase could lead to non-positive
     definite covariance matrices. Namely the use of the formula:
 
-    .. math:: C = (\sum_i w_i  x_i x_i^T)
-              - \mu \mu^T
+    .. math:: C = (\sum_i w_i  x_i x_i^T) - \mu \mu^T
 
     instead of:
 
@@ -372,7 +371,7 @@ def check_positive_definite_covars(covariance_type):
 
     This function ensures that some later optimization will not introduce the
     problem again.
-"""
+    """
     rng = np.random.RandomState(1)
     # we build a dataset with 2 2d component. The components are unbalanced
     # (respective weights 0.9 and 0.1)
