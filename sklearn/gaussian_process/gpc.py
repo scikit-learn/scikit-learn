@@ -94,7 +94,7 @@ class GaussianProcessClassifier(BaseEstimator):
         # Based on Algorithm 3.2 of GPML
         K_star = self.kernel(self.X_fit_, X)  # K_star =k(x_star)
         f_star = K_star.T.dot(self.y_fit_ - self.pi)  # Line 4
-        v = solve(self.L, self.W_sr.dot(K_star))  # Line 5
+        v = solve(self.L, self.W_sr[:, np.newaxis] * K_star)  # Line 5
         var_f_star = self.kernel(X) - v.T.dot(v)  # Line 6
 
         # Line 7:
@@ -136,8 +136,9 @@ class GaussianProcessClassifier(BaseEstimator):
 
         # Compute gradient based on Algorithm 5.1 of GPML
         d_Z = np.empty(theta.shape[0])
-        R = W_sr.dot(cho_solve((L, True), W_sr))  # Line 7
-        C = solve(L, W_sr.dot(K))  # Line 8
+        # XXX: Get rid of the np.diag() in the next line
+        R = W_sr[:, np.newaxis] * cho_solve((L, True), np.diag(W_sr))  # Line 7
+        C = solve(L, W_sr[:, np.newaxis] * K)  # Line 8
         # Line 9:
         s_2 = -0.5*(np.diag(K) - np.diag(C.T.dot(C))) \
             * (pi * (1 - pi) * (1 - 2*pi))  # third derivative
@@ -161,13 +162,14 @@ class GaussianProcessClassifier(BaseEstimator):
             pi = 1 / (1 + np.exp(-f))
             W = pi * (1 - pi)
             # Line 5
-            W_sr = np.diag(np.sqrt(W))  # XXX: avoid creating square matrix?
-            B = np.eye(W.shape[0]) + W_sr.dot(K).dot(W_sr)
+            W_sr = np.sqrt(W)
+            W_sr_K = W_sr[:, np.newaxis] * K
+            B = np.eye(W.shape[0]) + W_sr_K * W_sr
             L = cholesky(B, lower=True)
             # Line 6
             b = W * f + (self.y_fit_ - pi)
             # Line 7
-            a = b - W_sr.dot(cho_solve((L, True), W_sr.dot(K).dot(b)))
+            a = b - W_sr * cho_solve((L, True), W_sr_K.dot(b))
             # Line 8
             f = K.dot(a)
 
