@@ -478,7 +478,9 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
-        the mean predicted class probabilities of the trees in the forest.
+        the mean predicted class probabilities of the trees in the forest. The
+        class probability of a single tree is the fraction of samples of the same
+        class in a leaf.
 
         Parameters
         ----------
