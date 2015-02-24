@@ -439,12 +439,6 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
            [ 1,  2,  3,  6],
            [ 1,  4,  5, 20]])
 
-    Attributes
-    ----------
-
-    powers_ :
-         powers_[i, j] is the exponent of the jth input in the ith output.
-
     Notes
     -----
     Be aware that the number of features in the output array scales
@@ -459,24 +453,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         self.interaction_only = interaction_only
         self.include_bias = include_bias
 
-    @staticmethod
-    def _power_matrix(n_features, degree, interaction_only, include_bias):
-        """Compute the matrix of polynomial powers"""
-        comb = (combinations if interaction_only else combinations_w_r)
-        start = int(not include_bias)
-        combn = chain.from_iterable(comb(range(n_features), i)
-                                    for i in range(start, degree + 1))
-        powers = np.vstack(bincount(c, minlength=n_features) for c in combn)
-        return powers
-
     def fit(self, X, y=None):
-        """
-        Compute the polynomial feature combinations
-        """
-        n_samples, n_features = check_array(X).shape
-        self.powers_ = self._power_matrix(n_features, self.degree,
-                                          self.interaction_only,
-                                          self.include_bias)
         return self
 
     def transform(self, X, y=None):
@@ -493,15 +470,15 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
         """
-        check_is_fitted(self, 'powers_')
-
         X = check_array(X)
         n_samples, n_features = X.shape
 
-        if n_features != self.powers_.shape[1]:
-            raise ValueError("X shape does not match training shape")
+        comb = (combinations if self.interaction_only else combinations_w_r)
+        start = int(not self.include_bias)
+        combn = chain.from_iterable(comb(range(n_features), i)
+                                    for i in range(start, self.degree + 1))
 
-        return (X[:, None, :] ** self.powers_).prod(-1)
+        return np.hstack(X[:, c].prod(1).reshape((n_samples, 1)) for c in combn)
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
