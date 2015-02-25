@@ -459,7 +459,7 @@ class GMM(BaseEstimator):
             # reset self.converged_ to False
             self.converged_ = False
 
-            # this line should be removed when 'thresh' is deprecated
+            # this line should be removed when 'thresh' is removed in v0.18
             tol = (self.tol if self.thresh is None
                    else self.thresh / float(X.shape[0]))
 
@@ -471,7 +471,7 @@ class GMM(BaseEstimator):
 
                 # Check for convergence.
                 # (should compare to self.tol when dreprecated 'thresh' is
-                # removed)
+                # removed in v0.18)
                 if prev_log_likelihood is not None:
                     change = abs(current_log_likelihood - prev_log_likelihood)
                     if change < tol:
