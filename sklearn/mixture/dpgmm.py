@@ -142,7 +142,7 @@ class DPGMM(GMM):
         higher alpha means more clusters, as the expected number
         of clusters is ``alpha*log(N)``.
 
-    thresh : float, default 1e-2
+    tol : float, default 1e-3
         Convergence threshold.
 
     n_iter : int, default 10
@@ -198,13 +198,13 @@ class DPGMM(GMM):
     """
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
-                 random_state=None, thresh=1e-2, verbose=False,
+                 random_state=None, thresh=None, tol=1e-3, verbose=False,
                  min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
         self.alpha = alpha
         self.verbose = verbose
         super(DPGMM, self).__init__(n_components, covariance_type,
-                                    random_state=random_state,
-                                    thresh=thresh, min_covar=min_covar,
+                                    random_state=random_state, thresh=thresh,
+                                    tol=tol, min_covar=min_covar,
                                     n_iter=n_iter, params=params,
                                     init_params=init_params)
 
@@ -503,13 +503,13 @@ class DPGMM(GMM):
         """
         self.random_state_ = check_random_state(self.random_state)
 
-        ## initialization step
+        # initialization step
         X = check_array(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
 
-        n_features = X.shape[1]
-        z = np.ones((X.shape[0], self.n_components))
+        n_samples, n_features = X.shape
+        z = np.ones((n_samples, self.n_components))
         z /= self.n_components
 
         self._initial_bound = - 0.5 * n_features * np.log(2 * np.pi)
@@ -550,7 +550,7 @@ class DPGMM(GMM):
                     self.dof_, self.scale_, self.det_scale_, n_features)
                 self.bound_prec_ -= 0.5 * self.dof_ * np.trace(self.scale_)
             elif self.covariance_type == 'full':
-                self.dof_ = (1 + self.n_components + X.shape[0])
+                self.dof_ = (1 + self.n_components + n_samples)
                 self.dof_ *= np.ones(self.n_components)
                 self.scale_ = [2 * np.identity(n_features)
                                for _ in range(self.n_components)]
@@ -566,18 +566,31 @@ class DPGMM(GMM):
                                             np.trace(self.scale_[k]))
                 self.bound_prec_ *= 0.5
 
-        logprob = []
+        # EM algorithms
+        current_log_likelihood = None
         # reset self.converged_ to False
         self.converged_ = False
+
+        # this line should be removed when 'thresh' is removed in v0.18
+        tol = (self.tol if self.thresh is None
+               else self.thresh / float(n_samples))
+
         for i in range(self.n_iter):
+            prev_log_likelihood = current_log_likelihood
             # Expectation step
             curr_logprob, z = self.score_samples(X)
-            logprob.append(curr_logprob.sum() + self._logprior(z))
+
+            current_log_likelihood = (
+                curr_logprob.mean() + self._logprior(z) / n_samples)
 
             # Check for convergence.
-            if i > 0 and abs(logprob[-1] - logprob[-2]) < self.thresh:
-                self.converged_ = True
-                break
+            # (should compare to self.tol when dreprecated 'thresh' is
+            # removed in v0.18)
+            if prev_log_likelihood is not None:
+                change = abs(current_log_likelihood - prev_log_likelihood)
+                if change < tol:
+                    self.converged_ = True
+                    break
 
             # Maximization step
             self._do_mstep(X, z, self.params)
@@ -613,7 +626,7 @@ class VBGMM(DPGMM):
         value of alpha the more likely the variational mixture of
         Gaussians model will use all components it can.
 
-    thresh : float, default 1e-2
+    tol : float, default 1e-3
         Convergence threshold.
 
     n_iter : int, default 10
@@ -671,11 +684,11 @@ class VBGMM(DPGMM):
     """
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
-                 random_state=None, thresh=1e-2, verbose=False,
+                 random_state=None, thresh=None, tol=1e-3, verbose=False,
                  min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
         super(VBGMM, self).__init__(
             n_components, covariance_type, random_state=random_state,
-            thresh=thresh, verbose=verbose, min_covar=min_covar,
+            thresh=thresh, tol=tol, verbose=verbose, min_covar=min_covar,
             n_iter=n_iter, params=params, init_params=init_params)
         self.alpha = float(alpha) / n_components
 

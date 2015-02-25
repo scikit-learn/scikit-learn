@@ -190,9 +190,10 @@ Enhancements
    - More robust seeding and improved error messages in :class:`cluster.MeanShift`
      by `Andreas Müller`_.
 
-   - Make the :class:`GMM` stopping criterion less dependent on the number of
-     samples by thresholding the average log-likelihood change instead of its
-     sum over all samples. By `Hervé Bredin`_
+   - Make the stopping criterion for :class:`GMM`, :class:`DPGMM` 
+     and :class:`VBGMM` less dependent on the number of samples by 
+     thresholding the average log-likelihood change instead of its sum over 
+     all samples. By `Hervé Bredin`_
 
 Documentation improvements
 ..........................
@@ -390,7 +391,8 @@ API changes summary
       as the first nearest neighbor.
 
     - `thresh` parameter is deprecated in favor of new `tol` parameter in
-      :class:`GMM`. See `Enhancements` section for details. By `Hervé Bredin`_.
+      :class:`GMM`, :class:`DPGMM` and :class:`VBGMM`. See `Enhancements` 
+      section for details. By `Hervé Bredin`_.
 
     - Estimators will treat input with dtype object as numeric when possible.
       By `Andreas Müller`_
