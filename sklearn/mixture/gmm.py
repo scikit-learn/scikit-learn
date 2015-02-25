@@ -700,11 +700,12 @@ def _covar_mstep_full(gmm, X, responsibilities, weighted_X_sum, norm,
     cv = np.empty((gmm.n_components, n_features, n_features))
     for c in range(gmm.n_components):
         post = responsibilities[:, c]
-        # Underflow Errors in doing post * X.T are  not important
-        np.seterr(under='ignore')
-        avg_cv = np.dot(post * X.T, X) / (post.sum() + 10 * EPS)
-        mu = gmm.means_[c][np.newaxis]
-        cv[c] = (avg_cv - np.dot(mu.T, mu) + min_covar * np.eye(n_features))
+        mu = gmm.means_[c]
+        diff = X - mu
+        with np.errstate(under='ignore'):
+            # Underflow Errors in doing post * X.T are  not important
+            avg_cv = np.dot(post * diff.T, diff) / (post.sum() + 10 * EPS)
+        cv[c] = avg_cv + min_covar * np.eye(n_features)
     return cv
 
 

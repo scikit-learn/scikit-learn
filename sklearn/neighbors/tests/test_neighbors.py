@@ -318,6 +318,39 @@ def test_radius_neighbors_classifier_zero_distance():
             assert_array_equal(correct_labels1, clf.predict(z1))
 
 
+def test_neighbors_regressors_zero_distance():
+    """ Test radius-based regressor, when distance to a sample is zero. """
+
+    X = np.array([[1.0, 1.0], [1.0, 1.0], [2.0, 2.0], [2.5, 2.5]])
+    y = np.array([1.0, 1.5, 2.0, 0.0])
+    radius = 0.2
+    z = np.array([[1.1, 1.1], [2.0, 2.0]])
+
+    rnn_correct_labels = np.array([1.25, 2.0])
+
+    knn_correct_unif = np.array([1.25, 1.0])
+    knn_correct_dist = np.array([1.25, 2.0])
+
+    for algorithm in ALGORITHMS:
+        # we don't test for weights=_weight_func since user will be expected
+        # to handle zero distances themselves in the function.
+        for weights in ['uniform', 'distance']:
+            rnn = neighbors.RadiusNeighborsRegressor(radius=radius,
+                                                     weights=weights,
+                                                     algorithm=algorithm)
+            rnn.fit(X, y)
+            assert_array_almost_equal(rnn_correct_labels, rnn.predict(z))
+
+        for weights, corr_labels in zip(['uniform', 'distance'],
+                                        [knn_correct_unif, knn_correct_dist]):
+            knn = neighbors.KNeighborsRegressor(n_neighbors=2,
+                                                weights=weights,
+                                                algorithm=algorithm)
+            knn.fit(X, y)
+            assert_array_almost_equal(corr_labels, knn.predict(z))
+
+
+
 def test_RadiusNeighborsClassifier_multioutput():
     """Test k-NN classifier on multioutput data"""
     rng = check_random_state(0)

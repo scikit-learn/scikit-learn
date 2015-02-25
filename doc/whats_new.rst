@@ -309,6 +309,16 @@ Bug fixes
     - Fix log-density calculation in the :class:`mixture.GMM` with
       tied covariance. By `Will Dawson`_
 
+    - Fixed a scaling error in :class:`feature_selection.SelectFdr`
+      where a factor ``n_features`` was missing. By `Andrew Tulloch`_
+
+    - Fix zero division in :class:`neighbors.KNeighborsRegressor` and related
+      classes when using distance weighting and having identical data points.
+      By `Garret-R <https://github.com/Garrett-R>`_.
+
+    - Fixed round off errors with non positive-definite covariance matrices
+      in GMM. By `Alexis Mignon`_.
+
 API changes summary
 -------------------
 
@@ -384,6 +394,10 @@ API changes summary
 
     - `thresh` parameter is deprecated in favor of new `tol` parameter in
       :class:`GMM`. See `Enhancements` section for details. By `Hervé Bredin`_.
+
+    - Estimators will treat input with dtype object as numeric when possible.
+      By `Andreas Müller`_
+
 
 
 .. _changes_0_15_2:
@@ -3287,3 +3301,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Balazs Kegl: https://github.com/kegl
 
 .. _Eric Martin: http://ericmart.in
+
+.. _Andrew Tulloch: http://tullo.ch/
+
+.. _Alexis Mignon: https://github.com/AlexisMignon
