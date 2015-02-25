@@ -28,7 +28,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     loss : string, 'hinge' or 'squared_hinge' (default='squared_hinge')
         Specifies the loss function. 'hinge' is the standard SVM loss
-        (used e.g. by the SVC class) while 'squared_hinge' is the 
+        (used e.g. by the SVC class) while 'squared_hinge' is the
         square of the hinge loss.
 
     penalty : string, 'l1' or 'l2' (default='l2')
@@ -143,11 +143,10 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     """
 
-    def __init__(self, penalty='l2', loss='squared_hinge', dual=True, tol=1e-4, C=1.0,
-                 multi_class='ovr', fit_intercept=True, intercept_scaling=1,
-                 class_weight=None, verbose=0, random_state=None, max_iter=1000):
-        self.penalty = penalty
-        self.loss = loss
+    def __init__(self, penalty='l2', loss='squared_hinge', dual=True, tol=1e-4,
+                 C=1.0, multi_class='ovr', fit_intercept=True,
+                 intercept_scaling=1, class_weight=None, verbose=0,
+                 random_state=None, max_iter=1000):
         self.dual = dual
         self.tol = tol
         self.C = C
@@ -158,6 +157,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         self.verbose = verbose
         self.random_state = random_state
         self.max_iter = max_iter
+        self.penalty = penalty
+        self.loss = loss
 
     def fit(self, X, y):
         """Fit the model according to the given training data.
@@ -176,26 +177,34 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         self : object
             Returns self.
         """
+        # FIXME Remove l1/l2 support in 1.0 -----------------------------------
+        loss_l = self.loss.lower()
+
+        msg = ("loss='%s' has been deprecated in favor of "
+               "loss='%s' as of 0.16. Backward compatibility"
+               " for the loss='%s' will be removed in %s")
+
+        # FIXME change loss_l --> self.loss after 0.18
+        if loss_l in ('l1', 'l2'):
+            old_loss = self.loss
+            self.loss = {'l1': 'hinge', 'l2': 'squared_hinge'}.get(loss_l)
+            warnings.warn(msg % (old_loss, self.loss, old_loss, '1.0'),
+                          DeprecationWarning)
+        # ---------------------------------------------------------------------
+
         if self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
+        X, y = check_X_y(X, y, accept_sparse='csr',
+                         dtype=np.float64, order="C")
         self.classes_ = np.unique(y)
 
-        if self.loss in ('l1', 'l2'):
-            # convert for backwards compatibility
-            loss = {'l1': 'hinge', 'l2': 'squared_hinge'}.get(self.loss)
-            warnings.warn("loss='l1' (resp. loss='l2') is deprecated and will" +
-                          "be removed before version 1.0. Please use loss='hinge'" +
-                          "(resp. loss='squared_hinge') instead", DeprecationWarning)
-        else:
-            loss = self.loss
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             self.class_weight, self.penalty, self.dual, self.verbose,
             self.max_iter, self.tol, self.random_state, self.multi_class,
-            loss
+            self.loss
             )
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
@@ -223,7 +232,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         Penalty parameter C of the error term. The penalty is a squared
         l2 penalty. The bigger this parameter, the less regularization is used.
 
-    loss : string, 'epsilon_insensitive' or 'squared_epsilon_insensitive' 
+    loss : string, 'epsilon_insensitive' or 'squared_epsilon_insensitive'
            (default='epsilon_insensitive')
         Specifies the loss function. 'l1' is the epsilon-insensitive loss
         (standard SVR) while 'l2' is the squared epsilon-insensitive loss.
@@ -300,8 +309,9 @@ class LinearSVR(LinearModel, RegressorMixin):
         various loss functions and regularization regimes.
     """
 
-    def __init__(self, epsilon=0.0, tol=1e-4, C=1.0, loss='epsilon_insensitive', 
-                 fit_intercept=True, intercept_scaling=1., dual=True, verbose=0, 
+    def __init__(self, epsilon=0.0, tol=1e-4, C=1.0,
+                 loss='epsilon_insensitive', fit_intercept=True,
+                 intercept_scaling=1., dual=True, verbose=0,
                  random_state=None, max_iter=1000):
         self.tol = tol
         self.C = C
@@ -331,12 +341,30 @@ class LinearSVR(LinearModel, RegressorMixin):
         self : object
             Returns self.
         """
+        # FIXME Remove l1/l2 support in 1.0 -----------------------------------
+        loss_l = self.loss.lower()
+
+        msg = ("loss='%s' has been deprecated in favor of "
+               "loss='%s' as of 0.16. Backward compatibility"
+               " for the loss='%s' will be removed in %s")
+
+        # FIXME change loss_l --> self.loss after 0.18
+        if loss_l in ('l1', 'l2'):
+            old_loss = self.loss
+            self.loss = {'l1': 'epsilon_insensitive',
+                         'l2': 'squared_epsilon_insensitive'
+                         }.get(loss_l)
+            warnings.warn(msg % (old_loss, self.loss, old_loss, '1.0'),
+                          DeprecationWarning)
+        # ---------------------------------------------------------------------
+
         if self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
-        penalty = 'l2' # SVR only accepts L2 penalty
+        X, y = check_X_y(X, y, accept_sparse='csr',
+                         dtype=np.float64, order="C")
+        penalty = 'l2'  # SVR only accepts l2 penalty
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             None, penalty, self.dual, self.verbose,
