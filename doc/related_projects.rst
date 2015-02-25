@@ -75,6 +75,9 @@ Domain Specific Packages
 - `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natual language processing and some machine learning.
 - `NiLearn <https://nilearn.github.io/>`_ Machine learning for neuro-imaging.
 - `AstroML <http://www.astroml.org/>`_  Machine learning for astronomy.
+- `MSMBuilder <http://www.msmbuilder.org/>`_  Machine learning for protein conformational dynamics time series.
+
+
 
 Snippets and tidbits
 ---------------------
