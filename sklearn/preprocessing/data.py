@@ -7,6 +7,7 @@
 
 from itertools import chain, combinations
 import numbers
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -440,6 +441,16 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
            [ 1,  2,  3,  6],
            [ 1,  4,  5, 20]])
 
+    Attributes
+    ----------
+    n_input_features_ : int
+        The total number of input features.
+
+    n_output_features_ : int
+        The total number of polynomial output features. The number of output
+        features is computed by iterating over all suitably sized combinations
+        of input features.
+
     Notes
     -----
     Be aware that the number of features in the output array scales
@@ -460,6 +471,18 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         start = int(not include_bias)
         return chain.from_iterable(comb(range(n_features), i)
                                    for i in range(start, degree + 1))
+
+    @property
+    def powers_(self):
+        warnings.warn('PolynomialFeatures.powers_ is deprecated and will be '
+                      'removed in version 0.18.', DeprecationWarning)
+        check_is_fitted(self, 'n_input_features_')
+
+        combinations = self._combinations(self.n_input_features_, self.degree,
+                                          self.interaction_only,
+                                          self.include_bias)
+        return np.vstack(np.bincount(c, minlength=self.n_input_features_)
+                         for c in combinations)
 
     def fit(self, X, y=None):
         """
@@ -496,7 +519,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             raise ValueError("X shape does not match training shape")
 
         # allocate output data
-        XP = np.zeros((n_samples, self.n_output_features_), dtype=X.dtype)
+        XP = np.empty((n_samples, self.n_output_features_), dtype=X.dtype)
 
         combinations = self._combinations(n_features, self.degree,
                                           self.interaction_only,

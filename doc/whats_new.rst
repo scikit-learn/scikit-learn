@@ -157,7 +157,7 @@ Enhancements
 
    - Add ``n_iter_`` attribute to estimators that accept a ``max_iter`` attribute
      in their constructor. By `Manoj Kumar`_.
-  
+
    - Added decision function for :class:`multiclass.OneVsOneClassifier`
      By `Raghav R V`_ and `Kyle Beauchamp`_.
 
@@ -193,6 +193,9 @@ Enhancements
    - Make the :class:`GMM` stopping criterion less dependent on the number of
      samples by thresholding the average log-likelihood change instead of its
      sum over all samples. By `Hervé Bredin`_
+
+   - Significant performance and memory usage improvements in
+     :class:`preprocessing.PolynomialFeatures`. By `Eric Martin`_.
 
 Documentation improvements
 ..........................
@@ -3282,3 +3285,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Will Dawson: http://dawsonresearch.com
 
 .. _Balazs Kegl: https://github.com/kegl
+
+.. _Eric Martin: http://ericmart.in
