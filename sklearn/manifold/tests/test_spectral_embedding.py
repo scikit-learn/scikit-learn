@@ -4,13 +4,14 @@ from nose.tools import assert_equal
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 import numpy as np
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from nose.tools import assert_raises
 from nose.plugins.skip import SkipTest
 
 from sklearn.manifold.spectral_embedding_ import SpectralEmbedding
 from sklearn.manifold.spectral_embedding_ import _graph_is_connected
+from sklearn.manifold import spectral_embedding
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics import normalized_mutual_info_score
 from sklearn.cluster import KMeans
@@ -181,3 +182,13 @@ def test_connectivity(seed=36):
     assert_equal(_graph_is_connected(graph), True)
     assert_equal(_graph_is_connected(csr_matrix(graph)), True)
     assert_equal(_graph_is_connected(csc_matrix(graph)), True)
+
+
+def test_spectral_embedding_deterministic():
+    # Test that Spectral Embedding is deterministic
+    random_state = np.random.RandomState(36)
+    data = random_state.randn(10, 30)
+    sims = rbf_kernel(data)
+    embedding_1 = spectral_embedding(sims)
+    embedding_2 = spectral_embedding(sims)
+    assert_array_almost_equal(embedding_1, embedding_2)
