@@ -24,6 +24,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import confusion_matrix
@@ -97,6 +98,7 @@ REGRESSION_METRICS = {
 
 CLASSIFICATION_METRICS = {
     "accuracy_score": accuracy_score,
+    "balanced_accuracy_score": balanced_accuracy_score,
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
     "confusion_matrix": confusion_matrix,
     "hamming_loss": hamming_loss,
@@ -190,6 +192,7 @@ METRIC_UNDEFINED_MULTICLASS = [
     "samples_precision_score", "samples_recall_score",
 
     # Those metrics don't support multiclass outputs
+    "balanced_accuracy_score",
     "average_precision_score", "weighted_average_precision_score",
     "micro_average_precision_score", "macro_average_precision_score",
     "samples_average_precision_score",
@@ -331,7 +334,9 @@ NOT_SYMMETRIC_METRICS = [
     "micro_recall_score",
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
-    "macro_recall_score", "log_loss", "hinge_loss"
+    "macro_recall_score", "log_loss", "hinge_loss",
+
+    "balanced_accuracy_score",
 ]
 
 
@@ -341,6 +346,7 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
     "hamming_loss",
     "matthews_corrcoef_score",
     "median_absolute_error",
+    "balanced_accuracy_score",
 ]
 
 
