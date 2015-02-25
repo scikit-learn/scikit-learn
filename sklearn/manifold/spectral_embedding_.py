@@ -14,6 +14,7 @@ from scipy.sparse.linalg import lobpcg
 from ..base import BaseEstimator
 from ..externals import six
 from ..utils import check_random_state, check_array, check_symmetric
+from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.graph import graph_laplacian
 from ..utils.sparsetools import connected_components
 from ..utils.arpack import eigsh
@@ -41,7 +42,8 @@ def _graph_connected_component(graph, node_id):
         belong to the largest connected components of the given query
         node
     """
-    connected_components_matrix = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
+    connected_components_matrix = np.zeros(
+        shape=(graph.shape[0]), dtype=np.bool)
     connected_components_matrix[node_id] = True
     n_node = graph.shape[0]
     for i in range(n_node):
@@ -165,7 +167,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     norm_laplacian : bool, optional, default=True
         If True, then compute normalized Laplacian.
- 
+
     Returns
     -------
     embedding : array, shape=(n_samples, n_components)
@@ -197,7 +199,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     if eigen_solver is None:
         eigen_solver = 'arpack'
-    elif not eigen_solver in ('arpack', 'lobpcg', 'amg'):
+    elif eigen_solver not in ('arpack', 'lobpcg', 'amg'):
         raise ValueError("Unknown value for eigen_solver: '%s'."
                          "Should be 'amg', 'arpack', or 'lobpcg'"
                          % eigen_solver)
@@ -296,6 +298,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             embedding = diffusion_map.T[:n_components] * dd
             if embedding.shape[0] == 1:
                 raise ValueError
+
+    embedding = _deterministic_vector_sign_flip(embedding)
     if drop_first:
         return embedding[1:n_components].T
     else:
