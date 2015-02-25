@@ -79,9 +79,8 @@ def _fix_connectivity(X, connectivity, n_components=None,
                 jj = jj[0]
                 connectivity[idx_i[ii], idx_j[jj]] = True
                 connectivity[idx_j[jj], idx_i[ii]] = True
-        n_components = 1
 
-    return connectivity
+    return connectivity, n_components
 
 
 ###############################################################################
@@ -113,6 +112,8 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
     n_components : int (optional)
         Number of connected components. If None the number of connected
         components is estimated from the connectivity matrix.
+        NOTE: This parameter is now directly determined directly
+        from the connectivity matrix and will be removed in 0.18
 
     n_clusters : int (optional)
         Stop early the construction of the tree at n_clusters. This is
@@ -196,8 +197,12 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
         else:
             return children_, 1, n_samples, None
 
-    connectivity = _fix_connectivity(X, connectivity,
-                                     n_components=n_components)
+    if n_components is not None:
+        warnings.warn(
+            "n_components is now directly calculated from the connectivity "
+            "matrix and will be removed in 0.18",
+            DeprecationWarning)
+    connectivity, n_components = _fix_connectivity(X, connectivity)
     if n_clusters is None:
         n_nodes = 2 * n_samples - 1
     else:
@@ -320,6 +325,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
     n_components : int (optional)
         Number of connected components. If None the number of connected
         components is estimated from the connectivity matrix.
+        NOTE: This parameter is now directly determined directly
+        from the connectivity matrix and will be removed in 0.18
 
     n_clusters : int (optional)
         Stop early the construction of the tree at n_clusters. This is
@@ -425,8 +432,12 @@ def linkage_tree(X, connectivity=None, n_components=None,
             return children_, 1, n_samples, None, distances
         return children_, 1, n_samples, None
 
-    connectivity = _fix_connectivity(X, connectivity,
-                                     n_components=n_components)
+    if n_components is not None:
+        warnings.warn(
+            "n_components is now directly calculated from the connectivity "
+            "matrix and will be removed in 0.18",
+            DeprecationWarning)
+    connectivity, n_components = _fix_connectivity(X, connectivity)
 
     connectivity = connectivity.tocoo()
     # Put the diagonal to zero
@@ -621,8 +632,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         path to the caching directory.
 
     n_components : int (optional)
-        The number of connected components in the graph defined by the
-        connectivity matrix. If not set, it is estimated.
+        Number of connected components. If None the number of connected
+        components is estimated from the connectivity matrix.
+        NOTE: This parameter is now directly determined from the connectivity
+        matrix and will be removed in 0.18
 
     compute_full_tree : bool or 'auto' (optional)
         Stop early the construction of the tree at n_clusters. This is
@@ -783,9 +796,11 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    n_components : int, optional
-        The number of connected components in the graph defined by the
-        connectivity matrix. If not set, it is estimated.
+    n_components : int (optional)
+        Number of connected components. If None the number of connected
+        components is estimated from the connectivity matrix.
+        NOTE: This parameter is now directly determined from the connectivity
+        matrix and will be removed in 0.18
 
     compute_full_tree : bool or 'auto', optional, default "auto"
         Stop early the construction of the tree at n_clusters. This is
