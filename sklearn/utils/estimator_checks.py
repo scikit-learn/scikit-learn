@@ -88,6 +88,9 @@ def set_fast_parameters(estimator):
         # be tolerant of noisy datasets (not actually speed)
         estimator.set_params(alpha=.5)
 
+    if estimator.__class__.__name__ == "TheilSenRegressor":
+        estimator.max_subpopulation = 100
+
     if isinstance(estimator, BaseRandomProjection):
         # Due to the jl lemma and often very few samples, the number
         # of components of the random matrix projection will be probably
