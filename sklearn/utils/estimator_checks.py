@@ -24,7 +24,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_skip_travis
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_raise_message
 
 from sklearn.base import clone, ClassifierMixin
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
@@ -338,13 +337,8 @@ def check_estimators_dtypes(name, Estimator):
 
         for method in ["predict", "transform", "decision_function",
                        "predict_proba"]:
-            try:
-                if hasattr(estimator, method):
-                    getattr(estimator, method)(X_train)
-            except NotImplementedError:
-                # FIXME
-                # non-standard handling of ducktyping in BaggingEstimator
-                pass
+            if hasattr(estimator, method):
+                getattr(estimator, method)(X_train)
 
 
 def check_estimators_empty_data_messages(name, Estimator):
