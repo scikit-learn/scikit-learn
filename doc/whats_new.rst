@@ -157,7 +157,7 @@ Enhancements
 
    - Add ``n_iter_`` attribute to estimators that accept a ``max_iter`` attribute
      in their constructor. By `Manoj Kumar`_.
-  
+
    - Added decision function for :class:`multiclass.OneVsOneClassifier`
      By `Raghav R V`_ and `Kyle Beauchamp`_.
 
@@ -190,10 +190,14 @@ Enhancements
    - More robust seeding and improved error messages in :class:`cluster.MeanShift`
      by `Andreas Müller`_.
 
-   - Make the stopping criterion for :class:`GMM`, :class:`DPGMM` 
-     and :class:`VBGMM` less dependent on the number of samples by 
-     thresholding the average log-likelihood change instead of its sum over 
-     all samples. By `Hervé Bredin`_
+   - Make the stopping criterion for :class:`mixture.GMM`,
+     :class:`mixture.DPGMM` and :class:`mixture.VBGMM` less dependent on the
+     number of samples by thresholding the average log-likelihood change
+     instead of its sum over all samples. By `Hervé Bredin`_.
+
+   - The outcome of :func:`manifold.spectral_embedding` was made deterministic
+     by flipping the sign of eigen vectors. By `Hasil Sharma`_.
+
 
 Documentation improvements
 ..........................
@@ -391,7 +395,7 @@ API changes summary
       as the first nearest neighbor.
 
     - `thresh` parameter is deprecated in favor of new `tol` parameter in
-      :class:`GMM`, :class:`DPGMM` and :class:`VBGMM`. See `Enhancements` 
+      :class:`GMM`, :class:`DPGMM` and :class:`VBGMM`. See `Enhancements`
       section for details. By `Hervé Bredin`_.
 
     - Estimators will treat input with dtype object as numeric when possible.
@@ -3302,3 +3306,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Andrew Tulloch: http://tullo.ch/
 
 .. _Alexis Mignon: https://github.com/AlexisMignon
+
+.. _Hasil Sharma: https://github.com/Hasil-Sharma
