@@ -376,8 +376,11 @@ def test_check_accuracy_on_digits():
 
 
 def test_feature_log_prob_bnb():
-    """
-    Test for issue #4268.
+    """Test for issue #4268.
+
+    Tests that the feature log prob value computed by BernoulliNB when
+    alpha=1.0 is equal to the expression given in Manning, Raghavan,
+    and Schuetze's "Introduction to Information Retrieval" book.
     """
 
     X = np.array([[0, 0, 0], [1, 1, 0], [0, 1, 0], [1, 0, 1], [0, 1, 0]])
