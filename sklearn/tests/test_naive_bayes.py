@@ -373,3 +373,24 @@ def test_check_accuracy_on_digits():
 
     scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
     assert_greater(scores.mean(), 0.86)
+
+
+def test_feature_log_prob_bnb():
+    """
+    Test for issue #4268.
+    """
+
+    X = np.array([[0, 0, 0], [1, 1, 0], [0, 1, 0], [1, 0, 1], [0, 1, 0]])
+    Y = np.array([0, 0, 1, 2, 2])
+
+    # Fit Bernoulli NB w/ alpha = 1.0
+    clf = BernoulliNB(alpha=1.0)
+    clf.fit(X, Y)
+
+    # Manually form the (log) numerator and denominator that
+    # constitute P(feature presence | class)
+    num = np.log(clf.feature_count_ + 1.0)
+    denom = np.tile(np.log(clf.class_count_ + 2.0), (X.shape[1], 1)).T
+
+    # Check manual estimate matches
+    assert_array_equal(clf.feature_log_prob_, (num - denom))
