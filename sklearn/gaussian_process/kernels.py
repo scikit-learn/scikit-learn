@@ -99,8 +99,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
     def __repr__(self):
         return "{0}({1})".format(self.__class__.__name__,
-                                 ", ".join(map("{0}".format, self.params)))
-
+                                 ", ".join(map("{0:.3g}".format, self.params)))
     @abstractmethod
     def __call__(self, X, Y=None, eval_gradient=False):
         """Evaluate the kernel."""
@@ -301,7 +300,7 @@ class ConstantKernel(Kernel):
             return K
 
     def __repr__(self):
-        return "{0}".format(self.value)
+        return "{0:.3g}".format(self.value)
 
 
 class RBF(Kernel):
@@ -530,6 +529,87 @@ class PairwiseKernel(Kernel):
                 return pairwise_kernels(
                     X, Y, metric=self.metric, gamma=gamma,
                     filter_params=True, **self.kwargs)
-            return K, _approx_fprime(np.array([self.gamma]), f, 1e-10)
+            return K, _approx_fprime(self.params, f, 1e-10)
+        else:
+            return K
+
+
+class RationalQuadratic(Kernel):
+
+    def __init__(self, param_space=[(1.0,), (1.0,)]):
+        self._parse_param_space(param_space)
+
+
+    @property
+    def params(self):
+        return np.asarray([self.alpha, self.l])
+
+    @params.setter
+    def params(self, theta):
+        self.alpha = theta[0]
+        self.l = theta[1]
+
+    def __call__(self, X, Y=None, eval_gradient=False):
+        if Y is None:
+            dists = pdist(X, metric='sqeuclidean')
+            K = (1 + dists / (2 * self.alpha * self.l ** 2)) ** -self.alpha
+            # convert from upper-triangular matrix to square matrix
+            K = squareform(K)
+            np.fill_diagonal(K, 1)
+        else:
+            if eval_gradient:
+                raise ValueError(
+                    "Gradient can only be evaluated when Y is None.")
+            dists = cdist(X, Y, metric='sqeuclidean')
+            K = (1 + dists / (2 * self.alpha * self.l ** 2)) ** -self.alpha
+
+        if eval_gradient:
+            # approximate gradient numerically
+            def f(theta):  # helper function
+                theta_, self.params = self.params, theta
+                K = self(X, Y)
+                self.params = theta_
+                return K
+            return K, _approx_fprime(self.params, f, 1e-10)
+        else:
+            return K
+
+
+class ExpSineSquared(Kernel):
+
+    def __init__(self, param_space=[(1.0,), (1.0,)]):
+        self._parse_param_space(param_space)
+
+    @property
+    def params(self):
+        return np.asarray([self.l, self.c])
+
+    @params.setter
+    def params(self, theta):
+        self.l = theta[0]
+        self.c = theta[1]
+
+    def __call__(self, X, Y=None, eval_gradient=False):
+        if Y is None:
+            dists = pdist(X, metric='euclidean')
+            K = np.exp(- self.c * np.sin(np.pi * dists / self.l) ** 2)
+            # convert from upper-triangular matrix to square matrix
+            K = squareform(K)
+            np.fill_diagonal(K, 1)
+        else:
+            if eval_gradient:
+                raise ValueError(
+                    "Gradient can only be evaluated when Y is None.")
+            dists = cdist(X, Y, metric='euclidean')
+            K = np.exp(- self.c * np.sin(np.pi * dists / self.l) ** 2)
+
+        if eval_gradient:
+            # approximate gradient numerically
+            def f(theta):  # helper function
+                theta_, self.params = self.params, theta
+                K = self(X, Y)
+                self.params = theta_
+                return K
+            return K, _approx_fprime(self.params, f, 1e-10)
         else:
             return K
