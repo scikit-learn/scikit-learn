@@ -325,6 +325,29 @@ def test_isotonic_duplicate_min_entry():
     all_predictions_finite = np.all(np.isfinite(ir.predict(x)))
     assert_true(all_predictions_finite)
 
+
+def test_isotonic_zero_weight_loop():
+    # Test from @ogrisel's issue:
+    # https://github.com/scikit-learn/scikit-learn/issues/4297
+
+    # Get deterministic RNG with seed
+    rng = np.random.RandomState(42)
+
+    # Create regression and samples
+    regression = IsotonicRegression()
+    n_samples = 50
+    x = np.linspace(-3, 3, n_samples)
+    y = x + rng.uniform(size=n_samples)
+
+    # Get some random weights and zero out
+    w = rng.uniform(size=n_samples)
+    w[5:8] = 0
+    regression.fit(x, y, sample_weight=w)
+
+    # This will hang in failure case.
+    regression.fit(x, y, sample_weight=w)
+
+
 if __name__ == "__main__":
     import nose
     nose.run(argv=['', __file__])
