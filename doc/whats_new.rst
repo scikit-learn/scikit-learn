@@ -321,6 +321,10 @@ Bug fixes
     - Fixed round off errors with non positive-definite covariance matrices
       in GMM. By `Alexis Mignon`_.
 
+    - Fixed a error in the computation of conditional probabilities in
+      :class:`naive_bayes.BernoulliNB`. By `Hanna Wallach`_.
+
+
 API changes summary
 -------------------
 
@@ -3310,3 +3314,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Alexis Mignon: https://github.com/AlexisMignon
 
 .. _Hasil Sharma: https://github.com/Hasil-Sharma
+
+.. _Hanna Wallach: http://dirichlet.net/
