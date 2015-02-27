@@ -258,22 +258,19 @@ class EmpiricalCovariance(BaseEstimator):
         return result
 
     def mahalanobis(self, observations):
-        """Computes the Mahalanobis distances of given observations.
-
-        The provided observations are assumed to be centered. One may want to
-        center them using a location estimate first.
+        """Computes the squared Mahalanobis distances of given observations.
 
         Parameters
         ----------
         observations : array-like, shape = [n_observations, n_features]
             The observations, the Mahalanobis distances of the which we
             compute. Observations are assumed to be drawn from the same
-            distribution than the data used in fit (including centering).
+            distribution than the data used in fit.
 
         Returns
         -------
         mahalanobis_distance : array, shape = [n_observations,]
-            Mahalanobis distances of the observations.
+            Squared Mahalanobis distances of the observations.
 
         """
         precision = self.get_precision()
