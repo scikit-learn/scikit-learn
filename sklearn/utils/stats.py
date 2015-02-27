@@ -1,5 +1,7 @@
 import numpy as np
 from scipy.stats import rankdata as _sp_rankdata
+from .fixes import bincount
+
 
 # To remove when we support scipy 0.13
 def _rankdata(a, method="average"):
@@ -33,7 +35,7 @@ def _rankdata(a, method="average"):
         raise NotImplementedError()
 
     unique_all, inverse = np.unique(a, return_inverse=True)
-    count = np.bincount(inverse, minlength=unique_all.size)
+    count = bincount(inverse, minlength=unique_all.size)
     cum_count = count.cumsum()
     rank = cum_count[inverse]
     return rank

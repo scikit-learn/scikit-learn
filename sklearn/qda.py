@@ -14,6 +14,7 @@ from .base import BaseEstimator, ClassifierMixin
 from .externals.six.moves import xrange
 from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
+from .utils.fixes import bincount
 
 __all__ = ['QDA']
 
@@ -107,7 +108,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
         if self.priors is None:
-            self.priors_ = np.bincount(y) / float(n_samples)
+            self.priors_ = bincount(y) / float(n_samples)
         else:
             self.priors_ = self.priors
 

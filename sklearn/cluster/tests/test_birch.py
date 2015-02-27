@@ -5,7 +5,7 @@ Tests for the birch clustering algorithm.
 from scipy import sparse
 import numpy as np
 
-from .common import generate_clustered_data
+from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.cluster.birch import Birch
 from sklearn.cluster.hierarchical import AgglomerativeClustering
 from sklearn.datasets import make_blobs

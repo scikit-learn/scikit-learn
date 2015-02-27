@@ -62,7 +62,7 @@ for score in scores:
     print()
     for params, mean_score, scores in clf.grid_scores_:
         print("%0.3f (+/-%0.03f) for %r"
-              % (mean_score, scores.std() / 2, params))
+              % (mean_score, scores.std() * 2, params))
     print()
 
     print("Detailed classification report:")

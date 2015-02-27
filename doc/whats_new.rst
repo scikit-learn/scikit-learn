@@ -75,6 +75,11 @@ New features
      for fixed user-provided cross-validation folds.
      By `untom <https://github.com/untom>`_.
 
+   - Added :class:`calibration.CalibratedClassifierCV`, an approach for
+     calibrating the predicted probabilities of a classifier.
+     By `Alexandre Gramfort`_, `Jan Hendrik Metzen`_, `Mathieu Blondel`_
+     and `Balazs Kegl`_.
+
 
 Enhancements
 ............
@@ -153,6 +158,9 @@ Enhancements
    - Add ``n_iter_`` attribute to estimators that accept a ``max_iter`` attribute
      in their constructor. By `Manoj Kumar`_.
 
+   - Added decision function for :class:`multiclass.OneVsOneClassifier`
+     By `Raghav R V`_ and `Kyle Beauchamp`_.
+
    - :func:`neighbors.kneighbors_graph` and :func:`radius_neighbors_graph`
      support non-Euclidean metrics. By `Manoj Kumar`_
 
@@ -175,6 +183,21 @@ Enhancements
 
    - Parallelized calculation of :func:`pairwise_distances` is now supported
      for scipy metrics and custom callables. By `Joel Nothman`_.
+
+   - Allow the fitting and scoring of all clustering algorithms in
+     :class:`pipeline.Pipeline`. By `Andreas Müller`_.
+
+   - More robust seeding and improved error messages in :class:`cluster.MeanShift`
+     by `Andreas Müller`_.
+
+   - Make the stopping criterion for :class:`mixture.GMM`,
+     :class:`mixture.DPGMM` and :class:`mixture.VBGMM` less dependent on the
+     number of samples by thresholding the average log-likelihood change
+     instead of its sum over all samples. By `Hervé Bredin`_.
+
+   - The outcome of :func:`manifold.spectral_embedding` was made deterministic
+     by flipping the sign of eigen vectors. By `Hasil Sharma`_.
+
 
 Documentation improvements
 ..........................
@@ -285,6 +308,23 @@ Bug fixes
       :class:`sklearn.neighbors.NearestNeighbors` and family, when the query
       data is not the same as fit data. By `Manoj Kumar`_.
 
+    - Fix log-density calculation in the :class:`mixture.GMM` with
+      tied covariance. By `Will Dawson`_
+
+    - Fixed a scaling error in :class:`feature_selection.SelectFdr`
+      where a factor ``n_features`` was missing. By `Andrew Tulloch`_
+
+    - Fix zero division in :class:`neighbors.KNeighborsRegressor` and related
+      classes when using distance weighting and having identical data points.
+      By `Garret-R <https://github.com/Garrett-R>`_.
+
+    - Fixed round off errors with non positive-definite covariance matrices
+      in GMM. By `Alexis Mignon`_.
+
+    - Fixed a error in the computation of conditional probabilities in
+      :class:`naive_bayes.BernoulliNB`. By `Hanna Wallach`_.
+
+
 API changes summary
 -------------------
 
@@ -357,6 +397,17 @@ API changes summary
       and :func:`neighbors.radius_neighbors_graph` which has to be explicitly
       set by the user. If set to True, then the sample itself is considered
       as the first nearest neighbor.
+
+    - `thresh` parameter is deprecated in favor of new `tol` parameter in
+      :class:`GMM`, :class:`DPGMM` and :class:`VBGMM`. See `Enhancements`
+      section for details. By `Hervé Bredin`_.
+
+    - Estimators will treat input with dtype object as numeric when possible.
+      By `Andreas Müller`_
+
+    - Estimators now raise `ValueError` consistently when fitted on empty
+      data (less than 1 sample or less than 1 feature for 2D input).
+      By `Olivier Grisel`_.
 
 .. _changes_0_15_2:
 
@@ -3253,3 +3304,15 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Jan Hendrik Metzen: https://jmetzen.github.io/
 
 .. _Cathy Deng: https://github.com/cathydeng
+
+.. _Will Dawson: http://dawsonresearch.com
+
+.. _Balazs Kegl: https://github.com/kegl
+
+.. _Andrew Tulloch: http://tullo.ch/
+
+.. _Alexis Mignon: https://github.com/AlexisMignon
+
+.. _Hasil Sharma: https://github.com/Hasil-Sharma
+
+.. _Hanna Wallach: http://dirichlet.net/

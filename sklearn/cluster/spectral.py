@@ -184,7 +184,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     n_clusters : integer, optional
         Number of clusters to extract.
 
-    n_components : integer, optional, default is k
+    n_components : integer, optional, default is n_clusters
         Number of eigen vectors to use for the spectral embedding
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
@@ -243,7 +243,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     This algorithm solves the normalized cut for k=2: it is a
     normalized spectral clustering.
     """
-    if not assign_labels in ('kmeans', 'discretize'):
+    if assign_labels not in ('kmeans', 'discretize'):
         raise ValueError("The 'assign_labels' parameter should be "
                          "'kmeans' or 'discretize', but '%s' was given"
                          % assign_labels)
@@ -405,7 +405,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.coef0 = coef0
         self.kernel_params = kernel_params
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Creates an affinity matrix for X using the selected affinity,
         then applies spectral clustering to this affinity matrix.
 
@@ -415,7 +415,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
             OR, if affinity==`precomputed`, a precomputed affinity
             matrix of shape (n_samples, n_samples)
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        dtype=np.float64)
         if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
             warnings.warn("The spectral clustering API has changed. ``fit``"
                           "now constructs an affinity matrix from data. To use"

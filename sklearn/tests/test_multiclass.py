@@ -428,6 +428,47 @@ def test_ovo_fit_predict():
     assert_equal(len(ovo.estimators_), n_classes * (n_classes - 1) / 2)
 
 
+def test_ovo_decision_function():
+    n_samples = iris.data.shape[0]
+
+    ovo_clf = OneVsOneClassifier(LinearSVC(random_state=0))
+    ovo_clf.fit(iris.data, iris.target)
+    decisions = ovo_clf.decision_function(iris.data)
+
+    assert_equal(decisions.shape, (n_samples, n_classes))
+    assert_array_equal(decisions.argmax(axis=1), ovo_clf.predict(iris.data))
+
+    # Compute the votes
+    votes = np.zeros((n_samples, n_classes))
+
+    k = 0
+    for i in range(n_classes):
+        for j in range(i + 1, n_classes):
+            pred = ovo_clf.estimators_[k].predict(iris.data)
+            votes[pred == 0, i] += 1
+            votes[pred == 1, j] += 1
+            k += 1
+
+    # Extract votes and verify
+    assert_array_equal(votes, np.round(decisions))
+
+    for class_idx in range(n_classes):
+        # For each sample and each class, there only 3 possible vote levels
+        # because they are only 3 distinct class pairs thus 3 distinct
+        # binary classifiers.
+        # Therefore, sorting predictions based on votes would yield
+        # mostly tied predictions:
+        assert_true(set(votes[:, class_idx]).issubset(set([0., 1., 2.])))
+
+        # The OVO decision function on the other hand is able to resolve
+        # most of the ties on this data as it combines both the vote counts
+        # and the aggregated confidence levels of the binary classifiers
+        # to compute the aggregate decision function. The iris dataset
+        # has 150 samples with a couple of duplicates. The OvO decisions
+        # can resolve most of the ties:
+        assert_greater(len(np.unique(decisions[:, class_idx])), 146)
+
+
 def test_ovo_gridsearch():
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]
@@ -438,36 +479,27 @@ def test_ovo_gridsearch():
 
 
 def test_ovo_ties():
-    # test that ties are broken using the decision function, not defaulting to
-    # the smallest label
+    # Test that ties are broken using the decision function,
+    # not defaulting to the smallest label
     X = np.array([[1, 2], [2, 1], [-2, 1], [-2, -1]])
     y = np.array([2, 0, 1, 2])
     multi_clf = OneVsOneClassifier(Perceptron())
     ovo_prediction = multi_clf.fit(X, y).predict(X)
+    ovo_decision = multi_clf.decision_function(X)
 
-    # recalculate votes to make sure we have a tie
-    predictions = np.vstack([clf.predict(X) for clf in multi_clf.estimators_])
-    scores = np.vstack([clf.decision_function(X)
-                        for clf in multi_clf.estimators_])
-    # classifiers are in order 0-1, 0-2, 1-2
-    # aggregate votes:
-    votes = np.zeros((4, 3))
-    votes[np.arange(4), predictions[0]] += 1
-    votes[np.arange(4), 2 * predictions[1]] += 1
-    votes[np.arange(4), 1 + predictions[2]] += 1
-    # for the first point, there is one vote per class
+    # Classifiers are in order 0-1, 0-2, 1-2
+    # Use decision_function to compute the votes and the normalized
+    # sum_of_confidences, which is used to disambiguate when there is a tie in
+    # votes.
+    votes = np.round(ovo_decision)
+    normalized_confidences = ovo_decision - votes
+
+    # For the first point, there is one vote per class
     assert_array_equal(votes[0, :], 1)
-    # for the rest, there is no tie and the prediction is the argmax
+    # For the rest, there is no tie and the prediction is the argmax
     assert_array_equal(np.argmax(votes[1:], axis=1), ovo_prediction[1:])
-    # for the tie, the prediction is the class with the highest score
-    assert_equal(ovo_prediction[0], 0)
-    # in the zero-one classifier, the score for 0 is greater than the score for
-    # one.
-    assert_greater(scores[0][0], scores[0][1])
-    # score for one is greater than score for zero
-    assert_greater(scores[2, 0] - scores[0, 0], scores[0, 0] + scores[1, 0])
-    # score for one is greater than score for two
-    assert_greater(scores[2, 0] - scores[0, 0], -scores[1, 0] - scores[2, 0])
+    # For the tie, the prediction is the class with the highest score
+    assert_equal(ovo_prediction[0], normalized_confidences[0].argmax())
 
 
 def test_ovo_ties2():
@@ -484,12 +516,11 @@ def test_ovo_ties2():
 
 
 def test_ovo_string_y():
-    "Test that the OvO doesn't screw the encoding of string labels"
+    # Test that the OvO doesn't mess up the encoding of string labels
     X = np.eye(4)
     y = np.array(['a', 'b', 'c', 'd'])
 
-    svc = LinearSVC()
-    ovo = OneVsOneClassifier(svc)
+    ovo = OneVsOneClassifier(LinearSVC())
     ovo.fit(X, y)
     assert_array_equal(y, ovo.predict(X))
 
@@ -551,7 +582,6 @@ def test_deprecated():
             assert_almost_equal(predict_func(estimators_, classes_or_lb,
                                              X_test),
                                 meta_est.predict(X_test))
-
             if proba_func is not None:
                 assert_almost_equal(proba_func(estimators_, X_test,
                                                is_multilabel=False),

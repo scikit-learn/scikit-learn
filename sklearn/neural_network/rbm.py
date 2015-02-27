@@ -217,7 +217,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         return v_
 
-    def partial_fit(self, X):
+    def partial_fit(self, X, y=None):
         """Fit the model to the data X which should contain a partial
         segment of the data.
 
@@ -301,7 +301,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         returns the log of the logistic function of the difference.
         """
         check_is_fitted(self, "components_")
-        
+
         v = check_array(X, accept_sparse='csr')
         rng = check_random_state(self.random_state)
 

@@ -373,3 +373,75 @@ def test_check_accuracy_on_digits():
 
     scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
     assert_greater(scores.mean(), 0.86)
+
+
+def test_feature_log_prob_bnb():
+    """Test for issue #4268.
+
+    Tests that the feature log prob value computed by BernoulliNB when
+    alpha=1.0 is equal to the expression given in Manning, Raghavan,
+    and Schuetze's "Introduction to Information Retrieval" book:
+    http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
+    """
+
+    X = np.array([[0, 0, 0], [1, 1, 0], [0, 1, 0], [1, 0, 1], [0, 1, 0]])
+    Y = np.array([0, 0, 1, 2, 2])
+
+    # Fit Bernoulli NB w/ alpha = 1.0
+    clf = BernoulliNB(alpha=1.0)
+    clf.fit(X, Y)
+
+    # Manually form the (log) numerator and denominator that
+    # constitute P(feature presence | class)
+    num = np.log(clf.feature_count_ + 1.0)
+    denom = np.tile(np.log(clf.class_count_ + 2.0), (X.shape[1], 1)).T
+
+    # Check manual estimate matches
+    assert_array_equal(clf.feature_log_prob_, (num - denom))
+
+
+def test_bnb():
+    """
+    Tests that BernoulliNB when alpha=1.0 gives the same values as
+    those given for the toy example in Manning, Raghavan, and
+    Schuetze's "Introduction to Information Retrieval" book:
+    http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
+    """
+
+    # Training data points are:
+    # Chinese Beijing Chinese (class: China)
+    # Chinese Chinese Shanghai (class: China)
+    # Chinese Macao (class: China)
+    # Tokyo Japan Chinese (class: Japan)
+
+    # Features are Beijing, Chinese, Japan, Macao, Shanghai, and Tokyo
+    X = np.array([[1, 1, 0, 0, 0, 0],
+                  [0, 1, 0, 0, 1, 0],
+                  [0, 1, 0, 1, 0, 0],
+                  [0, 1, 1, 0, 0, 1]])
+
+    # Classes are China (0), Japan (1)
+    Y = np.array([0, 0, 0, 1])
+
+    # Fit BernoulliBN w/ alpha = 1.0
+    clf = BernoulliNB(alpha=1.0)
+    clf.fit(X, Y)
+
+    # Check the class prior is correct
+    class_prior = np.array([0.75, 0.25])
+    assert_array_almost_equal(np.exp(clf.class_log_prior_), class_prior)
+
+    # Check the feature probabilities are correct
+    feature_prob = np.array([[0.4, 0.8, 0.2, 0.4, 0.4, 0.2],
+                             [1/3.0, 2/3.0, 2/3.0, 1/3.0, 1/3.0, 2/3.0]])
+    assert_array_almost_equal(np.exp(clf.feature_log_prob_), feature_prob)
+
+    # Testing data point is:
+    # Chinese Chinese Chinese Tokyo Japan
+    X_test = np.array([0, 1, 1, 0, 0, 1])
+
+    # Check the predictive probabilities are correct
+    unnorm_predict_proba = np.array([[0.005183999999999999,
+                                      0.02194787379972565]])
+    predict_proba = unnorm_predict_proba / np.sum(unnorm_predict_proba)
+    assert_array_almost_equal(clf.predict_proba(X_test), predict_proba)

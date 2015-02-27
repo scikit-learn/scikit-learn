@@ -79,9 +79,8 @@ def _fix_connectivity(X, connectivity, n_components=None,
                 jj = jj[0]
                 connectivity[idx_i[ii], idx_j[jj]] = True
                 connectivity[idx_j[jj], idx_i[ii]] = True
-        n_components = 1
 
-    return connectivity
+    return connectivity, n_components
 
 
 ###############################################################################
@@ -113,6 +112,8 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
     n_components : int (optional)
         Number of connected components. If None the number of connected
         components is estimated from the connectivity matrix.
+        NOTE: This parameter is now directly determined directly
+        from the connectivity matrix and will be removed in 0.18
 
     n_clusters : int (optional)
         Stop early the construction of the tree at n_clusters. This is
@@ -127,7 +128,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
 
     Returns
     -------
-    children : 2D array, shape (n_nodes, 2)
+    children : 2D array, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf
@@ -145,7 +146,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
 
-    distances : 1D array, shape (n_nodes, )
+    distances : 1D array, shape (n_nodes-1, )
         Only returned if return_distance is set to True (for compatibility).
         The distances between the centers of the nodes. `distances[i]`
         corresponds to a weighted euclidean distance between
@@ -196,8 +197,12 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
         else:
             return children_, 1, n_samples, None
 
-    connectivity = _fix_connectivity(X, connectivity,
-                                     n_components=n_components)
+    if n_components is not None:
+        warnings.warn(
+            "n_components is now directly calculated from the connectivity "
+            "matrix and will be removed in 0.18",
+            DeprecationWarning)
+    connectivity, n_components = _fix_connectivity(X, connectivity)
     if n_clusters is None:
         n_nodes = 2 * n_samples - 1
     else:
@@ -320,6 +325,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
     n_components : int (optional)
         Number of connected components. If None the number of connected
         components is estimated from the connectivity matrix.
+        NOTE: This parameter is now directly determined directly
+        from the connectivity matrix and will be removed in 0.18
 
     n_clusters : int (optional)
         Stop early the construction of the tree at n_clusters. This is
@@ -346,7 +353,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
 
     Returns
     -------
-    children : 2D array, shape (n_nodes, 2)
+    children : 2D array, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf
@@ -364,7 +371,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
 
-    distances : ndarray, shape (n_nodes,)
+    distances : ndarray, shape (n_nodes-1,)
         Returned when return_distance is set to True.
 
         distances[i] refers to the distance between children[i][0] and
@@ -425,8 +432,12 @@ def linkage_tree(X, connectivity=None, n_components=None,
             return children_, 1, n_samples, None, distances
         return children_, 1, n_samples, None
 
-    connectivity = _fix_connectivity(X, connectivity,
-                                     n_components=n_components)
+    if n_components is not None:
+        warnings.warn(
+            "n_components is now directly calculated from the connectivity "
+            "matrix and will be removed in 0.18",
+            DeprecationWarning)
+    connectivity, n_components = _fix_connectivity(X, connectivity)
 
     connectivity = connectivity.tocoo()
     # Put the diagonal to zero
@@ -621,8 +632,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         path to the caching directory.
 
     n_components : int (optional)
-        The number of connected components in the graph defined by the
-        connectivity matrix. If not set, it is estimated.
+        Number of connected components. If None the number of connected
+        components is estimated from the connectivity matrix.
+        NOTE: This parameter is now directly determined from the connectivity
+        matrix and will be removed in 0.18
 
     compute_full_tree : bool or 'auto' (optional)
         Stop early the construction of the tree at n_clusters. This is
@@ -659,7 +672,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     n_components_ : int
         The estimated number of connected components in the graph.
 
-    children_ : array-like, shape (n_nodes, 2)
+    children_ : array-like, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf
@@ -683,7 +696,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.affinity = affinity
         self.pooling_func = pooling_func
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit the hierarchical clustering on the data
 
         Parameters
@@ -783,9 +796,11 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    n_components : int, optional
-        The number of connected components in the graph defined by the
-        connectivity matrix. If not set, it is estimated.
+    n_components : int (optional)
+        Number of connected components. If None the number of connected
+        components is estimated from the connectivity matrix.
+        NOTE: This parameter is now directly determined from the connectivity
+        matrix and will be removed in 0.18
 
     compute_full_tree : bool or 'auto', optional, default "auto"
         Stop early the construction of the tree at n_clusters. This is
@@ -822,7 +837,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     n_components_ : int
         The estimated number of connected components in the graph.
 
-    children_ : array-like, shape (n_nodes, 2)
+    children_ : array-like, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_features`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_features` is a non-leaf
@@ -902,7 +917,7 @@ class Ward(AgglomerativeClustering):
     n_components_ : int
         The estimated number of connected components in the graph.
 
-    children_ : array-like, shape (n_nodes, 2)
+    children_ : array-like, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         refer to leaves of the tree. A greater value `i` indicates a node with
         children `children_[i - n_samples]`.
@@ -970,7 +985,7 @@ class WardAgglomeration(AgglomerationTransform, Ward):
 
     Attributes
     ----------
-    children_ : array-like, shape (n_nodes, 2)
+    children_ : array-like, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_features`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_features` is a non-leaf

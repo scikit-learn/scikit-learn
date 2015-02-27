@@ -189,7 +189,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         of the construction and query, as well as the memory required
         to store the tree. The optimal value depends
         on the nature of the problem.
- 
+
     Attributes
     ----------
     core_sample_indices_ : array, shape = [n_core_samples]
@@ -224,7 +224,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         self.p = p
         self.random_state = random_state
 
-    def fit(self, X, sample_weight=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Perform DBSCAN clustering from features or distance matrix.
 
         Parameters

@@ -3,7 +3,6 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
 
 import numpy as np
-import warnings
 
 from sklearn import datasets
 from sklearn.base import clone
@@ -12,7 +11,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
 from sklearn.metrics import mean_squared_error
 from sklearn.utils import check_random_state, tosequence
-from sklearn.utils.testing import assert_almost_equal, clean_warning_registry
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -340,6 +339,9 @@ def test_check_max_features():
                                     max_features=(len(X[0]) + 1))
     assert_raises(ValueError, clf.fit, X, y)
 
+    clf = GradientBoostingRegressor(n_estimators=100, random_state=1,
+                                    max_features=-0.1)
+    assert_raises(ValueError, clf.fit, X, y)
 
 def test_max_feature_regression():
     """Test to make sure random state is set properly. """
@@ -383,6 +385,11 @@ def test_max_feature_auto():
     gbrt = GradientBoostingRegressor(n_estimators=1, max_features='log2')
     gbrt.fit(X_train, y_train)
     assert_equal(gbrt.max_features_, int(np.log2(n_features)))
+
+    gbrt = GradientBoostingRegressor(n_estimators=1,
+                                     max_features=0.01 / X.shape[1])
+    gbrt.fit(X_train, y_train)
+    assert_equal(gbrt.max_features_, 1)
 
 
 def test_staged_predict():
@@ -435,6 +442,24 @@ def test_staged_predict_proba():
         assert_equal(2, staged_proba.shape[1])
 
     assert_array_equal(clf.predict_proba(X_test), staged_proba)
+
+
+def test_staged_functions_defensive():
+    # test that staged_functions make defensive copies
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(10, 3))
+    y = (4 * X[:, 0]).astype(np.int) + 1  # don't predict zeros
+    for estimator in [GradientBoostingRegressor(),
+                      GradientBoostingClassifier()]:
+        estimator.fit(X, y)
+        for func in ['predict', 'decision_function', 'predict_proba']:
+            staged_func = getattr(estimator, "staged_" + func, None)
+            if staged_func is None:
+                # regressor has no staged_predict_proba
+                continue
+            staged_result = list(staged_func(X))
+            staged_result[1][:] = 0
+            assert_true(np.all(staged_result[0] != 0))
 
 
 def test_serialization():

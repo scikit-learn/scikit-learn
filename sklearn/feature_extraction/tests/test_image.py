@@ -9,10 +9,10 @@ from scipy import ndimage
 from nose.tools import assert_equal, assert_true
 from numpy.testing import assert_raises
 
-from ..image import img_to_graph, grid_to_graph
-from ..image import (extract_patches_2d, reconstruct_from_patches_2d,
-                     PatchExtractor, extract_patches)
-from ...utils.graph import connected_components
+from sklearn.feature_extraction.image import (
+    img_to_graph, grid_to_graph, extract_patches_2d,
+    reconstruct_from_patches_2d, PatchExtractor, extract_patches)
+from sklearn.utils.graph import connected_components
 
 
 def test_img_to_graph():

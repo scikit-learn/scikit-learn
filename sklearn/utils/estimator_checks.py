@@ -5,13 +5,16 @@ import sys
 import traceback
 import inspect
 import pickle
+from copy import deepcopy
 
 import numpy as np
 from scipy import sparse
 import struct
 
 from sklearn.externals.six.moves import zip
+from sklearn.externals.joblib import hash
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
@@ -22,15 +25,16 @@ from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_skip_travis
+from sklearn.utils.testing import ignore_warnings
 
-from sklearn.base import (clone, ClusterMixin, ClassifierMixin, RegressorMixin,
-                          TransformerMixin)
+from sklearn.base import clone, ClassifierMixin
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.lda import LDA
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
+from sklearn.pipeline import make_pipeline
 
 from sklearn.utils.validation import DataConversionWarning, NotFittedError
 from sklearn.cross_validation import train_test_split
@@ -42,13 +46,6 @@ from sklearn.datasets import load_iris, load_boston, make_blobs
 
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
-
-
-def is_supervised(estimator):
-    return (isinstance(estimator, ClassifierMixin)
-            or isinstance(estimator, RegressorMixin)
-            # transformers can all take a y
-            or isinstance(estimator, TransformerMixin))
 
 
 def _boston_subset(n_samples=200):
@@ -66,7 +63,8 @@ def _boston_subset(n_samples=200):
 def set_fast_parameters(estimator):
     # speed up some estimators
     params = estimator.get_params()
-    if "n_iter" in params:
+    if ("n_iter" in params
+            and estimator.__class__.__name__ != "TSNE"):
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
         # NMF
@@ -87,6 +85,13 @@ def set_fast_parameters(estimator):
     if "n_init" in params:
         # K-Means
         estimator.set_params(n_init=2)
+
+    if estimator.__class__.__name__ == "SelectFdr":
+        # be tolerant of noisy datasets (not actually speed)
+        estimator.set_params(alpha=.5)
+
+    if estimator.__class__.__name__ == "TheilSenRegressor":
+        estimator.max_subpopulation = 100
 
     if isinstance(estimator, BaseRandomProjection):
         # Due to the jl lemma and often very few samples, the number
@@ -131,10 +136,7 @@ def check_estimator_sparse_data(name, Estimator):
     set_fast_parameters(estimator)
     # fit and predict
     try:
-        if is_supervised(estimator):
-            estimator.fit(X, y)
-        else:
-            estimator.fit(X)
+        estimator.fit(X, y)
         if hasattr(estimator, "predict"):
             estimator.predict(X)
         if hasattr(estimator, 'predict_proba'):
@@ -151,6 +153,33 @@ def check_estimator_sparse_data(name, Estimator):
               "sparse data: it should raise a TypeError if sparse input "
               "is explicitly not supported." % name)
         raise
+
+
+def check_dtype_object(name, Estimator):
+    # check that estimators treat dtype object as numeric if possible
+    rng = np.random.RandomState(0)
+    X = rng.rand(40, 10).astype(object)
+    y = (X[:, 0] * 4).astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    with warnings.catch_warnings():
+        estimator = Estimator()
+    set_fast_parameters(estimator)
+
+    estimator.fit(X, y)
+    if hasattr(estimator, "predict"):
+        estimator.predict(X)
+
+    if hasattr(estimator, "transform"):
+        estimator.transform(X)
+
+    try:
+        estimator.fit(X, y.astype(object))
+    except Exception as e:
+        if "Unknown label type" not in str(e):
+            raise
+
+    X[0, 0] = {'foo': 'bar'}
+    assert_raise_message(TypeError, "string or a number", estimator.fit, X, y)
 
 
 def check_transformer(name, Transformer):
@@ -252,6 +281,89 @@ def _check_transformer(name, Transformer, X, y):
             assert_raises(ValueError, transformer.transform, X.T)
 
 
+@ignore_warnings
+def check_pipeline_consistency(name, Estimator):
+    # check that make_pipeline(est) gives same score as est
+    X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+                      random_state=0, n_features=2, cluster_std=0.1)
+    X -= X.min()
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+    set_random_state(estimator)
+    pipeline = make_pipeline(estimator)
+    estimator.fit(X, y)
+    pipeline.fit(X, y)
+    funcs = ["score", "fit_transform"]
+    for func_name in funcs:
+        func = getattr(estimator, func_name, None)
+        if func is not None:
+            func_pipeline = getattr(pipeline, func_name)
+            result = func(X, y)
+            result_pipe = func_pipeline(X, y)
+            assert_array_almost_equal(result, result_pipe)
+
+
+@ignore_warnings
+def check_fit_score_takes_y(name, Estimator):
+    # check that all estimators accept an optional y
+    # in fit and score so they can be used in pipelines
+    rnd = np.random.RandomState(0)
+    X = rnd.uniform(size=(10, 3))
+    y = np.arange(10) % 3
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+    set_random_state(estimator)
+    funcs = ["fit", "score", "partial_fit", "fit_predict", "fit_transform"]
+
+    for func_name in funcs:
+        func = getattr(estimator, func_name, None)
+        if func is not None:
+            func(X, y)
+            args = inspect.getargspec(func).args
+            assert_true(args[2] in ["y", "Y"])
+
+
+def check_estimators_dtypes(name, Estimator):
+    rnd = np.random.RandomState(0)
+    X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
+    X_train_64 = X_train_32.astype(np.float64)
+    X_train_int_64 = X_train_32.astype(np.int64)
+    X_train_int_32 = X_train_32.astype(np.int32)
+    y = X_train_int_64[:, 0]
+    y = multioutput_estimator_convert_y_2d(name, y)
+    for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
+        with warnings.catch_warnings(record=True):
+            estimator = Estimator()
+        set_fast_parameters(estimator)
+        set_random_state(estimator, 1)
+        estimator.fit(X_train, y)
+
+        for method in ["predict", "transform", "decision_function",
+                       "predict_proba"]:
+            if hasattr(estimator, method):
+                getattr(estimator, method)(X_train)
+
+
+def check_estimators_empty_data_messages(name, Estimator):
+    e = Estimator()
+    set_fast_parameters(e)
+    set_random_state(e, 1)
+
+    X_zero_samples = np.empty(0).reshape(0, 3)
+    # The precise message can change depending on whether X or y is
+    # validated first. Let us test the type of exception only:
+    assert_raises(ValueError, e.fit, X_zero_samples, [])
+
+    X_zero_features = np.empty(0).reshape(3, 0)
+    # the following y should be accepted by both classifiers and regressors
+    # and ignored by unsupervised models
+    y = multioutput_estimator_convert_y_2d(name, np.array([1, 0, 1]))
+    msg = "0 feature(s) (shape=(3, 0)) while a minimum of 1 is required."
+    assert_raise_message(ValueError, msg, e.fit, X_zero_features, y)
+
+
 def check_estimators_nan_inf(name, Estimator):
     rnd = np.random.RandomState(0)
     X_train_finite = rnd.uniform(size=(10, 3))
@@ -275,10 +387,7 @@ def check_estimators_nan_inf(name, Estimator):
             set_random_state(estimator, 1)
             # try to fit
             try:
-                if issubclass(Estimator, ClusterMixin):
-                    estimator.fit(X_train)
-                else:
-                    estimator.fit(X_train, y)
+                estimator.fit(X_train, y)
             except ValueError as e:
                 if 'inf' not in repr(e) and 'NaN' not in repr(e):
                     print(error_string_fit, Estimator, e)
@@ -291,12 +400,7 @@ def check_estimators_nan_inf(name, Estimator):
             else:
                 raise AssertionError(error_string_fit, Estimator)
             # actually fit
-            if issubclass(Estimator, ClusterMixin):
-                # All estimators except clustering algorithm
-                # support fitting with (optional) y
-                estimator.fit(X_train_finite)
-            else:
-                estimator.fit(X_train_finite, y)
+            estimator.fit(X_train_finite, y)
 
             # predict
             if hasattr(estimator, "predict"):
@@ -576,6 +680,7 @@ def check_classifiers_input_shapes(name, Classifier):
     # raised
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always", DataConversionWarning)
+        warnings.simplefilter("ignore", RuntimeWarning)
         classifier.fit(X, y[:, np.newaxis])
     msg = "expected 1 DataConversionWarning, got: %s" % (
         ", ".join([str(w_x) for w_x in w]))
@@ -829,20 +934,30 @@ def check_estimators_overwrite_params(name, Estimator):
         estimator.batch_size = 1
 
     set_fast_parameters(estimator)
-
     set_random_state(estimator)
 
+    # Make a physical copy of the orginal estimator parameters before fitting.
     params = estimator.get_params()
-    if is_supervised(estimator):
-        estimator.fit(X, y)
-    else:
-        estimator.fit(X)
+    original_params = deepcopy(params)
+
+    # Fit the model
+    estimator.fit(X, y)
+
+    # Compare the state of the model parameters with the original parameters
     new_params = estimator.get_params()
-    for k, v in params.items():
-        assert_false(np.any(new_params[k] != v),
-                     "Estimator %s changes its parameter %s"
-                     " from %s to %s during fit."
-                     % (name, k, v, new_params[k]))
+    for param_name, original_value in original_params.items():
+        new_value = new_params[param_name]
+
+        # We should never change or mutate the internal state of input
+        # parameters by default. To check this we use the joblib.hash function
+        # that introspects recursively any subobjects to compute a checksum.
+        # The only exception to this rule of immutable constructor parameters
+        # is possible RandomState instance but in this check we explicitly
+        # fixed the random_state params recursively to be integer seeds.
+        assert_equal(hash(new_value), hash(original_value),
+                     "Estimator %s should not change or mutate "
+                     " the parameter %s from %s to %s during fit."
+                     % (name, param_name, original_value, new_value))
 
 
 def check_sparsify_coefficients(name, Estimator):

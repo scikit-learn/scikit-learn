@@ -18,7 +18,7 @@ from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
 
 from ..utils import ConvergenceWarning
 from ..utils.extmath import pinvh
-from ..utils.validation import check_random_state
+from ..utils.validation import check_random_state, check_array
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..cross_validation import _check_cv as check_cv, cross_val_score
@@ -191,6 +191,9 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     else:
         errors = dict(invalid='raise')
     try:
+        # be robust to the max_iter=0 edge case, see:
+        # https://github.com/scikit-learn/scikit-learn/issues/4134
+        d_gap = np.inf
         for i in range(max_iter):
             for idx in range(n_features):
                 sub_covariance = covariance_[indices != idx].T[indices != idx]
@@ -314,7 +317,7 @@ class GraphLasso(EmpiricalCovariance):
         self.store_precision = True
 
     def fit(self, X, y=None):
-        X = np.asarray(X)
+        X = check_array(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -514,7 +517,14 @@ class GraphLassoCV(GraphLasso):
         self.store_precision = True
 
     def fit(self, X, y=None):
-        X = np.asarray(X)
+        """Fits the GraphLasso covariance model to X.
+
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Data from which to compute the covariance estimate
+        """
+        X = check_array(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:

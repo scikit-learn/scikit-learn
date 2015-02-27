@@ -35,7 +35,7 @@ Your implementation doesn't need to be in scikit-learn to be used together
 with scikit-learn tools, though. Implement your favorite algorithm
 in a scikit-learn compatible way, upload it to github and we will list
 it under :ref:`related_projects`.
-Also see :selectiveness:
+Also see selectiveness_.
 
 
 Can I add this classical algorithm from the 80s?

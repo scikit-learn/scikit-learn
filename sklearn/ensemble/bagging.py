@@ -20,6 +20,8 @@ from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_X_y, check_array, column_or_1d
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted
+from ..utils.fixes import bincount
+from ..utils.metaestimators import if_delegate_has_method
 
 from .base import BaseEnsemble, _partition_estimators
 
@@ -50,7 +52,6 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
     bootstrap_features = ensemble.bootstrap_features
     support_sample_weight = has_fit_parameter(ensemble.base_estimator_,
                                               "sample_weight")
-
 
     # Build estimators
     estimators = []
@@ -87,7 +88,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
 
             if bootstrap:
                 indices = random_state.randint(0, n_samples, max_samples)
-                sample_counts = np.bincount(indices, minlength=n_samples)
+                sample_counts = bincount(indices, minlength=n_samples)
                 curr_sample_weight *= sample_counts
 
             else:
@@ -110,7 +111,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                                                      max_samples,
                                                      random_state=random_state)
 
-            sample_counts = np.bincount(indices, minlength=n_samples)
+            sample_counts = bincount(indices, minlength=n_samples)
 
             estimator.fit((X[indices])[:, features], y[indices])
             samples = sample_counts > 0.
@@ -625,6 +626,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         else:
             return np.log(self.predict_proba(X))
 
+    @if_delegate_has_method(delegate='base_estimator')
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
 
@@ -644,9 +646,6 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
         """
         check_is_fitted(self, "classes_")
-        # Trigger an exception if not supported
-        if not hasattr(self.base_estimator_, "decision_function"):
-            raise NotImplementedError
 
         # Check data
         X = check_array(X)

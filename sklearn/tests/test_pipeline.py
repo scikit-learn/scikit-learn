@@ -34,7 +34,7 @@ JUNK_FOOD_DOCS = (
 )
 
 
-class IncorrectT(BaseEstimator):
+class IncorrectT(object):
     """Small class to test parameter dispatching.
     """
 
@@ -48,6 +48,12 @@ class T(IncorrectT):
     def fit(self, X, y):
         return self
 
+    def get_params(self, deep=False):
+        return {'a': self.a, 'b': self.b}
+
+    def set_params(self, **params):
+        self.a = params['a']
+        return self
 
 class TransfT(T):
 
@@ -55,7 +61,7 @@ class TransfT(T):
         return X
 
 
-class FitParamT(BaseEstimator):
+class FitParamT(object):
     """Mock classifier
     """
 
@@ -86,6 +92,7 @@ def test_pipeline_init():
     # Check that params are set
     pipe.set_params(svc__a=0.1)
     assert_equal(clf.a, 0.1)
+    assert_equal(clf.b, None)
     # Smoke test the repr:
     repr(pipe)
 

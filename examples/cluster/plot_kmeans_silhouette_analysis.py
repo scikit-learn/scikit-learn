@@ -117,8 +117,9 @@ for n_clusters in range_n_clusters:
     ax1.set_xticks([-0.1, 0, 0.2, 0.4, 0.6, 0.8, 1])
 
     # 2nd Plot showing the actual clusters formed
+    colors = cm.spectral(cluster_labels.astype(float) / n_clusters)
     ax2.scatter(X[:, 0], X[:, 1], marker='.', s=30, lw=0, alpha=0.7,
-                c=map(cm.spectral, cluster_labels.astype(float) / n_clusters))
+                c=colors)
 
     # Labeling the clusters
     centers = clusterer.cluster_centers_

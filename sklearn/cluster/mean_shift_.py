@@ -85,21 +85,22 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         the number of samples. The sklearn.cluster.estimate_bandwidth function
         can be used to do this more efficiently.
 
-    seeds : array-like, shape=[n_seeds, n_features]
-        Point used as initial kernel locations.
+    seeds : array-like, shape=[n_seeds, n_features] or None
+        Point used as initial kernel locations. If None and bin_seeding=False,
+        each data point is used as a seed. If None and bin_seeding=True,
+        see bin_seeding.
 
-    bin_seeding : boolean
+    bin_seeding : boolean, default=False
         If true, initial kernel locations are not locations of all
         points, but rather the location of the discretized version of
         points, where points are binned onto a grid whose coarseness
         corresponds to the bandwidth. Setting this option to True will speed
         up the algorithm because fewer seeds will be initialized.
-        default value: False
         Ignored if seeds argument is not None.
 
-    min_bin_freq : int, optional
+    min_bin_freq : int, default=1
        To speed up the algorithm, accept only those bins with at least
-       min_bin_freq points as seeds. If not defined, set to 1.
+       min_bin_freq points as seeds.
 
     cluster_all : boolean, default True
         If true, then all points are clustered, even those orphans that are
@@ -133,6 +134,9 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
 
     if bandwidth is None:
         bandwidth = estimate_bandwidth(X)
+    elif bandwidth <= 0:
+        raise ValueError("bandwidth needs to be greater than zero or None, got %f" %
+                         bandwidth)
     if seeds is None:
         if bin_seeding:
             seeds = get_bin_seeds(X, bandwidth, min_bin_freq)
@@ -155,12 +159,18 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                 break  # Depending on seeding strategy this condition may occur
             my_old_mean = my_mean  # save the old mean
             my_mean = np.mean(points_within, axis=0)
-            # If converged or at max_iter, addS the cluster
+            # If converged or at max_iter, adds the cluster
             if (extmath.norm(my_mean - my_old_mean) < stop_thresh or
                     completed_iterations == max_iter):
                 center_intensity_dict[tuple(my_mean)] = len(points_within)
                 break
             completed_iterations += 1
+
+    if not center_intensity_dict:
+        # nothing near seeds
+        raise ValueError("No point was within bandwidth=%f of any seed."
+                         " Try a different seeding strategy or increase the bandwidth."
+                         % bandwidth)
 
     # POST PROCESSING: remove near duplicate points
     # If the distance between two kernels is less than the bandwidth,
@@ -225,12 +235,16 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     # Bin points
     bin_sizes = defaultdict(int)
     for point in X:
-        binned_point = np.cast[np.int32](point / bin_size)
+        binned_point = np.round(point / bin_size)
         bin_sizes[tuple(binned_point)] += 1
 
     # Select only those bins as seeds which have enough members
     bin_seeds = np.array([point for point, freq in six.iteritems(bin_sizes) if
                           freq >= min_bin_freq], dtype=np.float32)
+    if len(bin_seeds) == len(X):
+        warnings.warn("Binning data failed with provided bin_size=%f, using data"
+                      " points as seeds." % bin_size)
+        return X
     bin_seeds = bin_seeds * bin_size
     return bin_seeds
 
@@ -320,7 +334,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
         self.cluster_all = cluster_all
         self.min_bin_freq = min_bin_freq
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Perform clustering.
 
         Parameters
