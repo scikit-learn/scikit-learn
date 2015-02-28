@@ -53,22 +53,20 @@ def test_no_nan():
 
 
 def test_correct_labelsize():
-    """ Assert 2 <= n_labels <= nsample -1 """
+    """Assert 1 < n_labels < n_samples"""
     dataset = datasets.load_iris()
     X = dataset.data
 
     # n_labels = n_samples
     y = np.arange(X.shape[0])
     assert_raises_regexp(ValueError,
-                         "Number of labels is %d "
-                         "but should be more than 2"
-                         "and less than n_samples - 1" % len(np.unique(y)),
+                         'Number of labels is %d\. Valid values are 2 '
+                         'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
                          silhouette_score, X, y)
 
     # n_labels = 1
     y = np.zeros(X.shape[0])
     assert_raises_regexp(ValueError,
-                         "Number of labels is %d "
-                         "but should be more than 2"
-                         "and less than n_samples - 1" % len(np.unique(y)),
+                         'Number of labels is %d\. Valid values are 2 '
+                         'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
                          silhouette_score, X, y)
