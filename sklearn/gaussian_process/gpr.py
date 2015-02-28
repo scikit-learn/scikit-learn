@@ -138,7 +138,12 @@ class GaussianProcessRegressor(BaseEstimator):
             K = kernel(self.X_fit_)
 
         K[np.diag_indices_from(K)] += self.y_err
-        L = cholesky(K, lower=True)  # Line 2
+        try:
+            L = cholesky(K, lower=True)  # Line 2
+        except np.linalg.LinAlgError:
+            return (-np.inf, np.zeros_like(theta))\
+                 if eval_gradient else -np.inf
+
         alpha = cho_solve((L, True), self.y_fit_)  # Line 3
 
         # Compute log-likelihood (compare line 7)
