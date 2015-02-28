@@ -38,6 +38,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
             self.params = np.array([float(param_space)])
             self.has_bounds = False
             return
+
         param_space = np.atleast_2d(param_space)
         if param_space.shape[1] == 1:
             # fixed hyperparameter
@@ -582,17 +583,17 @@ class ExpSineSquared(Kernel):
 
     @property
     def params(self):
-        return np.asarray([self.l, self.c])
+        return np.asarray([self.l, self.p])
 
     @params.setter
     def params(self, theta):
         self.l = theta[0]
-        self.c = theta[1]
+        self.p = theta[1]
 
     def __call__(self, X, Y=None, eval_gradient=False):
         if Y is None:
             dists = pdist(X, metric='euclidean')
-            K = np.exp(- self.c * np.sin(np.pi * dists / self.l) ** 2)
+            K = np.exp(- 2 * (np.sin(np.pi / self.p * dists) / self.l) ** 2)
             # convert from upper-triangular matrix to square matrix
             K = squareform(K)
             np.fill_diagonal(K, 1)
@@ -601,7 +602,42 @@ class ExpSineSquared(Kernel):
                 raise ValueError(
                     "Gradient can only be evaluated when Y is None.")
             dists = cdist(X, Y, metric='euclidean')
-            K = np.exp(- self.c * np.sin(np.pi * dists / self.l) ** 2)
+            K = np.exp(- 2 * (np.sin(np.pi / self.p * dists) / self.l) ** 2)
+
+        if eval_gradient:
+            # approximate gradient numerically
+            def f(theta):  # helper function
+                theta_, self.params = self.params, theta
+                K = self(X, Y)
+                self.params = theta_
+                return K
+            return K, _approx_fprime(self.params, f, 1e-5)
+        else:
+            return K
+
+
+class DotProduct(Kernel):
+
+    def __init__(self, param_space=1.0, degree=1):
+        self._parse_param_space(param_space)
+        self.degree = degree
+
+    @property
+    def params(self):
+        return np.asarray([self.sigma_0])
+
+    @params.setter
+    def params(self, theta):
+        self.sigma_0 = theta[0]
+
+    def __call__(self, X, Y=None, eval_gradient=False):
+        if Y is None:
+            K = (np.inner(X, X) + self.sigma_0 ** 2) ** self.degree
+        else:
+            if eval_gradient:
+                raise ValueError(
+                    "Gradient can only be evaluated when Y is None.")
+            K = (np.inner(X, Y) + self.sigma_0 ** 2) ** self.degree
 
         if eval_gradient:
             # approximate gradient numerically
