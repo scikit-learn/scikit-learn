@@ -18,7 +18,7 @@ from sklearn.gaussian_process.kernels import RBF
 
 
 # Specify Gaussian Process
-kernel = (1e-10, 1.0, 100) * RBF(param_space=(1e-10, 1.0, None))
+kernel = 1.0 * RBF((1e-10, 1.0, None))
 gp = GaussianProcessRegressor(kernel=kernel)
 
 # Plot prior

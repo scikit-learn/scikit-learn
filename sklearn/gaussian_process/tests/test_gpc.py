@@ -40,8 +40,6 @@ def test_predict_consistent():
 def test_lml_improving():
     """ Test that hyperparameter-tuning improves log-marginal likelihood. """
     for kernel in kernels:
-        if not kernel.has_bounds:
-            continue
         kernel = deepcopy(kernel)
         params_initial = kernel.params
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
@@ -52,8 +50,6 @@ def test_lml_improving():
 def test_converged_to_local_maximum():
     """ Test that we are in local maximum after hyperparameter-optimization. """
     for kernel in kernels:
-        if not kernel.has_bounds:
-            continue
         kernel = deepcopy(kernel)
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
 

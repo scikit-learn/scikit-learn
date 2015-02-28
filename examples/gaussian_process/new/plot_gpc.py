@@ -25,10 +25,10 @@ X = rng.uniform(0, 5, 50)[:, np.newaxis]
 y = np.array(np.sin((X[:, 0] - 2.5) ** 2) > 0.0, dtype=int)
 
 # Specify Gaussian Processes with fixed and optimized hyperparameters
-kernel_fix = 4.0 * RBF(param_space=[1.0])
-gp_fix = GaussianProcessClassifier(kernel=kernel_fix).fit(X, y)
+kernel_fix = 1.0 * RBF(param_space=1.0)
+gp_fix = GaussianProcessClassifier(kernel=kernel_fix, optimizer=None).fit(X, y)
 
-kernel_opt = (1e-10, 1.0, 100) * RBF(param_space=(1e-10, 1, 10))
+kernel_opt = 1.0 * RBF(1.0)
 gp_opt = GaussianProcessClassifier(kernel=kernel_opt).fit(X, y)
 
 print "Log Marginal Likelihood (initial): %.3f" % \

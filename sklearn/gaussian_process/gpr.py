@@ -38,6 +38,14 @@ class GaussianProcessRegressor(BaseEstimator):
         Larger values correspond to increased noise level in the observations
         and reduce potential numerical issue during fitting.
 
+    optimizer : string, optional (default: "fmin_l_bfgs_b")
+        A string specifying the optimization algorithm used for optimizing the
+        kernel's parameters. Default uses 'fmin_l_bfgs_b' algorithm from
+        scipy.optimize. If None, the kernel's paramters are kept fixed.
+        Available optimizers are::
+
+            'fmin_l_bfgs_b'
+
     Attributes
     ----------
     X_fit_:
@@ -51,9 +59,10 @@ class GaussianProcessRegressor(BaseEstimator):
     alpha_:
     """
 
-    def __init__(self, kernel=RBF(), y_err=1e-10):
+    def __init__(self, kernel=RBF(), y_err=1e-10, optimizer="fmin_l_bfgs_b"):
         self.kernel = kernel
         self.y_err = y_err
+        self.optimizer = optimizer
 
     def fit(self, X, y):
         X, y = check_X_y(X, y)
@@ -61,18 +70,20 @@ class GaussianProcessRegressor(BaseEstimator):
         self.X_fit_ = X
         self.y_fit_ = y
 
-        if self.kernel.has_bounds:
+        if self.optimizer == "fmin_l_bfgs_b":
             # Choose hyperparameters based on maximizing the log-marginal
-            # likelihood
+            # likelihood using fmin_l_bfgs_b
             def obj_func(theta):
                 lml, grad = self.log_marginal_likelihood(theta,
                                                          eval_gradient=True)
                 return -lml, -grad
-            self.theta_, lml, _ = fmin_l_bfgs_b(obj_func, self.kernel.params,
+            self.theta_, _, _ = fmin_l_bfgs_b(obj_func, self.kernel.params,
                                                 bounds=self.kernel.bounds)
             self.kernel.params = self.theta_
-        else:
+        elif self.optimizer is None:
             self.theta_ = self.kernel.params
+        else:
+            raise ValueError("Unknown optimizer %s." % self.optimizer)
 
         # Precompute quantities required for predictions which are independent
         # of actual query points

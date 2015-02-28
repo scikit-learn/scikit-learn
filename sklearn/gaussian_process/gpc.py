@@ -40,9 +40,10 @@ class GaussianProcessClassifier(BaseEstimator):
       * binary classification
     """
 
-    def __init__(self, kernel=RBF(), jitter=0.0):
+    def __init__(self, kernel=RBF(), jitter=0.0, optimizer="fmin_l_bfgs_b"):
         self.kernel = kernel
         self.jitter = jitter
+        self.optimizer = optimizer
 
     def fit(self, X, y):
         X, y = check_X_y(X, y)
@@ -51,7 +52,7 @@ class GaussianProcessClassifier(BaseEstimator):
         self.X_fit_ = X
         self.y_fit_ = y
 
-        if self.kernel.has_bounds:
+        if self.optimizer == "fmin_l_bfgs_b":
             # Choose hyperparameters based on maximizing the log-marginal
             # likelihood
             def obj_func(theta):
@@ -61,8 +62,10 @@ class GaussianProcessClassifier(BaseEstimator):
             self.theta_, _, _ = fmin_l_bfgs_b(obj_func, self.kernel.params,
                                               bounds=self.kernel.bounds)
             self.kernel.params = self.theta_
-        else:
+        elif self.optimizer is None:
             self.theta_ = self.kernel.params
+        else:
+            raise ValueError("Unknown optimizer %s." % self.optimizer)
 
         # Precompute quantities required for predictions which are independent
         # of actual query points

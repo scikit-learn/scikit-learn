@@ -12,8 +12,9 @@ from scipy.optimize import approx_fprime
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
-from sklearn.utils.testing import (assert_true, assert_greater,
-                                   assert_almost_equal)
+from sklearn.utils.testing \
+    import (assert_true, assert_greater, assert_array_less,
+            assert_almost_equal, assert_equal)
 
 
 def f(x):
@@ -23,10 +24,11 @@ X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = f(X).ravel()
 
 
-kernels = [RBF(0.1), RBF((1e-3, 1.0, 1e3)),
+kernels = [RBF(1.0), RBF((1e-3, 1.0, 1e3)),
            (1e-2, 1.0, 1e2) * RBF((1e-3, 0.1, 1e3)),
-           (1e-2, 1.0, 1e2) * RBF((1e-3, 0.1, 1e3)) + (None, 0.0, None),
-           (1e-2, 0.1, 1e2) * RBF((1e-3, 0.1, 1e3)) + (None, 0.0, None)]
+           (1e-2, 1.0, 1e2) * RBF((1e-3, 0.1, 1e3)) + (0.0, 0.0, 1e2),
+           (1e-2, 0.1, 1e2) * RBF((1e-3, 0.1, 1e3)) + (0.0, 0.0, 1e2)]
+
 
 def test_gpr_interpolation():
     """Test the interpolating property for different kernels."""
@@ -42,8 +44,6 @@ def test_gpr_interpolation():
 def test_lml_improving():
     """ Test that hyperparameter-tuning improves log-marginal likelihood. """
     for kernel in kernels:
-        if not kernel.has_bounds:
-            continue
         kernel = deepcopy(kernel)
         params_initial = kernel.params
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
@@ -54,14 +54,27 @@ def test_lml_improving():
 def test_converged_to_local_maximum():
     """ Test that we are in local maximum after hyperparameter-optimization. """
     for kernel in kernels:
-        if not kernel.has_bounds:
-            continue
         kernel = deepcopy(kernel)
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
         lml, lml_gradient = gpr.log_marginal_likelihood(kernel.params, True)
 
         assert_almost_equal(lml_gradient, 0, 5)
+
+
+def test_solution_inside_bounds():
+    """ Test that hyperparameter-optimization remains in bounds"""
+    for kernel in kernels:
+        kernel = deepcopy(kernel)
+        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+
+        bounds = kernel.bounds
+        max_ = np.finfo(bounds.dtype).max
+        tiny = np.finfo(bounds.dtype).tiny
+        bounds[~np.isfinite(bounds[:, 1]), 1] = max_
+
+        assert_array_less(bounds[:, 0], kernel.params + tiny)
+        assert_array_less(kernel.params, bounds[:, 1] + tiny)
 
 
 def test_lml_gradient():
@@ -112,3 +125,11 @@ def test_sample_statistics():
         assert_almost_equal(y_mean, np.mean(samples, 1), 2)
         assert_almost_equal(np.diag(y_cov) / np.diag(y_cov).max(),
                             np.var(samples, 1) / np.diag(y_cov).max(), 1)
+
+
+def test_no_optimizer():
+    """ Test that kernel parameters are unmodified when optimizer is None."""
+    kernel = RBF(1.0)
+    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(X, y)
+    assert_equal(kernel.params, 1.0)
+    assert_equal(gpr.theta_, 1.0)
