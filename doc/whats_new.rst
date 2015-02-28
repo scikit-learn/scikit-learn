@@ -324,6 +324,10 @@ Bug fixes
     - Fixed a error in the computation of conditional probabilities in
       :class:`naive_bayes.BernoulliNB`. By `Hanna Wallach`_.
 
+    - Make the method ``radius_neighbors`` of
+      :class:`neighbors.NearestNeighbors` return the samples lying on the
+      boundary for ``algorithm='brute'``. By `Yan Yi`_.
+
 
 API changes summary
 -------------------
@@ -3316,3 +3320,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Hasil Sharma: https://github.com/Hasil-Sharma
 
 .. _Hanna Wallach: http://dirichlet.net/
+
+.. _Yan Yi: http://www.seowyanyi.org
