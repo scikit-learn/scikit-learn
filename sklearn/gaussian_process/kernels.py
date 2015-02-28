@@ -34,24 +34,32 @@ class Kernel(six.with_metaclass(ABCMeta)):
     """ Base class for all kernels."""
 
     def _parse_param_space(self, param_space):
-        if not np.iterable(param_space):  # fixed hyperparameter
+        if not np.iterable(param_space):
             self.params = np.array([float(param_space)])
-            self.has_bounds = False
+            # No custom bounds specified; use default bounds
+            default_bounds = np.empty((self.params.shape[0], 2),
+                                      dtype=self.params.dtype)
+            default_bounds[:, 0] = 1e-5
+            default_bounds[:, 1] = np.inf
+            self.bounds = default_bounds
             return
 
         param_space = np.atleast_2d(param_space)
         if param_space.shape[1] == 1:
-            # fixed hyperparameter
             self.params = param_space[:, 0]
-            self.has_bounds = False
+            # No custom bounds specified; use default bounds
+            default_bounds = np.empty((self.params.shape[0], 2),
+                                      dtype=self.params.dtype)
+            default_bounds[:, 0] = 1e-5
+            default_bounds[:, 1] = np.inf
+            self.bounds = default_bounds
         elif param_space.shape[1] == 2:
-            # lower+upper bound for hyperparameter
+            # lower + upper bound for hyperparameter
             self.bounds = param_space
-            self.has_bounds = True
             # Use geometric mean of upper and lower boundary as initial
             # hyperparameter value
-            if np.any(np.equal(self.l_bound, None)) \
-               or np.any(np.equal(self.u_bound, None)):
+            if np.any(np.equal(self.l_bound, np.inf)) \
+               or np.any(np.equal(self.u_bound, np.inf)):
                 raise ValueError("Lower or upper bound being None requires "
                                  "explicitly specifying the initial value.")
             self.params = np.array([np.sqrt(self.l_bound * self.u_bound)])
@@ -59,7 +67,6 @@ class Kernel(six.with_metaclass(ABCMeta)):
             # lower bound, initial value, upper bound
             self.params = param_space[:, 1]
             self.bounds = param_space[:, [0, 2]]
-            self.has_bounds = True
         else:
             raise ValueError("Invalid parameter space given. Must not have "
                              "more than 3 entries per parameter.")
@@ -112,9 +119,6 @@ class KernelOperator(Kernel):
     def __init__(self, k1, k2):
         self.k1 = k1
         self.k2 = k2
-        # XXX: Deal with situations in which only some of the hyperparameter
-        #      shall be optimized
-        self.has_bounds = k1.has_bounds and k2.has_bounds
 
     @property
     def params(self):
@@ -128,7 +132,6 @@ class KernelOperator(Kernel):
 
     @property
     def bounds(self):
-        assert self.has_bounds
         return np.vstack((self.k1.bounds, self.k2.bounds))
 
     @bounds.setter
