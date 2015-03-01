@@ -555,10 +555,10 @@ class RationalQuadratic(Kernel):
 
     def __call__(self, X, Y=None, eval_gradient=False):
         if Y is None:
-            dists = pdist(X, metric='sqeuclidean')
-            K = (1 + dists / (2 * self.alpha * self.l ** 2)) ** -self.alpha
-            # convert from upper-triangular matrix to square matrix
-            K = squareform(K)
+            dists = squareform(pdist(X, metric='sqeuclidean'))
+            tmp = dists / (2 * self.alpha * self.l ** 2)
+            base = (1 + tmp)
+            K = base ** -self.alpha
             np.fill_diagonal(K, 1)
         else:
             if eval_gradient:
@@ -568,13 +568,10 @@ class RationalQuadratic(Kernel):
             K = (1 + dists / (2 * self.alpha * self.l ** 2)) ** -self.alpha
 
         if eval_gradient:
-            # approximate gradient numerically
-            def f(theta):  # helper function
-                theta_, self.params = self.params, theta
-                K = self(X, Y)
-                self.params = theta_
-                return K
-            return K, _approx_fprime(self.params, f, 1e-10)
+            K_gradient = np.empty((K.shape[0], K.shape[1], 2))
+            K_gradient[..., 0] = K * (-np.log(base) + tmp / base)
+            K_gradient[..., 1] = dists * K / (self.l ** 2 * base)
+            return K, K_gradient
         else:
             return K
 
@@ -595,11 +592,10 @@ class ExpSineSquared(Kernel):
 
     def __call__(self, X, Y=None, eval_gradient=False):
         if Y is None:
-            dists = pdist(X, metric='euclidean')
-            K = np.exp(- 2 * (np.sin(np.pi / self.p * dists) / self.l) ** 2)
-            # convert from upper-triangular matrix to square matrix
-            K = squareform(K)
-            np.fill_diagonal(K, 1)
+            dists = squareform(pdist(X, metric='euclidean'))
+            arg = np.pi  * dists / self.p
+            sin_of_arg = np.sin(arg)
+            K = np.exp(- 2 * (sin_of_arg / self.l) ** 2)
         else:
             if eval_gradient:
                 raise ValueError(
@@ -608,13 +604,12 @@ class ExpSineSquared(Kernel):
             K = np.exp(- 2 * (np.sin(np.pi / self.p * dists) / self.l) ** 2)
 
         if eval_gradient:
-            # approximate gradient numerically
-            def f(theta):  # helper function
-                theta_, self.params = self.params, theta
-                K = self(X, Y)
-                self.params = theta_
-                return K
-            return K, _approx_fprime(self.params, f, 1e-5)
+            K_gradient = np.empty((K.shape[0], K.shape[1], 2))
+            cos_of_arg = np.cos(arg)
+            K_gradient[..., 0] = 4 / self.l**3 * sin_of_arg**2 * K
+            K_gradient[..., 1] = \
+                4 * arg / (self.l**2 * self.p) * cos_of_arg * sin_of_arg * K
+            return K, K_gradient
         else:
             return K
 
@@ -635,7 +630,8 @@ class DotProduct(Kernel):
 
     def __call__(self, X, Y=None, eval_gradient=False):
         if Y is None:
-            K = (np.inner(X, X) + self.sigma_0 ** 2) ** self.degree
+            dot_product = np.inner(X, X)
+            K = (dot_product + self.sigma_0 ** 2) ** self.degree
         else:
             if eval_gradient:
                 raise ValueError(
@@ -643,12 +639,9 @@ class DotProduct(Kernel):
             K = (np.inner(X, Y) + self.sigma_0 ** 2) ** self.degree
 
         if eval_gradient:
-            # approximate gradient numerically
-            def f(theta):  # helper function
-                theta_, self.params = self.params, theta
-                K = self(X, Y)
-                self.params = theta_
-                return K
-            return K, _approx_fprime(self.params, f, 1e-10)
+            K_gradient = np.empty((K.shape[0], K.shape[1], 1))
+            K_gradient[..., 0] = 2 * self.sigma_0 * self.degree \
+                * (dot_product + self.sigma_0 ** 2) ** (self.degree - 1)
+            return K, K_gradient
         else:
             return K
