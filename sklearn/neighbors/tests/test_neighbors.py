@@ -830,6 +830,10 @@ def test_neighbors_badargs():
         assert_raises(ValueError,
                       nbrs.predict,
                       [])
+        if (isinstance(cls, neighbors.KNeighborsClassifier) or
+                isinstance(cls, neighbors.KNeighborsRegressor)):
+            nbrs = cls(n_neighbors=-1)
+            assert_raises(ValueError, nbrs.fit, X, y)
 
     nbrs = neighbors.NearestNeighbors().fit(X)
 
