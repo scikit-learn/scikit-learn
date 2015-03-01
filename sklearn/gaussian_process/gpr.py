@@ -165,7 +165,7 @@ class GaussianProcessRegressor(BaseEstimator):
         if eval_gradient:  # compare Equation 5.9 from GPML
             tmp = np.outer(alpha, alpha)
             tmp -= cho_solve((L, True), np.eye(K.shape[0]))
-            gradient = 0.5 * np.trace(tmp.dot(K_gradient))
+            gradient = 0.5 * np.einsum("ij,ijk->k", tmp, K_gradient)
             return log_likelihood, gradient
         else:
             return log_likelihood
