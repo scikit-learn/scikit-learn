@@ -252,6 +252,12 @@ class ConstantKernel(Kernel):
     Can be used as part of a product-kernel where it scales the magnitude of
     the other factor (kernel) or as part of a sum-kernel, where it modifies
     the mean of the Gaussian process.
+
+    Tunable kernel parameters
+    -------------------------
+    value : float
+        The constant value used for determining the magnitude (product-kernel)
+        or offset of mean (sum-lernel).
     """
 
     def __init__(self, param_space=1.0):
@@ -311,6 +317,13 @@ class RBF(Kernel):
     """ Radial-basis function kernel (aka squared-exponential kernel).
 
     Both isotropic and anisotropic version are supported.
+
+    Tunable kernel parameters
+    -------------------------
+    l : float or array with shape (n_features,), entries > 0
+        The length scale of the kernel. If a float, an isotropic kernel is
+        used. If an array, an anisotropic kernel is used where each dimension
+        of l defines the length-scale of the respective feature dimension.
     """
 
     def __init__(self, param_space=1.0):
@@ -387,6 +400,11 @@ class WhiteKernel(Kernel):
     The main use-case of this kernel is as part of a sum-kernel where it
     explains the noise-component of the signal. Tuning its parameter
     corresponds to estimating the noise-level.
+
+    Tunable kernel parameters
+    -------------------------
+    c : float
+        Parameter controlling the noise level.
     """
 
     def __init__(self, param_space=1.0):
@@ -539,6 +557,20 @@ class PairwiseKernel(Kernel):
 
 
 class RationalQuadratic(Kernel):
+    """ Rational Quadratic kernel.
+
+    This kernel can be seen as a scale mixture (an infinite sum) of RBF kernels
+    with different characteristic length-scales.
+
+    Only isotropic variant is supported at the moment.
+
+    Tunable kernel parameters
+    -------------------------
+    alpha : float > 0
+        Scale mixture parameter
+    l : float > 0
+        The length scale of the kernel.
+    """
 
     def __init__(self, param_space=[(1.0,), (1.0,)]):
         self._parse_param_space(param_space)
@@ -554,6 +586,31 @@ class RationalQuadratic(Kernel):
         self.l = theta[1]
 
     def __call__(self, X, Y=None, eval_gradient=False):
+        """ Return the kernel k(X, Y) and optionally its gradient.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+            Right argument of the returned kernel k(X, Y). If None, k(X, X)
+            if evaluated instead.
+
+        eval_gradient : bool (optional, default=False)
+            Determines whether the gradient with respect to the kernel
+            hyperparameter is determined. Only supported when Y is None.
+
+        Returns
+        -------
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X, Y)
+
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
+            The gradient of the kernel k(X, X) with repect to the
+            hyperparameter of the kernel. Only returned when eval_gradient
+            is True.
+        """
         if Y is None:
             dists = squareform(pdist(X, metric='sqeuclidean'))
             tmp = dists / (2 * self.alpha * self.l ** 2)
@@ -577,6 +634,19 @@ class RationalQuadratic(Kernel):
 
 
 class ExpSineSquared(Kernel):
+    """ Exp-Sine-Squared kernel.
+
+    This kernel allows modelling periodic functions.
+
+    Only isotropic variant is supported at the moment.
+
+    Tunable kernel parameters
+    -------------------------
+    l : float > 0
+        The length scale of the kernel.
+    p : float > 0
+        The periodicity of the kernel.
+    """
 
     def __init__(self, param_space=[(1.0,), (1.0,)]):
         self._parse_param_space(param_space)
@@ -591,6 +661,31 @@ class ExpSineSquared(Kernel):
         self.p = theta[1]
 
     def __call__(self, X, Y=None, eval_gradient=False):
+        """ Return the kernel k(X, Y) and optionally its gradient.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+            Right argument of the returned kernel k(X, Y). If None, k(X, X)
+            if evaluated instead.
+
+        eval_gradient : bool (optional, default=False)
+            Determines whether the gradient with respect to the kernel
+            hyperparameter is determined. Only supported when Y is None.
+
+        Returns
+        -------
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X, Y)
+
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
+            The gradient of the kernel k(X, X) with repect to the
+            hyperparameter of the kernel. Only returned when eval_gradient
+            is True.
+        """
         if Y is None:
             dists = squareform(pdist(X, metric='euclidean'))
             arg = np.pi  * dists / self.p
@@ -615,6 +710,16 @@ class ExpSineSquared(Kernel):
 
 
 class DotProduct(Kernel):
+    """ Dot-Product kernel.
+
+    This kernel is non-stationary.
+
+    Tunable kernel parameters
+    -------------------------
+    sigma_0 : float >= 0
+        Parameter controlling the inhomogenity of the kernel. If sigma_0=0,
+        the kernel is homogenous.
+    """
 
     def __init__(self, param_space=1.0, degree=1):
         self._parse_param_space(param_space)
@@ -629,6 +734,31 @@ class DotProduct(Kernel):
         self.sigma_0 = theta[0]
 
     def __call__(self, X, Y=None, eval_gradient=False):
+        """ Return the kernel k(X, Y) and optionally its gradient.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+            Right argument of the returned kernel k(X, Y). If None, k(X, X)
+            if evaluated instead.
+
+        eval_gradient : bool (optional, default=False)
+            Determines whether the gradient with respect to the kernel
+            hyperparameter is determined. Only supported when Y is None.
+
+        Returns
+        -------
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X, Y)
+
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
+            The gradient of the kernel k(X, X) with repect to the
+            hyperparameter of the kernel. Only returned when eval_gradient
+            is True.
+        """
         if Y is None:
             dot_product = np.inner(X, X)
             K = (dot_product + self.sigma_0 ** 2) ** self.degree
