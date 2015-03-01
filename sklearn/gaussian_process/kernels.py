@@ -313,6 +313,72 @@ class ConstantKernel(Kernel):
         return "{0:.3g}".format(self.value)
 
 
+class WhiteKernel(Kernel):
+    """ White kernel.
+
+    The main use-case of this kernel is as part of a sum-kernel where it
+    explains the noise-component of the signal. Tuning its parameter
+    corresponds to estimating the noise-level.
+
+    Tunable kernel parameters
+    -------------------------
+    c : float
+        Parameter controlling the noise level.
+    """
+
+    def __init__(self, param_space=1.0):
+        self._parse_param_space(param_space)
+
+    @property
+    def params(self):
+        return np.asarray([self.c])
+
+    @params.setter
+    def params(self, theta):
+        self.c = theta[0]
+
+    def __call__(self, X, Y=None, eval_gradient=False):
+        """ Return the kernel k(X, Y) and optionally its gradient.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+            Right argument of the returned kernel k(X, Y). If None, k(X, X)
+            if evaluated instead.
+
+        eval_gradient : bool (optional, default=False)
+            Determines whether the gradient with respect to the kernel
+            hyperparameter is determined. Only supported when Y is None.
+
+        Returns
+        -------
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X, Y)
+
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
+            The gradient of the kernel k(X, X) with repect to the
+            hyperparameter of the kernel. Only returned when eval_gradient
+            is True.
+        """
+        if Y is not None and eval_gradient:
+            raise ValueError("Gradient can only be evaluated when Y is None.")
+
+        if Y is None:
+            K = self.c * np.eye(X.shape[0])
+            if eval_gradient:
+                return K, np.eye(X.shape[0])[:, :, np.newaxis]
+            else:
+                return K
+        else:
+            K = np.zeros((X.shape[0], Y.shape[0]))
+            # entries which are sufficiently similar to be considered identical
+            K[cdist(X, Y) < 1e-10] = self.c
+            return K
+
+
 class RBF(Kernel):
     """ Radial-basis function kernel (aka squared-exponential kernel).
 
@@ -390,168 +456,6 @@ class RBF(Kernel):
             else:
                 raise Exception("Anisotropic kernels require that the number "
                                 "of length scales and features match.")
-        else:
-            return K
-
-
-class WhiteKernel(Kernel):
-    """ White kernel.
-
-    The main use-case of this kernel is as part of a sum-kernel where it
-    explains the noise-component of the signal. Tuning its parameter
-    corresponds to estimating the noise-level.
-
-    Tunable kernel parameters
-    -------------------------
-    c : float
-        Parameter controlling the noise level.
-    """
-
-    def __init__(self, param_space=1.0):
-        self._parse_param_space(param_space)
-
-    @property
-    def params(self):
-        return np.asarray([self.c])
-
-    @params.setter
-    def params(self, theta):
-        self.c = theta[0]
-
-    def __call__(self, X, Y=None, eval_gradient=False):
-        """ Return the kernel k(X, Y) and optionally its gradient.
-
-        Parameters
-        ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
-
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
-            Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
-
-        eval_gradient : bool (optional, default=False)
-            Determines whether the gradient with respect to the kernel
-            hyperparameter is determined. Only supported when Y is None.
-
-        Returns
-        -------
-        K : array, shape (n_samples_X, n_samples_Y)
-            Kernel k(X, Y)
-
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
-            The gradient of the kernel k(X, X) with repect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
-            is True.
-        """
-        if Y is not None and eval_gradient:
-            raise ValueError("Gradient can only be evaluated when Y is None.")
-
-        if Y is None:
-            K = self.c * np.eye(X.shape[0])
-            if eval_gradient:
-                return K, np.eye(X.shape[0])[:, :, np.newaxis]
-            else:
-                return K
-        else:
-            K = np.zeros((X.shape[0], Y.shape[0]))
-            # entries which are sufficiently similar to be considered identical
-            K[cdist(X, Y) < 1e-10] = self.c
-            return K
-
-
-# adapted from scipy/optimize/optimize.py for functions with 2d output
-def _approx_fprime(xk, f, epsilon, args=()):
-    f0 = f(*((xk,) + args))
-    grad = np.zeros((f0.shape[0], f0.shape[1], len(xk)), float)
-    ei = np.zeros((len(xk), ), float)
-    for k in range(len(xk)):
-        ei[k] = 1.0
-        d = epsilon * ei
-        grad[:, :, k] = (f(*((xk + d,) + args)) - f0) / d[k]
-        ei[k] = 0.0
-    return grad
-
-
-class PairwiseKernel(Kernel):
-    """ Wrapper for kernels in sklearn.metrics.pairwise.
-
-    A thin wrapper around the functionality of the kernels in
-    sklearn.metrics.pairwise.
-
-    Note: Evaluation of eval_gradient is not analytic but numeric and all
-          kernels support only isotropic distances. The parameter gamma is
-          specified via the param_space and may be optimized. The other
-          kernel parameters are set directly  at initialization and are kept
-          fixed.
-
-    Parameters
-    ----------
-    metric : string, or callable
-        The metric to use when calculating kernel between instances in a
-        feature array. If metric is a string, it must be one of the metrics
-        in pairwise.PAIRWISE_KERNEL_FUNCTIONS.
-        If metric is "precomputed", X is assumed to be a kernel matrix.
-        Alternatively, if metric is a callable function, it is called on each
-        pair of instances (rows) and the resulting value recorded. The callable
-        should take two arrays from X as input and return a value indicating
-        the distance between them.
-
-    `**kwds` : optional keyword parameters
-        Any further parameters are passed directly to the kernel function.
-    """
-
-    def __init__(self, param_space=1.0, metric="linear", **kwargs):
-        self._parse_param_space(param_space)
-        self.metric = metric
-        self.kwargs = kwargs
-        if "gamma" in kwargs:
-            raise ValueError(
-                "Gamma must not be set directly but via param_space.")
-
-    @property
-    def params(self):
-        return np.asarray([self.gamma])
-
-    @params.setter
-    def params(self, theta):
-        self.gamma = theta[0]
-
-    def __call__(self, X, Y=None, eval_gradient=False):
-        """ Return the kernel k(X, Y) and optionally its gradient.
-
-        Parameters
-        ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
-
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
-            Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
-
-        eval_gradient : bool (optional, default=False)
-            Determines whether the gradient with respect to the kernel
-            hyperparameter is determined. Only supported when Y is None.
-
-        Returns
-        -------
-        K : array, shape (n_samples_X, n_samples_Y)
-            Kernel k(X, Y)
-
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
-            The gradient of the kernel k(X, X) with repect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
-            is True.
-        """
-        K = pairwise_kernels(X, Y, metric=self.metric, gamma=self.gamma,
-                             filter_params=True, **self.kwargs)
-        if eval_gradient:
-            # approximate gradient numerically
-            def f(gamma):  # helper function
-                return pairwise_kernels(
-                    X, Y, metric=self.metric, gamma=gamma,
-                    filter_params=True, **self.kwargs)
-            return K, _approx_fprime(self.params, f, 1e-10)
         else:
             return K
 
@@ -773,5 +677,101 @@ class DotProduct(Kernel):
             K_gradient[..., 0] = 2 * self.sigma_0 * self.degree \
                 * (dot_product + self.sigma_0 ** 2) ** (self.degree - 1)
             return K, K_gradient
+        else:
+            return K
+
+
+# adapted from scipy/optimize/optimize.py for functions with 2d output
+def _approx_fprime(xk, f, epsilon, args=()):
+    f0 = f(*((xk,) + args))
+    grad = np.zeros((f0.shape[0], f0.shape[1], len(xk)), float)
+    ei = np.zeros((len(xk), ), float)
+    for k in range(len(xk)):
+        ei[k] = 1.0
+        d = epsilon * ei
+        grad[:, :, k] = (f(*((xk + d,) + args)) - f0) / d[k]
+        ei[k] = 0.0
+    return grad
+
+
+class PairwiseKernel(Kernel):
+    """ Wrapper for kernels in sklearn.metrics.pairwise.
+
+    A thin wrapper around the functionality of the kernels in
+    sklearn.metrics.pairwise.
+
+    Note: Evaluation of eval_gradient is not analytic but numeric and all
+          kernels support only isotropic distances. The parameter gamma is
+          specified via the param_space and may be optimized. The other
+          kernel parameters are set directly  at initialization and are kept
+          fixed.
+
+    Parameters
+    ----------
+    metric : string, or callable
+        The metric to use when calculating kernel between instances in a
+        feature array. If metric is a string, it must be one of the metrics
+        in pairwise.PAIRWISE_KERNEL_FUNCTIONS.
+        If metric is "precomputed", X is assumed to be a kernel matrix.
+        Alternatively, if metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays from X as input and return a value indicating
+        the distance between them.
+
+    `**kwds` : optional keyword parameters
+        Any further parameters are passed directly to the kernel function.
+    """
+
+    def __init__(self, param_space=1.0, metric="linear", **kwargs):
+        self._parse_param_space(param_space)
+        self.metric = metric
+        self.kwargs = kwargs
+        if "gamma" in kwargs:
+            raise ValueError(
+                "Gamma must not be set directly but via param_space.")
+
+    @property
+    def params(self):
+        return np.asarray([self.gamma])
+
+    @params.setter
+    def params(self, theta):
+        self.gamma = theta[0]
+
+    def __call__(self, X, Y=None, eval_gradient=False):
+        """ Return the kernel k(X, Y) and optionally its gradient.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+            Right argument of the returned kernel k(X, Y). If None, k(X, X)
+            if evaluated instead.
+
+        eval_gradient : bool (optional, default=False)
+            Determines whether the gradient with respect to the kernel
+            hyperparameter is determined. Only supported when Y is None.
+
+        Returns
+        -------
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X, Y)
+
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
+            The gradient of the kernel k(X, X) with repect to the
+            hyperparameter of the kernel. Only returned when eval_gradient
+            is True.
+        """
+        K = pairwise_kernels(X, Y, metric=self.metric, gamma=self.gamma,
+                             filter_params=True, **self.kwargs)
+        if eval_gradient:
+            # approximate gradient numerically
+            def f(gamma):  # helper function
+                return pairwise_kernels(
+                    X, Y, metric=self.metric, gamma=gamma,
+                    filter_params=True, **self.kwargs)
+            return K, _approx_fprime(self.params, f, 1e-10)
         else:
             return K
