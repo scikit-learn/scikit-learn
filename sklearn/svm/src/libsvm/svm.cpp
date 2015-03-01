@@ -2260,7 +2260,7 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
                 i = j-1;
                 this_label = label[j];
                 this_count = count[j];
-                while(i>=0 && label[i] > this_label)
+                while(i>=0 && label[i] < this_label)
                 {
                         label[i+1] = label[i];
                         count[i+1] = count[i];
@@ -2278,7 +2278,7 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
                         j ++;
                 }
                 data_label[i] = j;
-        }                
+        }
 
 	int *start = Malloc(int,nr_class);
 	start[0] = 0;
@@ -2836,6 +2836,7 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 			for(int j=i+1;j<nr_class;j++)
 			{
 				double sum = 0;
+
 				int si = start[i];
 				int sj = start[j];
 				int ci = model->nSV[i];

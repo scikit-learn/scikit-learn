@@ -18,6 +18,7 @@ cdef extern from "svm.h":
     char *svm_csr_check_parameter(svm_csr_problem *, svm_parameter *)
     svm_csr_model *svm_csr_train(svm_csr_problem *, svm_parameter *, int *) nogil
     void svm_csr_free_and_destroy_model(svm_csr_model** model_ptr_ptr)
+    void svm_csr_get_labels(const svm_csr_model* model_ptr, int *)
 
 cdef extern from "libsvm_sparse_helper.c":
     # this file contains methods for accessing libsvm 'hidden' fields
@@ -201,12 +202,16 @@ def libsvm_sparse_train ( int n_features,
         probA = np.empty(0, dtype=np.float64)
         probB = np.empty(0, dtype=np.float64)
 
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] labels
+    labels = np.empty(n_class, dtype=np.int32)
+    svm_csr_get_labels(model, <int*> labels.data)
+
     svm_csr_free_and_destroy_model (&model)
     free_problem(problem)
     free_param(param)
 
     return (support, support_vectors_, sv_coef_data, intercept, n_class_SV,
-            probA, probB, fit_status)
+            probA, probB, fit_status, labels)
 
 
 def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,

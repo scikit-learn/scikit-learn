@@ -178,11 +178,11 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         self.shape_fit_ = X.shape
 
-        # In binary case, we need to flip the sign of coef, intercept and
-        # decision function. Use self._intercept_ internally.
         self._intercept_ = self.intercept_.copy()
+        # Have to flip intercept sign for backward compatibility
         if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
             self.intercept_ *= -1
+
         return self
 
     def _validate_targets(self, y):
@@ -220,7 +220,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         # add other parameters to __init__
         self.support_, self.support_vectors_, self.n_support_, \
             self.dual_coef_, self.intercept_, self.probA_, \
-            self.probB_, self.fit_status_ = libsvm.fit(
+            self.probB_, self.fit_status_, self._labels_ = libsvm.fit(
                 X, y,
                 svm_type=solver_type, sample_weight=sample_weight,
                 class_weight=self.class_weight_, kernel=kernel, C=self.C,
@@ -243,7 +243,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         self.support_, self.support_vectors_, dual_coef_data, \
             self.intercept_, self.n_support_, \
-            self.probA_, self.probB_, self.fit_status_ = \
+            self.probA_, self.probB_, self.fit_status_, self._labels_ = \
             libsvm_sparse.libsvm_sparse_train(
                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
                 kernel_type, self.degree, self._gamma, self.coef0, self.tol,
@@ -374,10 +374,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             kernel=kernel, degree=self.degree, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self._gamma)
 
-        # In binary case, we need to flip the sign of coef, intercept and
-        # decision function.
         if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
-            return -dec_func.ravel()
+            return dec_func.ravel()
 
         return dec_func
 
@@ -460,7 +458,8 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             Class labels for samples in X.
         """
         y = super(BaseSVC, self).predict(X)
-        return self.classes_.take(np.asarray(y, dtype=np.intp))
+        indices = self._labels_.take(np.asarray(y, dtype=np.intp))
+        return self.classes_.take(indices)
 
     # Hacky way of getting predict_proba to raise an AttributeError when
     # probability=False using properties. Do not use this in new code; when
@@ -506,7 +505,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         X = self._validate_for_predict(X)
         pred_proba = (self._sparse_predict_proba
                       if self._sparse else self._dense_predict_proba)
-        return pred_proba(X)
+        return pred_proba(X)[:, self._labels_]
 
     @property
     def predict_log_proba(self):
@@ -581,7 +580,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
     def _get_coef(self):
         if self.dual_coef_.shape[0] == 1:
             # binary classifier
-            coef = -safe_sparse_dot(self.dual_coef_, self.support_vectors_)
+            coef = safe_sparse_dot(self.dual_coef_, self.support_vectors_)
         else:
             # 1vs1 classifier
             coef = _one_vs_one_coef(self.dual_coef_, self.n_support_,
