@@ -78,7 +78,7 @@ class GaussianProcessRegressor(BaseEstimator):
                                                          eval_gradient=True)
                 return -lml, -grad
             self.theta_, _, _ = fmin_l_bfgs_b(obj_func, self.kernel.params,
-                                                bounds=self.kernel.bounds)
+                                              bounds=self.kernel.bounds)
             self.kernel.params = self.theta_
         elif self.optimizer is None:
             self.theta_ = self.kernel.params
