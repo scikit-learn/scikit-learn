@@ -108,9 +108,14 @@ class Kernel(six.with_metaclass(ABCMeta)):
     def __repr__(self):
         return "{0}({1})".format(self.__class__.__name__,
                                  ", ".join(map("{0:.3g}".format, self.params)))
+
     @abstractmethod
     def __call__(self, X, Y=None, eval_gradient=False):
         """Evaluate the kernel."""
+
+    def is_stationary(self):
+        """ Returns whether the kernel is stationary. """
+        return True
 
 
 class KernelOperator(Kernel):
@@ -139,6 +144,10 @@ class KernelOperator(Kernel):
         i = self.k1.n_params
         self.k1.bounds = bounds[:i]
         self.k2.bounds = bounds[i:]
+
+    def is_stationary(self):
+        """ Retuuns whether the kernel is stationary. """
+        return self.k1.is_stationary() and self.k2.is_stationary()
 
 
 class Sum(KernelOperator):
@@ -680,6 +689,10 @@ class DotProduct(Kernel):
         else:
             return K
 
+    def is_stationary(self):
+        """ Returns whether the kernel is stationary. """
+        return False
+
 
 # adapted from scipy/optimize/optimize.py for functions with 2d output
 def _approx_fprime(xk, f, epsilon, args=()):
@@ -775,3 +788,7 @@ class PairwiseKernel(Kernel):
             return K, _approx_fprime(self.params, f, 1e-10)
         else:
             return K
+
+    def is_stationary(self):
+        """ Returns whether the kernel is stationary. """
+        return self.metric in ["rbf"]
