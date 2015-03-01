@@ -11,7 +11,8 @@ from scipy.optimize import approx_fprime
 
 from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
 from sklearn.gaussian_process.kernels \
-    import RBF, ConstantKernel, WhiteKernel, PairwiseKernel
+    import (RBF, RationalQuadratic, ExpSineSquared, DotProduct,
+            ConstantKernel, WhiteKernel, PairwiseKernel)
 
 from sklearn.utils.testing import assert_equal, assert_almost_equal
 
@@ -20,7 +21,10 @@ X = np.random.normal(0, 1, (10, 2))
 
 kernels = [RBF(2.0), RBF([[0.5], [2.0]]),
            ConstantKernel(10.0),
-           2.0 * RBF(0.5), RBF(2.0) + WhiteKernel(1.0)]
+           2.0 * RBF(0.5), RBF(2.0) + WhiteKernel(1.0),
+           RationalQuadratic([(1.0,), (1.0,)]),
+           ExpSineSquared([(1.0,), (1.0,)]),
+           DotProduct(1.0), DotProduct(1.0, degree=2)]
 for metric in PAIRWISE_KERNEL_FUNCTIONS:
     if metric in ["additive_chi2", "chi2"]:
         continue
@@ -48,7 +52,7 @@ def test_kernel_gradient():
                     approx_fprime(kernel.params, eval_kernel_ij_for_theta,
                                   1e-10)
 
-        assert_almost_equal(K_gradient, K_gradient_approx, 5)
+        assert_almost_equal(K_gradient, K_gradient_approx, 4)
 
 
 def test_auto_vs_cross():
