@@ -7,8 +7,8 @@ import numpy as np
 from scipy import linalg
 
 from ..utils.arpack import eigsh
-from ..utils.validation import check_is_fitted, NotFittedError
-from ..base import BaseEstimator, TransformerMixin
+from ..utils.validation import check_is_fitted
+from ..base import BaseEstimator, TransformerMixin, NotFittedError
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 

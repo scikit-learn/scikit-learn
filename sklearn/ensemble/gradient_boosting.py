@@ -31,7 +31,7 @@ import numpy as np
 from scipy import stats
 
 from .base import BaseEnsemble
-from ..base import BaseEstimator
+from ..base import BaseEstimator, NotFittedError
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state, check_array, check_X_y, column_or_1d
@@ -39,7 +39,7 @@ from ..utils import check_consistent_length
 from ..utils.extmath import logsumexp
 from ..utils.fixes import expit, bincount
 from ..utils.stats import _weighted_percentile
-from ..utils.validation import check_is_fitted, NotFittedError
+from ..utils.validation import check_is_fitted
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
 

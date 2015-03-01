@@ -14,13 +14,12 @@ from scipy.sparse import csr_matrix, issparse
 
 from .ball_tree import BallTree
 from .kd_tree import KDTree
-from ..base import BaseEstimator
+from ..base import BaseEstimator, NotFittedError
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array
 from ..utils.fixes import argpartition
 from ..utils.validation import DataConversionWarning
-from ..utils.validation import NotFittedError
 from ..externals import six
 
 

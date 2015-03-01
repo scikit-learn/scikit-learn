@@ -12,6 +12,7 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
+from ..base import NotFittedError
 from ..externals import six
 from inspect import getargspec
 
@@ -25,14 +26,6 @@ warnings.simplefilter("always", DataConversionWarning)
 
 class NonBLASDotWarning(UserWarning):
     """A warning on implicit dispatch to numpy.dot"""
-
-
-class NotFittedError(ValueError, AttributeError):
-    """Exception class to raise if estimator is used before fitting
-
-    This class inherits from both ValueError and AttributeError to help with
-    exception handling and backward compatibility.
-    """
 
 
 # Silenced by default to reduce verbosity. Turn on at runtime for

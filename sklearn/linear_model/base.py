@@ -24,12 +24,13 @@ from scipy import sparse
 
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
+                    NotFittedError)
 from ..utils import as_float_array, check_array, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
-from ..utils.validation import NotFittedError, check_is_fitted
+from ..utils.validation import check_is_fitted
 
 
 ###

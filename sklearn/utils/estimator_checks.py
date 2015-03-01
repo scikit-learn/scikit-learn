@@ -27,7 +27,7 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_skip_travis
 from sklearn.utils.testing import ignore_warnings
 
-from sklearn.base import clone, ClassifierMixin
+from sklearn.base import clone, ClassifierMixin, NotFittedError
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.lda import LDA
@@ -36,7 +36,7 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 from sklearn.pipeline import make_pipeline
 
-from sklearn.utils.validation import DataConversionWarning, NotFittedError
+from sklearn.utils.validation import DataConversionWarning
 from sklearn.cross_validation import train_test_split
 
 from sklearn.utils import shuffle

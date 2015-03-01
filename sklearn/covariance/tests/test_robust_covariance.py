@@ -9,9 +9,9 @@ import numpy as np
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.validation import NotFittedError
 
 from sklearn import datasets
+from sklearn.base import NotFittedError
 from sklearn.covariance import empirical_covariance, MinCovDet, \
     EllipticEnvelope
 
