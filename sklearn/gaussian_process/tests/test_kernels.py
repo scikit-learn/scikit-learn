@@ -85,3 +85,12 @@ def test_kernel_anisotropic():
     X2[:, 1] /= 4
     K2 = RBF(0.5)(X2)
     assert_almost_equal(K, K2)
+
+
+def test_kernel_stationary():
+    """ Test stationarity of kernels."""
+    for kernel in kernels:
+        if not kernel.is_stationary():
+            continue
+        K = kernel(X, X + 1)
+        assert_almost_equal(K[0, 0], np.diag(K))
