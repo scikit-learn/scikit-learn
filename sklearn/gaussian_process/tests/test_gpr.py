@@ -59,7 +59,9 @@ def test_converged_to_local_maximum():
 
         lml, lml_gradient = gpr.log_marginal_likelihood(kernel.params, True)
 
-        assert_almost_equal(lml_gradient, 0, 2)  # XXX: Check why only 2 digits
+        assert_true(np.all(np.isclose(lml_gradient, 0, atol=1e-5)
+                           | (kernel.params == kernel.bounds[:, 0])
+                           | (kernel.params == kernel.bounds[:, 1])))
 
 
 def test_solution_inside_bounds():
