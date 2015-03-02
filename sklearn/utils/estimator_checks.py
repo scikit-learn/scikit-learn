@@ -17,7 +17,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import META_ESTIMATORS
@@ -63,6 +62,9 @@ def _boston_subset(n_samples=200):
 def set_fast_parameters(estimator):
     # speed up some estimators
     params = estimator.get_params()
+    if estimator.__class__.__name__ == 'OrthogonalMatchingPursuitCV':
+        # FIXME: This test is unstable on Travis, see issue #3190.
+        check_skip_travis()
     if ("n_iter" in params
             and estimator.__class__.__name__ != "TSNE"):
         estimator.set_params(n_iter=5)
@@ -751,9 +753,6 @@ def check_regressors_int(name, Regressor):
     rnd = np.random.RandomState(0)
     y = rnd.randint(3, size=X.shape[0])
     y = multioutput_estimator_convert_y_2d(name, y)
-    if name == 'OrthogonalMatchingPursuitCV':
-        # FIXME: This test is unstable on Travis, see issue #3190.
-        check_skip_travis()
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
@@ -783,9 +782,6 @@ def check_regressors_train(name, Regressor):
     X, y = _boston_subset()
     y = StandardScaler().fit_transform(y)   # X is already scaled
     y = multioutput_estimator_convert_y_2d(name, y)
-    if name == 'OrthogonalMatchingPursuitCV':
-        # FIXME: This test is unstable on Travis, see issue #3190.
-        check_skip_travis()
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
@@ -819,9 +815,6 @@ def check_regressors_pickle(name, Regressor):
     X, y = _boston_subset()
     y = StandardScaler().fit_transform(y)   # X is already scaled
     y = multioutput_estimator_convert_y_2d(name, y)
-    if name == 'OrthogonalMatchingPursuitCV':
-        # FIXME: This test is unstable on Travis, see issue #3190.
-        check_skip_travis()
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
