@@ -149,7 +149,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             # concerned feature is efficient, for instance by its mean or
             # maximum.
             if not np.allclose(mean_1, 0):
-                raise ValueError(
+                warnings.warn(
                     "Centering failed. Dataset may contain too "
                     "large values. You may need to prescale "
                     "your features.")
