@@ -29,7 +29,7 @@ kernel_gpml = k1 + k2 + k3 + k4
 gp = GaussianProcessRegressor(kernel=kernel_gpml, y_err=0, optimizer=None)
 gp.fit(X, y - y_mean)
 
-print "GPML kernel: %s" % kernel_gpml
+print "GPML kernel: %s" % gp.kernel_
 print "Log-marginal-likelihood: %.3f" % gp.log_marginal_likelihood(gp.theta_)
 
 # Kernel with optimized parameters
@@ -42,7 +42,7 @@ kernel = k1 + k2 + k3 + k4
 gp = GaussianProcessRegressor(kernel=kernel, y_err=0)
 gp.fit(X, y - y_mean)
 
-print "\nLearned kernel: %s" % kernel
+print "\nLearned kernel: %s" % gp.kernel_
 print "Log-marginal-likelihood: %.3f" % gp.log_marginal_likelihood(gp.theta_)
 
 X_ = np.linspace(X.min(), X.max() + 30, 1000)[:, np.newaxis]

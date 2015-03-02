@@ -59,12 +59,18 @@ class GaussianProcessRegressor(BaseEstimator):
     alpha_:
     """
 
-    def __init__(self, kernel=RBF(), y_err=1e-10, optimizer="fmin_l_bfgs_b"):
+    def __init__(self, kernel=None, y_err=1e-10, optimizer="fmin_l_bfgs_b"):
         self.kernel = kernel
         self.y_err = y_err
         self.optimizer = optimizer
 
     def fit(self, X, y):
+        if self.kernel is None:  # Use an RBF kernel as default
+            self.kernel_ = RBF()
+        else:
+            import copy  # XXX
+            self.kernel_ = copy.deepcopy(self.kernel)
+
         X, y = check_X_y(X, y)
 
         self.X_fit_ = X
@@ -77,17 +83,17 @@ class GaussianProcessRegressor(BaseEstimator):
                 lml, grad = self.log_marginal_likelihood(theta,
                                                          eval_gradient=True)
                 return -lml, -grad
-            self.theta_, _, _ = fmin_l_bfgs_b(obj_func, self.kernel.params,
-                                              bounds=self.kernel.bounds)
-            self.kernel.params = self.theta_
+            self.theta_, _, _ = fmin_l_bfgs_b(obj_func, self.kernel_.params,
+                                              bounds=self.kernel_.bounds)
+            self.kernel_.params = self.theta_
         elif self.optimizer is None:
-            self.theta_ = self.kernel.params
+            self.theta_ = self.kernel_.params
         else:
             raise ValueError("Unknown optimizer %s." % self.optimizer)
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
-        K = self.kernel(self.X_fit_)
+        K = self.kernel_(self.X_fit_)
         K[np.diag_indices_from(K)] += self.y_err
         self.L_ = cholesky(K, lower=True)  # Line 2
         self.alpha_ = cho_solve((self.L_, True), self.y_fit_)  # Line 3
@@ -114,18 +120,17 @@ class GaussianProcessRegressor(BaseEstimator):
             else:
                 return y_mean
         else:  # Predict based on GP posterior
-            K_trans = self.kernel(X, self.X_fit_)
+            K_trans = self.kernel_(X, self.X_fit_)
             y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
                 y_cov = \
-                    self.kernel(X) - K_trans.dot(v)  # Line 6
+                    self.kernel_(X) - K_trans.dot(v)  # Line 6
                 return y_mean, y_cov
             elif return_std:
                 # XXX: Compute y_std more efficiently
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
-                y_cov = \
-                    self.kernel(X) - K_trans.dot(v)  # Line 6
+                y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
                 y_std = np.sqrt(np.diag(y_cov))
                 return y_mean, y_std
             else:
@@ -140,7 +145,7 @@ class GaussianProcessRegressor(BaseEstimator):
 
     def log_marginal_likelihood(self, theta, eval_gradient=False):
         import copy  # XXX: Avoid deepcopy
-        kernel = copy.deepcopy(self.kernel)
+        kernel = copy.deepcopy(self.kernel_)
         kernel.params = theta
 
         if eval_gradient:

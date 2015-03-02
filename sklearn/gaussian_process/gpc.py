@@ -40,12 +40,18 @@ class GaussianProcessClassifier(BaseEstimator):
       * binary classification
     """
 
-    def __init__(self, kernel=RBF(), jitter=0.0, optimizer="fmin_l_bfgs_b"):
+    def __init__(self, kernel=None, jitter=0.0, optimizer="fmin_l_bfgs_b"):
         self.kernel = kernel
         self.jitter = jitter
         self.optimizer = optimizer
 
     def fit(self, X, y):
+        if self.kernel is None:  # Use an RBF kernel as default
+            self.kernel_ = RBF()
+        else:
+            import copy  # XXX
+            self.kernel_ = copy.deepcopy(self.kernel)
+
         X, y = check_X_y(X, y)
 
         # XXX: Assert that y is binary and labels are {0, 1}
@@ -59,17 +65,17 @@ class GaussianProcessClassifier(BaseEstimator):
                 lml, grad = self.log_marginal_likelihood(theta,
                                                          eval_gradient=True)
                 return -lml, -grad
-            self.theta_, _, _ = fmin_l_bfgs_b(obj_func, self.kernel.params,
-                                              bounds=self.kernel.bounds)
-            self.kernel.params = self.theta_
+            self.theta_, _, _ = fmin_l_bfgs_b(obj_func, self.kernel_.params,
+                                              bounds=self.kernel_.bounds)
+            self.kernel_.params = self.theta_
         elif self.optimizer is None:
-            self.theta_ = self.kernel.params
+            self.theta_ = self.kernel_.params
         else:
             raise ValueError("Unknown optimizer %s." % self.optimizer)
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
-        self.K_ = self.kernel(self.X_fit_)
+        self.K_ = self.kernel_(self.X_fit_)
         self.K_[np.diag_indices_from(self.K_)] += self.jitter
 
         self.f_, _, (self.pi, self.W_sr, self.L, _, _) = \
@@ -85,7 +91,7 @@ class GaussianProcessClassifier(BaseEstimator):
         # decisions, it is enough to compute the MAP of the posterior and
         # pass it through the link function
         K_star = \
-            self.kernel(self.X_fit_, X)  # K_star =k(x_star)
+            self.kernel_(self.X_fit_, X)  # K_star =k(x_star)
         f_star = K_star.T.dot(self.y_fit_ - self.pi)  # Line 4 (Algorithm 3.2)
 
         return f_star > 0
@@ -95,10 +101,10 @@ class GaussianProcessClassifier(BaseEstimator):
         X = check_array(X)
 
         # Based on Algorithm 3.2 of GPML
-        K_star = self.kernel(self.X_fit_, X)  # K_star =k(x_star)
+        K_star = self.kernel_(self.X_fit_, X)  # K_star =k(x_star)
         f_star = K_star.T.dot(self.y_fit_ - self.pi)  # Line 4
         v = solve(self.L, self.W_sr[:, np.newaxis] * K_star)  # Line 5
-        var_f_star = self.kernel(X) - v.T.dot(v)  # Line 6
+        var_f_star = self.kernel_(X) - v.T.dot(v)  # Line 6
 
         # Line 7:
         # Approximate \int log(z) * N(z | f_star, var_f_star)
@@ -120,7 +126,7 @@ class GaussianProcessClassifier(BaseEstimator):
 
     def log_marginal_likelihood(self, theta, eval_gradient=False):
         import copy  # XXX
-        kernel = copy.deepcopy(self.kernel)
+        kernel = copy.deepcopy(self.kernel_)
         kernel.params = theta
 
         if eval_gradient:
