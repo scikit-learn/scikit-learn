@@ -86,3 +86,20 @@ def test_hasher_zeros():
     """Assert that no zeros are materialized in the output."""
     X = FeatureHasher().transform([{'foo': 0}])
     assert_equal(X.data.shape, (0,))
+
+
+def test_combinations():
+    raw_X = [{"tokyo": 1, "paris": 2, "amsterdam": 3},
+             {"paris": 3, "tokyo": 2}]
+
+    X1 = FeatureHasher(n_features=256, degree=2).transform(raw_X)
+    assert_equal(X1.shape, (2, 256))
+    assert_equal(X1.data.shape[0], 9)
+    assert_array_equal(np.diff(X1.indptr), [6, 3])
+
+
+    X1 = FeatureHasher(n_features=256, degree=2,
+                       interaction_only=True).transform(raw_X)
+    assert_equal(X1.shape, (2, 256))
+    assert_equal(X1.data.shape[0], 4)
+    assert_array_equal(np.diff(X1.indptr), [3, 1])

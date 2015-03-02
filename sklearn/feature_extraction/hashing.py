@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 import numbers
+import itertools
 
 import numpy as np
 import scipy.sparse as sp
@@ -13,6 +14,40 @@ from ..base import BaseEstimator, TransformerMixin
 def _iteritems(d):
     """Like d.iteritems, but accepts any collections.Mapping."""
     return d.iteritems() if hasattr(d, "iteritems") else d.items()
+
+
+def _check_feature_name(f):
+    if isinstance(f, unicode):
+        f = f.encode("utf-8")
+
+    # Need explicit type check because Murmurhash does not propagate
+    # all exceptions. Add "except *" there?
+    elif not isinstance(f, bytes):
+        raise TypeError("feature names must be strings")
+
+    return f
+
+
+def _combinations_x(x, degree, interaction_only):
+    if not interaction_only:
+        for f, v in x:
+            yield f, v
+
+    for combination in itertools.combinations(x, degree):
+        name = ""
+        value = 1.0
+
+        for f, v in combination:
+            name += f + "-"
+            value *= v
+
+        yield name, value
+
+
+def _combinations(raw_X, degree, interaction_only):
+    for x in raw_X:
+        x = list((_check_feature_name(f), v) for f, v in x)
+        yield _combinations_x(x, degree, interaction_only)
 
 
 class FeatureHasher(BaseEstimator, TransformerMixin):
@@ -37,10 +72,12 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.
+
     dtype : numpy type, optional
         The type of feature values. Passed to scipy.sparse matrix constructors
         as the dtype argument. Do not set this to bool, np.boolean or any
         unsigned integer type.
+
     input_type : string, optional
         Either "dict" (the default) to accept dictionaries over
         (feature_name, value); "pair" to accept pairs of (feature_name, value);
@@ -50,6 +87,14 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         The feature_name is hashed to find the appropriate column for the
         feature. The value's sign might be flipped in the output (but see
         non_negative, below).
+
+    degree : int, optional (default: 1)
+        Degree of the feature interactions to generate. When degree=1, no
+        feature interactions are generated.
+
+    interaction_only: bool, optional (default: False)
+        Whether to generate only interaction features. Only used if degree > 1.
+
     non_negative : boolean, optional, default np.float64
         Whether output matrices should contain non-negative values only;
         effectively calls abs on the matrix prior to returning it.
@@ -64,9 +109,11 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",
+                 degree=1, interaction_only=False,
                  dtype=np.float64, non_negative=False):
         self._validate_params(n_features, input_type)
-
+        self.degree = degree
+        self.interaction_only = interaction_only
         self.dtype = dtype
         self.input_type = input_type
         self.n_features = n_features
@@ -121,10 +168,15 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         """
         raw_X = iter(raw_X)
+
         if self.input_type == "dict":
             raw_X = (_iteritems(d) for d in raw_X)
         elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
+
+        if self.degree > 1:
+            raw_X = _combinations(raw_X, self.degree, self.interaction_only)
+
         indices, indptr, values = \
             _hashing.transform(raw_X, self.n_features, self.dtype)
         n_samples = indptr.shape[0] - 1
