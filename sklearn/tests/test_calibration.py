@@ -114,8 +114,7 @@ def test_sample_weight_warning():
 
     for method in ['sigmoid', 'isotonic']:
         base_estimator = LinearSVC(random_state=42)
-        calibrated_clf = CalibratedClassifierCV(base_estimator, method=method,
-                                                random_state=42)
+        calibrated_clf = CalibratedClassifierCV(base_estimator, method=method)
         # LinearSVC does not currently support sample weights but they
         # can still be used for the calibration step (with a warning)
         msg = "LinearSVC does not support sample_weight."
