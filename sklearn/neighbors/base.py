@@ -86,8 +86,8 @@ def _get_weights(dist, weights):
         if dist.dtype is np.dtype(object):
             for point_dist_i, point_dist in enumerate(dist):
                 # check if point_dist is iterable
-                # (ex: RadiusNeighborClassifier.predict may set an element of dist
-                # to 1e-6 to represent an 'outlier')
+                # (ex: RadiusNeighborClassifier.predict may set an element of
+                # dist to 1e-6 to represent an 'outlier')
                 if hasattr(point_dist, '__contains__') and 0. in point_dist:
                     dist[point_dist_i] = point_dist == 0.
                 else:
@@ -489,7 +489,12 @@ class RadiusNeighborsMixin(object):
     def radius_neighbors(self, X=None, radius=None, return_distance=True):
         """Finds the neighbors within a given radius of a point or points.
 
-        Returns indices of and distances to the neighbors of each point.
+        Return the indices and distances of each point from the dataset
+        lying in a ball with size ``radius`` around the points of the query
+        array. Points lying on the boundary are included in the results.
+
+        The result points are *not* necessarily sorted by distance to their
+        query point.
 
         Parameters
         ----------
@@ -507,18 +512,21 @@ class RadiusNeighborsMixin(object):
 
         Returns
         -------
-        dist : array
-            Array representing the euclidean distances to each point,
-            only present if return_distance=True.
+        dist : array, shape (n_samples,) of arrays
+            Array representing the distances to each point, only present if
+            return_distance=True. The distance values are computed according
+            to the ``metric`` constructor parameter.
 
-        ind : array
-            Indices of the nearest points in the population matrix.
+        ind : array, shape (n_samples,) of arrays
+            An array of arrays of indices of the approximate nearest points
+            from the population matrix that lie within a ball of size
+            ``radius`` around the query points.
 
         Examples
         --------
         In the following example, we construct a NeighborsClassifier
         class from an array representing our data set and ask who's
-        the closest point to [1,1,1]
+        the closest point to [1, 1, 1]:
 
         >>> import numpy as np
         >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
