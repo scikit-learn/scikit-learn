@@ -10,6 +10,8 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_less
@@ -219,6 +221,65 @@ def test_radius_neighbors():
                                      sorted_dists_approx)))
 
 
+def test_radius_neighbors_boundary_handling():
+    X = [[0.999, 0.001], [0.5, 0.5], [0, 1.], [-1., 0.001]]
+    n_points = len(X)
+
+    # Build an exact nearest neighbors model as reference model to ensure
+    # consistency between exact and approximate methods
+    nnbrs = NearestNeighbors(algorithm='brute', metric='cosine').fit(X)
+
+    # Build a LSHForest model with hyperparameter values that always guarantee
+    # exact results on this toy dataset.
+    lsfh = LSHForest(min_hash_match=0, n_candidates=n_points).fit(X)
+
+    # define a query aligned with the first axis
+    query = [1., 0.]
+
+    # Compute the exact cosine distances of the query to the four points of
+    # the dataset
+    dists = pairwise_distances(query, X, metric='cosine').ravel()
+
+    # The first point is almost aligned with the query (very small angle),
+    # the cosine distance should therefore be almost null:
+    assert_almost_equal(dists[0], 0, decimal=5)
+
+    # The second point form an angle of 45 degrees to the query vector
+    assert_almost_equal(dists[1], 1 - np.cos(np.pi / 4))
+
+    # The third point is orthogonal from the query vector hence at a distance
+    # exactly one:
+    assert_almost_equal(dists[2], 1)
+
+    # The last point is almost colinear but with opposite sign to the query
+    # therefore it has a cosine 'distance' very close to the maximum possible
+    # value of 2.
+    assert_almost_equal(dists[3], 2, decimal=5)
+
+    # If we query with a radius of one, all the samples except the last sample
+    # should be included in the results. This means that the third sample
+    # is lying on the boundary of the radius query:
+    exact_dists, exact_idx = nnbrs.radius_neighbors(query, radius=1)
+    approx_dists, approx_idx = lsfh.radius_neighbors(query, radius=1)
+
+    assert_array_equal(np.sort(exact_idx[0]), [0, 1, 2])
+    assert_array_equal(np.sort(approx_idx[0]), [0, 1, 2])
+    assert_array_almost_equal(np.sort(exact_dists[0]), dists[:-1])
+    assert_array_almost_equal(np.sort(approx_dists[0]), dists[:-1])
+
+    # If we perform the same query with a slighltly lower radius, the third
+    # point of the dataset that lay on the boundary of the previous query
+    # is now rejected:
+    eps = np.finfo(np.float64).eps
+    exact_dists, exact_idx = nnbrs.radius_neighbors(query, radius=1 - eps)
+    approx_dists, approx_idx = lsfh.radius_neighbors(query, radius=1 - eps)
+
+    assert_array_equal(np.sort(exact_idx[0]), [0, 1])
+    assert_array_equal(np.sort(approx_idx[0]), [0, 1])
+    assert_array_almost_equal(np.sort(exact_dists[0]), dists[:-2])
+    assert_array_almost_equal(np.sort(approx_dists[0]), dists[:-2])
+
+
 def test_distances():
     """Checks whether returned neighbors are from closest to farthest."""
     n_samples = 12
@@ -241,7 +302,8 @@ def test_distances():
         # increasing distance values.
         assert_true(np.all(np.diff(distances[0]) >= 0))
 
-        # The radius_neighbors method does guarantee the order of the results.
+        # Note: the radius_neighbors method does not guarantee the order of
+        # the results.
 
 
 def test_fit():
