@@ -25,11 +25,10 @@ X = rng.uniform(0, 5, 50)[:, np.newaxis]
 y = np.array(np.sin((X[:, 0] - 2.5) ** 2) > 0.0, dtype=int)
 
 # Specify Gaussian Processes with fixed and optimized hyperparameters
-kernel_fix = 1.0 * RBF(param_space=1.0)
-gp_fix = GaussianProcessClassifier(kernel=kernel_fix, optimizer=None).fit(X, y)
+gp_fix = GaussianProcessClassifier(kernel=1.0 * RBF(1.0),
+								   optimizer=None).fit(X, y)
 
-kernel_opt = 1.0 * RBF(1.0)
-gp_opt = GaussianProcessClassifier(kernel=kernel_opt).fit(X, y)
+gp_opt = GaussianProcessClassifier(kernel=1.0 * RBF(1.0)).fit(X, y)
 
 print "Log Marginal Likelihood (initial): %.3f" % \
     gp_fix.log_marginal_likelihood(gp_fix.theta_)
@@ -42,9 +41,9 @@ plt.figure(0)
 plt.scatter(X[:, 0], y)
 X_ = np.linspace(0, 5, 100)
 plt.plot(X_, gp_fix.predict_proba(X_[:, np.newaxis]), 'r',
-         label="Initial kernel: %s" % kernel_fix)
+         label="Initial kernel: %s" % gp_fix.kernel_)
 plt.plot(X_, gp_opt.predict_proba(X_[:, np.newaxis]), 'b',
-         label="Optimized kernel: %s" % kernel_opt)
+         label="Optimized kernel: %s" % gp_opt.kernel_)
 plt.legend(loc="best")
 plt.xlabel("Feature")
 plt.ylabel("Class")

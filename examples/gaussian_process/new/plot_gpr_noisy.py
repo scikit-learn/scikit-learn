@@ -34,7 +34,6 @@ y = 0.5*np.sin(3*X[:, 0]) + rng.normal(0, 0.5, X.shape[0])
 # First run
 plt.figure(0)
 kernel = 1.0 * RBF(100.0) + WhiteKernel((1e-10, 1e-5, 1e+1))
-kernel_str = str(kernel)
 gp = GaussianProcessRegressor(kernel=kernel,
                               y_err=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)
@@ -46,13 +45,13 @@ plt.fill_between(X_, y_mean - np.sqrt(np.diag(y_cov)),
 plt.plot(X_, 0.5*np.sin(3*X_), 'r', lw=3, zorder=9)
 plt.scatter(X[:, 0], y, c='r', s=50, zorder=10)
 plt.title("Initial: %s\nOptimum: %s\nLog-Marginal-Likelihood: %s"
-          % (kernel_str, kernel, gp.log_marginal_likelihood(kernel.params)))
+          % (kernel, gp.kernel_,
+             gp.log_marginal_likelihood(gp.kernel_.params)))
 plt.tight_layout()
 
 # First run
 plt.figure(1)
 kernel = 1.0 * RBF(1.0) + WhiteKernel((1e-10, 1e-5, 1e+1))
-kernel_str = str(kernel)
 gp = GaussianProcessRegressor(kernel=kernel,
                               y_err=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)
@@ -64,7 +63,8 @@ plt.fill_between(X_, y_mean - np.sqrt(np.diag(y_cov)),
 plt.plot(X_, 0.5*np.sin(3*X_), 'r', lw=3, zorder=9)
 plt.scatter(X[:, 0], y, c='r', s=50, zorder=10)
 plt.title("Initial: %s\nOptimum: %s\nLog-Marginal-Likelihood: %s"
-          % (kernel_str, kernel, gp.log_marginal_likelihood(kernel.params)))
+          % (kernel, gp.kernel_,
+             gp.log_marginal_likelihood(gp.kernel_.params)))
 plt.tight_layout()
 
 # Plot LML landscape

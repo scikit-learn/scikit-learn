@@ -3,8 +3,6 @@
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # Licence: BSD 3 clause
 
-from copy import deepcopy
-
 import numpy as np
 
 from scipy.optimize import approx_fprime
@@ -31,7 +29,6 @@ def test_predict_consistent():
     """ Check binary predict decision has also predicted probability above 0.5.
     """
     for kernel in kernels:
-        kernel = deepcopy(kernel)
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
         assert_array_equal(gpc.predict(X),
                            gpc.predict_proba(X) >=0.5)
@@ -40,20 +37,17 @@ def test_predict_consistent():
 def test_lml_improving():
     """ Test that hyperparameter-tuning improves log-marginal likelihood. """
     for kernel in kernels:
-        kernel = deepcopy(kernel)
-        params_initial = kernel.params
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
-        assert_greater(gpc.log_marginal_likelihood(kernel.params),
-                       gpc.log_marginal_likelihood(params_initial))
+        assert_greater(gpc.log_marginal_likelihood(gpc.kernel_.params),
+                       gpc.log_marginal_likelihood(kernel.params))
 
 
 def test_converged_to_local_maximum():
     """ Test that we are in local maximum after hyperparameter-optimization. """
     for kernel in kernels:
-        kernel = deepcopy(kernel)
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
 
-        lml, lml_gradient = gpc.log_marginal_likelihood(kernel.params, True)
+        lml, lml_gradient = gpc.log_marginal_likelihood(gpc.kernel_.params, True)
 
         assert_almost_equal(lml_gradient, 0, 2)
 
@@ -61,13 +55,11 @@ def test_converged_to_local_maximum():
 def test_lml_gradient():
     """ Compare analytic and numeric gradient of log marginal likelihood. """
     for kernel in kernels:
-        kernel = deepcopy(kernel)
-        params = kernel.params
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
 
-        lml, lml_gradient = gpc.log_marginal_likelihood(params, True)
+        lml, lml_gradient = gpc.log_marginal_likelihood(kernel.params, True)
         lml_gradient_approx = \
-            approx_fprime(params,
+            approx_fprime(kernel.params,
                           lambda theta: gpc.log_marginal_likelihood(theta,
                                                                     False),
                           1e-10)
