@@ -27,18 +27,21 @@ how well the probabilistic predictions of different classifiers are calibrated:
    :align: center
 
 .. currentmodule:: sklearn.linear_model
+
 :class:`LogisticRegression` returns well calibrated predictions by default as it directly
 optimizes log-loss. In contrast, the other methods return biased probabilities;
 with different biases per method:
 
- * .. currentmodule:: sklearn.naive_bayes
-   :class:`GaussianNB` tends to push probabilties to 0 or 1 (note the
+.. currentmodule:: sklearn.naive_bayes
+
+*  :class:`GaussianNB` tends to push probabilties to 0 or 1 (note the
    counts in the histograms). This is mainly because it makes the assumption
    that features are conditionally independent given the class, which is not
    the case in this dataset which contains 2 redundant features.
 
- * .. currentmodule:: sklearn.ensemble
-   :class:`RandomForestClassifier` shows the opposite behavior: the histograms
+.. currentmodule:: sklearn.ensemble
+
+*  :class:`RandomForestClassifier` shows the opposite behavior: the histograms
    show peaks at approximately 0.2 and 0.9 probability, while probabilities close to
    0 or 1 are very rare. An explanation for this is given by Niculescu-Mizil
    and Caruana [4]: "Methods such as bagging and random forests that average
@@ -58,13 +61,15 @@ with different biases per method:
    classifier could trust its "intuition" more and return probabilties closer
    to 0 or 1 typically.
 
- * .. currentmodule:: sklearn.svm
-   Linear Support Vector Classification (:class:`LinearSVC`) shows an even more sigmoid curve
+.. currentmodule:: sklearn.svm
+
+*  Linear Support Vector Classification (:class:`LinearSVC`) shows an even more sigmoid curve
    as the RandomForestClassifier, which is typical for maximum-margin methods
    (compare Niculescu-Mizil and Caruana [4]), which focus on hard samples
    that are close to the decision boundary (the support vectors).
 
 .. currentmodule:: sklearn.calibration
+
 Two approaches for performing calibration of probabilistic predictions are
 provided: a parametric approach based on Platt's sigmoid model and a
 non-parametric approach based on isotonic regression (:mod:`sklearn.isotonic`).
@@ -98,6 +103,7 @@ in the middle, i.e., 0.5.
    :align: center
 
 .. currentmodule:: sklearn.metrics
+
 The following experiment is performed on an artificial dataset for binary
 classification with 100.000 samples (1.000 of them are used for model fitting)
 with 20 features. Of the 20 features, only 2 are informative and 10 are
@@ -145,6 +151,7 @@ sigmoid calibration curves and in situations where many additional data can be
 used for calibration.
 
 .. currentmodule:: sklearn.calibration
+
 :class:`CalibratedClassifierCV` can also deal with classification tasks that
 involve more than two classes if the base estimator can do so. In this case,
 the classifier is calibrated first for each class separately in an one-vs-rest

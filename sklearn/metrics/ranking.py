@@ -579,9 +579,9 @@ def coverage_error(y_true, y_score, sample_weight=None):
 
     Compute how far we need to go through the ranked scores to cover all
     true labels. The best value is equal to the average number
-    of labels in ``y_true` per sample.
+    of labels in ``y_true`` per sample.
 
-    Ties in `y_scores` are broken by giving maximal rank that would have
+    Ties in ``y_scores`` are broken by giving maximal rank that would have
     been assigned to all tied values.
 
     Parameters

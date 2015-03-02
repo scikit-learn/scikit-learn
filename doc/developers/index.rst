@@ -719,7 +719,7 @@ mix both supervised and unsupervised transformers, even unsupervised
 estimators need to accept a ``y=None`` keyword argument in
 the second position that is just ignored by the estimator.
 For the same reason, ``fit_predict``, ``fit_transform``, ``score``
- and ``partial_fit`` methods need to accept a ``y`` argument in
+and ``partial_fit`` methods need to accept a ``y`` argument in
 the second place if they are implemented.
 
 The method should return the object (``self``). This pattern is useful
