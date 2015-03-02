@@ -1,5 +1,7 @@
 """Tests for input validation functions"""
 
+import warnings
+
 from tempfile import NamedTemporaryFile
 from itertools import product
 
@@ -178,8 +180,16 @@ def test_check_array():
     accept_sparses = [['csr', 'coo'], ['coo', 'dok']]
     for X, dtype, accept_sparse, copy in product(Xs, dtypes, accept_sparses,
                                                  copys):
-        X_checked = check_array(X, dtype=dtype, accept_sparse=accept_sparse,
-                                copy=copy)
+        with warnings.catch_warnings(record=True) as w:
+            X_checked = check_array(X, dtype=dtype,
+                                    accept_sparse=accept_sparse, copy=copy)
+        if (dtype is object or sp.isspmatrix_dok(X)) and len(w):
+            message = str(w[0].message)
+            messages = ["object dtype is not supported by sparse matrices",
+                        "Can't check dok sparse matrix for nan or inf."]
+            assert_true(message in messages)
+        else:
+            assert_equal(len(w), 0)
         if dtype is not None:
             assert_equal(X_checked.dtype, dtype)
         else:

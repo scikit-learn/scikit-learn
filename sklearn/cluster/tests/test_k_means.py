@@ -350,8 +350,7 @@ def test_minibatch_sensible_reassign_partial_fit():
     zeroed_X, true_labels = make_blobs(n_samples=n_samples, centers=5,
                                        cluster_std=1., random_state=42)
     zeroed_X[::2, :] = 0
-    mb_k_means = MiniBatchKMeans(n_clusters=20, random_state=42, verbose=10,
-                                 init="random")
+    mb_k_means = MiniBatchKMeans(n_clusters=20, random_state=42, init="random")
     for i in range(100):
         mb_k_means.partial_fit(zeroed_X)
     # there should not be too many exact zero cluster centers

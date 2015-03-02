@@ -17,7 +17,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import META_ESTIMATORS
@@ -325,6 +324,7 @@ def check_fit_score_takes_y(name, Estimator):
             assert_true(args[2] in ["y", "Y"])
 
 
+@ignore_warnings
 def check_estimators_dtypes(name, Estimator):
     rnd = np.random.RandomState(0)
     X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)

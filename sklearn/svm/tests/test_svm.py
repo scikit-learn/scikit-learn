@@ -259,7 +259,7 @@ def test_oneclass_decision_function():
     dec_func_test = clf.decision_function(X_test)
     assert_array_equal((dec_func_test > 0).ravel(), y_pred_test == 1)
     dec_func_outliers = clf.decision_function(X_outliers)
-    assert_array_equal((dec_func_outliers > 0).ravel(),  y_pred_outliers == 1)
+    assert_array_equal((dec_func_outliers > 0).ravel(), y_pred_outliers == 1)
 
 
 def test_tweak_params():
@@ -482,8 +482,8 @@ def test_linearsvc_parameters():
             clf.fit(X, y)
 
     # Incorrect loss value - test if explicit error message is raised
-    assert_raises_regexp(ValueError, ".*loss='L3' is not supported.*",
-                         svm.LinearSVC(loss="L3").fit, X, y)
+    assert_raises_regexp(ValueError, ".*loss='l3' is not supported.*",
+                         svm.LinearSVC(loss="l3").fit, X, y)
 
 
 # FIXME remove in 1.0
@@ -560,7 +560,7 @@ def test_linearsvc():
     assert_array_almost_equal(clf.intercept_, [0], decimal=3)
 
     # the same with l1 penalty
-    clf = svm.LinearSVC(penalty='l1', loss='l2', dual=False, random_state=0).fit(X, Y)
+    clf = svm.LinearSVC(penalty='l1', loss='squared_hinge', dual=False, random_state=0).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     # l2 penalty with dual formulation
@@ -568,7 +568,7 @@ def test_linearsvc():
     assert_array_equal(clf.predict(T), true_result)
 
     # l2 penalty, l1 loss
-    clf = svm.LinearSVC(penalty='l2', loss='l1', dual=True, random_state=0)
+    clf = svm.LinearSVC(penalty='l2', loss='hinge', dual=True, random_state=0)
     clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
@@ -635,7 +635,7 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
          [1, 3],
          [2, 3]]
     y = [0, 0, 1, 1]
-    clf = classifier(fit_intercept=True, penalty='l1', loss='l2',
+    clf = classifier(fit_intercept=True, penalty='l1', loss='squared_hinge',
                      dual=False, C=4, tol=1e-7, random_state=0)
     assert_true(clf.intercept_scaling == 1, clf.intercept_scaling)
     assert_true(clf.fit_intercept)
