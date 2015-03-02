@@ -230,9 +230,20 @@ latex_preamble = r"""
 trim_doctests_flags = True
 
 
+def generate_example_rst(app, what, name, obj, options, lines):
+    # generate empty examples files, so that we don't get
+    # inclusion errors if there are no examples for a class / module
+    examples_path = os.path.join(app.srcdir, "modules", "generated",
+                                 "%s.examples" % name)
+    if not os.path.exists(examples_path):
+        # touch file
+        open(examples_path, 'w').close()
+
+
 def setup(app):
     # to hide/show the prompt in code examples:
     app.add_javascript('js/copybutton.js')
+    app.connect('autodoc-process-docstring', generate_example_rst)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
