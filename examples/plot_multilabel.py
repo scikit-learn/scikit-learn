@@ -32,7 +32,7 @@ have a label.
 print(__doc__)
 
 import numpy as np
-import matplotlib.pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.multiclass import OneVsRestClassifier
@@ -48,7 +48,7 @@ def plot_hyperplane(clf, min_x, max_x, linestyle, label):
     a = -w[0] / w[1]
     xx = np.linspace(min_x - 5, max_x + 5)  # make sure the line is long enough
     yy = a * xx - (clf.intercept_[0]) / w[1]
-    pl.plot(xx, yy, linestyle, label=label)
+    plt.plot(xx, yy, linestyle, label=label)
 
 
 def plot_subfigure(X, Y, subplot, title, transform):
@@ -68,33 +68,33 @@ def plot_subfigure(X, Y, subplot, title, transform):
     classif = OneVsRestClassifier(SVC(kernel='linear'))
     classif.fit(X, Y)
 
-    pl.subplot(2, 2, subplot)
-    pl.title(title)
+    plt.subplot(2, 2, subplot)
+    plt.title(title)
 
     zero_class = np.where(Y[:, 0])
     one_class = np.where(Y[:, 1])
-    pl.scatter(X[:, 0], X[:, 1], s=40, c='gray')
-    pl.scatter(X[zero_class, 0], X[zero_class, 1], s=160, edgecolors='b',
+    plt.scatter(X[:, 0], X[:, 1], s=40, c='gray')
+    plt.scatter(X[zero_class, 0], X[zero_class, 1], s=160, edgecolors='b',
                facecolors='none', linewidths=2, label='Class 1')
-    pl.scatter(X[one_class, 0], X[one_class, 1], s=80, edgecolors='orange',
+    plt.scatter(X[one_class, 0], X[one_class, 1], s=80, edgecolors='orange',
                facecolors='none', linewidths=2, label='Class 2')
 
     plot_hyperplane(classif.estimators_[0], min_x, max_x, 'k--',
                     'Boundary\nfor class 1')
     plot_hyperplane(classif.estimators_[1], min_x, max_x, 'k-.',
                     'Boundary\nfor class 2')
-    pl.xticks(())
-    pl.yticks(())
+    plt.xticks(())
+    plt.yticks(())
 
-    pl.xlim(min_x - .5 * max_x, max_x + .5 * max_x)
-    pl.ylim(min_y - .5 * max_y, max_y + .5 * max_y)
+    plt.xlim(min_x - .5 * max_x, max_x + .5 * max_x)
+    plt.ylim(min_y - .5 * max_y, max_y + .5 * max_y)
     if subplot == 2:
-        pl.xlabel('First principal component')
-        pl.ylabel('Second principal component')
-        pl.legend(loc="upper left")
+        plt.xlabel('First principal component')
+        plt.ylabel('Second principal component')
+        plt.legend(loc="upper left")
 
 
-pl.figure(figsize=(8, 6))
+plt.figure(figsize=(8, 6))
 
 X, Y = make_multilabel_classification(n_classes=2, n_labels=1,
                                       allow_unlabeled=True,
@@ -112,5 +112,5 @@ X, Y = make_multilabel_classification(n_classes=2, n_labels=1,
 plot_subfigure(X, Y, 3, "Without unlabeled samples + CCA", "cca")
 plot_subfigure(X, Y, 4, "Without unlabeled samples + PCA", "pca")
 
-pl.subplots_adjust(.04, .02, .97, .94, .09, .2)
-pl.show()
+plt.subplots_adjust(.04, .02, .97, .94, .09, .2)
+plt.show()
