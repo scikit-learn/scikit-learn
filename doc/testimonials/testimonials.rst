@@ -288,7 +288,7 @@ Thierry Bertin-Mahieux, Birchbox, Data Scientist
 
   <div class="logo">
 
-.. image:: images/bestofmedia-logo.gif
+.. image:: images/bestofmedia-logo.png
    :target: http://www.bestofmedia.com
 
 .. raw:: html
