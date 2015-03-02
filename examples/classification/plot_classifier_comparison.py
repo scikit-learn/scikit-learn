@@ -23,9 +23,9 @@ set.
 print(__doc__)
 
 
-# Code source: Gaël Varoquaux
-#              Andreas Müller
-# Modified for documentation by Jaques Grobler
+# Code source: Gael Varoqueux
+#              Andreas Mueller
+# Modified for Documentation merge by Jaques Grobler
 # License: BSD 3 clause
 
 import numpy as np
@@ -41,11 +41,14 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.lda import LDA
 from sklearn.qda import QDA
+from sklearn.earth import EarthRegressor
+from sklearn.linear_model.logistic import LogisticRegression
+from sklearn.pipeline import Pipeline
 
 h = .02  # step size in the mesh
 
 names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Decision Tree",
-         "Random Forest", "AdaBoost", "Naive Bayes", "LDA", "QDA"]
+         "Random Forest", "AdaBoost", "Naive Bayes", "LDA", "QDA", "Earth"]
 classifiers = [
     KNeighborsClassifier(3),
     SVC(kernel="linear", C=0.025),
@@ -55,7 +58,9 @@ classifiers = [
     AdaBoostClassifier(),
     GaussianNB(),
     LDA(),
-    QDA()]
+    QDA(),
+    Pipeline([('earth', EarthRegressor(max_degree=3, penalty=1.5)),
+                             ('logistic', LogisticRegression())])]
 
 X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
                            random_state=1, n_clusters_per_class=1)
@@ -104,10 +109,10 @@ for ds in datasets:
 
         # Plot the decision boundary. For that, we will assign a color to each
         # point in the mesh [x_min, m_max]x[y_min, y_max].
-        if hasattr(clf, "decision_function"):
-            Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
-        else:
+        try:
             Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
+        except NotImplementedError:
+            Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 
         # Put the result into a color plot
         Z = Z.reshape(xx.shape)
