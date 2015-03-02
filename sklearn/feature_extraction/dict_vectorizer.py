@@ -52,7 +52,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Whether transform should produce scipy.sparse matrices.
         True by default.
     sort: boolean, optional.
-        Whether feature_names_ and vocabulary_ should be sorted when fitting.
+        Whether ``feature_names_`` and ``vocabulary_`` should be sorted when fitting.
         True by default.
 
     Attributes

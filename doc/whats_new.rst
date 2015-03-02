@@ -107,7 +107,7 @@ Enhancements
    - Support sparse multilabel indicator representation in
      :class:`preprocessing.LabelBinarizer` and
      :class:`multiclass.OneVsRestClassifier` (by `Hamzeh Alsalhi`_ with thanks
-     to `Rohit Sivaprasad`_), as well as evaluation metrics (by
+     to Rohit Sivaprasad), as well as evaluation metrics (by
      `Joel Nothman`_).
 
    - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
@@ -236,8 +236,8 @@ Bug fixes
       By `Joel Nothman`_
 
     - The ``scoring`` attribute of grid-search and cross-validation methods is no longer
-     ignored when a :class:`grid_search.GridSearchCV` is given as a base estimator or
-     the base estimator doesn't have predict.
+      ignored when a :class:`grid_search.GridSearchCV` is given as a base estimator or
+      the base estimator doesn't have predict.
 
     - The function :func:`hierarchical.ward_tree` now returns the children in
       the same order for both the structured and unstructured versions. By
@@ -247,8 +247,8 @@ Bug fixes
       ``step`` is not equal to 1. By `Nikolay Mayorov`_
 
     - The :class:`decomposition.PCA` now undoes whitening in its
-     ``inverse_transform``. Also, its ``components_`` now always have unit
-     length. By Michael Eickenberg.
+      ``inverse_transform``. Also, its ``components_`` now always have unit
+      length. By Michael Eickenberg.
 
     - Fix incomplete download of the dataset when
       :func:`datasets.download_20newsgroups` is called. By `Manoj Kumar`_.
@@ -3255,8 +3255,6 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Manoj Kumar: https://manojbits.wordpress.com
 
-.. _Andrew Tulloch: http://tullo.ch
-
 .. _Maheshakya Wijewardena: https://github.com/maheshakya
 
 .. _Danny Sullivan: https://github.com/dsullivan7
@@ -3322,3 +3320,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Hanna Wallach: http://dirichlet.net/
 
 .. _Yan Yi: http://www.seowyanyi.org
+
+.. _Kyle Beauchamp: https://github.com/kyleabeauchamp
+
+.. _Hervé Bredin: http://herve.niderb.fr/

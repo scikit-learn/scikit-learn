@@ -264,7 +264,7 @@ In the following sub-sections, we will describe each of those functions,
 preceded by some notes on common API and metric definition.
 
 From binary to multiclass and multilabel
-........................................
+----------------------------------------
 
 Some metrics are essentially defined for binary classification tasks (e.g.
 :func:`f1_score`, :func:`roc_auc_score`). In these cases, by default

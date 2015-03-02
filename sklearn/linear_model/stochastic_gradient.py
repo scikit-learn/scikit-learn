@@ -160,7 +160,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             if coef_init is not None:
                 coef_init = np.asarray(coef_init, order="C")
                 if coef_init.shape != (n_classes, n_features):
-                    raise ValueError("Provided coef_ does not match dataset. ")
+                    raise ValueError("Provided ``coef_`` does not match dataset. ")
                 self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros((n_classes, n_features),
@@ -679,7 +679,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
-        result in the coef_ attribute. If set to an int greater than 1,
+        result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
         average. So average=10 will begin averaging after seeing 10 samples.
 
