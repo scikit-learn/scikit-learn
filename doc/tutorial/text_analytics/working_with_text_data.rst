@@ -65,7 +65,7 @@ For instance::
 
 
 Loading the 20 newsgroups dataset
---------------------------------
+---------------------------------
 
 The dataset is called "Twenty Newsgroups". Here is the official
 description, quoted from the `website

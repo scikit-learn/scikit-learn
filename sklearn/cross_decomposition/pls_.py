@@ -180,7 +180,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         Y block to latents rotations.
 
     coef_: array, [p, q]
-        The coefficients of the linear model: Y = X coef_ + Err
+        The coefficients of the linear model: ``Y = X coef_ + Err``
 
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each

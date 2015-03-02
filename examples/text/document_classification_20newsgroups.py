@@ -208,7 +208,7 @@ def benchmark(clf):
     test_time = time() - t0
     print("test time:  %0.3fs" % test_time)
 
-    score = metrics.accuracy_score(y_test, pred, average='micro')
+    score = metrics.accuracy_score(y_test, pred)
     print("accuracy:   %0.3f" % score)
 
     if hasattr(clf, 'coef_'):
