@@ -24,6 +24,8 @@ from .metrics.pairwise import pairwise_kernels
 class RBFSampler(BaseEstimator, TransformerMixin):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
     of its Fourier transform.
+    
+    It implements a variant of Random Kitchen Sinks.[1]
 
     Parameters
     ----------
@@ -42,6 +44,11 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     -----
     See "Random Features for Large-Scale Kernel Machines" by A. Rahimi and
     Benjamin Recht.
+
+    [1] "Weighted Sums of Random Kitchen Sinks: Replacing
+    minimization with randomization in learning" by A. Rahimi and
+    Benjamin Recht.
+    (http://www.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
     """
 
     def __init__(self, gamma=1., n_components=100, random_state=None):
