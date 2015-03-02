@@ -181,8 +181,11 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function. Use self._intercept_ internally.
         self._intercept_ = self.intercept_.copy()
+        self._dual_coef_ = self.dual_coef_
         if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
             self.intercept_ *= -1
+            self.dual_coef_ = -self.dual_coef_
+
         return self
 
     def _validate_targets(self, y):
@@ -302,7 +305,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_,
+            self._dual_coef_, self._intercept_,
             self.probA_, self.probB_, svm_type=svm_type, kernel=kernel,
             degree=self.degree, coef0=self.coef0, gamma=self._gamma,
             cache_size=self.cache_size)
@@ -322,7 +325,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.support_vectors_.data,
             self.support_vectors_.indices,
             self.support_vectors_.indptr,
-            self.dual_coef_.data, self._intercept_,
+            self._dual_coef_.data, self._intercept_,
             LIBSVM_IMPL.index(self._impl), kernel_type,
             self.degree, self._gamma, self.coef0, self.tol,
             C, self.class_weight_,
@@ -368,7 +371,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_,
+            self._dual_coef_, self._intercept_,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self._impl),
             kernel=kernel, degree=self.degree, cache_size=self.cache_size,
@@ -426,7 +429,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return coef
 
     def _get_coef(self):
-        return safe_sparse_dot(self.dual_coef_, self.support_vectors_)
+        return safe_sparse_dot(self._dual_coef_, self.support_vectors_)
 
 
 class BaseSVC(BaseLibSVM, ClassifierMixin):
@@ -549,7 +552,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         svm_type = LIBSVM_IMPL.index(self._impl)
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_,
+            self._dual_coef_, self._intercept_,
             self.probA_, self.probB_,
             svm_type=svm_type, kernel=kernel, degree=self.degree,
             cache_size=self.cache_size, coef0=self.coef0, gamma=self._gamma)
@@ -570,7 +573,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             self.support_vectors_.data,
             self.support_vectors_.indices,
             self.support_vectors_.indptr,
-            self.dual_coef_.data, self._intercept_,
+            self._dual_coef_.data, self._intercept_,
             LIBSVM_IMPL.index(self._impl), kernel_type,
             self.degree, self._gamma, self.coef0, self.tol,
             self.C, self.class_weight_,
@@ -581,7 +584,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
     def _get_coef(self):
         if self.dual_coef_.shape[0] == 1:
             # binary classifier
-            coef = -safe_sparse_dot(self.dual_coef_, self.support_vectors_)
+            coef = safe_sparse_dot(self.dual_coef_, self.support_vectors_)
         else:
             # 1vs1 classifier
             coef = _one_vs_one_coef(self.dual_coef_, self.n_support_,

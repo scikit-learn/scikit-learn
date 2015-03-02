@@ -41,7 +41,7 @@ def test_libsvm_parameters():
     Test parameters on classes that make use of libsvm.
     """
     clf = svm.SVC(kernel='linear').fit(X, Y)
-    assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
+    assert_array_equal(clf.dual_coef_, [[-0.25, .25]])
     assert_array_equal(clf.support_, [1, 3])
     assert_array_equal(clf.support_vectors_, (X[1], X[3]))
     assert_array_equal(clf.intercept_, [0.])
@@ -112,7 +112,7 @@ def test_precomputed():
     pred = clf.predict(KT)
     assert_raises(ValueError, clf.predict, KT.T)
 
-    assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
+    assert_array_equal(clf.dual_coef_, [[-0.25, .25]])
     assert_array_equal(clf.support_, [1, 3])
     assert_array_equal(clf.intercept_, [0])
     assert_array_almost_equal(clf.support_, [1, 3])
@@ -136,7 +136,7 @@ def test_precomputed():
     clf.fit(X, Y)
     pred = clf.predict(T)
 
-    assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
+    assert_array_equal(clf.dual_coef_, [[-0.25, .25]])
     assert_array_equal(clf.intercept_, [0])
     assert_array_almost_equal(clf.support_, [1, 3])
     assert_array_equal(pred, true_result)
@@ -275,9 +275,9 @@ def test_tweak_params():
     """
     clf = svm.SVC(kernel='linear', C=1.0)
     clf.fit(X, Y)
-    assert_array_equal(clf.dual_coef_, [[.25, -.25]])
+    assert_array_equal(clf.dual_coef_, [[-.25, .25]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [1])
-    clf.dual_coef_ = np.array([[.0, 1.]])
+    clf._dual_coef_ = np.array([[.0, 1.]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [2])
 
 
@@ -328,6 +328,16 @@ def test_decision_function():
         clf.classes_[(clf.decision_function(X) > 0).astype(np.int)])
     expected = np.array([-1., -0.66, -1., 0.66, 1., 1.])
     assert_array_almost_equal(clf.decision_function(X), expected, 2)
+
+    # kernel binary:
+    clf = svm.SVC(kernel='rbf', gamma=1)
+    clf.fit(X, Y)
+    norm = lambda x: np.apply_along_axis(np.linalg.norm, 1, x)
+    rbfs = [np.exp(-clf.gamma * norm(clf.support_vectors_ - X[i])**2)
+            for i in range(len(X))]
+    
+    dec = np.dot(rbfs, clf.dual_coef_.T) + clf.intercept_
+    assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
 
 
 def test_weight():
