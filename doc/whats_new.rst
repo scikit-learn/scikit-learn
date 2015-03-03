@@ -413,6 +413,12 @@ API changes summary
       data (less than 1 sample or less than 1 feature for 2D input).
       By `Olivier Grisel`_.
 
+
+    - The ``shuffle`` option of :class:`.linear_model.SGDClassifier`,
+      :class:`linear_model.SGDRegressor`, :class:`linear_model.Perceptron`,
+      :class:`linear_model.PassiveAgressiveClassivier` and
+      :class:`linear_model.PassiveAgressiveRegressor` now defaults to ``True``.
+
 .. _changes_0_15_2:
 
 0.15.2
