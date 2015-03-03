@@ -149,10 +149,11 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             # concerned feature is efficient, for instance by its mean or
             # maximum.
             if not np.allclose(mean_1, 0):
-                warnings.warn(
-                    "Centering failed. Dataset may contain too "
-                    "large values. You may need to prescale "
-                    "your features.")
+                warnings.warn("Numerical issues were encountered "
+                              "and might not be solved. Dataset may "
+                              "contain too large values. You may need "
+                              "to prescale your features.")
+                Xr -= mean_1
         if with_std:
             Xr /= std_
             if with_mean:
@@ -1108,7 +1109,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         # We use only those catgorical features of X that are known using fit.
         # i.e lesser than n_values_ using mask.
         # This means, if self.handle_unknown is "ignore", the row_indices and
-        # col_indices corresponding to the unknown categorical feature are ignored.
+        # col_indices corresponding to the unknown categorical feature are
+        # ignored.
+
         mask = (X < self.n_values_).ravel()
         if np.any(~mask):
             if self.handle_unknown not in ['error', 'ignore']:

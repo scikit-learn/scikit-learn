@@ -105,11 +105,19 @@ def test_scaler_1d():
 
     X = np.zeros(22) + np.log(1e-5)
     assert_array_almost_equal(scale(X), np.zeros(22))
+    w = "standard deviation of the data is probably very close to 0"
+    assert_warns_message(UserWarning, w, scale, X)
 
     X = np.ones(10.) * 1e-100
     assert_array_almost_equal(scale(X), np.zeros(10))
 
-    X = np.arange(10.)
+    X = np.ones(10.) * 1e100
+    assert_array_almost_equal(scale(X), np.zeros(10))
+    assert_array_almost_equal(scale(X, with_std=False), np.zeros(10))
+    w = "Dataset may contain too large values"
+    assert_warns_message(UserWarning, w, scale, X)
+
+    X = np.arange(10.) * 1e100
     Y = np.arange(10.) * 1e-100
     assert_array_almost_equal(scale(X), scale(Y))
 
@@ -844,7 +852,7 @@ def test_one_hot_encoder_unknown_transform():
     oh.fit(X)
     assert_array_equal(
         oh.transform(y).toarray(),
-        np.array([[ 0.,  0.,  0.,  0.,  1.,  0.,  0.]])
+        np.array([[0.,  0.,  0.,  0.,  1.,  0.,  0.]])
         )
 
     # Raise error if handle_unknown is neither ignore or error.
