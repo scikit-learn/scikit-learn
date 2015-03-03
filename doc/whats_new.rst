@@ -198,6 +198,8 @@ Enhancements
    - The outcome of :func:`manifold.spectral_embedding` was made deterministic
      by flipping the sign of eigen vectors. By `Hasil Sharma`_.
 
+   - Allow sampling in :class:`mixture.VBGMM` and :class:`mixture.DPGMM`.
+     By `Andreas Müller`_.
 
 Documentation improvements
 ..........................

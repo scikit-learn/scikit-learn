@@ -3,13 +3,11 @@ import unittest
 from nose.tools import assert_true
 import numpy as np
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
-                           assert_raises)
+                           assert_raises, assert_array_less)
 from scipy import stats
 from sklearn import mixture
 from sklearn.datasets.samples_generator import make_spd_matrix
 from sklearn.utils.testing import assert_greater
-
-rng = np.random.RandomState(0)
 
 
 def test_sample_gaussian():
@@ -18,6 +16,7 @@ def test_sample_gaussian():
     is diagonal, spherical and full
     """
 
+    rng = np.random.RandomState(0)
     n_features, n_samples = 2, 300
     axis = 1
     mu = rng.randint(10) * rng.rand(n_features)
@@ -70,6 +69,7 @@ def test_lmvnpdf_diag():
     compare it to the vectorized version (mixture.lmvnpdf) to test
     for correctness
     """
+    rng = np.random.RandomState(0)
     n_features, n_components, n_samples = 2, 3, 10
     mu = rng.randint(10) * rng.rand(n_components, n_features)
     cv = (rng.rand(n_components, n_features) + 1.0) ** 2
@@ -81,6 +81,7 @@ def test_lmvnpdf_diag():
 
 
 def test_lmvnpdf_spherical():
+    rng = np.random.RandomState(0)
     n_features, n_components, n_samples = 2, 3, 10
 
     mu = rng.randint(10) * rng.rand(n_components, n_features)
@@ -95,6 +96,7 @@ def test_lmvnpdf_spherical():
 
 
 def test_lmvnpdf_full():
+    rng = np.random.RandomState(0)
     n_features, n_components, n_samples = 2, 3, 10
 
     mu = rng.randint(10) * rng.rand(n_components, n_features)
@@ -109,6 +111,7 @@ def test_lmvnpdf_full():
 
 
 def test_GMM_attributes():
+    rng = np.random.RandomState(0)
     n_components, n_features = 10, 4
     covariance_type = 'diag'
     g = mixture.GMM(n_components, covariance_type, random_state=rng)
@@ -139,20 +142,21 @@ class GMMTester():
     do_test_eval = True
 
     def _setUp(self):
+        self.rng = np.random.RandomState(0)
         self.n_components = 10
         self.n_features = 4
-        self.weights = rng.rand(self.n_components)
+        self.weights = self.rng.rand(self.n_components)
         self.weights = self.weights / self.weights.sum()
-        self.means = rng.randint(-20, 20, (self.n_components, self.n_features))
+        self.means = self.rng.randint(-20, 20, (self.n_components, self.n_features))
         self.threshold = -0.5
         self.I = np.eye(self.n_features)
         self.covars = {
-            'spherical': (0.1 + 2 * rng.rand(self.n_components,
-                                             self.n_features)) ** 2,
+            'spherical': (0.1 + 2 * self.rng.rand(self.n_components,
+                                                  self.n_features)) ** 2,
             'tied': (make_spd_matrix(self.n_features, random_state=0)
                      + 5 * self.I),
-            'diag': (0.1 + 2 * rng.rand(self.n_components,
-                                        self.n_features)) ** 2,
+            'diag': (0.1 + 2 * self.rng.rand(self.n_components,
+                                             self.n_features)) ** 2,
             'full': np.array([make_spd_matrix(self.n_features, random_state=0)
                               + 5 * self.I for x in range(self.n_components)])}
 
@@ -163,7 +167,8 @@ class GMMTester():
         # due to the variational parameters being more expressive than
         # covariance matrices
         g = self.model(n_components=self.n_components,
-                       covariance_type=self.covariance_type, random_state=rng)
+                       covariance_type=self.covariance_type,
+                       random_state=self.rng)
         # Make sure the means are far apart so responsibilities.argmax()
         # picks the actual component used to generate the observations.
         g.means_ = 20 * self.means
@@ -172,7 +177,7 @@ class GMMTester():
 
         gaussidx = np.repeat(np.arange(self.n_components), 5)
         n_samples = len(gaussidx)
-        X = rng.randn(n_samples, self.n_features) + g.means_[gaussidx]
+        X = self.rng.randn(n_samples, self.n_features) + g.means_[gaussidx]
 
         ll, responsibilities = g.score_samples(X)
 
@@ -184,8 +189,12 @@ class GMMTester():
         assert_array_equal(responsibilities.argmax(axis=1), gaussidx)
 
     def test_sample(self, n=100):
+        if not self.do_test_eval:
+            return  # DPGMM does not support setting the means and covariances
+        # test sampling from a pred-defined model
         g = self.model(n_components=self.n_components,
-                       covariance_type=self.covariance_type, random_state=rng)
+                       covariance_type=self.covariance_type,
+                       random_state=self.rng)
         # Make sure the means are far apart so responsibilities.argmax()
         # picks the actual component used to generate the observations.
         g.means_ = 20 * self.means
@@ -194,6 +203,39 @@ class GMMTester():
 
         samples = g.sample(n)
         self.assertEqual(samples.shape, (n, self.n_features))
+        logprobs = g.score_samples(samples)[0]
+        # samples are likely under the model
+        assert_array_less(-122, logprobs)
+
+    def test_train_sample(self, n=100):
+        # Generate samples from a GMM model with well spaced components by
+        # manually setting the attributes `means_`, `covar_` and `weights_`
+        # that are read/write attributes but only for GMM (not DPGMM for
+        # instance).
+
+        # Then fit a second independent mixture model (of any type including
+        # DPGMM this time) on the previous samples to have this model estimate
+        # its own `means_`, `covar_` and `weights_` parameters from the data to
+        # be able to in turn generate its own batch samples that should have a
+        # high likelihood under its estimated parameters.
+
+        sample_model = mixture.GMM(n_components=self.n_components,
+                                   covariance_type=self.covariance_type,
+                                   random_state=self.rng)
+        sample_model.means_ = 20 * self.means
+        sample_model.covars_ = np.maximum(self.covars[self.covariance_type], 0.1)
+        sample_model.weights_ = self.weights
+
+        data = sample_model.sample(n)
+        g = self.model(n_components=self.n_components,
+                       covariance_type=self.covariance_type,
+                       random_state=self.rng)
+        g.fit(data)
+        samples = g.sample(n)
+        self.assertEqual(samples.shape, (n, self.n_features))
+        logprobs = g.score_samples(samples)[0]
+        # samples are likely under the model
+        assert_array_less(-50, logprobs)
 
     def test_train(self, params='wmc'):
         g = mixture.GMM(n_components=self.n_components,
@@ -206,7 +248,7 @@ class GMMTester():
         X = g.sample(n_samples=100)
         g = self.model(n_components=self.n_components,
                        covariance_type=self.covariance_type,
-                       random_state=rng, min_covar=1e-1,
+                       random_state=self.rng, min_covar=1e-1,
                        n_iter=1, init_params=params)
         g.fit(X)
 
@@ -240,10 +282,10 @@ class GMMTester():
         """ Train on degenerate data with 0 in some dimensions
         """
         # Create a training set by sampling from the predefined distribution.
-        X = rng.randn(100, self.n_features)
+        X = self.rng.randn(100, self.n_features)
         X.T[1:] = 0
         g = self.model(n_components=2, covariance_type=self.covariance_type,
-                       random_state=rng, min_covar=1e-3, n_iter=5,
+                       random_state=self.rng, min_covar=1e-3, n_iter=5,
                        init_params=params)
         g.fit(X)
         trainll = g.score(X)
@@ -253,10 +295,10 @@ class GMMTester():
         """ Train on 1-D data
         """
         # Create a training set by sampling from the predefined distribution.
-        X = rng.randn(100, 1)
+        X = self.rng.randn(100, 1)
         #X.T[1:] = 0
         g = self.model(n_components=2, covariance_type=self.covariance_type,
-                       random_state=rng, min_covar=1e-7, n_iter=5,
+                       random_state=self.rng, min_covar=1e-7, n_iter=5,
                        init_params=params)
         g.fit(X)
         trainll = g.score(X)
@@ -295,6 +337,7 @@ class TestGMMWithFullCovars(unittest.TestCase, GMMTester):
 
 def test_multiple_init():
     """Test that multiple inits does not much worse than a single one"""
+    rng = np.random.RandomState(0)
     X = rng.randn(30, 5)
     X[:10] += 2
     g = mixture.GMM(n_components=2, covariance_type='spherical',
@@ -307,6 +350,7 @@ def test_multiple_init():
 
 def test_n_parameters():
     """Test that the right number of parameters is estimated"""
+    rng = np.random.RandomState(0)
     n_samples, n_dim, n_components = 7, 5, 2
     X = rng.randn(n_samples, n_dim)
     n_params = {'spherical': 13, 'diag': 21, 'tied': 26, 'full': 41}
@@ -322,6 +366,7 @@ def test_1d_1component():
     Test all of the covariance_types return the same BIC score for
     1-dimensional, 1 component fits.
     """
+    rng = np.random.RandomState(0)
     n_samples, n_dim, n_components = 100, 1, 1
     X = rng.randn(n_samples, n_dim)
     g_full = mixture.GMM(n_components=n_components, covariance_type='full',
@@ -337,6 +382,7 @@ def test_1d_1component():
 
 def test_aic():
     """ Test the aic and bic criteria"""
+    rng = np.random.RandomState(0)
     n_samples, n_dim, n_components = 50, 3, 2
     X = rng.randn(n_samples, n_dim)
     SGH = 0.5 * (X.var() + np.log(2 * np.pi))  # standard gaussian entropy
@@ -402,8 +448,3 @@ def test_positive_definite_covars():
     # Check positive definiteness for all covariance types
     for covariance_type in ["full", "tied", "diag", "spherical"]:
         yield check_positive_definite_covars, covariance_type
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()
