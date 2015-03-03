@@ -172,8 +172,7 @@ def test_classification_scores():
     # test fbeta score that takes an argument
     scorer = make_scorer(fbeta_score, beta=2)
     score1 = scorer(clf, X_test, y_test)
-    score2 = fbeta_score(y_test, clf.predict(X_test), beta=2,
-                         average='weighted')
+    score2 = fbeta_score(y_test, clf.predict(X_test), beta=2)
     assert_almost_equal(score1, score2)
 
     # test that custom scorer can be pickled
