@@ -213,7 +213,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     multilabel_ : boolean
         True if the transformer was fitted on a multilabel rather than a
-        multiclass set of labels. The multilabel_ attribute is deprecated
+        multiclass set of labels. The ``multilabel_`` attribute is deprecated
         and will be removed in 0.18
 
     sparse_input_ : boolean,
@@ -222,7 +222,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     indicator_matrix_ : str
         'sparse' when the input data to tansform is a multilable-indicator and
-        is sparse, None otherwise. The indicator_matrix_ attribute is
+        is sparse, None otherwise. The ``indicator_matrix_`` attribute is
         deprecated as of version 0.16 and will be removed in 0.18
 
 
@@ -607,7 +607,7 @@ def _inverse_binarize_multiclass(y, classes):
         samples = np.arange(n_samples)[(row_nnz > 0) &
                                        (row_max.ravel() == 0)]
         for i in samples:
-            ind = y.indices[y.indptr[i]:y.indptr[i+1]]
+            ind = y.indices[y.indptr[i]:y.indptr[i + 1]]
             y_i_argmax[i] = classes[np.setdiff1d(outputs, ind)][0]
 
         return classes[y_i_argmax]

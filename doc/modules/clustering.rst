@@ -482,7 +482,7 @@ reproducible, but it tends to create parcels of fairly even and
 geometrical shape.
 
 =====================================  =====================================
- ``assign_labels="kmeans"`              ``assign_labels="discretize"``
+ ``assign_labels="kmeans"``              ``assign_labels="discretize"``
 =====================================  =====================================
 |lena_kmeans|                          |lena_discretize|
 =====================================  =====================================
