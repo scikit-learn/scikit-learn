@@ -15,12 +15,12 @@ from nose.tools import assert_raises, assert_true, assert_equal, assert_false
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.metrics import f1_score
+from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
 from sklearn.utils.testing import assert_warns_message
-
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -41,7 +41,7 @@ def test_libsvm_parameters():
     Test parameters on classes that make use of libsvm.
     """
     clf = svm.SVC(kernel='linear').fit(X, Y)
-    assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
+    assert_array_equal(clf.dual_coef_, [[-0.25, .25]])
     assert_array_equal(clf.support_, [1, 3])
     assert_array_equal(clf.support_vectors_, (X[1], X[3]))
     assert_array_equal(clf.intercept_, [0.])
@@ -112,7 +112,7 @@ def test_precomputed():
     pred = clf.predict(KT)
     assert_raises(ValueError, clf.predict, KT.T)
 
-    assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
+    assert_array_equal(clf.dual_coef_, [[-0.25, .25]])
     assert_array_equal(clf.support_, [1, 3])
     assert_array_equal(clf.intercept_, [0])
     assert_array_almost_equal(clf.support_, [1, 3])
@@ -136,7 +136,7 @@ def test_precomputed():
     clf.fit(X, Y)
     pred = clf.predict(T)
 
-    assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
+    assert_array_equal(clf.dual_coef_, [[-0.25, .25]])
     assert_array_equal(clf.intercept_, [0])
     assert_array_almost_equal(clf.support_, [1, 3])
     assert_array_equal(pred, true_result)
@@ -275,9 +275,9 @@ def test_tweak_params():
     """
     clf = svm.SVC(kernel='linear', C=1.0)
     clf.fit(X, Y)
-    assert_array_equal(clf.dual_coef_, [[.25, -.25]])
+    assert_array_equal(clf.dual_coef_, [[-.25, .25]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [1])
-    clf.dual_coef_ = np.array([[.0, 1.]])
+    clf._dual_coef_ = np.array([[.0, 1.]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [2])
 
 
@@ -328,6 +328,14 @@ def test_decision_function():
         clf.classes_[(clf.decision_function(X) > 0).astype(np.int)])
     expected = np.array([-1., -0.66, -1., 0.66, 1., 1.])
     assert_array_almost_equal(clf.decision_function(X), expected, 2)
+
+    # kernel binary:
+    clf = svm.SVC(kernel='rbf', gamma=1)
+    clf.fit(X, Y)
+    
+    rbfs = rbf_kernel(X, clf.support_vectors_, gamma=clf.gamma)
+    dec = np.dot(rbfs, clf.dual_coef_.T) + clf.intercept_
+    assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
 
 
 def test_weight():

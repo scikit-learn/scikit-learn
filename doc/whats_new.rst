@@ -328,6 +328,10 @@ Bug fixes
       :class:`neighbors.NearestNeighbors` return the samples lying on the
       boundary for ``algorithm='brute'``. By `Yan Yi`_.
 
+    - Flip sign of ``dual_coef_`` of :class:`svm.SVC`
+      to make it consistent with the documentation and
+      ``decision_function``. By Artem Sobolev.
+
 
 API changes summary
 -------------------
