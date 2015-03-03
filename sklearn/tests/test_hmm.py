@@ -321,7 +321,6 @@ class GaussianHMMBaseTester(object):
         # ValueError: zero-size array to reduction operation maximum which has no identity
         h.fit(obs)
 
-
     def test_fit_with_priors(self, params='stmc', n_iter=5, verbose=False):
         startprob_prior = 10 * self.startprob + 2.0
         transmat_prior = 10 * self.transmat + 2.0

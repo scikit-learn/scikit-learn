@@ -503,8 +503,10 @@ def test_logistic_regression_multinomial():
 
     # Some basic attributes of Logistic Regression
     n_samples, n_features, n_classes = 50, 20, 3
-    X, y = make_classification(n_samples=50, n_features=20, n_informative=10,
-                               n_classes=3, random_state=0)
+    X, y = make_classification(n_samples=n_samples,
+                               n_features=n_features,
+                               n_informative=10,
+                               n_classes=n_classes, random_state=0)
     clf_int = LogisticRegression(solver='lbfgs', multi_class='multinomial')
     clf_int.fit(X, y)
     assert_array_equal(clf_int.coef_.shape, (n_classes, n_features))
@@ -580,7 +582,6 @@ def test_liblinear_decision_function_zero():
     See Issue: https://github.com/scikit-learn/scikit-learn/issues/3600
     and the PR https://github.com/scikit-learn/scikit-learn/pull/3623
     """
-    rng = np.random.RandomState(0)
     X, y = make_classification(n_samples=5, n_features=5)
     clf = LogisticRegression(fit_intercept=False)
     clf.fit(X, y)

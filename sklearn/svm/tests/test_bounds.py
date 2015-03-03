@@ -22,7 +22,7 @@ def test_l1_min_c():
     losses = ['squared_hinge', 'log']
     Xs = {'sparse': sparse_X, 'dense': dense_X}
     Ys = {'two-classes': Y1, 'multi-class': Y2}
-    intercepts = {'no-intercept':  {'fit_intercept': False},
+    intercepts = {'no-intercept': {'fit_intercept': False},
                   'fit-intercept': {'fit_intercept': True,
                                     'intercept_scaling': 10}}
 
@@ -50,9 +50,9 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
     min_c = l1_min_c(X, y, loss, fit_intercept, intercept_scaling)
 
     clf = {
-        'log':  LogisticRegression(penalty='l1'),
-        'squared_hinge':  LinearSVC(loss='squared_hinge',
-                                    penalty='l1', dual=False),
+        'log': LogisticRegression(penalty='l1'),
+        'squared_hinge': LinearSVC(loss='squared_hinge',
+                                   penalty='l1', dual=False),
     }[loss]
 
     clf.fit_intercept = fit_intercept

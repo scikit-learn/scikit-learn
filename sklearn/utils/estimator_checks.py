@@ -327,6 +327,7 @@ def check_fit_score_takes_y(name, Estimator):
             assert_true(args[2] in ["y", "Y"])
 
 
+@ignore_warnings
 def check_estimators_dtypes(name, Estimator):
     rnd = np.random.RandomState(0)
     X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
