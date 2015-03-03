@@ -179,7 +179,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.shape_fit_ = X.shape
 
         # In binary case, we need to flip the sign of coef, intercept and
-        # decision function. Use self._intercept_ internally.
+        # decision function. Use self._intercept_ and self._dual_coef_ internally.
         self._intercept_ = self.intercept_.copy()
         self._dual_coef_ = self.dual_coef_
         if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
