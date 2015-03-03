@@ -15,12 +15,12 @@ from nose.tools import assert_raises, assert_true, assert_equal, assert_false
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.metrics import f1_score
+from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
 from sklearn.utils.testing import assert_warns_message
-
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -332,10 +332,8 @@ def test_decision_function():
     # kernel binary:
     clf = svm.SVC(kernel='rbf', gamma=1)
     clf.fit(X, Y)
-    norm = lambda x: np.apply_along_axis(np.linalg.norm, 1, x)
-    rbfs = [np.exp(-clf.gamma * norm(clf.support_vectors_ - X[i])**2)
-            for i in range(len(X))]
     
+    rbfs = rbf_kernel(X, clf.support_vectors_, gamma=clf.gamma)
     dec = np.dot(rbfs, clf.dual_coef_.T) + clf.intercept_
     assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
 
