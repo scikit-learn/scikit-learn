@@ -667,3 +667,137 @@ error with a ``filterwarnings``::
 For a full code example that demonstrates using a :class:`FunctionTransformer`
 to do custom feature selection,
 see :ref:`sphx_glr_auto_examples_preprocessing_plot_function_transformer.py`
+
+.. _preprocessing_resample_labels:
+
+Resampling of labels
+==========================
+
+Balancing labels
+----------------
+Datasets, unless carefully designed, typically do not have an equal number
+of samples from each class. Resampling the dataset with :func:`resample_labels`
+allows for balancing or changing the label distribution, if desired, and also
+for growing or shrinking the dataset to any size.
+
+While the effectiveness of changing the label distribution of the training set
+is still an open question, such experiments are easy to conduct. Please note
+that this function will not generate any samples that are not in the original
+dataset, but it is possible to perturb the dataset after resampling to
+synthesize a similar but not identical dataset.
+
+As an example, assume there is an unbalanced dataset with three labels ``[0, 1,
+2]`` and ``[100, 125, 150]`` samples. There are three options for the ``method``
+keyword when balancing the class distribution with the :func:`resample_labels`.
+By setting the ``method='undersample'`` parameter, the number of samples in the
+least common class determines the count of the samples for each class, which
+results in a dataset of 300 points total, with 100 points drawn from each of
+the three classes::
+
+  >>> import numpy as np
+  >>> from sklearn.preprocessing.resample import resample_labels
+  >>> y = np.concatenate([np.repeat(0,100), np.repeat(1,125), np.repeat(2,150)])
+  >>> indices = resample_labels(y, method='undersample')
+  >>> print(np.bincount(y[indices]))
+  [100 100 100]
+
+With ``method='oversample'``, each class draws 150 samples and the length of the
+output is 450::
+  >>> indices = resample_labels(y, method='oversample')
+  >>> print(np.bincount(y[indices]))
+  [150 150 150]
+
+
+Using ``method='balance'`` keeps the length of the dataset at 375 but equalizes
+the count of each class by undersampling or oversampling as needed::
+
+  >>> indices = resample_labels(y, method='balance')
+  >>> print(np.bincount(y[indices]))
+  [125 125 125]
+
+Keep in mind that if your dataset changes or has rare labels that vary from
+run to run, you may end up with very few samples in your output dataset if one
+class is underrepresented or missing. One way to mitigate this problem is to use
+the ``scale`` parameter described later, but there is no substitute for being
+careful.
+
+
+Custom label distribution
+-------------------------
+The three built-in sampling options above produce a balanced dataset, but
+unbalancing the data by passing a ``method=dict`` is also supported. For
+instance, in the previous example, passing ``method={0: .5, 1: .25, 2: .25}``
+gives a dataset where a 0 sample is twice as likely as a 1 or 2.
+
+Skew the distribution with a dict::
+
+  >>> import numpy as np
+  >>> from sklearn.preprocessing.resample import resample_labels
+  >>> y = np.concatenate([np.repeat(0,100), np.repeat(1,125), np.repeat(2,150)])
+  >>> indices = resample_labels(y, method={0: .5, 1: .25, 2: .25}, random_state=4)
+  >>> print(np.bincount(y[indices]))
+  [203  89  83]
+
+
+Resizing the dataset
+--------------------
+Changing the size of a dataset is also supported, which can lead to interesting
+training possibilities. Perhaps the full dataset is very large and will take a
+long time to train. Setting ``scaling=3000``, for example, will output 3000
+samples with the desired label distribution, while setting ``scaling`` to a
+float will scale the original number of samples, e.g. ``scaling=.5`` will
+output half the number of samples in the original dataset, while
+``scaling=3.0`` will triple the dataset.
+
+Scaling up the size of a training set is also useful for making sure that
+a machine learning algorithm can handle training and predicting large amounts
+of data in a reasonable amount of time.
+
+Take scaling up the iris dataset from 150 samples to 7,500 as an example::
+
+    >>> import numpy as np
+    >>> from sklearn import svm, datasets
+    >>> from sklearn.preprocessing.resample import resample_labels
+    >>> iris = datasets.load_iris()
+    >>> X = iris.data
+    >>> y = iris.target
+    >>> indices = resample_labels(y, scaling=50.0)
+    >>> X0 = iris.data[indices]
+    >>> y0 = iris.target[indices]
+    >>> svc = svm.SVC(kernel='linear', C=1.0).fit(X, y)
+    >>> svc = svm.SVC(kernel='linear', C=1.0).fit(X0, y0)
+
+Training is almost instantaneous with 150 samples, takes slightly longer as
+shown with 50x samples, and can take over ten seconds with 1000x the data.
+
+Other resampling options
+------------------------
+Sampling can be done with or without replacement. The default option,
+``replace=False``, selects sampling without replacement. In order for the
+scaling feature to work with sampling without replacement, if we would
+run out of samples, instead the sample pool starts over with the original
+dataset. Thus, if you set ``scale=10.0`` and sample without replacement,
+the dataset will have each sample repeated ten times. In effect, only
+the last repetition of the dataset might vary when sampling without
+replacement.
+
+Shuffling the data can take considerable CPU time and is turned off by
+default, but is possible by setting the keyword argument ``shuffle=True``.
+
+Finally, for repeatability, you may set the ``random_state`` keyword
+argument.
+
+Keep training and testing datasets separate
+-------------------------------------------
+It's a fundamental machine learning practice to keep the training and
+testing datasets completely separate because estimators do very well
+on samples they have been trained on and testing results will be overly
+optimistic. When resampling, since you are duplicating samples exactly,
+there is now the possiblity that a sample could find its way into both
+sets.
+
+Even ruling out coding errors, techniques such as scaling a dataset
+and then running cross-validation on it would potentially place some
+samples in both datasets. The danger is that your results are not as
+good as the metrics report. Therefore, use extreme care when resampling
+so that you do not confuse the training and testing datasets.
