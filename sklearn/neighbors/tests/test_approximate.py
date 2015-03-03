@@ -170,8 +170,9 @@ def test_radius_neighbors():
         mean_dist = np.mean(pairwise_distances(query, X, metric='cosine'))
         neighbors = lshf.radius_neighbors(query, radius=mean_dist,
                                           return_distance=False)
-        # At least one neighbor should be returned.
-        assert_greater(neighbors.shape[0], 0)
+        assert_equal(neighbors.shape, (1,))
+        assert_equal(neighbors.dtype, object)
+        assert_greater(neighbors[0].shape[0], 0)
         # All distances should be less than mean_dist
         distances, neighbors = lshf.radius_neighbors(query,
                                                      radius=mean_dist,
