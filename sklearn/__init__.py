@@ -60,12 +60,12 @@ else:
                'cross_validation', 'datasets', 'decomposition', 'dummy',
                'ensemble', 'externals', 'feature_extraction',
                'feature_selection', 'gaussian_process', 'grid_search', 'hmm',
-               'isotonic', 'kernel_approximation', 'kernel_ridge', 
+               'isotonic', 'kernel_approximation', 'kernel_ridge',
                'lda', 'learning_curve',
                'linear_model', 'manifold', 'metrics', 'mixture', 'multiclass',
                'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
                'preprocessing', 'qda', 'random_projection', 'semi_supervised',
-               'svm', 'tree',
+               'svm', 'tree', "additive",
                # Non-modules:
                'clone']
 
