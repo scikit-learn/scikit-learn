@@ -42,7 +42,7 @@ class TestEarth(object):
                                    'endspan_alpha': None, 'check_every': None,
                                    'max_terms': None, 'max_degree':
                                    None, 'minspan_alpha': None,
-                                   'thresh': None, 'minspan': None, 'endspan': None, 
+                                   'thresh': None, 'minspan': None, 'endspan': None,
                                    'allow_linear': None})
         assert_equal(
             Earth(
@@ -133,11 +133,12 @@ class TestEarth(object):
             del data['y']
             X = data
             if 'sample_weight' in settings:
-                sample_weight = pandas.read_csv(os.path.join(directory, settings['sample_weight']))['sample_weight']
+                sample_weight = pandas.read_csv(
+                    os.path.join(directory, settings['sample_weight']))['sample_weight']
                 del settings['sample_weight']
             else:
                 sample_weight = None
-            model = Earth(**settings).fit(X, y, sample_weight = sample_weight)
+            model = Earth(**settings).fit(X, y, sample_weight=sample_weight)
 #             with open(os.path.join(directory, case + '.txt'), 'w') as outfile:
 #                 outfile.write(model.summary())
             with open(os.path.join(directory, case + '.txt'), 'r') as infile:

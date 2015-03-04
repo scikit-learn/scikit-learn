@@ -38,7 +38,8 @@ cdef class ForwardPasser:
             'minspan_alpha'] if 'minspan_alpha' in kwargs else .05
         self.max_terms = kwargs[
             'max_terms'] if 'max_terms' in kwargs else 2 * self.n + 10
-        self.allow_linear = kwargs['allow_linear'] if 'allow_linear' in kwargs else True
+        self.allow_linear = kwargs[
+            'allow_linear'] if 'allow_linear' in kwargs else True
         self.max_degree = kwargs['max_degree'] if 'max_degree' in kwargs else 1
         self.thresh = kwargs['thresh'] if 'thresh' in kwargs else 0.001
         self.penalty = kwargs['penalty'] if 'penalty' in kwargs else 3.0
@@ -66,7 +67,8 @@ cdef class ForwardPasser:
             shape=self.max_terms, dtype=np.float)
         self.B = np.ones(
             shape=(self.m, self.max_terms), order='C', dtype=np.float)
-        self.basis.weighted_transform(self.X, self.B[:,0:1], self.sample_weight)
+        self.basis.weighted_transform(
+            self.X, self.B[:, 0:1], self.sample_weight)
         # An orthogonal matrix with the same column space as B
         self.B_orth = self.B.copy()
         self.u = np.empty(shape=self.max_terms, dtype=np.float)
@@ -189,7 +191,7 @@ cdef class ForwardPasser:
             nrm += B_orth[i, k] * B_orth[i, k]
         nrm = sqrt(nrm)
         norms[k] = nrm
-        
+
         if nrm0 <= self.zero_tol or nrm / nrm0 <= self.zero_tol:
             for i in range(self.m):
                 B_orth[i, k] = 0.0
@@ -255,7 +257,7 @@ cdef class ForwardPasser:
         cdef cnp.ndarray[INT_t, ndim = 1] linear_variables = <cnp.ndarray[INT_t, ndim = 1] > self.linear_variables
         cdef cnp.ndarray[INT_t, ndim = 1] sorting = <cnp.ndarray[INT_t, ndim = 1] > self.sorting
         cdef cnp.ndarray[FLOAT_t, ndim = 1] sample_weight = <cnp.ndarray[FLOAT_t, ndim = 1] > self.sample_weight
-        
+
         if self.endspan < 0:
             endspan = round(3 - log2(self.endspan_alpha / self.n))
         else:
@@ -290,9 +292,9 @@ cdef class ForwardPasser:
                 linear_dependence = self.orthonormal_update(k)
 
                 # If a new hinge function does not improve the gcv over the linear term
-                # then just the linear term will be retained (if allow_linear).  Calculate the 
-                # gcv with just the linear term in order to compare later.  Note that the mse 
-                # with another term never increases, but the gcv may because it penalizes 
+                # then just the linear term will be retained (if allow_linear).  Calculate the
+                # gcv with just the linear term in order to compare later.  Note that the mse
+                # with another term never increases, but the gcv may because it penalizes
                 # additional terms.
                 mse_ = (self.y_squared - self.c_squared) / self.m
                 gcv_ = gcv_factor_k_plus_1 * \
@@ -308,9 +310,9 @@ cdef class ForwardPasser:
                                                         sorting, variable], variable, self.check_every, endspan, self.minspan, self.minspan_alpha, self.n, self.mwork)
 
                     if len(candidates_idx) > 0:
-                    # Choose the best candidate (if no candidate is an
-                    # improvement on the linear term in terms of gcv, knot_idx
-                    # is set to -1
+                        # Choose the best candidate (if no candidate is an
+                        # improvement on the linear term in terms of gcv, knot_idx
+                        # is set to -1
 
                         # Find the best knot location for this parent and
                         # variable combination
