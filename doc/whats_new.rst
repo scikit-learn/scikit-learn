@@ -254,7 +254,7 @@ Documentation improvements
 
    - Added silhouette plots for analysis of KMeans clustering using
      :func:`metrics.silhouette_samples` and :func:`metrics.silhouette_score`.
-     See :ref:`examples_cluster_plot_kmeans_silhouette_analysis.py`
+     See :ref:`example_cluster_plot_kmeans_silhouette_analysis.py`
 
 Bug fixes
 .........
