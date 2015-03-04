@@ -679,7 +679,7 @@ class VBGMM(DPGMM):
     See Also
     --------
     GMM : Finite Gaussian mixture model fit with EM
-    DPGMM : Ininite Gaussian mixture model, using the dirichlet
+    DPGMM : Infinite Gaussian mixture model, using the dirichlet
         process, fit with a variational algorithm
     """
 
