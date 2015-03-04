@@ -101,8 +101,9 @@ Enhancements
      descent for :class:`linear_model.Lasso`, :class:`linear_model.ElasticNet`
      and related. By `Manoj Kumar`_.
 
-   - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score` and
-     `metrics.log_loss`. By `Jatin Shah`_.
+   - Add ``sample_weight`` parameter to
+     :func:`metrics.jaccard_similarity_score` and :func:`metrics.log_loss`.
+     By `Jatin Shah`_.
 
    - Support sparse multilabel indicator representation in
      :class:`preprocessing.LabelBinarizer` and
