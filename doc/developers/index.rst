@@ -256,12 +256,28 @@ intuition.
 
 Next, one or two small code examples to show its use can be added.
 
-Finally, any math and equations, followed by references,
+Next, any math and equations, followed by references,
 can be added to further the documentation. Not starting the
 documentation with the maths makes it more friendly towards
 users that are just interested in what the feature will do, as
 opposed to how it works "under the hood".
 
+Finally, follow the formatting rules below to make it consistently good:
+
+    * Add "See also" in docstrings for related classes/functions.
+    
+    * "See also" in docstrings should be one line per reference, 
+      with a colon and an explanation, for example::
+
+        See also
+        --------
+        SelectKBest: Select features based on the k highest scores.
+        SelectFpr: Select features based on a false positive rate test.
+
+    * For unwritten formatting rules, try to follow existing good works:
+    
+        * For "References" in docstrings, see the Silhouette Coefficient
+          (:func:`sklearn.metrics.silhouette_score`).
 
 .. warning:: **Sphinx version**
 
