@@ -863,7 +863,7 @@ Receiver operating characteristic (ROC)
 
 The function :func:`roc_curve` computes the
 `receiver operating characteristic curve, or ROC curve <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_.
- Quoting Wikipedia :
+Quoting Wikipedia :
 
   "A receiver operating characteristic (ROC), or simply ROC curve, is a
   graphical plot which illustrates the performance of a binary classifier
