@@ -117,7 +117,7 @@ def test_spectral_embedding_amg_solver(seed=36):
     try:
         from pyamg import smoothed_aggregation_solver
     except ImportError:
-        raise SkipTest("pyagm not available.")
+        raise SkipTest("pyamg not available.")
 
     se_amg = SpectralEmbedding(n_components=2, affinity="nearest_neighbors",
                                eigen_solver="amg", n_neighbors=5,
