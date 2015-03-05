@@ -117,6 +117,11 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     Random projection is used as the hash family which approximates
     cosine distance.
 
+    The cosine distance is defined as ``1 - cosine_similarity``: the lowest
+    value is 0 (identical point) but it is bounded above by 2 for the farthest
+    points. Its value does not depend on the norm of the vector points but
+    only on their relative angles.
+
     Parameters
     ----------
 
@@ -387,8 +392,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         return bin_queries, np.max(depths, axis=0)
 
     def kneighbors(self, X, n_neighbors=None, return_distance=True):
-        """
-        Returns the n_number of approximated nearest neighbors
+        """Returns n_neighbors of approximate nearest neighbors.
 
         Parameters
         ----------
@@ -436,13 +440,22 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             return np.array(neighbors)
 
     def radius_neighbors(self, X, radius=None, return_distance=True):
-        """
-        Returns the approximated nearest neighbors within the radius
+        """Finds the neighbors within a given radius of a point or points.
+
+        Return the indices and distances of some points from the dataset
+        lying in a ball with size ``radius`` around the points of the query
+        array. Points lying on the boundary are included in the results.
+
+        The result points are *not* necessarily sorted by distance to their
+        query point.
+
+        LSH Forest being an approximate method, some true neighbors from the
+        indexed dataset might be missing from the results.
 
         Parameters
         ----------
         X : array_like or sparse (CSR) matrix, shape (n_samples, n_features)
-            List of n_features-dimensional data points.  Each row
+            List of n_features-dimensional data points. Each row
             corresponds to a single query.
 
         radius : float
@@ -455,12 +468,13 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         Returns
         -------
         dist : array, shape (n_samples,) of arrays
-            Array representing the cosine distances to each point,
-            only present if return_distance=True.
+            Each element is an array representing the cosine distances
+            to some points found within ``radius`` of the respective query.
+            Only present if ``return_distance=True``.
 
         ind : array, shape (n_samples,) of arrays
-            An array of arrays of indices of the approximated nearest points
-            with in the `radius` to the query in the population matrix.
+            Each element is an array of indices for neighbors within ``radius``
+            of the respective query.
         """
         if not hasattr(self, 'hash_functions_'):
             raise ValueError("estimator should be fitted.")

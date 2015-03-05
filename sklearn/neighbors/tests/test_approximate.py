@@ -10,6 +10,8 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_less
@@ -166,14 +168,20 @@ def test_radius_neighbors():
     lshf.fit(X)
 
     for i in range(n_iter):
+        # Select a random point in the dataset as the query
         query = X[rng.randint(0, n_samples)]
+
+        # At least one neighbor should be returned when the radius is the
+        # mean distance from the query to the points of the dataset.
         mean_dist = np.mean(pairwise_distances(query, X, metric='cosine'))
         neighbors = lshf.radius_neighbors(query, radius=mean_dist,
                                           return_distance=False)
+
         assert_equal(neighbors.shape, (1,))
         assert_equal(neighbors.dtype, object)
         assert_greater(neighbors[0].shape[0], 0)
-        # All distances should be less than mean_dist
+        # All distances to points in the results of the radius query should
+        # be less than mean_dist
         distances, neighbors = lshf.radius_neighbors(query,
                                                      radius=mean_dist,
                                                      return_distance=True)
@@ -184,23 +192,92 @@ def test_radius_neighbors():
     queries = X[rng.randint(0, n_samples, n_queries)]
     distances, neighbors = lshf.radius_neighbors(queries,
                                                  return_distance=True)
-    assert_equal(neighbors.shape[0], n_queries)
-    assert_equal(distances.shape[0], n_queries)
-    # dists and inds should not be 2D arrays
-    assert_equal(distances.ndim, 1)
-    assert_equal(neighbors.ndim, 1)
+
+    # dists and inds should not be 1D arrays or arrays of variable lengths
+    # hence the use of the object dtype.
+    assert_equal(distances.shape, (n_queries,))
+    assert_equal(distances.dtype, object)
+    assert_equal(neighbors.shape, (n_queries,))
+    assert_equal(neighbors.dtype, object)
 
     # Compare with exact neighbor search
     query = X[rng.randint(0, n_samples)]
     mean_dist = np.mean(pairwise_distances(query, X, metric='cosine'))
-    nbrs = NearestNeighbors(algorithm='brute', metric='cosine')
-    nbrs.fit(X)
+    nbrs = NearestNeighbors(algorithm='brute', metric='cosine').fit(X)
 
-    distances_approx, _ = lshf.radius_neighbors(query, radius=mean_dist)
     distances_exact, _ = nbrs.radius_neighbors(query, radius=mean_dist)
-    # Distances of exact neighbors is less than or equal to approximate
-    assert_true(np.all(np.less_equal(np.sort(distances_exact[0]),
-                                     np.sort(distances_approx[0]))))
+    distances_approx, _ = lshf.radius_neighbors(query, radius=mean_dist)
+
+    # Radius-based queries do not sort the result points and the order
+    # depends on the method, the random_state and the dataset order. Therefore
+    # we need to sort the results ourselves before performing any comparison.
+    sorted_dists_exact = np.sort(distances_exact[0])
+    sorted_dists_approx = np.sort(distances_approx[0])
+
+    # Distances to exact neighbors are less than or equal to approximate
+    # counterparts as the approximate radius query might have missed some
+    # closer neighbors.
+    assert_true(np.all(np.less_equal(sorted_dists_exact,
+                                     sorted_dists_approx)))
+
+
+def test_radius_neighbors_boundary_handling():
+    X = [[0.999, 0.001], [0.5, 0.5], [0, 1.], [-1., 0.001]]
+    n_points = len(X)
+
+    # Build an exact nearest neighbors model as reference model to ensure
+    # consistency between exact and approximate methods
+    nnbrs = NearestNeighbors(algorithm='brute', metric='cosine').fit(X)
+
+    # Build a LSHForest model with hyperparameter values that always guarantee
+    # exact results on this toy dataset.
+    lsfh = LSHForest(min_hash_match=0, n_candidates=n_points).fit(X)
+
+    # define a query aligned with the first axis
+    query = [1., 0.]
+
+    # Compute the exact cosine distances of the query to the four points of
+    # the dataset
+    dists = pairwise_distances(query, X, metric='cosine').ravel()
+
+    # The first point is almost aligned with the query (very small angle),
+    # the cosine distance should therefore be almost null:
+    assert_almost_equal(dists[0], 0, decimal=5)
+
+    # The second point form an angle of 45 degrees to the query vector
+    assert_almost_equal(dists[1], 1 - np.cos(np.pi / 4))
+
+    # The third point is orthogonal from the query vector hence at a distance
+    # exactly one:
+    assert_almost_equal(dists[2], 1)
+
+    # The last point is almost colinear but with opposite sign to the query
+    # therefore it has a cosine 'distance' very close to the maximum possible
+    # value of 2.
+    assert_almost_equal(dists[3], 2, decimal=5)
+
+    # If we query with a radius of one, all the samples except the last sample
+    # should be included in the results. This means that the third sample
+    # is lying on the boundary of the radius query:
+    exact_dists, exact_idx = nnbrs.radius_neighbors(query, radius=1)
+    approx_dists, approx_idx = lsfh.radius_neighbors(query, radius=1)
+
+    assert_array_equal(np.sort(exact_idx[0]), [0, 1, 2])
+    assert_array_equal(np.sort(approx_idx[0]), [0, 1, 2])
+    assert_array_almost_equal(np.sort(exact_dists[0]), dists[:-1])
+    assert_array_almost_equal(np.sort(approx_dists[0]), dists[:-1])
+
+    # If we perform the same query with a slighltly lower radius, the third
+    # point of the dataset that lay on the boundary of the previous query
+    # is now rejected:
+    eps = np.finfo(np.float64).eps
+    exact_dists, exact_idx = nnbrs.radius_neighbors(query, radius=1 - eps)
+    approx_dists, approx_idx = lsfh.radius_neighbors(query, radius=1 - eps)
+
+    assert_array_equal(np.sort(exact_idx[0]), [0, 1])
+    assert_array_equal(np.sort(approx_idx[0]), [0, 1])
+    assert_array_almost_equal(np.sort(exact_dists[0]), dists[:-2])
+    assert_array_almost_equal(np.sort(approx_dists[0]), dists[:-2])
 
 
 def test_distances():
@@ -220,14 +297,13 @@ def test_distances():
         distances, neighbors = lshf.kneighbors(query,
                                                n_neighbors=n_neighbors,
                                                return_distance=True)
-        # Returned neighbors should be from closest to farthest.
+
+        # Returned neighbors should be from closest to farthest, that is
+        # increasing distance values.
         assert_true(np.all(np.diff(distances[0]) >= 0))
 
-        mean_dist = np.mean(pairwise_distances(query, X, metric='cosine'))
-        distances, neighbors = lshf.radius_neighbors(query,
-                                                     radius=mean_dist,
-                                                     return_distance=True)
-        assert_true(np.all(np.diff(distances[0]) >= 0))
+        # Note: the radius_neighbors method does not guarantee the order of
+        # the results.
 
 
 def test_fit():
@@ -407,8 +483,3 @@ def test_sparse_input():
         assert_array_equal(a, b)
     for a, b in zip(i_sparse, i_dense):
         assert_array_equal(a, b)
-
-
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()
