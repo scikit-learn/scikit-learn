@@ -65,7 +65,7 @@ following rules before submitting a pull request:
    to other methods available in scikit-learn.
 
 -  At least one paragraph of narrative documentation with links to
-````   references in the literature (with PDF links when possible) and
+   references in the literature (with PDF links when possible) and
    the example.
 
 The documentation should also include expected time and space
