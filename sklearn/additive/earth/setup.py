@@ -3,7 +3,7 @@ from numpy.distutils.misc_util import Configuration
 
 
 def configuration(parent_package="", top_path=None):
-    config = Configuration("additive", parent_package, top_path)
+    config = Configuration("earth", parent_package, top_path)
     config.add_extension("_basis",
                          sources=["_basis.pyx"],
                          include_dirs=[numpy.get_include()])
