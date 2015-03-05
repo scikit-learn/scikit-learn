@@ -424,6 +424,9 @@ API changes summary
       :class:`linear_model.PassiveAgressiveClassivier` and
       :class:`linear_model.PassiveAgressiveRegressor` now defaults to ``True``.
 
+    - :class:`cluster.DBSCAN` now uses a deterministic initialization. The
+      `random_state` parameter is deprecated. By `Eric Schubert`_.
+
 .. _changes_0_15_2:
 
 0.15.2
@@ -3335,3 +3338,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Kyle Beauchamp: https://github.com/kyleabeauchamp
 
 .. _Hervé Bredin: http://herve.niderb.fr/
+
+.. _Eric Schubert: https://github.com/kno10
