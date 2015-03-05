@@ -81,11 +81,11 @@ def test_dbscan_sparse():
 
 def test_dbscan_no_core_samples():
     rng = np.random.RandomState(0)
-    X = rng.rand(40, 10)
+    X = rng.rand(15, 10)
     X[X < .8] = 0
 
     for X_ in [X, sparse.csr_matrix(X)]:
-        db = DBSCAN().fit(X_)
+        db = DBSCAN(min_samples=50).fit(X_)
         assert_array_equal(db.components_, np.empty((0, X_.shape[1])))
         assert_array_equal(db.labels_, -1)
         assert_equal(db.core_sample_indices_.shape, (0,))
