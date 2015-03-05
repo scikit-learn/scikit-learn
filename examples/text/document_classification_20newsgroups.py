@@ -36,6 +36,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
+from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import Perceptron
@@ -276,25 +277,14 @@ print("Naive Bayes")
 results.append(benchmark(MultinomialNB(alpha=.01)))
 results.append(benchmark(BernoulliNB(alpha=.01)))
 
-
-class L1LinearSVC(LinearSVC):
-
-    def fit(self, X, y):
-        # The smaller C, the stronger the regularization.
-        # The more regularization, the more sparsity.
-        self.transformer_ = LinearSVC(penalty="l1",
-                                      dual=False, tol=1e-3)
-        X = self.transformer_.fit_transform(X, y)
-        return LinearSVC.fit(self, X, y)
-
-    def predict(self, X):
-        X = self.transformer_.transform(X)
-        return LinearSVC.predict(self, X)
-
 print('=' * 80)
 print("LinearSVC with L1-based feature selection")
-results.append(benchmark(L1LinearSVC()))
-
+# The smaller C, the stronger the regularization.
+# The more regularization, the more sparsity.
+results.append(benchmark(Pipeline([
+  ('feature_selection', LinearSVC(penalty="l1", dual=False, tol=1e-3)),
+  ('classification', LinearSVC())
+])))
 
 # make some plots
 
