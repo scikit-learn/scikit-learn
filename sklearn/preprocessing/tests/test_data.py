@@ -100,6 +100,9 @@ def test_scaler_1d():
     X = np.ones(5)
     assert_array_equal(scale(X, with_mean=False), X)
 
+    # np.log(1e-5) is taken because of its length/precision,
+    # so that np.mean(X) and np.std(X) are then not precise enough
+    # to allow an easy standardization.
     X = np.zeros(8) + np.log(1e-5)
     assert_array_almost_equal(scale(X), np.zeros(8))
 
