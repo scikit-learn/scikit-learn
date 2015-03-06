@@ -35,8 +35,9 @@ warnings.filterwarnings('always', category=DeprecationWarning,
 #   X.Y     # Final release
 #
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
+# 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.16.dev'
+__version__ = '0.16.dev0'
 
 
 try:
