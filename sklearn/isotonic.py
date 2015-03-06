@@ -262,16 +262,15 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         else:
             self.increasing_ = self.increasing
 
-        order = np.lexsort((y, X))
-
         # If sample_weights is passed, removed zero-weight values and clean order
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
-            order = order[np.where(sample_weight > 0)]
-            sample_weight = sample_weight[order]
+            mask = sample_weight > 0
+            X, y, sample_weight = X[mask], y[mask], sample_weight[mask]
         else:
             sample_weight = np.ones(len(y))
 
+        order = np.lexsort((y, X))
         order_inv = np.argsort(order)
         X, y, sample_weight = [astype(array[order], np.float64, copy=False)
                                for array in [X, y, sample_weight]]
