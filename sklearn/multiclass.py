@@ -511,7 +511,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     def predict(self, X):
         """Estimate the best class label for each sample in X.
-        
+
         This is implemented as ``argmax(decision_function(X), axis=1)`` which
         will return the label of the class with most votes by estimators
         predicting the outcome of a decision for each possible class pair.
@@ -532,7 +532,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     def decision_function(self, X):
         """Decision function for the OneVsOneClassifier.
 
-        The decision values for the samples are computed by adding the 
+        The decision values for the samples are computed by adding the
         normalized sum of pair-wise classification confidence levels to the
         votes in order to disambiguate between the decision values when the
         votes for all the classes are equal leading to a tie.
