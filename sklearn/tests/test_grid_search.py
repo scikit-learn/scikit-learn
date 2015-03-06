@@ -306,23 +306,26 @@ def test_grid_search_bad_param_grid():
 
 def test_grid_search_sparse():
     """Test that grid search works with both dense and sparse matrices"""
-    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
+    X_, y_ = make_multilabel_classification(n_samples=200,
+                                            return_indicator=True,
+                                            random_state=0)
+    X_sparse = sp.csr_matrix(X_)
+    y_sparse = sp.csr_matrix(y_)
 
-    clf = LinearSVC()
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
+    clf = DecisionTreeClassifier
+    cv = GridSearchCV(clf, {"max_depth": [1, 2, 3, 4]})
+    cv.fit(X_sparse[:180], y_sparse[:180])
+    y_pred = cv.predict(X_sparse[180:])
+    max_depth = cv.best_estimator_.max_depth
+
+    clf = DecisionTreeClassifier
+    cv = GridSearchCV(clf, {"max_depth": [1, 2, 3, 4]})
     cv.fit(X_[:180], y_[:180])
-    y_pred = cv.predict(X_[180:])
-    C = cv.best_estimator_.C
-
-    X_ = sp.csr_matrix(X_)
-    clf = LinearSVC()
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
-    cv.fit(X_[:180].tocoo(), y_[:180])
     y_pred2 = cv.predict(X_[180:])
-    C2 = cv.best_estimator_.C
+    max_depth2 = cv.best_estimator_.max_depth
 
     assert_true(np.mean(y_pred == y_pred2) >= .9)
-    assert_equal(C, C2)
+    assert_equal(max_depth, max_depth2)
 
 
 def test_grid_search_sparse_scoring():
