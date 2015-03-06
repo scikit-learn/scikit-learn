@@ -133,8 +133,8 @@ def _load_imgs(file_paths, slice_, color, resize):
         slice_ = tuple(s or ds for s, ds in zip(slice_, default_slice))
 
     h_slice, w_slice = slice_
-    h = (h_slice.stop - h_slice.start) / (h_slice.step or 1)
-    w = (w_slice.stop - w_slice.start) / (w_slice.step or 1)
+    h = (h_slice.stop - h_slice.start) // (h_slice.step or 1)
+    w = (w_slice.stop - w_slice.start) // (w_slice.step or 1)
 
     if resize is not None:
         resize = float(resize)

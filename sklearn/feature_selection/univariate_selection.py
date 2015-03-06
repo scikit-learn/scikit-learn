@@ -112,7 +112,7 @@ def f_oneway(*args):
     f = msb / msw
     # flatten matrix to vector in sparse case
     f = np.asarray(f).ravel()
-    prob = stats.fprob(dfbn, dfwn, f)
+    prob = special.fdtrc(dfbn, dfwn, f)
     return f, prob
 
 
