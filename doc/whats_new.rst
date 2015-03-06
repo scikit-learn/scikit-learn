@@ -333,6 +333,9 @@ Bug fixes
       to make it consistent with the documentation and
       ``decision_function``. By Artem Sobolev.
 
+    - Fixed handling of ties in :class:`isotonic.IsotonicRegression`.
+      We now use the weighted average of targets (secondary method). By
+      `Andreas Müller`_ and `Michael Bommarito <http://bommaritollc.com/>`_.
 
 API changes summary
 -------------------

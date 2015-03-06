@@ -69,3 +69,56 @@ def _isotonic_regression(np.ndarray[DOUBLE, ndim=1] y,
             break
 
     return solution
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def _make_unique(np.ndarray[dtype=np.float64_t] X,
+                  np.ndarray[dtype=np.float64_t] y,
+                  np.ndarray[dtype=np.float64_t] sample_weights):
+    """Average targets for duplicate X, drop duplicates.
+
+    Aggregates duplicate X values into a single X value where
+    the target y is a (sample_weighted) average of the individual
+    targets.
+
+    Assumes that X is ordered, so that all duplicates follow each other.
+    """
+    unique_values = len(np.unique(X))
+    if unique_values == len(X):
+        return X, y, sample_weights
+    cdef np.ndarray[dtype=np.float64_t] y_out = np.empty(unique_values)
+    cdef np.ndarray[dtype=np.float64_t] x_out = np.empty(unique_values)
+    cdef np.ndarray[dtype=np.float64_t] weights_out = np.empty(unique_values)
+
+    cdef float current_x = X[0]
+    cdef float current_y = 0
+    cdef float current_weight = 0
+    cdef float y_old = 0
+    cdef int i = 0
+    cdef int current_count = 0
+    cdef int j
+    cdef float x
+    cdef int n_samples = len(X)
+    for j in range(n_samples):
+        x = X[j]
+        if x != current_x:
+            # next unique value
+            x_out[i] = current_x
+            weights_out[i] = current_weight / current_count
+            y_out[i] = current_y / current_weight
+            i += 1
+            current_x = x
+            current_weight = sample_weights[j]
+            current_y = y[j] * sample_weights[j]
+            current_count = 1
+        else:
+            current_weight += sample_weights[j]
+            current_y += y[j] * sample_weights[j]
+            current_count += 1
+            
+    x_out[i] = current_x
+    weights_out[i] = current_weight / current_count
+    y_out[i] = current_y / current_weight    
+    return x_out, y_out, weights_out

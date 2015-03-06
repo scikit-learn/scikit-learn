@@ -18,7 +18,6 @@ from scipy.optimize import fmin_bfgs
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
 from .preprocessing import LabelBinarizer
-from .utils import check_random_state
 from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted
 from .isotonic import IsotonicRegression
@@ -59,9 +58,6 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         If "prefit" is passed, it is assumed that base_estimator has been
         fitted already and all data is used for calibration.
 
-    random_state : int, RandomState instance or None (default=None)
-        Used to randomly break ties when method is 'isotonic'.
-
     Attributes
     ----------
     classes_ : array, shape (n_classes)
@@ -86,12 +82,10 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator=None, method='sigmoid', cv=3,
-                 random_state=None):
+    def __init__(self, base_estimator=None, method='sigmoid', cv=3):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
-        self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
         """Fit the calibrated model
@@ -116,7 +110,6 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         X, y = indexable(X, y)
         lb = LabelBinarizer().fit(y)
         self.classes_ = lb.classes_
-        random_state = check_random_state(self.random_state)
 
         # Check that we each cross-validation fold can have at least one
         # example per class
@@ -136,7 +129,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
 
         if self.cv == "prefit":
             calibrated_classifier = _CalibratedClassifier(
-                base_estimator, method=self.method, random_state=random_state)
+                base_estimator, method=self.method)
             if sample_weight is not None:
                 calibrated_classifier.fit(X, y, sample_weight)
             else:
@@ -164,8 +157,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                     this_estimator.fit(X[train], y[train])
 
                 calibrated_classifier = _CalibratedClassifier(
-                    this_estimator, method=self.method,
-                    random_state=random_state)
+                    this_estimator, method=self.method)
                 if sample_weight is not None:
                     calibrated_classifier.fit(X[test], y[test],
                                               sample_weight[test])
@@ -242,9 +234,6 @@ class _CalibratedClassifier(object):
         corresponds to Platt's method or 'isotonic' which is a
         non-parameteric approach based on isotonic regression.
 
-    random_state : int, RandomState instance or None (default=None)
-        Used to randomly break ties when method is 'isotonic'.
-
     References
     ----------
     .. [1] Obtaining calibrated probability estimates from decision trees
@@ -259,11 +248,9 @@ class _CalibratedClassifier(object):
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator, method='sigmoid',
-                 random_state=None):
+    def __init__(self, base_estimator, method='sigmoid'):
         self.base_estimator = base_estimator
         self.method = method
-        self.random_state = random_state
 
     def _preproc(self, X):
         n_classes = len(self.classes_)
@@ -312,13 +299,6 @@ class _CalibratedClassifier(object):
         for k, this_df in zip(idx_pos_class, df.T):
             if self.method == 'isotonic':
                 calibrator = IsotonicRegression(out_of_bounds='clip')
-                # XXX: isotonic regression cannot deal correctly with
-                #      situations in which multiple inputs are identical but
-                #      have different outputs. Since this is not untypical
-                #      when calibrating, we add some small random jitter to
-                #      the inputs.
-                jitter = self.random_state.normal(0, 1e-10, this_df.shape[0])
-                this_df = this_df + jitter
             elif self.method == 'sigmoid':
                 calibrator = _SigmoidCalibration()
             else:
