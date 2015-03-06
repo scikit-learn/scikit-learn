@@ -252,8 +252,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         """Build the y_ IsotonicRegression."""
         check_consistent_length(X, y, sample_weight)
         X, y = [check_array(x, ensure_2d=False) for x in [X, y]]
-        if sample_weight is not None:
-            sample_weight = check_array(sample_weight, ensure_2d=False)
 
         y = as_float_array(y)
         self._check_fit_data(X, y, sample_weight)
@@ -264,10 +262,16 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         else:
             self.increasing_ = self.increasing
 
+        # If sample_weights is passed, removed zero-weight values and clean order
+        if sample_weight is not None:
+            sample_weight = check_array(sample_weight, ensure_2d=False)
+            mask = sample_weight > 0
+            X, y, sample_weight = X[mask], y[mask], sample_weight[mask]
+        else:
+            sample_weight = np.ones(len(y))
+
         order = np.lexsort((y, X))
         order_inv = np.argsort(order)
-        if sample_weight is None:
-            sample_weight = np.ones(len(y))
         X, y, sample_weight = [astype(array[order], np.float64, copy=False)
                                for array in [X, y, sample_weight]]
         unique_X, unique_y, unique_sample_weight = _make_unique(X, y, sample_weight)
