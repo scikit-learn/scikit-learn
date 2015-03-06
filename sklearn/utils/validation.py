@@ -620,3 +620,20 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
 
     if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
         raise NotFittedError(msg % {'name': type(estimator).__name__})
+
+
+def check_random_state_shuffle(random_state, shuffle):
+    """Show a warning if random_state is not None and shuffle is False.
+
+    Parameters
+    ----------
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
+
+    shuffle : bool
+        Whether or not the training data should be shuffled after each epoch.
+    """
+    if random_state is not None and not shuffle:
+        warnings.warn("`shuffle` should be set to True for the data"
+                      " to be shuffled based on the given `random_state`.")

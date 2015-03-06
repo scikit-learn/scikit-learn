@@ -18,7 +18,7 @@ from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import (check_array, check_random_state, check_X_y)
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
-from ..utils.validation import check_is_fitted
+from ..utils.validation import (check_is_fitted, check_random_state_shuffle)
 from ..externals import six
 
 from .sgd_fast import plain_sgd, average_sgd
@@ -361,6 +361,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         self._validate_params()
         _check_partial_fit_first_call(self, classes)
+        check_random_state_shuffle(self.random_state, self.shuffle)
 
         n_classes = self.classes_.shape[0]
 
@@ -520,6 +521,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                              "estimate the class frequency distributions. "
                              "Pass the resulting weights as the class_weight "
                              "parameter.")
+
         return self._partial_fit(X, y, alpha=self.alpha, C=1.0, loss=self.loss,
                                  learning_rate=self.learning_rate, n_iter=1,
                                  classes=classes, sample_weight=sample_weight,
@@ -558,6 +560,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                           "method, which is deprecated and will be removed in"
                           "v0.17 of scikit-learn. Pass the class_weight into "
                           "the constructor instead.", DeprecationWarning)
+
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
