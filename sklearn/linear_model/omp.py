@@ -526,7 +526,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
 
 
 class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
-    """Orthogonal Mathching Pursuit model (OMP)
+    """Orthogonal Matching Pursuit model (OMP)
 
     Parameters
     ----------
@@ -609,8 +609,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         self : object
             returns an instance of self.
         """
-        X = check_array(X)
-        y = np.asarray(y)
+        X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
         n_features = X.shape[1]
 
         X, y, X_mean, y_mean, X_std, Gram, Xy = \
@@ -718,7 +717,7 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 
 
 class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
-    """Cross-validated Orthogonal Mathching Pursuit model (OMP)
+    """Cross-validated Orthogonal Matching Pursuit model (OMP)
 
     Parameters
     ----------
@@ -805,7 +804,8 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         self : object
             returns an instance of self.
         """
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, y_numeric=True)
+        X = as_float_array(X, copy=False, force_all_finite=False)
         cv = check_cv(self.cv, X, y, classifier=False)
         max_iter = (min(max(int(0.1 * X.shape[1]), 5), X.shape[1])
                     if not self.max_iter

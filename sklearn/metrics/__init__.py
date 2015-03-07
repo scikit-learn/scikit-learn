@@ -3,6 +3,7 @@ The :mod:`sklearn.metrics` module includes score functions, performance metrics
 and pairwise metrics and distance computations.
 """
 
+
 from .ranking import auc
 from .ranking import average_precision_score
 from .ranking import coverage_error
@@ -25,6 +26,7 @@ from .classification import precision_recall_fscore_support
 from .classification import precision_score
 from .classification import recall_score
 from .classification import zero_one_loss
+from .classification import brier_score_loss
 
 from . import cluster
 from .cluster import adjusted_mutual_info_score
@@ -103,4 +105,5 @@ __all__ = [
     'silhouette_score',
     'v_measure_score',
     'zero_one_loss',
+    'brier_score_loss',
 ]

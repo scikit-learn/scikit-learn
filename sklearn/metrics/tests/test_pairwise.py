@@ -2,7 +2,7 @@ import numpy as np
 from numpy import linalg
 
 from scipy.sparse import dok_matrix, csr_matrix, issparse
-from scipy.spatial.distance import cosine, cityblock, minkowski
+from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
 
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
@@ -118,28 +118,60 @@ def test_pairwise_distances():
     assert_raises(ValueError, pairwise_distances, X, Y, metric="blah")
 
 
-def test_pairwise_parallel():
+def check_pairwise_parallel(func, metric, kwds):
     rng = np.random.RandomState(0)
-    for func in (np.array, csr_matrix):
-        X = func(rng.random_sample((5, 4)))
-        Y = func(rng.random_sample((3, 4)))
+    for make_data in (np.array, csr_matrix):
+        X = make_data(rng.random_sample((5, 4)))
+        Y = make_data(rng.random_sample((3, 4)))
 
-        S = euclidean_distances(X)
-        S2 = _parallel_pairwise(X, None, euclidean_distances, n_jobs=3)
+        try:
+            S = func(X, metric=metric, n_jobs=1, **kwds)
+        except (TypeError, ValueError) as exc:
+            # Not all metrics support sparse input
+            # ValueError may be triggered by bad callable
+            if make_data is csr_matrix:
+                assert_raises(type(exc), func, X, metric=metric,
+                              n_jobs=2, **kwds)
+                continue
+            else:
+                raise
+        S2 = func(X, metric=metric, n_jobs=2, **kwds)
         assert_array_almost_equal(S, S2)
 
-        S = euclidean_distances(X, Y)
-        S2 = _parallel_pairwise(X, Y, euclidean_distances, n_jobs=3)
+        S = func(X, Y, metric=metric, n_jobs=1, **kwds)
+        S2 = func(X, Y, metric=metric, n_jobs=2, **kwds)
         assert_array_almost_equal(S, S2)
+
+
+def test_pairwise_parallel():
+    wminkowski_kwds = {'w': np.arange(1, 5).astype('double'), 'p': 1}
+    metrics = [(pairwise_distances, 'euclidean', {}),
+               (pairwise_distances, wminkowski, wminkowski_kwds),
+               (pairwise_distances, 'wminkowski', wminkowski_kwds),
+               (pairwise_kernels, 'polynomial', {'degree': 1}),
+               (pairwise_kernels, callable_rbf_kernel, {'gamma': .1}),
+               ]
+    for func, metric, kwds in metrics:
+        yield check_pairwise_parallel, func, metric, kwds
+
+
+def test_pairwise_callable_nonstrict_metric():
+    """paired_distances should allow callable metric where metric(x, x) != 0
+
+    Knowing that the callable is a strict metric would allow the diagonal to
+    be left uncalculated and set to 0.
+    """
+    assert_equal(pairwise_distances([[1]], metric=lambda x, y: 5)[0, 0], 5)
+
+
+def callable_rbf_kernel(x, y, **kwds):
+    """ Callable version of pairwise.rbf_kernel. """
+    K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
+    return K
 
 
 def test_pairwise_kernels():
     """ Test the pairwise_kernels helper function. """
-
-    def callable_rbf_kernel(x, y, **kwds):
-        """ Callable version of pairwise.rbf_kernel. """
-        K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
-        return K
 
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))

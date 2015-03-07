@@ -73,3 +73,9 @@ on_success:
   # On Windows, Apache Libcloud cannot find a standard CA cert bundle so we
   # disable the ssl checks.
   - "python -m wheelhouse_uploader upload --no-ssl-check --local-folder=dist sklearn-windows-wheels"
+
+notifications:
+  - provider: Webhook
+    url: https://webhooks.gitter.im/e/0dc8e57cd38105aeb1b4
+    on_build_success: false
+    on_build_failure: True

@@ -93,13 +93,10 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
         Initial guesses for solving X ~= WH such that
         the number of columns in W is n_components.
 
-    Remarks
-    -------
-
-    This implements the algorithm described in
-    C. Boutsidis, E. Gallopoulos: SVD based
-    initialization: A head start for nonnegative
-    matrix factorization - Pattern Recognition, 2008
+    References
+    ----------
+    C. Boutsidis, E. Gallopoulos: SVD based initialization: A head start for 
+    nonnegative matrix factorization - Pattern Recognition, 2008
 
     http://tinyurl.com/nndsvd
     """
@@ -204,12 +201,10 @@ def _nls_subproblem(V, W, H, tol, max_iter, sigma=0.01, beta=0.1):
     n_iter : int
         The number of iterations done by the algorithm.
 
-    Reference
-    ---------
-
-    C.-J. Lin. Projected gradient methods
-    for non-negative matrix factorization. Neural
-    Computation, 19(2007), 2756-2779.
+    References
+    ----------
+    C.-J. Lin. Projected gradient methods for non-negative matrix factorization.
+    Neural Computation, 19(2007), 2756-2779.
     http://www.csie.ntu.edu.tw/~cjlin/nmf/
 
     """

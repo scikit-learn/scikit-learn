@@ -1,6 +1,7 @@
 from __future__ import division, print_function
 
 import numpy as np
+from scipy import linalg
 from functools import partial
 from itertools import product
 import warnings
@@ -40,6 +41,7 @@ from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
+from sklearn.metrics import brier_score_loss
 
 
 from sklearn.metrics.classification import _check_targets
@@ -138,18 +140,23 @@ def test_precision_recall_f1_score_binary():
 
     # individual scoring function that can be used for grid search: in the
     # binary class case the score is the value of the measure for the positive
-    # class (e.g. label == 1)
-    ps = precision_score(y_true, y_pred)
-    assert_array_almost_equal(ps, 0.85, 2)
+    # class (e.g. label == 1). This is deprecated for average != 'binary'.
+    assert_dep_warning = partial(assert_warns, DeprecationWarning)
+    for kwargs, my_assert in [({}, assert_no_warnings),
+                              ({'average': 'binary'}, assert_no_warnings),
+                              ({'average': 'micro'}, assert_dep_warning)]:
+        ps = my_assert(precision_score, y_true, y_pred, **kwargs)
+        assert_array_almost_equal(ps, 0.85, 2)
 
-    rs = recall_score(y_true, y_pred)
-    assert_array_almost_equal(rs, 0.68, 2)
+        rs = my_assert(recall_score, y_true, y_pred, **kwargs)
+        assert_array_almost_equal(rs, 0.68, 2)
 
-    fs = f1_score(y_true, y_pred)
-    assert_array_almost_equal(fs, 0.76, 2)
+        fs = my_assert(f1_score, y_true, y_pred, **kwargs)
+        assert_array_almost_equal(fs, 0.76, 2)
 
-    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2),
-                        (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
+        assert_almost_equal(my_assert(fbeta_score, y_true, y_pred, beta=2,
+                                      **kwargs),
+                            (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
 
 
 @ignore_warnings
@@ -204,6 +211,7 @@ def test_average_precision_score_tied_values():
     assert_not_equal(average_precision_score(y_true, y_score), 1.)
 
 
+@ignore_warnings
 def test_precision_recall_fscore_support_errors():
     y_true, y_pred, _ = make_prediction(binary=True)
 
@@ -301,6 +309,20 @@ def test_precision_recall_f1_score_multiclass():
     assert_array_almost_equal(r, [0.79, 0.90, 0.10], 2)
     assert_array_almost_equal(f, [0.81, 0.57, 0.15], 2)
     assert_array_equal(s, [24, 20, 31])
+
+
+def test_precision_refcall_f1_score_multilabel_unordered_labels():
+    # test that labels need not be sorted in the multilabel case
+    y_true = np.array([[1, 1, 0, 0]])
+    y_pred = np.array([[0, 0, 1, 1]])
+    for average in ['samples', 'micro', 'macro', 'weighted', None]:
+        p, r, f, s = precision_recall_fscore_support(
+            y_true, y_pred, labels=[4, 1, 2, 3], warn_for=[], average=average)
+        assert_array_equal(p, 0)
+        assert_array_equal(r, 0)
+        assert_array_equal(f, 0)
+        if average is None:
+            assert_array_equal(s, [0, 1, 1, 0])
 
 
 def test_precision_recall_f1_score_multiclass_pos_label_none():
@@ -996,6 +1018,8 @@ def test_prf_average_compat():
     """
     y_true = [1, 2, 3, 3]
     y_pred = [1, 2, 3, 1]
+    y_true_bin = [0, 1, 1]
+    y_pred_bin = [0, 1, 0]
 
     for metric in [precision_score, recall_score, f1_score,
                    partial(fbeta_score, beta=2)]:
@@ -1006,7 +1030,16 @@ def test_prf_average_compat():
                      'average does not act like "weighted" by default')
 
         # check binary passes without warning
-        assert_no_warnings(metric, [0, 1, 1], [0, 1, 0])
+        assert_no_warnings(metric, y_true_bin, y_pred_bin)
+
+        # but binary with pos_label=None should behave like multiclass
+        score = assert_warns(DeprecationWarning, metric,
+                             y_true_bin, y_pred_bin, pos_label=None)
+        score_weighted = assert_no_warnings(metric, y_true_bin, y_pred_bin,
+                                            pos_label=None, average='weighted')
+        assert_equal(score, score_weighted,
+                     'average does not act like "weighted" by default with '
+                     'binary data and pos_label=None')
 
 
 @ignore_warnings  # sequence of sequences is deprecated
@@ -1238,3 +1271,20 @@ def test_log_loss():
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
     loss = log_loss(y_true, y_pred)
     assert_almost_equal(loss, 1.0383217, decimal=6)
+
+
+def test_brier_score_loss():
+    """Check brier_score_loss function"""
+    y_true = np.array([0, 1, 1, 0, 1, 1])
+    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1., 0.95])
+    true_score = linalg.norm(y_true - y_pred) ** 2 / len(y_true)
+
+    assert_almost_equal(brier_score_loss(y_true, y_true), 0.0)
+    assert_almost_equal(brier_score_loss(y_true, y_pred), true_score)
+    assert_almost_equal(brier_score_loss(1. + y_true, y_pred),
+                        true_score)
+    assert_almost_equal(brier_score_loss(2 * y_true - 1, y_pred),
+                        true_score)
+    assert_raises(ValueError, brier_score_loss, y_true, y_pred[1:])
+    assert_raises(ValueError, brier_score_loss, y_true, y_pred + 1.)
+    assert_raises(ValueError, brier_score_loss, y_true, y_pred - 1.)

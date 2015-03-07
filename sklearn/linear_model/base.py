@@ -25,7 +25,7 @@ from scipy import sparse
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..utils import as_float_array, check_array
+from ..utils import as_float_array, check_array, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
@@ -194,7 +194,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         if not hasattr(self, 'coef_') or self.coef_ is None:
             raise NotFittedError("This %(name)s instance is not fitted"
-                                 "yet"%{'name':type(self).__name__})
+                                 "yet" % {'name': type(self).__name__})
 
         X = check_array(X, accept_sparse='csr')
 
@@ -266,7 +266,7 @@ class SparseCoefMixin(object):
         self: estimator
         """
         msg = "Estimator, %(name)s, must be fitted before densifying."
-        check_is_fitted(self, "coef_",  msg=msg)
+        check_is_fitted(self, "coef_", msg=msg)
         if sp.issparse(self.coef_):
             self.coef_ = self.coef_.toarray()
         return self
@@ -296,7 +296,7 @@ class SparseCoefMixin(object):
         self: estimator
         """
         msg = "Estimator, %(name)s, must be fitted before sparsifying."
-        check_is_fitted(self, "coef_",  msg=msg)
+        check_is_fitted(self, "coef_", msg=msg)
         self.coef_ = sp.csr_matrix(self.coef_)
         return self
 
@@ -318,7 +318,8 @@ class LinearRegression(LinearModel, RegressorMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    n_jobs : The number of jobs to use for the computation.
+    n_jobs : int, optional, default 1
+        The number of jobs to use for the computation.
         If -1 all CPUs are used. This will only provide speedup for
         n_targets > 1 and sufficient large problems.
 
@@ -355,6 +356,7 @@ class LinearRegression(LinearModel, RegressorMixin):
         ----------
         X : numpy array or sparse matrix of shape [n_samples,n_features]
             Training data
+
         y : numpy array of shape [n_samples, n_targets]
             Target values
 
@@ -370,8 +372,8 @@ class LinearRegression(LinearModel, RegressorMixin):
             n_jobs_ = n_jobs
         else:
             n_jobs_ = self.n_jobs
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
-        y = np.asarray(y)
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                         y_numeric=True, multi_output=True)
 
         X, y, X_mean, y_mean, X_std = self._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)

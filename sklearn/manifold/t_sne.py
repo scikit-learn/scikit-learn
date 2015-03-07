@@ -423,7 +423,6 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
 
         if new_error is not None:
             error = new_error
-
     return p, error, i
 
 
@@ -598,10 +597,10 @@ class TSNE(BaseEstimator):
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = TSNE(n_components=2, random_state=0)
     >>> model.fit_transform(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    array([[  1.75677320e-04,   4.08340798e-05],
-           [  9.93642843e-05,   2.17790936e-04],
-           [  1.85517575e-04,  -9.32909822e-05],
-           [  9.54209795e-05,  -1.40144791e-05]])
+    array([[  1.75986001e-04,   3.99347346e-05],
+           [  9.89123868e-05,   2.19131463e-04],
+           [  1.85538268e-04,  -9.35699912e-05],
+           [  9.52834416e-05,  -1.40732126e-05]])
 
     References
     ----------
@@ -670,7 +669,6 @@ class TSNE(BaseEstimator):
                             'the array is small enough for it to fit in '
                             'memory. Otherwise consider dimensionality '
                             'reduction techniques (e.g. TruncatedSVD)')
-            X = check_array(X, dtype=np.float32)
         else:
             X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         random_state = check_random_state(self.random_state)
@@ -697,6 +695,7 @@ class TSNE(BaseEstimator):
                                                squared=True)
             else:
                 distances = pairwise_distances(X, metric=self.metric)
+        distances = check_array(distances, dtype=np.float32)
 
         if not np.all(distances >= 0):
             raise ValueError("All distances should be positive, either "
@@ -707,7 +706,7 @@ class TSNE(BaseEstimator):
         # degrees_of_freedom = n_components - 1 comes from
         # "Learning a Parametric Embedding by Preserving Local Structure"
         # Laurens van der Maaten, 2009.
-        degrees_of_freedom = self.n_components - 1.0
+        degrees_of_freedom = max(self.n_components - 1.0, 1.0)
         n_samples = X.shape[0]
         self.training_data_ = X
         # the number of nearest neighbors to find

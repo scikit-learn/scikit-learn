@@ -56,9 +56,10 @@ from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import check_random_state, check_array, compute_class_weight
+from ..utils import check_random_state, check_array, compute_sample_weight
 from ..utils.validation import DataConversionWarning, check_is_fitted
 from .base import BaseEnsemble, _partition_estimators
+from ..utils.fixes import bincount
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
@@ -84,34 +85,11 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
 
         random_state = check_random_state(tree.random_state)
         indices = random_state.randint(0, n_samples, n_samples)
-        sample_counts = np.bincount(indices, minlength=n_samples)
+        sample_counts = bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
 
         if class_weight == 'subsample':
-
-            expanded_class_weight = [curr_sample_weight]
-
-            for k in range(y.shape[1]):
-                y_full = y[:, k]
-                classes_full = np.unique(y_full)
-                y_boot = y[indices, k]
-                classes_boot = np.unique(y_boot)
-
-                # Get class weights for the bootstrap sample, covering all
-                # classes in case some were missing from the bootstrap sample
-                weight_k = np.choose(
-                    np.searchsorted(classes_boot, classes_full),
-                    compute_class_weight('auto', classes_boot, y_boot),
-                    mode='clip')
-
-                # Expand weights over the original y for this output
-                weight_k = weight_k[np.searchsorted(classes_full, y_full)]
-                expanded_class_weight.append(weight_k)
-
-            # Multiply all weights by sample & bootstrap weights
-            curr_sample_weight = np.prod(expanded_class_weight,
-                                         axis=0,
-                                         dtype=np.float64)
+            curr_sample_weight *= compute_sample_weight('auto', y, indices)
 
         tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
 
@@ -213,10 +191,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         self : object
             Returns self.
         """
-        # Convert data
-        # ensure_2d=False because there are actually unit test checking we fail
-        # for 1d. FIXME make this consistent in the future.
-        X = check_array(X, dtype=DTYPE, ensure_2d=False, accept_sparse="csc")
+        # Validate or convert input data
+        X = check_array(X, dtype=DTYPE, accept_sparse="csc")
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -229,7 +205,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         if y.ndim == 2 and y.shape[1] == 1:
             warn("A column-vector y was passed when a 1d array was"
                  " expected. Please change the shape of y to "
-                 "(n_samples, ), for example using ravel().",
+                 "(n_samples,), for example using ravel().",
                  DataConversionWarning, stacklevel=2)
 
         if y.ndim == 1:
@@ -448,33 +424,14 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                          'properly estimate the class frequency '
                          'distributions. Pass the resulting weights as the '
                          'class_weight parameter.')
-            elif self.n_outputs_ > 1:
-                if not hasattr(self.class_weight, "__iter__"):
-                    raise ValueError("For multi-output, class_weight should "
-                                     "be a list of dicts, or a valid string.")
-                elif len(self.class_weight) != self.n_outputs_:
-                    raise ValueError("For multi-output, number of elements "
-                                     "in class_weight should match number of "
-                                     "outputs.")
 
             if self.class_weight != 'subsample' or not self.bootstrap:
-                expanded_class_weight = []
-                for k in range(self.n_outputs_):
-                    if self.class_weight in valid_presets:
-                        class_weight_k = 'auto'
-                    elif self.n_outputs_ == 1:
-                        class_weight_k = self.class_weight
-                    else:
-                        class_weight_k = self.class_weight[k]
-                    weight_k = compute_class_weight(class_weight_k,
-                                                    self.classes_[k],
-                                                    y_original[:, k])
-                    weight_k = weight_k[np.searchsorted(self.classes_[k],
-                                                        y_original[:, k])]
-                    expanded_class_weight.append(weight_k)
-                expanded_class_weight = np.prod(expanded_class_weight,
-                                                axis=0,
-                                                dtype=np.float64)
+                if self.class_weight == 'subsample':
+                    class_weight = 'auto'
+                else:
+                    class_weight = self.class_weight
+                expanded_class_weight = compute_sample_weight(class_weight,
+                                                              y_original)
 
         return y, expanded_class_weight
 
@@ -521,7 +478,9 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
-        the mean predicted class probabilities of the trees in the forest.
+        the mean predicted class probabilities of the trees in the forest. The
+        class probability of a single tree is the fraction of samples of the same
+        class in a leaf.
 
         Parameters
         ----------
@@ -1503,7 +1462,7 @@ class RandomTreesEmbedding(BaseForest):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             The input samples. Use ``dtype=np.float32`` for maximum
             efficiency. Sparse matrices are also supported, use sparse
-            ``csc_matrix`` for maximum efficieny.
+            ``csc_matrix`` for maximum efficiency.
 
         Returns
         -------
@@ -1552,7 +1511,7 @@ class RandomTreesEmbedding(BaseForest):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Input data to be transformed. Use ``dtype=np.float32`` for maximum
             efficiency. Sparse matrices are also supported, use sparse
-            ``csr_matrix`` for maximum efficieny.
+            ``csr_matrix`` for maximum efficiency.
 
         Returns
         -------

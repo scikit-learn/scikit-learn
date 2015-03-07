@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_true, assert_false, assert_raises
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
 from sklearn.feature_selection import RFE, RFECV
+from sklearn.ensemble import BaggingClassifier
 
 
 class DelegatorData(object):
@@ -30,12 +31,15 @@ DELEGATING_METAESTIMATORS = [
                   skip_methods=['score']),
     DelegatorData('RandomizedSearchCV',
                   lambda est: RandomizedSearchCV(
-                      est, param_distributions={'param': [5]}, cv=2),
+                      est, param_distributions={'param': [5]}, cv=2, n_iter=1),
                   skip_methods=['score']),
     DelegatorData('RFE', RFE,
                   skip_methods=['transform', 'inverse_transform', 'score']),
     DelegatorData('RFECV', RFECV,
                   skip_methods=['transform', 'inverse_transform', 'score']),
+    DelegatorData('BaggingClassifier', BaggingClassifier,
+                  skip_methods=['transform', 'inverse_transform', 'score',
+                                'predict_proba', 'predict_log_proba', 'predict'])
 ]
 
 

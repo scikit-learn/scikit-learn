@@ -28,15 +28,19 @@ def _gs_decorrelation(w, W, j):
 
     Parameters
     ----------
-    w: array of shape(n), to be orthogonalized
+    w : ndarray of shape(n)
+        Array to be orthogonalized
 
-    W: array of shape(p, n), null space definition
+    W : ndarray of shape(p, n)
+        Null space definition
 
-    j: int < p
+    j : int < p
+        The no of (from the first) rows of Null space W wrt which w is
+        orthogonalized.
 
-    caveats
-    -------
-    assumes that W is orthogonal
+    Notes
+    -----
+    Assumes that W is orthogonal
     w changed in place
     """
     w -= np.dot(np.dot(w, W[:j].T), W[:j])

@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_array_equal
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
@@ -350,10 +351,41 @@ def test_enet_cv_positive_constraint():
     assert_true(min(enetcv_constrained.coef_) >= 0)
 
 
+def test_uniform_targets():
+    enet = ElasticNetCV(fit_intercept=True, n_alphas=3)
+    m_enet = MultiTaskElasticNetCV(fit_intercept=True, n_alphas=3)
+    lasso = LassoCV(fit_intercept=True, n_alphas=3)
+    m_lasso = MultiTaskLassoCV(fit_intercept=True, n_alphas=3)
+
+    models_single_task = (enet, lasso)
+    models_multi_task = (m_enet, m_lasso)
+
+    rng = np.random.RandomState(0)
+
+    X_train = rng.random_sample(size=(10, 3))
+    X_test = rng.random_sample(size=(10, 3))
+
+    y1 = np.empty(10)
+    y2 = np.empty((10, 2))
+
+    for model in models_single_task:
+        for y_values in (0, 5):
+            y1.fill(y_values)
+            assert_array_equal(model.fit(X_train, y1).predict(X_test), y1)
+            assert_array_equal(model.alphas_, [np.finfo(float).resolution]*3)
+
+    for model in models_multi_task:
+        for y_values in (0, 5):
+            y2[:, 0].fill(y_values)
+            y2[:, 1].fill(2 * y_values)
+            assert_array_equal(model.fit(X_train, y2).predict(X_test), y2)
+            assert_array_equal(model.alphas_, [np.finfo(float).resolution]*3)
+
+
 def test_multi_task_lasso_and_enet():
     X, y, X_test, y_test = build_dataset()
     Y = np.c_[y, y]
-    #Y_test = np.c_[y_test, y_test]
+    # Y_test = np.c_[y_test, y_test]
     clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
     assert_true(0 < clf.dual_gap_ < 1e-5)
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])

@@ -2,6 +2,8 @@
 # Author: Paolo Losi
 # License: BSD 3 clause
 
+from warnings import warn
+
 import numpy as np
 
 from ..preprocessing import LabelBinarizer
@@ -9,7 +11,8 @@ from ..utils.validation import check_consistent_length, check_array
 from ..utils.extmath import safe_sparse_dot
 
 
-def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0):
+def l1_min_c(X, y, loss='squared_hinge', fit_intercept=True,
+             intercept_scaling=1.0):
     """
     Return the lowest bound for C such that for C in (l1_min_C, infinity)
     the model is guaranteed not to be empty. This applies to l1 penalized
@@ -27,10 +30,12 @@ def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0):
     y : array, shape = [n_samples]
         Target vector relative to X
 
-    loss : {'l2', 'log'}, default to 'l2'
+    loss : {'squared_hinge', 'log'}, default 'squared_hinge'
         Specifies the loss function.
-        With 'l2' it is the l2 loss (a.k.a. squared hinge loss).
+        With 'squared_hinge' it is the squared hinge loss (a.k.a. L2 loss).
         With 'log' it is the loss of logistic regression models.
+        'l2' is accepted as an alias for 'squared_hinge', for backward
+        compatibility reasons, but should not be used in new code.
 
     fit_intercept : bool, default: True
         Specifies if the intercept should be fitted by the model.
@@ -49,8 +54,13 @@ def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0):
         minimum value for C
     """
 
-    if loss not in ('l2', 'log'):
-        raise ValueError('loss type not in ("l2", "log")')
+    if loss == "l2":
+        warn("loss='l2' will be impossible from 0.18 onwards."
+             " Use loss='squared_hinge' instead.",
+             DeprecationWarning)
+        loss = "squared_hinge"
+    if loss not in ('squared_hinge', 'log'):
+        raise ValueError('loss type not in ("squared_hinge", "log", "l2")')
 
     X = check_array(X, accept_sparse='csc')
     check_consistent_length(X, y)
@@ -65,7 +75,7 @@ def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0):
     if den == 0.0:
         raise ValueError('Ill-posed l1_min_c calculation: l1 will always '
                          'select zero coefficients for this data')
-    if loss == 'l2':
+    if loss == 'squared_hinge':
         return 0.5 / den
     else:  # loss == 'log':
         return 2.0 / den

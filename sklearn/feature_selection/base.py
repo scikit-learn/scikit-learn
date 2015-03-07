@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
+from warnings import warn
 
 import numpy as np
 from scipy.sparse import issparse, csc_matrix
@@ -73,6 +74,11 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
         """
         X = check_array(X, accept_sparse='csr')
         mask = self.get_support()
+        if not mask.any():
+            warn("No features were selected: either the data is"
+                 " too noisy or the selection test too strict.",
+                 UserWarning)
+            return np.empty(0).reshape((X.shape[0], 0))
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
         return check_array(X, accept_sparse='csr')[:, safe_mask(X, mask)]

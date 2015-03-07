@@ -5,7 +5,7 @@
 import scipy.sparse as sp
 import numpy as np
 
-from .fixes import sparse_min_max
+from .fixes import sparse_min_max, bincount
 from .sparsefuncs_fast import csr_mean_variance_axis0 as _csr_mean_var_axis0
 from .sparsefuncs_fast import csc_mean_variance_axis0 as _csc_mean_var_axis0
 
@@ -25,10 +25,10 @@ def inplace_csr_column_scale(X, scale):
 
     Parameters
     ----------
-    X: CSR matrix with shape (n_samples, n_features)
+    X : CSR matrix with shape (n_samples, n_features)
         Matrix to normalize using the variance of the features.
 
-    scale: float array with shape (n_features,)
+    scale : float array with shape (n_features,)
         Array of precomputed feature-wise values to use for scaling.
     """
     assert scale.shape[0] == X.shape[1]
@@ -43,11 +43,11 @@ def inplace_csr_row_scale(X, scale):
 
     Parameters
     ----------
-    X: CSR sparse matrix, shape (n_samples, n_features)
-    matrix to be scaled.
+    X : CSR sparse matrix, shape (n_samples, n_features)
+        Matrix to be scaled.
 
-    scale: float array with shape (n_samples,)
-    Array of precomputed sample-wise values to use for scaling.
+    scale : float array with shape (n_samples,)
+        Array of precomputed sample-wise values to use for scaling.
     """
     assert scale.shape[0] == X.shape[0]
     X.data *= np.repeat(scale, np.diff(X.indptr))
@@ -122,11 +122,11 @@ def inplace_row_scale(X, scale):
 
     Parameters
     ----------
-    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
-    matrix to be scaled.
+    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
+        Matrix to be scaled.
 
-    scale: float array with shape (n_features,)
-    Array of precomputed sample-wise values to use for scaling.
+    scale : float array with shape (n_features,)
+        Array of precomputed sample-wise values to use for scaling.
     """
     if isinstance(X, sp.csc_matrix):
         inplace_csr_column_scale(X.T, scale)
@@ -335,11 +335,11 @@ def count_nonzero(X, axis=None, sample_weight=None):
         return out * sample_weight
     elif axis == 0:
         if sample_weight is None:
-            return np.bincount(X.indices, minlength=X.shape[1])
+            return bincount(X.indices, minlength=X.shape[1])
         else:
             weights = np.repeat(sample_weight, np.diff(X.indptr))
-            return np.bincount(X.indices, minlength=X.shape[1],
-                               weights=weights)
+            return bincount(X.indices, minlength=X.shape[1],
+                            weights=weights)
     else:
         raise ValueError('Unsupported axis: {0}'.format(axis))
 

@@ -311,9 +311,9 @@ class GaussianNB(BaseNB):
         unique_y_in_classes = in1d(unique_y, classes)
 
         if not np.all(unique_y_in_classes):
-            raise ValueError(
-                    "The target label(s) %s in y do not exist in the "
-                    "initial classes %s" % (y[~unique_y_in_classes], classes))
+            raise ValueError("The target label(s) %s in y do not exist in the "
+                             "initial classes %s" %
+                             (y[~unique_y_in_classes], classes))
 
         for y_i in unique_y:
             i = classes.searchsorted(y_i)
@@ -437,6 +437,8 @@ class BaseDiscreteNB(BaseNB):
         if sample_weight is not None:
             Y *= check_array(sample_weight).T
 
+        class_prior = self.class_prior
+
         # Count raw events from data before updating the class log prior
         # and feature log probas
         self._count(X, Y)
@@ -446,7 +448,7 @@ class BaseDiscreteNB(BaseNB):
         # calls to partial_fit and prior any call to predict[_[log_]proba]
         # to avoid computing the smooth log probas at each call to partial fit
         self._update_feature_log_prob()
-        self._update_class_log_prior()
+        self._update_class_log_prior(class_prior=class_prior)
         return self
 
     def fit(self, X, y, sample_weight=None):
@@ -699,9 +701,8 @@ class BernoulliNB(BaseDiscreteNB):
 
     def _update_feature_log_prob(self):
         """Apply smoothing to raw counts and recompute log probabilities"""
-        n_classes = len(self.classes_)
         smoothed_fc = self.feature_count_ + self.alpha
-        smoothed_cc = self.class_count_ + self.alpha * n_classes
+        smoothed_cc = self.class_count_ + self.alpha * 2
 
         self.feature_log_prob_ = (np.log(smoothed_fc)
                                   - np.log(smoothed_cc.reshape(-1, 1)))
@@ -709,7 +710,7 @@ class BernoulliNB(BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
         check_is_fitted(self, "classes_")
-        
+
         X = check_array(X, accept_sparse='csr')
 
         if self.binarize is not None:

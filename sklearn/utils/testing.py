@@ -403,14 +403,22 @@ def fake_mldata(columns_dict, dataname, matfile, ordering=None):
 
     Parameters
     ----------
-    columns_dict: contains data as
-                  columns_dict[column_name] = array of data
-    dataname: name of data set
-    matfile: file-like object or file name
-    ordering: list of column_names, determines the ordering in the data set
+    columns_dict : dict, keys=str, values=ndarray
+        Contains data as columns_dict[column_name] = array of data.
 
-    Note: this function transposes all arrays, while fetch_mldata only
-    transposes 'data', keep that into account in the tests.
+    dataname : string
+        Name of data set.
+
+    matfile : string or file object
+        The file name string or the file-like object of the output file.
+
+    ordering : list, default None
+        List of column_names, determines the ordering in the data set.
+
+    Notes
+    -----
+    This function transposes all arrays, while fetch_mldata only transposes
+    'data', keep that into account in the tests.
     """
     datasets = dict(columns_dict)
 
@@ -484,19 +492,30 @@ META_ESTIMATORS = ["OneVsOneClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
-OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV"]
+OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV",
+         "RandomizedSearchCV"]
 
 # some trange ones
 DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
-             'LabelBinarizer', 'LabelEncoder', 'MultiLabelBinarizer',
-             'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
-             'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
-             'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures',
-             'GaussianRandomProjectionHash']
+             'LabelBinarizer', 'LabelEncoder',
+             'MultiLabelBinarizer', 'TfidfTransformer',
+             'TfidfVectorizer', 'IsotonicRegression',
+             'OneHotEncoder', 'RandomTreesEmbedding',
+             'FeatureHasher', 'DummyClassifier', 'DummyRegressor',
+             'TruncatedSVD', 'PolynomialFeatures',
+             'GaussianRandomProjectionHash', 'HashingVectorizer',
+             'CheckingClassifier', 'PatchExtractor', 'CountVectorizer',
+             # GradientBoosting base estimators, maybe should
+             # exclude them in another way
+             'ZeroEstimator', 'ScaledLogOddsEstimator',
+             'QuantileEstimator', 'MeanEstimator',
+             'LogOddsEstimator', 'PriorProbabilityEstimator',
+             '_SigmoidCalibration']
 
 
-def all_estimators(include_meta_estimators=False, include_other=False,
-                   type_filter=None, include_dont_test=False):
+def all_estimators(include_meta_estimators=False,
+                   include_other=False, type_filter=None,
+                   include_dont_test=False):
     """Get a list of all estimators from sklearn.
 
     This function crawls the module and gets all classes that inherit

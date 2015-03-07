@@ -56,6 +56,9 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    binary_metric : callable, returns shape [n_classes]
+        The binary metric function to use.
+
     Returns
     -------
     score : float or array of shape [n_classes]

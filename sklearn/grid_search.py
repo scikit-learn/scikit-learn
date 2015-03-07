@@ -26,6 +26,7 @@ from .cross_validation import _fit_and_score
 from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import check_random_state
+from .utils.random import sample_without_replacement
 from .utils.validation import _num_samples, indexable
 from .utils.metaestimators import if_delegate_has_method
 from .metrics.scorer import check_scoring
@@ -113,7 +114,11 @@ class ParameterSampler(object):
     """Generator on parameters sampled from given distributions.
 
     Non-deterministic iterable over random candidate combinations for hyper-
-    parameter search.
+    parameter search. If all parameters are presented as a list,
+    sampling without replacement is performed. If at least one parameter
+    is given as a distribution, sampling with replacement is used.
+    It is highly recommended to use continuous distributions for continuous
+    parameters.
 
     Note that as of SciPy 0.12, the ``scipy.stats.distributions`` do not accept
     a custom RNG instance and always use the singleton RNG from
@@ -165,17 +170,39 @@ class ParameterSampler(object):
         self.random_state = random_state
 
     def __iter__(self):
+        samples = []
+        # check if all distributions are given as lists
+        # in this case we want to sample without replacement
+        all_lists = np.all([not hasattr(v, "rvs")
+                            for v in self.param_distributions.values()])
         rnd = check_random_state(self.random_state)
-        # Always sort the keys of a dictionary, for reproducibility
-        items = sorted(self.param_distributions.items())
-        for _ in range(self.n_iter):
-            params = dict()
-            for k, v in items:
-                if hasattr(v, "rvs"):
-                    params[k] = v.rvs()
-                else:
-                    params[k] = v[rnd.randint(len(v))]
-            yield params
+
+        if all_lists:
+            # get complete grid and yield from it
+            param_grid = list(ParameterGrid(self.param_distributions))
+            grid_size = len(param_grid)
+
+            if grid_size < self.n_iter:
+                raise ValueError(
+                    "The total space of parameters %d is smaller "
+                    "than n_iter=%d." % (grid_size, self.n_iter)
+                    + " For exhaustive searches, use GridSearchCV.")
+            for i in sample_without_replacement(grid_size, self.n_iter,
+                                                random_state=rnd):
+                yield param_grid[i]
+
+        else:
+            # Always sort the keys of a dictionary, for reproducibility
+            items = sorted(self.param_distributions.items())
+            while len(samples) < self.n_iter:
+                params = dict()
+                for k, v in items:
+                    if hasattr(v, "rvs"):
+                        params[k] = v.rvs()
+                    else:
+                        params[k] = v[rnd.randint(len(v))]
+                samples.append(params)
+                yield params
 
     def __len__(self):
         """Number of points that will be sampled."""
@@ -249,7 +276,7 @@ def _check_param_grid(param_grid):
                 raise ValueError("Parameter array should be one-dimensional.")
 
             check = [isinstance(v, k) for k in (list, tuple, np.ndarray)]
-            if not True in check:
+            if True not in check:
                 raise ValueError("Parameter values should be a list.")
 
             if len(v) == 0:
@@ -716,6 +743,12 @@ class RandomizedSearchCV(BaseSearchCV):
     rather a fixed number of parameter settings is sampled from the specified
     distributions. The number of parameter settings that are tried is
     given by n_iter.
+
+    If all parameters are presented as a list,
+    sampling without replacement is performed. If at least one parameter
+    is given as a distribution, sampling with replacement is used.
+    It is highly recommended to use continuous distributions for continuous
+    parameters.
 
     Parameters
     ----------

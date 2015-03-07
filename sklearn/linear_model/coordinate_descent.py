@@ -60,8 +60,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     n_alphas : int, optional
         Number of alphas along the regularization path
 
-    fit_intercept : bool
-        Fit or not an intercept
+    fit_intercept : boolean, default True
+        Whether to fit an intercept or not
 
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
@@ -92,16 +92,23 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
+
     if sparse_center:
         if fit_intercept:
             Xy -= mean_dot[:, np.newaxis]
         if normalize:
             Xy /= X_std[:, np.newaxis]
+
     alpha_max = (np.sqrt(np.sum(Xy ** 2, axis=1)).max() /
                  (n_samples * l1_ratio))
-    alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
-                         num=n_alphas)[::-1]
-    return alphas
+
+    if alpha_max <= np.finfo(float).resolution:
+        alphas = np.empty(n_alphas)
+        alphas.fill(np.finfo(float).resolution)
+        return alphas
+
+    return np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
+                       num=n_alphas)[::-1]
 
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
@@ -169,6 +176,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     positive : bool, default False
         If set to True, forces coefficients to be positive.
+
+    return_n_iter : bool
+        whether to return the number of iterations or not.
 
     Returns
     -------
@@ -345,6 +355,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNetCV
     """
     X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
+    if Xy is not None:
+        Xy = check_array(Xy, 'csc', dtype=np.float64, order='F', copy=False,
+                         ensure_2d=False)
     n_samples, n_features = X.shape
 
     multi_output = False
@@ -365,7 +378,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     X, y, X_mean, y_mean, X_std, precompute, Xy = \
         _pre_fit(X, y, Xy, precompute, normalize=False, fit_intercept=False,
                  copy=False)
-
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
@@ -386,7 +398,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if selection not in ['random', 'cyclic']:
         raise ValueError("selection should be either random or cyclic.")
     random = (selection == 'random')
-    models = []
 
     if not multi_output:
         coefs = np.empty((n_features, n_alphas), dtype=np.float64)
@@ -411,6 +422,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model = cd_fast.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
         elif isinstance(precompute, np.ndarray):
+            precompute = check_array(precompute, 'csc', dtype=np.float64, order='F')
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
                 tol, rng, random, positive)
@@ -615,7 +627,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
                          order='F', copy=self.copy_X and self.fit_intercept,
-                         multi_output=True)
+                         multi_output=True, y_numeric=True)
 
         X, y, X_mean, y_mean, X_std, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
@@ -972,6 +984,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             Target values
         """
         y = np.asarray(y, dtype=np.float64)
+        if y.shape[0] == 0:
+            raise ValueError("y has 0 samples: %r" % y)
 
         if hasattr(self, 'l1_ratio'):
             model_str = 'ElasticNet'
@@ -1186,6 +1200,17 @@ class LassoCV(LinearModelCV, RegressorMixin):
         a random feature to update. Useful only when selection is set to
         'random'.
 
+    fit_intercept : boolean, default True
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional, default False
+        If ``True``, the regressors X will be normalized before regression.
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
+
     Attributes
     ----------
     alpha_ : float
@@ -1312,6 +1337,17 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         a random feature to update. Useful only when selection is set to
         'random'.
 
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional, default False
+        If ``True``, the regressors X will be normalized before regression.
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
+
     Attributes
     ----------
     alpha_ : float
@@ -1393,8 +1429,10 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.random_state = random_state
         self.selection = selection
 
+
 ###############################################################################
 # Multi Task ElasticNet and Lasso models (with joint feature selection)
+
 
 class MultiTaskElasticNet(Lasso):
     """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer

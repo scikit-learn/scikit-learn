@@ -13,7 +13,7 @@ from .validation import (as_float_array,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric)
-from .class_weight import compute_class_weight
+from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
 
 
@@ -21,9 +21,10 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
            "warn_if_not_float",
            "check_random_state",
-           "compute_class_weight",
+           "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
-           "check_consistent_length", "check_X_y", 'indexable']
+           "check_consistent_length", "check_X_y", 'indexable',
+           "check_symmetric"]
 
 
 class deprecated(object):
@@ -168,7 +169,7 @@ def resample(*arrays, **options):
 
     Parameters
     ----------
-    `*arrays` : sequence of arrays or scipy.sparse matrices with same shape[0]
+    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
 
     replace : boolean, True by default
         Implements resampling with replacement. If False, this will implement
@@ -183,8 +184,10 @@ def resample(*arrays, **options):
 
     Returns
     -------
-    Sequence of resampled views of the collections. The original arrays are
-    not impacted.
+    resampled_arrays : sequence of arrays or scipy.sparse matrices with same \
+    shape[0]
+        Sequence of resampled views of the collections. The original arrays are 
+        not impacted.
 
     Examples
     --------
@@ -275,7 +278,7 @@ def shuffle(*arrays, **options):
 
     Parameters
     ----------
-    `*arrays` : sequence of arrays or scipy.sparse matrices with same shape[0]
+    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
 
     random_state : int or RandomState instance
         Control the shuffling for reproducible behavior.
@@ -286,8 +289,10 @@ def shuffle(*arrays, **options):
 
     Returns
     -------
-    Sequence of shuffled views of the collections. The original arrays are
-    not impacted.
+    shuffled_arrays : sequence of arrays or scipy.sparse matrices with same \
+    shape[0]
+        Sequence of shuffled views of the collections. The original arrays are
+        not impacted.
 
     Examples
     --------
@@ -335,6 +340,10 @@ def safe_sqr(X, copy=True):
     Parameters
     ----------
     X : array like, matrix, sparse matrix
+
+    copy : boolean, optional, default True
+        Whether to create a copy of X and operate on it or to perform
+        inplace computation (default behaviour).
 
     Returns
     -------

@@ -57,6 +57,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         Useful for doing grid searches when an `RFE` object is passed as an
         argument to, e.g., a `sklearn.grid_search.GridSearchCV` object.
 
+    verbose : int, default=0
+        Controls verbosity of output.
+
     Attributes
     ----------
     n_features_ : int
@@ -66,8 +69,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         The mask of selected features.
 
     ranking_ : array of shape [n_features]
-        The feature ranking, such that `ranking_[i]` corresponds to the \
-        ranking position of the i-th feature. Selected (i.e., estimated \
+        The feature ranking, such that ``ranking_[i]`` corresponds to the
+        ranking position of the i-th feature. Selected (i.e., estimated
         best) features are assigned rank 1.
 
     estimator_ : object
@@ -276,7 +279,7 @@ class RFECV(RFE, MetaEstimatorMixin):
 
     grid_scores_ : array of shape [n_subsets_of_features]
         The cross-validation scores such that
-        `grid_scores_[i]` corresponds to
+        ``grid_scores_[i]`` corresponds to
         the CV score of the i-th subset of features.
 
     estimator_ : object
@@ -284,7 +287,7 @@ class RFECV(RFE, MetaEstimatorMixin):
 
     Notes
     -----
-    The size of grid_scores_ is equal to (n_features + step - 2) // step + 1,
+    The size of ``grid_scores_`` is equal to (n_features + step - 2) // step + 1,
     where step is the number of features removed at each iteration.
 
     Examples

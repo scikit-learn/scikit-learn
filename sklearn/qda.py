@@ -14,6 +14,7 @@ from .base import BaseEstimator, ClassifierMixin
 from .externals.six.moves import xrange
 from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
+from .utils.fixes import bincount
 
 __all__ = ['QDA']
 
@@ -96,6 +97,9 @@ class QDA(BaseEstimator, ClassifierMixin):
         store_covariances : boolean
             If True the covariance matrices are computed and stored in the
             `self.covariances_` attribute.
+        
+        tol : float, optional, default 1.0e-4
+            Threshold used for rank estimation.
         """
         X, y = check_X_y(X, y)
         self.classes_, y = np.unique(y, return_inverse=True)
@@ -104,7 +108,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
         if self.priors is None:
-            self.priors_ = np.bincount(y) / float(n_samples)
+            self.priors_ = bincount(y) / float(n_samples)
         else:
             self.priors_ = self.priors
 

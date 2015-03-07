@@ -32,7 +32,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.svm.classes import NuSVR
 from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
-from sklearn.metrics.metrics import hamming_loss
+from sklearn.metrics import hamming_loss
 
 ###############################################################################
 # Routines
@@ -140,7 +140,7 @@ configurations = [
      'data': classification_data,
      'n_samples': 30},
     {'estimator': NuSVR,
-     'tuned_params': {'C': 1e3, 'gamma': 2**-15},
+     'tuned_params': {'C': 1e3, 'gamma': 2 ** -15},
      'changing_param': 'nu',
      'changing_param_values': [0.1, 0.25, 0.5, 0.75, 0.9],
      'complexity_label': 'n_support_vectors',
