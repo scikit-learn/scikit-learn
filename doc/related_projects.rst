@@ -48,7 +48,7 @@ scikit-learn tools.
 - `HMMLearn <https://github.com/hmmlearn/hmmlearn>`_ Implementation of hidden
   markov models that was previously part of scikit-learn.
 
-- `PyStruct <https://pystruct.githup.io>`_ General conditional random fields
+- `PyStruct <https://pystruct.github.io>`_ General conditional random fields
   and structured prediction.
 
 - `py-earth <https://github.com/jcrudy/py-earth>`_ Multivariate adaptive regression splines
