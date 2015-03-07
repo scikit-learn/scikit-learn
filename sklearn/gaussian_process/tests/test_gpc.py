@@ -38,8 +38,8 @@ def test_lml_improving():
     """ Test that hyperparameter-tuning improves log-marginal likelihood. """
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
-        assert_greater(gpc.log_marginal_likelihood(gpc.kernel_.params),
-                       gpc.log_marginal_likelihood(kernel.params))
+        assert_greater(gpc.log_marginal_likelihood(gpc.kernel_.theta),
+                       gpc.log_marginal_likelihood(kernel.theta))
 
 
 def test_converged_to_local_maximum():
@@ -47,7 +47,7 @@ def test_converged_to_local_maximum():
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
 
-        lml, lml_gradient = gpc.log_marginal_likelihood(gpc.kernel_.params, True)
+        lml, lml_gradient = gpc.log_marginal_likelihood(gpc.kernel_.theta, True)
 
         assert_almost_equal(lml_gradient, 0, 2)
 
@@ -57,9 +57,9 @@ def test_lml_gradient():
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
 
-        lml, lml_gradient = gpc.log_marginal_likelihood(kernel.params, True)
+        lml, lml_gradient = gpc.log_marginal_likelihood(kernel.theta, True)
         lml_gradient_approx = \
-            approx_fprime(kernel.params,
+            approx_fprime(kernel.theta,
                           lambda theta: gpc.log_marginal_likelihood(theta,
                                                                     False),
                           1e-10)

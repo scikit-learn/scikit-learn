@@ -83,11 +83,11 @@ class GaussianProcessRegressor(BaseEstimator):
                 lml, grad = self.log_marginal_likelihood(theta,
                                                          eval_gradient=True)
                 return -lml, -grad
-            self.theta_, _, _ = fmin_l_bfgs_b(obj_func, self.kernel_.params,
+            self.theta_, _, _ = fmin_l_bfgs_b(obj_func, self.kernel_.theta,
                                               bounds=self.kernel_.bounds)
-            self.kernel_.params = self.theta_
+            self.kernel_.theta = self.theta_
         elif self.optimizer is None:
-            self.theta_ = self.kernel_.params
+            self.theta_ = self.kernel_.theta
         else:
             raise ValueError("Unknown optimizer %s." % self.optimizer)
 
@@ -146,7 +146,7 @@ class GaussianProcessRegressor(BaseEstimator):
     def log_marginal_likelihood(self, theta, eval_gradient=False):
         import copy  # XXX: Avoid deepcopy
         kernel = copy.deepcopy(self.kernel_)
-        kernel.params = theta
+        kernel.theta = theta
 
         if eval_gradient:
             K, K_gradient = kernel(self.X_fit_, eval_gradient=True)

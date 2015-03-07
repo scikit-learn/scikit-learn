@@ -38,18 +38,18 @@ def test_kernel_gradient():
 
         assert_equal(K_gradient.shape[0], X.shape[0])
         assert_equal(K_gradient.shape[1], X.shape[0])
-        assert_equal(K_gradient.shape[2], kernel.params.shape[0])
+        assert_equal(K_gradient.shape[2], kernel.theta.shape[0])
 
         K_gradient_approx = np.empty_like(K_gradient)
         for i in range(K.shape[0]):
             for j in range(K.shape[1]):
                 def eval_kernel_ij_for_theta(theta):
                     kernel_copy = deepcopy(kernel)
-                    kernel_copy.params = theta
+                    kernel_copy.theta = theta
                     K = kernel_copy(X, eval_gradient=False)
                     return K[i, j]
                 K_gradient_approx[i, j] = \
-                    approx_fprime(kernel.params, eval_kernel_ij_for_theta,
+                    approx_fprime(kernel.theta, eval_kernel_ij_for_theta,
                                   1e-10)
 
         assert_almost_equal(K_gradient, K_gradient_approx, 4)
