@@ -100,6 +100,9 @@ def test_scaler_1d():
     X = np.ones(5)
     assert_array_equal(scale(X, with_mean=False), X)
 
+
+def test_standard_scaler_numerical_stability():
+    """Test numerical stability of scaling"""
     # np.log(1e-5) is taken because of its length/precision,
     # so that np.mean(X) and np.std(X) are then not precise enough
     # to allow an easy standardization.
@@ -114,12 +117,12 @@ def test_scaler_1d():
         assert_array_almost_equal(scale(X), np.zeros(22))
     w = "standard deviation of the data is probably very close to 0"
     assert_warns_message(UserWarning, w, scale, X)
-    
+
     X = np.ones(10.) * 1e-100
     clean_warning_registry()
     with warnings.catch_warnings(record=True):
         assert_array_almost_equal(scale(X), np.zeros(10))
-    
+
     X = np.ones(10.) * 1e100
     clean_warning_registry()
     with warnings.catch_warnings(record=True):
@@ -127,7 +130,7 @@ def test_scaler_1d():
         assert_array_almost_equal(scale(X, with_std=False), np.zeros(10))
     w = "Dataset may contain too large values"
     assert_warns_message(UserWarning, w, scale, X)
-    
+
     X = np.arange(10.) * 1e100
     Y = np.arange(10.) * 1e-100
     clean_warning_registry()
