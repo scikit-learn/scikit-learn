@@ -36,13 +36,13 @@ class Kernel(six.with_metaclass(ABCMeta)):
     def __init__(self, theta=1.0, thetaL=1e-5, thetaU=np.inf):
         if not np.iterable(theta):
             theta = np.array([theta])
-        self.params = np.asarray(theta, dtype=np.float)
+        self.theta = np.asarray(theta, dtype=np.float)
         self.bounds = (np.asarray(thetaL, dtype=np.float),
                        np.asarray(thetaU, dtype=np.float))
 
     @property
-    def n_params(self):
-        return self.params.shape[0]
+    def n_dims(self):
+        return self.theta.shape[0]
 
     @property
     def bounds(self):
@@ -52,9 +52,9 @@ class Kernel(six.with_metaclass(ABCMeta)):
     def bounds(self, bounds):
         self.l_bound, self.u_bound = bounds
         if not np.iterable(self.l_bound):
-             self.l_bound = np.full_like(self.params,  self.l_bound)
+             self.l_bound = np.full_like(self.theta, self.l_bound)
         if not np.iterable(self.u_bound):
-             self.u_bound = np.full_like(self.params,  self.u_bound)
+             self.u_bound = np.full_like(self.theta, self.u_bound)
 
     def __add__(self, b):
         if not isinstance(b, Kernel):
@@ -78,7 +78,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
     def __repr__(self):
         return "{0}({1})".format(self.__class__.__name__,
-                                 ", ".join(map("{0:.3g}".format, self.params)))
+                                 ", ".join(map("{0:.3g}".format, self.theta)))
 
     @abstractmethod
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -97,14 +97,14 @@ class KernelOperator(Kernel):
         self.k2 = k2
 
     @property
-    def params(self):
-        return np.append(self.k1.params, self.k2.params)
+    def theta(self):
+        return np.append(self.k1.theta, self.k2.theta)
 
-    @params.setter
-    def params(self, theta):
-        i = self.k1.n_params
-        self.k1.params = theta[:i]
-        self.k2.params = theta[i:]
+    @theta.setter
+    def theta(self, theta):
+        i = self.k1.n_dims
+        self.k1.theta = theta[:i]
+        self.k2.theta = theta[i:]
 
     @property
     def bounds(self):
@@ -112,7 +112,7 @@ class KernelOperator(Kernel):
 
     @bounds.setter
     def bounds(self, bounds):
-        i = self.k1.n_params
+        i = self.k1.n_dims
         self.k1.bounds = bounds[:i]
         self.k2.bounds = bounds[i:]
 
@@ -157,7 +157,7 @@ class Sum(KernelOperator):
         K : array, shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with repect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
@@ -209,7 +209,7 @@ class Product(KernelOperator):
         K : array, shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with repect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
@@ -257,11 +257,11 @@ class ConstantKernel(Kernel):
             return cls(literal)
 
     @property
-    def params(self):
+    def theta(self):
         return np.array([self.value])
 
-    @params.setter
-    def params(self, theta):
+    @theta.setter
+    def theta(self, theta):
         if len(theta) != 1:
             raise ValueError("theta has not the correct number of entries."
                              " Should be 1; given are %d" % len(theta))
@@ -288,7 +288,7 @@ class ConstantKernel(Kernel):
         K : array, shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with repect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
@@ -322,11 +322,11 @@ class WhiteKernel(Kernel):
     """
 
     @property
-    def params(self):
+    def theta(self):
         return np.asarray([self.c])
 
-    @params.setter
-    def params(self, theta):
+    @theta.setter
+    def theta(self, theta):
         self.c = theta[0]
 
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -350,7 +350,7 @@ class WhiteKernel(Kernel):
         K : array, shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with repect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
@@ -385,11 +385,11 @@ class RBF(Kernel):
     """
 
     @property
-    def params(self):
+    def theta(self):
         return np.asarray(self.l)
 
-    @params.setter
-    def params(self, theta):
+    @theta.setter
+    def theta(self, theta):
         self.l = theta
 
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -413,7 +413,7 @@ class RBF(Kernel):
         K : array, shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with repect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
@@ -469,11 +469,11 @@ class RationalQuadratic(Kernel):
         super(RationalQuadratic, self).__init__(theta, thetaL, thetaU)
 
     @property
-    def params(self):
+    def theta(self):
         return np.asarray([self.alpha, self.l])
 
-    @params.setter
-    def params(self, theta):
+    @theta.setter
+    def theta(self, theta):
         self.alpha = theta[0]
         self.l = theta[1]
 
@@ -498,7 +498,7 @@ class RationalQuadratic(Kernel):
         K : array, shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with repect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
@@ -544,11 +544,11 @@ class ExpSineSquared(Kernel):
         super(ExpSineSquared, self).__init__(theta, thetaL, thetaU)
 
     @property
-    def params(self):
+    def theta(self):
         return np.asarray([self.l, self.p])
 
-    @params.setter
-    def params(self, theta):
+    @theta.setter
+    def theta(self, theta):
         self.l = theta[0]
         self.p = theta[1]
 
@@ -573,7 +573,7 @@ class ExpSineSquared(Kernel):
         K : array, shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with repect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
@@ -618,11 +618,11 @@ class DotProduct(Kernel):
         self.degree = degree
 
     @property
-    def params(self):
+    def theta(self):
         return np.asarray([self.sigma_0])
 
-    @params.setter
-    def params(self, theta):
+    @theta.setter
+    def theta(self, theta):
         self.sigma_0 = theta[0]
 
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -646,7 +646,7 @@ class DotProduct(Kernel):
         K : array, shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with repect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
@@ -724,11 +724,11 @@ class PairwiseKernel(Kernel):
                 "Gamma must not be set directly but via param_space.")
 
     @property
-    def params(self):
+    def theta(self):
         return np.asarray([self.gamma])
 
-    @params.setter
-    def params(self, theta):
+    @theta.setter
+    def theta(self, theta):
         self.gamma = theta[0]
 
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -752,7 +752,7 @@ class PairwiseKernel(Kernel):
         K : array, shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_params)
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with repect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
@@ -765,7 +765,7 @@ class PairwiseKernel(Kernel):
                 return pairwise_kernels(
                     X, Y, metric=self.metric, gamma=gamma,
                     filter_params=True, **self.kwargs)
-            return K, _approx_fprime(self.params, f, 1e-10)
+            return K, _approx_fprime(self.theta, f, 1e-10)
         else:
             return K
 

@@ -42,8 +42,8 @@ def test_lml_improving():
     """ Test that hyperparameter-tuning improves log-marginal likelihood. """
     for kernel in kernels:
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-        assert_greater(gpr.log_marginal_likelihood(gpr.kernel_.params),
-                       gpr.log_marginal_likelihood(kernel.params))
+        assert_greater(gpr.log_marginal_likelihood(gpr.kernel_.theta),
+                       gpr.log_marginal_likelihood(kernel.theta))
 
 
 def test_converged_to_local_maximum():
@@ -52,11 +52,11 @@ def test_converged_to_local_maximum():
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
         lml, lml_gradient = \
-            gpr.log_marginal_likelihood(gpr.kernel_.params, True)
+            gpr.log_marginal_likelihood(gpr.kernel_.theta, True)
 
         assert_true(np.all(np.isclose(lml_gradient, 0, atol=1e-5)
-                           | (gpr.kernel_.params == gpr.kernel_.bounds[:, 0])
-                           | (gpr.kernel_.params == gpr.kernel_.bounds[:, 1])))
+                           | (gpr.kernel_.theta == gpr.kernel_.bounds[:, 0])
+                           | (gpr.kernel_.theta == gpr.kernel_.bounds[:, 1])))
 
 
 def test_solution_inside_bounds():
@@ -65,12 +65,12 @@ def test_solution_inside_bounds():
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
         bounds = gpr.kernel_.bounds
-        max_ = np.finfo(gpr.kernel_.params.dtype).max
+        max_ = np.finfo(gpr.kernel_.theta.dtype).max
         tiny = 1e-10
         bounds[~np.isfinite(bounds[:, 1]), 1] = max_
 
-        assert_array_less(bounds[:, 0], gpr.kernel_.params + tiny)
-        assert_array_less(gpr.kernel_.params, bounds[:, 1] + tiny)
+        assert_array_less(bounds[:, 0], gpr.kernel_.theta + tiny)
+        assert_array_less(gpr.kernel_.theta, bounds[:, 1] + tiny)
 
 
 def test_lml_gradient():
@@ -78,9 +78,9 @@ def test_lml_gradient():
     for kernel in kernels:
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
-        lml, lml_gradient = gpr.log_marginal_likelihood(kernel.params, True)
+        lml, lml_gradient = gpr.log_marginal_likelihood(kernel.theta, True)
         lml_gradient_approx = \
-            approx_fprime(kernel.params,
+            approx_fprime(kernel.theta,
                           lambda theta: gpr.log_marginal_likelihood(theta,
                                                                     False),
                           1e-10)
@@ -96,9 +96,9 @@ def test_prior():
         y_mean, y_cov = gpr.predict(X, return_cov=True)
 
         assert_almost_equal(y_mean, 0, 5)
-        if len(gpr.kernel.params) > 1:
+        if len(gpr.kernel.theta) > 1:
             # XXX: quite hacky, works only for current kernels
-            assert_almost_equal(np.diag(y_cov), kernel.params[0] , 5)
+            assert_almost_equal(np.diag(y_cov), kernel.theta[0] , 5)
         else:
             assert_almost_equal(np.diag(y_cov), 1, 5)
 
@@ -122,5 +122,5 @@ def test_no_optimizer():
     """ Test that kernel parameters are unmodified when optimizer is None."""
     kernel = RBF(1.0)
     gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(X, y)
-    assert_equal(gpr.kernel_.params, 1.0)
+    assert_equal(gpr.kernel_.theta, 1.0)
     assert_equal(gpr.theta_, 1.0)
