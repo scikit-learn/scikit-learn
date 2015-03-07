@@ -33,43 +33,12 @@ from ..externals import six
 class Kernel(six.with_metaclass(ABCMeta)):
     """ Base class for all kernels."""
 
-    def _parse_param_space(self, param_space):
-        if not np.iterable(param_space):
-            self.params = np.array([float(param_space)])
-            # No custom bounds specified; use default bounds
-            default_bounds = np.empty((self.params.shape[0], 2),
-                                      dtype=self.params.dtype)
-            default_bounds[:, 0] = 1e-5
-            default_bounds[:, 1] = np.inf
-            self.bounds = default_bounds
-            return
-
-        param_space = np.atleast_2d(param_space)
-        if param_space.shape[1] == 1:
-            self.params = param_space[:, 0]
-            # No custom bounds specified; use default bounds
-            default_bounds = np.empty((self.params.shape[0], 2),
-                                      dtype=self.params.dtype)
-            default_bounds[:, 0] = 1e-5
-            default_bounds[:, 1] = np.inf
-            self.bounds = default_bounds
-        elif param_space.shape[1] == 2:
-            # lower + upper bound for hyperparameter
-            self.bounds = param_space
-            # Use geometric mean of upper and lower boundary as initial
-            # hyperparameter value
-            if np.any(np.equal(self.l_bound, np.inf)) \
-               or np.any(np.equal(self.u_bound, np.inf)):
-                raise ValueError("Lower or upper bound being None requires "
-                                 "explicitly specifying the initial value.")
-            self.params = np.array([np.sqrt(self.l_bound * self.u_bound)])
-        elif param_space.shape[1] == 3:
-            # lower bound, initial value, upper bound
-            self.params = param_space[:, 1]
-            self.bounds = param_space[:, [0, 2]]
-        else:
-            raise ValueError("Invalid parameter space given. Must not have "
-                             "more than 3 entries per parameter.")
+    def __init__(self, theta=1.0, thetaL=1e-5, thetaU=np.inf):
+        if not np.iterable(theta):
+            theta = np.array([theta])
+        self.params = np.asarray(theta, dtype=np.float)
+        self.bounds = (np.asarray(thetaL, dtype=np.float),
+                       np.asarray(thetaU, dtype=np.float))
 
     @property
     def n_params(self):
@@ -81,28 +50,30 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
     @bounds.setter
     def bounds(self, bounds):
-        bounds = bounds.reshape(-1, 2)
-        self.l_bound = bounds[:, 0]
-        self.u_bound = bounds[:, 1]
+        self.l_bound, self.u_bound = bounds
+        if not np.iterable(self.l_bound):
+             self.l_bound = np.full_like(self.params,  self.l_bound)
+        if not np.iterable(self.u_bound):
+             self.u_bound = np.full_like(self.params,  self.u_bound)
 
     def __add__(self, b):
         if not isinstance(b, Kernel):
-            return Sum(self, ConstantKernel(b))
+            return Sum(self, ConstantKernel.from_literal(b))
         return Sum(self, b)
 
     def __radd__(self, b):
         if not isinstance(b, Kernel):
-            return Sum(ConstantKernel(b), self)
+            return Sum(ConstantKernel.from_literal(b), self)
         return Sum(b, self)
 
     def __mul__(self, b):
         if not isinstance(b, Kernel):
-            return Product(self, ConstantKernel(b))
+            return Product(self, ConstantKernel.from_literal(b))
         return Product(self, b)
 
     def __rmul__(self, b):
         if not isinstance(b, Kernel):
-            return Product(ConstantKernel(b), self)
+            return Product(ConstantKernel.from_literal(b), self)
         return Product(b, self)
 
     def __repr__(self):
@@ -266,11 +237,24 @@ class ConstantKernel(Kernel):
     -------------------------
     value : float
         The constant value used for determining the magnitude (product-kernel)
-        or offset of mean (sum-lernel).
+        or offset of mean (sum-kernel).
     """
 
-    def __init__(self, param_space=1.0):
-        self._parse_param_space(param_space)
+    @classmethod
+    def from_literal(cls, literal):
+        if np.iterable(literal):
+            if len(literal) == 1:
+                return cls(literal[0])
+            elif len(literal) == 2:
+                return cls((literal[0] + literal[1]) / 2, literal[0],
+                            literal[1])
+            elif len(literal) == 3:
+                return cls(literal[1], literal[0], literal[2])
+            else:
+                raise ValueError("Cannot interpret literal %s for "
+                                 "ConstantKernel." % literal)
+        else:
+            return cls(literal)
 
     @property
     def params(self):
@@ -278,7 +262,9 @@ class ConstantKernel(Kernel):
 
     @params.setter
     def params(self, theta):
-        assert len(theta) == 1
+        if len(theta) != 1:
+            raise ValueError("theta has not the correct number of entries."
+                             " Should be 1; given are %d" % len(theta))
         self.value = theta[0]
 
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -334,9 +320,6 @@ class WhiteKernel(Kernel):
     c : float
         Parameter controlling the noise level.
     """
-
-    def __init__(self, param_space=1.0):
-        self._parse_param_space(param_space)
 
     @property
     def params(self):
@@ -401,9 +384,6 @@ class RBF(Kernel):
         of l defines the length-scale of the respective feature dimension.
     """
 
-    def __init__(self, param_space=1.0):
-        self._parse_param_space(param_space)
-
     @property
     def params(self):
         return np.asarray(self.l)
@@ -454,7 +434,7 @@ class RBF(Kernel):
         if eval_gradient:
             if self.l.shape[0] == 1:
                 K_gradient = \
-                    (K * squareform(dists) / self.l[0])[:, :, np.newaxis]
+                    (K * squareform(dists) / self.l)[:, :, np.newaxis]
                 return K, K_gradient
             elif self.l.shape[0] == X.shape[1]:
                 # We need to recompute the pairwise dimension-wise distances
@@ -485,9 +465,8 @@ class RationalQuadratic(Kernel):
         The length scale of the kernel.
     """
 
-    def __init__(self, param_space=[(1.0,), (1.0,)]):
-        self._parse_param_space(param_space)
-
+    def __init__(self, theta=[1.0, 1.0], thetaL=1e-5, thetaU=np.inf):
+        super(RationalQuadratic, self).__init__(theta, thetaL, thetaU)
 
     @property
     def params(self):
@@ -561,8 +540,8 @@ class ExpSineSquared(Kernel):
         The periodicity of the kernel.
     """
 
-    def __init__(self, param_space=[(1.0,), (1.0,)]):
-        self._parse_param_space(param_space)
+    def __init__(self, theta=[1.0, 1.0], thetaL=1e-5, thetaU=np.inf):
+        super(ExpSineSquared, self).__init__(theta, thetaL, thetaU)
 
     @property
     def params(self):
@@ -634,8 +613,8 @@ class DotProduct(Kernel):
         the kernel is homogenous.
     """
 
-    def __init__(self, param_space=1.0, degree=1):
-        self._parse_param_space(param_space)
+    def __init__(self, theta=[1.0, 1.0], thetaL=1e-5, thetaU=np.inf, degree=1):
+        super(DotProduct, self).__init__(theta, thetaL, thetaU)
         self.degree = degree
 
     @property
@@ -735,8 +714,9 @@ class PairwiseKernel(Kernel):
         Any further parameters are passed directly to the kernel function.
     """
 
-    def __init__(self, param_space=1.0, metric="linear", **kwargs):
-        self._parse_param_space(param_space)
+    def __init__(self, theta=1.0, thetaL=1e-5, thetaU=np.inf, metric="linear",
+                 **kwargs):
+        super(PairwiseKernel, self).__init__(theta, thetaL, thetaU)
         self.metric = metric
         self.kwargs = kwargs
         if "gamma" in kwargs:

@@ -19,10 +19,10 @@ from sklearn.gaussian_process.kernels \
     import RBF, RationalQuadratic, ExpSineSquared, DotProduct
 
 
-kernels = [1.0 * RBF((1e-10, 1.0, None)),
-           1.0 * RationalQuadratic(((0.1,), (1.0,))),
-           1.0 * ExpSineSquared(((0.1, 1.0, 10.0), (1.0, 3.0, 10.0))),
-           (0.01, 0.1, 10.0) * DotProduct(((0.0, 1.0, 10.0)), degree=2)]
+kernels = [1.0 * RBF(1.0, 1e-1, 10.0),
+           1.0 * RationalQuadratic((0.1, 1.0)),
+           1.0 * ExpSineSquared((1.0, 3.0), (0.1, 1.0), (10.0, 10.0)),
+           (0.01, 0.1, 10.0) * DotProduct(1.0, 0.0, 10.0, degree=2)]
 
 for fig_index, kernel in enumerate(kernels):
     if fig_index > 3: continue
@@ -65,7 +65,7 @@ for fig_index, kernel in enumerate(kernels):
     plt.scatter(X[:, 0], y, c='r', s=50, zorder=10)
     plt.xlim(0, 5)
     plt.ylim(-3, 3)
-    plt.title("Posterior (kernel: %s)" % kernel)
+    plt.title("Posterior (kernel: %s)" % gp.kernel_)
     plt.tight_layout()
 
 plt.show()

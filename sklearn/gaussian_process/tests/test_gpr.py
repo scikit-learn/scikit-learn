@@ -22,10 +22,10 @@ X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = f(X).ravel()
 
 
-kernels = [RBF(1.0), RBF((1e-3, 1.0, 1e3)),
-           (1e-2, 1.0, 1e2) * RBF((1e-3, 0.1, 1e3)),
-           (1e-2, 1.0, 1e2) * RBF((1e-3, 0.1, 1e3)) + (0.0, 0.0, 1e2),
-           (1e-2, 0.1, 1e2) * RBF((1e-3, 0.1, 1e3)) + (0.0, 0.0, 1e2)]
+kernels = [RBF(1.0), RBF(1.0, 1e-3, 1e3),
+           (1e-2, 1.0, 1e2) * RBF(1.0, 1e-3, 1e3),
+           (1e-2, 1.0, 1e2) * RBF(1.0, 1e-3, 1e3) + (0.0, 0.0, 1e2),
+           (1e-2, 0.1, 1e2) * RBF(1.0, 1e-3, 1e3) + (0.0, 0.0, 1e2)]
 
 
 def test_gpr_interpolation():
@@ -65,8 +65,8 @@ def test_solution_inside_bounds():
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
         bounds = gpr.kernel_.bounds
-        max_ = np.finfo(bounds.dtype).max
-        tiny = np.finfo(bounds.dtype).tiny
+        max_ = np.finfo(gpr.kernel_.params.dtype).max
+        tiny = 1e-10
         bounds[~np.isfinite(bounds[:, 1]), 1] = max_
 
         assert_array_less(bounds[:, 0], gpr.kernel_.params + tiny)

@@ -19,11 +19,11 @@ from sklearn.utils.testing import assert_equal, assert_almost_equal
 
 X = np.random.normal(0, 1, (10, 2))
 
-kernels = [RBF(2.0), RBF([[0.5], [2.0]]),
+kernels = [RBF(2.0), RBF([0.5, 2.0]),
            ConstantKernel(10.0),
            2.0 * RBF(0.5), RBF(2.0) + WhiteKernel(1.0),
-           RationalQuadratic([(1.0,), (1.0,)]),
-           ExpSineSquared([(1.0,), (1.0,)]),
+           RationalQuadratic([1.0, 1.0]),
+           ExpSineSquared([1.0, 1.0]),
            DotProduct(1.0), DotProduct(1.0, degree=2)]
 for metric in PAIRWISE_KERNEL_FUNCTIONS:
     if metric in ["additive_chi2", "chi2"]:
@@ -75,7 +75,7 @@ def test_kernel_operator_commutative():
 
 def test_kernel_anisotropic():
     """ Anisotropic kernel should be consistent with isotropic kernels."""
-    K = RBF([[0.5], [2.0]])(X)
+    K = RBF([0.5, 2.0])(X)
     X1 = np.array(X)
     X1[:, 0] *= 4
     K1 = RBF(2.0)(X1)
