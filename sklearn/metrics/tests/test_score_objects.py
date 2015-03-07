@@ -341,7 +341,7 @@ def test_scorer_sample_weight():
                              msg="scorer {0} behaves identically when "
                              "called with sample weights: {1} vs "
                              "{2}".format(name, weighted, unweighted))
-            assert_almost_equal(weighted, ignored,
+            assert_almost_equal(weighted, ignored, decimal=5,
                                 err_msg="scorer {0} behaves differently when "
                                 "ignoring samples and setting sample_weight to"
                                 " 0: {1} vs {2}".format(name, weighted,
