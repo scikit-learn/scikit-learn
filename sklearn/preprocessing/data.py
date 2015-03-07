@@ -150,6 +150,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             # maximum.
             if not np.allclose(mean_1, 0):
                 warnings.warn("Numerical issues were encountered "
+                              "when centering the data "
                               "and might not be solved. Dataset may "
                               "contain too large values. You may need "
                               "to prescale your features.")
@@ -165,6 +166,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
                 # substract the mean again:
                 if not np.allclose(mean_2, 0):
                     warnings.warn("Numerical issues were encountered "
+                                  "when scaling the data "
                                   "and might not be solved. The standard "
                                   "deviation of the data is probably "
                                   "very close to 0. ")
