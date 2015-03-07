@@ -21,8 +21,8 @@ y_mean = y.mean()
 
 # Kernel with parameters given in GPML book
 k1 = 66.0**2 * RBF(67.0)  # long term smooth rising trend
-k2 = 2.4**2 * RBF(90) * ExpSineSquared(((1.3,), (1.0,)))  # seasonal component
-k3 = 0.66**2 * RationalQuadratic(((0.78,), (1.2,)))  # medium term irregularit.
+k2 = 2.4**2 * RBF(90.0) * ExpSineSquared((1.3, 1.0))  # seasonal component
+k3 = 0.66**2 * RationalQuadratic((0.78, 1.2))  # medium term irregularit.
 k4 = 0.18**2 * RBF(0.134) + WhiteKernel(0.19**2) # noise terms
 kernel_gpml = k1 + k2 + k3 + k4
 
@@ -34,9 +34,9 @@ print "Log-marginal-likelihood: %.3f" % gp.log_marginal_likelihood(gp.theta_)
 
 # Kernel with optimized parameters
 k1 = 50.0**2 * RBF(50.0) # long term smooth rising trend
-k2 = 2.0**2 * RBF(100) * ExpSineSquared(((1.0,), (1.0,))) # seasonal component
-k3 = 0.5**2 * RationalQuadratic(((1.0,), (1.0,))) # medium term irregularities
-k4 = 0.1**2 * RBF(0.1) + WhiteKernel((1e-3, 0.1**2, np.inf))  # noise terms
+k2 = 2.0**2 * RBF(100.0) * ExpSineSquared((1.0, 1.0)) # seasonal component
+k3 = 0.5**2 * RationalQuadratic((1.0, 1.0)) # medium term irregularities
+k4 = 0.1**2 * RBF(0.1) + WhiteKernel(0.1**2, 1e-3, np.inf)  # noise terms
 kernel = k1 + k2 + k3 + k4
 
 gp = GaussianProcessRegressor(kernel=kernel, y_err=0)
