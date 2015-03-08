@@ -26,7 +26,7 @@ kernels = [RBF(2.0), RBF([0.5, 2.0]),
            2.0 * RBF(0.5), RBF(2.0) + WhiteKernel(1.0),
            RationalQuadratic([1.0, 1.0]),
            ExpSineSquared([1.0, 1.0]),
-           DotProduct(1.0), DotProduct(1.0, degree=2)]
+           DotProduct(1.0), DotProduct(1.0) ** 2]
 for metric in PAIRWISE_KERNEL_FUNCTIONS:
     if metric in ["additive_chi2", "chi2"]:
         continue
