@@ -29,6 +29,7 @@ from scipy.spatial.distance import pdist, cdist, squareform
 
 from ..metrics.pairwise import pairwise_kernels
 from ..externals import six
+from ..base import clone
 
 
 class Kernel(six.with_metaclass(ABCMeta)):
@@ -75,6 +76,12 @@ class Kernel(six.with_metaclass(ABCMeta)):
         for arg in args:
             params[arg] = getattr(self, arg, None)
         return params
+
+    def clone_with_theta(self, theta):
+        """ Returns a clone of self with given hyperparameters theta. """
+        cloned = clone(self)
+        cloned.theta = theta
+        return cloned
 
     @property
     def n_dims(self):

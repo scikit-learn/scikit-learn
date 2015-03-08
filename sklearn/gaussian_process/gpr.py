@@ -8,7 +8,7 @@ import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve
 from scipy.optimize import fmin_l_bfgs_b
 
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_X_y, check_array
@@ -68,8 +68,7 @@ class GaussianProcessRegressor(BaseEstimator):
         if self.kernel is None:  # Use an RBF kernel as default
             self.kernel_ = RBF()
         else:
-            import copy  # XXX
-            self.kernel_ = copy.deepcopy(self.kernel)
+            self.kernel_ = clone(self.kernel)
 
         X, y = check_X_y(X, y)
 
@@ -144,9 +143,7 @@ class GaussianProcessRegressor(BaseEstimator):
         return y_samples
 
     def log_marginal_likelihood(self, theta, eval_gradient=False):
-        import copy  # XXX: Avoid deepcopy
-        kernel = copy.deepcopy(self.kernel_)
-        kernel.theta = theta
+        kernel = self.kernel_.clone_with_theta(theta)
 
         if eval_gradient:
             K, K_gradient = kernel(self.X_fit_, eval_gradient=True)
