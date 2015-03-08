@@ -54,7 +54,7 @@ def test_converged_to_local_maximum():
         lml, lml_gradient = \
             gpr.log_marginal_likelihood(gpr.kernel_.theta, True)
 
-        assert_true(np.all(np.isclose(lml_gradient, 0, atol=1e-5)
+        assert_true(np.all((np.abs(lml_gradient) < 1e-5)
                            | (gpr.kernel_.theta == gpr.kernel_.bounds[:, 0])
                            | (gpr.kernel_.theta == gpr.kernel_.bounds[:, 1])))
 

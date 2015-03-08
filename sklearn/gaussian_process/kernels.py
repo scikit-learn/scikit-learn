@@ -128,7 +128,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
             return False
         params_a = self.get_params()
         params_b = b.get_params()
-        for key in set(params_a.keys() + params_b.keys()):
+        for key in set(list(params_a.keys()) + list(params_b.keys())):
             if np.any(params_a.get(key, None) != params_b.get(key, None)):
                 return False
         return True
