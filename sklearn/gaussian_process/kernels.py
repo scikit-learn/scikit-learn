@@ -120,6 +120,9 @@ class Kernel(six.with_metaclass(ABCMeta)):
             return Product(ConstantKernel.from_literal(b), self)
         return Product(b, self)
 
+    def __pow__(self, b):
+        return Exponentiation(self, b)
+
     def __eq__(self, b):
         if type(self) != type(b):
             return False
@@ -299,6 +302,92 @@ class Product(KernelOperator):
 
     def __repr__(self):
         return "{0} * {1}".format(self.k1, self.k2)
+
+
+class Exponentiation(Kernel):
+    """ Exponentiate kernel by given exponent. """
+
+    def __init__(self, kernel, exponent):
+        self.kernel = kernel
+        self.exponent = exponent
+
+    def get_params(self, deep=True):
+        """Get parameters of this kernel.
+
+        Parameters
+        ----------
+        deep: boolean, optional
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        params = dict(kernel=self.kernel, exponent=self.exponent)
+        return params
+
+    @property
+    def theta(self):
+        return self.kernel.theta
+
+    @theta.setter
+    def theta(self, theta):
+        self.kernel.theta = theta
+
+    @property
+    def bounds(self):
+        return self.kernel.bounds
+
+    @bounds.setter
+    def bounds(self, bounds):
+        self.kernel.bounds = bounds
+
+    def __eq__(self, b):
+        return (self.kernel == b.kernel and self.exponent == b.exponent)
+
+    def __call__(self, X, Y=None, eval_gradient=False):
+        """ Return the kernel k(X, Y) and optionally its gradient.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+            Right argument of the returned kernel k(X, Y). If None, k(X, X)
+            if evaluated instead.
+
+        eval_gradient : bool (optional, default=False)
+            Determines whether the gradient with respect to the kernel
+            hyperparameter is determined.
+
+        Returns
+        -------
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X, Y)
+
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
+            The gradient of the kernel k(X, X) with repect to the
+            hyperparameter of the kernel. Only returned when eval_gradient
+            is True.
+        """
+        if eval_gradient:
+            K, K_gradient = self.kernel(X, Y, eval_gradient=True)
+            K_gradient *= \
+                self.exponent * K[:, :, np.newaxis] ** (self.exponent - 1)
+            return K ** self.exponent, K_gradient
+        else:
+            K = self.kernel(X, Y, eval_gradient=False)
+            return K ** self.exponent
+
+    def __repr__(self):
+        return "{0} ** {1}".format(self.kernel, self.exponent)
+
+    def is_stationary(self):
+        """ Returns whether the kernel is stationary. """
+        return self.kernel.is_stationary()
 
 
 class ConstantKernel(Kernel):
@@ -688,9 +777,8 @@ class DotProduct(Kernel):
         the kernel is homogenous.
     """
 
-    def __init__(self, theta=[1.0, 1.0], thetaL=1e-5, thetaU=np.inf, degree=1):
+    def __init__(self, theta=[1.0, 1.0], thetaL=1e-5, thetaU=np.inf):
         super(DotProduct, self).__init__(theta, thetaL, thetaU)
-        self.degree = degree
 
     @property
     def theta(self):
@@ -727,18 +815,16 @@ class DotProduct(Kernel):
             is True.
         """
         if Y is None:
-            dot_product = np.inner(X, X)
-            K = (dot_product + self.sigma_0 ** 2) ** self.degree
+            K = np.inner(X, X) + self.sigma_0 ** 2
         else:
             if eval_gradient:
                 raise ValueError(
                     "Gradient can only be evaluated when Y is None.")
-            K = (np.inner(X, Y) + self.sigma_0 ** 2) ** self.degree
+            K = np.inner(X, Y) + self.sigma_0 ** 2
 
         if eval_gradient:
             K_gradient = np.empty((K.shape[0], K.shape[1], 1))
-            K_gradient[..., 0] = 2 * self.sigma_0 * self.degree \
-                * (dot_product + self.sigma_0 ** 2) ** (self.degree - 1)
+            K_gradient[..., 0] = 2 * self.sigma_0
             return K, K_gradient
         else:
             return K

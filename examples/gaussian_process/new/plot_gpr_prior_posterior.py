@@ -22,7 +22,7 @@ from sklearn.gaussian_process.kernels \
 kernels = [1.0 * RBF(1.0, 1e-1, 10.0),
            1.0 * RationalQuadratic((0.1, 1.0)),
            1.0 * ExpSineSquared((1.0, 3.0), (0.1, 1.0), (10.0, 10.0)),
-           (0.01, 0.1, 10.0) * DotProduct(1.0, 0.0, 10.0, degree=2)]
+           (0.01, 0.1, 10.0) * (DotProduct(1.0, 0.0, 10.0) ** 2)]
 
 for fig_index, kernel in enumerate(kernels):
     if fig_index > 3: continue
