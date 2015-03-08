@@ -55,7 +55,7 @@ class GaussianProcessClassifier(BaseEstimator):
 
         # XXX: Assert that y is binary and labels are {0, 1}
         self.X_fit_ = X
-        self.y_fit_ = y
+        self.y_fit_ = check_array(y, ensure_2d=False, dtype=float)
 
         if self.optimizer == "fmin_l_bfgs_b":
             # Choose hyperparameters based on maximizing the log-marginal
