@@ -96,9 +96,9 @@ class Kernel(six.with_metaclass(ABCMeta)):
     def bounds(self, bounds):
         self.l_bound, self.u_bound = bounds
         if not np.iterable(self.l_bound):
-             self.l_bound = np.full_like(self.theta, self.l_bound)
+             self.l_bound = np.ones_like(self.theta) * self.l_bound
         if not np.iterable(self.u_bound):
-             self.u_bound = np.full_like(self.theta, self.u_bound)
+             self.u_bound = np.ones_like(self.theta) * self.u_bound
 
     def __add__(self, b):
         if not isinstance(b, Kernel):
