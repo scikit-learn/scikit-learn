@@ -22,6 +22,7 @@ of the parameter during hyperparameter-optimization.
 
 from abc import ABCMeta, abstractmethod
 from functools import partial
+import inspect
 
 import numpy as np
 from scipy.spatial.distance import pdist, cdist, squareform
@@ -40,8 +41,44 @@ class Kernel(six.with_metaclass(ABCMeta)):
         self.bounds = (np.asarray(thetaL, dtype=np.float),
                        np.asarray(thetaU, dtype=np.float))
 
+    def get_params(self, deep=True):
+        """Get parameters of this kernel.
+
+        Parameters
+        ----------
+        deep: boolean, optional
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        params = dict(theta=self.theta, thetaL=self.bounds[:, 0],
+                      thetaU=self.bounds[:, 1])
+
+        # introspect the constructor arguments to find the model parameters
+        # to represent
+        cls = self.__class__
+        init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
+        args, varargs, kw, default = inspect.getargspec(init)
+        if varargs is not None:
+            raise RuntimeError("scikit-learn estimators should always "
+                               "specify their parameters in the signature"
+                               " of their __init__ (no varargs)."
+                               " %s doesn't follow this convention."
+                               % (cls, ))
+        # Remove 'self', theta, thetaL, and thetaU, and store remaining
+        # arguments in params
+        args = args[4:]
+        for arg in args:
+            params[arg] = getattr(self, arg, None)
+        return params
+
     @property
     def n_dims(self):
+        """ Returns the number of hyperparameters of the kernel."""
         return self.theta.shape[0]
 
     @property
@@ -76,6 +113,16 @@ class Kernel(six.with_metaclass(ABCMeta)):
             return Product(ConstantKernel.from_literal(b), self)
         return Product(b, self)
 
+    def __eq__(self, b):
+        if type(self) != type(b):
+            return False
+        params_a = self.get_params()
+        params_b = b.get_params()
+        for key in set(params_a.keys() + params_b.keys()):
+            if np.any(params_a.get(key, None) != params_b.get(key, None)):
+                return False
+        return True
+
     def __repr__(self):
         return "{0}({1})".format(self.__class__.__name__,
                                  ", ".join(map("{0:.3g}".format, self.theta)))
@@ -96,6 +143,23 @@ class KernelOperator(Kernel):
         self.k1 = k1
         self.k2 = k2
 
+    def get_params(self, deep=True):
+        """Get parameters of this kernel.
+
+        Parameters
+        ----------
+        deep: boolean, optional
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        params = dict(k1=self.k1, k2=self.k2)
+        return params
+
     @property
     def theta(self):
         return np.append(self.k1.theta, self.k2.theta)
@@ -115,6 +179,10 @@ class KernelOperator(Kernel):
         i = self.k1.n_dims
         self.k1.bounds = bounds[:i]
         self.k2.bounds = bounds[i:]
+
+    def __eq__(self, b):
+        return (self.k1 == b.k1 and self.k2 == b.k2) \
+            or (self.k1 == b.k2 and self.k2 == b.k1)
 
     def is_stationary(self):
         """ Retuuns whether the kernel is stationary. """
@@ -772,3 +840,8 @@ class PairwiseKernel(Kernel):
     def is_stationary(self):
         """ Returns whether the kernel is stationary. """
         return self.metric in ["rbf"]
+
+    def __repr__(self):
+        return "{0}({1}, metric={2})".format(
+            self.__class__.__name__,
+            ", ".join(map("{0:.3g}".format, self.theta)), self.metric)
