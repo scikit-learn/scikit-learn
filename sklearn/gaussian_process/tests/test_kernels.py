@@ -3,7 +3,6 @@
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # Licence: BSD 3 clause
 
-from copy import deepcopy
 from collections import Hashable
 
 import numpy as np
@@ -47,9 +46,8 @@ def test_kernel_gradient():
         for i in range(K.shape[0]):
             for j in range(K.shape[1]):
                 def eval_kernel_ij_for_theta(theta):
-                    kernel_copy = deepcopy(kernel)
-                    kernel_copy.theta = theta
-                    K = kernel_copy(X, eval_gradient=False)
+                    kernel_clone = kernel.clone_with_theta(theta)
+                    K = kernel_clone(X, eval_gradient=False)
                     return K[i, j]
                 K_gradient_approx[i, j] = \
                     approx_fprime(kernel.theta, eval_kernel_ij_for_theta,
