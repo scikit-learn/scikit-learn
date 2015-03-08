@@ -4,6 +4,7 @@
 # Licence: BSD 3 clause
 
 from copy import deepcopy
+from collections import Hashable
 
 import numpy as np
 
@@ -13,8 +14,10 @@ from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
 from sklearn.gaussian_process.kernels \
     import (RBF, RationalQuadratic, ExpSineSquared, DotProduct,
             ConstantKernel, WhiteKernel, PairwiseKernel)
+from sklearn.base import clone
 
-from sklearn.utils.testing import assert_equal, assert_almost_equal
+from sklearn.utils.testing import (assert_equal, assert_almost_equal,
+    assert_not_equal, assert_array_equal)
 
 
 X = np.random.normal(0, 1, (10, 2))
@@ -94,3 +97,22 @@ def test_kernel_stationary():
             continue
         K = kernel(X, X + 1)
         assert_almost_equal(K[0, 0], np.diag(K))
+
+
+def test_kernel_clone():
+    """ Test that sklearn's clone works correctly on kernels. """
+    for kernel in kernels:
+        kernel_cloned = clone(kernel)
+
+        assert_equal(kernel, kernel_cloned)
+        assert_not_equal(id(kernel), id(kernel_cloned))
+        for attr in kernel.__dict__.keys():
+            attr_value = getattr(kernel, attr)
+            attr_value_cloned = getattr(kernel_cloned, attr)
+            if np.iterable(attr_value):
+                assert_array_equal(attr_value, attr_value_cloned)
+            else:
+                assert_equal(attr_value, attr_value_cloned)
+            if not isinstance(attr_value, Hashable):
+                # modifiable attributes must not be identical
+                assert_not_equal(id(attr_value), id(attr_value_cloned))
