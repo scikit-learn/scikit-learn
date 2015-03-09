@@ -1,5 +1,30 @@
 .. currentmodule:: sklearn
 
+.. _changes_0_17:
+
+
+0.17
+====
+
+
+Changelog
+---------
+
+New features
+............
+
+Enhancements
+............
+
+   - :class:`naive_bayes.GaussianNB` now supports fitting with ``sample_weights``.
+     By `Jan Hendrik Metzen`_.
+
+Bug fixes
+.........
+
+API changes summary
+-------------------
+
 .. _changes_0_16:
 
 0.16
