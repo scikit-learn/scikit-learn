@@ -18,7 +18,7 @@ from ..utils import (check_array, check_random_state, check_X_y,
                      deprecated)
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
-from ..utils.validation import check_is_fitted
+from ..utils.validation import (check_is_fitted, check_random_state_shuffle)
 from ..externals import six
 
 from .sgd_fast import plain_sgd, average_sgd
@@ -347,6 +347,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         self._validate_params()
         _check_partial_fit_first_call(self, classes)
+        check_random_state_shuffle(self.random_state, self.shuffle)
 
         n_classes = self.classes_.shape[0]
 
