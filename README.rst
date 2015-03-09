@@ -1,9 +1,12 @@
 .. -*- mode: rst -*-
 
-|Travis|_
+|Travis|_ |AppVeyor|_
 
 .. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.png?branch=master
 .. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
+
+.. |AppVeyor| image:: https://img.shields.io/appveyor/ci/sklearn-ci/scikit-learn/master.png
+.. _AppVeyor: https://ci.appveyor.com/project/sklearn-ci/scikit-learn/history
 
 scikit-learn
 ============
