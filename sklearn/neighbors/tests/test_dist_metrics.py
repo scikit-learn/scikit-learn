@@ -1,4 +1,5 @@
 import itertools
+import pickle
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal
@@ -7,6 +8,10 @@ import scipy
 from scipy.spatial.distance import cdist
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from nose import SkipTest
+
+
+def dist_func(x1, x2, p):
+    return np.sum((x1 - x2) ** p) ** (1. / p)
 
 
 def cmp_version(version1, version2):
@@ -122,18 +127,24 @@ def test_haversine_metric():
 
 
 def test_pyfunc_metric():
-    def dist_func(x1, x2, p):
-        return np.sum((x1 - x2) ** p) ** (1. / p)
-
     X = np.random.random((10, 3))
 
     euclidean = DistanceMetric.get_metric("euclidean")
     pyfunc = DistanceMetric.get_metric("pyfunc", func=dist_func, p=2)
 
+    # Check if both callable metric and predefined metric initialized
+    # DistanceMetric object is picklable
+    euclidean_pkl = pickle.loads(pickle.dumps(euclidean))
+    pyfunc_pkl = pickle.loads(pickle.dumps(pyfunc))
+
     D1 = euclidean.pairwise(X)
     D2 = pyfunc.pairwise(X)
 
+    D1_pkl = euclidean_pkl.pairwise(X)
+    D2_pkl = pyfunc_pkl.pairwise(X)
+
     assert_array_almost_equal(D1, D2)
+    assert_array_almost_equal(D1_pkl, D2_pkl)
 
 
 if __name__ == '__main__':
