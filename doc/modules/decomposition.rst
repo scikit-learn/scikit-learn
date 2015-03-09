@@ -652,7 +652,7 @@ data and the components are non-negative. :class:`NMF` can be plugged in
 instead of :class:`PCA` or its variants, in the cases where the data matrix
 does not contain negative values.
 It finds a decomposition of samples :math:`X`
-into two matrices :math:`V` and :math:`H` of non-negative elements,
+into two matrices :math:`W` and :math:`H` of non-negative elements,
 by optimizing for the squared Frobenius norm:
 
 .. math::
@@ -711,11 +711,11 @@ the data.
 .. topic:: References:
 
     * `"Learning the parts of objects by non-negative matrix factorization"
-      <http://www.seas.upenn.edu/~ddlee/Papers/nmf.pdf>`_
+      <http://hebb.mit.edu/people/seung/papers/ls-lponm-99.pdf>`_
       D. Lee, S. Seung, 1999
 
     * `"Non-negative Matrix Factorization with Sparseness Constraints"
-      <http://www.cs.helsinki.fi/u/phoyer/papers/pdf/NMFscweb.pdf>`_
+      <http://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
       P. Hoyer, 2004
 
     * `"Projected gradient methods for non-negative matrix factorization"
