@@ -316,9 +316,9 @@ def test_scorer_sample_weight():
     # get sensible estimators for each metric
     sensible_regr = DummyRegressor(strategy='median')
     sensible_regr.fit(X_train, y_train)
-    sensible_clf = DecisionTreeClassifier()
+    sensible_clf = DecisionTreeClassifier(random_state=0)
     sensible_clf.fit(X_train, y_train)
-    sensible_ml_clf = DecisionTreeClassifier()
+    sensible_ml_clf = DecisionTreeClassifier(random_state=0)
     sensible_ml_clf.fit(X_train, y_ml_train)
     estimator = dict([(name, sensible_regr)
                       for name in REGRESSION_SCORERS] +
