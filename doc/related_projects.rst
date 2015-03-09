@@ -68,6 +68,12 @@ scikit-learn tools.
   Implementation of Nadaraya-Watson kernel regression with automatic bandwidth
   selection
 
+- `nolearn <https://github.com/dnouri/nolearn>`_
+  scikit-learn compatible wrappers for neural net libraries, and other utilities.
+
+- `Kayak <https://github.com/HIPS/Kayak>`_
+  Kayak is a library for automatic differentiation with applications to deep neural networks.
+
 
 Domain Specific Packages
 -------------------------
