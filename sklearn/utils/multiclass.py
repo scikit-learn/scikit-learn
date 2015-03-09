@@ -6,6 +6,7 @@ Multi-class / multi-label utility function
 ==========================================
 
 """
+from __future__ import division
 from collections import Sequence
 from itertools import chain
 import warnings
@@ -19,7 +20,10 @@ import numpy as np
 
 from ..externals.six import string_types
 
-from .validation import safe_asarray
+from .validation import check_array
+
+from ..utils.fixes import bincount
+
 
 def _unique_multiclass(y):
     if hasattr(y, '__array__'):
@@ -35,7 +39,7 @@ def _unique_sequence_of_sequence(y):
 
 
 def _unique_indicator(y):
-    return np.arange(safe_asarray(y).shape[1])
+    return np.arange(check_array(y, ['csr', 'csc', 'coo']).shape[1])
 
 
 _FN_UNIQUE_LABELS = {
@@ -60,7 +64,7 @@ def unique_labels(*ys):
 
     Parameters
     ----------
-    ys : array-likes,
+    *ys : array-likes,
 
     Returns
     -------
@@ -92,7 +96,7 @@ def unique_labels(*ys):
 
     # Check consistency for the indicator format
     if (label_type == "multilabel-indicator" and
-            len(set(safe_asarray(y).shape[1] for y in ys)) > 1):
+            len(set(check_array(y, ['csr', 'csc', 'coo']).shape[1] for y in ys)) > 1):
         raise ValueError("Multi-label binary indicator input with "
                          "different numbers of labels")
 
@@ -276,8 +280,7 @@ def type_of_target(y):
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
     """
-    valid = ((isinstance(y, (Sequence, spmatrix))
-             or hasattr(y, '__array__'))
+    valid = ((isinstance(y, (Sequence, spmatrix)) or hasattr(y, '__array__'))
              and not isinstance(y, string_types))
     if not valid:
         raise ValueError('Expected array-like (array or non-string sequence), '
@@ -317,8 +320,8 @@ def type_of_target(y):
 def _check_partial_fit_first_call(clf, classes=None):
     """Private helper function for factorizing common classes param logic
 
-    Estimator that implement the ``partial_fit`` API need to be provided with
-    the list of possible classes at the first call to partial fit.and
+    Estimators that implement the ``partial_fit`` API need to be provided with
+    the list of possible classes at the first call to partial_fit.
 
     Subsequent calls to partial_fit should check that ``classes`` is still
     consistent with a previous value of ``clf.classes_`` when provided.
@@ -347,3 +350,77 @@ def _check_partial_fit_first_call(clf, classes=None):
     # classes is None and clf.classes_ has already previously been set:
     # nothing to do
     return False
+
+
+def class_distribution(y, sample_weight=None):
+    """Compute class priors from multioutput-multiclass target data
+
+    Parameters
+    ----------
+    y : array like or sparse matrix of size (n_samples, n_outputs)
+        The labels for each example.
+
+    sample_weight : array-like of shape = (n_samples,), optional
+        Sample weights.
+
+    Returns
+    -------
+    classes : list of size n_outputs of arrays of size (n_classes,)
+        List of classes for each column.
+
+    n_classes : list of integrs of size n_outputs
+        Number of classes in each column
+
+    class_prior : list of size n_outputs of arrays of size (n_classes,)
+        Class distribution of each column.
+
+    """
+    classes = []
+    n_classes = []
+    class_prior = []
+
+    n_samples, n_outputs = y.shape
+
+    if issparse(y):
+        y = y.tocsc()
+        y_nnz = np.diff(y.indptr)
+
+        for k in range(n_outputs):
+            col_nonzero = y.indices[y.indptr[k]:y.indptr[k + 1]]
+            # separate sample weights for zero and non-zero elements
+            if sample_weight is not None:
+                nz_samp_weight = np.asarray(sample_weight)[col_nonzero]
+                zeros_samp_weight_sum = (np.sum(sample_weight) -
+                                         np.sum(nz_samp_weight))
+            else:
+                nz_samp_weight = None
+                zeros_samp_weight_sum = y.shape[0] - y_nnz[k]
+
+            classes_k, y_k = np.unique(y.data[y.indptr[k]:y.indptr[k + 1]],
+                                       return_inverse=True)
+            class_prior_k = bincount(y_k, weights=nz_samp_weight)
+
+            # An explicit zero was found, combine its wieght with the wieght
+            # of the implicit zeros
+            if 0 in classes_k:
+                class_prior_k[classes_k == 0] += zeros_samp_weight_sum
+
+            # If an there is an implict zero and it is not in classes and
+            # class_prior, make an entry for it
+            if 0 not in classes_k and y_nnz[k] < y.shape[0]:
+                classes_k = np.insert(classes_k, 0, 0)
+                class_prior_k = np.insert(class_prior_k, 0,
+                                          zeros_samp_weight_sum)
+
+            classes.append(classes_k)
+            n_classes.append(classes_k.shape[0])
+            class_prior.append(class_prior_k / class_prior_k.sum())
+    else:
+        for k in range(n_outputs):
+            classes_k, y_k = np.unique(y[:, k], return_inverse=True)
+            classes.append(classes_k)
+            n_classes.append(classes_k.shape[0])
+            class_prior_k = bincount(y_k, weights=sample_weight)
+            class_prior.append(class_prior_k / class_prior_k.sum())
+
+    return (classes, n_classes, class_prior)

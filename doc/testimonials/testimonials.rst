@@ -288,7 +288,7 @@ Thierry Bertin-Mahieux, Birchbox, Data Scientist
 
   <div class="logo">
 
-.. image:: images/bestofmedia-logo.gif
+.. image:: images/bestofmedia-logo.png
    :target: http://www.bestofmedia.com
 
 .. raw:: html
@@ -427,7 +427,7 @@ Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
 
 At PeerIndex we use scientific methodology to build the Influence Graph - a
 unique dataset that allows us to identify who’s really influential and in which
-context. To do this, we have to tackle a range of machine learning and
+context. To do this, we have to tackle a range of machine learning and
 predictive modeling problems. Scikit-learn has emerged as our primary tool for
 developing prototypes and making quick progress. From predicting missing data
 and classifying tweets to clustering communities of social media users, scikit-
@@ -567,5 +567,75 @@ Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
 .. raw:: html
 
    </span>
+
+
+
+`Machinalis <http://www.machinalis.com>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/machinalis.png
+   :target: http://www.machinalis.com
+
+.. raw:: html
+
+   </div>
+
+Scikit-learn is the cornerstone of all the machine learning projects carried at
+Machinalis. It has a consistent API, a wide selection of algorithms and lots
+of auxiliary tools to deal with the boilerplate.
+We have used it in production environments on a variety of projects
+including click-through rate prediction, `information extraction <https://github.com/machinalis/iepy>`_,
+and even counting sheep!
+
+In fact, we use it so much that we've started to freeze our common use cases
+into Python packages, some of them open-sourced, like
+`FeatureForge <https://github.com/machinalis/featureforge>`_ .
+Scikit-learn in one word: Awesome.
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Rafael Carrascosa, Lead developer
+
+
+`solido <http://www.solidodesign.com/>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/solido_logo.png
+   :target: http://www.solidodesign.com
+
+.. raw:: html
+
+   </div>
+
+Scikit-learn is helping to drive Moore’s Law, via Solido. Solido creates
+computer-aided design tools used by the majority of top-20 semiconductor
+companies and fabs, to design the bleeding-edge chips inside smartphones,
+automobiles, and more. Scikit-learn helps to power Solido’s algorithms for
+rare-event estimation, worst-case verification, optimization, and more. At
+Solido, we are particularly fond of scikit-learn’s libraries for Gaussian
+Process models, large-scale regularized linear regression, and classification.
+Scikit-learn has increased our productivity, because for many ML problems we no
+longer need to “roll our own” code. `This PyData 2014 talk <https://www.youtube.com/watch?v=Jm-eBD9xR3w>`_ has details.
+
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Trent McConaghy, founder, Solido Design Automation Inc.
+
+.. raw:: html
+
+  </span>
 
 

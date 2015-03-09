@@ -9,10 +9,9 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings, assert_warns_message
-from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_no_warnings, assert_warns
 from sklearn.utils import ConvergenceWarning
 from sklearn import linear_model, datasets
-from nose import SkipTest
 
 diabetes = datasets.load_diabetes()
 X, y = diabetes.data, diabetes.target
@@ -184,14 +183,9 @@ def test_no_path_all_precomputed():
 
 def test_singular_matrix():
     # Test when input is a singular matrix
-    # In this test the "drop for good strategy" of lars_path is necessary
-    # to give a good answer
     X1 = np.array([[1, 1.], [1., 1.]])
     y1 = np.array([1, 1])
-    in_warn_message = 'Dropping a regressor'
-    f = assert_warns_message
-    alphas, active, coef_path = f(ConvergenceWarning, in_warn_message,
-                                  linear_model.lars_path, X1, y1)
+    alphas, active, coef_path = linear_model.lars_path(X1, y1)
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
 
@@ -291,10 +285,6 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
 
 
 def test_lasso_lars_path_length():
-    import struct
-    if struct.calcsize('P') * 8 == 32:
-        # FIXME in master
-        raise SkipTest("skip unstable test on 32 bit arch")
     # Test that the path length of the LassoLars is right
     lasso = linear_model.LassoLars()
     lasso.fit(X, y)
@@ -327,39 +317,24 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     sigma = 0.2
     y += sigma * rng.rand(*y.shape)
     y = y.squeeze()
-
-    f = assert_warns_message
-
-    def in_warn_message(msg):
-        return 'Early stopping' in msg or 'Dropping a regressor' in msg
-    lars_alphas, _, lars_coef = f(ConvergenceWarning,
-                                  in_warn_message,
-                                  linear_model.lars_path, X, y, method='lasso')
-
-    with ignore_warnings():
-        _, lasso_coef2, _ = linear_model.lasso_path(X, y,
-                                                    alphas=lars_alphas,
-                                                    tol=1e-6,
-                                                    fit_intercept=False)
-
-        lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
-        iter_models = enumerate(linear_model.lasso_path(X, y,
-                                                        alphas=lars_alphas,
-                                                        tol=1e-6,
-                                                        return_models=True,
-                                                        fit_intercept=False))
-        for i, model in iter_models:
-            lasso_coef[:, i] = model.coef_
-
-    np.testing.assert_array_almost_equal(lars_coef, lasso_coef, decimal=1)
-    np.testing.assert_array_almost_equal(lars_coef, lasso_coef2, decimal=1)
-    np.testing.assert_array_almost_equal(lasso_coef, lasso_coef2, decimal=1)
+    lars_alphas, _, lars_coef = linear_model.lars_path(X, y, method='lasso')
 
 
-def test_lars_drop_for_good():
+    _, lasso_coef2, _ = linear_model.lasso_path(X, y,
+                                                alphas=lars_alphas,
+                                                tol=1e-6,
+                                                fit_intercept=False)
+
+    assert_array_almost_equal(lars_coef, lasso_coef2, decimal=1)
+
+
+def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
     # Create an ill-conditioned situation in which the LARS has to go
     # far in the path to converge, and check that LARS and coordinate
     # descent give the same answers
+    # Note it used to be the case that Lars had to use the drop for good
+    # strategy for this but this is no longer the case with the
+    # equality_tolerance checks
     X = [[1e20,  1e20,  0],
          [-1e-32,  0,  0],
          [1,       1,  1]]
@@ -376,8 +351,7 @@ def test_lars_drop_for_good():
     lars_obj = objective_function(lars_coef_)
 
     coord_descent = linear_model.Lasso(alpha=alpha, tol=1e-10, normalize=False)
-    with ignore_warnings():
-        cd_coef_ = coord_descent.fit(X, y).coef_
+    cd_coef_ = coord_descent.fit(X, y).coef_
     cd_obj = objective_function(cd_coef_)
 
     assert_less(lars_obj, cd_obj * (1. + 1e-8))
@@ -471,6 +445,15 @@ def test_lasso_lars_ic():
     # test error on unknown IC
     lars_broken = linear_model.LassoLarsIC('<unknown>')
     assert_raises(ValueError, lars_broken.fit, X, y)
+
+
+def test_no_warning_for_zero_mse():
+    """LassoLarsIC should not warn for log of zero MSE."""
+    y = np.arange(10, dtype=float)
+    X = y.reshape(-1, 1)
+    lars = linear_model.LassoLarsIC(normalize=False)
+    assert_no_warnings(lars.fit, X, y)
+    assert_true(np.any(np.isinf(lars.criterion_)))
 
 
 if __name__ == '__main__':

@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import AdaBoostRegressor
 
-# Create a the dataset
+# Create the dataset
 rng = np.random.RandomState(1)
 X = np.linspace(0, 6, 100)[:, np.newaxis]
 y = np.sin(X).ravel() + np.sin(6 * X).ravel() + rng.normal(0, 0.1, X.shape[0])

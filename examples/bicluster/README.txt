@@ -3,4 +3,4 @@
 Biclustering
 ------------
 
-Examples concerning the :mod:`sklearn.cluster.bicluster` package.
+Examples concerning the :mod:`sklearn.cluster.bicluster` module.

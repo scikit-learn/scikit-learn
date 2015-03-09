@@ -69,6 +69,7 @@ Here is a list of incremental estimators for different tasks:
       + :class:`sklearn.cluster.MiniBatchKMeans`
   - Decomposition / feature Extraction
       + :class:`sklearn.decomposition.MiniBatchDictionaryLearning`
+      + :class:`sklearn.decomposition.IncrementalPCA`
       + :class:`sklearn.cluster.MiniBatchKMeans`
 
 For classification, a somewhat important thing to note is that although a

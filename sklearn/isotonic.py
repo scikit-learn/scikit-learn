@@ -7,8 +7,9 @@ import numpy as np
 from scipy import interpolate
 from scipy.stats import spearmanr
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
-from .utils import as_float_array, check_arrays
-from ._isotonic import _isotonic_regression
+from .utils import as_float_array, check_array, check_consistent_length
+from .utils.fixes import astype
+from ._isotonic import _isotonic_regression, _make_unique
 import warnings
 import math
 
@@ -71,7 +72,7 @@ def check_increasing(x, y):
 
 
 def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
-                        weight=None, increasing=True):
+                        increasing=True):
     """Solve the isotonic regression model::
 
         min sum w[i] (y[i] - y_[i]) ** 2
@@ -104,7 +105,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
 
     Returns
     -------
-    `y_` : list of floating-point values
+    y_ : list of floating-point values
         Isotonic fit of y.
 
     References
@@ -112,12 +113,6 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     "Active set algorithms for isotonic regression; A unifying framework"
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
-    if weight is not None:
-        warnings.warn("'weight' was renamed to 'sample_weight' and will "
-                      "be removed in 0.16.",
-                      DeprecationWarning)
-        sample_weight = weight
-
     y = np.asarray(y, dtype=np.float)
     if sample_weight is None:
         sample_weight = np.ones(len(y), dtype=y.dtype)
@@ -190,21 +185,25 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     Attributes
     ----------
-    `X_` : ndarray (n_samples, )
+    X_ : ndarray (n_samples, )
         A copy of the input X.
 
-    `y_` : ndarray (n_samples, )
+    y_ : ndarray (n_samples, )
         Isotonic fit of y.
 
-    `X_min_` : float
+    X_min_ : float
         Minimum value of input array `X_` for left bound.
 
-    `X_max_` : float
+    X_max_ : float
         Maximum value of input array `X_` for right bound.
 
-    `f_` : function
+    f_ : function
         The stepwise interpolating function that covers the domain
         X_.
+
+    Notes
+    -----
+    Ties are broken using the secondary method from Leeuw, 1977.
 
     References
     ----------
@@ -212,6 +211,14 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     Nilotpal Chakravarti
     Mathematics of Operations Research
     Vol. 14, No. 2 (May, 1989), pp. 303-308
+
+    Isotone Optimization in R : Pool-Adjacent-Violators
+    Algorithm (PAVA) and Active Set Methods
+    Leeuw, Hornik, Mair
+    Journal of Statistical Software 2009
+
+    Correctness of Kruskal's algorithms for monotone regression with ties
+    Leeuw, Psychometrica, 1977
     """
     def __init__(self, y_min=None, y_max=None, increasing=True,
                  out_of_bounds='nan'):
@@ -234,13 +241,18 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
                              .format(self.out_of_bounds))
 
         bounds_error = self.out_of_bounds == "raise"
-        self.f_ = interpolate.interp1d(X, y, kind='linear',
-                                       bounds_error=bounds_error)
+        if len(y) == 1:
+            # single y, constant prediction
+            self.f_ = lambda x: y.repeat(x.shape)
+        else:
+            self.f_ = interpolate.interp1d(X, y, kind='slinear',
+                                           bounds_error=bounds_error)
 
     def _build_y(self, X, y, sample_weight):
         """Build the y_ IsotonicRegression."""
-        X, y, sample_weight = check_arrays(X, y, sample_weight,
-                                           sparse_format='dense')
+        check_consistent_length(X, y, sample_weight)
+        X, y = [check_array(x, ensure_2d=False) for x in [X, y]]
+
         y = as_float_array(y)
         self._check_fit_data(X, y, sample_weight)
 
@@ -250,15 +262,26 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         else:
             self.increasing_ = self.increasing
 
+        # If sample_weights is passed, removed zero-weight values and clean order
+        if sample_weight is not None:
+            sample_weight = check_array(sample_weight, ensure_2d=False)
+            mask = sample_weight > 0
+            X, y, sample_weight = X[mask], y[mask], sample_weight[mask]
+        else:
+            sample_weight = np.ones(len(y))
+
         order = np.lexsort((y, X))
         order_inv = np.argsort(order)
-        self.X_ = as_float_array(X[order], copy=False)
-        self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
+        X, y, sample_weight = [astype(array[order], np.float64, copy=False)
+                               for array in [X, y, sample_weight]]
+        unique_X, unique_y, unique_sample_weight = _make_unique(X, y, sample_weight)
+        self.X_ = unique_X
+        self.y_ = isotonic_regression(unique_y, unique_sample_weight, self.y_min,
                                       self.y_max, increasing=self.increasing_)
 
         return order_inv
 
-    def fit(self, X, y, sample_weight=None, weight=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -283,14 +306,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         X is stored for future use, as `transform` needs X to interpolate
         new input data.
         """
-        if weight is not None:
-            warnings.warn("'weight' was renamed to 'sample_weight' and will "
-                          "be removed in 0.16.",
-                          DeprecationWarning)
-            sample_weight = weight
-
         # Build y_
-        order_inv = self._build_y(X, y, sample_weight)
+        self._build_y(X, y, sample_weight)
 
         # Handle the left and right bounds on X
         self.X_min_ = np.min(self.X_)
@@ -311,7 +328,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Returns
         -------
-        `T_` : array, shape=(n_samples,)
+        T_ : array, shape=(n_samples,)
             The transformed data
         """
         T = as_float_array(T)
@@ -328,50 +345,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             T = np.clip(T, self.X_min_, self.X_max_)
         return self.f_(T)
 
-    def fit_transform(self, X, y, sample_weight=None, weight=None):
-        """Fit model and transform y by linear interpolation.
-
-        Parameters
-        ----------
-        X : array-like, shape=(n_samples,)
-            Training data.
-
-        y : array-like, shape=(n_samples,)
-            Training target.
-
-        sample_weight : array-like, shape=(n_samples,), optional, default: None
-            Weights. If set to None, all weights will be equal to 1 (equal
-            weights).
-
-        Returns
-        -------
-        `y_` : array, shape=(n_samples,)
-            The transformed data.
-
-        Notes
-        -----
-        X doesn't influence the result of `fit_transform`. It is however stored
-        for future use, as `transform` needs X to interpolate new input
-        data.
-        """
-        if weight is not None:
-            warnings.warn("'weight' was renamed to 'sample_weight' and will "
-                          "be removed in 0.16.",
-                          DeprecationWarning)
-            sample_weight = weight
-
-        # Build y_
-        order_inv = self._build_y(X, y, sample_weight)
-
-        # Handle the left and right bounds on X
-        self.X_min_ = np.min(self.X_)
-        self.X_max_ = np.max(self.X_)
-
-        # Build f_
-        self._build_f(self.X_, self.y_)
-
-        return self.y_[order_inv]
-
     def predict(self, T):
         """Predict new data by linear interpolation.
 
@@ -382,7 +355,23 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Returns
         -------
-        `T_` : array, shape=(n_samples,)
+        T_ : array, shape=(n_samples,)
             Transformed data.
         """
         return self.transform(T)
+
+    def __getstate__(self):
+        """Pickle-protocol - return state of the estimator. """
+        # copy __dict__
+        state = dict(self.__dict__)
+        # remove interpolation method
+        state.pop('f_', None)
+        return state
+
+    def __setstate__(self, state):
+        """Pickle-protocol - set state of the estimator.
+
+        We need to rebuild the interpolation function.
+        """
+        self.__dict__.update(state)
+        self._build_f(self.X_, self.y_)

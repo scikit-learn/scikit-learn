@@ -1,10 +1,10 @@
 """Testing for the boost module (sklearn.ensemble.boost)."""
 
 import numpy as np
-from numpy.testing import assert_array_equal, assert_array_less
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_equal
-from nose.tools import assert_raises
+from sklearn.utils.testing import assert_array_equal, assert_array_less
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises, assert_raises_regexp
 
 from sklearn.cross_validation import train_test_split
 from sklearn.grid_search import GridSearchCV
@@ -19,7 +19,6 @@ from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
 from sklearn import datasets
-import time
 
 
 # Common random state
@@ -248,6 +247,30 @@ def test_base_estimator():
     clf = AdaBoostRegressor(SVR(), random_state=0)
     clf.fit(X, y_regr)
 
+    # Check that an empty discrete ensemble fails in fit, not predict.
+    X_fail = [[1, 1], [1, 1], [1, 1], [1, 1]]
+    y_fail = ["foo", "bar", 1, 2]
+    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    assert_raises_regexp(ValueError, "worse than random",
+                         clf.fit, X_fail, y_fail)
+
+
+def test_sample_weight_missing():
+    from sklearn.linear_model import LinearRegression
+    from sklearn.cluster import KMeans
+
+    clf = AdaBoostClassifier(LinearRegression(), algorithm="SAMME")
+    assert_raises(ValueError, clf.fit, X, y_regr)
+
+    clf = AdaBoostRegressor(LinearRegression())
+    assert_raises(ValueError, clf.fit, X, y_regr)
+
+    clf = AdaBoostClassifier(KMeans(), algorithm="SAMME")
+    assert_raises(ValueError, clf.fit, X, y_regr)
+
+    clf = AdaBoostRegressor(KMeans())
+    assert_raises(ValueError, clf.fit, X, y_regr)
+
 
 def test_sparse_classification():
     """Check classification with sparse input."""
@@ -261,8 +284,8 @@ def test_sparse_classification():
             self.data_type_ = type(X)
             return self
 
-    X, y = datasets.make_multilabel_classification(n_classes=1, n_samples=100,
-                                                   n_features=50,
+    X, y = datasets.make_multilabel_classification(n_classes=1, n_samples=15,
+                                                   n_features=5,
                                                    return_indicator=True,
                                                    random_state=42)
     # Flatten y to a 1d array
@@ -293,7 +316,6 @@ def test_sparse_classification():
         sparse_results = sparse_classifier.predict(X_test_sparse)
         dense_results = dense_classifier.predict(X_test)
         assert_array_equal(sparse_results, dense_results)
-        sparse_y_pred, dense_y_pred = sparse_results, dense_results
 
         # decision_function
         sparse_results = sparse_classifier.decision_function(X_test_sparse)
@@ -342,7 +364,6 @@ def test_sparse_classification():
             assert_array_equal(sprase_res, dense_res)
 
         # Verify sparsity of data is maintained during training
-        sparse_type = type(X_train_sparse)
         types = [i.data_type_ for i in sparse_classifier.estimators_]
 
         assert all([(t == csc_matrix or t == csr_matrix)
@@ -361,7 +382,7 @@ def test_sparse_regression():
             self.data_type_ = type(X)
             return self
 
-    X, y = datasets.make_regression(n_samples=100, n_features=50, n_targets=1,
+    X, y = datasets.make_regression(n_samples=15, n_features=50, n_targets=1,
                                     random_state=42)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
@@ -373,13 +394,13 @@ def test_sparse_regression():
 
         # Trained on sparse format
         sparse_classifier = AdaBoostRegressor(
-            base_estimator=CustomSVR(probability=True),
+            base_estimator=CustomSVR(),
             random_state=1
         ).fit(X_train_sparse, y_train)
 
         # Trained on dense format
         dense_classifier = dense_results = AdaBoostRegressor(
-            base_estimator=CustomSVR(probability=True),
+            base_estimator=CustomSVR(),
             random_state=1
         ).fit(X_train, y_train)
 
@@ -394,7 +415,6 @@ def test_sparse_regression():
         for sprase_res, dense_res in zip(sparse_results, dense_results):
             assert_array_equal(sprase_res, dense_res)
 
-        sparse_type = type(X_train_sparse)
         types = [i.data_type_ for i in sparse_classifier.estimators_]
 
         assert all([(t == csc_matrix or t == csr_matrix)

@@ -30,6 +30,7 @@ if __name__ == "__main__":
     sgd_results = np.zeros((len(list_n_samples), len(list_n_features), 2))
     elnet_results = np.zeros((len(list_n_samples), len(list_n_features), 2))
     ridge_results = np.zeros((len(list_n_samples), len(list_n_features), 2))
+    asgd_results = np.zeros((len(list_n_samples), len(list_n_features), 2))
     for i, n_train in enumerate(list_n_samples):
         for j, n_features in enumerate(list_n_features):
             X, y, coef = make_regression(
@@ -75,7 +76,7 @@ if __name__ == "__main__":
             gc.collect()
             print("- benchmarking SGD")
             n_iter = np.ceil(10 ** 4.0 / n_train)
-            clf = SGDRegressor(alpha=alpha, fit_intercept=False,
+            clf = SGDRegressor(alpha=alpha / n_train, fit_intercept=False,
                                n_iter=n_iter, learning_rate="invscaling",
                                eta0=.01, power_t=0.25)
 
@@ -84,6 +85,21 @@ if __name__ == "__main__":
             sgd_results[i, j, 0] = mean_squared_error(clf.predict(X_test),
                                                      y_test)
             sgd_results[i, j, 1] = time() - tstart
+
+            gc.collect()
+            print("n_iter", n_iter)
+            print("- benchmarking A-SGD")
+            n_iter = np.ceil(10 ** 4.0 / n_train)
+            clf = SGDRegressor(alpha=alpha / n_train, fit_intercept=False,
+                               n_iter=n_iter, learning_rate="invscaling",
+                               eta0=.002, power_t=0.05,
+                               average=(n_iter * n_train // 2))
+
+            tstart = time()
+            clf.fit(X_train, y_train)
+            asgd_results[i, j, 0] = mean_squared_error(clf.predict(X_test),
+                                                       y_test)
+            asgd_results[i, j, 1] = time() - tstart
 
             gc.collect()
             print("- benchmarking RidgeRegression")
@@ -105,6 +121,8 @@ if __name__ == "__main__":
                 label="ElasticNet")
         pl.plot(list_n_samples, np.sqrt(sgd_results[:, j, 0]),
                 label="SGDRegressor")
+        pl.plot(list_n_samples, np.sqrt(asgd_results[:, j, 0]),
+                label="A-SGDRegressor")
         pl.plot(list_n_samples, np.sqrt(ridge_results[:, j, 0]),
                 label="Ridge")
         pl.legend(prop={"size": 10})
@@ -118,6 +136,8 @@ if __name__ == "__main__":
                 label="ElasticNet")
         pl.plot(list_n_samples, np.sqrt(sgd_results[:, j, 1]),
                 label="SGDRegressor")
+        pl.plot(list_n_samples, np.sqrt(asgd_results[:, j, 1]),
+                label="A-SGDRegressor")
         pl.plot(list_n_samples, np.sqrt(ridge_results[:, j, 1]),
                 label="Ridge")
         pl.legend(prop={"size": 10})

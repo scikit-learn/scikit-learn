@@ -6,8 +6,8 @@ import scipy.sparse as sp
 from sklearn.decomposition import TruncatedSVD
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
-                                   assert_raises, assert_almost_equal,
-                                   assert_greater, assert_array_less)
+                                   assert_raises, assert_greater,
+                                   assert_array_less)
 
 
 # Make an X that looks somewhat like a small tf-idf matrix.

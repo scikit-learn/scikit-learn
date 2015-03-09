@@ -129,8 +129,9 @@ two classes, only one model is trained::
     >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-    intercept_scaling=1, loss='l2', multi_class='ovr', penalty='l2',
-    random_state=None, tol=0.0001, verbose=0)
+         intercept_scaling=1, loss='squared_hinge', max_iter=1000,
+         multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
+         verbose=0)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
@@ -172,7 +173,7 @@ This might be made more clear by an example:
 
 Consider a three class problem with with class 0 having three support vectors
 :math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support vectors
-:math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_1, v^{1}_1` respectively.  For each
+:math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_2, v^{1}_2` respectively.  For each
 support vector :math:`v^{j}_i`, there are two dual coefficients.  Let's call
 the coefficient of support vector :math:`v^{j}_i` in the classifier between
 classes :math:`i` and :math:`k` :math:`\alpha^{j}_{i,k}`.
@@ -287,8 +288,12 @@ Vector Regression depends only on a subset of the training data,
 because the cost function for building the model ignores any training
 data close to the model prediction.
 
-There are two flavors of Support Vector Regression: :class:`SVR` and
-:class:`NuSVR`.
+There are three different implementations of Support Vector Regression: 
+:class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR` 
+provides a faster implementation than :class:`SVR` but only considers
+linear kernels, while :class:`NuSVR` implements a slightly different
+formulation than :class:`SVR` and :class:`LinearSVR`. See
+:ref:`svm_implementation_details` for further details.
 
 As with classification classes, the fit method will take as
 argument vectors X, y, only that in this case y is expected to have
@@ -299,9 +304,8 @@ floating point values instead of integer values::
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3,
-    epsilon=0.1, gamma=0.0, kernel='rbf', max_iter=-1, probability=False,
-    random_state=None, shrinking=True, tol=0.001, verbose=False)
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.0,
+        kernel='rbf', max_iter=-1, shrinking=True, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -309,6 +313,8 @@ floating point values instead of integer values::
 .. topic:: Examples:
 
  * :ref:`example_svm_plot_svm_regression.py`
+
+
 
 .. _svm_outlier_detection:
 
@@ -516,7 +522,7 @@ correctly.  ``gamma`` defines how much influence a single training example has.
 The larger ``gamma`` is, the closer other examples must be to be affected.
 
 Proper choice of ``C`` and ``gamma`` is critical to the SVM's performance.  One
-is advised to use :class:`GridSearchCV` with ``C`` and ``gamma`` spaced
+is advised to use :class:`sklearn.grid_search.GridSearchCV` with ``C`` and ``gamma`` spaced
 exponentially far apart to choose good values.
 
 .. topic:: Examples:
@@ -590,7 +596,7 @@ The decision function is:
 This parameters can be accessed through the members ``dual_coef_`
 which holds the product :math:`y_i \alpha_i`, ``support_vectors_`` which
 holds the support vectors, and ``intercept_`` which holds the independent
-term :math:`-\rho` :
+term :math:`\rho` :
 
 .. topic:: References:
 
@@ -617,6 +623,7 @@ bound of the fraction of support vectors.
 It can be shown that the :math:`\nu`-SVC formulation is a reparametrization
 of the :math:`C`-SVC and therefore mathematically equivalent.
 
+.. _svm_implementation_details:
 
 Implementation details
 ======================

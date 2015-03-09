@@ -72,6 +72,6 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
 
     if len(indices):
         indices_a = np.frombuffer(indices, dtype=np.int32)
-    else:
+    else:       # workaround for NumPy < 1.7.0
         indices_a = np.empty(0, dtype=np.int32)
     return (indices_a, np.frombuffer(indptr, dtype=np.int32), values[:size])

@@ -22,5 +22,5 @@
 /sklearn/utils/_logistic_sigmoid.c -diff
 /sklearn/utils/murmurhash.c -diff
 /sklearn/utils/seq_dataset.c -diff
-/sklearn/utils/sparsefuncs.c -diff
+/sklearn/utils/sparsefuncs_fast.c -diff
 /sklearn/utils/weight_vector.c -diff

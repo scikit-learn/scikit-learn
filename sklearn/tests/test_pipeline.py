@@ -16,6 +16,7 @@ from sklearn.base import BaseEstimator, clone
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LinearRegression
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.decomposition import PCA, RandomizedPCA, TruncatedSVD
 from sklearn.datasets import load_iris
@@ -33,7 +34,7 @@ JUNK_FOOD_DOCS = (
 )
 
 
-class IncorrectT(BaseEstimator):
+class IncorrectT(object):
     """Small class to test parameter dispatching.
     """
 
@@ -47,6 +48,12 @@ class T(IncorrectT):
     def fit(self, X, y):
         return self
 
+    def get_params(self, deep=False):
+        return {'a': self.a, 'b': self.b}
+
+    def set_params(self, **params):
+        self.a = params['a']
+        return self
 
 class TransfT(T):
 
@@ -54,7 +61,7 @@ class TransfT(T):
         return X
 
 
-class FitParamT(BaseEstimator):
+class FitParamT(object):
     """Mock classifier
     """
 
@@ -85,6 +92,7 @@ def test_pipeline_init():
     # Check that params are set
     pipe.set_params(svc__a=0.1)
     assert_equal(clf.a, 0.1)
+    assert_equal(clf.b, None)
     # Smoke test the repr:
     repr(pipe)
 
@@ -378,3 +386,18 @@ def test_feature_union_feature_names():
     for feat in feature_names:
         assert_true("chars__" in feat or "words__" in feat)
     assert_equal(len(feature_names), 35)
+
+
+def test_classes_property():
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+
+    reg = make_pipeline(SelectKBest(k=1), LinearRegression())
+    reg.fit(X, y)
+    assert_raises(AttributeError, getattr, reg, "classes_")
+
+    clf = make_pipeline(SelectKBest(k=1), LogisticRegression(random_state=0))
+    assert_raises(AttributeError, getattr, clf, "classes_")
+    clf.fit(X, y)
+    assert_array_equal(clf.classes_, np.unique(y))

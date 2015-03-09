@@ -63,6 +63,7 @@ Classes
 
    cluster.AffinityPropagation
    cluster.AgglomerativeClustering
+   cluster.Birch
    cluster.DBSCAN
    cluster.FeatureAgglomeration
    cluster.KMeans
@@ -166,6 +167,7 @@ Classes
    cross_validation.LeaveOneOut
    cross_validation.LeavePLabelOut
    cross_validation.LeavePOut
+   cross_validation.PredefinedSplit
    cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
    cross_validation.StratifiedShuffleSplit
@@ -176,6 +178,7 @@ Classes
 
    cross_validation.train_test_split
    cross_validation.cross_val_score
+   cross_validation.cross_val_predict
    cross_validation.permutation_test_score
    cross_validation.check_cv
 
@@ -199,6 +202,8 @@ Loaders
    :toctree: generated/
    :template: function.rst
 
+   datasets.clear_data_home
+   datasets.get_data_home
    datasets.fetch_20newsgroups
    datasets.fetch_20newsgroups_vectorized
    datasets.load_boston
@@ -211,6 +216,7 @@ Loaders
    datasets.load_lfw_people
    datasets.fetch_lfw_people
    datasets.load_linnerud
+   datasets.mldata_filename
    datasets.fetch_mldata
    datasets.fetch_olivetti_faces
    datasets.fetch_california_housing
@@ -219,6 +225,7 @@ Loaders
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
+   datasets.load_svmlight_files
    datasets.dump_svmlight_file
 
 Samples generator
@@ -270,6 +277,7 @@ Samples generator
    :template: class.rst
 
    decomposition.PCA
+   decomposition.IncrementalPCA
    decomposition.ProjectedGradientNMF
    decomposition.RandomizedPCA
    decomposition.KernelPCA
@@ -571,6 +579,25 @@ From text
    kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
 
+.. _kernel_ridge_ref:
+
+:mod:`sklearn.kernel_ridge` Kernel Ridge Regression
+========================================================
+
+.. automodule:: sklearn.kernel_ridge
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`kernel_ridge` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   kernel_ridge.KernelRidge
+
 .. _lda_ref:
 
 :mod:`sklearn.lda`: Linear Discriminant Analysis
@@ -639,6 +666,7 @@ From text
    linear_model.LassoLarsIC
    linear_model.LinearRegression
    linear_model.LogisticRegression
+   linear_model.LogisticRegressionCV
    linear_model.MultiTaskLasso
    linear_model.MultiTaskElasticNet
    linear_model.MultiTaskLassoCV
@@ -657,6 +685,7 @@ From text
    linear_model.RidgeCV
    linear_model.SGDClassifier
    linear_model.SGDRegressor
+   linear_model.TheilSenRegressor
 
 .. autosummary::
    :toctree: generated/
@@ -724,6 +753,7 @@ details.
    :template: function.rst
 
    metrics.make_scorer
+   metrics.get_scorer
 
 Classification metrics
 ----------------------
@@ -738,6 +768,7 @@ details.
    metrics.accuracy_score
    metrics.auc
    metrics.average_precision_score
+   metrics.brier_score_loss
    metrics.classification_report
    metrics.confusion_matrix
    metrics.f1_score
@@ -754,6 +785,7 @@ details.
    metrics.roc_auc_score
    metrics.roc_curve
    metrics.zero_one_loss
+   metrics.brier_score_loss
 
 Regression metrics
 ------------------
@@ -768,7 +800,21 @@ details.
    metrics.explained_variance_score
    metrics.mean_absolute_error
    metrics.mean_squared_error
+   metrics.median_absolute_error
    metrics.r2_score
+
+Multilabel ranking metrics
+--------------------------
+See the :ref:`multilabel_ranking_metrics` section of the user guide for further
+details.
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.coverage_error
+   metrics.label_ranking_average_precision_score
+
 
 
 Clustering metrics
@@ -815,6 +861,8 @@ further details.
 
 Pairwise metrics
 ----------------
+
+See the :ref:`metrics` section of the user guide for further details.
 
 .. automodule:: sklearn.metrics.pairwise
    :no-members:
@@ -885,17 +933,6 @@ Pairwise metrics
     multiclass.OneVsOneClassifier
     multiclass.OutputCodeClassifier
 
-.. autosummary::
-    :toctree: generated
-    :template: function.rst
-
-    multiclass.fit_ovr
-    multiclass.predict_ovr
-    multiclass.fit_ovo
-    multiclass.predict_ovo
-    multiclass.fit_ecoc
-    multiclass.predict_ecoc
-
 .. _naive_bayes_ref:
 
 :mod:`sklearn.naive_bayes`: Naive Bayes
@@ -943,6 +980,7 @@ Pairwise metrics
    neighbors.NearestCentroid
    neighbors.BallTree
    neighbors.KDTree
+   neighbors.LSHForest
    neighbors.DistanceMetric
    neighbors.KernelDensity
 
@@ -971,6 +1009,33 @@ Pairwise metrics
    :template: class.rst
 
    neural_network.BernoulliRBM
+
+
+.. _calibration_ref:
+
+:mod:`sklearn.calibration`: Probability Calibration
+===================================================
+
+.. automodule:: sklearn.calibration
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`calibration` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   calibration.CalibratedClassifierCV
+
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   calibration.calibration_curve
 
 
 .. _cross_decomposition_ref:
@@ -1151,6 +1216,7 @@ Estimators
    svm.LinearSVC
    svm.NuSVC
    svm.SVR
+   svm.LinearSVR
    svm.NuSVR
    svm.OneClassSVM
 

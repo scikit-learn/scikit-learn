@@ -90,10 +90,10 @@ Classification
 :class:`DecisionTreeClassifier` is a class capable of performing multi-class
 classification on a dataset.
 
-As other classifiers, :class:`DecisionTreeClassifier` take as input two
-arrays: an array X of size ``[n_samples, n_features]`` holding the training
-samples, and an array Y of integer values, size ``[n_samples]``, holding
-the class labels for the training samples::
+As other classifiers, :class:`DecisionTreeClassifier` take as input two arrays:
+an array X, sparse or dense, of size ``[n_samples, n_features]``  holding the
+training samples, and an array Y of integer values, size ``[n_samples]``,
+holding the class labels for the training samples::
 
     >>> from sklearn import tree
     >>> X = [[0, 0], [1, 1]]
@@ -101,10 +101,16 @@ the class labels for the training samples::
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf = clf.fit(X, Y)
 
-After being fitted, the model can then be used to predict new values::
+After being fitted, the model can then be used to predict the class of samples::
 
     >>> clf.predict([[2., 2.]])
     array([1])
+
+Alternatively, the probability of each class can be predicted, which is the
+fraction of training samples of the same class in a leaf::
+
+    >>> clf.predict_proba([[2., 2.]])
+    array([[ 0.,  1.]])
 
 :class:`DecisionTreeClassifier` is capable of both binary (where the
 labels are [-1, 1]) classification and multiclass (where the labels are
@@ -155,10 +161,16 @@ a PDF file (or any other supported file type) directly in Python::
     .. figure:: ../images/iris.pdf
        :align: center
 
-After being fitted, the model can then be used to predict new values::
+After being fitted, the model can then be used to predict the class of samples::
 
-    >>> clf.predict(iris.data[0, :])
+    >>> clf.predict(iris.data[:1, :])
     array([0])
+
+Alternatively, the probability of each class can be predicted, which is the
+fraction of training samples of the same class in a leaf::
+
+    >>> clf.predict_proba(iris.data[:1, :])
+    array([[ 1.,  0.,  0.]])
 
 .. figure:: ../auto_examples/tree/images/plot_iris_001.png
    :target: ../auto_examples/tree/plot_iris.html
@@ -194,7 +206,6 @@ instead of integer values::
     >>> clf = clf.fit(X, y)
     >>> clf.predict([[1, 1]])
     array([ 0.5])
-
 
 .. topic:: Examples:
 
@@ -320,11 +331,29 @@ Tips on practical use
     create arbitrary small leaves, though ``min_samples_split`` is more common
     in the literature.
 
-  * Balance your dataset before training to prevent the tree from creating
-    a tree biased toward the classes that are dominant.
+  * Balance your dataset before training to prevent the tree from being biased
+    toward the classes that are dominant. Class balancing can be done by
+    sampling an equal number of samples from each class, or preferably by
+    normalizing the sum of the sample weights (``sample_weight``) for each
+    class to the same value. Also note that weight-based pre-pruning criteria,
+    such as ``min_weight_fraction_leaf``, will then be less biased toward
+    dominant classes than criteria that are not aware of the sample weights,
+    like ``min_samples_leaf``.
+
+  * If the samples are weighted, it will be easier to optimize the tree
+    structure using weight-based pre-pruning criterion such as
+    ``min_weight_fraction_leaf``, which ensure that leaf nodes contain at least
+    a fraction of the overall sum of the sample weights.
 
   * All decision trees use ``np.float32`` arrays internally.
     If training data is not in this format, a copy of the dataset will be made.
+
+  * If the input matrix X is very sparse, it is recommended to convert to sparse
+    ``csc_matrix` before calling fit and sparse ``csr_matrix`` before calling
+    predict. Training time can be orders of magnitude faster for a sparse
+    matrix input compared to a dense matrix when features have zero values in
+    most of the samples.
+
 
 
 .. _tree_algorithms:

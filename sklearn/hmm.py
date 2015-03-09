@@ -20,6 +20,7 @@ import numpy as np
 
 from .utils import check_random_state, deprecated
 from .utils.extmath import logsumexp
+from .utils.validation import check_is_fitted
 from .base import BaseEstimator
 from .mixture import (
     GMM, log_multivariate_normal_density, sample_gaussian,
@@ -762,6 +763,8 @@ class GaussianHMM(_BaseHMM):
     covars_ = property(_get_covars, _set_covars)
 
     def _compute_log_likelihood(self, obs):
+        check_is_fitted(self, '_means_')
+        
         return log_multivariate_normal_density(
             obs, self._means_, self._covars_, self._covariance_type)
 
@@ -1011,6 +1014,7 @@ class MultinomialHMM(_BaseHMM):
     emissionprob_ = property(_get_emissionprob, _set_emissionprob)
 
     def _compute_log_likelihood(self, obs):
+        check_is_fitted(self, 'emissionprob_')
         return self._log_emissionprob[:, obs].T
 
     def _generate_sample_from_state(self, state, random_state=None):

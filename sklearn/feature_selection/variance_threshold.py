@@ -4,8 +4,9 @@
 import numpy as np
 from ..base import BaseEstimator
 from .base import SelectorMixin
-from ..utils import atleast2d_or_csr
-from ..utils.sparsefuncs_fast import csr_mean_variance_axis0
+from ..utils import check_array
+from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.validation import check_is_fitted
 
 
 class VarianceThreshold(BaseEstimator, SelectorMixin):
@@ -23,7 +24,7 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
 
     Attributes
     ----------
-    `variances_` : array, shape (n_features,)
+    variances_ : array, shape (n_features,)
         Variances of individual features.
 
     Examples
@@ -58,10 +59,10 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
         -------
         self
         """
-        X = atleast2d_or_csr(X, dtype=np.float64)
+        X = check_array(X, ('csr', 'csc'), dtype=np.float64)
 
         if hasattr(X, "toarray"):   # sparse matrix
-            _, self.variances_ = csr_mean_variance_axis0(X)
+            _, self.variances_ = mean_variance_axis(X, axis=0)
         else:
             self.variances_ = np.var(X, axis=0)
 
@@ -74,4 +75,6 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
         return self
 
     def _get_support_mask(self):
+        check_is_fitted(self, 'variances_')
+
         return self.variances_ > self.threshold

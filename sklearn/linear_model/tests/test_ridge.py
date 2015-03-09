@@ -10,12 +10,12 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
-from sklearn.metrics.scorer import SCORERS
+from sklearn.metrics import make_scorer
+from sklearn.metrics import get_scorer
 
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.ridge import ridge_regression
@@ -322,18 +322,20 @@ def _test_ridge_loo(filter_):
 
     # check that we get same best alpha with custom loss_func
     f = ignore_warnings
-    ridge_gcv2 = RidgeCV(fit_intercept=False, loss_func=mean_squared_error)
+    scoring = make_scorer(mean_squared_error, greater_is_better=False)
+    ridge_gcv2 = RidgeCV(fit_intercept=False, scoring=scoring)
     f(ridge_gcv2.fit)(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv2.alpha_, alpha_)
 
     # check that we get same best alpha with custom score_func
     func = lambda x, y: -mean_squared_error(x, y)
-    ridge_gcv3 = RidgeCV(fit_intercept=False, score_func=func)
+    scoring = make_scorer(func)
+    ridge_gcv3 = RidgeCV(fit_intercept=False, scoring=scoring)
     f(ridge_gcv3.fit)(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv3.alpha_, alpha_)
 
     # check that we get same best alpha with a scorer
-    scorer = SCORERS['mean_squared_error']
+    scorer = get_scorer('mean_squared_error')
     ridge_gcv4 = RidgeCV(fit_intercept=False, scoring=scorer)
     ridge_gcv4.fit(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv4.alpha_, alpha_)
@@ -448,6 +450,13 @@ def test_ridge_cv_sparse_svd():
     assert_raises(TypeError, ridge.fit, X)
 
 
+def test_ridge_sparse_svd():
+    X = sp.csc_matrix(rng.rand(100, 10))
+    y = rng.rand(100)
+    ridge = Ridge(solver='svd')
+    assert_raises(TypeError, ridge.fit, X, y)
+
+
 def test_class_weights():
     """
     Test class weights.
@@ -530,41 +539,6 @@ def test_ridgecv_store_cv_values():
     assert_equal(r.cv_values_.shape, (n_samples, n_responses, n_alphas))
 
 
-def test_ridge_sample_weights_in_feature_space():
-    """Check that Cholesky solver in feature space applies sample_weights
-    correctly.
-    """
-
-    rng = np.random.RandomState(42)
-
-    n_samples_list = [5, 6, 7] * 2
-    n_features_list = [7, 6, 5] * 2
-    n_targets_list = [1, 1, 1, 2, 2, 2]
-    noise = 1.
-    alpha = 2.
-    alpha = np.atleast_1d(alpha)
-
-    for n_samples, n_features, n_targets in zip(n_samples_list,
-                                                n_features_list,
-                                                n_targets_list):
-        X = rng.randn(n_samples, n_features)
-        beta = rng.randn(n_features, n_targets)
-        Y = X.dot(beta)
-        Y_noisy = Y + rng.randn(*Y.shape) * np.sqrt((Y ** 2).sum(0)) * noise
-
-        K = X.dot(X.T)
-        sample_weights = 1. + (rng.randn(n_samples) ** 2) * 10
-
-        coef_sample_space = _solve_cholesky_kernel(K, Y_noisy, alpha,
-                                         sample_weight=sample_weights)
-
-        coef_feature_space = _solve_cholesky(X, Y_noisy, alpha,
-                                         sample_weight=sample_weights)
-
-        assert_array_almost_equal(X.T.dot(coef_sample_space),
-                                  coef_feature_space.T)
-
-
 def test_raises_value_error_if_sample_weights_greater_than_1d():
     """Sample weights must be either scalar or 1D"""
 
@@ -572,7 +546,6 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
     n_featuress = [3, 2]
 
     rng = np.random.RandomState(42)
-
 
     for n_samples, n_features in zip(n_sampless, n_featuress):
         X = rng.randn(n_samples, n_features)
@@ -634,97 +607,6 @@ def test_sparse_design_with_sample_weights():
 
             assert_array_almost_equal(sparse_ridge.coef_, dense_ridge.coef_,
                                       decimal=6)
-
-
-def test_raises_value_error_if_sample_weights_greater_than_1d():
-    """Sample weights must be either scalar or 1D"""
-
-    n_sampless = [2, 3]
-    n_featuress = [3, 2]
-
-    rng = np.random.RandomState(42)
-
-
-    for n_samples, n_features in zip(n_sampless, n_featuress):
-        X = rng.randn(n_samples, n_features)
-        y = rng.randn(n_samples)
-        sample_weights_OK = rng.randn(n_samples) ** 2 + 1
-        sample_weights_OK_1 = 1.
-        sample_weights_OK_2 = 2.
-        sample_weights_not_OK = sample_weights_OK[:, np.newaxis]
-        sample_weights_not_OK_2 = sample_weights_OK[np.newaxis, :]
-
-        ridge = Ridge(alpha=1)
-
-        # make sure the "OK" sample weights actually work
-        ridge.fit(X, y, sample_weights_OK)
-        ridge.fit(X, y, sample_weights_OK_1)
-        ridge.fit(X, y, sample_weights_OK_2)
-
-        def fit_ridge_not_ok():
-            ridge.fit(X, y, sample_weights_not_OK)
-
-        def fit_ridge_not_ok_2():
-            ridge.fit(X, y, sample_weights_not_OK_2)
-
-        assert_raise_message(ValueError,
-                              "Sample weights must be 1D array or scalar",
-                              fit_ridge_not_ok)
-
-        assert_raise_message(ValueError,
-                              "Sample weights must be 1D array or scalar",
-                              fit_ridge_not_ok_2)
-
-
-def test_sparse_design_with_sample_weights():
-    """Sample weights must work with sparse matrices"""
-
-    n_sampless = [2, 3]
-    n_featuress = [3, 2]
-
-    rng = np.random.RandomState(42)
-
-    sparse_matrix_converters = [sp.coo_matrix,
-                                sp.csr_matrix,
-                                sp.csc_matrix,
-                                sp.lil_matrix,
-                                sp.dok_matrix
-                                ]
-
-    sparse_ridge = Ridge(alpha=1., fit_intercept=False)
-    dense_ridge = Ridge(alpha=1., fit_intercept=False)
-
-    for n_samples, n_features in zip(n_sampless, n_featuress):
-        X = rng.randn(n_samples, n_features)
-        y = rng.randn(n_samples)
-        sample_weights = rng.randn(n_samples) ** 2 + 1
-        for sparse_converter in sparse_matrix_converters:
-            X_sparse = sparse_converter(X)
-            sparse_ridge.fit(X_sparse, y, sample_weight=sample_weights)
-            dense_ridge.fit(X, y, sample_weight=sample_weights)
-
-            assert_array_almost_equal(sparse_ridge.coef_, dense_ridge.coef_,
-                                      decimal=6)
-
-
-def test_deprecation_warning_dense_cholesky():
-    """Tests if DeprecationWarning is raised at instantiation of estimators
-    and when ridge_regression is called"""
-
-    warning_class = DeprecationWarning
-    warning_message = ("The name 'dense_cholesky' is deprecated."
-                       " Using 'cholesky' instead")
-
-    X = np.ones([2, 3])
-    y = np.ones(2)
-    func1 = lambda: Ridge(solver='dense_cholesky').fit(X, y)
-    func2 = lambda: RidgeClassifier(solver='dense_cholesky').fit(X, y)
-    X = np.ones([3, 2])
-    y = np.zeros(3)
-    func3 = lambda: ridge_regression(X, y, alpha=1, solver='dense_cholesky')
-
-    for func in [func1, func2, func3]:
-        assert_warns_message(warning_class, warning_message, func)
 
 
 def test_raises_value_error_if_solver_not_supported():
@@ -742,3 +624,9 @@ def test_raises_value_error_if_solver_not_supported():
         ridge_regression(X, y, alpha=1., solver=wrong_solver)
 
     assert_raise_message(exception, message, func)
+
+
+def test_sparse_cg_max_iter():
+    reg = Ridge(solver="sparse_cg", max_iter=1)
+    reg.fit(X_diabetes, y_diabetes)
+    assert_equal(reg.coef_.shape[0], X_diabetes.shape[1])

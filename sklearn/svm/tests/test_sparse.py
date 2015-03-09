@@ -156,14 +156,16 @@ def test_linearsvc():
 
     assert_true(sp_clf.fit_intercept)
 
-    assert_array_almost_equal(clf.raw_coef_, sp_clf.raw_coef_, decimal=4)
+    assert_array_almost_equal(clf.coef_, sp_clf.coef_, decimal=4)
+    assert_array_almost_equal(clf.intercept_, sp_clf.intercept_, decimal=4)
 
     assert_array_almost_equal(clf.predict(X), sp_clf.predict(X_sp))
 
     clf.fit(X2, Y2)
     sp_clf.fit(X2_sp, Y2)
 
-    assert_array_almost_equal(clf.raw_coef_, sp_clf.raw_coef_, decimal=4)
+    assert_array_almost_equal(clf.coef_, sp_clf.coef_, decimal=4)
+    assert_array_almost_equal(clf.intercept_, sp_clf.intercept_, decimal=4)
 
 
 def test_linearsvc_iris():
@@ -174,7 +176,8 @@ def test_linearsvc_iris():
 
     assert_equal(clf.fit_intercept, sp_clf.fit_intercept)
 
-    assert_array_almost_equal(clf.raw_coef_, sp_clf.raw_coef_, decimal=1)
+    assert_array_almost_equal(clf.coef_, sp_clf.coef_, decimal=1)
+    assert_array_almost_equal(clf.intercept_, sp_clf.intercept_, decimal=1)
     assert_array_almost_equal(
         clf.predict(iris.data.toarray()), sp_clf.predict(iris.data))
 
