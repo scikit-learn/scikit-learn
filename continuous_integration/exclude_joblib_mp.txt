@@ -1,2 +1,0 @@
-sklearn.externals.joblib.test.test_parallel
-sklearn.externals.joblib.test.test_pool

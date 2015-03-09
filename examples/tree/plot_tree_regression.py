@@ -15,7 +15,10 @@ details of the training data and learn from the noise, i.e. they overfit.
 """
 print(__doc__)
 
+# Import the necessary modules and libraries
 import numpy as np
+from sklearn.tree import DecisionTreeRegressor
+import matplotlib.pyplot as plt
 
 # Create a random dataset
 rng = np.random.RandomState(1)
@@ -24,8 +27,6 @@ y = np.sin(X).ravel()
 y[::5] += 3 * (0.5 - rng.rand(16))
 
 # Fit regression model
-from sklearn.tree import DecisionTreeRegressor
-
 clf_1 = DecisionTreeRegressor(max_depth=2)
 clf_2 = DecisionTreeRegressor(max_depth=5)
 clf_1.fit(X, y)
@@ -37,8 +38,6 @@ y_1 = clf_1.predict(X_test)
 y_2 = clf_2.predict(X_test)
 
 # Plot the results
-import matplotlib.pyplot as plt
-
 plt.figure()
 plt.scatter(X, y, c="k", label="data")
 plt.plot(X_test, y_1, c="g", label="max_depth=2", linewidth=2)

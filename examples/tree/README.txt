@@ -3,4 +3,4 @@
 Decision Trees
 --------------
 
-Examples concerning the :mod:`sklearn.tree` package.
+Examples concerning the :mod:`sklearn.tree` module.

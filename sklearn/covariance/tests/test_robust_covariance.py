@@ -9,6 +9,7 @@ import numpy as np
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.validation import NotFittedError
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, MinCovDet, \
@@ -82,9 +83,8 @@ def test_outlier_detection():
     rnd = np.random.RandomState(0)
     X = rnd.randn(100, 10)
     clf = EllipticEnvelope(contamination=0.1)
-    print(clf.threshold)
-    assert_raises(Exception, clf.predict, X)
-    assert_raises(Exception, clf.decision_function, X)
+    assert_raises(NotFittedError, clf.predict, X)
+    assert_raises(NotFittedError, clf.decision_function, X)
     clf.fit(X)
     y_pred = clf.predict(X)
     decision = clf.decision_function(X, raw_values=True)

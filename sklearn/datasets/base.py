@@ -10,7 +10,6 @@ Base IO code for all datasets
 import os
 import csv
 import shutil
-import warnings
 from os import environ
 from os.path import dirname
 from os.path import join
@@ -44,7 +43,7 @@ def get_data_home(data_home=None):
     in the user home folder.
 
     Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
-    variable or programmatically by giving an explit folder path. The
+    variable or programmatically by giving an explicit folder path. The
     '~' symbol is expanded to the user home folder.
 
     If the folder does not already exist, it is automatically created.
@@ -66,7 +65,6 @@ def clear_data_home(data_home=None):
 
 def load_files(container_path, description=None, categories=None,
                load_content=True, shuffle=True, encoding=None,
-               charset=None, charset_error=None,
                decode_error='strict', random_state=0):
     """Load text files with categories as subfolder names.
 
@@ -155,20 +153,6 @@ def load_files(container_path, description=None, categories=None,
         'target_names', the meaning of the labels, and 'DESCR', the full
         description of the dataset.
     """
-    if charset is not None:
-        warnings.warn("The charset parameter is deprecated as of version "
-                      "0.14 and will be removed in 0.16. "
-                      "Use encoding instead.",
-                      DeprecationWarning)
-        encoding = charset
-
-    if charset_error is not None:
-        warnings.warn("The charset_error parameter is deprecated as of "
-                      "version 0.14 and will be removed in 0.16. Use "
-                      "decode_error instead.",
-                      DeprecationWarning)
-        decode_error = charset_error
-
     target = []
     target_names = []
     filenames = []
@@ -426,7 +410,7 @@ def load_boston():
     fdescr_name = join(module_path, 'descr', 'boston_house_prices.rst')
     with open(fdescr_name) as f:
         descr_text = f.read()
-    
+
     data_file_name = join(module_path, 'data', 'boston_house_prices.csv')
     with open(data_file_name) as f:
         data_file = csv.reader(f)

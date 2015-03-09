@@ -33,7 +33,8 @@ by decomposing such problems into binary classification problems.
     several joint classification tasks. This is a generalization
     of the multi-label classification task, where the set of classification
     problem is restricted to binary classification, and of the multi-class
-    classification task. *The output format is a 2d numpy array.*
+    classification task. *The output format is a 2d numpy array or sparse 
+    matrix.*
 
     The set of labels can be different for each output variable.
     For instance a sample could be assigned "pear" for an output variable that
@@ -61,7 +62,9 @@ if you're using one of these unless you want custom multiclass behavior:
   - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
     :class:`sklearn.lda.LDA`,
     :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
-    :ref:`Nearest Neighbors <neighbors>`.
+    :ref:`Nearest Neighbors <neighbors>`,
+    setting "multi_class=multinomial" in
+    :class:`sklearn.linear_model.LogisticRegression`.
   - One-Vs-One: :class:`sklearn.svm.SVC`.
   - One-Vs-All: all linear models except :class:`sklearn.svm.SVC`.
 
@@ -94,14 +97,13 @@ format.
   >>> X, Y = make_multilabel_classification(n_samples=5, random_state=0,
   ...                                       return_indicator=False)
   >>> Y
-  ([0, 1, 2], [4, 1, 0, 2], [4, 0, 1], [1, 0], [3, 2])
+  [[2, 3, 4], [2], [0, 1, 3], [0, 1, 2, 3, 4], [0, 1, 2]]
   >>> MultiLabelBinarizer().fit_transform(Y)
-  array([[1, 1, 1, 0, 0],
-         [1, 1, 1, 0, 1],
-         [1, 1, 0, 0, 1],
-         [1, 1, 0, 0, 0],
-         [0, 0, 1, 1, 0]])
-
+  array([[0, 0, 1, 1, 1],
+         [0, 0, 1, 0, 0],
+         [1, 1, 0, 1, 0],
+         [1, 1, 1, 1, 1],
+         [1, 1, 1, 0, 0]])
 
 One-Vs-The-Rest
 ===============
@@ -159,6 +161,11 @@ One-Vs-One
 
 :class:`OneVsOneClassifier` constructs one classifier per pair of classes.
 At prediction time, the class which received the most votes is selected.
+In the event of a tie (among two classes with an equal number of votes), it
+selects the class with the highest aggregate classification confidence by
+summing over the pair-wise classification confidence levels computed by the
+underlying binary classifiers.
+
 Since it requires to fit ``n_classes * (n_classes - 1) / 2`` classifiers,
 this method is usually slower than one-vs-the-rest, due to its
 O(n_classes^2) complexity. However, this method may be advantageous for
@@ -185,6 +192,12 @@ Below is an example of multiclass learning using OvO::
          1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
+
+
+.. topic:: References:
+
+    .. [1] "Pattern Recognition and Machine Learning. Springer",
+        Christopher M. Bishop, page 183, (First Edition)
 
 
 Error-Correcting Output-Codes

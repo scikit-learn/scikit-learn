@@ -4,7 +4,7 @@
 import numpy as np
 from scipy import sparse
 
-from ..graph import graph_laplacian
+from sklearn.utils.graph import graph_laplacian
 
 
 def test_graph_laplacian():

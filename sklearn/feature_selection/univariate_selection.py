@@ -6,15 +6,17 @@
 
 
 import numpy as np
+import warnings
+
 from scipy import special, stats
 from scipy.sparse import issparse
 
 from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
-from ..utils import (array2d, as_float_array,
-                     atleast2d_or_csr, check_arrays, safe_sqr,
+from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
                      safe_mask)
 from ..utils.extmath import norm, safe_sparse_dot
+from ..utils.validation import check_is_fitted
 from .base import SelectorMixin
 
 
@@ -103,6 +105,10 @@ def f_oneway(*args):
     dfwn = n_samples - n_classes
     msb = ssbn / float(dfbn)
     msw = sswn / float(dfwn)
+    constant_features_idx = np.where(msw == 0.)[0]
+    if (np.nonzero(msb)[0].size != msb.size and constant_features_idx.size):
+        warnings.warn("Features %s are constant." % constant_features_idx,
+                      UserWarning)
     f = msb / msw
     # flatten matrix to vector in sparse case
     f = np.asarray(f).ravel()
@@ -129,7 +135,7 @@ def f_classif(X, y):
     pval : array, shape = [n_features,]
         The set of p-values.
     """
-    X, y = check_arrays(X, y)
+    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
     return f_oneway(*args)
 
@@ -187,7 +193,7 @@ def chi2(X, y):
 
     # XXX: we might want to do some of the following in logspace instead for
     # numerical stability.
-    X = atleast2d_or_csr(X)
+    X = check_array(X, accept_sparse='csr')
     if np.any((X.data if issparse(X) else X) < 0):
         raise ValueError("Input X must be non-negative.")
 
@@ -197,8 +203,8 @@ def chi2(X, y):
 
     observed = safe_sparse_dot(Y.T, X)          # n_classes * n_features
 
-    feature_count = array2d(X.sum(axis=0))
-    class_prob = array2d(Y.mean(axis=0))
+    feature_count = check_array(X.sum(axis=0))
+    class_prob = check_array(Y.mean(axis=0))
     expected = np.dot(class_prob.T, feature_count)
 
     return _chisquare(observed, expected)
@@ -237,8 +243,7 @@ def f_regression(X, y, center=True):
     """
     if issparse(X) and center:
         raise ValueError("center=True only allowed for dense data")
-    X, y = check_arrays(X, y, dtype=np.float)
-    y = y.ravel()
+    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float)
     if center:
         y = y - np.mean(y)
         X = X.copy('F')  # faster in fortran
@@ -290,7 +295,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        X, y = check_arrays(X, y)
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
 
         if not callable(self.score_func):
             raise TypeError("The score function should be a callable, %s (%s) "
@@ -325,10 +330,10 @@ class SelectPercentile(_BaseFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
 
     Notes
@@ -348,6 +353,8 @@ class SelectPercentile(_BaseFilter):
                              % self.percentile)
 
     def _get_support_mask(self):
+        check_is_fitted(self, 'scores_')
+
         # Cater for NaNs
         if self.percentile == 100:
             return np.ones(len(self.scores_), dtype=np.bool)
@@ -381,10 +388,10 @@ class SelectKBest(_BaseFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
 
     Notes
@@ -405,6 +412,8 @@ class SelectKBest(_BaseFilter):
                              % self.k)
 
     def _get_support_mask(self):
+        check_is_fitted(self, 'scores_')
+
         if self.k == 'all':
             return np.ones(self.scores_.shape, dtype=bool)
         elif self.k == 0:
@@ -436,10 +445,10 @@ class SelectFpr(_BaseFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
     """
 
@@ -448,14 +457,16 @@ class SelectFpr(_BaseFilter):
         self.alpha = alpha
 
     def _get_support_mask(self):
+        check_is_fitted(self, 'scores_')
+
         return self.pvalues_ < self.alpha
 
 
 class SelectFdr(_BaseFilter):
     """Filter: Select the p-values for an estimated false discovery rate
 
-    This uses the Benjamini-Hochberg procedure. ``alpha`` is the target false
-    discovery rate.
+    This uses the Benjamini-Hochberg procedure. ``alpha`` is an upper bound
+    on the expected false discovery rate.
 
     Parameters
     ----------
@@ -469,11 +480,16 @@ class SelectFdr(_BaseFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/False_discovery_rate
+
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
@@ -481,10 +497,15 @@ class SelectFdr(_BaseFilter):
         self.alpha = alpha
 
     def _get_support_mask(self):
-        alpha = self.alpha
+        check_is_fitted(self, 'scores_')
+
+        n_features = len(self.pvalues_)
         sv = np.sort(self.pvalues_)
-        threshold = sv[sv < alpha * np.arange(len(self.pvalues_))].max()
-        return self.pvalues_ <= threshold
+        selected = sv[sv <= float(self.alpha) / n_features
+                      * np.arange(n_features)]
+        if selected.size == 0:
+            return np.zeros_like(self.pvalues_, dtype=bool)
+        return self.pvalues_ <= selected.max()
 
 
 class SelectFwe(_BaseFilter):
@@ -501,10 +522,10 @@ class SelectFwe(_BaseFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
     """
 
@@ -513,6 +534,8 @@ class SelectFwe(_BaseFilter):
         self.alpha = alpha
 
     def _get_support_mask(self):
+        check_is_fitted(self, 'scores_')
+
         return (self.pvalues_ < self.alpha / len(self.pvalues_))
 
 
@@ -539,10 +562,10 @@ class GenericUnivariateSelect(_BaseFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
     """
 
@@ -578,6 +601,8 @@ class GenericUnivariateSelect(_BaseFilter):
         self._make_selector()._check_params(X, y)
 
     def _get_support_mask(self):
+        check_is_fitted(self, 'scores_')
+
         selector = self._make_selector()
         selector.pvalues_ = self.pvalues_
         selector.scores_ = self.scores_

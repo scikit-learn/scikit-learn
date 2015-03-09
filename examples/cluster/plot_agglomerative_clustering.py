@@ -47,7 +47,7 @@ X = X.T
 # time. A very large number of neighbors gives more evenly distributed
 # cluster sizes, but may not impose the local manifold structure of
 # the data
-knn_graph = kneighbors_graph(X, 30)
+knn_graph = kneighbors_graph(X, 30, include_self=False)
 
 for connectivity in (None, knn_graph):
     for n_clusters in (30, 3):

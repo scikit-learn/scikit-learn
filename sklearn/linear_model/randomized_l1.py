@@ -19,8 +19,9 @@ from .base import center_data
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.joblib import Memory, Parallel, delayed
-from ..utils import (as_float_array, check_random_state, safe_asarray,
-                     check_arrays, safe_mask, ConvergenceWarning)
+from ..utils import (as_float_array, check_random_state, check_X_y,
+                     check_array, safe_mask, ConvergenceWarning)
+from ..utils.validation import check_is_fitted
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
 
@@ -76,18 +77,18 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            training data.
+        X : array-like, sparse matrix shape = [n_samples, n_features]
+            Training data.
 
         y : array-like, shape = [n_samples]
-            target values.
+            Target values.
 
         Returns
         -------
         self : object
-            returns an instance of self.
+            Returns an instance of self.
         """
-        X, y = check_arrays(X, y)
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], y_numeric=True)
         X = as_float_array(X, copy=False)
         n_samples, n_features = X.shape
 
@@ -121,6 +122,8 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def get_support(self, indices=False):
         """Return a mask, or list, of the features/indices selected."""
+        check_is_fitted(self, 'scores_')
+
         mask = self.scores_ > self.selection_threshold
         return mask if not indices else np.where(mask)[0]
 
@@ -129,9 +132,10 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
     def transform(self, X):
         """Transform a new matrix using the selected features"""
         mask = self.get_support()
+        X = check_array(X)
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
-        return safe_asarray(X)[:, safe_mask(X, mask)]
+        return check_array(X)[:, safe_mask(X, mask)]
 
     def inverse_transform(self, X):
         """Transform a new matrix using the selected features"""
@@ -266,10 +270,10 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     Attributes
     ----------
-    `scores_` : array, shape = [n_features]
+    scores_ : array, shape = [n_features]
         Feature scores between 0 and 1.
 
-    `all_scores_` : array, shape = [n_features, n_reg_parameter]
+    all_scores_ : array, shape = [n_features, n_reg_parameter]
         Feature scores between 0 and 1 for all values of the regularization \
         parameter. The reference article suggests ``scores_`` is the max of \
         ``all_scores_``.
@@ -384,7 +388,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     n_resampling : int, optional, default=200
         Number of randomized models.
 
-    selection_threshold: float, optional, default=0.25
+    selection_threshold : float, optional, default=0.25
         The score above which features should be selected.
 
     fit_intercept : boolean, optional, default=True
@@ -434,10 +438,10 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     Attributes
     ----------
-    `scores_` : array, shape = [n_features]
+    scores_ : array, shape = [n_features]
         Feature scores between 0 and 1.
 
-    `all_scores_` : array, shape = [n_features, n_reg_parameter]
+    all_scores_ : array, shape = [n_features, n_reg_parameter]
         Feature scores between 0 and 1 for all values of the regularization \
         parameter. The reference article suggests ``scores_`` is the max \
         of ``all_scores_``.

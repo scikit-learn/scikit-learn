@@ -27,7 +27,8 @@ from .. import __version__
 from ..externals import six
 from ..externals.six import u, b
 from ..externals.six.moves import range, zip
-from ..utils import atleast2d_or_csr
+from ..utils import check_array
+from ..utils.fixes import frombuffer_empty
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
@@ -64,24 +65,24 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
 
     Parameters
     ----------
-    f: {str, file-like, int}
+    f : {str, file-like, int}
         (Path to) a file to load. If a path ends in ".gz" or ".bz2", it will
         be uncompressed on the fly. If an integer is passed, it is assumed to
         be a file descriptor. A file-like or file descriptor will not be closed
         by this function. A file-like object must be opened in binary mode.
 
-    n_features: int or None
+    n_features : int or None
         The number of features to use. If None, it will be inferred. This
         argument is useful to load several files that are subsets of a
         bigger sliced dataset: each subset might not have examples of
         every feature, hence the inferred shape might vary from one
         slice to another.
 
-    multilabel: boolean, optional
+    multilabel : boolean, optional, default False
         Samples may have several labels each (see
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 
-    zero_based: boolean or "auto", optional
+    zero_based : boolean or "auto", optional, default "auto"
         Whether column indices in f are zero-based (True) or one-based
         (False). If column indices are one-based, they are transformed to
         zero-based to match Python/NumPy conventions.
@@ -90,8 +91,12 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
         are unfortunately not self-identifying. Using "auto" or True should
         always be safe.
 
-    query_id: boolean, defaults to False
+    query_id : boolean, default False
         If True, will return the query_id array for each file.
+
+    dtype : numpy data type, default np.float64
+        Data type of dataset to be loaded. This will be the data type of the
+        output numpy arrays ``X`` and ``y``.
 
     Returns
     -------
@@ -108,6 +113,21 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     --------
     load_svmlight_files: similar function for loading multiple files in this
     format, enforcing the same number of features/columns on all of them.
+
+    Examples
+    --------
+    To use joblib.Memory to cache the svmlight file::
+
+        from sklearn.externals.joblib import Memory
+        from sklearn.datasets import load_svmlight_file
+        mem = Memory("./mycache")
+
+        @mem.cache
+        def get_data():
+            data = load_svmlight_file("mysvmlightfile")
+            return data[0], data[1]
+
+        X, y = get_data()
     """
     return tuple(load_svmlight_files([f], n_features, dtype, multilabel,
                                      zero_based, query_id))
@@ -130,14 +150,6 @@ def _gen_open(f):
         return open(f, "rb")
 
 
-def _frombuffer(x, dtype):
-    # np.frombuffer doesn't like zero-length buffers in older NumPy
-    if len(x):
-        return np.frombuffer(x, dtype=dtype)
-    else:
-        return np.empty(0, dtype=dtype)
-
-
 def _open_and_load(f, dtype, multilabel, zero_based, query_id):
     if hasattr(f, "read"):
         actual_dtype, data, ind, indptr, labels, query = \
@@ -150,11 +162,11 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id):
 
     # convert from array.array, give data the right dtype
     if not multilabel:
-        labels = _frombuffer(labels, np.float64)
-    data = _frombuffer(data, actual_dtype)
-    indices = _frombuffer(ind, np.intc)
+        labels = frombuffer_empty(labels, np.float64)
+    data = frombuffer_empty(data, actual_dtype)
+    indices = frombuffer_empty(ind, np.intc)
     indptr = np.frombuffer(indptr, dtype=np.intc)   # never empty
-    query = _frombuffer(query, np.intc)
+    query = frombuffer_empty(query, np.intc)
 
     data = np.asarray(data, dtype=dtype)    # no-op for float{32,64}
     return data, indices, indptr, labels, query
@@ -210,6 +222,10 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     query_id: boolean, defaults to False
         If True, will return the query_id array for each file.
 
+    dtype : numpy data type, default np.float64
+        Data type of dataset to be loaded. This will be the data type of the
+        output numpy arrays ``X`` and ``y``.
+ 
     Returns
     -------
     [X1, y1, ..., Xn, yn]
@@ -219,8 +235,8 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     ..., Xn, yn, qn] where (Xi, yi, qi) is the result from
     load_svmlight_file(files[i])
 
-    Rationale
-    ---------
+    Notes
+    -----
     When fitting a model to a matrix X_train and evaluating it against a
     matrix X_test, it is essential that X_train and X_test have the same
     number of features (X_train.shape[1] == X_test.shape[1]). This may not
@@ -356,7 +372,7 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
         raise ValueError("expected y of shape (n_samples,), got %r"
                          % (y.shape,))
 
-    Xval = atleast2d_or_csr(X)
+    Xval = check_array(X, accept_sparse='csr')
     if Xval.shape[0] != y.shape[0]:
         raise ValueError("X.shape[0] and y.shape[0] should be the same, got"
                          " %r and %r instead." % (Xval.shape[0], y.shape[0]))

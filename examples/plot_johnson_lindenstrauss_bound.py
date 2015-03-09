@@ -118,7 +118,6 @@ plt.legend(["eps = %0.1f" % eps for eps in eps_range], loc="lower right")
 plt.xlabel("Number of observations to eps-embed")
 plt.ylabel("Minimum number of dimensions")
 plt.title("Johnson-Lindenstrauss bounds:\nn_samples vs n_components")
-plt.show()
 
 # range of admissible distortions
 eps_range = np.linspace(0.01, 0.99, 100)
@@ -136,7 +135,6 @@ plt.legend(["n_samples = %d" % n for n in n_samples_range], loc="upper right")
 plt.xlabel("Distortion eps")
 plt.ylabel("Minimum number of dimensions")
 plt.title("Johnson-Lindenstrauss bounds:\nn_components vs eps")
-plt.show()
 
 # Part 2: perform sparse random projection of some digits images which are
 # quite low dimensional and dense or documents of the 20 newsgroups dataset
@@ -174,7 +172,7 @@ for n_components in n_components_range:
         projected_data, squared=True).ravel()[nonzero]
 
     plt.figure()
-    plt.hexbin(dists, projected_dists, gridsize=100)
+    plt.hexbin(dists, projected_dists, gridsize=100, cmap=plt.cm.PuBu)
     plt.xlabel("Pairwise squared distances in original space")
     plt.ylabel("Pairwise squared distances in projected space")
     plt.title("Pairwise distances distribution for n_components=%d" %
@@ -192,7 +190,8 @@ for n_components in n_components_range:
     plt.ylabel("Distribution of samples pairs")
     plt.title("Histogram of pairwise distance rates for n_components=%d" %
               n_components)
-    plt.show()
 
     # TODO: compute the expected value of eps and add them to the previous plot
     # as vertical lines / region
+
+plt.show()

@@ -7,8 +7,8 @@ import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 import scipy.stats
 
-from .. import SelectKBest, chi2
-from ..univariate_selection import _chisquare
+from sklearn.feature_selection import SelectKBest, chi2
+from sklearn.feature_selection.univariate_selection import _chisquare
 
 from nose.tools import assert_raises
 from numpy.testing import assert_equal, assert_array_almost_equal

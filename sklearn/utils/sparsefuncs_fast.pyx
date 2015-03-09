@@ -145,7 +145,8 @@ def csc_mean_variance_axis0(X):
     cdef double diff
 
     # means[j] contains the mean of feature j
-    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features, dtype=X.dtype)
+    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features,
+                                                     dtype=np.float64)
 
     # variances[j] contains the variance of feature j
     cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
@@ -274,7 +275,7 @@ def assign_rows_csr(X,
     out : array, shape=(arbitrary, n_features)
     """
     cdef:
-        # npy_intp (np.intc in Python) is what np.where returns,
+        # npy_intp (np.intp in Python) is what np.where returns,
         # but int is what scipy.sparse uses.
         int i, ind, j
         np.npy_intp rX
