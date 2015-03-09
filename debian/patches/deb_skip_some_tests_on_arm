@@ -1,6 +1,6 @@
 --- a/sklearn/feature_extraction/tests/test_text.py
 +++ b/sklearn/feature_extraction/tests/test_text.py
-@@ -357,6 +357,10 @@ def test_tfidf_no_smoothing():
+@@ -351,6 +351,10 @@ def test_tfidf_no_smoothing():
          numpy_provides_div0_warning = len(w) == 1
  
      in_warning_message = 'divide by zero'
@@ -11,9 +11,11 @@
      tfidf = assert_warns_message(RuntimeWarning, in_warning_message,
                                   tr.fit_transform, X).toarray()
      if not numpy_provides_div0_warning:
---- a/sklearn/metrics/tests/test_metrics.py
-+++ b/sklearn/metrics/tests/test_metrics.py
-@@ -1221,6 +1221,9 @@ def test_precision_recall_curve_toydata(
+diff --git a/sklearn/metrics/tests/test_ranking.py b/sklearn/metrics/tests/test_ranking.py
+index 40ce6f6..8328716 100644
+--- a/sklearn/metrics/tests/test_ranking.py
++++ b/sklearn/metrics/tests/test_ranking.py
+@@ -543,6 +543,9 @@ def test_precision_recall_curve_toydata():
  
          y_true = [0, 0]
          y_score = [0.25, 0.75]

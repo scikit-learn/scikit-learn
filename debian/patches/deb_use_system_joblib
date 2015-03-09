@@ -3,15 +3,6 @@ Subject: use system-wide joblib and do not attempt to install joblib/test
 
  Relies on DFSG-ed sources with no joblib present
 
---- a/sklearn/externals/setup.py
-+++ b/sklearn/externals/setup.py
-@@ -5,6 +5,5 @@ def configuration(parent_package='', top
-     from numpy.distutils.misc_util import Configuration
-     config = Configuration('externals', parent_package, top_path)
-     config.add_subpackage('joblib')
--    config.add_subpackage('joblib/test')
- 
-     return config
 --- /dev/null
 +++ b/sklearn/externals/joblib/__init__.py
 @@ -0,0 +1,3 @@
@@ -20,7 +11,7 @@ Subject: use system-wide joblib and do not attempt to install joblib/test
 +from joblib import *
 --- a/sklearn/metrics/pairwise.py
 +++ b/sklearn/metrics/pairwise.py
-@@ -51,7 +51,7 @@ from ..utils.extmath import row_norms, s
+@@ -24,7 +24,7 @@ from ..utils.extmath import row_norms, s
  from ..preprocessing import normalize
  from ..externals.joblib import Parallel
  from ..externals.joblib import delayed
@@ -29,7 +20,7 @@ Subject: use system-wide joblib and do not attempt to install joblib/test
  
  from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
  
-@@ -960,7 +960,7 @@ def _parallel_pairwise(X, Y, func, n_job
+@@ -950,7 +950,7 @@ def _parallel_pairwise(X, Y, func, n_job
      """Break the pairwise matrix in n_jobs even slices
      and compute them in parallel"""
      if n_jobs < 0:
