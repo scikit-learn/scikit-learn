@@ -8,8 +8,6 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
-import warnings
-
 import numpy as np
 from scipy import stats
 from ..utils.extmath import weighted_mode
@@ -19,7 +17,7 @@ from .base import \
     NeighborsBase, KNeighborsMixin,\
     RadiusNeighborsMixin, SupervisedIntegerMixin
 from ..base import ClassifierMixin
-from ..utils import atleast2d_or_csr
+from ..utils import check_array
 
 
 class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
@@ -115,13 +113,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     def __init__(self, n_neighbors=5,
                  weights='uniform', algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, **kwargs):
-        if kwargs:
-            if 'warn_on_equidistant' in kwargs:
-                kwargs.pop('warn_on_equidistant')
-                warnings.warn("The warn_on_equidistant parameter is "
-                              "deprecated and will be removed in 0.16.",
-                              DeprecationWarning,
-                              stacklevel=2)
 
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
@@ -142,7 +133,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         y : array of shape [n_samples] or [n_samples, n_outputs]
             Class labels for each data sample.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -186,7 +177,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -201,10 +192,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
             weights = np.ones_like(neigh_ind)
-        else:
-            # Some weights may be infinite (zero distance), which can cause
-            # downstream NaN values when used for normalization.
-            weights[np.isinf(weights)] = np.finfo('f').max
 
         all_rows = np.arange(X.shape[0])
         probabilities = []
@@ -341,7 +328,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             Class labels for each data sample.
 
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         n_samples = X.shape[0]
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)

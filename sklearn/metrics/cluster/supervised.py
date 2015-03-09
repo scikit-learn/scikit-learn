@@ -16,6 +16,7 @@ from scipy.sparse import coo_matrix
 import numpy as np
 
 from .expected_mutual_info_fast import expected_mutual_information
+from ...utils.fixes import bincount
 
 
 def comb2(n):
@@ -292,7 +293,7 @@ def homogeneity_score(labels_true, labels_pred):
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
-       <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
+       <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -364,7 +365,7 @@ def completeness_score(labels_true, labels_pred):
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
-       <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
+       <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -436,7 +437,7 @@ def v_measure_score(labels_true, labels_pred):
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
-       <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
+       <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -596,8 +597,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     Returns
     -------
     ami: float(upperlimited by 1.0)
-       The AMI returns a value of 1 when the two partitions are identical 
-       (ie perfectly matched). Random partitions (independent labellings) have 
+       The AMI returns a value of 1 when the two partitions are identical
+       (ie perfectly matched). Random partitions (independent labellings) have
        an expected AMI around 0 on average hence can be negative.
 
     See also
@@ -739,7 +740,7 @@ def entropy(labels):
     if len(labels) == 0:
         return 1.0
     label_idx = np.unique(labels, return_inverse=True)[1]
-    pi = np.bincount(label_idx).astype(np.float)
+    pi = bincount(label_idx).astype(np.float)
     pi = pi[pi > 0]
     pi_sum = np.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for

@@ -5,9 +5,9 @@
 import scipy.sparse as sp
 import numpy as np
 
-from .fixes import sparse_min_max
-from .sparsefuncs_fast import (csr_mean_variance_axis0,
-                               csc_mean_variance_axis0)
+from .fixes import sparse_min_max, bincount
+from .sparsefuncs_fast import csr_mean_variance_axis0 as _csr_mean_var_axis0
+from .sparsefuncs_fast import csc_mean_variance_axis0 as _csc_mean_var_axis0
 
 
 def _raise_typeerror(X):
@@ -25,10 +25,10 @@ def inplace_csr_column_scale(X, scale):
 
     Parameters
     ----------
-    X: CSR matrix with shape (n_samples, n_features)
+    X : CSR matrix with shape (n_samples, n_features)
         Matrix to normalize using the variance of the features.
 
-    scale: float array with shape (n_features,)
+    scale : float array with shape (n_features,)
         Array of precomputed feature-wise values to use for scaling.
     """
     assert scale.shape[0] == X.shape[1]
@@ -43,23 +43,26 @@ def inplace_csr_row_scale(X, scale):
 
     Parameters
     ----------
-    X: CSR sparse matrix, shape (n_samples, n_features)
-    matrix to be scaled.
+    X : CSR sparse matrix, shape (n_samples, n_features)
+        Matrix to be scaled.
 
-    scale: float array with shape (n_samples,)
-    Array of precomputed sample-wise values to use for scaling.
+    scale : float array with shape (n_samples,)
+        Array of precomputed sample-wise values to use for scaling.
     """
     assert scale.shape[0] == X.shape[0]
     X.data *= np.repeat(scale, np.diff(X.indptr))
 
 
-def mean_variance_axis0(X):
+def mean_variance_axis(X, axis):
     """Compute mean and variance along axis 0 on a CSR or CSC matrix
 
     Parameters
     ----------
     X: CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
+
+    axis: int (either 0 or 1)
+        Axis along which the axis should be computed.
 
     Returns
     -------
@@ -71,10 +74,20 @@ def mean_variance_axis0(X):
         Feature-wise variances
 
     """
+    if axis not in (0, 1):
+        raise ValueError(
+            "Unknown axis value: %d. Use 0 for rows, or 1 for columns" % axis)
+
     if isinstance(X, sp.csr_matrix):
-        return csr_mean_variance_axis0(X)
+        if axis == 0:
+            return _csr_mean_var_axis0(X)
+        else:
+            return _csc_mean_var_axis0(X.T)
     elif isinstance(X, sp.csc_matrix):
-        return csc_mean_variance_axis0(X)
+        if axis == 0:
+            return _csc_mean_var_axis0(X)
+        else:
+            return _csr_mean_var_axis0(X.T)
     else:
         _raise_typeerror(X)
 
@@ -109,11 +122,11 @@ def inplace_row_scale(X, scale):
 
     Parameters
     ----------
-    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
-    matrix to be scaled.
+    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
+        Matrix to be scaled.
 
-    scale: float array with shape (n_features,)
-    Array of precomputed sample-wise values to use for scaling.
+    scale : float array with shape (n_features,)
+        Array of precomputed sample-wise values to use for scaling.
     """
     if isinstance(X, sp.csc_matrix):
         inplace_csr_column_scale(X.T, scale)
@@ -258,12 +271,15 @@ def inplace_swap_column(X, m, n):
 
 
 def min_max_axis(X, axis):
-    """Compute minimum and maximum along axis 0 on a CSR or CSC matrix
+    """Compute minimum and maximum along an axis on a CSR or CSC matrix
 
     Parameters
     ----------
-    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
+    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
+
+    axis: int (either 0 or 1)
+        Axis along which the axis should be computed.
 
     Returns
     -------
@@ -278,3 +294,111 @@ def min_max_axis(X, axis):
         return sparse_min_max(X, axis=axis)
     else:
         _raise_typeerror(X)
+
+
+def count_nonzero(X, axis=None, sample_weight=None):
+    """A variant of X.getnnz() with extension to weighting on axis 0
+
+    Useful in efficiently calculating multilabel metrics.
+
+    Parameters
+    ----------
+    X : CSR sparse matrix, shape = (n_samples, n_labels)
+        Input data.
+
+    axis : None, 0 or 1
+        The axis on which the data is aggregated.
+
+    sample_weight : array, shape = (n_samples,), optional
+        Weight for each row of X.
+    """
+    if axis == -1:
+        axis = 1
+    elif axis == -2:
+        axis = 0
+    elif X.format != 'csr':
+        raise TypeError('Expected CSR sparse format, got {0}'.format(X.format))
+
+    # We rely here on the fact that np.diff(Y.indptr) for a CSR
+    # will return the number of nonzero entries in each row.
+    # A bincount over Y.indices will return the number of nonzeros
+    # in each column. See ``csr_matrix.getnnz`` in scipy >= 0.14.
+    if axis is None:
+        if sample_weight is None:
+            return X.nnz
+        else:
+            return np.dot(np.diff(X.indptr), sample_weight)
+    elif axis == 1:
+        out = np.diff(X.indptr)
+        if sample_weight is None:
+            return out
+        return out * sample_weight
+    elif axis == 0:
+        if sample_weight is None:
+            return bincount(X.indices, minlength=X.shape[1])
+        else:
+            weights = np.repeat(sample_weight, np.diff(X.indptr))
+            return bincount(X.indices, minlength=X.shape[1],
+                            weights=weights)
+    else:
+        raise ValueError('Unsupported axis: {0}'.format(axis))
+
+
+def _get_median(data, n_zeros):
+    """Compute the median of data with n_zeros additional zeros.
+
+    This function is used to support sparse matrices; it modifies data in-place
+    """
+    n_elems = len(data) + n_zeros
+    if not n_elems:
+        return np.nan
+    n_negative = np.count_nonzero(data < 0)
+    middle, is_odd = divmod(n_elems, 2)
+    data.sort()
+
+    if is_odd:
+        return _get_elem_at_rank(middle, data, n_negative, n_zeros)
+
+    return (_get_elem_at_rank(middle - 1, data, n_negative, n_zeros) +
+            _get_elem_at_rank(middle, data, n_negative, n_zeros)) / 2.
+
+
+def _get_elem_at_rank(rank, data, n_negative, n_zeros):
+    """Find the value in data augmented with n_zeros for the given rank"""
+    if rank < n_negative:
+        return data[rank]
+    if rank - n_negative < n_zeros:
+        return 0
+    return data[rank - n_zeros]
+
+
+def csc_median_axis_0(X):
+    """Find the median across axis 0 of a CSC matrix.
+    It is equivalent to doing np.median(X, axis=0).
+
+    Parameters
+    ----------
+    X : CSC sparse matrix, shape (n_samples, n_features)
+        Input data.
+
+    Returns
+    -------
+    median : ndarray, shape (n_features,)
+        Median. 
+
+    """
+    if not isinstance(X, sp.csc_matrix):
+        raise TypeError("Expected matrix of CSC format, got %s" % X.format)
+
+    indptr = X.indptr
+    n_samples, n_features = X.shape
+    median = np.zeros(n_features)
+
+    for f_ind, (start, end) in enumerate(zip(indptr[:-1], indptr[1:])):
+
+        # Prevent modifying X in place
+        data = np.copy(X.data[start: end])
+        nz = n_samples - data.size
+        median[f_ind] = _get_median(data, nz)
+
+    return median

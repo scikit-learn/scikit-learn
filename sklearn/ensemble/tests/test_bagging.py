@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -23,7 +24,8 @@ from sklearn.linear_model import Perceptron, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC, SVR
-
+from sklearn.pipeline import make_pipeline
+from sklearn.feature_selection import SelectKBest
 from sklearn.cross_validation import train_test_split
 from sklearn.datasets import load_boston, load_iris
 from sklearn.utils import check_random_state
@@ -402,8 +404,7 @@ def test_error():
                   BaggingClassifier(base, max_features="foobar").fit, X, y)
 
     # Test support of decision_function
-    assert_raises(NotImplementedError,
-                  BaggingClassifier(base).fit(X, y).decision_function, X)
+    assert_false(hasattr(BaggingClassifier(base).fit(X, y), 'decision_function'))
 
 
 def test_parallel_classification():
@@ -540,8 +541,15 @@ def test_base_estimator():
     ensemble = BaggingRegressor(SVR(),
                                 n_jobs=3,
                                 random_state=0).fit(X_train, y_train)
-
     assert_true(isinstance(ensemble.base_estimator_, SVR))
+
+
+def test_bagging_with_pipeline():
+    estimator = BaggingClassifier(make_pipeline(SelectKBest(k=1),
+                                                DecisionTreeClassifier()),
+                                  max_features=2)
+    estimator.fit(iris.data, iris.target)
+
 
 if __name__ == "__main__":
     import nose

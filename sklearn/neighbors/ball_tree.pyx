@@ -22,14 +22,12 @@ VALID_METRICS = ['EuclideanDistance', 'SEuclideanDistance',
                  'PyFuncDistance', 'HaversineDistance']
 
 
-#----------------------------------------------------------------------
-# Here's our big hack: we can't subclass BinaryTree, because polymorphism
-# doesn't work in cython.  The dual-tree queries defined in BinaryTree
-# break if we try this approach.  So we use a literal include to "inherit"
-# all the boiler-plate code, and assign BinaryTree to BallTree.  The
-# specifics of the implementation are the functions in this module.
 include "binary_tree.pxi"
-BallTree = BinaryTree
+
+# Inherit BallTree from BinaryTree
+cdef class BallTree(BinaryTree):
+    __doc__ = CLASS_DOC.format(**DOC_DICT)
+    pass
 
 #----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a Ball Tree

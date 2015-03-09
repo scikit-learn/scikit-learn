@@ -62,8 +62,7 @@
 
     </h2>
     <blockquote>
-    <p>Identifying to which set of categories a new observation belong
-    to.</p>
+    <p>Identifying to which category an object belongs to.</p>
     <div class="box-links">
     <strong>Applications</strong>: Spam detection, Image recognition.</br>
     <strong>Algorithms</strong>:&nbsp;
@@ -93,7 +92,7 @@
 
     </h2>
     <blockquote>
-    <p>Predicting a continuous value for a new example.</p>
+    <p>Predicting a continuous-valued attribute associated with an object.</p>
     <div class="box-links">
     <strong>Applications</strong>: Drug response, Stock prices.</br>
     <strong>Algorithms</strong>:&nbsp;
@@ -253,7 +252,6 @@
                 <li><em>On-going development:</em>
                 <a href="whats_new.html"><em>What's new</em> (changelog)</a>
                 </li>
-                <li><em>August 2014.</em> scikit-learn 0.15.1 is available for download (<a href="whats_new.html">Changelog</a>).
                 <li><em>July 2014.</em> scikit-learn 0.15.0 is available for download (<a href="whats_new.html">Changelog</a>).
                 </li>
                 <li><em>July 14-20th, 2014: international sprint.</em>
@@ -277,7 +275,8 @@
             <div class="span4">
                 <h4>Community</h4>
                 <ul>
-		<li><em>About us</em> See <a href="about.html">authors</a> # scikit-learn</li>
+                <li><em>About us</em> See <a href="about.html">authors</a> # scikit-learn</li>
+                <li><em>More Machine Learning</em> Find <a href="related_projects.html">related projects</a></li>
                 <li><em>Questions?</em> See <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a> # scikit-learn</li>
                 <li><em>Mailing list:</em> <a href="https://lists.sourceforge.net/lists/listinfo/scikit-learn-general">scikit-learn-general@lists.sourceforge.net</a></li>
                 <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>

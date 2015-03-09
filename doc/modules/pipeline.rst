@@ -1,8 +1,13 @@
+.. _combining_estimators:
+
+===============================================
+Pipeline and FeatureUnion: combining estimators
+===============================================
+
 .. _pipeline:
 
-==============================
 Pipeline: chaining estimators
-==============================
+=============================
 
 .. currentmodule:: sklearn.pipeline
 
@@ -23,7 +28,7 @@ The last estimator may be any type (transformer, classifier, etc.).
 
 
 Usage
-=====
+-----
 
 The :class:`Pipeline` is build using a list of ``(key, value)`` pairs, where
 the ``key`` a string containing the name you want to give this step and ``value``
@@ -85,15 +90,19 @@ This is particularly important for doing grid searches::
 
 .. topic:: Examples:
 
- * :ref:`example_feature_selection_pipeline.py`
- * :ref:`example_grid_search_text_feature_extraction.py`
+ * :ref:`example_feature_selection_feature_selection_pipeline.py`
+ * :ref:`example_model_selection_grid_search_text_feature_extraction.py`
  * :ref:`example_plot_digits_pipe.py`
  * :ref:`example_plot_kernel_approximation.py`
  * :ref:`example_svm_plot_svm_anova.py`
 
+.. topic:: See also:
+
+ * :ref:`grid_search`
+
 
 Notes
-=====
+-----
 
 Calling ``fit`` on the pipeline is the same as calling ``fit`` on
 each estimator in turn, ``transform`` the input and pass it on to the next step.
@@ -105,9 +114,8 @@ pipeline.
 
 .. _feature_union:
 
-==========================================
-FeatureUnion: Combining feature extractors
-==========================================
+FeatureUnion: composite feature spaces
+======================================
 
 .. currentmodule:: sklearn.pipeline
 
@@ -131,7 +139,7 @@ responsibility.)
 
 
 Usage
-=====
+-----
 
 A :class:`FeatureUnion` is built using a list of ``(key, value)`` pairs,
 where the ``key`` is the name you want to give to a given transformation
@@ -158,3 +166,4 @@ Like pipelines, feature unions have a shorthand constructor called
 .. topic:: Examples:
 
  * :ref:`example_feature_stacker.py`
+ * :ref:`example_hetero_feature_union.py`

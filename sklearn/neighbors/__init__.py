@@ -12,6 +12,7 @@ from .classification import KNeighborsClassifier, RadiusNeighborsClassifier
 from .regression import KNeighborsRegressor, RadiusNeighborsRegressor
 from .nearest_centroid import NearestCentroid
 from .kde import KernelDensity
+from .approximate import LSHForest
 
 __all__ = ['BallTree',
            'DistanceMetric',
@@ -24,4 +25,5 @@ __all__ = ['BallTree',
            'RadiusNeighborsRegressor',
            'kneighbors_graph',
            'radius_neighbors_graph',
-           'KernelDensity']
+           'KernelDensity',
+           'LSHForest']

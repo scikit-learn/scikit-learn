@@ -36,7 +36,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         Array of pairwise distances between samples, or a feature array.
 
     labels : array, shape = [n_samples]
-             label values for each sample
+         Predicted labels for each sample.
 
     metric : string, or callable
         The metric to use when calculating distance between instances in a
@@ -78,10 +78,9 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     """
     n_labels = len(np.unique(labels))
     n_samples = X.shape[0]
-    if not 2 <= n_labels <= n_samples-1:
-        raise ValueError("Number of labels is %d "
-                         "but should be more than 2"
-                         "and less than n_samples - 1" % n_labels)
+    if not 1 < n_labels < n_samples:
+        raise ValueError("Number of labels is %d. Valid values are 2 "
+                         "to n_samples - 1 (inclusive)" % n_labels)
 
     if sample_size is not None:
         random_state = check_random_state(random_state)
@@ -96,7 +95,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
 def silhouette_samples(X, labels, metric='euclidean', **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
-    The Silhoeutte Coefficient is a measure of how well samples are clustered
+    The Silhouette Coefficient is a measure of how well samples are clustered
     with samples that are similar to themselves. Clustering models with a high
     Silhouette Coefficient are said to be dense, where samples in the same
     cluster are similar to each other, and well separated, where samples in
