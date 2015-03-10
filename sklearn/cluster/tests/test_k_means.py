@@ -25,6 +25,7 @@ from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _kmeans_single
 from sklearn.cluster.k_means_ import _k_init
 from sklearn.cluster.k_means_ import _mini_batch_step
+from sklearn.cluster.k_means_ import _labels_inertia_precompute_dense
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.externals.six.moves import cStringIO as StringIO
 
@@ -40,7 +41,8 @@ n_clusters, n_features = centers.shape
 X, true_labels = make_blobs(n_samples=n_samples, centers=centers,
                             cluster_std=1., random_state=42)
 X_csr = sp.csr_matrix(X)
-sample_unweight = np.ones((n_samples,))
+sample_unweight = np.ones(shape=(n_samples,), dtype=np.float64)
+default_weight = np.ones(shape=(X.shape[0],), dtype=np.float64)
 
 
 def test_weighted_kmeans():
@@ -55,14 +57,6 @@ def test_weighted_kmeans():
         X_csr[:75], sample_weight=sample_unweight[:75])
     sparse_weighted_labels = clf_b.predict(X[75:])
     assert_array_equal(sparse_weighted_labels, unweighted_labels)
-
-
-def test_weighted_kmeans_weight_flag():
-    km = KMeans()
-    assert_raises(TypeError, km.fit, X, sample_weight=1)
-    assert_raises(
-        ValueError, km.fit, X, sample_weight=np.ones((n_samples + 1,)))
-    assert_raises(ValueError, km.fit, X, sample_weight=np.ones((n_samples, 1)))
 
 
 def test_weighted_kmeans_single():
@@ -122,6 +116,149 @@ def test_weighted_kmeans_single_sparse():
     assert_array_equal(labels_c, labels_b)
     assert_array_almost_equal(centers_c, centers_b)
     assert_almost_equal(inertia_b, inertia_c)
+
+
+def test_labels_inertia_weighted():
+    # Tests that weighted _labels_inertia gives consistent
+    # results and scales as expected
+
+    x_squared_norms = (X ** 2).sum(axis=1)
+
+    labels, inertia = _labels_inertia(X, x_squared_norms, centers,
+                                      precompute_distances=True,
+                                      distances=None)
+
+    wgts_labels, wgts_inertia = \
+        _labels_inertia(X, x_squared_norms, centers,
+                        precompute_distances=True,
+                        distances=None,
+                        sample_weight=default_weight)
+    assert_equal(wgts_inertia, inertia)
+    assert_array_equal(wgts_labels, labels)
+
+    # test scaling of the inertia
+    scaled_labels, scaled_inertia = \
+        _labels_inertia(X, x_squared_norms, centers,
+                        precompute_distances=True, distances=None,
+                        sample_weight=2*default_weight)
+    assert_equal(2 * inertia, scaled_inertia)
+    assert_array_equal(scaled_labels, labels)
+
+    x_squared_norms_csr = row_norms(X_csr, squared=True)
+    csr_labels, csr_inertia = \
+        _labels_inertia(X_csr, x_squared_norms_csr, centers,
+                        precompute_distances=True,
+                        distances=None)
+
+    assert_array_equal(csr_labels, labels)
+    assert_equal(csr_inertia, inertia)
+
+
+def test_labels_inertia_precompute_dense_weighted():
+    # Tests that weighted _labels_inertia_precompute gives consistent
+    # results and scales as expected
+    x_squared_norms = (X ** 2).sum(axis=1)
+    distances = np.zeros(shape=(0,), dtype=np.float64)
+
+    labels, inertia = \
+        _labels_inertia_precompute_dense(X, x_squared_norms, centers,
+                                         distances)
+
+    wgts_labels, wgts_inertia = \
+        _labels_inertia_precompute_dense(X, x_squared_norms, centers,
+                                         distances,
+                                         sample_weight=sample_unweight)
+
+    assert_equal(wgts_inertia, inertia)
+    assert_array_equal(wgts_labels, labels)
+
+    # test scaling of the inertia
+    scaled_labels, scaled_inertia = \
+        _labels_inertia_precompute_dense(X, x_squared_norms, centers,
+                                         distances,
+                                         sample_weight=2*sample_unweight)
+
+    assert_equal(2*inertia, scaled_inertia)
+    assert_array_equal(labels, scaled_labels)
+
+
+def test_mini_batch_step_dense_weighted():
+    rng = np.random.RandomState(42)
+    old_centers = centers + rng.normal(size=centers.shape)
+    wgtd_centers = old_centers.copy()
+    scaled_centers = old_centers.copy()
+
+    old_buffer = np.zeros(old_centers.shape[1], dtype=np.double)
+    wgtd_buffer = np.zeros(wgtd_centers.shape[1], dtype=np.double)
+    scaled_buffer = np.zeros(scaled_centers.shape[1], dtype=np.double)
+
+    old_counts = np.zeros(old_centers.shape[0], dtype=np.float64)
+    wgtd_counts = np.zeros(wgtd_centers.shape[0], dtype=np.float64)
+    scaled_counts = np.zeros(scaled_centers.shape[0], dtype=np.float64)
+    # extract a small minibatch
+    X_mb = X
+    x_mb_squared_norms = row_norms(X_mb, squared=True)
+    sample_unweight_mb = sample_unweight
+
+    inertia, diff = _mini_batch_step(
+        X_mb, x_mb_squared_norms, old_centers, old_counts,
+        old_buffer, True, None, random_reassign=False)
+
+    wgtd_inertia, wgtd_diff = _mini_batch_step(
+        X_mb, x_mb_squared_norms, wgtd_centers, wgtd_counts,
+        wgtd_buffer, True, None, random_reassign=False,
+        sample_weight=sample_unweight_mb)
+
+    assert_equal(wgtd_inertia, inertia)
+    assert_almost_equal(wgtd_diff, diff)
+
+    # test that inertias scale properly
+    wgtd_inertia, wgtd_diff = _mini_batch_step(
+        X_mb, x_mb_squared_norms, scaled_centers, scaled_counts,
+        scaled_buffer, True, None, random_reassign=False,
+        sample_weight=2*sample_unweight_mb)
+
+    assert_equal(2*inertia, wgtd_inertia)
+
+
+def test_mini_batch_step_sparse_weighted():
+    rng = np.random.RandomState(42)
+    old_centers = centers + rng.normal(size=centers.shape)
+    wgtd_centers = old_centers.copy()
+    scaled_centers = old_centers.copy()
+
+    old_buffer = np.zeros(old_centers.shape[1], dtype=np.double)
+    wgtd_buffer = np.zeros(wgtd_centers.shape[1], dtype=np.double)
+    scaled_buffer = np.zeros(scaled_centers.shape[1], dtype=np.double)
+
+    old_counts = np.zeros(old_centers.shape[0], dtype=np.float64)
+    wgtd_counts = np.zeros(wgtd_centers.shape[0], dtype=np.float64)
+    scaled_counts = np.zeros(scaled_centers.shape[0], dtype=np.float64)
+
+    # extract a small minibatch
+    X_mb_csr = X_csr[:10]
+    x_mb_squared_norms_csr = row_norms(X_mb_csr, squared=True)
+    sample_unweight_mb = sample_unweight[:10]
+
+    inertia, diff = _mini_batch_step(
+        X_mb_csr, x_mb_squared_norms_csr, old_centers, old_counts,
+        old_buffer, True, None, random_reassign=False)
+
+    wgtd_inertia, wgtd_diff = _mini_batch_step(
+        X_mb_csr, x_mb_squared_norms_csr, wgtd_centers, wgtd_counts,
+        wgtd_buffer, True, None, random_reassign=False,
+        sample_weight=sample_unweight_mb)
+
+    assert_equal(wgtd_inertia, inertia)
+    assert_almost_equal(wgtd_diff, diff)
+
+    # test that inertias scale properly
+    wgtd_inertia, wgtd_diff = _mini_batch_step(
+        X_mb_csr, x_mb_squared_norms_csr, scaled_centers, scaled_counts,
+        scaled_buffer, True, None, random_reassign=False,
+        sample_weight=2 * sample_unweight_mb)
+
+    assert_equal(2 * inertia, wgtd_inertia)
 
 
 def test_weighted_k_init():

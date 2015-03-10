@@ -45,6 +45,7 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
         unsigned int n_features = centers.shape[1]
         unsigned int n_samples = X.shape[0]
         unsigned int sample_idx, center_idx, feature_idx
+        unsigned int n_weights = sample_weight.shape[0]
         unsigned int store_distances = 0
         unsigned int k
         DOUBLE inertia = 0.0
@@ -60,27 +61,51 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
         center_squared_norms[center_idx] = ddot(
             n_features, &centers[center_idx, 0], 1, &centers[center_idx, 0], 1)
 
-    for sample_idx in range(n_samples):
-        min_dist = -1
-        for center_idx in range(n_clusters):
-            dist = 0.0
-            # hardcoded: minimize euclidean distance to cluster center:
-            # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
-            dist += ddot(n_features, &X[sample_idx, 0], 1,
-                         &centers[center_idx, 0], 1)
-            dist *= -2
-            dist += center_squared_norms[center_idx]
-            dist += x_squared_norms[sample_idx]
-            # weighted euclidean distance:
-            # weight(a) * ||a - b||^2
-            dist *= sample_weight[sample_idx]
-            if min_dist == -1 or dist < min_dist:
-                min_dist = dist
-                labels[sample_idx] = center_idx
+    if n_weights == 1:
+        for sample_idx in range(n_samples):
+            min_dist = -1
+            for center_idx in range(n_clusters):
+                dist = 0.0
+                # hardcoded: minimize euclidean distance to cluster center:
+                # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
+                dist += ddot(n_features, &X[sample_idx, 0], 1,
+                             &centers[center_idx, 0], 1)
+                dist *= -2
+                dist += center_squared_norms[center_idx]
+                dist += x_squared_norms[sample_idx]
+            
+                if min_dist == -1 or dist < min_dist:
+                    min_dist = dist
+                    labels[sample_idx] = center_idx
 
-        if store_distances:
-            distances[sample_idx] = min_dist
-        inertia += min_dist
+            if store_distances:
+                distances[sample_idx] = min_dist
+            inertia += min_dist
+
+    else:
+        for sample_idx in range(n_samples):
+            min_dist = -1
+            for center_idx in range(n_clusters):
+                dist = 0.0
+                # hardcoded: minimize euclidean distance to cluster center:
+                # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
+                dist += ddot(n_features, &X[sample_idx, 0], 1,
+                             &centers[center_idx, 0], 1)
+                dist *= -2
+                dist += center_squared_norms[center_idx]
+                dist += x_squared_norms[sample_idx]
+
+                # weighted euclidean distance:
+                # weight(a) * ||a - b||^2
+                dist *= sample_weight[sample_idx]
+
+                if min_dist == -1 or dist < min_dist:
+                    min_dist = dist
+                    labels[sample_idx] = center_idx
+
+            if store_distances:
+                distances[sample_idx] = min_dist
+            inertia += min_dist
 
     return inertia
 
@@ -103,6 +128,7 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         np.ndarray[INT, ndim=1] X_indptr = X.indptr
         unsigned int n_clusters = centers.shape[0]
         unsigned int n_features = centers.shape[1]
+        unsigned int n_weights = sample_weight.shape[0]
         unsigned int n_samples = X.shape[0]
         unsigned int store_distances = 0
         unsigned int sample_idx, center_idx, feature_idx
@@ -120,26 +146,49 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         center_squared_norms[center_idx] = ddot(
             n_features, &centers[center_idx, 0], 1, &centers[center_idx, 0], 1)
 
-    for sample_idx in range(n_samples):
-        min_dist = -1
-        for center_idx in range(n_clusters):
-            dist = 0.0
-            # hardcoded: minimize euclidean distance to cluster center:
-            # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
-            for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
-                dist += centers[center_idx, X_indices[k]] * X_data[k]
-            dist *= -2
-            dist += center_squared_norms[center_idx]
-            dist += x_squared_norms[sample_idx]
-            # weighted euclidean distance:
-            # weight(a) * ||a - b||^2
-            dist *= sample_weight[sample_idx]
-            if min_dist == -1 or dist < min_dist:
-                min_dist = dist
-                labels[sample_idx] = center_idx
-                if store_distances:
-                    distances[sample_idx] = dist
-        inertia += min_dist
+    if n_weights == 1:
+        for sample_idx in range(n_samples):
+            min_dist = -1
+            for center_idx in range(n_clusters):
+                dist = 0.0
+                # hardcoded: minimize euclidean distance to cluster center:
+                # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
+                for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
+                    dist += centers[center_idx, X_indices[k]] * X_data[k]
+                dist *= -2
+                dist += center_squared_norms[center_idx]
+                dist += x_squared_norms[sample_idx]
+
+                if min_dist == -1 or dist < min_dist:
+                    min_dist = dist
+                    labels[sample_idx] = center_idx
+                    if store_distances:
+                        distances[sample_idx] = dist
+            inertia += min_dist
+
+    else:
+        for sample_idx in range(n_samples):
+            min_dist = -1
+            for center_idx in range(n_clusters):
+                dist = 0.0
+                # hardcoded: minimize euclidean distance to cluster center:
+                # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
+                for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
+                    dist += centers[center_idx, X_indices[k]] * X_data[k]
+                dist *= -2
+                dist += center_squared_norms[center_idx]
+                dist += x_squared_norms[sample_idx]
+        
+                # weighted euclidean distance:
+                # weight(a) * ||a - b||^2
+                dist *= sample_weight[sample_idx]
+
+                if min_dist == -1 or dist < min_dist:
+                    min_dist = dist
+                    labels[sample_idx] = center_idx
+                    if store_distances:
+                        distances[sample_idx] = dist
+            inertia += min_dist
 
     return inertia
 
@@ -168,8 +217,6 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
     counts: array, shape (n_clusters,)
          The vector in which we keep track of the numbers of elements in a
          cluster
-
-    ### TODO sample_weight note
     
     Returns
     -------
@@ -193,7 +240,7 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         unsigned int n_samples = X.shape[0]
         unsigned int n_clusters = centers.shape[0]
         unsigned int n_features = centers.shape[1]
-
+        unsigned int n_weights = sample_weight.shape[0]
         unsigned int sample_idx, center_idx, feature_idx
         unsigned int k
         DOUBLE old_count, new_count
@@ -206,9 +253,14 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         new_count = old_count
 
         # count the number of samples assigned to this center
-        for sample_idx in range(n_samples):
-            if nearest_center[sample_idx] == center_idx:
-                new_count += sample_weight[sample_idx]
+        if n_weights == 1:
+            for sample_idx in range(n_samples):
+                if nearest_center[sample_idx] == center_idx:
+                    new_count += 1
+        else:
+            for sample_idx in range(n_samples):
+                if nearest_center[sample_idx] == center_idx:
+                    new_count += sample_weight[sample_idx]
 
         if new_count == old_count:
             # no new sample: leave this center as it stands
@@ -219,18 +271,29 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         if compute_squared_diff:
             old_center[:] = centers[center_idx]
         centers[center_idx] *= old_count
-
+            
         # iterate of over samples assigned to this cluster to move the center
         # location by inplace summation
-        for sample_idx in range(n_samples):
-            if nearest_center[sample_idx] != center_idx:
-                continue
+        if n_weights == 1:
+            for sample_idx in range(n_samples):
+                if nearest_center[sample_idx] != center_idx:
+                    continue
 
-            # inplace sum with new samples that are members of this cluster
-            # and update of the incremental squared difference update of the
-            # center position
-            for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
-                centers[center_idx, X_indices[k]] += sample_weight[sample_idx] * X_data[k]
+                # inplace sum with new samples that are members of this cluster
+                # and update of the incremental squared difference update of the
+                # center position
+                for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
+                    centers[center_idx, X_indices[k]] += X_data[k]
+        else:
+            for sample_idx in range(n_samples):
+                if nearest_center[sample_idx] != center_idx:
+                    continue
+
+                # inplace sum with new samples that are members of this cluster
+                # and update of the incremental squared difference update of the
+                # center position
+                for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
+                    centers[center_idx, X_indices[k]] += sample_weight[sample_idx] * X_data[k]
 
         # inplace rescale center with updated count
         if new_count > old_count:
@@ -246,7 +309,6 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                 for feature_idx in range(n_features):
                     squared_diff += (old_center[feature_idx]
                                      - centers[center_idx, feature_idx]) ** 2
-
     return squared_diff
 
 
@@ -280,13 +342,20 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
         The resulting centers
     """
     ## TODO: add support for CSR input
-    cdef int n_samples, n_features
-    n_samples = X.shape[0]
-    n_features = X.shape[1]
-    cdef int i, j, c
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
+    cdef unsigned int i, j, c
+    cdef unsigned int n_weights = sample_weight.shape[0]
     cdef np.ndarray[DOUBLE, ndim=2] centers = np.zeros((n_clusters, n_features))
-    cdef np.ndarray[DOUBLE, ndim=1] n_samples_in_cluster = \
-        bincount(labels, weights=sample_weight, minlength=n_clusters)
+    cdef np.ndarray[DOUBLE, ndim=1] n_samples_in_cluster
+
+    if n_weights == 1:
+        n_samples_in_cluster = \
+            1. * bincount(labels, minlength=n_clusters)
+    else:
+        n_samples_in_cluster = \
+            bincount(labels, weights=sample_weight, minlength=n_clusters)
+
     empty_clusters = np.where(n_samples_in_cluster == 0)[0]
     # maybe also relocate small clusters?
 
@@ -298,16 +367,23 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
         # XXX two relocated clusters could be close to each other
         new_center = X[far_from_centers[i]]
         centers[cluster_id] = new_center
-        n_samples_in_cluster[cluster_id] = sample_weight[far_from_centers[i]]
+        n_samples_in_cluster[cluster_id] = 1
+        if n_weights > 1:
+            n_samples_in_cluster[cluster_id] *= sample_weight[far_from_centers[i]]
 
-    for i in range(n_samples):
-        for j in range(n_features):
-            # weighted centroid 
-            centers[labels[i], j] += sample_weight[i] * X[i, j]
-
+    if n_weights == 1:
+        for i in range(n_samples):
+            for j in range(n_features):
+                centers[labels[i], j] += X[i, j]
+    else:
+        for i in range(n_samples):
+            for j in range(n_features):
+                centers[labels[i], j] += sample_weight[i] * X[i, j]
+                
     centers /= n_samples_in_cluster[:, np.newaxis]
 
     return centers
+
 
 def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
         np.ndarray[DOUBLE, ndim=1] distances,
@@ -342,14 +418,21 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
     cdef np.ndarray[int, ndim=1] indices = X.indices
     cdef np.ndarray[int, ndim=1] indptr = X.indptr
     cdef int ind, j
+    cdef unsigned int n_weights = sample_weight.shape[0]
 
     cdef np.ndarray[DOUBLE, ndim=2, mode="c"] centers = \
         np.zeros((n_clusters, n_features))
     cdef np.ndarray[np.npy_intp, ndim=1] far_from_centers
-    cdef np.ndarray[DOUBLE, ndim=1, mode="c"] n_samples_in_cluster = \
-        bincount(labels, weights=sample_weight, minlength=n_clusters)
-    cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] empty_clusters = \
-        np.where(n_samples_in_cluster == 0)[0]
+    cdef np.ndarray[DOUBLE, ndim=1, mode="c"] n_samples_in_cluster 
+
+    if n_weights == 1:
+        n_samples_in_cluster =\
+            1. * bincount(labels, minlength=n_clusters)
+    else:
+        n_samples_in_cluster =\
+            bincount(labels, weights=sample_weight, minlength=n_clusters)
+    
+    empty_clusters = np.where(n_samples_in_cluster == 0)[0]
 
     # maybe also relocate small clusters?
 
@@ -364,12 +447,20 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
         centers[cluster_id] = 0.
         add_row_csr(data, indices, indptr, far_from_centers[i],
                     centers[cluster_id])
-        n_samples_in_cluster[cluster_id] = sample_weight[far_from_centers[i]]
+        n_samples_in_cluster[cluster_id] = 1
+        if n_weights >1:
+            n_samples_in_cluster[cluster_id] *= sample_weight[far_from_centers[i]]
 
-    for i in range(labels.shape[0]):
-        for ind in range(indptr[i], indptr[i + 1]):
-            j = indices[ind]
-            centers[labels[i], j] += sample_weight[i] * data[ind]
+    if n_weights == 1:
+        for i in range(labels.shape[0]):
+            for ind in range(indptr[i], indptr[i + 1]):
+                j = indices[ind]
+                centers[labels[i], j] += data[ind]
+    else:
+        for i in range(labels.shape[0]):
+            for ind in range(indptr[i], indptr[i + 1]):
+                j = indices[ind]
+                centers[labels[i], j] += sample_weight[i] * data[ind]
 
     centers /= n_samples_in_cluster[:, np.newaxis]
 
