@@ -820,7 +820,7 @@ class _BaseRidgeCV(LinearModel):
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
                  store_cv_values=False):
-        self.alphas = np.asarray(alphas)
+        self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
@@ -846,7 +846,12 @@ class _BaseRidgeCV(LinearModel):
         -------
         self : Returns self.
         """
+<<<<<<< HEAD
                  
+=======
+        self.alphas = np.asarray(self.alphas)
+
+>>>>>>> use tuples instead of mutable  default values
         if self.cv is None:
             estimator = _RidgeGCV(self.alphas,
                                   fit_intercept=self.fit_intercept,
