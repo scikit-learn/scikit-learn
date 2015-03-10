@@ -78,17 +78,15 @@ def test_rfe_deprecation_estimator_params():
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
-    rfe = RFE(estimator=SVC(), n_features_to_select=4, step=0.1,
-              estimator_params={'kernel': 'linear'})
     assert_warns_message(DeprecationWarning, deprecation_message,
-                         rfe.fit,
+                         RFE(estimator=SVC(), n_features_to_select=4, step=0.1,
+                             estimator_params={'kernel': 'linear'}).fit,
                          X=X,
                          y=y)
 
-    rfecv = RFECV(estimator=SVC(), step=1, cv=5,
-                  estimator_params={'kernel': 'linear'})
     assert_warns_message(DeprecationWarning, deprecation_message,
-                         rfecv.fit,
+                         RFECV(estimator=SVC(), step=1, cv=5,
+                               estimator_params={'kernel': 'linear'}).fit,
                          X=X,
                          y=y)
 
