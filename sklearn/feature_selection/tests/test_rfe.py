@@ -70,19 +70,27 @@ def test_rfe_set_params():
 
 
 def test_rfe_deprecation_estimator_params():
-    deprecation_message = ("The 'estimator parameters' is deprecated as of version 0.16 "
+    deprecation_message = ("The parameter 'estimator_params' is deprecated as of version 0.16 "
                            "and will be removed in 0.18. The parameter is no longer "
                            "necessary because the value is set via the estimator initialisation "
                            "or set_params function.")
-    clf = SVC()
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+    rfe = RFE(estimator=SVC(), n_features_to_select=4, step=0.1,
+              estimator_params={'kernel': 'linear'})
     assert_warns_message(DeprecationWarning, deprecation_message,
-                         RFE,
-                         estimator=clf,
-                         estimator_params={'kernel': 'linear'})
+                         rfe.fit,
+                         X=X,
+                         y=y)
+
+    rfecv = RFECV(estimator=SVC(), step=1, cv=5,
+                  estimator_params={'kernel': 'linear'})
     assert_warns_message(DeprecationWarning, deprecation_message,
-                         RFECV,
-                         estimator=clf,
-                         estimator_params={'kernel': 'linear'})
+                         rfecv.fit,
+                         X=X,
+                         y=y)
 
 
 def test_rfe():

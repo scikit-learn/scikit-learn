@@ -104,12 +104,6 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     """
     def __init__(self, estimator, n_features_to_select=None, step=1,
                  estimator_params=None, verbose=0):
-        if estimator_params is not None:
-            warnings.warn("The 'estimator parameters' is deprecated as of version 0.16 "
-                          "and will be removed in 0.18. The parameter is no longer "
-                          "necessary because the value is set via the estimator initialisation "
-                          "or set_params function."
-                          , DeprecationWarning)
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
@@ -142,6 +136,13 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             step = int(self.step)
         if step <= 0:
             raise ValueError("Step must be >0")
+
+        if self.estimator_params is not None:
+            warnings.warn("The parameter 'estimator_params' is deprecated as of version 0.16 "
+                          "and will be removed in 0.18. The parameter is no longer "
+                          "necessary because the value is set via the estimator initialisation "
+                          "or set_params function."
+                          , DeprecationWarning)
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
@@ -326,12 +327,6 @@ class RFECV(RFE, MetaEstimatorMixin):
     """
     def __init__(self, estimator, step=1, cv=None, scoring=None,
                  estimator_params=None, verbose=0):
-        if estimator_params is not None:
-            warnings.warn("The 'estimator parameters' is deprecated as of version 0.16 "
-                          "and will be removed in 0.18. The parameter is no longer "
-                          "necessary because the value is set via the estimator initialisation "
-                          "or set_params function."
-                          , DeprecationWarning)
         self.estimator = estimator
         self.step = step
         self.cv = cv
@@ -354,6 +349,12 @@ class RFECV(RFE, MetaEstimatorMixin):
             regression).
         """
         X, y = check_X_y(X, y, "csr")
+        if self.estimator_params is not None:
+            warnings.warn("The parameter 'estimator_params' is deprecated as of version 0.16 "
+                          "and will be removed in 0.18. The parameter is no longer "
+                          "necessary because the value is set via the estimator initialisation "
+                          "or set_params function."
+                          , DeprecationWarning)
         # Initialization
         rfe = RFE(estimator=self.estimator, n_features_to_select=1,
                   step=self.step, estimator_params=self.estimator_params,
