@@ -28,11 +28,9 @@ with hr2(X) = -log sum f^2(x) = -log(1/n^2 sum_i sum_j K(xi-xj, 2*h'^2), n is th
 """
 
 import numpy as np
-from numpy.linalg import pinv
 from collections import defaultdict
 from functools import reduce
 import numpy.lib.arraysetops as at
-from itertools import starmap
 from operator import mul
 from joblib import Parallel, delayed
 
@@ -139,8 +137,7 @@ def Parallel_MI_RenyiCC_cd_Multi(xyui, X, hx, neigh, k):
 def Parallel_MI_RenyiCC_cd_Multi_hr2c_dim0(i, X, hx):
     return [ParzenWindow(i[j]-X[:,j], hx) for j in range(X.shape[1])]
 
-def Parallel_MI_RenyiCC_cd_Multi_hr2c_dim1(Xj, hx):
-    neigh = KNearestNeighbors(Xj, k)
+def Parallel_MI_RenyiCC_cd_Multi_hr2c_dim1(Xj, hx, neigh):
     #return np.sum(ParzenWindow(xi-Xj, hx) for xi in Xj)
     return np.sum(ParzenWindow(xi-Xj[knn(xi, neigh),:], hx) for xi in Xj)
 
@@ -236,7 +233,7 @@ def MI_RenyiCC_Multi(X,y=None, k=0, type='c', njobs=4):
             hr2cp = reduce(mul,np.sum(np.array(hr2cp),0))
             hr2c = (1/N**4)*nxyu*hr2cp
         else:
-            hr2cp = Parallel(n_jobs=njobs)(delayed(Parallel_MI_RenyiCC_cd_Multi_hr2c_dim1)(X[:,j], hx) for j in range(X.shape[1]))
+            hr2cp = Parallel(n_jobs=njobs)(delayed(Parallel_MI_RenyiCC_cd_Multi_hr2c_dim1)(X[:,j], hx, neigh) for j in range(X.shape[1]))
             hr2cp = reduce(mul,hr2cp)
             hr2c = (1/N**4)*nxyu*hr2cp
         #print("hr2a:",hr2a,"-hr2b:",hr2b,"-hr2c:",hr2c)
@@ -369,7 +366,6 @@ def ParzenWindow(w, h, d=1):
         pw = Estimation of the parzen window function for the density estimation f(w)
     """""""""""""""""""""""
     if d>1:
-        #pw = sum(starmap(np.dot,GaussianWindow(list(w),h)))
         pw = np.sum(np.prod(GaussianWindow(list(w),h),1))
     else: pw = np.sum(GaussianWindow(w,h))#np.sum(np.exp(-w**2/(2*phi))/den)
     return pw
