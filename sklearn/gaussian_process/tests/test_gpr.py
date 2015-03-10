@@ -110,7 +110,7 @@ def test_sample_statistics():
 
         y_mean, y_cov = gpr.predict(X2, return_cov=True)
 
-        samples = gpr.sample(X2, 1000000)
+        samples = gpr.sample_y(X2, 1000000)
 
         # More digits accuracy would require many more samples
         assert_almost_equal(y_mean, np.mean(samples, 1), 2)

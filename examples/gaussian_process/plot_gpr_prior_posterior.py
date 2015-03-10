@@ -39,7 +39,7 @@ for fig_index, kernel in enumerate(kernels):
     plt.fill_between(X_, y_mean - np.sqrt(np.diag(y_cov)),
                      y_mean + np.sqrt(np.diag(y_cov)),
                      alpha=0.5, color='k')
-    y_samples = gp.sample(X_[:, np.newaxis], 10)
+    y_samples = gp.sample_y(X_[:, np.newaxis], 10)
     plt.plot(X_, y_samples, color='b', lw=1)
     plt.xlim(0, 5)
     plt.ylim(-3, 3)
@@ -60,7 +60,7 @@ for fig_index, kernel in enumerate(kernels):
                      y_mean + np.sqrt(np.diag(y_cov)),
                      alpha=0.5, color='k')
 
-    y_samples = gp.sample(X_[:, np.newaxis], 10)
+    y_samples = gp.sample_y(X_[:, np.newaxis], 10)
     plt.plot(X_, y_samples, color='b', lw=1)
     plt.scatter(X[:, 0], y, c='r', s=50, zorder=10)
     plt.xlim(0, 5)
