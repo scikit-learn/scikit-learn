@@ -153,7 +153,7 @@ Enhancements
      `newton-cg` by Simon Wu.
 
    - ``DictVectorizer`` can now perform ``fit_transform`` on an iterable in a
-     single pass, when giving the option ``sort=False``. By Dan Blanchard.
+     single pass, when giving the option ``sort=False``. By `Dan Blanchard`_.
 
    - :class:`GridSearchCV` and :class:`RandomizedSearchCV` can now be
      configured to work with estimators that may fail and raise errors on
@@ -3368,3 +3368,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Hervé Bredin: http://herve.niderb.fr/
 
 .. _Eric Schubert: https://github.com/kno10
+
+.. _Dan Blanchard: https://github.com/dan-blanchard
