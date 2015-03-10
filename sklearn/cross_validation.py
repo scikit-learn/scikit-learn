@@ -60,34 +60,17 @@ class _PartitionIterator(with_metaclass(ABCMeta)):
         Total number of elements in dataset.
     """
 
-    def __init__(self, n, indices=None):
-        if indices is None:
-            indices = True
-        else:
-            warnings.warn("The indices parameter is deprecated and will be "
-                          "removed (assumed True) in 0.17", DeprecationWarning,
-                          stacklevel=1)
+    def __init__(self, n):
         if abs(n - int(n)) >= np.finfo('f').eps:
             raise ValueError("n must be an integer")
         self.n = int(n)
-        self._indices = indices
-
-    @property
-    def indices(self):
-        warnings.warn("The indices attribute is deprecated and will be "
-                      "removed (assumed True) in 0.17", DeprecationWarning,
-                      stacklevel=1)
-        return self._indices
 
     def __iter__(self):
-        indices = self._indices
-        if indices:
-            ind = np.arange(self.n)
+        ind = np.arange(self.n)
         for test_index in self._iter_test_masks():
             train_index = np.logical_not(test_index)
-            if indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
+            train_index = ind[train_index]
+            test_index = ind[test_index]
             yield train_index, test_index
 
     # Since subclasses must implement either _iter_test_masks or
@@ -214,8 +197,8 @@ class LeavePOut(_PartitionIterator):
     TRAIN: [0 1] TEST: [2 3]
     """
 
-    def __init__(self, n, p, indices=None):
-        super(LeavePOut, self).__init__(n, indices)
+    def __init__(self, n, p):
+        super(LeavePOut, self).__init__(n)
         self.p = p
 
     def _iter_test_indices(self):
@@ -239,8 +222,8 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
     """Base class to validate KFold approaches"""
 
     @abstractmethod
-    def __init__(self, n, n_folds, indices, shuffle, random_state):
-        super(_BaseKFold, self).__init__(n, indices)
+    def __init__(self, n, n_folds, shuffle, random_state):
+        super(_BaseKFold, self).__init__(n)
 
         if abs(n_folds - int(n_folds)) >= np.finfo('f').eps:
             raise ValueError("n_folds must be an integer")
@@ -317,9 +300,9 @@ class KFold(_BaseKFold):
     classification tasks).
     """
 
-    def __init__(self, n, n_folds=3, indices=None, shuffle=False,
+    def __init__(self, n, n_folds=3, shuffle=False,
                  random_state=None):
-        super(KFold, self).__init__(n, n_folds, indices, shuffle, random_state)
+        super(KFold, self).__init__(n, n_folds, shuffle, random_state)
         self.idxs = np.arange(n)
         if shuffle:
             rng = check_random_state(self.random_state)
@@ -400,10 +383,10 @@ class StratifiedKFold(_BaseKFold):
 
     """
 
-    def __init__(self, y, n_folds=3, indices=None, shuffle=False,
+    def __init__(self, y, n_folds=3, shuffle=False,
                  random_state=None):
         super(StratifiedKFold, self).__init__(
-            len(y), n_folds, indices, shuffle, random_state)
+            len(y), n_folds, shuffle, random_state)
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_labels, y_inversed = np.unique(y, return_inverse=True)
@@ -506,8 +489,8 @@ class LeaveOneLabelOut(_PartitionIterator):
 
     """
 
-    def __init__(self, labels, indices=None):
-        super(LeaveOneLabelOut, self).__init__(len(labels), indices)
+    def __init__(self, labels):
+        super(LeaveOneLabelOut, self).__init__(len(labels))
         # We make a copy of labels to avoid side-effects during iteration
         self.labels = np.array(labels, copy=True)
         self.unique_labels = np.unique(labels)
@@ -579,9 +562,9 @@ class LeavePLabelOut(_PartitionIterator):
      [5 6]] [1] [2 1]
     """
 
-    def __init__(self, labels, p, indices=None):
+    def __init__(self, labels, p):
         # We make a copy of labels to avoid side-effects during iteration
-        super(LeavePLabelOut, self).__init__(len(labels), indices)
+        super(LeavePLabelOut, self).__init__(len(labels))
         self.labels = np.array(labels, copy=True)
         self.unique_labels = np.unique(labels)
         self.n_unique_labels = len(self.unique_labels)
@@ -750,12 +733,7 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
     def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
-                 indices=None, random_state=None, n_iterations=None):
-        if indices is None:
-            indices = True
-        else:
-            warnings.warn("The indices parameter is deprecated and will be "
-                          "removed (assumed True) in 0.17", DeprecationWarning)
+                 random_state=None, n_iterations=None):
         self.n = n
         self.n_iter = n_iter
         if n_iterations is not None:  # pragma: no cover
@@ -765,29 +743,14 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
-        self._indices = indices
         self.n_train, self.n_test = _validate_shuffle_split(n,
                                                             test_size,
                                                             train_size)
 
-    @property
-    def indices(self):
-        warnings.warn("The indices attribute is deprecated and will be "
-                      "removed (assumed True) in 0.17", DeprecationWarning,
-                      stacklevel=1)
-        return self._indices
-
     def __iter__(self):
-        if self._indices:
-            for train, test in self._iter_indices():
-                yield train, test
-            return
         for train, test in self._iter_indices():
-            train_m = np.zeros(self.n, dtype=bool)
-            test_m = np.zeros(self.n, dtype=bool)
-            train_m[train] = True
-            test_m[test] = True
-            yield train_m, test_m
+            yield train, test
+        return
 
     @abstractmethod
     def _iter_indices(self):
@@ -999,10 +962,10 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     """
 
     def __init__(self, y, n_iter=10, test_size=0.1, train_size=None,
-                 indices=None, random_state=None, n_iterations=None):
+                 random_state=None, n_iterations=None):
 
         super(StratifiedShuffleSplit, self).__init__(
-            len(y), n_iter, test_size, train_size, indices, random_state,
+            len(y), n_iter, test_size, train_size, random_state,
             n_iterations)
         self.y = np.array(y)
         self.classes, self.y_indices = np.unique(y, return_inverse=True)
@@ -1105,8 +1068,8 @@ class PredefinedSplit(_PartitionIterator):
     TRAIN: [0 2] TEST: [1 3]
     """
 
-    def __init__(self, test_fold, indices=None):
-        super(PredefinedSplit, self).__init__(len(test_fold), indices)
+    def __init__(self, test_fold):
+        super(PredefinedSplit, self).__init__(len(test_fold))
         self.test_fold = np.array(test_fold, dtype=np.int)
         self.test_fold = column_or_1d(self.test_fold)
         self.unique_folds = np.unique(self.test_fold)
@@ -1586,35 +1549,26 @@ def check_cv(cv, X=None, y=None, classifier=False):
         The return value is guaranteed to be a cv generator instance, whatever
         the input type.
     """
-    return _check_cv(cv, X=X, y=y, classifier=classifier, warn_mask=True)
+    return _check_cv(cv, X=X, y=y, classifier=classifier)
 
 
-def _check_cv(cv, X=None, y=None, classifier=False, warn_mask=False):
+def _check_cv(cv, X=None, y=None, classifier=False):
     # This exists for internal use while indices is being deprecated.
     is_sparse = sp.issparse(X)
-    needs_indices = is_sparse or not hasattr(X, "shape")
     if cv is None:
         cv = 3
     if isinstance(cv, numbers.Integral):
-        if warn_mask and not needs_indices:
-            warnings.warn('check_cv will return indices instead of boolean '
-                          'masks from 0.17', DeprecationWarning)
-        else:
-            needs_indices = None
         if classifier:
             if type_of_target(y) in ['binary', 'multiclass']:
-                cv = StratifiedKFold(y, cv, indices=needs_indices)
+                cv = StratifiedKFold(y, cv)
             else:
-                cv = KFold(_num_samples(y), cv, indices=needs_indices)
+                cv = KFold(_num_samples(y), cv)
         else:
             if not is_sparse:
                 n_samples = len(X)
             else:
                 n_samples = X.shape[0]
-            cv = KFold(n_samples, cv, indices=needs_indices)
-    if needs_indices and not getattr(cv, "_indices", True):
-        raise ValueError("Sparse data and lists require indices-based cross"
-                         " validation generator, got: %r", cv)
+            cv = KFold(n_samples, cv)
     return cv
 
 

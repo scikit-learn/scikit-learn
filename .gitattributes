@@ -1,5 +1,4 @@
 /sklearn/__check_build/_check_build.c -diff
-/sklearn/_hmmc.c -diff
 /sklearn/_isotonic.c -diff
 /sklearn/cluster/_dbscan_inner.cpp -diff
 /sklearn/cluster/_hierarchical.cpp -diff

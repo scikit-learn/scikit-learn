@@ -21,7 +21,7 @@ from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import check_X_y
-from ..utils import compute_sample_weight, compute_class_weight
+from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
@@ -185,16 +185,6 @@ def _solve_svd(X, y, alpha):
     return np.dot(Vt.T, d_UT_y).T
 
 
-def _deprecate_dense_cholesky(solver):
-    if solver == 'dense_cholesky':
-        warnings.warn(DeprecationWarning(
-            "The name 'dense_cholesky' is deprecated and will "
-            "be removed in 0.17. Use 'cholesky' instead. "))
-        solver = 'cholesky'
-
-    return solver
-
-
 def _rescale_data(X, y, sample_weight):
     """Rescale data so as to support sample_weight"""
     n_samples = X.shape[0]
@@ -292,8 +282,6 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     has_sw = sample_weight is not None
 
-    solver = _deprecate_dense_cholesky(solver)
-
     if solver == 'auto':
         # cholesky if it's a dense array and cg in
         # any other case
@@ -389,14 +377,12 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
-        solver = _deprecate_dense_cholesky(self.solver)
-
         self.coef_ = ridge_regression(X, y,
                                       alpha=self.alpha,
                                       sample_weight=sample_weight,
                                       max_iter=self.max_iter,
                                       tol=self.tol,
-                                      solver=solver)
+                                      solver=self.solver)
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
