@@ -135,7 +135,7 @@ class GaussianProcessRegressor(BaseEstimator):
             else:
                 return y_mean
 
-    def sample(self, X, n_samples=1, random_state=0):
+    def sample_y(self, X, n_samples=1, random_state=0):
         rng = check_random_state(random_state)
 
         y_mean, y_cov = self.predict(X, return_cov=True)
