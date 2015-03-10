@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils import ConvergenceWarning
 
 from sklearn.linear_model.logistic import (
@@ -597,3 +598,20 @@ def test_liblinear_logregcv_sparse():
     X, y = make_classification(n_samples=10, n_features=5)
     clf = LogisticRegressionCV(solver='liblinear')
     clf.fit(sparse.csr_matrix(X), y)
+
+
+def test_logreg_intercept_scaling():
+    # Test that the right error message is thrown when intercept_scaling <= 0
+    msg = ('Intercept scaling needs to be greater than 0.'
+           ' To disable fitting an intercept,'
+           ' set fit_intercept=False.')
+    for i in [-1, 0]:
+        clf = LogisticRegression(intercept_scaling=i)
+        assert_raise_message(ValueError, msg, clf.fit, X, Y1)
+
+
+def test_logreg_intercept_scaling_zero():
+    # Test that intercept_scaling is ignored when fit_intercept is False
+    clf = LogisticRegression(fit_intercept=False)
+    clf.fit(X, Y1)
+    assert_equal(clf.intercept_, 0.)

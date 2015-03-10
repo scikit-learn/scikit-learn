@@ -779,9 +779,15 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     if verbose:
         print('[LibLinear]', end='')
 
+    # LinearSVC breaks when intercept_scaling is <= 0
     bias = -1.0
     if fit_intercept:
-        bias = intercept_scaling
+        if intercept_scaling <= 0:
+            raise ValueError("Intercept scaling needs to be greater than 0."
+                             " To disable fitting an intercept,"
+                             " set fit_intercept=False.")
+        else:
+            bias = intercept_scaling
 
     libsvm.set_verbosity_wrap(verbose)
     libsvm_sparse.set_verbosity_wrap(verbose)
