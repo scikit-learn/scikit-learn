@@ -124,3 +124,13 @@ def test_no_optimizer():
     gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(X, y)
     assert_equal(gpr.kernel_.theta, 1.0)
     assert_equal(gpr.theta_, 1.0)
+
+
+def test_predict_cov_vs_std():
+    """ Test that predicted std.-dev. is consistent with cov's diagonal."""
+    for kernel in kernels:
+        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+        print gpr.kernel_
+        y_mean, y_cov = gpr.predict(X2, return_cov=True)
+        y_mean, y_std = gpr.predict(X2, return_std=True)
+        assert_almost_equal(np.sqrt(np.diag(y_cov)), y_std)
