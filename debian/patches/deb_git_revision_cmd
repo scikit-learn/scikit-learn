@@ -1,0 +1,14 @@
+Index: scikit-learn-0.16.0~b1+git1-gab4d07d/doc/sphinxext/github_link.py
+===================================================================
+--- scikit-learn-0.16.0~b1+git1-gab4d07d.orig/doc/sphinxext/github_link.py
++++ scikit-learn-0.16.0~b1+git1-gab4d07d/doc/sphinxext/github_link.py
+@@ -5,7 +5,8 @@ import os
+ import sys
+ from functools import partial
+ 
+-REVISION_CMD = 'git rev-parse --short HEAD'
++#REVISION_CMD = 'git rev-parse --short HEAD'
++REVISION_CMD = 'cat debian/github-revision.txt'
+ 
+ 
+ def _get_git_revision():
