@@ -264,13 +264,8 @@ def format_records(records):   # , print_globals=False):
         # dotted names
         tokeneater.name_cont = False
 
-        def linereader(file=file, lnum_loc=lnum, getline=linecache.getline):
+        def linereader(file=file, lnum=[lnum], getline=linecache.getline):
             
-            if isinstance(lnum_loc, collections.Iterable):
-                lnum = lnum_loc
-            else:
-                lnum = [lnum_loc]
-
             line = getline(file, lnum[0])
             lnum[0] += 1
             return line
