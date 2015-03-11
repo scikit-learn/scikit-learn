@@ -1,6 +1,7 @@
 import numpy as np
 from ..utils.fixes import bincount
 
+
 def _balance_weights(y):
     """Compute sample weights such that the class distribution of y becomes
        balanced.
