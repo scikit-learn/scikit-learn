@@ -457,6 +457,7 @@ class ConstantKernel(Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
+        X = np.atleast_2d(X)
         if Y is None:
             Y = X
         elif eval_gradient:
@@ -519,6 +520,7 @@ class WhiteKernel(Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
+        X = np.atleast_2d(X)
         if Y is not None and eval_gradient:
             raise ValueError("Gradient can only be evaluated when Y is None.")
 
@@ -582,6 +584,7 @@ class RBF(Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
+        X = np.atleast_2d(X)
         if Y is None:
             dists = pdist(X / self.l, metric='sqeuclidean')
             K = np.exp(-.5 * dists)
@@ -667,6 +670,7 @@ class RationalQuadratic(Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
+        X = np.atleast_2d(X)
         if Y is None:
             dists = squareform(pdist(X, metric='sqeuclidean'))
             tmp = dists / (2 * self.alpha * self.l ** 2)
@@ -742,6 +746,7 @@ class ExpSineSquared(Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
+        X = np.atleast_2d(X)
         if Y is None:
             dists = squareform(pdist(X, metric='euclidean'))
             arg = np.pi  * dists / self.p
@@ -814,6 +819,7 @@ class DotProduct(Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
+        X = np.atleast_2d(X)
         if Y is None:
             K = np.inner(X, X) + self.sigma_0 ** 2
         else:
@@ -918,6 +924,7 @@ class PairwiseKernel(Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
+        X = np.atleast_2d(X)
         K = pairwise_kernels(X, Y, metric=self.metric, gamma=self.gamma,
                              filter_params=True, **self.kwargs)
         if eval_gradient:

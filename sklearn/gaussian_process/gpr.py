@@ -5,7 +5,7 @@
 # License: BSD 3 clause
 
 import numpy as np
-from scipy.linalg import cholesky, cho_solve, solve
+from scipy.linalg import cholesky, cho_solve, solve, solve_triangular
 from scipy.optimize import fmin_l_bfgs_b
 
 from sklearn.base import BaseEstimator, clone
@@ -113,9 +113,8 @@ class GaussianProcessRegressor(BaseEstimator):
                 y_cov = self.kernel(X)
                 return y_mean, y_cov
             elif return_std:
-                # XXX: Compute y_std more efficiently
-                y_std = np.sqrt(np.diag(self.kernel(X)))
-                return y_mean, y_std
+                y_var = np.apply_along_axis(self.kernel, 1, X)[:, 0]
+                return y_mean, np.sqrt(y_var)
             else:
                 return y_mean
         else:  # Predict based on GP posterior
@@ -123,15 +122,19 @@ class GaussianProcessRegressor(BaseEstimator):
             y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
-                y_cov = \
-                    self.kernel_(X) - K_trans.dot(v)  # Line 6
+                y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
                 return y_mean, y_cov
             elif return_std:
-                # XXX: Compute y_std more efficiently
-                v = cho_solve((self.L_, True), K_trans.T)  # Line 5
-                y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
-                y_std = np.sqrt(np.diag(y_cov))
-                return y_mean, y_std
+                # compute inverse K_inv of K based on its cholesky
+                # decomposition L and its inverse L_inv
+                L_inv = solve_triangular(self.L_.T, np.eye(self.L_.shape[0]))
+                K_inv = L_inv.dot(L_inv.T)
+                # Compute variance of predictive distribution
+                y_var = np.apply_along_axis(self.kernel_, 1, X)[:, 0]
+                y_var -= np.sum(K_trans.T[:, np.newaxis] * K_trans.T
+                                * K_inv[:, :, np.newaxis],
+                                axis=(0, 1))
+                return y_mean, np.sqrt(y_var)
             else:
                 return y_mean
 
@@ -167,6 +170,9 @@ class GaussianProcessRegressor(BaseEstimator):
         if eval_gradient:  # compare Equation 5.9 from GPML
             tmp = np.outer(alpha, alpha)
             tmp -= cho_solve((L, True), np.eye(K.shape[0]))
+            # Compute "0.5 * trace(tmp.dot(K_gradient))" without constructing
+            # the full matrix tmp.dot(K_gradient) since only its diagonal is
+            # required
             gradient = 0.5 * np.einsum("ij,ijk->k", tmp, K_gradient)
             return log_likelihood, gradient
         else:
