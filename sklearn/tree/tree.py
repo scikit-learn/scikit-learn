@@ -27,6 +27,7 @@ from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_array, check_random_state, compute_sample_weight
 from ..utils.validation import NotFittedError, check_is_fitted
+from ..utils.validation import check_consistent_length
 
 
 from ._tree import Criterion
@@ -147,7 +148,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         n_samples, self.n_features_ = X.shape
         is_classification = isinstance(self, ClassifierMixin)
 
-        y = np.atleast_1d(y)
+        if not issparse(y):
+            y = np.atleast_1d(y)
         expanded_class_weight = None
 
         if y.ndim == 1:
@@ -158,13 +160,13 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.n_outputs_ = y.shape[1]
 
         if is_classification:
-            y = np.copy(y)
+            y = y.copy()
 
             self.classes_ = []
             self.n_classes_ = []
 
             if self.class_weight is not None:
-                y_original = np.copy(y)
+                y_original = y.copy()
 
             for k in range(self.n_outputs_):
                 classes_k, y[:, k] = np.unique(y[:, k], return_inverse=True)
@@ -181,7 +183,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
 
-        if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
+        if issparse(y) and (getattr(y.data, "dtype", None) != DOUBLE
+                or not y.data.flags.contiguous):
+            y.data = np.ascontiguousarray(y.data, dtype=DOUBLE)
+        elif getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous):
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
@@ -215,10 +220,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                 max_features = 0
 
         self.max_features_ = max_features
+        check_consistent_length(X, y)
 
-        if len(y) != n_samples:
-            raise ValueError("Number of labels=%d does not match "
-                             "number of samples=%d" % (len(y), n_samples))
         if self.min_samples_split <= 0:
             raise ValueError("min_samples_split must be greater than zero.")
         if self.min_samples_leaf <= 0:

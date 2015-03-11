@@ -312,13 +312,13 @@ def test_grid_search_sparse():
     X_sparse = sp.csr_matrix(X_)
     y_sparse = sp.csr_matrix(y_)
 
-    clf = DecisionTreeClassifier
+    clf = DecisionTreeClassifier()
     cv = GridSearchCV(clf, {"max_depth": [1, 2, 3, 4]})
     cv.fit(X_sparse[:180], y_sparse[:180])
     y_pred = cv.predict(X_sparse[180:])
     max_depth = cv.best_estimator_.max_depth
 
-    clf = DecisionTreeClassifier
+    clf = DecisionTreeClassifier()
     cv = GridSearchCV(clf, {"max_depth": [1, 2, 3, 4]})
     cv.fit(X_[:180], y_[:180])
     y_pred2 = cv.predict(X_[180:])

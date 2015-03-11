@@ -27,7 +27,7 @@ from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import check_random_state
 from .utils.random import sample_without_replacement
-from .utils.validation import _num_samples, indexable
+from .utils.validation import _num_samples, indexable, check_consistent_length
 from .utils.metaestimators import if_delegate_has_method
 from .metrics.scorer import check_scoring
 
@@ -477,10 +477,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         X, y = indexable(X, y)
 
         if y is not None:
-            if len(y) != n_samples:
-                raise ValueError('Target variable (y) has a different number '
-                                 'of samples (%i) than data (X: %i samples)'
-                                 % (len(y), n_samples))
+            check_consistent_length(X, y)
+
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
         if self.verbose > 0:

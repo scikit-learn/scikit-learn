@@ -953,10 +953,7 @@ cdef class Splitter:
     def __setstate__(self, d):
         pass
 
-    cdef void init(self,
-                   object X,
-                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight) except *:
+    cdef void init(self, object X, object y, DOUBLE_t* sample_weight) except *:
         """Initialize the splitter."""
         # Reset random state
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
@@ -1042,10 +1039,7 @@ cdef class BaseDenseSplitter(Splitter):
         self.X_sample_stride = 0
         self.X_fx_stride = 0
 
-    cdef void init(self,
-                   object X,
-                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight) except *:
+    cdef void init(self, object X, object y, DOUBLE_t* sample_weight) except *:
         """Initialize the splitter."""
 
         # Call parent init
@@ -1591,9 +1585,7 @@ cdef class PresortBestSplitter(BaseDenseSplitter):
                                       self.min_weight_leaf,
                                       self.random_state), self.__getstate__())
 
-    cdef void init(self, object X,
-                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight) except *:
+    cdef void init(self, object X, object y, DOUBLE_t* sample_weight) except *:
 
         cdef void* sample_mask = NULL
 
@@ -1838,10 +1830,7 @@ cdef class BaseSparseSplitter(Splitter):
         free(self.index_to_samples)
         free(self.sorted_samples)
 
-    cdef void init(self,
-                   object X,
-                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight) except *:
+    cdef void init(self, object X, object y, DOUBLE_t* sample_weight) except *:
         """Initialize the splitter."""
 
         # Call parent init
@@ -2566,30 +2555,35 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 cdef class TreeBuilder:
     """Interface for different tree building strategies. """
 
-    cpdef build(self, Tree tree, object X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, object y,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
         pass
 
-    cdef inline _check_input(self, object X, np.ndarray y,
+    cdef inline _check_input(self, object X, object y,
                              np.ndarray sample_weight):
         """Check input dtype, layout and format"""
+        e_msg = "No support for np.int64 index based sparse matrices"
+
         if issparse(X):
             X = X.tocsc()
             X.sort_indices()
-
             if X.data.dtype != DTYPE:
                 X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
-
             if X.indices.dtype != np.int32 or X.indptr.dtype != np.int32:
-                raise ValueError("No support for np.int64 index based "
-                                 "sparse matrices")
-
+                raise ValueError(e_msg)
         elif X.dtype != DTYPE:
             # since we have to copy we will make it fortran for efficiency
             X = np.asfortranarray(X, dtype=DTYPE)
 
-        if y.dtype != DOUBLE or not y.flags.contiguous:
+        if issparse(y):
+            y = y.tocsc()
+            y.sort_indices()
+            if y.data.dtype != DOUBLE:
+                y.data = np.ascontiguousarray(y.data, dtype=DOUBLE)
+            if y.indices.dtype != np.int32 or y.indptr.dtype != np.int32:
+                raise ValueError(e_msg)
+        elif y.dtype != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         if (sample_weight is not None and
@@ -2614,7 +2608,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         self.min_weight_leaf = min_weight_leaf
         self.max_depth = max_depth
 
-    cpdef build(self, Tree tree, object X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, object y,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
 
@@ -2768,7 +2762,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.max_depth = max_depth
         self.max_leaf_nodes = max_leaf_nodes
 
-    cpdef build(self, Tree tree, object X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, object y,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
 
