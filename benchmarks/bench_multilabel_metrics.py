@@ -139,7 +139,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument('metrics', nargs='*', default=sorted(METRICS),
                     help='Specifies metrics to benchmark, defaults to all. '
-                         'Choices are: '.format(sorted(METRICS)))
+                         'Choices are: {}'.format(sorted(METRICS)))
     ap.add_argument('--formats', nargs='+', choices=sorted(FORMATS),
                     help='Specifies multilabel formats to benchmark '
                          '(defaults to all).')
