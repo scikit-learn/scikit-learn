@@ -846,10 +846,9 @@ class _BaseRidgeCV(LinearModel):
         -------
         self : Returns self.
         """
-        alphas = np.asarray(self.alphas)
-
+                 
         if self.cv is None:
-            estimator = _RidgeGCV(alphas,
+            estimator = _RidgeGCV(self.alphas,
                                   fit_intercept=self.fit_intercept,
                                   normalize=self.normalize,
                                   scoring=self.scoring,
@@ -863,7 +862,7 @@ class _BaseRidgeCV(LinearModel):
             if self.store_cv_values:
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
-            parameters = {'alpha': alphas}
+            parameters = {'alpha': self.alphas}
             # FIXME: sample_weight must be split into training/validation data
             #        too!
             #fit_params = {'sample_weight' : sample_weight}
