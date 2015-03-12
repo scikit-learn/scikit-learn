@@ -303,9 +303,9 @@ def test_probability():
                             np.exp(clf.predict_log_proba(iris.data)), 8)
 
 
-def test_decision_function():
+def test_svc_decision_function():
     """
-    Test decision_function
+    Test SVC's decision_function
 
     Sanity check, test that decision_function implemented in python
     returns the same as the one in libsvm
@@ -336,6 +336,32 @@ def test_decision_function():
     rbfs = rbf_kernel(X, clf.support_vectors_, gamma=clf.gamma)
     dec = np.dot(rbfs, clf.dual_coef_.T) + clf.intercept_
     assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
+
+
+def test_svr_decision_function():
+    """
+    Test SVR's decision_function
+
+    Sanity check, test that decision_function implemented in python
+    returns the same as the one in libsvm
+
+    """
+
+    X = iris.data
+    y = iris.target
+
+    # linear kernel
+    reg = svm.SVR(kernel='linear', C=0.1).fit(X, y)
+
+    dec = np.dot(X, reg.coef_.T) + reg.intercept_
+    assert_array_almost_equal(dec.ravel(), reg.decision_function(X).ravel())
+
+    # rbf kernel
+    reg = svm.SVR(kernel='rbf', gamma=1).fit(X, y)
+    
+    rbfs = rbf_kernel(X, reg.support_vectors_, gamma=reg.gamma)
+    dec = np.dot(rbfs, reg.dual_coef_.T) + reg.intercept_
+    assert_array_almost_equal(dec.ravel(), reg.decision_function(X).ravel())
 
 
 def test_weight():
