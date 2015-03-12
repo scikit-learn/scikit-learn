@@ -25,7 +25,7 @@ def configuration(parent_package="", top_path=None):
                          include_dirs=[join('..', 'src', 'cblas'),
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],
-                         extra_compile_args=eca)
+                         extra_compile_args=eca, **blas_info)
 
     return config
 
