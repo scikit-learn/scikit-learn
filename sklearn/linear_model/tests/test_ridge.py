@@ -759,3 +759,19 @@ def test_raises_value_error_if_solver_not_supported():
         ridge_regression(X, y, alpha=1., solver=wrong_solver)
 
     assert_raise_message(exception, message, func)
+
+def test_tuples_and_arrays_same_result_in_ridgeCV():
+    """ Test that ridgeCV can take as alphas sequence a np.array or a tuple """
+    rng = np.random.RandomState(42)
+
+    n_samples, n_features, n_targets = 20, 10, 5
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_targets)
+    
+    alphas1 = np.array([0.1, .1, 1])
+    alphas2 = (0.1, .1, 1)
+    
+    rcv1 = RidgeCV(alphas=alphas1).fit(X, y) 
+    rcv2 = RidgeCV(alphas=alphas2).fit(X, y)
+    assert_array_almost_equal(rcv1.coef_, rcv2.coef_)
+    
