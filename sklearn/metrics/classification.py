@@ -34,7 +34,6 @@ from ..utils import check_array
 from ..utils import check_consistent_length
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import column_or_1d
-from ..utils import check_consistent_length
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
