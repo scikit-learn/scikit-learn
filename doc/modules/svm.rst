@@ -575,9 +575,9 @@ Its dual is
 
 where :math:`e` is the vector of all ones, :math:`C > 0` is the upper bound,
 :math:`Q` is an :math:`n` by :math:`n` positive semidefinite matrix,
-:math:`Q_{ij} \equiv K(x_i, x_j)` and :math:`\phi (x_i)^T \phi (x)`
-is the kernel. Here training vectors are mapped into a higher (maybe infinite)
-dimensional space by the function :math:`\phi`.
+:math:`Q_{ij} \equiv K(x_i, x_j) = \phi (x_i)^T \phi (x_j)`
+is the kernel. Here training vectors are implicitly mapped into a higher
+(maybe infinite) dimensional space by the function :math:`\phi`.
 
 
 The decision function is:
@@ -650,7 +650,11 @@ Its dual is
    \textrm {subject to } & e^T (\alpha - \alpha^*) = 0\\
    & 0 \leq \alpha_i, \alpha_i^* \leq C, i=1, ..., n
 
-where :math:`e`, :math:`C > 0` and :math:`Q` are the same as in the case of SVC.
+where :math:`e` is the vector of all ones, :math:`C > 0` is the upper bound,
+:math:`Q` is an :math:`n` by :math:`n` positive semidefinite matrix,
+:math:`Q_{ij} \equiv K(x_i, x_j) = \phi (x_i)^T \phi (x_j)`
+is the kernel. Here training vectors are implicitly mapped into a higher
+(maybe infinite) dimensional space by the function :math:`\phi`.
 
 The decision function is:
 
