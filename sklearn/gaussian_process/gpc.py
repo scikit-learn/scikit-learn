@@ -116,7 +116,9 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         K_star = self.kernel_(self.X_fit_, X)  # K_star =k(x_star)
         f_star = K_star.T.dot(self.y_fit_ - self.pi_)  # Line 4
         v = solve(self.L_, self.W_sr_[:, np.newaxis] * K_star)  # Line 5
-        var_f_star = self.kernel_(X) - v.T.dot(v)  # Line 6
+        # Compute np.diag(v.T.dot(v)) via einsum
+        var_f_star = np.apply_along_axis(self.kernel_, 1, X)[:, 0] \
+            - np.einsum("ij,ij->j", v, v) # Line 6
 
         # Line 7:
         # Approximate \int log(z) * N(z | f_star, var_f_star)
@@ -125,11 +127,11 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         # sigmoid by a linear combination of 5 error functions.
         # For information on how this integral can be computed see
         # blitiri.blogspot.de/2012/11/gaussian-integral-of-error-function.html
-        alpha = 1 / (2 * np.diag(var_f_star))
+        alpha = 1 / (2 * var_f_star)
         gamma = LAMBDAS * f_star
         integrals = np.sqrt(np.pi / alpha) \
             * erf(gamma * np.sqrt(alpha / (alpha + LAMBDAS**2))) \
-            / (2 * np.sqrt(np.diag(var_f_star) * 2 * np.pi))
+            / (2 * np.sqrt(var_f_star * 2 * np.pi))
         pi_star = (COEFS * integrals).sum(axis=0) + .5 * COEFS.sum()
 
         return np.vstack((1 - pi_star, pi_star)).T
