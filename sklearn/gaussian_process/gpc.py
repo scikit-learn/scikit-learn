@@ -4,15 +4,17 @@
 #
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve
 from scipy.optimize import fmin_l_bfgs_b
 from scipy.special import erf
 
-from sklearn.base import BaseEstimator, clone
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.utils.validation import check_X_y, check_is_fitted, check_array
-
+from sklearn.preprocessing import LabelEncoder
 
 # Values required for approximating the logistic sigmoid by
 # error functions. coefs are obtained via:
@@ -25,7 +27,7 @@ COEFS = np.array([-1854.8214151, 3516.89893646, 221.29346712,
                   128.12323805, -2010.49422654])[:, np.newaxis]
 
 
-class GaussianProcessClassifier(BaseEstimator):
+class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
     """ Gaussian process classification (GPC).
 
     The implementation is based on Algorithm 3.1, 3.2, and 5.1 of
@@ -47,15 +49,27 @@ class GaussianProcessClassifier(BaseEstimator):
 
     def fit(self, X, y):
         if self.kernel is None:  # Use an RBF kernel as default
-            self.kernel_ = RBF()
+            self.kernel_ = 1.0 * RBF(1.0)
         else:
             self.kernel_ = clone(self.kernel)
 
         X, y = check_X_y(X, y)
 
-        # XXX: Assert that y is binary and labels are {0, 1}
         self.X_fit_ = X
-        self.y_fit_ = check_array(y, ensure_2d=False, dtype=float)
+
+        # Encode class labels and check that it is a binary classification
+        # problem
+        label_encoder = LabelEncoder()
+        self.y_fit_ = label_encoder.fit_transform(y)
+        self.classes_ = label_encoder.classes_
+        if self.classes_.size > 2:
+            raise ValueError("GaussianProcessClassifier supports only binary "
+                             "classification. y contains classes %s"
+                             % self.classes_)
+        elif self.classes_.size == 1:
+            warnings.warn("Only one class label (%s) occurrs in training set."
+                          % self.classes_)
+            self.classes_ = np.array([self.classes_[0], self.classes_[0]])
 
         if self.optimizer == "fmin_l_bfgs_b":
             # Choose hyperparameters based on maximizing the log-marginal
@@ -77,7 +91,7 @@ class GaussianProcessClassifier(BaseEstimator):
         self.K_ = self.kernel_(self.X_fit_)
         self.K_[np.diag_indices_from(self.K_)] += self.jitter
 
-        self.f_, _, (self.pi, self.W_sr, self.L, _, _) = \
+        self.f_, _, (self.pi_, self.W_sr_, self.L_, _, _) = \
             self._posterior_mode(self.K_, return_temporaries=True)
 
         return self
@@ -89,11 +103,10 @@ class GaussianProcessClassifier(BaseEstimator):
         # As discussed on Section 3.4.2 of GPML, for making hard binary
         # decisions, it is enough to compute the MAP of the posterior and
         # pass it through the link function
-        K_star = \
-            self.kernel_(self.X_fit_, X)  # K_star =k(x_star)
-        f_star = K_star.T.dot(self.y_fit_ - self.pi)  # Line 4 (Algorithm 3.2)
+        K_star = self.kernel_(self.X_fit_, X)  # K_star =k(x_star)
+        f_star = K_star.T.dot(self.y_fit_ - self.pi_)  # Line 4 (Algorithm 3.2)
 
-        return f_star > 0
+        return np.where(f_star > 0, self.classes_[1], self.classes_[0])
 
     def predict_proba(self, X):
         check_is_fitted(self, ["X_fit_", "y_fit_", "K_", "f_"])
@@ -101,19 +114,17 @@ class GaussianProcessClassifier(BaseEstimator):
 
         # Based on Algorithm 3.2 of GPML
         K_star = self.kernel_(self.X_fit_, X)  # K_star =k(x_star)
-        f_star = K_star.T.dot(self.y_fit_ - self.pi)  # Line 4
-        v = solve(self.L, self.W_sr[:, np.newaxis] * K_star)  # Line 5
+        f_star = K_star.T.dot(self.y_fit_ - self.pi_)  # Line 4
+        v = solve(self.L_, self.W_sr_[:, np.newaxis] * K_star)  # Line 5
         var_f_star = self.kernel_(X) - v.T.dot(v)  # Line 6
 
         # Line 7:
         # Approximate \int log(z) * N(z | f_star, var_f_star)
         # Approximation is due to Williams & Barber, "Bayesian Classification
-        # with Gaussian Processes", Appendix A:
-        # Approximate the logistic sigmoid by a linear combination of
-        # 5 error functions
-        # See
+        # with Gaussian Processes", Appendix A: Approximate the logistic
+        # sigmoid by a linear combination of 5 error functions.
+        # For information on how this integral can be computed see
         # blitiri.blogspot.de/2012/11/gaussian-integral-of-error-function.html
-        # for information on how this integral can be computed
         alpha = 1 / (2 * np.diag(var_f_star))
         gamma = LAMBDAS * f_star
         integrals = np.sqrt(np.pi / alpha) \
@@ -121,7 +132,7 @@ class GaussianProcessClassifier(BaseEstimator):
             / (2 * np.sqrt(np.diag(var_f_star) * 2 * np.pi))
         pi_star = (COEFS * integrals).sum(axis=0) + .5 * COEFS.sum()
 
-        return pi_star
+        return np.vstack((1 - pi_star, pi_star)).T
 
     def log_marginal_likelihood(self, theta, eval_gradient=False):
         kernel = self.kernel_.clone_with_theta(theta)
