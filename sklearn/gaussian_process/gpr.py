@@ -133,7 +133,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 y_var = np.apply_along_axis(self.kernel_, 1, X)[:, 0]
                 y_var -= np.sum(K_trans.T[:, np.newaxis] * K_trans.T
                                 * K_inv[:, :, np.newaxis],
-                                axis=(0, 1))
+                                axis=0).sum(axis=0)  # axis=(0, 1)
                 return y_mean, np.sqrt(y_var)
             else:
                 return y_mean
