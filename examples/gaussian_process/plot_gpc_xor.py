@@ -26,7 +26,7 @@ kernel = 1.0 * RBF(1.0)
 clf = GaussianProcessClassifier(kernel=kernel).fit(X, Y)
 
 # plot the decision function for each datapoint on the grid
-Z = clf.predict_proba(np.vstack((xx.ravel(), yy.ravel())).T)
+Z = clf.predict_proba(np.vstack((xx.ravel(), yy.ravel())).T)[:, 1]
 Z = Z.reshape(xx.shape)
 
 image = plt.imshow(Z, interpolation='nearest',

@@ -40,13 +40,13 @@ print "Log Marginal Likelihood (optimized): %.3f" % \
 plt.figure(0)
 plt.scatter(X[:, 0], y)
 X_ = np.linspace(0, 5, 100)
-plt.plot(X_, gp_fix.predict_proba(X_[:, np.newaxis]), 'r',
+plt.plot(X_, gp_fix.predict_proba(X_[:, np.newaxis])[:, 1], 'r',
          label="Initial kernel: %s" % gp_fix.kernel_)
-plt.plot(X_, gp_opt.predict_proba(X_[:, np.newaxis]), 'b',
+plt.plot(X_, gp_opt.predict_proba(X_[:, np.newaxis])[:, 1], 'b',
          label="Optimized kernel: %s" % gp_opt.kernel_)
 plt.legend(loc="best")
 plt.xlabel("Feature")
-plt.ylabel("Class")
+plt.ylabel("Class 1 probability")
 
 # Plot LML landscape
 plt.figure(1)

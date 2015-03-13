@@ -31,7 +31,7 @@ def test_predict_consistent():
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
         assert_array_equal(gpc.predict(X),
-                           gpc.predict_proba(X) >=0.5)
+                           gpc.predict_proba(X)[:, 1] >=0.5)
 
 
 def test_lml_improving():
