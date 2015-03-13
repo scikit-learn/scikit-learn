@@ -68,11 +68,12 @@ def distortion_metrics(X, labels, metric='sqeuclidean', p=2):
     for i, l in enumerate(labels):
         assi[l].append(i)
 
-    inertia = .0
+    distance_sum = .0
     nb_feature = X.shape[1]
     for points in assi.values():
         clu_points = X[points, :]
         clu_center = np.mean(clu_points, axis=0).reshape(1, nb_feature)
-        inertia += np.sum(cdist(clu_points, clu_center, metric=metric, p=p))
+        distance_sum += np.sum(cdist(
+            clu_points, clu_center, metric=metric, p=p))
 
-    return inertia / X.shape[1]
+    return distance_sum / X.shape[1]
