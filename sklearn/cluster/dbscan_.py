@@ -135,7 +135,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     labels = -np.ones(X.shape[0], dtype=np.intp)
 
     # A list of all core samples found.
-    core_samples = np.asarray(n_neighbors > min_samples, dtype=np.uint8)
+    core_samples = np.asarray(n_neighbors >= min_samples, dtype=np.uint8)
     dbscan_inner(core_samples, neighborhoods, labels)
     return np.where(core_samples)[0], labels
 
