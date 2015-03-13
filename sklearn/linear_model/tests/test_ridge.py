@@ -630,3 +630,20 @@ def test_sparse_cg_max_iter():
     reg = Ridge(solver="sparse_cg", max_iter=1)
     reg.fit(X_diabetes, y_diabetes)
     assert_equal(reg.coef_.shape[0], X_diabetes.shape[1])
+
+
+def test_tuples_and_arrays_same_result_in_ridgeCV():
+    """ Test that ridgeCV can take as alphas sequence a np.array or a tuple """
+    rng = np.random.RandomState(42)
+
+    n_samples, n_features, n_targets = 20, 10, 5
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_targets)
+    
+    alphas1 = np.array([0.1, .1, 1])
+    alphas2 = (0.1, .1, 1)
+    
+    rcv1 = RidgeCV(alphas=alphas1).fit(X, y) 
+    rcv2 = RidgeCV(alphas=alphas2).fit(X, y)
+    assert_array_almost_equal(rcv1.coef_, rcv2.coef_)
+    
