@@ -630,7 +630,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf1.fit(X4, Y4, sample_weight=sample_weights)
         clf2.fit(X4, Y4, sample_weight=multiplied_together)
 
-        assert_array_equal(clf1.coef_, clf2.coef_)
+        assert_almost_equal(clf1.coef_, clf2.coef_)
 
     def test_auto_weight(self):
         """Test class weights for imbalanced data"""
