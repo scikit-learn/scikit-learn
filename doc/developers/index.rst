@@ -818,6 +818,7 @@ The default value for ``deep`` should be true.
 
 The ``set_params`` on the other hand takes as input a dict of the form
 ``'parameter': value`` and sets the parameter of the estimator using this dict.
+Return value must be estimator itself.
 
 While the ``get_params`` mechanism is not essential (see :ref:`cloning` below),
 the ``set_params`` function is necessary as it is used to set parameters during
@@ -835,6 +836,7 @@ implement the interface is::
     def set_params(self, **parameters):
         for parameter, value in parameters.items():
             self.setattr(parameter, value)
+        return self
 
 
 Parameters and init
