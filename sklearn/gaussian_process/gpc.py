@@ -118,9 +118,8 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         K_star = self.kernel_(self.X_fit_, X)  # K_star =k(x_star)
         f_star = K_star.T.dot(self.y_fit_ - self.pi_)  # Line 4
         v = solve(self.L_, self.W_sr_[:, np.newaxis] * K_star)  # Line 5
-        # Compute np.diag(v.T.dot(v)) via einsum
-        var_f_star = np.apply_along_axis(self.kernel_, 1, X)[:, 0] \
-            - np.einsum("ij,ij->j", v, v) # Line 6
+        # Line 6 (compute np.diag(v.T.dot(v)) via einsum)
+        var_f_star = self.kernel_.diag(X) - np.einsum("ij,ij->j", v, v)
 
         # Line 7:
         # Approximate \int log(z) * N(z | f_star, var_f_star)

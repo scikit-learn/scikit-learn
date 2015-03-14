@@ -63,6 +63,15 @@ def test_auto_vs_cross():
         K_cross = kernel(X, X)
         assert_almost_equal(K_auto, K_cross, 5)
 
+
+def test_kernel_diag():
+    """ Test that diag method of kernel returns consistent results. """
+    for kernel in kernels:
+        K_call_diag = np.diag(kernel(X))
+        K_diag = kernel.diag(X)
+        assert_almost_equal(K_call_diag, K_diag, 5)
+
+
 def test_kernel_operator_commutative():
     """ Adding kernels and multiplying kernels should be commutative. """
     # Check addition

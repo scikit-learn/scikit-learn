@@ -113,7 +113,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 y_cov = self.kernel(X)
                 return y_mean, y_cov
             elif return_std:
-                y_var = np.apply_along_axis(self.kernel, 1, X)[:, 0]
+                y_var = self.kernel.diag(X)
                 return y_mean, np.sqrt(y_var)
             else:
                 return y_mean
@@ -130,7 +130,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 L_inv = solve_triangular(self.L_.T, np.eye(self.L_.shape[0]))
                 K_inv = L_inv.dot(L_inv.T)
                 # Compute variance of predictive distribution
-                y_var = np.apply_along_axis(self.kernel_, 1, X)[:, 0]
+                y_var = self.kernel_.diag(X)
                 y_var -= np.sum(K_trans.T[:, np.newaxis] * K_trans.T
                                 * K_inv[:, :, np.newaxis],
                                 axis=0).sum(axis=0)  # axis=(0, 1)
