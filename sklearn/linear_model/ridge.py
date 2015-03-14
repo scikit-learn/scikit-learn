@@ -900,7 +900,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     Parameters
     ----------
-    alphas : numpy array of shape [n_alphas]
+    alphas : numpy array or tuple of length [n_alphas]
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
@@ -984,7 +984,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : numpy array of shape [n_alphas]
+    alphas : numpy array or tuple of length [n_alphas]
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
