@@ -42,10 +42,12 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
       * binary classification
     """
 
-    def __init__(self, kernel=None, jitter=0.0, optimizer="fmin_l_bfgs_b"):
+    def __init__(self, kernel=None, jitter=0.0, optimizer="fmin_l_bfgs_b",
+                 warm_start=False):
         self.kernel = kernel
         self.jitter = jitter
         self.optimizer = optimizer
+        self.warm_start = warm_start
 
     def fit(self, X, y):
         if self.kernel is None:  # Use an RBF kernel as default
@@ -174,7 +176,15 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
 
     def _posterior_mode(self, K, return_temporaries=False):
         # Based on Algorithm 3.1 of GPML
-        f = np.zeros_like(self.y_fit_, dtype=np.float64)
+
+        # If warm_start are enabled, we reuse the last solution for the
+        # posterior mode as initialization; otherwise, we initialize with 0
+        if self.warm_start and hasattr(self, "f_cached") \
+           and self.f_cached.shape == self.y_fit_.shape:
+            f = self.f_cached
+        else:
+            f = np.zeros_like(self.y_fit_, dtype=np.float64)
+
         log_marginal_likelihood = -np.inf
         while True:
             # Line 4
@@ -204,6 +214,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
                 break
             log_marginal_likelihood = lml
 
+        self.f_cached = f  # Remember solution for later warm-starts
         if return_temporaries:
             return f, log_marginal_likelihood, (pi, W_sr, L, b, a)
         else:
