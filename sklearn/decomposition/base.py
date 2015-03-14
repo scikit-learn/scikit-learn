@@ -126,6 +126,9 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
         >>> ipca.transform(X) # doctest: +SKIP
         """
         check_is_fitted(self, ['mean_', 'components_'], all_or_any=all)
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
 
         X = check_array(X)
         if self.mean_ is not None:

@@ -399,6 +399,9 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
             Projected array.
 
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
         if self.components_ is None:

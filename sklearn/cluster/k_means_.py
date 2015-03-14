@@ -833,6 +833,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             X transformed in the new space.
         """
         check_is_fitted(self, 'cluster_centers_')
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
 
         X = self._check_test_data(X)
         return self._transform(X)

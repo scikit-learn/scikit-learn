@@ -346,6 +346,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis.
         """
         check_is_fitted(self, 'std_')
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
 
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False)
@@ -495,6 +498,9 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             features generated from the combination of inputs.
         """
         check_is_fitted(self, 'powers_')
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
 
         X = check_array(X)
         n_samples, n_features = X.shape
@@ -629,6 +635,9 @@ class Normalizer(BaseEstimator, TransformerMixin):
             The data to normalize, row by row. scipy.sparse matrices should be
             in CSR format to avoid an un-necessary copy.
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr')
         return normalize(X, norm=self.norm, axis=1, copy=copy)
@@ -734,6 +743,9 @@ class Binarizer(BaseEstimator, TransformerMixin):
             scipy.sparse matrices should be in CSR format to avoid an
             un-necessary copy.
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
         copy = copy if copy is not None else self.copy
         return binarize(X, threshold=self.threshold, copy=copy)
 
@@ -782,6 +794,9 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         K_new : numpy array of shape [n_samples1, n_samples2]
         """
         check_is_fitted(self, 'K_fit_all_')
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
 
         K = check_array(K)
         if copy:

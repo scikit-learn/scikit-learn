@@ -563,6 +563,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             Transformed data.
         """
         check_is_fitted(self, 'subcluster_centers_')
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
         return euclidean_distances(X, self.subcluster_centers_)
 
     def _global_clustering(self, X=None):

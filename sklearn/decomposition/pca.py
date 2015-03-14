@@ -627,6 +627,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         """
         check_is_fitted(self, 'mean_')
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
 
         X = check_array(X)
         if self.mean_ is not None:
