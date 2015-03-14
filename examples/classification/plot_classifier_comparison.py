@@ -36,6 +36,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_moons, make_circles, make_classification
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
+from sklearn.gaussian_process import GaussianProcessClassifier
+from sklearn.gaussian_process.kernels import RBF
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
@@ -44,12 +46,14 @@ from sklearn.qda import QDA
 
 h = .02  # step size in the mesh
 
-names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Decision Tree",
-         "Random Forest", "AdaBoost", "Naive Bayes", "LDA", "QDA"]
+names = ["3 Near. Neighb.", "Linear SVM", "RBF SVM", "RBF GPC",
+         "Decision Tree", "Random Forest", "AdaBoost", "Naive Bayes", "LDA",
+         "QDA"]
 classifiers = [
     KNeighborsClassifier(3),
     SVC(kernel="linear", C=0.025),
     SVC(gamma=2, C=1),
+    GaussianProcessClassifier(1.0 * RBF(1.0), warm_start=True),
     DecisionTreeClassifier(max_depth=5),
     RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
     AdaBoostClassifier(),
@@ -75,7 +79,8 @@ for ds in datasets:
     # preprocess dataset, split into training and test part
     X, y = ds
     X = StandardScaler().fit_transform(X)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.4)
+    X_train, X_test, y_train, y_test = \
+        train_test_split(X, y, test_size=.4, random_state=42)
 
     x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
     y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
@@ -128,5 +133,5 @@ for ds in datasets:
                 size=15, horizontalalignment='right')
         i += 1
 
-figure.subplots_adjust(left=.02, right=.98)
+plt.tight_layout()
 plt.show()
