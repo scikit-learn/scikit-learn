@@ -141,6 +141,25 @@ class Kernel(six.with_metaclass(ABCMeta)):
     def __call__(self, X, Y=None, eval_gradient=False):
         """Evaluate the kernel."""
 
+    def diag(self, X):
+        """Returns the diagonal of the kernel k(X, X).
+
+        The result of this method is identical to np.diag(self(X)); however,
+        it can be evaluted more efficiently since only the diagonal is
+        evaluated.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Returns
+        -------
+        K_diag : array, shape (n_samples_X,)
+            Diagonal of kernel k(X, X)
+        """
+        return np.ones(X.shape[0])
+
     def is_stationary(self):
         """ Returns whether the kernel is stationary. """
         return True
@@ -247,6 +266,25 @@ class Sum(KernelOperator):
         else:
             return self.k1(X, Y) + self.k2(X, Y)
 
+    def diag(self, X):
+        """Returns the diagonal of the kernel k(X, X).
+
+        The result of this method is identical to np.diag(self(X)); however,
+        it can be evaluted more efficiently since only the diagonal is
+        evaluated.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Returns
+        -------
+        K_diag : array, shape (n_samples_X,)
+            Diagonal of kernel k(X, X)
+        """
+        return self.k1.diag(X) + self.k2.diag(X)
+
     def __repr__(self):
         return "{0} + {1}".format(self.k1, self.k2)
 
@@ -299,6 +337,25 @@ class Product(KernelOperator):
                                        K2_gradient * K1[:, :, np.newaxis]))
         else:
             return self.k1(X, Y) * self.k2(X, Y)
+
+    def diag(self, X):
+        """Returns the diagonal of the kernel k(X, X).
+
+        The result of this method is identical to np.diag(self(X)); however,
+        it can be evaluted more efficiently since only the diagonal is
+        evaluated.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Returns
+        -------
+        K_diag : array, shape (n_samples_X,)
+            Diagonal of kernel k(X, X)
+        """
+        return self.k1.diag(X) * self.k2.diag(X)
 
     def __repr__(self):
         return "{0} * {1}".format(self.k1, self.k2)
@@ -381,6 +438,25 @@ class Exponentiation(Kernel):
         else:
             K = self.kernel(X, Y, eval_gradient=False)
             return K ** self.exponent
+
+    def diag(self, X):
+        """Returns the diagonal of the kernel k(X, X).
+
+        The result of this method is identical to np.diag(self(X)); however,
+        it can be evaluted more efficiently since only the diagonal is
+        evaluated.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Returns
+        -------
+        K_diag : array, shape (n_samples_X,)
+            Diagonal of kernel k(X, X)
+        """
+        return self.kernel.diag(X) ** self.exponent
 
     def __repr__(self):
         return "{0} ** {1}".format(self.kernel, self.exponent)
@@ -469,6 +545,25 @@ class ConstantKernel(Kernel):
         else:
             return K
 
+    def diag(self, X):
+        """Returns the diagonal of the kernel k(X, X).
+
+        The result of this method is identical to np.diag(self(X)); however,
+        it can be evaluted more efficiently since only the diagonal is
+        evaluated.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Returns
+        -------
+        K_diag : array, shape (n_samples_X,)
+            Diagonal of kernel k(X, X)
+        """
+        return self.value * np.ones(X.shape[0])
+
     def __repr__(self):
         return "{0:.3g}".format(self.value)
 
@@ -535,6 +630,25 @@ class WhiteKernel(Kernel):
             # entries which are sufficiently similar to be considered identical
             K[cdist(X, Y) < 1e-10] = self.c
             return K
+
+    def diag(self, X):
+        """Returns the diagonal of the kernel k(X, X).
+
+        The result of this method is identical to np.diag(self(X)); however,
+        it can be evaluted more efficiently since only the diagonal is
+        evaluated.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Returns
+        -------
+        K_diag : array, shape (n_samples_X,)
+            Diagonal of kernel k(X, X)
+        """
+        return self.c * np.ones(X.shape[0])
 
 
 class RBF(Kernel):
@@ -835,6 +949,25 @@ class DotProduct(Kernel):
         else:
             return K
 
+    def diag(self, X):
+        """Returns the diagonal of the kernel k(X, X).
+
+        The result of this method is identical to np.diag(self(X)); however,
+        it can be evaluted more efficiently since only the diagonal is
+        evaluated.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Returns
+        -------
+        K_diag : array, shape (n_samples_X,)
+            Diagonal of kernel k(X, X)
+        """
+        return (X ** 2).sum(1) + self.sigma_0 ** 2
+
     def is_stationary(self):
         """ Returns whether the kernel is stationary. """
         return False
@@ -936,6 +1069,26 @@ class PairwiseKernel(Kernel):
             return K, _approx_fprime(self.theta, f, 1e-10)
         else:
             return K
+
+    def diag(self, X):
+        """Returns the diagonal of the kernel k(X, X).
+
+        The result of this method is identical to np.diag(self(X)); however,
+        it can be evaluted more efficiently since only the diagonal is
+        evaluated.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Returns
+        -------
+        K_diag : array, shape (n_samples_X,)
+            Diagonal of kernel k(X, X)
+        """
+        # We have to fall back to slow way of computing diagonal
+        return np.apply_along_axis(self, 1, X)[:, 0]
 
     def is_stationary(self):
         """ Returns whether the kernel is stationary. """
