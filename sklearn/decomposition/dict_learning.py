@@ -756,6 +756,9 @@ class SparseCodingMixin(TransformerMixin):
         # XXX : kwargs is not documented
         X = check_array(X)
         n_samples, n_features = X.shape
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
 
         code = sparse_encode(
             X, self.components_, algorithm=self.transform_algorithm,

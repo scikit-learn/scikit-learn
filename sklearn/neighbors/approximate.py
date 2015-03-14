@@ -86,6 +86,9 @@ class ProjectionToHashMixin(object):
         return self.transform(X)
 
     def transform(self, X, y=None):
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
         return self._to_hash(super(ProjectionToHashMixin, self).transform(X))
 
 

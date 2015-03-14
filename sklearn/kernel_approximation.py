@@ -91,6 +91,9 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
         """
         check_is_fitted(self, 'random_weights_')
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
 
         X = check_array(X, accept_sparse='csr')
         projection = safe_sparse_dot(X, self.random_weights_)
@@ -177,6 +180,9 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
         """
         check_is_fitted(self, 'random_weights_')
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
 
         X = as_float_array(X, copy=True)
         X = check_array(X, copy=False)
@@ -276,6 +282,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         msg = ("%(name)s is not fitted. Call fit to set the parameters before"
                " calling transform")
         check_is_fitted(self, "sample_interval_", msg=msg)
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
 
         X = check_array(X, accept_sparse='csr')
         sparse = sp.issparse(X)

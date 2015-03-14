@@ -269,10 +269,10 @@ class VectorizerMixin(object):
         """Check if vocabulary is empty or missing (not fit-ed)"""
         msg="%(name)s - Vocabulary wasn't fitted."
         check_is_fitted(self, 'vocabulary_', msg=msg),
-        
+
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
- 
+
     @property
     @deprecated("The `fixed_vocabulary` attribute is deprecated and will be "
                 "removed in 0.18.  Please use `fixed_vocabulary_` instead.")
@@ -468,6 +468,9 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
             Document-term matrix.
 
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
         analyzer = self.build_analyzer()
         X = self._get_hasher().transform(analyzer(doc) for doc in X)
         if self.binary:
@@ -630,7 +633,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     Notes
     -----
-    The ``stop_words_`` attribute can get large and increase the model size 
+    The ``stop_words_`` attribute can get large and increase the model size
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
     """
@@ -846,7 +849,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         """
         if not hasattr(self, 'vocabulary_'):
             self._validate_vocabulary()
- 
+
         self._check_vocabulary()
 
         # use the same matrix-building strategy as fit_transform
@@ -1171,7 +1174,7 @@ class TfidfVectorizer(CountVectorizer):
           - were cut off by feature selection (`max_features`).
 
         This is only available if no vocabulary was given.
- 
+
     See also
     --------
     CountVectorizer
@@ -1181,10 +1184,10 @@ class TfidfVectorizer(CountVectorizer):
     TfidfTransformer
         Apply Term Frequency Inverse Document Frequency normalization to a
         sparse matrix of occurrence counts.
- 
+
     Notes
     -----
-    The ``stop_words_`` attribute can get large and increase the model size 
+    The ``stop_words_`` attribute can get large and increase the model size
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
     """

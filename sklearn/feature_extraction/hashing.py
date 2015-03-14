@@ -120,6 +120,9 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             Feature matrix, for use with estimators or further transformers.
 
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
         raw_X = iter(raw_X)
         if self.input_type == "dict":
             raw_X = (_iteritems(d) for d in raw_X)

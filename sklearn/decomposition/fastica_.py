@@ -536,6 +536,9 @@ class FastICA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
         """
         check_is_fitted(self, 'mixing_')
+        if y is not None:
+            warnings.warn('y is deprecated and will be removed in 0.18',
+                          DeprecationWarning)
 
         X = check_array(X, copy=copy)
         if self.whiten:
