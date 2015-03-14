@@ -5,19 +5,22 @@ TODO: remove hard coded numerical results when possible
 """
 
 import numpy as np
-from numpy.testing import (assert_array_equal, assert_array_almost_equal,
-                           assert_almost_equal)
+import itertools
+
+from numpy.testing import assert_array_equal, assert_array_almost_equal
+from numpy.testing import assert_almost_equal
 from scipy import sparse
 from nose.tools import assert_raises, assert_true, assert_equal, assert_false
 
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.datasets.samples_generator import make_classification
 from sklearn.metrics import f1_score
+from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
-
+from sklearn.utils.testing import assert_warns_message
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -38,7 +41,7 @@ def test_libsvm_parameters():
     Test parameters on classes that make use of libsvm.
     """
     clf = svm.SVC(kernel='linear').fit(X, Y)
-    assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
+    assert_array_equal(clf.dual_coef_, [[-0.25, .25]])
     assert_array_equal(clf.support_, [1, 3])
     assert_array_equal(clf.support_vectors_, (X[1], X[3]))
     assert_array_equal(clf.intercept_, [0.])
@@ -75,9 +78,9 @@ def test_libsvm_iris():
     # we should get deteriministic results (assuming that there is no other
     # thread calling this wrapper calling `srand` concurrently).
     pred2 = svm.libsvm.cross_validation(iris.data,
-                                       iris.target.astype(np.float64), 5,
-                                       kernel='linear',
-                                       random_seed=0)
+                                        iris.target.astype(np.float64), 5,
+                                        kernel='linear',
+                                        random_seed=0)
     assert_array_equal(pred, pred2)
 
 
@@ -109,7 +112,7 @@ def test_precomputed():
     pred = clf.predict(KT)
     assert_raises(ValueError, clf.predict, KT.T)
 
-    assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
+    assert_array_equal(clf.dual_coef_, [[-0.25, .25]])
     assert_array_equal(clf.support_, [1, 3])
     assert_array_equal(clf.intercept_, [0])
     assert_array_almost_equal(clf.support_, [1, 3])
@@ -133,7 +136,7 @@ def test_precomputed():
     clf.fit(X, Y)
     pred = clf.predict(T)
 
-    assert_array_equal(clf.dual_coef_, [[0.25, -.25]])
+    assert_array_equal(clf.dual_coef_, [[-0.25, .25]])
     assert_array_equal(clf.intercept_, [0])
     assert_array_almost_equal(clf.support_, [1, 3])
     assert_array_equal(pred, true_result)
@@ -256,7 +259,7 @@ def test_oneclass_decision_function():
     dec_func_test = clf.decision_function(X_test)
     assert_array_equal((dec_func_test > 0).ravel(), y_pred_test == 1)
     dec_func_outliers = clf.decision_function(X_outliers)
-    assert_array_equal((dec_func_outliers > 0).ravel(),  y_pred_outliers == 1)
+    assert_array_equal((dec_func_outliers > 0).ravel(), y_pred_outliers == 1)
 
 
 def test_tweak_params():
@@ -272,9 +275,9 @@ def test_tweak_params():
     """
     clf = svm.SVC(kernel='linear', C=1.0)
     clf.fit(X, Y)
-    assert_array_equal(clf.dual_coef_, [[.25, -.25]])
+    assert_array_equal(clf.dual_coef_, [[-.25, .25]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [1])
-    clf.dual_coef_ = np.array([[.0, 1.]])
+    clf._dual_coef_ = np.array([[.0, 1.]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [2])
 
 
@@ -325,6 +328,14 @@ def test_decision_function():
         clf.classes_[(clf.decision_function(X) > 0).astype(np.int)])
     expected = np.array([-1., -0.66, -1., 0.66, 1., 1.])
     assert_array_almost_equal(clf.decision_function(X), expected, 2)
+
+    # kernel binary:
+    clf = svm.SVC(kernel='rbf', gamma=1)
+    clf.fit(X, Y)
+    
+    rbfs = rbf_kernel(X, clf.support_vectors_, gamma=clf.gamma)
+    dec = np.dot(rbfs, clf.dual_coef_.T) + clf.intercept_
+    assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
 
 
 def test_weight():
@@ -457,21 +468,91 @@ def test_linearsvc_parameters():
     """
     Test possible parameter combinations in LinearSVC
     """
-    # generate list of possible parameter combinations
-    params = [(dual, loss, penalty) for dual in [True, False]
-              for loss in ['hinge', 'squared_hinge', 'logistic_regression']
-              for penalty in ['l1', 'l2']]
+    # Generate list of possible parameter combinations
+    losses = ['hinge', 'squared_hinge', 'logistic_regression', 'foo']
+    penalties, duals = ['l1', 'l2', 'bar'], [True, False]
 
     X, y = make_classification(n_samples=5, n_features=5)
 
-    for dual, loss, penalty in params:
+    for loss, penalty, dual in itertools.product(losses, penalties, duals):
         clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
-        if (loss == 'hinge' and penalty == 'l1') or (
-            loss == 'hinge' and penalty == 'l2' and not dual) or (
-            penalty == 'l1' and dual):
-            assert_raises(ValueError, clf.fit, X, y)
+        if ((loss, penalty) == ('hinge', 'l1') or
+                (loss, penalty, dual) == ('hinge', 'l2', False) or
+                (penalty, dual) == ('l1', True) or
+                loss == 'foo' or penalty == 'bar'):
+
+            assert_raises_regexp(ValueError,
+                                 "Unsupported set of arguments.*penalty='%s.*"
+                                 "loss='%s.*dual=%s"
+                                 % (penalty, loss, dual),
+                                 clf.fit, X, y)
         else:
             clf.fit(X, y)
+
+    # Incorrect loss value - test if explicit error message is raised
+    assert_raises_regexp(ValueError, ".*loss='l3' is not supported.*",
+                         svm.LinearSVC(loss="l3").fit, X, y)
+
+
+# FIXME remove in 1.0
+def test_linearsvx_loss_penalty_deprecations():
+    X, y = [[0.0], [1.0]], [0, 1]
+
+    msg = ("loss='%s' has been deprecated in favor of "
+           "loss='%s' as of 0.16. Backward compatibility"
+           " for the %s will be removed in %s")
+
+    # LinearSVC
+    # loss l1/L1 --> hinge
+    assert_warns_message(DeprecationWarning,
+                         msg % ("l1", "hinge", "loss='l1'", "1.0"),
+                         svm.LinearSVC(loss="l1").fit, X, y)
+
+    # loss l2/L2 --> squared_hinge
+    assert_warns_message(DeprecationWarning,
+                         msg % ("L2", "squared_hinge", "loss='L2'", "1.0"),
+                         svm.LinearSVC(loss="L2").fit, X, y)
+
+    # LinearSVR
+    # loss l1/L1 --> epsilon_insensitive
+    assert_warns_message(DeprecationWarning,
+                         msg % ("L1", "epsilon_insensitive", "loss='L1'",
+                                "1.0"),
+                         svm.LinearSVR(loss="L1").fit, X, y)
+
+    # loss l2/L2 --> squared_epsilon_insensitive
+    assert_warns_message(DeprecationWarning,
+                         msg % ("l2", "squared_epsilon_insensitive",
+                                "loss='l2'", "1.0"),
+                         svm.LinearSVR(loss="l2").fit, X, y)
+
+
+# FIXME remove in 0.18
+def test_linear_svx_uppercase_loss_penalty():
+    # Check if Upper case notation is supported by _fit_liblinear
+    # which is called by fit
+    X, y = [[0.0], [1.0]], [0, 1]
+
+    msg = ("loss='%s' has been deprecated in favor of "
+           "loss='%s' as of 0.16. Backward compatibility"
+           " for the uppercase notation will be removed in %s")
+
+    # loss SQUARED_hinge --> squared_hinge
+    assert_warns_message(DeprecationWarning,
+                         msg % ("SQUARED_hinge", "squared_hinge", "0.18"),
+                         svm.LinearSVC(loss="SQUARED_hinge").fit, X, y)
+
+    # penalty L2 --> l2
+    assert_warns_message(DeprecationWarning,
+                         msg.replace("loss", "penalty")
+                         % ("L2", "l2", "0.18"),
+                         svm.LinearSVC(penalty="L2").fit, X, y)
+
+    # loss EPSILON_INSENSITIVE --> epsilon_insensitive
+    assert_warns_message(DeprecationWarning,
+                         msg % ("EPSILON_INSENSITIVE", "epsilon_insensitive",
+                                "0.18"),
+                         svm.LinearSVR(loss="EPSILON_INSENSITIVE").fit, X, y)
 
 
 def test_linearsvc():
@@ -487,7 +568,7 @@ def test_linearsvc():
     assert_array_almost_equal(clf.intercept_, [0], decimal=3)
 
     # the same with l1 penalty
-    clf = svm.LinearSVC(penalty='l1', loss='l2', dual=False, random_state=0).fit(X, Y)
+    clf = svm.LinearSVC(penalty='l1', loss='squared_hinge', dual=False, random_state=0).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     # l2 penalty with dual formulation
@@ -495,7 +576,7 @@ def test_linearsvc():
     assert_array_equal(clf.predict(T), true_result)
 
     # l2 penalty, l1 loss
-    clf = svm.LinearSVC(penalty='l2', loss='l1', dual=True, random_state=0)
+    clf = svm.LinearSVC(penalty='l2', loss='hinge', dual=True, random_state=0)
     clf.fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
@@ -562,7 +643,7 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
          [1, 3],
          [2, 3]]
     y = [0, 0, 1, 1]
-    clf = classifier(fit_intercept=True, penalty='l1', loss='l2',
+    clf = classifier(fit_intercept=True, penalty='l1', loss='squared_hinge',
                      dual=False, C=4, tol=1e-7, random_state=0)
     assert_true(clf.intercept_scaling == 1, clf.intercept_scaling)
     assert_true(clf.fit_intercept)

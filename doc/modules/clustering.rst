@@ -482,7 +482,7 @@ reproducible, but it tends to create parcels of fairly even and
 geometrical shape.
 
 =====================================  =====================================
- ``assign_labels="kmeans"`              ``assign_labels="discretize"``
+ ``assign_labels="kmeans"``              ``assign_labels="discretize"``
 =====================================  =====================================
 |lena_kmeans|                          |lena_discretize|
 =====================================  =====================================
@@ -841,6 +841,7 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
 
 To avoid the computation of global clustering, for every call of ``partial_fit``
 the user is advised
+
  1. To set ``n_clusters=None`` initially
  2. Train all data by multiple calls to partial_fit.
  3. Set ``n_clusters`` to a required value using

@@ -529,7 +529,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              "dual=False, got dual=%s" % dual)
     # Preprocessing.
     X = check_array(X, accept_sparse='csr', dtype=np.float64)
-    y = check_array(y, ensure_2d=False, copy=copy)
+    y = check_array(y, ensure_2d=False, copy=copy, dtype=None)
     _, n_features = X.shape
     check_consistent_length(X, y)
     classes = np.unique(y)
@@ -591,7 +591,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     if coef is not None:
         # it must work both giving the bias term and not
         if multi_class == 'ovr':
-            if not coef.size in (n_features, w0.size):
+            if coef.size not in (n_features, w0.size):
                 raise ValueError(
                     'Initialization coef is of shape %d, expected shape '
                     '%d or %d' % (coef.size, n_features, w0.size)
@@ -1242,15 +1242,15 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Array of C i.e. inverse of regularization parameter values used
         for cross-validation.
 
-    coefs_paths_ : array, shape (n_folds, len(Cs_), n_features) or
-                     (n_folds, len(Cs_), n_features + 1)
+    coefs_paths_ : array, shape ``(n_folds, len(Cs_), n_features)`` or
+                     ``(n_folds, len(Cs_), n_features + 1)``
         dict with classes as the keys, and the path of coefficients obtained
         during cross-validating across each fold and then across each Cs
         after doing an OvR for the corresponding class as values.
         If the 'multi_class' option is set to 'multinomial', then
         the coefs_paths are the coefficients corresponding to each class.
-        Each dict value has shape (n_folds, len(Cs_), n_features) or
-        (n_folds, len(Cs_), n_features + 1) depending on whether the
+        Each dict value has shape ``(n_folds, len(Cs_), n_features)`` or
+        ``(n_folds, len(Cs_), n_features + 1)`` depending on whether the
         intercept is fit or not.
 
     scores_ : dict
@@ -1318,7 +1318,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                                  "the primal form.")
 
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
-        y = check_array(y, ensure_2d=False)
+        y = check_array(y, ensure_2d=False, dtype=None)
 
         if self.multi_class not in ['ovr', 'multinomial']:
             raise ValueError("multi_class backend should be either "

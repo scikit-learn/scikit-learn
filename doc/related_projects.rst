@@ -48,7 +48,7 @@ scikit-learn tools.
 - `HMMLearn <https://github.com/hmmlearn/hmmlearn>`_ Implementation of hidden
   markov models that was previously part of scikit-learn.
 
-- `PyStruct <https://pystruct.githup.io>`_ General conditional random fields
+- `PyStruct <https://pystruct.github.io>`_ General conditional random fields
   and structured prediction.
 
 - `py-earth <https://github.com/jcrudy/py-earth>`_ Multivariate adaptive regression splines
@@ -75,6 +75,9 @@ Domain Specific Packages
 - `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natual language processing and some machine learning.
 - `NiLearn <https://nilearn.github.io/>`_ Machine learning for neuro-imaging.
 - `AstroML <http://www.astroml.org/>`_  Machine learning for astronomy.
+- `MSMBuilder <http://www.msmbuilder.org/>`_  Machine learning for protein conformational dynamics time series.
+
+
 
 Snippets and tidbits
 ---------------------

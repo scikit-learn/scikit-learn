@@ -132,6 +132,7 @@ def boxplot_runtimes(runtimes, pred_type, configuration):
     pred_type : 'bulk' or 'atomic'
 
     """
+
     fig, ax1 = plt.subplots(figsize=(10, 6))
     bp = plt.boxplot(runtimes, )
 
@@ -140,9 +141,7 @@ def boxplot_runtimes(runtimes, pred_type, configuration):
                                       estimator_conf['instance']),
                                   estimator_conf['complexity_label']) for
                  estimator_conf in configuration['estimators']]
-    xtick_names = plt.setp(ax1, xticklabels=cls_infos)
-    plt.setp(xtick_names)
-
+    plt.setp(ax1, xticklabels=cls_infos)
     plt.setp(bp['boxes'], color='black')
     plt.setp(bp['whiskers'], color='black')
     plt.setp(bp['fliers'], color='red', marker='+')

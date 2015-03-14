@@ -113,7 +113,7 @@ def test_classifier_correctness():
             clf2 = PassiveAggressiveClassifier(C=1.0,
                                                loss=loss,
                                                fit_intercept=True,
-                                               n_iter=2)
+                                               n_iter=2, shuffle=False)
             clf2.fit(data, y_bin)
 
             assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
@@ -168,7 +168,7 @@ def test_regressor_correctness():
             reg2 = PassiveAggressiveRegressor(C=1.0,
                                               loss=loss,
                                               fit_intercept=True,
-                                              n_iter=2)
+                                              n_iter=2, shuffle=False)
             reg2.fit(data, y_bin)
 
             assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)

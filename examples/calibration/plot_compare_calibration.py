@@ -1,7 +1,7 @@
 """
-=======================================
+========================================
 Comparison of Calibration of Classifiers
-=======================================
+========================================
 
 Well calibrated classifiers are probabilistic classifiers for which the output
 of the predict_proba method can be directly interpreted as a confidence level.
@@ -58,12 +58,10 @@ np.random.seed(0)
 import matplotlib.pyplot as plt
 
 from sklearn import datasets
-from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import LinearSVC
-from sklearn.metrics import brier_score_loss
 from sklearn.calibration import calibration_curve
 
 X, y = datasets.make_classification(n_samples=100000, n_features=20,

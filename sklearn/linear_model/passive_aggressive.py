@@ -15,17 +15,16 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     C : float
         Maximum step size (regularization). Defaults to 1.0.
 
-    fit_intercept : bool
+    fit_intercept : bool, default=False
         Whether the intercept should be estimated or not. If False, the
-        data is assumed to be already centered. Defaults to True.
+        data is assumed to be already centered.
 
     n_iter : int, optional
         The number of passes over the training data (aka epochs).
         Defaults to 5.
 
-    shuffle : bool, optional
+    shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
-        Defaults to False.
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
@@ -71,7 +70,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     """
     def __init__(self, C=1.0, fit_intercept=True,
-                 n_iter=5, shuffle=False, verbose=0, loss="hinge",
+                 n_iter=5, shuffle=True, verbose=0, loss="hinge",
                  n_jobs=1, random_state=None, warm_start=False):
         BaseSGDClassifier.__init__(self,
                                    penalty=None,
@@ -163,9 +162,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         The number of passes over the training data (aka epochs).
         Defaults to 5.
 
-    shuffle : bool, optional
+    shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
-        Defaults to False.
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
@@ -205,7 +203,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    def __init__(self, C=1.0, fit_intercept=True, n_iter=5, shuffle=False,
+    def __init__(self, C=1.0, fit_intercept=True, n_iter=5, shuffle=True,
                  verbose=0, loss="epsilon_insensitive",
                  epsilon=DEFAULT_EPSILON, random_state=None, class_weight=None,
                  warm_start=False):

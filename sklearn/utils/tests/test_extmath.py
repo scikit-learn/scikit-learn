@@ -29,6 +29,7 @@ from sklearn.utils.extmath import log_logistic, logistic_sigmoid
 from sklearn.utils.extmath import fast_dot, _fast_dot
 from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import _batch_mean_variance_update
+from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -456,6 +457,18 @@ def test_incremental_variance_ddof():
             assert_almost_equal(incremental_variances,
                                 calculated_variances, 6)
             assert_equal(incremental_count, sample_count)
+
+
+def test_vector_sign_flip():
+    # Testing that sign flip is working & largest value has positive sign
+    data = np.random.RandomState(36).randn(5, 5)
+    max_abs_rows = np.argmax(np.abs(data), axis=1)
+    data_flipped = _deterministic_vector_sign_flip(data)
+    max_rows = np.argmax(data_flipped, axis=1)
+    assert_array_equal(max_abs_rows, max_rows)
+    signs = np.sign(data[range(data.shape[0]), max_abs_rows])
+    assert_array_equal(data, data_flipped * signs[:, np.newaxis])
+
 
 if __name__ == '__main__':
     import nose

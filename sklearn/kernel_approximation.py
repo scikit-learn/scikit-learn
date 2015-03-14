@@ -24,6 +24,8 @@ from .metrics.pairwise import pairwise_kernels
 class RBFSampler(BaseEstimator, TransformerMixin):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
     of its Fourier transform.
+    
+    It implements a variant of Random Kitchen Sinks.[1]
 
     Parameters
     ----------
@@ -42,6 +44,11 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     -----
     See "Random Features for Large-Scale Kernel Machines" by A. Rahimi and
     Benjamin Recht.
+
+    [1] "Weighted Sums of Random Kitchen Sinks: Replacing
+    minimization with randomization in learning" by A. Rahimi and
+    Benjamin Recht.
+    (http://www.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
     """
 
     def __init__(self, gamma=1., n_components=100, random_state=None):
@@ -437,10 +444,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
         X : array-like, shape=(n_samples, n_feature)
             Training data.
         """
-
+        X = check_array(X, accept_sparse='csr')
         rnd = check_random_state(self.random_state)
-        if not sp.issparse(X):
-            X = np.asarray(X)
         n_samples = X.shape[0]
 
         # get basis vectors
@@ -487,6 +492,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
             Transformed data.
         """
         check_is_fitted(self, 'components_')
+        X = check_array(X, accept_sparse='csr')
 
         kernel_params = self._get_kernel_params()
         embedded = pairwise_kernels(X, self.components_,

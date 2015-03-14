@@ -7,14 +7,13 @@ from abc import ABCMeta, abstractmethod
 
 from . import libsvm, liblinear
 from . import libsvm_sparse
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils import check_array, check_random_state, column_or_1d
 from ..utils import ConvergenceWarning, compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..externals import six
-
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
@@ -70,7 +69,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
                  class_weight, verbose, max_iter, random_state):
 
-        if not impl in LIBSVM_IMPL:  # pragma: no cover
+        if impl not in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
 
@@ -180,10 +179,13 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.shape_fit_ = X.shape
 
         # In binary case, we need to flip the sign of coef, intercept and
-        # decision function. Use self._intercept_ internally.
+        # decision function. Use self._intercept_ and self._dual_coef_ internally.
         self._intercept_ = self.intercept_.copy()
+        self._dual_coef_ = self.dual_coef_
         if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
             self.intercept_ *= -1
+            self.dual_coef_ = -self.dual_coef_
+
         return self
 
     def _validate_targets(self, y):
@@ -303,7 +305,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_,
+            self._dual_coef_, self._intercept_,
             self.probA_, self.probB_, svm_type=svm_type, kernel=kernel,
             degree=self.degree, coef0=self.coef0, gamma=self._gamma,
             cache_size=self.cache_size)
@@ -323,7 +325,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.support_vectors_.data,
             self.support_vectors_.indices,
             self.support_vectors_.indptr,
-            self.dual_coef_.data, self._intercept_,
+            self._dual_coef_.data, self._intercept_,
             LIBSVM_IMPL.index(self._impl), kernel_type,
             self.degree, self._gamma, self.coef0, self.tol,
             C, self.class_weight_,
@@ -369,7 +371,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_,
+            self._dual_coef_, self._intercept_,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self._impl),
             kernel=kernel, degree=self.degree, cache_size=self.cache_size,
@@ -384,7 +386,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _validate_for_predict(self, X):
         check_is_fitted(self, 'support_')
-        
+
         X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
@@ -427,7 +429,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return coef
 
     def _get_coef(self):
-        return safe_sparse_dot(self.dual_coef_, self.support_vectors_)
+        return safe_sparse_dot(self._dual_coef_, self.support_vectors_)
 
 
 class BaseSVC(BaseLibSVM, ClassifierMixin):
@@ -550,7 +552,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         svm_type = LIBSVM_IMPL.index(self._impl)
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_,
+            self._dual_coef_, self._intercept_,
             self.probA_, self.probB_,
             svm_type=svm_type, kernel=kernel, degree=self.degree,
             cache_size=self.cache_size, coef0=self.coef0, gamma=self._gamma)
@@ -571,7 +573,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             self.support_vectors_.data,
             self.support_vectors_.indices,
             self.support_vectors_.indptr,
-            self.dual_coef_.data, self._intercept_,
+            self._dual_coef_.data, self._intercept_,
             LIBSVM_IMPL.index(self._impl), kernel_type,
             self.degree, self._gamma, self.coef0, self.tol,
             self.C, self.class_weight_,
@@ -582,7 +584,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
     def _get_coef(self):
         if self.dual_coef_.shape[0] == 1:
             # binary classifier
-            coef = -safe_sparse_dot(self.dual_coef_, self.support_vectors_)
+            coef = safe_sparse_dot(self.dual_coef_, self.support_vectors_)
         else:
             # 1vs1 classifier
             coef = _one_vs_one_coef(self.dual_coef_, self.n_support_,
@@ -604,11 +606,10 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
       - loss
       - dual
 
-    The same number is internally by LibLinear to determine which
-    solver to use.
+    The same number is also internally used by LibLinear to determine
+    which solver to use.
     """
-
-    # nested dicts containing level 1: available loss functions, 
+    # nested dicts containing level 1: available loss functions,
     # level2: available penalties for the given loss functin,
     # level3: wether the dual solver is available for the specified
     # combination of loss function and penalty
@@ -616,10 +617,10 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         'logistic_regression': {
             'l1': {False: 6},
             'l2': {False: 0, True: 7}},
-        'hinge' : {
-            'l2' : {True: 3}},
+        'hinge': {
+            'l2': {True: 3}},
         'squared_hinge': {
-            'l1': {False : 5},
+            'l1': {False: 5},
             'l2': {False: 2, True: 1}},
         'epsilon_insensitive': {
             'l2': {True: 13}},
@@ -627,7 +628,6 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
             'l2': {False: 11, True: 12}},
         'crammer_singer': 4
     }
-    
 
     if multi_class == 'crammer_singer':
         return _solver_type_dict[multi_class]
@@ -635,32 +635,34 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         raise ValueError("`multi_class` must be one of `ovr`, "
                          "`crammer_singer`, got %r" % multi_class)
 
-    _solver_pen = _solver_type_dict.get(loss, None)
+    # FIXME loss.lower() --> loss in 0.18
+    _solver_pen = _solver_type_dict.get(loss.lower(), None)
     if _solver_pen is None:
-        error_string = ("Loss %s is not supported" % loss)
+        error_string = ("loss='%s' is not supported" % loss)
     else:
-        _solver_dual = _solver_pen.get(penalty, None)
+        # FIME penalty.lower() --> penalty in 0.18
+        _solver_dual = _solver_pen.get(penalty.lower(), None)
         if _solver_dual is None:
             error_string = ("The combination of penalty='%s'"
                             "and loss='%s' is not supported"
-                            % (loss, penalty))
+                            % (penalty, loss))
         else:
             solver_num = _solver_dual.get(dual, None)
             if solver_num is None:
                 error_string = ("loss='%s' and penalty='%s'"
                                 "are not supported when dual=%s"
-                                % (loss, penalty, dual))
+                                % (penalty, loss, dual))
             else:
                 return solver_num
-    raise ValueError('Unsupported set of arguments: %s, '
-                         'Parameters: penalty=%r, loss=%r, dual=%r'
-                         % (error_string, penalty, loss, dual))
-    return _solver_type_dict[solver_type]
+    
+    raise ValueError(('Unsupported set of arguments: %s, '
+                      'Parameters: penalty=%r, loss=%r, dual=%r')
+                     % (error_string, penalty, loss, dual))
 
 
 def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                    penalty, dual, verbose, max_iter, tol,
-                   random_state=None, multi_class='ovr', 
+                   random_state=None, multi_class='ovr',
                    loss='logistic_regression', epsilon=0.1):
     """Used by Logistic Regression (and CV) and LinearSVC.
 
@@ -722,7 +724,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         If `crammer_singer` is chosen, the options loss, penalty and dual will
         be ignored.
 
-    loss : str, {'logistic_regression', 'hinge', 'squared_hinge', 
+    loss : str, {'logistic_regression', 'hinge', 'squared_hinge',
                  'epsilon_insensitive', 'squared_epsilon_insensitive}
         The loss function used to fit the model.
 
@@ -743,7 +745,23 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     n_iter_ : int
         Maximum number of iterations run across all classes.
     """
-    if loss not in ['epsilon_insensitive', 'squared_epsilon_insensitive']:
+    # FIXME Remove case insensitivity in 0.18 ---------------------
+    loss_l, penalty_l = loss.lower(), penalty.lower()
+
+    msg = ("loss='%s' has been deprecated in favor of "
+           "loss='%s' as of 0.16. Backward compatibility"
+           " for the uppercase notation will be removed in %s")
+    if (not loss.islower()) and loss_l not in ('l1', 'l2'):
+        warnings.warn(msg % (loss, loss_l, "0.18"),
+                      DeprecationWarning)
+    if not penalty.islower():
+        warnings.warn(msg.replace("loss", "penalty")
+                      % (penalty, penalty_l, "0.18"),
+                      DeprecationWarning)
+    # -------------------------------------------------------------
+
+    # FIXME loss_l --> loss in 0.18
+    if loss_l not in ['epsilon_insensitive', 'squared_epsilon_insensitive']:
         enc = LabelEncoder()
         y_ind = enc.fit_transform(y)
         classes_ = enc.classes_
@@ -772,7 +790,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     # LibLinear wants targets as doubles, even for classification
     y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
     solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)
-    raw_coef_, n_iter_  = liblinear.train_wrap(
+    raw_coef_, n_iter_ = liblinear.train_wrap(
         X, y_ind, sp.isspmatrix(X), solver_type, tol, bias, C,
         class_weight_, max_iter, rnd.randint(np.iinfo('i').max),
         epsilon

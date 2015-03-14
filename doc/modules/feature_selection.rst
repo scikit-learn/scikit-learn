@@ -210,8 +210,8 @@ settings, using the Lasso, while :class:`RandomizedLogisticRegression` uses the
 logistic regression and is suitable for classification tasks.  To get a full
 path of stability scores you can use :func:`lasso_stability_path`.
 
-.. figure:: ../auto_examples/linear_model/linear_model.png
-   :target: ../auto_examples/linear_model/linear_model.html
+.. figure:: ../auto_examples/linear_model/plot_sparse_recovery_003.png
+   :target: ../auto_examples/linear_model/plot_sparse_recovery.html
    :align: center
    :scale: 60
 

@@ -132,7 +132,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, dtype=np.float)
+        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
         X, y, X_mean, y_mean, X_std = self._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
         n_samples, n_features = X.shape
@@ -342,7 +342,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, dtype=np.float)
+        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)

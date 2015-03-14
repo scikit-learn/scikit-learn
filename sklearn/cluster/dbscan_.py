@@ -8,11 +8,13 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 #
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
-from ..utils import check_random_state, check_array, check_consistent_length
+from ..utils import check_array, check_consistent_length
 from ..neighbors import NearestNeighbors
 
 
@@ -34,7 +36,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
 
     min_samples : int, optional
         The number of samples (or total weight) in a neighborhood for a point
-        to be considered as a core point.
+        to be considered as a core point. This includes the point itself.
 
     metric : string, or callable
         The metric to use when calculating distance between instances in a
@@ -60,13 +62,14 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         between points.
 
     sample_weight : array, shape (n_samples,), optional
-        Weight of each sample, such that a sample with weight greater
-        than ``min_samples`` is automatically a core sample; a sample with
-        negative weight may inhibit its eps-neighbor from being core.
+        Weight of each sample, such that a sample with a weight of at least
+        ``min_samples`` is by itself a core sample; a sample with negative
+        weight may inhibit its eps-neighbor from being core.
         Note that weights are absolute, and default to 1.
 
     random_state: numpy.RandomState, optional
-        The generator used to shuffle the samples. Defaults to numpy.random.
+        Deprecated and ignored as of version 0.16, will be removed in version
+        0.18. DBSCAN does not use random initialization.
 
     Returns
     -------
@@ -80,6 +83,10 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     -----
     See examples/cluster/plot_dbscan.py for an example.
 
+    This implementation bulk-computes all neighborhood queries, which increases
+    the memory complexity to O(n.d) where d is the average number of neighbors,
+    while original DBSCAN had memory complexity O(n).
+
     References
     ----------
     Ester, M., H. P. Kriegel, J. Sander, and X. Xu, "A Density-Based
@@ -89,14 +96,16 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     """
     if not eps > 0.0:
         raise ValueError("eps must be positive.")
+    if random_state is not None:
+        warnings.warn("The parameter random_state is deprecated in 0.16 "
+                      "and will be removed in version 0.18. "
+                      "DBSCAN is deterministic except for rare border cases.",
+                      category=DeprecationWarning)
 
     X = check_array(X, accept_sparse='csr')
     if sample_weight is not None:
         sample_weight = np.asarray(sample_weight)
         check_consistent_length(X, sample_weight)
-
-    # If index order not given, create random order.
-    random_state = check_random_state(random_state)
 
     # Calculate neighborhood for all samples. This leaves the original point
     # in, which needs to be considered later (i.e. point i is in the
@@ -109,6 +118,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
                                            leaf_size=leaf_size,
                                            metric=metric, p=p)
         neighbors_model.fit(X)
+        # This has worst case O(n^2) memory complexity
         neighborhoods = neighbors_model.radius_neighbors(X, eps,
                                                          return_distance=False)
         neighborhoods = np.array(neighborhoods)
@@ -122,15 +132,14 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     labels = -np.ones(X.shape[0], dtype=np.int)
 
     # A list of all core samples found.
-    core_samples = np.flatnonzero(n_neighbors > min_samples)
-    index_order = core_samples[random_state.permutation(core_samples.shape[0])]
+    core_samples = np.flatnonzero(n_neighbors >= min_samples)
 
     # label_num is the label given to the new cluster
     label_num = 0
 
     # Look at all samples and determine if they are core.
     # If they are then build a new cluster from them.
-    for index in index_order:
+    for index in core_samples:
         # Already classified
         if labels[index] != -1:
             continue
@@ -170,7 +179,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         as in the same neighborhood.
     min_samples : int, optional
         The number of samples (or total weight) in a neighborhood for a point
-        to be considered as a core point.
+        to be considered as a core point. This includes the point itself.
     metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
@@ -178,8 +187,6 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
-    random_state : numpy.RandomState, optional
-        The generator used to shuffle the samples. Defaults to numpy.random.
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         The algorithm to be used by the NearestNeighbors module
         to compute pointwise distances and find nearest neighbors.
@@ -189,6 +196,9 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         of the construction and query, as well as the memory required
         to store the tree. The optimal value depends
         on the nature of the problem.
+    random_state: numpy.RandomState, optional
+        Deprecated and ignored as of version 0.16, will be removed in version
+        0.18. DBSCAN does not use random initialization.
 
     Attributes
     ----------
@@ -205,6 +215,10 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     Notes
     -----
     See examples/cluster/plot_dbscan.py for an example.
+
+    This implementation bulk-computes all neighborhood queries, which increases
+    the memory complexity to O(n.d) where d is the average number of neighbors,
+    while original DBSCAN had memory complexity O(n).
 
     References
     ----------
@@ -234,9 +248,9 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             A feature array, or array of distances between samples if
             ``metric='precomputed'``.
         sample_weight : array, shape (n_samples,), optional
-            Weight of each sample, such that a sample with weight greater
-            than ``min_samples`` is automatically a core sample; a sample with
-            negative weight may inhibit its eps-neighbor from being core.
+            Weight of each sample, such that a sample with a weight of at least
+            ``min_samples`` is by itself a core sample; a sample with negative
+            weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
         """
         X = check_array(X, accept_sparse='csr')
@@ -260,9 +274,9 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             A feature array, or array of distances between samples if
             ``metric='precomputed'``.
         sample_weight : array, shape (n_samples,), optional
-            Weight of each sample, such that a sample with weight greater
-            than ``min_samples`` is automatically a core sample; a sample with
-            negative weight may inhibit its eps-neighbor from being core.
+            Weight of each sample, such that a sample with a weight of at least
+            ``min_samples`` is by itself a core sample; a sample with negative
+            weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
 
         Returns

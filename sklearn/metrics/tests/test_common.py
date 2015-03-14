@@ -221,6 +221,7 @@ METRICS_WITH_POS_LABEL = [
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
 
+    # pos_label support deprecated; to be removed in 0.18:
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
     "weighted_precision_score", "weighted_recall_score",
 
@@ -232,7 +233,7 @@ METRICS_WITH_POS_LABEL = [
 ]
 
 # Metrics with a "labels" argument
-# XXX: Handle multi_class metrics that has a labels argument as well as a
+# TODO: Handle multi_class metrics that has a labels argument as well as a
 # decision function argument. e.g hinge_loss
 METRICS_WITH_LABELS = [
     "confusion_matrix",
@@ -942,7 +943,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         unweighted_score,
         metric(y1, y2, sample_weight=np.ones(shape=len(y1))),
         err_msg="For %s sample_weight=None is not equivalent to "
-            "sample_weight=ones" % name)
+                "sample_weight=ones" % name)
 
     # check that the weighted and unweighted scores are unequal
     weighted_score = metric(y1, y2, sample_weight=sample_weight)
@@ -957,8 +958,8 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     assert_almost_equal(
         weighted_score, weighted_score_list,
         err_msg="Weighted scores for array and list sample_weight input are "
-            "not equal (%f != %f) for %s" % (
-                weighted_score, weighted_score_list, name))
+                "not equal (%f != %f) for %s" % (
+                    weighted_score, weighted_score_list, name))
 
     # check that integer weights is the same as repeated samples
     repeat_weighted_score = metric(

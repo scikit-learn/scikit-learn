@@ -1,13 +1,28 @@
 import numpy as np
 import pickle
 
-from sklearn.isotonic import check_increasing, isotonic_regression,\
-    IsotonicRegression
+from sklearn.isotonic import (check_increasing, isotonic_regression,
+                              IsotonicRegression)
 
-from sklearn.utils.testing import assert_raises, assert_array_equal,\
-    assert_true, assert_false, assert_equal
+from sklearn.utils.testing import (assert_raises, assert_array_equal,
+                                   assert_true, assert_false, assert_equal,
+                                   assert_array_almost_equal,
+                                   assert_warns_message, assert_no_warnings)
+from sklearn.utils import shuffle
 
-from sklearn.utils.testing import assert_warns_message, assert_no_warnings
+
+def test_permutation_invariance():
+    # check that fit is permuation invariant.
+    # regression test of missing sorting of sample-weights
+    ir = IsotonicRegression()
+    x = [1, 2, 3, 4, 5, 6, 7]
+    y = [1, 41, 51, 1, 2, 5, 24]
+    sample_weight = [1, 2, 3, 4, 5, 6, 7]
+    x_s, y_s, sample_weight_s = shuffle(x, y, sample_weight, random_state=0)
+    y_transformed = ir.fit_transform(x, y, sample_weight=sample_weight)
+    y_transformed_s = ir.fit(x_s, y_s, sample_weight=sample_weight_s).transform(x)
+
+    assert_array_equal(y_transformed, y_transformed_s)
 
 
 def test_check_increasing_up():
@@ -76,9 +91,65 @@ def test_isotonic_regression():
                        ir.fit_transform(x, y)[perm])
     assert_array_equal(ir.transform(x[perm]), ir.transform(x)[perm])
 
-    # check it doesn't change y when all x are equal:
+    # check we don't crash when all x are equal:
     ir = IsotonicRegression()
-    assert_array_equal(ir.fit_transform(np.ones(len(x)), y), y)
+    assert_array_equal(ir.fit_transform(np.ones(len(x)), y), np.mean(y))
+
+
+def test_isotonic_regression_ties_min():
+    # Setup examples with ties on minimum
+    x = [0, 1, 1, 2, 3, 4, 5]
+    y = [0, 1, 2, 3, 4, 5, 6]
+    y_true = [0, 1.5, 1.5, 3, 4, 5, 6]
+
+    # Check that we get identical results for fit/transform and fit_transform
+    ir = IsotonicRegression()
+    ir.fit(x, y)
+    assert_array_equal(ir.fit(x, y).transform(x), ir.fit_transform(x, y))
+    assert_array_equal(y_true, ir.fit_transform(x, y))
+
+
+def test_isotonic_regression_ties_max():
+    # Setup examples with ties on maximum
+    x = [1, 2, 3, 4, 5, 5]
+    y = [1, 2, 3, 4, 5, 6]
+    y_true = [1, 2, 3, 4, 5.5, 5.5]
+
+    # Check that we get identical results for fit/transform and fit_transform
+    ir = IsotonicRegression()
+    ir.fit(x, y)
+    assert_array_equal(ir.fit(x, y).transform(x), ir.fit_transform(x, y))
+    assert_array_equal(y_true, ir.fit_transform(x, y))
+
+
+def test_isotonic_regression_ties_secondary_():
+    """
+    Test isotonic regression fit, transform  and fit_transform
+    against the "secondary" ties method and "pituitary" data from R
+     "isotone" package, as detailed in: J. d. Leeuw, K. Hornik, P. Mair,
+     Isotone Optimization in R: Pool-Adjacent-Violators Algorithm
+    (PAVA) and Active Set Methods
+
+    Set values based on pituitary example and
+     the following R command detailed in the paper above:
+    > library("isotone")
+    > data("pituitary")
+    > res1 <- gpava(pituitary$age, pituitary$size, ties="secondary")
+    > res1$x
+
+    `isotone` version: 1.0-2, 2014-09-07
+    R version: R version 3.1.1 (2014-07-10)
+    """
+    x = [8, 8, 8, 10, 10, 10, 12, 12, 12, 14, 14]
+    y = [21, 23.5, 23, 24, 21, 25, 21.5, 22, 19, 23.5, 25]
+    y_true = [22.22222, 22.22222, 22.22222, 22.22222, 22.22222, 22.22222,
+              22.22222, 22.22222, 22.22222, 24.25, 24.25]
+
+    # Check fit, transform and fit_transform
+    ir = IsotonicRegression()
+    ir.fit(x, y)
+    assert_array_almost_equal(ir.transform(x), y_true, 4)
+    assert_array_almost_equal(ir.fit_transform(x, y), y_true, 4)
 
 
 def test_isotonic_regression_reversed():
@@ -173,7 +244,7 @@ def test_isotonic_regression_oob_raise():
     ir.fit(x, y)
 
     # Check that an exception is thrown
-    assert_raises(ValueError, ir.predict, [min(x)-10, max(x)+10])
+    assert_raises(ValueError, ir.predict, [min(x) - 10, max(x) + 10])
 
 
 def test_isotonic_regression_oob_clip():
@@ -202,7 +273,7 @@ def test_isotonic_regression_oob_nan():
     ir.fit(x, y)
 
     # Predict from  training and test x and check that we have two NaNs.
-    y1 = ir.predict([min(x)-10, max(x)+10])
+    y1 = ir.predict([min(x) - 10, max(x) + 10])
     assert_equal(sum(np.isnan(y1)), 2)
 
 
@@ -253,6 +324,29 @@ def test_isotonic_duplicate_min_entry():
     ir.fit(x, y)
     all_predictions_finite = np.all(np.isfinite(ir.predict(x)))
     assert_true(all_predictions_finite)
+
+
+def test_isotonic_zero_weight_loop():
+    # Test from @ogrisel's issue:
+    # https://github.com/scikit-learn/scikit-learn/issues/4297
+
+    # Get deterministic RNG with seed
+    rng = np.random.RandomState(42)
+
+    # Create regression and samples
+    regression = IsotonicRegression()
+    n_samples = 50
+    x = np.linspace(-3, 3, n_samples)
+    y = x + rng.uniform(size=n_samples)
+
+    # Get some random weights and zero out
+    w = rng.uniform(size=n_samples)
+    w[5:8] = 0
+    regression.fit(x, y, sample_weight=w)
+
+    # This will hang in failure case.
+    regression.fit(x, y, sample_weight=w)
+
 
 if __name__ == "__main__":
     import nose

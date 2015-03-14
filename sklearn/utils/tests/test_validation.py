@@ -1,29 +1,30 @@
 """Tests for input validation functions"""
 
+import warnings
+
 from tempfile import NamedTemporaryFile
+from itertools import product
+
 import numpy as np
 from numpy.testing import assert_array_equal, assert_warns
 import scipy.sparse as sp
 from nose.tools import assert_raises, assert_true, assert_false, assert_equal
-from itertools import product
 
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
-
 from sklearn.utils.estimator_checks import NotAnArray
-
 from sklearn.random_projection import sparse_random_matrix
-
 from sklearn.linear_model import ARDRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
-
 from sklearn.datasets import make_blobs
 from sklearn.utils.validation import (
     NotFittedError,
     has_fit_parameter,
-    check_is_fitted)
+    check_is_fitted,
+    check_consistent_length)
 
 from sklearn.utils.testing import assert_raise_message
 
@@ -179,8 +180,16 @@ def test_check_array():
     accept_sparses = [['csr', 'coo'], ['coo', 'dok']]
     for X, dtype, accept_sparse, copy in product(Xs, dtypes, accept_sparses,
                                                  copys):
-        X_checked = check_array(X, dtype=dtype, accept_sparse=accept_sparse,
-                                copy=copy)
+        with warnings.catch_warnings(record=True) as w:
+            X_checked = check_array(X, dtype=dtype,
+                                    accept_sparse=accept_sparse, copy=copy)
+        if (dtype is object or sp.isspmatrix_dok(X)) and len(w):
+            message = str(w[0].message)
+            messages = ["object dtype is not supported by sparse matrices",
+                        "Can't check dok sparse matrix for nan or inf."]
+            assert_true(message in messages)
+        else:
+            assert_equal(len(w), 0)
         if dtype is not None:
             assert_equal(X_checked.dtype, dtype)
         else:
@@ -237,6 +246,11 @@ def test_check_array_min_samples_and_features_messages():
     assert_raise_message(ValueError, msg, check_X_y, X, y,
                          ensure_min_samples=2)
 
+    # The same message is raised if the data has 2 dimensions even if this is
+    # not mandatory
+    assert_raise_message(ValueError, msg, check_X_y, X, y,
+                         ensure_min_samples=2, ensure_2d=False)
+
     # Simulate a model that would require at least 3 features (e.g. SelectKBest
     # with k=3)
     X = np.ones((10, 2))
@@ -244,6 +258,11 @@ def test_check_array_min_samples_and_features_messages():
     msg = "2 feature(s) (shape=(10, 2)) while a minimum of 3 is required."
     assert_raise_message(ValueError, msg, check_X_y, X, y,
                          ensure_min_features=3)
+
+    # Only the feature check is enabled whenever the number of dimensions is 2
+    # even if allow_nd is enabled:
+    assert_raise_message(ValueError, msg, check_X_y, X, y,
+                         ensure_min_features=3, allow_nd=True)
 
     # Simulate a case where a pipeline stage as trimmed all the features of a
     # 2D dataset.
@@ -327,3 +346,21 @@ def test_check_is_fitted():
 
     assert_equal(None, check_is_fitted(ard, "coef_"))
     assert_equal(None, check_is_fitted(svr, "support_"))
+
+
+def test_check_consistent_length():
+    check_consistent_length([1], [2], [3], [4], [5])
+    check_consistent_length([[1, 2], [[1, 2]]], [1, 2], ['a', 'b'])
+    check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
+    assert_raises_regexp(ValueError, 'inconsistent numbers of samples',
+                         check_consistent_length, [1, 2], [1])
+    assert_raises_regexp(TypeError, 'got <\w+ \'int\'>',
+                         check_consistent_length, [1, 2], 1)
+    assert_raises_regexp(TypeError, 'got <\w+ \'object\'>',
+                         check_consistent_length, [1, 2], object())
+
+    assert_raises(TypeError, check_consistent_length, [1, 2], np.array(1))
+    # Despite ensembles having __len__ they must raise TypeError
+    assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
+                         [1, 2], RandomForestRegressor())
+    # XXX: We should have a test with a string, but what is correct behaviour?

@@ -50,12 +50,10 @@ def _split_node(node, threshold, branching_factor):
     new_subcluster2 = _CFSubcluster()
     new_node1 = _CFNode(
         threshold, branching_factor, is_leaf=node.is_leaf,
-        n_features=node.n_features
-        )
+        n_features=node.n_features)
     new_node2 = _CFNode(
         threshold, branching_factor, is_leaf=node.is_leaf,
-        n_features=node.n_features
-        )
+        n_features=node.n_features)
     new_subcluster1.child_ = new_node1
     new_subcluster2.child_ = new_node2
 
@@ -122,17 +120,17 @@ class _CFNode(object):
         the final subclusters.
 
     init_centroids_ : ndarray, shape (branching_factor + 1, n_features)
-        manipulate init_centroids_ throughout rather than centroids_ since
-        the centroids are just a view of the init_centroids_ .
+        manipulate ``init_centroids_`` throughout rather than centroids_ since
+        the centroids are just a view of the ``init_centroids_`` .
 
     init_sq_norm_ : ndarray, shape (branching_factor + 1,)
-        manipulate init_sq_norm_ throughout. similar to init_centroids_.
+        manipulate init_sq_norm_ throughout. similar to ``init_centroids_``.
 
     centroids_ : ndarray
-        view of init_centroids_.
+        view of ``init_centroids_``.
 
     squared_norm_ : ndarray
-        view of init_sq_norm_.
+        view of ``init_sq_norm_``.
 
     """
     def __init__(self, threshold, branching_factor, is_leaf, n_features):
@@ -266,11 +264,11 @@ class _CFSubcluster(object):
 
     centroid_ : ndarray
         Centroid of the subcluster. Prevent recomputing of centroids when
-        CFNode.centroids_ is called.
+        ``CFNode.centroids_`` is called.
 
     child_ : _CFNode
         Child Node of the subcluster. Once a given _CFNode is set as the child
-        of the _CFNode, it is set to self.child_.
+        of the _CFNode, it is set to ``self.child_``.
 
     sq_norm_ : ndarray
         Squared norm of the subcluster. Used to prevent recomputing when
@@ -319,8 +317,7 @@ class _CFSubcluster(object):
         dot_product = -2 * np.dot(self.linear_sum_, self.centroid_)
         return sqrt(
             ((self.squared_sum_ + dot_product) / self.n_samples_) +
-            self.sq_norm_
-            )
+            self.sq_norm_)
 
 
 class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
@@ -527,7 +524,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
     def predict(self, X):
         """
-        Predict data using the centroids_ of subclusters.
+        Predict data using the ``centroids_`` of subclusters.
 
         Avoid computation of the row norms of X.
 

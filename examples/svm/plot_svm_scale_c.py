@@ -38,19 +38,19 @@ account for the different amount of training samples?`
 
 The figures below are used to illustrate the effect of scaling our
 `C` to compensate for the change in the number of samples, in the
-case of using an `L1` penalty, as well as the `L2` penalty.
+case of using an `l1` penalty, as well as the `l2` penalty.
 
-L1-penalty case
+l1-penalty case
 -----------------
-In the `L1` case, theory says that prediction consistency
+In the `l1` case, theory says that prediction consistency
 (i.e. that under given hypothesis, the estimator
 learned predicts as well as a model knowing the true distribution)
-is not possible because of the bias of the `L1`. It does say, however,
+is not possible because of the bias of the `l1`. It does say, however,
 that model consistency, in terms of finding the right set of non-zero
 parameters as well as their signs, can be achieved by scaling
 `C1`.
 
-L2-penalty case
+l2-penalty case
 -----------------
 The theory says that in order to achieve prediction consistency, the
 penalty parameter should be kept constant
@@ -63,17 +63,17 @@ The two figures below plot the values of `C` on the `x-axis` and the
 corresponding cross-validation scores on the `y-axis`, for several different
 fractions of a generated data-set.
 
-In the `L1` penalty case, the cross-validation-error correlates best with
+In the `l1` penalty case, the cross-validation-error correlates best with
 the test-error, when scaling our `C` with the number of samples, `n`,
 which can be seen in the first figure.
 
-For the `L2` penalty case, the best result comes from the case where `C`
+For the `l2` penalty case, the best result comes from the case where `C`
 is not scaled.
 
 .. topic:: Note:
 
     Two separate datasets are used for the two different plots. The reason
-    behind this is the `L1` case works better on sparse data, while `L2`
+    behind this is the `l1` case works better on sparse data, while `l2`
     is better suited to the non-sparse case.
 """
 print(__doc__)
@@ -100,20 +100,20 @@ rnd = check_random_state(1)
 n_samples = 100
 n_features = 300
 
-# L1 data (only 5 informative features)
+# l1 data (only 5 informative features)
 X_1, y_1 = datasets.make_classification(n_samples=n_samples,
                                         n_features=n_features, n_informative=5,
                                         random_state=1)
 
-# L2 data: non sparse, but less features
+# l2 data: non sparse, but less features
 y_2 = np.sign(.5 - rnd.rand(n_samples))
 X_2 = rnd.randn(n_samples, n_features / 5) + y_2[:, np.newaxis]
 X_2 += 5 * rnd.randn(n_samples, n_features / 5)
 
-clf_sets = [(LinearSVC(penalty='L1', loss='L2', dual=False,
+clf_sets = [(LinearSVC(penalty='l1', loss='squared_hinge', dual=False,
                        tol=1e-3),
              np.logspace(-2.3, -1.3, 10), X_1, y_1),
-            (LinearSVC(penalty='L2', loss='L2', dual=True,
+            (LinearSVC(penalty='l2', loss='squared_hinge', dual=True,
                        tol=1e-4),
              np.logspace(-4.5, -2, 10), X_2, y_2)]
 

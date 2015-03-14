@@ -180,7 +180,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         Y block to latents rotations.
 
     coef_: array, [p, q]
-        The coefficients of the linear model: Y = X coef_ + Err
+        The coefficients of the linear model: ``Y = X coef_ + Err``
 
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
@@ -252,7 +252,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         if self.algorithm == "svd" and self.mode == "B":
             raise ValueError('Incompatible configuration: mode B is not '
                              'implemented with svd algorithm')
-        if not self.deflation_mode in ["canonical", "regression"]:
+        if self.deflation_mode not in ["canonical", "regression"]:
             raise ValueError('The deflation mode is unknown')
         # Scale (in place)
         X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_\
@@ -494,7 +494,7 @@ class PLSRegression(_PLS):
         Y block to latents rotations.
 
     coef_: array, [p, q]
-        The coefficients of the linear model: Y = X coef_ + Err
+        The coefficients of the linear model: ``Y = X coef_ + Err``
 
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
@@ -556,10 +556,9 @@ class PLSRegression(_PLS):
     @property
     def coefs(self):
         check_is_fitted(self, 'coef_')
-        DeprecationWarning("'coefs' attribute has been deprecated and will be "
-                           "removed in version 0.17. Use 'coef_' instead")
+        DeprecationWarning("``coefs`` attribute has been deprecated and will be "
+                           "removed in version 0.17. Use ``coef_`` instead")
         return self.coef_
-
 
 
 class PLSCanonical(_PLS):

@@ -130,7 +130,7 @@ symbol_dict = {
     'XRX': 'Xerox',
     'LMT': 'Lookheed Martin',
     'WMT': 'Wal-Mart',
-    'WAG': 'Walgreen',
+    'WBA': 'Walgreen',
     'HD': 'Home Depot',
     'GSK': 'GlaxoSmithKline',
     'PFE': 'Pfizer',

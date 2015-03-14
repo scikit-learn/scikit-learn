@@ -172,8 +172,7 @@ def test_classification_scores():
     # test fbeta score that takes an argument
     scorer = make_scorer(fbeta_score, beta=2)
     score1 = scorer(clf, X_test, y_test)
-    score2 = fbeta_score(y_test, clf.predict(X_test), beta=2,
-                         average='weighted')
+    score2 = fbeta_score(y_test, clf.predict(X_test), beta=2)
     assert_almost_equal(score1, score2)
 
     # test that custom scorer can be pickled
@@ -317,9 +316,9 @@ def test_scorer_sample_weight():
     # get sensible estimators for each metric
     sensible_regr = DummyRegressor(strategy='median')
     sensible_regr.fit(X_train, y_train)
-    sensible_clf = DecisionTreeClassifier()
+    sensible_clf = DecisionTreeClassifier(random_state=0)
     sensible_clf.fit(X_train, y_train)
-    sensible_ml_clf = DecisionTreeClassifier()
+    sensible_ml_clf = DecisionTreeClassifier(random_state=0)
     sensible_ml_clf.fit(X_train, y_ml_train)
     estimator = dict([(name, sensible_regr)
                       for name in REGRESSION_SCORERS] +

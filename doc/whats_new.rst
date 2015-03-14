@@ -1,5 +1,30 @@
 .. currentmodule:: sklearn
 
+.. _changes_0_17:
+
+
+0.17
+====
+
+
+Changelog
+---------
+
+New features
+............
+
+Enhancements
+............
+
+   - :class:`naive_bayes.GaussianNB` now supports fitting with ``sample_weights``.
+     By `Jan Hendrik Metzen`_.
+
+Bug fixes
+.........
+
+API changes summary
+-------------------
+
 .. _changes_0_16:
 
 0.16
@@ -101,13 +126,14 @@ Enhancements
      descent for :class:`linear_model.Lasso`, :class:`linear_model.ElasticNet`
      and related. By `Manoj Kumar`_.
 
-   - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score` and
-     `metrics.log_loss`. By `Jatin Shah`_.
+   - Add ``sample_weight`` parameter to
+     :func:`metrics.jaccard_similarity_score` and :func:`metrics.log_loss`.
+     By `Jatin Shah`_.
 
    - Support sparse multilabel indicator representation in
      :class:`preprocessing.LabelBinarizer` and
      :class:`multiclass.OneVsRestClassifier` (by `Hamzeh Alsalhi`_ with thanks
-     to `Rohit Sivaprasad`_), as well as evaluation metrics (by
+     to Rohit Sivaprasad), as well as evaluation metrics (by
      `Joel Nothman`_).
 
    - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
@@ -127,7 +153,7 @@ Enhancements
      `newton-cg` by Simon Wu.
 
    - ``DictVectorizer`` can now perform ``fit_transform`` on an iterable in a
-     single pass, when giving the option ``sort=False``. By Dan Blanchard.
+     single pass, when giving the option ``sort=False``. By `Dan Blanchard`_.
 
    - :class:`GridSearchCV` and :class:`RandomizedSearchCV` can now be
      configured to work with estimators that may fail and raise errors on
@@ -157,7 +183,7 @@ Enhancements
 
    - Add ``n_iter_`` attribute to estimators that accept a ``max_iter`` attribute
      in their constructor. By `Manoj Kumar`_.
-  
+
    - Added decision function for :class:`multiclass.OneVsOneClassifier`
      By `Raghav R V`_ and `Kyle Beauchamp`_.
 
@@ -190,9 +216,14 @@ Enhancements
    - More robust seeding and improved error messages in :class:`cluster.MeanShift`
      by `Andreas Müller`_.
 
-   - Make the :class:`GMM` stopping criterion less dependent on the number of
-     samples by thresholding the average log-likelihood change instead of its
-     sum over all samples. By `Hervé Bredin`_
+   - Make the stopping criterion for :class:`mixture.GMM`,
+     :class:`mixture.DPGMM` and :class:`mixture.VBGMM` less dependent on the
+     number of samples by thresholding the average log-likelihood change
+     instead of its sum over all samples. By `Hervé Bredin`_.
+
+   - The outcome of :func:`manifold.spectral_embedding` was made deterministic
+     by flipping the sign of eigen vectors. By `Hasil Sharma`_.
+
 
 Documentation improvements
 ..........................
@@ -231,8 +262,8 @@ Bug fixes
       By `Joel Nothman`_
 
     - The ``scoring`` attribute of grid-search and cross-validation methods is no longer
-     ignored when a :class:`grid_search.GridSearchCV` is given as a base estimator or
-     the base estimator doesn't have predict.
+      ignored when a :class:`grid_search.GridSearchCV` is given as a base estimator or
+      the base estimator doesn't have predict.
 
     - The function :func:`hierarchical.ward_tree` now returns the children in
       the same order for both the structured and unstructured versions. By
@@ -242,8 +273,8 @@ Bug fixes
       ``step`` is not equal to 1. By `Nikolay Mayorov`_
 
     - The :class:`decomposition.PCA` now undoes whitening in its
-     ``inverse_transform``. Also, its ``components_`` now always have unit
-     length. By Michael Eickenberg.
+      ``inverse_transform``. Also, its ``components_`` now always have unit
+      length. By Michael Eickenberg.
 
     - Fix incomplete download of the dataset when
       :func:`datasets.download_20newsgroups` is called. By `Manoj Kumar`_.
@@ -305,6 +336,31 @@ Bug fixes
 
     - Fix log-density calculation in the :class:`mixture.GMM` with
       tied covariance. By `Will Dawson`_
+
+    - Fixed a scaling error in :class:`feature_selection.SelectFdr`
+      where a factor ``n_features`` was missing. By `Andrew Tulloch`_
+
+    - Fix zero division in :class:`neighbors.KNeighborsRegressor` and related
+      classes when using distance weighting and having identical data points.
+      By `Garret-R <https://github.com/Garrett-R>`_.
+
+    - Fixed round off errors with non positive-definite covariance matrices
+      in GMM. By `Alexis Mignon`_.
+
+    - Fixed a error in the computation of conditional probabilities in
+      :class:`naive_bayes.BernoulliNB`. By `Hanna Wallach`_.
+
+    - Make the method ``radius_neighbors`` of
+      :class:`neighbors.NearestNeighbors` return the samples lying on the
+      boundary for ``algorithm='brute'``. By `Yan Yi`_.
+
+    - Flip sign of ``dual_coef_`` of :class:`svm.SVC`
+      to make it consistent with the documentation and
+      ``decision_function``. By Artem Sobolev.
+
+    - Fixed handling of ties in :class:`isotonic.IsotonicRegression`.
+      We now use the weighted average of targets (secondary method). By
+      `Andreas Müller`_ and `Michael Bommarito <http://bommaritollc.com/>`_.
 
 API changes summary
 -------------------
@@ -380,8 +436,24 @@ API changes summary
       as the first nearest neighbor.
 
     - `thresh` parameter is deprecated in favor of new `tol` parameter in
-      :class:`GMM`. See `Enhancements` section for details. By `Hervé Bredin`_.
+      :class:`GMM`, :class:`DPGMM` and :class:`VBGMM`. See `Enhancements`
+      section for details. By `Hervé Bredin`_.
 
+    - Estimators will treat input with dtype object as numeric when possible.
+      By `Andreas Müller`_
+
+    - Estimators now raise `ValueError` consistently when fitted on empty
+      data (less than 1 sample or less than 1 feature for 2D input).
+      By `Olivier Grisel`_.
+
+
+    - The ``shuffle`` option of :class:`.linear_model.SGDClassifier`,
+      :class:`linear_model.SGDRegressor`, :class:`linear_model.Perceptron`,
+      :class:`linear_model.PassiveAgressiveClassivier` and
+      :class:`linear_model.PassiveAgressiveRegressor` now defaults to ``True``.
+
+    - :class:`cluster.DBSCAN` now uses a deterministic initialization. The
+      `random_state` parameter is deprecated. By `Eric Schubert`_.
 
 .. _changes_0_15_2:
 
@@ -3225,8 +3297,6 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Manoj Kumar: https://manojbits.wordpress.com
 
-.. _Andrew Tulloch: http://tullo.ch
-
 .. _Maheshakya Wijewardena: https://github.com/maheshakya
 
 .. _Danny Sullivan: https://github.com/dsullivan7
@@ -3282,3 +3352,21 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Will Dawson: http://dawsonresearch.com
 
 .. _Balazs Kegl: https://github.com/kegl
+
+.. _Andrew Tulloch: http://tullo.ch/
+
+.. _Alexis Mignon: https://github.com/AlexisMignon
+
+.. _Hasil Sharma: https://github.com/Hasil-Sharma
+
+.. _Hanna Wallach: http://dirichlet.net/
+
+.. _Yan Yi: http://www.seowyanyi.org
+
+.. _Kyle Beauchamp: https://github.com/kyleabeauchamp
+
+.. _Hervé Bredin: http://herve.niderb.fr/
+
+.. _Eric Schubert: https://github.com/kno10
+
+.. _Dan Blanchard: https://github.com/dan-blanchard

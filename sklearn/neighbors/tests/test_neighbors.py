@@ -41,6 +41,7 @@ neighbors.kneighbors_graph = ignore_warnings(neighbors.kneighbors_graph)
 neighbors.radius_neighbors_graph = ignore_warnings(
     neighbors.radius_neighbors_graph)
 
+
 def _weight_func(dist):
     """ Weight function to replace lambda d: d ** -2.
     The lambda function is not valid because:
@@ -316,6 +317,57 @@ def test_radius_neighbors_classifier_zero_distance():
                                                       algorithm=algorithm)
             clf.fit(X, y)
             assert_array_equal(correct_labels1, clf.predict(z1))
+
+
+def test_neighbors_regressors_zero_distance():
+    """ Test radius-based regressor, when distance to a sample is zero. """
+
+    X = np.array([[1.0, 1.0], [1.0, 1.0], [2.0, 2.0], [2.5, 2.5]])
+    y = np.array([1.0, 1.5, 2.0, 0.0])
+    radius = 0.2
+    z = np.array([[1.1, 1.1], [2.0, 2.0]])
+
+    rnn_correct_labels = np.array([1.25, 2.0])
+
+    knn_correct_unif = np.array([1.25, 1.0])
+    knn_correct_dist = np.array([1.25, 2.0])
+
+    for algorithm in ALGORITHMS:
+        # we don't test for weights=_weight_func since user will be expected
+        # to handle zero distances themselves in the function.
+        for weights in ['uniform', 'distance']:
+            rnn = neighbors.RadiusNeighborsRegressor(radius=radius,
+                                                     weights=weights,
+                                                     algorithm=algorithm)
+            rnn.fit(X, y)
+            assert_array_almost_equal(rnn_correct_labels, rnn.predict(z))
+
+        for weights, corr_labels in zip(['uniform', 'distance'],
+                                        [knn_correct_unif, knn_correct_dist]):
+            knn = neighbors.KNeighborsRegressor(n_neighbors=2,
+                                                weights=weights,
+                                                algorithm=algorithm)
+            knn.fit(X, y)
+            assert_array_almost_equal(corr_labels, knn.predict(z))
+
+
+def test_radius_neighbors_boundary_handling():
+    """Test whether points lying on boundary are handled consistently
+
+    Also ensures that even with only one query point, an object array
+    is returned rather than a 2d array.
+    """
+
+    X = np.array([[1.5], [3.0], [3.01]])
+    radius = 3.0
+
+    for algorithm in ALGORITHMS:
+        nbrs = neighbors.NearestNeighbors(radius=radius,
+                                          algorithm=algorithm).fit(X)
+        results = nbrs.radius_neighbors([0.0], return_distance=False)
+        assert_equal(results.shape, (1,))
+        assert_equal(results.dtype, object)
+        assert_array_equal(results[0], [0, 1])
 
 
 def test_RadiusNeighborsClassifier_multioutput():
@@ -894,7 +946,8 @@ def test_non_euclidean_kneighbors():
         nbrs_graph = neighbors.radius_neighbors_graph(
             X, radius, metric=metric).toarray()
         nbrs1 = neighbors.NearestNeighbors(metric=metric, radius=radius).fit(X)
-        assert_array_equal(nbrs_graph, nbrs1.radius_neighbors_graph(X).toarray())
+        assert_array_equal(nbrs_graph,
+                           nbrs1.radius_neighbors_graph(X).toarray())
 
     # Raise error when wrong parameters are supplied,
     X_nbrs = neighbors.NearestNeighbors(3, metric='manhattan')
@@ -995,7 +1048,8 @@ def test_k_and_radius_neighbors_duplicates():
         rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5)
         assert_array_equal(rng.A, np.ones((2, 2)))
 
-        rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5, mode='distance')
+        rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5,
+                                        mode='distance')
         assert_array_equal(rng.A, [[0, 1], [1, 0]])
         assert_array_equal(rng.indices, [0, 1, 0, 1])
         assert_array_equal(rng.data, [0, 1, 1, 0])

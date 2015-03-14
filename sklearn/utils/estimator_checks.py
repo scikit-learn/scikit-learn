@@ -5,16 +5,18 @@ import sys
 import traceback
 import inspect
 import pickle
+from copy import deepcopy
 
 import numpy as np
 from scipy import sparse
 import struct
 
 from sklearn.externals.six.moves import zip
+from sklearn.externals.joblib import hash
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import META_ESTIMATORS
@@ -60,6 +62,9 @@ def _boston_subset(n_samples=200):
 def set_fast_parameters(estimator):
     # speed up some estimators
     params = estimator.get_params()
+    if estimator.__class__.__name__ == 'OrthogonalMatchingPursuitCV':
+        # FIXME: This test is unstable on Travis, see issue #3190.
+        check_skip_travis()
     if ("n_iter" in params
             and estimator.__class__.__name__ != "TSNE"):
         estimator.set_params(n_iter=5)
@@ -86,6 +91,9 @@ def set_fast_parameters(estimator):
     if estimator.__class__.__name__ == "SelectFdr":
         # be tolerant of noisy datasets (not actually speed)
         estimator.set_params(alpha=.5)
+
+    if estimator.__class__.__name__ == "TheilSenRegressor":
+        estimator.max_subpopulation = 100
 
     if isinstance(estimator, BaseRandomProjection):
         # Due to the jl lemma and often very few samples, the number
@@ -149,6 +157,33 @@ def check_estimator_sparse_data(name, Estimator):
         raise
 
 
+def check_dtype_object(name, Estimator):
+    # check that estimators treat dtype object as numeric if possible
+    rng = np.random.RandomState(0)
+    X = rng.rand(40, 10).astype(object)
+    y = (X[:, 0] * 4).astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    with warnings.catch_warnings():
+        estimator = Estimator()
+    set_fast_parameters(estimator)
+
+    estimator.fit(X, y)
+    if hasattr(estimator, "predict"):
+        estimator.predict(X)
+
+    if hasattr(estimator, "transform"):
+        estimator.transform(X)
+
+    try:
+        estimator.fit(X, y.astype(object))
+    except Exception as e:
+        if "Unknown label type" not in str(e):
+            raise
+
+    X[0, 0] = {'foo': 'bar'}
+    assert_raise_message(TypeError, "string or a number", estimator.fit, X, y)
+
+
 def check_transformer(name, Transformer):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
@@ -193,10 +228,6 @@ def _check_transformer(name, Transformer, X, y):
     with warnings.catch_warnings(record=True):
         transformer = Transformer()
     set_random_state(transformer)
-
-    if name == "KernelPCA":
-        transformer.remove_zero_eig = False
-
     set_fast_parameters(transformer)
 
     # fit
@@ -250,6 +281,15 @@ def _check_transformer(name, Transformer, X, y):
 
 @ignore_warnings
 def check_pipeline_consistency(name, Estimator):
+    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
+        # Those transformers yield non-deterministic output when executed on
+        # a 32bit Python. The same transformers are stable on 64bit Python.
+        # FIXME: try to isolate a minimalistic reproduction case only depending
+        # scipy and/or maybe generate a test dataset that does not
+        # cause such unstable behaviors.
+        msg = name + ' is non deterministic on 32bit Python'
+        raise SkipTest(msg)
+
     # check that make_pipeline(est) gives same score as est
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
@@ -292,6 +332,7 @@ def check_fit_score_takes_y(name, Estimator):
             assert_true(args[2] in ["y", "Y"])
 
 
+@ignore_warnings
 def check_estimators_dtypes(name, Estimator):
     rnd = np.random.RandomState(0)
     X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
@@ -309,13 +350,26 @@ def check_estimators_dtypes(name, Estimator):
 
         for method in ["predict", "transform", "decision_function",
                        "predict_proba"]:
-            try:
-                if hasattr(estimator, method):
-                    getattr(estimator, method)(X_train)
-            except NotImplementedError:
-                # FIXME
-                # non-standard handling of ducktyping in BaggingEstimator
-                pass
+            if hasattr(estimator, method):
+                getattr(estimator, method)(X_train)
+
+
+def check_estimators_empty_data_messages(name, Estimator):
+    e = Estimator()
+    set_fast_parameters(e)
+    set_random_state(e, 1)
+
+    X_zero_samples = np.empty(0).reshape(0, 3)
+    # The precise message can change depending on whether X or y is
+    # validated first. Let us test the type of exception only:
+    assert_raises(ValueError, e.fit, X_zero_samples, [])
+
+    X_zero_features = np.empty(0).reshape(3, 0)
+    # the following y should be accepted by both classifiers and regressors
+    # and ignored by unsupervised models
+    y = multioutput_estimator_convert_y_2d(name, np.array([1, 0, 1]))
+    msg = "0 feature(s) (shape=(3, 0)) while a minimum of 1 is required."
+    assert_raise_message(ValueError, msg, e.fit, X_zero_features, y)
 
 
 def check_estimators_nan_inf(name, Estimator):
@@ -550,7 +604,7 @@ def check_classifiers_train(name, Classifier):
         assert_equal(y_pred.shape, (n_samples,))
         # training set performance
         if name not in ['BernoulliNB', 'MultinomialNB']:
-            assert_greater(accuracy_score(y, y_pred), 0.85)
+            assert_greater(accuracy_score(y, y_pred), 0.83)
 
         # raises error on malformed input for predict
         assert_raises(ValueError, classifier.predict, X.T)
@@ -705,9 +759,6 @@ def check_regressors_int(name, Regressor):
     rnd = np.random.RandomState(0)
     y = rnd.randint(3, size=X.shape[0])
     y = multioutput_estimator_convert_y_2d(name, y)
-    if name == 'OrthogonalMatchingPursuitCV':
-        # FIXME: This test is unstable on Travis, see issue #3190.
-        check_skip_travis()
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
@@ -737,9 +788,6 @@ def check_regressors_train(name, Regressor):
     X, y = _boston_subset()
     y = StandardScaler().fit_transform(y)   # X is already scaled
     y = multioutput_estimator_convert_y_2d(name, y)
-    if name == 'OrthogonalMatchingPursuitCV':
-        # FIXME: This test is unstable on Travis, see issue #3190.
-        check_skip_travis()
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
@@ -748,6 +796,8 @@ def check_regressors_train(name, Regressor):
     if not hasattr(regressor, 'alphas') and hasattr(regressor, 'alpha'):
         # linear regressors need to set alpha, but not generalized CV ones
         regressor.alpha = 0.01
+    if name == 'PassiveAggressiveRegressor':
+        regressor.C = 0.01
 
     # raises error on malformed input for fit
     assert_raises(ValueError, regressor.fit, X, y[:-1])
@@ -766,6 +816,7 @@ def check_regressors_train(name, Regressor):
     # and furthermore assumes the presence of outliers, hence
     # skipped
     if name not in ('PLSCanonical', 'CCA', 'RANSACRegressor'):
+        print(regressor)
         assert_greater(regressor.score(X, y_), 0.5)
 
 
@@ -773,9 +824,6 @@ def check_regressors_pickle(name, Regressor):
     X, y = _boston_subset()
     y = StandardScaler().fit_transform(y)   # X is already scaled
     y = multioutput_estimator_convert_y_2d(name, y)
-    if name == 'OrthogonalMatchingPursuitCV':
-        # FIXME: This test is unstable on Travis, see issue #3190.
-        check_skip_travis()
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
@@ -822,7 +870,7 @@ def check_class_weight_classifiers(name, Classifier):
         set_random_state(classifier)
         classifier.fit(X_train, y_train)
         y_pred = classifier.predict(X_test)
-        assert_greater(np.mean(y_pred == 0), 0.9)
+        assert_greater(np.mean(y_pred == 0), 0.89)
 
 
 def check_class_weight_auto_classifiers(name, Classifier, X_train, y_train,
@@ -888,17 +936,30 @@ def check_estimators_overwrite_params(name, Estimator):
         estimator.batch_size = 1
 
     set_fast_parameters(estimator)
-
     set_random_state(estimator)
 
+    # Make a physical copy of the orginal estimator parameters before fitting.
     params = estimator.get_params()
+    original_params = deepcopy(params)
+
+    # Fit the model
     estimator.fit(X, y)
+
+    # Compare the state of the model parameters with the original parameters
     new_params = estimator.get_params()
-    for k, v in params.items():
-        assert_false(np.any(new_params[k] != v),
-                     "Estimator %s changes its parameter %s"
-                     " from %s to %s during fit."
-                     % (name, k, v, new_params[k]))
+    for param_name, original_value in original_params.items():
+        new_value = new_params[param_name]
+
+        # We should never change or mutate the internal state of input
+        # parameters by default. To check this we use the joblib.hash function
+        # that introspects recursively any subobjects to compute a checksum.
+        # The only exception to this rule of immutable constructor parameters
+        # is possible RandomState instance but in this check we explicitly
+        # fixed the random_state params recursively to be integer seeds.
+        assert_equal(hash(new_value), hash(original_value),
+                     "Estimator %s should not change or mutate "
+                     " the parameter %s from %s to %s during fit."
+                     % (name, param_name, original_value, new_value))
 
 
 def check_sparsify_coefficients(name, Estimator):

@@ -547,8 +547,8 @@ def label_ranking_average_precision_score(y_true, y_score):
 
     # Handle badly formated array and the degenerate case with one label
     y_type = type_of_target(y_true)
-    if (y_type != "multilabel-indicator"
-            and not (y_type == "binary" and y_true.ndim == 2)):
+    if (y_type != "multilabel-indicator" and
+            not (y_type == "binary" and y_true.ndim == 2)):
         raise ValueError("{0} format is not supported".format(y_type))
 
     y_true = csr_matrix(y_true)
@@ -569,7 +569,7 @@ def label_ranking_average_precision_score(y_true, y_score):
         scores_i = y_score[i]
         rank = rankdata(scores_i, 'max')[relevant]
         L = rankdata(scores_i[relevant], 'max')
-        out += np.divide(L, rank, dtype=float).mean()
+        out += (L / rank).mean()
 
     return out / n_samples
 
@@ -579,9 +579,9 @@ def coverage_error(y_true, y_score, sample_weight=None):
 
     Compute how far we need to go through the ranked scores to cover all
     true labels. The best value is equal to the average number
-    of labels in ``y_true` per sample.
+    of labels in ``y_true`` per sample.
 
-    Ties in `y_scores` are broken by giving maximal rank that would have
+    Ties in ``y_scores`` are broken by giving maximal rank that would have
     been assigned to all tied values.
 
     Parameters

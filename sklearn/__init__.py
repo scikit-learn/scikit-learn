@@ -35,8 +35,9 @@ warnings.filterwarnings('always', category=DeprecationWarning,
 #   X.Y     # Final release
 #
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
+# 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.16.dev'
+__version__ = '0.17.dev0'
 
 
 try:
@@ -60,7 +61,7 @@ else:
                'cross_validation', 'datasets', 'decomposition', 'dummy',
                'ensemble', 'externals', 'feature_extraction',
                'feature_selection', 'gaussian_process', 'grid_search', 'hmm',
-               'isotonic', 'kernel_approximation', 'kernel_ridge', 
+               'isotonic', 'kernel_approximation', 'kernel_ridge',
                'lda', 'learning_curve',
                'linear_model', 'manifold', 'metrics', 'mixture', 'multiclass',
                'naive_bayes', 'neighbors', 'neural_network', 'pipeline',

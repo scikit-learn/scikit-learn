@@ -29,6 +29,7 @@ from sklearn.cluster.bicluster import BiclusterMixin
 from sklearn.cross_validation import train_test_split
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
+    check_dtype_object,
     check_parameters_default_constructible,
     check_estimator_sparse_data,
     check_estimators_dtypes,
@@ -40,6 +41,7 @@ from sklearn.utils.estimator_checks import (
     check_regressors_pickle,
     check_transformer_pickle,
     check_transformers_unfitted,
+    check_estimators_empty_data_messages,
     check_estimators_nan_inf,
     check_estimators_unfitted,
     check_classifiers_one_label,
@@ -96,6 +98,11 @@ def test_non_meta_estimators():
         if name not in CROSS_DECOMPOSITION:
             yield check_estimators_dtypes, name, Estimator
             yield check_fit_score_takes_y, name, Estimator
+            yield check_dtype_object, name, Estimator
+
+            # Check that all estimator yield informative messages when
+            # trained on empty datasets
+            yield check_estimators_empty_data_messages, name, Estimator
 
         if name not in CROSS_DECOMPOSITION + ['SpectralEmbedding']:
             # SpectralEmbedding is non-deterministic,

@@ -7,6 +7,7 @@ from numpy.testing import (assert_array_equal, assert_array_almost_equal,
 from scipy import stats
 from sklearn import mixture
 from sklearn.datasets.samples_generator import make_spd_matrix
+from sklearn.utils.testing import assert_greater
 
 rng = np.random.RandomState(0)
 
@@ -350,6 +351,57 @@ def test_aic():
         bound = n_dim * 3. / np.sqrt(n_samples)
         assert_true(np.abs(g.aic(X) - aic) / n_samples < bound)
         assert_true(np.abs(g.bic(X) - bic) / n_samples < bound)
+
+
+def check_positive_definite_covars(covariance_type):
+    r"""Test that covariance matrices do not become non positive definite
+
+    Due to the accumulation of round-off errors, the computation of the
+    covariance  matrices during the learning phase could lead to non-positive
+    definite covariance matrices. Namely the use of the formula:
+
+    .. math:: C = (\sum_i w_i  x_i x_i^T) - \mu \mu^T
+
+    instead of:
+
+    .. math:: C = \sum_i w_i (x_i - \mu)(x_i - \mu)^T
+
+    while mathematically equivalent, was observed a ``LinAlgError`` exception,
+    when computing a ``GMM`` with full covariance matrices and fixed mean.
+
+    This function ensures that some later optimization will not introduce the
+    problem again.
+    """
+    rng = np.random.RandomState(1)
+    # we build a dataset with 2 2d component. The components are unbalanced
+    # (respective weights 0.9 and 0.1)
+    X = rng.randn(100, 2)
+    X[-10:] += (3, 3)  # Shift the 10 last points
+
+    gmm = mixture.GMM(2, params="wc", covariance_type=covariance_type,
+                      min_covar=1e-3)
+
+    # This is a non-regression test for issue #2640. The following call used
+    # to trigger:
+    # numpy.linalg.linalg.LinAlgError: 2-th leading minor not positive definite
+    gmm.fit(X)
+
+    if covariance_type == "diag" or covariance_type == "spherical":
+        assert_greater(gmm.covars_.min(), 0)
+    else:
+        if covariance_type == "tied":
+            covs = [gmm.covars_]
+        else:
+            covs = gmm.covars_
+
+        for c in covs:
+            assert_greater(np.linalg.det(c), 0)
+
+
+def test_positive_definite_covars():
+    # Check positive definiteness for all covariance types
+    for covariance_type in ["full", "tied", "diag", "spherical"]:
+        yield check_positive_definite_covars, covariance_type
 
 
 if __name__ == '__main__':

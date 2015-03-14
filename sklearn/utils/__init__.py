@@ -23,7 +23,8 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_random_state",
            "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
-           "check_consistent_length", "check_X_y", 'indexable']
+           "check_consistent_length", "check_X_y", 'indexable',
+           "check_symmetric"]
 
 
 class deprecated(object):
