@@ -30,8 +30,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
     Parameters
     ----------
-    kernel : Kernel object
-        The kernel specifying the covariance function of the GP.
+    kernel : kernel object
+        The kernel specifying the covariance function of the GP. If None is
+        passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
+        the kernel's hyperparameters are optimized during fitting.
 
     y_err : float, optional (default: 1e-10)
         Value added to the diagonal of the kernel matrix during fitting.
@@ -53,6 +55,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
     y_fit_: array-like, shape = (n_samples,)
         Target values in training data (also required for prediction)
+
+    kernel_: kernel object
+        The kernel used for prediction. The structure of the kernel is the
+        same as the one passed as parameter but with optimized hyperparameters
 
     theta_: array-like, shape =(n_kernel_params,)
         Selected kernel hyperparameters
@@ -85,7 +91,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self : returns an instance of self.
         """
         if self.kernel is None:  # Use an RBF kernel as default
-            self.kernel_ = RBF()
+            self.kernel_ = 1.0 * RBF(1.0)
         else:
             self.kernel_ = clone(self.kernel)
 
