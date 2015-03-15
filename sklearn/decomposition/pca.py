@@ -10,6 +10,7 @@
 # License: BSD 3 clause
 
 from math import log, sqrt
+import warnings
 
 import numpy as np
 from scipy import linalg

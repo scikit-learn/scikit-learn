@@ -19,6 +19,7 @@ import numbers
 from operator import itemgetter
 import re
 import unicodedata
+import warnings
 
 import numpy as np
 import scipy.sparse as sp

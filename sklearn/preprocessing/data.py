@@ -6,6 +6,7 @@
 
 from itertools import chain, combinations
 import numbers
+import warnings
 
 import numpy as np
 from scipy import sparse

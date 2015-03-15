@@ -8,6 +8,8 @@
 #
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 from scipy import linalg
 
