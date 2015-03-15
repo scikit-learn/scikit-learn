@@ -22,10 +22,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
     In addition to standard sklearn estimators, GaussianProcessRegressor
        * allows prediction without prior fitting (based on the GP prior)
-       * provides an additional method sample(X), which evaluates samples drawn
-         from the GPR (prior or posterior) at given inputs
+       * provides an additional method sample_y(X), which evaluates samples
+         drawn from the GPR (prior or posterior) at given inputs
        * exposes a method log_marginal_likelihood(theta), which can be used
-         externally for other ways of selecting hyperparamters, e.g., via
+         externally for other ways of selecting hyperparameters, e.g., via
          Markov chain Monte Carlo.
 
     Parameters
@@ -41,22 +41,27 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     optimizer : string, optional (default: "fmin_l_bfgs_b")
         A string specifying the optimization algorithm used for optimizing the
         kernel's parameters. Default uses 'fmin_l_bfgs_b' algorithm from
-        scipy.optimize. If None, the kernel's paramters are kept fixed.
+        scipy.optimize. If None, the kernel's parameters are kept fixed.
         Available optimizers are::
 
             'fmin_l_bfgs_b'
 
     Attributes
     ----------
-    X_fit_:
+    X_fit_ : array-like, shape = (n_samples, n_features)
+        Feature values in training data (also required for prediction)
 
-    y_fit_:
+    y_fit_: array-like, shape = (n_samples,)
+        Target values in training data (also required for prediction)
 
-    theta_:
+    theta_: array-like, shape =(n_kernel_params,)
+        Selected kernel hyperparameters
 
-    L_:
+    L_: array-like, shape = (n_samples, n_samples)
+        Lower-triangular Cholesky decomposition of the kernel in X_fit_
 
-    alpha_:
+    alpha_: array-like, shape = (n_samples,)
+        Dual coefficients of training data points in kernel space
     """
 
     def __init__(self, kernel=None, y_err=1e-10, optimizer="fmin_l_bfgs_b"):
@@ -65,6 +70,20 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.optimizer = optimizer
 
     def fit(self, X, y):
+        """Fit Gaussian process regression model
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Training data
+
+        y : array-like, shape = (n_samples, )
+            Target values
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         if self.kernel is None:  # Use an RBF kernel as default
             self.kernel_ = RBF()
         else:
@@ -86,6 +105,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                                               bounds=self.kernel_.bounds)
             self.kernel_.theta = self.theta_
         elif self.optimizer is None:
+            # Use initially provided hyperparameters
             self.theta_ = self.kernel_.theta
         else:
             raise ValueError("Unknown optimizer %s." % self.optimizer)
@@ -100,6 +120,39 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         return self
 
     def predict(self, X, return_std=False, return_cov=False):
+        """Predict using the Gaussian process regression model
+
+        We can also predict based on an unfitted model by using the GP prior.
+        In addition to the mean of the predictive distribution, also its
+        standard deviation (return_std=True) or covariance (return_cov=True).
+        Note that at most one of the two can be requested.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Query points where the GP is evaluated
+
+        return_std : bool, default: False
+            If True, the standard-deviation of the predictive distribution at
+            the query points is returned along with the mean.
+
+        return_cov : bool, default: False
+            If True, the covariance of the joint predictive distribution at
+            the query points is returned along with the mean
+
+        Returns
+        -------
+        y_mean : array, shape = (n_samples,)
+            Mean of predictive distribution a query points
+
+        y_std : array, shape = (n_samples,), optional
+            Standard deviation of predictive distribution a query points.
+            Only returned when return_std is True
+
+        y_cov : array, shape = (n_samples, n_samples), optional
+            Covariance of joint predictive distribution a query points.
+            Only returned when return_cov is True
+        """
         if return_std and return_cov:
             raise RuntimeError(
                 "Not returning standard deviation of predictions when "
@@ -125,7 +178,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
                 return y_mean, y_cov
             elif return_std:
-                # compute inverse K_inv of K based on its cholesky
+                # compute inverse K_inv of K based on its Cholesky
                 # decomposition L and its inverse L_inv
                 L_inv = solve_triangular(self.L_.T, np.eye(self.L_.shape[0]))
                 K_inv = L_inv.dot(L_inv.T)
@@ -133,12 +186,31 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 y_var = self.kernel_.diag(X)
                 y_var -= np.sum(K_trans.T[:, np.newaxis] * K_trans.T
                                 * K_inv[:, :, np.newaxis],
-                                axis=0).sum(axis=0)  # axis=(0, 1)
+                                axis=0).sum(axis=0)  # axis=(0, 1) in np >= 1.7
                 return y_mean, np.sqrt(y_var)
             else:
                 return y_mean
 
     def sample_y(self, X, n_samples=1, random_state=0):
+        """Draw samples from Gaussian process and evaluate at X.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples_X, n_features)
+            Query points where the GP samples are evaluated
+
+        n_samples : int, default: 1
+            The number of samples drawn from the Gaussian process
+
+        random_state: RandomState or an int seed (0 by default)
+            A random number generator instance
+
+        Returns
+        -------
+        y_samples : array, shape = (n_samples_X, n_samples)
+            Values of n_samples samples drawn from Gaussian process and
+            evaluated at query points.
+        """
         rng = check_random_state(random_state)
 
         y_mean, y_cov = self.predict(X, return_cov=True)
@@ -146,6 +218,29 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         return y_samples
 
     def log_marginal_likelihood(self, theta, eval_gradient=False):
+        """ Returns log-marginal likelihood of theta for training data.
+
+        Parameters
+        ----------
+        theta : array-like, shape = (n_kernel_params,)
+            Kernel hyperparameters for which the log-marginal likelihood is
+            evaluated
+
+        eval_gradient : bool, default: False
+            If True, the gradient of the log-marginal likelihood with respect
+            to the kernel hyperparameters at position theta is returned
+            additionally.
+
+        Returns
+        -------
+        log_likelihood : float
+            Log-marginal likelihood of theta for training data.
+
+        log_likelihood_gradient : array, shape = (n_kernel_params,), optional
+            Gradient of the log-marginal likelihood with respect to the kernel
+            hyperparameters at position theta.
+            Only returned when eval_gradient is True.
+        """
         kernel = self.kernel_.clone_with_theta(theta)
 
         if eval_gradient:
@@ -157,8 +252,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         try:
             L = cholesky(K, lower=True)  # Line 2
         except np.linalg.LinAlgError:
-            return (-np.inf, np.zeros_like(theta))\
-                 if eval_gradient else -np.inf
+            return (-np.inf, np.zeros_like(theta)) \
+                if eval_gradient else -np.inf
 
         alpha = cho_solve((L, True), self.y_fit_)  # Line 3
 
@@ -173,7 +268,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             # Compute "0.5 * trace(tmp.dot(K_gradient))" without constructing
             # the full matrix tmp.dot(K_gradient) since only its diagonal is
             # required
-            gradient = 0.5 * np.einsum("ij,ijk->k", tmp, K_gradient)
-            return log_likelihood, gradient
+            log_likelihood_gradient = \
+                0.5 * np.einsum("ij,ijk->k", tmp, K_gradient)
+            return log_likelihood, log_likelihood_gradient
         else:
             return log_likelihood
