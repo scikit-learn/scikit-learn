@@ -471,8 +471,9 @@ def test_sparse_input():
 
     d_sparse, i_sparse = forest_sparse.kneighbors(X2, return_distance=True)
     d_dense, i_dense = forest_dense.kneighbors(X2.A, return_distance=True)
-    assert_array_equal(d_sparse, d_dense)
-    assert_array_equal(i_sparse, i_dense)
+
+    assert_almost_equal(d_sparse, d_dense)
+    assert_almost_equal(i_sparse, i_dense)
 
     d_sparse, i_sparse = forest_sparse.radius_neighbors(X2,
                                                         return_distance=True)
@@ -480,6 +481,6 @@ def test_sparse_input():
                                                      return_distance=True)
     assert_equal(d_sparse.shape, d_dense.shape)
     for a, b in zip(d_sparse, d_dense):
-        assert_array_equal(a, b)
+        assert_almost_equal(a, b)
     for a, b in zip(i_sparse, i_dense):
-        assert_array_equal(a, b)
+        assert_almost_equal(a, b)
