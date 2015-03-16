@@ -5,6 +5,7 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 
 # Author: Robert Layton <robertlayton@gmail.com>
 #         Joel Nothman <joel.nothman@gmail.com>
+#         Erich Schubert <erich.schubert@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -137,6 +138,10 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     # label_num is the label given to the new cluster
     label_num = 0
 
+    # Temporary boolean mask to join the candidates of the next round
+    # Where each 1 is a candidate for the next iteration
+    candidates_mask = np.zeros(X.shape[0], dtype=np.int8)
+
     # Look at all samples and determine if they are core.
     # If they are then build a new cluster from them.
     for index in core_samples:
@@ -147,18 +152,26 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         labels[index] = label_num
 
         # candidates for new core samples in the cluster.
-        candidates = [index]
+        candidates = neighborhoods[index]
+        candidates = candidates[labels.take(candidates) == -1]
+
+        # For performance reasons with numpy, we perform bulk expansion
+        # of neighborhoods instead of expanding one point at a time
         while len(candidates) > 0:
-            # The tolist() is needed for NumPy 1.6.
-            cand_neighbors = np.concatenate(np.take(neighborhoods, candidates,
-                                                    axis=0).tolist())
-            cand_neighbors = np.unique(cand_neighbors)
-            noise = cand_neighbors[labels.take(cand_neighbors) == -1]
-            labels[noise] = label_num
-            # A candidate is a core point in the current cluster that has
-            # not yet been used to expand the current cluster.
-            candidates = np.intersect1d(noise, core_samples,
+            # Label neighbors:
+            labels[candidates] = label_num
+            # Keep only core points:
+            candidates = np.intersect1d(candidates, core_samples,
                                         assume_unique=True)
+            if len(candidates) == 0:
+                break
+            # Get neighbors of core points (list-of-lists):
+            for idx in np.take(neighborhoods, candidates, axis=0):
+                # Join neighbors into candidates_mask:
+                candidates_mask[idx] = 1
+            # Unset all candidates that have already been labeled
+            candidates_mask[labels > -1] = 0
+            candidates = np.flatnonzero(candidates_mask)
         # Current cluster finished.
         # Next core point found will start a new cluster.
         label_num += 1
