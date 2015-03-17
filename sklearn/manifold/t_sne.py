@@ -215,7 +215,7 @@ def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
         update = momentum * update - learning_rate * grad
         p += update
 
-        if verbose >= 2 and (i+1) % 10 == 0:
+        if verbose >= 2 and (i + 1) % 10 == 0:
             print("[t-SNE] Iteration %d: error = %.7f, gradient norm = %.7f"
                   % (i + 1, error, grad_norm))
 
@@ -333,7 +333,7 @@ class TSNE(BaseEstimator):
         Maximum number of iterations for the optimization. Should be at
         least 200.
 
-    metric : string or callable, (default: "euclidean")
+    metric : string or callable, optional
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter, or
@@ -342,7 +342,8 @@ class TSNE(BaseEstimator):
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
         should take two arrays from X as input and return a value indicating
-        the distance between them.
+        the distance between them. The default is "euclidean" which is
+        interpreted as squared euclidean distance.
 
     init : string, optional (default: "random")
         Initialization of embedding. Possible options are 'random' and 'pca'.
@@ -403,7 +404,7 @@ class TSNE(BaseEstimator):
         self.verbose = verbose
         self.random_state = random_state
 
-    def _fit(self, X):
+    def fit(self, X, y=None):
         """Fit the model using X as training data.
 
         Parameters
@@ -412,7 +413,7 @@ class TSNE(BaseEstimator):
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=np.float64)
         random_state = check_random_state(self.random_state)
 
         if self.early_exaggeration < 1.0:
@@ -432,12 +433,16 @@ class TSNE(BaseEstimator):
         else:
             if self.verbose:
                 print("[t-SNE] Computing pairwise distances...")
-            distances = pairwise_distances(X, metric=self.metric, squared=True)
+
+            if self.metric == "euclidean":
+                distances = pairwise_distances(X, metric=self.metric, squared=True)
+            else:
+                distances = pairwise_distances(X, metric=self.metric)
 
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # alpha = n_components - 1 comes from "Learning a Parametric Embedding
         # by Preserving Local Structure" Laurens van der Maaten, 2009.
-        alpha = self.n_components - 1.0
+        alpha = max(self.n_components - 1.0, 1)
         n_samples = X.shape[0]
         self.training_data_ = X
 
@@ -502,7 +507,7 @@ class TSNE(BaseEstimator):
 
         return X_embedded
 
-    def fit_transform(self, X):
+    def fit_transform(self, X, y=None):
         """Transform X to the embedded space.
 
         Parameters
@@ -516,5 +521,5 @@ class TSNE(BaseEstimator):
         X_new : array, shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        self._fit(X)
+        self.fit(X)
         return self.embedding_

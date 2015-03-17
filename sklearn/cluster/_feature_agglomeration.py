@@ -9,6 +9,7 @@ import numpy as np
 
 from ..base import TransformerMixin
 from ..utils import check_array
+from ..utils.validation import check_is_fitted
 
 import warnings
 
@@ -43,9 +44,13 @@ class AgglomerationTransform(TransformerMixin):
         Y : array, shape = [n_samples, n_clusters] or [n_clusters]
             The pooled values for each feature cluster.
         """
+        check_is_fitted(self, "labels_")
+
         if pooling_func is not None:
-            warnings.warn("The pooling_func parameter is deprecated since 0.15 and will be "
-                "removed in 0.18. Pass it to the constructor instead.", DeprecationWarning)
+            warnings.warn("The pooling_func parameter is deprecated since 0.15 "
+                          "and will be removed in 0.18. "
+                          "Pass it to the constructor instead.",
+                          DeprecationWarning)
         else:
             pooling_func = self.pooling_func
         X = check_array(X)
@@ -75,5 +80,7 @@ class AgglomerationTransform(TransformerMixin):
             A vector of size n_samples with the values of Xred assigned to
             each of the cluster of samples.
         """
+        check_is_fitted(self, "labels_")
+
         unil, inverse = np.unique(self.labels_, return_inverse=True)
         return Xred[..., inverse]

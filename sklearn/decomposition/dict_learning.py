@@ -19,6 +19,7 @@ from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import zip
 from ..utils import check_array, check_random_state, gen_even_slices
 from ..utils.extmath import randomized_svd, row_norms
+from ..utils.validation import check_is_fitted
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
@@ -411,7 +412,6 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     SparsePCA
     MiniBatchSparsePCA
     """
-
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method %r not supported as a fit algorithm.'
                          % method)
@@ -603,6 +603,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     MiniBatchSparsePCA
 
     """
+    if n_components is None:
+        n_components = X.shape[1]
 
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
@@ -749,6 +751,8 @@ class SparseCodingMixin(TransformerMixin):
             Transformed data
 
         """
+        check_is_fitted(self, 'components_')
+
         # XXX : kwargs is not documented
         X = check_array(X)
         n_samples, n_features = X.shape
@@ -1156,13 +1160,9 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         """
         random_state = check_random_state(self.random_state)
         X = check_array(X)
-        if self.n_components is None:
-            n_components = X.shape[1]
-        else:
-            n_components = self.n_components
 
         U, (A, B), self.n_iter_ = dict_learning_online(
-            X, n_components, self.alpha,
+            X, self.n_components, self.alpha,
             n_iter=self.n_iter, return_code=False,
             method=self.fit_algorithm,
             n_jobs=self.n_jobs, dict_init=self.dict_init,

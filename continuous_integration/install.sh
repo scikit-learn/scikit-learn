@@ -47,7 +47,15 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # Use standard ubuntu packages in their default version
-    sudo apt-get install -qq python-scipy python-nose python-pip
+    sudo apt-get install -qq python-scipy
+    # At the time of writing numpy 1.9.1 is included in the travis
+    # virtualenv but we want to used numpy installed through apt-get
+    # install.
+    deactivate
+    # Create a new virtualenv using system site packages for numpy and scipy
+    virtualenv --system-site-packages testvenv
+    source testvenv/bin/activate
+    pip install nose
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then

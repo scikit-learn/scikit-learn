@@ -7,7 +7,7 @@ This example illustrates the need for robust covariance estimation
 on a real data set. It is useful both for outlier detection and for
 a better understanding of the data structure.
 
-We selected two sets of two variables from the boston housing data set
+We selected two sets of two variables from the Boston housing data set
 as an illustration of what kind of analysis can be done with several
 outlier detection tools. For the purpose of visualization, we are working
 with two-dimensional examples, but one should be aware that things are
@@ -110,7 +110,7 @@ plt.legend((legend1_values_list[0].collections[0],
            loc="upper center",
            prop=matplotlib.font_manager.FontProperties(size=12))
 plt.ylabel("accessibility to radial highways")
-plt.xlabel("pupil-teatcher ratio by town")
+plt.xlabel("pupil-teacher ratio by town")
 
 legend2_values_list = list( legend2.values() )
 legend2_keys_list = list( legend2.keys() )

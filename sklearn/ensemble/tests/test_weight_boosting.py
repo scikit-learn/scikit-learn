@@ -1,10 +1,10 @@
 """Testing for the boost module (sklearn.ensemble.boost)."""
 
 import numpy as np
-from numpy.testing import assert_array_equal, assert_array_less
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_equal
-from nose.tools import assert_raises
+from sklearn.utils.testing import assert_array_equal, assert_array_less
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises, assert_raises_regexp
 
 from sklearn.cross_validation import train_test_split
 from sklearn.grid_search import GridSearchCV
@@ -247,6 +247,13 @@ def test_base_estimator():
     clf = AdaBoostRegressor(SVR(), random_state=0)
     clf.fit(X, y_regr)
 
+    # Check that an empty discrete ensemble fails in fit, not predict.
+    X_fail = [[1, 1], [1, 1], [1, 1], [1, 1]]
+    y_fail = ["foo", "bar", 1, 2]
+    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    assert_raises_regexp(ValueError, "worse than random",
+                         clf.fit, X_fail, y_fail)
+
 
 def test_sample_weight_missing():
     from sklearn.linear_model import LinearRegression
@@ -387,13 +394,13 @@ def test_sparse_regression():
 
         # Trained on sparse format
         sparse_classifier = AdaBoostRegressor(
-            base_estimator=CustomSVR(probability=True),
+            base_estimator=CustomSVR(),
             random_state=1
         ).fit(X_train_sparse, y_train)
 
         # Trained on dense format
         dense_classifier = dense_results = AdaBoostRegressor(
-            base_estimator=CustomSVR(probability=True),
+            base_estimator=CustomSVR(),
             random_state=1
         ).fit(X_train, y_train)
 

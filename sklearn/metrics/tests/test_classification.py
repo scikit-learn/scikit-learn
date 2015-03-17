@@ -1,6 +1,7 @@
 from __future__ import division, print_function
 
 import numpy as np
+from scipy import linalg
 from functools import partial
 from itertools import product
 import warnings
@@ -13,7 +14,7 @@ from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
 from sklearn.utils.fixes import np_version
 from sklearn.utils.validation import check_random_state
 
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises, clean_warning_registry
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -40,6 +41,7 @@ from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
+from sklearn.metrics import brier_score_loss
 
 
 from sklearn.metrics.classification import _check_targets
@@ -138,18 +140,23 @@ def test_precision_recall_f1_score_binary():
 
     # individual scoring function that can be used for grid search: in the
     # binary class case the score is the value of the measure for the positive
-    # class (e.g. label == 1)
-    ps = precision_score(y_true, y_pred)
-    assert_array_almost_equal(ps, 0.85, 2)
+    # class (e.g. label == 1). This is deprecated for average != 'binary'.
+    assert_dep_warning = partial(assert_warns, DeprecationWarning)
+    for kwargs, my_assert in [({}, assert_no_warnings),
+                              ({'average': 'binary'}, assert_no_warnings),
+                              ({'average': 'micro'}, assert_dep_warning)]:
+        ps = my_assert(precision_score, y_true, y_pred, **kwargs)
+        assert_array_almost_equal(ps, 0.85, 2)
 
-    rs = recall_score(y_true, y_pred)
-    assert_array_almost_equal(rs, 0.68, 2)
+        rs = my_assert(recall_score, y_true, y_pred, **kwargs)
+        assert_array_almost_equal(rs, 0.68, 2)
 
-    fs = f1_score(y_true, y_pred)
-    assert_array_almost_equal(fs, 0.76, 2)
+        fs = my_assert(f1_score, y_true, y_pred, **kwargs)
+        assert_array_almost_equal(fs, 0.76, 2)
 
-    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2),
-                        (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
+        assert_almost_equal(my_assert(fbeta_score, y_true, y_pred, beta=2,
+                                      **kwargs),
+                            (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
 
 
 @ignore_warnings
@@ -204,6 +211,7 @@ def test_average_precision_score_tied_values():
     assert_not_equal(average_precision_score(y_true, y_score), 1.)
 
 
+@ignore_warnings
 def test_precision_recall_fscore_support_errors():
     y_true, y_pred, _ = make_prediction(binary=True)
 
@@ -303,6 +311,20 @@ def test_precision_recall_f1_score_multiclass():
     assert_array_equal(s, [24, 20, 31])
 
 
+def test_precision_refcall_f1_score_multilabel_unordered_labels():
+    # test that labels need not be sorted in the multilabel case
+    y_true = np.array([[1, 1, 0, 0]])
+    y_pred = np.array([[0, 0, 1, 1]])
+    for average in ['samples', 'micro', 'macro', 'weighted', None]:
+        p, r, f, s = precision_recall_fscore_support(
+            y_true, y_pred, labels=[4, 1, 2, 3], warn_for=[], average=average)
+        assert_array_equal(p, 0)
+        assert_array_equal(r, 0)
+        assert_array_equal(f, 0)
+        if average is None:
+            assert_array_equal(s, [0, 1, 1, 0])
+
+
 def test_precision_recall_f1_score_multiclass_pos_label_none():
     """Test Precision Recall and F1 Score for multiclass classification task
 
@@ -398,6 +420,40 @@ avg / total       0.51      0.53      0.47        75
     report = classification_report(
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names)
+    assert_equal(report, expected_report)
+
+    # print classification report with label detection
+    expected_report = """\
+             precision    recall  f1-score   support
+
+          0       0.83      0.79      0.81        24
+          1       0.33      0.10      0.15        31
+          2       0.42      0.90      0.57        20
+
+avg / total       0.51      0.53      0.47        75
+"""
+    report = classification_report(y_true, y_pred)
+    assert_equal(report, expected_report)
+
+
+def test_classification_report_multiclass_with_digits():
+    """Test performance report with added digits in floating point values"""
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
+
+    # print classification report with class names
+    expected_report = """\
+             precision    recall  f1-score   support
+
+     setosa    0.82609   0.79167   0.80851        24
+ versicolor    0.33333   0.09677   0.15000        31
+  virginica    0.41860   0.90000   0.57143        20
+
+avg / total    0.51375   0.53333   0.47310        75
+"""
+    report = classification_report(
+        y_true, y_pred, labels=np.arange(len(iris.target_names)),
+        target_names=iris.target_names, digits=5)
     assert_equal(report, expected_report)
 
     # print classification report with label detection
@@ -908,7 +964,7 @@ def test_recall_warnings():
                        np.array([[1, 1], [1, 1]]),
                        np.array([[0, 0], [0, 0]]),
                        average='micro')
-
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
         recall_score(np.array([[0, 0], [0, 0]]),
@@ -920,6 +976,7 @@ def test_recall_warnings():
 
 
 def test_precision_warnings():
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
 
@@ -937,6 +994,7 @@ def test_precision_warnings():
 
 
 def test_fscore_warnings():
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
 
@@ -953,6 +1011,35 @@ def test_fscore_warnings():
             assert_equal(str(record.pop().message),
                          'F-score is ill-defined and '
                          'being set to 0.0 due to no true samples.')
+
+
+def test_prf_average_compat():
+    """Ensure warning if f1_score et al.'s average is implicit for multiclass
+    """
+    y_true = [1, 2, 3, 3]
+    y_pred = [1, 2, 3, 1]
+    y_true_bin = [0, 1, 1]
+    y_pred_bin = [0, 1, 0]
+
+    for metric in [precision_score, recall_score, f1_score,
+                   partial(fbeta_score, beta=2)]:
+        score = assert_warns(DeprecationWarning, metric, y_true, y_pred)
+        score_weighted = assert_no_warnings(metric, y_true, y_pred,
+                                            average='weighted')
+        assert_equal(score, score_weighted,
+                     'average does not act like "weighted" by default')
+
+        # check binary passes without warning
+        assert_no_warnings(metric, y_true_bin, y_pred_bin)
+
+        # but binary with pos_label=None should behave like multiclass
+        score = assert_warns(DeprecationWarning, metric,
+                             y_true_bin, y_pred_bin, pos_label=None)
+        score_weighted = assert_no_warnings(metric, y_true_bin, y_pred_bin,
+                                            pos_label=None, average='weighted')
+        assert_equal(score, score_weighted,
+                     'average does not act like "weighted" by default with '
+                     'binary data and pos_label=None')
 
 
 @ignore_warnings  # sequence of sequences is deprecated
@@ -1059,6 +1146,95 @@ def test_hinge_loss_binary():
     assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
 
 
+def test_hinge_loss_multiclass():
+    pred_decision = np.array([
+        [0.36, -0.17, -0.58, -0.99],
+        [-0.54, -0.37, -0.48, -0.58],
+        [-1.45, -0.58, -0.38, -0.17],
+        [-0.54, -0.38, -0.48, -0.58],
+        [-2.36, -0.79, -0.27,  0.24],
+        [-1.45, -0.58, -0.38, -0.17]
+    ])
+    y_true = np.array([0, 1, 2, 1, 3, 2])
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][1] + pred_decision[1][2],
+        1 - pred_decision[2][2] + pred_decision[2][3],
+        1 - pred_decision[3][1] + pred_decision[3][2],
+        1 - pred_decision[4][3] + pred_decision[4][2],
+        1 - pred_decision[5][2] + pred_decision[5][3]
+    ])
+    dummy_losses[dummy_losses <= 0] = 0
+    dummy_hinge_loss = np.mean(dummy_losses)
+    assert_equal(hinge_loss(y_true, pred_decision),
+                 dummy_hinge_loss)
+
+
+def test_hinge_loss_multiclass_missing_labels_with_labels_none():
+    y_true = np.array([0, 1, 2, 2])
+    pred_decision = np.array([
+        [1.27, 0.034, -0.68, -1.40],
+        [-1.45, -0.58, -0.38, -0.17],
+        [-2.36, -0.79, -0.27,  0.24],
+        [-2.36, -0.79, -0.27,  0.24]
+    ])
+    error_message = ("Please include all labels in y_true "
+                     "or pass labels as third argument")
+    assert_raise_message(ValueError,
+                         error_message,
+                         hinge_loss, y_true, pred_decision)
+
+
+def test_hinge_loss_multiclass_with_missing_labels():
+    pred_decision = np.array([
+        [0.36, -0.17, -0.58, -0.99],
+        [-0.55, -0.38, -0.48, -0.58],
+        [-1.45, -0.58, -0.38, -0.17],
+        [-0.55, -0.38, -0.48, -0.58],
+        [-1.45, -0.58, -0.38, -0.17]
+    ])
+    y_true = np.array([0, 1, 2, 1, 2])
+    labels = np.array([0, 1, 2, 3])
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][1] + pred_decision[1][2],
+        1 - pred_decision[2][2] + pred_decision[2][3],
+        1 - pred_decision[3][1] + pred_decision[3][2],
+        1 - pred_decision[4][2] + pred_decision[4][3]
+    ])
+    dummy_losses[dummy_losses <= 0] = 0
+    dummy_hinge_loss = np.mean(dummy_losses)
+    assert_equal(hinge_loss(y_true, pred_decision, labels=labels),
+                 dummy_hinge_loss)
+
+
+def test_hinge_loss_multiclass_invariance_lists():
+    # Currently, invariance of string and integer labels cannot be tested
+    # in common invariance tests because invariance tests for multiclass
+    # decision functions is not implemented yet.
+    y_true = ['blue', 'green', 'red',
+              'green', 'white', 'red']
+    pred_decision = [
+        [0.36, -0.17, -0.58, -0.99],
+        [-0.55, -0.38, -0.48, -0.58],
+        [-1.45, -0.58, -0.38,  -0.17],
+        [-0.55, -0.38, -0.48, -0.58],
+        [-2.36, -0.79, -0.27,  0.24],
+        [-1.45, -0.58, -0.38,  -0.17]]
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][1] + pred_decision[1][2],
+        1 - pred_decision[2][2] + pred_decision[2][3],
+        1 - pred_decision[3][1] + pred_decision[3][2],
+        1 - pred_decision[4][3] + pred_decision[4][2],
+        1 - pred_decision[5][2] + pred_decision[5][3]
+    ])
+    dummy_losses[dummy_losses <= 0] = 0
+    dummy_hinge_loss = np.mean(dummy_losses)
+    assert_equal(hinge_loss(y_true, pred_decision),
+                 dummy_hinge_loss)
+
+
 def test_log_loss():
     # binary case with symbolic labels ("no" < "yes")
     y_true = ["no", "no", "no", "yes", "yes", "yes"]
@@ -1095,3 +1271,20 @@ def test_log_loss():
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
     loss = log_loss(y_true, y_pred)
     assert_almost_equal(loss, 1.0383217, decimal=6)
+
+
+def test_brier_score_loss():
+    """Check brier_score_loss function"""
+    y_true = np.array([0, 1, 1, 0, 1, 1])
+    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1., 0.95])
+    true_score = linalg.norm(y_true - y_pred) ** 2 / len(y_true)
+
+    assert_almost_equal(brier_score_loss(y_true, y_true), 0.0)
+    assert_almost_equal(brier_score_loss(y_true, y_pred), true_score)
+    assert_almost_equal(brier_score_loss(1. + y_true, y_pred),
+                        true_score)
+    assert_almost_equal(brier_score_loss(2 * y_true - 1, y_pred),
+                        true_score)
+    assert_raises(ValueError, brier_score_loss, y_true, y_pred[1:])
+    assert_raises(ValueError, brier_score_loss, y_true, y_pred + 1.)
+    assert_raises(ValueError, brier_score_loss, y_true, y_pred - 1.)

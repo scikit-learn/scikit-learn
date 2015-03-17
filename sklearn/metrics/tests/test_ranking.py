@@ -13,7 +13,7 @@ from sklearn.random_projection import sparse_random_matrix
 from sklearn.utils.validation import check_array, check_consistent_length
 from sklearn.utils.validation import check_random_state
 
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises, clean_warning_registry
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -23,12 +23,12 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import auc
-from sklearn.metrics import auc_score
 from sklearn.metrics import average_precision_score
+from sklearn.metrics import coverage_error
 from sklearn.metrics import label_ranking_average_precision_score
-from sklearn.metrics import roc_curve
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_curve
 
 from sklearn.metrics.base import UndefinedMetricWarning
 
@@ -131,10 +131,6 @@ def test_roc_curve():
     expected_auc = _auc(y_true, probas_pred)
     assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
     assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
-
-    assert_almost_equal(roc_auc,
-                        ignore_warnings(auc_score)(y_true, probas_pred))
-
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
 
@@ -420,6 +416,7 @@ def test_auc_score_non_binary_class():
     assert_raise_message(ValueError, "multiclass format is not supported",
                          roc_auc_score, y_true, y_pred)
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         rng = check_random_state(404)
         y_pred = rng.rand(10)
@@ -610,13 +607,6 @@ def test_score_scale_invariance():
     roc_auc = roc_auc_score(y_true, probas_pred)
     roc_auc_scaled = roc_auc_score(y_true, 100 * probas_pred)
     roc_auc_shifted = roc_auc_score(y_true, probas_pred - 10)
-    assert_equal(roc_auc, roc_auc_scaled)
-    assert_equal(roc_auc, roc_auc_shifted)
-
-    f = ignore_warnings(auc_score)
-    roc_auc = f(y_true, probas_pred)
-    roc_auc_scaled = f(y_true, 100 * probas_pred)
-    roc_auc_shifted = f(y_true, probas_pred - 10)
     assert_equal(roc_auc, roc_auc_scaled)
     assert_equal(roc_auc, roc_auc_shifted)
 
@@ -843,3 +833,67 @@ def test_label_ranking_avp():
         yield (check_alternative_lrap_implementation,
                label_ranking_average_precision_score,
                n_classes, n_samples, random_state)
+
+
+def test_coverage_error():
+    # Toy case
+    assert_almost_equal(coverage_error([[0, 1]], [[0.25, 0.75]]), 1)
+    assert_almost_equal(coverage_error([[0, 1]], [[0.75, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[1, 1]], [[0.75, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[0, 0]], [[0.75, 0.25]]), 0)
+
+    assert_almost_equal(coverage_error([[0, 0, 0]], [[0.25, 0.5, 0.75]]), 0)
+    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.25, 0.5, 0.75]]), 1)
+    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.25, 0.5, 0.75]]), 2)
+    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.25, 0.5, 0.75]]), 2)
+    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.25, 0.5, 0.75]]), 3)
+    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.25, 0.5, 0.75]]), 3)
+    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.25, 0.5, 0.75]]), 3)
+    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.25, 0.5, 0.75]]), 3)
+
+    assert_almost_equal(coverage_error([[0, 0, 0]], [[0.75, 0.5, 0.25]]), 0)
+    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.75, 0.5, 0.25]]), 3)
+    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.75, 0.5, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.75, 0.5, 0.25]]), 3)
+    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.75, 0.5, 0.25]]), 1)
+    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.75, 0.5, 0.25]]), 3)
+    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.75, 0.5, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.75, 0.5, 0.25]]), 3)
+
+    assert_almost_equal(coverage_error([[0, 0, 0]], [[0.5, 0.75, 0.25]]), 0)
+    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.5, 0.75, 0.25]]), 3)
+    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.5, 0.75, 0.25]]), 1)
+    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.5, 0.75, 0.25]]), 3)
+    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.5, 0.75, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.5, 0.75, 0.25]]), 3)
+    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.5, 0.75, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.5, 0.75, 0.25]]), 3)
+
+    # Non trival case
+    assert_almost_equal(coverage_error([[0, 1, 0], [1, 1, 0]],
+                                       [[0.1, 10., -3], [0, 1, 3]]),
+                        (1 + 3) / 2.)
+
+    assert_almost_equal(coverage_error([[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+                                       [[0.1, 10, -3], [0, 1, 3], [0, 2, 0]]),
+                        (1 + 3 + 3) / 3.)
+
+    assert_almost_equal(coverage_error([[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+                                       [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]]),
+                        (1 + 3 + 3) / 3.)
+
+
+def test_coverage_tie_handling():
+    assert_almost_equal(coverage_error([[0, 0]], [[0.5, 0.5]]), 0)
+    assert_almost_equal(coverage_error([[1, 0]], [[0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[0, 1]], [[0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[1, 1]], [[0.5, 0.5]]), 2)
+
+    assert_almost_equal(coverage_error([[0, 0, 0]], [[0.25, 0.5, 0.5]]), 0)
+    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.25, 0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.25, 0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.25, 0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.25, 0.5, 0.5]]), 3)
+    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.25, 0.5, 0.5]]), 3)
+    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.25, 0.5, 0.5]]), 3)
+    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 3)

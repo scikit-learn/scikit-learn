@@ -5,6 +5,7 @@
 
 import numpy as np
 from scipy import sparse
+import warnings
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -49,7 +50,8 @@ def test_linear_regression_n_jobs():
     X = [[1], [2]]
     Y = [1, 2]
     clf = LinearRegression()
-    clf_fit = clf.fit(X, Y, 4)
+    with warnings.catch_warnings(record=True):
+        clf_fit = clf.fit(X, Y, 4)
     assert_equal(clf_fit.n_jobs, clf.n_jobs)
     assert_equal(clf.n_jobs, 1)
 
@@ -81,15 +83,16 @@ def test_fit_intercept():
 def test_linear_regression_sparse(random_state=0):
     "Test that linear regression also works with sparse data"
     random_state = check_random_state(random_state)
-    n = 100
-    X = sparse.eye(n, n)
-    beta = random_state.rand(n)
-    y = X * beta[:, np.newaxis]
+    for i in range(10):
+        n = 100
+        X = sparse.eye(n, n)
+        beta = random_state.rand(n)
+        y = X * beta[:, np.newaxis]
 
-    ols = LinearRegression()
-    ols.fit(X, y.ravel())
-    assert_array_almost_equal(beta, ols.coef_ + ols.intercept_)
-    assert_array_almost_equal(ols.residues_, 0)
+        ols = LinearRegression()
+        ols.fit(X, y.ravel())
+        assert_array_almost_equal(beta, ols.coef_ + ols.intercept_)
+        assert_array_almost_equal(ols.residues_, 0)
 
 
 def test_linear_regression_multiple_outcome(random_state=0):

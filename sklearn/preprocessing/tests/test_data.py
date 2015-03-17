@@ -3,16 +3,17 @@ import numpy as np
 import numpy.linalg as la
 from scipy import sparse
 
-from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_almost_equal, clean_warning_registry
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.preprocessing.data import _transform_selected
@@ -317,22 +318,26 @@ def test_scaler_int():
     X_csc = sparse.csc_matrix(X)
 
     null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         X_null = null_transform.fit_transform(X_csr)
     assert_array_equal(X_null.data, X_csr.data)
     X_orig = null_transform.inverse_transform(X_null)
     assert_array_equal(X_orig.data, X_csr.data)
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler = StandardScaler(with_mean=False).fit(X)
         X_scaled = scaler.transform(X, copy=True)
     assert_false(np.any(np.isnan(X_scaled)))
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
         X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
     assert_false(np.any(np.isnan(X_csr_scaled.data)))
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
         X_csc_scaled = scaler_csr.transform(X_csc, copy=True)
@@ -407,6 +412,19 @@ def test_scale_sparse_with_mean_raise_exception():
     assert_raises(ValueError, scaler.inverse_transform, X_transformed_csr)
 
 
+def test_scale_input_finiteness_validation():
+    """Check if non finite inputs raise ValueError"""
+    X = [np.nan, 5, 6, 7, 8]
+    assert_raises_regex(ValueError,
+                        "Input contains NaN, infinity or a value too large",
+                        scale, X)
+
+    X = [np.inf, 5, 6, 7, 8]
+    assert_raises_regex(ValueError,
+                        "Input contains NaN, infinity or a value too large",
+                        scale, X)
+
+
 def test_scale_function_without_centering():
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
@@ -442,13 +460,12 @@ def test_warning_scaling_integers():
     X = np.array([[1, 2, 0],
                   [0, 0, 0]], dtype=np.uint8)
 
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("always")
-        assert_warns(UserWarning, StandardScaler().fit, X)
+    w = "assumes floating point values as input, got uint8"
 
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("always")
-        assert_warns(UserWarning, MinMaxScaler().fit, X)
+    clean_warning_registry()
+    assert_warns_message(UserWarning, w, scale, X)
+    assert_warns_message(UserWarning, w, StandardScaler().fit, X)
+    assert_warns_message(UserWarning, w, MinMaxScaler().fit, X)
 
 
 def test_normalizer_l1():
@@ -796,3 +813,27 @@ def test_one_hot_encoder_categorical_features():
     # Edge case: all categorical
     cat = [True, True, True]
     _check_one_hot(X, X2, cat, 5)
+
+
+def test_one_hot_encoder_unknown_transform():
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
+    y = np.array([[4, 1, 1]])
+
+    # Test that one hot encoder raises error for unknown features
+    # present during transform.
+    oh = OneHotEncoder(handle_unknown='error')
+    oh.fit(X)
+    assert_raises(ValueError, oh.transform, y)
+
+    # Test the ignore option, ignores unknown features.
+    oh = OneHotEncoder(handle_unknown='ignore')
+    oh.fit(X)
+    assert_array_equal(
+        oh.transform(y).toarray(),
+        np.array([[ 0.,  0.,  0.,  0.,  1.,  0.,  0.]])
+        )
+
+    # Raise error if handle_unknown is neither ignore or error.
+    oh = OneHotEncoder(handle_unknown='42')
+    oh.fit(X)
+    assert_raises(ValueError, oh.transform, y)

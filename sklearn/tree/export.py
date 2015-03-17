@@ -25,6 +25,9 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
         $ dot -Tps tree.dot -o tree.ps      (PostScript format)
         $ dot -Tpng tree.dot -o tree.png    (PNG format)
 
+    The sample counts that are shown are weighted with any sample_weights that
+    might be present.
+
     Parameters
     ----------
     decision_tree : decision tree classifier

@@ -131,7 +131,7 @@ which is fast to train and achieves a decent F-score::
   >>> clf = MultinomialNB(alpha=.01)
   >>> clf.fit(vectors, newsgroups_train.target)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(newsgroups_test.target, pred)
+  >>> metrics.f1_score(newsgroups_test.target, pred, average='weighted')
   0.88251152461278892
 
 (The example :ref:`example_text_document_classification_20newsgroups.py` shuffles
@@ -181,7 +181,7 @@ blocks, and quotation blocks respectively.
   ...                                      categories=categories)
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(pred, newsgroups_test.target)
+  >>> metrics.f1_score(pred, newsgroups_test.target, average='weighted')
   0.78409163025839435
 
 This classifier lost over a lot of its F-score, just because we removed
@@ -196,7 +196,7 @@ It loses even more if we also strip this metadata from the training data:
   >>> clf.fit(vectors, newsgroups_train.target)
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(newsgroups_test.target, pred)
+  >>> metrics.f1_score(newsgroups_test.target, pred, average='weighted')
   0.73160869205141166
 
 Some other classifiers cope better with this harder version of the task. Try

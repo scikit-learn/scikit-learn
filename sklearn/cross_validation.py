@@ -23,12 +23,14 @@ import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import indexable, check_random_state, safe_indexing
-from .utils.validation import _num_samples, check_array
+from .utils.validation import (_is_arraylike, _num_samples,
+                               check_array, column_or_1d)
 from .utils.multiclass import type_of_target
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
 from .externals.six.moves import zip
 from .metrics.scorer import check_scoring
+from .utils.fixes import bincount
 
 __all__ = ['Bootstrap',
            'KFold',
@@ -39,8 +41,10 @@ __all__ = ['Bootstrap',
            'ShuffleSplit',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
+           'PredefinedSplit',
            'check_cv',
            'cross_val_score',
+           'cross_val_predict',
            'permutation_test_score',
            'train_test_split']
 
@@ -403,14 +407,14 @@ class StratifiedKFold(_BaseKFold):
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_labels, y_inversed = np.unique(y, return_inverse=True)
-        label_counts = np.bincount(y_inversed)
+        label_counts = bincount(y_inversed)
         min_labels = np.min(label_counts)
         if self.n_folds > min_labels:
             warnings.warn(("The least populated class in y has only %d"
-                          " members, which is too few. The minimum"
-                          " number of labels for any class cannot"
-                          " be less than n_folds=%d."
-                          % (min_labels, self.n_folds)), Warning)
+                           " members, which is too few. The minimum"
+                           " number of labels for any class cannot"
+                           " be less than n_folds=%d."
+                           % (min_labels, self.n_folds)), Warning)
 
         # don't want to use the same seed in each label's shuffle
         if self.shuffle:
@@ -676,23 +680,19 @@ class Bootstrap(object):
     indices = True
 
     def __init__(self, n, n_iter=3, train_size=.5, test_size=None,
-                 random_state=None, n_bootstraps=None):
+                 random_state=None):
         # See, e.g., http://youtu.be/BzHz0J9a6k0?t=9m38s for a motivation
         # behind this deprecation
         warnings.warn("Bootstrap will no longer be supported as a " +
                       "cross-validation method as of version 0.15 and " +
                       "will be removed in 0.17", DeprecationWarning)
         self.n = n
-        if n_bootstraps is not None:  # pragma: no cover
-            warnings.warn("n_bootstraps was renamed to n_iter and will "
-                          "be removed in 0.16.", DeprecationWarning)
-            n_iter = n_bootstraps
         self.n_iter = n_iter
-        if (isinstance(train_size, numbers.Real) and train_size >= 0.0
+        if isinstance(train_size, numbers.Integral):
+            self.train_size = train_size
+        elif (isinstance(train_size, numbers.Real) and train_size >= 0.0
                 and train_size <= 1.0):
             self.train_size = int(ceil(train_size * n))
-        elif isinstance(train_size, numbers.Integral):
-            self.train_size = train_size
         else:
             raise ValueError("Invalid value for train_size: %r" %
                              train_size)
@@ -700,10 +700,10 @@ class Bootstrap(object):
             raise ValueError("train_size=%d should not be larger than n=%d" %
                              (self.train_size, n))
 
-        if isinstance(test_size, numbers.Real) and 0.0 <= test_size <= 1.0:
-            self.test_size = int(ceil(test_size * n))
-        elif isinstance(test_size, numbers.Integral):
+        if isinstance(test_size, numbers.Integral):
             self.test_size = test_size
+        elif isinstance(test_size, numbers.Real) and 0.0 <= test_size <= 1.0:
+            self.test_size = int(ceil(test_size * n))
         elif test_size is None:
             self.test_size = self.n - self.train_size
         else:
@@ -1008,7 +1008,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         self.classes, self.y_indices = np.unique(y, return_inverse=True)
         n_cls = self.classes.shape[0]
 
-        if np.min(np.bincount(self.y_indices)) < 2:
+        if np.min(bincount(self.y_indices)) < 2:
             raise ValueError("The least populated class in y has only 1"
                              " member, which is too few. The minimum"
                              " number of labels for any class cannot"
@@ -1025,7 +1025,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self):
         rng = check_random_state(self.random_state)
-        cls_count = np.bincount(self.y_indices)
+        cls_count = bincount(self.y_indices)
         p_i = cls_count / float(self.n)
         n_i = np.round(self.n_train * p_i).astype(int)
         t_i = np.minimum(cls_count - n_i,
@@ -1047,8 +1047,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             # up here with less samples in train and test than asked for.
             if len(train) < self.n_train or len(test) < self.n_test:
                 # We complete by affecting randomly the missing indexes
-                missing_idx = np.where(np.bincount(train + test,
-                                                   minlength=len(self.y)) == 0,
+                missing_idx = np.where(bincount(train + test,
+                                                minlength=len(self.y)) == 0,
                                        )[0]
                 missing_idx = rng.permutation(missing_idx)
                 train.extend(missing_idx[:(self.n_train - len(train))])
@@ -1073,7 +1073,219 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         return self.n_iter
 
 
+class PredefinedSplit(_PartitionIterator):
+    """Predefined split cross validation iterator
+
+    Splits the data into training/test set folds according to a predefined
+    scheme. Each sample can be assigned to at most one test set fold, as
+    specified by the user through the ``test_fold`` parameter.
+
+    Parameters
+    ----------
+    test_fold : "array-like, shape (n_samples,)
+        test_fold[i] gives the test set fold of sample i. A value of -1
+        indicates that the corresponding sample is not part of any test set
+        folds, but will instead always be put into the training fold.
+
+    Examples
+    --------
+    >>> from sklearn.cross_validation import PredefinedSplit
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([0, 0, 1, 1])
+    >>> ps = PredefinedSplit(test_fold=[0, 1, -1, 1])
+    >>> len(ps)
+    2
+    >>> print(ps)       # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    sklearn.cross_validation.PredefinedSplit(test_fold=[ 0  1 -1  1])
+    >>> for train_index, test_index in ps:
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [1 2 3] TEST: [0]
+    TRAIN: [0 2] TEST: [1 3]
+    """
+
+    def __init__(self, test_fold, indices=None):
+        super(PredefinedSplit, self).__init__(len(test_fold), indices)
+        self.test_fold = np.array(test_fold, dtype=np.int)
+        self.test_fold = column_or_1d(self.test_fold)
+        self.unique_folds = np.unique(self.test_fold)
+        self.unique_folds = self.unique_folds[self.unique_folds != -1]
+
+    def _iter_test_indices(self):
+        for f in self.unique_folds:
+            yield np.where(self.test_fold == f)[0]
+
+    def __repr__(self):
+        return '%s.%s(test_fold=%s)' % (
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.test_fold)
+
+    def __len__(self):
+        return len(self.unique_folds)
+
+
 ##############################################################################
+def _index_param_value(X, v, indices):
+    """Private helper function for parameter value indexing."""
+    if not _is_arraylike(v) or _num_samples(v) != _num_samples(X):
+        # pass through: skip indexing
+        return v
+    if sp.issparse(v):
+        v = v.tocsr()
+    return safe_indexing(v, indices)
+
+
+def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
+                      verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+    """Generate cross-validated estimates for each input data point
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit' and 'predict'
+        The object to use to fit the data.
+
+    X : array-like
+        The data to fit. Can be, for example a list, or an array at least 2d.
+
+    y : array-like, optional, default: None
+        The target variable to try to predict in the case of
+        supervised learning.
+
+    cv : cross-validation generator or int, optional, default: None
+        A cross-validation generator to use. If int, determines
+        the number of folds in StratifiedKFold if y is binary
+        or multiclass and estimator is a classifier, or the number
+        of folds in KFold otherwise. If None, it is equivalent to cv=3.
+        This generator must include all elements in the test set exactly once.
+        Otherwise, a ValueError is raised.
+
+    n_jobs : integer, optional
+        The number of CPUs to use to do the computation. -1 means
+        'all CPUs'.
+
+    verbose : integer, optional
+        The verbosity level.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method of the estimator.
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    Returns
+    -------
+    preds : ndarray
+        This is the result of calling 'predict'
+    """
+    X, y = indexable(X, y)
+
+    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+    # We clone the estimator to make sure that all the folds are
+    # independent, and that it is pickle-able.
+    parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
+                        pre_dispatch=pre_dispatch)
+    preds_blocks = parallel(delayed(_fit_and_predict)(clone(estimator), X, y,
+                                                      train, test, verbose,
+                                                      fit_params)
+                            for train, test in cv)
+    p = np.concatenate([p for p, _ in preds_blocks])
+    locs = np.concatenate([loc for _, loc in preds_blocks])
+    if not _check_is_partition(locs, X.shape[0]):
+        raise ValueError('cross_val_predict only works for partitions')
+    preds = p.copy()
+    preds[locs] = p
+    return preds
+
+
+def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
+    """Fit estimator and predict values for a given dataset split.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit' and 'predict'
+        The object to use to fit the data.
+
+    X : array-like of shape at least 2D
+        The data to fit.
+
+    y : array-like, optional, default: None
+        The target variable to try to predict in the case of
+        supervised learning.
+
+    train : array-like, shape (n_train_samples,)
+        Indices of training samples.
+
+    test : array-like, shape (n_test_samples,)
+        Indices of test samples.
+
+    verbose : integer
+        The verbosity level.
+
+    fit_params : dict or None
+        Parameters that will be passed to ``estimator.fit``.
+
+    Returns
+    -------
+    preds : sequence
+        Result of calling 'estimator.predict'
+
+    test : array-like
+        This is the value of the test parameter
+    """
+    # Adjust length of sample weights
+    fit_params = fit_params if fit_params is not None else {}
+    fit_params = dict([(k, _index_param_value(X, v, train))
+                      for k, v in fit_params.items()])
+
+    X_train, y_train = _safe_split(estimator, X, y, train)
+    X_test, _ = _safe_split(estimator, X, y, test, train)
+
+    if y_train is None:
+        estimator.fit(X_train, **fit_params)
+    else:
+        estimator.fit(X_train, y_train, **fit_params)
+    preds = estimator.predict(X_test)
+    return preds, test
+
+
+def _check_is_partition(locs, n):
+    """Check whether locs is a reordering of the array np.arange(n)
+
+    Parameters
+    ----------
+    locs : ndarray
+        integer array to test
+    n : int
+        number of expected elements
+
+    Returns
+    -------
+    is_partition : bool
+        True iff sorted(locs) is range(n)
+    """
+    if len(locs) != n:
+        return False
+    hit = np.zeros(n, bool)
+    hit[locs] = True
+    if not np.all(hit):
+        return False
+    return True
 
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
@@ -1171,14 +1383,14 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         The target variable to try to predict in the case of
         supervised learning.
 
-    scoring : callable
+    scorer : callable
         A scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    train : array-like, shape = (n_train_samples,)
+    train : array-like, shape (n_train_samples,)
         Indices of training samples.
 
-    test : array-like, shape = (n_test_samples,)
+    test : array-like, shape (n_test_samples,)
         Indices of test samples.
 
     verbose : integer
@@ -1227,12 +1439,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                           for k, v in parameters.items()))
         print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
-    # Adjust lenght of sample weights
-    n_samples = _num_samples(X)
+    # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = dict([(k, np.asarray(v)[train]
-                       if hasattr(v, '__len__') and len(v) == n_samples else v)
-                       for k, v in fit_params.items()])
+    fit_params = dict([(k, _index_param_value(X, v, train))
+                      for k, v in fit_params.items()])
 
     if parameters is not None:
         estimator.set_params(**parameters)
@@ -1458,7 +1668,7 @@ def permutation_test_score(estimator, X, y, cv=None,
     score : float
         The true score without permuting targets.
 
-    permutation_scores : array, shape = [n_permutations]
+    permutation_scores : array, shape (n_permutations,)
         The scores obtained for each permutations.
 
     pvalue : float
@@ -1572,16 +1782,26 @@ def train_test_split(*arrays, **options):
     random_state = options.pop('random_state', None)
     dtype = options.pop('dtype', None)
     if dtype is not None:
-        warnings.warn("dtype option is ignored and will be removed in 0.18.")
+        warnings.warn("dtype option is ignored and will be removed in 0.18.",
+                      DeprecationWarning)
 
-    force_arrays = options.pop('force_arrays', False)
+    allow_nd = options.pop('allow_nd', None)
+    allow_lists = options.pop('allow_lists', None)
+
+    if allow_lists is not None:
+        warnings.warn("The allow_lists option is deprecated and will be "
+                      "assumed True in 0.18 and removed.", DeprecationWarning)
+
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
-    if force_arrays:
-        warnings.warn("The force_arrays option is deprecated and will be "
-                      "removed in 0.18.", DeprecationWarning)
-        arrays = [check_array(x, 'csr', ensure_2d=False, force_all_finite=False)
-                  if x is not None else x for x in arrays]
+    if allow_nd is not None:
+        warnings.warn("The allow_nd option is deprecated and will be "
+                      "assumed True in 0.18 and removed.", DeprecationWarning)
+    if allow_lists is False or allow_nd is False:
+        arrays = [check_array(x, 'csr', allow_nd=allow_nd,
+                              force_all_finite=False, ensure_2d=False)
+                  if x is not None else x
+                  for x in arrays]
 
     if test_size is None and train_size is None:
         test_size = 0.25

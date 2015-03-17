@@ -171,6 +171,15 @@ def test_omp_path():
     assert_array_almost_equal(path[:, :, -1], last)
 
 
+def test_omp_return_path_prop_with_gram():
+    path = orthogonal_mp(X, y, n_nonzero_coefs=5, return_path=True, 
+            precompute=True)
+    last = orthogonal_mp(X, y, n_nonzero_coefs=5, return_path=False,
+            precompute=True)
+    assert_equal(path.shape, (n_features, n_targets, 5))
+    assert_array_almost_equal(path[:, :, -1], last)
+
+
 def test_omp_cv():
     # FIXME: This test is unstable on Travis, see issue #3190 for more detail.
     check_skip_travis()

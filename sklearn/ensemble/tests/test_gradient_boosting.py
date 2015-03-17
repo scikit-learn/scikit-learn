@@ -3,7 +3,6 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
 
 import numpy as np
-import warnings
 
 from sklearn import datasets
 from sklearn.base import clone
@@ -22,7 +21,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.validation import DataConversionWarning
-
+from sklearn.utils.validation import NotFittedError
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -340,6 +339,9 @@ def test_check_max_features():
                                     max_features=(len(X[0]) + 1))
     assert_raises(ValueError, clf.fit, X, y)
 
+    clf = GradientBoostingRegressor(n_estimators=100, random_state=1,
+                                    max_features=-0.1)
+    assert_raises(ValueError, clf.fit, X, y)
 
 def test_max_feature_regression():
     """Test to make sure random state is set properly. """
@@ -384,6 +386,11 @@ def test_max_feature_auto():
     gbrt.fit(X_train, y_train)
     assert_equal(gbrt.max_features_, int(np.log2(n_features)))
 
+    gbrt = GradientBoostingRegressor(n_estimators=1,
+                                     max_features=0.01 / X.shape[1])
+    gbrt.fit(X_train, y_train)
+    assert_equal(gbrt.max_features_, 1)
+
 
 def test_staged_predict():
     """Test whether staged decision function eventually gives
@@ -417,8 +424,8 @@ def test_staged_predict_proba():
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingClassifier(n_estimators=20)
-    # test raise ValueError if not fitted
-    assert_raises(ValueError, lambda X: np.fromiter(
+    # test raise NotFittedError if not fitted
+    assert_raises(NotFittedError, lambda X: np.fromiter(
         clf.staged_predict_proba(X), dtype=np.float64), X_test)
 
     clf.fit(X_train, y_train)
@@ -435,6 +442,24 @@ def test_staged_predict_proba():
         assert_equal(2, staged_proba.shape[1])
 
     assert_array_equal(clf.predict_proba(X_test), staged_proba)
+
+
+def test_staged_functions_defensive():
+    # test that staged_functions make defensive copies
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(10, 3))
+    y = (4 * X[:, 0]).astype(np.int) + 1  # don't predict zeros
+    for estimator in [GradientBoostingRegressor(),
+                      GradientBoostingClassifier()]:
+        estimator.fit(X, y)
+        for func in ['predict', 'decision_function', 'predict_proba']:
+            staged_func = getattr(estimator, "staged_" + func, None)
+            if staged_func is None:
+                # regressor has no staged_predict_proba
+                continue
+            staged_result = list(staged_func(X))
+            staged_result[1][:] = 0
+            assert_true(np.all(staged_result[0] != 0))
 
 
 def test_serialization():
@@ -555,14 +580,6 @@ def test_mem_layout():
     assert_equal(100, len(clf.estimators_))
 
 
-def test_oob_score():
-    """Test if oob_score is deprecated. """
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
-                                     subsample=0.5)
-    clf.fit(X, y)
-    assert_warns(DeprecationWarning, hasattr, clf, 'oob_score_')
-
-
 def test_oob_improvement():
     """Test if oob improvement has correct shape and regression test. """
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
@@ -648,24 +665,6 @@ def test_more_verbose_output():
     n_lines = sum(1 for l in verbose_output.readlines())
     # 100 lines for n_estimators==100
     assert_equal(100, n_lines)
-
-
-def test_warn_deviance():
-    """Test if mdeviance and bdeviance give deprecated warning. """
-    for loss in ('bdeviance', 'mdeviance'):
-        with warnings.catch_warnings(record=True) as w:
-            # This will raise a DataConversionWarning that we want to
-            # "always" raise, elsewhere the warnings gets ignored in the
-            # later tests, and the tests that check for this warning fail
-            warnings.simplefilter("always", DataConversionWarning)
-            clf = GradientBoostingClassifier(loss=loss)
-            try:
-                clf.fit(X, y)
-            except:
-                # mdeviance will raise ValueError because only 2 classes
-                pass
-            # deprecated warning for bdeviance and mdeviance
-            assert len(w) == 1
 
 
 def test_warm_start():
@@ -814,7 +813,6 @@ def test_monitor_early_stopping():
         assert_equal(est.estimators_.shape[0], 10)
         assert_equal(est.train_score_.shape[0], 10)
         assert_equal(est.oob_improvement_.shape[0], 10)
-        assert_equal(est._oob_score_.shape[0], 10)
 
         # try refit
         est.set_params(n_estimators=30)
@@ -822,7 +820,6 @@ def test_monitor_early_stopping():
         assert_equal(est.n_estimators, 30)
         assert_equal(est.estimators_.shape[0], 30)
         assert_equal(est.train_score_.shape[0], 30)
-        assert_equal(est.oob_improvement_.shape[0], 30)
 
         est = Cls(n_estimators=20, max_depth=1, random_state=1, subsample=0.5,
                   warm_start=True)
@@ -831,7 +828,6 @@ def test_monitor_early_stopping():
         assert_equal(est.estimators_.shape[0], 10)
         assert_equal(est.train_score_.shape[0], 10)
         assert_equal(est.oob_improvement_.shape[0], 10)
-        assert_equal(est._oob_score_.shape[0], 10)
 
         # try refit
         est.set_params(n_estimators=30, warm_start=False)

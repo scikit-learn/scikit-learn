@@ -161,6 +161,11 @@ One-Vs-One
 
 :class:`OneVsOneClassifier` constructs one classifier per pair of classes.
 At prediction time, the class which received the most votes is selected.
+In the event of a tie (among two classes with an equal number of votes), it
+selects the class with the highest aggregate classification confidence by
+summing over the pair-wise classification confidence levels computed by the
+underlying binary classifiers.
+
 Since it requires to fit ``n_classes * (n_classes - 1) / 2`` classifiers,
 this method is usually slower than one-vs-the-rest, due to its
 O(n_classes^2) complexity. However, this method may be advantageous for
@@ -187,6 +192,12 @@ Below is an example of multiclass learning using OvO::
          1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
+
+
+.. topic:: References:
+
+    .. [1] "Pattern Recognition and Machine Learning. Springer",
+        Christopher M. Bishop, page 183, (First Edition)
 
 
 Error-Correcting Output-Codes
