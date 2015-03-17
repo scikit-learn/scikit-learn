@@ -227,6 +227,9 @@ Enhancements
      by flipping the sign of eigen vectors. By `Hasil Sharma`_.
 
 
+   - Significant performance and memory usage improvements in
+     :class:`preprocessing.PolynomialFeatures`. By `Eric Martin`_.
+
 Documentation improvements
 ..........................
 
@@ -3354,6 +3357,8 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Will Dawson: http://dawsonresearch.com
 
 .. _Balazs Kegl: https://github.com/kegl
+
+.. _Eric Martin: http://ericmart.in
 
 .. _Andrew Tulloch: http://tullo.ch/
 
