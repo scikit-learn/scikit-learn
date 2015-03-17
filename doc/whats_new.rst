@@ -196,8 +196,10 @@ Enhancements
 
    - Sparse support for :func:`paired_distances`. By `Joel Nothman`_.
 
-   - DBSCAN now supports sparse input and sample weights, and should be
-     faster in general. By `Joel Nothman`_.
+   - :class:`cluster.DBSCAN` now supports sparse input and sample weights and
+     has been optimized: the inner loop has been rewritten in Cython and
+     radius neighbors queries are now computed in batch. By `Joel Nothman`_
+     and `Lars Buitinck`_.
 
    - Add ``class_weight`` parameter to automatically weight samples by class
      frequency for :class:`ensemble.RandomForestClassifier`,
