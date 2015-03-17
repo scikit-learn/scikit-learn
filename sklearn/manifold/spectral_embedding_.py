@@ -17,7 +17,7 @@ from ..utils import check_random_state
 from ..utils.validation import check_array
 from ..utils.graph import graph_laplacian
 from ..utils.sparsetools import connected_components
-from ..utils.arpack import eigsh
+from ..utils.arpack import eigsh, eigs
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 
@@ -639,26 +639,45 @@ def diffusion_embedding(adjacency, n_components=8, diffusion_time=None,
     if not _graph_is_connected(adjacency):
         warnings.warn("Graph is not fully connected, spectral embedding"
                       " may not work as expected.")
-    ndim = adjacency.shape[0]
-    v = np.sqrt(np.sum(adjacency, axis=1))
-    A = adjacency/(v[:, None] * v[None, :])
-    A = np.squeeze(A * [A > 1e-5])
-    if n_components is not None:
-        lambdas, vectors = eigsh(A, k=n_components + 1)
-    else:
-        lambdas, vectors = eigsh(A, k=max(2, int(np.sqrt(ndim/2))))
-    lambdas = lambdas[::-1]
-    vectors = vectors[:, ::-1]
+    K = sparse.csr_matrix(adjacency)
+    ndim = K.shape[0]
+    v = np.array(np.sqrt(K.sum(axis=1))).flatten()
+    A = K.copy()
+    del K
+    A.data /= v[A.indices]
+    A = sparse.csr_matrix(A.transpose().toarray())
+    A.data /= v[A.indices]
+    A = sparse.csr_matrix(A.transpose().toarray())
 
-    psi = vectors/vectors[:, 0][:, None]
+    func = eigs
+    if n_components is not None:
+        lambdas, vectors = func(A, k=n_components + 1)
+    else:
+        lambdas, vectors = func(A, k=max(2, int(np.sqrt(ndim))))
+    del A
+
+    if func == eigsh:
+        lambdas = lambdas[::-1]
+        vectors = vectors[:, ::-1]
+    else:
+        lambdas = np.real(lambdas)
+        vectors = np.real(vectors)
+        lambda_idx = np.argsort(lambdas)[::-1]
+        lambdas = lambdas[lambda_idx]
+        vectors = vectors[:, lambda_idx]
+
+    psi = vectors/vectors[:, [0]]
     if diffusion_time <= 0:
         lambdas = lambdas[1:] / (1 - lambdas[1:])
     else:
-        lambdas = lambdas[1:]**diffusion_time
+        lambdas = lambdas[1:] ** float(diffusion_time)
+    lambda_ratio = lambdas/lambdas[0]
+    threshold = max(0.05, lambda_ratio[-1])
+
+    n_components_auto = np.amax(np.nonzero(lambda_ratio > threshold)[0])
+    n_components_auto = min(n_components_auto, ndim)
     if n_components is None:
-        lambda_ratio = lambdas/lambdas[0]
-        n_components = np.amin(np.nonzero(lambda_ratio < .05)[0])
-        n_components = min(n_components, ndim)
+        n_components = n_components_auto
     embedding = psi[:, 1:(n_components + 1)] * lambdas[:n_components][None, :]
     return embedding
 
@@ -720,7 +739,7 @@ class DiffusionEmbedding(SpectralEmbedding):
         """
         random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, basestring):
-            if self.affinity not in set(("nearest_neighbors", "rbf",
+            if self.affinity not in set(("nearest_neighbors", "rbf", "cauchy",
                                          "precomputed", "markov")):
                 raise ValueError(("%s is not a valid affinity. Expected  'markov', "
                                   "'precomputed', 'rbf', 'nearest_neighbors' "
@@ -729,14 +748,24 @@ class DiffusionEmbedding(SpectralEmbedding):
             raise ValueError(("'affinity' is expected to be an an affinity "
                               "name or a callable. Got: %s") % self.affinity)
 
-        if self.affinity == 'markov':
+        from ..decomposition import RandomizedPCA
+        pca = RandomizedPCA(n_components=self.n_components,
+                            random_state=random_state)
+        #X = pca.fit_transform(X)
+        eps = self.gamma
+        if self.affinity in ['markov', 'cauchy']:
             from ..metrics import pairwise_distances
-            D = pairwise_distances(X)
-            k = int(max(2, np.round(D.shape[0] * 0.01)))
-            eps = 2 * np.median(np.sort(D, axis=0)[k+1, :])**2
-            affinity_matrix = np.exp(-(D * D) / eps)
+            D = pairwise_distances(X, metric='euclidean') #, squared=True)
+            if eps is None:
+                k = int(max(2, np.round(D.shape[0] * 0.01)))
+                eps = 2 * np.median(np.sort(D, axis=0)[k+1, :])**2
+            if self.affinity == 'markov':
+                affinity_matrix = np.exp(-(D * D) / eps)
+            elif self.affinity == 'cauchy':
+                affinity_matrix = 1./(D * D + eps)
         else:
             affinity_matrix = self._get_affinity_matrix(X)
+        self.eps_ = eps
         self.embedding_ = diffusion_embedding(affinity_matrix,
                                               n_components=self.n_components,
                                               eigen_solver=self.eigen_solver,
