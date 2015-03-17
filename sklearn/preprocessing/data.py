@@ -7,7 +7,6 @@
 
 from itertools import chain, combinations
 import numbers
-import warnings
 
 import numpy as np
 from scipy import sparse
@@ -474,8 +473,6 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     @property
     def powers_(self):
-        warnings.warn('PolynomialFeatures.powers_ is deprecated and will be '
-                      'removed in version 0.18.', DeprecationWarning)
         check_is_fitted(self, 'n_input_features_')
 
         combinations = self._combinations(self.n_input_features_, self.degree,
