@@ -217,6 +217,24 @@ class DPGMM(GMM):
         elif self.covariance_type == 'tied':
             return [self.precs_] * self.n_components
 
+    @property
+    def covars_(self):
+        """Covariance parameters for each mixture component.
+
+        The shape depends on `covariance_type`::
+
+            (n_components, n_features)             if 'spherical',
+            (n_features, n_features)               if 'tied',
+            (n_components, n_features)             if 'diag',
+            (n_components, n_features, n_features) if 'full'
+        """
+        if self.covariance_type == 'full':
+            return self._get_covars()
+        elif self.covariance_type in ['diag', 'spherical']:
+            return [1. / prec for prec in self.precs_]
+        elif self.covariance_type == 'tied':
+            return pinvh(self.precs_)
+
     def _get_covars(self):
         return [pinvh(c) for c in self._get_precisions()]
 
