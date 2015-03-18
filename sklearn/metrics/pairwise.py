@@ -346,7 +346,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
 
 def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
-                              batch_size=500, metric_kwargs={}):
+                              batch_size=500, metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -419,6 +419,9 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
     sklearn.metrics.pairwise_distances
     sklearn.metrics.pairwise_distances_argmin_min
     """
+    if metric_kwargs is None:
+        metric_kwargs = {}
+
     return pairwise_distances_argmin_min(X, Y, axis, metric, batch_size,
                                          metric_kwargs)[0]
 
