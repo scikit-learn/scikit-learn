@@ -2,6 +2,7 @@
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
+#          Alejandro Correa Bahnsen <al.bahnsen@gmail.com>
 # License: BSD 3 clause
 
 from itertools import chain, combinations
@@ -502,7 +503,13 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         if n_features != self.powers_.shape[1]:
             raise ValueError("X shape does not match training shape")
 
-        return (X[:, None, :] ** self.powers_).prod(-1)
+        NP = self.powers_.shape[0]
+        XP = np.zeros((n_samples, NP), dtype=X.dtype)
+        
+        for i in range(n_samples):
+            XP[i, :] = (X[i, None, :] ** self.powers_).prod(-1)
+
+        return XP
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
