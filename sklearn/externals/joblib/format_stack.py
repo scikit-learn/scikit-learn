@@ -268,6 +268,7 @@ def format_records(records):   # , print_globals=False):
         tokeneater.name_cont = False
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         def linereader(file=file, lnum=[lnum], getline=linecache.getline):
             
 =======
@@ -279,6 +280,10 @@ def format_records(records):   # , print_globals=False):
                 lnum = [lnum_loc]
 
 >>>>>>> use tuples instead of mutable  default values
+=======
+        def linereader(file=file, lnum=[lnum], getline=linecache.getline):
+            
+>>>>>>> joblib is restored to its original version. In ridge.py alphas is not casted to a numpy array anymore
             line = getline(file, lnum[0])
             lnum[0] += 1
             return line
