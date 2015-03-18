@@ -106,7 +106,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         self : object
             Returns an instance of self.
         """
-        X, y = check_X_y(X, y, accept_sparse=['csc', 'csr', 'coo'])
+        X, y = check_X_y(X, y, accept_sparse=['csc', 'csr', 'coo'],
+                         force_all_finite=False)
         X, y = indexable(X, y)
         lb = LabelBinarizer().fit(y)
         self.classes_ = lb.classes_
@@ -184,7 +185,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
             The predicted probas.
         """
         check_is_fitted(self, ["classes_", "calibrated_classifiers_"])
-        X = check_array(X, accept_sparse=['csc', 'csr', 'coo'])
+        X = check_array(X, accept_sparse=['csc', 'csr', 'coo'],
+                        force_all_finite=False)
         # Compute the arithmetic mean of the predictions of the calibrated
         # classfiers
         mean_proba = np.zeros((X.shape[0], len(self.classes_)))
