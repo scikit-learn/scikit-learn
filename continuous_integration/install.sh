@@ -44,6 +44,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
         # Make sure that MKL is not used
         conda remove --yes --features mkl || echo "MKL not installed"
     fi
+    python -c "import six; print(six.__path__)"
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # Use standard ubuntu packages in their default version
