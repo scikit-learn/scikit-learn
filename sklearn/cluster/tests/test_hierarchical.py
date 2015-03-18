@@ -20,7 +20,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import ignore_warnings
 
-from sklearn.cluster import Ward, WardAgglomeration, ward_tree
+from sklearn.cluster import ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
 from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
                                           linkage_tree)
@@ -45,9 +45,6 @@ def test_linkage_misc():
 
     # Smoke test FeatureAgglomeration
     FeatureAgglomeration().fit(X)
-
-    # Deprecation of Ward class
-    assert_warns(DeprecationWarning, Ward).fit(X)
 
     # test hiearchical clustering on a precomputed distances matrix
     dis = cosine_distances(X)
@@ -221,14 +218,8 @@ def test_ward_agglomeration():
     mask = np.ones([10, 10], dtype=np.bool)
     X = rng.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
-    assert_warns(DeprecationWarning, WardAgglomeration)
-
-    with ignore_warnings():
-        ward = WardAgglomeration(n_clusters=5, connectivity=connectivity)
-        ward.fit(X)
     agglo = FeatureAgglomeration(n_clusters=5, connectivity=connectivity)
     agglo.fit(X)
-    assert_array_equal(agglo.labels_, ward.labels_)
     assert_true(np.size(np.unique(agglo.labels_)) == 5)
 
     X_red = agglo.transform(X)

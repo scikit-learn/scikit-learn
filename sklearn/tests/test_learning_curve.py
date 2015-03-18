@@ -228,7 +228,7 @@ def test_learning_curve_with_boolean_indices():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
-    cv = KFold(n=30, n_folds=3, indices=False)
+    cv = KFold(n=30, n_folds=3)
     train_sizes, train_scores, test_scores = learning_curve(
         estimator, X, y, cv=cv, train_sizes=np.linspace(0.1, 1.0, 10))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
