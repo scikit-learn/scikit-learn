@@ -55,7 +55,6 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # Create a new virtualenv using system site packages for numpy and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
-    python -c "import six; print(six.__path__)"
     pip remove six
     pip install nose
 fi
