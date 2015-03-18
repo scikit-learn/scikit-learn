@@ -151,6 +151,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
           - None: no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
+
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
     priors : array, optional, shape (n_classes,)
