@@ -517,10 +517,10 @@ def _compare_attributes(estimator1, estimator2, _invert_logic=False):
     # Collect all attributes from both the models
     for e_dict in (est1_dict, est2_dict):
         for key, value in e_dict.items():
-            if (key.endswith('_') and not key.endswith('estimator_')
-                    and not key.endswith('estimators_')
-                    and type(value) in comparables
-                    and key not in skip_attributes):
+            if (key.endswith('_') and not key.endswith('estimator_') and
+                    not key.endswith('estimators_') and
+                    type(value) in comparables and
+                    key not in skip_attributes):
 
                 attr_dict[key] = type(value)
 
@@ -539,7 +539,7 @@ def _compare_attributes(estimator1, estimator2, _invert_logic=False):
                 try:
                     if (type(est1_dict[attr][0]) not in comparables
                             or type(est2_dict[attr][0]) not in comparables):
-                                continue
+                        continue
                 except IndexError:
                     # If the list / ndarray is empty
                     pass

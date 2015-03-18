@@ -24,7 +24,6 @@ from sklearn.utils.testing import META_ESTIMATORS
 from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import check_skip_travis
 from sklearn.utils.testing import assert_same_model
 from sklearn.utils.testing import assert_not_same_model
 from sklearn.utils.testing import ignore_warnings
@@ -493,6 +492,7 @@ def check_partial_fit_n_features(name, Estimator):
     """Check if ValueError is raised if number of features changes between
     multiple partial_fit calls.
     """
+    name  # avoids unused argument error
 
     X, y = make_blobs(n_samples=50, random_state=1)
     X -= X.min()
@@ -512,7 +512,7 @@ def check_partial_fit_clone_consistency(name, Estimator):
     """General tests for partial_fit method"""
 
     X, y = make_blobs(n_samples=50, random_state=0)
-    test_X, test_y = make_blobs(n_samples=50, random_state=1)
+    test_X, _ = make_blobs(n_samples=50, random_state=1)
 
     if name in ("MultinomialNB",):
         X -= X.min()
@@ -547,7 +547,7 @@ def check_partial_fit_reset_when_fit(name, Estimator):
     """
 
     X, y = make_blobs(n_samples=50, n_features=4, random_state=0)
-    test_X, test_y = make_blobs(n_samples=50, n_features=4, random_state=1)
+    test_X, _ = make_blobs(n_samples=50, n_features=4, random_state=1)
 
     if name in ("MultinomialNB",):
         X -= X.min()
@@ -569,7 +569,7 @@ def check_partial_fit_reset_when_fit(name, Estimator):
     # Run 2 iterations of full set of partial_fit with batches of size 10
     classes = np.unique(y)
     for i in range(2):
-        X_s, y_s = shuffle(X, y, random_state=i)
+        (X_s, y_s) = shuffle(X, y, random_state=i)
         for j in range(0, 50, 10):
             _partial_fit(estimator_2, X_s[j:10+j], y_s[j:10+j],
                          classes=classes)
@@ -590,8 +590,8 @@ def check_partial_fit_effect(name, Estimator):
     # Smaller data set for 2nd partial_fit
     dX, dy = make_blobs(n_samples=10, centers=8, n_features=8, random_state=2)
     # Test data set to compare model
-    test_X, test_y = make_blobs(n_samples=50, centers=8, n_features=8,
-                                random_state=3)
+    test_X, _ = make_blobs(n_samples=50, centers=8, n_features=8,
+                           random_state=3)
 
     if name in ("MultinomialNB",):
         X -= X.min()
@@ -1270,6 +1270,7 @@ def multioutput_estimator_convert_y_2d(name, y):
 
 def check_non_transformer_estimators_n_iter(name, estimator,
                                             multi_output=False):
+    name  # avoids unused argument error
     # Check if all iterative solvers, run for more than one iteratiom
 
     iris = load_iris()
