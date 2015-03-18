@@ -99,16 +99,17 @@ def test_gradient_descent_stops():
 def test_binary_search():
     """Test if the binary search finds Gaussians with desired perplexity."""
     random_state = check_random_state(0)
-    distances = random_state.randn(50, 2)
-    distances = distances.dot(distances.T)
+    distances = random_state.randn(50, 2).astype(np.float32)
+    # Distances shouldn't be negative
+    distances = np.abs(distances.dot(distances.T))
     np.fill_diagonal(distances, 0.0)
     desired_perplexity = 25.0
-    P = _binary_search_perplexity(distances, desired_perplexity, verbose=0)
+    P = _binary_search_perplexity(distances, None, desired_perplexity,
+                                  verbose=0)
     P = np.maximum(P, np.finfo(np.double).eps)
     mean_perplexity = np.mean([np.exp(-np.sum(P[i] * np.log(P[i])))
                                for i in range(P.shape[0])])
     assert_almost_equal(mean_perplexity, desired_perplexity, decimal=3)
-
 
 def test_gradient():
     """Test gradient of Kullback-Leibler divergence."""
@@ -167,13 +168,13 @@ def test_preserve_trustworthiness_approximately():
 
 
 def test_fit_csr_matrix():
-    """X can be a sparse matrix."""
+    """X can be a sparse matrix for method=exact"""
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
     X[(np.random.randint(0, 100, 50), np.random.randint(0, 2, 50))] = 0.0
     X_csr = sp.csr_matrix(X)
     tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
-                random_state=0)
+                random_state=0, method='exact')
     X_embedded = tsne.fit_transform(X_csr)
     assert_almost_equal(trustworthiness(X_csr, X_embedded, n_neighbors=1), 1.0,
                         decimal=1)
@@ -214,8 +215,8 @@ def test_non_square_precomputed_distances():
 
 def test_init_not_available():
     """'init' must be 'pca' or 'random'."""
-    assert_raises_regexp(ValueError, "'init' must be either 'pca' or 'random'",
-                         TSNE, init="not available")
+    msg = "'init' must be 'pca', 'random' or a NumPy array"
+    assert_raises_regexp(ValueError, msg, TSNE, init="not available")
 
 
 def test_distance_not_available():
