@@ -596,18 +596,13 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
     def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
-                 random_state=None, n_iterations=None):
+                 random_state=None):
         self.n = n
         self.n_iter = n_iter
-        if n_iterations is not None:  # pragma: no cover
-            warnings.warn("n_iterations was renamed to n_iter for consistency "
-                          " and will be removed in 0.16.")
-            self.n_iter = n_iterations
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
-        self.n_train, self.n_test = _validate_shuffle_split(n,
-                                                            test_size,
+        self.n_train, self.n_test = _validate_shuffle_split(n, test_size,
                                                             train_size)
 
     def __iter__(self):
