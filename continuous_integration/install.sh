@@ -48,6 +48,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # Use standard ubuntu packages in their default version
     sudo apt-get install -qq python-scipy
+    sudo apt-get remove python-six
     # At the time of writing numpy 1.9.1 is included in the travis
     # virtualenv but we want to used numpy installed through apt-get
     # install.
