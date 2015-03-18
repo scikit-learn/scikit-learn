@@ -21,6 +21,7 @@ from ..externals.joblib import Parallel, delayed
 import scipy
 solve_triangular_args = {}
 if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
+    # check_finite=False is an optimization available only in scipy >=0.12
     solve_triangular_args = {'check_finite': False}
 
 
@@ -89,7 +90,13 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
     indices = np.arange(X.shape[1])  # keeping track of swapping
 
     max_features = X.shape[1] if tol is not None else n_nonzero_coefs
-    L = np.empty((max_features, max_features), dtype=X.dtype)
+    if solve_triangular_args:
+        # new scipy, don't need to initialize because check_finite=False
+        L = np.empty((max_features, max_features), dtype=X.dtype)
+    else:
+        # old scipy, we need the garbage upper triangle to be non-Inf
+        L = np.zeros((max_features, max_features), dtype=X.dtype)
+
     L[0, 0] = 1.
     if return_path:
         coefs = np.empty_like(L)
@@ -373,8 +380,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     for k in range(y.shape[1]):
         out = _cholesky_omp(
             X, y[:, k], n_nonzero_coefs, tol,
-            copy_X=copy_X, return_path=return_path
-            )
+            copy_X=copy_X, return_path=return_path)
         if return_path:
             _, idx, coefs, n_iter = out
             coef = coef[:, :, :len(idx)]
@@ -504,8 +510,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
             Gram, Xy[:, k], n_nonzero_coefs,
             norms_squared[k] if tol is not None else None, tol,
             copy_Gram=copy_Gram, copy_Xy=copy_Xy,
-            return_path=return_path
-            )
+            return_path=return_path)
         if return_path:
             _, idx, coefs, n_iter = out
             coef = coef[:, :, :len(idx)]
