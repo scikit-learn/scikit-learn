@@ -18,6 +18,10 @@ Adapted from IPython's VerboseTB.
 #            2001 Nathaniel Gray
 # License: BSD 3 clause
 
+<<<<<<< HEAD
+=======
+import collections
+>>>>>>> use tuples instead of mutable  default values
 import inspect
 import keyword
 import linecache
@@ -263,8 +267,18 @@ def format_records(records):   # , print_globals=False):
         # dotted names
         tokeneater.name_cont = False
 
+<<<<<<< HEAD
         def linereader(file=file, lnum=[lnum], getline=linecache.getline):
             
+=======
+        def linereader(file=file, lnum_loc=lnum, getline=linecache.getline):
+            
+            if isinstance(lnum_loc, collections.Iterable):
+                lnum = lnum_loc
+            else:
+                lnum = [lnum_loc]
+
+>>>>>>> use tuples instead of mutable  default values
             line = getline(file, lnum[0])
             lnum[0] += 1
             return line
