@@ -16,7 +16,6 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
@@ -834,10 +833,8 @@ def test_cross_val_generator_with_indices():
     lolo = cval.LeaveOneLabelOut(labels)
     lopo = cval.LeavePLabelOut(labels, 2)
     ps = cval.PredefinedSplit([1, 1, 2, 2])
-    # Bootstrap as a cross-validation is deprecated
-    b = assert_warns(DeprecationWarning, cval.Bootstrap, 2)
     ss = cval.ShuffleSplit(2)
-    for cv in [loo, lpo, kf, skf, lolo, lopo, b, ss, ps]:
+    for cv in [loo, lpo, kf, skf, lolo, lopo, ss, ps]:
         for train, test in cv:
             assert_not_equal(np.asarray(train).dtype.kind, 'b')
             assert_not_equal(np.asarray(train).dtype.kind, 'b')
@@ -856,34 +853,14 @@ def test_cross_val_generator_with_default_indices():
     skf = cval.StratifiedKFold(y, 2)
     lolo = cval.LeaveOneLabelOut(labels)
     lopo = cval.LeavePLabelOut(labels, 2)
-    b = cval.Bootstrap(2)  # only in index mode
     ss = cval.ShuffleSplit(2)
     ps = cval.PredefinedSplit([1, 1, 2, 2])
-    for cv in [loo, lpo, kf, skf, lolo, lopo, b, ss, ps]:
+    for cv in [loo, lpo, kf, skf, lolo, lopo, ss, ps]:
         for train, test in cv:
             assert_not_equal(np.asarray(train).dtype.kind, 'b')
             assert_not_equal(np.asarray(train).dtype.kind, 'b')
             X[train], X[test]
             y[train], y[test]
-
-
-@ignore_warnings
-def test_bootstrap_errors():
-    assert_raises(ValueError, cval.Bootstrap, 10, train_size=100)
-    assert_raises(ValueError, cval.Bootstrap, 10, test_size=100)
-    assert_raises(ValueError, cval.Bootstrap, 10, train_size=1.1)
-    assert_raises(ValueError, cval.Bootstrap, 10, test_size=1.1)
-    assert_raises(ValueError, cval.Bootstrap, 10, train_size=0.6,
-                  test_size=0.5)
-
-
-@ignore_warnings
-def test_bootstrap_test_sizes():
-    assert_equal(cval.Bootstrap(10, test_size=0.2).test_size, 2)
-    assert_equal(cval.Bootstrap(10, test_size=1).test_size, 1)
-    assert_equal(cval.Bootstrap(10, train_size=1.).train_size, 10)
-    assert_equal(cval.Bootstrap(10, test_size=2).test_size, 2)
-    assert_equal(cval.Bootstrap(10, test_size=None).test_size, 5)
 
 
 def test_shufflesplit_errors():

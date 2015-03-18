@@ -186,7 +186,7 @@ def resample(*arrays, **options):
     -------
     resampled_arrays : sequence of arrays or scipy.sparse matrices with same \
     shape[0]
-        Sequence of resampled views of the collections. The original arrays are 
+        Sequence of resampled views of the collections. The original arrays are
         not impacted.
 
     Examples
@@ -224,7 +224,6 @@ def resample(*arrays, **options):
 
     See also
     --------
-    :class:`sklearn.cross_validation.Bootstrap`
     :func:`sklearn.utils.shuffle`
     """
     random_state = check_random_state(options.pop('random_state', None))
