@@ -15,7 +15,7 @@ from scipy import sparse
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
-from ..utils import check_array, check_X_y
+from ..utils import check_array, check_X_y, deprecated
 from ..utils.validation import check_random_state
 from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
@@ -689,7 +689,22 @@ class ElasticNet(LinearModel, RegressorMixin):
         """ sparse representation of the fitted coef """
         return sparse.csr_matrix(self.coef_)
 
+    @deprecated(" and will be removed in 0.19")
     def decision_function(self, X):
+        """Decision function of the linear model
+
+        Parameters
+        ----------
+        X : numpy array or scipy.sparse matrix of shape (n_samples, n_features)
+
+        Returns
+        -------
+        T : array, shape = (n_samples,)
+            The predicted decision function
+        """
+        return self._decision_function(X)
+
+    def _decision_function(self, X):
         """Decision function of the linear model
 
         Parameters
@@ -706,7 +721,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             return np.ravel(safe_sparse_dot(self.coef_, X.T, dense_output=True)
                             + self.intercept_)
         else:
-            return super(ElasticNet, self).decision_function(X)
+            return super(ElasticNet, self)._decision_function(X)
 
 
 ###############################################################################
