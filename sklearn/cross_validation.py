@@ -817,11 +817,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     """
 
     def __init__(self, y, n_iter=10, test_size=0.1, train_size=None,
-                 random_state=None, n_iterations=None):
+                 random_state=None):
 
         super(StratifiedShuffleSplit, self).__init__(
-            len(y), n_iter, test_size, train_size, random_state,
-            n_iterations)
+            len(y), n_iter, test_size, train_size, random_state)
+
         self.y = np.array(y)
         self.classes, self.y_indices = np.unique(y, return_inverse=True)
         n_cls = self.classes.shape[0]
