@@ -815,16 +815,18 @@ def test_svr_coef_sign():
 
 def test_linear_svc_intercept_scaling():
     # Test that the right error message is thrown when intercept_scaling <= 0
-    msg = ('Intercept scaling needs to be greater than 0.'
-           ' To disable fitting an intercept,' 
-           ' set fit_intercept=False.')
+
     for i in [-1, 0]:
         lsvc = svm.LinearSVC(intercept_scaling=i)
+        msg = ('Intercept scaling is %r but needs to be greater than 0.'
+               ' To disable fitting an intercept,'
+               ' set fit_intercept=False.' % lsvc.intercept_scaling)
         assert_raise_message(ValueError, msg, lsvc.fit, X, Y)
 
 
 def test_lsvc_intercept_scaling_zero():
     # Test that intercept_scaling is ignored when fit_intercept is False
+
     lsvc = svm.LinearSVC(fit_intercept=False)
     lsvc.fit(X, Y)
     assert_equal(lsvc.intercept_, 0.)

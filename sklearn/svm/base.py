@@ -654,7 +654,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
                                 % (penalty, loss, dual))
             else:
                 return solver_num
-    
+
     raise ValueError(('Unsupported set of arguments: %s, '
                       'Parameters: penalty=%r, loss=%r, dual=%r')
                      % (error_string, penalty, loss, dual))
@@ -783,9 +783,9 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     bias = -1.0
     if fit_intercept:
         if intercept_scaling <= 0:
-            raise ValueError("Intercept scaling needs to be greater than 0."
+            raise ValueError("Intercept scaling is %r but needs to be greater than 0."
                              " To disable fitting an intercept,"
-                             " set fit_intercept=False.")
+                             " set fit_intercept=False." % intercept_scaling)
         else:
             bias = intercept_scaling
 
