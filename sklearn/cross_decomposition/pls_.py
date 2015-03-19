@@ -238,7 +238,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         X = check_array(X, dtype=np.float, copy=self.copy)
         Y = check_array(Y, dtype=np.float, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
-            Y = Y[:, None]
+            Y = Y.reshape(-1, 1)
 
         n = X.shape[0]
         p = X.shape[1]
@@ -372,6 +372,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
         check_is_fitted(self, 'x_mean_')
+        if Y is not None and Y.ndim == 1:
+            Y = Y.reshape(-1, 1)
         # Normalize
         if copy:
             Xc = (np.asarray(X) - self.x_mean_) / self.x_std_
@@ -730,7 +732,9 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
         X = check_array(X, dtype=np.float, copy=self.copy)
-        Y = check_array(Y, dtype=np.float, copy=self.copy)
+        Y = check_array(Y, dtype=np.float, copy=self.copy, ensure_2d=False)
+        if Y.ndim == 1:
+            Y = Y.reshape(-1, 1)
 
         p = X.shape[1]
 
@@ -747,7 +751,10 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         # components is smaller than rank(X) - 1. Hence, if we want to extract
         # all the components (C.shape[1]), we have to use another one. Else,
         # let's use arpacks to compute only the interesting components.
-        if self.n_components == C.shape[1]:
+        if self.n_components > np.max(C.shape):
+            raise ValueError("n_components=%d is invalid with X of shape %s and Y of shape %s."
+                             % (self.n_components, str(X.shape), str(Y.shape)))
+        elif self.n_components >= np.min(C.shape):
             U, s, V = linalg.svd(C, full_matrices=False)
         else:
             U, s, V = arpack.svds(C, k=self.n_components)
@@ -764,6 +771,8 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         Xr = (X - self.x_mean_) / self.x_std_
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:
+            if Y.ndim == 1:
+                Y = Y.reshape(-1, 1)
             Yr = (Y - self.y_mean_) / self.y_std_
             y_scores = np.dot(Yr, self.y_weights_)
             return x_scores, y_scores

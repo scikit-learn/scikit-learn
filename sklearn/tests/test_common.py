@@ -95,14 +95,13 @@ def test_non_meta_estimators():
             continue
         if name.endswith("HMM") or name.startswith("_"):
             continue
-        if name not in CROSS_DECOMPOSITION:
-            yield check_estimators_dtypes, name, Estimator
-            yield check_fit_score_takes_y, name, Estimator
-            yield check_dtype_object, name, Estimator
+        yield check_estimators_dtypes, name, Estimator
+        yield check_fit_score_takes_y, name, Estimator
+        yield check_dtype_object, name, Estimator
 
-            # Check that all estimator yield informative messages when
-            # trained on empty datasets
-            yield check_estimators_empty_data_messages, name, Estimator
+        # Check that all estimator yield informative messages when
+        # trained on empty datasets
+        yield check_estimators_empty_data_messages, name, Estimator
 
         if name not in CROSS_DECOMPOSITION + ['SpectralEmbedding']:
             # SpectralEmbedding is non-deterministic,
