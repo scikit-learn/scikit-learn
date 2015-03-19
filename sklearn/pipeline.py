@@ -330,10 +330,10 @@ def make_pipeline(*steps):
     --------
     >>> from sklearn.naive_bayes import GaussianNB
     >>> from sklearn.preprocessing import StandardScaler
+    >>> from sklearn.pipeline import make_pipeline
     >>> make_pipeline(StandardScaler(), GaussianNB())    # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(steps=[('standardscaler',
-                     StandardScaler(copy=True, with_mean=True, with_std=True)),
-                    ('gaussiannb', GaussianNB())])
+        Pipeline(steps=[('standardscaler', StandardScaler(copy=True,
+                 with_mean=True, with_std=True)), ('gaussiannb', GaussianNB())])
 
     Returns
     -------
