@@ -106,13 +106,14 @@ def test_non_meta_estimators():
         if name not in CROSS_DECOMPOSITION + ['SpectralEmbedding']:
             # SpectralEmbedding is non-deterministic,
             # see issue #4236
+            # cross-decomposition's "transform" returns X and Y
             yield check_pipeline_consistency, name, Estimator
 
-        if name not in CROSS_DECOMPOSITION + ['Imputer']:
+        if name not in ['Imputer']:
             # Test that all estimators check their input for NaN's and infs
             yield check_estimators_nan_inf, name, Estimator
 
-        if name not in CROSS_DECOMPOSITION + ['GaussianProcess']:
+        if name not in ['GaussianProcess']:
             # FIXME!
             # in particular GaussianProcess!
             yield check_estimators_overwrite_params, name, Estimator

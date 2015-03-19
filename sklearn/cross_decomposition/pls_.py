@@ -372,6 +372,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
         check_is_fitted(self, 'x_mean_')
+        X = check_array(X)
         if Y is not None and Y.ndim == 1:
             Y = Y.reshape(-1, 1)
         # Normalize
@@ -413,11 +414,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         be an issue in high dimensional space.
         """
         check_is_fitted(self, 'x_mean_')
+        X = check_array(X, copy=self.copy)
         # Normalize
         if copy:
-            Xc = (np.asarray(X) - self.x_mean_)
+            Xc = X - self.x_mean_
         else:
-            X = np.asarray(X)
             Xc -= self.x_mean_
             Xc /= self.x_std_
         Ypred = np.dot(Xc, self.coef_)
@@ -768,6 +769,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     def transform(self, X, Y=None):
         """Apply the dimension reduction learned on the train data."""
         check_is_fitted(self, 'x_mean_')
+        X = check_array(X, dtype=np.float, copy=self.copy)
         Xr = (X - self.x_mean_) / self.x_std_
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:
