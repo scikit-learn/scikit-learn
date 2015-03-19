@@ -271,6 +271,10 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         # NIPALS algo: outer loop, over components
         for k in range(self.n_components):
+            if np.all(np.dot(Yk.T, Yk) < np.finfo(np.double).eps):
+                # Yk constant
+                warnings.warn('Y constant at iteration %s' % k)
+                break
             #1) weights estimation (inner loop)
             # -----------------------------------
             if self.algorithm == "nipals":
@@ -291,6 +295,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             # test for null variance
             if np.dot(x_scores.T, x_scores) < np.finfo(np.double).eps:
                 warnings.warn('X scores are null at iteration %s' % k)
+                break
             #2) Deflation (in place)
             # ----------------------
             # Possible memory footprint reduction may done here: in order to
