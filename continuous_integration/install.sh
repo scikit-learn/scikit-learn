@@ -45,8 +45,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
         conda remove --yes --features mkl || echo "MKL not installed"
     fi
 
-    python -c "import six; print(six.__path__)"
-    pip uninstall six
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # Use standard ubuntu packages in their default version
@@ -58,7 +56,6 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # Create a new virtualenv using system site packages for numpy and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
-    pip uninstall six
     pip install nose
 fi
 
