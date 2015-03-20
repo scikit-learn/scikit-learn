@@ -373,8 +373,10 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         """
         check_is_fitted(self, 'x_mean_')
         X = check_array(X)
-        if Y is not None and Y.ndim == 1:
-            Y = Y.reshape(-1, 1)
+        if Y is not None:
+            Y = check_array(Y, ensure_2d=False)
+            if Y.ndim == 1:
+                Y = Y.reshape(-1, 1)
         # Normalize
         if copy:
             Xc = (np.asarray(X) - self.x_mean_) / self.x_std_
