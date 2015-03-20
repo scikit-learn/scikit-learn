@@ -281,9 +281,8 @@ def test_connectivity_propagation():
                   (.017, .153), (.017, .153), (.018, .153),
                   (.018, .153), (.018, .153), (.018, .153),
                   (.018, .153), (.018, .153), (.018, .153),
-                  (.018, .152), (.018, .149), (.018, .144),
-                 ])
-    connectivity = kneighbors_graph(X, 10)
+                  (.018, .152), (.018, .149), (.018, .144)])
+    connectivity = kneighbors_graph(X, 10, include_self=False)
     ward = AgglomerativeClustering(
         n_clusters=4, connectivity=connectivity, linkage='ward')
     # If changes are not propagated correctly, fit crashes with an
@@ -454,10 +453,22 @@ def test_int_float_dict():
 def test_connectivity_callable():
     rng = np.random.RandomState(0)
     X = rng.rand(20, 5)
-    connectivity = kneighbors_graph(X, 3)
+    connectivity = kneighbors_graph(X, 3, include_self=False)
     aglc1 = AgglomerativeClustering(connectivity=connectivity)
     aglc2 = AgglomerativeClustering(
-        connectivity=partial(kneighbors_graph, n_neighbors=3))
+        connectivity=partial(kneighbors_graph, n_neighbors=3, include_self=False))
+    aglc1.fit(X)
+    aglc2.fit(X)
+    assert_array_equal(aglc1.labels_, aglc2.labels_)
+
+
+def test_connectivity_ignores_diagonal():
+    rng = np.random.RandomState(0)
+    X = rng.rand(20, 5)
+    connectivity = kneighbors_graph(X, 3, include_self=False)
+    connectivity_include_self = kneighbors_graph(X, 3, include_self=True)
+    aglc1 = AgglomerativeClustering(connectivity=connectivity)
+    aglc2 = AgglomerativeClustering(connectivity=connectivity_include_self)
     aglc1.fit(X)
     aglc2.fit(X)
     assert_array_equal(aglc1.labels_, aglc2.labels_)
@@ -467,7 +478,7 @@ def test_compute_full_tree():
     """Test that the full tree is computed if n_clusters is small"""
     rng = np.random.RandomState(0)
     X = rng.randn(10, 2)
-    connectivity = kneighbors_graph(X, 5)
+    connectivity = kneighbors_graph(X, 5, include_self=False)
 
     # When n_clusters is less, the full tree should be built
     # that is the number of merges should be n_samples - 1
@@ -481,7 +492,7 @@ def test_compute_full_tree():
     # we should stop when there are n_clusters.
     n_clusters = 101
     X = rng.randn(200, 2)
-    connectivity = kneighbors_graph(X, 10)
+    connectivity = kneighbors_graph(X, 10, include_self=False)
     agc = AgglomerativeClustering(n_clusters=n_clusters,
                                   connectivity=connectivity)
     agc.fit(X)
