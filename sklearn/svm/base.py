@@ -666,7 +666,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
                                 % (penalty, loss, dual))
             else:
                 return solver_num
-    
+
     raise ValueError(('Unsupported set of arguments: %s, '
                       'Parameters: penalty=%r, loss=%r, dual=%r')
                      % (error_string, penalty, loss, dual))
@@ -791,9 +791,15 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     if verbose:
         print('[LibLinear]', end='')
 
+    # LinearSVC breaks when intercept_scaling is <= 0
     bias = -1.0
     if fit_intercept:
-        bias = intercept_scaling
+        if intercept_scaling <= 0:
+            raise ValueError("Intercept scaling is %r but needs to be greater than 0."
+                             " To disable fitting an intercept,"
+                             " set fit_intercept=False." % intercept_scaling)
+        else:
+            bias = intercept_scaling
 
     libsvm.set_verbosity_wrap(verbose)
     libsvm_sparse.set_verbosity_wrap(verbose)
