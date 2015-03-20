@@ -11,8 +11,10 @@ from sklearn.feature_selection.rfe import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
 from sklearn.svm import SVC, SVR
+
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
@@ -50,6 +52,7 @@ class MockClassifier(object):
     def set_params(self, **params):
         return self
 
+
 def test_rfe_set_params():
     generator = check_random_state(0)
     iris = load_iris()
@@ -64,6 +67,28 @@ def test_rfe_set_params():
               estimator_params={'kernel': 'linear'})
     y_pred2 = rfe.fit(X, y).predict(X)
     assert_array_equal(y_pred, y_pred2)
+
+
+def test_rfe_deprecation_estimator_params():
+    deprecation_message = ("The parameter 'estimator_params' is deprecated as of version 0.16 "
+                           "and will be removed in 0.18. The parameter is no longer "
+                           "necessary because the value is set via the estimator initialisation "
+                           "or set_params function.")
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+    assert_warns_message(DeprecationWarning, deprecation_message,
+                         RFE(estimator=SVC(), n_features_to_select=4, step=0.1,
+                             estimator_params={'kernel': 'linear'}).fit,
+                         X=X,
+                         y=y)
+
+    assert_warns_message(DeprecationWarning, deprecation_message,
+                         RFECV(estimator=SVC(), step=1, cv=5,
+                               estimator_params={'kernel': 'linear'}).fit,
+                         X=X,
+                         y=y)
 
 
 def test_rfe():
