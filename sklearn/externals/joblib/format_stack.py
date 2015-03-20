@@ -262,11 +262,7 @@ def format_records(records):   # , print_globals=False):
         # dotted names
         tokeneater.name_cont = False
 
-            
-           
-
         def linereader(file=file, lnum=[lnum], getline=linecache.getline):
-            
             line = getline(file, lnum[0])
             lnum[0] += 1
             return line
