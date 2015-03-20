@@ -33,7 +33,7 @@ by decomposing such problems into binary classification problems.
     several joint classification tasks. This is a generalization
     of the multi-label classification task, where the set of classification
     problem is restricted to binary classification, and of the multi-class
-    classification task. *The output format is a 2d numpy array or sparse 
+    classification task. *The output format is a 2d numpy array or sparse
     matrix.*
 
     The set of labels can be different for each output variable.
@@ -65,7 +65,7 @@ if you're using one of these unless you want custom multiclass behavior:
     :ref:`Nearest Neighbors <neighbors>`,
     setting ``multi_class='multinomial'`` in
     :class:`sklearn.linear_model.LogisticRegression`.
-  - Support multilabel: :ref:`Decision Trees <tree>`, 
+  - Support multilabel: :ref:`Decision Trees <tree>`,
     :ref:`Random Forests <forest>`, :ref:`Nearest Neighbors <neighbors>`,
     :ref:`Ridge Regression <ridge_regression>`.
   - One-Vs-One: :class:`sklearn.svm.SVC`.

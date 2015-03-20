@@ -350,8 +350,8 @@ New features
    - Add :class:`cluster.Birch`, an online clustering algorithm. By
      `Manoj Kumar`_, `Alexandre Gramfort`_ and `Joel Nothman`_.
 
-   - Added shrinkage support to :class:`lda.LDA` using two new solvers. By
-     `Clemens Brunner`_ and `Martin Billinger`_.
+   - Added shrinkage support to :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+     using two new solvers. By `Clemens Brunner`_ and `Martin Billinger`_.
 
    - Added :class:`kernel_ridge.KernelRidge`, an implementation of
      kernelized ridge regression.
@@ -758,8 +758,8 @@ Bug fixes
   - Explicitly close open files to avoid ``ResourceWarnings`` under Python 3.
     By Calvin Giles.
 
-  - The ``transform`` of :class:`lda.LDA` now projects the input on the most
-    discriminant directions. By Martin Billinger.
+  - The ``transform`` of :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+    now projects the input on the most discriminant directions. By Martin Billinger.
 
   - Fixed potential overflow in ``_tree.safe_realloc`` by `Lars Buitinck`_.
 
@@ -2266,9 +2266,9 @@ API changes summary
    - Fixed API inconsistency: :meth:`linear_model.SGDClassifier.predict_proba` now
      returns 2d array when fit on two classes.
 
-   - Fixed API inconsistency: :meth:`qda.QDA.decision_function` and
-     :meth:`lda.LDA.decision_function` now return 1d arrays when fit on two
-     classes.
+   - Fixed API inconsistency: :meth:`discriminant_analysis.QuadraticDiscriminantAnalysis.decision_function`
+     and :meth:`discriminant_analysis.LinearDiscriminantAnalysis.decision_function` now return 1d arrays
+     when fit on two classes.
 
    - Grid of alphas used for fitting :class:`linear_model.LassoCV` and
      :class:`linear_model.ElasticNetCV` is now stored
@@ -3053,8 +3053,8 @@ Some other modules benefited from significant improvements or cleanups.
 
   - Add attribute converged to Gaussian Mixture Models by Vincent Schut.
 
-  - Implemented ``transform``, ``predict_log_proba`` in :class:`lda.LDA`
-    By `Mathieu Blondel`_.
+  - Implemented ``transform``, ``predict_log_proba`` in
+    :class:`discriminant_analysis.LinearDiscriminantAnalysis` By `Mathieu Blondel`_.
 
   - Refactoring in the :ref:`svm` module and bug fixes by `Fabian Pedregosa`_,
     `Gael Varoquaux`_ and Amit Aides.
