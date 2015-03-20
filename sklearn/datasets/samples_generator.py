@@ -291,9 +291,9 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     sparse : bool, optional (default=False)
         If ``True``, return a sparse feature matrix
 
-    return_indicator : bool, optional (default=False),
-        If ``True``, return ``Y`` in the binary indicator format, else
-        return a tuple of lists of labels.
+    return_indicator : False | 'dense' | 'sparse' (default=False),
+        If ``dense`` return ``Y`` in the dense binary indicator format. If
+        ``'sparse'`` return ``Y`` in the sparse binary indicator format.
 
     return_distributions : bool, optional (default=False)
         If ``True``, return the prior class probability and conditional
@@ -308,10 +308,10 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
 
     Returns
     -------
-    X : array or sparse CSR matrix of shape [n_samples, n_features]
+    X : array of shape [n_samples, n_features]
         The generated samples.
 
-    Y : tuple of lists or array of shape [n_samples, n_classes]
+    Y : array or sparse CSR matrix of shape [n_samples, n_classes]
         The label sets.
 
     p_c : array, shape [n_classes]
@@ -379,17 +379,20 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     if not sparse:
         X = X.toarray()
 
-    if return_indicator:
-        lb = MultiLabelBinarizer()
+    # return_indicator can be True due to backward compatibility
+    if return_indicator in (True, 'sparse', 'dense'):
+        lb = MultiLabelBinarizer(sparse_output=(return_indicator == 'sparse'))
         Y = lb.fit([range(n_classes)]).transform(Y)
-    else:
+    elif return_indicator is False:
         warnings.warn('Support for the sequence of sequences multilabel '
                       'representation is being deprecated and replaced with '
                       'a sparse indicator matrix. '
-                      'return_indicator will default to True from version '
+                      "return_indicator will default to 'dense' from version "
                       '0.17.',
                       DeprecationWarning)
-
+    else:
+        raise ValueError("return_indicator must be either 'sparse', 'dense' "
+                         'or False.')
     if return_distributions:
         return X, Y, p_c, p_w_c
     return X, Y

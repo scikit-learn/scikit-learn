@@ -90,7 +90,7 @@ def test_ovr_fit_predict_sparse():
                                                        n_labels=3,
                                                        length=50,
                                                        allow_unlabeled=True,
-                                                       return_indicator=True,
+                                                       return_indicator='dense',
                                                        random_state=0)
 
         X_train, Y_train = X[:80], Y[:80]
@@ -263,7 +263,7 @@ def test_ovr_multilabel_dataset():
                                                        n_labels=2,
                                                        length=50,
                                                        allow_unlabeled=au,
-                                                       return_indicator=True,
+                                                       return_indicator='dense',
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test, Y_test = X[80:], Y[80:]
@@ -288,7 +288,7 @@ def test_ovr_multilabel_predict_proba():
                                                        n_labels=3,
                                                        length=50,
                                                        allow_unlabeled=au,
-                                                       return_indicator=True,
+                                                       return_indicator='dense',
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test = X[80:]
@@ -340,7 +340,7 @@ def test_ovr_multilabel_decision_function():
                                                    n_labels=3,
                                                    length=50,
                                                    allow_unlabeled=True,
-                                                   return_indicator=True,
+                                                   return_indicator='dense',
                                                    random_state=0)
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]
