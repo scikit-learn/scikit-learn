@@ -626,6 +626,7 @@ def test_raises_value_error_if_solver_not_supported():
     assert_raise_message(exception, message, func)
 
 
+
 def test_sparse_cg_max_iter():
     reg = Ridge(solver="sparse_cg", max_iter=1)
     reg.fit(X_diabetes, y_diabetes)
