@@ -450,13 +450,13 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         X_new : array, shape (n_samples, n_components)
             Transformed data.
         """
-        check_is_fitted(self, ['xbar_', 'scalings_'], all_or_any=any)
-
-        X = check_array(X)
         if self.solver == 'lsqr':
             raise NotImplementedError("transform not implemented for 'lsqr' "
                                       "solver (use 'svd' or 'eigen').")
-        elif self.solver == 'svd':
+        check_is_fitted(self, ['xbar_', 'scalings_'], all_or_any=any)
+
+        X = check_array(X)
+        if self.solver == 'svd':
             X_new = np.dot(X - self.xbar_, self.scalings_)
         elif self.solver == 'eigen':
             X_new = np.dot(X, self.scalings_)
