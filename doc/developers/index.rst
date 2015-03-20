@@ -46,7 +46,7 @@ extension in place::
 Another option is to use the ``develop`` option if you change your code a lot
 and do not want to have to reinstall every time. This basically builds the
 extension in place and creates a link to the development directory (see
-<https://pythonhosted.org/setuptools/setuptools.html#development-mode>)::
+`the setuptool docs <https://pythonhosted.org/setuptools/setuptools.html#development-mode>`_)::
 
     python setup.py develop
 
