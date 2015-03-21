@@ -116,18 +116,18 @@ def check_input_with_sparse_random_matrix(random_matrix):
 def test_basic_property_of_random_matrix():
     # Check basic properties of random matrix generation
     for random_matrix in all_random_matrix:
-        check_input_size_random_matrix(random_matrix)
-        check_size_generated(random_matrix)
-        check_zero_mean_and_unit_norm(random_matrix)
+        yield check_input_size_random_matrix, random_matrix
+        yield check_size_generated, random_matrix
+        yield check_zero_mean_and_unit_norm, random_matrix
 
     for random_matrix in all_sparse_random_matrix:
-        check_input_with_sparse_random_matrix(random_matrix)
+        yield check_input_with_sparse_random_matrix, random_matrix
 
         random_matrix_dense = \
             lambda n_components, n_features, random_state: random_matrix(
                 n_components, n_features, random_state=random_state,
                 density=1.0)
-        check_zero_mean_and_unit_norm(random_matrix_dense)
+        yield check_zero_mean_and_unit_norm, random_matrix_dense
 
 
 def test_gaussian_random_matrix():
