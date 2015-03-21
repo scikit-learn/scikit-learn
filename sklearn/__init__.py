@@ -66,7 +66,7 @@ else:
                'linear_model', 'manifold', 'metrics', 'mixture', 'multiclass',
                'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
                'preprocessing', 'qda', 'random_projection', 'semi_supervised',
-               'svm', 'tree',
+               'svm', 'tree', 'discriminant_analysis',
                # Non-modules:
                'clone']
 
