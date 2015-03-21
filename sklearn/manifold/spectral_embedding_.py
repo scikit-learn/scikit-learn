@@ -412,7 +412,8 @@ class SpectralEmbedding(BaseEstimator):
                 self.n_neighbors_ = (self.n_neighbors
                                      if self.n_neighbors is not None
                                      else max(int(X.shape[0] / 10), 1))
-                self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors_)
+                self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors_,
+                                                         include_self=True)
                 # currently only symmetric affinity_matrix supported
                 self.affinity_matrix_ = 0.5 * (self.affinity_matrix_ +
                                                self.affinity_matrix_.T)

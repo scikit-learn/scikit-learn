@@ -23,7 +23,6 @@ from sklearn.utils.testing import META_ESTIMATORS
 from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import check_skip_travis
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.base import clone, ClassifierMixin
@@ -62,9 +61,6 @@ def _boston_subset(n_samples=200):
 def set_fast_parameters(estimator):
     # speed up some estimators
     params = estimator.get_params()
-    if estimator.__class__.__name__ == 'OrthogonalMatchingPursuitCV':
-        # FIXME: This test is unstable on Travis, see issue #3190.
-        check_skip_travis()
     if ("n_iter" in params
             and estimator.__class__.__name__ != "TSNE"):
         estimator.set_params(n_iter=5)

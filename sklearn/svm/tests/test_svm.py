@@ -20,7 +20,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_warns_message, assert_raise_message
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -303,9 +303,9 @@ def test_probability():
                             np.exp(clf.predict_log_proba(iris.data)), 8)
 
 
-def test_decision_function():
+def test_svc_decision_function():
     """
-    Test decision_function
+    Test SVC's decision_function
 
     Sanity check, test that decision_function implemented in python
     returns the same as the one in libsvm
@@ -336,6 +336,32 @@ def test_decision_function():
     rbfs = rbf_kernel(X, clf.support_vectors_, gamma=clf.gamma)
     dec = np.dot(rbfs, clf.dual_coef_.T) + clf.intercept_
     assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
+
+
+def test_svr_decision_function():
+    """
+    Test SVR's decision_function
+
+    Sanity check, test that decision_function implemented in python
+    returns the same as the one in libsvm
+
+    """
+
+    X = iris.data
+    y = iris.target
+
+    # linear kernel
+    reg = svm.SVR(kernel='linear', C=0.1).fit(X, y)
+
+    dec = np.dot(X, reg.coef_.T) + reg.intercept_
+    assert_array_almost_equal(dec.ravel(), reg.decision_function(X).ravel())
+
+    # rbf kernel
+    reg = svm.SVR(kernel='rbf', gamma=1).fit(X, y)
+    
+    rbfs = rbf_kernel(X, reg.support_vectors_, gamma=reg.gamma)
+    dec = np.dot(rbfs, reg.dual_coef_.T) + reg.intercept_
+    assert_array_almost_equal(dec.ravel(), reg.decision_function(X).ravel())
 
 
 def test_weight():
@@ -811,6 +837,25 @@ def test_svr_coef_sign():
         svr.fit(X, y)
         assert_array_almost_equal(svr.predict(X),
                                   np.dot(X, svr.coef_.ravel()) + svr.intercept_)
+
+
+def test_linear_svc_intercept_scaling():
+    # Test that the right error message is thrown when intercept_scaling <= 0
+
+    for i in [-1, 0]:
+        lsvc = svm.LinearSVC(intercept_scaling=i)
+        msg = ('Intercept scaling is %r but needs to be greater than 0.'
+               ' To disable fitting an intercept,'
+               ' set fit_intercept=False.' % lsvc.intercept_scaling)
+        assert_raise_message(ValueError, msg, lsvc.fit, X, Y)
+
+
+def test_lsvc_intercept_scaling_zero():
+    # Test that intercept_scaling is ignored when fit_intercept is False
+
+    lsvc = svm.LinearSVC(fit_intercept=False)
+    lsvc.fit(X, Y)
+    assert_equal(lsvc.intercept_, 0.)
 
 
 if __name__ == '__main__':

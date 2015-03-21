@@ -68,8 +68,6 @@ def test_polynomial_features():
     X_poly = interact.fit_transform(X)
     assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
 
-    assert_raises(ValueError, interact.transform, X[:, 1:])
-
 
 def test_scaler_1d():
     """Test scaling of dataset along single axis"""

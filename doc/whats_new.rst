@@ -196,8 +196,10 @@ Enhancements
 
    - Sparse support for :func:`paired_distances`. By `Joel Nothman`_.
 
-   - DBSCAN now supports sparse input and sample weights, and should be
-     faster in general. By `Joel Nothman`_.
+   - :class:`cluster.DBSCAN` now supports sparse input and sample weights and
+     has been optimized: the inner loop has been rewritten in Cython and
+     radius neighbors queries are now computed in batch. By `Joel Nothman`_
+     and `Lars Buitinck`_.
 
    - Add ``class_weight`` parameter to automatically weight samples by class
      frequency for :class:`ensemble.RandomForestClassifier`,
@@ -224,6 +226,8 @@ Enhancements
    - The outcome of :func:`manifold.spectral_embedding` was made deterministic
      by flipping the sign of eigen vectors. By `Hasil Sharma`_.
 
+   - Significant performance and memory usage improvements in
+     :class:`preprocessing.PolynomialFeatures`. By `Eric Martin`_.
 
 Documentation improvements
 ..........................
@@ -250,7 +254,7 @@ Documentation improvements
 
    - Added silhouette plots for analysis of KMeans clustering using
      :func:`metrics.silhouette_samples` and :func:`metrics.silhouette_score`.
-     See :ref:`examples_cluster_plot_kmeans_silhouette_analysis.py`
+     See :ref:`example_cluster_plot_kmeans_silhouette_analysis.py`
 
 Bug fixes
 .........
@@ -3370,3 +3374,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Eric Schubert: https://github.com/kno10
 
 .. _Dan Blanchard: https://github.com/dan-blanchard
+
+.. _Eric Martin: http://ericmart.in

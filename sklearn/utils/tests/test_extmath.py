@@ -3,7 +3,6 @@
 #          Denis Engemann <d.engemann@fz-juelich.de>
 #
 # License: BSD 3 clause
-import warnings
 
 import numpy as np
 from scipy import sparse
@@ -25,7 +24,7 @@ from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
-from sklearn.utils.extmath import log_logistic, logistic_sigmoid
+from sklearn.utils.extmath import log_logistic
 from sklearn.utils.extmath import fast_dot, _fast_dot
 from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import _batch_mean_variance_update
@@ -318,8 +317,6 @@ def test_logistic_sigmoid():
     naive_log_logistic = lambda x: np.log(naive_logistic(x))
 
     x = np.linspace(-2, 2, 50)
-    with warnings.catch_warnings(record=True):
-        assert_array_almost_equal(logistic_sigmoid(x), naive_logistic(x))
     assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))
 
     extreme_x = np.array([-100., 100.])
@@ -444,9 +441,9 @@ def test_incremental_variance_ddof():
                 incremental_count = batch.shape[0]
                 sample_count = batch.shape[0]
             else:
-                result = _batch_mean_variance_update(batch, incremental_means,
-                                                    incremental_variances,
-                                                    sample_count)
+                result = _batch_mean_variance_update(
+                    batch, incremental_means, incremental_variances,
+                    sample_count)
                 (incremental_means, incremental_variances,
                  incremental_count) = result
                 sample_count += batch.shape[0]

@@ -5,7 +5,6 @@
 
 import numpy as np
 from scipy import sparse
-import warnings
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -41,19 +40,6 @@ def test_linear_regression():
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(clf.intercept_, [0])
     assert_array_almost_equal(clf.predict(X), [0])
-
-
-def test_linear_regression_n_jobs():
-    """
-    Test for the n_jobs parameter on the fit method and the constructor
-    """
-    X = [[1], [2]]
-    Y = [1, 2]
-    clf = LinearRegression()
-    with warnings.catch_warnings(record=True):
-        clf_fit = clf.fit(X, Y, 4)
-    assert_equal(clf_fit.n_jobs, clf.n_jobs)
-    assert_equal(clf.n_jobs, 1)
 
 
 def test_fit_intercept():

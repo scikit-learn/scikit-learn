@@ -32,8 +32,7 @@ from .externals.six.moves import zip
 from .metrics.scorer import check_scoring
 from .utils.fixes import bincount
 
-__all__ = ['Bootstrap',
-           'KFold',
+__all__ = ['KFold',
            'LeaveOneLabelOut',
            'LeaveOneOut',
            'LeavePLabelOut',
@@ -60,34 +59,17 @@ class _PartitionIterator(with_metaclass(ABCMeta)):
         Total number of elements in dataset.
     """
 
-    def __init__(self, n, indices=None):
-        if indices is None:
-            indices = True
-        else:
-            warnings.warn("The indices parameter is deprecated and will be "
-                          "removed (assumed True) in 0.17", DeprecationWarning,
-                          stacklevel=1)
+    def __init__(self, n):
         if abs(n - int(n)) >= np.finfo('f').eps:
             raise ValueError("n must be an integer")
         self.n = int(n)
-        self._indices = indices
-
-    @property
-    def indices(self):
-        warnings.warn("The indices attribute is deprecated and will be "
-                      "removed (assumed True) in 0.17", DeprecationWarning,
-                      stacklevel=1)
-        return self._indices
 
     def __iter__(self):
-        indices = self._indices
-        if indices:
-            ind = np.arange(self.n)
+        ind = np.arange(self.n)
         for test_index in self._iter_test_masks():
             train_index = np.logical_not(test_index)
-            if indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
+            train_index = ind[train_index]
+            test_index = ind[test_index]
             yield train_index, test_index
 
     # Since subclasses must implement either _iter_test_masks or
@@ -214,8 +196,8 @@ class LeavePOut(_PartitionIterator):
     TRAIN: [0 1] TEST: [2 3]
     """
 
-    def __init__(self, n, p, indices=None):
-        super(LeavePOut, self).__init__(n, indices)
+    def __init__(self, n, p):
+        super(LeavePOut, self).__init__(n)
         self.p = p
 
     def _iter_test_indices(self):
@@ -239,8 +221,8 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
     """Base class to validate KFold approaches"""
 
     @abstractmethod
-    def __init__(self, n, n_folds, indices, shuffle, random_state):
-        super(_BaseKFold, self).__init__(n, indices)
+    def __init__(self, n, n_folds, shuffle, random_state):
+        super(_BaseKFold, self).__init__(n)
 
         if abs(n_folds - int(n_folds)) >= np.finfo('f').eps:
             raise ValueError("n_folds must be an integer")
@@ -317,9 +299,9 @@ class KFold(_BaseKFold):
     classification tasks).
     """
 
-    def __init__(self, n, n_folds=3, indices=None, shuffle=False,
+    def __init__(self, n, n_folds=3, shuffle=False,
                  random_state=None):
-        super(KFold, self).__init__(n, n_folds, indices, shuffle, random_state)
+        super(KFold, self).__init__(n, n_folds, shuffle, random_state)
         self.idxs = np.arange(n)
         if shuffle:
             rng = check_random_state(self.random_state)
@@ -400,10 +382,10 @@ class StratifiedKFold(_BaseKFold):
 
     """
 
-    def __init__(self, y, n_folds=3, indices=None, shuffle=False,
+    def __init__(self, y, n_folds=3, shuffle=False,
                  random_state=None):
         super(StratifiedKFold, self).__init__(
-            len(y), n_folds, indices, shuffle, random_state)
+            len(y), n_folds, shuffle, random_state)
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_labels, y_inversed = np.unique(y, return_inverse=True)
@@ -506,8 +488,8 @@ class LeaveOneLabelOut(_PartitionIterator):
 
     """
 
-    def __init__(self, labels, indices=None):
-        super(LeaveOneLabelOut, self).__init__(len(labels), indices)
+    def __init__(self, labels):
+        super(LeaveOneLabelOut, self).__init__(len(labels))
         # We make a copy of labels to avoid side-effects during iteration
         self.labels = np.array(labels, copy=True)
         self.unique_labels = np.unique(labels)
@@ -579,9 +561,9 @@ class LeavePLabelOut(_PartitionIterator):
      [5 6]] [1] [2 1]
     """
 
-    def __init__(self, labels, p, indices=None):
+    def __init__(self, labels, p):
         # We make a copy of labels to avoid side-effects during iteration
-        super(LeavePLabelOut, self).__init__(len(labels), indices)
+        super(LeavePLabelOut, self).__init__(len(labels))
         self.labels = np.array(labels, copy=True)
         self.unique_labels = np.unique(labels)
         self.n_unique_labels = len(self.unique_labels)
@@ -610,184 +592,23 @@ class LeavePLabelOut(_PartitionIterator):
                    factorial(self.p))
 
 
-class Bootstrap(object):
-    """Random sampling with replacement cross-validation iterator
-
-    Provides train/test indices to split data in train test sets
-    while resampling the input n_iter times: each time a new
-    random split of the data is performed and then samples are drawn
-    (with replacement) on each side of the split to build the training
-    and test sets.
-
-    Note: contrary to other cross-validation strategies, bootstrapping
-    will allow some samples to occur several times in each splits. However
-    a sample that occurs in the train split will never occur in the test
-    split and vice-versa.
-
-    If you want each sample to occur at most once you should probably
-    use ShuffleSplit cross validation instead.
-
-    Parameters
-    ----------
-    n : int
-        Total number of elements in the dataset.
-
-    n_iter : int (default is 3)
-        Number of bootstrapping iterations
-
-    train_size : int or float (default is 0.5)
-        If int, number of samples to include in the training split
-        (should be smaller than the total number of samples passed
-        in the dataset).
-
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the train split.
-
-    test_size : int or float or None (default is None)
-        If int, number of samples to include in the training set
-        (should be smaller than the total number of samples passed
-        in the dataset).
-
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the test split.
-
-        If None, n_test is set as the complement of n_train.
-
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
-
-    Examples
-    --------
-    >>> from sklearn import cross_validation
-    >>> bs = cross_validation.Bootstrap(9, random_state=0)
-    >>> len(bs)
-    3
-    >>> print(bs)
-    Bootstrap(9, n_iter=3, train_size=5, test_size=4, random_state=0)
-    >>> for train_index, test_index in bs:
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...
-    TRAIN: [1 8 7 7 8] TEST: [0 3 0 5]
-    TRAIN: [5 4 2 4 2] TEST: [6 7 1 0]
-    TRAIN: [4 7 0 1 1] TEST: [5 3 6 5]
-
-    See also
-    --------
-    ShuffleSplit: cross validation using random permutations.
-    """
-
-    # Static marker to be able to introspect the CV type
-    indices = True
-
-    def __init__(self, n, n_iter=3, train_size=.5, test_size=None,
-                 random_state=None):
-        # See, e.g., http://youtu.be/BzHz0J9a6k0?t=9m38s for a motivation
-        # behind this deprecation
-        warnings.warn("Bootstrap will no longer be supported as a " +
-                      "cross-validation method as of version 0.15 and " +
-                      "will be removed in 0.17", DeprecationWarning)
-        self.n = n
-        self.n_iter = n_iter
-        if isinstance(train_size, numbers.Integral):
-            self.train_size = train_size
-        elif (isinstance(train_size, numbers.Real) and train_size >= 0.0
-                and train_size <= 1.0):
-            self.train_size = int(ceil(train_size * n))
-        else:
-            raise ValueError("Invalid value for train_size: %r" %
-                             train_size)
-        if self.train_size > n:
-            raise ValueError("train_size=%d should not be larger than n=%d" %
-                             (self.train_size, n))
-
-        if isinstance(test_size, numbers.Integral):
-            self.test_size = test_size
-        elif isinstance(test_size, numbers.Real) and 0.0 <= test_size <= 1.0:
-            self.test_size = int(ceil(test_size * n))
-        elif test_size is None:
-            self.test_size = self.n - self.train_size
-        else:
-            raise ValueError("Invalid value for test_size: %r" % test_size)
-        if self.test_size > n - self.train_size:
-            raise ValueError(("test_size + train_size=%d, should not be " +
-                              "larger than n=%d") %
-                             (self.test_size + self.train_size, n))
-
-        self.random_state = random_state
-
-    def __iter__(self):
-        rng = check_random_state(self.random_state)
-        for i in range(self.n_iter):
-            # random partition
-            permutation = rng.permutation(self.n)
-            ind_train = permutation[:self.train_size]
-            ind_test = permutation[self.train_size:self.train_size
-                                   + self.test_size]
-
-            # bootstrap in each split individually
-            train = rng.randint(0, self.train_size,
-                                size=(self.train_size,))
-            test = rng.randint(0, self.test_size,
-                               size=(self.test_size,))
-            yield ind_train[train], ind_test[test]
-
-    def __repr__(self):
-        return ('%s(%d, n_iter=%d, train_size=%d, test_size=%d, '
-                'random_state=%s)' % (
-                    self.__class__.__name__,
-                    self.n,
-                    self.n_iter,
-                    self.train_size,
-                    self.test_size,
-                    self.random_state,
-                ))
-
-    def __len__(self):
-        return self.n_iter
-
-
 class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
     def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
-                 indices=None, random_state=None, n_iterations=None):
-        if indices is None:
-            indices = True
-        else:
-            warnings.warn("The indices parameter is deprecated and will be "
-                          "removed (assumed True) in 0.17", DeprecationWarning)
+                 random_state=None):
         self.n = n
         self.n_iter = n_iter
-        if n_iterations is not None:  # pragma: no cover
-            warnings.warn("n_iterations was renamed to n_iter for consistency "
-                          " and will be removed in 0.16.")
-            self.n_iter = n_iterations
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
-        self._indices = indices
-        self.n_train, self.n_test = _validate_shuffle_split(n,
-                                                            test_size,
+        self.n_train, self.n_test = _validate_shuffle_split(n, test_size,
                                                             train_size)
 
-    @property
-    def indices(self):
-        warnings.warn("The indices attribute is deprecated and will be "
-                      "removed (assumed True) in 0.17", DeprecationWarning,
-                      stacklevel=1)
-        return self._indices
-
     def __iter__(self):
-        if self._indices:
-            for train, test in self._iter_indices():
-                yield train, test
-            return
         for train, test in self._iter_indices():
-            train_m = np.zeros(self.n, dtype=bool)
-            test_m = np.zeros(self.n, dtype=bool)
-            train_m[train] = True
-            test_m[test] = True
-            yield train_m, test_m
+            yield train, test
+        return
 
     @abstractmethod
     def _iter_indices(self):
@@ -852,9 +673,6 @@ class ShuffleSplit(BaseShuffleSplit):
     TRAIN: [2 1] TEST: [0]
     TRAIN: [0 2] TEST: [3]
 
-    See also
-    --------
-    Bootstrap: cross-validation using re-sampling with replacement.
     """
 
     def _iter_indices(self):
@@ -999,11 +817,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     """
 
     def __init__(self, y, n_iter=10, test_size=0.1, train_size=None,
-                 indices=None, random_state=None, n_iterations=None):
+                 random_state=None):
 
         super(StratifiedShuffleSplit, self).__init__(
-            len(y), n_iter, test_size, train_size, indices, random_state,
-            n_iterations)
+            len(y), n_iter, test_size, train_size, random_state)
+
         self.y = np.array(y)
         self.classes, self.y_indices = np.unique(y, return_inverse=True)
         n_cls = self.classes.shape[0]
@@ -1105,8 +923,8 @@ class PredefinedSplit(_PartitionIterator):
     TRAIN: [0 2] TEST: [1 3]
     """
 
-    def __init__(self, test_fold, indices=None):
-        super(PredefinedSplit, self).__init__(len(test_fold), indices)
+    def __init__(self, test_fold):
+        super(PredefinedSplit, self).__init__(len(test_fold))
         self.test_fold = np.array(test_fold, dtype=np.int)
         self.test_fold = column_or_1d(self.test_fold)
         self.unique_folds = np.unique(self.test_fold)
@@ -1586,35 +1404,26 @@ def check_cv(cv, X=None, y=None, classifier=False):
         The return value is guaranteed to be a cv generator instance, whatever
         the input type.
     """
-    return _check_cv(cv, X=X, y=y, classifier=classifier, warn_mask=True)
+    return _check_cv(cv, X=X, y=y, classifier=classifier)
 
 
-def _check_cv(cv, X=None, y=None, classifier=False, warn_mask=False):
+def _check_cv(cv, X=None, y=None, classifier=False):
     # This exists for internal use while indices is being deprecated.
     is_sparse = sp.issparse(X)
-    needs_indices = is_sparse or not hasattr(X, "shape")
     if cv is None:
         cv = 3
     if isinstance(cv, numbers.Integral):
-        if warn_mask and not needs_indices:
-            warnings.warn('check_cv will return indices instead of boolean '
-                          'masks from 0.17', DeprecationWarning)
-        else:
-            needs_indices = None
         if classifier:
             if type_of_target(y) in ['binary', 'multiclass']:
-                cv = StratifiedKFold(y, cv, indices=needs_indices)
+                cv = StratifiedKFold(y, cv)
             else:
-                cv = KFold(_num_samples(y), cv, indices=needs_indices)
+                cv = KFold(_num_samples(y), cv)
         else:
             if not is_sparse:
                 n_samples = len(X)
             else:
                 n_samples = X.shape[0]
-            cv = KFold(n_samples, cv, indices=needs_indices)
-    if needs_indices and not getattr(cv, "_indices", True):
-        raise ValueError("Sparse data and lists require indices-based cross"
-                         " validation generator, got: %r", cv)
+            cv = KFold(n_samples, cv)
     return cv
 
 

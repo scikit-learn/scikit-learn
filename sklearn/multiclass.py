@@ -511,7 +511,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     def predict(self, X):
         """Estimate the best class label for each sample in X.
-        
+
         This is implemented as ``argmax(decision_function(X), axis=1)`` which
         will return the label of the class with most votes by estimators
         predicting the outcome of a decision for each possible class pair.
@@ -532,7 +532,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     def decision_function(self, X):
         """Decision function for the OneVsOneClassifier.
 
-        The decision values for the samples are computed by adding the 
+        The decision values for the samples are computed by adding the
         normalized sum of pair-wise classification confidence levels to the
         votes in order to disambiguate between the decision values when the
         votes for all the classes are equal leading to a tie.
@@ -569,9 +569,14 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         if max_confidences == min_confidences:
             return votes
 
-        # Scale the sum_of_confidences to [-0.4, 0.4] and add it with votes
-        return votes + sum_of_confidences * \
-               (0.4 / max(abs(max_confidences), abs(min_confidences)))
+        # Scale the sum_of_confidences to (-0.5, 0.5) and add it with votes.
+        # The motivation is to use confidence levels as a way to break ties in
+        # the votes without switching any decision made based on a difference
+        # of 1 vote.
+        eps = np.finfo(sum_of_confidences.dtype).eps
+        max_abs_confidence = max(abs(max_confidences), abs(min_confidences))
+        scale = (0.5 - eps) / max_abs_confidence
+        return votes + sum_of_confidences * scale
 
 
 @deprecated("fit_ecoc is deprecated and will be removed in 0.18."

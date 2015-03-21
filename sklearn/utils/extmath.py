@@ -18,7 +18,7 @@ import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse
 
-from . import check_random_state, deprecated
+from . import check_random_state
 from .fixes import np_version
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
@@ -437,7 +437,7 @@ def pinvh(a, cond=None, rcond=None, lower=True):
         zero.
 
         If None or -1, suitable machine precision is used.
- 
+
     lower : boolean
         Whether the pertinent array data is taken from the lower or upper
         triangle of a. (Default: lower)
@@ -539,7 +539,7 @@ def svd_flip(u, v, u_based_decision=True):
     Parameters
     ----------
     u, v : ndarray
-        u and v are the output of `linalg.svd` or 
+        u and v are the output of `linalg.svd` or
         `sklearn.utils.extmath.randomized_svd`, with matching inner dimensions
         so one can compute `np.dot(u * s, v)`.
 
@@ -567,14 +567,6 @@ def svd_flip(u, v, u_based_decision=True):
         u *= signs
         v *= signs[:, np.newaxis]
     return u, v
-
-
-@deprecated('to be removed in 0.17; use scipy.special.expit or log_logistic')
-def logistic_sigmoid(X, log=False, out=None):
-    """Logistic function, ``1 / (1 + e ** (-x))``, or its log."""
-    from .fixes import expit
-    fn = log_logistic if log else expit
-    return fn(X, out)
 
 
 def log_logistic(X, out=None):
@@ -696,7 +688,7 @@ def _batch_mean_variance_update(X, old_mean, old_variance, old_sample_count):
 
 def _deterministic_vector_sign_flip(u):
     """Modify the sign of vectors for reproducibility
-    
+
     Flips the sign of elements of all the vectors (rows of u) such that
     the absolute maximum element of each vector is positive.
 

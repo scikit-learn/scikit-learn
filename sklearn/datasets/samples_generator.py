@@ -612,7 +612,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
-    if not noise is None:
+    if noise is not None:
         X += generator.normal(scale=noise, size=X.shape)
 
     return X, y
@@ -662,7 +662,7 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
-    if not noise is None:
+    if noise is not None:
         X += generator.normal(scale=noise, size=X.shape)
 
     return X, y
@@ -1219,7 +1219,7 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
         d = np.diag(prec).reshape(1, prec.shape[0])
         d = 1. / np.sqrt(d)
 
-        prec *= d 
+        prec *= d
         prec *= d.T
 
     return prec

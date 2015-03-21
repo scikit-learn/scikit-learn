@@ -6,7 +6,6 @@
 
 import numpy as np
 import scipy.sparse as sp
-import warnings
 
 from abc import ABCMeta, abstractmethod
 
@@ -525,8 +524,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                  classes=classes, sample_weight=sample_weight,
                                  coef_init=None, intercept_init=None)
 
-    def fit(self, X, y, coef_init=None, intercept_init=None,
-            class_weight=None, sample_weight=None):
+    def fit(self, X, y, coef_init=None, intercept_init=None, sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -553,11 +551,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
-        if class_weight is not None:
-            warnings.warn("You are trying to set class_weight through the fit "
-                          "method, which is deprecated and will be removed in"
-                          "v0.17 of scikit-learn. Pass the class_weight into "
-                          "the constructor instead.", DeprecationWarning)
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,

@@ -14,7 +14,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_warns_message
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone
@@ -602,20 +601,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory(alpha=0.1, n_iter=1000, class_weight=[0.5])
         clf.fit(X, Y)
 
-    def test_class_weight_warning(self):
-        """Tests that class_weight passed through fit raises warning.
-           This test should be removed after deprecating support for this"""
-
-        clf = self.factory()
-        warning_message = ("You are trying to set class_weight through the fit "
-                           "method, which is deprecated and will be removed in"
-                           "v0.17 of scikit-learn. Pass the class_weight into "
-                           "the constructor instead.")
-        assert_warns_message(DeprecationWarning,
-                             warning_message,
-                             clf.fit, X4, Y4,
-                             class_weight=1)
-
     def test_weights_multiplied(self):
         """Tests that class_weight and sample_weight are multiplicative"""
         class_weights = {1: .6, 2: .3}
@@ -630,7 +615,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf1.fit(X4, Y4, sample_weight=sample_weights)
         clf2.fit(X4, Y4, sample_weight=multiplied_together)
 
-        assert_array_equal(clf1.coef_, clf2.coef_)
+        assert_almost_equal(clf1.coef_, clf2.coef_)
 
     def test_auto_weight(self):
         """Test class weights for imbalanced data"""

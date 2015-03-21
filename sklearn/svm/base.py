@@ -104,6 +104,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
+            For kernel="precomputed", the expected shape of X is
+            (n_samples, n_samples).
 
         y : array-like, shape (n_samples,)
             Target values (class labels in classification, real numbers in
@@ -278,6 +280,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            For kernel="precomputed", the expected shape of X is
+            (n_samples_test, n_samples_train).
 
         Returns
         -------
@@ -350,6 +354,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+            For kernel="precomputed", the expected shape of X is
+            [n_samples_test, n_samples_train].
 
         Returns
         -------
@@ -456,6 +462,8 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            For kernel="precomputed", the expected shape of X is
+            [n_samples_test, n_samples_train]
 
         Returns
         -------
@@ -487,6 +495,8 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+            For kernel="precomputed", the expected shape of X is
+            [n_samples_test, n_samples_train]
 
         Returns
         -------
@@ -521,6 +531,8 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+            For kernel="precomputed", the expected shape of X is
+            [n_samples_test, n_samples_train]
 
         Returns
         -------
@@ -654,7 +666,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
                                 % (penalty, loss, dual))
             else:
                 return solver_num
-    
+
     raise ValueError(('Unsupported set of arguments: %s, '
                       'Parameters: penalty=%r, loss=%r, dual=%r')
                      % (error_string, penalty, loss, dual))
@@ -779,9 +791,15 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     if verbose:
         print('[LibLinear]', end='')
 
+    # LinearSVC breaks when intercept_scaling is <= 0
     bias = -1.0
     if fit_intercept:
-        bias = intercept_scaling
+        if intercept_scaling <= 0:
+            raise ValueError("Intercept scaling is %r but needs to be greater than 0."
+                             " To disable fitting an intercept,"
+                             " set fit_intercept=False." % intercept_scaling)
+        else:
+            bias = intercept_scaling
 
     libsvm.set_verbosity_wrap(verbose)
     libsvm_sparse.set_verbosity_wrap(verbose)
