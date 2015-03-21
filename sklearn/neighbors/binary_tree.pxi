@@ -1289,7 +1289,10 @@ cdef class BinaryTree:
             [ 0.          0.19662693  0.29473397]
         """
         # XXX: we should allow X to be a pre-built tree.
-        X = check_array(X, dtype=DTYPE, order='C')
+        # For BallTree, user defined metrics should be allowed to handle nan.
+        allow_nan = callable(getattr(self, "metric", None))
+        X = check_array(X, dtype=DTYPE, order='C',
+                        force_all_finite=not allow_nan)
 
         if X.shape[X.ndim - 1] != self.data.shape[1]:
             raise ValueError("query data dimension must "
@@ -1437,7 +1440,9 @@ cdef class BinaryTree:
         cdef DTYPE_t* pt
 
         # validate X and prepare for query
-        X = check_array(X, dtype=DTYPE, order='C')
+        allow_nan = callable(getattr(self, "metric", None))
+        X = check_array(X, dtype=DTYPE, order='C',
+                        force_all_finite=not allow_nan)
 
         if X.shape[X.ndim - 1] != self.data.shape[1]:
             raise ValueError("query data dimension must "
@@ -1587,7 +1592,9 @@ cdef class BinaryTree:
         cdef DTYPE_t log_knorm = _log_kernel_norm(h_c, n_features, kernel_c)
 
         # validate X and prepare for query
-        X = check_array(X, dtype=DTYPE, order='C')
+        allow_nan = callable(getattr(self, "metric", None))
+        X = check_array(X, dtype=DTYPE, order='C',
+                        force_all_finite=not allow_nan)
 
         if X.shape[X.ndim - 1] != n_features:
             raise ValueError("query data dimension must "
@@ -1690,7 +1697,9 @@ cdef class BinaryTree:
         cdef ITYPE_t i
 
         # validate X and prepare for query
-        X = check_array(X, dtype=DTYPE, order='C')
+        allow_nan = callable(getattr(self, "metric", None))
+        X = check_array(X, dtype=DTYPE, order='C',
+                        force_all_finite=not allow_nan)
 
         if X.shape[X.ndim - 1] != self.data.shape[1]:
             raise ValueError("query data dimension must "
