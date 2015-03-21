@@ -30,7 +30,7 @@ Other packages useful for data analysis and machine learning.
 
 - `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and fitting algorithms.
 
-- `sklearn_theano <http://sklearn-theano.github.io//>`_ scikit-learn compatible estimators, transformers, and datasets which use Theano internally
+- `sklearn_theano <http://sklearn-theano.github.io/>`_ scikit-learn compatible estimators, transformers, and datasets which use Theano internally
 
 
 Extensions and Algorithms
