@@ -89,7 +89,7 @@ def test_classifier_partial_fit():
 
 
 def test_classifier_refit():
-    """Classifier can be retrained on different labels and features."""
+    # Classifier can be retrained on different labels and features.
     clf = PassiveAggressiveClassifier().fit(X, y)
     assert_array_equal(clf.classes_, np.unique(y))
 

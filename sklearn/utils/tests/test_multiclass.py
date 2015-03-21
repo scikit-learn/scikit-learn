@@ -209,7 +209,7 @@ def test_unique_labels():
 
 @ignore_warnings
 def test_unique_labels_non_specific():
-    """Test unique_labels with a variety of collected examples"""
+    # Test unique_labels with a variety of collected examples
 
     # Smoke test for all supported format
     for format in ["binary", "multiclass", "multilabel-sequences",

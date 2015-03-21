@@ -236,7 +236,7 @@ def test_PLSSVD():
 
 
 def test_univariate_pls_regression():
-    """Ensure 1d Y is correctly interpreted"""
+    # Ensure 1d Y is correctly interpreted
     d = load_linnerud()
     X = d.data
     Y = d.target

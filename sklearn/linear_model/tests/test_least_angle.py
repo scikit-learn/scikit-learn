@@ -20,9 +20,7 @@ X, y = diabetes.data, diabetes.target
 
 
 def test_simple():
-    """
-    Principle of Lars is to keep covariances tied and decreasing
-    """
+    # Principle of Lars is to keep covariances tied and decreasing
 
     # also test verbose output
     from sklearn.externals.six.moves import cStringIO as StringIO
@@ -52,9 +50,7 @@ def test_simple():
 
 
 def test_simple_precomputed():
-    """
-    The same, with precomputed Gram matrix
-    """
+    # The same, with precomputed Gram matrix
 
     G = np.dot(diabetes.data.T, diabetes.data)
     alphas_, active, coef_path_ = linear_model.lars_path(
@@ -74,9 +70,7 @@ def test_simple_precomputed():
 
 
 def test_all_precomputed():
-    """
-    Test that lars_path with precomputed Gram and Xy gives the right answer
-    """
+    # Test that lars_path with precomputed Gram and Xy gives the right answer
     X, y = diabetes.data, diabetes.target
     G = np.dot(X.T, X)
     Xy = np.dot(X.T, y)
@@ -88,10 +82,8 @@ def test_all_precomputed():
 
 
 def test_lars_lstsq():
-    """
-    Test that Lars gives least square solution at the end
-    of the path
-    """
+    # Test that Lars gives least square solution at the end
+    # of the path
     X1 = 3 * diabetes.data  # use un-normalized dataset
     clf = linear_model.LassoLars(alpha=0.)
     clf.fit(X1, y)
@@ -100,17 +92,15 @@ def test_lars_lstsq():
 
 
 def test_lasso_gives_lstsq_solution():
-    """
-    Test that Lars Lasso gives least square solution at the end
-    of the path
-    """
+    # Test that Lars Lasso gives least square solution at the end
+    # of the path
     alphas_, active, coef_path_ = linear_model.lars_path(X, y, method="lasso")
     coef_lstsq = np.linalg.lstsq(X, y)[0]
     assert_array_almost_equal(coef_lstsq, coef_path_[:, -1])
 
 
 def test_collinearity():
-    """Check that lars_path is robust to collinearity in input"""
+    # Check that lars_path is robust to collinearity in input
     X = np.array([[3., 3., 1.],
                   [2., 2., 0.],
                   [1., 1., 0]])
@@ -133,9 +123,7 @@ def test_collinearity():
 
 
 def test_no_path():
-    """
-    Test that the ``return_path=False`` option returns the correct output
-    """
+    # Test that the ``return_path=False`` option returns the correct output
 
     alphas_, active_, coef_path_ = linear_model.lars_path(
         diabetes.data, diabetes.target, method="lar")
@@ -147,9 +135,7 @@ def test_no_path():
 
 
 def test_no_path_precomputed():
-    """
-    Test that the ``return_path=False`` option with Gram remains correct
-    """
+    # Test that the ``return_path=False`` option with Gram remains correct
 
     G = np.dot(diabetes.data.T, diabetes.data)
 
@@ -164,9 +150,7 @@ def test_no_path_precomputed():
 
 
 def test_no_path_all_precomputed():
-    """
-    Test that the ``return_path=False`` option with Gram and Xy remains correct
-    """
+    # Test that the ``return_path=False`` option with Gram and Xy remains correct
     X, y = 3 * diabetes.data, diabetes.target
     G = np.dot(X.T, X)
     Xy = np.dot(X.T, y)
@@ -217,10 +201,8 @@ def test_rank_deficient_design():
 
 
 def test_lasso_lars_vs_lasso_cd(verbose=False):
-    """
-    Test that LassoLars and Lasso using coordinate descent give the
-    same results.
-    """
+    # Test that LassoLars and Lasso using coordinate descent give the
+    # same results.
     X = 3 * diabetes.data
 
     alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso')
@@ -256,11 +238,9 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
 
 
 def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
-    """
-    Test that LassoLars and Lasso using coordinate descent give the
-    same results when early stopping is used.
-    (test : before, in the middle, and in the last part of the path)
-    """
+    # Test that LassoLars and Lasso using coordinate descent give the
+    # same results when early stopping is used.
+    # (test : before, in the middle, and in the last part of the path)
     alphas_min = [10, 0.9, 1e-4]
     for alphas_min in alphas_min:
         alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
@@ -358,11 +338,8 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
 
 
 def test_lars_add_features():
-    """
-    assure that at least some features get added if necessary
-
-    test for 6d2b4c
-    """
+    # assure that at least some features get added if necessary
+    # test for 6d2b4c
     # Hilbert matrix
     n = 5
     H = 1. / (np.arange(1, n + 1) + np.arange(n)[:, np.newaxis])
@@ -381,9 +358,7 @@ def test_lars_n_nonzero_coefs(verbose=False):
 
 
 def test_multitarget():
-    """
-    Assure that estimators receiving multidimensional y do the right thing
-    """
+    # Assure that estimators receiving multidimensional y do the right thing
     X = diabetes.data
     Y = np.vstack([diabetes.target, diabetes.target ** 2]).T
     n_targets = Y.shape[1]
@@ -406,12 +381,10 @@ def test_multitarget():
 
 
 def test_lars_cv():
-    """ Test the LassoLarsCV object by checking that the optimal alpha
-        increases as the number of samples increases.
-
-        This property is not actually garantied in general and is just a
-        property of the given dataset, with the given steps chosen.
-    """
+    # Test the LassoLarsCV object by checking that the optimal alpha
+    # increases as the number of samples increases.
+    # This property is not actually garantied in general and is just a
+    # property of the given dataset, with the given steps chosen.
     old_alpha = 0
     lars_cv = linear_model.LassoLarsCV()
     for length in (400, 200, 100):
@@ -423,11 +396,10 @@ def test_lars_cv():
 
 
 def test_lasso_lars_ic():
-    """ Test the LassoLarsIC object by checking that
-        - some good features are selected.
-        - alpha_bic > alpha_aic
-        - n_nonzero_bic < n_nonzero_aic
-    """
+    # Test the LassoLarsIC object by checking that
+    # - some good features are selected.
+    # - alpha_bic > alpha_aic
+    # - n_nonzero_bic < n_nonzero_aic
     lars_bic = linear_model.LassoLarsIC('bic')
     lars_aic = linear_model.LassoLarsIC('aic')
     rng = np.random.RandomState(42)
@@ -448,7 +420,7 @@ def test_lasso_lars_ic():
 
 
 def test_no_warning_for_zero_mse():
-    """LassoLarsIC should not warn for log of zero MSE."""
+    # LassoLarsIC should not warn for log of zero MSE.
     y = np.arange(10, dtype=float)
     X = y.reshape(-1, 1)
     lars = linear_model.LassoLarsIC(normalize=False)

@@ -40,7 +40,7 @@ from sklearn.preprocessing import normalize
 
 
 def test_pairwise_distances():
-    """ Test the pairwise_distance helper function. """
+    # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
     X = rng.random_sample((5, 4))
@@ -156,22 +156,20 @@ def test_pairwise_parallel():
 
 
 def test_pairwise_callable_nonstrict_metric():
-    """paired_distances should allow callable metric where metric(x, x) != 0
-
-    Knowing that the callable is a strict metric would allow the diagonal to
-    be left uncalculated and set to 0.
-    """
+    # paired_distances should allow callable metric where metric(x, x) != 0
+    # Knowing that the callable is a strict metric would allow the diagonal to
+    # be left uncalculated and set to 0.
     assert_equal(pairwise_distances([[1]], metric=lambda x, y: 5)[0, 0], 5)
 
 
 def callable_rbf_kernel(x, y, **kwds):
-    """ Callable version of pairwise.rbf_kernel. """
+    # Callable version of pairwise.rbf_kernel.
     K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
     return K
 
 
 def test_pairwise_kernels():
-    """ Test the pairwise_kernels helper function. """
+    # Test the pairwise_kernels helper function.
 
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
@@ -232,7 +230,7 @@ def test_pairwise_kernels_filter_param():
 
 
 def test_paired_distances():
-    """ Test the pairwise_distance helper function. """
+    # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
     X = rng.random_sample((5, 4))
@@ -263,7 +261,7 @@ def test_paired_distances():
 
 
 def test_pairwise_distances_argmin_min():
-    """ Check pairwise minimum distances computation for any metric"""
+    # Check pairwise minimum distances computation for any metric
     X = [[0], [1]]
     Y = [[-1], [2]]
 
@@ -325,7 +323,7 @@ def test_pairwise_distances_argmin_min():
 
 
 def test_euclidean_distances():
-    """ Check the pairwise Euclidean distances computation"""
+    # Check the pairwise Euclidean distances computation
     X = [[0]]
     Y = [[1], [2]]
     D = euclidean_distances(X, Y)
@@ -340,7 +338,7 @@ def test_euclidean_distances():
 # Paired distances
 
 def test_paired_euclidean_distances():
-    """ Check the paired Euclidean distances computation"""
+    # Check the paired Euclidean distances computation
     X = [[0], [0]]
     Y = [[1], [2]]
     D = paired_euclidean_distances(X, Y)
@@ -348,7 +346,7 @@ def test_paired_euclidean_distances():
 
 
 def test_paired_manhattan_distances():
-    """ Check the paired manhattan distances computation"""
+    # Check the paired manhattan distances computation
     X = [[0], [0]]
     Y = [[1], [2]]
     D = paired_manhattan_distances(X, Y)
@@ -411,7 +409,7 @@ def test_chi_square_kernel():
 
 
 def test_kernel_symmetry():
-    """ Valid kernels should be symmetric"""
+    # Valid kernels should be symmetric
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     for kernel in (linear_kernel, polynomial_kernel, rbf_kernel,
@@ -448,7 +446,7 @@ def test_rbf_kernel():
 
 
 def test_cosine_similarity():
-    """ Test the cosine_similarity. """
+    # Test the cosine_similarity.
 
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
@@ -469,7 +467,7 @@ def test_cosine_similarity():
 
 
 def test_check_dense_matrices():
-    """ Ensure that pairwise array check works for dense matrices."""
+    # Ensure that pairwise array check works for dense matrices.
     # Check that if XB is None, XB is returned as reference to XA
     XA = np.resize(np.arange(40), (5, 8))
     XA_checked, XB_checked = check_pairwise_arrays(XA, None)
@@ -478,7 +476,7 @@ def test_check_dense_matrices():
 
 
 def test_check_XB_returned():
-    """ Ensure that if XA and XB are given correctly, they return as equal."""
+    # Ensure that if XA and XB are given correctly, they return as equal.
     # Check that if XB is not None, it is returned equal.
     # Note that the second dimension of XB is the same as XA.
     XA = np.resize(np.arange(40), (5, 8))
@@ -494,7 +492,7 @@ def test_check_XB_returned():
 
 
 def test_check_different_dimensions():
-    """ Ensure an error is raised if the dimensions are different. """
+    # Ensure an error is raised if the dimensions are different.
     XA = np.resize(np.arange(45), (5, 9))
     XB = np.resize(np.arange(32), (4, 8))
     assert_raises(ValueError, check_pairwise_arrays, XA, XB)
@@ -504,7 +502,7 @@ def test_check_different_dimensions():
 
 
 def test_check_invalid_dimensions():
-    """ Ensure an error is raised on 1D input arrays. """
+    # Ensure an error is raised on 1D input arrays.
     XA = np.arange(45)
     XB = np.resize(np.arange(32), (4, 8))
     assert_raises(ValueError, check_pairwise_arrays, XA, XB)
@@ -514,7 +512,7 @@ def test_check_invalid_dimensions():
 
 
 def test_check_sparse_arrays():
-    """ Ensures that checks return valid sparse matrices. """
+    # Ensures that checks return valid sparse matrices.
     rng = np.random.RandomState(0)
     XA = rng.random_sample((5, 4))
     XA_sparse = csr_matrix(XA)
@@ -536,7 +534,7 @@ def test_check_sparse_arrays():
 
 
 def tuplify(X):
-    """ Turns a numpy matrix (any n-dimensional array) into tuples."""
+    # Turns a numpy matrix (any n-dimensional array) into tuples.
     s = X.shape
     if len(s) > 1:
         # Tuplify each sub-array in the input.
@@ -547,7 +545,7 @@ def tuplify(X):
 
 
 def test_check_tuple_input():
-    """ Ensures that checks return valid tuples. """
+    # Ensures that checks return valid tuples.
     rng = np.random.RandomState(0)
     XA = rng.random_sample((5, 4))
     XA_tuples = tuplify(XA)
@@ -559,7 +557,7 @@ def test_check_tuple_input():
 
 
 def test_check_preserve_type():
-    """ Ensures that type float32 is preserved. """
+    # Ensures that type float32 is preserved.
     XA = np.resize(np.arange(40), (5, 8)).astype(np.float32)
     XB = np.resize(np.arange(40), (5, 8)).astype(np.float32)
 

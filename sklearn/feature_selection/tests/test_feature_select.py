@@ -34,7 +34,7 @@ from sklearn.feature_selection import (chi2, f_classif, f_oneway, f_regression,
 # Test the score functions
 
 def test_f_oneway_vs_scipy_stats():
-    """Test that our f_oneway gives the same result as scipy.stats"""
+    # Test that our f_oneway gives the same result as scipy.stats
     rng = np.random.RandomState(0)
     X1 = rng.randn(10, 3)
     X2 = 1 + rng.randn(10, 3)
@@ -59,10 +59,8 @@ def test_f_oneway_ints():
 
 
 def test_f_classif():
-    """
-    Test whether the F test yields meaningful results
-    on a simple simulated classification problem
-    """
+    # Test whether the F test yields meaningful results
+    # on a simple simulated classification problem
     X, y = make_classification(n_samples=200, n_features=20,
                                n_informative=3, n_redundant=2,
                                n_repeated=0, n_classes=8,
@@ -81,10 +79,8 @@ def test_f_classif():
 
 
 def test_f_regression():
-    """
-    Test whether the F test yields meaningful results
-    on a simple simulated regression problem
-    """
+    # Test whether the F test yields meaningful results
+    # on a simple simulated regression problem
     X, y = make_regression(n_samples=200, n_features=20, n_informative=5,
                            shuffle=False, random_state=0)
 
@@ -103,10 +99,8 @@ def test_f_regression():
 
 
 def test_f_regression_input_dtype():
-    """
-    Test whether f_regression returns the same value
-    for any numeric data_type
-    """
+    # Test whether f_regression returns the same value
+    # for any numeric data_type
     rng = np.random.RandomState(0)
     X = rng.rand(10, 20)
     y = np.arange(10).astype(np.int)
@@ -118,11 +112,9 @@ def test_f_regression_input_dtype():
 
 
 def test_f_regression_center():
-    """Test whether f_regression preserves dof according to 'center' argument
-
-    We use two centered variates so we have a simple relationship between
-    F-score with variates centering and F-score without variates centering.
-    """
+    # Test whether f_regression preserves dof according to 'center' argument
+    # We use two centered variates so we have a simple relationship between
+    # F-score with variates centering and F-score without variates centering.
     # Create toy example
     X = np.arange(-5, 6).reshape(-1, 1)  # X has zero mean
     n_samples = X.size
@@ -137,10 +129,8 @@ def test_f_regression_center():
 
 
 def test_f_classif_multi_class():
-    """
-    Test whether the F test yields meaningful results
-    on a simple simulated classification problem
-    """
+    # Test whether the F test yields meaningful results
+    # on a simple simulated classification problem
     X, y = make_classification(n_samples=200, n_features=20,
                                n_informative=3, n_redundant=2,
                                n_repeated=0, n_classes=8,
@@ -156,11 +146,9 @@ def test_f_classif_multi_class():
 
 
 def test_select_percentile_classif():
-    """
-    Test whether the relative univariate feature selection
-    gets the correct items in a simple classification problem
-    with the percentile heuristic
-    """
+    # Test whether the relative univariate feature selection
+    # gets the correct items in a simple classification problem
+    # with the percentile heuristic
     X, y = make_classification(n_samples=200, n_features=20,
                                n_informative=3, n_redundant=2,
                                n_repeated=0, n_classes=8,
@@ -179,11 +167,9 @@ def test_select_percentile_classif():
 
 
 def test_select_percentile_classif_sparse():
-    """
-    Test whether the relative univariate feature selection
-    gets the correct items in a simple classification problem
-    with the percentile heuristic
-    """
+    # Test whether the relative univariate feature selection
+    # gets the correct items in a simple classification problem
+    # with the percentile heuristic
     X, y = make_classification(n_samples=200, n_features=20,
                                n_informative=3, n_redundant=2,
                                n_repeated=0, n_classes=8,
@@ -213,11 +199,9 @@ def test_select_percentile_classif_sparse():
 # Test univariate selection in classification settings
 
 def test_select_kbest_classif():
-    """
-    Test whether the relative univariate feature selection
-    gets the correct items in a simple classification problem
-    with the k best heuristic
-    """
+    # Test whether the relative univariate feature selection
+    # gets the correct items in a simple classification problem
+    # with the k best heuristic
     X, y = make_classification(n_samples=200, n_features=20,
                                n_informative=3, n_redundant=2,
                                n_repeated=0, n_classes=8,
@@ -236,9 +220,7 @@ def test_select_kbest_classif():
 
 
 def test_select_kbest_all():
-    """
-    Test whether k="all" correctly returns all features.
-    """
+    # Test whether k="all" correctly returns all features.
     X, y = make_classification(n_samples=20, n_features=10,
                                shuffle=False, random_state=0)
 
@@ -248,9 +230,7 @@ def test_select_kbest_all():
 
 
 def test_select_kbest_zero():
-    """
-    Test whether k=0 correctly returns no features.
-    """
+    # Test whether k=0 correctly returns no features.
     X, y = make_classification(n_samples=20, n_features=10,
                                shuffle=False, random_state=0)
 
@@ -265,11 +245,9 @@ def test_select_kbest_zero():
 
 
 def test_select_heuristics_classif():
-    """
-    Test whether the relative univariate feature selection
-    gets the correct items in a simple classification problem
-    with the fdr, fwe and fpr heuristics
-    """
+    # Test whether the relative univariate feature selection
+    # gets the correct items in a simple classification problem
+    # with the fdr, fwe and fpr heuristics
     X, y = make_classification(n_samples=200, n_features=20,
                                n_informative=3, n_redundant=2,
                                n_repeated=0, n_classes=8,
@@ -300,11 +278,9 @@ def assert_best_scores_kept(score_filter):
 
 
 def test_select_percentile_regression():
-    """
-    Test whether the relative univariate feature selection
-    gets the correct items in a simple regression problem
-    with the percentile heuristic
-    """
+    # Test whether the relative univariate feature selection
+    # gets the correct items in a simple regression problem
+    # with the percentile heuristic
     X, y = make_regression(n_samples=200, n_features=20,
                            n_informative=5, shuffle=False, random_state=0)
 
@@ -327,10 +303,8 @@ def test_select_percentile_regression():
 
 
 def test_select_percentile_regression_full():
-    """
-    Test whether the relative univariate feature selection
-    selects all features when '100%' is asked.
-    """
+    # Test whether the relative univariate feature selection
+    # selects all features when '100%' is asked.
     X, y = make_regression(n_samples=200, n_features=20,
                            n_informative=5, shuffle=False, random_state=0)
 
@@ -358,11 +332,9 @@ def test_invalid_percentile():
 
 
 def test_select_kbest_regression():
-    """
-    Test whether the relative univariate feature selection
-    gets the correct items in a simple regression problem
-    with the k best heuristic
-    """
+    # Test whether the relative univariate feature selection
+    # gets the correct items in a simple regression problem
+    # with the k best heuristic
     X, y = make_regression(n_samples=200, n_features=20, n_informative=5,
                            shuffle=False, random_state=0, noise=10)
 
@@ -379,11 +351,9 @@ def test_select_kbest_regression():
 
 
 def test_select_heuristics_regression():
-    """
-    Test whether the relative univariate feature selection
-    gets the correct items in a simple regression problem
-    with the fpr, fdr or fwe heuristics
-    """
+    # Test whether the relative univariate feature selection
+    # gets the correct items in a simple regression problem
+    # with the fpr, fdr or fwe heuristics
     X, y = make_regression(n_samples=200, n_features=20, n_informative=5,
                            shuffle=False, random_state=0, noise=10)
 
@@ -401,9 +371,7 @@ def test_select_heuristics_regression():
 
 
 def test_select_fdr_regression():
-    """
-    Test that fdr heuristic actually has low FDR.
-    """
+    # Test that fdr heuristic actually has low FDR.
     def single_fdr(alpha, n_informative, random_state):
         X, y = make_regression(n_samples=150, n_features=20,
                                n_informative=n_informative, shuffle=False,
@@ -445,11 +413,9 @@ def test_select_fdr_regression():
 
 
 def test_select_fwe_regression():
-    """
-    Test whether the relative univariate feature selection
-    gets the correct items in a simple regression problem
-    with the fwe heuristic
-    """
+    # Test whether the relative univariate feature selection
+    # gets the correct items in a simple regression problem
+    # with the fwe heuristic
     X, y = make_regression(n_samples=200, n_features=20,
                            n_informative=5, shuffle=False, random_state=0)
 
@@ -466,10 +432,8 @@ def test_select_fwe_regression():
 
 
 def test_selectkbest_tiebreaking():
-    """Test whether SelectKBest actually selects k features in case of ties.
-
-    Prior to 0.11, SelectKBest would return more features than requested.
-    """
+    # Test whether SelectKBest actually selects k features in case of ties.
+    # Prior to 0.11, SelectKBest would return more features than requested.
     Xs = [[0, 1, 1], [0, 0, 1], [1, 0, 0], [1, 1, 0]]
     y = [1]
     dummy_score = lambda X, y: (X[0], X[0])
@@ -486,8 +450,7 @@ def test_selectkbest_tiebreaking():
 
 
 def test_selectpercentile_tiebreaking():
-    """Test if SelectPercentile selects the right n_features in case of ties.
-    """
+    # Test if SelectPercentile selects the right n_features in case of ties.
     Xs = [[0, 1, 1], [0, 0, 1], [1, 0, 0], [1, 1, 0]]
     y = [1]
     dummy_score = lambda X, y: (X[0], X[0])
@@ -504,7 +467,7 @@ def test_selectpercentile_tiebreaking():
 
 
 def test_tied_pvalues():
-    """Test whether k-best and percentiles work with tied pvalues from chi2."""
+    # Test whether k-best and percentiles work with tied pvalues from chi2.
     # chi2 will return the same p-values for the following features, but it
     # will return different scores.
     X0 = np.array([[10000, 9999, 9998], [1, 1, 1]])
@@ -522,7 +485,7 @@ def test_tied_pvalues():
 
 
 def test_tied_scores():
-    """Test for stable sorting in k-best with tied scores."""
+    # Test for stable sorting in k-best with tied scores.
     X_train = np.array([[0, 0, 0], [1, 1, 1]])
     y_train = [0, 1]
 
@@ -533,7 +496,7 @@ def test_tied_scores():
 
 
 def test_nans():
-    """Assert that SelectKBest and SelectPercentile can handle NaNs."""
+    # Assert that SelectKBest and SelectPercentile can handle NaNs.
     # First feature has zero variance to confuse f_classif (ANOVA) and
     # make it return a NaN.
     X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
@@ -567,7 +530,7 @@ def test_invalid_k():
 
 
 def test_f_classif_constant_feature():
-    """Test that f_classif warns if a feature is constant throughout."""
+    # Test that f_classif warns if a feature is constant throughout.
 
     X, y = make_classification(n_samples=10, n_features=5)
     X[:, 0] = 2.0

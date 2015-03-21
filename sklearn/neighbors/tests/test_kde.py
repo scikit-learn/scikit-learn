@@ -90,7 +90,7 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
 
 
 def test_kde_algorithm_metric_choice():
-    """Smoke test for various metrics and algorithms"""
+    # Smoke test for various metrics and algorithms
     rng = np.random.RandomState(0)
     X = rng.randn(10, 2)    # 2 features required for haversine dist.
     Y = rng.randn(10, 2)

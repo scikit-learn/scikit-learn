@@ -22,7 +22,7 @@ Y /= Y.sum(axis=1)[:, np.newaxis]
 
 
 def test_additive_chi2_sampler():
-    """test that AdditiveChi2Sampler approximates kernel on random data"""
+    # test that AdditiveChi2Sampler approximates kernel on random data
 
     # compute exact kernel
     # appreviations for easier formular
@@ -80,7 +80,7 @@ def test_additive_chi2_sampler():
 
 
 def test_skewed_chi2_sampler():
-    """test that RBFSampler approximates kernel on random data"""
+    # test that RBFSampler approximates kernel on random data
 
     # compute exact kernel
     c = 0.03
@@ -111,7 +111,7 @@ def test_skewed_chi2_sampler():
 
 
 def test_rbf_sampler():
-    """test that RBFSampler approximates kernel on random data"""
+    # test that RBFSampler approximates kernel on random data
     # compute exact kernel
     gamma = 10.
     kernel = rbf_kernel(X, Y, gamma=gamma)
@@ -130,10 +130,8 @@ def test_rbf_sampler():
 
 
 def test_input_validation():
-    """Regression test: kernel approx. transformers should work on lists
-
-    No assertions; the old versions would simply crash
-    """
+    # Regression test: kernel approx. transformers should work on lists
+    # No assertions; the old versions would simply crash
     X = [[1, 2], [3, 4], [5, 6]]
     AdditiveChi2Sampler().fit(X).transform(X)
     SkewedChi2Sampler().fit(X).transform(X)
@@ -188,7 +186,7 @@ def test_nystroem_singular_kernel():
 
 
 def test_nystroem_poly_kernel_params():
-    """Non-regression: Nystroem should pass other parameters beside gamma."""
+    # Non-regression: Nystroem should pass other parameters beside gamma.
     rnd = np.random.RandomState(37)
     X = rnd.uniform(size=(10, 4))
 
@@ -200,7 +198,7 @@ def test_nystroem_poly_kernel_params():
 
 
 def test_nystroem_callable():
-    """Test Nystroem on a callable."""
+    # Test Nystroem on a callable.
     rnd = np.random.RandomState(42)
     n_samples = 10
     X = rnd.uniform(size=(n_samples, 4))
