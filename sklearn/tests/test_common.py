@@ -248,7 +248,7 @@ def test_class_weight_classifiers():
 
 
 def test_class_weight_auto_classifiers():
-    """Test that class_weight="auto" improves f1-score"""
+    # Test that class_weight="auto" improves f1-score
 
     # This test is broken; its success depends on:
     # * a rare fortuitous RNG seed for make_classification; and

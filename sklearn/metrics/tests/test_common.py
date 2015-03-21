@@ -346,7 +346,7 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
 
 @ignore_warnings
 def test_symmetry():
-    """Test the symmetry of score and loss functions"""
+    # Test the symmetry of score and loss functions
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(20, ))
     y_pred = random_state.randint(0, 2, size=(20, ))
@@ -513,7 +513,7 @@ def test_format_invariance_with_1d_vectors():
 
 @ignore_warnings
 def test_invariance_string_vs_numbers_labels():
-    """Ensure that classification metrics with string labels"""
+    # Ensure that classification metrics with string labels
     random_state = check_random_state(0)
     y1 = random_state.randint(0, 2, size=(20, ))
     y2 = random_state.randint(0, 2, size=(20, ))
@@ -586,12 +586,10 @@ def test_invariance_string_vs_numbers_labels():
 
 @ignore_warnings
 def check_single_sample(name):
-    """Non-regression test: scores should work with a single sample.
-
-    This is important for leave-one-out cross validation.
-    Score functions tested are those that formerly called np.squeeze,
-    which turns an array of size 1 into a 0-d array (!).
-    """
+    # Non-regression test: scores should work with a single sample.
+    # This is important for leave-one-out cross validation.
+    # Score functions tested are those that formerly called np.squeeze,
+    # which turns an array of size 1 into a 0-d array (!).
     metric = ALL_METRICS[name]
 
     # assert that no exception is thrown

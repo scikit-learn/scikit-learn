@@ -121,7 +121,7 @@ def test_ovr_fit_predict_sparse():
 
 
 def test_ovr_always_present():
-    """Test that ovr works with classes that are always present or absent."""
+    # Test that ovr works with classes that are always present or absent.
     # Note: tests is the case where _ConstantPredictor is utilised
     X = np.ones((10, 2))
     X[:5, :] = 0

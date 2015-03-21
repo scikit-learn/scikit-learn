@@ -37,9 +37,7 @@ iris.target = iris.target[perm]
 
 
 def test_libsvm_parameters():
-    """
-    Test parameters on classes that make use of libsvm.
-    """
+    # Test parameters on classes that make use of libsvm.
     clf = svm.SVC(kernel='linear').fit(X, Y)
     assert_array_equal(clf.dual_coef_, [[-0.25, .25]])
     assert_array_equal(clf.support_, [1, 3])
@@ -49,7 +47,7 @@ def test_libsvm_parameters():
 
 
 def test_libsvm_iris():
-    """Check consistency on dataset iris."""
+    # Check consistency on dataset iris.
 
     # shuffle the dataset so that labels are not ordered
     for k in ('linear', 'rbf'):
@@ -85,9 +83,7 @@ def test_libsvm_iris():
 
 
 def test_single_sample_1d():
-    """
-    Test whether SVCs work on a single sample given as a 1-d array
-    """
+    # Test whether SVCs work on a single sample given as a 1-d array
 
     clf = svm.SVC().fit(X, Y)
     clf.predict(X[0])
@@ -97,11 +93,8 @@ def test_single_sample_1d():
 
 
 def test_precomputed():
-    """
-    SVC with a precomputed kernel.
-
-    We test it with a toy dataset and with iris.
-    """
+    # SVC with a precomputed kernel.
+    # We test it with a toy dataset and with iris.
     clf = svm.SVC(kernel='precomputed')
     # Gram matrix for train data (square matrix)
     # (we use just a linear kernel)
@@ -170,9 +163,7 @@ def test_precomputed():
 
 
 def test_svr():
-    """
-    Test Support Vector Regression
-    """
+    # Test Support Vector Regression
 
     diabetes = datasets.load_diabetes()
     for clf in (svm.NuSVR(kernel='linear', nu=.4, C=1.0),
@@ -215,9 +206,7 @@ def test_svr_errors():
 
 
 def test_oneclass():
-    """
-    Test OneClassSVM
-    """
+    # Test OneClassSVM
     clf = svm.OneClassSVM()
     clf.fit(X)
     pred = clf.predict(T)
@@ -231,9 +220,7 @@ def test_oneclass():
 
 
 def test_oneclass_decision_function():
-    """
-    Test OneClassSVM decision function
-    """
+    # Test OneClassSVM decision function
     clf = svm.OneClassSVM()
     rnd = check_random_state(2)
 
@@ -263,16 +250,12 @@ def test_oneclass_decision_function():
 
 
 def test_tweak_params():
-    """
-    Make sure some tweaking of parameters works.
-
-    We change clf.dual_coef_ at run time and expect .predict() to change
-    accordingly. Notice that this is not trivial since it involves a lot
-    of C/Python copying in the libsvm bindings.
-
-    The success of this test ensures that the mapping between libsvm and
-    the python classifier is complete.
-    """
+    # Make sure some tweaking of parameters works.
+    # We change clf.dual_coef_ at run time and expect .predict() to change
+    # accordingly. Notice that this is not trivial since it involves a lot
+    # of C/Python copying in the libsvm bindings.
+    # The success of this test ensures that the mapping between libsvm and
+    # the python classifier is complete.
     clf = svm.SVC(kernel='linear', C=1.0)
     clf.fit(X, Y)
     assert_array_equal(clf.dual_coef_, [[-.25, .25]])
@@ -282,11 +265,8 @@ def test_tweak_params():
 
 
 def test_probability():
-    """
-    Predict probabilities using SVC
-
-    This uses cross validation, so we use a slightly bigger testing set.
-    """
+    # Predict probabilities using SVC
+    # This uses cross validation, so we use a slightly bigger testing set.
 
     for clf in (svm.SVC(probability=True, random_state=0, C=1.0),
                 svm.NuSVC(probability=True, random_state=0)):
@@ -303,14 +283,10 @@ def test_probability():
                             np.exp(clf.predict_log_proba(iris.data)), 8)
 
 
-def test_svc_decision_function():
-    """
-    Test SVC's decision_function
-
-    Sanity check, test that decision_function implemented in python
-    returns the same as the one in libsvm
-
-    """
+def test_decision_function():
+    # Test decision_function
+    # Sanity check, test that decision_function implemented in python
+    # returns the same as the one in libsvm
     # multi class:
     clf = svm.SVC(kernel='linear', C=0.1).fit(iris.data, iris.target)
 
@@ -339,13 +315,9 @@ def test_svc_decision_function():
 
 
 def test_svr_decision_function():
-    """
-    Test SVR's decision_function
-
-    Sanity check, test that decision_function implemented in python
-    returns the same as the one in libsvm
-
-    """
+    # Test SVR's decision_function
+    # Sanity check, test that decision_function implemented in python
+    # returns the same as the one in libsvm
 
     X = iris.data
     y = iris.target
@@ -365,9 +337,7 @@ def test_svr_decision_function():
 
 
 def test_weight():
-    """
-    Test class weights
-    """
+    # Test class weights
     clf = svm.SVC(class_weight={1: 0.1})
     # we give a small weights to class 1
     clf.fit(X, Y)
@@ -386,9 +356,7 @@ def test_weight():
 
 
 def test_sample_weights():
-    """
-    Test weights on individual samples
-    """
+    # Test weights on individual samples
     # TODO: check on NuSVR, OneClass, etc.
     clf = svm.SVC()
     clf.fit(X, Y)
@@ -408,7 +376,7 @@ def test_sample_weights():
 
 
 def test_auto_weight():
-    """Test class weights for imbalanced data"""
+    # Test class weights for imbalanced data
     from sklearn.linear_model import LogisticRegression
     # We take as dataset the two-dimensional projection of iris so
     # that it is not separable and remove half of predictors from
@@ -435,9 +403,7 @@ def test_auto_weight():
 
 
 def test_bad_input():
-    """
-    Test that it gives proper exception on deficient input
-    """
+    # Test that it gives proper exception on deficient input
     # impossible value of C
     assert_raises(ValueError, svm.SVC(C=-1).fit, X, Y)
 
@@ -491,9 +457,7 @@ def test_sparse_precomputed():
 
 
 def test_linearsvc_parameters():
-    """
-    Test possible parameter combinations in LinearSVC
-    """
+    # Test possible parameter combinations in LinearSVC
     # Generate list of possible parameter combinations
     losses = ['hinge', 'squared_hinge', 'logistic_regression', 'foo']
     penalties, duals = ['l1', 'l2', 'bar'], [True, False]
@@ -582,9 +546,7 @@ def test_linear_svx_uppercase_loss_penalty():
 
 
 def test_linearsvc():
-    """
-    Test basic routines using LinearSVC
-    """
+    # Test basic routines using LinearSVC
     clf = svm.LinearSVC(random_state=0).fit(X, Y)
 
     # by default should have intercept
@@ -613,7 +575,7 @@ def test_linearsvc():
 
 
 def test_linearsvc_crammer_singer():
-    """Test LinearSVC with crammer_singer multi-class svm"""
+    # Test LinearSVC with crammer_singer multi-class svm
     ovr_clf = svm.LinearSVC(random_state=0).fit(iris.data, iris.target)
     cs_clf = svm.LinearSVC(multi_class='crammer_singer', random_state=0)
     cs_clf.fit(iris.data, iris.target)
@@ -633,7 +595,7 @@ def test_linearsvc_crammer_singer():
 
 
 def test_crammer_singer_binary():
-    """Test Crammer-Singer formulation in the binary case"""
+    # Test Crammer-Singer formulation in the binary case
     X, y = make_classification(n_classes=2, random_state=0)
 
     for fit_intercept in (True, False):
@@ -645,11 +607,8 @@ def test_crammer_singer_binary():
 
 def test_linearsvc_iris():
 
-    """
-    Test that LinearSVC gives plausible predictions on the iris dataset
-
-    Also, test symbolic class names (classes_).
-    """
+    # Test that LinearSVC gives plausible predictions on the iris dataset
+    # Also, test symbolic class names (classes_).
     target = iris.target_names[iris.target]
     clf = svm.LinearSVC(random_state=0).fit(iris.data, target)
     assert_equal(set(clf.classes_), set(iris.target_names))
@@ -661,9 +620,7 @@ def test_linearsvc_iris():
 
 
 def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
-    """
-    Test that dense liblinear honours intercept_scaling param
-    """
+    # Test that dense liblinear honours intercept_scaling param
     X = [[2, 1],
          [3, 1],
          [1, 3],
@@ -720,7 +677,7 @@ def test_liblinear_set_coef():
 
 
 def test_immutable_coef_property():
-    """Check that primal coef modification are not silently ignored"""
+    # Check that primal coef modification are not silently ignored
     svms = [
         svm.SVC(kernel='linear').fit(iris.data, iris.target),
         svm.NuSVC(kernel='linear').fit(iris.data, iris.target),
@@ -819,7 +776,7 @@ def test_consistent_proba():
 
 
 def test_linear_svc_convergence_warnings():
-    """Test that warnings are raised if model does not converge"""
+    # Test that warnings are raised if model does not converge
 
     lsvc = svm.LinearSVC(max_iter=2, verbose=1)
     assert_warns(ConvergenceWarning, lsvc.fit, X, Y)
@@ -827,7 +784,7 @@ def test_linear_svc_convergence_warnings():
 
 
 def test_svr_coef_sign():
-    """Test that SVR(kernel="linear") has coef_ with the right sign."""
+    # Test that SVR(kernel="linear") has coef_ with the right sign.
     # Non-regression test for #2933.
     X = np.random.RandomState(21).randn(10, 3)
     y = np.random.RandomState(12).randn(10)

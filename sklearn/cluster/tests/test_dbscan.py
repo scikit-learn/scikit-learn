@@ -25,7 +25,7 @@ X = generate_clustered_data(n_clusters=n_clusters)
 
 
 def test_dbscan_similarity():
-    """Tests the DBSCAN algorithm with a similarity array."""
+    # Tests the DBSCAN algorithm with a similarity array.
     # Parameters chosen specifically for this task.
     eps = 0.15
     min_samples = 10
@@ -48,7 +48,7 @@ def test_dbscan_similarity():
 
 
 def test_dbscan_feature():
-    """Tests the DBSCAN algorithm with a feature vector array."""
+    # Tests the DBSCAN algorithm with a feature vector array.
     # Parameters chosen specifically for this task.
     # Different eps to other test, because distance is not normalised.
     eps = 0.8
@@ -91,7 +91,7 @@ def test_dbscan_no_core_samples():
 
 
 def test_dbscan_callable():
-    """Tests the DBSCAN algorithm with a callable metric."""
+    # Tests the DBSCAN algorithm with a callable metric.
     # Parameters chosen specifically for this task.
     # Different eps to other test, because distance is not normalised.
     eps = 0.8
@@ -117,7 +117,7 @@ def test_dbscan_callable():
 
 
 def test_dbscan_balltree():
-    """Tests the DBSCAN algorithm with balltree for neighbor calculation."""
+    # Tests the DBSCAN algorithm with balltree for neighbor calculation.
     eps = 0.8
     min_samples = 10
 
@@ -156,13 +156,13 @@ def test_dbscan_balltree():
 
 
 def test_input_validation():
-    """DBSCAN.fit should accept a list of lists."""
+    # DBSCAN.fit should accept a list of lists.
     X = [[1., 2.], [3., 4.]]
     DBSCAN().fit(X)             # must not raise exception
 
 
 def test_dbscan_badargs():
-    """Test bad argument values: these should all raise ValueErrors"""
+    # Test bad argument values: these should all raise ValueErrors
     assert_raises(ValueError,
                   dbscan,
                   X, eps=-1.0)

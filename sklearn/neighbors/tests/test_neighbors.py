@@ -56,7 +56,7 @@ def _weight_func(dist):
 
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,
                                  n_query_pts=2, n_neighbors=5):
-    """Test unsupervised neighbors methods"""
+    # Test unsupervised neighbors methods
     X = rng.rand(n_samples, n_features)
 
     test = rng.rand(n_query_pts, n_features)
@@ -82,7 +82,7 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
 
 
 def test_unsupervised_inputs():
-    """test the types of valid input into NearestNeighbors"""
+    # test the types of valid input into NearestNeighbors
     X = rng.random_sample((10, 3))
 
     nbrs_fid = neighbors.NearestNeighbors(n_neighbors=1)
@@ -103,7 +103,7 @@ def test_unsupervised_inputs():
 def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
                                        n_query_pts=2, radius=0.5,
                                        random_state=0):
-    """Test unsupervised radius-based query"""
+    # Test unsupervised radius-based query
     rng = np.random.RandomState(random_state)
 
     X = rng.rand(n_samples, n_features)
@@ -146,7 +146,7 @@ def test_kneighbors_classifier(n_samples=40,
                                n_test_pts=10,
                                n_neighbors=5,
                                random_state=0):
-    """Test k-neighbors classification"""
+    # Test k-neighbors classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
@@ -172,7 +172,7 @@ def test_kneighbors_classifier(n_samples=40,
 def test_kneighbors_classifier_float_labels(n_samples=40, n_features=5,
                                             n_test_pts=10, n_neighbors=5,
                                             random_state=0):
-    """Test k-neighbors classification"""
+    # Test k-neighbors classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
@@ -185,7 +185,7 @@ def test_kneighbors_classifier_float_labels(n_samples=40, n_features=5,
 
 
 def test_kneighbors_classifier_predict_proba():
-    """Test KNeighborsClassifier.predict_proba() method"""
+    # Test KNeighborsClassifier.predict_proba() method
     X = np.array([[0, 2, 0],
                   [0, 2, 1],
                   [2, 0, 0],
@@ -221,7 +221,7 @@ def test_radius_neighbors_classifier(n_samples=40,
                                      n_test_pts=10,
                                      radius=0.5,
                                      random_state=0):
-    """Test radius-based classification"""
+    # Test radius-based classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
@@ -244,8 +244,8 @@ def test_radius_neighbors_classifier(n_samples=40,
 
 
 def test_radius_neighbors_classifier_when_no_neighbors():
-    """ Test radius-based classifier when no neighbors found.
-    In this case it should rise an informative exception """
+    # Test radius-based classifier when no neighbors found.
+    # In this case it should rise an informative exception
 
     X = np.array([[1.0, 1.0], [2.0, 2.0]])
     y = np.array([1, 2])
@@ -273,8 +273,8 @@ def test_radius_neighbors_classifier_when_no_neighbors():
 
 
 def test_radius_neighbors_classifier_outlier_labeling():
-    """ Test radius-based classifier when no neighbors found and outliers
-    are labeled. """
+    # Test radius-based classifier when no neighbors found and outliers
+    # are labeled.
 
     X = np.array([[1.0, 1.0], [2.0, 2.0]])
     y = np.array([1, 2])
@@ -299,7 +299,7 @@ def test_radius_neighbors_classifier_outlier_labeling():
 
 
 def test_radius_neighbors_classifier_zero_distance():
-    """ Test radius-based classifier, when distance to a sample is zero. """
+    # Test radius-based classifier, when distance to a sample is zero.
 
     X = np.array([[1.0, 1.0], [2.0, 2.0]])
     y = np.array([1, 2])
@@ -320,7 +320,7 @@ def test_radius_neighbors_classifier_zero_distance():
 
 
 def test_neighbors_regressors_zero_distance():
-    """ Test radius-based regressor, when distance to a sample is zero. """
+    # Test radius-based regressor, when distance to a sample is zero.
 
     X = np.array([[1.0, 1.0], [1.0, 1.0], [2.0, 2.0], [2.5, 2.5]])
     y = np.array([1.0, 1.5, 2.0, 0.0])
@@ -371,7 +371,7 @@ def test_radius_neighbors_boundary_handling():
 
 
 def test_RadiusNeighborsClassifier_multioutput():
-    """Test k-NN classifier on multioutput data"""
+    # Test k-NN classifier on multioutput data
     rng = check_random_state(0)
     n_features = 2
     n_samples = 40
@@ -411,7 +411,7 @@ def test_kneighbors_classifier_sparse(n_samples=40,
                                       n_test_pts=10,
                                       n_neighbors=5,
                                       random_state=0):
-    """Test k-NN classifier on sparse matrices"""
+    # Test k-NN classifier on sparse matrices
     # Like the above, but with various types of sparse matrices
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
@@ -430,7 +430,7 @@ def test_kneighbors_classifier_sparse(n_samples=40,
 
 
 def test_KNeighborsClassifier_multioutput():
-    """Test k-NN classifier on multioutput data"""
+    # Test k-NN classifier on multioutput data
     rng = check_random_state(0)
     n_features = 5
     n_samples = 50
@@ -480,7 +480,7 @@ def test_kneighbors_regressor(n_samples=40,
                               n_test_pts=10,
                               n_neighbors=3,
                               random_state=0):
-    """Test k-neighbors regression"""
+    # Test k-neighbors regression
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = np.sqrt((X ** 2).sum(1))
@@ -502,7 +502,7 @@ def test_kneighbors_regressor(n_samples=40,
 
 
 def test_KNeighborsRegressor_multioutput_uniform_weight():
-    """Test k-neighbors in multi-output regression with uniform weight"""
+    # Test k-neighbors in multi-output regression with uniform weight
     rng = check_random_state(0)
     n_features = 5
     n_samples = 40
@@ -533,7 +533,7 @@ def test_kneighbors_regressor_multioutput(n_samples=40,
                                           n_test_pts=10,
                                           n_neighbors=3,
                                           random_state=0):
-    """Test k-neighbors in multi-output regression"""
+    # Test k-neighbors in multi-output regression
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = np.sqrt((X ** 2).sum(1))
@@ -560,7 +560,7 @@ def test_radius_neighbors_regressor(n_samples=40,
                                     n_test_pts=10,
                                     radius=0.5,
                                     random_state=0):
-    """Test radius-based neighbors regression"""
+    # Test radius-based neighbors regression
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = np.sqrt((X ** 2).sum(1))
@@ -582,7 +582,7 @@ def test_radius_neighbors_regressor(n_samples=40,
 
 
 def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
-    """Test radius neighbors in multi-output regression (uniform weight)"""
+    # Test radius neighbors in multi-output regression (uniform weight)
 
     rng = check_random_state(0)
     n_features = 5
@@ -616,7 +616,7 @@ def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
                                               n_test_pts=10,
                                               n_neighbors=3,
                                               random_state=0):
-    """Test k-neighbors in multi-output regression with various weight"""
+    # Test k-neighbors in multi-output regression with various weight
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = np.sqrt((X ** 2).sum(1))
@@ -643,7 +643,7 @@ def test_kneighbors_regressor_sparse(n_samples=40,
                                      n_test_pts=10,
                                      n_neighbors=5,
                                      random_state=0):
-    """Test radius-based regression on sparse matrices"""
+    # Test radius-based regression on sparse matrices
     # Like the above, but with various types of sparse matrices
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
@@ -659,11 +659,9 @@ def test_kneighbors_regressor_sparse(n_samples=40,
 
 
 def test_neighbors_iris():
-    """Sanity checks on the iris dataset
-
-    Puts three points of each label in the plane and performs a
-    nearest neighbor query on points near the decision boundary.
-    """
+    # Sanity checks on the iris dataset
+    # Puts three points of each label in the plane and performs a
+    # nearest neighbor query on points near the decision boundary.
 
     for algorithm in ALGORITHMS:
         clf = neighbors.KNeighborsClassifier(n_neighbors=1,
@@ -682,11 +680,9 @@ def test_neighbors_iris():
 
 
 def test_neighbors_digits():
-    """Sanity check on the digits dataset
-
-    the 'brute' algorithm has been observed to fail if the input
-    dtype is uint8 due to overflow in distance calculations.
-    """
+    # Sanity check on the digits dataset
+    # the 'brute' algorithm has been observed to fail if the input
+    # dtype is uint8 due to overflow in distance calculations.
 
     X = digits.data.astype('uint8')
     Y = digits.target
@@ -704,7 +700,7 @@ def test_neighbors_digits():
 
 
 def test_kneighbors_graph():
-    """Test kneighbors_graph to build the k-Nearest Neighbor graph."""
+    # Test kneighbors_graph to build the k-Nearest Neighbor graph.
     X = np.array([[0, 1], [1.01, 1.], [2, 0]])
 
     # n_neighbors = 1
@@ -741,8 +737,8 @@ def test_kneighbors_graph():
 
 
 def test_kneighbors_graph_sparse(seed=36):
-    """Test kneighbors_graph to build the k-Nearest Neighbor graph
-    for sparse input."""
+    # Test kneighbors_graph to build the k-Nearest Neighbor graph
+    # for sparse input.
     rng = np.random.RandomState(seed)
     X = rng.randn(10, 10)
     Xcsr = csr_matrix(X)
@@ -759,7 +755,7 @@ def test_kneighbors_graph_sparse(seed=36):
 
 
 def test_radius_neighbors_graph():
-    """Test radius_neighbors_graph to build the Nearest Neighbor graph."""
+    # Test radius_neighbors_graph to build the Nearest Neighbor graph.
     X = np.array([[0, 1], [1.01, 1.], [2, 0]])
 
     A = neighbors.radius_neighbors_graph(X, 1.5, mode='connectivity')
@@ -778,8 +774,8 @@ def test_radius_neighbors_graph():
 
 
 def test_radius_neighbors_graph_sparse(seed=36):
-    """Test radius_neighbors_graph to build the Nearest Neighbor graph
-    for sparse input."""
+    # Test radius_neighbors_graph to build the Nearest Neighbor graph
+    # for sparse input.
     rng = np.random.RandomState(seed)
     X = rng.randn(10, 10)
     Xcsr = csr_matrix(X)
@@ -796,7 +792,7 @@ def test_radius_neighbors_graph_sparse(seed=36):
 
 
 def test_neighbors_badargs():
-    """Test bad argument values: these should all raise ValueErrors"""
+    # Test bad argument values: these should all raise ValueErrors
     assert_raises(ValueError,
                   neighbors.NearestNeighbors,
                   algorithm='blah')
@@ -847,7 +843,7 @@ def test_neighbors_badargs():
 
 def test_neighbors_metrics(n_samples=20, n_features=3,
                            n_query_pts=2, n_neighbors=5):
-    """Test computing the neighbors for various metrics"""
+    # Test computing the neighbors for various metrics
     # create a symmetric matrix
     V = rng.rand(n_features, n_features)
     VI = np.dot(V, V.T)
@@ -966,7 +962,7 @@ def check_object_arrays(nparray, list_check):
 
 
 def test_k_and_radius_neighbors_train_is_not_query():
-    """Test kneighbors et.al when query is not training data"""
+    # Test kneighbors et.al when query is not training data
 
     for algorithm in ALGORITHMS:
 
@@ -995,7 +991,7 @@ def test_k_and_radius_neighbors_train_is_not_query():
 
 
 def test_k_and_radius_neighbors_X_None():
-    """Test kneighbors et.al when query is None"""
+    # Test kneighbors et.al when query is None
     for algorithm in ALGORITHMS:
 
         nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
@@ -1027,7 +1023,7 @@ def test_k_and_radius_neighbors_X_None():
 
 
 def test_k_and_radius_neighbors_duplicates():
-    """Test behavior of kneighbors when duplicates are present in query"""
+    # Test behavior of kneighbors when duplicates are present in query
 
     for algorithm in ALGORITHMS:
         nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
@@ -1074,7 +1070,7 @@ def test_k_and_radius_neighbors_duplicates():
 
 
 def test_include_self_neighbors_graph():
-    """Test include_self parameter in neighbors_graph"""
+    # Test include_self parameter in neighbors_graph
     X = [[2, 3], [4, 5]]
     kng = neighbors.kneighbors_graph(X, 1, include_self=True).A
     kng_not_self = neighbors.kneighbors_graph(X, 1, include_self=False).A

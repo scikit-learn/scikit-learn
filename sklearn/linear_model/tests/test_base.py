@@ -17,9 +17,7 @@ from sklearn.datasets.samples_generator import make_regression
 
 
 def test_linear_regression():
-    """
-    Test LinearRegression on a simple dataset.
-    """
+    # Test LinearRegression on a simple dataset.
     # a simple dataset
     X = [[1], [2]]
     Y = [1, 2]
@@ -43,9 +41,7 @@ def test_linear_regression():
 
 
 def test_fit_intercept():
-    """
-    Test assertions on betas shape.
-    """
+    # Test assertions on betas shape.
     X2 = np.array([[0.38349978, 0.61650022],
                    [0.58853682, 0.41146318]])
     X3 = np.array([[0.27677969, 0.70693172, 0.01628859],
@@ -253,7 +249,7 @@ def test_sparse_center_data():
 
 
 def test_csr_sparse_center_data():
-    """Test output format of sparse_center_data, when input is csr"""
+    # Test output format of sparse_center_data, when input is csr
     X, y = make_regression()
     X[X < 2.5] = 0.0
     csr = sparse.csr_matrix(X)
