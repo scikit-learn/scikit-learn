@@ -26,6 +26,8 @@ detector from various online websites.
 from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
 
+from sklearn.utils import deprecated
+
 import logging
 import numpy as np
 
@@ -362,6 +364,9 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     return pairs, target, np.array(['Different persons', 'Same person'])
 
 
+@deprecated("Function 'load_lfw_people' has been deprecated in 0.17 and will be "
+            "removed in 0.19."
+            "Use fetch_lfw_people(download_if_missing=False) instead.")
 def load_lfw_people(download_if_missing=False, **kwargs):
     """Alias for fetch_lfw_people(download_if_missing=False)
 
@@ -484,6 +489,9 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
                  DESCR="'%s' segment of the LFW pairs dataset" % subset)
 
 
+@deprecated("Function 'load_lfw_pairs' has been deprecated in 0.17 and will be "
+            "removed in 0.19."
+            "Use fetch_lfw_pairs(download_if_missing=False) instead.")
 def load_lfw_pairs(download_if_missing=False, **kwargs):
     """Alias for fetch_lfw_pairs(download_if_missing=False)
 

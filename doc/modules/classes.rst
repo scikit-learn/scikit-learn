@@ -210,9 +210,7 @@ Loaders
    datasets.load_digits
    datasets.load_files
    datasets.load_iris
-   datasets.load_lfw_pairs
    datasets.fetch_lfw_pairs
-   datasets.load_lfw_people
    datasets.fetch_lfw_people
    datasets.load_linnerud
    datasets.mldata_filename
