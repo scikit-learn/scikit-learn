@@ -8,6 +8,8 @@ from scipy import stats
 from sklearn import mixture
 from sklearn.datasets.samples_generator import make_spd_matrix
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_raise_message
+
 
 rng = np.random.RandomState(0)
 
@@ -102,6 +104,18 @@ def test_lmvnpdf_full():
     reference = _naive_lmvnpdf_diag(X, mu, cv)
     lpr = mixture.log_multivariate_normal_density(X, mu, fullcv, 'full')
     assert_array_almost_equal(lpr, reference)
+
+
+def test_lvmpdf_full_cv_non_positive_definite():
+    n_features, n_components, n_samples = 2, 1, 10
+    rng = np.random.RandomState(0)
+    X = rng.randint(10) * rng.rand(n_samples, n_features)
+    mu = np.mean(X, 0)
+    cv = np.array([[[-1, 0], [0, 1]]])
+    expected_message = "'covars' must be symmetric, positive-definite"
+    assert_raise_message(ValueError, expected_message,
+                         mixture.log_multivariate_normal_density,
+                         X, mu, cv, 'full')
 
 
 def test_GMM_attributes():
