@@ -182,7 +182,7 @@ def assert_tree_equal(d, s, message):
 
 
 def test_classification_toy():
-    """Check classification on a toy dataset."""
+    # Check classification on a toy dataset.
     for name, Tree in CLF_TREES.items():
         clf = Tree(random_state=0)
         clf.fit(X, y)
@@ -196,7 +196,7 @@ def test_classification_toy():
 
 
 def test_weighted_classification_toy():
-    """Check classification on a weighted toy dataset."""
+    # Check classification on a weighted toy dataset.
     for name, Tree in CLF_TREES.items():
         clf = Tree(random_state=0)
 
@@ -210,7 +210,7 @@ def test_weighted_classification_toy():
 
 
 def test_regression_toy():
-    """Check regression on a toy dataset."""
+    # Check regression on a toy dataset.
     for name, Tree in REG_TREES.items():
         reg = Tree(random_state=1)
         reg.fit(X, y)
@@ -224,7 +224,7 @@ def test_regression_toy():
 
 
 def test_xor():
-    """Check on a XOR problem"""
+    # Check on a XOR problem
     y = np.zeros((10, 10))
     y[:5, :5] = 1
     y[5:, 5:] = 1
@@ -247,7 +247,7 @@ def test_xor():
 
 
 def test_iris():
-    """Check consistency on dataset iris."""
+    # Check consistency on dataset iris.
     for (name, Tree), criterion in product(CLF_TREES.items(), CLF_CRITERIONS):
         clf = Tree(criterion=criterion, random_state=0)
         clf.fit(iris.data, iris.target)
@@ -265,7 +265,7 @@ def test_iris():
 
 
 def test_boston():
-    """Check consistency on dataset boston house prices."""
+    # Check consistency on dataset boston house prices.
 
     for (name, Tree), criterion in product(REG_TREES.items(), REG_CRITERIONS):
         reg = Tree(criterion=criterion, random_state=0)
@@ -286,7 +286,7 @@ def test_boston():
 
 
 def test_probability():
-    """Predict probabilities using DecisionTreeClassifier."""
+    # Predict probabilities using DecisionTreeClassifier.
 
     for name, Tree in CLF_TREES.items():
         clf = Tree(max_depth=1, max_features=1, random_state=42)
@@ -305,7 +305,7 @@ def test_probability():
 
 
 def test_arrayrepr():
-    """Check the array representation."""
+    # Check the array representation.
     # Check resize
     X = np.arange(10000)[:, np.newaxis]
     y = np.arange(10000)
@@ -316,7 +316,7 @@ def test_arrayrepr():
 
 
 def test_pure_set():
-    """Check when y is pure."""
+    # Check when y is pure.
     X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
     y = [1, 1, 1, 1, 1, 1]
 
@@ -334,7 +334,7 @@ def test_pure_set():
 
 
 def test_numerical_stability():
-    """Check numerical stability."""
+    # Check numerical stability.
     X = np.array([
         [152.08097839, 140.40744019, 129.75102234, 159.90493774],
         [142.50700378, 135.81935120, 117.82884979, 162.75781250],
@@ -357,7 +357,7 @@ def test_numerical_stability():
 
 
 def test_importances():
-    """Check variable importances."""
+    # Check variable importances.
     X, y = datasets.make_classification(n_samples=2000,
                                         n_features=10,
                                         n_informative=3,
@@ -393,13 +393,13 @@ def test_importances():
 
 @raises(ValueError)
 def test_importances_raises():
-    """Check if variable importance before fit raises ValueError. """
+    # Check if variable importance before fit raises ValueError.
     clf = DecisionTreeClassifier()
     clf.feature_importances_
 
 
 def test_importances_gini_equal_mse():
-    """Check that gini is equivalent to mse for binary output variable"""
+    # Check that gini is equivalent to mse for binary output variable
 
     X, y = datasets.make_classification(n_samples=2000,
                                         n_features=10,
@@ -425,7 +425,7 @@ def test_importances_gini_equal_mse():
 
 
 def test_max_features():
-    """Check max_features."""
+    # Check max_features.
     for name, TreeRegressor in REG_TREES.items():
         reg = TreeRegressor(max_features="auto")
         reg.fit(boston.data, boston.target)
@@ -490,7 +490,7 @@ def test_max_features():
 
 
 def test_error():
-    """Test that it gives proper exception on deficient input."""
+    # Test that it gives proper exception on deficient input.
     for name, TreeEstimator in CLF_TREES.items():
         # predict before fit
         est = TreeEstimator()
@@ -547,7 +547,7 @@ def test_error():
 
 
 def test_min_samples_leaf():
-    """Test if leaves contain more than leaf_count training examples"""
+    # Test if leaves contain more than leaf_count training examples
     X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
     y = iris.target
 
@@ -617,7 +617,7 @@ def test_min_weight_fraction_leaf():
 
 
 def test_pickle():
-    """Check that tree estimator are pickable """
+    # Check that tree estimator are pickable
     for name, TreeClassifier in CLF_TREES.items():
         clf = TreeClassifier(random_state=0)
         clf.fit(iris.data, iris.target)
@@ -646,7 +646,7 @@ def test_pickle():
 
 
 def test_multioutput():
-    """Check estimators on multi-output problems."""
+    # Check estimators on multi-output problems.
     X = [[-2, -1],
          [-1, -1],
          [-1, -2],
@@ -702,7 +702,7 @@ def test_multioutput():
 
 
 def test_classes_shape():
-    """Test that n_classes_ and classes_ have proper shape."""
+    # Test that n_classes_ and classes_ have proper shape.
     for name, TreeClassifier in CLF_TREES.items():
         # Classification, single output
         clf = TreeClassifier(random_state=0)
@@ -722,7 +722,7 @@ def test_classes_shape():
 
 
 def test_unbalanced_iris():
-    """Check class rebalancing."""
+    # Check class rebalancing.
     unbalanced_X = iris.data[:125]
     unbalanced_y = iris.target[:125]
     sample_weight = _balance_weights(unbalanced_y)
@@ -734,7 +734,7 @@ def test_unbalanced_iris():
 
 
 def test_memory_layout():
-    """Check that it works no matter the memory layout"""
+    # Check that it works no matter the memory layout
     for (name, TreeEstimator), dtype in product(ALL_TREES.items(),
                                                 [np.float64, np.float32]):
         est = TreeEstimator(random_state=0)
@@ -777,7 +777,7 @@ def test_memory_layout():
 
 
 def test_sample_weight():
-    """Check sample weighting."""
+    # Check sample weighting.
     # Test that zero-weighted samples are not taken into account
     X = np.arange(100)[:, np.newaxis]
     y = np.ones(100)
@@ -828,7 +828,7 @@ def test_sample_weight():
 
 
 def test_sample_weight_invalid():
-    """Check sample weighting raises errors."""
+    # Check sample weighting raises errors.
     X = np.arange(100)[:, np.newaxis]
     y = np.ones(100)
     y[:50] = 0.0
@@ -897,7 +897,7 @@ def test_class_weights():
 
 
 def check_class_weight_errors(name):
-    """Test if class_weight raises errors and warnings when expected."""
+    # Test if class_weight raises errors and warnings when expected.
     TreeClassifier = CLF_TREES[name]
     _y = np.vstack((y, np.array(y) * 2)).T
 
@@ -921,7 +921,7 @@ def test_class_weight_errors():
 
 
 def test_max_leaf_nodes():
-    """Test greedy trees with max_depth + 1 leafs. """
+    # Test greedy trees with max_depth + 1 leafs.
     from sklearn.tree._tree import TREE_LEAF
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     k = 4
@@ -940,7 +940,7 @@ def test_max_leaf_nodes():
 
 
 def test_max_leaf_nodes_max_depth():
-    """Test preceedence of max_leaf_nodes over max_depth. """
+    # Test preceedence of max_leaf_nodes over max_depth.
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
@@ -950,10 +950,8 @@ def test_max_leaf_nodes_max_depth():
 
 
 def test_arrays_persist():
-    """Ensure property arrays' memory stays alive when tree disappears
-
-    non-regression for #2726
-    """
+    # Ensure property arrays' memory stays alive when tree disappears
+    # non-regression for #2726
     for attr in ['n_classes', 'value', 'children_left', 'children_right',
                  'threshold', 'impurity', 'feature', 'n_node_samples']:
         value = getattr(DecisionTreeClassifier().fit([[0]], [0]).tree_, attr)
@@ -991,7 +989,7 @@ def test_with_only_one_non_constant_features():
 
 
 def test_big_input():
-    """Test if the warning for too large inputs is appropriate."""
+    # Test if the warning for too large inputs is appropriate.
     X = np.repeat(10 ** 40., 4).astype(np.float64).reshape(-1, 1)
     clf = DecisionTreeClassifier()
     try:

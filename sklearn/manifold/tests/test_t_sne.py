@@ -19,7 +19,7 @@ from scipy.spatial.distance import squareform
 
 
 def test_gradient_descent_stops():
-    """Test stopping conditions of gradient descent."""
+    # Test stopping conditions of gradient descent.
     class ObjectiveSmallGradient:
         def __init__(self):
             self.it = -1
@@ -97,7 +97,7 @@ def test_gradient_descent_stops():
 
 
 def test_binary_search():
-    """Test if the binary search finds Gaussians with desired perplexity."""
+    # Test if the binary search finds Gaussians with desired perplexity.
     random_state = check_random_state(0)
     distances = random_state.randn(50, 2)
     distances = distances.dot(distances.T)
@@ -111,7 +111,7 @@ def test_binary_search():
 
 
 def test_gradient():
-    """Test gradient of Kullback-Leibler divergence."""
+    # Test gradient of Kullback-Leibler divergence.
     random_state = check_random_state(0)
 
     n_samples = 50
@@ -135,7 +135,7 @@ def test_gradient():
 
 
 def test_trustworthiness():
-    """Test trustworthiness score."""
+    # Test trustworthiness score.
     random_state = check_random_state(0)
 
     # Affine transformation
@@ -155,7 +155,7 @@ def test_trustworthiness():
 
 
 def test_preserve_trustworthiness_approximately():
-    """Nearest neighbors should be preserved approximately."""
+    # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
     for init in ('random', 'pca'):
@@ -167,7 +167,7 @@ def test_preserve_trustworthiness_approximately():
 
 
 def test_fit_csr_matrix():
-    """X can be a sparse matrix."""
+    # X can be a sparse matrix.
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
     X[(np.random.randint(0, 100, 50), np.random.randint(0, 2, 50))] = 0.0
@@ -180,7 +180,7 @@ def test_fit_csr_matrix():
 
 
 def test_preserve_trustworthiness_approximately_with_precomputed_distances():
-    """Nearest neighbors should be preserved approximately."""
+    # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
     D = squareform(pdist(X), "sqeuclidean")
@@ -192,41 +192,41 @@ def test_preserve_trustworthiness_approximately_with_precomputed_distances():
 
 
 def test_early_exaggeration_too_small():
-    """Early exaggeration factor must be >= 1."""
+    # Early exaggeration factor must be >= 1.
     tsne = TSNE(early_exaggeration=0.99)
     assert_raises_regexp(ValueError, "early_exaggeration .*",
                          tsne.fit_transform, np.array([[0.0]]))
 
 
 def test_too_few_iterations():
-    """Number of gradient descent iterations must be at least 200."""
+    # Number of gradient descent iterations must be at least 200.
     tsne = TSNE(n_iter=199)
     assert_raises_regexp(ValueError, "n_iter .*", tsne.fit_transform,
                          np.array([[0.0]]))
 
 
 def test_non_square_precomputed_distances():
-    """Precomputed distance matrices must be square matrices."""
+    # Precomputed distance matrices must be square matrices.
     tsne = TSNE(metric="precomputed")
     assert_raises_regexp(ValueError, ".* square distance matrix",
                          tsne.fit_transform, np.array([[0.0], [1.0]]))
 
 
 def test_init_not_available():
-    """'init' must be 'pca' or 'random'."""
+    # 'init' must be 'pca' or 'random'.
     assert_raises_regexp(ValueError, "'init' must be either 'pca' or 'random'",
                          TSNE, init="not available")
 
 
 def test_distance_not_available():
-    """'metric' must be valid."""
+    # 'metric' must be valid.
     tsne = TSNE(metric="not available")
     assert_raises_regexp(ValueError, "Unknown metric not available.*",
                          tsne.fit_transform, np.array([[0.0], [1.0]]))
 
 
 def test_pca_initialization_not_compatible_with_precomputed_kernel():
-    """Precomputed distance matrices must be square matrices."""
+    # Precomputed distance matrices must be square matrices.
     tsne = TSNE(metric="precomputed", init="pca")
     assert_raises_regexp(ValueError, "The parameter init=\"pca\" cannot be "
                          "used with metric=\"precomputed\".",
@@ -257,7 +257,7 @@ def test_verbose():
 
 
 def test_chebyshev_metric():
-    """t-SNE should allow metrics that cannot be squared (issue #3526)."""
+    # t-SNE should allow metrics that cannot be squared (issue #3526).
     random_state = check_random_state(0)
     tsne = TSNE(metric="chebyshev")
     X = random_state.randn(5, 2)
@@ -265,7 +265,7 @@ def test_chebyshev_metric():
 
 
 def test_reduction_to_one_component():
-    """t-SNE should allow reduction to one component (issue #4154)."""
+    # t-SNE should allow reduction to one component (issue #4154).
     random_state = check_random_state(0)
     tsne = TSNE(n_components=1)
     X = random_state.randn(5, 2)

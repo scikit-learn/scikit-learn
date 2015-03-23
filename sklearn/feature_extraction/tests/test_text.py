@@ -561,7 +561,7 @@ def test_vectorizer_max_features():
 
 
 def test_count_vectorizer_max_features():
-    """Regression test: max_features didn't work correctly in 0.14."""
+    # Regression test: max_features didn't work correctly in 0.14.
 
     cv_1 = CountVectorizer(max_features=1)
     cv_3 = CountVectorizer(max_features=3)
@@ -860,8 +860,7 @@ def test_pickling_vectorizer():
 
 
 def test_stop_words_removal():
-    """Ensure that deleting the stop_words_ attribute doesn't affect transform
-    """
+    # Ensure that deleting the stop_words_ attribute doesn't affect transform
 
     fitted_vectorizers = (
         TfidfVectorizer().fit(JUNK_FOOD_DOCS),

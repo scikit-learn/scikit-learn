@@ -55,7 +55,7 @@ def test_get_submatrix():
 
 
 def _test_shape_indices(model):
-    """Test get_shape and get_indices on fitted model."""
+    # Test get_shape and get_indices on fitted model.
     for i in range(model.n_clusters):
         m, n = model.get_shape(i)
         i_ind, j_ind = model.get_indices(i)
@@ -64,7 +64,7 @@ def _test_shape_indices(model):
 
 
 def test_spectral_coclustering():
-    """Test Dhillon's Spectral CoClustering on a simple problem."""
+    # Test Dhillon's Spectral CoClustering on a simple problem.
     param_grid = {'svd_method': ['randomized', 'arpack'],
                   'n_svd_vecs': [None, 20],
                   'mini_batch': [False, True],
@@ -93,7 +93,7 @@ def test_spectral_coclustering():
 
 
 def test_spectral_biclustering():
-    """Test Kluger methods on a checkerboard dataset."""
+    # Test Kluger methods on a checkerboard dataset.
     S, rows, cols = make_checkerboard((30, 30), 3, noise=0.5,
                                       random_state=0)
 

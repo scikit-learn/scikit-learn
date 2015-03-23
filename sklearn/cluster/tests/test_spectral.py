@@ -162,7 +162,7 @@ def test_affinities():
     assert_equal((X.shape[0],), labels.shape)
 
     def histogram(x, y, **kwargs):
-        """Histogram kernel implemented as a callable."""
+        # Histogram kernel implemented as a callable.
         assert_equal(kwargs, {})    # no kernel_params that we didn't ask for
         return np.minimum(x, y).sum()
 

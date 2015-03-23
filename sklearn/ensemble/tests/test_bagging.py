@@ -50,7 +50,7 @@ boston.target = boston.target[perm]
 
 
 def test_classification():
-    """Check classification for various parameter settings."""
+    # Check classification for various parameter settings.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(iris.data,
                                                         iris.target,
@@ -73,7 +73,7 @@ def test_classification():
 
 
 def test_sparse_classification():
-    """Check classification for various parameter settings on sparse input."""
+    # Check classification for various parameter settings on sparse input.
 
     class CustomSVC(SVC):
         """SVC variant that records the nature of the training set"""
@@ -132,7 +132,7 @@ def test_sparse_classification():
 
 
 def test_regression():
-    """Check regression for various parameter settings."""
+    # Check regression for various parameter settings.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
                                                         boston.target[:50],
@@ -154,7 +154,7 @@ def test_regression():
 
 
 def test_sparse_regression():
-    """Check regression for various parameter settings on sparse input."""
+    # Check regression for various parameter settings on sparse input.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
                                                         boston.target[:50],
@@ -214,7 +214,7 @@ def test_sparse_regression():
 
 
 def test_bootstrap_samples():
-    """Test that bootstraping samples generate non-perfect base estimators."""
+    # Test that bootstraping samples generate non-perfect base estimators.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
@@ -242,7 +242,7 @@ def test_bootstrap_samples():
 
 
 def test_bootstrap_features():
-    """Test that bootstraping features may generate dupplicate features."""
+    # Test that bootstraping features may generate dupplicate features.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
@@ -266,7 +266,7 @@ def test_bootstrap_features():
 
 
 def test_probability():
-    """Predict probabilities."""
+    # Predict probabilities.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(iris.data,
                                                         iris.target,
@@ -298,8 +298,8 @@ def test_probability():
 
 
 def test_oob_score_classification():
-    """Check that oob prediction is a good estimation of the generalization
-    error."""
+    # Check that oob prediction is a good estimation of the generalization
+    # error.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(iris.data,
                                                         iris.target,
@@ -328,8 +328,8 @@ def test_oob_score_classification():
 
 
 def test_oob_score_regression():
-    """Check that oob prediction is a good estimation of the generalization
-    error."""
+    # Check that oob prediction is a good estimation of the generalization
+    # error.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
@@ -357,7 +357,7 @@ def test_oob_score_regression():
 
 
 def test_single_estimator():
-    """Check singleton ensembles."""
+    # Check singleton ensembles.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
@@ -375,7 +375,7 @@ def test_single_estimator():
 
 
 def test_error():
-    """Test that it gives proper exception on deficient input."""
+    # Test that it gives proper exception on deficient input.
     X, y = iris.data, iris.target
     base = DecisionTreeClassifier()
 
@@ -408,7 +408,7 @@ def test_error():
 
 
 def test_parallel_classification():
-    """Check parallel classification."""
+    # Check parallel classification.
     rng = check_random_state(0)
 
     # Classification
@@ -454,7 +454,7 @@ def test_parallel_classification():
 
 
 def test_parallel_regression():
-    """Check parallel regression."""
+    # Check parallel regression.
     rng = check_random_state(0)
 
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
@@ -480,7 +480,7 @@ def test_parallel_regression():
 
 
 def test_gridsearch():
-    """Check that bagging ensembles can be grid-searched."""
+    # Check that bagging ensembles can be grid-searched.
     # Transform iris into a binary classification task
     X, y = iris.data, iris.target
     y[y == 2] = 1
@@ -495,7 +495,7 @@ def test_gridsearch():
 
 
 def test_base_estimator():
-    """Check base_estimator and its default values."""
+    # Check base_estimator and its default values.
     rng = check_random_state(0)
 
     # Classification

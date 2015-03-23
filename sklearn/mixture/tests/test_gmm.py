@@ -13,10 +13,8 @@ rng = np.random.RandomState(0)
 
 
 def test_sample_gaussian():
-    """
-    Test sample generation from mixture.sample_gaussian where covariance
-    is diagonal, spherical and full
-    """
+    # Test sample generation from mixture.sample_gaussian where covariance
+    # is diagonal, spherical and full
 
     n_features, n_samples = 2, 300
     axis = 1
@@ -65,11 +63,9 @@ def _naive_lmvnpdf_diag(X, mu, cv):
 
 
 def test_lmvnpdf_diag():
-    """
-    test a slow and naive implementation of lmvnpdf and
-    compare it to the vectorized version (mixture.lmvnpdf) to test
-    for correctness
-    """
+    # test a slow and naive implementation of lmvnpdf and
+    # compare it to the vectorized version (mixture.lmvnpdf) to test
+    # for correctness
     n_features, n_components, n_samples = 2, 3, 10
     mu = rng.randint(10) * rng.rand(n_components, n_features)
     cv = (rng.rand(n_components, n_features) + 1.0) ** 2
@@ -237,8 +233,7 @@ class GMMTester():
             % (delta_min, self.threshold, self.covariance_type, trainll))
 
     def test_train_degenerate(self, params='wmc'):
-        """ Train on degenerate data with 0 in some dimensions
-        """
+        # Train on degenerate data with 0 in some dimensions
         # Create a training set by sampling from the predefined distribution.
         X = rng.randn(100, self.n_features)
         X.T[1:] = 0
@@ -250,8 +245,7 @@ class GMMTester():
         self.assertTrue(np.sum(np.abs(trainll / 100 / X.shape[1])) < 5)
 
     def test_train_1d(self, params='wmc'):
-        """ Train on 1-D data
-        """
+        # Train on 1-D data
         # Create a training set by sampling from the predefined distribution.
         X = rng.randn(100, 1)
         #X.T[1:] = 0
@@ -294,7 +288,7 @@ class TestGMMWithFullCovars(unittest.TestCase, GMMTester):
 
 
 def test_multiple_init():
-    """Test that multiple inits does not much worse than a single one"""
+    # Test that multiple inits does not much worse than a single one
     X = rng.randn(30, 5)
     X[:10] += 2
     g = mixture.GMM(n_components=2, covariance_type='spherical',
@@ -306,7 +300,7 @@ def test_multiple_init():
 
 
 def test_n_parameters():
-    """Test that the right number of parameters is estimated"""
+    # Test that the right number of parameters is estimated
     n_samples, n_dim, n_components = 7, 5, 2
     X = rng.randn(n_samples, n_dim)
     n_params = {'spherical': 13, 'diag': 21, 'tied': 26, 'full': 41}
@@ -318,10 +312,8 @@ def test_n_parameters():
 
 
 def test_1d_1component():
-    """
-    Test all of the covariance_types return the same BIC score for
-    1-dimensional, 1 component fits.
-    """
+    # Test all of the covariance_types return the same BIC score for
+    # 1-dimensional, 1 component fits.
     n_samples, n_dim, n_components = 100, 1, 1
     X = rng.randn(n_samples, n_dim)
     g_full = mixture.GMM(n_components=n_components, covariance_type='full',
@@ -336,7 +328,7 @@ def test_1d_1component():
 
 
 def test_aic():
-    """ Test the aic and bic criteria"""
+    # Test the aic and bic criteria
     n_samples, n_dim, n_components = 50, 3, 2
     X = rng.randn(n_samples, n_dim)
     SGH = 0.5 * (X.var() + np.log(2 * np.pi))  # standard gaussian entropy

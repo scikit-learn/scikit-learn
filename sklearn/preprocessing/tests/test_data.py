@@ -40,7 +40,7 @@ def toarray(a):
 
 
 def test_polynomial_features():
-    """Test Polynomial Features"""
+    # Test Polynomial Features
     X1 = np.arange(6)[:, np.newaxis]
     P1 = np.hstack([np.ones_like(X1),
                     X1, X1 ** 2, X1 ** 3])
@@ -70,7 +70,7 @@ def test_polynomial_features():
 
 
 def test_scaler_1d():
-    """Test scaling of dataset along single axis"""
+    # Test scaling of dataset along single axis
     rng = np.random.RandomState(0)
     X = rng.randn(5)
     X_orig_copy = X.copy()
@@ -100,7 +100,7 @@ def test_scaler_1d():
 
 
 def test_scaler_2d_arrays():
-    """Test scaling of 2d array along first axis"""
+    # Test scaling of 2d array along first axis
     rng = np.random.RandomState(0)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
@@ -181,7 +181,7 @@ def test_min_max_scaler_iris():
 
 
 def test_min_max_scaler_zero_variance_features():
-    """Check min max scaler on toy data with zero variance features"""
+    # Check min max scaler on toy data with zero variance features
     X = [[0., 1., +0.5],
          [0., 1., -0.1],
          [0., 1., +1.1]]
@@ -216,7 +216,7 @@ def test_min_max_scaler_zero_variance_features():
 
 
 def test_min_max_scaler_1d():
-    """Test scaling of dataset along single axis"""
+    # Test scaling of dataset along single axis
     rng = np.random.RandomState(0)
     X = rng.randn(5)
     X_orig_copy = X.copy()
@@ -378,7 +378,7 @@ def test_scaler_int():
 
 
 def test_scaler_without_copy():
-    """Check that StandardScaler.fit does not change input"""
+    # Check that StandardScaler.fit does not change input
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
@@ -411,7 +411,7 @@ def test_scale_sparse_with_mean_raise_exception():
 
 
 def test_scale_input_finiteness_validation():
-    """Check if non finite inputs raise ValueError"""
+    # Check if non finite inputs raise ValueError
     X = [np.nan, 5, 6, 7, 8]
     assert_raises_regex(ValueError,
                         "Input contains NaN, infinity or a value too large",
@@ -454,7 +454,7 @@ def test_scale_function_without_centering():
 
 
 def test_warning_scaling_integers():
-    """Check warning when scaling integer data"""
+    # Check warning when scaling integer data
     X = np.array([[1, 2, 0],
                   [0, 0, 0]], dtype=np.uint8)
 
@@ -564,7 +564,7 @@ def test_normalizer_l2():
 
 
 def test_normalize():
-    """Test normalize function"""
+    # Test normalize function
     # Only tests functionality not used by the tests for Normalizer.
     X = np.random.RandomState(37).randn(3, 2)
     assert_array_equal(normalize(X, copy=False),
@@ -622,8 +622,8 @@ def test_binarizer():
 
 
 def test_center_kernel():
-    """Test that KernelCenterer is equivalent to StandardScaler
-       in feature space"""
+    # Test that KernelCenterer is equivalent to StandardScaler
+       # in feature space
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
     scaler = StandardScaler(with_std=False)
@@ -683,7 +683,7 @@ def test_add_dummy_feature_csr():
 
 
 def test_one_hot_encoder_sparse():
-    """Test OneHotEncoder's fit and transform."""
+    # Test OneHotEncoder's fit and transform.
     X = [[3, 2, 1], [0, 1, 1]]
     enc = OneHotEncoder()
     # discover max values automatically
@@ -736,7 +736,7 @@ def test_one_hot_encoder_sparse():
     assert_raises(ValueError, enc.transform, [[0], [-1]])
 
 def test_one_hot_encoder_dense():
-    """check for sparse=False"""
+    # check for sparse=False
     X = [[3, 2, 1], [0, 1, 1]]
     enc = OneHotEncoder(sparse=False)
     # discover max values automatically

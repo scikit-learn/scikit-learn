@@ -33,7 +33,7 @@ def check_warnings():
 
 
 def test_lasso_zero():
-    """Check that the lasso can handle zero data without crashing"""
+    # Check that the lasso can handle zero data without crashing
     X = [[0], [0], [0]]
     y = [0, 0, 0]
     clf = Lasso(alpha=0.1).fit(X, y)
@@ -44,12 +44,9 @@ def test_lasso_zero():
 
 
 def test_lasso_toy():
-    """
-    Test Lasso on a toy example for various values of alpha.
-
-    When validating this against glmnet notice that glmnet divides it
-    against nobs.
-    """
+    # Test Lasso on a toy example for various values of alpha.
+    # When validating this against glmnet notice that glmnet divides it
+    # against nobs.
 
     X = [[-1], [0], [1]]
     Y = [-1, 0, 1]       # just a straight line
@@ -85,14 +82,10 @@ def test_lasso_toy():
 
 
 def test_enet_toy():
-    """
-    Test ElasticNet for various parameters of alpha and l1_ratio.
-
-    Actually, the parameters alpha = 0 should not be allowed. However,
-    we test it as a border case.
-
-    ElasticNet is tested with and without precomputed Gram matrix
-    """
+    # Test ElasticNet for various parameters of alpha and l1_ratio.
+    # Actually, the parameters alpha = 0 should not be allowed. However,
+    # we test it as a border case.
+    # ElasticNet is tested with and without precomputed Gram matrix
 
     X = np.array([[-1.], [0.], [1.]])
     Y = [-1, 0, 1]       # just a straight line
@@ -540,11 +533,9 @@ def test_warm_start_convergence_with_regularizer_decrement():
 
 
 def test_random_descent():
-    """Test that both random and cyclic selection give the same results.
-
-    Ensure that the test models fully converge and check a wide
-    range of conditions.
-    """
+    # Test that both random and cyclic selection give the same results.
+    # Ensure that the test models fully converge and check a wide
+    # range of conditions.
 
     # This uses the coordinate descent algo using the gram trick.
     X, y, _, _ = build_dataset(n_samples=50, n_features=20)
@@ -587,9 +578,7 @@ def test_random_descent():
 
 
 def test_deprection_precompute_enet():
-    """
-    Test that setting precompute="auto" gives a Deprecation Warning.
-    """
+    # Test that setting precompute="auto" gives a Deprecation Warning.
 
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     clf = ElasticNet(precompute="auto")
@@ -599,9 +588,7 @@ def test_deprection_precompute_enet():
 
 
 def test_enet_path_positive():
-    """
-    Test that the coefs returned by positive=True in enet_path are positive
-    """
+    # Test that the coefs returned by positive=True in enet_path are positive
 
     X, y, _, _ = build_dataset(n_samples=50, n_features=50)
     for path in [enet_path, lasso_path]:
@@ -610,9 +597,7 @@ def test_enet_path_positive():
 
 
 def test_sparse_dense_descent_paths():
-    """
-    Test that dense and sparse input give the same input for descent paths.
-    """
+    # Test that dense and sparse input give the same input for descent paths.
     X, y, _, _ = build_dataset(n_samples=50, n_features=20)
     csr = sparse.csr_matrix(X)
     for path in [enet_path, lasso_path]:

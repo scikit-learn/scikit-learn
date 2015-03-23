@@ -11,7 +11,7 @@ from sklearn.utils.testing import assert_equal
 
 
 def test_compute_class_weight():
-    """Test (and demo) compute_class_weight."""
+    # Test (and demo) compute_class_weight.
     y = np.asarray([2, 2, 2, 3, 3, 4])
     classes = np.unique(y)
     cw = compute_class_weight("auto", classes, y)
@@ -20,14 +20,14 @@ def test_compute_class_weight():
 
 
 def test_compute_class_weight_not_present():
-    """Raise error when y does not contain all class labels"""
+    # Raise error when y does not contain all class labels
     classes = np.arange(4)
     y = np.asarray([0, 0, 0, 1, 1, 2])
     assert_raises(ValueError, compute_class_weight, "auto", classes, y)
 
 
 def test_compute_class_weight_auto_negative():
-    """Test compute_class_weight when labels are negative"""
+    # Test compute_class_weight when labels are negative
     # Test with balanced class labels.
     classes = np.array([-2, -1, 0])
     y = np.asarray([-1, -1, 0, 0, -2, -2])
@@ -45,7 +45,7 @@ def test_compute_class_weight_auto_negative():
 
 
 def test_compute_class_weight_auto_unordered():
-    """Test compute_class_weight when classes are unordered"""
+    # Test compute_class_weight when classes are unordered
     classes = np.array([1, 0, 3])
     y = np.asarray([1, 0, 0, 3, 3, 3])
     cw = compute_class_weight("auto", classes, y)
@@ -55,7 +55,7 @@ def test_compute_class_weight_auto_unordered():
 
 
 def test_compute_sample_weight():
-    """Test (and demo) compute_sample_weight."""
+    # Test (and demo) compute_sample_weight.
     # Test with balanced classes
     y = np.asarray([1, 1, 1, 2, 2, 2])
     sample_weight = compute_sample_weight("auto", y)
@@ -97,7 +97,7 @@ def test_compute_sample_weight():
 
 
 def test_compute_sample_weight_with_subsample():
-    """Test compute_sample_weight with subsamples specified."""
+    # Test compute_sample_weight with subsamples specified.
     # Test with balanced classes and all samples present
     y = np.asarray([1, 1, 1, 2, 2, 2])
     sample_weight = compute_sample_weight("auto", y, range(6))
@@ -136,7 +136,7 @@ def test_compute_sample_weight_with_subsample():
 
 
 def test_compute_sample_weight_errors():
-    """Test compute_sample_weight raises errors expected."""
+    # Test compute_sample_weight raises errors expected.
     # Invalid preset string
     y = np.asarray([1, 1, 1, 2, 2, 2])
     y_ = np.asarray([[1, 0], [1, 0], [1, 0], [2, 1], [2, 1], [2, 1]])

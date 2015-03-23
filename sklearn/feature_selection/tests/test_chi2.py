@@ -29,7 +29,7 @@ def mkchi2(k):
 
 
 def test_chi2():
-    """Test Chi2 feature extraction"""
+    # Test Chi2 feature extraction
 
     chi2 = mkchi2(k=1).fit(X, y)
     chi2 = mkchi2(k=1).fit(X, y)
@@ -52,24 +52,22 @@ def test_chi2():
 
 
 def test_chi2_coo():
-    """Check that chi2 works with a COO matrix
-
-    (as returned by CountVectorizer, DictVectorizer)
-    """
+    # Check that chi2 works with a COO matrix
+    # (as returned by CountVectorizer, DictVectorizer)
     Xcoo = coo_matrix(X)
     mkchi2(k=2).fit_transform(Xcoo, y)
     # if we got here without an exception, we're safe
 
 
 def test_chi2_negative():
-    """Check for proper error on negative numbers in the input X."""
+    # Check for proper error on negative numbers in the input X.
     X, y = [[0, 1], [-1e-20, 1]], [0, 1]
     for X in (X, np.array(X), csr_matrix(X)):
         assert_raises(ValueError, chi2, X, y)
 
 
 def test_chisquare():
-    """Test replacement for scipy.stats.chisquare against the original."""
+    # Test replacement for scipy.stats.chisquare against the original.
     obs = np.array([[2., 2.],
                     [1., 1.]])
     exp = np.array([[1.5, 1.5],

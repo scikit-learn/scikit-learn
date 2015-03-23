@@ -39,7 +39,7 @@ iris.data = sparse.csr_matrix(iris.data)
 
 
 def test_svc():
-    """Check that sparse SVC gives the same result as SVC"""
+    # Check that sparse SVC gives the same result as SVC
 
     clf = svm.SVC(kernel='linear', probability=True, random_state=0)
     clf.fit(X, Y)
@@ -114,7 +114,7 @@ def test_svc_with_custom_kernel():
 
 
 def test_svc_iris():
-    """Test the sparse SVC with the iris dataset"""
+    # Test the sparse SVC with the iris dataset
     for k in ('linear', 'poly', 'rbf'):
         sp_clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         clf = svm.SVC(kernel=k).fit(iris.data.toarray(), iris.target)
@@ -129,9 +129,7 @@ def test_svc_iris():
 
 
 def test_error():
-    """
-    Test that it gives proper exception on deficient input
-    """
+    # Test that it gives proper exception on deficient input
     # impossible value of C
     assert_raises(ValueError, svm.SVC(C=-1).fit, X, Y)
 
@@ -148,9 +146,7 @@ def test_error():
 
 
 def test_linearsvc():
-    """
-    Similar to test_SVC
-    """
+    # Similar to test_SVC
     clf = svm.LinearSVC(random_state=0).fit(X, Y)
     sp_clf = svm.LinearSVC(random_state=0).fit(X_sp, Y)
 
@@ -169,7 +165,7 @@ def test_linearsvc():
 
 
 def test_linearsvc_iris():
-    """Test the sparse LinearSVC with the iris dataset"""
+    # Test the sparse LinearSVC with the iris dataset
 
     sp_clf = svm.LinearSVC(random_state=0).fit(iris.data, iris.target)
     clf = svm.LinearSVC(random_state=0).fit(iris.data.toarray(), iris.target)
@@ -194,9 +190,7 @@ def test_linearsvc_iris():
 
 
 def test_weight():
-    """
-    Test class weights
-    """
+    # Test class weights
     X_, y_ = make_classification(n_samples=200, n_features=100,
                                  weights=[0.833, 0.167], random_state=0)
 
@@ -211,9 +205,7 @@ def test_weight():
 
 
 def test_sample_weights():
-    """
-    Test weights on individual samples
-    """
+    # Test weights on individual samples
     clf = svm.SVC()
     clf.fit(X_sp, Y)
     assert_array_equal(clf.predict(X[2]), [1.])
@@ -224,19 +216,14 @@ def test_sample_weights():
 
 
 def test_sparse_liblinear_intercept_handling():
-    """
-    Test that sparse liblinear honours intercept_scaling param
-    """
+    # Test that sparse liblinear honours intercept_scaling param
     test_svm.test_dense_liblinear_intercept_handling(svm.LinearSVC)
 
 
 def test_sparse_realdata():
-    """
-    Test on a subset from the 20newsgroups dataset.
-
-    This catchs some bugs if input is not correctly converted into
-    sparse format or weights are not correctly initialized.
-    """
+    # Test on a subset from the 20newsgroups dataset.
+    # This catchs some bugs if input is not correctly converted into
+    # sparse format or weights are not correctly initialized.
 
     data = np.array([0.03771744,  0.1003567,  0.01174647,  0.027069])
     indices = np.array([6, 5, 35, 31])
