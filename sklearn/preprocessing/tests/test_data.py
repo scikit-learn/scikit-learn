@@ -2,6 +2,7 @@ import warnings
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse
+from distutils.version import LooseVersion
 
 from sklearn.utils.testing import assert_almost_equal, clean_warning_registry
 from sklearn.utils.testing import assert_array_almost_equal
@@ -14,6 +15,7 @@ from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.preprocessing.data import _transform_selected
@@ -97,6 +99,45 @@ def test_scaler_1d():
 
     X = np.ones(5)
     assert_array_equal(scale(X, with_mean=False), X)
+
+
+def test_standard_scaler_numerical_stability():
+    """Test numerical stability of scaling"""
+    # np.log(1e-5) is taken because of its floating point representation
+    # was empirically found to cause numerical problems with np.mean & np.std.
+
+    x = np.zeros(8, dtype=np.float64) + np.log(1e-5, dtype=np.float64)
+    if LooseVersion(np.__version__) >= LooseVersion('1.9'):
+        # This does not raise a warning as the number of samples is too low
+        # to trigger the problem in recent numpy
+        x_scaled = assert_no_warnings(scale, x)
+        assert_array_almost_equal(scale(x), np.zeros(8))
+    else:
+        w = "standard deviation of the data is probably very close to 0"
+        x_scaled = assert_warns_message(UserWarning, w, scale, x)
+        assert_array_almost_equal(x_scaled, np.zeros(8))
+
+    # with 2 more samples, the std computation run into numerical issues:
+    x = np.zeros(10, dtype=np.float64) + np.log(1e-5, dtype=np.float64)
+    w = "standard deviation of the data is probably very close to 0"
+    x_scaled = assert_warns_message(UserWarning, w, scale, x)
+    assert_array_almost_equal(x_scaled, np.zeros(10))
+
+    x = np.ones(10, dtype=np.float64) * 1e-100
+    x_small_scaled = assert_no_warnings(scale, x)
+    assert_array_almost_equal(x_small_scaled, np.zeros(10))
+
+    # Large values can cause (often recoverable) numerical stability issues:
+    x_big = np.ones(10, dtype=np.float64) * 1e100
+    w = "Dataset may contain too large values"
+    x_big_scaled = assert_warns_message(UserWarning, w, scale, x_big)
+    assert_array_almost_equal(x_big_scaled, np.zeros(10))
+    assert_array_almost_equal(x_big_scaled, x_small_scaled)
+
+    x_big_centered = assert_warns_message(UserWarning, w, scale, x_big,
+                                          with_std=False)
+    assert_array_almost_equal(x_big_centered, np.zeros(10))
+    assert_array_almost_equal(x_big_centered, x_small_scaled)
 
 
 def test_scaler_2d_arrays():
@@ -735,6 +776,7 @@ def test_one_hot_encoder_sparse():
     enc.fit([[0], [1]])
     assert_raises(ValueError, enc.transform, [[0], [-1]])
 
+
 def test_one_hot_encoder_dense():
     # check for sparse=False
     X = [[3, 2, 1], [0, 1, 1]]
@@ -828,7 +870,7 @@ def test_one_hot_encoder_unknown_transform():
     oh.fit(X)
     assert_array_equal(
         oh.transform(y).toarray(),
-        np.array([[ 0.,  0.,  0.,  0.,  1.,  0.,  0.]])
+        np.array([[0.,  0.,  0.,  0.,  1.,  0.,  0.]])
         )
 
     # Raise error if handle_unknown is neither ignore or error.
