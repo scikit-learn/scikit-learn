@@ -231,9 +231,9 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
             target.extend(data.target)
             filenames.extend(data.filenames)
 
-        data.data = data_lst
-        data.target = np.array(target)
-        data.filenames = np.array(filenames)
+        data.data = data['data'] = data_lst
+        data.target = data['target'] = np.array(target)
+        data.filenames = data['filenames'] = np.array(filenames)
         data.description = 'the 20 newsgroups by date dataset'
     else:
         raise ValueError(
