@@ -635,19 +635,10 @@ class _RidgeGCV(LinearModel):
     http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
-<<<<<<< HEAD
-=======
-
-<<<<<<< HEAD
->>>>>>> # This is a combination of 2 commits.
-=======
-
->>>>>>> # This is a combination of 4 commits.
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False,
                  scoring=None, copy_X=True,
                  gcv_mode=None, store_cv_values=False):
-        self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
@@ -827,7 +818,6 @@ class _BaseRidgeCV(LinearModel):
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
                  store_cv_values=False):
-        self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
@@ -853,10 +843,9 @@ class _BaseRidgeCV(LinearModel):
         -------
         self : Returns self.
         """
-        alphas = np.asarray(self.alphas)
 
         if self.cv is None:
-            estimator = _RidgeGCV(alphas,
+            estimator = _RidgeGCV(self.alphas,
                                   fit_intercept=self.fit_intercept,
                                   normalize=self.normalize,
                                   scoring=self.scoring,
@@ -870,7 +859,7 @@ class _BaseRidgeCV(LinearModel):
             if self.store_cv_values:
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
-            parameters = {'alpha': alphas}
+            parameters = {'alpha': self.alphas}
             # FIXME: sample_weight must be split into training/validation data
             #        too!
             #fit_params = {'sample_weight' : sample_weight}
@@ -979,23 +968,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     alphas : array-like of shape [n_alphas]
-=======
-    alphas : numpy array or tuple of length [n_alphas]
->>>>>>> update documentation
-=======
-    alphas : array-like of shape [n_alphas]
->>>>>>> documentation updated
-=======
-    alphas : array-like of shape [n_alphas]
->>>>>>> # This is a combination of 2 commits.
-=======
-    alphas : array-like of shape [n_alphas]
->>>>>>> # This is a combination of 4 commits.
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
