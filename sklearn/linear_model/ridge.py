@@ -636,12 +636,10 @@ class _RidgeGCV(LinearModel):
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
-
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False,
                  scoring=None, copy_X=True,
                  gcv_mode=None, store_cv_values=False):
-        self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
@@ -821,7 +819,6 @@ class _BaseRidgeCV(LinearModel):
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
                  store_cv_values=False):
-        self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
@@ -847,10 +844,9 @@ class _BaseRidgeCV(LinearModel):
         -------
         self : Returns self.
         """
-        alphas = np.asarray(self.alphas)
 
         if self.cv is None:
-            estimator = _RidgeGCV(alphas,
+            estimator = _RidgeGCV(self.alphas,
                                   fit_intercept=self.fit_intercept,
                                   normalize=self.normalize,
                                   scoring=self.scoring,
@@ -864,7 +860,7 @@ class _BaseRidgeCV(LinearModel):
             if self.store_cv_values:
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
-            parameters = {'alpha': alphas}
+            parameters = {'alpha': self.alphas}
             # FIXME: sample_weight must be split into training/validation data
             #        too!
             #fit_params = {'sample_weight' : sample_weight}
