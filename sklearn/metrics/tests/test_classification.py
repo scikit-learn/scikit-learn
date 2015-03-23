@@ -520,6 +520,8 @@ avg / total       0.51      0.53      0.47        75
     else:
         report = classification_report(y_true, y_pred)
         assert_equal(report, expected_report)
+
+
 @ignore_warnings  # sequence of sequences is deprecated
 def test_multilabel_classification_report():
     n_classes = 4
