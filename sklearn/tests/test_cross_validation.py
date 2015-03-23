@@ -696,6 +696,16 @@ def test_train_test_split():
     assert_equal(split[2].shape, (7, 7, 11))
     assert_equal(split[3].shape, (3, 7, 11))
 
+    # test stratification option
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2])
+    for test_size, exp_test_size in zip([2, 4, 0.25, 0.5],
+                                        [2, 4, 2, 4]):
+        train, test = cval.train_test_split(y,
+                                            test_size=test_size,
+                                            stratify=y)
+        assert_equal(len(test), exp_test_size)
+        assert_equal(len(test) + len(train), len(y))
+        assert_almost_equal(np.sum(y[train] == 1), np.sum(y[train] == 1))
 
 def train_test_split_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
