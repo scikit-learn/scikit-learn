@@ -843,7 +843,6 @@ class _BaseRidgeCV(LinearModel):
         -------
         self : Returns self.
         """
-
         if self.cv is None:
             estimator = _RidgeGCV(self.alphas,
                                   fit_intercept=self.fit_intercept,
