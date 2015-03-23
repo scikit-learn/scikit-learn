@@ -6,6 +6,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 
 from sklearn.datasets import make_blobs
 from sklearn import lda
@@ -93,6 +94,11 @@ def test_lda_transform():
     X_transformed = clf.fit(X, y).transform(X)
     assert_equal(X_transformed.shape[1], 1)
 
+    clf = lda.LDA(solver="lsqr", n_components=1)
+    clf.fit(X, y)
+    msg = "transform not implemented for 'lsqr'"
+    assert_raise_message(NotImplementedError, msg, clf.transform, X)
+
 
 def test_lda_orthogonality():
     # arrange four classes with their means in a kite-shaped pattern
@@ -114,8 +120,8 @@ def test_lda_orthogonality():
 
     d1 = means_transformed[3] - means_transformed[0]
     d2 = means_transformed[2] - means_transformed[1]
-    d1 /= np.sqrt(np.sum(d1**2))
-    d2 /= np.sqrt(np.sum(d2**2))
+    d1 /= np.sqrt(np.sum(d1 ** 2))
+    d2 /= np.sqrt(np.sum(d2 ** 2))
 
     # the transformed within-class covariance should be the identity matrix
     assert_almost_equal(np.cov(clf.transform(scatter).T), np.eye(2))
