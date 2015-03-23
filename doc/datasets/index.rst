@@ -6,7 +6,7 @@ Dataset loading utilities
 
 .. currentmodule:: sklearn.datasets
 
-The ``sklearn.datasets`` package embeds some small toy datasets
+The :mod:`sklearn.datasets` package embeds some small toy datasets
 as introduced in the :ref:`Getting Started <loading_example_dataset>` section.
 
 To evaluate the impact of the scale of the dataset (``n_samples`` and
@@ -27,15 +27,16 @@ The simplest one is the interface for sample images, which is described
 below in the :ref:`sample_images` section.
 
 The dataset generation functions and the svmlight loader share a simplistic
-interface, returning a tuple ``(X, y)`` consisting of a n_samples x n_features
-numpy array X and an array of length n_samples containing the targets y.
+interface, returning a tuple ``(X, y)`` consisting of a ``n_samples`` x 
+``n_features`` numpy array ``X`` and an array of length ``n_samples`` containing
+the targets ``y``.
 
 The toy datasets as well as the 'real world' datasets and the datasets
 fetched from mldata.org have more sophisticated structure.
 These functions return a dictionary-like object holding at least two items:
-an array of shape ``n_samples`` * `` n_features`` with key ``data``
+an array of shape ``n_samples`` x ``n_features`` with key ``data``
 (except for 20newsgroups)
-and a NumPy array of length ``n_samples``, containing the target values,
+and a numpy array of length ``n_samples``, containing the target values,
 with key ``target``.
 
 The datasets also contain a description in ``DESCR`` and some contain
@@ -224,8 +225,9 @@ Datasets in svmlight / libsvm format
 scikit-learn includes utility functions for loading
 datasets in the svmlight / libsvm format. In this format, each line
 takes the form ``<label> <feature-id>:<feature-value>
-<feature-id>:<feature-value> ...``. This format is especially suitable for sparse datasets.
-In this module, scipy sparse CSR matrices are used for ``X`` and numpy arrays are used for ``y``.
+<feature-id>:<feature-value> ...``. This format is especially suitable for
+sparse datasets. In this module, scipy sparse CSR matrices are used for ``X``
+and numpy arrays are used for ``y``.
 
 You may load a dataset like as follows::
 

@@ -10,22 +10,22 @@ between the train and test set is based upon a messages posted before
 and after a specific date.
 
 This module contains two loaders. The first one,
-``sklearn.datasets.fetch_20newsgroups``,
+:func:`sklearn.datasets.fetch_20newsgroups`,
 returns a list of the raw texts that can be fed to text feature
-extractors such as :class:`sklearn.feature_extraction.text.Vectorizer`
+extractors such as :class:`sklearn.feature_extraction.text.CountVectorizer`
 with custom parameters so as to extract feature vectors.
-The second one, ``sklearn.datasets.fetch_20newsgroups_vectorized``,
+The second one, :func:`sklearn.datasets.fetch_20newsgroups_vectorized`,
 returns ready-to-use features, i.e., it is not necessary to use a feature
 extractor.
 
 Usage
 -----
 
-The ``sklearn.datasets.fetch_20newsgroups`` function is a data
+The :func:`sklearn.datasets.fetch_20newsgroups` function is a data
 fetching / caching functions that downloads the data archive from
 the original `20 newsgroups website`_, extracts the archive contents
 in the ``~/scikit_learn_data/20news_home`` folder and calls the
-``sklearn.datasets.load_file`` on either the training or
+:func:`sklearn.datasets.load_files` on either the training or
 testing set folder, or both of them::
 
   >>> from sklearn.datasets import fetch_20newsgroups
@@ -65,7 +65,8 @@ attribute is the integer index of the category::
   array([12,  6,  9,  8,  6,  7,  9,  2, 13, 19])
 
 It is possible to load only a sub-selection of the categories by passing the
-list of the categories to load to the ``fetch_20newsgroups`` function::
+list of the categories to load to the
+:func:`sklearn.datasets.fetch_20newsgroups` function::
 
   >>> cats = ['alt.atheism', 'sci.space']
   >>> newsgroups_train = fetch_20newsgroups(subset='train', categories=cats)
@@ -85,7 +86,7 @@ Converting text to vectors
 In order to feed predictive or clustering models with the text data,
 one first need to turn the text into vectors of numerical values suitable
 for statistical analysis. This can be achieved with the utilities of the
-``sklearn.feature_extraction.text`` as demonstrated in the following
+:mod:`sklearn.feature_extraction.text` as demonstrated in the following
 example that extract `TF-IDF`_ vectors of unigram tokens
 from a subset of 20news::
 
@@ -106,8 +107,8 @@ components by sample in a more than 30000-dimensional space
   >>> vectors.nnz / float(vectors.shape[0])
   159.01327433628319
 
-``sklearn.datasets.fetch_20newsgroups_vectorized`` is a function which returns
-ready-to-use tfidf features instead of file names.
+:func:`sklearn.datasets.fetch_20newsgroups_vectorized` is a function which
+returns ready-to-use tfidf features instead of file names.
 
 .. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/
 .. _`TF-IDF`: http://en.wikipedia.org/wiki/Tf-idf
@@ -134,10 +135,10 @@ which is fast to train and achieves a decent F-score::
   >>> metrics.f1_score(newsgroups_test.target, pred, average='weighted')
   0.88251152461278892
 
-(The example :ref:`example_text_document_classification_20newsgroups.py` shuffles
-the training and test data, instead of segmenting by time, and in that case
-multinomial Naive Bayes gets a much higher F-score of 0.88. Are you suspicious
-yet of what's going on inside this classifier?)
+(The example :ref:`example_text_document_classification_20newsgroups.py`
+shuffles the training and test data, instead of segmenting by time, and in that
+case multinomial Naive Bayes gets a much higher F-score of 0.88. Are you
+suspicious yet of what's going on inside this classifier?)
 
 Let's take a look at what the most informative features are:
 
@@ -171,8 +172,8 @@ barely have to identify topics from text at all, and they all perform at the
 same high level.
 
 For this reason, the functions that load 20 Newsgroups data provide a
-parameter called **remove**, telling it what kinds of information to strip out
-of each file. **remove** should be a tuple containing any subset of
+parameter called ``remove``, telling it what kinds of information to strip out
+of each file. ``remove`` should be a tuple containing any subset of
 ``('headers', 'footers', 'quotes')``, telling it to remove headers, signature
 blocks, and quotation blocks respectively.
 
@@ -200,8 +201,8 @@ It loses even more if we also strip this metadata from the training data:
   0.73160869205141166
 
 Some other classifiers cope better with this harder version of the task. Try
-running :ref:`example_model_selection_grid_search_text_feature_extraction.py` with and without
-the ``--filter`` option to compare the results.
+running :ref:`example_model_selection_grid_search_text_feature_extraction.py`
+with and without the ``--filter`` option to compare the results.
 
 .. topic:: Recommendation
 
