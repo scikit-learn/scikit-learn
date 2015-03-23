@@ -22,7 +22,7 @@ from sklearn.utils.testing import assert_warns
 
 
 def test_n_samples_leaves_roots():
-    """Sanity check for the number of samples in leaves and roots"""
+    # Sanity check for the number of samples in leaves and roots
     X, y = make_blobs(n_samples=10)
     brc = Birch()
     brc.fit(X)
@@ -34,7 +34,7 @@ def test_n_samples_leaves_roots():
 
 
 def test_partial_fit():
-    """Test that fit is equivalent to calling partial_fit multiple times"""
+    # Test that fit is equivalent to calling partial_fit multiple times
     X, y = make_blobs(n_samples=100)
     brc = Birch(n_clusters=3)
     brc.fit(X)
@@ -52,7 +52,7 @@ def test_partial_fit():
 
 
 def test_birch_predict():
-    """Test the predict method predicts the nearest centroid."""
+    # Test the predict method predicts the nearest centroid.
     rng = np.random.RandomState(0)
     X = generate_clustered_data(n_clusters=3, n_features=3,
                                 n_samples_per_cluster=10)
@@ -70,7 +70,7 @@ def test_birch_predict():
 
 
 def test_n_clusters():
-    """Test that n_clusters param works properly"""
+    # Test that n_clusters param works properly
     X, y = make_blobs(n_samples=100, centers=10)
     brc1 = Birch(n_clusters=10)
     brc1.fit(X)
@@ -96,7 +96,7 @@ def test_n_clusters():
 
 
 def test_sparse_X():
-    """Test that sparse and dense data give same results"""
+    # Test that sparse and dense data give same results
     X, y = make_blobs(n_samples=100, centers=10)
     brc = Birch(n_clusters=10)
     brc.fit(X)
@@ -119,7 +119,7 @@ def check_branching_factor(node, branching_factor):
 
 
 def test_branching_factor():
-    """Test that nodes have at max branching_factor number of subclusters"""
+    # Test that nodes have at max branching_factor number of subclusters
     X, y = make_blobs()
     branching_factor = 9
 
@@ -149,7 +149,7 @@ def check_threshold(birch_instance, threshold):
 
 
 def test_threshold():
-    """Test that the leaf subclusters have a threshold lesser than radius"""
+    # Test that the leaf subclusters have a threshold lesser than radius
     X, y = make_blobs(n_samples=80, centers=4)
     brc = Birch(threshold=0.5, n_clusters=None)
     brc.fit(X)

@@ -152,7 +152,7 @@ def test_label_binarizer_set_label_encoding():
 
 @ignore_warnings
 def test_label_binarizer_errors():
-    """Check that invalid arguments yield ValueError"""
+    # Check that invalid arguments yield ValueError
     one_class = np.array([0, 0, 0, 0])
     lb = LabelBinarizer().fit(one_class)
 
@@ -191,7 +191,7 @@ def test_label_binarizer_errors():
 
 
 def test_label_encoder():
-    """Test LabelEncoder's transform and inverse_transform methods"""
+    # Test LabelEncoder's transform and inverse_transform methods
     le = LabelEncoder()
     le.fit([1, 1, 4, 5, -1, 0])
     assert_array_equal(le.classes_, [-1, 0, 1, 4, 5])
@@ -203,7 +203,7 @@ def test_label_encoder():
 
 
 def test_label_encoder_fit_transform():
-    """Test fit_transform"""
+    # Test fit_transform
     le = LabelEncoder()
     ret = le.fit_transform([1, 1, 4, 5, -1, 0])
     assert_array_equal(ret, [2, 2, 3, 4, 0, 1])
@@ -214,7 +214,7 @@ def test_label_encoder_fit_transform():
 
 
 def test_label_encoder_errors():
-    """Check that invalid arguments yield ValueError"""
+    # Check that invalid arguments yield ValueError
     le = LabelEncoder()
     assert_raises(ValueError, le.transform, [])
     assert_raises(ValueError, le.inverse_transform, [])
@@ -333,8 +333,7 @@ def test_multilabel_binarizer_given_classes():
 
 
 def test_multilabel_binarizer_same_length_sequence():
-    """Ensure sequences of the same length are not interpreted as a 2-d array
-    """
+    # Ensure sequences of the same length are not interpreted as a 2-d array
     inp = [[1], [0], [2]]
     indicator_mat = np.array([[0, 1, 0],
                               [1, 0, 0],

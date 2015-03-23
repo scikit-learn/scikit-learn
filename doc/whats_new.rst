@@ -229,6 +229,9 @@ Enhancements
    - Significant performance and memory usage improvements in
      :class:`preprocessing.PolynomialFeatures`. By `Eric Martin`_.
 
+   - Numerical stability improvements for :class:`preprocessing.StandardScaler`
+     and :func:`preprocessing.scale`. By `Nicolas Goix`_
+
 Documentation improvements
 ..........................
 
@@ -3376,3 +3379,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Dan Blanchard: https://github.com/dan-blanchard
 
 .. _Eric Martin: http://ericmart.in
+
+.. _Nicolas Goix: https://webperso.telecom-paristech.fr/front/frontoffice.php?SP_ID=241

@@ -32,12 +32,9 @@ y2 = np.array([1, 1, 2, 2, 3, 3])
 
 
 def test_gnb():
-    """
-    Gaussian Naive Bayes classification.
-
-    This checks that GaussianNB implements fit and predict and returns
-    correct values for a simple toy dataset.
-    """
+    # Gaussian Naive Bayes classification.
+    # This checks that GaussianNB implements fit and predict and returns
+    # correct values for a simple toy dataset.
 
     clf = GaussianNB()
     y_pred = clf.fit(X, y).predict(X)
@@ -54,7 +51,7 @@ def test_gnb():
 
 
 def test_gnb_prior():
-    """Test whether class priors are properly set. """
+    # Test whether class priors are properly set.
     clf = GaussianNB().fit(X, y)
     assert_array_almost_equal(np.array([3, 3]) / 6.0,
                               clf.class_prior_, 8)
@@ -96,7 +93,7 @@ def test_gnb_sample_weight():
 
 
 def test_discrete_prior():
-    """Test whether class priors are properly set. """
+    # Test whether class priors are properly set.
     for cls in [BernoulliNB, MultinomialNB]:
         clf = cls().fit(X2, y2)
         assert_array_almost_equal(np.log(np.array([2, 2, 2]) / 6.0),
@@ -104,11 +101,9 @@ def test_discrete_prior():
 
 
 def test_mnnb():
-    """Test Multinomial Naive Bayes classification.
-
-    This checks that MultinomialNB implements fit and predict and returns
-    correct values for a simple toy dataset.
-    """
+    # Test Multinomial Naive Bayes classification.
+    # This checks that MultinomialNB implements fit and predict and returns
+    # correct values for a simple toy dataset.
 
     for X in [X2, scipy.sparse.csr_matrix(X2)]:
         # Check the ability to predict the learning set.
@@ -188,7 +183,7 @@ def test_gnb_partial_fit():
 
 
 def test_discretenb_pickle():
-    """Test picklability of discrete naive Bayes classifiers"""
+    # Test picklability of discrete naive Bayes classifiers
 
     for cls in [BernoulliNB, MultinomialNB, GaussianNB]:
         clf = cls().fit(X2, y2)
@@ -213,7 +208,7 @@ def test_discretenb_pickle():
 
 
 def test_input_check_fit():
-    """Test input checks for the fit method"""
+    # Test input checks for the fit method
     for cls in [BernoulliNB, MultinomialNB, GaussianNB]:
         # check shape consistency for number of samples at fit time
         assert_raises(ValueError, cls().fit, X2, y2[:-1])
@@ -246,7 +241,7 @@ def test_input_check_partial_fit():
 
 
 def test_discretenb_predict_proba():
-    """Test discrete NB classes' probability scores"""
+    # Test discrete NB classes' probability scores
 
     # The 100s below distinguish Bernoulli from multinomial.
     # FIXME: write a test to show this.
@@ -277,8 +272,8 @@ def test_discretenb_predict_proba():
 
 
 def test_discretenb_uniform_prior():
-    """Test whether discrete NB classes fit a uniform prior
-       when fit_prior=False and class_prior=None"""
+    # Test whether discrete NB classes fit a uniform prior
+    # when fit_prior=False and class_prior=None
 
     for cls in [BernoulliNB, MultinomialNB]:
         clf = cls()
@@ -289,7 +284,7 @@ def test_discretenb_uniform_prior():
 
 
 def test_discretenb_provide_prior():
-    """Test whether discrete NB classes use provided prior"""
+    # Test whether discrete NB classes use provided prior
 
     for cls in [BernoulliNB, MultinomialNB]:
         clf = cls(class_prior=[0.5, 0.5])
@@ -304,8 +299,8 @@ def test_discretenb_provide_prior():
 
 
 def test_discretenb_provide_prior_with_partial_fit():
-    """Test whether discrete NB classes use provided prior
-       when using partial_fit"""
+    # Test whether discrete NB classes use provided prior
+    # when using partial_fit
 
     iris = load_iris()
     iris_data1, iris_data2, iris_target1, iris_target2 = train_test_split(
@@ -363,10 +358,8 @@ def test_sample_weight_mnb():
 
 
 def test_coef_intercept_shape():
-    """coef_ and intercept_ should have shapes as in other linear models.
-
-    Non-regression test for issue #2127.
-    """
+    # coef_ and intercept_ should have shapes as in other linear models.
+    # Non-regression test for issue #2127.
     X = [[1, 0, 0], [1, 1, 1]]
     y = [1, 2]  # binary classification
 
@@ -408,13 +401,11 @@ def test_check_accuracy_on_digits():
 
 
 def test_feature_log_prob_bnb():
-    """Test for issue #4268.
-
-    Tests that the feature log prob value computed by BernoulliNB when
-    alpha=1.0 is equal to the expression given in Manning, Raghavan,
-    and Schuetze's "Introduction to Information Retrieval" book:
-    http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
-    """
+    # Test for issue #4268.
+    # Tests that the feature log prob value computed by BernoulliNB when
+    # alpha=1.0 is equal to the expression given in Manning, Raghavan,
+    # and Schuetze's "Introduction to Information Retrieval" book:
+    # http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
 
     X = np.array([[0, 0, 0], [1, 1, 0], [0, 1, 0], [1, 0, 1], [0, 1, 0]])
     Y = np.array([0, 0, 1, 2, 2])
@@ -433,12 +424,10 @@ def test_feature_log_prob_bnb():
 
 
 def test_bnb():
-    """
-    Tests that BernoulliNB when alpha=1.0 gives the same values as
-    those given for the toy example in Manning, Raghavan, and
-    Schuetze's "Introduction to Information Retrieval" book:
-    http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
-    """
+    # Tests that BernoulliNB when alpha=1.0 gives the same values as
+    # those given for the toy example in Manning, Raghavan, and
+    # Schuetze's "Introduction to Information Retrieval" book:
+    # http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
 
     # Training data points are:
     # Chinese Beijing Chinese (class: China)

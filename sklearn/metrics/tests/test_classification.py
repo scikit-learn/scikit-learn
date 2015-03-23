@@ -128,7 +128,7 @@ def test_multilabel_accuracy_score_subset_accuracy():
 
 
 def test_precision_recall_f1_score_binary():
-    """Test Precision Recall and F1 Score for binary classification task"""
+    # Test Precision Recall and F1 Score for binary classification task
     y_true, y_pred, _ = make_prediction(binary=True)
 
     # detailed measures for each class
@@ -161,10 +161,9 @@ def test_precision_recall_f1_score_binary():
 
 @ignore_warnings
 def test_precision_recall_f_binary_single_class():
-    """Test precision, recall and F1 score behave with a single positive or
-    negative class
-
-    Such a case may occur with non-stratified cross-validation"""
+    # Test precision, recall and F1 score behave with a single positive or
+    # negative class
+    # Such a case may occur with non-stratified cross-validation
     assert_equal(1., precision_score([1, 1], [1, 1]))
     assert_equal(1., recall_score([1, 1], [1, 1]))
     assert_equal(1., f1_score([1, 1], [1, 1]))
@@ -175,9 +174,8 @@ def test_precision_recall_f_binary_single_class():
 
 
 def test_average_precision_score_score_non_binary_class():
-    """Test that average_precision_score function returns an error when trying
-    to compute average_precision_score for multiclass task.
-    """
+    # Test that average_precision_score function returns an error when trying
+    # to compute average_precision_score for multiclass task.
     rng = check_random_state(404)
     y_pred = rng.rand(10)
 
@@ -229,7 +227,7 @@ def test_precision_recall_fscore_support_errors():
 
 
 def test_confusion_matrix_binary():
-    """Test confusion matrix - binary classification case"""
+    # Test confusion matrix - binary classification case
     y_true, y_pred, _ = make_prediction(binary=True)
 
     def test(y_true, y_pred):
@@ -257,7 +255,7 @@ def test_matthews_corrcoef_nan():
 
 
 def test_precision_recall_f1_score_multiclass():
-    """Test Precision Recall and F1 Score for multiclass classification task"""
+    # Test Precision Recall and F1 Score for multiclass classification task
     y_true, y_pred, _ = make_prediction(binary=False)
 
     # compute scores with default labels introspection
@@ -326,10 +324,8 @@ def test_precision_refcall_f1_score_multilabel_unordered_labels():
 
 
 def test_precision_recall_f1_score_multiclass_pos_label_none():
-    """Test Precision Recall and F1 Score for multiclass classification task
-
-    GH Issue #1296
-    """
+    # Test Precision Recall and F1 Score for multiclass classification task
+    # GH Issue #1296
     # initialize data
     y_true = np.array([0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1])
     y_pred = np.array([1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1])
@@ -341,7 +337,7 @@ def test_precision_recall_f1_score_multiclass_pos_label_none():
 
 
 def test_zero_precision_recall():
-    """Check that pathological cases do not bring NaNs"""
+    # Check that pathological cases do not bring NaNs
 
     old_error_settings = np.seterr(all='raise')
 
@@ -361,7 +357,7 @@ def test_zero_precision_recall():
 
 
 def test_confusion_matrix_multiclass():
-    """Test confusion matrix - multi-class case"""
+    # Test confusion matrix - multi-class case
     y_true, y_pred, _ = make_prediction(binary=False)
 
     def test(y_true, y_pred, string_type=False):
@@ -387,7 +383,7 @@ def test_confusion_matrix_multiclass():
 
 
 def test_confusion_matrix_multiclass_subset_labels():
-    """Test confusion matrix - multi-class case with subset of labels"""
+    # Test confusion matrix - multi-class case with subset of labels
     y_true, y_pred, _ = make_prediction(binary=False)
 
     # compute confusion matrix with only first two labels considered
@@ -403,7 +399,7 @@ def test_confusion_matrix_multiclass_subset_labels():
 
 
 def test_classification_report_multiclass():
-    """Test performance report"""
+    # Test performance report
     iris = datasets.load_iris()
     y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
 
@@ -421,7 +417,6 @@ avg / total       0.51      0.53      0.47        75
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names)
     assert_equal(report, expected_report)
-
     # print classification report with label detection
     expected_report = """\
              precision    recall  f1-score   support
@@ -437,7 +432,7 @@ avg / total       0.51      0.53      0.47        75
 
 
 def test_classification_report_multiclass_with_digits():
-    """Test performance report with added digits in floating point values"""
+    # Test performance report with added digits in floating point values
     iris = datasets.load_iris()
     y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
 
@@ -455,7 +450,6 @@ avg / total    0.51375   0.53333   0.47310        75
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names, digits=5)
     assert_equal(report, expected_report)
-
     # print classification report with label detection
     expected_report = """\
              precision    recall  f1-score   support
@@ -537,7 +531,6 @@ def test_multilabel_classification_report():
                            n_samples=n_samples)
     _, y_pred_ll = make_ml(n_features=1, n_classes=n_classes, random_state=1,
                            n_samples=n_samples)
-
     expected_report = """\
              precision    recall  f1-score   support
 
@@ -653,8 +646,7 @@ def test_multilabel_jaccard_similarity_score():
 
 @ignore_warnings
 def test_precision_recall_f1_score_multilabel_1():
-    """ Test precision_recall_f1_score on a crafted multilabel example
-    """
+    # Test precision_recall_f1_score on a crafted multilabel example
     # First crafted example
     y_true_ll = [(0,), (1,), (2, 3)]
     y_pred_ll = [(1,), (1,), (2, 0)]
@@ -730,8 +722,7 @@ def test_precision_recall_f1_score_multilabel_1():
 
 @ignore_warnings
 def test_precision_recall_f1_score_multilabel_2():
-    """ Test precision_recall_f1_score on a crafted multilabel example 2
-    """
+    # Test precision_recall_f1_score on a crafted multilabel example 2
     # Second crafted example
     y_true_ll = [(1,), (2,), (2, 3)]
     y_pred_ll = [(4,), (4,), (2, 1)]
@@ -1014,8 +1005,7 @@ def test_fscore_warnings():
 
 
 def test_prf_average_compat():
-    """Ensure warning if f1_score et al.'s average is implicit for multiclass
-    """
+    # Ensure warning if f1_score et al.'s average is implicit for multiclass
     y_true = [1, 2, 3, 3]
     y_pred = [1, 2, 3, 1]
     y_true_bin = [0, 1, 1]
@@ -1044,8 +1034,8 @@ def test_prf_average_compat():
 
 @ignore_warnings  # sequence of sequences is deprecated
 def test__check_targets():
-    """Check that _check_targets correctly merges target types, squeezes
-    output and fails if input lengths differ."""
+    # Check that _check_targets correctly merges target types, squeezes
+    # output and fails if input lengths differ.
     IND = 'multilabel-indicator'
     SEQ = 'multilabel-sequences'
     MC = 'multiclass'
@@ -1274,7 +1264,7 @@ def test_log_loss():
 
 
 def test_brier_score_loss():
-    """Check brier_score_loss function"""
+    # Check brier_score_loss function
     y_true = np.array([0, 1, 1, 0, 1, 1])
     y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1., 0.95])
     true_score = linalg.norm(y_true - y_pred) ** 2 / len(y_true)

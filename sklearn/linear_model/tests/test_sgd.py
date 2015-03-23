@@ -174,7 +174,7 @@ class CommonTest(object):
         self._test_warm_start(X, Y, "optimal")
 
     def test_input_format(self):
-        """Input format tests. """
+        # Input format tests.
         clf = self.factory(alpha=0.01, n_iter=5,
                            shuffle=False)
         clf.fit(X, Y)
@@ -184,7 +184,7 @@ class CommonTest(object):
         assert_raises(ValueError, clf.fit, X, Y_)
 
     def test_clone(self):
-        """Test whether clone works ok. """
+        # Test whether clone works ok.
         clf = self.factory(alpha=0.01, n_iter=5, penalty='l1')
         clf = clone(clf)
         clf.set_params(penalty='l2')
@@ -257,9 +257,8 @@ class CommonTest(object):
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     """Test suite for the dense representation variant of SGD"""
     factory_class = SGDClassifier
-
     def test_sgd(self):
-        """Check that SGD gives any results :-)"""
+        # Check that SGD gives any results :-)
 
         for loss in ("hinge", "squared_hinge", "log", "modified_huber"):
             clf = self.factory(penalty='l2', alpha=0.01, fit_intercept=True,
@@ -270,68 +269,68 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
     @raises(ValueError)
     def test_sgd_bad_l1_ratio(self):
-        """Check whether expected ValueError on bad l1_ratio"""
+        # Check whether expected ValueError on bad l1_ratio
         self.factory(l1_ratio=1.1)
 
     @raises(ValueError)
     def test_sgd_bad_learning_rate_schedule(self):
-        """Check whether expected ValueError on bad learning_rate"""
+        # Check whether expected ValueError on bad learning_rate
         self.factory(learning_rate="<unknown>")
 
     @raises(ValueError)
     def test_sgd_bad_eta0(self):
-        """Check whether expected ValueError on bad eta0"""
+        # Check whether expected ValueError on bad eta0
         self.factory(eta0=0, learning_rate="constant")
 
     @raises(ValueError)
     def test_sgd_bad_alpha(self):
-        """Check whether expected ValueError on bad alpha"""
+        # Check whether expected ValueError on bad alpha
         self.factory(alpha=-.1)
 
     @raises(ValueError)
     def test_sgd_bad_penalty(self):
-        """Check whether expected ValueError on bad penalty"""
+        # Check whether expected ValueError on bad penalty
         self.factory(penalty='foobar', l1_ratio=0.85)
 
     @raises(ValueError)
     def test_sgd_bad_loss(self):
-        """Check whether expected ValueError on bad loss"""
+        # Check whether expected ValueError on bad loss
         self.factory(loss="foobar")
 
     @raises(ValueError)
     def test_sgd_n_iter_param(self):
-        """Test parameter validity check"""
+        # Test parameter validity check
         self.factory(n_iter=-10000)
 
     @raises(ValueError)
     def test_sgd_shuffle_param(self):
-        """Test parameter validity check"""
+        # Test parameter validity check
         self.factory(shuffle="false")
 
     @raises(TypeError)
     def test_argument_coef(self):
-        """Checks coef_init not allowed as model argument (only fit)"""
+        # Checks coef_init not allowed as model argument (only fit)
         # Provided coef_ does not match dataset.
         self.factory(coef_init=np.zeros((3,))).fit(X, Y)
 
     @raises(ValueError)
     def test_provide_coef(self):
-        """Checks coef_init shape for the warm starts"""
+        # Checks coef_init shape for the warm starts
         # Provided coef_ does not match dataset.
         self.factory().fit(X, Y, coef_init=np.zeros((3,)))
 
     @raises(ValueError)
     def test_set_intercept(self):
-        """Checks intercept_ shape for the warm starts"""
+        # Checks intercept_ shape for the warm starts
         # Provided intercept_ does not match dataset.
         self.factory().fit(X, Y, intercept_init=np.zeros((3,)))
 
     def test_set_intercept_binary(self):
-        """Checks intercept_ shape for the warm starts in binary case"""
+        # Checks intercept_ shape for the warm starts in binary case
         self.factory().fit(X5, Y5, intercept_init=0)
 
     def test_average_binary_computed_correctly(self):
-        """Checks the SGDClassifier correctly computes the average weights"""
+        # Checks the SGDClassifier correctly computes the average weights
         eta = .1
         alpha = 2.
         n_samples = 20
@@ -360,7 +359,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_almost_equal(clf.intercept_, average_intercept, decimal=14)
 
     def test_set_intercept_to_intercept(self):
-        """Checks intercept_ shape consistency for the warm starts"""
+        # Checks intercept_ shape consistency for the warm starts
         # Inconsistent intercept_ shape.
         clf = self.factory().fit(X5, Y5)
         self.factory().fit(X5, Y5, intercept_init=clf.intercept_)
@@ -369,11 +368,11 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
     @raises(ValueError)
     def test_sgd_at_least_two_labels(self):
-        """Target must have at least two labels"""
+        # Target must have at least two labels
         self.factory(alpha=0.01, n_iter=20).fit(X2, np.ones(9))
 
     def test_partial_fit_weight_class_auto(self):
-        """partial_fit with class_weight='auto' not supported"""
+        # partial_fit with class_weight='auto' not supported
         assert_raises_regexp(ValueError,
                              "class_weight 'auto' is not supported for "
                              "partial_fit. In order to use 'auto' weights, "
@@ -387,7 +386,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                              X, Y, classes=np.unique(Y))
 
     def test_sgd_multiclass(self):
-        """Multi-class test case"""
+        # Multi-class test case
         clf = self.factory(alpha=0.01, n_iter=20).fit(X2, Y2)
         assert_equal(clf.coef_.shape, (3, 2))
         assert_equal(clf.intercept_.shape, (3,))
@@ -398,7 +397,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_sgd_multiclass_average(self):
         eta = .001
         alpha = .01
-        """Multi-class average test case"""
+        # Multi-class average test case
         clf = self.factory(loss='squared_loss',
                            learning_rate='constant',
                            eta0=eta, alpha=alpha,
@@ -419,7 +418,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                                 decimal=16)
 
     def test_sgd_multiclass_with_init_coef(self):
-        """Multi-class test case"""
+        # Multi-class test case
         clf = self.factory(alpha=0.01, n_iter=20)
         clf.fit(X2, Y2, coef_init=np.zeros((3, 2)),
                 intercept_init=np.zeros(3))
@@ -429,7 +428,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_array_equal(pred, true_result2)
 
     def test_sgd_multiclass_njobs(self):
-        """Multi-class test case with multi-core support"""
+        # Multi-class test case with multi-core support
         clf = self.factory(alpha=0.01, n_iter=20, n_jobs=2).fit(X2, Y2)
         assert_equal(clf.coef_.shape, (3, 2))
         assert_equal(clf.intercept_.shape, (3,))
@@ -438,8 +437,8 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_array_equal(pred, true_result2)
 
     def test_set_coef_multiclass(self):
-        """Checks coef_init and intercept_init shape for for multi-class
-        problems"""
+        # Checks coef_init and intercept_init shape for for multi-class
+        # problems
         # Provided coef_ does not match dataset
         clf = self.factory()
         assert_raises(ValueError, clf.fit, X2, Y2, coef_init=np.zeros((2, 2)))
@@ -456,7 +455,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory().fit(X2, Y2, intercept_init=np.zeros((3,)))
 
     def test_sgd_proba(self):
-        """Check SGD.predict_proba"""
+        # Check SGD.predict_proba
 
         # Hinge loss does not allow for conditional prob estimate.
         # We cannot use the factory here, because it defines predict_proba
@@ -523,7 +522,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
             assert_array_almost_equal(p[0], [1 / 3.] * 3)
 
     def test_sgd_l1(self):
-        """Test L1 regularization"""
+        # Test L1 regularization
         n = len(X4)
         rng = np.random.RandomState(13)
         idx = np.arange(n)
@@ -552,9 +551,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_array_equal(pred, Y)
 
     def test_class_weights(self):
-        """
-        Test class weights.
-        """
+        # Test class weights.
         X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                       [1.0, 1.0], [1.0, 0.0]])
         y = [1, 1, 1, -1, -1]
@@ -574,7 +571,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
 
     def test_equal_class_weight(self):
-        """Test if equal class weights approx. equals no class weights. """
+        # Test if equal class weights approx. equals no class weights.
         X = [[1, 0], [1, 0], [0, 1], [0, 1]]
         y = [0, 0, 1, 1]
         clf = self.factory(alpha=0.1, n_iter=1000, class_weight=None)
@@ -591,18 +588,18 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
     @raises(ValueError)
     def test_wrong_class_weight_label(self):
-        """ValueError due to not existing class label."""
+        # ValueError due to not existing class label.
         clf = self.factory(alpha=0.1, n_iter=1000, class_weight={0: 0.5})
         clf.fit(X, Y)
 
     @raises(ValueError)
     def test_wrong_class_weight_format(self):
-        """ValueError due to wrong class_weight argument type."""
+        # ValueError due to wrong class_weight argument type.
         clf = self.factory(alpha=0.1, n_iter=1000, class_weight=[0.5])
         clf.fit(X, Y)
 
     def test_weights_multiplied(self):
-        """Tests that class_weight and sample_weight are multiplicative"""
+        # Tests that class_weight and sample_weight are multiplicative
         class_weights = {1: .6, 2: .3}
         sample_weights = np.random.random(Y4.shape[0])
         multiplied_together = np.copy(sample_weights)
@@ -618,7 +615,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_almost_equal(clf1.coef_, clf2.coef_)
 
     def test_auto_weight(self):
-        """Test class weights for imbalanced data"""
+        # Test class weights for imbalanced data
         # compute reference metrics on iris dataset that is quite balanced by
         # default
         X, y = iris.data, iris.target
@@ -669,7 +666,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_greater(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
 
     def test_sample_weights(self):
-        """Test weights on individual samples"""
+        # Test weights on individual samples
         X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                       [1.0, 1.0], [1.0, 0.0]])
         y = [1, 1, 1, -1, -1]
@@ -687,7 +684,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
     @raises(ValueError)
     def test_wrong_sample_weights(self):
-        """Test if ValueError is raised if sample_weight has wrong shape"""
+        # Test if ValueError is raised if sample_weight has wrong shape
         clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False)
         # provided sample_weight too long
         clf.fit(X, Y, sample_weight=np.arange(7))
@@ -734,11 +731,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_true(id1, id2)
 
     def test_fit_then_partial_fit(self):
-        """Partial_fit should work after initial fit in the multiclass case.
-
-        Non-regression test for #2496; fit would previously produce a
-        Fortran-ordered coef_ that subsequent partial_fit couldn't handle.
-        """
+        # Partial_fit should work after initial fit in the multiclass case.
+        # Non-regression test for #2496; fit would previously produce a
+        # Fortran-ordered coef_ that subsequent partial_fit couldn't handle.
         clf = self.factory()
         clf.fit(X2, Y2)
         clf.partial_fit(X2, Y2)     # no exception here
@@ -794,7 +789,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         self._test_warm_start(X2, Y2, "optimal")
 
     def test_multiple_fit(self):
-        """Test multiple calls of fit w/ different shaped inputs."""
+        # Test multiple calls of fit w/ different shaped inputs.
         clf = self.factory(alpha=0.01, n_iter=5,
                            shuffle=False)
         clf.fit(X, Y)
@@ -820,7 +815,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
     factory_class = SGDRegressor
 
     def test_sgd(self):
-        """Check that SGD gives any results."""
+        # Check that SGD gives any results.
         clf = self.factory(alpha=0.1, n_iter=2,
                            fit_intercept=False)
         clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
@@ -828,16 +823,16 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
 
     @raises(ValueError)
     def test_sgd_bad_penalty(self):
-        """Check whether expected ValueError on bad penalty"""
+        # Check whether expected ValueError on bad penalty
         self.factory(penalty='foobar', l1_ratio=0.85)
 
     @raises(ValueError)
     def test_sgd_bad_loss(self):
-        """Check whether expected ValueError on bad loss"""
+        # Check whether expected ValueError on bad loss
         self.factory(loss="foobar")
 
     def test_sgd_averaged_computed_correctly(self):
-        """Tests the average regressor matches the naive implementation"""
+        # Tests the average regressor matches the naive implementation
 
         eta = .001
         alpha = .01
@@ -865,7 +860,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         assert_almost_equal(clf.intercept_, average_intercept, decimal=16)
 
     def test_sgd_averaged_partial_fit(self):
-        """Tests whether the partial fit yields the same average as the fit"""
+        # Tests whether the partial fit yields the same average as the fit
         eta = .001
         alpha = .01
         n_samples = 20
@@ -893,7 +888,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         assert_almost_equal(clf.intercept_[0], average_intercept, decimal=16)
 
     def test_average_sparse(self):
-        """Checks the average weights on data with 0s"""
+        # Checks the average weights on data with 0s
 
         eta = .001
         alpha = .01
@@ -989,7 +984,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         assert_greater(score, 0.5)
 
     def test_elasticnet_convergence(self):
-        """Check that the SGD output is consistent with coordinate descent"""
+        # Check that the SGD output is consistent with coordinate descent
 
         n_samples, n_features = 1000, 5
         rng = np.random.RandomState(0)
@@ -1062,13 +1057,13 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
 
 
 class SparseSGDRegressorTestCase(DenseSGDRegressorTestCase):
-    """Run exactly the same tests using the sparse representation variant"""
+    # Run exactly the same tests using the sparse representation variant
 
     factory_class = SparseSGDRegressor
 
 
 def test_l1_ratio():
-    """Test if l1 ratio extremes match L1 and L2 penalty settings. """
+    # Test if l1 ratio extremes match L1 and L2 penalty settings.
     X, y = datasets.make_classification(n_samples=1000,
                                         n_features=100, n_informative=20,
                                         random_state=1234)

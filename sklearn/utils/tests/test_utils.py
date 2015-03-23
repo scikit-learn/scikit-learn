@@ -20,7 +20,7 @@ from sklearn.utils.mocking import MockDataFrame
 
 
 def test_make_rng():
-    """Check the check_random_state utility function behavior"""
+    # Check the check_random_state utility function behavior
     assert_true(check_random_state(None) is np.random.mtrand._rand)
     assert_true(check_random_state(np.random) is np.random.mtrand._rand)
 
@@ -37,12 +37,12 @@ def test_make_rng():
 
 
 def test_resample_noarg():
-    """Border case not worth mentioning in doctests"""
+    # Border case not worth mentioning in doctests
     assert_true(resample() is None)
 
 
 def test_deprecated():
-    """Test whether the deprecated decorator issues appropriate warnings"""
+    # Test whether the deprecated decorator issues appropriate warnings
     # Copied almost verbatim from http://docs.python.org/library/warnings.html
 
     # First a function...
@@ -79,7 +79,7 @@ def test_deprecated():
 
 
 def test_resample_value_errors():
-    """Check that invalid arguments yield ValueError"""
+    # Check that invalid arguments yield ValueError
     assert_raises(ValueError, resample, [0], [0, 1])
     assert_raises(ValueError, resample, [0, 1], [0, 1], n_samples=3)
     assert_raises(ValueError, resample, [0, 1], [0, 1], meaning_of_life=42)

@@ -45,7 +45,7 @@ def _check_with_col_sign_flipping(A, B, tol=0.0):
 
 
 def test_spectral_embedding_two_components(seed=36):
-    """Test spectral embedding with two components"""
+    # Test spectral embedding with two components
     random_state = np.random.RandomState(seed)
     n_sample = 100
     affinity = np.zeros(shape=[n_sample * 2,
@@ -77,7 +77,7 @@ def test_spectral_embedding_two_components(seed=36):
 
 
 def test_spectral_embedding_precomputed_affinity(seed=36):
-    """Test spectral embedding with precomputed kernel"""
+    # Test spectral embedding with precomputed kernel
     gamma = 1.0
     se_precomp = SpectralEmbedding(n_components=2, affinity="precomputed",
                                    random_state=np.random.RandomState(seed))
@@ -92,7 +92,7 @@ def test_spectral_embedding_precomputed_affinity(seed=36):
 
 
 def test_spectral_embedding_callable_affinity(seed=36):
-    """Test spectral embedding with callable affinity"""
+    # Test spectral embedding with callable affinity
     gamma = 0.9
     kern = rbf_kernel(S, gamma=gamma)
     se_callable = SpectralEmbedding(n_components=2,
@@ -113,7 +113,7 @@ def test_spectral_embedding_callable_affinity(seed=36):
 
 
 def test_spectral_embedding_amg_solver(seed=36):
-    """Test spectral embedding with amg solver"""
+    # Test spectral embedding with amg solver
     try:
         from pyamg import smoothed_aggregation_solver
     except ImportError:
@@ -131,7 +131,7 @@ def test_spectral_embedding_amg_solver(seed=36):
 
 
 def test_pipeline_spectral_clustering(seed=36):
-    """Test using pipeline to do spectral clustering"""
+    # Test using pipeline to do spectral clustering
     random_state = np.random.RandomState(seed)
     se_rbf = SpectralEmbedding(n_components=n_clusters,
                                affinity="rbf",
@@ -150,7 +150,7 @@ def test_pipeline_spectral_clustering(seed=36):
 
 
 def test_spectral_embedding_unknown_eigensolver(seed=36):
-    """Test that SpectralClustering fails with an unknown eigensolver"""
+    # Test that SpectralClustering fails with an unknown eigensolver
     se = SpectralEmbedding(n_components=1, affinity="precomputed",
                            random_state=np.random.RandomState(seed),
                            eigen_solver="<unknown>")
@@ -158,14 +158,14 @@ def test_spectral_embedding_unknown_eigensolver(seed=36):
 
 
 def test_spectral_embedding_unknown_affinity(seed=36):
-    """Test that SpectralClustering fails with an unknown affinity type"""
+    # Test that SpectralClustering fails with an unknown affinity type
     se = SpectralEmbedding(n_components=1, affinity="<unknown>",
                            random_state=np.random.RandomState(seed))
     assert_raises(ValueError, se.fit, S)
 
 
 def test_connectivity(seed=36):
-    """Test that graph connectivity test works as expected"""
+    # Test that graph connectivity test works as expected
     graph = np.array([[1, 0, 0, 0, 0],
                       [0, 1, 1, 0, 0],
                       [0, 1, 1, 1, 0],

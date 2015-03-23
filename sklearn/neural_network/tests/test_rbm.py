@@ -59,7 +59,7 @@ def test_transform():
 
 
 def test_small_sparse():
-    """BernoulliRBM should work on small sparse matrices."""
+    # BernoulliRBM should work on small sparse matrices.
     X = csr_matrix(Xdigits[:4])
     BernoulliRBM().fit(X)       # no exception
 
@@ -96,10 +96,8 @@ def test_sample_hiddens():
 
 
 def test_fit_gibbs():
-    """
-    Gibbs on the RBM hidden layer should be able to recreate [[0], [1]]
-    from the same input
-    """
+    # Gibbs on the RBM hidden layer should be able to recreate [[0], [1]]
+    # from the same input
     rng = np.random.RandomState(42)
     X = np.array([[0.], [1.]])
     rbm1 = BernoulliRBM(n_components=2, batch_size=2,
@@ -113,10 +111,8 @@ def test_fit_gibbs():
 
 
 def test_fit_gibbs_sparse():
-    """
-    Gibbs on the RBM hidden layer should be able to recreate [[0], [1]] from
-    the same input even when the input is sparse, and test against non-sparse
-    """
+    # Gibbs on the RBM hidden layer should be able to recreate [[0], [1]] from
+    # the same input even when the input is sparse, and test against non-sparse
     rbm1 = test_fit_gibbs()
     rng = np.random.RandomState(42)
     from scipy.sparse import csc_matrix
@@ -131,8 +127,8 @@ def test_fit_gibbs_sparse():
 
 
 def test_gibbs_smoke():
-    """Check if we don't get NaNs sampling the full digits dataset.
-    Also check that sampling again will yield different results."""
+    # Check if we don't get NaNs sampling the full digits dataset.
+    # Also check that sampling again will yield different results.
     X = Xdigits
     rbm1 = BernoulliRBM(n_components=42, batch_size=40,
                         n_iter=20, random_state=42)
@@ -144,7 +140,7 @@ def test_gibbs_smoke():
 
 
 def test_score_samples():
-    """Test score_samples (pseudo-likelihood) method."""
+    # Test score_samples (pseudo-likelihood) method.
     # Assert that pseudo-likelihood is computed without clipping.
     # See Fabian's blog, http://bit.ly/1iYefRk
     rng = np.random.RandomState(42)
@@ -179,9 +175,7 @@ def test_rbm_verbose():
 
 
 def test_sparse_and_verbose():
-    """
-    Make sure RBM works with sparse input when verbose=True
-    """
+    # Make sure RBM works with sparse input when verbose=True
     old_stdout = sys.stdout
     sys.stdout = StringIO()
     from scipy.sparse import csc_matrix

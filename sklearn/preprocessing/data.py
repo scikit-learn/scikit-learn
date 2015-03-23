@@ -7,6 +7,7 @@
 
 from itertools import chain, combinations
 import numbers
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -18,6 +19,7 @@ from ..utils import warn_if_not_float
 from ..utils.extmath import row_norms
 from ..utils.fixes import (combinations_with_replacement as combinations_w_r,
                            bincount)
+from ..utils.fixes import isclose
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis)
@@ -57,7 +59,7 @@ def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
     if with_std:
         std_ = Xr.std(axis=0)
         if isinstance(std_, np.ndarray):
-            std_[std_ == 0.0] = 1.0
+            std_[std_ == 0.] = 1.0
         elif std_ == 0.:
             std_ = 1.
     else:
@@ -141,8 +143,35 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         Xr = np.rollaxis(X, axis)
         if with_mean:
             Xr -= mean_
+            mean_1 = Xr.mean(axis=0)
+            # Verify that mean_1 is 'close to zero'. If X contains very
+            # large values, mean_1 can also be very large, due to a lack of
+            # precision of mean_. In this case, a pre-scaling of the
+            # concerned feature is efficient, for instance by its mean or
+            # maximum.
+            if not np.allclose(mean_1, 0):
+                warnings.warn("Numerical issues were encountered "
+                              "when centering the data "
+                              "and might not be solved. Dataset may "
+                              "contain too large values. You may need "
+                              "to prescale your features.")
+                Xr -= mean_1
         if with_std:
             Xr /= std_
+            if with_mean:
+                mean_2 = Xr.mean(axis=0)
+                # If mean_2 is not 'close to zero', it comes from the fact that
+                # std_ is very small so that mean_2 = mean_1/std_ > 0, even if
+                # mean_1 was close to zero. The problem is thus essentially due
+                # to the lack of precision of mean_. A solution is then to
+                # substract the mean again:
+                if not np.allclose(mean_2, 0):
+                    warnings.warn("Numerical issues were encountered "
+                                  "when scaling the data "
+                                  "and might not be solved. The standard "
+                                  "deviation of the data is probably "
+                                  "very close to 0. ")
+                    Xr -= mean_2
     return X
 
 

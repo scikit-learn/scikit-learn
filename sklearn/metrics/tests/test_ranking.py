@@ -123,7 +123,7 @@ def _average_precision(y_true, y_score):
 
 
 def test_roc_curve():
-    """Test Area under Receiver Operating Characteristic (ROC) curve"""
+    # Test Area under Receiver Operating Characteristic (ROC) curve
     y_true, _, probas_pred = make_prediction(binary=True)
 
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
@@ -149,7 +149,7 @@ def test_roc_curve_end_points():
 
 
 def test_roc_returns_consistency():
-    """Test whether the returned threshold matches up with tpr"""
+    # Test whether the returned threshold matches up with tpr
     # make small toy dataset
     y_true, _, probas_pred = make_prediction(binary=True)
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
@@ -168,10 +168,8 @@ def test_roc_returns_consistency():
 
 
 def test_roc_nonrepeating_thresholds():
-    """Test to ensure that we don't return spurious repeating thresholds.
-
-    Duplicated thresholds can arise due to machine precision issues.
-    """
+    # Test to ensure that we don't return spurious repeating thresholds.
+    # Duplicated thresholds can arise due to machine precision issues.
     dataset = datasets.load_digits()
     X = dataset['data']
     y = dataset['target']
@@ -193,14 +191,14 @@ def test_roc_nonrepeating_thresholds():
 
 
 def test_roc_curve_multi():
-    """roc_curve not applicable for multi-class problems"""
+    # roc_curve not applicable for multi-class problems
     y_true, _, probas_pred = make_prediction(binary=False)
 
     assert_raises(ValueError, roc_curve, y_true, probas_pred)
 
 
 def test_roc_curve_confidence():
-    """roc_curve for confidence scores"""
+    # roc_curve for confidence scores
     y_true, _, probas_pred = make_prediction(binary=True)
 
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred - 0.5)
@@ -211,7 +209,7 @@ def test_roc_curve_confidence():
 
 
 def test_roc_curve_hard():
-    """roc_curve for hard decisions"""
+    # roc_curve for hard decisions
     y_true, pred, probas_pred = make_prediction(binary=True)
 
     # always predict one
@@ -350,7 +348,7 @@ def test_roc_curve_toydata():
 
 
 def test_auc():
-    """Test Area Under Curve (AUC) computation"""
+    # Test Area Under Curve (AUC) computation
     x = [0, 1]
     y = [0, 1]
     assert_array_almost_equal(auc(x, y), 0.5)
@@ -396,9 +394,8 @@ def test_auc_errors():
 
 
 def test_auc_score_non_binary_class():
-    """Test that roc_auc_score function returns an error when trying
-    to compute AUC for non-binary class values.
-    """
+    # Test that roc_auc_score function returns an error when trying
+    # to compute AUC for non-binary class values.
     rng = check_random_state(404)
     y_pred = rng.rand(10)
     # y_true contains only one class value
@@ -473,7 +470,7 @@ def test_precision_recall_curve_pos_label():
 
 
 def _test_precision_recall_curve(y_true, probas_pred):
-    """Test Precision-Recall and aread under PR curve"""
+    # Test Precision-Recall and aread under PR curve
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
     precision_recall_auc = auc(r, p)
     assert_array_almost_equal(precision_recall_auc, 0.85, 2)
@@ -618,7 +615,7 @@ def test_score_scale_invariance():
 
 
 def check_lrap_toy(lrap_score):
-    """Check on several small example that it works """
+    # Check on several small example that it works
     assert_almost_equal(lrap_score([[0, 1]], [[0.25, 0.75]]), 1)
     assert_almost_equal(lrap_score([[0, 1]], [[0.75, 0.25]]), 1 / 2)
     assert_almost_equal(lrap_score([[1, 1]], [[0.75, 0.25]]), 1)
@@ -714,7 +711,7 @@ def check_lrap_error_raised(lrap_score):
 
 
 def check_lrap_only_ties(lrap_score):
-    """Check tie handling in score"""
+    # Check tie handling in score
     # Basic check with only ties and increasing label space
     for n_labels in range(2, 10):
         y_score = np.ones((1, n_labels))
@@ -730,7 +727,7 @@ def check_lrap_only_ties(lrap_score):
 
 
 def check_lrap_without_tie_and_increasing_score(lrap_score):
-    """ Check that Label ranking average precision works for various"""
+    # Check that Label ranking average precision works for various
     # Basic check with increasing label space size and decreasing score
     for n_labels in range(2, 10):
         y_score = n_labels - (np.arange(n_labels).reshape((1, n_labels)) + 1)

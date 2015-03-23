@@ -44,7 +44,7 @@ DELEGATING_METAESTIMATORS = [
 
 
 def test_metaestimator_delegation():
-    """Ensures specified metaestimators have methods iff subestimator does"""
+    # Ensures specified metaestimators have methods iff subestimator does
     def hides(method):
         @property
         def wrapper(obj):

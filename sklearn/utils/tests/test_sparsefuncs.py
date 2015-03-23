@@ -362,7 +362,7 @@ def test_count_nonzero():
 
 
 def test_csc_row_median():
-    """Test csc_row_median actually calculates the median."""
+    # Test csc_row_median actually calculates the median.
 
     # Test that it gives the same output when X is dense.
     rng = np.random.RandomState(0)

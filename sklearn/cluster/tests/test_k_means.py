@@ -81,7 +81,7 @@ def test_labels_assignment_and_inertia():
 
 
 def test_minibatch_update_consistency():
-    """Check that dense and sparse minibatch update give the same results"""
+    # Check that dense and sparse minibatch update give the same results
     rng = np.random.RandomState(42)
     old_centers = centers + rng.normal(size=centers.shape)
 
@@ -480,7 +480,7 @@ def test_mini_match_k_means_invalid_init():
 
 
 def test_k_means_copyx():
-    """Check if copy_x=False returns nearly equal X after de-centering."""
+    # Check if copy_x=False returns nearly equal X after de-centering.
     my_X = X.copy()
     km = KMeans(copy_x=False, n_clusters=n_clusters, random_state=42)
     km.fit(my_X)
@@ -491,13 +491,11 @@ def test_k_means_copyx():
 
 
 def test_k_means_non_collapsed():
-    """Check k_means with a bad initialization does not yield a singleton
-
-    Starting with bad centers that are quickly ignored should not
-    result in a repositioning of the centers to the center of mass that
-    would lead to collapsed centers which in turns make the clustering
-    dependent of the numerical unstabilities.
-    """
+    # Check k_means with a bad initialization does not yield a singleton
+    # Starting with bad centers that are quickly ignored should not
+    # result in a repositioning of the centers to the center of mass that
+    # would lead to collapsed centers which in turns make the clustering
+    # dependent of the numerical unstabilities.
     my_X = np.array([[1.1, 1.1], [0.9, 1.1], [1.1, 0.9], [0.9, 1.1]])
     array_init = np.array([[1.0, 1.0], [5.0, 5.0], [-5.0, -5.0]])
     km = KMeans(init=array_init, n_clusters=3, random_state=42, n_init=1)
@@ -630,7 +628,7 @@ def test_fit_transform():
 
 
 def test_n_init():
-    """Check that increasing the number of init increases the quality"""
+    # Check that increasing the number of init increases the quality
     n_runs = 5
     n_init_range = [1, 5, 10]
     inertia = np.zeros((len(n_init_range), n_runs))
