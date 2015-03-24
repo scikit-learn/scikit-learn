@@ -304,6 +304,8 @@ class KFold(_BaseKFold):
     StratifiedKFold: take label information into account to avoid building
     folds with imbalanced class distributions (for binary or multiclass
     classification tasks).
+
+    DisjointLabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, n, n_folds=3, shuffle=False,
@@ -333,6 +335,133 @@ class KFold(_BaseKFold):
             self.n_folds,
             self.shuffle,
             self.random_state,
+        )
+
+    def __len__(self):
+        return self.n_folds
+
+
+def disjoint_label_folds(labels, n_folds=3):
+    """Creates folds where a same label is not in two different folds.
+    
+    Parameters
+    ----------
+    labels: numpy array, shape (n_samples,)
+        Contains an id for each sample.
+        The folds are built so that the same id doesn't appear in two different folds.
+    
+    n_folds: int, default=3
+        Number of folds to split the data into.
+        
+    Returns
+    -------
+    folds: numpy array of shape (n_samples, )
+        Array of integers between 0 and (n_folds - 1).
+        Folds[i] contains the folds to which sample i is assigned.
+        
+    Notes
+    -----
+    The folds are built by distributing the labels by frequency of appearance.
+    The number of labels has to be at least equal to the number of folds.
+    """
+    labels = np.array(labels)
+    unique_labels, labels = np.unique(labels, return_inverse=True)
+    n_labels = len(unique_labels)
+    if n_folds > n_labels:
+        raise ValueError(
+                ("Cannot have number of folds n_folds={0} greater"
+                 " than the number of labels: {1}.").format(n_folds, n_labels))
+    
+    # number of occurrence of each label (its "weight")
+    samples_per_label = np.bincount(labels)
+    # We want to distribute the most frequent labels first
+    ind = np.argsort(samples_per_label, kind='mergesort')[::-1]
+    samples_per_label = samples_per_label[ind]
+
+    # Total weight of each fold
+    samples_per_fold = np.zeros(n_folds, dtype=np.uint64)
+
+    # Mapping from label index to fold index
+    label_to_fold = np.zeros(len(unique_labels), dtype=np.uintp)
+    
+    # While there are weights, distribute them
+    # Specifically, add the biggest weight to the lightest fold
+    for label_index, w in enumerate(samples_per_label):
+        ind_min = np.argmin(samples_per_fold)
+        samples_per_fold[ind_min] += w
+        label_to_fold[ind[label_index]] = ind_min
+    
+    folds = label_to_fold[labels]
+
+    return folds
+
+
+class DisjointLabelKFold(_BaseKFold):
+    """K-fold iterator variant with non-overlapping labels.
+
+    The same label will not appear in two different folds (the number of
+    labels has to be at least equal to the number of folds).
+
+    The folds are approximately balanced in the sense so that the number of
+    distinct labels is approximately the same in each fold.
+
+    Parameters
+    ----------
+    labels : array-like with shape (n_samples, )
+        Contains a label for each sample.
+        The folds are built so that the same label doesn't appear in two different folds.
+
+    n_folds : int, default is 3
+        Number of folds.
+
+    Examples
+    --------
+    >>> from sklearn import cross_validation
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    >>> y = np.array([1, 2, 3, 4])
+    >>> labels = np.array([0, 0, 2, 2])
+    >>> dl_kfold = cross_validation.DisjointLabelKFold(labels, n_folds=2)
+    >>> len(dl_kfold)
+    2
+    >>> print(dl_kfold)
+    sklearn.cross_validation.DisjointLabelKFold(n_labels=4, n_folds=2)
+    >>> for train_index, test_index in dl_kfold:
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
+    ...     print(X_train, X_test, y_train, y_test)
+    ... 
+    TRAIN: [0 1] TEST: [2 3]
+    [[1 2]
+     [3 4]] [[5 6]
+     [7 8]] [1 2] [3 4]
+    TRAIN: [2 3] TEST: [0 1]
+    [[5 6]
+     [7 8]] [[1 2]
+     [3 4]] [3 4] [1 2]
+
+    See also
+    --------
+    LeaveOneLabelOut for splitting the data according to explicit,
+    domain-specific stratification of the dataset.
+    """
+    def __init__(self, labels, n_folds=3):
+        # No shuffling implemented yet
+        super(DisjointLabelKFold, self).__init__(len(labels), n_folds, False, None)
+        self.n_folds = n_folds
+        self.n = len(labels)
+        self.idxs = disjoint_label_folds(labels=labels, n_folds=n_folds)
+
+    def _iter_test_indices(self):
+        for i in range(self.n_folds):
+            yield (self.idxs == i)
+
+    def __repr__(self):
+        return '{0}.{1}(n_labels={2}, n_folds={3})'.format(
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.n,
+            self.n_folds,
         )
 
     def __len__(self):
@@ -389,6 +518,9 @@ class StratifiedKFold(_BaseKFold):
     All the folds have size trunc(n_samples / n_folds), the last one has the
     complementary.
 
+    See also
+    --------
+    DisjointLabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, y, n_folds=3, shuffle=False,
@@ -497,6 +629,9 @@ class LeaveOneLabelOut(_PartitionIterator):
      [3 4]] [[5 6]
      [7 8]] [1 2] [1 2]
 
+    See also
+    --------
+    DisjointLabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, labels):
@@ -572,6 +707,10 @@ class LeavePLabelOut(_PartitionIterator):
     TRAIN: [0] TEST: [1 2]
     [[1 2]] [[3 4]
      [5 6]] [1] [2 1]
+
+    See also
+    --------
+    DisjointLabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, labels, p):
