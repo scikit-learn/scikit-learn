@@ -235,8 +235,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         # copy since this will contains the residuals (deflated) matrices
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float, copy=self.copy)
-        Y = check_array(Y, dtype=np.float, copy=self.copy, ensure_2d=False)
+        X = check_array(X, dtype=np.float64, copy=self.copy)
+        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
@@ -273,7 +273,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         for k in range(self.n_components):
             if np.all(np.dot(Yk.T, Yk) < np.finfo(np.double).eps):
                 # Yk constant
-                warnings.warn('Y constant at iteration %s' % k)
+                warnings.warn('Y residual constant at iteration %s' % k)
                 break
             #1) weights estimation (inner loop)
             # -----------------------------------
@@ -372,28 +372,19 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
         check_is_fitted(self, 'x_mean_')
-        X = check_array(X)
+        X = check_array(X, copy=copy)
+        # Normalize
+        X -= self.x_mean_
+        X /= self.x_std_
+        # Apply rotation
+        x_scores = np.dot(X, self.x_rotations_)
         if Y is not None:
-            Y = check_array(Y, ensure_2d=False)
+            Y = check_array(Y, ensure_2d=False, copy=copy)
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
-        # Normalize
-        if copy:
-            Xc = (np.asarray(X) - self.x_mean_) / self.x_std_
-            if Y is not None:
-                Yc = (np.asarray(Y) - self.y_mean_) / self.y_std_
-        else:
-            X = np.asarray(X)
-            Xc -= self.x_mean_
-            Xc /= self.x_std_
-            if Y is not None:
-                Y = np.asarray(Y)
-                Yc -= self.y_mean_
-                Yc /= self.y_std_
-        # Apply rotation
-        x_scores = np.dot(Xc, self.x_rotations_)
-        if Y is not None:
-            y_scores = np.dot(Yc, self.y_rotations_)
+            Y -= self.y_mean_
+            Y /= self.y_std_
+            y_scores = np.dot(Y, self.y_rotations_)
             return x_scores, y_scores
 
         return x_scores
@@ -419,11 +410,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         X = check_array(X, copy=self.copy)
         # Normalize
         if copy:
-            Xc = X - self.x_mean_
+            X = X - self.x_mean_
         else:
-            Xc -= self.x_mean_
-            Xc /= self.x_std_
-        Ypred = np.dot(Xc, self.coef_)
+            X -= self.x_mean_
+        X /= self.x_std_
+        Ypred = np.dot(X, self.coef_)
         return Ypred + self.y_mean_
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -734,8 +725,8 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     def fit(self, X, Y):
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float, copy=self.copy)
-        Y = check_array(Y, dtype=np.float, copy=self.copy, ensure_2d=False)
+        X = check_array(X, dtype=np.float64, copy=self.copy)
+        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
@@ -771,7 +762,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     def transform(self, X, Y=None):
         """Apply the dimension reduction learned on the train data."""
         check_is_fitted(self, 'x_mean_')
-        X = check_array(X, dtype=np.float, copy=self.copy)
+        X = check_array(X, dtype=np.float64, copy=self.copy)
         Xr = (X - self.x_mean_) / self.x_std_
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:
