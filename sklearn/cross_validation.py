@@ -1620,25 +1620,10 @@ def train_test_split(*arrays, **options):
     if test_size is None and train_size is None:
         test_size = 0.25
     arrays = indexable(*arrays)
-    swap_needed = False
     if stratify is not None:
-        # StratifiedKFold expects n_folds, not train_size/test_size
-        # compute the former from the latter
-        n_train, n_test = _validate_shuffle_split(len(stratify),
-                                                  test_size,
-                                                  train_size)
-        if n_train < n_test:
-            # StratifiedKFold can't generate a test set that is larger
-            # than the training set, whereas ShuffleSplit can. If such a
-            # sample is requested, fake it by swapping the generated train and
-            # test set
-            swap_needed = True
-            n_folds = ceil((n_test + n_train) / n_train)
-        else:
-            n_folds = ceil((n_test + n_train) / n_test)
-        # todo shuffle parameter of StratifiedKFold not exposed
-        cv = StratifiedKFold(stratify, n_folds=n_folds,
-                             random_state=random_state)
+        cv = StratifiedShuffleSplit(stratify, test_size=test_size,
+                                    train_size=train_size,
+                                    random_state=random_state)
     else:
         n_samples = _num_samples(arrays[0])
         cv = ShuffleSplit(n_samples, test_size=test_size,
@@ -1646,8 +1631,6 @@ def train_test_split(*arrays, **options):
                           random_state=random_state)
 
     train, test = next(iter(cv))
-    if swap_needed:
-        train, test = test, train
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
 
