@@ -639,6 +639,7 @@ class _RidgeGCV(LinearModel):
                  fit_intercept=True, normalize=False,
                  scoring=None, copy_X=True,
                  gcv_mode=None, store_cv_values=False):
+        self.alphas = np.array(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
@@ -818,6 +819,7 @@ class _BaseRidgeCV(LinearModel):
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
                  store_cv_values=False):
+        self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
