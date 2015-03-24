@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.utils.testing import (assert_array_almost_equal,
-                                   assert_array_equal, assert_true)
+                                   assert_array_equal, assert_true, assert_raise_message)
 from sklearn.datasets import load_linnerud
 from sklearn.cross_decomposition import pls_
 from nose.tools import assert_equal
@@ -285,3 +285,13 @@ def test_scale():
                 pls_.PLSSVD()]:
         clf.set_params(scale=True)
         clf.fit(X, Y)
+
+
+def test_pls_errors():
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+    for clf in [pls_.PLSCanonical(), pls_.PLSRegression(),
+                pls_.PLSSVD()]:
+        clf.n_components = 4
+        assert_raise_message(ValueError, "Invalid number of components", clf.fit, X, Y)

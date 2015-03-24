@@ -245,7 +245,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         q = Y.shape[1]
 
         if self.n_components < 1 or self.n_components > p:
-            raise ValueError('invalid number of components')
+            raise ValueError('Invalid number of components: %d' %
+                             self.n_components)
         if self.algorithm not in ("svd", "nipals"):
             raise ValueError("Got algorithm %s when only 'svd' "
                              "and 'nipals' are known" % self.algorithm)
@@ -340,6 +341,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             self.y_rotations_ = np.ones(1)
 
         if True or self.deflation_mode == "regression":
+            # FIXME what's with the if?
             # Estimate regression coefficient
             # Regress Y on T
             # Y = TQ' + Err,
@@ -407,12 +409,9 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         be an issue in high dimensional space.
         """
         check_is_fitted(self, 'x_mean_')
-        X = check_array(X, copy=self.copy)
+        X = check_array(X, copy=copy)
         # Normalize
-        if copy:
-            X = X - self.x_mean_
-        else:
-            X -= self.x_mean_
+        X -= self.x_mean_
         X /= self.x_std_
         Ypred = np.dot(X, self.coef_)
         return Ypred + self.y_mean_
@@ -730,10 +729,10 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
-        p = X.shape[1]
-
-        if self.n_components < 1 or self.n_components > p:
-            raise ValueError('invalid number of components')
+        if self.n_components > max(Y.shape[1], X.shape[1]):
+            raise ValueError("Invalid number of components n_components=%d with "
+                             "X of shape %s and Y of shape %s."
+                             % (self.n_components, str(X.shape), str(Y.shape)))
 
         # Scale (in place)
         X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ =\
@@ -745,10 +744,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         # components is smaller than rank(X) - 1. Hence, if we want to extract
         # all the components (C.shape[1]), we have to use another one. Else,
         # let's use arpacks to compute only the interesting components.
-        if self.n_components > np.max(C.shape):
-            raise ValueError("n_components=%d is invalid with X of shape %s and Y of shape %s."
-                             % (self.n_components, str(X.shape), str(Y.shape)))
-        elif self.n_components >= np.min(C.shape):
+        if self.n_components >= np.min(C.shape):
             U, s, V = linalg.svd(C, full_matrices=False)
         else:
             U, s, V = arpack.svds(C, k=self.n_components)
@@ -762,7 +758,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     def transform(self, X, Y=None):
         """Apply the dimension reduction learned on the train data."""
         check_is_fitted(self, 'x_mean_')
-        X = check_array(X, dtype=np.float64, copy=self.copy)
+        X = check_array(X, dtype=np.float64)
         Xr = (X - self.x_mean_) / self.x_std_
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:
