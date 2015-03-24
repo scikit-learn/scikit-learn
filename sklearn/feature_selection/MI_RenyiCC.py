@@ -185,7 +185,7 @@ def MI_RenyiCC_Multi(X,y=None, k=0, type='c', njobs=4):
         u = np.array([at.unique(x, return_counts=True) for x in X.T])
         freqs = DiscDensity(zip(*X.T), N)
         hr2c = Sum_Dot_Vect(u[:,1], N)
-        hr2 = Parallel(n_jobs=njobs)(delayed(Parallel_MI_RenyiCC_d_Multi)(i, freqs[i],u, N) for i in freqs)
+        hr2 = Parallel(n_jobs=njobs, backend="threading")(delayed(Parallel_MI_RenyiCC_d_Multi)(i, freqs[i],u, N) for i in freqs)
         s = np.sum(np.array(hr2),0)
         hr2a = s[0]
         hr2b = s[1]
@@ -195,8 +195,8 @@ def MI_RenyiCC_Multi(X,y=None, k=0, type='c', njobs=4):
         iqrx = [np.subtract(*np.percentile(x, [75, 25])) for x in X.T]
         varx = [np.var(x) for x in X.T]
         h = 0.85*min( 1/np.sqrt(np.mean(varx)), np.mean(iqrx))*N**(-1/6)
-        #hr2 = Parallel(n_jobs=njobs)(delayed(Parallel_MI_RenyiCC_c_Multi)(i, X, h) for i in zip(*X.T))
-        hr2 = Parallel(n_jobs=njobs)(delayed(Parallel_MI_RenyiCC_c_Multi)(i, X[knn(i, neigh),:], h) for i in zip(*X.T))
+        #hr2 = Parallel(n_jobs=njobs, backend="threading")(delayed(Parallel_MI_RenyiCC_c_Multi)(i, X, h) for i in zip(*X.T))
+        hr2 = Parallel(n_jobs=njobs, backend="threading")(delayed(Parallel_MI_RenyiCC_c_Multi)(i, X[knn(i, neigh),:], h) for i in zip(*X.T))
         s = np.sum(np.array(hr2),0)
         hr2a = s[0]
         hr2b = s[1]
@@ -217,7 +217,7 @@ def MI_RenyiCC_Multi(X,y=None, k=0, type='c', njobs=4):
         z = zip(*np.hstack((X,np.reshape(y,(N,1)))).T)
         for i in z: xyu[int(i[-1:][0])].append(i[:-1])
         neigh = KNearestNeighbors(X, k)
-        hr2 = Parallel(n_jobs=njobs)(delayed(Parallel_MI_RenyiCC_cd_Multi)(np.array(xyu[yui]), X, hx, neigh, k) for yui in yu)
+        hr2 = Parallel(n_jobs=njobs, backend="threading")(delayed(Parallel_MI_RenyiCC_cd_Multi)(np.array(xyu[yui]), X, hx, neigh, k) for yui in yu)
         s = np.sum(np.array(hr2),0)
         hr2a = s[0]
         hr2b = s[1]
@@ -227,13 +227,13 @@ def MI_RenyiCC_Multi(X,y=None, k=0, type='c', njobs=4):
         #ith sample through all the features dimension while the 2nd compute knn of the ith sample along each feature
         #dimension
         if X.shape[0]>X.shape[1]:
-            #hr2cp = Parallel(n_jobs=njobs)(delayed(Parallel_MI_RenyiCC_cd_Multi_hr2c_dim0)(i, X, hx) for i in range(N))
-            hr2cp = Parallel(n_jobs=njobs)(delayed(Parallel_MI_RenyiCC_cd_Multi_hr2c_dim0)\
+            #hr2cp = Parallel(n_jobs=njobs, backend="threading")(delayed(Parallel_MI_RenyiCC_cd_Multi_hr2c_dim0)(i, X, hx) for i in range(N))
+            hr2cp = Parallel(n_jobs=njobs, backend="threading")(delayed(Parallel_MI_RenyiCC_cd_Multi_hr2c_dim0)\
                                                             (i, X[knn(i, neigh),:], hx) for i in X)
             hr2cp = reduce(mul,np.sum(np.array(hr2cp),0))
             hr2c = (1/N**4)*nxyu*hr2cp
         else:
-            hr2cp = Parallel(n_jobs=njobs)(delayed(Parallel_MI_RenyiCC_cd_Multi_hr2c_dim1)(X[:,j], hx, neigh) for j in range(X.shape[1]))
+            hr2cp = Parallel(n_jobs=njobs, backend="threading")(delayed(Parallel_MI_RenyiCC_cd_Multi_hr2c_dim1)(X[:,j], hx, neigh) for j in range(X.shape[1]))
             hr2cp = reduce(mul,hr2cp)
             hr2c = (1/N**4)*nxyu*hr2cp
         #print("hr2a:",hr2a,"-hr2b:",hr2b,"-hr2c:",hr2c)
@@ -277,7 +277,7 @@ def MI_RenyiCC(x, y, type, njobs=4):
         hr2y = -np.log(np.sum((yc/N)**2))
         freqs = DiscDensity(zip(x,y), N)
         hr2c = np.sum(np.dot(np.reshape((yc/N)**2,(len(yc),1)), np.reshape((xc/N)**2,(1,len(xc)))))
-        hr2 = Parallel(n_jobs=njobs)(delayed(Parallel_MI_RenyiCC_d)(i, freqs[i],xu, yu,xc,yc, N) for i in freqs)
+        hr2 = Parallel(n_jobs=njobs, backend="threading")(delayed(Parallel_MI_RenyiCC_d)(i, freqs[i],xu, yu,xc,yc, N) for i in freqs)
         s = np.sum(np.array(hr2),0)
         hr2a = s[0]
         hr2b = s[1]
