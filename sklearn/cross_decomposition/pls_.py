@@ -373,7 +373,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             if Y is not None:
                 Yc = (np.asarray(Y) - self.y_mean_) / self.y_std_
         else:
-            X = np.asarray(X)
+            Xc = np.asarray(X)
             Xc -= self.x_mean_
             Xc /= self.x_std_
             if Y is not None:
@@ -410,7 +410,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         if copy:
             Xc = (np.asarray(X) - self.x_mean_)
         else:
-            X = np.asarray(X)
+            Xc = np.asarray(X)
             Xc -= self.x_mean_
             Xc /= self.x_std_
         Ypred = np.dot(Xc, self.coef_)
