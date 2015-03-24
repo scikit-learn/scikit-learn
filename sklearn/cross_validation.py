@@ -332,6 +332,71 @@ class KFold(_BaseKFold):
         return self.n_folds
 
 
+def subject_independent_folds(subjects, n_folds=3):
+    """ Creates folds where a same subject is not in two different folds
+    
+    Parameters
+    ----------
+    subjects: iterable of shape (n_samples, )
+        contains an id for each sample
+        The folds are built so that the same id doesn't appear in two different folds
+    
+    n_folds: int, default is 3
+        number of folds to split the data into
+        
+    Returns
+    -------
+    folds: numpy array of shape (n_samples, )
+        array of integers between 0 and (n_folds - 1)
+        folds[i] contains the folds to which sample i is assigned.
+        
+    Notes
+    -----
+    The folds are built by distributing the subjects by frequency of appearance.
+    """
+    subjects = np.array(subjects)
+    unique_subjects = np.unique(subjects)
+    
+    # number of occurrence of each subject (its "weight")
+    weight_per_subject = sorted([(sum(subjects == i), i) for i in unique_subjects])
+    # Total weight of each fold
+    weight_per_fold = np.zeros(n_folds)
+    # For each sample, a digit between 0 and (n_folds - 1) to tell which fold it belongs to
+    folds = np.zeros(len(subjects))
+    
+    # While there are weights, distribute them
+    # Specifically, add the biggest weight to the lightest fold
+    while weight_per_subject:
+        ind_min = np.argmin(weight_per_fold)
+        w, actor = weight_per_subject.pop()
+        weight_per_fold[ind_min] += w
+        folds[subjects == actor] = ind_min
+    
+    return folds
+
+
+class SubjectIndependentKfold(_BaseKFold):
+    def __init__(self, subjects, n_folds=3):
+        self.n_folds = n_folds
+        self.n = len(subjects)
+        self.idxs = subject_independent_folds(subjects=subjects, n_folds=n_folds)
+
+    def _iter_test_indices(self):
+        for i in range(self.n_folds):
+            yield (self.idxs == i)
+
+    def __repr__(self):
+        return '{}.{}(n_subjects={}, n_folds={})'.format(
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.n,
+            self.n_folds,
+        )
+
+    def __len__(self):
+        return self.n_folds
+
+
 class StratifiedKFold(_BaseKFold):
     """Stratified K-Folds cross validation iterator
 

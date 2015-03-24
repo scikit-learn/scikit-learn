@@ -1038,3 +1038,59 @@ def test_check_is_partition():
 
     p[0] = 23
     assert_false(cval._check_is_partition(p, 100))
+
+
+def test_subject_independent_folds():
+    """ Check that the function produces equilibrated folds
+        with no subject appearing in two different folds
+    """
+    # Fix the seed for reproducibility 
+    np.random.seed(0)
+    
+    # Parameters of the test
+    n_subjects = 15
+    n_samples = 1000
+    n_folds = 5
+    
+    # Construct the test data
+    tolerance = 0.05 * n_samples # 5 percent error allowed
+    subjects = np.random.randint(0, n_subjects, n_samples)
+    folds = cval.subject_independent_folds(subjects, n_folds)
+    ideal_n_subjects_per_fold = n_samples // n_folds
+    
+    # Check that folds have approximately the same size
+    assert(len(folds)==len(subjects))
+    for i in np.unique(folds):
+        assert(abs(sum(folds == i) - ideal_n_subjects_per_fold) <= tolerance)
+    
+    # Check that each subjects appears only in 1 fold
+    for subject in np.unique(subjects):
+        assert(len(np.unique(folds[subjects == subject])) == 1)
+        
+    subjects = ['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
+                'Francis', 'Robert', 'Michel', 'Rachel', 'Lois',
+                'Michelle', 'Bernard', 'Marion', 'Laura', 'Jean',
+                'Rachel', 'Franck', 'John', 'Gael', 'Anna', 'Alix',
+                'Robert', 'Marion', 'David', 'Tony', 'Abel', 'Becky',
+                'Madmood', 'Cary', 'Mary', 'Alexandre', 'David', 'Francis',
+                'Barack', 'Abdoul', 'Rasha', 'Xi', 'Silvia']
+    
+    n_subjects = len(np.unique(subjects))
+    n_samples = len(subjects)
+    n_folds = 5
+    
+    # Construct the test data
+    tolerance = 0.05 * n_samples # 5 percent error allowed
+    subjects = np.random.randint(0, n_subjects, n_samples)
+    folds = cval.subject_independent_folds(subjects, n_folds)
+    ideal_n_subjects_per_fold = n_samples // n_folds
+    
+    # Check that folds have approximately the same size
+    assert(len(folds)==len(subjects))
+    for i in np.unique(folds):
+        assert(abs(sum(folds == i) - ideal_n_subjects_per_fold) <= tolerance)
+    
+    # Check that each subjects appears only in 1 fold
+    for subject in np.unique(subjects):
+        assert(len(np.unique(folds[subjects == subject])) == 1)
+        
