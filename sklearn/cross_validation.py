@@ -332,12 +332,12 @@ class KFold(_BaseKFold):
         return self.n_folds
 
 
-def subject_independent_folds(subjects, n_folds=3):
-    """ Creates folds where a same subject is not in two different folds
+def disjoint_group_folds(groups, n_folds=3):
+    """Creates folds where a same group is not in two different folds
     
     Parameters
     ----------
-    subjects: iterable of shape (n_samples, )
+    groups: iterable of shape (n_samples, )
         contains an id for each sample
         The folds are built so that the same id doesn't appear in two different folds
     
@@ -352,34 +352,46 @@ def subject_independent_folds(subjects, n_folds=3):
         
     Notes
     -----
-    The folds are built by distributing the subjects by frequency of appearance.
+    The folds are built by distributing the groups by frequency of appearance.
     """
-    subjects = np.array(subjects)
-    unique_subjects = np.unique(subjects)
+    groups = np.array(groups)
+    unique_groups = np.unique(groups)
     
-    # number of occurrence of each subject (its "weight")
-    weight_per_subject = sorted([(sum(subjects == i), i) for i in unique_subjects])
+    # number of occurrence of each group (its "weight")
+    weight_per_group = sorted([(sum(groups == group_id), group_id) for group_id in unique_groups])
     # Total weight of each fold
     weight_per_fold = np.zeros(n_folds)
     # For each sample, a digit between 0 and (n_folds - 1) to tell which fold it belongs to
-    folds = np.zeros(len(subjects))
+    folds = np.zeros(len(groups))
     
     # While there are weights, distribute them
     # Specifically, add the biggest weight to the lightest fold
-    while weight_per_subject:
+    while weight_per_group:
         ind_min = np.argmin(weight_per_fold)
-        w, actor = weight_per_subject.pop()
+        w, group_id = weight_per_group.pop()
         weight_per_fold[ind_min] += w
-        folds[subjects == actor] = ind_min
+        folds[groups == group_id] = ind_min
     
     return folds
 
 
-class SubjectIndependentKfold(_BaseKFold):
-    def __init__(self, subjects, n_folds=3):
+class DisjointGroupKfold(_BaseKFold):
+    def __init__(self, groups, n_folds=3):
+        """Creates K approximately equilibrated folds
+            where the same group will not appear in two different folds
+
+        Parameters
+        ----------
+        groups: numpy array of shape (n_samples, )
+            contains an id for each sample
+            The folds are built so that the same id doesn't appear in two different folds
+
+        n_folds: int, default is 3
+            number of folds
+        """
         self.n_folds = n_folds
-        self.n = len(subjects)
-        self.idxs = subject_independent_folds(subjects=subjects, n_folds=n_folds)
+        self.n = len(groups)
+        self.idxs = disjoint_group_folds(groups=groups, n_folds=n_folds)
 
     def _iter_test_indices(self):
         for i in range(self.n_folds):

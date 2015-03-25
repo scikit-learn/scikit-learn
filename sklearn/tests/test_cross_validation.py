@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -1042,32 +1043,33 @@ def test_check_is_partition():
 
 def test_subject_independent_folds():
     """ Check that the function produces equilibrated folds
-        with no subject appearing in two different folds
+        with no group appearing in two different folds
     """
     # Fix the seed for reproducibility 
-    np.random.seed(0)
+    rng = np.random.RandomState(0)
     
     # Parameters of the test
-    n_subjects = 15
+    n_groups = 15
     n_samples = 1000
     n_folds = 5
     
     # Construct the test data
     tolerance = 0.05 * n_samples # 5 percent error allowed
-    subjects = np.random.randint(0, n_subjects, n_samples)
-    folds = cval.subject_independent_folds(subjects, n_folds)
-    ideal_n_subjects_per_fold = n_samples // n_folds
+    groups = np.random.randint(0, n_groups, n_samples)
+    folds = cval.disjoint_group_folds(groups, n_folds)
+    ideal_n_groups_per_fold = n_samples // n_folds
     
     # Check that folds have approximately the same size
-    assert(len(folds)==len(subjects))
+    assert_equal(len(folds), len(groups))
     for i in np.unique(folds):
-        assert(abs(sum(folds == i) - ideal_n_subjects_per_fold) <= tolerance)
+        assert_greater_equal(tolerance, abs(sum(folds == i) - ideal_n_groups_per_fold))
     
     # Check that each subjects appears only in 1 fold
-    for subject in np.unique(subjects):
-        assert(len(np.unique(folds[subjects == subject])) == 1)
+    for group in np.unique(groups):
+        assert_equal(len(np.unique(folds[groups == group])), 1)
         
-    subjects = ['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
+    # Construct the test data
+    groups = ['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
                 'Francis', 'Robert', 'Michel', 'Rachel', 'Lois',
                 'Michelle', 'Bernard', 'Marion', 'Laura', 'Jean',
                 'Rachel', 'Franck', 'John', 'Gael', 'Anna', 'Alix',
@@ -1075,22 +1077,19 @@ def test_subject_independent_folds():
                 'Madmood', 'Cary', 'Mary', 'Alexandre', 'David', 'Francis',
                 'Barack', 'Abdoul', 'Rasha', 'Xi', 'Silvia']
     
-    n_subjects = len(np.unique(subjects))
-    n_samples = len(subjects)
+    n_groups = len(np.unique(groups))
+    n_samples = len(groups)
     n_folds = 5
-    
-    # Construct the test data
     tolerance = 0.05 * n_samples # 5 percent error allowed
-    subjects = np.random.randint(0, n_subjects, n_samples)
-    folds = cval.subject_independent_folds(subjects, n_folds)
-    ideal_n_subjects_per_fold = n_samples // n_folds
+    folds = cval.disjoint_group_folds(groups, n_folds)
+    ideal_n_groups_per_fold = n_samples // n_folds
     
     # Check that folds have approximately the same size
-    assert(len(folds)==len(subjects))
+    assert_equal(len(folds), len(groups))
     for i in np.unique(folds):
-        assert(abs(sum(folds == i) - ideal_n_subjects_per_fold) <= tolerance)
+        assert_greater_equal(tolerance, abs(sum(folds == i) - ideal_n_groups_per_fold))
     
     # Check that each subjects appears only in 1 fold
-    for subject in np.unique(subjects):
-        assert(len(np.unique(folds[subjects == subject])) == 1)
+    for group in np.unique(groups):
+        assert_equal(len(np.unique(folds[groups == group])), 1)
         
