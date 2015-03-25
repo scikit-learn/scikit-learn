@@ -981,6 +981,7 @@ def test_non_uniform_weights_toy_edge_case_reg():
         gb.fit(X, y, sample_weight=sample_weight)
         assert_true(gb.predict([[1, 0]])[0] > 0.5, loss)
 
+
 def test_non_uniform_weights_toy_min_weight_leaf():
     """Regression test for https://github.com/scikit-learn/scikit-learn/issues/4447 """
     X = [[1, 0],
