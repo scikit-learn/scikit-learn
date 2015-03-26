@@ -424,7 +424,7 @@ class DisjointLabelKfold(_BaseKFold):
             yield (self.idxs == i)
 
     def __repr__(self):
-        return '{}.{}(n_labels={}, n_folds={})'.format(
+        return '{0}.{1}(n_labels={2}, n_folds={3})'.format(
             self.__class__.__module__,
             self.__class__.__name__,
             self.n,
