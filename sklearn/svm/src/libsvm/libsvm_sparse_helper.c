@@ -267,10 +267,9 @@ int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
 
 int csr_copy_predict_values (npy_intp *data_size, char *data, npy_intp *index_size,
                 char *index, npy_intp *intptr_size, char *intptr, struct svm_csr_model *model,
-                char *dec_values) {
+                char *dec_values, int nr_class) {
     struct svm_csr_node **predict_nodes;
     npy_intp i;
-    int m = model->nr_class;
 
     predict_nodes = csr_to_libsvm((double *) data, (int *) index,
                                   (int *) intptr, intptr_size[0]-1);
@@ -279,7 +278,7 @@ int csr_copy_predict_values (npy_intp *data_size, char *data, npy_intp *index_si
         return -1;
     for(i=0; i < intptr_size[0] - 1; ++i) {
         svm_csr_predict_values(model, predict_nodes[i],
-                               ((double *) dec_values) + i*m);
+                               ((double *) dec_values) + i*nr_class);
         free(predict_nodes[i]);
     }
     free(predict_nodes);
@@ -328,7 +327,7 @@ void copy_intercept(char *data, struct svm_csr_model *model, npy_intp *dims)
     }
 }
 
-void copy_support (char *data, struct svm_model *model)
+void copy_support (char *data, struct svm_csr_model *model)
 {
     memcpy (data, model->sv_ind, (model->l) * sizeof(int));
 }
