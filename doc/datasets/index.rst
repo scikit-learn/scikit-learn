@@ -29,7 +29,7 @@ below in the :ref:`sample_images` section.
 The dataset generation functions and the svmlight loader share a simplistic
 interface, returning a tuple ``(X, y)`` consisting of a ``n_samples`` *
 ``n_features`` numpy array ``X`` and an array of length ``n_samples``
- containing the targets ``y``.
+containing the targets ``y``.
 
 The toy datasets as well as the 'real world' datasets and the datasets
 fetched from mldata.org have more sophisticated structure.
