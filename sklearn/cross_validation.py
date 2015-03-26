@@ -332,12 +332,12 @@ class KFold(_BaseKFold):
         return self.n_folds
 
 
-def disjoint_group_folds(groups, n_folds=3):
-    """Creates folds where a same group is not in two different folds
+def disjoint_label_folds(y, n_folds=3):
+    """Creates folds where a same label is not in two different folds
     
     Parameters
     ----------
-    groups: iterable of shape (n_samples, )
+    y: iterable of shape (n_samples, )
         contains an id for each sample
         The folds are built so that the same id doesn't appear in two different folds
     
@@ -352,46 +352,46 @@ def disjoint_group_folds(groups, n_folds=3):
         
     Notes
     -----
-    The folds are built by distributing the groups by frequency of appearance.
+    The folds are built by distributing the labels by frequency of appearance.
     """
-    groups = np.array(groups)
-    unique_groups = np.unique(groups)
+    labels = np.array(y)
+    unique_labels = np.unique(labels)
     
-    # number of occurrence of each group (its "weight")
-    weight_per_group = sorted([(sum(groups == group_id), group_id) for group_id in unique_groups])
+    # number of occurrence of each label (its "weight")
+    weight_per_label = sorted([(sum(labels == label), label) for label in unique_labels])
     # Total weight of each fold
     weight_per_fold = np.zeros(n_folds)
     # For each sample, a digit between 0 and (n_folds - 1) to tell which fold it belongs to
-    folds = np.zeros(len(groups))
+    folds = np.zeros(len(labels))
     
     # While there are weights, distribute them
     # Specifically, add the biggest weight to the lightest fold
-    while weight_per_group:
+    while weight_per_label:
         ind_min = np.argmin(weight_per_fold)
-        w, group_id = weight_per_group.pop()
+        w, label = weight_per_label.pop()
         weight_per_fold[ind_min] += w
-        folds[groups == group_id] = ind_min
+        folds[labels == label] = ind_min
     
     return folds
 
 
-class DisjointGroupKfold(_BaseKFold):
-    def __init__(self, groups, n_folds=3):
+class DisjointLabelKfold(_BaseKFold):
+    def __init__(self, y, n_folds=3):
         """Creates K approximately equilibrated folds
-            where the same group will not appear in two different folds
+            where the same label will not appear in two different folds
 
         Parameters
         ----------
-        groups: numpy array of shape (n_samples, )
+        y: numpy array of shape (n_samples, )
             contains an id for each sample
-            The folds are built so that the same id doesn't appear in two different folds
+            The folds are built so that the same label doesn't appear in two different folds
 
         n_folds: int, default is 3
             number of folds
         """
         self.n_folds = n_folds
-        self.n = len(groups)
-        self.idxs = disjoint_group_folds(groups=groups, n_folds=n_folds)
+        self.n = len(y)
+        self.idxs = disjoint_label_folds(y=y, n_folds=n_folds)
 
     def _iter_test_indices(self):
         for i in range(self.n_folds):

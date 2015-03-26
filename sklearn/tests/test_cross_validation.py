@@ -1041,35 +1041,35 @@ def test_check_is_partition():
     assert_false(cval._check_is_partition(p, 100))
 
 
-def test_subject_independent_folds():
+def test_disjoint_label_folds():
     """ Check that the function produces equilibrated folds
-        with no group appearing in two different folds
+        with no label appearing in two different folds
     """
     # Fix the seed for reproducibility 
     rng = np.random.RandomState(0)
     
     # Parameters of the test
-    n_groups = 15
+    n_labels = 15
     n_samples = 1000
     n_folds = 5
     
     # Construct the test data
     tolerance = 0.05 * n_samples # 5 percent error allowed
-    groups = np.random.randint(0, n_groups, n_samples)
-    folds = cval.disjoint_group_folds(groups, n_folds)
-    ideal_n_groups_per_fold = n_samples // n_folds
+    labels = np.random.randint(0, n_labels, n_samples)
+    folds = cval.disjoint_label_folds(labels, n_folds)
+    ideal_n_labels_per_fold = n_samples // n_folds
     
     # Check that folds have approximately the same size
-    assert_equal(len(folds), len(groups))
+    assert_equal(len(folds), len(labels))
     for i in np.unique(folds):
-        assert_greater_equal(tolerance, abs(sum(folds == i) - ideal_n_groups_per_fold))
+        assert_greater_equal(tolerance, abs(sum(folds == i) - ideal_n_labels_per_fold))
     
     # Check that each subjects appears only in 1 fold
-    for group in np.unique(groups):
-        assert_equal(len(np.unique(folds[groups == group])), 1)
+    for label in np.unique(labels):
+        assert_equal(len(np.unique(folds[labels == label])), 1)
         
     # Construct the test data
-    groups = ['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
+    labels = ['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
                 'Francis', 'Robert', 'Michel', 'Rachel', 'Lois',
                 'Michelle', 'Bernard', 'Marion', 'Laura', 'Jean',
                 'Rachel', 'Franck', 'John', 'Gael', 'Anna', 'Alix',
@@ -1077,19 +1077,19 @@ def test_subject_independent_folds():
                 'Madmood', 'Cary', 'Mary', 'Alexandre', 'David', 'Francis',
                 'Barack', 'Abdoul', 'Rasha', 'Xi', 'Silvia']
     
-    n_groups = len(np.unique(groups))
-    n_samples = len(groups)
+    n_labels = len(np.unique(labels))
+    n_samples = len(labels)
     n_folds = 5
     tolerance = 0.05 * n_samples # 5 percent error allowed
-    folds = cval.disjoint_group_folds(groups, n_folds)
-    ideal_n_groups_per_fold = n_samples // n_folds
+    folds = cval.disjoint_label_folds(labels, n_folds)
+    ideal_n_labels_per_fold = n_samples // n_folds
     
     # Check that folds have approximately the same size
-    assert_equal(len(folds), len(groups))
+    assert_equal(len(folds), len(labels))
     for i in np.unique(folds):
-        assert_greater_equal(tolerance, abs(sum(folds == i) - ideal_n_groups_per_fold))
+        assert_greater_equal(tolerance, abs(sum(folds == i) - ideal_n_labels_per_fold))
     
     # Check that each subjects appears only in 1 fold
-    for group in np.unique(groups):
-        assert_equal(len(np.unique(folds[groups == group])), 1)
+    for label in np.unique(labels):
+        assert_equal(len(np.unique(folds[labels == label])), 1)
         
