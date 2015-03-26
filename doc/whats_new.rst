@@ -232,6 +232,9 @@ Enhancements
    - Numerical stability improvements for :class:`preprocessing.StandardScaler`
      and :func:`preprocessing.scale`. By `Nicolas Goix`_
 
+   - :class:`svm.SVC` fitted on sparse input now implements ``decision_function``.
+     By `Rob Zinkov`_ and `Andreas Müller`_.
+
 Documentation improvements
 ..........................
 
