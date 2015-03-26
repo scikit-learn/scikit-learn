@@ -983,7 +983,7 @@ def test_non_uniform_weights_toy_edge_case_reg():
 
 
 def test_non_uniform_weights_toy_min_weight_leaf():
-    """Regression test for https://github.com/scikit-learn/scikit-learn/issues/4447 """
+    # Regression test for issue #4447
     X = [[1, 0],
          [1, 0],
          [1, 0],
