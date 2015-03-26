@@ -976,10 +976,10 @@ def test_non_uniform_weights_toy_edge_case_reg():
     y = [0, 0, 1, 0]
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
-    for loss in ('ls', 'lad', 'quantile'):  # not for huber
-        gb = GradientBoostingRegressor(learning_rate=1.0, n_estimators=1, loss=loss)
+    for loss in ('huber', 'ls', 'lad', 'quantile'):
+        gb = GradientBoostingRegressor(learning_rate=1.0, n_estimators=2, loss=loss)
         gb.fit(X, y, sample_weight=sample_weight)
-        assert_true(gb.predict([[1, 0]])[0] > 0.5, loss)
+        assert_greater(gb.predict([[1, 0]])[0], 0.5)
 
 
 def test_non_uniform_weights_toy_min_weight_leaf():
