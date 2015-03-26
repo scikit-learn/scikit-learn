@@ -1042,9 +1042,9 @@ def test_check_is_partition():
 
 
 def test_disjoint_label_folds():
-    """ Check that the function produces equilibrated folds
-        with no label appearing in two different folds
-    """
+    ## Check that the function produces equilibrated folds
+    ##      with no label appearing in two different folds
+
     # Fix the seed for reproducibility 
     rng = np.random.RandomState(0)
     
