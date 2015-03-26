@@ -30,6 +30,28 @@ API changes summary
 0.16
 ====
 
+Highlights
+-----------
+
+   - Speed improvements (notably in class:`clustering.DBSCAN`), reduced memory
+     requirements, bug-fixes and better default settings.
+
+   - Multinomial Logistic regression and a path algorithm in
+     :class:`linear_model.LogisticRegressionCV`.
+
+   - Out-of core learning of PCA via :class:`decomposition.IncrementalPCA`.
+
+   - Probability callibration of classifiers using
+     :class:`calibration.CalibratedClassifierCV`.
+
+   - :class:`clustering.Birch` clustering method for large-scale datasets.
+
+   - Scalable approximate nearest neighbors search with Locality-sensitive
+     hashing forests in :class:`neighbors.LSHForest`.
+
+   - Improved error messages and better validation when using malformed input data.
+
+   - More robust integration with pandas dataframes.
 
 Changelog
 ---------
