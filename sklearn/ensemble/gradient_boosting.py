@@ -1002,12 +1002,19 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         n_inbag = max(1, int(self.subsample * n_samples))
         loss_ = self.loss_
 
+        # Set min_weight_leaf from min_weight_fraction_leaf
+        if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
+            min_weight_leaf = (self.min_weight_fraction_leaf *
+                               np.sum(sample_weight))
+        else:
+            min_weight_leaf = 0.
+
         # init criterion and splitter
         criterion = FriedmanMSE(1)
         splitter = PresortBestSplitter(criterion,
                                        self.max_features_,
                                        self.min_samples_leaf,
-                                       self.min_weight_fraction_leaf,
+                                       min_weight_leaf,
                                        random_state)
 
         if self.verbose:
