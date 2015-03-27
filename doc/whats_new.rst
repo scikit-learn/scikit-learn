@@ -19,7 +19,7 @@ Highlights
    - Probability callibration of classifiers using
      :class:`calibration.CalibratedClassifierCV`.
 
-   - :class:`clustering.Birch` clustering method for large-scale datasets.
+   - :class:`cluster.Birch` clustering method for large-scale datasets.
 
    - Scalable approximate nearest neighbors search with Locality-sensitive
      hashing forests in :class:`neighbors.LSHForest`.
