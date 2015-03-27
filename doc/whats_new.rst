@@ -8,7 +8,7 @@
 Highlights
 -----------
 
-   - Speed improvements (notably in class:`cluster.DBSCAN`), reduced memory
+   - Speed improvements (notably in :class:`cluster.DBSCAN`), reduced memory
      requirements, bug-fixes and better default settings.
 
    - Multinomial Logistic regression and a path algorithm in
