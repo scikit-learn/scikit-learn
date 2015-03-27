@@ -29,7 +29,7 @@ iris.target = iris.target[perm]
 
 
 def test_classification_toy():
-    """Check classification on a toy dataset, including sparse versions."""
+    # Check classification on a toy dataset, including sparse versions.
     clf = NearestCentroid()
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
@@ -63,7 +63,7 @@ def test_precomputed():
 
 
 def test_iris():
-    """Check consistency on dataset iris."""
+    # Check consistency on dataset iris.
     for metric in ('euclidean', 'cosine'):
         clf = NearestCentroid(metric=metric).fit(iris.data, iris.target)
         score = np.mean(clf.predict(iris.data) == iris.target)
@@ -71,7 +71,7 @@ def test_iris():
 
 
 def test_iris_shrinkage():
-    """Check consistency on dataset iris, when using shrinkage."""
+    # Check consistency on dataset iris, when using shrinkage.
     for metric in ('euclidean', 'cosine'):
         for shrink_threshold in [None, 0.1, 0.5]:
             clf = NearestCentroid(metric=metric,
@@ -109,7 +109,7 @@ def test_shrinkage_threshold_decoded_y():
 
 
 def test_predict_translated_data():
-    """Test that NearestCentroid gives same results on translated data"""
+    # Test that NearestCentroid gives same results on translated data
 
     rng = np.random.RandomState(0)
     X = rng.rand(50, 50)
@@ -126,7 +126,7 @@ def test_predict_translated_data():
 
 
 def test_manhattan_metric():
-    """Test the manhattan metric."""
+    # Test the manhattan metric.
 
     clf = NearestCentroid(metric='manhattan')
     clf.fit(X, y)

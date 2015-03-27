@@ -83,7 +83,7 @@ class DummyScorer(object):
 
 
 def test_check_scoring():
-    """Test all branches of check_scoring"""
+    # Test all branches of check_scoring
     estimator = EstimatorWithoutFit()
     pattern = (r"estimator should a be an estimator implementing 'fit' method,"
                r" .* was passed")
@@ -134,14 +134,14 @@ def test_check_scoring_gridsearchcv():
 
 
 def test_make_scorer():
-    """Sanity check on the make_scorer factory function."""
+    # Sanity check on the make_scorer factory function.
     f = lambda *args: 0
     assert_raises(ValueError, make_scorer, f, needs_threshold=True,
                   needs_proba=True)
 
 
 def test_classification_scores():
-    """Test classification scorers."""
+    # Test classification scorers.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = LinearSVC(random_state=0)
@@ -185,7 +185,7 @@ def test_classification_scores():
 
 
 def test_regression_scorers():
-    """Test regression scorers."""
+    # Test regression scorers.
     diabetes = load_diabetes()
     X, y = diabetes.data, diabetes.target
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
@@ -197,7 +197,7 @@ def test_regression_scorers():
 
 
 def test_thresholded_scorers():
-    """Test scorers that take thresholds."""
+    # Test scorers that take thresholds.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = LogisticRegression(random_state=0)
@@ -227,9 +227,8 @@ def test_thresholded_scorers():
 
 
 def test_thresholded_scorers_multilabel_indicator_data():
-    """Test that the scorer work with multilabel-indicator format
-    for multilabel and multi-output multi-class classifier
-    """
+    # Test that the scorer work with multilabel-indicator format
+    # for multilabel and multi-output multi-class classifier
     X, y = make_multilabel_classification(return_indicator=True,
                                           allow_unlabeled=False,
                                           random_state=0)
@@ -272,7 +271,7 @@ def test_thresholded_scorers_multilabel_indicator_data():
 
 
 def test_unsupervised_scorers():
-    """Test clustering scorers against gold standard labeling."""
+    # Test clustering scorers against gold standard labeling.
     # We don't have any real unsupervised Scorers yet.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
@@ -285,7 +284,7 @@ def test_unsupervised_scorers():
 
 @ignore_warnings
 def test_raises_on_score_list():
-    """Test that when a list of scores is returned, we raise proper errors."""
+    # Test that when a list of scores is returned, we raise proper errors.
     X, y = make_blobs(random_state=0)
     f1_scorer_no_average = make_scorer(f1_score, average=None)
     clf = DecisionTreeClassifier()
@@ -298,7 +297,7 @@ def test_raises_on_score_list():
 
 @ignore_warnings
 def test_scorer_sample_weight():
-    """Test that scorers support sample_weight or raise sensible errors"""
+    # Test that scorers support sample_weight or raise sensible errors
 
     # Unlike the metrics invariance test, in the scorer case it's harder
     # to ensure that, on the classifier output, weighted and unweighted

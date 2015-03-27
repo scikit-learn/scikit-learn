@@ -25,13 +25,13 @@ X, _ = make_blobs(n_samples=300, n_features=2, centers=centers,
 
 
 def test_estimate_bandwidth():
-    """Test estimate_bandwidth"""
+    # Test estimate_bandwidth
     bandwidth = estimate_bandwidth(X, n_samples=200)
     assert_true(0.9 <= bandwidth <= 1.5)
 
 
 def test_mean_shift():
-    """ Test MeanShift algorithm """
+    # Test MeanShift algorithm
     bandwidth = 1.2
 
     ms = MeanShift(bandwidth=bandwidth)
@@ -47,7 +47,7 @@ def test_mean_shift():
 
 
 def test_meanshift_predict():
-    """Test MeanShift.predict"""
+    # Test MeanShift.predict
     ms = MeanShift(bandwidth=1.2)
     labels = ms.fit_predict(X)
     labels2 = ms.predict(X)
@@ -62,17 +62,15 @@ def test_meanshift_all_orphans():
 
 
 def test_unfitted():
-    """Non-regression: before fit, there should be not fitted attributes."""
+    # Non-regression: before fit, there should be not fitted attributes.
     ms = MeanShift()
     assert_false(hasattr(ms, "cluster_centers_"))
     assert_false(hasattr(ms, "labels_"))
 
 
 def test_bin_seeds():
-    """
-    Test the bin seeding technique which can be used in the mean shift
-    algorithm
-    """
+    # Test the bin seeding technique which can be used in the mean shift
+    # algorithm
     # Data is just 6 points in the plane
     X = np.array([[1., 1.], [1.4, 1.4], [1.8, 1.2],
                   [2., 1.], [2.1, 1.1], [0., 0.]])

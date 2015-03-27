@@ -12,7 +12,7 @@ iris = datasets.load_iris()
 
 
 def test_incremental_pca():
-    """Incremental PCA on dense arrays."""
+    # Incremental PCA on dense arrays.
     X = iris.data
     batch_size = X.shape[0] // 3
     ipca = IncrementalPCA(n_components=2, batch_size=batch_size)
@@ -35,7 +35,7 @@ def test_incremental_pca():
 
 
 def test_incremental_pca_check_projection():
-    """Test that the projection of data is correct."""
+    # Test that the projection of data is correct.
     rng = np.random.RandomState(1999)
     n, p = 100, 3
     X = rng.randn(n, p) * .1
@@ -56,7 +56,7 @@ def test_incremental_pca_check_projection():
 
 
 def test_incremental_pca_inverse():
-    """Test that the projection of data can be inverted."""
+    # Test that the projection of data can be inverted.
     rng = np.random.RandomState(1999)
     n, p = 50, 3
     X = rng.randn(n, p)  # spherical data
@@ -72,7 +72,7 @@ def test_incremental_pca_inverse():
 
 
 def test_incremental_pca_validation():
-    """Test that n_components is >=1 and <= n_features."""
+    # Test that n_components is >=1 and <= n_features.
     X = [[0, 1], [1, 0]]
     for n_components in [-1, 0, .99, 3]:
         assert_raises(ValueError, IncrementalPCA(n_components,
@@ -80,7 +80,7 @@ def test_incremental_pca_validation():
 
 
 def test_incremental_pca_set_params():
-    """Test that components_ sign is stable over batch sizes."""
+    # Test that components_ sign is stable over batch sizes.
     rng = np.random.RandomState(1999)
     n_samples = 100
     n_features = 20
@@ -101,7 +101,7 @@ def test_incremental_pca_set_params():
 
 
 def test_incremental_pca_num_features_change():
-    """Test that changing n_components will raise an error."""
+    # Test that changing n_components will raise an error.
     rng = np.random.RandomState(1999)
     n_samples = 100
     X = rng.randn(n_samples, 20)
@@ -112,7 +112,7 @@ def test_incremental_pca_num_features_change():
 
 
 def test_incremental_pca_batch_signs():
-    """Test that components_ sign is stable over batch sizes."""
+    # Test that components_ sign is stable over batch sizes.
     rng = np.random.RandomState(1999)
     n_samples = 100
     n_features = 3
@@ -128,7 +128,7 @@ def test_incremental_pca_batch_signs():
 
 
 def test_incremental_pca_batch_values():
-    """Test that components_ values are stable over batch sizes."""
+    # Test that components_ values are stable over batch sizes.
     rng = np.random.RandomState(1999)
     n_samples = 100
     n_features = 3
@@ -144,7 +144,7 @@ def test_incremental_pca_batch_values():
 
 
 def test_incremental_pca_partial_fit():
-    """Test that fit and partial_fit get equivalent results."""
+    # Test that fit and partial_fit get equivalent results.
     rng = np.random.RandomState(1999)
     n, p = 50, 3
     X = rng.randn(n, p)  # spherical data
@@ -164,7 +164,7 @@ def test_incremental_pca_partial_fit():
 
 
 def test_incremental_pca_against_pca_iris():
-    """Test that IncrementalPCA and PCA are approximate (to a sign flip)."""
+    # Test that IncrementalPCA and PCA are approximate (to a sign flip).
     X = iris.data
 
     Y_pca = PCA(n_components=2).fit_transform(X)
@@ -174,7 +174,7 @@ def test_incremental_pca_against_pca_iris():
 
 
 def test_incremental_pca_against_pca_random_data():
-    """Test that IncrementalPCA and PCA are approximate (to a sign flip)."""
+    # Test that IncrementalPCA and PCA are approximate (to a sign flip).
     rng = np.random.RandomState(1999)
     n_samples = 100
     n_features = 3
@@ -187,7 +187,7 @@ def test_incremental_pca_against_pca_random_data():
 
 
 def test_explained_variances():
-    """Test that PCA and IncrementalPCA calculations match"""
+    # Test that PCA and IncrementalPCA calculations match
     X = datasets.make_low_rank_matrix(1000, 100, tail_strength=0.,
                                       effective_rank=10, random_state=1999)
     prec = 3
@@ -204,7 +204,7 @@ def test_explained_variances():
 
 
 def test_whitening():
-    """Test that PCA and IncrementalPCA transforms match to sign flip."""
+    # Test that PCA and IncrementalPCA transforms match to sign flip.
     X = datasets.make_low_rank_matrix(1000, 10, tail_strength=0.,
                                       effective_rank=2, random_state=1999)
     prec = 3

@@ -185,7 +185,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     alphas : array, shape (n_alphas,)
         The alphas along the path where models are computed.
 
-    coefs : array, shape (n_features, n_alphas) or
+    coefs : array, shape (n_features, n_alphas) or \
             (n_outputs, n_features, n_alphas)
         Coefficients along the path.
 
@@ -331,7 +331,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     alphas : array, shape (n_alphas,)
         The alphas along the path where models are computed.
 
-    coefs : array, shape (n_features, n_alphas) or
+    coefs : array, shape (n_features, n_alphas) or \
             (n_outputs, n_features, n_alphas)
         Coefficients along the path.
 
@@ -1815,8 +1815,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     alpha_ : float
         The amount of penalization chosen by cross validation
 
-    mse_path_ : array, shape (n_alphas, n_folds) or
-                    (n_l1_ratio, n_alphas, n_folds)
+    mse_path_ : array, shape (n_alphas, n_folds) or \
+                (n_l1_ratio, n_alphas, n_folds)
         mean square error for the test set on each fold, varying alpha
 
     alphas_ : numpy array, shape (n_alphas,) or (n_l1_ratio, n_alphas)

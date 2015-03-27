@@ -16,8 +16,7 @@ from sklearn.decomposition import FactorAnalysis
 
 
 def test_factor_analysis():
-    """Test FactorAnalysis ability to recover the data covariance structure
-    """
+    # Test FactorAnalysis ability to recover the data covariance structure
     rng = np.random.RandomState(0)
     n_samples, n_features, n_components = 20, 5, 3
 
