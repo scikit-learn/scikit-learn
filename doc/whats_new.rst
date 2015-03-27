@@ -33,7 +33,7 @@ API changes summary
 Highlights
 -----------
 
-   - Speed improvements (notably in class:`clustering.DBSCAN`), reduced memory
+   - Speed improvements (notably in :class:`cluster.DBSCAN`), reduced memory
      requirements, bug-fixes and better default settings.
 
    - Multinomial Logistic regression and a path algorithm in
@@ -44,7 +44,7 @@ Highlights
    - Probability callibration of classifiers using
      :class:`calibration.CalibratedClassifierCV`.
 
-   - :class:`clustering.Birch` clustering method for large-scale datasets.
+   - :class:`cluster.Birch` clustering method for large-scale datasets.
 
    - Scalable approximate nearest neighbors search with Locality-sensitive
      hashing forests in :class:`neighbors.LSHForest`.
