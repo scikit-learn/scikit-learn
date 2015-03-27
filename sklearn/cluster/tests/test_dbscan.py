@@ -25,7 +25,7 @@ X = generate_clustered_data(n_clusters=n_clusters)
 
 
 def test_dbscan_similarity():
-    """Tests the DBSCAN algorithm with a similarity array."""
+    # Tests the DBSCAN algorithm with a similarity array.
     # Parameters chosen specifically for this task.
     eps = 0.15
     min_samples = 10
@@ -48,7 +48,7 @@ def test_dbscan_similarity():
 
 
 def test_dbscan_feature():
-    """Tests the DBSCAN algorithm with a feature vector array."""
+    # Tests the DBSCAN algorithm with a feature vector array.
     # Parameters chosen specifically for this task.
     # Different eps to other test, because distance is not normalised.
     eps = 0.8
@@ -91,7 +91,7 @@ def test_dbscan_no_core_samples():
 
 
 def test_dbscan_callable():
-    """Tests the DBSCAN algorithm with a callable metric."""
+    # Tests the DBSCAN algorithm with a callable metric.
     # Parameters chosen specifically for this task.
     # Different eps to other test, because distance is not normalised.
     eps = 0.8
@@ -117,7 +117,7 @@ def test_dbscan_callable():
 
 
 def test_dbscan_balltree():
-    """Tests the DBSCAN algorithm with balltree for neighbor calculation."""
+    # Tests the DBSCAN algorithm with balltree for neighbor calculation.
     eps = 0.8
     min_samples = 10
 
@@ -156,13 +156,13 @@ def test_dbscan_balltree():
 
 
 def test_input_validation():
-    """DBSCAN.fit should accept a list of lists."""
+    # DBSCAN.fit should accept a list of lists.
     X = [[1., 2.], [3., 4.]]
     DBSCAN().fit(X)             # must not raise exception
 
 
 def test_dbscan_badargs():
-    """Test bad argument values: these should all raise ValueErrors"""
+    # Test bad argument values: these should all raise ValueErrors
     assert_raises(ValueError,
                   dbscan,
                   X, eps=-1.0)
@@ -259,3 +259,37 @@ def test_weighted_dbscan():
     assert_array_equal(core1, core5)
     assert_array_equal(label1, label5)
     assert_array_equal(label1, est.labels_)
+
+
+def test_dbscan_core_samples_toy():
+    X = [[0], [2], [3], [4], [6], [8], [10]]
+    n_samples = len(X)
+
+    for algorithm in ['brute', 'kd_tree', 'ball_tree']:
+        # Degenerate case: every sample is a core sample, either with its own
+        # cluster or including other close core samples.
+        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                      min_samples=1)
+        assert_array_equal(core_samples, np.arange(n_samples))
+        assert_array_equal(labels, [0, 1, 1, 1, 2, 3, 4])
+
+        # With eps=1 and min_samples=2 only the 3 samples from the denser area
+        # are core samples. All other points are isolated and considered noise.
+        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                      min_samples=2)
+        assert_array_equal(core_samples, [1, 2, 3])
+        assert_array_equal(labels, [-1, 0, 0, 0, -1, -1, -1])
+
+        # Only the sample in the middle of the dense area is core. Its two
+        # neighbors are edge samples. Remaining samples are noise.
+        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                      min_samples=3)
+        assert_array_equal(core_samples, [2])
+        assert_array_equal(labels, [-1, 0, 0, 0, -1, -1, -1])
+
+        # It's no longer possible to extract core samples with eps=1:
+        # everything is noise.
+        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                      min_samples=4)
+        assert_array_equal(core_samples, [])
+        assert_array_equal(labels, -np.ones(n_samples))

@@ -5,6 +5,7 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 
 # Author: Robert Layton <robertlayton@gmail.com>
 #         Joel Nothman <joel.nothman@gmail.com>
+#         Lars Buitinck
 #
 # License: BSD 3 clause
 
@@ -16,6 +17,8 @@ from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
 from ..utils import check_array, check_consistent_length
 from ..neighbors import NearestNeighbors
+
+from ._dbscan_inner import dbscan_inner
 
 
 def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
@@ -112,7 +115,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     # neighborhood of point i. While True, its useless information)
     if metric == 'precomputed':
         D = pairwise_distances(X, metric=metric)
-        neighborhoods = [np.where(x <= eps)[0] for x in D]
+        neighborhoods = np.array([np.where(x <= eps)[0] for x in D])
     else:
         neighbors_model = NearestNeighbors(radius=eps, algorithm=algorithm,
                                            leaf_size=leaf_size,
@@ -121,7 +124,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         # This has worst case O(n^2) memory complexity
         neighborhoods = neighbors_model.radius_neighbors(X, eps,
                                                          return_distance=False)
-        neighborhoods = np.array(neighborhoods)
+
     if sample_weight is None:
         n_neighbors = np.array([len(neighbors) for neighbors in neighborhoods])
     else:
@@ -129,40 +132,12 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
                                 for neighbors in neighborhoods])
 
     # Initially, all samples are noise.
-    labels = -np.ones(X.shape[0], dtype=np.int)
+    labels = -np.ones(X.shape[0], dtype=np.intp)
 
     # A list of all core samples found.
-    core_samples = np.flatnonzero(n_neighbors >= min_samples)
-
-    # label_num is the label given to the new cluster
-    label_num = 0
-
-    # Look at all samples and determine if they are core.
-    # If they are then build a new cluster from them.
-    for index in core_samples:
-        # Already classified
-        if labels[index] != -1:
-            continue
-
-        labels[index] = label_num
-
-        # candidates for new core samples in the cluster.
-        candidates = [index]
-        while len(candidates) > 0:
-            # The tolist() is needed for NumPy 1.6.
-            cand_neighbors = np.concatenate(np.take(neighborhoods, candidates,
-                                                    axis=0).tolist())
-            cand_neighbors = np.unique(cand_neighbors)
-            noise = cand_neighbors[labels.take(cand_neighbors) == -1]
-            labels[noise] = label_num
-            # A candidate is a core point in the current cluster that has
-            # not yet been used to expand the current cluster.
-            candidates = np.intersect1d(noise, core_samples,
-                                        assume_unique=True)
-        # Current cluster finished.
-        # Next core point found will start a new cluster.
-        label_num += 1
-    return core_samples, labels
+    core_samples = np.asarray(n_neighbors >= min_samples, dtype=np.uint8)
+    dbscan_inner(core_samples, neighborhoods, labels)
+    return np.where(core_samples)[0], labels
 
 
 class DBSCAN(BaseEstimator, ClusterMixin):

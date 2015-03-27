@@ -30,7 +30,7 @@ from sklearn.utils.testing import assert_raise_message
 
 
 def test_as_float_array():
-    """Test function for as_float_array"""
+    # Test function for as_float_array
     X = np.ones((3, 10), dtype=np.int32)
     X = X + np.arange(10, dtype=np.int32)
     # Checks that the return type is ok
@@ -63,7 +63,7 @@ def test_as_float_array():
 
 
 def test_np_matrix():
-    """Confirm that input validation code does not return np.matrix"""
+    # Confirm that input validation code does not return np.matrix
     X = np.arange(12).reshape(3, 4)
 
     assert_false(isinstance(as_float_array(X), np.matrix))
@@ -72,7 +72,7 @@ def test_np_matrix():
 
 
 def test_memmap():
-    """Confirm that input validation code doesn't copy memory mapped arrays"""
+    # Confirm that input validation code doesn't copy memory mapped arrays
 
     asflt = lambda x: as_float_array(x, copy=False)
 
@@ -88,11 +88,9 @@ def test_memmap():
 
 
 def test_ordering():
-    """Check that ordering is enforced correctly by validation utilities.
-
-    We need to check each validation utility, because a 'copy' without
-    'order=K' will kill the ordering.
-    """
+    # Check that ordering is enforced correctly by validation utilities.
+    # We need to check each validation utility, because a 'copy' without
+    # 'order=K' will kill the ordering.
     X = np.ones((10, 5))
     for A in X, X.T:
         for copy in (True, False):

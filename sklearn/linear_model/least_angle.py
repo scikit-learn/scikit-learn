@@ -983,7 +983,7 @@ class LarsCV(Lars):
             returns an instance of self.
         """
         self.fit_path = True
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, y_numeric=True)
 
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=False)

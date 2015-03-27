@@ -198,8 +198,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         Maximum value of input array `X_` for right bound.
 
     f_ : function
-        The stepwise interpolating function that covers the domain
-        X_.
+        The stepwise interpolating function that covers the domain `X_`.
 
     Notes
     -----

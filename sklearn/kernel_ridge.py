@@ -141,7 +141,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         self : returns an instance of self.
         """
         # Convert data
-        X, y = check_X_y(X, y, multi_output=True)
+        X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True)
 
         n_samples = X.shape[0]
         K = self._get_kernel(X)

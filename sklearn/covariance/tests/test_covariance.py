@@ -23,9 +23,7 @@ n_samples, n_features = X.shape
 
 
 def test_covariance():
-    """Tests Covariance module on a simple dataset.
-
-    """
+    # Tests Covariance module on a simple dataset.
     # test covariance fit from data
     cov = EmpiricalCovariance()
     cov.fit(X)
@@ -76,9 +74,7 @@ def test_covariance():
 
 
 def test_shrunk_covariance():
-    """Tests ShrunkCovariance module on a simple dataset.
-
-    """
+    # Tests ShrunkCovariance module on a simple dataset.
     # compare shrunk covariance obtained from data and from MLE estimate
     cov = ShrunkCovariance(shrinkage=0.5)
     cov.fit(X)
@@ -110,9 +106,7 @@ def test_shrunk_covariance():
 
 
 def test_ledoit_wolf():
-    """Tests LedoitWolf module on a simple dataset.
-
-    """
+    # Tests LedoitWolf module on a simple dataset.
     # test shrinkage coeff on a simple data set
     X_centered = X - X.mean(axis=0)
     lw = LedoitWolf(assume_centered=True)
@@ -197,9 +191,7 @@ def test_ledoit_wolf():
 
 
 def test_oas():
-    """Tests OAS module on a simple dataset.
-
-    """
+    # Tests OAS module on a simple dataset.
     # test shrinkage coeff on a simple data set
     X_centered = X - X.mean(axis=0)
     oa = OAS(assume_centered=True)
@@ -231,7 +223,7 @@ def test_oas():
     assert_almost_equal(oa.score(X_centered), score_, 4)
     assert(oa.precision_ is None)
 
-    ### Same tests without assuming centered data
+    # Same tests without assuming centered data--------------------------------
     # test shrinkage coeff on a simple data set
     oa = OAS()
     oa.fit(X)

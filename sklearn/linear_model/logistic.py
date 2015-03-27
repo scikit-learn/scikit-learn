@@ -1242,8 +1242,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Array of C i.e. inverse of regularization parameter values used
         for cross-validation.
 
-    coefs_paths_ : array, shape ``(n_folds, len(Cs_), n_features)`` or
-                     ``(n_folds, len(Cs_), n_features + 1)``
+    coefs_paths_ : array, shape ``(n_folds, len(Cs_), n_features)`` or \
+                   ``(n_folds, len(Cs_), n_features + 1)``
         dict with classes as the keys, and the path of coefficients obtained
         during cross-validating across each fold and then across each Cs
         after doing an OvR for the corresponding class as values.

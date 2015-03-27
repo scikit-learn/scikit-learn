@@ -46,7 +46,7 @@ extension in place::
 Another option is to use the ``develop`` option if you change your code a lot
 and do not want to have to reinstall every time. This basically builds the
 extension in place and creates a link to the development directory (see
-<https://pythonhosted.org/setuptools/setuptools.html#development-mode>)::
+`the setuptool docs <https://pythonhosted.org/setuptools/setuptools.html#development-mode>`_)::
 
     python setup.py develop
 
@@ -256,12 +256,28 @@ intuition.
 
 Next, one or two small code examples to show its use can be added.
 
-Finally, any math and equations, followed by references,
+Next, any math and equations, followed by references,
 can be added to further the documentation. Not starting the
 documentation with the maths makes it more friendly towards
 users that are just interested in what the feature will do, as
 opposed to how it works "under the hood".
 
+Finally, follow the formatting rules below to make it consistently good:
+
+    * Add "See also" in docstrings for related classes/functions.
+    
+    * "See also" in docstrings should be one line per reference, 
+      with a colon and an explanation, for example::
+
+        See also
+        --------
+        SelectKBest: Select features based on the k highest scores.
+        SelectFpr: Select features based on a false positive rate test.
+
+    * For unwritten formatting rules, try to follow existing good works:
+    
+        * For "References" in docstrings, see the Silhouette Coefficient
+          (:func:`sklearn.metrics.silhouette_score`).
 
 .. warning:: **Sphinx version**
 
@@ -802,6 +818,7 @@ The default value for ``deep`` should be true.
 
 The ``set_params`` on the other hand takes as input a dict of the form
 ``'parameter': value`` and sets the parameter of the estimator using this dict.
+Return value must be estimator itself.
 
 While the ``get_params`` mechanism is not essential (see :ref:`cloning` below),
 the ``set_params`` function is necessary as it is used to set parameters during
@@ -819,6 +836,7 @@ implement the interface is::
     def set_params(self, **parameters):
         for parameter, value in parameters.items():
             self.setattr(parameter, value)
+        return self
 
 
 Parameters and init

@@ -6,6 +6,7 @@
 
 """Recursive feature elimination for feature ranking"""
 
+import warnings
 import numpy as np
 from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
@@ -102,7 +103,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, n_features_to_select=None, step=1,
-                 estimator_params={}, verbose=0):
+                 estimator_params=None, verbose=0):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
@@ -136,6 +137,13 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         if step <= 0:
             raise ValueError("Step must be >0")
 
+        if self.estimator_params is not None:
+            warnings.warn("The parameter 'estimator_params' is deprecated as of version 0.16 "
+                          "and will be removed in 0.18. The parameter is no longer "
+                          "necessary because the value is set via the estimator initialisation "
+                          "or set_params function."
+                          , DeprecationWarning)
+
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
         # Elimination
@@ -145,7 +153,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
             # Rank the remaining features
             estimator = clone(self.estimator)
-            estimator.set_params(**self.estimator_params)
+            if self.estimator_params:
+                estimator.set_params(**self.estimator_params)
             if self.verbose > 0:
                 print("Fitting estimator with %d features." % np.sum(support_))
 
@@ -166,7 +175,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         # Set final attributes
         self.estimator_ = clone(self.estimator)
-        self.estimator_.set_params(**self.estimator_params)
+        if self.estimator_params:
+            self.estimator_.set_params(**self.estimator_params)
         self.estimator_.fit(X[:, support_], y)
         self.n_features_ = support_.sum()
         self.support_ = support_
@@ -316,7 +326,7 @@ class RFECV(RFE, MetaEstimatorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, step=1, cv=None, scoring=None,
-                 estimator_params={}, verbose=0):
+                 estimator_params=None, verbose=0):
         self.estimator = estimator
         self.step = step
         self.cv = cv
@@ -339,6 +349,12 @@ class RFECV(RFE, MetaEstimatorMixin):
             regression).
         """
         X, y = check_X_y(X, y, "csr")
+        if self.estimator_params is not None:
+            warnings.warn("The parameter 'estimator_params' is deprecated as of version 0.16 "
+                          "and will be removed in 0.18. The parameter is no longer "
+                          "necessary because the value is set via the estimator initialisation "
+                          "or set_params function."
+                          , DeprecationWarning)
         # Initialization
         rfe = RFE(estimator=self.estimator, n_features_to_select=1,
                   step=self.step, estimator_params=self.estimator_params,
@@ -390,7 +406,8 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.n_features_ = rfe.n_features_
         self.ranking_ = rfe.ranking_
         self.estimator_ = clone(self.estimator)
-        self.estimator_.set_params(**self.estimator_params)
+        if self.estimator_params:
+            self.estimator_.set_params(**self.estimator_params)
         self.estimator_.fit(self.transform(X), y)
 
         # Fixing a normalization error, n is equal to len(cv) - 1

@@ -27,7 +27,7 @@ from sklearn.neighbors import NearestNeighbors
 
 
 def test_neighbors_accuracy_with_n_candidates():
-    """Checks whether accuracy increases as `n_candidates` increases."""
+    # Checks whether accuracy increases as `n_candidates` increases.
     n_candidates_values = np.array([.1, 50, 500])
     n_samples = 100
     n_features = 10
@@ -61,7 +61,7 @@ def test_neighbors_accuracy_with_n_candidates():
 
 
 def test_neighbors_accuracy_with_n_estimators():
-    """Checks whether accuracy increases as `n_estimators` increases."""
+    # Checks whether accuracy increases as `n_estimators` increases.
     n_estimators = np.array([1, 10, 100])
     n_samples = 100
     n_features = 10
@@ -96,12 +96,10 @@ def test_neighbors_accuracy_with_n_estimators():
 
 @ignore_warnings
 def test_kneighbors():
-    """Checks whether desired number of neighbors are returned.
-
-    It is guaranteed to return the requested number of neighbors
-    if `min_hash_match` is set to 0. Returned distances should be
-    in ascending order.
-    """
+    # Checks whether desired number of neighbors are returned.
+    # It is guaranteed to return the requested number of neighbors
+    # if `min_hash_match` is set to 0. Returned distances should be
+    # in ascending order.
     n_samples = 12
     n_features = 2
     n_iter = 10
@@ -147,14 +145,12 @@ def test_kneighbors():
 
 
 def test_radius_neighbors():
-    """Checks whether Returned distances are less than `radius`
-
-    At least one point should be returned when the `radius` is set
-    to mean distance from the considering point to other points in
-    the database.
-    Moreover, this test compares the radius neighbors of LSHForest
-    with the `sklearn.neighbors.NearestNeighbors`.
-    """
+    # Checks whether Returned distances are less than `radius`
+    # At least one point should be returned when the `radius` is set
+    # to mean distance from the considering point to other points in
+    # the database.
+    # Moreover, this test compares the radius neighbors of LSHForest
+    # with the `sklearn.neighbors.NearestNeighbors`.
     n_samples = 12
     n_features = 2
     n_iter = 10
@@ -281,7 +277,7 @@ def test_radius_neighbors_boundary_handling():
 
 
 def test_distances():
-    """Checks whether returned neighbors are from closest to farthest."""
+    # Checks whether returned neighbors are from closest to farthest.
     n_samples = 12
     n_features = 2
     n_iter = 10
@@ -307,7 +303,7 @@ def test_distances():
 
 
 def test_fit():
-    """Checks whether `fit` method sets all attribute values correctly."""
+    # Checks whether `fit` method sets all attribute values correctly.
     n_samples = 12
     n_features = 2
     n_estimators = 5
@@ -334,10 +330,8 @@ def test_fit():
 
 
 def test_partial_fit():
-    """Checks whether inserting array is consitent with fitted data.
-
-    `partial_fit` method should set all attribute values correctly.
-    """
+    # Checks whether inserting array is consitent with fitted data.
+    # `partial_fit` method should set all attribute values correctly.
     n_samples = 12
     n_samples_partial_fit = 3
     n_features = 2
@@ -371,13 +365,11 @@ def test_partial_fit():
 
 
 def test_hash_functions():
-    """Checks randomness of hash functions.
-
-    Variance and mean of each hash function (projection vector)
-    should be different from flattened array of hash functions.
-    If hash functions are not randomly built (seeded with
-    same value), variances and means of all functions are equal.
-    """
+    # Checks randomness of hash functions.
+    # Variance and mean of each hash function (projection vector)
+    # should be different from flattened array of hash functions.
+    # If hash functions are not randomly built (seeded with
+    # same value), variances and means of all functions are equal.
     n_samples = 12
     n_features = 2
     n_estimators = 5
@@ -402,12 +394,10 @@ def test_hash_functions():
 
 
 def test_candidates():
-    """Checks whether candidates are sufficient.
-
-    This should handle the cases when number of candidates is 0.
-    User should be warned when number of candidates is less than
-    requested number of neighbors.
-    """
+    # Checks whether candidates are sufficient.
+    # This should handle the cases when number of candidates is 0.
+    # User should be warned when number of candidates is less than
+    # requested number of neighbors.
     X_train = np.array([[5, 5, 2], [21, 5, 5], [1, 1, 1], [8, 9, 1],
                         [6, 10, 2]], dtype=np.float32)
     X_test = np.array([7, 10, 3], dtype=np.float32)
@@ -442,7 +432,7 @@ def test_candidates():
 
 
 def test_graphs():
-    """Smoke tests for graph methods."""
+    # Smoke tests for graph methods.
     n_samples_sizes = [5, 10, 20]
     n_features = 3
     rng = np.random.RandomState(42)
@@ -471,8 +461,9 @@ def test_sparse_input():
 
     d_sparse, i_sparse = forest_sparse.kneighbors(X2, return_distance=True)
     d_dense, i_dense = forest_dense.kneighbors(X2.A, return_distance=True)
-    assert_array_equal(d_sparse, d_dense)
-    assert_array_equal(i_sparse, i_dense)
+
+    assert_almost_equal(d_sparse, d_dense)
+    assert_almost_equal(i_sparse, i_dense)
 
     d_sparse, i_sparse = forest_sparse.radius_neighbors(X2,
                                                         return_distance=True)
@@ -480,6 +471,6 @@ def test_sparse_input():
                                                      return_distance=True)
     assert_equal(d_sparse.shape, d_dense.shape)
     for a, b in zip(d_sparse, d_dense):
-        assert_array_equal(a, b)
+        assert_almost_equal(a, b)
     for a, b in zip(i_sparse, i_dense):
-        assert_array_equal(a, b)
+        assert_almost_equal(a, b)

@@ -34,7 +34,6 @@ from ..utils import check_array
 from ..utils import check_consistent_length
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import column_or_1d
-from ..utils import check_consistent_length
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
@@ -1471,17 +1470,17 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     References
     ----------
     .. [1] `Wikipedia entry on the Hinge loss
-            <http://en.wikipedia.org/wiki/Hinge_loss>`_
+           <http://en.wikipedia.org/wiki/Hinge_loss>`_
 
     .. [2] Koby Crammer, Yoram Singer. On the Algorithmic
            Implementation of Multiclass Kernel-based Vector
            Machines. Journal of Machine Learning Research 2,
            (2001), 265-292
 
-    .. [3] 'L1 AND L2 Regularization for Multiclass Hinge Loss Models
+    .. [3] `L1 AND L2 Regularization for Multiclass Hinge Loss Models
            by Robert C. Moore, John DeNero.
            <http://www.ttic.edu/sigml/symposium2011/papers/
-           Moore+DeNero_Regularization.pdf>'
+           Moore+DeNero_Regularization.pdf>`_
 
     Examples
     --------
@@ -1502,6 +1501,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     0.30...
 
     In the multiclass case:
+
     >>> X = np.array([[0], [1], [2], [3]])
     >>> Y = np.array([0, 1, 2, 3])
     >>> labels = np.array([0, 1, 2, 3])

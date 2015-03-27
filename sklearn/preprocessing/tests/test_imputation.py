@@ -75,7 +75,7 @@ def _check_statistics(X, X_true,
 
 
 def test_imputation_shape():
-    """Verify the shapes of the imputed matrix for different strategies."""
+    # Verify the shapes of the imputed matrix for different strategies.
     X = np.random.randn(10, 2)
     X[::2] = np.nan
 
@@ -88,8 +88,8 @@ def test_imputation_shape():
 
 
 def test_imputation_mean_median_only_zero():
-    """Test imputation using the mean and median strategies, when
-       missing_values == 0."""
+    # Test imputation using the mean and median strategies, when
+    # missing_values == 0.
     X = np.array([
         [np.nan, 0, 0,  0,  5],
         [np.nan, 1, 0,  np.nan,  3],
@@ -122,8 +122,8 @@ def test_imputation_mean_median_only_zero():
 
 
 def test_imputation_mean_median():
-    """Test imputation using the mean and median strategies, when
-       missing_values != 0."""
+    # Test imputation using the mean and median strategies, when
+    # missing_values != 0.
     rng = np.random.RandomState(0)
 
     dim = 10
@@ -192,8 +192,7 @@ def test_imputation_mean_median():
 
 
 def test_imputation_median_special_cases():
-    """Test median imputation with sparse boundary cases
-    """
+    # Test median imputation with sparse boundary cases
     X = np.array([
         [0, np.nan, np.nan],  # odd: implicit zero
         [5, np.nan, np.nan],  # odd: explicit nonzero
@@ -222,7 +221,7 @@ def test_imputation_median_special_cases():
 
 
 def test_imputation_most_frequent():
-    """Test imputation using the most-frequent strategy."""
+    # Test imputation using the most-frequent strategy.
     X = np.array([
         [-1, -1,  0,  5],
         [-1,  2, -1,  3],
@@ -245,7 +244,7 @@ def test_imputation_most_frequent():
 
 
 def test_imputation_pipeline_grid_search():
-    """Test imputation within a pipeline + gridsearch."""
+    # Test imputation within a pipeline + gridsearch.
     pipeline = Pipeline([('imputer', Imputer(missing_values=0)),
                          ('tree', tree.DecisionTreeRegressor(random_state=0))])
 
@@ -262,7 +261,7 @@ def test_imputation_pipeline_grid_search():
 
 
 def test_imputation_pickle():
-    """Test for pickling imputers."""
+    # Test for pickling imputers.
     import pickle
 
     l = 100
@@ -281,7 +280,7 @@ def test_imputation_pickle():
 
 
 def test_imputation_copy():
-    """Test imputation with copy"""
+    # Test imputation with copy
     X_orig = sparse_random_matrix(5, 5, density=0.75, random_state=0)
 
     # copy=True, dense => copy

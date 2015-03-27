@@ -27,7 +27,7 @@ F, _ = f_regression(X, y)
 
 
 def test_lasso_stability_path():
-    """Check lasso stability path"""
+    # Check lasso stability path
     # Load diabetes data and add noisy features
     scaling = 0.3
     coef_grid, scores_path = lasso_stability_path(X, y, scaling=scaling,
@@ -39,7 +39,7 @@ def test_lasso_stability_path():
 
 
 def test_randomized_lasso():
-    """Check randomized lasso"""
+    # Check randomized lasso
     scaling = 0.3
     selection_threshold = 0.5
 
@@ -76,7 +76,7 @@ def test_randomized_lasso():
 
 
 def test_randomized_logistic():
-    """Check randomized sparse logistic regression"""
+    # Check randomized sparse logistic regression
     iris = load_iris()
     X = iris.data[:, [0, 2]]
     y = iris.target
@@ -102,7 +102,7 @@ def test_randomized_logistic():
 
 
 def test_randomized_logistic_sparse():
-    """Check randomized sparse logistic regression on sparse data"""
+    # Check randomized sparse logistic regression on sparse data
     iris = load_iris()
     X = iris.data[:, [0, 2]]
     y = iris.target

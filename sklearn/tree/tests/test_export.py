@@ -17,7 +17,7 @@ true_result = [-1, 1, 1]
 
 
 def test_graphviz_toy():
-    """Check correctness of export_graphviz"""
+    # Check correctness of export_graphviz
     clf = DecisionTreeClassifier(max_depth=3,
                                  min_samples_split=1,
                                  criterion="gini",
@@ -75,7 +75,7 @@ def test_graphviz_toy():
 
 
 def test_graphviz_errors():
-    """Check for errors of export_graphviz"""
+    # Check for errors of export_graphviz
     clf = DecisionTreeClassifier(max_depth=3, min_samples_split=1)
     clf.fit(X, y)
 

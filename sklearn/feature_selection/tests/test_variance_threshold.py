@@ -11,7 +11,7 @@ data = [[0, 1, 2, 3, 4],
 
 
 def test_zero_variance():
-    """Test VarianceThreshold with default setting, zero variance."""
+    # Test VarianceThreshold with default setting, zero variance.
 
     for X in [data, csr_matrix(data), csc_matrix(data), bsr_matrix(data)]:
         sel = VarianceThreshold().fit(X)
@@ -22,7 +22,7 @@ def test_zero_variance():
 
 
 def test_variance_threshold():
-    """Test VarianceThreshold with custom variance."""
+    # Test VarianceThreshold with custom variance.
     for X in [data, csr_matrix(data)]:
         X = VarianceThreshold(threshold=.4).fit_transform(X)
         assert_equal((len(data), 1), X.shape)

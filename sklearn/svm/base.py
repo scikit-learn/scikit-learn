@@ -104,6 +104,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
+            For kernel="precomputed", the expected shape of X is
+            (n_samples, n_samples).
 
         y : array-like, shape (n_samples,)
             Target values (class labels in classification, real numbers in
@@ -278,6 +280,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            For kernel="precomputed", the expected shape of X is
+            (n_samples_test, n_samples_train).
 
         Returns
         -------
@@ -350,6 +354,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+            For kernel="precomputed", the expected shape of X is
+            [n_samples_test, n_samples_train].
 
         Returns
         -------
@@ -360,22 +366,12 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         # NOTE: _validate_for_predict contains check for is_fitted
         # hence must be placed before any other attributes are used.
         X = self._validate_for_predict(X)
-        if self._sparse:
-            raise NotImplementedError("Decision_function not supported for"
-                                      " sparse SVM.")
         X = self._compute_kernel(X)
 
-        kernel = self.kernel
-        if callable(kernel):
-            kernel = 'precomputed'
-
-        dec_func = libsvm.decision_function(
-            X, self.support_, self.support_vectors_, self.n_support_,
-            self._dual_coef_, self._intercept_,
-            self.probA_, self.probB_,
-            svm_type=LIBSVM_IMPL.index(self._impl),
-            kernel=kernel, degree=self.degree, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self._gamma)
+        if self._sparse:
+            dec_func = self._sparse_decision_function(X)
+        else:
+            dec_func = self._dense_decision_function(X)
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function.
@@ -383,6 +379,43 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             return -dec_func.ravel()
 
         return dec_func
+
+    def _dense_decision_function(self, X):
+        X = check_array(X, dtype=np.float64, order="C")
+
+        kernel = self.kernel
+        if callable(kernel):
+            kernel = 'precomputed'
+
+        return libsvm.decision_function(
+            X, self.support_, self.support_vectors_, self.n_support_,
+            self._dual_coef_, self._intercept_,
+            self.probA_, self.probB_,
+            svm_type=LIBSVM_IMPL.index(self._impl),
+            kernel=kernel, degree=self.degree, cache_size=self.cache_size,
+            coef0=self.coef0, gamma=self._gamma)
+
+    def _sparse_decision_function(self, X):
+        X.data = np.asarray(X.data, dtype=np.float64, order='C')
+
+        kernel = self.kernel
+        if hasattr(kernel, '__call__'):
+            kernel = 'precomputed'
+
+        kernel_type = self._sparse_kernels.index(kernel)
+
+        return libsvm_sparse.libsvm_sparse_decision_function(
+            X.data, X.indices, X.indptr,
+            self.support_vectors_.data,
+            self.support_vectors_.indices,
+            self.support_vectors_.indptr,
+            self._dual_coef_.data, self._intercept_,
+            LIBSVM_IMPL.index(self._impl), kernel_type,
+            self.degree, self._gamma, self.coef0, self.tol,
+            self.C, self.class_weight_,
+            self.nu, self.epsilon, self.shrinking,
+            self.probability, self.n_support_,
+            self.probA_, self.probB_)
 
     def _validate_for_predict(self, X):
         check_is_fitted(self, 'support_')
@@ -456,6 +489,8 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            For kernel="precomputed", the expected shape of X is
+            [n_samples_test, n_samples_train]
 
         Returns
         -------
@@ -487,6 +522,8 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+            For kernel="precomputed", the expected shape of X is
+            [n_samples_test, n_samples_train]
 
         Returns
         -------
@@ -521,6 +558,8 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+            For kernel="precomputed", the expected shape of X is
+            [n_samples_test, n_samples_train]
 
         Returns
         -------
@@ -654,9 +693,8 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
                                 % (penalty, loss, dual))
             else:
                 return solver_num
-    
-    raise ValueError(('Unsupported set of arguments: %s, '
-                      'Parameters: penalty=%r, loss=%r, dual=%r')
+    raise ValueError('Unsupported set of arguments: %s, '
+                     'Parameters: penalty=%r, loss=%r, dual=%r'
                      % (error_string, penalty, loss, dual))
 
 
@@ -779,9 +817,15 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     if verbose:
         print('[LibLinear]', end='')
 
+    # LinearSVC breaks when intercept_scaling is <= 0
     bias = -1.0
     if fit_intercept:
-        bias = intercept_scaling
+        if intercept_scaling <= 0:
+            raise ValueError("Intercept scaling is %r but needs to be greater than 0."
+                             " To disable fitting an intercept,"
+                             " set fit_intercept=False." % intercept_scaling)
+        else:
+            bias = intercept_scaling
 
     libsvm.set_verbosity_wrap(verbose)
     libsvm_sparse.set_verbosity_wrap(verbose)
@@ -793,8 +837,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     raw_coef_, n_iter_ = liblinear.train_wrap(
         X, y_ind, sp.isspmatrix(X), solver_type, tol, bias, C,
         class_weight_, max_iter, rnd.randint(np.iinfo('i').max),
-        epsilon
-        )
+        epsilon)
     # Regarding rnd.randint(..) in the above signature:
     # seed for srand in range [0..INT_MAX); due to limitations in Numpy
     # on 32-bit platforms, we can't get to the UINT_MAX limit that

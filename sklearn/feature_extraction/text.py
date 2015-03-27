@@ -267,12 +267,12 @@ class VectorizerMixin(object):
 
     def _check_vocabulary(self):
         """Check if vocabulary is empty or missing (not fit-ed)"""
-        msg="%(name)s - Vocabulary wasn't fitted."
+        msg = "%(name)s - Vocabulary wasn't fitted."
         check_is_fitted(self, 'vocabulary_', msg=msg),
-        
+
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
- 
+
     @property
     @deprecated("The `fixed_vocabulary` attribute is deprecated and will be "
                 "removed in 0.18.  Please use `fixed_vocabulary_` instead.")
@@ -320,7 +320,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     Parameters
     ----------
 
-    input: string {'filename', 'file', 'content'}
+    input : string {'filename', 'file', 'content'}
         If 'filename', the sequence passed as an argument to fit is
         expected to be a list of filenames that need reading to fetch
         the raw content to analyze.
@@ -331,7 +331,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         Otherwise the input is expected to be the sequence strings or
         bytes items are expected to be analyzed directly.
 
-    encoding : string, 'utf-8' by default.
+    encoding : string, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
         decode.
 
@@ -341,14 +341,14 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         'strict', meaning that a UnicodeDecodeError will be raised. Other
         values are 'ignore' and 'replace'.
 
-    strip_accents: {'ascii', 'unicode', None}
+    strip_accents : {'ascii', 'unicode', None}
         Remove accents during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
 
-    analyzer: string, {'word', 'char', 'char_wb'} or callable
+    analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
         word boundaries.
@@ -356,35 +356,35 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
 
-    preprocessor: callable or None (default)
+    preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
 
-    tokenizer: callable or None (default)
+    tokenizer : callable or None (default)
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
 
-    ngram_range: tuple (min_n, max_n)
+    ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
         will be used.
 
-    stop_words: string {'english'}, list, or None (default)
+    stop_words : string {'english'}, list, or None (default)
         If 'english', a built-in stop word list for English is used.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
 
-    lowercase: boolean, default True
+    lowercase : boolean, default=True
         Convert all characters to lowercase before tokenizing.
 
-    token_pattern: string
+    token_pattern : string
         Regular expression denoting what constitutes a "token", only used
         if `analyzer == 'word'`. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
-    n_features : integer, optional, (2 ** 20) by default
+    n_features : integer, default=(2 ** 20)
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.
@@ -392,7 +392,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     norm : 'l1', 'l2' or None, optional
         Norm used to normalize term vectors. None for no normalization.
 
-    binary: boolean, False by default.
+    binary: boolean, default=False.
         If True, all non zero counts are set to 1. This is useful for discrete
         probabilistic models that model binary events rather than integer
         counts.
@@ -400,7 +400,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     dtype: type, optional
         Type of the matrix returned by fit_transform() or transform().
 
-    non_negative : boolean, optional
+    non_negative : boolean, default=False
         Whether output matrices should contain non-negative values only;
         effectively calls abs on the matrix prior to returning it.
         When True, output values can be interpreted as frequencies.
@@ -573,7 +573,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
-    max_df : float in range [0.0, 1.0] or int, optional, 1.0 by default
+    max_df : float in range [0.0, 1.0] or int, default=1.0
         When building the vocabulary ignore terms that have a document
         frequency strictly higher than the given threshold (corpus-specific
         stop words).
@@ -581,7 +581,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         absolute counts.
         This parameter is ignored if vocabulary is not None.
 
-    min_df : float in range [0.0, 1.0] or int, optional, 1 by default
+    min_df : float in range [0.0, 1.0] or int, default=1
         When building the vocabulary ignore terms that have a document
         frequency strictly lower than the given threshold. This value is also
         called cut-off in the literature.
@@ -589,7 +589,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         absolute counts.
         This parameter is ignored if vocabulary is not None.
 
-    max_features : optional, None by default
+    max_features : int or None, default=None
         If not None, build a vocabulary that only consider the top
         max_features ordered by term frequency across the corpus.
 
@@ -602,7 +602,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         in the mapping should not be repeated and should not have any gap
         between 0 and the largest index.
 
-    binary : boolean, False by default.
+    binary : boolean, default=False
         If True, all non zero counts are set to 1. This is useful for discrete
         probabilistic models that model binary events rather than integer
         counts.
@@ -630,7 +630,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     Notes
     -----
-    The ``stop_words_`` attribute can get large and increase the model size 
+    The ``stop_words_`` attribute can get large and increase the model size
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
     """
@@ -846,7 +846,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         """
         if not hasattr(self, 'vocabulary_'):
             self._validate_vocabulary()
- 
+
         self._check_vocabulary()
 
         # use the same matrix-building strategy as fit_transform
@@ -926,15 +926,15 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     norm : 'l1', 'l2' or None, optional
         Norm used to normalize term vectors. None for no normalization.
 
-    use_idf : boolean, optional
+    use_idf : boolean, default=True
         Enable inverse-document-frequency reweighting.
 
-    smooth_idf : boolean, optional
+    smooth_idf : boolean, default=True
         Smooth idf weights by adding one to document frequencies, as if an
         extra document was seen containing every term in the collection
         exactly once. Prevents zero divisions.
 
-    sublinear_tf : boolean, optional
+    sublinear_tf : boolean, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
     References
@@ -1109,14 +1109,14 @@ class TfidfVectorizer(CountVectorizer):
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
-    max_df : float in range [0.0, 1.0] or int, optional, 1.0 by default
+    max_df : float in range [0.0, 1.0] or int, default=1.0
         When building the vocabulary ignore terms that have a document frequency
         strictly higher than the given threshold (corpus specific stop words).
         If float, the parameter represents a proportion of documents, integer
         absolute counts.
         This parameter is ignored if vocabulary is not None.
 
-    min_df : float in range [0.0, 1.0] or int, optional, 1 by default
+    min_df : float in range [0.0, 1.0] or int, default=1
         When building the vocabulary ignore terms that have a document frequency
         strictly lower than the given threshold.
         This value is also called cut-off in the literature.
@@ -1124,7 +1124,7 @@ class TfidfVectorizer(CountVectorizer):
         absolute counts.
         This parameter is ignored if vocabulary is not None.
 
-    max_features : optional, None by default
+    max_features : int or None, default=None
         If not None, build a vocabulary that only consider the top
         max_features ordered by term frequency across the corpus.
 
@@ -1135,7 +1135,7 @@ class TfidfVectorizer(CountVectorizer):
         indices in the feature matrix, or an iterable over terms. If not
         given, a vocabulary is determined from the input documents.
 
-    binary : boolean, False by default.
+    binary : boolean, default=False
         If True, all non-zero term counts are set to 1. This does not mean
         outputs will have only 0/1 values, only that the tf term in tf-idf
         is binary. (Set idf and normalization to False to get 0/1 outputs.)
@@ -1146,15 +1146,15 @@ class TfidfVectorizer(CountVectorizer):
     norm : 'l1', 'l2' or None, optional
         Norm used to normalize term vectors. None for no normalization.
 
-    use_idf : boolean, optional
+    use_idf : boolean, default=True
         Enable inverse-document-frequency reweighting.
 
-    smooth_idf : boolean, optional
+    smooth_idf : boolean, default=True
         Smooth idf weights by adding one to document frequencies, as if an
         extra document was seen containing every term in the collection
         exactly once. Prevents zero divisions.
 
-    sublinear_tf : boolean, optional
+    sublinear_tf : boolean, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
     Attributes
@@ -1171,7 +1171,7 @@ class TfidfVectorizer(CountVectorizer):
           - were cut off by feature selection (`max_features`).
 
         This is only available if no vocabulary was given.
- 
+
     See also
     --------
     CountVectorizer
@@ -1181,10 +1181,10 @@ class TfidfVectorizer(CountVectorizer):
     TfidfTransformer
         Apply Term Frequency Inverse Document Frequency normalization to a
         sparse matrix of occurrence counts.
- 
+
     Notes
     -----
-    The ``stop_words_`` attribute can get large and increase the model size 
+    The ``stop_words_`` attribute can get large and increase the model size
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
     """

@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils import ConvergenceWarning
 
 from sklearn.linear_model.logistic import (
@@ -50,10 +51,8 @@ def check_predictions(clf, X, y):
 
 
 def test_predict_2_classes():
-    """Simple sanity check on a 2 classes dataset
-
-    Make sure it predicts the correct result on simple datasets.
-    """
+    # Simple sanity check on a 2 classes dataset
+    # Make sure it predicts the correct result on simple datasets.
     check_predictions(LogisticRegression(random_state=0), X, Y1)
     check_predictions(LogisticRegression(random_state=0), X_sp, Y1)
 
@@ -67,7 +66,7 @@ def test_predict_2_classes():
 
 
 def test_error():
-    """Test for appropriate exception on errors"""
+    # Test for appropriate exception on errors
     assert_raises(ValueError, LogisticRegression(C=-1).fit, X, Y1)
 
 
@@ -77,7 +76,7 @@ def test_predict_3_classes():
 
 
 def test_predict_iris():
-    """Test logistic regression with the iris dataset"""
+    # Test logistic regression with the iris dataset
     n_samples, n_features = iris.data.shape
 
     target = iris.target_names[iris.target]
@@ -111,7 +110,7 @@ def test_multinomial_validation():
 
 
 def test_multinomial_binary():
-    """Test multinomial LR on a binary problem."""
+    # Test multinomial LR on a binary problem.
     target = (iris.target > 0).astype(np.intp)
     target = np.array(["setosa", "not-setosa"])[target]
 
@@ -132,7 +131,7 @@ def test_multinomial_binary():
 
 
 def test_sparsify():
-    """Test sparsify and densify members."""
+    # Test sparsify and densify members.
     n_samples, n_features = iris.data.shape
     target = iris.target_names[iris.target]
     clf = LogisticRegression(random_state=0).fit(iris.data, target)
@@ -155,7 +154,7 @@ def test_sparsify():
 
 
 def test_inconsistent_input():
-    """Test that an exception is raised on inconsistent input"""
+    # Test that an exception is raised on inconsistent input
     rng = np.random.RandomState(0)
     X_ = rng.random_sample((5, 10))
     y_ = np.ones(X_.shape[0])
@@ -173,7 +172,7 @@ def test_inconsistent_input():
 
 
 def test_write_parameters():
-    """Test that we can write to coef_ and intercept_"""
+    # Test that we can write to coef_ and intercept_
     clf = LogisticRegression(random_state=0)
     clf.fit(X, Y1)
     clf.coef_[:] = 0
@@ -183,17 +182,15 @@ def test_write_parameters():
 
 @raises(ValueError)
 def test_nan():
-    """Test proper NaN handling.
-
-    Regression test for Issue #252: fit used to go into an infinite loop.
-    """
+    # Test proper NaN handling.
+    # Regression test for Issue #252: fit used to go into an infinite loop.
     Xnan = np.array(X, dtype=np.float64)
     Xnan[0, 1] = np.nan
     LogisticRegression(random_state=0).fit(Xnan, Y1)
 
 
 def test_consistency_path():
-    """Test that the path algorithm is consistent"""
+    # Test that the path algorithm is consistent
     rng = np.random.RandomState(0)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = [1] * 100 + [-1] * 100
@@ -314,7 +311,7 @@ def test_logistic_loss_grad_hess():
 
 
 def test_logistic_cv():
-    """test for LogisticRegressionCV object"""
+    # test for LogisticRegressionCV object
     n_samples, n_features = 50, 5
     rng = np.random.RandomState(0)
     X_ref = rng.randn(n_samples, n_features)
@@ -387,7 +384,7 @@ def test_intercept_logistic_helper():
 
 
 def test_ovr_multinomial_iris():
-    """Test that OvR and multinomial are correct using the iris dataset."""
+    # Test that OvR and multinomial are correct using the iris dataset.
     train, target = iris.data, iris.target
     n_samples, n_features = train.shape
 
@@ -490,7 +487,7 @@ def test_logistic_regressioncv_class_weights():
 
 
 def test_logistic_regression_convergence_warnings():
-    """Test that warnings are raised if model does not converge"""
+    # Test that warnings are raised if model does not converge
 
     X, y = make_classification(n_samples=20, n_features=20)
     clf_lib = LogisticRegression(solver='liblinear', max_iter=2, verbose=1)
@@ -499,7 +496,7 @@ def test_logistic_regression_convergence_warnings():
 
 
 def test_logistic_regression_multinomial():
-    """Tests for the multinomial option in logistic regression"""
+    # Tests for the multinomial option in logistic regression
 
     # Some basic attributes of Logistic Regression
     n_samples, n_features, n_classes = 50, 20, 3
@@ -575,13 +572,11 @@ def test_multinomial_loss_grad_hess():
 
 
 def test_liblinear_decision_function_zero():
-    """Test negative prediction when decision_function values are zero.
-
-    Liblinear predicts the positive class when decision_function values
-    are zero. This is a test to verify that we do not do the same.
-    See Issue: https://github.com/scikit-learn/scikit-learn/issues/3600
-    and the PR https://github.com/scikit-learn/scikit-learn/pull/3623
-    """
+    # Test negative prediction when decision_function values are zero.
+    # Liblinear predicts the positive class when decision_function values
+    # are zero. This is a test to verify that we do not do the same.
+    # See Issue: https://github.com/scikit-learn/scikit-learn/issues/3600
+    # and the PR https://github.com/scikit-learn/scikit-learn/pull/3623
     X, y = make_classification(n_samples=5, n_features=5)
     clf = LogisticRegression(fit_intercept=False)
     clf.fit(X, y)
@@ -592,8 +587,27 @@ def test_liblinear_decision_function_zero():
 
 
 def test_liblinear_logregcv_sparse():
-    """Test LogRegCV with solver='liblinear' works for sparse matrices"""
+    # Test LogRegCV with solver='liblinear' works for sparse matrices
 
     X, y = make_classification(n_samples=10, n_features=5)
     clf = LogisticRegressionCV(solver='liblinear')
     clf.fit(sparse.csr_matrix(X), y)
+
+
+def test_logreg_intercept_scaling():
+    # Test that the right error message is thrown when intercept_scaling <= 0
+
+    for i in [-1, 0]:
+        clf = LogisticRegression(intercept_scaling=i)
+        msg = ('Intercept scaling is %r but needs to be greater than 0.'
+               ' To disable fitting an intercept,'
+               ' set fit_intercept=False.' % clf.intercept_scaling)
+        assert_raise_message(ValueError, msg, clf.fit, X, Y1)
+
+
+def test_logreg_intercept_scaling_zero():
+    # Test that intercept_scaling is ignored when fit_intercept is False
+
+    clf = LogisticRegression(fit_intercept=False)
+    clf.fit(X, Y1)
+    assert_equal(clf.intercept_, 0.)
