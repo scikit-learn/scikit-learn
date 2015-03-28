@@ -426,6 +426,56 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
                                          metric_kwargs)[0]
 
 
+def haversine_distances(X, Y=None):
+    """Compute haversine distance between samples in X and Y.
+
+    Haversine (Spherical) Distance
+
+    The Haversine distance is the angular distance between two points on
+    the surface of a sphere. The first distance of each point is assumed
+    to be the latitude, the second is the longitude, given in radians.
+    The dimension of the points must be 2.
+
+    .. math::
+       D(x, y) = 2\arcsin[\sqrt{\sin^2((x1 - y1) / 2)
+                                + cos(x1)cos(y1)sin^2((x2 - y2) / 2)}]
+
+    Parameters
+    ----------
+    X : {array-like}, shape (n_samples_1, 2)
+
+    Y : {array-like}, shape (n_samples_2, 2)
+
+    Returns
+    -------
+    distances : {array}, shape (n_samples_1, n_samples_2)
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics.pairwise import haversine_distances
+    >>> X = np.array([[0, np.pi], [np.pi/2, 0]])
+    >>> Y = np.array([[-np.pi/2, 0], [-np.pi/2, -np.pi]])
+    >>> haversine_distances(X, Y) # doctest: +ELLIPSIS
+    array([[ 1.57...,  1.57...],
+           [ 3.14...,  3.14...]])
+
+    References
+    ----------
+    * Haversine formula http://en.wikipedia.org/wiki/Haversine_formula
+    """
+    X, Y = check_pairwise_arrays(X, Y)
+
+    if X.shape[1] != 2 or Y.shape[1] != 2:
+        raise ValueError("Haversine distance only valid in 2 dimensions")
+
+    D = np.square(np.sin((X[:, np.newaxis, :] - Y[np.newaxis, :, :]) * 0.5))
+    D = 2 * np.arcsin(np.sqrt(D[:, :, 0] +
+                              np.outer(np.cos(X[:, 0]), np.cos(Y[:, 0].T)) *
+                              D[:, :, 1]))
+    return D
+
+
 def manhattan_distances(X, Y=None, sum_over_features=True,
                         size_threshold=5e8):
     """ Compute the L1 distances between the vectors in X and Y.
@@ -920,6 +970,7 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     'cityblock': manhattan_distances,
     'cosine': cosine_distances,
     'euclidean': euclidean_distances,
+    'haversine': haversine_distances,
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances, }
@@ -940,6 +991,7 @@ def distance_metrics():
     'cityblock'      metrics.pairwise.manhattan_distances
     'cosine'         metrics.pairwise.cosine_distances
     'euclidean'      metrics.pairwise.euclidean_distances
+    'haversine'      metrics.pairwise.haversine_distances
     'l1'             metrics.pairwise.manhattan_distances
     'l2'             metrics.pairwise.euclidean_distances
     'manhattan'      metrics.pairwise.manhattan_distances
@@ -1004,11 +1056,12 @@ def _pairwise_callable(X, Y, metric, **kwds):
 
 
 _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
-                  'braycurtis', 'canberra', 'chebyshev', 'correlation',
-                  'cosine', 'dice', 'hamming', 'jaccard', 'kulsinski',
-                  'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
-                  'russellrao', 'seuclidean', 'sokalmichener',
-                  'sokalsneath', 'sqeuclidean', 'yule', "wminkowski"]
+                  'haversine', 'braycurtis', 'canberra', 'chebyshev',
+                  'correlation', 'cosine', 'dice', 'hamming', 'jaccard',
+                  'kulsinski', 'mahalanobis', 'matching', 'minkowski',
+                  'rogerstanimoto', 'russellrao', 'seuclidean',
+                  'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule',
+                  'wminkowski']
 
 
 def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
@@ -1027,8 +1080,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
     Valid values for metric are:
 
-    - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-      'manhattan']. These metrics support sparse matrix inputs.
+    - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'haversine',
+      'l1', 'l2', 'manhattan']. These metrics support sparse matrix inputs.
 
     - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',

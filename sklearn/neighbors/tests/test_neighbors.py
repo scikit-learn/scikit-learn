@@ -11,8 +11,10 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
+
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn import neighbors, datasets
 
@@ -797,7 +799,7 @@ def test_neighbors_badargs():
                   neighbors.NearestNeighbors,
                   algorithm='blah')
 
-    X = rng.random_sample((10, 2))
+    X = rng.random_sample((10, 3))
     Xsparse = csr_matrix(X)
     y = np.ones(10)
 
@@ -812,13 +814,6 @@ def test_neighbors_badargs():
                       cls, p=-1)
         assert_raises(ValueError,
                       cls, algorithm='blah')
-        nbrs = cls(algorithm='ball_tree', metric='haversine')
-        assert_raises(ValueError,
-                      nbrs.predict,
-                      X)
-        assert_raises(ValueError,
-                      ignore_warnings(nbrs.fit),
-                      Xsparse, y)
         nbrs = cls()
         assert_raises(ValueError,
                       nbrs.fit,
@@ -830,6 +825,12 @@ def test_neighbors_badargs():
         assert_raises(ValueError,
                       nbrs.predict,
                       [])
+        nbrs = cls(metric='haversine', algorithm='brute')
+        nbrs.fit(X, y)
+        assert_raise_message(ValueError,
+                             "Haversine distance only valid in 2 dimensions",
+                             nbrs.predict,
+                             X)
 
     nbrs = neighbors.NearestNeighbors().fit(X)
 
@@ -857,7 +858,8 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                ('chebyshev', {}),
                ('seuclidean', dict(V=rng.rand(n_features))),
                ('wminkowski', dict(p=3, w=rng.rand(n_features))),
-               ('mahalanobis', dict(VI=VI))]
+               ('mahalanobis', dict(VI=VI)),
+               ('haversine', {})]
     algorithms = ['brute', 'ball_tree', 'kd_tree']
     X = rng.rand(n_samples, n_features)
 
@@ -880,8 +882,13 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                                                algorithm=algorithm,
                                                metric=metric, p=p,
                                                metric_params=metric_params)
-            neigh.fit(X)
-            results.append(neigh.kneighbors(test, return_distance=True))
+            if metric == 'haversine':
+                neigh.fit(X[:, :2])
+                results.append(neigh.kneighbors(test[:, :2],
+                                                return_distance=True))
+            else:
+                neigh.fit(X)
+                results.append(neigh.kneighbors(test, return_distance=True))
 
         assert_array_almost_equal(results[0][0], results[1][0])
         assert_array_almost_equal(results[0][1], results[1][1])
