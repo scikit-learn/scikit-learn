@@ -35,13 +35,6 @@ from ..base import clone
 class Kernel(six.with_metaclass(ABCMeta)):
     """ Base class for all kernels."""
 
-    def __init__(self, theta=1.0, thetaL=1e-5, thetaU=np.inf):
-        if not np.iterable(theta):
-            theta = np.array([theta])
-        self.theta = np.asarray(theta, dtype=np.float)
-        self.bounds = (np.asarray(thetaL, dtype=np.float),
-                       np.asarray(thetaU, dtype=np.float))
-
     def get_params(self, deep=True):
         """Get parameters of this kernel.
 
@@ -56,8 +49,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        params = dict(theta=self.theta, thetaL=self.bounds[:, 0],
-                      thetaU=self.bounds[:, 1])
+        params = dict()
 
         # introspect the constructor arguments to find the model parameters
         # to represent
@@ -70,9 +62,8 @@ class Kernel(six.with_metaclass(ABCMeta)):
                                " of their __init__ (no varargs)."
                                " %s doesn't follow this convention."
                                % (cls, ))
-        # Remove 'self', theta, thetaL, and thetaU, and store remaining
-        # arguments in params
-        args = args[4:]
+        # Remove 'self' and store remaining arguments in params
+        args = args[1:]
         for arg in args:
             params[arg] = getattr(self, arg, None)
         return params
@@ -89,16 +80,32 @@ class Kernel(six.with_metaclass(ABCMeta)):
         return self.theta.shape[0]
 
     @property
+    def theta(self):
+        return np.array([getattr(self, var_name)
+                         for var_name in self.theta_vars])
+
+    @theta.setter
+    def theta(self, theta):
+        if len(theta) != len(self.theta_vars):
+            raise ValueError("theta has not the correct number of entries."
+                             " Should be %d; given are %d"
+                             % (len(self.theta_vars), len(theta)))
+        for i, var_name in enumerate(self.theta_vars):
+            setattr(self, var_name, theta[i])
+
+    @property
     def bounds(self):
-        return np.vstack((self.l_bound, self.u_bound)).T
+        return np.array([getattr(self, var_name + "_bounds")
+                         for var_name in self.theta_vars])
 
     @bounds.setter
     def bounds(self, bounds):
-        self.l_bound, self.u_bound = bounds
-        if not np.iterable(self.l_bound):
-             self.l_bound = np.ones_like(self.theta) * self.l_bound
-        if not np.iterable(self.u_bound):
-             self.u_bound = np.ones_like(self.theta) * self.u_bound
+        if len(bounds) != len(self.theta_vars):
+            raise ValueError("theta has not the correct number of entries."
+                             " Should be %d; given are %d"
+                             % (len(self.theta_vars), len(bounds)))
+        for i, var_name in enumerate(self.theta_vars):
+            setattr(self, var_name + "_bounds", bounds[i])
 
     def __add__(self, b):
         if not isinstance(b, Kernel):
@@ -195,26 +202,30 @@ class KernelOperator(Kernel):
 
     @theta.setter
     def theta(self, theta):
-        i = self.k1.n_dims
-        self.k1.theta = theta[:i]
-        self.k2.theta = theta[i:]
+        k1_dims = self.k1.n_dims
+        self.k1.theta = theta[:k1_dims]
+        self.k2.theta = theta[k1_dims:]
 
     @property
     def bounds(self):
+        if self.k1.bounds.size == 0:
+            return self.k2.bounds
+        if self.k2.bounds.size == 0:
+            return self.k1.bounds
         return np.vstack((self.k1.bounds, self.k2.bounds))
 
     @bounds.setter
     def bounds(self, bounds):
-        i = self.k1.n_dims
-        self.k1.bounds = bounds[:i]
-        self.k2.bounds = bounds[i:]
+        k1_dims = self.k1.n_dims
+        self.k1.bounds = bounds[:k1_dims]
+        self.k2.bounds = bounds[k1_dims:]
 
     def __eq__(self, b):
         return (self.k1 == b.k1 and self.k2 == b.k2) \
             or (self.k1 == b.k2 and self.k2 == b.k1)
 
     def is_stationary(self):
-        """ Retuuns whether the kernel is stationary. """
+        """ Returns whether the kernel is stationary. """
         return self.k1.is_stationary() and self.k2.is_stationary()
 
 
@@ -475,37 +486,31 @@ class ConstantKernel(Kernel):
 
     Tunable kernel parameters
     -------------------------
-    value : float
+    c : float
         The constant value used for determining the magnitude (product-kernel)
         or offset of mean (sum-kernel).
     """
+    def __init__(self, c=1.0, c_bounds=(0, np.inf)):
+        self.c = c
+        self.c_bounds = c_bounds
+
+        self.theta_vars = ["c"] if c_bounds is not "fixed" else []
 
     @classmethod
     def from_literal(cls, literal):
         if np.iterable(literal):
             if len(literal) == 1:
-                return cls(literal[0])
+                return cls(c=literal[0])
             elif len(literal) == 2:
-                return cls((literal[0] + literal[1]) / 2, literal[0],
-                            literal[1])
+                return cls(c=(literal[0] + literal[1]) / 2,
+                           c_bounds=(literal[0], literal[1]))
             elif len(literal) == 3:
-                return cls(literal[1], literal[0], literal[2])
+                return cls(c=literal[1], c_bounds=(literal[0], literal[2]))
             else:
                 raise ValueError("Cannot interpret literal %s for "
                                  "ConstantKernel." % literal)
         else:
             return cls(literal)
-
-    @property
-    def theta(self):
-        return np.array([self.value])
-
-    @theta.setter
-    def theta(self, theta):
-        if len(theta) != 1:
-            raise ValueError("theta has not the correct number of entries."
-                             " Should be 1; given are %d" % len(theta))
-        self.value = theta[0]
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """ Return the kernel k(X, Y) and optionally its gradient.
@@ -539,9 +544,12 @@ class ConstantKernel(Kernel):
         elif eval_gradient:
             raise ValueError("Gradient can only be evaluated when Y is None.")
 
-        K = self.value * np.ones((X.shape[0], Y.shape[0]))
+        K = self.c * np.ones((X.shape[0], Y.shape[0]))
         if eval_gradient:
-            return K, np.ones((X.shape[0], X.shape[0], 1))
+            if self.c_bounds is not "fixed":
+                return K, np.ones((X.shape[0], X.shape[0], 1))
+            else:
+                return K, np.empty((X.shape[0], X.shape[0], 0))
         else:
             return K
 
@@ -562,10 +570,10 @@ class ConstantKernel(Kernel):
         K_diag : array, shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return self.value * np.ones(X.shape[0])
+        return self.c * np.ones(X.shape[0])
 
     def __repr__(self):
-        return "{0:.3g}".format(self.value)
+        return "{0:.3g}".format(self.c)
 
 
 class WhiteKernel(Kernel):
@@ -580,14 +588,11 @@ class WhiteKernel(Kernel):
     c : float
         Parameter controlling the noise level.
     """
+    def __init__(self, c=1.0, c_bounds=(0.0, np.inf)):
+        self.c = c
+        self.c_bounds = c_bounds
 
-    @property
-    def theta(self):
-        return np.asarray([self.c])
-
-    @theta.setter
-    def theta(self, theta):
-        self.c = theta[0]
+        self.theta_vars = ["c"] if c_bounds is not "fixed" else []
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """ Return the kernel k(X, Y) and optionally its gradient.
@@ -622,7 +627,10 @@ class WhiteKernel(Kernel):
         if Y is None:
             K = self.c * np.eye(X.shape[0])
             if eval_gradient:
-                return K, np.eye(X.shape[0])[:, :, np.newaxis]
+                if self.c_bounds is not "fixed":
+                    return K, np.eye(X.shape[0])[:, :, np.newaxis]
+                else:
+                    return K, np.empty((X.shape[0], X.shape[0], 0))
             else:
                 return K
         else:
@@ -650,6 +658,9 @@ class WhiteKernel(Kernel):
         """
         return self.c * np.ones(X.shape[0])
 
+    def __repr__(self):
+        return "{0}(c={1:.3g})".format(self.__class__.__name__, self.c)
+
 
 class RBF(Kernel):
     """ Radial-basis function kernel (aka squared-exponential kernel).
@@ -663,14 +674,15 @@ class RBF(Kernel):
         used. If an array, an anisotropic kernel is used where each dimension
         of l defines the length-scale of the respective feature dimension.
     """
+    def __init__(self, l=1.0, l_bounds=(1e-5, np.inf)):
+        if np.iterable(l):
+            self.l = np.asarray(l, dtype=np.float)
+        else:
+            self.l = float(l)
+        self.l_bounds = l_bounds
 
-    @property
-    def theta(self):
-        return np.asarray(self.l)
+        self.theta_vars = ["l"] if l_bounds is not "fixed" else []
 
-    @theta.setter
-    def theta(self, theta):
-        self.l = theta
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """ Return the kernel k(X, Y) and optionally its gradient.
@@ -713,7 +725,9 @@ class RBF(Kernel):
             K = np.exp(-.5 * dists)
 
         if eval_gradient:
-            if self.l.shape[0] == 1:
+            if self.l_bounds is "fixed":  # Hyperparameter l kept fixed
+                return K, np.empty((X.shape[0], X.shape[0], 0))
+            elif not np.iterable(self.l) or self.l.shape[0] == 1:
                 K_gradient = \
                     (K * squareform(dists) / self.l)[:, :, np.newaxis]
                 return K, K_gradient
@@ -728,6 +742,15 @@ class RBF(Kernel):
                                 "of length scales and features match.")
         else:
             return K
+
+    def __repr__(self):
+        if np.iterable(self.l):  # anisotropic
+            return "{0}(l=[{1}])".format(self.__class__.__name__,
+                                         ", ".join(map("{0:.3g}".format,
+                                                   self.l)))
+        else:  # isotropic
+            return "{0}(l={1:.3g})".format(self.__class__.__name__, self.l)
+
 
 
 class RationalQuadratic(Kernel):
@@ -745,18 +768,16 @@ class RationalQuadratic(Kernel):
     l : float > 0
         The length scale of the kernel.
     """
+    def __init__(self, alpha=1.0, l=1.0, alpha_bounds=(1e-5, np.inf),
+                 l_bounds=(1e-5, np.inf)):
+        self.alpha = alpha
+        self.l = l
+        self.alpha_bounds = alpha_bounds
+        self.l_bounds = l_bounds
 
-    def __init__(self, theta=[1.0, 1.0], thetaL=1e-5, thetaU=np.inf):
-        super(RationalQuadratic, self).__init__(theta, thetaL, thetaU)
-
-    @property
-    def theta(self):
-        return np.asarray([self.alpha, self.l])
-
-    @theta.setter
-    def theta(self, theta):
-        self.alpha = theta[0]
-        self.l = theta[1]
+        self.theta_vars = ["alpha"] if alpha_bounds is not "fixed" else []
+        if self.l_bounds is not "fixed":
+            self.theta_vars += ["l"]
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """ Return the kernel k(X, Y) and optionally its gradient.
@@ -799,12 +820,26 @@ class RationalQuadratic(Kernel):
             K = (1 + dists / (2 * self.alpha * self.l ** 2)) ** -self.alpha
 
         if eval_gradient:
-            K_gradient = np.empty((K.shape[0], K.shape[1], 2))
-            K_gradient[..., 0] = K * (-np.log(base) + tmp / base)
-            K_gradient[..., 1] = dists * K / (self.l ** 2 * base)
-            return K, K_gradient
+            # gradient with respect to alpha
+            if "alpha" in self.theta_vars:
+                alpha_gradient = K * (-np.log(base) + tmp / base)
+                alpha_gradient = alpha_gradient[:, :, np.newaxis]
+            else:  # alpha is kept fixed
+                alpha_gradient = np.empty((K.shape[0], K.shape[1], 0))
+            # gradient with respect to l
+            if "l" in self.theta_vars:
+                l_gradient = dists * K / (self.l ** 2 * base)
+                l_gradient = l_gradient[:, :, np.newaxis]
+            else:  # l is kept fixed
+                l_gradient = np.empty((K.shape[0], K.shape[1], 0))
+
+            return K, np.dstack((alpha_gradient, l_gradient))
         else:
             return K
+
+    def __repr__(self):
+        return "{0}(alpha={1:.3g}, l={2:.3g})".format(
+            self.__class__.__name__, self.alpha, self.l)
 
 
 class ExpSineSquared(Kernel):
@@ -822,17 +857,16 @@ class ExpSineSquared(Kernel):
         The periodicity of the kernel.
     """
 
-    def __init__(self, theta=[1.0, 1.0], thetaL=1e-5, thetaU=np.inf):
-        super(ExpSineSquared, self).__init__(theta, thetaL, thetaU)
+    def __init__(self, l=1.0, p=1.0, l_bounds=(1e-5, np.inf),
+                 p_bounds=(1e-5, np.inf)):
+        self.l = l
+        self.p = p
+        self.l_bounds = l_bounds
+        self.p_bounds = p_bounds
 
-    @property
-    def theta(self):
-        return np.asarray([self.l, self.p])
-
-    @theta.setter
-    def theta(self, theta):
-        self.l = theta[0]
-        self.p = theta[1]
+        self.theta_vars = ["l"] if l_bounds is not "fixed" else []
+        if self.p_bounds is not "fixed":
+            self.theta_vars += ["p"]
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """ Return the kernel k(X, Y) and optionally its gradient.
@@ -874,14 +908,28 @@ class ExpSineSquared(Kernel):
             K = np.exp(- 2 * (np.sin(np.pi / self.p * dists) / self.l) ** 2)
 
         if eval_gradient:
-            K_gradient = np.empty((K.shape[0], K.shape[1], 2))
             cos_of_arg = np.cos(arg)
-            K_gradient[..., 0] = 4 / self.l**3 * sin_of_arg**2 * K
-            K_gradient[..., 1] = \
-                4 * arg / (self.l**2 * self.p) * cos_of_arg * sin_of_arg * K
-            return K, K_gradient
+            # gradient with respect to l
+            if "l" in self.theta_vars:
+                l_gradient = 4 / self.l**3 * sin_of_arg**2 * K
+                l_gradient = l_gradient[:, :, np.newaxis]
+            else:  # l is kept fixed
+                l_gradient = np.empty((K.shape[0], K.shape[1], 0))
+            # gradient with respect to p
+            if "p" in self.theta_vars:
+                p_gradient = \
+                   4 * arg / (self.l**2 * self.p) * cos_of_arg * sin_of_arg * K
+                p_gradient = p_gradient[:, :, np.newaxis]
+            else:  # p is kept fixed
+                p_gradient = np.empty((K.shape[0], K.shape[1], 0))
+
+            return K, np.dstack((l_gradient, p_gradient))
         else:
             return K
+
+    def __repr__(self):
+        return "{0}(l={1:.3g}, p={2:.3g})".format(
+            self.__class__.__name__, self.l, self.p)
 
 
 class DotProduct(Kernel):
@@ -896,16 +944,11 @@ class DotProduct(Kernel):
         the kernel is homogenous.
     """
 
-    def __init__(self, theta=[1.0, 1.0], thetaL=1e-5, thetaU=np.inf):
-        super(DotProduct, self).__init__(theta, thetaL, thetaU)
+    def __init__(self, sigma_0=1.0, sigma_0_bounds=(1e-5, np.inf)):
+        self.sigma_0 = sigma_0
+        self.sigma_0_bounds = sigma_0_bounds
 
-    @property
-    def theta(self):
-        return np.asarray([self.sigma_0])
-
-    @theta.setter
-    def theta(self, theta):
-        self.sigma_0 = theta[0]
+        self.theta_vars = ["sigma_0"] if sigma_0_bounds is not "fixed" else []
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """ Return the kernel k(X, Y) and optionally its gradient.
@@ -943,9 +986,12 @@ class DotProduct(Kernel):
             K = np.inner(X, Y) + self.sigma_0 ** 2
 
         if eval_gradient:
-            K_gradient = np.empty((K.shape[0], K.shape[1], 1))
-            K_gradient[..., 0] = 2 * self.sigma_0
-            return K, K_gradient
+            if self.sigma_0_bounds is not "fixed":
+                K_gradient = np.empty((K.shape[0], K.shape[1], 1))
+                K_gradient[..., 0] = 2 * self.sigma_0
+                return K, K_gradient
+            else:
+                return K, np.empty((X.shape[0], X.shape[0], 0))
         else:
             return K
 
@@ -971,6 +1017,10 @@ class DotProduct(Kernel):
     def is_stationary(self):
         """ Returns whether the kernel is stationary. """
         return False
+
+    def __repr__(self):
+        return "{0}(sigma_0={1:.3g})".format(
+            self.__class__.__name__, self.sigma_0)
 
 
 # adapted from scipy/optimize/optimize.py for functions with 2d output
@@ -1014,22 +1064,15 @@ class PairwiseKernel(Kernel):
         Any further parameters are passed directly to the kernel function.
     """
 
-    def __init__(self, theta=1.0, thetaL=1e-5, thetaU=np.inf, metric="linear",
-                 **kwargs):
-        super(PairwiseKernel, self).__init__(theta, thetaL, thetaU)
+    def __init__(self, gamma=1.0, gamma_bounds=(1e-5, np.inf),
+                 metric="linear", **kwargs):
+        self.gamma = gamma
+        self.gamma_bounds = gamma_bounds
+
+        self.theta_vars = ["gamma"] if gamma_bounds is not "fixed" else []
+
         self.metric = metric
         self.kwargs = kwargs
-        if "gamma" in kwargs:
-            raise ValueError(
-                "Gamma must not be set directly but via param_space.")
-
-    @property
-    def theta(self):
-        return np.asarray([self.gamma])
-
-    @theta.setter
-    def theta(self, theta):
-        self.gamma = theta[0]
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """ Return the kernel k(X, Y) and optionally its gradient.
@@ -1061,12 +1104,15 @@ class PairwiseKernel(Kernel):
         K = pairwise_kernels(X, Y, metric=self.metric, gamma=self.gamma,
                              filter_params=True, **self.kwargs)
         if eval_gradient:
-            # approximate gradient numerically
-            def f(gamma):  # helper function
-                return pairwise_kernels(
-                    X, Y, metric=self.metric, gamma=gamma,
-                    filter_params=True, **self.kwargs)
-            return K, _approx_fprime(self.theta, f, 1e-10)
+            if self.gamma_bounds is "fixed":
+                return K, np.empty((X.shape[0], X.shape[0], 0))
+            else:
+                # approximate gradient numerically
+                def f(gamma):  # helper function
+                    return pairwise_kernels(
+                        X, Y, metric=self.metric, gamma=gamma,
+                        filter_params=True, **self.kwargs)
+                return K, _approx_fprime(self.theta, f, 1e-10)
         else:
             return K
 
@@ -1095,6 +1141,5 @@ class PairwiseKernel(Kernel):
         return self.metric in ["rbf"]
 
     def __repr__(self):
-        return "{0}({1}, metric={2})".format(
-            self.__class__.__name__,
-            ", ".join(map("{0:.3g}".format, self.theta)), self.metric)
+        return "{0}(gamma={1}, metric={2})".format(
+            self.__class__.__name__, self.gamma, self.metric)
