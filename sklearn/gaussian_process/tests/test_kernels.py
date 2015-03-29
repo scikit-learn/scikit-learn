@@ -139,16 +139,23 @@ def test_kernel_operator_commutative():
 
 def test_kernel_anisotropic():
     """ Anisotropic kernel should be consistent with isotropic kernels."""
-    K = RBF([0.5, 2.0])(X)
+    kernel = 3.0 * RBF([0.5, 2.0])
+
+    K = kernel(X)
     X1 = np.array(X)
     X1[:, 0] *= 4
-    K1 = RBF(2.0)(X1)
+    K1 = 3.0 * RBF(2.0)(X1)
     assert_almost_equal(K, K1)
 
     X2 = np.array(X)
     X2[:, 1] /= 4
-    K2 = RBF(0.5)(X2)
+    K2 = 3.0 * RBF(0.5)(X2)
     assert_almost_equal(K, K2)
+
+    # Check getting and setting via theta
+    kernel.theta = kernel.theta * 2
+    assert_array_equal(kernel.theta, [6.0, 1.0, 4.0])
+    assert_array_equal(kernel.k2.l, [1.0, 4.0])
 
 
 def test_kernel_stationary():
