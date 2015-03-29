@@ -22,7 +22,7 @@ X = rng.randn(200, 2)
 Y = np.logical_xor(X[:, 0] > 0, X[:, 1] > 0)
 
 # fit the model
-kernel = 1.0 * RBF(1.0)
+kernel = 1.0 * RBF(l=1.0)
 clf = GaussianProcessClassifier(kernel=kernel, warm_start=True).fit(X, Y)
 
 # plot the decision function for each datapoint on the grid

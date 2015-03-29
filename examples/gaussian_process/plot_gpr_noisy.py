@@ -29,11 +29,11 @@ from sklearn.gaussian_process.kernels import RBF, WhiteKernel
 
 rng = np.random.RandomState(0)
 X = rng.uniform(0, 5, 20)[:, np.newaxis]
-y = 0.5*np.sin(3*X[:, 0]) + rng.normal(0, 0.5, X.shape[0])
+y = 0.5 * np.sin(3 * X[:, 0]) + rng.normal(0, 0.5, X.shape[0])
 
 # First run
 plt.figure(0)
-kernel = 1.0 * RBF(100.0) + WhiteKernel(1e-5, 1e-10, 1e+1)
+kernel = 1.0 * RBF(l=100.0) + WhiteKernel(c=1e-5, c_bounds=(1e-10, 1e+1))
 gp = GaussianProcessRegressor(kernel=kernel,
                               y_err=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)
@@ -51,7 +51,7 @@ plt.tight_layout()
 
 # First run
 plt.figure(1)
-kernel = 1.0 * RBF(1.0) + WhiteKernel(1e-5, 1e-10, 1e+1)
+kernel = 1.0 * RBF(l=1.0) + WhiteKernel(c=1e-5, c_bounds=(1e-10, 1e+1))
 gp = GaussianProcessRegressor(kernel=kernel,
                               y_err=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)
