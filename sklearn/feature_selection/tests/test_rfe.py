@@ -70,10 +70,11 @@ def test_rfe_set_params():
 
 
 def test_rfe_deprecation_estimator_params():
-    deprecation_message = ("The parameter 'estimator_params' is deprecated as of version 0.16 "
-                           "and will be removed in 0.18. The parameter is no longer "
-                           "necessary because the value is set via the estimator initialisation "
-                           "or set_params function.")
+    deprecation_message = ("The parameter 'estimator_params' is deprecated as "
+                           "of version 0.16 and will be removed in 0.18. The "
+                           "parameter is no longer necessary because the "
+                           "value is set via the estimator initialisation or "
+                           "set_params method.")
     generator = check_random_state(0)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
