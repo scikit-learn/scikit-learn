@@ -81,31 +81,55 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
     @property
     def theta(self):
-        return np.array([getattr(self, var_name)
-                         for var_name in self.theta_vars])
+        theta = []
+        for var_name in self.theta_vars:
+            if not isinstance(var_name, basestring):  # vector-valued parameter
+                var_name, _ = var_name
+            theta.append(getattr(self, var_name))
+        return np.array(theta)
 
     @theta.setter
     def theta(self, theta):
-        if len(theta) != len(self.theta_vars):
+        i = 0
+        for var_name in self.theta_vars:
+            if not isinstance(var_name, basestring):  # vector-valued parameter
+                var_name, var_length = var_name
+                setattr(self, var_name, theta[i:i + var_length])
+                i += var_length
+            else:
+                setattr(self, var_name, theta[i])
+                i += 1
+
+        if i != len(theta):
             raise ValueError("theta has not the correct number of entries."
                              " Should be %d; given are %d"
-                             % (len(self.theta_vars), len(theta)))
-        for i, var_name in enumerate(self.theta_vars):
-            setattr(self, var_name, theta[i])
+                             % (i, len(theta)))
 
     @property
     def bounds(self):
-        return np.array([getattr(self, var_name + "_bounds")
-                         for var_name in self.theta_vars])
+        bounds = []
+        for var_name in self.theta_vars:
+            if not isinstance(var_name, basestring):  # vector-valued parameter
+                var_name, _ = var_name
+            bounds.append(getattr(self, var_name + "_bounds"))
+        return np.array(bounds)
 
     @bounds.setter
     def bounds(self, bounds):
-        if len(bounds) != len(self.theta_vars):
-            raise ValueError("theta has not the correct number of entries."
+        i = 0
+        for var_name in self.theta_vars:
+            if not isinstance(var_name, basestring):  # vector-valued parameter
+                var_name, var_length = var_name
+                setattr(self, var_name + "_bounds", bounds[i:i + var_length])
+                i += var_length
+            else:
+                setattr(self, var_name + "_bounds", bounds[i])
+                i += 1
+
+        if i != len(bounds):
+            raise ValueError("bounds has not the correct number of entries."
                              " Should be %d; given are %d"
-                             % (len(self.theta_vars), len(bounds)))
-        for i, var_name in enumerate(self.theta_vars):
-            setattr(self, var_name + "_bounds", bounds[i])
+                             % (i, len(bounds)))
 
     def __add__(self, b):
         if not isinstance(b, Kernel):
@@ -681,8 +705,12 @@ class RBF(Kernel):
             self.l = float(l)
         self.l_bounds = l_bounds
 
-        self.theta_vars = ["l"] if l_bounds is not "fixed" else []
-
+        self.theta_vars = []
+        if l_bounds is not "fixed":
+            if np.iterable(l):  # anisotropic l needs special care
+                self.theta_vars.append(("l", len(l)))
+            else:
+                self.theta_vars.append("l")
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """ Return the kernel k(X, Y) and optionally its gradient.
