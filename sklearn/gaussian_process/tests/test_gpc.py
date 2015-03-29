@@ -21,8 +21,8 @@ X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = np.array(f(X).ravel() > 0, dtype=int)
 
 
-kernels = [RBF(0.1), RBF(1.0, 1e-3, 1e3),
-           (1e-2, 1.0, 1e2) *  RBF(1.0, 1e-3, 1e3)]
+kernels = [RBF(l=0.1), RBF(l=1.0, l_bounds=(1e-3, 1e3)),
+           (1e-2, 1.0, 1e2) *  RBF(l=1.0, l_bounds=(1e-3, 1e3))]
 
 
 def test_predict_consistent():

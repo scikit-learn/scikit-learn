@@ -22,10 +22,10 @@ X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = f(X).ravel()
 
 
-kernels = [RBF(1.0), RBF(1.0, 1e-3, 1e3),
-           (1e-2, 1.0, 1e2) * RBF(1.0, 1e-3, 1e3),
-           (1e-2, 1.0, 1e2) * RBF(1.0, 1e-3, 1e3) + (0.0, 0.0, 1e2),
-           (1e-2, 0.1, 1e2) * RBF(1.0, 1e-3, 1e3) + (0.0, 0.0, 1e2)]
+kernels = [RBF(l=1.0), RBF(l=1.0, l_bounds=(1e-3, 1e3)),
+           (1e-2, 1.0, 1e2)*RBF(l=1.0, l_bounds=(1e-3, 1e3)),
+           (1e-2, 1.0, 1e2)*RBF(l=1.0, l_bounds=(1e-3, 1e3)) + (0.0, 0.0, 1e2),
+           (1e-2, 0.1, 1e2)*RBF(l=1.0, l_bounds=(1e-3, 1e3)) + (0.0, 0.0, 1e2)]
 
 
 def test_gpr_interpolation():
