@@ -55,8 +55,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
     estimator_params : dict
         Parameters for the external estimator.
-        Useful for doing grid searches when an `RFE` object is passed as an
-        argument to, e.g., a `sklearn.grid_search.GridSearchCV` object.
+        This attribute is deprecated as of version 0.16 and will be removed in
+        0.18. Use estimator initialisation or set_params method instead.
 
     verbose : int, default=0
         Controls verbosity of output.
@@ -138,11 +138,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             raise ValueError("Step must be >0")
 
         if self.estimator_params is not None:
-            warnings.warn("The parameter 'estimator_params' is deprecated as of version 0.16 "
-                          "and will be removed in 0.18. The parameter is no longer "
-                          "necessary because the value is set via the estimator initialisation "
-                          "or set_params function."
-                          , DeprecationWarning)
+            warnings.warn("The parameter 'estimator_params' is deprecated as "
+                          "of version 0.16 and will be removed in 0.18. The "
+                          "parameter is no longer necessary because the value "
+                          "is set via the estimator initialisation or "
+                          "set_params method.", DeprecationWarning)
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
@@ -266,8 +266,8 @@ class RFECV(RFE, MetaEstimatorMixin):
 
     estimator_params : dict
         Parameters for the external estimator.
-        Useful for doing grid searches when an `RFE` object is passed as an
-        argument to, e.g., a `sklearn.grid_search.GridSearchCV` object.
+        This attribute is deprecated as of version 0.16 and will be removed in
+        0.18. Use estimator initialisation or set_params method instead.
 
     verbose : int, default=0
         Controls verbosity of output.
@@ -350,11 +350,11 @@ class RFECV(RFE, MetaEstimatorMixin):
         """
         X, y = check_X_y(X, y, "csr")
         if self.estimator_params is not None:
-            warnings.warn("The parameter 'estimator_params' is deprecated as of version 0.16 "
-                          "and will be removed in 0.18. The parameter is no longer "
-                          "necessary because the value is set via the estimator initialisation "
-                          "or set_params function."
-                          , DeprecationWarning)
+            warnings.warn("The parameter 'estimator_params' is deprecated as "
+                          "of version 0.16 and will be removed in 0.18. "
+                          "The parameter is no longer necessary because the "
+                          "value is set via the estimator initialisation or "
+                          "set_params method.", DeprecationWarning)
         # Initialization
         rfe = RFE(estimator=self.estimator, n_features_to_select=1,
                   step=self.step, estimator_params=self.estimator_params,
