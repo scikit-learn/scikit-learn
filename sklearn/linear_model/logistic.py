@@ -1128,7 +1128,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     using the cv parameter. In the case of newton-cg and lbfgs solvers,
     we warm start along the path i.e guess the initial coefficients of the
     present fit to be the coefficients got after convergence in the previous
-    fit, so in general it is supposed to be faster.
+    fit, so it is supposed to be faster for high-dimensional dense data.
 
     For a multiclass problem, the hyperparameters for each class are computed
     using the best scores got by doing a one-vs-rest in parallel across all
