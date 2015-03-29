@@ -12,8 +12,6 @@ import numpy as np
 
 from .discriminant_analysis import QuadraticDiscriminantAnalysis
 
-__all__ = ['QDA']
-
 
 class QDA(QuadraticDiscriminantAnalysis):
     """
@@ -77,4 +75,4 @@ class QDA(QuadraticDiscriminantAnalysis):
         warnings.warn("qda.QDA has been moved to"
                       " discriminant_analysis.QuadraticDiscriminantAnalysis"
                       " in 0.17 and will be removed in 0.19.", DeprecationWarning)
-        super(QDA, self).__init__(priors=None, reg_param=0.)
+        super(QDA, self).__init__(priors=priors, reg_param=reg_param)
