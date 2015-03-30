@@ -3,11 +3,13 @@ scikit-learn (0.16.0-1) experimental; urgency=medium
   * Fresh upstream release
   * debian/patches
     - deb_git_revision_cmd - use debian/github-revision.txt with github
-	  treeish for this release (TODO: automate)
-	- deb_no_plot_gallery - do not build gallery of example plots (some
-	  require network and otherwise memory/cpu intensive etc)
+      treeish for this release (TODO: automate)
+    - deb_no_plot_gallery - do not build gallery of example plots (some
+      require network and otherwise memory/cpu intensive etc)
+    - deb_optional_linkcode - would not use linkcode extension if not
+      available
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 27 Mar 2015 12:33:40 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 30 Mar 2015 16:11:59 -0400
 
 scikit-learn (0.15.2-3) unstable; urgency=medium
 

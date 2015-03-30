@@ -1,0 +1,32 @@
+Index: scikit-learn-0.16.0/doc/conf.py
+===================================================================
+--- scikit-learn-0.16.0.orig/doc/conf.py	2015-03-30 19:48:50.952957810 +0000
++++ scikit-learn-0.16.0/doc/conf.py	2015-03-30 19:53:21.791793421 +0000
+@@ -38,9 +38,16 @@
+ extensions = ['gen_rst',
+               'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
+               'sphinx.ext.pngmath', 'numpy_ext.numpydoc',
+-              'sphinx.ext.linkcode',
+               ]
+ 
++if make_linkcode_resolve:
++    try:
++        import sphinx.ext.linkcode as linkcode_module
++        extensions += [ 'sphinx.ext.linkcode' ]
++    except ImportError:
++        linkcode_module = None
++
++
+ autosummary_generate = True
+ 
+ autodoc_default_flags = ['members', 'inherited-members']
+@@ -250,7 +257,8 @@
+ 
+ 
+ # The following is used by sphinx.ext.linkcode to provide links to github
+-linkcode_resolve = make_linkcode_resolve('sklearn',
++if linkcode_module:
++    linkcode_resolve = make_linkcode_resolve('sklearn',
+                                          u'https://github.com/scikit-learn/'
+                                          'scikit-learn/blob/{revision}/'
+                                          '{package}/{path}#L{lineno}')
