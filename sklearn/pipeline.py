@@ -102,6 +102,8 @@ class Pipeline(BaseEstimator):
             for name, step in six.iteritems(self.named_steps):
                 for key, value in six.iteritems(step.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value
+
+            out.update(super(Pipeline, self).get_params(deep=False))
             return out
 
     @property
@@ -487,6 +489,7 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
             for name, trans in self.transformer_list:
                 for key, value in iteritems(trans.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value
+            out.update(super(FeatureUnion, self).get_params(deep=False))
             return out
 
     def _update_transformer_list(self, transformers):

@@ -25,7 +25,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 
-from sklearn.base import clone, ClassifierMixin
+from sklearn.base import clone, ClassifierMixin, BaseEstimator
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.lda import LDA
@@ -33,7 +33,6 @@ from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 from sklearn.pipeline import make_pipeline
-
 from sklearn.utils.validation import DataConversionWarning, NotFittedError
 from sklearn.cross_validation import train_test_split
 
@@ -1117,3 +1116,31 @@ def check_transformer_n_iter(name, estimator):
             assert_greater(iter_, 1)
     else:
         assert_greater(estimator.n_iter_, 1)
+
+
+def check_get_params_invariance(name, estimator):
+    class T(BaseEstimator):
+        """Mock classifier
+        """
+
+        def __init__(self):
+            pass
+
+        def fit(self, X, y):
+            return self
+
+    if name in ('FeatureUnion', 'Pipeline'):
+        e = estimator([('clf', T())])
+
+    elif name in ('GridSearchCV' 'RandomizedSearchCV'):
+        return
+
+    else:
+        e = estimator()
+
+
+    shallow_params = e.get_params(deep=False)
+    deep_params = e.get_params(deep=True)
+
+    assert_true(all(item in deep_params.items() for item in 
+        shallow_params.items()))
