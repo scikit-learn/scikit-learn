@@ -1,17 +1,16 @@
-""" Kernels for Gaussian process regression and classification.
+"""Kernels for Gaussian process regression and classification.
 
 The kernels in this module allow kernel-engineering, i.e., they can be
-combined via the "+" and "*" operators. These expressions can also contain
-scalar values, which are automatically converted to a constant kernel.
+combined via the "+" and "*" operators or be exponentiated with a scalar
+via "**". These sum and product expressions can also contain scalar values,
+which are automatically converted to a constant kernel.
 
 All kernels allow (analytic) gradient-based hyperparameter optimization.
 The space of hyperparameters can be specified by giving lower und upper
 boundaries for the value of each hyperparameter (the search space is thus
-rectangular). This can be achieved by using a pair or triple instead of a
-single float wherever a parameter value is specified. In case of a pair,
-the first value specifies the lower boundary and the second value the upper
-boundary. In case of a triple, the middle value specified the initial value
-of the parameter during hyperparameter-optimization.
+rectangular). Instead of specifying bounds, hyperparameters can also be
+declared to be "fixed", which causes these hyperparameters to be excluded from
+optimization.
 """
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
@@ -33,7 +32,7 @@ from ..base import clone
 
 
 class Kernel(six.with_metaclass(ABCMeta)):
-    """ Base class for all kernels."""
+    """Base class for all kernels."""
 
     def get_params(self, deep=True):
         """Get parameters of this kernel.
@@ -69,18 +68,25 @@ class Kernel(six.with_metaclass(ABCMeta)):
         return params
 
     def clone_with_theta(self, theta):
-        """ Returns a clone of self with given hyperparameters theta. """
+        """Returns a clone of self with given hyperparameters theta. """
         cloned = clone(self)
         cloned.theta = theta
         return cloned
 
     @property
     def n_dims(self):
-        """ Returns the number of hyperparameters of the kernel."""
+        """Returns the number of non-fixed hyperparameters of the kernel."""
         return self.theta.shape[0]
 
     @property
     def theta(self):
+        """Returns the (flattened) non-fixed hyperparameters of the kernel.
+
+        Returns
+        -------
+        theta : array, shape (n_dims,)
+            The non-fixed hyperparameters of the kernel
+        """
         theta = []
         for var_name in self.theta_vars:
             if not isinstance(var_name, basestring):  # vector-valued parameter
@@ -90,6 +96,13 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
     @theta.setter
     def theta(self, theta):
+        """Sets the (flattened) non-fixed hyperparameters of the kernel.
+
+        Parameters
+        ----------
+        theta : array, shape (n_dims,)
+            The non-fixed hyperparameters of the kernel
+        """
         i = 0
         for var_name in self.theta_vars:
             if not isinstance(var_name, basestring):  # vector-valued parameter
@@ -107,6 +120,13 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
     @property
     def bounds(self):
+        """Returns the bounds on the kernel's hyperparameters.
+
+        Returns
+        -------
+        bounds : array, shape (n_dims, 2)
+            The bounds on the kernel's hyperparameters
+        """
         bounds = []
         for var_name in self.theta_vars:
             if not isinstance(var_name, basestring):  # vector-valued parameter
@@ -126,6 +146,13 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
     @bounds.setter
     def bounds(self, bounds):
+        """Sets the bounds on the kernel's hyperparameters.
+
+        Parameters
+        ----------
+        bounds : array, shape (n_dims, 2)
+            The bounds on the kernel's hyperparameters
+        """
         i = 0
         for var_name in self.theta_vars:
             if not isinstance(var_name, basestring):  # vector-valued parameter
@@ -202,12 +229,12 @@ class Kernel(six.with_metaclass(ABCMeta)):
         return np.ones(X.shape[0])
 
     def is_stationary(self):
-        """ Returns whether the kernel is stationary. """
+        """Returns whether the kernel is stationary. """
         return True
 
 
 class KernelOperator(Kernel):
-    """ Base class for all kernel operators. """
+    """Base class for all kernel operators. """
 
     def __init__(self, k1, k2):
         self.k1 = k1
@@ -232,16 +259,37 @@ class KernelOperator(Kernel):
 
     @property
     def theta(self):
+        """Returns the (flattened) non-fixed hyperparameters of the kernel.
+
+        Returns
+        -------
+        theta : array, shape (n_dims,)
+            The non-fixed hyperparameters of the kernel
+        """
         return np.append(self.k1.theta, self.k2.theta)
 
     @theta.setter
     def theta(self, theta):
+        """Sets the (flattened) non-fixed hyperparameters of the kernel.
+
+        Parameters
+        ----------
+        theta : array, shape (n_dims,)
+            The non-fixed hyperparameters of the kernel
+        """
         k1_dims = self.k1.n_dims
         self.k1.theta = theta[:k1_dims]
         self.k2.theta = theta[k1_dims:]
 
     @property
     def bounds(self):
+        """Returns the bounds on the kernel's hyperparameters.
+
+        Returns
+        -------
+        bounds : array, shape (n_dims, 2)
+            The bounds on the kernel's hyperparameters
+        """
         if self.k1.bounds.size == 0:
             return self.k2.bounds
         if self.k2.bounds.size == 0:
@@ -250,6 +298,13 @@ class KernelOperator(Kernel):
 
     @bounds.setter
     def bounds(self, bounds):
+        """Sets the bounds on the kernel's hyperparameters.
+
+        Parameters
+        ----------
+        bounds : array, shape (n_dims, 2)
+            The bounds on the kernel's hyperparameters
+        """
         k1_dims = self.k1.n_dims
         self.k1.bounds = bounds[:k1_dims]
         self.k2.bounds = bounds[k1_dims:]
@@ -259,12 +314,12 @@ class KernelOperator(Kernel):
             or (self.k1 == b.k2 and self.k2 == b.k1)
 
     def is_stationary(self):
-        """ Returns whether the kernel is stationary. """
+        """Returns whether the kernel is stationary. """
         return self.k1.is_stationary() and self.k2.is_stationary()
 
 
 class Sum(KernelOperator):
-    """ Sum-kernel k1 + k2 of two kernels k1 and k2.
+    """Sum-kernel k1 + k2 of two kernels k1 and k2.
 
     The resulting kernel is defined as
     k_sum(X, Y) = k1(X, Y) + k2(X, Y)
@@ -279,7 +334,7 @@ class Sum(KernelOperator):
     """
 
     def __call__(self, X, Y=None, eval_gradient=False):
-        """ Return the kernel k(X, Y) and optionally its gradient.
+        """Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
         ----------
@@ -335,7 +390,7 @@ class Sum(KernelOperator):
 
 
 class Product(KernelOperator):
-    """ Product-kernel k1 * k2 of two kernels k1 and k2.
+    """Product-kernel k1 * k2 of two kernels k1 and k2.
 
     The resulting kernel is defined as
     k_prod(X, Y) = k1(X, Y) * k2(X, Y)
@@ -350,7 +405,7 @@ class Product(KernelOperator):
     """
 
     def __call__(self, X, Y=None, eval_gradient=False):
-        """ Return the kernel k(X, Y) and optionally its gradient.
+        """Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
         ----------
@@ -407,8 +462,20 @@ class Product(KernelOperator):
 
 
 class Exponentiation(Kernel):
-    """ Exponentiate kernel by given exponent. """
+    """Exponentiate kernel by given exponent.
 
+    The resulting kernel is defined as
+    k_exp(X, Y) = k(X, Y) ** exponent
+
+    Parameters
+    ----------
+    kernel : Kernel object
+        The base kernel
+
+    exponent : float
+        The exponent for the base kernel
+
+    """
     def __init__(self, kernel, exponent):
         self.kernel = kernel
         self.exponent = exponent
@@ -432,25 +499,53 @@ class Exponentiation(Kernel):
 
     @property
     def theta(self):
+        """Returns the (flattened) non-fixed hyperparameters of the kernel.
+
+        Returns
+        -------
+        theta : array, shape (n_dims,)
+            The non-fixed hyperparameters of the kernel
+        """
         return self.kernel.theta
 
     @theta.setter
     def theta(self, theta):
+        """Sets the (flattened) non-fixed hyperparameters of the kernel.
+
+        Parameters
+        ----------
+        theta : array, shape (n_dims,)
+            The non-fixed hyperparameters of the kernel
+        """
         self.kernel.theta = theta
 
     @property
     def bounds(self):
+        """Returns the bounds on the kernel's hyperparameters.
+
+        Returns
+        -------
+        bounds : array, shape (n_dims, 2)
+            The bounds on the kernel's hyperparameters
+        """
         return self.kernel.bounds
 
     @bounds.setter
     def bounds(self, bounds):
+        """Sets the bounds on the kernel's hyperparameters.
+
+        Parameters
+        ----------
+        bounds : array, shape (n_dims, 2)
+            The bounds on the kernel's hyperparameters
+        """
         self.kernel.bounds = bounds
 
     def __eq__(self, b):
         return (self.kernel == b.kernel and self.exponent == b.exponent)
 
     def __call__(self, X, Y=None, eval_gradient=False):
-        """ Return the kernel k(X, Y) and optionally its gradient.
+        """Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
         ----------
@@ -507,22 +602,26 @@ class Exponentiation(Kernel):
         return "{0} ** {1}".format(self.kernel, self.exponent)
 
     def is_stationary(self):
-        """ Returns whether the kernel is stationary. """
+        """Returns whether the kernel is stationary. """
         return self.kernel.is_stationary()
 
 
 class ConstantKernel(Kernel):
-    """ Constant kernel.
+    """Constant kernel.
 
     Can be used as part of a product-kernel where it scales the magnitude of
     the other factor (kernel) or as part of a sum-kernel, where it modifies
     the mean of the Gaussian process.
 
-    Tunable kernel parameters
-    -------------------------
-    c : float
-        The constant value used for determining the magnitude (product-kernel)
-        or offset of mean (sum-kernel).
+    k(x_1, x_2) = c for all x_1, x_2
+
+    Parameters
+    ----------
+    c : float, default: 1.0
+        The constant value which defines the covariance: k(x_1, x_2) = c
+
+    c_bounds : pair of floats >= 0, default: (0, np.inf)
+        The lower and upper bound on c
     """
     def __init__(self, c=1.0, c_bounds=(0, np.inf)):
         self.c = c
@@ -547,7 +646,7 @@ class ConstantKernel(Kernel):
             return cls(literal)
 
     def __call__(self, X, Y=None, eval_gradient=False):
-        """ Return the kernel k(X, Y) and optionally its gradient.
+        """Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
         ----------
@@ -611,16 +710,21 @@ class ConstantKernel(Kernel):
 
 
 class WhiteKernel(Kernel):
-    """ White kernel.
+    """White kernel.
 
     The main use-case of this kernel is as part of a sum-kernel where it
     explains the noise-component of the signal. Tuning its parameter
     corresponds to estimating the noise-level.
 
-    Tunable kernel parameters
-    -------------------------
-    c : float
-        Parameter controlling the noise level.
+    k(x_1, x_2) = c if x_1 == x_2 else 0
+
+    Parameters
+    ----------
+    c : float, default: 1.0
+        Parameter controlling the noise level
+
+    c_bounds : pair of floats >= 0, default: (0.0, np.inf)
+        The lower and upper bound on c
     """
     def __init__(self, c=1.0, c_bounds=(0.0, np.inf)):
         self.c = c
@@ -629,7 +733,7 @@ class WhiteKernel(Kernel):
         self.theta_vars = ["c"] if c_bounds is not "fixed" else []
 
     def __call__(self, X, Y=None, eval_gradient=False):
-        """ Return the kernel k(X, Y) and optionally its gradient.
+        """Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
         ----------
@@ -697,16 +801,19 @@ class WhiteKernel(Kernel):
 
 
 class RBF(Kernel):
-    """ Radial-basis function kernel (aka squared-exponential kernel).
+    """Radial-basis function kernel (aka squared-exponential kernel).
 
     Both isotropic and anisotropic version are supported.
 
-    Tunable kernel parameters
-    -------------------------
-    l : float or array with shape (n_features,), entries > 0
+    Parameters
+    -----------
+    l : float or array with shape (n_features,), entries > 0, default: 1.0
         The length scale of the kernel. If a float, an isotropic kernel is
         used. If an array, an anisotropic kernel is used where each dimension
         of l defines the length-scale of the respective feature dimension.
+
+    l_bounds : pair of floats >= 0, default: (1e-5, np.inf)
+        The lower and upper bound on l
     """
     def __init__(self, l=1.0, l_bounds=(1e-5, np.inf)):
         if np.iterable(l):
@@ -723,7 +830,7 @@ class RBF(Kernel):
                 self.theta_vars.append("l")
 
     def __call__(self, X, Y=None, eval_gradient=False):
-        """ Return the kernel k(X, Y) and optionally its gradient.
+        """Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
         ----------
@@ -792,19 +899,26 @@ class RBF(Kernel):
 
 
 class RationalQuadratic(Kernel):
-    """ Rational Quadratic kernel.
+    """Rational Quadratic kernel.
 
     This kernel can be seen as a scale mixture (an infinite sum) of RBF kernels
     with different characteristic length-scales.
 
     Only isotropic variant is supported at the moment.
 
-    Tunable kernel parameters
-    -------------------------
-    alpha : float > 0
+    Parameters
+    ----------
+    alpha : float > 0, default: 1.0
         Scale mixture parameter
-    l : float > 0
+
+    l : float > 0, default: 1.0
         The length scale of the kernel.
+
+    alpha_bounds : pair of floats >= 0, default: (1e-5, np.inf)
+        The lower and upper bound on alpha
+
+    l_bounds : pair of floats >= 0, default: (1e-5, np.inf)
+        The lower and upper bound on l
     """
     def __init__(self, alpha=1.0, l=1.0, alpha_bounds=(1e-5, np.inf),
                  l_bounds=(1e-5, np.inf)):
@@ -818,7 +932,7 @@ class RationalQuadratic(Kernel):
             self.theta_vars += ["l"]
 
     def __call__(self, X, Y=None, eval_gradient=False):
-        """ Return the kernel k(X, Y) and optionally its gradient.
+        """Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
         ----------
@@ -881,18 +995,25 @@ class RationalQuadratic(Kernel):
 
 
 class ExpSineSquared(Kernel):
-    """ Exp-Sine-Squared kernel.
+    """Exp-Sine-Squared kernel.
 
     This kernel allows modelling periodic functions.
 
     Only isotropic variant is supported at the moment.
 
-    Tunable kernel parameters
-    -------------------------
-    l : float > 0
+    Parameters
+    ----------
+    l : float > 0, default: 1.0
         The length scale of the kernel.
-    p : float > 0
+
+    p : float > 0, default: 1.0
         The periodicity of the kernel.
+
+    l_bounds : pair of floats >= 0, default: (1e-5, np.inf)
+        The lower and upper bound on l
+
+    p_bounds : pair of floats >= 0, default: (1e-5, np.inf)
+        The lower and upper bound on p
     """
 
     def __init__(self, l=1.0, p=1.0, l_bounds=(1e-5, np.inf),
@@ -907,7 +1028,7 @@ class ExpSineSquared(Kernel):
             self.theta_vars += ["p"]
 
     def __call__(self, X, Y=None, eval_gradient=False):
-        """ Return the kernel k(X, Y) and optionally its gradient.
+        """Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
         ----------
@@ -971,15 +1092,18 @@ class ExpSineSquared(Kernel):
 
 
 class DotProduct(Kernel):
-    """ Dot-Product kernel.
+    """Dot-Product kernel.
 
     This kernel is non-stationary.
 
-    Tunable kernel parameters
-    -------------------------
-    sigma_0 : float >= 0
+    Parameters
+    ----------
+    sigma_0 : float >= 0, default: 1.0
         Parameter controlling the inhomogenity of the kernel. If sigma_0=0,
         the kernel is homogenous.
+
+    sigma_0_bounds : pair of floats >= 0, default: (1e-5, np.inf)
+        The lower and upper bound on l
     """
 
     def __init__(self, sigma_0=1.0, sigma_0_bounds=(1e-5, np.inf)):
@@ -989,7 +1113,7 @@ class DotProduct(Kernel):
         self.theta_vars = ["sigma_0"] if sigma_0_bounds is not "fixed" else []
 
     def __call__(self, X, Y=None, eval_gradient=False):
-        """ Return the kernel k(X, Y) and optionally its gradient.
+        """Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
         ----------
@@ -1053,7 +1177,7 @@ class DotProduct(Kernel):
         return (X ** 2).sum(1) + self.sigma_0 ** 2
 
     def is_stationary(self):
-        """ Returns whether the kernel is stationary. """
+        """Returns whether the kernel is stationary. """
         return False
 
     def __repr__(self):
@@ -1075,7 +1199,7 @@ def _approx_fprime(xk, f, epsilon, args=()):
 
 
 class PairwiseKernel(Kernel):
-    """ Wrapper for kernels in sklearn.metrics.pairwise.
+    """Wrapper for kernels in sklearn.metrics.pairwise.
 
     A thin wrapper around the functionality of the kernels in
     sklearn.metrics.pairwise.
@@ -1088,6 +1212,12 @@ class PairwiseKernel(Kernel):
 
     Parameters
     ----------
+    gam ma: float >= 0, default: 1.0
+        Parameter gamma of the pairwise kernel specified by metric
+
+    gamma_bounds : pair of floats >= 0, default: (1e-5, np.inf)
+        The lower and upper bound on gamma
+
     metric : string, or callable
         The metric to use when calculating kernel between instances in a
         feature array. If metric is a string, it must be one of the metrics
@@ -1113,7 +1243,7 @@ class PairwiseKernel(Kernel):
         self.kwargs = kwargs
 
     def __call__(self, X, Y=None, eval_gradient=False):
-        """ Return the kernel k(X, Y) and optionally its gradient.
+        """Return the kernel k(X, Y) and optionally its gradient.
 
         Parameters
         ----------
@@ -1175,7 +1305,7 @@ class PairwiseKernel(Kernel):
         return np.apply_along_axis(self, 1, X)[:, 0]
 
     def is_stationary(self):
-        """ Returns whether the kernel is stationary. """
+        """Returns whether the kernel is stationary. """
         return self.metric in ["rbf"]
 
     def __repr__(self):
