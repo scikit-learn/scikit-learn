@@ -26,7 +26,7 @@ X = np.random.normal(0, 1, (10, 2))
 kernels = [RBF(l=2.0), RBF(l_bounds=(0.5, 2.0)),
            ConstantKernel(c=10.0),
            2.0 * RBF(l=0.5), RBF(l=2.0) + WhiteKernel(c=1.0),
-           RationalQuadratic(alpha=1.0, l=1.0),
+           RationalQuadratic(l=1.0, alpha=1.0),
            ExpSineSquared(l=1.0, p=1.0),
            DotProduct(sigma_0=1.0), DotProduct(sigma_0=1.0) ** 2]
 for metric in PAIRWISE_KERNEL_FUNCTIONS:
