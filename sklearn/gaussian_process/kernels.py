@@ -881,7 +881,6 @@ class RBF(Kernel):
             return "{0}(l={1:.3g})".format(self.__class__.__name__, self.l)
 
 
-
 class RationalQuadratic(Kernel):
     """Rational Quadratic kernel.
 
@@ -892,28 +891,28 @@ class RationalQuadratic(Kernel):
 
     Parameters
     ----------
-    alpha : float > 0, default: 1.0
-        Scale mixture parameter
-
     l : float > 0, default: 1.0
         The length scale of the kernel.
 
-    alpha_bounds : pair of floats >= 0, default: (1e-5, np.inf)
-        The lower and upper bound on alpha
+    alpha : float > 0, default: 1.0
+        Scale mixture parameter
 
     l_bounds : pair of floats >= 0, default: (1e-5, np.inf)
         The lower and upper bound on l
-    """
-    def __init__(self, alpha=1.0, l=1.0, alpha_bounds=(1e-5, np.inf),
-                 l_bounds=(1e-5, np.inf)):
-        self.alpha = alpha
-        self.l = l
-        self.alpha_bounds = alpha_bounds
-        self.l_bounds = l_bounds
 
-        self.theta_vars = ["alpha"] if alpha_bounds is not "fixed" else []
-        if self.l_bounds is not "fixed":
-            self.theta_vars += ["l"]
+    alpha_bounds : pair of floats >= 0, default: (1e-5, np.inf)
+        The lower and upper bound on alpha
+    """
+    def __init__(self, l=1.0, alpha=1.0, l_bounds=(1e-5, np.inf),
+                 alpha_bounds=(1e-5, np.inf)):
+        self.l = l
+        self.alpha = alpha
+        self.l_bounds = l_bounds
+        self.alpha_bounds = alpha_bounds
+
+        self.theta_vars = ["l"] if self.l_bounds is not "fixed" else []
+        if self.alpha_bounds is not "fixed":
+            self.theta_vars += ["alpha"]
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -956,12 +955,6 @@ class RationalQuadratic(Kernel):
             K = (1 + dists / (2 * self.alpha * self.l ** 2)) ** -self.alpha
 
         if eval_gradient:
-            # gradient with respect to alpha
-            if "alpha" in self.theta_vars:
-                alpha_gradient = K * (-np.log(base) + tmp / base)
-                alpha_gradient = alpha_gradient[:, :, np.newaxis]
-            else:  # alpha is kept fixed
-                alpha_gradient = np.empty((K.shape[0], K.shape[1], 0))
             # gradient with respect to l
             if "l" in self.theta_vars:
                 l_gradient = dists * K / (self.l ** 2 * base)
@@ -969,7 +962,14 @@ class RationalQuadratic(Kernel):
             else:  # l is kept fixed
                 l_gradient = np.empty((K.shape[0], K.shape[1], 0))
 
-            return K, np.dstack((alpha_gradient, l_gradient))
+            # gradient with respect to alpha
+            if "alpha" in self.theta_vars:
+                alpha_gradient = K * (-np.log(base) + tmp / base)
+                alpha_gradient = alpha_gradient[:, :, np.newaxis]
+            else:  # alpha is kept fixed
+                alpha_gradient = np.empty((K.shape[0], K.shape[1], 0))
+
+            return K, np.dstack((l_gradient, alpha_gradient))
         else:
             return K
 
@@ -1040,7 +1040,7 @@ class ExpSineSquared(Kernel):
         X = np.atleast_2d(X)
         if Y is None:
             dists = squareform(pdist(X, metric='euclidean'))
-            arg = np.pi  * dists / self.p
+            arg = np.pi * dists / self.p
             sin_of_arg = np.sin(arg)
             K = np.exp(- 2 * (sin_of_arg / self.l) ** 2)
         else:
@@ -1060,8 +1060,8 @@ class ExpSineSquared(Kernel):
                 l_gradient = np.empty((K.shape[0], K.shape[1], 0))
             # gradient with respect to p
             if "p" in self.theta_vars:
-                p_gradient = \
-                   4 * arg / (self.l**2 * self.p) * cos_of_arg * sin_of_arg * K
+                p_gradient = 4 * arg / (self.l**2 * self.p) * cos_of_arg \
+                    * sin_of_arg * K
                 p_gradient = p_gradient[:, :, np.newaxis]
             else:  # p is kept fixed
                 p_gradient = np.empty((K.shape[0], K.shape[1], 0))
