@@ -15,7 +15,7 @@ from sklearn.utils.validation import check_X_y, check_array
 
 
 class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
-    """ Gaussian process regression (GPR).
+    """Gaussian process regression (GPR).
 
     The implementation is based on Algorithm 2.1 of ``Gaussian Processes
     for Machine Learning'' (GPML) by Rasmussen and Williams.
@@ -224,7 +224,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         return y_samples
 
     def log_marginal_likelihood(self, theta, eval_gradient=False):
-        """ Returns log-marginal likelihood of theta for training data.
+        """Returns log-marginal likelihood of theta for training data.
 
         Parameters
         ----------

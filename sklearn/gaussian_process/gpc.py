@@ -28,7 +28,7 @@ COEFS = np.array([-1854.8214151, 3516.89893646, 221.29346712,
 
 
 class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
-    """ Gaussian process classification (GPC) based on Laplace approximation.
+    """Gaussian process classification (GPC) based on Laplace approximation.
 
     The implementation is based on Algorithm 3.1, 3.2, and 5.1 of
     ``Gaussian Processes for Machine Learning'' (GPML) by Rasmussen and
@@ -233,7 +233,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         return np.vstack((1 - pi_star, pi_star)).T
 
     def log_marginal_likelihood(self, theta, eval_gradient=False):
-        """ Returns log-marginal likelihood of theta for training data.
+        """Returns log-marginal likelihood of theta for training data.
 
         Parameters
         ----------
@@ -293,7 +293,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         return Z, d_Z
 
     def _posterior_mode(self, K, return_temporaries=False):
-        """ Mode-finding for binary Laplace GPC and fixed kernel.
+        """Mode-finding for binary Laplace GPC and fixed kernel.
 
         This approximates the posterior of the latent function values for given
         inputs and target observations with a Gaussian approximation and uses
