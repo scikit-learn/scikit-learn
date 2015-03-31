@@ -86,7 +86,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
             if not isinstance(var_name, basestring):  # vector-valued parameter
                 var_name, _ = var_name
             theta.append(getattr(self, var_name))
-        return np.array(theta)
+        return np.array(theta).ravel()
 
     @theta.setter
     def theta(self, theta):
@@ -110,9 +110,19 @@ class Kernel(six.with_metaclass(ABCMeta)):
         bounds = []
         for var_name in self.theta_vars:
             if not isinstance(var_name, basestring):  # vector-valued parameter
-                var_name, _ = var_name
-            bounds.append(getattr(self, var_name + "_bounds"))
-        return np.array(bounds)
+                var_name, var_length = var_name
+                var_bounds = np.atleast_2d(getattr(self, var_name + "_bounds"))
+                if var_bounds.shape[0] == 1:
+                    var_bounds = np.repeat(var_bounds, var_length, 0)
+                elif var_bounds.shape[0] != var_length:
+                    raise ValueError("Bounds on %s should have either 1 or "
+                                     "%d dimensions. Given are %d"
+                                     % (var_name, var_length,
+                                        var_bounds.shape[0]))
+                bounds.append(var_bounds)
+            else:
+                bounds.append(getattr(self, var_name + "_bounds"))
+        return np.vstack(bounds)
 
     @bounds.setter
     def bounds(self, bounds):

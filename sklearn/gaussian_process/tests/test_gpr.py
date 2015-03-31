@@ -130,7 +130,20 @@ def test_predict_cov_vs_std():
     """ Test that predicted std.-dev. is consistent with cov's diagonal."""
     for kernel in kernels:
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-        print gpr.kernel_
         y_mean, y_cov = gpr.predict(X2, return_cov=True)
         y_mean, y_std = gpr.predict(X2, return_std=True)
         assert_almost_equal(np.sqrt(np.diag(y_cov)), y_std)
+
+
+def test_anisotropic_kernel():
+    """ Test that GPR can identify meaningful anisotropic length-scales. """
+    # We learn a function which varies in one dimension ten-times slower
+    # than in the other. The corresponding length-scales should differ by at
+    # least a factor 5
+    rng = np.random.RandomState(0)
+    X = rng.uniform(-1, 1, (50, 2))
+    y = X[:, 0] +  0.1 * X[:, 1]
+
+    kernel = RBF([1.0, 1.0])
+    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    assert_greater(gpr.kernel_.theta[1], gpr.kernel_.theta[0] * 5)
