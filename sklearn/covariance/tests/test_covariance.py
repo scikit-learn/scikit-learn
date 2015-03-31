@@ -145,10 +145,6 @@ def test_ledoit_wolf():
     assert_almost_equal(lw.score(X_centered), score_, 4)
     assert(lw.precision_ is None)
 
-    # (too) large data set
-    X_large = np.ones((20, 200))
-    assert_raises(MemoryError, ledoit_wolf, X_large, block_size=100)
-
     # Same tests without assuming centered data
     # test shrinkage coeff on a simple data set
     lw = LedoitWolf()
@@ -188,6 +184,21 @@ def test_ledoit_wolf():
     lw.fit(X)
     assert_almost_equal(lw.score(X), score_, 4)
     assert(lw.precision_ is None)
+
+
+def test_ledoit_wolf_large():
+    # test that ledoit_wolf doesn't error on data that is wider than block_size
+    rng = np.random.RandomState(0)
+    # use a number of features that is larger than the block-size
+    X = rng.normal(size=(10, 20))
+    lw = LedoitWolf(block_size=10).fit(X)
+    # check that covariance is about diagonal (random normal noise)
+    assert_almost_equal(lw.covariance_, np.eye(20), 0)
+    cov = lw.covariance_
+
+    # check that the result is consistent with not splitting data into blocks.
+    lw = LedoitWolf(block_size=25).fit(X)
+    assert_almost_equal(lw.covariance_, cov)
 
 
 def test_oas():
