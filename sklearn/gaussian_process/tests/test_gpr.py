@@ -8,7 +8,7 @@ import numpy as np
 from scipy.optimize import approx_fprime
 
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF
+from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 
 from sklearn.utils.testing \
     import (assert_true, assert_greater, assert_array_less,
@@ -23,9 +23,11 @@ y = f(X).ravel()
 
 
 kernels = [RBF(l=1.0), RBF(l=1.0, l_bounds=(1e-3, 1e3)),
-           (1e-2, 1.0, 1e2)*RBF(l=1.0, l_bounds=(1e-3, 1e3)),
-           (1e-2, 1.0, 1e2)*RBF(l=1.0, l_bounds=(1e-3, 1e3)) + (0.0, 0.0, 1e2),
-           (1e-2, 0.1, 1e2)*RBF(l=1.0, l_bounds=(1e-3, 1e3)) + (0.0, 0.0, 1e2)]
+           C(1.0, (1e-2, 1e2)) * RBF(l=1.0, l_bounds=(1e-3, 1e3)),
+           C(1.0, (1e-2, 1e2)) * RBF(l=1.0, l_bounds=(1e-3, 1e3))
+               + C(0.0, (0.0, 1e2)),
+           C(0.1, (1e-2, 1e2)) * RBF(l=1.0, l_bounds=(1e-3, 1e3))
+               + C(0.0, (0.0, 1e2))]
 
 
 def test_gpr_interpolation():

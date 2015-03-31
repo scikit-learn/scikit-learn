@@ -170,22 +170,22 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
     def __add__(self, b):
         if not isinstance(b, Kernel):
-            return Sum(self, ConstantKernel.from_literal(b))
+            return Sum(self, ConstantKernel(b))
         return Sum(self, b)
 
     def __radd__(self, b):
         if not isinstance(b, Kernel):
-            return Sum(ConstantKernel.from_literal(b), self)
+            return Sum(ConstantKernel(b), self)
         return Sum(b, self)
 
     def __mul__(self, b):
         if not isinstance(b, Kernel):
-            return Product(self, ConstantKernel.from_literal(b))
+            return Product(self, ConstantKernel(b))
         return Product(self, b)
 
     def __rmul__(self, b):
         if not isinstance(b, Kernel):
-            return Product(ConstantKernel.from_literal(b), self)
+            return Product(ConstantKernel(b), self)
         return Product(b, self)
 
     def __pow__(self, b):
@@ -628,22 +628,6 @@ class ConstantKernel(Kernel):
         self.c_bounds = c_bounds
 
         self.theta_vars = ["c"] if c_bounds is not "fixed" else []
-
-    @classmethod
-    def from_literal(cls, literal):
-        if np.iterable(literal):
-            if len(literal) == 1:
-                return cls(c=literal[0])
-            elif len(literal) == 2:
-                return cls(c=(literal[0] + literal[1]) / 2,
-                           c_bounds=(literal[0], literal[1]))
-            elif len(literal) == 3:
-                return cls(c=literal[1], c_bounds=(literal[0], literal[2]))
-            else:
-                raise ValueError("Cannot interpret literal %s for "
-                                 "ConstantKernel." % literal)
-        else:
-            return cls(literal)
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.

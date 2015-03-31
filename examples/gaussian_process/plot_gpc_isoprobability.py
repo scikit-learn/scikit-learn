@@ -22,7 +22,7 @@ from matplotlib import pyplot as pl
 from matplotlib import cm
 
 from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.gaussian_process.kernels import DotProduct
+from sklearn.gaussian_process.kernels import DotProduct, ConstantKernel as C
 
 # A few constants
 lim = 8
@@ -46,7 +46,7 @@ X = np.array([[-4.61611719, -6.00099547],
 y = np.array(g(X) > 0, dtype=int)
 
 # Instanciate and fit Gaussian Process Model
-kernel = (1e-5, 0.1, np.inf) * DotProduct(sigma_0=0.1) ** 2
+kernel = C(0.1, (1e-5, np.inf)) * DotProduct(sigma_0=0.1) ** 2
 gp = GaussianProcessClassifier(kernel=kernel)
 gp.fit(X, y)
 print "Learned kernel: %s " % gp.kernel_

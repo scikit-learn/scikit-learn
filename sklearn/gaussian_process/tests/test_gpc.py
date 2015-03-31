@@ -8,7 +8,7 @@ import numpy as np
 from scipy.optimize import approx_fprime
 
 from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.gaussian_process.kernels import RBF
+from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 
 from sklearn.utils.testing import (assert_true, assert_greater,
                                    assert_almost_equal, assert_array_equal)
@@ -22,7 +22,7 @@ y = np.array(f(X).ravel() > 0, dtype=int)
 
 
 kernels = [RBF(l=0.1), RBF(l=1.0, l_bounds=(1e-3, 1e3)),
-           (1e-2, 1.0, 1e2) *  RBF(l=1.0, l_bounds=(1e-3, 1e3))]
+           C(1.0, (1e-2, 1e2)) *  RBF(l=1.0, l_bounds=(1e-3, 1e3))]
 
 
 def test_predict_consistent():
