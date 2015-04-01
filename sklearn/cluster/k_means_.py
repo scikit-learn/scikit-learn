@@ -684,7 +684,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
-    verbose : int, default 0
+    verbose : boolean, default False
         Verbosity mode.
 
     copy_x : boolean, default True
@@ -733,7 +733,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def __init__(self, n_clusters=8, init='k-means++', n_init=10, max_iter=300,
                  tol=1e-4, precompute_distances='auto',
-                 verbose=0, random_state=None, copy_x=True, n_jobs=1):
+                 verbose=False, random_state=None, copy_x=True, n_jobs=1):
 
         if hasattr(init, '__array__'):
             n_clusters = init.shape[0]
