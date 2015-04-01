@@ -724,9 +724,10 @@ so the "multinomial" setting does not learn sparse models.
    :ref:`l1_feature_selection`.
 
 :class:`LogisticRegressionCV` implements Logistic Regression with
-builtin cross-validation to find out the optimal C parameter. In
-general the "newton-cg" and "lbfgs" solvers are found to be faster
-due to warm-starting. For the multiclass case, if `multi_class`
+builtin cross-validation to find out the optimal C parameter.
+"newton-cg" and "lbfgs" solvers are found to be faster
+for high-dimensional dense data, due to warm-starting.
+For the multiclass case, if `multi_class`
 option is set to "ovr", an optimal C is obtained for each class and if
 the `multi_class` option is set to "multinomial", an optimal C is
 obtained that minimizes the cross-entropy loss.
