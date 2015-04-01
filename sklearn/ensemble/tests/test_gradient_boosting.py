@@ -5,11 +5,12 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 import numpy as np
 
 from sklearn import datasets
-from sklearn.base import clone
+from sklearn.base import clone, NotFittedError
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
 from sklearn.metrics import mean_squared_error
+
 from sklearn.utils import check_random_state, tosequence
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -21,7 +22,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.validation import DataConversionWarning
-from sklearn.utils.validation import NotFittedError
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]

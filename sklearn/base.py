@@ -443,6 +443,15 @@ class MetaEstimatorMixin(object):
 
 
 ###############################################################################
+class NotFittedError(ValueError, AttributeError):
+    """Exception class to raise if estimator is used before fitting.
+
+    This class inherits from both ValueError and AttributeError to help with
+    exception handling and backward compatibility.
+    """
+
+
+###############################################################################
 # XXX: Temporary solution to figure out if an estimator is a classifier
 
 def _get_sub_estimator(estimator):

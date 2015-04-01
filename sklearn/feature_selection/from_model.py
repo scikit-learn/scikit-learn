@@ -3,10 +3,10 @@
 
 import numpy as np
 
-from ..base import TransformerMixin
+from ..base import TransformerMixin, NotFittedError
 from ..externals import six
 from ..utils import safe_mask, check_array
-from ..utils.validation import NotFittedError, check_is_fitted
+from ..utils.validation import check_is_fitted
 
 
 class _LearntSelectorMixin(TransformerMixin):

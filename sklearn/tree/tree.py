@@ -22,11 +22,12 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy.sparse import issparse
 
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
+                    NotFittedError)
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_array, check_random_state, compute_sample_weight
-from ..utils.validation import NotFittedError, check_is_fitted
+from ..utils.validation import check_is_fitted
 
 
 from ._tree import Criterion
