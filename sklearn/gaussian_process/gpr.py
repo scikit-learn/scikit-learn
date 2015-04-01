@@ -35,10 +35,12 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
 
-    y_err : float, optional (default: 1e-10)
+    sigma_squared_n : float or array-like, optional (default: 1e-10)
         Value added to the diagonal of the kernel matrix during fitting.
         Larger values correspond to increased noise level in the observations
-        and reduce potential numerical issue during fitting.
+        and reduce potential numerical issue during fitting. If an array is
+        passed, it must have the same number of entries as the data used for
+        fitting and is used as datapoint-dependent noise level.
 
     optimizer : string, optional (default: "fmin_l_bfgs_b")
         A string specifying the optimization algorithm used for optimizing the
@@ -70,9 +72,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         Dual coefficients of training data points in kernel space
     """
 
-    def __init__(self, kernel=None, y_err=1e-10, optimizer="fmin_l_bfgs_b"):
+    def __init__(self, kernel=None, sigma_squared_n=1e-10,
+                 optimizer="fmin_l_bfgs_b"):
         self.kernel = kernel
-        self.y_err = y_err
+        self.sigma_squared_n = sigma_squared_n
         self.optimizer = optimizer
 
     def fit(self, X, y):
@@ -97,6 +100,12 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
         X, y = check_X_y(X, y)
 
+        if np.iterable(self.sigma_squared_n) \
+           and self.sigma_squared_n.shape[0] != y.shape[0]:
+            raise ValueError("sigma_n_squared must be a scalar or an array "
+                             "with same number of entries as y. (%d != %d)"
+                              % (self.sigma_squared_n.shape[0], y.shape[0]))
+
         self.X_fit_ = X
         self.y_fit_ = y
 
@@ -119,7 +128,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         # Precompute quantities required for predictions which are independent
         # of actual query points
         K = self.kernel_(self.X_fit_)
-        K[np.diag_indices_from(K)] += self.y_err
+        K[np.diag_indices_from(K)] += self.sigma_squared_n
         self.L_ = cholesky(K, lower=True)  # Line 2
         self.alpha_ = cho_solve((self.L_, True), self.y_fit_)  # Line 3
 
@@ -254,7 +263,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:
             K = kernel(self.X_fit_)
 
-        K[np.diag_indices_from(K)] += self.y_err
+        K[np.diag_indices_from(K)] += self.sigma_squared_n
         try:
             L = cholesky(K, lower=True)  # Line 2
         except np.linalg.LinAlgError:
