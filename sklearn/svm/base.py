@@ -354,13 +354,13 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             For kernel="precomputed", the expected shape of X is
             [n_samples_test, n_samples_train].
 
         Returns
         -------
-        X : array-like, shape = [n_samples, n_class * (n_class-1) / 2]
+        X : array-like, shape (n_samples, n_class * (n_class-1) / 2)
             Returns the decision function of the sample for each class
             in the model.
         """
@@ -371,11 +371,11 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
 
         Returns
         -------
-        X : array-like, shape = [n_samples, n_class * (n_class-1) / 2]
+        X : array-like, shape (n_samples, n_class * (n_class-1) / 2)
             Returns the decision function of the sample for each class
             in the model.
         """
@@ -502,11 +502,11 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
 
         Returns
         -------
-        X : array-like, shape = [n_samples, n_class * (n_class-1) / 2]
+        X : array-like, shape (n_samples, n_class * (n_class-1) / 2)
             Returns the decision function of the sample for each class
             in the model.
         """
@@ -519,13 +519,13 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             For kernel="precomputed", the expected shape of X is
             [n_samples_test, n_samples_train]
 
         Returns
         -------
-        y_pred : array, shape = [n_samples]
+        y_pred : array, shape (n_samples,)
             Class labels for samples in X.
         """
         y = super(BaseSVC, self).predict(X)
@@ -552,13 +552,13 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             For kernel="precomputed", the expected shape of X is
             [n_samples_test, n_samples_train]
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like, shape (n_samples, n_classes)
             Returns the probability of the sample for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
@@ -588,13 +588,13 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             For kernel="precomputed", the expected shape of X is
             [n_samples_test, n_samples_train]
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like, shape (n_samples, n_classes)
             Returns the log-probabilities of the sample for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
@@ -739,11 +739,11 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training vector, where n_samples in the number of samples and
         n_features is the number of features.
 
-    y : array-like, shape = [n_samples]
+    y : array-like, shape (n_samples,)
         Target vector relative to X
 
     C : float
