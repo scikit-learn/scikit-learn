@@ -1094,6 +1094,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
                          "Valid metrics are %s, or 'precomputed', or a "
                          "callable" % (metric, _VALID_METRICS))
 
+    distances = None
     if metric == "precomputed":
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
@@ -1106,24 +1107,14 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
                             " support sparse matrices.")
         X, Y = check_pairwise_arrays(X, Y)
         if n_jobs == 1 and X is Y:
-            return distance.squareform(distance.pdist(X, metric=metric,
+            distances = distance.squareform(distance.pdist(X, metric=metric,
                                                       **kwds))
-        func = partial(distance.cdist, metric=metric, **kwds)
+        else:
+            func = partial(distance.cdist, metric=metric, **kwds)
 
-    return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
+    if distances is None :
+        distances = _parallel_pairwise(X, Y, func, n_jobs, **kwds)
 
-
-def safe_pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
-    """ Compute a 'safe' distance matrix from a vector array X and optional Y, especially when metric is 'correlation'.
-
-    When metric is 'correlation', scipy.distance.pdist returns NaN values when a sample has zero variance.
-    Those values will be replaced by 1.0.
-
-    See also
-    --------
-    pairwise_distances
-    """
-    distances = pairwise_distances(X, Y, metric, n_jobs, **kwds)
     if metric == 'correlation':
         invalid_peak_to_peak_value = 0.0
         correlation_for_invalid_value = 1.0  # maximum value of scipy.spatial.distance.correlation
@@ -1137,7 +1128,6 @@ def safe_pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
             distances[:, invalid_rows_X] = correlation_for_invalid_value
 
     return distances
-
 
 # Helper functions - distance
 PAIRWISE_KERNEL_FUNCTIONS = {
