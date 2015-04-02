@@ -160,10 +160,21 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
             estimator.fit(X[:, features], y)
 
-            if estimator.coef_.ndim > 1:
-                ranks = np.argsort(safe_sqr(estimator.coef_).sum(axis=0))
+            # Get coefs
+            if hasattr(estimator, 'coef_'):
+                coefs = estimator.coef_
+            elif hasattr(estimator, 'feature_importances_'):
+                coefs = estimator.feature_importances_
             else:
-                ranks = np.argsort(safe_sqr(estimator.coef_))
+                raise RuntimeError('The classifier does not expose '
+                                   '"coef_" or "feature_importances_" '
+                                   'attributes')
+
+            # Get ranks
+            if coefs.ndim > 1:
+                ranks = np.argsort(safe_sqr(coefs).sum(axis=0))
+            else:
+                ranks = np.argsort(safe_sqr(coefs))
 
             # for sparse case ranks is matrix
             ranks = np.ravel(ranks)

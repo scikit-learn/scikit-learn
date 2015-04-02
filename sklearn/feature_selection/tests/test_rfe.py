@@ -11,6 +11,7 @@ from sklearn.feature_selection.rfe import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
 from sklearn.svm import SVC, SVR
+from sklearn.ensemble import RandomForestClassifier
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
@@ -68,6 +69,25 @@ def test_rfe_set_params():
     y_pred2 = rfe.fit(X, y).predict(X)
     assert_array_equal(y_pred, y_pred2)
 
+
+def test_rfe_features_importance():
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+
+    clf = RandomForestClassifier(n_estimators=10, n_jobs=1)
+    rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1)
+    rfe.fit(X, y)
+    assert_equal(len(rfe.ranking_), X.shape[1])
+
+    clf_svc = SVC(kernel="linear")
+    rfe_svc = RFE(estimator=clf_svc, n_features_to_select=4, step=0.1)
+    rfe_svc.fit(X, y)
+
+    # Check if the supports are equal
+    diff_support = rfe.get_support() == rfe_svc.get_support()
+    assert_true(sum(diff_support) == len(diff_support))
 
 def test_rfe_deprecation_estimator_params():
     deprecation_message = ("The parameter 'estimator_params' is deprecated as "
