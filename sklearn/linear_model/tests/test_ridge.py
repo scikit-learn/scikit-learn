@@ -766,7 +766,6 @@ def test_ridge_gcv_with_sample_weights():
     ridge_gcv.fit(X, Y, sample_weight=sample_weights)
     loo_predictions = ridge_gcv.cv_values_
 
-
     assert_array_almost_equal(cv_errors ** 2,
                               loo_predictions.transpose(2, 0, 1))
 

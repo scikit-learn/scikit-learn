@@ -797,11 +797,21 @@ class _RidgeGCV(LinearModel):
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
 
-    def _pre_compute(self, X, y):
+    def _pre_compute(self, X, y, sample_weight=None):
         # even if X is very sparse, K is usually very dense
         K = safe_sparse_dot(X, X.T, dense_output=True)
+        if sample_weight is not None:
+            has_sw = True
+            sqrt_sw = np.sqrt(sample_weight).reshape(K.shape[0], 1)
+            K *= sqrt_sw
+            K *= sqrt_sw.T
+        else:
+            has_sw = False
         v, Q = linalg.eigh(K)
-        QT_y = np.dot(Q.T, y)
+        if has_sw:
+            QT_y = np.dot(Q.T, sqrt_sw * y.reshape(y.shape[0], -1))
+        else:
+            QT_y = np.dot(Q.T, y)
         return v, Q, QT_y
 
     def _decomp_diag(self, v_prime, Q):
@@ -815,15 +825,28 @@ class _RidgeGCV(LinearModel):
             D = D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)]
         return D * B
 
-    def _errors(self, alpha, y, v, Q, QT_y):
+    def _errors(self, alpha, y, v, Q, QT_y, sample_weight=None):
         # don't construct matrix G, instead compute action on y & diagonal
         w = 1.0 / (v + alpha)
         c = np.dot(Q, self._diag_dot(w, QT_y))
+        c.shape = (c.shape[0], -1)
+        if sample_weight is not None:
+            has_sw = True
+            sqrt_sw = np.sqrt(sample_weight).reshape(y.shape[0], 1)
+            c *= sqrt_sw
+        else:
+            has_sw = False
         G_diag = self._decomp_diag(w, Q)
-        # handle case where y is 2-d
-        if len(y.shape) != 1:
-            G_diag = G_diag[:, np.newaxis]
-        return (c / G_diag) ** 2, c
+        G_diag = G_diag[:, np.newaxis]
+
+        errors = c / G_diag
+        if has_sw:
+            errors /= sqrt_sw ** 2
+
+        if y.ndim == 1:
+            errors.shape = (-1,)
+            c.shape = (-1,)
+        return errors ** 2, c
 
     def _values(self, alpha, y, v, Q, QT_y):
         # don't construct matrix G, instead compute action on y & diagonal
@@ -835,7 +858,7 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return y - (c / G_diag), c
 
-    def _pre_compute_svd(self, X, y):
+    def _pre_compute_svd(self, X, y, sample_weight=None):
         if sparse.issparse(X):
             raise TypeError("SVD not supported for sparse matrices")
         U, s, _ = linalg.svd(X, full_matrices=0)
@@ -843,7 +866,7 @@ class _RidgeGCV(LinearModel):
         UT_y = np.dot(U.T, y)
         return v, U, UT_y
 
-    def _errors_svd(self, alpha, y, v, U, UT_y):
+    def _errors_svd(self, alpha, y, v, U, UT_y, sample_weight=None):
         w = ((v + alpha) ** -1) - (alpha ** -1)
         c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
         G_diag = self._decomp_diag(w, U) + (alpha ** -1)
@@ -889,7 +912,7 @@ class _RidgeGCV(LinearModel):
             sample_weight=sample_weight)
 
         gcv_mode = self.gcv_mode
-        with_sw = len(np.shape(sample_weight))
+        with_sw = sample_weight is not None
 
         if gcv_mode is None or gcv_mode == 'auto':
             if sparse.issparse(X) or n_features > n_samples or with_sw:
@@ -914,7 +937,7 @@ class _RidgeGCV(LinearModel):
         else:
             raise ValueError('bad gcv_mode "%s"' % gcv_mode)
 
-        v, Q, QT_y = _pre_compute(X, y)
+        v, Q, QT_y = _pre_compute(X, y, sample_weight)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
@@ -923,13 +946,10 @@ class _RidgeGCV(LinearModel):
         error = scorer is None
 
         for i, alpha in enumerate(self.alphas):
-            weighted_alpha = (sample_weight * alpha
-                              if sample_weight is not None
-                              else alpha)
             if error:
-                out, c = _errors(weighted_alpha, y, v, Q, QT_y)
+                out, c = _errors(alpha, y, v, Q, QT_y, sample_weight)
             else:
-                out, c = _values(weighted_alpha, y, v, Q, QT_y)
+                out, c = _values(alpha, y, v, Q, QT_y)
             cv_values[:, i] = out.ravel()
             C.append(c)
 
