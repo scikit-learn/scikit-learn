@@ -236,6 +236,9 @@ def test_feature_union():
     X_transformed = fs.fit_transform(X, y)
     assert_equal(X_transformed.shape, (X.shape[0], 8))
 
+    # regression test (#4461)
+    assert_true('transformer_weights' in fs.get_params(deep=True))
+
 
 def test_make_union():
     pca = PCA()

@@ -487,6 +487,7 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
             for name, trans in self.transformer_list:
                 for key, value in iteritems(trans.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value
+            out['transformer_weights'] = self.transformer_weights
             return out
 
     def _update_transformer_list(self, transformers):
