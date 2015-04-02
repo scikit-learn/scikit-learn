@@ -892,9 +892,10 @@ on a classifier, but not otherwise. Similarly, scorers for average precision
 that take a continuous prediction need to call ``decision_function`` for classifiers,
 but ``predict`` for regressors. This distinction between classifiers and regressors
 is implemented using the ``_estimator_type`` attribute, which takes a string value.
-It should be ``"classifier"`` for classifiers and ``"regressor"`` for regressors,
-to work as expected. Inheriting from ``ClassifierMixin`` or ``RegressorMixin`` will
-set the attribute automatically.
+It should be ``"classifier"`` for classifiers and ``"regressor"`` for
+regressors and ``"clusterer"`` for clustering methods, to work as expected.
+Inheriting from ``ClassifierMixin``, ``RegressorMixin`` or ``ClusterMixin``
+will set the attribute automatically.
 
 Working notes
 -------------
