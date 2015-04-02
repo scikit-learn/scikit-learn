@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 import warnings
+from operator import itemgetter
 
 import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve
@@ -14,6 +15,7 @@ from scipy.special import erf
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.utils.validation import check_X_y, check_is_fitted, check_array
+from sklearn.utils import check_random_state
 from sklearn.preprocessing import LabelEncoder
 
 # Values required for approximating the logistic sigmoid by
@@ -61,6 +63,14 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
 
             'fmin_l_bfgs_b'
 
+    n_restarts_optimizer: int, optional (default: 1)
+        The number of restarts of the optimizer for finding the kernel's
+        parameters which maximize the log-marginal likelihood. The first run
+        of the optimizer is performed from the kernel's initial parameters,
+        the remaining ones (if any) from thetas sampled log-uniform randomly
+        from the space of allowed theta-values. If greater than 1, all bounds
+        must be finite.
+
     warm_start : bool, optional (default: False)
         If warm-starts are enabled, the solution of the last Newton iteration
         on the Laplace approximation of the posterior mode is used as
@@ -68,6 +78,10 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         up convergence when _posterior_mode is called several times on similar
         problems as in hyperparameter optimization.
 
+    random_state : integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
 
     Attributes
     ----------
@@ -100,11 +114,13 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
     """
 
     def __init__(self, kernel=None, jitter=0.0, optimizer="fmin_l_bfgs_b",
-                 warm_start=False):
+                 n_restarts_optimizer=1, warm_start=False, random_state=None):
         self.kernel = kernel
         self.jitter = jitter
         self.optimizer = optimizer
+        self.n_restarts_optimizer = n_restarts_optimizer
         self.warm_start = warm_start
+        self.rng = check_random_state(random_state)
 
     def fit(self, X, y):
         """Fit Gaussian process regression model
@@ -144,15 +160,36 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
                           % self.classes_)
             self.classes_ = np.array([self.classes_[0], self.classes_[0]])
 
-        if self.optimizer == "fmin_l_bfgs_b":
+        if self.optimizer in ["fmin_l_bfgs_b"]:
             # Choose hyperparameters based on maximizing the log-marginal
-            # likelihood
+            # likelihood (potentially starting from several initial values)
             def obj_func(theta):
                 lml, grad = self.log_marginal_likelihood(theta,
                                                          eval_gradient=True)
                 return -lml, -grad
-            self.theta_, _, _ = fmin_l_bfgs_b(obj_func, self.kernel_.theta,
-                                              bounds=self.kernel_.bounds)
+
+            # First optimize starting from theta specified in kernel
+            optima = [(self._constrained_optimization(obj_func,
+                                                      self.kernel_.theta,
+                                                      self.kernel_.bounds))]
+
+            # Additional runs are performed from log-uniform chosen initial
+            # theta
+            if self.n_restarts_optimizer > 1:
+                if not np.isfinite(self.kernel_.bounds).all():
+                    raise ValueError(
+                        "Multiple optimizer restarts (n_restarts_optimizer>1) "
+                        "requires that all bounds are finite.")
+                log_bounds = np.log(self.kernel_.bounds)
+                for iteration in range(1, self.n_restarts_optimizer):
+                    theta_initial = np.exp(self.rng.uniform(log_bounds[:, 0],
+                                                            log_bounds[:, 1]))
+                    optima.append(
+                        self._constrained_optimization(obj_func, theta_initial,
+                                                       self.kernel_.bounds))
+            # Select result from run with minimal (negative) log-marginal
+            # likelihood
+            self.theta_ = optima[np.argmin(map(itemgetter(1), optima))][0]
             self.kernel_.theta = self.theta_
         elif self.optimizer is None:
             self.theta_ = self.kernel_.theta
@@ -344,3 +381,9 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
             return log_marginal_likelihood, (pi, W_sr, L, b, a)
         else:
             return log_marginal_likelihood
+
+    def _constrained_optimization(self, obj_func, initial_theta, bounds):
+        if self.optimizer in ["fmin_l_bfgs_b"]:
+            theta_opt, func_min, _ = \
+                fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds)
+        return theta_opt, func_min
