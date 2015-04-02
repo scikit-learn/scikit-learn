@@ -65,7 +65,9 @@ taking as input a user-specified base estimator along with parameters
 specifying the strategy to draw random subsets. In particular, ``max_samples``
 and ``max_features`` control the size of the subsets (in terms of samples and
 features), while ``bootstrap`` and ``bootstrap_features`` control whether
-samples and features are drawn with or without replacement. As an example, the
+samples and features are drawn with or without replacement. When using a subset
+of the available samples the generalization error can be estimated with the
+out-of-bag samples by setting ``oob_score=True``. As an example, the
 snippet below illustrates how to instantiate a bagging ensemble of
 :class:`KNeighborsClassifier` base estimators, each built on random subsets of
 50% of the samples and 50% of the features.
@@ -207,6 +209,9 @@ should always be cross-validated. In addition, note that in random forests,
 bootstrap samples are used by default (``bootstrap=True``)
 while the default strategy for extra-trees is to use the whole dataset
 (``bootstrap=False``).
+When using bootstrap sampling the generalization error can be estimated
+on the left out or out-of-bag samples. This can be enabled by
+setting ``oob_score=True``.
 
 Parallelization
 ---------------
