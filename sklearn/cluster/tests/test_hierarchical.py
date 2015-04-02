@@ -123,10 +123,10 @@ def test_distance_threshold():
     connectivity = grid_to_graph(*mask.shape)
     for name, linkage_func in _TREE_BUILDERS.items():
         # n_cluster case
-        res =  linkage_func(X.T, connectivity, return_distance=True)
+        res = linkage_func(X.T, connectivity, return_distance=True)
         children, n_nodes, n_leaves, parent, distances = res
         # distance_threshold case
-        distance_idx  = 42
+        distance_idx = 42
         distance_threshold = distances[distance_idx]
         if name == 'ward':
             # Revert the final scaling on distance

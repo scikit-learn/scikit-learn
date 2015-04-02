@@ -123,10 +123,12 @@ def ward_tree(X, connectivity=None, n_components=None,
         complete tree is not computed, thus the 'children' output is of
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
+        You should set distance_threshold OR n_clusters.
 
     distance_threshold : int (optional)
         Stop early the construction of the tree when a given value
         of distance if obtained.
+        You should set distance_threshold OR n_clusters.
 
     return_distance: bool (optional)
         If True, return the distance between the clusters.
@@ -345,10 +347,12 @@ def linkage_tree(X, connectivity=None, n_components=None,
         complete tree is not computed, thus the 'children' output is of
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
+        You should set distance_threshold OR n_clusters.
 
     distance_threshold : int (optional)
         Stop early the construction of the tree when a given value
         of distance if obtained.
+        You should set distance_threshold OR n_clusters.
 
     linkage : {"average", "complete"}, optional, default: "complete"
         Which linkage critera to use. The linkage criterion determines which
@@ -784,7 +788,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             memory.cache(tree_builder)(X, connectivity,
                                        n_components=self.n_components,
                                        n_clusters=n_clusters,
-                                       distance_threshold = \
+                                       distance_threshold=\
                                            self.distance_threshold,
                                        **kwargs)
         # Cut the tree
