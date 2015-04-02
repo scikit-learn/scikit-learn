@@ -29,7 +29,7 @@ from sklearn.svm import SVC, SVR
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SelectKBest
 from sklearn.cross_validation import train_test_split
-from sklearn.datasets import load_boston, load_iris
+from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
 
 from scipy.sparse import csc_matrix, csr_matrix
@@ -570,6 +570,59 @@ def test_bagging_sample_weight_unsupported_but_passed():
     estimator.fit(iris.data, iris.target).predict(iris.data)
     assert_raises(ValueError, estimator.fit, iris.data, iris.target,
                   sample_weight=rng.randint(10, size=(iris.data.shape[0])))
+
+
+def test_warm_start(random_state=42):
+    # Test if fitting incrementally with warm start gives a forest of the
+    # right size and the same results as a normal fit.
+    X, y = make_hastie_10_2(n_samples=20, random_state=1)
+
+    clf_ws = None
+    for n_estimators in [5, 10]:
+        if clf_ws is None:
+            clf_ws = BaggingClassifier(n_estimators=n_estimators,
+                                       random_state=random_state,
+                                       warm_start=True)
+        else:
+            clf_ws.set_params(n_estimators=n_estimators)
+        clf_ws.fit(X, y)
+        assert_equal(len(clf_ws), n_estimators)
+
+    clf_no_ws = BaggingClassifier(n_estimators=10, random_state=random_state,
+                                  warm_start=False)
+    clf_no_ws.fit(X, y)
+
+    assert_equal(set([tree.random_state for tree in clf_ws]),
+                 set([tree.random_state for tree in clf_no_ws]))
+
+
+def test_warm_start_smaller_n_estimators():
+    # Test if warm start'ed second fit with smaller n_estimators raises error.
+    X, y = make_hastie_10_2(n_samples=20, random_state=1)
+    clf = BaggingClassifier(n_estimators=5, warm_start=True)
+    clf.fit(X, y)
+    clf.set_params(n_estimators=4)
+    assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_warm_start_equivalence():
+    # warm started classifier with 5+5 estimators should be equivalent to
+    # one classifier with 10 estimators
+    X, y = make_hastie_10_2(n_samples=20, random_state=1)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=43)
+
+    clf_ws = BaggingClassifier(n_estimators=5, warm_start=True)
+    clf_ws.fit(X_train, y_train)
+    clf_ws.set_params(n_estimators=10)
+    clf_ws.fit(X_train, y_train)
+    y1 = clf_ws.predict(X_test)
+
+    clf = BaggingClassifier(n_estimators=10, warm_start=False)
+    clf.fit(X_train, y_train)
+    y2 = clf.predict(X_test)
+
+    assert_array_almost_equal(y1, y2)
+
 
 if __name__ == "__main__":
     import nose
