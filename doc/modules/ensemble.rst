@@ -207,6 +207,9 @@ should always be cross-validated. In addition, note that in random forests,
 bootstrap samples are used by default (``bootstrap=True``)
 while the default strategy for extra-trees is to use the whole dataset
 (``bootstrap=False``).
+When using bootstrap sampling the generalization error can be estimated
+on the left out or out-of-bag samples. This can be enabled by
+setting ``oob_score=True``.
 
 Parallelization
 ---------------
