@@ -914,6 +914,25 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     feature_importances_ : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.tree import DecisionTreeRegressor
+    >>> from sklearn.ensemble import AdaBoostRegressor
+    >>> X = np.array([[0.], [0.1], [0.2], [0.3], [0.4], [0.5]])
+    >>> y = np.array([ 0.05 ,  0.80,  1.25 ,  1.10,  0.65, -0.09])
+    >>> clf = AdaBoostRegressor(DecisionTreeRegressor(max_depth=4),
+    ...                           n_estimators=30)
+    >>> clf.fit(X, y)
+    AdaBoostRegressor(base_estimator=DecisionTreeRegressor(criterion='mse', max_depth=4, max_features=None,
+               max_leaf_nodes=None, min_samples_leaf=1, min_samples_split=2,
+               min_weight_fraction_leaf=0.0, random_state=None,
+               splitter='best'),
+             learning_rate=1.0, loss='linear', n_estimators=30,
+             random_state=None)
+    >>> clf.predict(X)
+    array([ 0.05,  0.8 ,  1.25,  1.1 ,  0.65, -0.09])
+
     See also
     --------
     AdaBoostClassifier, GradientBoostingRegressor, DecisionTreeRegressor
