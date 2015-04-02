@@ -7,7 +7,7 @@ Linear and Quadratic Discriminant Analysis
 .. currentmodule:: sklearn
 
 Linear Discriminant Analysis (:class:`discriminant_analysis.LinearDiscriminantAnalysis`) and
-quadratic Discriminant Analysis (:class:`discriminant_analysis.QuadraticDiscriminantAnalysis`)
+Quadratic Discriminant Analysis (:class:`discriminant_analysis.QuadraticDiscriminantAnalysis`)
 are two classic classifiers, with, as their names suggest, a linear and a
 quadratic decision surface, respectively.
 
