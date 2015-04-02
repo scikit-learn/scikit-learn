@@ -86,7 +86,8 @@ def _fix_connectivity(X, connectivity, n_components=None,
 ###############################################################################
 # Hierarchical tree building functions
 
-def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
+def ward_tree(X, connectivity=None, n_components=None,
+              n_clusters=None, distance_threshold=None,
               return_distance=False):
     """Ward clustering based on a Feature matrix.
 
@@ -122,6 +123,10 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
         complete tree is not computed, thus the 'children' output is of
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
+
+    distance_threshold : int (optional)
+        Stop early the construction of the tree when a given value
+        of distance if obtained.
 
     return_distance: bool (optional)
         If True, return the distance between the clusters.
@@ -286,6 +291,10 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
         [heappush(inertia, (ini[idx], k, coord_col[idx]))
             for idx in range(n_additions)]
 
+        # early break on distance_threshold
+        if distance_threshold and inert >= distance_threshold:
+            break
+
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
     # sort children to get consistent output with unstructured version
@@ -302,7 +311,8 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
 
 # average and complete linkage
 def linkage_tree(X, connectivity=None, n_components=None,
-                 n_clusters=None, linkage='complete', affinity="euclidean",
+                 n_clusters=None, distance_threshold=None,
+                 linkage='complete', affinity="euclidean",
                  return_distance=False):
     """Linkage agglomerative clustering based on a Feature matrix.
 
@@ -335,6 +345,10 @@ def linkage_tree(X, connectivity=None, n_components=None,
         complete tree is not computed, thus the 'children' output is of
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
+
+    distance_threshold : int (optional)
+        Stop early the construction of the tree when a given value
+        of distance if obtained.
 
     linkage : {"average", "complete"}, optional, default: "complete"
         Which linkage critera to use. The linkage criterion determines which
@@ -523,6 +537,10 @@ def linkage_tree(X, connectivity=None, n_components=None,
         # Clear A[i] and A[j] to save memory
         A[i] = A[j] = 0
 
+        # early break on distance
+        if distance_threshold and edge.weight >= distance_threshold:
+            break
+
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
 
@@ -681,12 +699,22 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     """
 
-    def __init__(self, n_clusters=2, affinity="euclidean",
+    def __init__(self, n_clusters=2,
+                 distance_threshold=None,
+                 affinity="euclidean",
                  memory=Memory(cachedir=None, verbose=0),
                  connectivity=None, n_components=None,
                  compute_full_tree='auto', linkage='ward',
                  pooling_func=np.mean):
+        if ((not n_clusters and not distance_threshold)
+            or (n_clusters and distance_threshold)):
+            raise ValueError('You should provide n_clusters '
+                             'OR distance_threshold. '
+                             'You give %s and %s'
+                             % (str(n_clusters),
+                                str(distance_threshold)))
         self.n_clusters = n_clusters
+        self.distance_threshold = distance_threshold
         self.memory = memory
         self.n_components = n_components
         self.connectivity = connectivity
@@ -756,6 +784,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             memory.cache(tree_builder)(X, connectivity,
                                        n_components=self.n_components,
                                        n_clusters=n_clusters,
+                                       distance_threshold = \
+                                           self.distance_threshold,
                                        **kwargs)
         # Cut the tree
         if compute_full_tree:

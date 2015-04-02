@@ -115,6 +115,32 @@ def test_height_linkage_tree():
         assert_true(len(children) + n_leaves == n_nodes)
 
 
+def test_distance_threshold():
+    # Check that we cut on the correct distance threshold
+    rng = np.random.RandomState(0)
+    mask = np.ones([10, 10], dtype=np.bool)
+    X = rng.randn(50, 100)
+    connectivity = grid_to_graph(*mask.shape)
+    for name, linkage_func in _TREE_BUILDERS.items():
+        # n_cluster case
+        res =  linkage_func(X.T, connectivity, return_distance=True)
+        children, n_nodes, n_leaves, parent, distances = res
+        # distance_threshold case
+        distance_idx  = 42
+        distance_threshold = distances[distance_idx]
+        if name == 'ward':
+            # Revert the final scaling on distance
+            distance_threshold = (distance_threshold ** 2)/2
+        res = linkage_func(X.T, connectivity,
+                           return_distance=True,
+                           distance_threshold=distance_threshold)
+        children, n_nodes, n_leaves, parent, ndistances = res
+        assert_true(len(children) == (distance_idx + 1))
+        assert_true(any(ndistances < distance_threshold))
+        n_nodes = X.shape[1] + distance_idx + 1
+        assert_true(len(children) + n_leaves == n_nodes)
+
+
 def test_agglomerative_clustering():
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.
@@ -501,11 +527,29 @@ def test_agg_n_clusters():
 
     rng = np.random.RandomState(0)
     X = rng.rand(20, 10)
-    for n_clus in [-1, 0]:
-        agc = AgglomerativeClustering(n_clusters=n_clus)
-        msg = ("n_clusters should be an integer greater than 0."
-               " %s was provided." % str(agc.n_clusters))
-        assert_raise_message(ValueError, msg, agc.fit, X)
+    agc = AgglomerativeClustering(n_clusters=-1)
+    msg = ("n_clusters should be an integer greater than 0."
+           " %s was provided." % str(agc.n_clusters))
+    assert_raise_message(ValueError, msg, agc.fit, X)
+
+def test_agg_n_clusters_and_threshold():
+    # Test that an error is raised when n_clusters <= 0
+
+    rng = np.random.RandomState(0)
+    X = rng.rand(20, 10)
+    msg = ('You should provide n_clusters OR distance_threshold. '
+           'You give 0 and None')
+    assert_raise_message(ValueError, msg, AgglomerativeClustering, 0)
+
+def test_agg_n_clusters_and_threshold_both():
+    # Test that an error is raised when n_clusters <= 0
+
+    rng = np.random.RandomState(0)
+    X = rng.rand(20, 10)
+    msg = ('You should provide n_clusters OR distance_threshold. '
+           'You give 10 and 10')
+    assert_raise_message(ValueError, msg, AgglomerativeClustering, 10, 10)
+
 
 if __name__ == '__main__':
     import nose
