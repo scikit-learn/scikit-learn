@@ -65,7 +65,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
             print("building estimator %d of %d" % (i + 1, n_estimators))
 
         random_state = check_random_state(seeds[i])
-        seed = check_random_state(random_state.randint(MAX_INT))
+        seed = random_state.randint(MAX_INT)
         estimator = ensemble._make_estimator(append=False)
 
         try:  # Not all estimator accept a random_state
@@ -206,6 +206,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
                  bootstrap=True,
                  bootstrap_features=False,
                  oob_score=False,
+                 warm_start=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0):
@@ -218,6 +219,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         self.bootstrap = bootstrap
         self.bootstrap_features = bootstrap_features
         self.oob_score = oob_score
+        self.warm_start = warm_start
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
@@ -278,27 +280,47 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError("Out of bag estimation only available"
                              " if bootstrap=True")
 
-        # Free allocated memory, if any
-        self.estimators_ = None
+        if not self.warm_start:
+            # Free allocated memory, if any
+            self.estimators_ = []
+            self.estimators_samples_ = []
+            self.estiamtors_features_ = []
 
-        # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
-                                                             self.n_jobs)
-        seeds = random_state.randint(MAX_INT, size=self.n_estimators)
+        n_more_estimators = self.n_estimators - len(self.estimators_)
 
-        all_results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(_parallel_build_estimators)(
-                n_estimators[i],
-                self,
-                X,
-                y,
-                sample_weight,
-                seeds[starts[i]:starts[i + 1]],
-                verbose=self.verbose)
-            for i in range(n_jobs))
+        if n_more_estimators < 0:
+            raise ValueError('n_estimators=%d must be larger or equal to '
+                             'len(estimators_)=%d when warm_start==True'
+                             % (self.n_estimators, len(self.estimators_)))
+
+        elif n_more_estimators == 0:
+            warn("Warm-start fitting without increasing n_estimators does not "
+                 "fit new trees.")
+        else:
+            # Parallel loop
+            n_jobs, n_estimators, starts = _partition_estimators(n_more_estimators,
+                                                                 self.n_jobs)
+
+            # Advance random state to state after training
+            # the first n_estimators
+            if self.warm_start and len(self.estimators_) > 0:
+                random_state.randint(MAX_INT, size=len(self.estimators_))
+
+            seeds = random_state.randint(MAX_INT, size=n_more_estimators)
+
+            all_results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+                delayed(_parallel_build_estimators)(
+                    n_estimators[i],
+                    self,
+                    X,
+                    y,
+                    sample_weight,
+                    seeds[starts[i]:starts[i + 1]],
+                    verbose=self.verbose)
+                for i in range(n_jobs))
 
         # Reduce
-        self.estimators_ = list(itertools.chain.from_iterable(
+        self.estimators_ += list(itertools.chain.from_iterable(
             t[0] for t in all_results))
         self.estimators_samples_ = list(itertools.chain.from_iterable(
             t[1] for t in all_results))
@@ -306,12 +328,12 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
             t[2] for t in all_results))
 
         if self.oob_score:
-            self._set_oob_score(X, y)
+            self._set_oob_score(X, y, n_more_estimators)
 
         return self
 
     @abstractmethod
-    def _set_oob_score(self, X, y):
+    def _set_oob_score(self, X, y, n_more_estimators):
         """Calculate out of bag predictions and score."""
 
     def _validate_y(self, y):
@@ -367,6 +389,11 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     oob_score : bool
         Whether to use out-of-bag samples to estimate
         the generalization error.
+
+    warm_start : bool, optional (default=False)
+        When set to True, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just fit
+        a whole new ensemble.
 
     n_jobs : int, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -435,6 +462,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                  bootstrap=True,
                  bootstrap_features=False,
                  oob_score=False,
+                 warm_start=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0):
@@ -447,6 +475,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             bootstrap=bootstrap,
             bootstrap_features=bootstrap_features,
             oob_score=oob_score,
+            warm_start=warm_start,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
@@ -456,14 +485,14 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         super(BaggingClassifier, self)._validate_estimator(
             default=DecisionTreeClassifier())
 
-    def _set_oob_score(self, X, y):
+    def _set_oob_score(self, X, y, n_more_estimators):
         n_classes_ = self.n_classes_
         classes_ = self.classes_
         n_samples = y.shape[0]
 
         predictions = np.zeros((n_samples, n_classes_))
 
-        for estimator, samples, features in zip(self.estimators_,
+        for estimator, samples, features in zip(self.estimators_[-n_more_estimators:],
                                                 self.estimators_samples_,
                                                 self.estimators_features_):
             mask = np.ones(n_samples, dtype=np.bool)
@@ -724,6 +753,11 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         Whether to use out-of-bag samples to estimate
         the generalization error.
 
+    warm_start : bool, optional (default=False)
+        When set to True, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just fit
+        a whole new ensemble.
+
     n_jobs : int, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.
@@ -783,6 +817,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
                  bootstrap=True,
                  bootstrap_features=False,
                  oob_score=False,
+                 warm_start=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0):
@@ -794,6 +829,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             bootstrap=bootstrap,
             bootstrap_features=bootstrap_features,
             oob_score=oob_score,
+            warm_start=warm_start,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
@@ -840,13 +876,13 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         super(BaggingRegressor, self)._validate_estimator(
             default=DecisionTreeRegressor())
 
-    def _set_oob_score(self, X, y):
+    def _set_oob_score(self, X, y, n_more_estimators):
         n_samples = y.shape[0]
 
         predictions = np.zeros((n_samples,))
         n_predictions = np.zeros((n_samples,))
 
-        for estimator, samples, features in zip(self.estimators_,
+        for estimator, samples, features in zip(self.estimators_[-n_more_estimators:],
                                                 self.estimators_samples_,
                                                 self.estimators_features_):
             mask = np.ones(n_samples, dtype=np.bool)
