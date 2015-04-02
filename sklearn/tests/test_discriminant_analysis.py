@@ -200,6 +200,7 @@ def test_deprecated_lda_scaling():
 def test_lda_deprecation():
     # Test if deprecation warning is raised for lda.LDA
     with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always", DeprecationWarning)
         clf = lda.LDA()
         assert_equal(w[0].category, DeprecationWarning)
 
@@ -302,5 +303,6 @@ def test_qda_regularization():
 def test_qda_deprecation():
     # Test if deprecation warning is raised for qda.QDA
     with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always", DeprecationWarning)
         clf = qda.QDA()
         assert_equal(w[0].category, DeprecationWarning)
