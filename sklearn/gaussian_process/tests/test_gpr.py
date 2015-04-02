@@ -8,7 +8,8 @@ import numpy as np
 from scipy.optimize import approx_fprime
 
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
+from sklearn.gaussian_process.kernels \
+    import RBF, ConstantKernel as C, WhiteKernel
 
 from sklearn.utils.testing \
     import (assert_true, assert_greater, assert_array_less,
@@ -149,3 +150,27 @@ def test_anisotropic_kernel():
     kernel = RBF([1.0, 1.0])
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     assert_greater(gpr.kernel_.theta[1], gpr.kernel_.theta[0] * 5)
+
+def test_random_starts():
+    """
+    Test that an increasing number of random-starts of GP fitting only
+    increases the log marginal likelihood of the chosen theta.
+    """
+    n_samples, n_features = 25, 3
+    np.random.seed(0)
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, n_features) * 2 - 1
+    y = np.sin(X).sum(axis=1) + np.sin(3 * X).sum(axis=1) \
+        + rng.normal(scale=0.1, size=n_samples)
+
+    kernel = C(1.0, (1e-2, 1e2)) \
+        * RBF(l=[1.0] * n_features, l_bounds=[(1e-4, 1e+2)] * n_features) \
+        + WhiteKernel(c=1e-5, c_bounds=(1e-5, 1e1))
+    last_lml = -np.inf
+    for n_restarts_optimizer in range(1, 10):
+        gp = GaussianProcessRegressor(
+            kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
+            random_state=0,).fit(X, y)
+        lml = gp.log_marginal_likelihood(gp.theta_)
+        assert_greater(lml, last_lml - np.finfo(np.float32).eps)
+        last_lml = lml
