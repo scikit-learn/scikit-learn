@@ -235,17 +235,18 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         # copy since this will contains the residuals (deflated) matrices
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float, copy=self.copy)
-        Y = check_array(Y, dtype=np.float, copy=self.copy, ensure_2d=False)
+        X = check_array(X, dtype=np.float64, copy=self.copy)
+        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
-            Y = Y[:, None]
+            Y = Y.reshape(-1, 1)
 
         n = X.shape[0]
         p = X.shape[1]
         q = Y.shape[1]
 
         if self.n_components < 1 or self.n_components > p:
-            raise ValueError('invalid number of components')
+            raise ValueError('Invalid number of components: %d' %
+                             self.n_components)
         if self.algorithm not in ("svd", "nipals"):
             raise ValueError("Got algorithm %s when only 'svd' "
                              "and 'nipals' are known" % self.algorithm)
@@ -271,6 +272,10 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         # NIPALS algo: outer loop, over components
         for k in range(self.n_components):
+            if np.all(np.dot(Yk.T, Yk) < np.finfo(np.double).eps):
+                # Yk constant
+                warnings.warn('Y residual constant at iteration %s' % k)
+                break
             #1) weights estimation (inner loop)
             # -----------------------------------
             if self.algorithm == "nipals":
@@ -291,6 +296,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             # test for null variance
             if np.dot(x_scores.T, x_scores) < np.finfo(np.double).eps:
                 warnings.warn('X scores are null at iteration %s' % k)
+                break
             #2) Deflation (in place)
             # ----------------------
             # Possible memory footprint reduction may done here: in order to
@@ -335,6 +341,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             self.y_rotations_ = np.ones(1)
 
         if True or self.deflation_mode == "regression":
+            # FIXME what's with the if?
             # Estimate regression coefficient
             # Regress Y on T
             # Y = TQ' + Err,
@@ -367,23 +374,19 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
         check_is_fitted(self, 'x_mean_')
+        X = check_array(X, copy=copy)
         # Normalize
-        if copy:
-            Xc = (np.asarray(X) - self.x_mean_) / self.x_std_
-            if Y is not None:
-                Yc = (np.asarray(Y) - self.y_mean_) / self.y_std_
-        else:
-            X = np.asarray(X)
-            Xc -= self.x_mean_
-            Xc /= self.x_std_
-            if Y is not None:
-                Y = np.asarray(Y)
-                Yc -= self.y_mean_
-                Yc /= self.y_std_
+        X -= self.x_mean_
+        X /= self.x_std_
         # Apply rotation
-        x_scores = np.dot(Xc, self.x_rotations_)
+        x_scores = np.dot(X, self.x_rotations_)
         if Y is not None:
-            y_scores = np.dot(Yc, self.y_rotations_)
+            Y = check_array(Y, ensure_2d=False, copy=copy)
+            if Y.ndim == 1:
+                Y = Y.reshape(-1, 1)
+            Y -= self.y_mean_
+            Y /= self.y_std_
+            y_scores = np.dot(Y, self.y_rotations_)
             return x_scores, y_scores
 
         return x_scores
@@ -406,14 +409,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         be an issue in high dimensional space.
         """
         check_is_fitted(self, 'x_mean_')
+        X = check_array(X, copy=copy)
         # Normalize
-        if copy:
-            Xc = (np.asarray(X) - self.x_mean_)
-        else:
-            X = np.asarray(X)
-            Xc -= self.x_mean_
-            Xc /= self.x_std_
-        Ypred = np.dot(Xc, self.coef_)
+        X -= self.x_mean_
+        X /= self.x_std_
+        Ypred = np.dot(X, self.coef_)
         return Ypred + self.y_mean_
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -724,13 +724,15 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     def fit(self, X, Y):
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float, copy=self.copy)
-        Y = check_array(Y, dtype=np.float, copy=self.copy)
+        X = check_array(X, dtype=np.float64, copy=self.copy)
+        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
+        if Y.ndim == 1:
+            Y = Y.reshape(-1, 1)
 
-        p = X.shape[1]
-
-        if self.n_components < 1 or self.n_components > p:
-            raise ValueError('invalid number of components')
+        if self.n_components > max(Y.shape[1], X.shape[1]):
+            raise ValueError("Invalid number of components n_components=%d with "
+                             "X of shape %s and Y of shape %s."
+                             % (self.n_components, str(X.shape), str(Y.shape)))
 
         # Scale (in place)
         X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ =\
@@ -742,7 +744,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         # components is smaller than rank(X) - 1. Hence, if we want to extract
         # all the components (C.shape[1]), we have to use another one. Else,
         # let's use arpacks to compute only the interesting components.
-        if self.n_components == C.shape[1]:
+        if self.n_components >= np.min(C.shape):
             U, s, V = linalg.svd(C, full_matrices=False)
         else:
             U, s, V = arpack.svds(C, k=self.n_components)
@@ -756,9 +758,12 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     def transform(self, X, Y=None):
         """Apply the dimension reduction learned on the train data."""
         check_is_fitted(self, 'x_mean_')
+        X = check_array(X, dtype=np.float64)
         Xr = (X - self.x_mean_) / self.x_std_
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:
+            if Y.ndim == 1:
+                Y = Y.reshape(-1, 1)
             Yr = (Y - self.y_mean_) / self.y_std_
             y_scores = np.dot(Yr, self.y_weights_)
             return x_scores, y_scores

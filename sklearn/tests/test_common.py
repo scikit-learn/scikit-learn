@@ -96,25 +96,25 @@ def test_non_meta_estimators():
             continue
         if name.endswith("HMM") or name.startswith("_"):
             continue
-        if name not in CROSS_DECOMPOSITION:
-            yield check_estimators_dtypes, name, Estimator
-            yield check_fit_score_takes_y, name, Estimator
-            yield check_dtype_object, name, Estimator
+        yield check_estimators_dtypes, name, Estimator
+        yield check_fit_score_takes_y, name, Estimator
+        yield check_dtype_object, name, Estimator
 
-            # Check that all estimator yield informative messages when
-            # trained on empty datasets
-            yield check_estimators_empty_data_messages, name, Estimator
+        # Check that all estimator yield informative messages when
+        # trained on empty datasets
+        yield check_estimators_empty_data_messages, name, Estimator
 
         if name not in CROSS_DECOMPOSITION + ['SpectralEmbedding']:
             # SpectralEmbedding is non-deterministic,
             # see issue #4236
+            # cross-decomposition's "transform" returns X and Y
             yield check_pipeline_consistency, name, Estimator
 
-        if name not in CROSS_DECOMPOSITION + ['Imputer']:
+        if name not in ['Imputer']:
             # Test that all estimators check their input for NaN's and infs
             yield check_estimators_nan_inf, name, Estimator
 
-        if name not in CROSS_DECOMPOSITION + ['GaussianProcess']:
+        if name not in ['GaussianProcess']:
             # FIXME!
             # in particular GaussianProcess!
             yield check_estimators_overwrite_params, name, Estimator
