@@ -31,7 +31,8 @@ from sklearn.datasets import make_regression
 
 from sklearn.grid_search import GridSearchCV
 
-from sklearn.cross_validation import KFold
+from sklearn.cross_validation import KFold, LeaveOneOut
+from sklearn.utils import check_random_state
 
 
 diabetes = datasets.load_diabetes()
@@ -715,3 +716,57 @@ def test_ridge_fit_intercept_sparse():
     assert_warns(UserWarning, sparse.fit, X_csr, y)
     assert_almost_equal(dense.intercept_, sparse.intercept_)
     assert_array_almost_equal(dense.coef_, sparse.coef_)
+
+
+def make_noisy_forward_data(
+    n_samples=100,
+    n_features=200,
+    n_targets=10,
+    train_frac=.8,
+    noise_levels=None,
+    random_state=42):
+    """Creates a simple, dense, noisy forward linear model with multiple
+    output."""
+    rng = check_random_state(random_state)
+    n_train = int(train_frac * n_samples)
+    train = slice(None, n_train)
+    test = slice(n_train, None)
+    X = rng.randn(n_samples, n_features)
+    W = rng.randn(n_features, n_targets)
+    Y_clean = X.dot(W)
+    if noise_levels is None:
+        noise_levels = rng.randn(n_targets) ** 2
+    noise_levels = np.atleast_1d(noise_levels) * np.ones(n_targets)
+    noise = rng.randn(*Y_clean.shape) * noise_levels * Y_clean.std(0)
+    Y = Y_clean + noise
+    return X, Y, W, train, test
+
+
+def test_ridge_gcv_with_sample_weights():
+
+    n_samples, n_features, n_targets = 20, 5, 7
+    X, Y, W, _, _ = make_noisy_forward_data(n_samples, n_features, n_targets)
+    alphas = np.logspace(-3, 3, 9)
+
+    rng = np.random.RandomState(42)
+    sample_weights = rng.randn(n_samples) ** 2
+    cv = LeaveOneOut(n_samples)
+    cv_predictions = np.array([[
+        Ridge(solver='cholesky', alpha=alpha, fit_intercept=False).fit(
+            X[train], Y[train], sample_weight=sample_weights[train]
+            ).predict(X[test])
+        for train, test in cv] for alpha in alphas]).squeeze()
+
+    cv_errors = Y[np.newaxis] - cv_predictions.reshape(
+        len(alphas), n_samples, n_targets)
+
+    ridge_gcv = _RidgeGCV(alphas=alphas, store_cv_values=True,
+                          gcv_mode='eigen', fit_intercept=False)
+    # emulate the sample weight stuff from _RidgeGCV
+    ridge_gcv.fit(X, Y, sample_weight=sample_weights)
+    loo_predictions = ridge_gcv.cv_values_
+
+
+    assert_array_almost_equal(cv_errors ** 2,
+                              loo_predictions.transpose(2, 0, 1))
+
