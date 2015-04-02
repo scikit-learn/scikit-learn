@@ -199,12 +199,9 @@ def test_deprecated_lda_scaling():
 
 def test_lda_deprecation():
     # Test if deprecation warning is raised for lda.LDA
-    msg = ('lda.LDA has been moved to'
-           ' discriminant_analysis.LinearDiscriminantAnalysis'
-           ' in 0.17 and will be removed in 0.19')
     with warnings.catch_warnings(record=True) as w:
         clf = lda.LDA()
-        assert_equal(str(w.pop().message), msg)
+        assert_equal(w[0].category, DeprecationWarning)
 
 
 def test_qda():
@@ -304,9 +301,6 @@ def test_qda_regularization():
 
 def test_qda_deprecation():
     # Test if deprecation warning is raised for qda.QDA
-    msg = ('qda.QDA has been moved to'
-           ' discriminant_analysis.QuadraticDiscriminantAnalysis'
-           ' in 0.17 and will be removed in 0.19.')
     with warnings.catch_warnings(record=True) as w:
         clf = qda.QDA()
-        assert_equal(str(w.pop().message), msg)
+        assert_equal(w[0].category, DeprecationWarning)
