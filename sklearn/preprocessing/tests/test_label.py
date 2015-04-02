@@ -410,6 +410,13 @@ def test_label_binarize_with_class_order():
     expected = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])
     assert_array_equal(out, expected)
 
+    out = label_binarize([0, 1, 2, 3], classes=[3, 2, 0, 1])
+    expected = np.array([[0, 0, 1, 0],
+                         [0, 0, 0, 1],
+                         [0, 1, 0, 0],
+                         [1, 0, 0, 0]])
+    assert_array_equal(out, expected)
+
 
 def check_binarized_results(y, classes, pos_label, neg_label, expected):
     for sparse_output in [True, False]:
