@@ -6,17 +6,17 @@ print __doc__
 # License: BSD 3 clause
 
 import numpy as np
-import statsmodels.api as sm   # XXX: Upload data on mldata
 
 from matplotlib import pyplot as plt
 
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, Kernel, WhiteKernel, RationalQuadratic, ExpSineSquared
+from sklearn.datasets import fetch_mldata
 
-data = sm.datasets.get_rdataset("co2").data
-X = np.array(data.time)[:, np.newaxis]
-y = np.array(data.co2)
+data = fetch_mldata('mauna-loa-atmospheric-co2').data
+X = data[:, [1]]
+y = data[:, 0]
 y_mean = y.mean()
 
 # Kernel with parameters given in GPML book
@@ -26,7 +26,8 @@ k3 = 0.66**2 * RationalQuadratic(l=1.2, alpha=0.78)  # medium term irregularit.
 k4 = 0.18**2 * RBF(l=0.134) + WhiteKernel(c=0.19**2) # noise terms
 kernel_gpml = k1 + k2 + k3 + k4
 
-gp = GaussianProcessRegressor(kernel=kernel_gpml, y_err=0, optimizer=None)
+gp = GaussianProcessRegressor(kernel=kernel_gpml, sigma_squared_n=0,
+							  optimizer=None)
 gp.fit(X, y - y_mean)
 
 print "GPML kernel: %s" % gp.kernel_
@@ -41,7 +42,7 @@ k4 = 0.1**2 * RBF(l=0.1) + WhiteKernel(c=0.1**2,
 									   c_bounds=(1e-3, np.inf))  # noise terms
 kernel = k1 + k2 + k3 + k4
 
-gp = GaussianProcessRegressor(kernel=kernel, y_err=0)
+gp = GaussianProcessRegressor(kernel=kernel, sigma_squared_n=0)
 gp.fit(X, y - y_mean)
 
 print "\nLearned kernel: %s" % gp.kernel_
