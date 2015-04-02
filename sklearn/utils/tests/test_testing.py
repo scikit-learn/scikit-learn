@@ -12,17 +12,16 @@ from sklearn.utils.testing import (
     assert_warns,
     assert_no_warnings,
     assert_equal,
-    assert_not_equal,
     set_random_state,
     assert_raise_message,
     assert_same_model,
     assert_not_same_model,
-    assert_array_equal,
     assert_array_not_equal)
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.lda import LDA
 from sklearn.datasets import make_blobs
 from sklearn.svm import LinearSVC
+from sklearn.cluster import KMeans
 
 try:
     from nose.tools import assert_less
@@ -90,59 +89,7 @@ def test_assert_raise_message():
                   _raise_ValueError, "test")
 
 
-class MockClassifier():
-    def __init__(self, same_predict=True, same_transform=True,
-                 same_decision_function=True, same_predict_proba=True,
-                 same_attributes=True, n_outputs=1):
-        self._same_predict = same_predict
-        self._same_transform = same_transform
-        self._same_decision_function = same_decision_function
-        self._same_predict_proba = same_predict_proba
-        self._n_outputs = n_outputs
-        self._same_attributes = same_attributes
-
-    def fit(self, X=None, y=None):
-        X, y = np.array(X), np.array(y)
-        self._n_features = X.shape[1] if len(X.shape) == 2 else 1
-        self._n_classes = np.unique(y).size
-        if self._same_attributes:
-            random_base_module = np.random.RandomState(0)  # Seeded RNG
-        else:
-            random_base_module = np.random  # Unseeded RNG
-        # A float attribute
-        self.attribute1_ = random_base_module.random_sample()
-        # A list attribute
-        self.attribute2_ = random_base_module.random_sample((10, 10))
-        return self
-
-    def _output(self, X, same=False, integer=True, shape=None):
-        X = np.array(X)
-        n_samples = X.shape[0] if len(X.shape) == 2 else X.size
-        if shape is None:
-            shape = (n_samples, self._n_outputs)
-        if same:
-            random_base_module = np.random.RandomState(0)
-        else:
-            random_base_module = np.random  # Truly random
-        if integer:
-            return random_base_module.randint(0, self._n_classes, size=shape)
-        else:
-            return random_base_module.random_sample(shape)
-
-    def predict(self, X):
-        return self._output(X, self._same_predict, integer=True)
-
-    def transform(self, X):
-        return self._output(X, self._same_transform, integer=False)
-
-    def predict_proba(self, X):
-        return self._output(X, self._same_predict_proba, integer=False)
-
-    def decision_function(self, X):
-        return self._output(X, self._same_decision_function, integer=False)
-
-
-def test_assert_xsame_model_():
+def test_assert_same_not_same_model():
     X1, y1 = make_blobs(n_samples=200, n_features=5, center_box=(-200, -150),
                         centers=2, random_state=0)
     X2, y2 = make_blobs(n_samples=100, n_features=5, center_box=(-1, 1),
@@ -150,92 +97,19 @@ def test_assert_xsame_model_():
     X3, y3 = make_blobs(n_samples=50, n_features=5, center_box=(-100, -50),
                         centers=4, random_state=2)
 
-    # ----> Test using a regular estimator <----
-    assert_same_model(X3, LinearSVC(random_state=0).fit(X1, y1),
-                      LinearSVC(random_state=0).fit(X1, y1))
+    for Estimator in (LinearSVC, KMeans):
+        assert_same_model(X3, Estimator(random_state=0).fit(X1, y1),
+                          Estimator(random_state=0).fit(X1, y1))
 
-    assert_raises(AssertionError, assert_not_same_model, X3,
-                  LinearSVC(random_state=0).fit(X1, y1),
-                  LinearSVC(random_state=0).fit(X1, y1))
+        assert_raises(AssertionError, assert_not_same_model, X3,
+                      Estimator(random_state=0).fit(X1, y1),
+                      Estimator(random_state=0).fit(X1, y1))
 
-    assert_raises(AssertionError, assert_same_model, X3,
-                  LinearSVC().fit(X1, y1), LinearSVC().fit(X2, y2))
+        assert_raises(AssertionError, assert_same_model, X3,
+                      Estimator().fit(X1, y1), Estimator().fit(X2, y2))
 
-    assert_not_same_model(X3, LinearSVC().fit(X1, y1), LinearSVC().fit(X2, y2))
-
-    # ---->  Test using the TestClassifier  <----
-    for o in (1, 2, 3):
-        t1 = MockClassifier(n_outputs=o).fit(X1, y1)
-        t2 = MockClassifier(n_outputs=o).fit(X1, y1)
-
-        # predict alone different
-        t1._same_predict = False
-        assert_array_not_equal(t1.predict(X3), t2.predict(X3))
-        assert_raises(AssertionError, assert_same_model, X3, t1, t2)
-        assert_not_same_model(X3, t1, t2)
-
-        # decision_function alone different
-        t1._same_predict = True
-        t1._same_decision_function = False
-        assert_array_not_equal(t1.decision_function(X3),
-                               t2.decision_function(X3))
-        assert_raises(AssertionError, assert_same_model, X3, t1, t2)
-        assert_not_same_model(X3, t1, t2)
-
-        # predict_proba alone different
-        t1._same_decision_function = True
-        t1._same_predict_proba = False
-        assert_array_not_equal(t1.predict_proba(X3), t2.predict_proba(X3))
-        assert_raises(AssertionError, assert_same_model, X3, t1, t2)
-        assert_not_same_model(X3, t1, t2)
-
-        # transform alone different
-        t1._same_predict_proba = True
-        t1._same_transform = False
-        assert_array_not_equal(t1.transform(X3), t2.transform(X3))
-        assert_raises(AssertionError, assert_same_model, X3, t1, t2)
-        assert_not_same_model(X3, t1, t2)
-
-        # Attributes alone differ
-        t1._same_transform = True
-        t1._same_attributes = False
-        t1.fit(X1, y1)  # Attributes are set inside fit only
-        assert_not_equal(t1.attribute1_, t2.attribute1_)
-        assert_array_not_equal(t1.attribute2_, t2.attribute2_)
-        assert_raises(AssertionError, assert_same_model, X3, t1, t2)
-        assert_not_same_model(X3, t1, t2)
-
-        # All set to True
-        t1._same_attributes = True
-        t1.fit(X1, y1)
-        assert_equal(t1.attribute1_, t2.attribute1_)
-        assert_array_equal(t1.attribute2_, t2.attribute2_)
-        assert_array_equal(t1.predict(X3), t2.predict(X3))
-        assert_array_equal(t1.transform(X3), t2.transform(X3))
-        assert_array_equal(t1.predict_proba(X3), t2.predict_proba(X3))
-        assert_array_equal(t1.decision_function(X3),
-                           t2.decision_function(X3))
-
-        # Any two set to differ
-        t1._same_predict_proba = False
-        t1._same_predict = False
-        assert_raises(AssertionError, assert_same_model, X3, t1, t2)
-        assert_not_same_model(X3, t1, t2)
-
-        # Any one set to False along with differing attributes
-        t1._same_predict_proba = True
-        t1._same_transform = False
-        t1._same_attributes = False
-        t1.fit(X1, y1)  # Attributes are set inside fit only
-        assert_raises(AssertionError, assert_same_model, X3, t1, t1)
-        assert_not_same_model(X3, t1, t2)
-
-        # All set to False
-        t1._same_decision_function = False
-        t1._same_predict_proba = False
-        t1._same_predict = False
-        assert_raises(AssertionError, assert_same_model, X3, t1, t2)
-        assert_not_same_model(X3, t1, t2)
+        assert_not_same_model(X3, Estimator().fit(X1, y1),
+                              Estimator().fit(X2, y2))
 
 
 def test_array_not_equal():
