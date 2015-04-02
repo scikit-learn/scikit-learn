@@ -12,7 +12,7 @@ import warnings
 import sys
 import pkgutil
 
-from sklearn.externals.six import PY3
+from sklearn.externals.six import PY3, iteritems
 from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
@@ -64,6 +64,8 @@ from sklearn.utils.estimator_checks import (
     check_regressors_no_decision_function,
     check_pipeline_consistency,
     CROSS_DECOMPOSITION)
+from sklearn.decomposition import PCA
+from sklearn.dummy import DummyClassifier
 
 
 def test_all_estimator_no_base_class():
@@ -379,3 +381,37 @@ def test_transformer_n_iter():
 
         if hasattr(estimator, "max_iter") and name not in external_solver:
             yield check_transformer_n_iter, name, estimator
+
+
+# addresses #4467, #4465 and #4461
+# essentially tests consistency between shallow and deep
+# get_params() calls of
+# - FeatureUnion
+# - Pipeline
+def test_custom_get_params():
+    # find classes that overwrite the get_params() function
+    estimators = all_estimators(
+        include_meta_estimators=True,
+        include_other=True)
+    custom_funcs = []
+    for name, obj in estimators:
+        if (hasattr(obj, "get_params") and
+            # test if overwritten
+            obj.get_params != sklearn.base.BaseEstimator.get_params):
+            custom_funcs.append(obj)
+
+    # test consistency of deep/shallow get_params()
+    for cust_est in custom_funcs:
+        clf = DummyClassifier()
+        featsel = PCA(n_components=2)
+        meta = cust_est([('pca', featsel), ('dummclf', clf)])
+        shallows = meta.get_params(deep=False)
+        deeps = meta.get_params(deep=True)
+        if 'steps' in shallows.keys():
+            items_to_test = shallows['steps']
+        elif 'transformer_list' in shallows.keys():
+            items_to_test = shallows['transformer_list']
+        for name, trans in items_to_test:
+            for key, value in iteritems(trans.get_params(deep=True)):
+                deep_name = '%s__%s' % (name, key)
+                assert(deep_name in deeps.keys())
