@@ -453,7 +453,7 @@ See :func:`sklearn.utils.check_random_state` in :ref:`developers-utils`.
 
 Here's a simple example of code using some of the above guidelines::
 
-    from sklearn.utils import array2d, check_random_state
+    from sklearn.utils import check_array, check_random_state
 
     def choose_random_sample(X, random_state=0):
         """
@@ -472,7 +472,7 @@ Here's a simple example of code using some of the above guidelines::
         x : numpy array, shape = (n_features,)
             A random point selected from X
         """
-        X = array2d(X)
+        X = check_array(X)
         random_state = check_random_state(random_state)
         i = random_state.randint(X.shape[0])
         return X[i]
