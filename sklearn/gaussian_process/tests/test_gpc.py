@@ -65,3 +65,25 @@ def test_lml_gradient():
                           1e-10)
 
         assert_almost_equal(lml_gradient, lml_gradient_approx, 3)
+
+def test_random_starts():
+    """
+    Test that an increasing number of random-starts of GP fitting only
+    increases the log marginal likelihood of the chosen theta.
+    """
+    n_samples, n_features = 25, 3
+    np.random.seed(0)
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, n_features) * 2 - 1
+    y = (np.sin(X).sum(axis=1) + np.sin(3 * X).sum(axis=1)) > 0
+
+    kernel = C(1.0, (1e-2, 1e2)) \
+        * RBF(l=[1e-3] * n_features, l_bounds=[(1e-4, 1e+2)] * n_features)
+    last_lml = -np.inf
+    for n_restarts_optimizer in range(1, 10):
+        gp = GaussianProcessClassifier(
+            kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
+            random_state=0,).fit(X, y)
+        lml = gp.log_marginal_likelihood(gp.theta_)
+        assert_greater(lml, last_lml - np.finfo(np.float32).eps)
+        last_lml = lml
