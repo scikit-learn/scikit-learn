@@ -39,10 +39,16 @@ class Pipeline(BaseEstimator):
 
     Parameters
     ----------
-    steps: list
+    steps : list
         List of (name, transform) tuples (implementing fit/transform) that are
         chained, in the order in which they are chained, with the last object
         an estimator.
+
+    Attributes
+    ----------
+    named_steps : dict
+        Read-only attribute to access any step parameter by user given name.
+        Keys are step names and values are steps parameters.
 
     Examples
     --------
@@ -67,6 +73,8 @@ class Pipeline(BaseEstimator):
     >>> prediction = anova_svm.predict(X)
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
     0.77...
+    >>> # getting the selected features chosen by anova_filter
+    >>> support = anova_svm.named_steps.get_support()
     """
 
     # BaseEstimator interface
