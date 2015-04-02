@@ -745,7 +745,8 @@ def make_noisy_forward_data(
 def test_ridge_gcv_with_sample_weights():
 
     n_samples, n_features, n_targets = 20, 5, 7
-    X, Y, W, _, _ = make_noisy_forward_data(n_samples, n_features, n_targets)
+    X, Y = datasets.make_regression(n_samples, n_features,
+                                    n_targets=n_targets)
     alphas = np.logspace(-3, 3, 9)
 
     rng = np.random.RandomState(42)
