@@ -6,6 +6,7 @@ Multi-dimensional Scaling (MDS)
 # Licence: BSD
 
 import numpy as np
+from scipy.sparse import linalg
 
 import warnings
 
@@ -106,7 +107,9 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
                                    (disparities ** 2).sum())
 
         # Compute stress
-        stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
+        stress = (euclidean_distances(
+            dis.ravel(), disparities.ravel()) ** 2).sum()
+        stress /= 2
 
         # Update X using the Guttman transform
         dis[dis == 0] = 1e-5
@@ -285,7 +288,7 @@ def svd_mds(similarities, n_components=2):
         overridden if initial array is provided.
     """
 
-    similarities, = check_array(similarities, sparse_format='dense')
+    similarities = check_array(similarities)
     n_samples = similarities.shape[0]
 
     if similarities.shape[0] != similarities.shape[1]:
@@ -296,16 +299,15 @@ def svd_mds(similarities, n_components=2):
 
     H = np.eye(*similarities.shape) - 1./n_samples*np.ones(similarities.shape)
     K = -0.5*np.dot(H, np.dot(similarities**2, H))
-    w, V = np.linalg.eig(K)
+    w, V = linalg.eigs(K, k=n_components)
     # Sort eigenvalues and eigenvectors in decreasing order
-    ix = np.argsort(w)[::-1]
-    w = w[ix]
-    V = V[:, ix]
     if not np.all(w >= -1e-12):
         raise ValueError("similarities must be euclidean")
     X = np.sqrt(w[:n_components])*V[:, :n_components]
     dists = euclidean_distances(X)
-    stress = ((similarities.ravel() - dists.ravel()) ** 2).sum() / 2
+    stress = (euclidean_distances(
+        similarities.ravel(), dists.ravel()) ** 2).sum()
+    stress /= 2
     return X, stress
 
 

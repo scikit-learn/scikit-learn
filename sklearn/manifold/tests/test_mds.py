@@ -65,10 +65,8 @@ def test_MDS():
 
 def test_svd_mds():
     # Generate 4 randomly chosen points
-    Y = np.array([[1,  0,  1],
-                  [-1, 3,  2],
-                  [1, -2,  3],
-                  [2, -1, -3]])
+    random_state = np.random.RandomState(seed=42)
+    Y = random_state.randint(-10, 10, (10, 2))
     sim = euclidean_distances(Y)
     # calculate error or smacof-based solution
     X_smacof, smacof_stress = mds.smacof(sim, n_components=2, random_state=42)
