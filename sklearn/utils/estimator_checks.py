@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import META_ESTIMATORS
 from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
@@ -841,6 +842,31 @@ def check_regressors_pickle(name, Regressor):
     unpickled_regressor = pickle.loads(pickled_regressor)
     pickled_y_pred = unpickled_regressor.predict(X)
     assert_array_almost_equal(pickled_y_pred, y_pred)
+
+
+@ignore_warnings
+def check_regressors_no_decision_function(name, Regressor):
+    # checks whether regressors have decision_function or predict_proba
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(10, 4))
+    y = multioutput_estimator_convert_y_2d(name, X[:, 0])
+    regressor = Regressor()
+
+    set_fast_parameters(regressor)
+    if hasattr(regressor, "n_components"):
+        # FIXME CCA, PLS is not robust to rank 1 effects
+        regressor.n_components = 1
+
+    regressor.fit(X, y)
+    funcs = ["decision_function", "predict_proba", "predict_log_proba"]
+    for func_name in funcs:
+        func = getattr(regressor, func_name, None)
+        if func is None:
+            # doesn't have function
+            continue
+        # has function. Should raise deprecation warning
+        msg = func_name
+        assert_warns_message(DeprecationWarning, msg, func, X)
 
 
 def check_class_weight_classifiers(name, Classifier):

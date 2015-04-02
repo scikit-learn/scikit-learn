@@ -883,6 +883,20 @@ take arguments ``X, y``, even if y is not used. Similarly, for ``score`` to be
 usable, the last step of the pipeline needs to have a ``score`` function that
 accepts an optional ``y``.
 
+Estimator types
+---------------
+Some common functionality depends on the kind of estimator passed.
+For example, cross-validation in :class:`grid_search.GridSearchCV` and
+:func:`cross_validation.cross_val_score` defaults to being stratified when used
+on a classifier, but not otherwise. Similarly, scorers for average precision
+that take a continuous prediction need to call ``decision_function`` for classifiers,
+but ``predict`` for regressors. This distinction between classifiers and regressors
+is implemented using the ``_estimator_type`` attribute, which takes a string value.
+It should be ``"classifier"`` for classifiers and ``"regressor"`` for
+regressors and ``"clusterer"`` for clustering methods, to work as expected.
+Inheriting from ``ClassifierMixin``, ``RegressorMixin`` or ``ClusterMixin``
+will set the attribute automatically.
+
 Working notes
 -------------
 

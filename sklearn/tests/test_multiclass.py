@@ -31,7 +31,7 @@ from sklearn.svm import LinearSVC, SVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
                                   Perceptron, LogisticRegression)
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn import svm
@@ -77,6 +77,23 @@ def test_ovr_fit_predict():
     ovr = OneVsRestClassifier(MultinomialNB())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert_greater(np.mean(iris.target == pred), 0.65)
+
+
+def test_ovr_ovo_regressor():
+    # test that ovr and ovo work on regressors which don't have a decision_function
+    ovr = OneVsRestClassifier(DecisionTreeRegressor())
+    pred = ovr.fit(iris.data, iris.target).predict(iris.data)
+    assert_equal(len(ovr.estimators_), n_classes)
+    assert_array_equal(np.unique(pred), [0, 1, 2])
+    # we are doing something sensible
+    assert_greater(np.mean(pred == iris.target), .9)
+
+    ovr = OneVsOneClassifier(DecisionTreeRegressor())
+    pred = ovr.fit(iris.data, iris.target).predict(iris.data)
+    assert_equal(len(ovr.estimators_), n_classes * (n_classes - 1) / 2)
+    assert_array_equal(np.unique(pred), [0, 1, 2])
+    # we are doing something sensible
+    assert_greater(np.mean(pred == iris.target), .9)
 
 
 def test_ovr_fit_predict_sparse():

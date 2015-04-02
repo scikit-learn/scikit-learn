@@ -61,6 +61,7 @@ from sklearn.utils.estimator_checks import (
     check_transformer_n_iter,
     check_fit_score_takes_y,
     check_non_transformer_estimators_n_iter,
+    check_regressors_no_decision_function,
     check_pipeline_consistency,
     CROSS_DECOMPOSITION)
 
@@ -190,6 +191,7 @@ def test_regressors():
         yield check_regressors_train, name, Regressor
         yield check_regressor_data_not_an_array, name, Regressor
         yield check_estimators_partial_fit_n_features, name, Regressor
+        yield check_regressors_no_decision_function, name, Regressor
         # Test that estimators can be pickled, and once pickled
         # give the same answer as before.
         yield check_regressors_pickle, name, Regressor

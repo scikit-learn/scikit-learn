@@ -10,7 +10,7 @@ from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils import check_array, check_random_state, column_or_1d
-from ..utils import ConvergenceWarning, compute_class_weight
+from ..utils import ConvergenceWarning, compute_class_weight, deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..externals import six
@@ -348,18 +348,34 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             X = np.asarray(kernel, dtype=np.float64, order='C')
         return X
 
+    @deprecated(" and will be removed in 0.19")
     def decision_function(self, X):
         """Distance of the samples X to the separating hyperplane.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             For kernel="precomputed", the expected shape of X is
             [n_samples_test, n_samples_train].
 
         Returns
         -------
-        X : array-like, shape = [n_samples, n_class * (n_class-1) / 2]
+        X : array-like, shape (n_samples, n_class * (n_class-1) / 2)
+            Returns the decision function of the sample for each class
+            in the model.
+        """
+        return self._decision_function(X)
+
+    def _decision_function(self, X):
+        """Distance of the samples X to the separating hyperplane.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+
+        Returns
+        -------
+        X : array-like, shape (n_samples, n_class * (n_class-1) / 2)
             Returns the decision function of the sample for each class
             in the model.
         """
@@ -481,6 +497,21 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 
         return np.asarray(y, dtype=np.float64, order='C')
 
+    def decision_function(self, X):
+        """Distance of the samples X to the separating hyperplane.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+
+        Returns
+        -------
+        X : array-like, shape (n_samples, n_class * (n_class-1) / 2)
+            Returns the decision function of the sample for each class
+            in the model.
+        """
+        return self._decision_function(X)
+
     def predict(self, X):
         """Perform classification on samples in X.
 
@@ -488,13 +519,13 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             For kernel="precomputed", the expected shape of X is
             [n_samples_test, n_samples_train]
 
         Returns
         -------
-        y_pred : array, shape = [n_samples]
+        y_pred : array, shape (n_samples,)
             Class labels for samples in X.
         """
         y = super(BaseSVC, self).predict(X)
@@ -521,13 +552,13 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             For kernel="precomputed", the expected shape of X is
             [n_samples_test, n_samples_train]
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like, shape (n_samples, n_classes)
             Returns the probability of the sample for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
@@ -557,13 +588,13 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             For kernel="precomputed", the expected shape of X is
             [n_samples_test, n_samples_train]
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like, shape (n_samples, n_classes)
             Returns the log-probabilities of the sample for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
@@ -708,11 +739,11 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training vector, where n_samples in the number of samples and
         n_features is the number of features.
 
-    y : array-like, shape = [n_samples]
+    y : array-like, shape (n_samples,)
         Target vector relative to X
 
     C : float

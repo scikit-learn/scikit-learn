@@ -94,6 +94,10 @@ class Pipeline(BaseEstimator):
                             "'%s' (type %s) doesn't)"
                             % (estimator, type(estimator)))
 
+    @property
+    def _estimator_type(self):
+        return self.steps[-1][1]._estimator_type
+
     def get_params(self, deep=True):
         if not deep:
             return super(Pipeline, self).get_params(deep=False)

@@ -35,7 +35,7 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state, check_array, check_X_y, column_or_1d
-from ..utils import check_consistent_length
+from ..utils import check_consistent_length, deprecated
 from ..utils.extmath import logsumexp
 from ..utils.fixes import expit, bincount
 from ..utils.stats import _weighted_percentile
@@ -438,7 +438,7 @@ class ClassificationLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
     def _score_to_proba(self, score):
         """Template method to convert scores to probabilities.
 
-        If the loss does not support probabilites raises AttributeError.
+         the does not support probabilites raises AttributeError.
         """
         raise TypeError('%s does not support predict_proba' % type(self).__name__)
 
@@ -1044,9 +1044,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                 self.train_score_[i] = loss_(y[sample_mask],
                                              y_pred[sample_mask],
                                              sample_weight[sample_mask])
-                self.oob_improvement_[i] = (old_oob_score -
-                    loss_(y[~sample_mask], y_pred[~sample_mask],
-                          sample_weight[~sample_mask]))
+                self.oob_improvement_[i] = (
+                    old_oob_score - loss_(y[~sample_mask],
+                                          y_pred[~sample_mask],
+                                          sample_weight[~sample_mask]))
             else:
                 # no need to fancy index w/ no subsampling
                 self.train_score_[i] = loss_(y, y_pred, sample_weight)
@@ -1082,6 +1083,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         predict_stages(self.estimators_, X, self.learning_rate, score)
         return score
 
+    @deprecated(" and will be removed in 0.19")
     def decision_function(self, X):
         """Compute the decision function of ``X``.
 
@@ -1104,7 +1106,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             return score.ravel()
         return score
 
-    def staged_decision_function(self, X):
+    def _staged_decision_function(self, X):
         """Compute decision function of ``X`` for each iteration.
 
         This method allows monitoring (i.e. determine error on testing set)
@@ -1128,6 +1130,30 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate, score)
             yield score.copy()
+
+    @deprecated(" and will be removed in 0.19")
+    def staged_decision_function(self, X):
+        """Compute decision function of ``X`` for each iteration.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        score : generator of array, shape = [n_samples, k]
+            The decision function of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+            Regression and binary classification are special cases with
+            ``k == 1``, otherwise ``k==n_classes``.
+        """
+        for dec in self._staged_decision_function(X):
+            # no yield from in Python2.X
+            yield dec
 
     @property
     def feature_importances_(self):
@@ -1315,6 +1341,51 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         self.n_classes_ = len(self.classes_)
         return y
 
+    def decision_function(self, X):
+        """Compute the decision function of ``X``.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        score : array, shape = [n_samples, n_classes] or [n_samples]
+            The decision function of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+            Regression and binary classification produce an array of shape
+            [n_samples].
+        """
+        X = check_array(X, dtype=DTYPE, order="C")
+        score = self._decision_function(X)
+        if score.shape[1] == 1:
+            return score.ravel()
+        return score
+
+    def staged_decision_function(self, X):
+        """Compute decision function of ``X`` for each iteration.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        score : generator of array, shape = [n_samples, k]
+            The decision function of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+            Regression and binary classification are special cases with
+            ``k == 1``, otherwise ``k==n_classes``.
+        """
+        for dec in self._staged_decision_function(X):
+            # no yield from in Python2.X
+            yield dec
+
     def predict(self, X):
         """Predict class for X.
 
@@ -1348,7 +1419,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         y : generator of array of shape = [n_samples]
             The predicted value of the input samples.
         """
-        for score in self.staged_decision_function(X):
+        for score in self._staged_decision_function(X):
             decisions = self.loss_._score_to_decision(score)
             yield self.classes_.take(decisions, axis=0)
 
@@ -1419,7 +1490,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             The predicted value of the input samples.
         """
         try:
-            for score in self.staged_decision_function(X):
+            for score in self._staged_decision_function(X):
                 yield self.loss_._score_to_proba(score)
         except NotFittedError:
             raise
@@ -1594,7 +1665,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         y : array of shape = [n_samples]
             The predicted values.
         """
-        return self.decision_function(X).ravel()
+        X = check_array(X, dtype=DTYPE, order="C")
+        return self._decision_function(X).ravel()
 
     def staged_predict(self, X):
         """Predict regression target at each stage for X.
@@ -1612,5 +1684,5 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         y : generator of array of shape = [n_samples]
             The predicted value of the input samples.
         """
-        for y in self.staged_decision_function(X):
+        for y in self._staged_decision_function(X):
             yield y.ravel()

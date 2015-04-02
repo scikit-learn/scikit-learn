@@ -39,7 +39,7 @@ import warnings
 import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
-from .base import MetaEstimatorMixin
+from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
@@ -77,6 +77,8 @@ def _fit_binary(estimator, X, y, classes=None):
 
 def _predict_binary(estimator, X):
     """Make predictions using a single binary estimator."""
+    if is_regressor(estimator):
+        return estimator.predict(X)
     try:
         score = np.ravel(estimator.decision_function(X))
     except (AttributeError, NotImplementedError):
@@ -276,11 +278,11 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         # In cases where individual estimators are very fast to train setting
         # n_jobs > 1 in can results in slower performance due to the overhead
         # of spawning threads.  See joblib issue #112.
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_fit_binary)
-             (self.estimator, X, column,
-              classes=["not %s" % self.label_binarizer_.classes_[i],
-                       self.label_binarizer_.classes_[i]])
-              for i, column in enumerate(columns))
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_fit_binary)(
+            self.estimator, X, column, classes=[
+                "not %s" % self.label_binarizer_.classes_[i],
+                self.label_binarizer_.classes_[i]])
+            for i, column in enumerate(columns))
 
         return self
 
