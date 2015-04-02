@@ -4,6 +4,8 @@
 #
 # License: BSD 3 clause
 
+from operator import itemgetter
+
 import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve, solve_triangular
 from scipy.optimize import fmin_l_bfgs_b
@@ -50,6 +52,19 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
             'fmin_l_bfgs_b'
 
+    n_restarts_optimizer: int, optional (default: 1)
+        The number of restarts of the optimizer for finding the kernel's
+        parameters which maximize the log-marginal likelihood. The first run
+        of the optimizer is performed from the kernel's initial parameters,
+        the remaining ones (if any) from thetas sampled log-uniform randomly
+        from the space of allowed theta-values. If greater than 1, all bounds
+        must be finite.
+
+    random_state : integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+
     Attributes
     ----------
     X_fit_ : array-like, shape = (n_samples, n_features)
@@ -73,10 +88,13 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     """
 
     def __init__(self, kernel=None, sigma_squared_n=1e-10,
-                 optimizer="fmin_l_bfgs_b"):
+                 optimizer="fmin_l_bfgs_b", n_restarts_optimizer=1,
+                 random_state=None):
         self.kernel = kernel
         self.sigma_squared_n = sigma_squared_n
         self.optimizer = optimizer
+        self.n_restarts_optimizer = n_restarts_optimizer
+        self.rng = check_random_state(random_state)
 
     def fit(self, X, y):
         """Fit Gaussian process regression model
@@ -109,15 +127,36 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.X_fit_ = X
         self.y_fit_ = y
 
-        if self.optimizer == "fmin_l_bfgs_b":
+        if self.optimizer in ["fmin_l_bfgs_b"]:
             # Choose hyperparameters based on maximizing the log-marginal
-            # likelihood using fmin_l_bfgs_b
+            # likelihood (potentially starting from several initial values)
             def obj_func(theta):
                 lml, grad = self.log_marginal_likelihood(theta,
                                                          eval_gradient=True)
                 return -lml, -grad
-            self.theta_, _, _ = fmin_l_bfgs_b(obj_func, self.kernel_.theta,
-                                              bounds=self.kernel_.bounds)
+
+            # First optimize starting from theta specified in kernel
+            optima = [(self._constrained_optimization(obj_func,
+                                                      self.kernel_.theta,
+                                                      self.kernel_.bounds))]
+
+            # Additional runs are performed from log-uniform chosen initial
+            # theta
+            if self.n_restarts_optimizer > 1:
+                if not np.isfinite(self.kernel_.bounds).all():
+                    raise ValueError(
+                        "Multiple optimizer restarts (n_restarts_optimizer>1) "
+                        "requires that all bounds are finite.")
+                log_bounds = np.log(self.kernel_.bounds)
+                for iteration in range(1, self.n_restarts_optimizer):
+                    theta_initial = np.exp(self.rng.uniform(log_bounds[:, 0],
+                                                            log_bounds[:, 1]))
+                    optima.append(
+                        self._constrained_optimization(obj_func, theta_initial,
+                                                       self.kernel_.bounds))
+            # Select result from run with minimal (negative) log-marginal
+            # likelihood
+            self.theta_ = optima[np.argmin(map(itemgetter(1), optima))][0]
             self.kernel_.theta = self.theta_
         elif self.optimizer is None:
             # Use initially provided hyperparameters
@@ -288,3 +327,9 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             return log_likelihood, log_likelihood_gradient
         else:
             return log_likelihood
+
+    def _constrained_optimization(self, obj_func, initial_theta, bounds):
+        if self.optimizer in ["fmin_l_bfgs_b"]:
+            theta_opt, func_min, _ = \
+                fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds)
+        return theta_opt, func_min
