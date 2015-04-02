@@ -1270,36 +1270,37 @@ def test_min_weight_leaf_split_level():
         yield check_min_weight_leaf_split_level, name
 
 
-def check_public_apply(tree):
-    # tree_.apply does not check that data is of type float32, so we manually
-    # do it here.
-    X_small_32 = X_small.astype(np.float32, copy = True)
-    if tree in CLF_TREES.keys():
-        tree_class = CLF_TREES[tree]
-        clf = tree_class()
-        clf.fit(X_small_32, y_small)
-    else: #The tree is a regression a tree
-        tree_class = REG_TREES[tree]
-        clf = tree_class()
-        clf.fit(X_small_32, y_small_reg)
+def check_public_apply(name):
+    X_small32 = X_small.astype(tree._tree.DTYPE)
 
-    assert_array_equal(clf.apply(X_small_32), clf.tree_.apply(X_small_32))
+    est = ALL_TREES[name]()
+    est.fit(X_small, y_small)
+    assert_array_equal(est.apply(X_small),
+                       est.tree_.apply(X_small32))
 
-    for sparse_matrix in (csr_matrix, csc_matrix, coo_matrix):
-        X_small_sparse = sparse_matrix(X_small_32)
-        assert_array_equal(clf.apply(X_small_sparse), clf.tree_.apply(X_small_32))
+
+def check_public_apply_sparse(name):
+    X_small32 = csr_matrix(X_small.astype(tree._tree.DTYPE))
+
+    est = ALL_TREES[name]()
+    est.fit(X_small, y_small)
+    assert_array_equal(est.apply(X_small),
+                       est.tree_.apply(X_small32))
+
 
 def test_public_apply():
-    """
-    Test that Tree.apply matches Tree.tree_.apply for sparse and dense inputs
-    """
-    for tree in ALL_TREES.iterkeys():
-        yield check_public_apply, tree
+    for name in ALL_TREES:
+        yield (check_public_apply, name)
 
-def test_apply_valid():
-    """
-    Check that apply() raises error if preconditions not met.
-    """
-    clf = DecisionTreeClassifier()
-    X_sparse_small = csr_matrix(X_small)
-    assert_raises(ValueError, clf.apply, X_sparse_small)
+    for name in SPARSE_TREES:
+        yield (check_public_apply_sparse, name)
+
+
+def check_apply_error(name):
+    est = ALL_TREES[name]()
+    assert_raises(ValueError, est.apply, X_small)
+
+
+def test_apply_error():
+    for name in ALL_TREES:
+        yield (check_apply_error, name)
