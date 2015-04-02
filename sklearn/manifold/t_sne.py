@@ -17,7 +17,7 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.extmath import _ravel
 from ..decomposition import RandomizedPCA
-from ..metrics.pairwise import pairwise_distances
+from ..metrics.pairwise import safe_pairwise_distances
 from . import _utils
 
 
@@ -269,8 +269,8 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     if precomputed:
         dist_X = X
     else:
-        dist_X = pairwise_distances(X, squared=True)
-    dist_X_embedded = pairwise_distances(X_embedded, squared=True)
+        dist_X = safe_pairwise_distances(X, squared=True)
+    dist_X_embedded = safe_pairwise_distances(X_embedded, squared=True)
     ind_X = np.argsort(dist_X, axis=1)
     ind_X_embedded = np.argsort(dist_X_embedded, axis=1)[:, 1:n_neighbors + 1]
 
@@ -438,9 +438,9 @@ class TSNE(BaseEstimator):
                 print("[t-SNE] Computing pairwise distances...")
 
             if self.metric == "euclidean":
-                distances = pairwise_distances(X, metric=self.metric, squared=True)
+                distances = safe_pairwise_distances(X, metric=self.metric, squared=True)
             else:
-                distances = pairwise_distances(X, metric=self.metric)
+                distances = safe_pairwise_distances(X, metric=self.metric)
 
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # alpha = n_components - 1 comes from "Learning a Parametric Embedding

@@ -1113,6 +1113,32 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
 
 
+def safe_pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
+    """ Compute a 'safe' distance matrix from a vector array X and optional Y, especially when metric is 'correlation'.
+
+    When metric is 'correlation', scipy.distance.pdist returns NaN values when a sample has zero variance.
+    Those values will be replaced by 1.0.
+
+    See also
+    --------
+    pairwise_distances
+    """
+    distances = pairwise_distances(X, Y, metric, n_jobs, **kwds)
+    if metric == 'correlation':
+        invalid_peak_to_peak_value = 0.0
+        correlation_for_invalid_value = 1.0  # maximum value of scipy.spatial.distance.correlation
+        invalid_rows_X = np.where(np.ptp(X, axis=1) == invalid_peak_to_peak_value)
+        distances[invalid_rows_X, :] = correlation_for_invalid_value
+
+        if Y is not None:
+            invalid_rows_Y = np.where(np.ptp(Y, axis=1) == invalid_peak_to_peak_value)
+            distances[:, invalid_rows_Y] = correlation_for_invalid_value
+        else:
+            distances[:, invalid_rows_X] = correlation_for_invalid_value
+
+    return distances
+
+
 # Helper functions - distance
 PAIRWISE_KERNEL_FUNCTIONS = {
     # If updating this dictionary, update the doc in both distance_metrics()
