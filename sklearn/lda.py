@@ -86,7 +86,7 @@ class LDA(LinearDiscriminantAnalysis):
 
     See also
     --------
-    sklearn.qda.QDA: Quadratic discriminant analysis
+    sklearn.qda.QDA: Quadratic Discriminant Analysis
 
     Notes
     -----

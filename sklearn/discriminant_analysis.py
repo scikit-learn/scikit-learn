@@ -196,7 +196,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin, Transform
 
     See also
     --------
-    sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis: Quadratic discriminant analysis
+    sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis: Quadratic Discriminant Analysis
 
     Notes
     -----
@@ -563,7 +563,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
     See also
     --------
-    sklearn.discriminant_analysis.LinearDiscriminantAnalysis: Linear discriminant analysis
+    sklearn.discriminant_analysis.LinearDiscriminantAnalysis: Linear Discriminant Analysis
     """
 
     def __init__(self, priors=None, reg_param=0.):

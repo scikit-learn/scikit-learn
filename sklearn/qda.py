@@ -68,7 +68,7 @@ class QDA(QuadraticDiscriminantAnalysis):
 
     See also
     --------
-    sklearn.lda.LDA: Linear discriminant analysis
+    sklearn.lda.LDA: Linear Discriminant Analysis
     """
 
     def __init__(self, priors=None, reg_param=0.):

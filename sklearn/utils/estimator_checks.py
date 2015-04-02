@@ -29,7 +29,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.base import clone, ClassifierMixin
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
-from sklearn.lda import LDA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
@@ -1045,7 +1045,7 @@ def check_estimators_data_not_an_array(name, Estimator, X, y):
 
 
 def check_parameters_default_constructible(name, Estimator):
-    classifier = LDA()
+    classifier = LinearDiscriminantAnalysis()
     # test default-constructibility
     # get rid of deprecation warnings
     with warnings.catch_warnings(record=True):

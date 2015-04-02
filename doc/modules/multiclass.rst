@@ -60,7 +60,7 @@ grouped by strategy; you don't need the meta-estimators in this class
 if you're using one of these unless you want custom multiclass behavior:
 
   - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
-    :class:`sklearn.lda.LDA`,
+    :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`,
     :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
     :ref:`Nearest Neighbors <neighbors>`,
     setting "multi_class=multinomial" in

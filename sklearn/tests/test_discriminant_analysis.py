@@ -202,7 +202,7 @@ def test_lda_deprecation():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always", DeprecationWarning)
         clf = lda.LDA()
-        assert_equal(w[0].category, DeprecationWarning)
+        assert_true(issubclass(w[0].category, DeprecationWarning))
 
 
 def test_qda():
@@ -305,4 +305,4 @@ def test_qda_deprecation():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always", DeprecationWarning)
         clf = qda.QDA()
-        assert_equal(w[0].category, DeprecationWarning)
+        assert_true(issubclass(w[0].category, DeprecationWarning))

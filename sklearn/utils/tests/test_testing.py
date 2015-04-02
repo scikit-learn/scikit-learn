@@ -16,7 +16,7 @@ from sklearn.utils.testing import (
     assert_raise_message)
 
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.lda import LDA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 try:
     from nose.tools import assert_less
@@ -60,9 +60,9 @@ def test_assert_greater_equal():
 
 
 def test_set_random_state():
-    lda = LDA()
+    lda = LinearDiscriminantAnalysis()
     tree = DecisionTreeClassifier()
-    # LDA doesn't have random state: smoke test
+    # Linear Discriminant Analysis doesn't have random state: smoke test
     set_random_state(lda, 3)
     set_random_state(tree, 3)
     assert_equal(tree.random_state, 3)
