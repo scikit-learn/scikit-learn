@@ -442,6 +442,9 @@ class TSNE(BaseEstimator):
             else:
                 distances = pairwise_distances(X, metric=self.metric)
 
+        # Replacing any nan entries with zero to avoid undefined distances
+        distances = np.nan_to_num(distances)
+
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # alpha = n_components - 1 comes from "Learning a Parametric Embedding
         # by Preserving Local Structure" Laurens van der Maaten, 2009.

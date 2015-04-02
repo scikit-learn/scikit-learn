@@ -271,3 +271,19 @@ def test_reduction_to_one_component():
     X = random_state.randn(5, 2)
     X_embedded = tsne.fit_transform(X)
     assert(np.all(np.isfinite(X_embedded)))
+
+def test_undefined_correlation():
+    # t-SNE throws an exception with undefined correlation (issue #4475)
+    from sklearn.manifold import TSNE
+    import numpy as np
+    np.random.seed(42)
+    
+    data = np.random.rand(10, 3)
+    data[-1, :] = 0
+    
+    try:
+        model = TSNE(metric="correlation")
+        model.fit_transform(data)
+        assert True
+    except ValueError as e:
+        assert False
