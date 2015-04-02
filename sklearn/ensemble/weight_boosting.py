@@ -352,6 +352,25 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     feature_importances_ : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
 
+    Examples
+    --------
+    >>> from sklearn.ensemble import AdaBoostClassifier
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> X = np.array([[0, 0], [0.0, 1.0], [0.0, -1.0], [-1.0, 0.0], [1.0, 0.0]])
+    >>> y = np.array([0, 1, 1, 1, 1])
+    >>> bdt = AdaBoostClassifier(DecisionTreeClassifier(max_depth=1),
+    ...                          algorithm="SAMME",
+    ...                          n_estimators=20)
+    >>> bdt.fit(X, y)
+    AdaBoostClassifier(algorithm='SAMME',
+              base_estimator=DecisionTreeClassifier(class_weight=None, criterion='gini', max_depth=1,
+                max_features=None, max_leaf_nodes=None, min_samples_leaf=1,
+                min_samples_split=2, min_weight_fraction_leaf=0.0,
+                random_state=None, splitter='best'),
+              learning_rate=1.0, n_estimators=20, random_state=None)
+    >>> bdt.predict(X)
+    array([0, 1, 1, 1, 1])
+
     See also
     --------
     AdaBoostRegressor, GradientBoostingClassifier, DecisionTreeClassifier
