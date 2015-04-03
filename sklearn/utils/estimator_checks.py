@@ -330,6 +330,24 @@ def check_fit_score_takes_y(name, Estimator):
 
 
 @ignore_warnings
+def check_X_one_dim(name, Estimator):
+    # check that estimators work with 1-ndim X
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(20, ))
+    y = X.astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+    set_random_state(estimator, 1)
+    estimator.fit(X, y)
+
+    for method in ["predict", "transform", "decision_function",
+                   "predict_proba"]:
+        if hasattr(estimator, method):
+            getattr(estimator, method)(X)
+
+
+@ignore_warnings
 def check_estimators_dtypes(name, Estimator):
     rnd = np.random.RandomState(0)
     X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
@@ -339,8 +357,7 @@ def check_estimators_dtypes(name, Estimator):
     y = X_train_int_64[:, 0]
     y = multioutput_estimator_convert_y_2d(name, y)
     for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
-        with warnings.catch_warnings(record=True):
-            estimator = Estimator()
+        estimator = Estimator()
         set_fast_parameters(estimator)
         set_random_state(estimator, 1)
         estimator.fit(X_train, y)

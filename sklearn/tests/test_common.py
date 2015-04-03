@@ -63,6 +63,7 @@ from sklearn.utils.estimator_checks import (
     check_non_transformer_estimators_n_iter,
     check_regressors_no_decision_function,
     check_pipeline_consistency,
+    check_X_one_dim,
     CROSS_DECOMPOSITION)
 
 
@@ -99,6 +100,7 @@ def test_non_meta_estimators():
         yield check_estimators_dtypes, name, Estimator
         yield check_fit_score_takes_y, name, Estimator
         yield check_dtype_object, name, Estimator
+        yield check_X_one_dim, name, Estimator
 
         # Check that all estimator yield informative messages when
         # trained on empty datasets
