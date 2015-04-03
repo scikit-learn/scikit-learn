@@ -383,7 +383,6 @@ def test_transformer_n_iter():
             yield check_transformer_n_iter, name, estimator
 
 
-# addresses #4467, #4465 and #4461
 # essentially tests consistency between shallow and deep
 # get_params() calls of
 # - FeatureUnion
@@ -393,25 +392,25 @@ def test_custom_get_params():
     estimators = all_estimators(
         include_meta_estimators=True,
         include_other=True)
-    custom_funcs = []
-    for name, obj in estimators:
-        if (hasattr(obj, "get_params") and
-            # test if overwritten
-            obj.get_params != sklearn.base.BaseEstimator.get_params):
-            custom_funcs.append(obj)
+    for name, estimator in estimators:
+        if (hasattr(estimator, "get_params") and
+            # test whether overwritten
+            estimator.get_params == sklearn.base.BaseEstimator.get_params):
+            continue
 
-    # test consistency of deep/shallow get_params()
-    for cust_est in custom_funcs:
+        # test consistency of deep/shallow get_params()
         clf = DummyClassifier()
         featsel = PCA(n_components=2)
-        meta = cust_est([('pca', featsel), ('dummclf', clf)])
+        meta = estimator([('pca', featsel), ('dummclf', clf)])
         shallows = meta.get_params(deep=False)
         deeps = meta.get_params(deep=True)
-        if 'steps' in shallows.keys():
-            items_to_test = shallows['steps']
-        elif 'transformer_list' in shallows.keys():
-            items_to_test = shallows['transformer_list']
-        for name, trans in items_to_test:
-            for key, value in iteritems(trans.get_params(deep=True)):
-                deep_name = '%s__%s' % (name, key)
-                assert(deep_name in deeps.keys())
+
+        for name, key in shallows.items():
+            if ('steps' in name or
+                'transformer_list' in name):
+                for item_name, trans in key:
+                    for key, value in iteritems(trans.get_params(deep=True)):
+                        deep_name = '%s__%s' % (item_name, key)
+                        assert(deep_name in deeps.keys())
+            else:
+                assert(deeps[name] == key)
