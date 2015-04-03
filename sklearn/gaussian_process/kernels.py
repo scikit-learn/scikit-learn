@@ -310,6 +310,8 @@ class KernelOperator(Kernel):
         self.k2.bounds = bounds[k1_dims:]
 
     def __eq__(self, b):
+        if type(self) != type(b):
+            return False
         return (self.k1 == b.k1 and self.k2 == b.k2) \
             or (self.k1 == b.k2 and self.k2 == b.k1)
 
@@ -542,6 +544,8 @@ class Exponentiation(Kernel):
         self.kernel.bounds = bounds
 
     def __eq__(self, b):
+        if type(self) != type(b):
+            return False
         return (self.kernel == b.kernel and self.exponent == b.exponent)
 
     def __call__(self, X, Y=None, eval_gradient=False):
