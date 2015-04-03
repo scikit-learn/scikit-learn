@@ -197,14 +197,6 @@ def test_deprecated_lda_scaling():
                      'using covariance: %s' % solver)
 
 
-def test_lda_deprecation():
-    # Test if deprecation warning is raised for lda.LDA
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always", DeprecationWarning)
-        clf = lda.LDA()
-        assert_true(issubclass(w[0].category, DeprecationWarning))
-
-
 def test_qda():
     # QDA classification.
     # This checks that QDA implements fit and predict and returns
@@ -298,11 +290,3 @@ def test_qda_regularization():
         clf.fit(X5, y5)
     y_pred5 = clf.predict(X5)
     assert_array_equal(y_pred5, y5)
-
-
-def test_qda_deprecation():
-    # Test if deprecation warning is raised for qda.QDA
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always", DeprecationWarning)
-        clf = qda.QDA()
-        assert_true(issubclass(w[0].category, DeprecationWarning))
