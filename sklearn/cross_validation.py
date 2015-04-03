@@ -31,6 +31,7 @@ from .externals.six import with_metaclass
 from .externals.six.moves import zip
 from .metrics.scorer import check_scoring
 from .utils.fixes import bincount
+from .gaussian_process.kernels import Kernel as GPKernel
 
 __all__ = ['KFold',
            'LabelKFold',
@@ -1561,7 +1562,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
 def _safe_split(estimator, X, y, indices, train_indices=None):
     """Create subset of dataset and properly handle kernels."""
-    if hasattr(estimator, 'kernel') and callable(estimator.kernel):
+    if hasattr(estimator, 'kernel') and callable(estimator.kernel) \
+       and not isinstance(estimator.kernel, GPKernel):
         # cannot compute the kernel values with custom function
         raise ValueError("Cannot use a custom kernel function. "
                          "Precompute the kernel matrix instead.")
