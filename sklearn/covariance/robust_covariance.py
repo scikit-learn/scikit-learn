@@ -361,7 +361,7 @@ def fast_mcd(X, support_fraction=None,
 
     X = np.asarray(X)
     if X.ndim == 1:
-        X = np.reshape(X, (1, -1))
+        X = np.reshape(X, (-1, 1))
         warnings.warn("Only one sample available. "
                       "You may want to reshape your data array")
     n_samples, n_features = X.shape
