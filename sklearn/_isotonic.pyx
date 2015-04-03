@@ -92,14 +92,14 @@ def _make_unique(np.ndarray[dtype=np.float64_t] X,
     cdef np.ndarray[dtype=np.float64_t] x_out = np.empty(unique_values)
     cdef np.ndarray[dtype=np.float64_t] weights_out = np.empty(unique_values)
 
-    cdef float current_x = X[0]
-    cdef float current_y = 0
-    cdef float current_weight = 0
-    cdef float y_old = 0
+    cdef np.float64_t current_x = X[0]
+    cdef np.float64_t current_y = 0
+    cdef np.float64_t current_weight = 0
+    cdef np.float64_t y_old = 0
     cdef int i = 0
     cdef int current_count = 0
     cdef int j
-    cdef float x
+    cdef np.float64_t x
     cdef int n_samples = len(X)
     for j in range(n_samples):
         x = X[j]
@@ -117,8 +117,8 @@ def _make_unique(np.ndarray[dtype=np.float64_t] X,
             current_weight += sample_weights[j]
             current_y += y[j] * sample_weights[j]
             current_count += 1
-            
+
     x_out[i] = current_x
     weights_out[i] = current_weight / current_count
-    y_out[i] = current_y / current_weight    
+    y_out[i] = current_y / current_weight
     return x_out, y_out, weights_out
