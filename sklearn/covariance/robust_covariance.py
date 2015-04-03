@@ -362,8 +362,9 @@ def fast_mcd(X, support_fraction=None,
     X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
-        warnings.warn("Only one sample available. "
-                      "You may want to reshape your data array")
+        warnings.warn("1D array passed in. "
+                      "Assuming the array contains samples, not features. "
+                      "You may wish to reshape your data.")
     n_samples, n_features = X.shape
 
     # minimum breakdown value
