@@ -1270,6 +1270,9 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     If metric is 'precomputed', Y is ignored and X is returned.
 
     """
+    # import GPKernel locally to prevent circular imports
+    from ..gaussian_process.kernels import Kernel as GPKernel
+
     if metric == "precomputed":
         return X
     elif metric in PAIRWISE_KERNEL_FUNCTIONS:
@@ -1277,6 +1280,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
             kwds = dict((k, kwds[k]) for k in kwds
                         if k in KERNEL_PARAMS[metric])
         func = PAIRWISE_KERNEL_FUNCTIONS[metric]
+    elif isinstance(metric, GPKernel):
+        func = metric.__call__
     elif callable(metric):
         func = partial(_pairwise_callable, metric=metric, **kwds)
     else:
