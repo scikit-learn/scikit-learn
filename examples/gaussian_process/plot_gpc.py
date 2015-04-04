@@ -1,9 +1,21 @@
 """Gaussian process classification (GPC)
 
-This example illustrates both prediction of the prior GPC and the posterior
-GPC. While the posterior model has a considerably larger
-log-marginal-likelihood, the generated predictions are not optimal. This
-is caused by the Laplace approximations used internally by GPC.
+This example illustrates the predicted probability of GPC for an RBF kernel
+with different choices of the hyperparameters. The first figure shows the
+predicted probability of GPC with arbitrarily chosen hyperparameters and with
+the hyperparameters corresponding to the maximum log-marginal-likelihood (LML).
+
+While the hyperparameters chosen by optimizing LML have a considerable larger
+LML, they perform slightly worse according to the log-loss on test data. The
+figure shows that this is because they exhibit a steep change of the class
+probabilities at the class boundaries (which is good) but have predicted
+probabilities close to 0.5 far away from the class boundaries (which is bad)
+This undiesirable effect is caused by the Laplace approximation used
+internally by GPC.
+
+The second figure shows the log-marginal-likelihood for different choices of
+the kernel's hyperparameters, highlighting the two choices of the
+hyperparameters used in the first figure by black dots.
 """
 print __doc__
 
@@ -15,38 +27,52 @@ import numpy as np
 
 from matplotlib import pyplot as plt
 
+from sklearn.metrics.classification import accuracy_score, log_loss
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
 
 
 # Generate data
+train_size = 50
 rng = np.random.RandomState(0)
-X = rng.uniform(0, 5, 50)[:, np.newaxis]
-y = np.array(np.sin((X[:, 0] - 2.5) ** 2) > 0.0, dtype=int)
+X = rng.uniform(0, 5, 100)[:, np.newaxis]
+y = np.array(X[:, 0] > 2.5, dtype=int)
 
 # Specify Gaussian Processes with fixed and optimized hyperparameters
 gp_fix = GaussianProcessClassifier(kernel=1.0 * RBF(l=1.0),
-								   optimizer=None).fit(X, y)
+                                   optimizer=None)
+gp_fix.fit(X[:train_size], y[:train_size])
 
-gp_opt = GaussianProcessClassifier(kernel=1.0 * RBF(l=1.0)).fit(X, y)
+gp_opt = GaussianProcessClassifier(kernel=1.0 * RBF(l=1.0))
+gp_opt.fit(X[:train_size], y[:train_size])
 
 print "Log Marginal Likelihood (initial): %.3f" % \
     gp_fix.log_marginal_likelihood(gp_fix.theta_)
 print "Log Marginal Likelihood (optimized): %.3f" % \
-    gp_fix.log_marginal_likelihood(gp_opt.theta_)
+    gp_opt.log_marginal_likelihood(gp_opt.theta_)
+
+print "Accuracy: %.3f (initial) %.3f (optimized)" \
+    % (accuracy_score(y[:train_size], gp_fix.predict(X[:train_size])),
+       accuracy_score(y[:train_size], gp_opt.predict(X[:train_size])))
+print "Log-loss: %.3f (initial) %.3f (optimized)" \
+    % (log_loss(y[:train_size], gp_fix.predict_proba(X[:train_size])[:, 1]),
+       log_loss(y[:train_size], gp_opt.predict_proba(X[:train_size])[:, 1]))
 
 
 # Plot posteriors
 plt.figure(0)
-plt.scatter(X[:, 0], y)
+plt.scatter(X[:train_size, 0], y[:train_size], c='k', label="Train data")
+plt.scatter(X[train_size:, 0], y[train_size:], c='g', label="Test data")
 X_ = np.linspace(0, 5, 100)
 plt.plot(X_, gp_fix.predict_proba(X_[:, np.newaxis])[:, 1], 'r',
          label="Initial kernel: %s" % gp_fix.kernel_)
 plt.plot(X_, gp_opt.predict_proba(X_[:, np.newaxis])[:, 1], 'b',
          label="Optimized kernel: %s" % gp_opt.kernel_)
-plt.legend(loc="best")
 plt.xlabel("Feature")
 plt.ylabel("Class 1 probability")
+plt.xlim(0, 5)
+plt.ylim(-0.25, 1.5)
+plt.legend(loc="best")
 
 # Plot LML landscape
 plt.figure(1)
@@ -56,10 +82,12 @@ Theta0, Theta1 = np.meshgrid(theta0, theta1)
 LML = [[gp_opt.log_marginal_likelihood([Theta0[i, j], Theta1[i, j]])
         for i in range(Theta0.shape[0])] for j in range(Theta0.shape[1])]
 LML = np.array(LML).T
+plt.plot(gp_fix.theta_[0], gp_fix.theta_[1], 'ko', zorder=10)
+plt.plot(gp_opt.theta_[0], gp_opt.theta_[1], 'ko', zorder=10)
 plt.pcolor(Theta0, Theta1, LML)
 plt.xscale("log")
 plt.yscale("log")
-plt.colorbar()
+plt.colorbar(label="Log-marginal Likelihood")
 plt.xlabel("Magnitude")
 plt.ylabel("Length-scale")
 plt.title("Log-marginal-likelihood")
