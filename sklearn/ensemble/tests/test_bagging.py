@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.grid_search import GridSearchCV, ParameterGrid
@@ -603,6 +604,24 @@ def test_warm_start_smaller_n_estimators():
     clf.fit(X, y)
     clf.set_params(n_estimators=4)
     assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_warm_start_equal_n_estimators():
+    # Test that nothing happens when fitting without increasing n_estimators
+    X, y = make_hastie_10_2(n_samples=20, random_state=1)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=43)
+
+    clf = BaggingClassifier(n_estimators=5, warm_start=True, random_state=83)
+    clf.fit(X_train, y_train)
+
+    y_pred = clf.predict(X_test)
+    # modify X to nonsense values, this should not change anything
+    X_train += 1.
+
+    assert_warns_message(UserWarning,
+                         "Warm-start fitting without increasing n_estimators does not",
+                         clf.fit, X_train, y_train)
+    assert_array_equal(y_pred, clf.predict(X_test))
 
 
 def test_warm_start_equivalence():
