@@ -94,7 +94,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 
     # Initialize list of closest distances and calculate current potential
     closest_dist_sq = euclidean_distances(
-        centers[0], X, Y_norm_squared=x_squared_norms, squared=True)
+        centers[0].reshape(1, -1), X, Y_norm_squared=x_squared_norms, squared=True)
     current_pot = closest_dist_sq.sum()
 
     # Pick the remaining n_clusters-1 points

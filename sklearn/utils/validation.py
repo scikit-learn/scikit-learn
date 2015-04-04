@@ -345,6 +345,8 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None, copy=Fal
     if ensure_2d:
         if array.ndim == 1:
             array = array.reshape(-1, 1)
+        elif array.ndim == 0:
+            array = array.reshape(1, 1)
 
     shape_repr = _shape_repr(array.shape)
     if ensure_min_samples > 0:

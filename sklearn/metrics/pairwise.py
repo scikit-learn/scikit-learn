@@ -192,7 +192,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     X, Y = check_pairwise_arrays(X, Y)
 
     if Y_norm_squared is not None:
-        YY = check_array(Y_norm_squared)
+        YY = check_array(np.atleast_2d(Y_norm_squared))
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")
@@ -602,8 +602,7 @@ PAIRED_DISTANCES = {
     'l2': paired_euclidean_distances,
     'l1': paired_manhattan_distances,
     'manhattan': paired_manhattan_distances,
-    'cityblock': paired_manhattan_distances,
-    }
+    'cityblock': paired_manhattan_distances}
 
 
 def paired_distances(X, Y, metric="euclidean", **kwds):
@@ -1089,7 +1088,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
     """
     if (metric not in _VALID_METRICS and
-       not callable(metric) and metric != "precomputed"):
+            not callable(metric) and metric != "precomputed"):
         raise ValueError("Unknown metric %s. "
                          "Valid metrics are %s, or 'precomputed', or a "
                          "callable" % (metric, _VALID_METRICS))
