@@ -645,6 +645,59 @@ def test_warm_start_equivalence():
     assert_array_almost_equal(y1, y2)
 
 
+def test_warm_start_oob_score():
+    # Check oob score is a good estimate of generalization error
+    # when using warm start
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(iris.data,
+                                                        iris.target,
+                                                        random_state=rng)
+    clf_ws = BaggingClassifier(n_estimators=100,
+                               oob_score=True,
+                               warm_start=True,
+                               random_state=rng)
+    clf_ws.fit(X_train, y_train)
+
+    test_score = clf_ws.score(X_test, y_test)
+
+    assert_less(abs(test_score - clf_ws.oob_score_), 0.1)
+
+
+def test_warm_start_oob_on_most_recent_X():
+    # Check oob score is evaluated only with most recent training
+    # samples and newly added estimators
+    rng = check_random_state(0)
+    X, y = make_hastie_10_2(n_samples=2000, random_state=rng)
+    X_train, X_test, y_train, y_test = train_test_split(X,
+                                                        y,
+                                                        random_state=rng)
+    # It is important to have different n_samples for the
+    # two training sets
+    X_train1, X_train2, y_train1, y_train2 = train_test_split(X_train,
+                                                              y_train,
+                                                              random_state=rng)
+    clf_ws = BaggingClassifier(n_estimators=50,
+                               oob_score=True,
+                               warm_start=True,
+                               random_state=2718)
+    clf_ws.fit(X_train1, y_train1)
+
+    # Need the state just before training the next 50 classifiers
+    # as input random_state for the classifier used to compare oob_score
+    stored_rng = check_random_state(clf_ws.random_state)
+    stored_rng.randint(np.iinfo(np.int32).max, size=clf_ws.n_estimators)
+
+    clf_ws.set_params(n_estimators=100)
+    clf_ws.fit(X_train2, y_train2)
+
+    clf = BaggingClassifier(n_estimators=50,
+                            oob_score=True,
+                            random_state=stored_rng)
+    clf.fit(X_train2, y_train2)
+
+    assert_equal(clf.oob_score_, clf_ws.oob_score_)
+
+
 if __name__ == "__main__":
     import nose
     nose.runmodule()
