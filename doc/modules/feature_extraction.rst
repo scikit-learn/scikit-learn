@@ -403,7 +403,7 @@ scheme developed for information retrieval (as a ranking function
 for search engines results), that has also found good use in document
 classification and clustering.
 
-This normalization is implemented by the :class:`text.TfidfTransformer`
+This normalization is implemented by the :class:`TfidfTransformer`
 class::
 
   >>> from sklearn.feature_extraction.text import TfidfTransformer
