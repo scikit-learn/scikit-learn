@@ -725,26 +725,6 @@ def test_memory_layout():
         yield check_memory_layout, name, dtype
 
 
-def check_1d_input(name, X, X_2d, y):
-    ForestEstimator = FOREST_ESTIMATORS[name]
-    assert_raises(ValueError, ForestEstimator(random_state=0).fit, X, y)
-
-    est = ForestEstimator(random_state=0)
-    est.fit(X_2d, y)
-
-    if name in FOREST_CLASSIFIERS or name in FOREST_REGRESSORS:
-        assert_raises(ValueError, est.predict, X)
-
-
-def test_1d_input():
-    X = iris.data[:, 0].ravel()
-    X_2d = iris.data[:, 0].reshape((-1, 1))
-    y = iris.target
-
-    for name in FOREST_ESTIMATORS:
-        yield check_1d_input, name, X, X_2d, y
-
-
 def check_class_weights(name):
     # Check class_weights resemble sample_weights behavior.
     ForestClassifier = FOREST_CLASSIFIERS[name]

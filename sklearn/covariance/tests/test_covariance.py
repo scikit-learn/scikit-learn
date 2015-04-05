@@ -171,14 +171,6 @@ def test_ledoit_wolf():
     assert_almost_equal(lw_shinkrage_from_mle, lw.shrinkage_)
     assert_array_almost_equal(empirical_covariance(X_1d), lw.covariance_, 4)
 
-    # test with one sample
-    # FIXME I don't know what this test does
-    X_1sample = np.arange(5)
-    lw = LedoitWolf()
-    assert_warns(UserWarning, lw.fit, X_1sample)
-    assert_array_almost_equal(lw.covariance_,
-                              np.zeros(shape=(5, 5), dtype=np.float64))
-
     # test shrinkage coeff on a simple data set (without saving precision)
     lw = LedoitWolf(store_precision=False)
     lw.fit(X)
@@ -257,14 +249,6 @@ def test_oas():
     assert_array_almost_equal(oa_cov_from_mle, oa.covariance_, 4)
     assert_almost_equal(oa_shinkrage_from_mle, oa.shrinkage_)
     assert_array_almost_equal(empirical_covariance(X_1d), oa.covariance_, 4)
-
-    # test with one sample
-    # FIXME I don't know what this test does
-    X_1sample = np.arange(5)
-    oa = OAS()
-    assert_warns(UserWarning, oa.fit, X_1sample)
-    assert_array_almost_equal(oa.covariance_,
-                              np.zeros(shape=(5, 5), dtype=np.float64))
 
     # test shrinkage coeff on a simple data set (without saving precision)
     oa = OAS(store_precision=False)
