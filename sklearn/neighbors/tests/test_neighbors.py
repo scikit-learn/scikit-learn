@@ -869,6 +869,7 @@ def test_neighbors_metrics(n_samples=20, n_features=10,
         p = metric_params.pop('p', 2)
         for algorithm in ALGORITHMS:
             if algorithm == "auto":
+                # FIXME I don't understand this
                 continue
             # KD tree doesn't support all metrics
             if (algorithm == 'kd_tree' and
