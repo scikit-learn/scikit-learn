@@ -841,10 +841,11 @@ def test_neighbors_badargs():
                   X, mode='blah')
 
 
-def test_neighbors_metrics(n_samples=20, n_features=3,
+def test_neighbors_metrics(n_samples=20, n_features=10,
                            n_query_pts=2, n_neighbors=5):
     # Test computing the neighbors for various metrics
     # create a symmetric matrix
+    rng = np.random.RandomState(0)
     V = rng.rand(n_features, n_features)
     VI = np.dot(V, V.T)
 
@@ -858,6 +859,8 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
     # try also with default parameters
     metrics += [(m, {}) for m in _VALID_METRICS]
     X = rng.rand(n_samples, n_features)
+    # make it more interesting for boolean metrics
+    X[X > .5] = 0
 
     test = rng.rand(n_query_pts, n_features)
 
@@ -891,10 +894,14 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
             results.append(neigh.kneighbors(test, return_distance=True))
         if len(results) >= 2:
             assert_array_almost_equal(results[0][0], results[1][0])
-            assert_array_almost_equal(results[0][1], results[1][1])
+            if len(np.unique(results[0][0])) == n_query_pts * n_neighbors:
+                # if all distances are the same, can't expect
+                # deterministic results
+                assert_array_equal(results[0][1], results[1][1])
         if len(results) == 3:
             assert_array_almost_equal(results[0][0], results[2][0])
-            assert_array_almost_equal(results[0][1], results[2][1])
+            if len(np.unique(results[0][0])) == n_query_pts * n_neighbors:
+                assert_array_equal(results[0][1], results[2][1])
 
 
 def test_callable_metric():
