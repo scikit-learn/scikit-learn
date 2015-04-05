@@ -51,11 +51,11 @@ def test_dict_learning_nonzero_coefs():
     n_components = 4
     dico = DictionaryLearning(n_components, transform_algorithm='lars',
                               transform_n_nonzero_coefs=3, random_state=0)
-    code = dico.fit(X).transform(X[1])
+    code = dico.fit(X).transform([X[1]])
     assert_true(len(np.flatnonzero(code)) == 3)
 
     dico.set_params(transform_algorithm='omp')
-    code = dico.transform(X[1])
+    code = dico.transform([X[1]])
     assert_equal(len(np.flatnonzero(code)), 3)
 
 
@@ -149,7 +149,7 @@ def test_dict_learning_online_partial_fit():
                                         random_state=0)
     for i in range(10):
         for sample in X:
-            dict2.partial_fit(sample)
+            dict2.partial_fit([sample])
 
     assert_true(not np.all(sparse_encode(X, dict1.components_, alpha=1) ==
                            0))

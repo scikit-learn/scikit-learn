@@ -492,7 +492,7 @@ def test_degenerate_targets():
 
     clf = GradientBoostingRegressor(n_estimators=100, random_state=1)
     clf.fit(X, np.ones(len(X)))
-    clf.predict(rng.rand(2))
+    clf.predict(rng.rand(1, 2))
     assert_array_equal(np.ones((1,), dtype=np.float64),
                        clf.predict(rng.rand(2)))
 
@@ -989,15 +989,14 @@ def test_non_uniform_weights_toy_min_weight_leaf():
     X = [[1, 0],
          [1, 0],
          [1, 0],
-         [0, 1],
-        ]
+         [0, 1]]
     y = [0, 0, 1, 0]
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
     gb = GradientBoostingRegressor(n_estimators=5, min_weight_fraction_leaf=0.1)
     gb.fit(X, y, sample_weight=sample_weight)
     assert_true(gb.predict([[1, 0]])[0] > 0.5)
-    assert_almost_equal(gb.estimators_[0,0].splitter.min_weight_leaf, 0.2)
+    assert_almost_equal(gb.estimators_[0, 0].splitter.min_weight_leaf, 0.2)
 
 
 def test_non_uniform_weights_toy_edge_case_clf():
