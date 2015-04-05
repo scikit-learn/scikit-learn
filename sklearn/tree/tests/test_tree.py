@@ -12,7 +12,6 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import coo_matrix
 
 from sklearn.random_projection import sparse_random_matrix
-from sklearn.utils.random import sample_without_replacement
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
@@ -1218,25 +1217,6 @@ def check_explicit_sparse_zeros(tree, max_depth=3,
 def test_explicit_sparse_zeros():
     for tree in SPARSE_TREES:
         yield (check_explicit_sparse_zeros, tree)
-
-
-def check_raise_error_on_1d_input(name):
-    TreeEstimator = ALL_TREES[name]
-
-    X = iris.data[:, 0].ravel()
-    X_2d = iris.data[:, 0].reshape((-1, 1))
-    y = iris.target
-
-    assert_raises(ValueError, TreeEstimator(random_state=0).fit, X, y)
-
-    est = TreeEstimator(random_state=0)
-    est.fit(X_2d, y)
-    assert_raises(ValueError, est.predict, X)
-
-
-def test_1d_input():
-    for name in ALL_TREES:
-        yield check_raise_error_on_1d_input, name
 
 
 def _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight):
