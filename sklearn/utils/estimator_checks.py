@@ -338,13 +338,21 @@ def check_X_one_dim(name, Estimator):
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()
     set_fast_parameters(estimator)
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
     set_random_state(estimator, 1)
+    estimator_reshaped = clone(estimator)
     estimator.fit(X, y)
-
+    estimator_reshaped.fit(X.reshape(-1, 1), y)
     for method in ["predict", "transform", "decision_function",
                    "predict_proba"]:
         if hasattr(estimator, method):
-            getattr(estimator, method)(X)
+            result = getattr(estimator, method)(X)
+            result_reshaped = getattr(estimator_reshaped, method)(X.reshape(-1, 1))
+            # we actually used it as the n_samples dimension
+            assert_array_almost_equal(result, result_reshaped)
 
 
 @ignore_warnings
