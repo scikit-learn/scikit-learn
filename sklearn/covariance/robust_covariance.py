@@ -142,12 +142,13 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
     dist = (np.dot(X - location, precision) * (X - location)).sum(axis=1)
     # Catch computation errors
     if np.isinf(det):
-        raise ValueError(
-            "Singular covariance matrix. "
-            "Please check that the covariance matrix corresponding "
-            "to the dataset is full rank and that MinCovDet is used with "
-            "Gaussian-distributed data (or at least data drawn from a "
-            "unimodal, symmetric distribution.")
+        return location, covariance, det, support, dist
+        # raise ValueError(
+        #     "Singular covariance matrix. "
+        #     "Please check that the covariance matrix corresponding "
+        #     "to the dataset is full rank and that MinCovDet is used with "
+        #     "Gaussian-distributed data (or at least data drawn from a "
+        #     "unimodal, symmetric distribution.")
     # Check convergence
     if np.allclose(det, previous_det):
         # c_step procedure converged
