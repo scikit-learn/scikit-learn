@@ -118,7 +118,7 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
     # Iterative procedure for Minimum Covariance Determinant computation
     det = fast_logdet(covariance)
     previous_det = np.inf
-    while (det < previous_det) and (remaining_iterations > 0):
+    while (det < previous_det) and (remaining_iterations > 0) and (det != -np.inf):
         # save old estimates values
         previous_location = location
         previous_covariance = covariance
@@ -142,7 +142,7 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
     dist = (np.dot(X - location, precision) * (X - location)).sum(axis=1)
     # Catch computation errors
     if np.isinf(det):
-        return location, covariance, det, support, dist
+        results = location, covariance, det, support, dist
         # raise ValueError(
         #     "Singular covariance matrix. "
         #     "Please check that the covariance matrix corresponding "
