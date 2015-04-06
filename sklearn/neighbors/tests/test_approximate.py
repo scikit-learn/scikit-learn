@@ -41,7 +41,7 @@ def test_neighbors_accuracy_with_n_candidates():
         lshf = LSHForest(n_candidates=n_candidates)
         lshf.fit(X)
         for j in range(n_iter):
-            query = X[rng.randint(0, n_samples)]
+            query = X[rng.randint(0, n_samples)].reshape(1, -1)
             neighbors = lshf.kneighbors(query, n_neighbors=n_points,
                                         return_distance=False)
             distances = pairwise_distances(query, X, metric='cosine')
