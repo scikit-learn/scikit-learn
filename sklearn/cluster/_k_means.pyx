@@ -43,7 +43,7 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
         unsigned int n_clusters = centers.shape[0]
         unsigned int n_features = centers.shape[1]
         unsigned int n_samples = X.shape[0]
-        unsigned int x_stride = X.strides[1]/sizeof(DOUBLE)
+        unsigned int x_stride = X.strides[1] / sizeof(DOUBLE)
         unsigned int sample_idx, center_idx, feature_idx
         unsigned int store_distances = 0
         unsigned int k
