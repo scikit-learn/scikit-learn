@@ -410,7 +410,7 @@ def assert_raise_message(exception, message, function, *args, **kwargs):
 def assert_array_not_equal(x, y, err_msg="The arrays are equal", verbose=True):
     """Raises an AssertionError if two array-like objects are equal."""
     try:
-        assert_array_equal(x, y, verbose=verbose)
+        assert_array_almost_equal(x, y, verbose=verbose)
     except AssertionError:
         return
     raise AssertionError(err_msg)
@@ -508,8 +508,8 @@ def _compare_attributes(estimator1, estimator2, _invert_logic=False):
     comparables = [list, np.ndarray, np.float64, float, int, 'str']
 
     if not _invert_logic:
-        assert_equality = assert_equal
-        assert_array_equality = assert_array_equal
+        assert_equality = lambda x, y, message: assert_almost_equal(x, y, err_msg=message)
+        assert_array_equality = lambda x, y, message: assert_array_almost_equal(x, y, err_msg=message)
     else:
         assert_equality = assert_not_equal
         assert_array_equality = assert_array_not_equal
