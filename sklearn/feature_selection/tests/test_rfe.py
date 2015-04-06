@@ -16,6 +16,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import set_random_state
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
@@ -77,11 +78,13 @@ def test_rfe_features_importance():
     y = iris.target
 
     clf = RandomForestClassifier(n_estimators=10, n_jobs=1)
+    set_random_state(clf, 1)
     rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1)
     rfe.fit(X, y)
     assert_equal(len(rfe.ranking_), X.shape[1])
 
     clf_svc = SVC(kernel="linear")
+    set_random_state(clf_svc)
     rfe_svc = RFE(estimator=clf_svc, n_features_to_select=4, step=0.1)
     rfe_svc.fit(X, y)
 
@@ -121,6 +124,7 @@ def test_rfe():
 
     # dense model
     clf = SVC(kernel="linear")
+    set_random_state(clf)
     rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1)
     rfe.fit(X, y)
     X_r = rfe.transform(X)
@@ -129,6 +133,7 @@ def test_rfe():
 
     # sparse model
     clf_sparse = SVC(kernel="linear")
+    set_random_state(clf_sparse)
     rfe_sparse = RFE(estimator=clf_sparse, n_features_to_select=4, step=0.1)
     rfe_sparse.fit(X_sparse, y)
     X_r_sparse = rfe_sparse.transform(X_sparse)
@@ -149,6 +154,7 @@ def test_rfe_mockclassifier():
 
     # dense model
     clf = MockClassifier()
+    set_random_state(clf)
     rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1)
     rfe.fit(X, y)
     X_r = rfe.transform(X)
