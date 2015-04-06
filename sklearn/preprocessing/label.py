@@ -559,7 +559,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
 
     # preserve label ordering
     if np.any(classes != sorted_class):
-        indices = np.argsort(classes)
+        indices = np.searchsorted(sorted_class, classes)
         Y = Y[:, indices]
 
     if y_type == "binary":
