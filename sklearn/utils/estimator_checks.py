@@ -347,6 +347,25 @@ def check_fit_score_takes_y(name, Estimator):
 
 
 @ignore_warnings
+def check_fortran_ordering(name, Estimator):
+    rnd = np.random.RandomState(0)
+    X_train_C = 3 * rnd.uniform(size=(20, 5)).copy("C")
+    X_train_F = X_train_C.copy("F")
+    y = X_train_C[:, 0].astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator_C = Estimator()
+    set_fast_parameters(estimator_C)
+    set_random_state(estimator_C, 1)
+    estimator_F = clone(estimator_C)
+
+    estimator_C.fit(X_train_C, y)
+    estimator_F.fit(X_train_F, y)
+
+    assert_same_model(X_train_C, estimator_C, estimator_F)
+    assert_same_model(X_train_F, estimator_C, estimator_F)
+
+
+@ignore_warnings
 def check_estimators_dtypes(name, Estimator):
     rnd = np.random.RandomState(0)
     X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
@@ -356,8 +375,7 @@ def check_estimators_dtypes(name, Estimator):
     y = X_train_int_64[:, 0]
     y = multioutput_estimator_convert_y_2d(name, y)
     for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
-        with warnings.catch_warnings(record=True):
-            estimator = Estimator()
+        estimator = Estimator()
         set_fast_parameters(estimator)
         set_random_state(estimator, 1)
         estimator.fit(X_train, y)
@@ -571,7 +589,7 @@ def check_partial_fit_reset_when_fit(name, Estimator):
     for i in range(2):
         (X_s, y_s) = shuffle(X, y, random_state=i)
         for j in range(0, 50, 10):
-            _partial_fit(estimator_2, X_s[j:10+j], y_s[j:10+j],
+            _partial_fit(estimator_2, X_s[j:10 + j], y_s[j:10 + j],
                          classes=classes)
 
     # Test that change in features does not raise any error

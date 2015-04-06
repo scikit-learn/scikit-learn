@@ -32,6 +32,7 @@ from sklearn.utils.estimator_checks import (
     check_dtype_object,
     check_parameters_default_constructible,
     check_estimator_sparse_data,
+    check_fortran_ordering,
     check_estimators_dtypes,
     check_transformer,
     check_clustering,
@@ -101,6 +102,7 @@ def test_non_meta_estimators():
         if name.endswith("HMM") or name.startswith("_"):
             continue
         yield check_estimators_dtypes, name, Estimator
+        yield check_fortran_ordering, name, Estimator
         yield check_fit_score_takes_y, name, Estimator
         yield check_dtype_object, name, Estimator
 
