@@ -261,6 +261,18 @@ def test_k_means_n_init():
     assert_raises_regexp(ValueError, "n_init", KMeans(n_init=-1).fit, X)
 
 
+def test_k_means_fortran_aligned_data():
+    # Check the KMeans will work well, even if X is a fortran-aligned data. 
+    X = np.asfortranarray([[0, 0], [0, 1], [0, 1]])
+    centers = np.array([[0, 0], [0, 1]])
+    labels = np.array([0, 1, 1])
+    km = KMeans(n_init=1, init=centers, precompute_distances=False,
+                random_state=42)
+    km.fit(X)
+    assert_array_equal(km.cluster_centers_, centers)
+    assert_array_equal(km.labels_, labels)
+
+
 def test_mb_k_means_plus_plus_init_dense_array():
     mb_k_means = MiniBatchKMeans(init="k-means++", n_clusters=n_clusters,
                                  random_state=42)
