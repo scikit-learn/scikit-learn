@@ -135,6 +135,7 @@ each described by the mean :math:`\mu_j` of the samples in the cluster.
 The means are commonly called the cluster "centroids";
 note that they are not, in general, points from :math:`X`,
 although they live in the same space.
+
 The K-means algorithm aims to choose centroids
 that minimise the *inertia*, or within-cluster sum of squared criterion:
 
@@ -1403,3 +1404,221 @@ Drawbacks
    the silhouette analysis is used to choose an optimal value for n_clusters.
 
 
+
+Select number of clusters
+===============================
+
+.. figure:: ../auto_examples/cluster/images/plot_chosen_nb_cluster_comparaison.png
+   :target: ../auto_examples/cluster/plot_chosen_nb_cluster_comparaison.html
+   :align: center
+   :scale: 50
+
+   A comparison of algorithms to select the number of clusters in scikit-learn. The clustering algorithm used is spectral clustering
+
+.. currentmodule:: sklearn.metrics.cluster
+
+Many algorithms require to select the wanted number of clusters. If one does
+not know how many clusters he wants, there exists algorithm to find the most
+relevant number of clusters for its data, given the data and the clustering
+algorithm used.
+
+.. _stability:
+
+Stability
+---------
+
+A number of clusters is relevant if the clustering algorithm finds similar
+results with small perturbations of the data. In this implementation, we use
+the clustering algorithm on 2 large overlapping subsets of the data. If the
+number of clusters is relevant, data in both subsets should be clustered in
+a similar way. Given a similarity measure of two clustering :math:`sim(., .)`,
+We draw subsamples :math:`E_i` from the initial data :math:`E`.
+For all number of clusters :math:`k=2\dots k_{max}`, we perform :math:`N_{draws}`
+times:
+
+- Select 2 subsets :math:`E_1` and :math:`E_2`.
+
+- Use clustering algorithm on both subsets. Let :math:`C_1` be clusters obtained
+  on :math:`E_1`, :math:`C_2` those obtained on :math:`E_2`. 
+
+- Compute similarity :math:`s(C_1, C_2)`
+
+The chosen number of clusters is the one that has maximum average similarity
+
+Usage
+~~~~~
+
+Given a dataset and a clustering algorithm (a :class:`ClusterMixin`),
+stability returns the most stable number of clusters
+
+  >>> from sklearn.datasets import make_blobs
+  >>> from sklearn.cluster import KMeans
+  >>> from sklearn.metrics.cluster.stability import stability
+  >>> data, labels = make_blobs(n_samples=1000, centers=2, random_state=0)
+  >>> kmeans_model = KMeans()
+  >>> stability(data, kmeans_model, k_max=10, verbose=False)
+  2
+
+Advantages
+~~~~~~~~~~
+
+- Finds a number of clusters that is truly relevant to your data and your
+  clustering algorithm
+
+- The stability score, going from 0 to 1, can measure how well your data
+  is clustered in k groups
+
+
+Drawbacks
+~~~~~~~~~
+
+- Computational time
+
+.. topic:: References
+
+ * `"A stability based method for discovering structure in clustered data"
+   <http://www.researchgate.net/profile/Asa_Ben-Hur/publication/11435997_A_stability_based_method_for_discovering_structure_in_clustered_data/links/00b4953988b6d0233d000000.pdf>`_
+   Ben-Hur, A., Elisseeff, A., & Guyon, I., *Pacific symposium on biocomputing* (2001, December)
+
+ * `"Clustering stability: an overview"
+   <http://arxiv.org/pdf/1007.1075.pdf>`_
+   Von Luxburg, U., (2010)
+
+.. _gap_statistic:
+
+Gap statistic
+-------------
+
+Gap statistic compares the :math:`k` clusters obtained by the selected clustering
+algorithm with :math:`k` clusters obtained by the same algorithm on random data.
+Clusters'quality are judged by the mean distance of clusters'points to their
+clusters'center. Given a distance function :math:`d(., .)`, we define inertia
+for a partition of the data in :math:`k` clusters :math:`(C_1, \dots, C_k)` as:
+
+.. math:: W_k = \sum_{r=1}^k \frac{\sum_{x, y \in C_r}dist(x, y)}{2|C_r|}
+
+By default, random data is drawn from a uniform distribution, with the same
+bounds as :math:`E`. Data can also be drawn from a Gaussian distribution with
+same mean and variance as :math:`E`. Let :math:`W_k` be the inertia of
+randomly-drawn data in k clusters, :math:`W_k^*` be the inertia of :math:`E` in
+k clusters. The gap statistic is defined as:
+
+.. math:: Gap(k) = \mathbb{E}\left[\log(W_k)\right] - \log(W_k^*)
+
+If we have K clusters in our data, we expect :math:`W_k^*` to increase
+fast if :math:`k \leq K` and slowly for :math:`k > K`.
+We estimate :math:`\mathbb{E}\left[\log(W_k)\right]` by creating :math:`B`
+random datasets. Let :math:`sd_k` be the standard deviation of
+:math:`\log(W_k)`. We select the smallest :math:`k` such that the gap increase is 
+too small after :math:`k^*`:
+
+.. math:: k^* = \mbox{smallest k such that} \;
+   Gap(k) \geq Gap(k+1) - \frac{sd_{k+1}}{\sqrt{1 + 1/B}}
+
+Usage
+~~~~~
+
+Given a dataset and a clustering algorithm (a :class:`ClusterMixin`),
+gap_statistic returns the estimated number of clusters
+
+  >>> from sklearn.datasets import make_blobs
+  >>> from sklearn.cluster import KMeans
+  >>> from sklearn.metrics.cluster.gap_statistic import gap_statistic
+  >>> data, labels = make_blobs(n_samples=1000, centers=4, random_state=0)
+  >>> kmeans_model = KMeans()
+  >>> gap_statistic(data, kmeans_model, k_max=10)
+  4
+
+.. topic:: References
+
+ * `"Estimating the number of clusters in a data set via the gap statistic"
+   <http://web.stanford.edu/~hastie/Papers/gap.pdf>`_
+   Tibshirani, R., Walther, G., & Hastie, T., *Journal of the Royal Statistical Society: Series B* (Statistical Methodology), (2001)
+
+.. _calinski_harabaz_index:
+
+Calinski-Harabaz index
+----------------------
+
+The goal of the Calinski-Harabaz index is to maximize dispersion between clusters 
+and minimize dispersion within clusters. Let 
+
+- :math:`N` be the number of points in our data, 
+- :math:`C_q` be the set of points in cluster :math:`q`, 
+- :math:`c_q` be the center of cluster :math:`q`, 
+- :math:`c` be the center of :math:`E`, 
+- :math:`n_q` be the number of points in cluster :math:`q`:
+
+The Calinski-Harabaz index for data in :math:`k` cluster, noted
+:math:`CH(k)`, is defined as:
+
+.. math::
+
+  CH(k) = \frac{trace(B_k)}{trace(W_k)} \times \frac{N - k}{k - 1}
+
+with  
+
+.. math::
+  W_k  = \sum_{q=1}^k \sum_{x \in C_q} (x - c_q) (x - c_q)^T \\
+  B_k = \sum_q n_q (c_q - c) (c_q -c)^T \\
+
+Advantages
+~~~~~~~~~~
+
+- The score is higher when clusters are dense and well separated, which relates
+  to a standard concept of a cluster.
+
+- Fast computation
+
+
+Drawbacks
+~~~~~~~~~
+
+- The Calinski-Harabaz index is generally higher for convex clusters than other
+  concepts of clusters, such as density based clusters like those obtained
+  through DBSCAN.
+
+.. topic:: References
+
+ *  "A dendrite method for cluster analysis"
+    Caliński, T., & Harabasz, J., *Communications in Statistics-theory and Methods*, (1974)
+
+.. _distortion_jump:
+
+Distortion jump
+---------------
+
+Distortion jump aims to maximize efficiency (using the smallest number of clusters)
+while minimizing error by information theoretic standards (here, the error is the
+variance of data points in cluster). The data :math:`E` consists of
+:math:`N` points of :math:`d` dimensions. The average
+distortion is:
+
+.. math:: W_k = \frac{1}{d}\sum_{q=1}^k \sum_{x \in C_q} (x-c_q)^T (x-c_q)
+
+
+with :math:`C_q` the set of points in cluster :math:`q` and 
+:math:`c_q` the center of cluster :math:`q`. :math:`k^*`, the chosen number of cluster, is the one that maximized our gain in information. Let :math:`y = d / 2`. 
+
+.. math:: k^* = \arg\min_{k=2\dots k_{max}}W_k^{-y} - W_{k-1}^{-y}
+
+The choice of the transform power :math:`Y = (d/2)` is motivated by asymptotic reasoning using results from rate distortion theory.
+
+
+.. topic:: References
+
+ * `"Distortion Jump"
+   <en.wikipedia.org/wiki/Determining_the_number_of_clusters_in_a_data_set>`_
+
+
+Advantages
+~~~~~~~~~~
+
+- Fast computation
+
+Drawbacks
+~~~~~~~~~
+
+- The distortion jump works better for convex clusters than other
+  concepts of clusters, such as density based clusters like those obtained
+  through DBSCAN.
