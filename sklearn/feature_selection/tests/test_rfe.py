@@ -89,6 +89,7 @@ def test_rfe_features_importance():
     diff_support = rfe.get_support() == rfe_svc.get_support()
     assert_true(sum(diff_support) == len(diff_support))
 
+
 def test_rfe_deprecation_estimator_params():
     deprecation_message = ("The parameter 'estimator_params' is deprecated as "
                            "of version 0.16 and will be removed in 0.18. The "
