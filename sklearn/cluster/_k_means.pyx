@@ -44,6 +44,7 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
         unsigned int n_features = centers.shape[1]
         unsigned int n_samples = X.shape[0]
         unsigned int x_stride = X.strides[1] / sizeof(DOUBLE)
+        unsigned int center_stride = centers.strides[1] / sizeof(DOUBLE)
         unsigned int sample_idx, center_idx, feature_idx
         unsigned int store_distances = 0
         unsigned int k
@@ -58,7 +59,8 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
 
     for center_idx in range(n_clusters):
         center_squared_norms[center_idx] = ddot(
-            n_features, &centers[center_idx, 0], 1, &centers[center_idx, 0], 1)
+            n_features, &centers[center_idx, 0], center_stride,
+            &centers[center_idx, 0], center_stride)
 
     for sample_idx in range(n_samples):
         min_dist = -1
@@ -67,7 +69,7 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
             # hardcoded: minimize euclidean distance to cluster center:
             # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
             dist += ddot(n_features, &X[sample_idx, 0], x_stride,
-                         &centers[center_idx, 0], 1)
+                         &centers[center_idx, 0], center_stride)
             dist *= -2
             dist += center_squared_norms[center_idx]
             dist += x_squared_norms[sample_idx]
