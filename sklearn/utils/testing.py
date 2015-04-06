@@ -622,11 +622,11 @@ def if_matplotlib(func):
     @wraps(func)
     def run_test(*args, **kwargs):
         try:
-            import matplotlib
+            import matplotlib,pyplot as plt
             matplotlib.use('Agg', warn=False)
             # this fails if no $DISPLAY specified
-            matplotlib.pylab.figure()
-        except:
+            plt.figure()
+        except ImportError:
             raise SkipTest('Matplotlib not available.')
         else:
             return func(*args, **kwargs)
