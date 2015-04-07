@@ -482,7 +482,7 @@ reproducible, but it tends to create parcels of fairly even and
 geometrical shape.
 
 =====================================  =====================================
- ``assign_labels="kmeans"`              ``assign_labels="discretize"``
+ ``assign_labels="kmeans"``              ``assign_labels="discretize"``
 =====================================  =====================================
 |lena_kmeans|                          |lena_discretize|
 =====================================  =====================================
@@ -778,11 +778,12 @@ by black points below.
 Birch
 =====
 
-The :class:`Birch` builds a tree called the Characteristic Feature Tree(CFT) for
-the given data. The data is essentially lossy compressed to a set of Characteristic
-Feature nodes (CF Nodes). The CF Nodes have a number of subclusters called
-Characteristic Feature subclusters (CF Subclusters) and these CF Subclusters
-located in the non-terminal CF Nodes can have CF Nodes as children. 
+The :class:`Birch` builds a tree called the Characteristic Feature Tree (CFT)
+for the given data. The data is essentially lossy compressed to a set of
+Characteristic Feature nodes (CF Nodes). The CF Nodes have a number of
+subclusters called Characteristic Feature subclusters (CF Subclusters)
+and these CF Subclusters located in the non-terminal CF Nodes
+can have CF Nodes as children.
 
 The CF Subclusters hold the necessary information for clustering which prevents
 the need to hold the entire input data in memory. This information includes:
@@ -804,7 +805,7 @@ from the leaves of the CFT. This reduced data can be further processed by feedin
 it into a global clusterer. This global clusterer can be set by ``n_clusters``.
 If ``n_clusters`` is set to None, the subclusters from the leaves are directly
 read off, otherwise a global clustering step labels these subclusters into global
-clusters(labels) and the samples are mapped to the global label of the nearest subcluster.
+clusters (labels) and the samples are mapped to the global label of the nearest subcluster.
 
 **Algorithm description:**
 
@@ -829,7 +830,7 @@ clusters(labels) and the samples are mapped to the global label of the nearest s
 
 **Birch or MiniBatchKMeans?**
 
- - Birch does not scale very well to high dimensionsal data. As a rule of thumb if
+ - Birch does not scale very well to high dimensional data. As a rule of thumb if
    ``n_features`` is greater than twenty, it is generally better to use MiniBatchKMeans.
  - If the number of instances of data needs to be reduced, or if one wants a
    large number of subclusters either as a preprocessing step or otherwise,
@@ -840,12 +841,13 @@ clusters(labels) and the samples are mapped to the global label of the nearest s
 
 To avoid the computation of global clustering, for every call of ``partial_fit``
 the user is advised
-1. To set ``n_clusters=None`` initially
-2. Train all data by multiple calls to partial_fit.
-3. Set ``n_clusters`` to a required value using
-   ``brc.set_params(n_clusters=n_clusters)``
-4. Call ``partial_fit`` finally with no arguments, i.e ``brc.partial_fit()``
-   which performs the global clustering.
+
+ 1. To set ``n_clusters=None`` initially
+ 2. Train all data by multiple calls to partial_fit.
+ 3. Set ``n_clusters`` to a required value using
+    ``brc.set_params(n_clusters=n_clusters)``.
+ 4. Call ``partial_fit`` finally with no arguments, i.e ``brc.partial_fit()``
+    which performs the global clustering.
 
 .. image:: ../auto_examples/cluster/images/plot_birch_vs_minibatchkmeans_001.png
     :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html
@@ -859,6 +861,7 @@ the user is advised
  * Roberto Perdisci
    JBirch - Java implementation of BIRCH clustering algorithm
    https://code.google.com/p/jbirch/
+
 
 .. _clustering_evaluation:
 
@@ -1343,7 +1346,7 @@ of two scores:
 - **b**: The mean distance between a sample and all other points in the *next
   nearest cluster*.
 
-The Silhoeutte Coefficient *s* for a single sample is then given as:
+The Silhouette Coefficient *s* for a single sample is then given as:
 
 .. math:: s = \frac{b - a}{max(a, b)}
 

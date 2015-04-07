@@ -105,7 +105,7 @@ def test_classification_toy():
 
 
 def check_iris_criterion(name, criterion):
-    """Check consistency on dataset iris."""
+    # Check consistency on dataset iris.
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
     clf = ForestClassifier(n_estimators=10, criterion=criterion,
@@ -129,7 +129,7 @@ def test_iris():
 
 
 def check_boston_criterion(name, criterion):
-    """Check consistency on dataset boston house prices."""
+    # Check consistency on dataset boston house prices.
     ForestRegressor = FOREST_REGRESSORS[name]
 
     clf = ForestRegressor(n_estimators=5, criterion=criterion, random_state=1)
@@ -152,7 +152,7 @@ def test_boston():
 
 
 def check_regressor_attributes(name):
-    """Regression models should not have a classes_ attribute."""
+    # Regression models should not have a classes_ attribute.
     r = FOREST_REGRESSORS[name](random_state=0)
     assert_false(hasattr(r, "classes_"))
     assert_false(hasattr(r, "n_classes_"))
@@ -168,7 +168,7 @@ def test_regressor_attributes():
 
 
 def check_probability(name):
-    """Predict probabilities."""
+    # Predict probabilities.
     ForestClassifier = FOREST_CLASSIFIERS[name]
     with np.errstate(divide="ignore"):
         clf = ForestClassifier(n_estimators=10, random_state=1, max_features=1,
@@ -186,7 +186,7 @@ def test_probability():
 
 
 def check_importances(name, X, y):
-    """Check variable importances."""
+    # Check variable importances.
 
     ForestClassifier = FOREST_CLASSIFIERS[name]
     for n_jobs in [1, 2]:
@@ -235,10 +235,9 @@ def test_unfitted_feature_importances():
         yield check_unfitted_feature_importances, name
 
 
-
 def check_oob_score(name, X, y, n_estimators=20):
-    """Check that oob prediction is a good estimation of the generalization
-       error."""
+    # Check that oob prediction is a good estimation of the generalization
+    # error.
     # Proper behavior
     est = FOREST_ESTIMATORS[name](oob_score=True, random_state=0,
                                   n_estimators=n_estimators, bootstrap=True)
@@ -305,7 +304,7 @@ def check_gridsearch(name):
 
 
 def test_gridsearch():
-    """Check that base trees can be grid-searched."""
+    # Check that base trees can be grid-searched.
     for name in FOREST_CLASSIFIERS:
         yield check_gridsearch, name
 
@@ -334,7 +333,7 @@ def test_parallel():
 
 
 def check_pickle(name, X, y):
-    """Check pickability."""
+    # Check pickability.
 
     ForestEstimator = FOREST_ESTIMATORS[name]
     obj = ForestEstimator(random_state=0)
@@ -357,7 +356,7 @@ def test_pickle():
 
 
 def check_multioutput(name):
-    """Check estimators on multi-output problems."""
+    # Check estimators on multi-output problems.
 
     X_train = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-2, 1],
                [-1, 1], [-1, 2], [2, -1], [1, -1], [1, -2]]
@@ -392,7 +391,7 @@ def test_multioutput():
 
 
 def check_classes_shape(name):
-    """Test that n_classes_ and classes_ have proper shape."""
+    # Test that n_classes_ and classes_ have proper shape.
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
     # Classification, single output
@@ -555,7 +554,7 @@ def test_distribution():
 
 
 def check_max_leaf_nodes_max_depth(name, X, y):
-    """Test precedence of max_leaf_nodes over max_depth. """
+    # Test precedence of max_leaf_nodes over max_depth.
     ForestEstimator = FOREST_ESTIMATORS[name]
     est = ForestEstimator(max_depth=1, max_leaf_nodes=4,
                           n_estimators=1).fit(X, y)
@@ -572,7 +571,7 @@ def test_max_leaf_nodes_max_depth():
 
 
 def check_min_samples_leaf(name, X, y):
-    """Test if leaves contain more than leaf_count training examples"""
+    # Test if leaves contain more than leaf_count training examples
     ForestEstimator = FOREST_ESTIMATORS[name]
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -598,8 +597,8 @@ def test_min_samples_leaf():
 
 
 def check_min_weight_fraction_leaf(name, X, y):
-    """Test if leaves contain at least min_weight_fraction_leaf of the
-    training set"""
+    # Test if leaves contain at least min_weight_fraction_leaf of the
+    # training set
     ForestEstimator = FOREST_ESTIMATORS[name]
     rng = np.random.RandomState(0)
     weights = rng.rand(X.shape[0])
@@ -672,7 +671,7 @@ def test_sparse_input():
 
 
 def check_memory_layout(name, dtype):
-    """Check that it works no matter the memory layout"""
+    # Check that it works no matter the memory layout
 
     est = FOREST_ESTIMATORS[name](random_state=0, bootstrap=False)
 
@@ -712,7 +711,6 @@ def check_memory_layout(name, dtype):
         y = iris.target
         assert_array_equal(est.fit(X, y).predict(X), y)
 
-
     # Strided
     X = np.asarray(iris.data[::3], dtype=dtype)
     y = iris.target[::3]
@@ -747,9 +745,105 @@ def test_1d_input():
         yield check_1d_input, name, X, X_2d, y
 
 
+def check_class_weights(name):
+    # Check class_weights resemble sample_weights behavior.
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+
+    # Iris is balanced, so no effect expected for using 'auto' weights
+    clf1 = ForestClassifier(random_state=0)
+    clf1.fit(iris.data, iris.target)
+    clf2 = ForestClassifier(class_weight='auto', random_state=0)
+    clf2.fit(iris.data, iris.target)
+    assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+
+    # Make a multi-output problem with three copies of Iris
+    iris_multi = np.vstack((iris.target, iris.target, iris.target)).T
+    # Create user-defined weights that should balance over the outputs
+    clf3 = ForestClassifier(class_weight=[{0: 2., 1: 2., 2: 1.},
+                                          {0: 2., 1: 1., 2: 2.},
+                                          {0: 1., 1: 2., 2: 2.}],
+                            random_state=0)
+    clf3.fit(iris.data, iris_multi)
+    assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
+    # Check against multi-output "auto" which should also have no effect
+    clf4 = ForestClassifier(class_weight='auto', random_state=0)
+    clf4.fit(iris.data, iris_multi)
+    assert_almost_equal(clf3.feature_importances_, clf4.feature_importances_)
+
+    # Inflate importance of class 1, check against user-defined weights
+    sample_weight = np.ones(iris.target.shape)
+    sample_weight[iris.target == 1] *= 100
+    class_weight = {0: 1., 1: 100., 2: 1.}
+    clf1 = ForestClassifier(random_state=0)
+    clf1.fit(iris.data, iris.target, sample_weight)
+    clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
+    clf2.fit(iris.data, iris.target)
+    assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+
+    # Check that sample_weight and class_weight are multiplicative
+    clf1 = ForestClassifier(random_state=0)
+    clf1.fit(iris.data, iris.target, sample_weight**2)
+    clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
+    clf2.fit(iris.data, iris.target, sample_weight)
+    assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+
+
+def test_class_weights():
+    for name in FOREST_CLASSIFIERS:
+        yield check_class_weights, name
+
+
+def check_class_weight_auto_and_bootstrap_multi_output(name):
+    # Test class_weight works for multi-output
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    _y = np.vstack((y, np.array(y) * 2)).T
+    clf = ForestClassifier(class_weight='auto', random_state=0)
+    clf.fit(X, _y)
+    clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}, {-2: 1., 2: 1.}],
+                           random_state=0)
+    clf.fit(X, _y)
+    clf = ForestClassifier(class_weight='subsample', random_state=0)
+    clf.fit(X, _y)
+
+
+def test_class_weight_auto_and_bootstrap_multi_output():
+    for name in FOREST_CLASSIFIERS:
+        yield check_class_weight_auto_and_bootstrap_multi_output, name
+
+
+def check_class_weight_errors(name):
+    # Test if class_weight raises errors and warnings when expected.
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    _y = np.vstack((y, np.array(y) * 2)).T
+
+    # Invalid preset string
+    clf = ForestClassifier(class_weight='the larch', random_state=0)
+    assert_raises(ValueError, clf.fit, X, y)
+    assert_raises(ValueError, clf.fit, X, _y)
+
+    # Warning warm_start with preset
+    clf = ForestClassifier(class_weight='auto', warm_start=True,
+                           random_state=0)
+    assert_warns(UserWarning, clf.fit, X, y)
+    assert_warns(UserWarning, clf.fit, X, _y)
+
+    # Not a list or preset for multi-output
+    clf = ForestClassifier(class_weight=1, random_state=0)
+    assert_raises(ValueError, clf.fit, X, _y)
+
+    # Incorrect length list for multi-output
+    clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}], random_state=0)
+    assert_raises(ValueError, clf.fit, X, _y)
+
+
+def test_class_weight_errors():
+    for name in FOREST_CLASSIFIERS:
+        yield check_class_weight_errors, name
+
+
 def check_warm_start(name, random_state=42):
-    """Test if fitting incrementally with warm start gives a forest of the
-    right size and the same results as a normal fit."""
+    # Test if fitting incrementally with warm start gives a forest of the
+    # right size and the same results as a normal fit.
     X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
     ForestEstimator = FOREST_ESTIMATORS[name]
     clf_ws = None
@@ -780,8 +874,7 @@ def test_warm_start():
 
 
 def check_warm_start_clear(name):
-    """Test if fit clears state and grows a new forest when warm_start==False.
-    """
+    # Test if fit clears state and grows a new forest when warm_start==False.
     X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
     ForestEstimator = FOREST_ESTIMATORS[name]
     clf = ForestEstimator(n_estimators=5, max_depth=1, warm_start=False,
@@ -803,7 +896,7 @@ def test_warm_start_clear():
 
 
 def check_warm_start_smaller_n_estimators(name):
-    """Test if warm start second fit with smaller n_estimators raises error."""
+    # Test if warm start second fit with smaller n_estimators raises error.
     X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
     ForestEstimator = FOREST_ESTIMATORS[name]
     clf = ForestEstimator(n_estimators=5, max_depth=1, warm_start=True)
@@ -818,8 +911,8 @@ def test_warm_start_smaller_n_estimators():
 
 
 def check_warm_start_equal_n_estimators(name):
-    """Test if warm start with equal n_estimators does nothing and returns the
-    same forest and raises a warning."""
+    # Test if warm start with equal n_estimators does nothing and returns the
+    # same forest and raises a warning.
     X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
     ForestEstimator = FOREST_ESTIMATORS[name]
     clf = ForestEstimator(n_estimators=5, max_depth=3, warm_start=True,
@@ -844,7 +937,7 @@ def test_warm_start_equal_n_estimators():
 
 
 def check_warm_start_oob(name):
-    """Test that the warm start computes oob score when asked."""
+    # Test that the warm start computes oob score when asked.
     X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
     ForestEstimator = FOREST_ESTIMATORS[name]
     # Use 15 estimators to avoid 'some inputs do not have OOB scores' warning.

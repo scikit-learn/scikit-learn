@@ -50,13 +50,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('metrics/cluster')
     config.add_subpackage('metrics/cluster/tests')
 
-    # add cython extension module for hmm
-    config.add_extension(
-        '_hmmc',
-        sources=['_hmmc.c'],
-        include_dirs=[numpy.get_include()],
-        libraries=libraries,
-    )
+    # add cython extension module for isotonic regression
     config.add_extension(
         '_isotonic',
         sources=['_isotonic.c'],

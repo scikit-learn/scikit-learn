@@ -120,7 +120,7 @@ efficient.
 The input matrix :math:`A` is preprocessed as follows:
 
 .. math::
-    A_n = R^{−1/2} A C^{−1/2}
+    A_n = R^{-1/2} A C^{-1/2}
 
 Where :math:`R` is the diagonal matrix with entry :math:`i` equal to
 :math:`\sum_{j} A_{ij}` and :math:`C` is the diagonal matrix with

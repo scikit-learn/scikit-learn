@@ -48,9 +48,6 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
 
         self._validate_params()
 
-        self.coef_ = None
-        self.intercept_ = None
-
         self.num_seen_ = None
         self.seen_ = None
         self.sum_gradient_ = None

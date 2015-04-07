@@ -19,10 +19,8 @@ from sklearn.ensemble.gradient_boosting import _weighted_percentile
 
 
 def test_binomial_deviance():
-    """Check binomial deviance loss.
-
-    Check against alternative definitions in ESLII.
-    """
+    # Check binomial deviance loss.
+    # Check against alternative definitions in ESLII.
     bd = BinomialDeviance(2)
 
     # pred has the same BD for y in {0, 1}
@@ -55,7 +53,7 @@ def test_binomial_deviance():
 
 
 def test_log_odds_estimator():
-    """Check log odds estimator. """
+    # Check log odds estimator.
     est = LogOddsEstimator()
     assert_raises(ValueError, est.fit, None, np.array([1]))
 
@@ -78,7 +76,7 @@ def test_sample_weight_smoke():
 
 
 def test_sample_weight_init_estimators():
-    """Smoke test for init estimators with sample weights. """
+    # Smoke test for init estimators with sample weights.
     rng = check_random_state(13)
     X = rng.rand(100, 2)
     sample_weight = np.ones(100)
@@ -145,7 +143,7 @@ def test_weighted_percentile_zero_weight():
 
 
 def test_sample_weight_deviance():
-    """Test if deviance supports sample weights. """
+    # Test if deviance supports sample weights.
     rng = check_random_state(13)
     X = rng.rand(100, 2)
     sample_weight = np.ones(100)

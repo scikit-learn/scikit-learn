@@ -3,22 +3,26 @@ import pickle
 import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
 
+from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss, precision_score, recall_score)
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.scorer import check_scoring
+from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
+                                    _passthrough_scorer)
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
 from sklearn.svm import LinearSVC
+from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import Ridge, LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -47,7 +51,7 @@ class EstimatorWithoutFit(object):
     pass
 
 
-class EstimatorWithFit(object):
+class EstimatorWithFit(BaseEstimator):
     """Dummy estimator to test check_scoring"""
     def fit(self, X, y):
         return self
@@ -72,8 +76,14 @@ class EstimatorWithFitAndPredict(object):
         return self.y
 
 
+class DummyScorer(object):
+    """Dummy scorer that always returns 1."""
+    def __call__(self, est, X, y):
+        return 1
+
+
 def test_check_scoring():
-    """Test all branches of check_scoring"""
+    # Test all branches of check_scoring
     estimator = EstimatorWithoutFit()
     pattern = (r"estimator should a be an estimator implementing 'fit' method,"
                r" .* was passed")
@@ -82,6 +92,7 @@ def test_check_scoring():
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
     scorer = check_scoring(estimator)
+    assert_true(scorer is _passthrough_scorer)
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFitAndPredict()
@@ -94,25 +105,43 @@ def test_check_scoring():
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFit()
-    pattern = (r"The estimator passed should have a 'score'"
-               r" or a 'predict' method\. The estimator .* does not\.")
-    assert_raises_regexp(TypeError, pattern, check_scoring, estimator,
-                         "accuracy")
+    scorer = check_scoring(estimator, "accuracy")
+    assert_true(isinstance(scorer, _PredictScorer))
 
     estimator = EstimatorWithFit()
     scorer = check_scoring(estimator, allow_none=True)
     assert_true(scorer is None)
 
 
+def test_check_scoring_gridsearchcv():
+    # test that check_scoring works on GridSearchCV and pipeline.
+    # slightly redundant non-regression test.
+
+    grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]})
+    scorer = check_scoring(grid, "f1")
+    assert_true(isinstance(scorer, _PredictScorer))
+
+    pipe = make_pipeline(LinearSVC())
+    scorer = check_scoring(pipe, "f1")
+    assert_true(isinstance(scorer, _PredictScorer))
+
+    # check that cross_val_score definitely calls the scorer
+    # and doesn't make any assumptions about the estimator apart from having a
+    # fit.
+    scores = cross_val_score(EstimatorWithFit(), [[1], [2], [3]], [1, 0, 1],
+                             scoring=DummyScorer())
+    assert_array_equal(scores, 1)
+
+
 def test_make_scorer():
-    """Sanity check on the make_scorer factory function."""
+    # Sanity check on the make_scorer factory function.
     f = lambda *args: 0
     assert_raises(ValueError, make_scorer, f, needs_threshold=True,
                   needs_proba=True)
 
 
 def test_classification_scores():
-    """Test classification scorers."""
+    # Test classification scorers.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = LinearSVC(random_state=0)
@@ -143,8 +172,7 @@ def test_classification_scores():
     # test fbeta score that takes an argument
     scorer = make_scorer(fbeta_score, beta=2)
     score1 = scorer(clf, X_test, y_test)
-    score2 = fbeta_score(y_test, clf.predict(X_test), beta=2,
-                         average='weighted')
+    score2 = fbeta_score(y_test, clf.predict(X_test), beta=2)
     assert_almost_equal(score1, score2)
 
     # test that custom scorer can be pickled
@@ -157,7 +185,7 @@ def test_classification_scores():
 
 
 def test_regression_scorers():
-    """Test regression scorers."""
+    # Test regression scorers.
     diabetes = load_diabetes()
     X, y = diabetes.data, diabetes.target
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
@@ -169,7 +197,7 @@ def test_regression_scorers():
 
 
 def test_thresholded_scorers():
-    """Test scorers that take thresholds."""
+    # Test scorers that take thresholds.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = LogisticRegression(random_state=0)
@@ -191,6 +219,13 @@ def test_thresholded_scorers():
     score2 = roc_auc_score(y_test, clf.predict_proba(X_test)[:, 1])
     assert_almost_equal(score1, score2)
 
+    # test with a regressor (no decision_function)
+    reg = DecisionTreeRegressor()
+    reg.fit(X_train, y_train)
+    score1 = get_scorer('roc_auc')(reg, X_test, y_test)
+    score2 = roc_auc_score(y_test, reg.predict(X_test))
+    assert_almost_equal(score1, score2)
+
     # Test that an exception is raised on more than two classes
     X, y = make_blobs(random_state=0, centers=3)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
@@ -199,9 +234,8 @@ def test_thresholded_scorers():
 
 
 def test_thresholded_scorers_multilabel_indicator_data():
-    """Test that the scorer work with multilabel-indicator format
-    for multilabel and multi-output multi-class classifier
-    """
+    # Test that the scorer work with multilabel-indicator format
+    # for multilabel and multi-output multi-class classifier
     X, y = make_multilabel_classification(return_indicator=True,
                                           allow_unlabeled=False,
                                           random_state=0)
@@ -244,7 +278,7 @@ def test_thresholded_scorers_multilabel_indicator_data():
 
 
 def test_unsupervised_scorers():
-    """Test clustering scorers against gold standard labeling."""
+    # Test clustering scorers against gold standard labeling.
     # We don't have any real unsupervised Scorers yet.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
@@ -257,7 +291,7 @@ def test_unsupervised_scorers():
 
 @ignore_warnings
 def test_raises_on_score_list():
-    """Test that when a list of scores is returned, we raise proper errors."""
+    # Test that when a list of scores is returned, we raise proper errors.
     X, y = make_blobs(random_state=0)
     f1_scorer_no_average = make_scorer(f1_score, average=None)
     clf = DecisionTreeClassifier()
@@ -270,7 +304,7 @@ def test_raises_on_score_list():
 
 @ignore_warnings
 def test_scorer_sample_weight():
-    """Test that scorers support sample_weight or raise sensible errors"""
+    # Test that scorers support sample_weight or raise sensible errors
 
     # Unlike the metrics invariance test, in the scorer case it's harder
     # to ensure that, on the classifier output, weighted and unweighted
@@ -288,9 +322,9 @@ def test_scorer_sample_weight():
     # get sensible estimators for each metric
     sensible_regr = DummyRegressor(strategy='median')
     sensible_regr.fit(X_train, y_train)
-    sensible_clf = DecisionTreeClassifier()
+    sensible_clf = DecisionTreeClassifier(random_state=0)
     sensible_clf.fit(X_train, y_train)
-    sensible_ml_clf = DecisionTreeClassifier()
+    sensible_ml_clf = DecisionTreeClassifier(random_state=0)
     sensible_ml_clf.fit(X_train, y_ml_train)
     estimator = dict([(name, sensible_regr)
                       for name in REGRESSION_SCORERS] +

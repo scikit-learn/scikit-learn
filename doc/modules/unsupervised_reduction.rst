@@ -39,7 +39,7 @@ documentation: :ref:`random_projection`.
 
    * :ref:`example_plot_johnson_lindenstrauss_bound.py`
 
-Feature agglometration
+Feature agglomeration
 ------------------------
 
 :class:`cluster.FeatureAgglomeration` applies
@@ -54,7 +54,7 @@ similarly.
 .. topic:: **Feature scaling**
 
    Note that if features have very different scaling or statistical
-   properties, :class:`cluster.FeatureAgglomeration` maye not be able to
+   properties, :class:`cluster.FeatureAgglomeration` may not be able to
    capture the links between related features. Using a 
    :class:`preprocessing.StandardScaler` can be useful in these settings.
 

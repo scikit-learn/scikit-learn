@@ -57,10 +57,10 @@ funded one year for a developer to work on the project full-time
 .. image:: images/cds-logo.png
    :align: center
 
-The following students were sponspored by `Google <http://code.google.com/opensource/>`_
+The following students were sponsored by `Google <http://code.google.com/opensource/>`_
 to work on scikit-learn through the
 `Google Summer of Code <http://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
-programme.
+program.
 
 - 2007 - David Cournapeau
 - 2011 - `Vlad Niculae`_
@@ -80,7 +80,7 @@ College <http://www.dartmouth.edu/~psych/>`_).
 
 The `PSF <http://www.python.org/psf/>`_ helped find and manage funding for our
 2011 Granada sprint. More information can be found `here
-<https://github.com/scikit-learn/scikit-learn/wiki/Past-sprints#granada-19th-21th-dec-2011>`_
+<https://github.com/scikit-learn/scikit-learn/wiki/Past-sprints#granada-19th-21th-dec-2011>`__
 
 `tinyclues <http://www.tinyclues.com/>`_ funded the 2011 international Granada
 sprint.
@@ -173,7 +173,8 @@ The 2013' Paris international sprint
 
   </div>
 
-*For more information on this sprint, see* `here <https://github.com/scikit-learn/administrative/blob/master/sprint_paris_2013/proposal.rst>`_
+*For more information on this sprint, see* `here
+<https://github.com/scikit-learn/administrative/blob/master/sprint_paris_2013/proposal.rst>`__
 
 
 Infrastructure support

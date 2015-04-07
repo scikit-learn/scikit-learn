@@ -114,7 +114,7 @@ def _kl_divergence(params, P, alpha, n_samples, n_components):
 def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
                       momentum=0.5, learning_rate=1000.0, min_gain=0.01,
                       min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
-                      args=[]):
+                      args=None):
     """Batch gradient descent with momentum and individual gains.
 
     Parameters
@@ -173,6 +173,9 @@ def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
     i : int
         Last iteration.
     """
+    if args is None:
+        args = []
+
     p = p0.copy().ravel()
     update = np.zeros_like(p)
     gains = np.ones_like(p)
@@ -215,7 +218,7 @@ def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
         update = momentum * update - learning_rate * grad
         p += update
 
-        if verbose >= 2 and (i+1) % 10 == 0:
+        if verbose >= 2 and (i + 1) % 10 == 0:
             print("[t-SNE] Iteration %d: error = %.7f, gradient norm = %.7f"
                   % (i + 1, error, grad_norm))
 
@@ -404,7 +407,7 @@ class TSNE(BaseEstimator):
         self.verbose = verbose
         self.random_state = random_state
 
-    def _fit(self, X):
+    def fit(self, X, y=None):
         """Fit the model using X as training data.
 
         Parameters
@@ -413,7 +416,7 @@ class TSNE(BaseEstimator):
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=np.float64)
         random_state = check_random_state(self.random_state)
 
         if self.early_exaggeration < 1.0:
@@ -433,7 +436,7 @@ class TSNE(BaseEstimator):
         else:
             if self.verbose:
                 print("[t-SNE] Computing pairwise distances...")
-            
+
             if self.metric == "euclidean":
                 distances = pairwise_distances(X, metric=self.metric, squared=True)
             else:
@@ -442,7 +445,7 @@ class TSNE(BaseEstimator):
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # alpha = n_components - 1 comes from "Learning a Parametric Embedding
         # by Preserving Local Structure" Laurens van der Maaten, 2009.
-        alpha = self.n_components - 1.0
+        alpha = max(self.n_components - 1.0, 1)
         n_samples = X.shape[0]
         self.training_data_ = X
 
@@ -507,7 +510,7 @@ class TSNE(BaseEstimator):
 
         return X_embedded
 
-    def fit_transform(self, X):
+    def fit_transform(self, X, y=None):
         """Transform X to the embedded space.
 
         Parameters
@@ -521,5 +524,5 @@ class TSNE(BaseEstimator):
         X_new : array, shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        self._fit(X)
+        self.fit(X)
         return self.embedding_

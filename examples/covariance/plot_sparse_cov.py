@@ -40,7 +40,7 @@ zero: because of the penalty, they are all smaller than the corresponding
 ground truth value, as can be seen on the figure.
 
 Note that, the color range of the precision matrices is tweaked to
-improve readibility of the figure. The full range of values of the
+improve readability of the figure. The full range of values of the
 empirical precision is not displayed.
 
 The alpha parameter of the GraphLasso setting the sparsity of the model is

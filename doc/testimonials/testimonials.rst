@@ -288,7 +288,7 @@ Thierry Bertin-Mahieux, Birchbox, Data Scientist
 
   <div class="logo">
 
-.. image:: images/bestofmedia-logo.gif
+.. image:: images/bestofmedia-logo.png
    :target: http://www.bestofmedia.com
 
 .. raw:: html
@@ -427,7 +427,7 @@ Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
 
 At PeerIndex we use scientific methodology to build the Influence Graph - a
 unique dataset that allows us to identify who’s really influential and in which
-context. To do this, we have to tackle a range of machine learning and
+context. To do this, we have to tackle a range of machine learning and
 predictive modeling problems. Scikit-learn has emerged as our primary tool for
 developing prototypes and making quick progress. From predicting missing data
 and classifying tweets to clustering communities of social media users, scikit-

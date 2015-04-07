@@ -25,6 +25,7 @@ from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
+from sklearn.metrics import brier_score_loss
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import coverage_error
 from sklearn.metrics import explained_variance_score
@@ -148,6 +149,8 @@ THRESHOLDED_METRICS = {
 
     "hinge_loss": hinge_loss,
 
+    "brier_score_loss": brier_score_loss,
+
     "roc_auc_score": roc_auc_score,
     "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
     "samples_roc_auc": partial(roc_auc_score, average="samples"),
@@ -197,6 +200,7 @@ METRIC_UNDEFINED_MULTICLASS = [
     "macro_roc_auc",  "samples_roc_auc",
 
     "coverage_error",
+    "brier_score_loss"
 ]
 
 # Metrics with an "average" argument
@@ -211,10 +215,13 @@ THRESHOLDED_METRICS_WITH_AVERAGING = [
 
 # Metrics with a "pos_label" argument
 METRICS_WITH_POS_LABEL = [
-    "roc_curve", "hinge_loss",
+    "roc_curve",
+
+    "brier_score_loss",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
 
+    # pos_label support deprecated; to be removed in 0.18:
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
     "weighted_precision_score", "weighted_recall_score",
 
@@ -226,7 +233,7 @@ METRICS_WITH_POS_LABEL = [
 ]
 
 # Metrics with a "labels" argument
-# XXX: Handle multi_class metrics that has a labels argument as well as a
+# TODO: Handle multi_class metrics that has a labels argument as well as a
 # decision function argument. e.g hinge_loss
 METRICS_WITH_LABELS = [
     "confusion_matrix",
@@ -339,7 +346,7 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
 
 @ignore_warnings
 def test_symmetry():
-    """Test the symmetry of score and loss functions"""
+    # Test the symmetry of score and loss functions
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(20, ))
     y_pred = random_state.randint(0, 2, size=(20, ))
@@ -506,7 +513,7 @@ def test_format_invariance_with_1d_vectors():
 
 @ignore_warnings
 def test_invariance_string_vs_numbers_labels():
-    """Ensure that classification metrics with string labels"""
+    # Ensure that classification metrics with string labels
     random_state = check_random_state(0)
     y1 = random_state.randint(0, 2, size=(20, ))
     y2 = random_state.randint(0, 2, size=(20, ))
@@ -554,9 +561,15 @@ def test_invariance_string_vs_numbers_labels():
                                        "invariance test".format(name))
 
     for name, metric in THRESHOLDED_METRICS.items():
-        if name in ("log_loss", "hinge_loss", "unnormalized_log_loss"):
+        if name in ("log_loss", "hinge_loss", "unnormalized_log_loss",
+                    "brier_score_loss"):
+            # Ugly, but handle case with a pos_label and label
+            metric_str = metric
+            if name in METRICS_WITH_POS_LABEL:
+                metric_str = partial(metric_str, pos_label=pos_label_str)
+
             measure_with_number = metric(y1, y2)
-            measure_with_str = metric(y1_str, y2)
+            measure_with_str = metric_str(y1_str, y2)
             assert_array_equal(measure_with_number, measure_with_str,
                                err_msg="{0} failed string vs number "
                                        "invariance test".format(name))
@@ -573,12 +586,10 @@ def test_invariance_string_vs_numbers_labels():
 
 @ignore_warnings
 def check_single_sample(name):
-    """Non-regression test: scores should work with a single sample.
-
-    This is important for leave-one-out cross validation.
-    Score functions tested are those that formerly called np.squeeze,
-    which turns an array of size 1 into a 0-d array (!).
-    """
+    # Non-regression test: scores should work with a single sample.
+    # This is important for leave-one-out cross validation.
+    # Score functions tested are those that formerly called np.squeeze,
+    # which turns an array of size 1 into a 0-d array (!).
     metric = ALL_METRICS[name]
 
     # assert that no exception is thrown
@@ -930,7 +941,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         unweighted_score,
         metric(y1, y2, sample_weight=np.ones(shape=len(y1))),
         err_msg="For %s sample_weight=None is not equivalent to "
-            "sample_weight=ones" % name)
+                "sample_weight=ones" % name)
 
     # check that the weighted and unweighted scores are unequal
     weighted_score = metric(y1, y2, sample_weight=sample_weight)
@@ -945,8 +956,8 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     assert_almost_equal(
         weighted_score, weighted_score_list,
         err_msg="Weighted scores for array and list sample_weight input are "
-            "not equal (%f != %f) for %s" % (
-                weighted_score, weighted_score_list, name))
+                "not equal (%f != %f) for %s" % (
+                    weighted_score, weighted_score_list, name))
 
     # check that integer weights is the same as repeated samples
     repeat_weighted_score = metric(
@@ -1066,3 +1077,24 @@ def test_sample_weight_invariance(n_samples=50):
                    y_pred)
 
 
+def test_no_averaging_labels():
+    # test labels argument when not using averaging
+    # in multi-class and multi-label cases
+    y_true_multilabel = np.array([[1, 1, 0, 0], [1, 1, 0, 0]])
+    y_pred_multilabel = np.array([[0, 0, 1, 1], [0, 1, 1, 0]])
+    y_true_multiclass = np.array([1, 2, 3])
+    y_pred_multiclass = np.array([1, 3, 4])
+    labels = np.array([4, 1, 2, 3])
+    _, inverse_labels = np.unique(labels, return_inverse=True)
+
+    for name in METRICS_WITH_AVERAGING:
+        for y_true, y_pred in [[y_true_multiclass, y_pred_multiclass],
+                               [y_true_multilabel, y_pred_multilabel]]:
+            if name not in MULTILABELS_METRICS and y_pred.shape[1] > 0:
+                continue
+
+            metric = ALL_METRICS[name]
+
+            score_labels = metric(y_true, y_pred, labels=labels, average=None)
+            score = metric(y_true, y_pred, average=None)
+            assert_array_equal(score_labels, score[inverse_labels])

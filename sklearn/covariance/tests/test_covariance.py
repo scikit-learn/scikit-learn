@@ -23,9 +23,7 @@ n_samples, n_features = X.shape
 
 
 def test_covariance():
-    """Tests Covariance module on a simple dataset.
-
-    """
+    # Tests Covariance module on a simple dataset.
     # test covariance fit from data
     cov = EmpiricalCovariance()
     cov.fit(X)
@@ -57,10 +55,12 @@ def test_covariance():
         cov.error_norm(empirical_covariance(X_1d), norm='spectral'), 0)
 
     # test with one sample
+    # FIXME I don't know what this test does
     X_1sample = np.arange(5)
     cov = EmpiricalCovariance()
-
     assert_warns(UserWarning, cov.fit, X_1sample)
+    assert_array_almost_equal(cov.covariance_,
+                              np.zeros(shape=(5, 5), dtype=np.float64))
 
     # test integer type
     X_integer = np.asarray([[0, 1], [1, 0]])
@@ -74,9 +74,7 @@ def test_covariance():
 
 
 def test_shrunk_covariance():
-    """Tests ShrunkCovariance module on a simple dataset.
-
-    """
+    # Tests ShrunkCovariance module on a simple dataset.
     # compare shrunk covariance obtained from data and from MLE estimate
     cov = ShrunkCovariance(shrinkage=0.5)
     cov.fit(X)
@@ -108,9 +106,7 @@ def test_shrunk_covariance():
 
 
 def test_ledoit_wolf():
-    """Tests LedoitWolf module on a simple dataset.
-
-    """
+    # Tests LedoitWolf module on a simple dataset.
     # test shrinkage coeff on a simple data set
     X_centered = X - X.mean(axis=0)
     lw = LedoitWolf(assume_centered=True)
@@ -149,10 +145,6 @@ def test_ledoit_wolf():
     assert_almost_equal(lw.score(X_centered), score_, 4)
     assert(lw.precision_ is None)
 
-    # (too) large data set
-    X_large = np.ones((20, 200))
-    assert_raises(MemoryError, ledoit_wolf, X_large, block_size=100)
-
     # Same tests without assuming centered data
     # test shrinkage coeff on a simple data set
     lw = LedoitWolf()
@@ -180,9 +172,12 @@ def test_ledoit_wolf():
     assert_array_almost_equal(empirical_covariance(X_1d), lw.covariance_, 4)
 
     # test with one sample
+    # FIXME I don't know what this test does
     X_1sample = np.arange(5)
     lw = LedoitWolf()
     assert_warns(UserWarning, lw.fit, X_1sample)
+    assert_array_almost_equal(lw.covariance_,
+                              np.zeros(shape=(5, 5), dtype=np.float64))
 
     # test shrinkage coeff on a simple data set (without saving precision)
     lw = LedoitWolf(store_precision=False)
@@ -191,10 +186,23 @@ def test_ledoit_wolf():
     assert(lw.precision_ is None)
 
 
-def test_oas():
-    """Tests OAS module on a simple dataset.
+def test_ledoit_wolf_large():
+    # test that ledoit_wolf doesn't error on data that is wider than block_size
+    rng = np.random.RandomState(0)
+    # use a number of features that is larger than the block-size
+    X = rng.normal(size=(10, 20))
+    lw = LedoitWolf(block_size=10).fit(X)
+    # check that covariance is about diagonal (random normal noise)
+    assert_almost_equal(lw.covariance_, np.eye(20), 0)
+    cov = lw.covariance_
 
-    """
+    # check that the result is consistent with not splitting data into blocks.
+    lw = LedoitWolf(block_size=25).fit(X)
+    assert_almost_equal(lw.covariance_, cov)
+
+
+def test_oas():
+    # Tests OAS module on a simple dataset.
     # test shrinkage coeff on a simple data set
     X_centered = X - X.mean(axis=0)
     oa = OAS(assume_centered=True)
@@ -226,7 +234,7 @@ def test_oas():
     assert_almost_equal(oa.score(X_centered), score_, 4)
     assert(oa.precision_ is None)
 
-    ### Same tests without assuming centered data
+    # Same tests without assuming centered data--------------------------------
     # test shrinkage coeff on a simple data set
     oa = OAS()
     oa.fit(X)
@@ -251,9 +259,12 @@ def test_oas():
     assert_array_almost_equal(empirical_covariance(X_1d), oa.covariance_, 4)
 
     # test with one sample
+    # FIXME I don't know what this test does
     X_1sample = np.arange(5)
     oa = OAS()
     assert_warns(UserWarning, oa.fit, X_1sample)
+    assert_array_almost_equal(oa.covariance_,
+                              np.zeros(shape=(5, 5), dtype=np.float64))
 
     # test shrinkage coeff on a simple data set (without saving precision)
     oa = OAS(store_precision=False)

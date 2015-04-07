@@ -10,7 +10,6 @@ import numbers
 import numpy as np
 from warnings import warn
 from abc import ABCMeta, abstractmethod
-from ..utils.validation import has_fit_parameter
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed
@@ -20,8 +19,12 @@ from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_X_y, check_array, column_or_1d
 from ..utils.random import sample_without_replacement
+from ..utils.validation import has_fit_parameter, check_is_fitted
+from ..utils.fixes import bincount
+from ..utils.metaestimators import if_delegate_has_method
 
 from .base import BaseEnsemble, _partition_estimators
+
 
 __all__ = ["BaggingClassifier",
            "BaggingRegressor"]
@@ -49,7 +52,6 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
     bootstrap_features = ensemble.bootstrap_features
     support_sample_weight = has_fit_parameter(ensemble.base_estimator_,
                                               "sample_weight")
-
 
     # Build estimators
     estimators = []
@@ -86,7 +88,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
 
             if bootstrap:
                 indices = random_state.randint(0, n_samples, max_samples)
-                sample_counts = np.bincount(indices, minlength=n_samples)
+                sample_counts = bincount(indices, minlength=n_samples)
                 curr_sample_weight *= sample_counts
 
             else:
@@ -109,7 +111,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                                                      max_samples,
                                                      random_state=random_state)
 
-            sample_counts = np.bincount(indices, minlength=n_samples)
+            sample_counts = bincount(indices, minlength=n_samples)
 
             estimator.fit((X[indices])[:, features], y[indices])
             samples = sample_counts > 0.
@@ -516,7 +518,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         y : array of shape = [n_samples]
             The predicted classes.
         """
-        return self.classes_.take(np.argmax(self.predict_proba(X), axis=1),
+        predicted_probabilitiy = self.predict_proba(X)
+        return self.classes_.take((np.argmax(predicted_probabilitiy, axis=1)),
                                   axis=0)
 
     def predict_proba(self, X):
@@ -541,6 +544,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
+        check_is_fitted(self, "classes_")
         # Check data
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
@@ -586,6 +590,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
+        check_is_fitted(self, "classes_")
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
             X = check_array(X)
@@ -621,6 +626,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         else:
             return np.log(self.predict_proba(X))
 
+    @if_delegate_has_method(delegate='base_estimator')
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
 
@@ -639,9 +645,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             cases with ``k == 1``, otherwise ``k==n_classes``.
 
         """
-        # Trigger an exception if not supported
-        if not hasattr(self.base_estimator_, "decision_function"):
-            raise NotImplementedError
+        check_is_fitted(self, "classes_")
 
         # Check data
         X = check_array(X)
@@ -809,6 +813,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         y : array of shape = [n_samples]
             The predicted values.
         """
+        check_is_fitted(self, "estimators_features_")
         # Check data
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 

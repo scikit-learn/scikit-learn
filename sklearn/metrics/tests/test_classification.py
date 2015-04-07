@@ -1,6 +1,7 @@
 from __future__ import division, print_function
 
 import numpy as np
+from scipy import linalg
 from functools import partial
 from itertools import product
 import warnings
@@ -40,6 +41,7 @@ from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
+from sklearn.metrics import brier_score_loss
 
 
 from sklearn.metrics.classification import _check_targets
@@ -126,7 +128,7 @@ def test_multilabel_accuracy_score_subset_accuracy():
 
 
 def test_precision_recall_f1_score_binary():
-    """Test Precision Recall and F1 Score for binary classification task"""
+    # Test Precision Recall and F1 Score for binary classification task
     y_true, y_pred, _ = make_prediction(binary=True)
 
     # detailed measures for each class
@@ -138,26 +140,30 @@ def test_precision_recall_f1_score_binary():
 
     # individual scoring function that can be used for grid search: in the
     # binary class case the score is the value of the measure for the positive
-    # class (e.g. label == 1)
-    ps = precision_score(y_true, y_pred)
-    assert_array_almost_equal(ps, 0.85, 2)
+    # class (e.g. label == 1). This is deprecated for average != 'binary'.
+    assert_dep_warning = partial(assert_warns, DeprecationWarning)
+    for kwargs, my_assert in [({}, assert_no_warnings),
+                              ({'average': 'binary'}, assert_no_warnings),
+                              ({'average': 'micro'}, assert_dep_warning)]:
+        ps = my_assert(precision_score, y_true, y_pred, **kwargs)
+        assert_array_almost_equal(ps, 0.85, 2)
 
-    rs = recall_score(y_true, y_pred)
-    assert_array_almost_equal(rs, 0.68, 2)
+        rs = my_assert(recall_score, y_true, y_pred, **kwargs)
+        assert_array_almost_equal(rs, 0.68, 2)
 
-    fs = f1_score(y_true, y_pred)
-    assert_array_almost_equal(fs, 0.76, 2)
+        fs = my_assert(f1_score, y_true, y_pred, **kwargs)
+        assert_array_almost_equal(fs, 0.76, 2)
 
-    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2),
-                        (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
+        assert_almost_equal(my_assert(fbeta_score, y_true, y_pred, beta=2,
+                                      **kwargs),
+                            (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
 
 
 @ignore_warnings
 def test_precision_recall_f_binary_single_class():
-    """Test precision, recall and F1 score behave with a single positive or
-    negative class
-
-    Such a case may occur with non-stratified cross-validation"""
+    # Test precision, recall and F1 score behave with a single positive or
+    # negative class
+    # Such a case may occur with non-stratified cross-validation
     assert_equal(1., precision_score([1, 1], [1, 1]))
     assert_equal(1., recall_score([1, 1], [1, 1]))
     assert_equal(1., f1_score([1, 1], [1, 1]))
@@ -168,9 +174,8 @@ def test_precision_recall_f_binary_single_class():
 
 
 def test_average_precision_score_score_non_binary_class():
-    """Test that average_precision_score function returns an error when trying
-    to compute average_precision_score for multiclass task.
-    """
+    # Test that average_precision_score function returns an error when trying
+    # to compute average_precision_score for multiclass task.
     rng = check_random_state(404)
     y_pred = rng.rand(10)
 
@@ -204,6 +209,7 @@ def test_average_precision_score_tied_values():
     assert_not_equal(average_precision_score(y_true, y_score), 1.)
 
 
+@ignore_warnings
 def test_precision_recall_fscore_support_errors():
     y_true, y_pred, _ = make_prediction(binary=True)
 
@@ -221,7 +227,7 @@ def test_precision_recall_fscore_support_errors():
 
 
 def test_confusion_matrix_binary():
-    """Test confusion matrix - binary classification case"""
+    # Test confusion matrix - binary classification case
     y_true, y_pred, _ = make_prediction(binary=True)
 
     def test(y_true, y_pred):
@@ -249,7 +255,7 @@ def test_matthews_corrcoef_nan():
 
 
 def test_precision_recall_f1_score_multiclass():
-    """Test Precision Recall and F1 Score for multiclass classification task"""
+    # Test Precision Recall and F1 Score for multiclass classification task
     y_true, y_pred, _ = make_prediction(binary=False)
 
     # compute scores with default labels introspection
@@ -303,11 +309,23 @@ def test_precision_recall_f1_score_multiclass():
     assert_array_equal(s, [24, 20, 31])
 
 
-def test_precision_recall_f1_score_multiclass_pos_label_none():
-    """Test Precision Recall and F1 Score for multiclass classification task
+def test_precision_refcall_f1_score_multilabel_unordered_labels():
+    # test that labels need not be sorted in the multilabel case
+    y_true = np.array([[1, 1, 0, 0]])
+    y_pred = np.array([[0, 0, 1, 1]])
+    for average in ['samples', 'micro', 'macro', 'weighted', None]:
+        p, r, f, s = precision_recall_fscore_support(
+            y_true, y_pred, labels=[4, 1, 2, 3], warn_for=[], average=average)
+        assert_array_equal(p, 0)
+        assert_array_equal(r, 0)
+        assert_array_equal(f, 0)
+        if average is None:
+            assert_array_equal(s, [0, 1, 1, 0])
 
-    GH Issue #1296
-    """
+
+def test_precision_recall_f1_score_multiclass_pos_label_none():
+    # Test Precision Recall and F1 Score for multiclass classification task
+    # GH Issue #1296
     # initialize data
     y_true = np.array([0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1])
     y_pred = np.array([1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1])
@@ -319,7 +337,7 @@ def test_precision_recall_f1_score_multiclass_pos_label_none():
 
 
 def test_zero_precision_recall():
-    """Check that pathological cases do not bring NaNs"""
+    # Check that pathological cases do not bring NaNs
 
     old_error_settings = np.seterr(all='raise')
 
@@ -339,7 +357,7 @@ def test_zero_precision_recall():
 
 
 def test_confusion_matrix_multiclass():
-    """Test confusion matrix - multi-class case"""
+    # Test confusion matrix - multi-class case
     y_true, y_pred, _ = make_prediction(binary=False)
 
     def test(y_true, y_pred, string_type=False):
@@ -365,7 +383,7 @@ def test_confusion_matrix_multiclass():
 
 
 def test_confusion_matrix_multiclass_subset_labels():
-    """Test confusion matrix - multi-class case with subset of labels"""
+    # Test confusion matrix - multi-class case with subset of labels
     y_true, y_pred, _ = make_prediction(binary=False)
 
     # compute confusion matrix with only first two labels considered
@@ -381,7 +399,7 @@ def test_confusion_matrix_multiclass_subset_labels():
 
 
 def test_classification_report_multiclass():
-    """Test performance report"""
+    # Test performance report
     iris = datasets.load_iris()
     y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
 
@@ -399,7 +417,6 @@ avg / total       0.51      0.53      0.47        75
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names)
     assert_equal(report, expected_report)
-
     # print classification report with label detection
     expected_report = """\
              precision    recall  f1-score   support
@@ -415,7 +432,7 @@ avg / total       0.51      0.53      0.47        75
 
 
 def test_classification_report_multiclass_with_digits():
-    """Test performance report with added digits in floating point values"""
+    # Test performance report with added digits in floating point values
     iris = datasets.load_iris()
     y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
 
@@ -433,7 +450,6 @@ avg / total    0.51375   0.53333   0.47310        75
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names, digits=5)
     assert_equal(report, expected_report)
-
     # print classification report with label detection
     expected_report = """\
              precision    recall  f1-score   support
@@ -515,7 +531,6 @@ def test_multilabel_classification_report():
                            n_samples=n_samples)
     _, y_pred_ll = make_ml(n_features=1, n_classes=n_classes, random_state=1,
                            n_samples=n_samples)
-
     expected_report = """\
              precision    recall  f1-score   support
 
@@ -631,8 +646,7 @@ def test_multilabel_jaccard_similarity_score():
 
 @ignore_warnings
 def test_precision_recall_f1_score_multilabel_1():
-    """ Test precision_recall_f1_score on a crafted multilabel example
-    """
+    # Test precision_recall_f1_score on a crafted multilabel example
     # First crafted example
     y_true_ll = [(0,), (1,), (2, 3)]
     y_pred_ll = [(1,), (1,), (2, 0)]
@@ -708,8 +722,7 @@ def test_precision_recall_f1_score_multilabel_1():
 
 @ignore_warnings
 def test_precision_recall_f1_score_multilabel_2():
-    """ Test precision_recall_f1_score on a crafted multilabel example 2
-    """
+    # Test precision_recall_f1_score on a crafted multilabel example 2
     # Second crafted example
     y_true_ll = [(1,), (2,), (2, 3)]
     y_pred_ll = [(4,), (4,), (2, 1)]
@@ -992,10 +1005,11 @@ def test_fscore_warnings():
 
 
 def test_prf_average_compat():
-    """Ensure warning if f1_score et al.'s average is implicit for multiclass
-    """
+    # Ensure warning if f1_score et al.'s average is implicit for multiclass
     y_true = [1, 2, 3, 3]
     y_pred = [1, 2, 3, 1]
+    y_true_bin = [0, 1, 1]
+    y_pred_bin = [0, 1, 0]
 
     for metric in [precision_score, recall_score, f1_score,
                    partial(fbeta_score, beta=2)]:
@@ -1006,13 +1020,22 @@ def test_prf_average_compat():
                      'average does not act like "weighted" by default')
 
         # check binary passes without warning
-        assert_no_warnings(metric, [0, 1, 1], [0, 1, 0])
+        assert_no_warnings(metric, y_true_bin, y_pred_bin)
+
+        # but binary with pos_label=None should behave like multiclass
+        score = assert_warns(DeprecationWarning, metric,
+                             y_true_bin, y_pred_bin, pos_label=None)
+        score_weighted = assert_no_warnings(metric, y_true_bin, y_pred_bin,
+                                            pos_label=None, average='weighted')
+        assert_equal(score, score_weighted,
+                     'average does not act like "weighted" by default with '
+                     'binary data and pos_label=None')
 
 
 @ignore_warnings  # sequence of sequences is deprecated
 def test__check_targets():
-    """Check that _check_targets correctly merges target types, squeezes
-    output and fails if input lengths differ."""
+    # Check that _check_targets correctly merges target types, squeezes
+    # output and fails if input lengths differ.
     IND = 'multilabel-indicator'
     SEQ = 'multilabel-sequences'
     MC = 'multiclass'
@@ -1238,3 +1261,20 @@ def test_log_loss():
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
     loss = log_loss(y_true, y_pred)
     assert_almost_equal(loss, 1.0383217, decimal=6)
+
+
+def test_brier_score_loss():
+    # Check brier_score_loss function
+    y_true = np.array([0, 1, 1, 0, 1, 1])
+    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1., 0.95])
+    true_score = linalg.norm(y_true - y_pred) ** 2 / len(y_true)
+
+    assert_almost_equal(brier_score_loss(y_true, y_true), 0.0)
+    assert_almost_equal(brier_score_loss(y_true, y_pred), true_score)
+    assert_almost_equal(brier_score_loss(1. + y_true, y_pred),
+                        true_score)
+    assert_almost_equal(brier_score_loss(2 * y_true - 1, y_pred),
+                        true_score)
+    assert_raises(ValueError, brier_score_loss, y_true, y_pred[1:])
+    assert_raises(ValueError, brier_score_loss, y_true, y_pred + 1.)
+    assert_raises(ValueError, brier_score_loss, y_true, y_pred - 1.)
