@@ -900,8 +900,9 @@ class LarsCV(Lars):
         Maximum number of iterations to perform.
 
     cv : cross-validation generator, optional
-        see :mod:`sklearn.cross_validation`. If ``None`` is passed, default to
-        a 5-fold strategy
+        If an integer is passed, it is the number of folds (default 3) in
+        StratifiedKFold. Specific cross-validation objects can be passed, see
+        :mod:`sklearn.cross_validation`.
 
     max_n_alphas : integer, optional
         The maximum number of points on the path used to compute the
@@ -1073,8 +1074,9 @@ class LassoLarsCV(LarsCV):
         Maximum number of iterations to perform.
 
     cv : cross-validation generator, optional
-        see sklearn.cross_validation module. If None is passed, default to
-        a 5-fold strategy
+        If an integer is passed, it is the number of folds (default 3) in
+        StratifiedKFold. Specific cross-validation objects can be passed, see
+        :mod:`sklearn.cross_validation`.    
 
     max_n_alphas : integer, optional
         The maximum number of points on the path used to compute the

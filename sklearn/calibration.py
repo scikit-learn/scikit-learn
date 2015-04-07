@@ -52,8 +52,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         Use sigmoids (Platt's calibration) in this case.
 
     cv : integer or cross-validation generator or "prefit", optional
-        If an integer is passed, it is the number of folds (default 3).
-        Specific cross-validation objects can be passed, see
+        If an integer is passed, it is the number of folds (default 3) in
+        StratifiedKFold. Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects.
         If "prefit" is passed, it is assumed that base_estimator has been
         fitted already and all data is used for calibration.

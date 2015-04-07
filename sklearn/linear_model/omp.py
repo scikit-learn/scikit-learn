@@ -744,7 +744,12 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         to include. 10% of ``n_features`` but at least 5 if available.
 
     cv : cross-validation generator, optional
-        see :mod:`sklearn.cross_validation`. If ``None`` is passed, default to
+        The default cross-validation generator used is StratifiedKFold.
+        If an integer is provided, then it is the number of folds used.
+        See the module :mod:`sklearn.cross_validation` module for the
+        list of possible cross-validation objects.
+
+see :mod:`sklearn.cross_validation`. If ``None`` is passed, default to
         a 5-fold strategy
 
     n_jobs : integer, optional

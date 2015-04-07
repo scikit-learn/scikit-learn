@@ -973,9 +973,10 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
 
     cv : cross-validation generator or int, optional, default: None
         A cross-validation generator to use. If int, determines
-        the number of folds in StratifiedKFold if y is binary
-        or multiclass and estimator is a classifier, or the number
+        the number of folds in StratifiedKFold if y, or the number
         of folds in KFold otherwise. If None, it is equivalent to cv=3.
+        Specific cross-validation objects can be passed, see
+        sklearn.cross_validation module for the list of possible objects.
         This generator must include all elements in the test set exactly once.
         Otherwise, a ValueError is raised.
 
@@ -1129,9 +1130,9 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
 
     cv : cross-validation generator or int, optional, default: None
         A cross-validation generator to use. If int, determines
-        the number of folds in StratifiedKFold if y is binary
-        or multiclass and estimator is a classifier, or the number
-        of folds in KFold otherwise. If None, it is equivalent to cv=3.
+        the number of folds in StratifiedKFold. If None, it is 
+        equivalent to cv=3. Specific cross-validation objects can be passed, see
+        sklearn.cross_validation module for the list of possible objects.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -1384,9 +1385,11 @@ def check_cv(cv, X=None, y=None, classifier=False):
     ----------
     cv : int, a cv generator instance, or None
         The input specifying which cv generator to use. It can be an
-        integer, in which case it is the number of folds in a KFold,
+        integer, in which case it is the number of folds in a StratifiedKFold,
         None, in which case 3 fold is used, or another object, that
-        will then be used as a cv generator.
+        will then be used as a cv generator. Specific cross-validation objects 
+        can be passed, see sklearn.cross_validation module for the list of 
+        possible objects.
 
     X : array-like
         The data the cross-val object will be applied on.
