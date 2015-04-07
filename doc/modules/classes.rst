@@ -1286,5 +1286,6 @@ Low-level methods
    :template: function.rst
 
    utils.check_random_state
+   utils.estimator_checks.check_estimator
    utils.resample
    utils.shuffle
