@@ -907,10 +907,11 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         ``scorer(estimator, X, y)``.
 
     cv : integer or cross-validation generator, optional
-        The default cross-validation generator used is StratifiedKFold.
-        If an integer is provided, then it is the number of folds used.
-        See the module :mod:`sklearn.cross_validation` module for the
-        list of possible cross-validation objects.
+        If None, Generalized Cross-Validation (efficient Leave-One-Out)
+        will be used.
+        If an integer is passed, it is the number of folds for KFold cross
+        validation.  Specific cross-validation objects can be passed, see
+        sklearn.cross_validation module for the list of possible objects
 
     gcv_mode : {None, 'auto', 'svd', eigen'}, optional
         Flag indicating which strategy to use when performing
@@ -990,11 +991,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         ``scorer(estimator, X, y)``.
 
     cv : cross-validation generator, optional
-        The default cross-validation generator used is StratifiedKFold.
-        If an integer is provided, then it is the number of folds used.
-        See the module :mod:`sklearn.cross_validation` module for the
-        list of possible cross-validation objects.
-        
+        If None, Generalized Cross-Validation (efficient Leave-One-Out)
+        will be used.
+
     class_weight : dict, optional
         Weights associated with classes in the form
         ``{class_label : weight}``. If not given, all classes are

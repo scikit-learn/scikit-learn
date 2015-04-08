@@ -1189,8 +1189,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
         than ``tol``.
 
     cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of fold (default 3)
-        in StratifiedKFold. Specific cross-validation objects can be passed,
+        If an integer is passed, it is the number of fold (default 3).
+        Specific cross-validation objects can be passed,
         see the :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 

@@ -434,9 +434,8 @@ class GraphLassoCV(GraphLasso):
         values of alphas are passed.
 
     cv : cross-validation generator, optional
-        see sklearn.cross_validation module. If an integer is passed, it is
-        the number of folds in StratifiedKFolds. If None is passed, defaults to
-        a 3-fold strategy. 
+        see sklearn.cross_validation module. If None is passed, defaults to
+        a 3-fold strategy
 
     tol: positive float, optional
         The tolerance to declare convergence: if the dual gap goes below

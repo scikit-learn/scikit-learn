@@ -975,6 +975,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
         A cross-validation generator to use. If int, determines
         the number of folds in StratifiedKFold if y, or the number
         of folds in KFold otherwise. If None, it is equivalent to cv=3.
+        If the estimator is a classifier the default will be StratifiedKFold.
         Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects.
         This generator must include all elements in the test set exactly once.
@@ -1129,10 +1130,11 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         ``scorer(estimator, X, y)``.
 
     cv : cross-validation generator or int, optional, default: None
-        A cross-validation generator to use. If int, determines
-        the number of folds in StratifiedKFold. If None, it is 
-        equivalent to cv=3. Specific cross-validation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects.
+        A cross-validation generator to use. If int and if estimator is a
+        classiffier, determines the number of folds in StratifiedKFold. 
+        If None, it is equivalent to cv=3. Specific cross-validation objects 
+        can be passed, see sklearn.cross_validation module for the list of 
+        possible objects.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -1385,11 +1387,11 @@ def check_cv(cv, X=None, y=None, classifier=False):
     ----------
     cv : int, a cv generator instance, or None
         The input specifying which cv generator to use. It can be an
-        integer, in which case it is the number of folds in a StratifiedKFold,
-        None, in which case 3 fold is used, or another object, that
-        will then be used as a cv generator. Specific cross-validation objects 
-        can be passed, see sklearn.cross_validation module for the list of 
-        possible objects.
+        integer, in which case it is the number of folds in a StratifiedKFold 
+        the task is a classfier, None, in which case 3 fold is used, or another
+        object, that will then be used as a cv generator. Specific 
+        cross-validation objects can be passed, see sklearn.cross_validation 
+        module for the list of possible objects.
 
     X : array-like
         The data the cross-val object will be applied on.
@@ -1454,6 +1456,7 @@ def permutation_test_score(estimator, X, y, cv=None,
 
     cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
+        Assuming estimator is a classifier, will default to StratifiedKFold.
         Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects.
 
