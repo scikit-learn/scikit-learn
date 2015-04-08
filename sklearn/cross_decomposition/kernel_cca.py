@@ -22,7 +22,7 @@ class KernelCCA(BaseEstimator):
 
     Canonical correlation analysis between two kernels. By default,
     the kernel matrices are decomposed by Partial Gram-Schmidt
-    Orthgonalization. Kernels are centered before everything.
+    Orthogonalization. Kernels are centered before everything.
 
     Parameters
     ----------
@@ -72,9 +72,9 @@ class KernelCCA(BaseEstimator):
 
     nor : {1, 2, 3}, optional
         Normalize option (default is 2).
-        nor=1 without normalisation and use Gram-Schmidt space.
-        nor=2 normalisation in kernel space.
-        nor=3 normalisation in Gram-Schmidt space.
+        nor=1 without normalization and use Gram-Schmidt space.
+        nor=2 normalization in kernel space.
+        nor=3 normalization in Gram-Schmidt space.
 
     tol : float, optional
         Convergence tolerance for arpack (default is 0,
@@ -125,7 +125,7 @@ class KernelCCA(BaseEstimator):
 
     By default, Partial Gram-Schmidt Orthogonalization (pgso) is used to
     decompose the kernel matrix. When PGSO is not used, only positive
-    correlation coefficients and corresponding basis vectors  are returned.
+    correlation coefficients and corresponding basis vectors are returned.
 
     This implementation is based on the matlab code for kernel CCA provided
     by David Hardoon.
@@ -233,6 +233,10 @@ class KernelCCA(BaseEstimator):
 
         norm2 = np.diag(K)
         j = 0
+
+        if np.sum(norm2) <= eta:
+            warnings.warn("PGSO failed, try larger eta or KCCA without PGSO.")
+
         while np.sum(norm2) > eta and j != m:
             # find the best new element
             j2 = np.argmax(norm2)
@@ -271,18 +275,13 @@ class KernelCCA(BaseEstimator):
         Kxinv = linalg.pinv(np.dot((1-self.kapa)*I, Kx) + self.kapa*I)
         Kyinv = linalg.pinv(np.dot((1-self.kapa)*I, Ky) + self.kapa*I)
         A = np.dot(np.dot(np.dot(Kxinv, Ky), Kyinv), Kx)
-        A = 0.5*(A.T + A) + np.diag(np.ones(A.shape[0]))*10e-6
+        A = 0.5*(A.T + A) + np.diag(np.ones(A.shape[0]))*1e-6
 
-        rankA = np.linalg.matrix_rank(A)
+        rankA = linalg.matrix_rank(A)
         if self.n_components > rankA:
             warnings.warn("set n_components to %d" % rankA)
             self.n_components = rankA
         rr, alpha = self._solve_eigenvalues(A)
-
-        #if np.all(rr.real > 0): # rr is lambda^2
-        #    r = np.sqrt(rr.real)
-        #else: # rr has negative eigenvalues
-        #    r = np.array(map(cmath.sqrt, rr.real))
 
         # throw away negative eigenvalues
         if not np.all(rr.real > 0):
@@ -337,7 +336,7 @@ class KernelCCA(BaseEstimator):
         A = np.dot(np.dot(SinvZxy, Zyyinv), SinvZxy.T)
         A = 0.5*(A.T + A) + np.diag(np.ones(A.shape[0]))*10e-6
 
-        rankA = np.linalg.matrix_rank(A)
+        rankA = linalg.matrix_rank(A)
         if self.n_components > rankA:
             warnings.warn("set n_components to %d" % rankA)
             self.n_components = rankA
@@ -361,16 +360,16 @@ class KernelCCA(BaseEstimator):
         nbeta = np.dot(invRy, beta)  # nbeta is beta in the paper
 
         # normalising the feature vectors and recomputing the correlation
-        if self.nor == 1:  # no normalizsation but using GS projected space
+        if self.nor == 1:  # no normalization but using GS projected space
             nalpha = alpha
             nbeta = beta
             warnings.warn("Remember to project your testing Kernels"
                           "into the GS space!")
-        elif self.nor == 2:  # normalisation in kernel space
+        elif self.nor == 2:  # normalization in kernel space
             nalpha = self._normalisekcca(nalpha, Kx)
             nbeta = self._normalisekcca(nbeta, Ky)
             r = np.diag(np.dot(np.dot(np.dot(nalpha.T, Kx.T), Ky), nbeta))
-        elif self.nor == 3:  # normalisation in GS space
+        elif self.nor == 3:  # normalization in GS space
             nalpha = self._normalisekcca(alpha, Rx)
             nbeta = self._normalisekcca(beta, Ry)
             r = np.diag(np.dot(np.dot(np.dot(nalpha.T, Rx.T), Ry), nbeta))
