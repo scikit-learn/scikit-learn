@@ -67,8 +67,8 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
 
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
-               min_bin_freq=1, cluster_all=True, max_iterations=300,
-               kernel='flat', gamma=1.0):
+               min_bin_freq=1, cluster_all=True, max_iter=300,
+               max_iterations=None, kernel='flat', gamma=1.0):
     """Perform MeanShift Clustering of data using a flat kernel
 
     MeanShift clustering aims to discover *blobs* in a smooth density of
@@ -92,6 +92,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         the median of all pairwise distances. This will take quadratic time in
         the number of samples. The sklearn.cluster.estimate_bandwidth function
         can be used to do this more efficiently.
+        The only exception is when an rbf kernel is used. In this case
+        the default value of bandwidth is 3 / sqrt(gamma).
 
     seeds : array-like, shape=[n_seeds, n_features] or None
         Point used as initial kernel locations. If None and bin_seeding=False,
@@ -150,7 +152,10 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         max_iter = max_iterations
 
     if bandwidth is None:
-        bandwidth = estimate_bandwidth(X)
+        if kernel == 'rbf':
+            bandwidth = 3 / np.sqrt(gamma)
+        else:
+            bandwidth = estimate_bandwidth(X)
     elif bandwidth <= 0:
         raise ValueError("bandwidth needs to be greater than zero or None, got %f" %
                          bandwidth)
