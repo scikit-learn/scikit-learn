@@ -416,10 +416,6 @@ class KernelCCA(BaseEstimator):
         p = X.shape[1]
         q = Y.shape[1]
 
-        #if n != Y.shape[0]:
-        #    raise ValueError(
-        #        "Invalid number of samples", KernelCCA().fit, X, Y)
-
         if self.n_components < 1 or self.n_components > n:
             raise ValueError('Invalid number of components: %d' %
                              self.n_components)
