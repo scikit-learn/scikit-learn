@@ -76,29 +76,29 @@ param_grid = {"alpha": [1e0, 1e-1, 1e-2, 1e-3],
 kr = GridSearchCV(KernelRidge(), cv=5, param_grid=param_grid)
 stime = time.time()
 kr.fit(X, y)
-print "Time for KRR fitting: %.3f" % (time.time() - stime)
+print("Time for KRR fitting: %.3f" % (time.time() - stime))
 
 gp_kernel = ExpSineSquared(1.0, 5.0) + WhiteKernel(1e-1)
 gpr = GaussianProcessRegressor(kernel=gp_kernel)
 stime = time.time()
 gpr.fit(X, y)
-print "Time for GPR fitting: %.3f" % (time.time() - stime)
+print("Time for GPR fitting: %.3f" % (time.time() - stime))
 
 # Predict using kernel ridge
 X_plot = np.linspace(0, 20, 10000)[:, None]
 stime = time.time()
 y_kr = kr.predict(X_plot)
-print "Time for KRR prediction: %.3f" % (time.time() - stime)
+print("Time for KRR prediction: %.3f" % (time.time() - stime))
 
 # Predict using kernel ridge
 stime = time.time()
 y_gpr = gpr.predict(X_plot, return_std=False)
-print "Time for GPR prediction: %.3f" % (time.time() - stime)
+print("Time for GPR prediction: %.3f" % (time.time() - stime))
 
 stime = time.time()
 y_gpr, y_std = gpr.predict(X_plot, return_std=True)
-print "Time for GPR prediction with standard-deviation: %.3f" \
-    % (time.time() - stime)
+print("Time for GPR prediction with standard-deviation: %.3f"
+      % (time.time() - stime))
 
 # Plot results
 plt.scatter(X, y, c='k', label='data')

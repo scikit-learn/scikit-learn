@@ -1,7 +1,4 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
-r"""
+"""
 =========================================================
 Gaussian Processes regression: basic introductory example
 =========================================================

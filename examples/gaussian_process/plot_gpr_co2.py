@@ -1,5 +1,11 @@
-"""Gaussian process regression (GPR) on Mauna Loa CO2 data. """
-print __doc__
+"""
+========================================================
+Gaussian process regression (GPR) on Mauna Loa CO2 data.
+========================================================
+
+Gaussian process regression (GPR) on Mauna Loa CO2 data.
+"""
+print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #
@@ -30,8 +36,8 @@ gp = GaussianProcessRegressor(kernel=kernel_gpml, sigma_squared_n=0,
 							  optimizer=None)
 gp.fit(X, y - y_mean)
 
-print "GPML kernel: %s" % gp.kernel_
-print "Log-marginal-likelihood: %.3f" % gp.log_marginal_likelihood(gp.theta_)
+print("GPML kernel: %s" % gp.kernel_)
+print("Log-marginal-likelihood: %.3f" % gp.log_marginal_likelihood(gp.theta_))
 
 # Kernel with optimized parameters
 k1 = 50.0**2 * RBF(l=50.0) # long term smooth rising trend
@@ -45,8 +51,8 @@ kernel = k1 + k2 + k3 + k4
 gp = GaussianProcessRegressor(kernel=kernel, sigma_squared_n=0)
 gp.fit(X, y - y_mean)
 
-print "\nLearned kernel: %s" % gp.kernel_
-print "Log-marginal-likelihood: %.3f" % gp.log_marginal_likelihood(gp.theta_)
+print("\nLearned kernel: %s" % gp.kernel_)
+print("Log-marginal-likelihood: %.3f" % gp.log_marginal_likelihood(gp.theta_))
 
 X_ = np.linspace(X.min(), X.max() + 30, 1000)[:, np.newaxis]
 y_pred, y_std = gp.predict(X_, return_std=True)

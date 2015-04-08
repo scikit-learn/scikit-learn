@@ -1,4 +1,7 @@
-"""Gaussian process classification (GPC)
+"""
+====================================================================
+Probabilistic predictions with Gaussian process classification (GPC)
+====================================================================
 
 This example illustrates the predicted probability of GPC for an RBF kernel
 with different choices of the hyperparameters. The first figure shows the
@@ -17,7 +20,7 @@ The second figure shows the log-marginal-likelihood for different choices of
 the kernel's hyperparameters, highlighting the two choices of the
 hyperparameters used in the first figure by black dots.
 """
-print __doc__
+print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #
@@ -46,17 +49,17 @@ gp_fix.fit(X[:train_size], y[:train_size])
 gp_opt = GaussianProcessClassifier(kernel=1.0 * RBF(l=1.0))
 gp_opt.fit(X[:train_size], y[:train_size])
 
-print "Log Marginal Likelihood (initial): %.3f" % \
-    gp_fix.log_marginal_likelihood(gp_fix.theta_)
-print "Log Marginal Likelihood (optimized): %.3f" % \
-    gp_opt.log_marginal_likelihood(gp_opt.theta_)
+print("Log Marginal Likelihood (initial): %.3f"
+      % gp_fix.log_marginal_likelihood(gp_fix.theta_))
+print("Log Marginal Likelihood (optimized): %.3f"
+      % gp_opt.log_marginal_likelihood(gp_opt.theta_))
 
-print "Accuracy: %.3f (initial) %.3f (optimized)" \
-    % (accuracy_score(y[:train_size], gp_fix.predict(X[:train_size])),
-       accuracy_score(y[:train_size], gp_opt.predict(X[:train_size])))
-print "Log-loss: %.3f (initial) %.3f (optimized)" \
-    % (log_loss(y[:train_size], gp_fix.predict_proba(X[:train_size])[:, 1]),
-       log_loss(y[:train_size], gp_opt.predict_proba(X[:train_size])[:, 1]))
+print("Accuracy: %.3f (initial) %.3f (optimized)"
+      % (accuracy_score(y[:train_size], gp_fix.predict(X[:train_size])),
+         accuracy_score(y[:train_size], gp_opt.predict(X[:train_size]))))
+print("Log-loss: %.3f (initial) %.3f (optimized)"
+      % (log_loss(y[:train_size], gp_fix.predict_proba(X[:train_size])[:, 1]),
+         log_loss(y[:train_size], gp_opt.predict_proba(X[:train_size])[:, 1])))
 
 
 # Plot posteriors

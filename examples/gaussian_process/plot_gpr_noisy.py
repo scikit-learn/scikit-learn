@@ -1,4 +1,7 @@
-"""Gaussian process regression (GPR) with noise-level estimation.
+"""
+=============================================================
+Gaussian process regression (GPR) with noise-level estimation
+=============================================================
 
 This example illustrates that GPR with a sum-kernel including a WhiteKernel can
 estimate the noise level of data. An illustration of the
@@ -12,7 +15,7 @@ hyperparameters, the gradient-based optimization might also converge to the
 high-noise solution. It is thus important to repeat the optimization several
 times for different initializations.
 """
-print __doc__
+print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #
