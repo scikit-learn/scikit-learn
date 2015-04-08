@@ -40,6 +40,7 @@ from sklearn.utils.estimator_checks import (
     check_regressors_train,
     check_regressors_pickle,
     check_transformer_pickle,
+    check_transformer_pipe,
     check_transformers_unfitted,
     check_estimators_empty_data_messages,
     check_estimators_nan_inf,
@@ -132,6 +133,7 @@ def test_transformers():
         # All transformers should either deal with sparse data or raise an
         # exception with type TypeError and an intelligible error message
         yield check_transformer_pickle, name, Transformer
+        yield check_transformer_pipe, name, Transformer
         if name not in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer',
                         'PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']:
             yield check_transformer_data_not_an_array, name, Transformer

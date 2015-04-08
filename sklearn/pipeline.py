@@ -114,19 +114,34 @@ class Pipeline(BaseEstimator):
 
     # Estimator interface
 
-    def _pre_transform(self, X, y=None, **fit_params):
+    def _fit_pre_pipe(self, X, y=None, **fit_params):
         fit_params_steps = dict((step, {}) for step, _ in self.steps)
         for pname, pval in six.iteritems(fit_params):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X
+        yt = y
         for name, transform in self.steps[:-1]:
-            if hasattr(transform, "fit_transform"):
-                Xt = transform.fit_transform(Xt, y, **fit_params_steps[name])
+            if hasattr(transform, "fit_pipe"):
+                Xt, yt = transform.fit_pipe(Xt, yt, **fit_params_steps[name])
+            elif hasattr(transform, "pipe"):
+                Xt = transform.fit(Xt, y, **fit_params_steps[name]).pipe(Xt, yt)
+            elif hasattr(transform, "fit_transform"):
+                Xt = transform.fit_transform(Xt, yt, **fit_params_steps[name])
             else:
-                Xt = transform.fit(Xt, y, **fit_params_steps[name]) \
+                Xt = transform.fit(Xt, yt, **fit_params_steps[name]) \
                               .transform(Xt)
-        return Xt, fit_params_steps[self.steps[-1][0]]
+        return Xt, yt, fit_params_steps[self.steps[-1][0]]
+
+    def _pre_pipe(self, X, y=None):
+        Xt = X
+        yt = y
+        for name, transform in self.steps[:-1]:
+            if hasattr(transform, "pipe"):
+                Xt = transform.pipe(Xt, yt)
+            else:
+                Xt = transform.transform(Xt)
+        return Xt, yt
 
     def fit(self, X, y=None, **fit_params):
         """Fit all the transforms one after the other and transform the
@@ -141,8 +156,8 @@ class Pipeline(BaseEstimator):
             Training targets. Must fulfill label requirements for all steps of
             the pipeline.
         """
-        Xt, fit_params = self._pre_transform(X, y, **fit_params)
-        self.steps[-1][-1].fit(Xt, y, **fit_params)
+        Xt, yt, fit_params = self._fit_pre_pipe(X, y, **fit_params)
+        self.steps[-1][-1].fit(Xt, yt, **fit_params)
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -160,11 +175,11 @@ class Pipeline(BaseEstimator):
             Training targets. Must fulfill label requirements for all steps of
             the pipeline.
         """
-        Xt, fit_params = self._pre_transform(X, y, **fit_params)
+        Xt, yt, fit_params = self._fit_pre_pipe(X, y, **fit_params)
         if hasattr(self.steps[-1][-1], 'fit_transform'):
-            return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
+            return self.steps[-1][-1].fit_transform(Xt, yt, **fit_params)
         else:
-            return self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
+            return self.steps[-1][-1].fit(Xt, yt, **fit_params).transform(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X):
@@ -178,9 +193,8 @@ class Pipeline(BaseEstimator):
             Data to predict on. Must fulfill input requirements of first step of
             the pipeline.
         """
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
+        # some steps could create y that others consume
+        Xt, _ = self._pre_pipe(X, y=None)
         return self.steps[-1][-1].predict(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
@@ -195,9 +209,7 @@ class Pipeline(BaseEstimator):
             Data to predict on. Must fulfill input requirements of first step of
             the pipeline.
         """
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
+        Xt, _ = self._pre_pipe(X, y=None)
         return self.steps[-1][-1].predict_proba(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
@@ -212,9 +224,7 @@ class Pipeline(BaseEstimator):
             Data to predict on. Must fulfill input requirements of first step of
             the pipeline.
         """
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
+        Xt, _ = self._pre_pipe(X, y=None)
         return self.steps[-1][-1].decision_function(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
@@ -229,9 +239,7 @@ class Pipeline(BaseEstimator):
             Data to predict on. Must fulfill input requirements of first step of
             the pipeline.
         """
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
+        Xt, _ = self._pre_pipe(X, y=None)
         return self.steps[-1][-1].predict_log_proba(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
@@ -246,10 +254,8 @@ class Pipeline(BaseEstimator):
             Data to predict on. Must fulfill input requirements of first step of
             the pipeline.
         """
-        Xt = X
-        for name, transform in self.steps:
-            Xt = transform.transform(Xt)
-        return Xt
+        Xt, _ = self._pre_pipe(X, y=None)
+        return self.steps[-1][1].transform(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def inverse_transform(self, X):
@@ -272,6 +278,22 @@ class Pipeline(BaseEstimator):
         return Xt
 
     @if_delegate_has_method(delegate='_final_estimator')
+    def pipe(self, X, y):
+        """Applies transformations to X and y. Valid only if the final
+        estimator implements pipe.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to inverse transform. Must fulfill output requirements of the
+            last step of the pipeline.
+        """
+        if X.ndim == 1:
+            X = X[None, :]
+        Xt, yt = self._pre_pipe(X, y=None)
+        return self.steps[-1][0].pipe(Xt, yt)
+
+    @if_delegate_has_method(delegate='_final_estimator')
     def score(self, X, y=None):
         """Applies transforms to the data, and the score method of the
         final estimator. Valid only if the final estimator implements
@@ -287,10 +309,8 @@ class Pipeline(BaseEstimator):
             Targets used for scoring. Must fulfill label requirements for all steps of
             the pipeline.
         """
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].score(Xt, y)
+        Xt, yt = self._pre_pipe(X, y=y)
+        return self.steps[-1][-1].score(Xt, yt)
 
     @property
     def classes_(self):
