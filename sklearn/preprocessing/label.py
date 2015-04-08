@@ -64,10 +64,14 @@ class _LabelTransformer(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMi
         pass
 
     def pipe(self, X=None, y=None):
-        return X, self.transform(y)
+        if y is not None:
+            y = self.transform(y)
+        return X, y
 
     def fit_pipe(self, X=None, y=None):
-        return X, self.fit_transform(y)
+        if y is not None:
+            y = self.fit_transform(y)
+        return X, y
 
 
 class LabelEncoder(_LabelTransformer):

@@ -125,7 +125,7 @@ class Pipeline(BaseEstimator):
             if hasattr(transform, "fit_pipe"):
                 Xt, yt = transform.fit_pipe(Xt, yt, **fit_params_steps[name])
             elif hasattr(transform, "pipe"):
-                Xt = transform.fit(Xt, y, **fit_params_steps[name]).pipe(Xt, yt)
+                Xt, yt = transform.fit(Xt, y, **fit_params_steps[name]).pipe(Xt, yt)
             elif hasattr(transform, "fit_transform"):
                 Xt = transform.fit_transform(Xt, yt, **fit_params_steps[name])
             else:
@@ -138,7 +138,7 @@ class Pipeline(BaseEstimator):
         yt = y
         for name, transform in self.steps[:-1]:
             if hasattr(transform, "pipe"):
-                Xt = transform.pipe(Xt, yt)
+                Xt, yt = transform.pipe(Xt, yt)
             else:
                 Xt = transform.transform(Xt)
         return Xt, yt
