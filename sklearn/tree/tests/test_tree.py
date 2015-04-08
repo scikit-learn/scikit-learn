@@ -29,6 +29,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import raises
 from sklearn.utils.validation import check_random_state
+from sklearn.utils.validation import NotFittedError
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -494,7 +495,7 @@ def test_error():
     for name, TreeEstimator in CLF_TREES.items():
         # predict before fit
         est = TreeEstimator()
-        assert_raises(Exception, est.predict_proba, X)
+        assert_raises(NotFittedError, est.predict_proba, X)
 
         est.fit(X, y)
         X2 = [-2, -1, 1]  # wrong feature shape for sample
@@ -527,7 +528,7 @@ def test_error():
 
         # predict before fitting
         est = TreeEstimator()
-        assert_raises(Exception, est.predict, T)
+        assert_raises(NotFittedError, est.predict, T)
 
         # predict on vector with different dims
         est.fit(X, y)
@@ -544,6 +545,10 @@ def test_error():
         clf = TreeEstimator()
         clf.fit(X, y)
         assert_raises(ValueError, clf.predict, Xt)
+
+        # apply before fitting
+        est = TreeEstimator()
+        assert_raises(NotFittedError, est.apply, T)
 
 
 def test_min_samples_leaf():
@@ -1294,13 +1299,3 @@ def test_public_apply():
 
     for name in SPARSE_TREES:
         yield (check_public_apply_sparse, name)
-
-
-def check_apply_error(name):
-    est = ALL_TREES[name]()
-    assert_raises(ValueError, est.apply, X_small)
-
-
-def test_apply_error():
-    for name in ALL_TREES:
-        yield (check_apply_error, name)

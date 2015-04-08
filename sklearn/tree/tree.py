@@ -389,8 +389,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             ``[0;self.tree_.node_count)``.
         """
         if self.tree_ is None:
-            raise ValueError("Estimator not fitted, "
-                             "call `fit` before `apply`.")
+            raise NotFittedError("Estimator not fitted, "
+                                 "call `fit` before `apply`.")
 
         X = check_array(X, dtype=DTYPE, accept_sparse="csr")
 
