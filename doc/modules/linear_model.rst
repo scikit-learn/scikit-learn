@@ -180,7 +180,8 @@ the parameter vector.
 The implementation in the class :class:`Lasso` uses coordinate descent as
 the algorithm to fit the coefficients. See :ref:`least_angle_regression`
 for another implementation::
-
+    
+    >>> from sklearn import linear_model
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
@@ -723,9 +724,10 @@ so the "multinomial" setting does not learn sparse models.
    :ref:`l1_feature_selection`.
 
 :class:`LogisticRegressionCV` implements Logistic Regression with
-builtin cross-validation to find out the optimal C parameter. In
-general the "newton-cg" and "lbfgs" solvers are found to be faster
-due to warm-starting. For the multiclass case, if `multi_class`
+builtin cross-validation to find out the optimal C parameter.
+"newton-cg" and "lbfgs" solvers are found to be faster
+for high-dimensional dense data, due to warm-starting.
+For the multiclass case, if `multi_class`
 option is set to "ovr", an optimal C is obtained for each class and if
 the `multi_class` option is set to "multinomial", an optimal C is
 obtained that minimizes the cross-entropy loss.
@@ -1072,6 +1074,7 @@ polynomial regression can be created and used as follows::
     >>> from sklearn.preprocessing import PolynomialFeatures
     >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.pipeline import Pipeline
+    >>> import numpy as np
     >>> model = Pipeline([('poly', PolynomialFeatures(degree=3)),
     ...                   ('linear', LinearRegression(fit_intercept=False))])
     >>> # fit to an order-3 polynomial data
@@ -1097,6 +1100,7 @@ This way, we can solve the XOR problem with a linear classifier::
 
     >>> from sklearn.linear_model import Perceptron
     >>> from sklearn.preprocessing import PolynomialFeatures
+    >>> import numpy as np
     >>> X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
     >>> y = X[:, 0] ^ X[:, 1]
     >>> X = PolynomialFeatures(interaction_only=True).fit_transform(X)
@@ -1105,7 +1109,7 @@ This way, we can solve the XOR problem with a linear classifier::
            [1, 0, 1, 0],
            [1, 1, 0, 0],
            [1, 1, 1, 1]])
-    >>> clf = Perceptron(fit_intercept=False, n_iter=10).fit(X, y)
+    >>> clf = Perceptron(fit_intercept=False, n_iter=10, shuffle=False).fit(X, y)
     >>> clf.score(X, y)
     1.0
 

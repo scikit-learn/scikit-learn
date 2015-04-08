@@ -13,6 +13,7 @@ from ..utils import check_array
 from ..utils import as_float_array
 from ..utils.fixes import astype
 from ..utils.sparsefuncs import _get_median
+from ..utils.validation import check_is_fitted
 
 from ..externals import six
 
@@ -304,6 +305,9 @@ class Imputer(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             The input data to complete.
         """
+        if self.axis == 0:
+            check_is_fitted(self, 'statistics_')
+
         # Copy just once
         X = as_float_array(X, copy=self.copy, force_all_finite=False)
 

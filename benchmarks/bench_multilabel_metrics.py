@@ -22,7 +22,7 @@ from sklearn.utils.testing import ignore_warnings
 
 
 METRICS = {
-    'f1': f1_score,
+    'f1': partial(f1_score, average='micro'),
     'f1-by-sample': partial(f1_score, average='samples'),
     'accuracy': accuracy_score,
     'hamming': hamming_loss,
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument('metrics', nargs='*', default=sorted(METRICS),
                     help='Specifies metrics to benchmark, defaults to all. '
-                         'Choices are: '.format(sorted(METRICS)))
+                         'Choices are: {}'.format(sorted(METRICS)))
     ap.add_argument('--formats', nargs='+', choices=sorted(FORMATS),
                     help='Specifies multilabel formats to benchmark '
                          '(defaults to all).')

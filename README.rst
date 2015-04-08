@@ -1,9 +1,12 @@
 .. -*- mode: rst -*-
 
-|Travis|_
+|Travis|_ |AppVeyor|_
 
 .. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.png?branch=master
 .. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
+
+.. |AppVeyor| image:: https://img.shields.io/appveyor/ci/sklearn-ci/scikit-learn/master.png
+.. _AppVeyor: https://ci.appveyor.com/project/sklearn-ci/scikit-learn/history
 
 scikit-learn
 ============
@@ -38,7 +41,7 @@ scikit-learn is tested to work under Python 2.6, Python 2.7, and Python 3.4.
 (using the same codebase thanks to an embedded copy of
 `six <http://pythonhosted.org/six/>`_). It should also work with Python 3.3.
 
-The required dependencies to build the software are NumPy >= 1.6.2,
+The required dependencies to build the software are NumPy >= 1.6.1,
 SciPy >= 0.9 and a working C/C++ compiler.
 
 For running the examples Matplotlib >= 1.1.1 is required and for running the

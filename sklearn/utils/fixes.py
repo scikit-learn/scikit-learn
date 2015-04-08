@@ -12,6 +12,8 @@ at which the fixe is no longer needed.
 
 import inspect
 import warnings
+import sys
+import functools
 
 import numpy as np
 import scipy.sparse as sp
@@ -314,3 +316,38 @@ if sp_version < (0, 15):
     from ._scipy_sparse_lsqr_backport import lsqr as sparse_lsqr
 else:
     from scipy.sparse.linalg import lsqr as sparse_lsqr
+
+
+if sys.version_info < (2, 7, 0):
+    # partial cannot be pickled in Python 2.6
+    # http://bugs.python.org/issue1398
+    class partial(object):
+        def __init__(self, func, *args, **keywords):
+            functools.update_wrapper(self, func)
+            self.func = func
+            self.args = args
+            self.keywords = keywords
+
+        def __call__(self, *args, **keywords):
+            args = self.args + args
+            kwargs = self.keywords.copy()
+            kwargs.update(keywords)
+            return self.func(*args, **kwargs)
+else:
+    from functools import partial
+
+
+if np_version < (1, 6, 2):
+    # Allow bincount to accept empty arrays
+    # https://github.com/numpy/numpy/commit/40f0844846a9d7665616b142407a3d74cb65a040
+    def bincount(x, weights=None, minlength=None):
+        if len(x) > 0:
+            return np.bincount(x, weights, minlength)
+        else:
+            if minlength is None:
+                minlength = 0
+            minlength = np.asscalar(np.asarray(minlength, dtype=np.intp))
+            return np.zeros(minlength, dtype=np.intp)
+
+else:
+    from numpy import bincount

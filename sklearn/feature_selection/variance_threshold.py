@@ -6,6 +6,7 @@ from ..base import BaseEstimator
 from .base import SelectorMixin
 from ..utils import check_array
 from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.validation import check_is_fitted
 
 
 class VarianceThreshold(BaseEstimator, SelectorMixin):
@@ -74,4 +75,6 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
         return self
 
     def _get_support_mask(self):
+        check_is_fitted(self, 'variances_')
+
         return self.variances_ > self.threshold

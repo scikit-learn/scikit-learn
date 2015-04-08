@@ -23,9 +23,7 @@ import warnings
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from ..preprocessing import LabelBinarizer
 from ..utils import check_consistent_length
-from ..utils import deprecated
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.fixes import isclose
@@ -173,51 +171,6 @@ def average_precision_score(y_true, y_score, average="macro",
 
     return _average_binary_score(_binary_average_precision, y_true, y_score,
                                  average, sample_weight=sample_weight)
-
-
-@deprecated("Function 'auc_score' has been renamed to "
-            "'roc_auc_score' and will be removed in release 0.16.")
-def auc_score(y_true, y_score):
-    """Compute Area Under the Curve (AUC) from prediction scores
-
-    Note: this implementation is restricted to the binary classification task.
-
-    Parameters
-    ----------
-
-    y_true : array, shape = [n_samples]
-        True binary labels.
-
-    y_score : array, shape = [n_samples]
-        Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
-
-    Returns
-    -------
-    auc : float
-
-    References
-    ----------
-    .. [1] `Wikipedia entry for the Receiver operating characteristic
-            <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
-
-    See also
-    --------
-    average_precision_score : Area under the precision-recall curve
-
-    roc_curve : Compute Receiver operating characteristic (ROC)
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.metrics import auc_score
-    >>> y_true = np.array([0, 0, 1, 1])
-    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> auc_score(y_true, y_scores)
-    0.75
-
-    """
-    return roc_auc_score(y_true, y_score)
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
@@ -594,8 +547,8 @@ def label_ranking_average_precision_score(y_true, y_score):
 
     # Handle badly formated array and the degenerate case with one label
     y_type = type_of_target(y_true)
-    if (y_type != "multilabel-indicator"
-            and not (y_type == "binary" and y_true.ndim == 2)):
+    if (y_type != "multilabel-indicator" and
+            not (y_type == "binary" and y_true.ndim == 2)):
         raise ValueError("{0} format is not supported".format(y_type))
 
     y_true = csr_matrix(y_true)
@@ -616,7 +569,7 @@ def label_ranking_average_precision_score(y_true, y_score):
         scores_i = y_score[i]
         rank = rankdata(scores_i, 'max')[relevant]
         L = rankdata(scores_i[relevant], 'max')
-        out += np.divide(L, rank, dtype=float).mean()
+        out += (L / rank).mean()
 
     return out / n_samples
 
@@ -625,10 +578,10 @@ def coverage_error(y_true, y_score, sample_weight=None):
     """Coverage error measure
 
     Compute how far we need to go through the ranked scores to cover all
-    true labels. The best value is equal to the average the number
-    of labels in ``y_true` per sample.
+    true labels. The best value is equal to the average number
+    of labels in ``y_true`` per sample.
 
-    Ties in `y_scores` are broken by giving maximal rank that would have
+    Ties in ``y_scores`` are broken by giving maximal rank that would have
     been assigned to all tied values.
 
     Parameters

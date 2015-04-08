@@ -20,6 +20,7 @@ from scipy.optimize import nnls
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
+from ..utils.validation import check_is_fitted
 
 
 def safe_vstack(Xs):
@@ -92,13 +93,10 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
         Initial guesses for solving X ~= WH such that
         the number of columns in W is n_components.
 
-    Remarks
-    -------
-
-    This implements the algorithm described in
-    C. Boutsidis, E. Gallopoulos: SVD based
-    initialization: A head start for nonnegative
-    matrix factorization - Pattern Recognition, 2008
+    References
+    ----------
+    C. Boutsidis, E. Gallopoulos: SVD based initialization: A head start for 
+    nonnegative matrix factorization - Pattern Recognition, 2008
 
     http://tinyurl.com/nndsvd
     """
@@ -203,12 +201,10 @@ def _nls_subproblem(V, W, H, tol, max_iter, sigma=0.01, beta=0.1):
     n_iter : int
         The number of iterations done by the algorithm.
 
-    Reference
-    ---------
-
-    C.-J. Lin. Projected gradient methods
-    for non-negative matrix factorization. Neural
-    Computation, 19(2007), 2756-2779.
+    References
+    ----------
+    C.-J. Lin. Projected gradient methods for non-negative matrix factorization.
+    Neural Computation, 19(2007), 2756-2779.
     http://www.csie.ntu.edu.tw/~cjlin/nmf/
 
     """
@@ -569,6 +565,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         data: array, [n_samples, n_components]
             Transformed data
         """
+        check_is_fitted(self, 'n_components_')
+
         X = check_array(X, accept_sparse='csc')
         Wt = np.zeros((self.n_components_, X.shape[0]))
         check_non_negative(X, "ProjectedGradientNMF.transform")

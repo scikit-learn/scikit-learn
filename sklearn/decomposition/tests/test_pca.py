@@ -17,7 +17,7 @@ iris = datasets.load_iris()
 
 
 def test_pca():
-    """PCA on dense arrays"""
+    # PCA on dense arrays
     pca = PCA(n_components=2)
     X = iris.data
     X_r = pca.fit(X).transform(X)
@@ -47,7 +47,7 @@ def test_pca():
 
 
 def test_whitening():
-    """Check that PCA output has unit-variance"""
+    # Check that PCA output has unit-variance
     rng = np.random.RandomState(0)
     n_samples = 100
     n_features = 80
@@ -93,7 +93,7 @@ def test_whitening():
 
 
 def test_explained_variance():
-    """Check that PCA output has unit-variance"""
+    # Check that PCA output has unit-variance
     rng = np.random.RandomState(0)
     n_samples = 100
     n_features = 80
@@ -118,7 +118,7 @@ def test_explained_variance():
 
 
 def test_pca_check_projection():
-    """Test that the projection of data is correct"""
+    # Test that the projection of data is correct
     rng = np.random.RandomState(0)
     n, p = 100, 3
     X = rng.randn(n, p) * .1
@@ -132,7 +132,7 @@ def test_pca_check_projection():
 
 
 def test_pca_inverse():
-    """Test that the projection of data can be inverted"""
+    # Test that the projection of data can be inverted
     rng = np.random.RandomState(0)
     n, p = 50, 3
     X = rng.randn(n, p)  # spherical data
@@ -161,7 +161,7 @@ def test_pca_validation():
 
 
 def test_randomized_pca_check_projection():
-    """Test that the projection by RandomizedPCA on dense data is correct"""
+    # Test that the projection by RandomizedPCA on dense data is correct
     rng = np.random.RandomState(0)
     n, p = 100, 3
     X = rng.randn(n, p) * .1
@@ -175,7 +175,7 @@ def test_randomized_pca_check_projection():
 
 
 def test_randomized_pca_check_list():
-    """Test that the projection by RandomizedPCA on list data is correct"""
+    # Test that the projection by RandomizedPCA on list data is correct
     X = [[1.0, 0.0], [0.0, 1.0]]
     X_transformed = RandomizedPCA(n_components=1,
                                   random_state=0).fit(X).transform(X)
@@ -185,7 +185,7 @@ def test_randomized_pca_check_list():
 
 
 def test_randomized_pca_inverse():
-    """Test that RandomizedPCA is inversible on dense data"""
+    # Test that RandomizedPCA is inversible on dense data
     rng = np.random.RandomState(0)
     n, p = 50, 3
     X = rng.randn(n, p)  # spherical data
@@ -209,7 +209,7 @@ def test_randomized_pca_inverse():
 
 
 def test_pca_dim():
-    """Check automated dimensionality setting"""
+    # Check automated dimensionality setting
     rng = np.random.RandomState(0)
     n, p = 100, 5
     X = rng.randn(n, p) * .1
@@ -220,10 +220,8 @@ def test_pca_dim():
 
 
 def test_infer_dim_1():
-    """TODO: explain what this is testing
-
-    Or at least use explicit variable names...
-    """
+    # TODO: explain what this is testing
+    # Or at least use explicit variable names...
     n, p = 1000, 5
     rng = np.random.RandomState(0)
     X = (rng.randn(n, p) * .1 + rng.randn(n, 1) * np.array([3, 4, 5, 1, 2])
@@ -239,10 +237,8 @@ def test_infer_dim_1():
 
 
 def test_infer_dim_2():
-    """TODO: explain what this is testing
-
-    Or at least use explicit variable names...
-    """
+    # TODO: explain what this is testing
+    # Or at least use explicit variable names...
     n, p = 1000, 5
     rng = np.random.RandomState(0)
     X = rng.randn(n, p) * .1
@@ -255,8 +251,6 @@ def test_infer_dim_2():
 
 
 def test_infer_dim_3():
-    """
-    """
     n, p = 100, 5
     rng = np.random.RandomState(0)
     X = rng.randn(n, p) * .1
@@ -290,7 +284,7 @@ def test_infer_dim_by_explained_variance():
 
 
 def test_pca_score():
-    """Test that probabilistic PCA scoring yields a reasonable score"""
+    # Test that probabilistic PCA scoring yields a reasonable score
     n, p = 1000, 3
     rng = np.random.RandomState(0)
     X = rng.randn(n, p) * .1 + np.array([3, 4, 5])
@@ -302,7 +296,7 @@ def test_pca_score():
 
 
 def test_pca_score2():
-    """Test that probabilistic PCA correctly separated different datasets"""
+    # Test that probabilistic PCA correctly separated different datasets
     n, p = 100, 3
     rng = np.random.RandomState(0)
     X = rng.randn(n, p) * .1 + np.array([3, 4, 5])
@@ -320,7 +314,7 @@ def test_pca_score2():
 
 
 def test_pca_score3():
-    """Check that probabilistic PCA selects the right model"""
+    # Check that probabilistic PCA selects the right model
     n, p = 200, 3
     rng = np.random.RandomState(0)
     Xl = (rng.randn(n, p) + rng.randn(n, 1) * np.array([3, 4, 5])

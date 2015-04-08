@@ -79,17 +79,17 @@ def test_classifier_accuracy():
 def test_classifier_partial_fit():
     classes = np.unique(y)
     for data in (X, X_csr):
-            clf = PassiveAggressiveClassifier(C=1.0,
-                                              fit_intercept=True,
-                                              random_state=0)
-            for t in range(30):
-                clf.partial_fit(data, y, classes)
-            score = clf.score(data, y)
-            assert_greater(score, 0.79)
+        clf = PassiveAggressiveClassifier(C=1.0,
+                                          fit_intercept=True,
+                                          random_state=0)
+        for t in range(30):
+            clf.partial_fit(data, y, classes)
+        score = clf.score(data, y)
+        assert_greater(score, 0.79)
 
 
 def test_classifier_refit():
-    """Classifier can be retrained on different labels and features."""
+    # Classifier can be retrained on different labels and features.
     clf = PassiveAggressiveClassifier().fit(X, y)
     assert_array_equal(clf.classes_, np.unique(y))
 
@@ -113,7 +113,7 @@ def test_classifier_correctness():
             clf2 = PassiveAggressiveClassifier(C=1.0,
                                                loss=loss,
                                                fit_intercept=True,
-                                               n_iter=2)
+                                               n_iter=2, shuffle=False)
             clf2.fit(data, y_bin)
 
             assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
@@ -144,13 +144,13 @@ def test_regressor_partial_fit():
     y_bin[y != 1] = -1
 
     for data in (X, X_csr):
-            reg = PassiveAggressiveRegressor(C=1.0,
-                                             fit_intercept=True,
-                                             random_state=0)
-            for t in range(50):
-                reg.partial_fit(data, y_bin)
-            pred = reg.predict(data)
-            assert_less(np.mean((pred - y_bin) ** 2), 1.7)
+        reg = PassiveAggressiveRegressor(C=1.0,
+                                         fit_intercept=True,
+                                         random_state=0)
+        for t in range(50):
+            reg.partial_fit(data, y_bin)
+        pred = reg.predict(data)
+        assert_less(np.mean((pred - y_bin) ** 2), 1.7)
 
 
 def test_regressor_correctness():
@@ -168,7 +168,7 @@ def test_regressor_correctness():
             reg2 = PassiveAggressiveRegressor(C=1.0,
                                               loss=loss,
                                               fit_intercept=True,
-                                              n_iter=2)
+                                              n_iter=2, shuffle=False)
             reg2.fit(data, y_bin)
 
             assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)

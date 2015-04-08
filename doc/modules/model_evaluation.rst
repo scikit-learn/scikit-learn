@@ -54,27 +54,31 @@ and mean_squared_error, which measure the distance between the model
 and the data, are negated.
 
 
-======================     =======================================     ==================================
-Scoring                    Function                                              Comment
-======================     =======================================     ==================================
+========================     =======================================     ==================================
+Scoring                      Function                                    Comment
+========================     =======================================     ==================================
 **Classification**
-'accuracy'                 :func:`metrics.accuracy_score`
-'average_precision'        :func:`metrics.average_precision_score`
-'f1'                       :func:`metrics.f1_score`
-'log_loss'                 :func:`metrics.log_loss`                    requires ``predict_proba`` support
-'precision'                :func:`metrics.precision_score`
-'recall'                   :func:`metrics.recall_score`
-'roc_auc'                  :func:`metrics.roc_auc_score`
+'accuracy'                   :func:`metrics.accuracy_score`
+'average_precision'          :func:`metrics.average_precision_score`
+'f1'                         :func:`metrics.f1_score`                    for binary targets
+'f1_micro'                   :func:`metrics.f1_score`                    micro-averaged
+'f1_macro'                   :func:`metrics.f1_score`                    macro-averaged
+'f1_weighted'                :func:`metrics.f1_score`                    weighted average
+'f1_samples'                 :func:`metrics.f1_score`                    by multilabel sample
+'log_loss'                   :func:`metrics.log_loss`                    requires ``predict_proba`` support
+'precision' etc.             :func:`metrics.precision_score`             suffixes apply as with 'f1'
+'recall' etc.                :func:`metrics.recall_score`                suffixes apply as with 'f1'
+'roc_auc'                    :func:`metrics.roc_auc_score`
 
 **Clustering**
-'adjusted_rand_score'      :func:`metrics.adjusted_rand_score`
+'adjusted_rand_score'        :func:`metrics.adjusted_rand_score`
 
 **Regression**
-'mean_absolute_error'      :func:`metrics.mean_absolute_error`
-'mean_squared_error'       :func:`metrics.mean_squared_error`
-'median_absolute_error'    :func:`metrics.median_absolute_error`
-'r2'                       :func:`metrics.r2_score`
-======================     =======================================     ==================================
+'mean_absolute_error'        :func:`metrics.mean_absolute_error`
+'mean_squared_error'         :func:`metrics.mean_squared_error`
+'median_absolute_error'      :func:`metrics.median_absolute_error`
+'r2'                         :func:`metrics.r2_score`
+========================     =======================================     ==================================
 
 Usage examples:
 
@@ -84,7 +88,7 @@ Usage examples:
     >>> model = svm.SVC()
     >>> cross_validation.cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'log_loss', 'mean_absolute_error', 'mean_squared_error', 'median_absolute_error', 'precision', 'r2', 'recall', 'roc_auc']
+    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'log_loss', 'mean_absolute_error', 'mean_squared_error', 'median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
     >>> clf = svm.SVC(probability=True, random_state=0)
     >>> cross_validation.cross_val_score(clf, X, y, scoring='log_loss') # doctest: +ELLIPSIS
     array([-0.07..., -0.16..., -0.06...])
@@ -208,6 +212,8 @@ The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure classification performance.
 Some metrics might require probability estimates of the positive class,
 confidence values, or binary decisions values.
+Most implementations allow each sample to provide a weighted contribution
+to the overall score, through the ``sample_weight`` parameter.
 
 Some of these are restricted to the binary classification case:
 
@@ -254,7 +260,53 @@ And some work with binary and multilabel (but not multiclass) problems:
    roc_auc_score
 
 
-In the following sub-sections, we will describe each of those functions.
+In the following sub-sections, we will describe each of those functions,
+preceded by some notes on common API and metric definition.
+
+From binary to multiclass and multilabel
+----------------------------------------
+
+Some metrics are essentially defined for binary classification tasks (e.g.
+:func:`f1_score`, :func:`roc_auc_score`). In these cases, by default
+only the positive label is evaluated, assuming by default that the positive
+class is labelled ``1`` (though this may be configurable through the
+``pos_label`` parameter).
+
+.. _average:
+
+In extending a binary metric to multiclass or multilabel problems, the data
+is treated as a collection of binary problems, one for each class.
+There are then a number of ways to average binary metric calculations across
+the set of classes, each of which may be useful in some scenario.
+Where available, you should select among these using the ``average`` parameter.
+
+* ``"macro"`` simply calculates the mean of the binary metrics,
+  giving equal weight to each class.  In problems where infrequent classes
+  are nonetheless important, macro-averaging may be a means of highlighting
+  their performance. On the other hand, the assumption that all classes are
+  equally important is often untrue, such that macro-averaging will
+  over-emphasize the typically low performance on an infrequent class.
+* ``"weighted"`` accounts for class imbalance by computing the average of
+  binary metrics in which each class's score is weighted by its presence in the
+  true data sample.
+* ``"micro"`` gives each sample-class pair an equal contribution to the overall
+  metric (except as a result of sample-weight). Rather than summing the
+  metric per class, this sums the dividends and divisors that make up the the
+  per-class metrics to calculate an overall quotient.
+  Micro-averaging may be preferred in multilabel settings, including
+  multiclass classification where a majority class is to be ignored.
+* ``"samples"`` applies only to multilabel problems. It does not calculate a
+  per-class measure, instead calculating the metric over the true and predicted
+  classes for each sample in the evaluation data, and returning their
+  (``sample_weight``-weighted) average.
+* Selecting ``average=None`` will return an array with the score for each
+  class.
+
+While multiclass data is provided to the metric, like binary targets, as an
+array of class labels, multilabel data is specified as an indicator matrix,
+in which cell ``[i, j]`` has value 1 if sample ``i`` has label ``j`` and value
+0 otherwise.
+
 
 Accuracy score
 --------------
@@ -595,21 +647,10 @@ There are a few ways to combine results across labels,
 specified by the ``average`` argument to the
 :func:`average_precision_score` (multilabel only), :func:`f1_score`,
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
-:func:`precision_score` and :func:`recall_score` functions:
-
-* ``"micro"``: calculate metrics globally by counting the total true
-  positives, false negatives and false positives. Except in the multi-label
-  case, this implies that precision, recall and :math:`F` are equal.
-* ``"samples"``: calculate metrics for each sample, comparing sets of
-  labels assigned to each, and find the mean across all samples.
-  This is only meaningful and available in the multilabel case.
-* ``"macro"``: calculate metrics for each label, and find their mean.
-  This does not take label imbalance into account.
-* ``"weighted"``: calculate metrics for each label, and find their average
-  weighted by the number of occurrences of the label in the true data.
-  This alters ``"macro"`` to account for label imbalance; it may produce an
-  F-score that is not between precision and recall.
-* ``None``: calculate metrics for each label and do not average them.
+:func:`precision_score` and :func:`recall_score` functions, as described
+:ref:`above <average>`. Note that for "micro"-averaging in a multiclass setting
+will produce equal precision, recall and :math:`F`, while "weighted" averaging
+may produce an F-score that is not between precision and recall.
 
 To make this more explicit, consider the following notation:
 
@@ -702,8 +743,9 @@ with a svm classifier in a binary class problem::
   >>> est = svm.LinearSVC(random_state=0)
   >>> est.fit(X, y)
   LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-       intercept_scaling=1, loss='l2', max_iter=1000, multi_class='ovr',
-       penalty='l2', random_state=0, tol=0.0001, verbose=0)
+       intercept_scaling=1, loss='squared_hinge', max_iter=1000,
+       multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
+       verbose=0)
   >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
   >>> pred_decision  # doctest: +ELLIPSIS
   array([-2.18...,  2.36...,  0.09...])
@@ -719,8 +761,9 @@ with a svm classifier in a multiclass problem::
   >>> est = svm.LinearSVC()
   >>> est.fit(X, Y)
   LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-       intercept_scaling=1, loss='l2', max_iter=1000, multi_class='ovr',
-       penalty='l2', random_state=None, tol=0.0001, verbose=0)
+       intercept_scaling=1, loss='squared_hinge', max_iter=1000,
+       multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
+       verbose=0)
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
   >>> hinge_loss(y_true, pred_decision, labels)  #doctest: +ELLIPSIS
@@ -820,7 +863,7 @@ Receiver operating characteristic (ROC)
 
 The function :func:`roc_curve` computes the
 `receiver operating characteristic curve, or ROC curve <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_.
- Quoting Wikipedia :
+Quoting Wikipedia :
 
   "A receiver operating characteristic (ROC), or simply ROC curve, is a
   graphical plot which illustrates the performance of a binary classifier
@@ -869,20 +912,7 @@ For more information see the `Wikipedia article on AUC
   0.75
 
 In multi-label classification, the :func:`roc_auc_score` function is
-extended by averaging over the labels:
-
-* ``"micro"``: computes AUROC globally; obtained
-  by considering each element of the label indicator matrix as a label.
-* ``"samples"``: computes AUROC for each sample,
-  comparing the sets of labels and scores assigned to each, and finds the mean
-  across all samples.
-* ``"macro"``: computes AUROC for each label, and finds
-  their mean.
-* ``"weighted"``: computes AUROC for each label and
-  finds their average, weighted by the number of occurrences of the label in the
-  true data.
-* ``None``: this returns an array of scores with scores with shape (n_classes,)
-  instead of an aggregate scalar score.
+extended by averaging over the labels as :ref:`above <average>`.
 
 Compared to metrics such as the subset accuracy, the Hamming loss, or the
 F1 score, ROC doesn't require optimizing a threshold for each label. The
@@ -976,7 +1006,7 @@ Coverage error
 --------------
 
 The :func:`coverage_error` function computes the average number of labels that
-have to be included in the final prediction such such that all true labels
+have to be included in the final prediction such that all true labels
 are predicted. This is useful if you want to know how many top-scored-labels
 you have to predict in average without missing any true one. The best value
 of this metrics is thus the average number of true labels.
@@ -1293,7 +1323,7 @@ imbalance, etc...
 :class:`DummyRegressor` also implements four simple rules of thumb for regression:
 
 - ``mean`` always predicts the mean of the training targets.
-- ``median`` always predicts the median of the training targests.
+- ``median`` always predicts the median of the training targets.
 - ``quantile`` always predicts a user provided quantile of the training targets.
 - ``constant`` always predicts a constant value that is provided by the user.
 

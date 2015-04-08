@@ -14,7 +14,7 @@ training samples. This is called **underfitting**. A polynomial of degree 4
 approximates the true function almost perfectly. However, for higher degrees
 the model will **overfit** the training data, i.e. it learns the noise of the
 training data.
-We evaluate quantitavely **overfitting** / **underfitting** by using
+We evaluate quantitatively **overfitting** / **underfitting** by using
 cross-validation. We calculate the mean squared error (MSE) on the validation
 set, the higher, the less likely the model generalizes correctly from the
 training data.
@@ -40,7 +40,7 @@ y = true_fun(X) + np.random.randn(n_samples) * 0.1
 
 plt.figure(figsize=(14, 5))
 for i in range(len(degrees)):
-    ax = plt.subplot(1, len(degrees), i+1)
+    ax = plt.subplot(1, len(degrees), i + 1)
     plt.setp(ax, xticks=(), yticks=())
 
     polynomial_features = PolynomialFeatures(degree=degrees[i],

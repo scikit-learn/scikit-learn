@@ -16,8 +16,8 @@ Standardization, or mean removal and variance scaling
 =====================================================
 
 **Standardization** of datasets is a **common requirement for many
-machine learning estimators** implemented in the scikit: they might behave
-badly if the individual feature do not more or less look like standard
+machine learning estimators** implemented in the scikit; they might behave
+badly if the individual features do not more or less look like standard
 normally distributed data: Gaussian with **zero mean and unit variance**.
 
 In practice we often ignore the shape of the distribution and just

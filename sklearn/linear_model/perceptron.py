@@ -26,9 +26,8 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
         The number of passes over the training data (aka epochs).
         Defaults to 5.
 
-    shuffle : bool, optional
+    shuffle : bool, optional, default True
         Whether or not the training data should be shuffled after each epoch.
-        Defaults to False.
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
@@ -85,7 +84,7 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
     http://en.wikipedia.org/wiki/Perceptron and references therein.
     """
     def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
-                 n_iter=5, shuffle=False, verbose=0, eta0=1.0, n_jobs=1,
+                 n_iter=5, shuffle=True, verbose=0, eta0=1.0, n_jobs=1,
                  random_state=0, class_weight=None, warm_start=False):
         super(Perceptron, self).__init__(loss="perceptron",
                                          penalty=penalty,

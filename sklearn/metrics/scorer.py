@@ -19,6 +19,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 # License: Simplified BSD
 
 from abc import ABCMeta, abstractmethod
+from functools import partial
 
 import numpy as np
 
@@ -29,6 +30,7 @@ from . import (r2_score, median_absolute_error, mean_absolute_error,
 from .cluster import adjusted_rand_score
 from ..utils.multiclass import type_of_target
 from ..externals import six
+from ..base import is_regressor
 
 
 class _BaseScorer(six.with_metaclass(ABCMeta, object)):
@@ -156,20 +158,23 @@ class _ThresholdScorer(_BaseScorer):
         if y_type not in ("binary", "multilabel-indicator"):
             raise ValueError("{0} format is not supported".format(y_type))
 
-        try:
-            y_pred = clf.decision_function(X)
+        if is_regressor(clf):
+            y_pred = clf.predict(X)
+        else:
+            try:
+                y_pred = clf.decision_function(X)
 
-            # For multi-output multi-class estimator
-            if isinstance(y_pred, list):
-                y_pred = np.vstack(p for p in y_pred).T
+                # For multi-output multi-class estimator
+                if isinstance(y_pred, list):
+                    y_pred = np.vstack(p for p in y_pred).T
 
-        except (NotImplementedError, AttributeError):
-            y_pred = clf.predict_proba(X)
+            except (NotImplementedError, AttributeError):
+                y_pred = clf.predict_proba(X)
 
-            if y_type == "binary":
-                y_pred = y_pred[:, 1]
-            elif isinstance(y_pred, list):
-                y_pred = np.vstack([p[:, -1] for p in y_pred]).T
+                if y_type == "binary":
+                    y_pred = y_pred[:, 1]
+                elif isinstance(y_pred, list):
+                    y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
@@ -200,8 +205,7 @@ def _passthrough_scorer(estimator, *args, **kwargs):
     return estimator.score(*args, **kwargs)
 
 
-def check_scoring(estimator, scoring=None, allow_none=False,
-                  score_overrides_loss=False):
+def check_scoring(estimator, scoring=None, allow_none=False):
     """Determine scorer from user options.
 
     A TypeError will be thrown if the estimator cannot be scored.
@@ -230,20 +234,16 @@ def check_scoring(estimator, scoring=None, allow_none=False,
     if not hasattr(estimator, 'fit'):
         raise TypeError("estimator should a be an estimator implementing "
                         "'fit' method, %r was passed" % estimator)
-    elif hasattr(estimator, 'predict') and has_scoring:
+    elif has_scoring:
         return get_scorer(scoring)
     elif hasattr(estimator, 'score'):
         return _passthrough_scorer
-    elif not has_scoring:
-        if allow_none:
-            return None
+    elif allow_none:
+        return None
+    else:
         raise TypeError(
             "If no scoring is specified, the estimator passed should "
             "have a 'score' method. The estimator %r does not." % estimator)
-    else:
-        raise TypeError(
-            "The estimator passed should have a 'score' or a 'predict' "
-            "method. The estimator %r does not." % estimator)
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
@@ -342,8 +342,15 @@ SCORERS = dict(r2=r2_scorer,
                median_absolute_error=median_absolute_error_scorer,
                mean_absolute_error=mean_absolute_error_scorer,
                mean_squared_error=mean_squared_error_scorer,
-               accuracy=accuracy_scorer, f1=f1_scorer, roc_auc=roc_auc_scorer,
+               accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
                average_precision=average_precision_scorer,
-               precision=precision_scorer, recall=recall_scorer,
                log_loss=log_loss_scorer,
                adjusted_rand_score=adjusted_rand_scorer)
+
+for name, metric in [('precision', precision_score),
+                     ('recall', recall_score), ('f1', f1_score)]:
+    SCORERS[name] = make_scorer(metric)
+    for average in ['macro', 'micro', 'samples', 'weighted']:
+        qualified_name = '{0}_{1}'.format(name, average)
+        SCORERS[qualified_name] = make_scorer(partial(metric, pos_label=None,
+                                                      average=average))

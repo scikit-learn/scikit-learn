@@ -157,20 +157,3 @@ def newton_cg(func_grad_hess, func, grad, x0, args=(), eps=1e-4, tol=1e-4,
         warnings.warn("newton-cg failed to converge. Increase the "
                       "number of iterations.")
     return xk
-
-
-###############################################################################
-# Tests
-
-if __name__ == "__main__":
-    A = np.random.normal(size=(10, 10))
-
-    def func(x):
-        Ax = A.dot(x)
-        return .5*(Ax).dot(Ax)
-
-    def func_grad_hess(x):
-        return func(x), A.T.dot(A.dot(x)), lambda x: A.T.dot(A.dot(x))
-
-    x0 = np.ones(10)
-    out = newton_cg(func_grad_hess, func, x0)
