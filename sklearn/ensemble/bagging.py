@@ -294,40 +294,40 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         elif n_more_estimators == 0:
             warn("Warm-start fitting without increasing n_estimators does not "
                  "fit new trees.")
+            return self
 
-        else:
-            # Parallel loop
-            n_jobs, n_estimators, starts = _partition_estimators(n_more_estimators,
-                                                                 self.n_jobs)
+        # Parallel loop
+        n_jobs, n_estimators, starts = _partition_estimators(n_more_estimators,
+                                                             self.n_jobs)
 
-            # Advance random state to state after training
-            # the first n_estimators
-            if self.warm_start and len(self.estimators_) > 0:
-                random_state.randint(MAX_INT, size=len(self.estimators_))
+        # Advance random state to state after training
+        # the first n_estimators
+        if self.warm_start and len(self.estimators_) > 0:
+            random_state.randint(MAX_INT, size=len(self.estimators_))
 
-            seeds = random_state.randint(MAX_INT, size=n_more_estimators)
+        seeds = random_state.randint(MAX_INT, size=n_more_estimators)
 
-            all_results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-                delayed(_parallel_build_estimators)(
-                    n_estimators[i],
-                    self,
-                    X,
-                    y,
-                    sample_weight,
-                    seeds[starts[i]:starts[i + 1]],
-                    verbose=self.verbose)
-                for i in range(n_jobs))
+        all_results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+            delayed(_parallel_build_estimators)(
+                n_estimators[i],
+                self,
+                X,
+                y,
+                sample_weight,
+                seeds[starts[i]:starts[i + 1]],
+                verbose=self.verbose)
+            for i in range(n_jobs))
 
-            # Reduce
-            self.estimators_ += list(itertools.chain.from_iterable(
-                t[0] for t in all_results))
-            self.estimators_samples_ = list(itertools.chain.from_iterable(
-                t[1] for t in all_results))
-            self.estimators_features_ = list(itertools.chain.from_iterable(
-                t[2] for t in all_results))
+        # Reduce
+        self.estimators_ += list(itertools.chain.from_iterable(
+            t[0] for t in all_results))
+        self.estimators_samples_ = list(itertools.chain.from_iterable(
+            t[1] for t in all_results))
+        self.estimators_features_ = list(itertools.chain.from_iterable(
+            t[2] for t in all_results))
 
-            if self.oob_score:
-                self._set_oob_score(X, y, n_more_estimators)
+        if self.oob_score:
+            self._set_oob_score(X, y, n_more_estimators)
 
         return self
 
