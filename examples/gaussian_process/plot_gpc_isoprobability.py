@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-===================================================================
-Gaussian Processes classification example with probabilistic output
-===================================================================
+=================================================================
+Iso-probability lines for Gaussian Processes classification (GPC)
+=================================================================
 
 A two-dimensional classification exampe showing iso-probability lines for
 the predicted probabilities.
@@ -49,7 +49,7 @@ y = np.array(g(X) > 0, dtype=int)
 kernel = C(0.1, (1e-5, np.inf)) * DotProduct(sigma_0=0.1) ** 2
 gp = GaussianProcessClassifier(kernel=kernel)
 gp.fit(X, y)
-print "Learned kernel: %s " % gp.kernel_
+print("Learned kernel: %s " % gp.kernel_)
 
 # Evaluate real function and the predicted probability
 res = 50

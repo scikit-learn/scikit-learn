@@ -1,10 +1,13 @@
-"""Gaussian process regression (GPR) prior and posterior
+"""
+==========================================================================
+Illustration of prior and posterior Gaussian process for different kernels
+==========================================================================
 
 This example illustrates the prior and posterior of a GPR with different
 kernels. Mean, standard deviation, and 10 samples are shown for both prior
 and posterior.
 """
-print __doc__
+print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #
@@ -42,7 +45,7 @@ for fig_index, kernel in enumerate(kernels):
                      y_mean + np.sqrt(np.diag(y_cov)),
                      alpha=0.5, color='k')
     y_samples = gp.sample_y(X_[:, np.newaxis], 10)
-    plt.plot(X_, y_samples, color='b', lw=1)
+    plt.plot(X_, y_samples, lw=1)
     plt.xlim(0, 5)
     plt.ylim(-3, 3)
     plt.title("Prior (kernel:  %s)" % kernel)
@@ -63,7 +66,7 @@ for fig_index, kernel in enumerate(kernels):
                      alpha=0.5, color='k')
 
     y_samples = gp.sample_y(X_[:, np.newaxis], 10)
-    plt.plot(X_, y_samples, color='b', lw=1)
+    plt.plot(X_, y_samples, lw=1)
     plt.scatter(X[:, 0], y, c='r', s=50, zorder=10)
     plt.xlim(0, 5)
     plt.ylim(-3, 3)

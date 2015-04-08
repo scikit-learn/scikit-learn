@@ -22,7 +22,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     The implementation is based on Algorithm 2.1 of ``Gaussian Processes
     for Machine Learning'' (GPML) by Rasmussen and Williams.
 
-    In addition to standard sklearn estimators, GaussianProcessRegressor
+    In addition to standard sklearn estimators, GaussianProcessRegressor:
+
        * allows prediction without prior fitting (based on the GP prior)
        * provides an additional method sample_y(X), which evaluates samples
          drawn from the GPR (prior or posterior) at given inputs

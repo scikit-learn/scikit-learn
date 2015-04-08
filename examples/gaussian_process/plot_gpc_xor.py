@@ -1,8 +1,11 @@
-"""Gaussian process classification (GPC)
+"""
+========================================================================
+Illustration of Gaussian process classification (GPC) on the XOR dataset
+========================================================================
 
 This example illustrates GPC on XOR data.
 """
-print __doc__
+print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #
