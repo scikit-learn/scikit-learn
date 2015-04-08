@@ -8,7 +8,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 
-from ..utils import check_array
+from ..utils import check_array, check_consistent_length
 from ..utils.arpack import eigsh
 from ..base import BaseEstimator
 from sklearn.preprocessing import KernelCenterer
@@ -277,7 +277,7 @@ class KernelCCA(BaseEstimator):
         A = np.dot(np.dot(np.dot(Kxinv, Ky), Kyinv), Kx)
         A = 0.5*(A.T + A) + np.diag(np.ones(A.shape[0]))*1e-6
 
-        rankA = linalg.matrix_rank(A)
+        rankA = np.linalg.matrix_rank(A)
         if self.n_components > rankA:
             warnings.warn("set n_components to %d" % rankA)
             self.n_components = rankA
@@ -336,7 +336,7 @@ class KernelCCA(BaseEstimator):
         A = np.dot(np.dot(SinvZxy, Zyyinv), SinvZxy.T)
         A = 0.5*(A.T + A) + np.diag(np.ones(A.shape[0]))*10e-6
 
-        rankA = linalg.matrix_rank(A)
+        rankA = np.linalg.matrix_rank(A)
         if self.n_components > rankA:
             warnings.warn("set n_components to %d" % rankA)
             self.n_components = rankA
@@ -406,19 +406,23 @@ class KernelCCA(BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        check_consistent_length(X, Y)
         X = check_array(X, dtype=np.float, copy=self.copy)
-        Y = check_array(Y, dtype=np.float, copy=self.copy)
+        Y = check_array(Y, dtype=np.float, copy=self.copy, ensure_2d=False)
+        if Y.ndim == 1:
+            Y = Y.reshape(-1,1)
 
         n = X.shape[0]
         p = X.shape[1]
         q = Y.shape[1]
 
-        if n != Y.shape[0]:
-            raise ValueError(
-                'Incompatible shapes: X has %s samples, while Y '
-                'has %s' % (X.shape[0], Y.shape[0]))
+        #if n != Y.shape[0]:
+        #    raise ValueError(
+        #        "Invalid number of samples", KernelCCA().fit, X, Y)
+
         if self.n_components < 1 or self.n_components > n:
-            raise ValueError('Invalid number of components')
+            raise ValueError('Invalid number of components: %d' %
+                             self.n_components)
         if self.eigen_solver not in ("auto", "dense", "arpack"):
             raise ValueError("Got eigen_solver %s when only 'auto', "
                              "'dense' and 'arparck' are valid" %
