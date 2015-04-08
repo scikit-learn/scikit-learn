@@ -359,8 +359,10 @@ class SAGClassifier(BaseSAG, LinearClassifierMixin, BaseEstimator):
         if self.classes_.shape[0] == 2:
             if self.warm_start:
                 # init parameters for binary classifier
-                coef_init = self.coef_
-                intercept_init = self.intercept_
+                if hasattr(self, "coef_"):
+                    coef_init = self.coef_
+                if hasattr(self, "intercept_"):
+                    intercept_init = self.intercept_
                 sum_gradient_init = self.sum_gradient_
                 gradient_memory_init = self.gradient_memory_
                 seen_init = self.seen_
@@ -374,9 +376,9 @@ class SAGClassifier(BaseSAG, LinearClassifierMixin, BaseEstimator):
             class_index = np.where(self.classes_ == target_class)[0][0]
             if self.warm_start:
                 # init parameters for multi-class classifier
-                if self.coef_ is not None:
+                if hasattr(self, "coef_") and self.coef_ is not None:
                     coef_init = self.coef_[class_index]
-                if self.intercept_ is not None:
+                if hasattr(self, "intercept_") and self.intercept_ is not None:
                     intercept_init = self.intercept_[class_index]
                 if self.sum_gradient_ is not None:
                     sum_gradient_init = self.sum_gradient_[class_index]
@@ -535,8 +537,10 @@ class SAGRegressor(BaseSAG, LinearModel, RegressorMixin,
         intercept_sum_gradient_init = None
 
         if self.warm_start:
-            coef_init = self.coef_
-            intercept_init = self.intercept_
+            if hasattr(self, "coef_"):
+                coef_init = self.coef_
+            if hasattr(self, "intercept_"):
+                intercept_init = self.intercept_
             sum_gradient_init = self.sum_gradient_
             gradient_memory_init = self.gradient_memory_
             seen_init = self.seen_
