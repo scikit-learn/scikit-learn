@@ -102,16 +102,6 @@ def test_ordering():
             if copy:
                 assert_false(A is B)
 
-    """
-    X = sp.csr_matrix(X)
-    X.data = X.data[::-1]
-    assert_false(X.data.flags['C_CONTIGUOUS'])
-
-    for copy in (True, False):
-        Y = check_array(X, accept_sparse='csr', copy=copy, order='C')
-        assert_true(Y.data.flags['C_CONTIGUOUS'])
-    """
-
 
 def test_check_array():
     # accept_sparse == None
