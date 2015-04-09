@@ -494,7 +494,7 @@ def test_degenerate_targets():
     clf.fit(X, np.ones(len(X)))
     clf.predict(rng.rand(1, 2))
     assert_array_equal(np.ones((1,), dtype=np.float64),
-                       clf.predict(rng.rand(2)))
+                       clf.predict(rng.rand(1, 2)))
 
 
 def test_quantile_loss():
