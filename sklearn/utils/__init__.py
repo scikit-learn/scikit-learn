@@ -169,7 +169,9 @@ def resample(*arrays, **options):
 
     Parameters
     ----------
-    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
+    *arrays : sequence of indexable data-structures
+        Indexable data-structures can be arrays, lists, dataframes or scipy
+        sparse matrices with consistent first dimension.
 
     replace : boolean, True by default
         Implements resampling with replacement. If False, this will implement
@@ -184,8 +186,7 @@ def resample(*arrays, **options):
 
     Returns
     -------
-    resampled_arrays : sequence of arrays or scipy.sparse matrices with same \
-    shape[0]
+    resampled_arrays : sequence of indexable data-structures
         Sequence of resampled views of the collections. The original arrays are
         not impacted.
 
@@ -193,7 +194,7 @@ def resample(*arrays, **options):
     --------
     It is possible to mix sparse and dense arrays in the same run::
 
-      >>> X = [[1., 0.], [2., 1.], [0., 0.]]
+      >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
       >>> from scipy.sparse import coo_matrix
@@ -246,8 +247,6 @@ def resample(*arrays, **options):
             max_n_samples, n_samples))
 
     check_consistent_length(*arrays)
-    arrays = [check_array(x, accept_sparse='csr', ensure_2d=False,
-                          allow_nd=True) for x in arrays]
 
     if replace:
         indices = random_state.randint(0, n_samples, size=(max_n_samples,))
@@ -256,12 +255,9 @@ def resample(*arrays, **options):
         random_state.shuffle(indices)
         indices = indices[:max_n_samples]
 
-    resampled_arrays = []
-
-    for array in arrays:
-        array = array[indices]
-        resampled_arrays.append(array)
-
+    # convert sparse matrices to CSR for row-based indexing
+    arrays = [a.tocsr() if issparse(a) else a for a in arrays]
+    resampled_arrays = [safe_indexing(a, indices) for a in arrays]
     if len(resampled_arrays) == 1:
         # syntactic sugar for the unit argument case
         return resampled_arrays[0]
@@ -277,7 +273,9 @@ def shuffle(*arrays, **options):
 
     Parameters
     ----------
-    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
+    *arrays : sequence of indexable data-structures
+        Indexable data-structures can be arrays, lists, dataframes or scipy
+        sparse matrices with consistent first dimension.
 
     random_state : int or RandomState instance
         Control the shuffling for reproducible behavior.
@@ -288,8 +286,7 @@ def shuffle(*arrays, **options):
 
     Returns
     -------
-    shuffled_arrays : sequence of arrays or scipy.sparse matrices with same \
-    shape[0]
+    shuffled_arrays : sequence of indexable data-structures
         Sequence of shuffled views of the collections. The original arrays are
         not impacted.
 
@@ -297,7 +294,7 @@ def shuffle(*arrays, **options):
     --------
     It is possible to mix sparse and dense arrays in the same run::
 
-      >>> X = [[1., 0.], [2., 1.], [0., 0.]]
+      >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
       >>> from scipy.sparse import coo_matrix
