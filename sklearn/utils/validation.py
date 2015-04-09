@@ -260,8 +260,8 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
                           % spmatrix.format)
         else:
             _assert_all_finite(spmatrix.data)
-    if hasattr(spmatrix, "data"):
-        spmatrix.data = np.array(spmatrix.data, copy=False, order=order)
+    #if hasattr(spmatrix, "data"):
+    #    spmatrix.data = np.array(spmatrix.data, copy=False, order=order)
     return spmatrix
 
 
