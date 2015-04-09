@@ -265,9 +265,9 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
     return spmatrix
 
 
-def check_array(array, accept_sparse=None, dtype="numeric", order=None, copy=False,
-                force_all_finite=True, ensure_2d=True, allow_nd=False,
-                ensure_min_samples=1, ensure_min_features=1):
+def check_array(array, accept_sparse=None, dtype="numeric", order=None,
+                copy=False, force_all_finite=True, ensure_2d=True,
+                allow_nd=False, ensure_min_samples=1, ensure_min_features=1):
     """Input validation on an array, list, sparse matrix or similar.
 
     By default, the input is converted to an at least 2nd numpy array.
