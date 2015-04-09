@@ -112,9 +112,8 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
         if lim < tol:
             break
     else:
-        warnings.warn('FastICA did not converge.' +
-                      ' You might want' +
-                      ' to increase the number of iterations.')
+        warnings.warn('FastICA did not converge. Consider increasing '
+                      'tolerance or the maximum number of iterations.')
 
     return W, ii + 1
 
