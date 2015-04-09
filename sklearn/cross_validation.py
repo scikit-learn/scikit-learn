@@ -973,13 +973,11 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
 
     cv : cross-validation generator or int, optional, default: None
         A cross-validation generator to use. If int, determines
-        the number of folds in StratifiedKFold if y, or the number
-        of folds in KFold otherwise. If None, it is equivalent to cv=3.
-        If the estimator is a classifier the default will be StratifiedKFold.
-        Specific cross-validation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects.
-        This generator must include all elements in the test set exactly once.
-        Otherwise, a ValueError is raised.
+        the number of folds in StratifiedKFold if y is a classifier.
+        If None, it is equivalent to cv=3. Specific cross-validation objects 
+        can be passed, see sklearn.cross_validation module for the list of 
+        possible objects. This generator must include all elements in the test
+        set exactly once. Otherwise, a ValueError is raised.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
