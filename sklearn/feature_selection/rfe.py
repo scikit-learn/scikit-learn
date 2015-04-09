@@ -398,18 +398,16 @@ class RFECV(RFE, MetaEstimatorMixin):
             X_train, y_train = _safe_split(self.estimator, X, y, train)
             X_test, y_test = _safe_split(self.estimator, X, y, test, train)
 
-            rfe = RFE(estimator=self.estimator, n_features_to_select=1,
+            rfe = RFE(estimator=self.estimator,
+                      n_features_to_select=n_features_to_select,
                       step=self.step, estimator_params=self.estimator_params,
                       verbose=self.verbose - 1)
 
-            # Compute a full ranking of the features
-            # ranking_ contains the same set of values for all CV folds,
-            # but perhaps reordered
             rfe._fit(X_train, y_train, lambda estimator, features:
                      _score(estimator, X_test[:, features], y_test, scorer))
             scores.append(np.array(rfe.scores_[::-1]).reshape(1, -1))
         scores = np.sum(np.concatenate(scores, 0), 0)
-        # The index in scores when 'n_features' features is selected
+        # The index in 'scores' when 'n_features' features are selected
         n_feature_index = np.ceil((n_features - n_features_to_select) /
                                   float(self.step))
         n_features_to_select = max(n_features_to_select,
