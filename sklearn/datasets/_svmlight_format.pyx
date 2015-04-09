@@ -65,8 +65,9 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
         target, features = line_parts[0], line_parts[1:]
         if multilabel:
             if ":" in target:
-                target, features = "", line_parts[0:]
-            target = [float(y) for y in target.split(COMMA)]
+                target, features = [], line_parts[0:]
+            else:
+                target = [float(y) for y in target.split(COMMA)]
             target.sort()
             labels.append(tuple(target))
         else:
