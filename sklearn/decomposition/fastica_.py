@@ -224,7 +224,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             w = np.dot(W, K.T)
             A = w.T * (w * w.T).I
 
-    S : array, shape (n_components, n_samples) | None
+    S : array, shape (n_samples, n_components) | None
         Estimated source matrix
 
     X_mean : array, shape (n_features, )
