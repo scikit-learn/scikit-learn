@@ -1208,6 +1208,8 @@ def check_explicit_sparse_zeros(tree, max_depth=3,
     Xs = (X_test, X_sparse_test)
     for X1, X2 in product(Xs, Xs):
         assert_array_almost_equal(s.tree_.apply(X1), d.tree_.apply(X2))
+        assert_array_almost_equal(s.apply(X1), d.apply(X2))
+        assert_array_almost_equal(s.apply(X1), s.tree_.apply(X1))
         assert_array_almost_equal(s.predict(X1), d.predict(X2))
 
         if tree in CLF_TREES:
@@ -1266,3 +1268,38 @@ def check_min_weight_leaf_split_level(name):
 def test_min_weight_leaf_split_level():
     for name in ALL_TREES:
         yield check_min_weight_leaf_split_level, name
+<<<<<<< HEAD
+
+def check_public_apply(tree):
+    # tree_.apply does not check that data is of type float32, so we manually
+    # do it here.
+    X_small_32 = X_small.astype(np.float32, copy = True)
+    if tree in CLF_TREES.keys():
+        tree_class = CLF_TREES[tree]
+        clf = tree_class()
+        clf.fit(X_small_32, y_small)
+    else: #The tree is a regression a tree
+        tree_class = REG_TREES[tree]
+        clf = tree_class()
+        clf.fit(X_small_32, y_small_reg)
+
+    assert_array_equal(clf.apply(X_small_32), clf.tree_.apply(X_small_32))
+    
+    for sparse_matrix in (csr_matrix, csc_matrix, coo_matrix):
+        X_small_sparse = sparse_matrix(X_small_32)
+        assert_array_equal(clf.apply(X_small_sparse), clf.tree_.apply(X_small_32))
+        
+def test_public_apply():
+    """
+    Test that Tree.apply matches Tree.tree_.apply for sparse and dense inputs
+    """
+    for tree in ALL_TREES.iterkeys():
+        yield check_public_apply, tree
+        
+def test_apply_valid():
+    """
+    Check that apply() raises error if preconditions not met.
+    """
+    clf = DecisionTreeClassifier()
+    X_sparse_small = csr_matrix(X_small)
+    assert_raises(ValueError, clf.apply, X_sparse_small)
