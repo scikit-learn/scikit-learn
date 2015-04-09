@@ -2,6 +2,32 @@
 
 .. _changes_0_16:
 
+0.16.1
+=======
+
+Changelog
+---------
+
+Bug fixes
+.........
+
+   - Allow input data larger than ``block_size`` in
+     :class:`covariance.LedoitWolf` by `Andreas Müller`_.
+
+   - Fix a bug in :class:`isotonic.IsotonicRegression` deduplication that
+     caused unstable result in :class:`calibration.CalibratedClassifierCV` by
+     `Jan Hendrik Metzen`_.
+
+   - Fix sorting of labels in func:`preprocessing.label_binarize` by Michael Heilman.
+
+   - Fix several stability and convergence issues in
+     :class:`cross_decomposition.CCA` and
+     :class:`cross_decomposition.PLSCanonical` by `Andreas Müller`_
+
+   - Fix a bug in :class:`cluster.KMeans` when ``precompute_distances=False``
+     on fortran-ordered data.
+
+
 0.16
 ====
 
