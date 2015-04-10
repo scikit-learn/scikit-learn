@@ -13,6 +13,8 @@ from sklearn.utils import check_random_state
 from sklearn.ensemble.gradient_boosting import BinomialDeviance
 from sklearn.ensemble.gradient_boosting import LogOddsEstimator
 from sklearn.ensemble.gradient_boosting import LeastSquaresError
+from sklearn.ensemble.gradient_boosting import LeastAbsoluteError
+from sklearn.ensemble.gradient_boosting import QuantileLossFunction
 from sklearn.ensemble.gradient_boosting import RegressionLossFunction
 from sklearn.ensemble.gradient_boosting import LOSS_FUNCTIONS
 from sklearn.ensemble.gradient_boosting import _weighted_percentile
@@ -174,3 +176,24 @@ def test_sample_weight_deviance():
         deviance_w_w = loss(y, p, sample_weight)
         deviance_wo_w = loss(y, p)
         assert deviance_wo_w == deviance_w_w
+
+
+def test_lad_equals_quantile_50():
+    lad = LeastAbsoluteError(1)
+    ql = QuantileLossFunction(1, alpha=0.5)
+    weights = np.linspace(0, 1, 11) ** 2
+
+    pred = np.linspace(0, 1, 11)
+    true = 0.5 * np.ones(11)
+
+    lad_loss = lad(true, pred)
+    ql_loss = ql(true, pred)
+
+    assert_almost_equal(lad_loss, 2 * ql_loss)
+    assert_almost_equal(lad_loss, 0.272727, 3)
+
+    lad_weighted_loss = lad(true, pred, sample_weight=weights)
+    ql_weighted_loss = ql(true, pred, sample_weight=weights)
+
+    assert_almost_equal(lad_weighted_loss, 2 * ql_weighted_loss)
+    assert_almost_equal(lad_weighted_loss, 0.311688, 3)
