@@ -261,8 +261,7 @@ predictive.
 Type casting
 ~~~~~~~~~~~~
 
-Unless otherwise specified, input will be cast to ``float64``, and regression
-targets will be ``float64``. Consider the following example::
+Unless otherwise specified, input will be cast to ``float64``::
 
   >>> import numpy as np
   >>> from sklearn import random_projection
@@ -277,16 +276,43 @@ targets will be ``float64``. Consider the following example::
   >>> X_new.dtype
   dtype('float64')
 
-The input data ``X`` is ``float32``, which is cast to ``float64`` by
+In this example, ``X`` is ``float32``, which is cast to ``float64`` by
 ``fit_transform(X)``.
+
+Regression targets are cast to ``float64``, classification targets are
+maintained::
+    >>> from sklearn import datasets
+    >>> from sklearn.svm import SVC
+
+    >>> iris = datasets.load_iris()
+    >>> clf = SVC()
+    >>> clf.fit(iris.data, iris.target)
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
+      kernel='rbf', max_iter=-1, probability=False, random_state=None,
+      shrinking=True, tol=0.001, verbose=False)
+
+    >>> clf.predict(iris.data[:3])
+    array([0, 0, 0])
+
+    >>> clf.fit(iris.data, iris.target_names[iris.target])
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
+      kernel='rbf', max_iter=-1, probability=False, random_state=None,
+      shrinking=True, tol=0.001, verbose=False)
+
+    >>> clf.predict(iris.data[:3])  # doctest: +NORMALIZE_WHITESPACE
+    array(['setosa', 'setosa', 'setosa'], dtype='<U10')
+
+Here, the first ``predict()`` returns an integer array, since ``iris.target``
+(an integer array) was used in ``fit``. The second ``predict`` returns a string
+array, since ``iris.target_names`` was for fitting.
 
 
 Refitting and updating parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Hyper-parameters of an estimator can be updated after it has be constructed by
+Hyper-parameters of an estimator can be updated after it has been constructed by
 changing the corresponding member variables. Calling ``fit()`` more than once
-will overwrite what was learned by previous ``fit()``::
+will overwrite what was learned by any previous ``fit()``::
 
   >>> import numpy as np
   >>> from sklearn.svm import SVC
