@@ -250,3 +250,69 @@ Note that pickle has some security and maintainability issues. Please refer to
 section :ref:`model_persistence` for more detailed information about model
 persistence with scikit-learn.
 
+
+Conventions
+-----------
+
+scikit-learn estimators follow certain rules to make their behavior more
+predictive.
+
+
+Type casting
+~~~~~~~~~~~~
+
+Unless otherwise specified, input will be cast to ``float64``, and regression
+targets will be ``float64``. Consider the following example::
+
+  >>> import numpy as np
+  >>> from sklearn import random_projection
+
+  >>> X = np.random.rand(10, 2000)
+  >>> X = np.array(X, dtype='float32')
+  >>> X.dtype
+  dtype('float32')
+
+  >>> transformer = random_projection.GaussianRandomProjection()
+  >>> X_new = transformer.fit_transform(X)
+  >>> X_new.dtype
+  dtype('float64')
+
+The input data ``X`` is ``float32``, which is cast to ``float64`` by
+``fit_transform(X)``.
+
+
+Refitting and updating parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Hyper-parameters of an estimator can be updated after it has be constructed by
+changing the corresponding member variables. Calling ``fit()`` more than once
+will overwrite what was learned by previous ``fit()``::
+
+  >>> import numpy as np
+  >>> from sklearn.svm import SVC
+
+  >>> np.random.seed(0)
+  >>> X = np.random.rand(100, 10)
+  >>> y = np.random.binomial(1, 0.5, 100)
+  >>> XX = np.random.rand(5, 10)
+
+  >>> clf = SVC()
+  >>> clf.kernel = 'linear'
+  >>> clf.fit(X, y)
+  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
+    kernel='linear', max_iter=-1, probability=False, random_state=None,
+    shrinking=True, tol=0.001, verbose=False)
+  >>> clf.predict(XX)
+  array([1, 0, 1, 1, 0])
+
+  >>> clf.kernel = 'rbf'
+  >>> clf.fit(X, y)
+  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
+    kernel='rbf', max_iter=-1, probability=False, random_state=None,
+    shrinking=True, tol=0.001, verbose=False)
+  >>> clf.predict(XX)
+  array([0, 0, 0, 1, 0])
+
+Here, the default kernel ``rbf`` is first changed to ``linear`` after the
+estimator has been constructed via ``SVC()``, and changed back to ``rbf`` to
+refit the estimator and to make a second prediction.
