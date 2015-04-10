@@ -3,7 +3,53 @@
 Gaussian process regression (GPR) on Mauna Loa CO2 data.
 ========================================================
 
-Gaussian process regression (GPR) on Mauna Loa CO2 data.
+This example is based on Section 5.4.3 of "Gaussian Processes for Machine
+Learning" [RW2006]. It illustrates an example of complex kernel engineering and
+hyperparameter optimization using gradient ascent on the
+log-marginal-likelihood. The data consists of the monthly average atmospheric
+CO2 concentrations (in parts per million by volume (ppmv)) collected at the
+Mauna Loa Observatory in Hawaii, between 1958 and 1997. The objective is to
+model the CO2 concentration as a function of the time t.
+
+The kernel is composed of several terms that are responsible for explaining
+different properties of the signal:
+ - a long term, smooth rising trend is to be explained by an RBF kernel. The
+   RBF kernel with a large length-scale enforces this component to be smooth;
+   it is not enforced that the trend is rising which leaves this choice to the
+   GP. The specific length-scale and the amplitude are free hyperparameters.
+ - a seasonal component, which is to be explained by the periodic
+   ExpSineSquared kernel with a fixed periodicity of 1 year. The length-scale
+   of this periodic component, controlling its smoothness, is a free parameter.
+   In order to allow decaying away from exact periodicity, the product with an
+   RBF kernel is taken. The length-scale of this RBF component controls the
+   decay time and is a further free parameter.
+ - smaller, medium term irregularities are to be explained by a
+   RationalQuadratic kernel component, whose length-scale and alpha parameter,
+   which determines the diffuseness of the length-scales, are to be determined.
+   According to [RW2006], these irregularities can better be explained by
+   a RationalQuadratic than an RBF kernel component, probably because it can
+   accommodate several length-scales.
+ - a "noise" term, consisting of an RBF kernel contribution, which shall
+   explain the correlated noise components such as local weather phenomena,
+   and a WhiteKernel contribution for the white noise. The relative amplitudes
+   and the RBF's length scale are further free parameters.
+
+Maximizing the log-marginal-likelihood after subtracting the target's mean
+yields the following kernel with an LML of -84.483:
+   2.5e+03 * RBF(l=49.8)
+   + 6.68 * RBF(l=100) * ExpSineSquared(l=1.37, p=1)
+   + 0.215 * RationalQuadratic(alpha=3.98, l=0.982)
+   + 0.0381 * RBF(l=0.136) + WhiteKernel(c=0.0335)
+Thus, most of the target signal (sqrt(2.5e+03)ppm = 50ppm) is explained by a
+long-term rising trend (length-scale 49.8 years). The periodic component has
+an amplitude of sqrt(6.68)ppm = 2.58ppm, a decay time of 100 years and a
+length-scale of 1.37. The long decay time indicates that we have a locally very
+close to periodic seasonal component. The correlated noise has an amplitude of
+sqrt(0.0381)ppm = 0.195ppm with a length scale of 0.136 years and a white-noise
+contribution of sqrt(0.0335)ppm = 0.183pm. Thus, the overall noise level is
+very small, indicating that the data can be very well explained by the model.
+The figure shows also that the model makes very confident predictions until
+around 2015.
 """
 print(__doc__)
 
