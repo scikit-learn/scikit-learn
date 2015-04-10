@@ -791,7 +791,17 @@ class WhiteKernel(Kernel):
 class RBF(Kernel):
     """Radial-basis function kernel (aka squared-exponential kernel).
 
-    Both isotropic and anisotropic version are supported.
+    The RBF kernel is a stationary kernel. It is also known as the
+    "squared exponential" kernel. It is parameterized by a length-scale
+    parameter l>0, which can either be a scalar (isotropic variant of
+    the kernel) or a vector with the same number of dimensions as the inputs
+    X (anisotropic variant of the kernel). The kernel given by:
+
+    k(x_i, x_j) = exp(-1 / 2 d(x_i / l, x_j / l)^2)
+
+    This kernel is infinitely differentiable, which implies that GPs with this
+    kernel as covariance function have mean square derivatives of all orders,
+    and are thus very smooth.
 
     Parameters
     -----------
@@ -888,10 +898,13 @@ class RBF(Kernel):
 class RationalQuadratic(Kernel):
     """Rational Quadratic kernel.
 
-    This kernel can be seen as a scale mixture (an infinite sum) of RBF kernels
-    with different characteristic length-scales.
+    The RationalQuadratic kernel can be seen as a scale mixture (an infinite
+    sum) of RBF kernels with different characteristic length-scales. It is
+    parameterized by a length-scale parameter l>0 and a scale mixture parameter
+    alpha>0 Only the isotropic variant where l is a scalar is supported at the
+    moment. The kernel given by:
 
-    Only isotropic variant is supported at the moment.
+    k(x_i, x_j) = (1 + d(x_i, x_j)^2 / (2*alpha l^2))^alpha
 
     Parameters
     ----------
@@ -985,9 +998,12 @@ class RationalQuadratic(Kernel):
 class ExpSineSquared(Kernel):
     """Exp-Sine-Squared kernel.
 
-    This kernel allows modelling periodic functions.
+    The ExpSineSquared kernel allows modeling periodic functions. It is
+    parameterized by a length-scale parameter l>0 and a periodicity parameter
+    p>0. Only the isotropic variant where l is a scalar is supported at the
+    moment. The kernel given by:
 
-    Only isotropic variant is supported at the moment.
+    k(x_i, x_j) =  exp(-2 sin(\pi / p * d(x_i, x_j)) / l)^2
 
     Parameters
     ----------
@@ -1003,7 +1019,6 @@ class ExpSineSquared(Kernel):
     p_bounds : pair of floats >= 0, default: (1e-5, np.inf)
         The lower and upper bound on p
     """
-
     def __init__(self, l=1.0, p=1.0, l_bounds=(1e-5, np.inf),
                  p_bounds=(1e-5, np.inf)):
         self.l = l
@@ -1082,7 +1097,17 @@ class ExpSineSquared(Kernel):
 class DotProduct(Kernel):
     """Dot-Product kernel.
 
-    This kernel is non-stationary.
+    The DotProduct kernel is non-stationary and can be obtained from linear
+    regression by putting N(0, 1) priors on the coefficients of x_d (d = 1, . .
+    . , D) and a prior of N(0, \sigma_0^2) on the bias. The DotProduct kernel is
+    invariant to a rotation of the coordinates about the origin, but not
+    translations. It is parameterized by a parameter sigma_0^2. For
+    sigma_0^2 =0, the kernel is called the homogeneous linear kernel, otherwise
+    it is inhomogeneous. The kernel is given by
+
+    k(x_i, x_j) = sigma_0 ^ 2 + x_i \cdot x_j
+
+    The DotProduct kernel is commonly combined with exponentiation.
 
     Parameters
     ----------
