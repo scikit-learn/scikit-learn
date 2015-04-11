@@ -284,11 +284,11 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
         # find points to reassign empty clusters to
         far_from_centers = distances.argsort()[::-1]
 
-    for i, cluster_id in enumerate(empty_clusters):
-        # XXX two relocated clusters could be close to each other
-        new_center = X[far_from_centers[i]]
-        centers[cluster_id] = new_center
-        n_samples_in_cluster[cluster_id] = 1
+        for i, cluster_id in enumerate(empty_clusters):
+            # XXX two relocated clusters could be close to each other
+            new_center = X[far_from_centers[i]]
+            centers[cluster_id] = new_center
+            n_samples_in_cluster[cluster_id] = 1
 
     for i in range(n_samples):
         for j in range(n_features):
@@ -345,14 +345,14 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
         # find points to reassign empty clusters to
         far_from_centers = distances.argsort()[::-1]
 
-    for i in range(empty_clusters.shape[0]):
-        cluster_id = empty_clusters[i]
+        for i in range(empty_clusters.shape[0]):
+            cluster_id = empty_clusters[i]
 
-        # XXX two relocated clusters could be close to each other
-        centers[cluster_id] = 0.
-        add_row_csr(data, indices, indptr, far_from_centers[i],
-                    centers[cluster_id])
-        n_samples_in_cluster[cluster_id] = 1
+            # XXX two relocated clusters could be close to each other
+            centers[cluster_id] = 0.
+            add_row_csr(data, indices, indptr, far_from_centers[i],
+                        centers[cluster_id])
+            n_samples_in_cluster[cluster_id] = 1
 
     for i in range(labels.shape[0]):
         add_row_csr(data, indices, indptr, i, centers[labels[i]])
