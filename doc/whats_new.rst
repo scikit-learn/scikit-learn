@@ -25,6 +25,10 @@ Bug fixes
 API changes summary
 -------------------
 
+    - :class:`tree.DecisionTreeClassifier` now exposes an ``apply`` method
+      for retrieving the leaf indices samples are predicted as. By
+      `Daniel Galvez`_ and `Gilles Louppe`_.
+
 .. _changes_0_16:
 
 0.16
