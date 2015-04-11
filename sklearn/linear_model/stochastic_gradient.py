@@ -22,7 +22,7 @@ from ..utils.validation import check_is_fitted
 from ..externals import six
 
 from .sgd_fast import plain_sgd, average_sgd
-from ..utils.fixed import astype
+from ..utils.fixes import astype
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from ..utils import compute_class_weight
 from .sgd_fast import Hinge
