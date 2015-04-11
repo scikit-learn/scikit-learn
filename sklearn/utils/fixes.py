@@ -103,7 +103,7 @@ try:
 except TypeError:
     # Compat where astype accepted no copy argument
     def astype(array, dtype, copy=True):
-        if array.dtype == dtype:
+        if not copy and array.dtype == dtype:
             return array
         return array.astype(dtype)
 else:
