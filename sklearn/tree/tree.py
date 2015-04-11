@@ -386,7 +386,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         X_leaves : array_like, shape = [n_samples,]
             For each datapoint x in X, return the index of the leaf x
             ends up in. Leaves are numbered within
-            ``[0;self.tree_.node_count)``.
+            ``[0; self.tree_.node_count)``, possibly with gaps in the
+            numbering.
         """
         if self.tree_ is None:
             raise NotFittedError("Estimator not fitted, "
