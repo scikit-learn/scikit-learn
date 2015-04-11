@@ -27,6 +27,7 @@ from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
 from .utils import check_X_y, check_array
 from .utils.extmath import safe_sparse_dot, logsumexp
+from .utils.fixes import astype
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.fixes import in1d
 from .utils.validation import check_is_fitted
@@ -473,7 +474,7 @@ class BaseDiscreteNB(BaseNB):
             raise ValueError(msg % (X.shape[0], y.shape[0]))
 
         # convert to float to support sample weight consistently
-        Y = Y.astype(np.float64)
+        Y = astype(Y, np.float64, copy=False)
         if sample_weight is not None:
             Y *= check_array(sample_weight).T
 
@@ -522,7 +523,7 @@ class BaseDiscreteNB(BaseNB):
 
         # convert to float to support sample weight consistently;
         # this means we also don't have to cast X to floating point
-        Y = Y.astype(np.float64)
+        Y = astype(Y, np.float64, copy=False)
         if sample_weight is not None:
             Y *= check_array(sample_weight).T
 

@@ -17,9 +17,9 @@ from ..externals import six
 from ..utils import check_array
 from ..utils import warn_if_not_float
 from ..utils.extmath import row_norms
-from ..utils.fixes import (combinations_with_replacement as combinations_w_r,
-                           bincount)
-from ..utils.fixes import isclose
+from ..utils.fixes import (astype,
+                           combinations_with_replacement as combinations_w_r,
+                           bincount, isclose)
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis)
@@ -347,7 +347,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse='csr', copy=self.copy,
                         ensure_2d=False)
         if warn_if_not_float(X, estimator=self):
-            X = X.astype(np.float)
+            X = astype(X, np.float, copy=False)
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -380,7 +380,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False)
         if warn_if_not_float(X, estimator=self):
-            X = X.astype(np.float)
+            X = astype(X, np.float, copy=False)
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
