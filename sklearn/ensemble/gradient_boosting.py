@@ -1294,12 +1294,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
-    `init` : BaseEstimator
+    init : BaseEstimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
-    estimators_ : list of DecisionTreeRegressor
-        The collection of fitted sub-estimators.
+    estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, loss_.K]
+        The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
+        classification, otherwise n_classes.
+
 
     See also
     --------
@@ -1615,7 +1617,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
-    estimators_ : list of DecisionTreeRegressor
+    estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, 1]
         The collection of fitted sub-estimators.
 
     See also
