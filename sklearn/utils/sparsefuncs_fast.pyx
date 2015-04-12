@@ -39,7 +39,7 @@ def csr_row_norms(X):
     for i in range(n_samples):
         sum_ = 0.0
         for j in range(indptr[i], indptr[i + 1]):
-            sum_ += data[j] * data[j]
+            sum_ += data[j] ** 2
         norms[i] = sum_
 
     return norms
@@ -98,7 +98,7 @@ def csr_mean_variance_axis0(X):
     for i in xrange(non_zero):
         col_ind = X_indices[i]
         diff = X_data[i] - means[col_ind]
-        variances[col_ind] += diff * diff
+        variances[col_ind] += diff ** 2
         counts[col_ind] += 1
 
     for i in xrange(n_features):
@@ -163,7 +163,7 @@ def csc_mean_variance_axis0(X):
 
         for j in xrange(startptr, endptr):
             diff = X_data[j] - means[i]
-            variances[i] += diff * diff
+            variances[i] += diff ** 2
 
         variances[i] += (n_samples - counts) * means[i] * means[i]
         variances[i] /= n_samples
@@ -226,7 +226,7 @@ def inplace_csr_row_normalize_l2(X):
         sum_ = 0.0
 
         for j in xrange(X_indptr[i], X_indptr[i + 1]):
-            sum_ += (X_data[j] * X_data[j])
+            sum_ += (X_data[j] ** 2)
 
         if sum_ == 0.0:
             # do not normalize empty rows (can happen if CSR is not pruned
