@@ -958,7 +958,7 @@ class ShuffleLabelsOut(ShuffleSplit):
     The difference between LeavePLabelOut and ShuffleLabelsOut is that
     the former generates splits using all subsets of size `p` unique labels,
     whereas ShuffleLabelsOut generates a user-determined number of random
-    test splits, each with `p` unique labels.
+    test splits, each with a user-determined fraction of unique labels.
 
 
     Parameters
