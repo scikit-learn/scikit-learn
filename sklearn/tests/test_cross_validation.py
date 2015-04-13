@@ -483,6 +483,29 @@ def test_predefinedsplit_with_kfold_split():
     assert_array_equal(ps_test, kf_test)
 
 
+def test_shuffle_labels_out():
+    ys = [np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
+          np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
+          np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
+          np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
+          ]
+
+    for y in ys:
+        slo = cval.ShuffleLabelsOut(y, 6, test_size=0.33,
+                                    random_state=0)
+
+        for train, test in slo:
+            # First test: no train label is in the test set and vice versa
+            assert_false(np.any(np.in1d(y[train], np.unique(y[test]))))
+            assert_false(np.any(np.in1d(y[test], np.unique(y[train]))))
+
+            # Second test: train and test add up to all the data
+            assert_equal(y[train].size + y[test].size, y.size)
+
+            # Third test: train and test are disjoint
+            assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
+
+
 def test_leave_label_out_changing_labels():
     # Check that LeaveOneLabelOut and LeavePLabelOut work normally if
     # the labels variable is changed before calling __iter__
