@@ -1,5 +1,6 @@
 import numpy as np
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import (assert_array_almost_equal,
+                                   assert_array_equal, assert_true, assert_raise_message)
 from sklearn.datasets import load_linnerud
 from sklearn.cross_decomposition import pls_
 from nose.tools import assert_equal
@@ -248,6 +249,30 @@ def test_univariate_pls_regression():
     assert_array_almost_equal(model1, model2)
 
 
+def test_predict_transform_copy():
+    # check that the "copy" keyword works
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+    clf = pls_.PLSCanonical()
+    X_copy = X.copy()
+    Y_copy = Y.copy()
+    clf.fit(X, Y)
+    # check that results are identical with copy
+    assert_array_almost_equal(clf.predict(X), clf.predict(X.copy(), copy=False))
+    assert_array_almost_equal(clf.transform(X), clf.transform(X.copy(), copy=False))
+
+    # check also if passing Y
+    assert_array_almost_equal(clf.transform(X, Y),
+                              clf.transform(X.copy(), Y.copy(), copy=False))
+    # check that copy doesn't destroy
+    # we do want to check exact equality here
+    assert_array_equal(X_copy, X)
+    assert_array_equal(Y_copy, Y)
+    # also check that mean wasn't zero before (to make sure we didn't touch it)
+    assert_true(np.all(X.mean(axis=0) != 0))
+
+
 def test_scale():
     d = load_linnerud()
     X = d.data
@@ -260,3 +285,13 @@ def test_scale():
                 pls_.PLSSVD()]:
         clf.set_params(scale=True)
         clf.fit(X, Y)
+
+
+def test_pls_errors():
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+    for clf in [pls_.PLSCanonical(), pls_.PLSRegression(),
+                pls_.PLSSVD()]:
+        clf.n_components = 4
+        assert_raise_message(ValueError, "Invalid number of components", clf.fit, X, Y)

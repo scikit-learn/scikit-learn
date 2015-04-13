@@ -22,7 +22,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import Ridge, LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -217,6 +217,13 @@ def test_thresholded_scorers():
     clf.fit(X_train, y_train)
     score1 = get_scorer('roc_auc')(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, clf.predict_proba(X_test)[:, 1])
+    assert_almost_equal(score1, score2)
+
+    # test with a regressor (no decision_function)
+    reg = DecisionTreeRegressor()
+    reg.fit(X_train, y_train)
+    score1 = get_scorer('roc_auc')(reg, X_test, y_test)
+    score2 = roc_auc_score(y_test, reg.predict(X_test))
     assert_almost_equal(score1, score2)
 
     # Test that an exception is raised on more than two classes

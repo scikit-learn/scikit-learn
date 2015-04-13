@@ -25,6 +25,10 @@ Bug fixes
 API changes summary
 -------------------
 
+    - :class:`tree.DecisionTreeClassifier` now exposes an ``apply`` method
+      for retrieving the leaf indices samples are predicted as. By
+      `Daniel Galvez`_ and `Gilles Louppe`_.
+
 .. _changes_0_16:
 
 0.16
@@ -485,7 +489,7 @@ API changes summary
       :class:`linear_model.PassiveAgressiveRegressor` now defaults to ``True``.
 
     - :class:`cluster.DBSCAN` now uses a deterministic initialization. The
-      `random_state` parameter is deprecated. By `Eric Schubert`_.
+      `random_state` parameter is deprecated. By `Erich Schubert`_.
 
 .. _changes_0_15_2:
 
@@ -3399,7 +3403,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Hervé Bredin: http://herve.niderb.fr/
 
-.. _Eric Schubert: https://github.com/kno10
+.. _Erich Schubert: https://github.com/kno10
 
 .. _Dan Blanchard: https://github.com/dan-blanchard
 

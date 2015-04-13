@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.cluster import ward_tree
@@ -495,6 +496,16 @@ def test_n_components():
     for linkage_func in _TREE_BUILDERS.values():
         assert_equal(ignore_warnings(linkage_func)(X, connectivity)[1], 5)
 
+def test_agg_n_clusters():
+    # Test that an error is raised when n_clusters <= 0
+
+    rng = np.random.RandomState(0)
+    X = rng.rand(20, 10)
+    for n_clus in [-1, 0]:
+        agc = AgglomerativeClustering(n_clusters=n_clus)
+        msg = ("n_clusters should be an integer greater than 0."
+               " %s was provided." % str(agc.n_clusters))
+        assert_raise_message(ValueError, msg, agc.fit, X)
 
 if __name__ == '__main__':
     import nose

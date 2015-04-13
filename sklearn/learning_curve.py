@@ -17,6 +17,9 @@ from .utils import indexable
 from .utils.fixes import astype
 
 
+__all__ = ['learning_curve', 'validation_curve']
+
+
 def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
                    cv=None, scoring=None, exploit_incremental_learning=False,
                    n_jobs=1, pre_dispatch="all", verbose=0):

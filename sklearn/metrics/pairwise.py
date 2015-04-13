@@ -602,8 +602,7 @@ PAIRED_DISTANCES = {
     'l2': paired_euclidean_distances,
     'l1': paired_manhattan_distances,
     'manhattan': paired_manhattan_distances,
-    'cityblock': paired_manhattan_distances,
-    }
+    'cityblock': paired_manhattan_distances}
 
 
 def paired_distances(X, Y, metric="euclidean", **kwds):
@@ -1050,8 +1049,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
              [n_samples_a, n_features] otherwise
         Array of pairwise distances between samples, or a feature array.
 
-    Y : array [n_samples_b, n_features]
-        A second feature array only if X has shape [n_samples_a, n_features].
+    Y : array [n_samples_b, n_features], optional
+        An optional second feature array. Only allowed if metric != "precomputed".
 
     metric : string, or callable
         The metric to use when calculating distance between instances in a
@@ -1089,7 +1088,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
     """
     if (metric not in _VALID_METRICS and
-       not callable(metric) and metric != "precomputed"):
+            not callable(metric) and metric != "precomputed"):
         raise ValueError("Unknown metric %s. "
                          "Valid metrics are %s, or 'precomputed', or a "
                          "callable" % (metric, _VALID_METRICS))
