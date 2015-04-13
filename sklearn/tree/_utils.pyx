@@ -82,6 +82,26 @@ cdef inline double rand_uniform(double low, double high,
 cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
 
+cdef bint goes_left(DTYPE_t feature_value, SplitValue split,
+                    INT32_t n_categories) nogil:
+    """Determine whether a sample goes to the left or right child node."""
+    cdef UINT32_t rng_seed
+
+    if n_categories < 1:
+        # Non-categorical feature
+        return feature_value <= split.threshold
+    elif (split.cat_split & 1 == 0):
+        # Bitfield model
+        return (split.cat_split >> <SIZE_t>feature_value) & 1
+    else:
+        # Random model
+        rng_seed = split.cat_split >> 32
+        for q in range((split.cat_split & <SIZE_t>0xFFFFFFFF) >> 1):
+            if (<SIZE_t>feature_value ==
+                    rand_int(0, n_categories, &rng_seed)):
+                return 1
+        return 0
+
 
 # =============================================================================
 # Stack data structure

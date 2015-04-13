@@ -10,6 +10,8 @@
 import numpy as np
 cimport numpy as np
 
+from ._splitter cimport SplitValue
+
 ctypedef np.npy_float32 DTYPE_t          # Type of X
 ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
@@ -50,6 +52,10 @@ cdef double rand_uniform(double low, double high,
 
 
 cdef double log(double x) nogil
+
+# Function for traversing a tree
+cdef bint goes_left(DTYPE_t feature_value, SplitValue split,
+                    INT32_t n_categories) nogil
 
 # =============================================================================
 # Stack data structure
