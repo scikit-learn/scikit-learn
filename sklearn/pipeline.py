@@ -184,6 +184,26 @@ class Pipeline(BaseEstimator):
         return self.steps[-1][-1].predict(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
+    def fit_predict(self, X, y=None, **fit_params):
+        """Applies fit_predict of last step in pipeline after transforms.
+
+        Applies fit_transforms of a pipeline to the data, followed by the
+        fit_predict method of the final estimator in the pipeline. Valid
+        only if the final estimator implements fit_predict.
+
+        Parameters
+        ----------
+        X : iterable
+            Training data. Must fulfill input requirements of first step of
+            the pipeline.
+        y : iterable, default=None
+            Training targets. Must fulfill label requirements for all steps
+            of the pipeline.
+        """
+        Xt, fit_params = self._pre_transform(X, y, **fit_params)
+        return self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
+
+    @if_delegate_has_method(delegate='_final_estimator')
     def predict_proba(self, X):
         """Applies transforms to the data, and the predict_proba method of the
         final estimator. Valid only if the final estimator implements
