@@ -145,25 +145,6 @@ class Pipeline(BaseEstimator):
         self.steps[-1][-1].fit(Xt, y, **fit_params)
         return self
 
-    def fit_predict(self, X, y=None, **fit_params):
-        """Exposes fit_predict on pipelines.
-
-        Fit all the transforms one after the other and transform the
-        data, then run fit_predict of the final estimator on the transformed
-        data.
-
-        Parameters
-        ----------
-        X : iterable
-            Training data. Must fulfill input requirements of first step of
-            the pipeline.
-        y : iterable, default=None
-            Training targets. Must fulfill label requirements for all steps
-            of the pipeline.
-        """
-        Xt, fit_params = self._pre_transform(X, y, **fit_params)
-        return self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
-
     def fit_transform(self, X, y=None, **fit_params):
         """Fit all the transforms one after the other and transform the
         data, then use fit_transform on transformed data using the final
@@ -201,6 +182,26 @@ class Pipeline(BaseEstimator):
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict(Xt)
+
+    @if_delegate_has_method(delegate='_final_estimator')
+    def fit_predict(self, X, y=None, **fit_params):
+        """Exposes fit_predict on pipelines.
+
+        Fit all the transforms one after the other and transform the
+        data, then run fit_predict of the final estimator on the transformed
+        data.
+
+        Parameters
+        ----------
+        X : iterable
+            Training data. Must fulfill input requirements of first step of
+            the pipeline.
+        y : iterable, default=None
+            Training targets. Must fulfill label requirements for all steps
+            of the pipeline.
+        """
+        Xt, fit_params = self._pre_transform(X, y, **fit_params)
+        return self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict_proba(self, X):

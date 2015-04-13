@@ -5,7 +5,7 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.externals.six.moves import zip
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises, assert_raises_regex
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
@@ -220,6 +220,19 @@ def test_fit_predict_on_pipeline():
     pipeline_pred = pipe.fit_predict(iris.data)
 
     assert_array_almost_equal(pipeline_pred, separate_pred)
+
+
+def test_fit_predict_on_pipeline_without_fit_predict():
+    # tests that applying fit_predict on pipeline where final step does not
+    # have fit_predict implemented raises AttributeError
+    iris = load_iris()
+    scaler = StandardScaler()
+    pca = PCA()
+    pipe = Pipeline([('scaler', scaler), ('pca', pca)])
+
+    assert_raises_regex(AttributeError,
+                        "'PCA' object has no attribute 'fit_predict'",
+                        lambda: pipe.fit_predict(iris.data))
 
 
 def test_feature_union():
