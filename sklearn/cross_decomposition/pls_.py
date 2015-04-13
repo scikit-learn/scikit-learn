@@ -377,7 +377,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             Xc -= self.x_mean_
             Xc /= self.x_std_
             if Y is not None:
-                Y = np.asarray(Y)
+                Yc = np.asarray(Y)
                 Yc -= self.y_mean_
                 Yc /= self.y_std_
         # Apply rotation
