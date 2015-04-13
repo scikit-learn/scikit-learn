@@ -41,6 +41,7 @@ __all__ = ['KFold',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
            'PredefinedSplit',
+           'ShuffleLabelsOut',
            'check_cv',
            'cross_val_score',
            'cross_val_predict',
@@ -960,6 +961,82 @@ class PredefinedSplit(_PartitionIterator):
 
     def __len__(self):
         return len(self.unique_folds)
+
+
+class ShuffleLabelsOut(ShuffleSplit):
+    '''Shuffle-Labels-Out cross-validation iterator
+
+    Provides randomized train/test indices to split data according to a
+    third-party provided label. This label information can be used to encode
+    arbitrary domain specific stratifications of the samples as integers.
+
+    For instance the labels could be the year of collection of the samples
+    and thus allow for cross-validation against time-based splits.
+
+    The difference between LeavePLabelOut and ShuffleLabelsOut is that
+    the former generates splits using all subsets of size `p` unique labels,
+    whereas ShuffleLabelsOut generates a user-determined number of random
+    test splits, each with `p` unique labels.
+
+
+    Parameters
+    ----------
+    y :  array, [n_samples]
+        Labels of samples
+
+    n_iter : int (default 5)
+        Number of re-shuffling & splitting iterations.
+
+    test_size : float (default 0.2), int, or None
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the labels to include in the test split. If
+        int, represents the absolute number of test labels. If None,
+        the value is automatically set to the complement of the train size.
+
+    train_size : float, int, or None (default is None)
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the labels to include in the train split. If
+        int, represents the absolute number of train labels. If None,
+        the value is automatically set to the complement of the test size.
+
+    random_state : int or RandomState
+        Pseudo-random number generator state used for random sampling.
+    '''
+
+    def __init__(self, y, n_iter=5, test_size=0.2, train_size=None,
+                 random_state=None):
+
+        classes, y_indices = np.unique(y, return_inverse=True)
+
+        super(ShuffleLabelsOut, self).__init__(
+            len(classes), n_iter, test_size, train_size, random_state)
+
+        self.classes = classes
+        self.y_indices = y_indices
+
+    def __repr__(self):
+        return ('%s(labels=%s, n_iter=%d, test_size=%s, '
+                'random_state=%s)' % (
+                    self.__class__.__name__,
+                    self.y,
+                    self.n_iter,
+                    str(self.test_size),
+                    self.random_state,
+                ))
+
+    def __len__(self):
+        return self.n_iter
+
+    def _iter_indices(self):
+
+        for y_train, y_test in super(ShuffleLabelsOut, self)._iter_indices():
+            # these are the indices of classes in the partition
+            # invert them into data indices
+
+            train = np.flatnonzero(np.in1d(self.y_indices, y_train))
+            test = np.flatnonzero(np.in1d(self.y_indices, y_test))
+
+            yield train, test
 
 
 ##############################################################################
