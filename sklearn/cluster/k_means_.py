@@ -413,6 +413,8 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
     # Allocate memory to store the distances for each sample to its
     # closer center for reallocation in case of ties
     distances = np.zeros(shape=(X.shape[0],), dtype=np.float64)
+    
+    is_sparse = sp.issparse(X)
 
     # iterations
     for i in range(max_iter):
@@ -424,7 +426,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
                             distances=distances)
 
         # computation of the means is also called the M-step of EM
-        if sp.issparse(X):
+        if is_sparse:
             centers = _k_means._centers_sparse(X, labels, n_clusters,
                                                distances)
         else:
