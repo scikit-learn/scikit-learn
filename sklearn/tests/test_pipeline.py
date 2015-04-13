@@ -223,16 +223,14 @@ def test_fit_predict_on_pipeline():
 
 
 def test_fit_predict_on_pipeline_without_fit_predict():
-    # tests that applying fit_predict on pipeline where final step does not
-    # have fit_predict implemented raises AttributeError
-    iris = load_iris()
+    # tests that a pipeline does not have fit_predict method when final
+    # step of pipeline does not have fit_predict defined
     scaler = StandardScaler()
     pca = PCA()
     pipe = Pipeline([('scaler', scaler), ('pca', pca)])
-
     assert_raises_regex(AttributeError,
                         "'PCA' object has no attribute 'fit_predict'",
-                        lambda: pipe.fit_predict(iris.data))
+                        getattr, pipe, 'fit_predict')
 
 
 def test_feature_union():

@@ -185,11 +185,11 @@ class Pipeline(BaseEstimator):
 
     @if_delegate_has_method(delegate='_final_estimator')
     def fit_predict(self, X, y=None, **fit_params):
-        """Exposes fit_predict on pipelines.
+        """Applies fit_predict of last step in pipeline after transforms.
 
-        Fit all the transforms one after the other and transform the
-        data, then run fit_predict of the final estimator on the transformed
-        data.
+        Applies fit_transforms of a pipeline to the data, followed by the
+        fit_predict method of the final estimator in the pipeline. Valid
+        only if the final estimator implements fit_predict.
 
         Parameters
         ----------
