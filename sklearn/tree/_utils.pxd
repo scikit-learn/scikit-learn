@@ -33,6 +33,7 @@ ctypedef fused realloc_ptr:
     (DTYPE_t*)
     (SIZE_t*)
     (unsigned char*)
+    (INT32_t*)
 
 cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except *
 

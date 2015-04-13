@@ -55,6 +55,8 @@ cdef class Tree:
     cdef Node* nodes                     # Array of nodes
     cdef double* value                   # (capacity, n_outputs, max_n_classes) array of values
     cdef SIZE_t value_stride             # = n_outputs * max_n_classes
+    cdef INT32_t* n_categories           # (n_features) array giving number of
+                                         # categories (<0 for non-categorical)
 
     # Methods
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
@@ -66,6 +68,7 @@ cdef class Tree:
 
     cdef np.ndarray _get_value_ndarray(self)
     cdef np.ndarray _get_node_ndarray(self)
+    cdef np.ndarray _get_ncat_ndarray(self)
 
     cpdef np.ndarray predict(self, object X)
 
