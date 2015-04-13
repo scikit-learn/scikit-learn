@@ -48,7 +48,7 @@ cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) nogil:
     self.impurity_right = INFINITY
     self.pos = start_pos
     self.feature = 0
-    self.threshold = 0.
+    self.split_value.threshold = 0.
     self.improvement = -INFINITY
 
 cdef class Splitter:
@@ -461,10 +461,10 @@ cdef class BestSplitter(BaseDenseSplitter):
 
                             if current_proxy_improvement > best_proxy_improvement:
                                 best_proxy_improvement = current_proxy_improvement
-                                current.threshold = (Xf[p - 1] + Xf[p]) / 2.0
+                                current.split_value.threshold = (Xf[p - 1] + Xf[p]) / 2.0
 
-                                if current.threshold == Xf[p]:
-                                    current.threshold = Xf[p - 1]
+                                if current.split_value.threshold == Xf[p]:
+                                    current.split_value.threshold = Xf[p - 1]
 
                                 best = current  # copy
 
@@ -475,7 +475,7 @@ cdef class BestSplitter(BaseDenseSplitter):
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p] + feature_offset] <= best.threshold:
+                if X[X_sample_stride * samples[p] + feature_offset] <= best.split_value.threshold:
                     p += 1
 
                 else:
@@ -749,19 +749,18 @@ cdef class RandomSplitter(BaseDenseSplitter):
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
                     # Draw a random threshold
-                    current.threshold = rand_uniform(min_feature_value,
-                                                     max_feature_value,
-                                                     random_state)
+                    current.split_value.threshold = rand_uniform(
+                        min_feature_value, max_feature_value, random_state)
 
-                    if current.threshold == max_feature_value:
-                        current.threshold = min_feature_value
+                    if current.split_value.threshold == max_feature_value:
+                        current.split_value.threshold = min_feature_value
 
                     # Partition
                     partition_end = end
                     p = start
                     while p < partition_end:
                         current_feature_value = Xf[p]
-                        if current_feature_value <= current.threshold:
+                        if current_feature_value <= current.split_value.threshold:
                             p += 1
                         else:
                             partition_end -= 1
@@ -803,7 +802,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
                 p = start
 
                 while p < partition_end:
-                    if X[X_sample_stride * samples[p] + feature_stride] <= best.threshold:
+                    if X[X_sample_stride * samples[p] + feature_stride] <= best.split_value.threshold:
                         p += 1
 
                     else:
@@ -1347,9 +1346,9 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                             if current_proxy_improvement > best_proxy_improvement:
                                 best_proxy_improvement = current_proxy_improvement
 
-                                current.threshold = (Xf[p_prev] + Xf[p]) / 2.0
-                                if current.threshold == Xf[p]:
-                                    current.threshold = Xf[p_prev]
+                                current.split_value.threshold = (Xf[p_prev] + Xf[p]) / 2.0
+                                if current.split_value.threshold == Xf[p]:
+                                    current.split_value.threshold = Xf[p_prev]
 
                                 best = current
 
@@ -1358,7 +1357,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
             self.extract_nnz(best.feature, &end_negative, &start_positive,
                              &is_samples_sorted)
 
-            self._partition(best.threshold, end_negative, start_positive,
+            self._partition(best.split_value.threshold, end_negative, start_positive,
                             best.pos)
 
             self.criterion.reset()
@@ -1542,15 +1541,14 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
                     # Draw a random threshold
-                    current.threshold = rand_uniform(min_feature_value,
-                                                     max_feature_value,
-                                                     random_state)
+                    current.split_value.threshold = rand_uniform(
+                        min_feature_value, max_feature_value, random_state)
 
-                    if current.threshold == max_feature_value:
-                        current.threshold = min_feature_value
+                    if current.split_value.threshold == max_feature_value:
+                        current.split_value.threshold = min_feature_value
 
                     # Partition
-                    current.pos = self._partition(current.threshold,
+                    current.pos = self._partition(current.split_value.threshold,
                                                   end_negative,
                                                   start_positive,
                                                   start_positive +
@@ -1586,7 +1584,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                 self.extract_nnz(best.feature, &end_negative, &start_positive,
                                  &is_samples_sorted)
 
-                self._partition(best.threshold, end_negative, start_positive,
+                self._partition(best.split_value.threshold, end_negative, start_positive,
                                 best.pos)
 
             self.criterion.reset()
