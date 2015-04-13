@@ -17,6 +17,7 @@ from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
+from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.decomposition import PCA, RandomizedPCA, TruncatedSVD
 from sklearn.datasets import load_iris
@@ -200,6 +201,25 @@ def test_pipeline_methods_preprocessing_svm():
         assert_equal(decision_function.shape, (n_samples, n_classes))
 
         pipe.score(X, y)
+
+
+def test_fit_predict_on_pipeline():
+    # test that the fit_predict method is implemented on a pipeline
+    # test that the fit_predict on pipeline yields same results as applying
+    # transform and clustering steps separately
+    iris = load_iris()
+    scaler = StandardScaler()
+    km = KMeans(random_state=0)
+
+    # first compute the transform and clustering step separately
+    scaled = scaler.fit_transform(iris.data)
+    separate_pred = km.fit_predict(scaled)
+
+    # use a pipeline to do the transform and clustering in one step
+    pipe = Pipeline([('scaler', scaler), ('Kmeans', km)])
+    pipeline_pred = pipe.fit_predict(iris.data)
+
+    assert_array_almost_equal(pipeline_pred, separate_pred)
 
 
 def test_feature_union():
