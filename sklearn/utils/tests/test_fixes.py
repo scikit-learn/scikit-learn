@@ -14,12 +14,13 @@ from numpy.testing import (assert_almost_equal,
 from sklearn.utils.fixes import divide, expit
 from sklearn.utils.fixes import astype
 
+from scipy.sparse import bsr_matrix
 
 def test_expit():
     # Check numerical stability of expit (logistic function).
 
     # Simulate our previous Cython implementation, based on
-    #http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression
+    # http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression
     assert_almost_equal(expit(1000.), 1. / (1. + np.exp(-1000.)), decimal=16)
     assert_almost_equal(expit(-1000.), np.exp(-1000.) / (1. + np.exp(-1000.)),
                         decimal=16)
@@ -53,3 +54,9 @@ def test_astype_copy_memory():
 
     e_int32 = astype(a_int32, dtype=np.int32)
     assert_false(np.may_share_memory(e_int32, a_int32))
+
+
+def test_astype_sparse_matrix():
+    # Check that the copy boolean is ignored for SciPy sparse matrices
+    sparse_matrix = bsr_matrix(np.ones((3, 4), dtype=np.float32))
+    astype(sparse_matrix, dtype=np.int32, copy=False)
