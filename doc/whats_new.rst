@@ -22,7 +22,8 @@ New features
 
    - The new class :class:`preprocessing.RobustScaler` provides an
      alternative to :class:`preprocessing.StandardScaler` for feature-wise
-     centering and range normalization that is robust to outliers. By `Thomas Unterthiner`_.
+     centering and range normalization that is robust to outliers.
+     By `Thomas Unterthiner`_.
 
    - The new class :class:`preprocessing.MaxAbsScaler` provides an
      alternative to :class:`preprocessing.MinMaxScaler` for feature-wise
@@ -32,6 +33,11 @@ New features
    - The new class :class:`preprocessing.FunctionTransformer` turns a Python
      function into a ``Pipeline``-compatible transformer object.
      By Joe Jevnik.
+
+   - :class:`cross_validation.LabelShuffleSplit` generates random train-test
+     splits, similar to :class:`cross_validation.ShuffleSplit`, except that
+     the splits are conditioned on a label array. By `Brian McFee`_.
+
 
 Enhancements
 ............
@@ -3581,3 +3587,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Thomas Unterthiner: https://github.com/untom
 
 .. _Loic Esteve: https://github.com/lesteve
+
+.. _Brian McFee: https://bmcfee.github.io
