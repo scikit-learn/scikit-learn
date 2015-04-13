@@ -112,11 +112,11 @@ def astype(array, dtype, copy=True):
     if not copy and array.dtype == dtype:
         return array
     elif sp.issparse(array):
-        return array.astype(t=dtype)
+        return array.astype(dtype)
     elif np_astype_copy_supported:
-        return array.astype(dtype=dtype, copy=copy)
+        return array.astype(dtype, copy=copy)
     else:
-        return array.astype(dtype=dtype)
+        return array.astype(dtype)
 
 try:
     with warnings.catch_warnings(record=True):
