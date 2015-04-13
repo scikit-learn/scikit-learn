@@ -21,7 +21,7 @@ ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 ctypedef np.npy_uint64 UINT64_t          # Unsigned 64 bit integer
 
-cdef union SplitValue:
+ctypedef union SplitValue:
     # Union type to generalize the concept of a threshold to
     # categorical features. For non-categorical features, use the
     # threshold member. It acts just as before, where feature values

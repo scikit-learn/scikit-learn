@@ -60,8 +60,8 @@ cdef class Tree:
 
     # Methods
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
-                          SIZE_t feature, double threshold, double impurity,
-                          SIZE_t n_node_samples,
+                          SIZE_t feature, SplitValue split_value,
+                          double impurity, SIZE_t n_node_samples,
                           double weighted_n_samples) nogil
     cdef void _resize(self, SIZE_t capacity) except *
     cdef int _resize_c(self, SIZE_t capacity=*) nogil
