@@ -57,6 +57,23 @@ def test_astype_copy_memory():
 
 
 def test_astype_sparse_matrix():
-    # Check that the copy boolean is ignored for SciPy sparse matrices
-    sparse_matrix = bsr_matrix(np.ones((3, 4), dtype=np.float32))
-    astype(sparse_matrix, dtype=np.int32, copy=False)
+    # Checking that the copy boolean is ignored for SciPy sparse matrices
+    a_spmatrix = bsr_matrix(np.ones((3, 4), dtype=np.int32))
+
+    # Check that dtype conversion works
+    b_spmatrix = astype(a_spmatrix, dtype=np.float32, copy=False)
+    assert_equal(b_spmatrix.dtype, np.float32)
+
+    # Changing dtype forces a copy even if copy=False
+    assert_false(np.may_share_memory(b_spmatrix, a_spmatrix))
+
+    # Check that copy can be skipped if requested dtype match
+    c_spmatrix = astype(a_spmatrix, dtype=np.int32, copy=False)
+    assert_true(c_spmatrix is a_spmatrix)
+
+    # Check that copy can be forced, and is the case by default:
+    d_spmatrix = astype(a_spmatrix, dtype=np.int32, copy=True)
+    assert_false(np.may_share_memory(d_spmatrix, a_spmatrix))
+
+    e_spmatrix = astype(a_spmatrix, dtype=np.int32)
+    assert_false(np.may_share_memory(e_spmatrix, a_spmatrix))

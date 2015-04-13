@@ -14,7 +14,6 @@ import inspect
 import warnings
 import sys
 import functools
-import inspect
 
 import numpy as np
 import scipy.sparse as sp
