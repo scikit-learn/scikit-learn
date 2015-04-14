@@ -480,7 +480,7 @@ class DPGMM(GMM):
                                                     + self.gamma_[i, 2])
         self.weights_ /= np.sum(self.weights_)
 
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """Estimate model parameters with the variational
         algorithm.
 
@@ -500,6 +500,12 @@ class DPGMM(GMM):
         X : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+
+        Returns
+        -------
+        responsibilities : array, shape (n_samples, n_components)
+            Posterior probabilities of each mixture component for each
+            observation.
         """
         self.random_state_ = check_random_state(self.random_state)
 
@@ -595,9 +601,14 @@ class DPGMM(GMM):
             # Maximization step
             self._do_mstep(X, z, self.params)
 
+        if self.n_iter == 0:
+            # Need to make sure that there is a z value to output
+            # Output zeros because it was just a quick initialization
+            z = np.zeros((X.shape[0], self.n_components))
+
         self._set_weights()
 
-        return self
+        return z
 
 
 class VBGMM(DPGMM):
