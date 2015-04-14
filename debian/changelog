@@ -1,3 +1,9 @@
+scikit-learn (0.16.1-1) experimental; urgency=medium
+
+  * Fresh upstream bugfix release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 14 Apr 2015 19:04:54 -0400
+
 scikit-learn (0.16.0-1) experimental; urgency=medium
 
   * Fresh upstream release
