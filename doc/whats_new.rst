@@ -19,6 +19,9 @@ Enhancements
    - :class:`naive_bayes.GaussianNB` now supports fitting with ``sample_weights``.
      By `Jan Hendrik Metzen`_.
 
+   - :class:`dummy.DummyClassifier` now supports a prior fitting strategy.
+     By `Arnaud Joly`_.
+
 Bug fixes
 .........
 
