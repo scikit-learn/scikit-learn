@@ -335,7 +335,8 @@ class KNeighborsMixin(object):
         train_size = self._fit_X.shape[0]
         if n_neighbors > train_size:
             raise ValueError(
-                "Expected n_neighbors <= %d. Got %d" %
+                "Expected n_neighbors <= n_samples, "
+                " but n_samples = %d, n_neighbors = %d" %
                 (train_size, n_neighbors)
             )
         n_samples, _ = X.shape
