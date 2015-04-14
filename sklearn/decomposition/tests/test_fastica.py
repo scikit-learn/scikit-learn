@@ -38,9 +38,7 @@ def center_and_norm(x, axis=-1):
 
 
 def test_gs():
-    """
-    Test gram schmidt orthonormalization
-    """
+    # Test gram schmidt orthonormalization
     # generate a random orthogonal  matrix
     rng = np.random.RandomState(0)
     W, _, _ = np.linalg.svd(rng.randn(10, 10))
@@ -54,8 +52,7 @@ def test_gs():
 
 
 def test_fastica_simple(add_noise=False):
-    """ Test the FastICA algorithm on very simple data.
-    """
+    # Test the FastICA algorithm on very simple data.
     rng = np.random.RandomState(0)
     # scipy.stats uses the global RNG:
     np.random.seed(0)
@@ -146,8 +143,7 @@ def test_fastica_nowhiten():
 
 
 def test_non_square_fastica(add_noise=False):
-    """ Test the FastICA algorithm on very simple data.
-    """
+    # Test the FastICA algorithm on very simple data.
     rng = np.random.RandomState(0)
 
     n_samples = 1000
@@ -190,7 +186,7 @@ def test_non_square_fastica(add_noise=False):
 
 
 def test_fit_transform():
-    """Test FastICA.fit_transform"""
+    # Test FastICA.fit_transform
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
     for whiten, n_components in [[True, 5], [False, None]]:
@@ -211,7 +207,7 @@ def test_fit_transform():
 
 
 def test_inverse_transform():
-    """Test FastICA.inverse_transform"""
+    # Test FastICA.inverse_transform
     n_features = 10
     n_samples = 100
     n1, n2 = 5, 10

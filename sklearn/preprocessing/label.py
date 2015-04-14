@@ -282,15 +282,15 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self.sparse_output = sparse_output
 
     @property
-    @deprecated("Attribute indicator_matrix_ is deprecated and will be "
-                "removed in 0.17. Use 'y_type_ == 'multilabel-indicator'' "
+    @deprecated("Attribute ``indicator_matrix_`` is deprecated and will be "
+                "removed in 0.17. Use ``y_type_ == 'multilabel-indicator'`` "
                 "instead")
     def indicator_matrix_(self):
         return self.y_type_ == 'multilabel-indicator'
 
     @property
-    @deprecated("Attribute multilabel_ is deprecated and will be removed "
-                "in 0.17. Use 'y_type_.startswith('multilabel')' "
+    @deprecated("Attribute ``multilabel_`` is deprecated and will be removed "
+                "in 0.17. Use ``y_type_.startswith('multilabel')`` "
                 "instead")
     def multilabel_(self):
         return self.y_type_.startswith('multilabel')
@@ -559,7 +559,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
 
     # preserve label ordering
     if np.any(classes != sorted_class):
-        indices = np.argsort(classes)
+        indices = np.searchsorted(sorted_class, classes)
         Y = Y[:, indices]
 
     if y_type == "binary":

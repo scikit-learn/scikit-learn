@@ -20,7 +20,7 @@ from sklearn.utils.mocking import MockDataFrame
 
 
 def test_make_rng():
-    """Check the check_random_state utility function behavior"""
+    # Check the check_random_state utility function behavior
     assert_true(check_random_state(None) is np.random.mtrand._rand)
     assert_true(check_random_state(np.random) is np.random.mtrand._rand)
 
@@ -37,12 +37,12 @@ def test_make_rng():
 
 
 def test_resample_noarg():
-    """Border case not worth mentioning in doctests"""
+    # Border case not worth mentioning in doctests
     assert_true(resample() is None)
 
 
 def test_deprecated():
-    """Test whether the deprecated decorator issues appropriate warnings"""
+    # Test whether the deprecated decorator issues appropriate warnings
     # Copied almost verbatim from http://docs.python.org/library/warnings.html
 
     # First a function...
@@ -79,7 +79,7 @@ def test_deprecated():
 
 
 def test_resample_value_errors():
-    """Check that invalid arguments yield ValueError"""
+    # Check that invalid arguments yield ValueError
     assert_raises(ValueError, resample, [0], [0, 1])
     assert_raises(ValueError, resample, [0, 1], [0, 1], n_samples=3)
     assert_raises(ValueError, resample, [0, 1], [0, 1], meaning_of_life=42)
@@ -186,3 +186,36 @@ def test_shuffle_on_ndim_equals_three():
     S = set(to_tuple(A))
     shuffle(A)  # shouldn't raise a ValueError for dim = 3
     assert_equal(set(to_tuple(A)), S)
+
+
+def test_shuffle_dont_convert_to_array():
+    # Check that shuffle does not try to convert to numpy arrays with float
+    # dtypes can let any indexable datastructure pass-through.
+    a = ['a', 'b', 'c']
+    b = np.array(['a', 'b', 'c'], dtype=object)
+    c = [1, 2, 3]
+    d = MockDataFrame(np.array([['a', 0],
+                                ['b', 1],
+                                ['c', 2]],
+                      dtype=object))
+    e = sp.csc_matrix(np.arange(6).reshape(3, 2))
+    a_s, b_s, c_s, d_s, e_s = shuffle(a, b, c, d, e, random_state=0)
+
+    assert_equal(a_s, ['c', 'b', 'a'])
+    assert_equal(type(a_s), list)
+
+    assert_array_equal(b_s, ['c', 'b', 'a'])
+    assert_equal(b_s.dtype, object)
+
+    assert_equal(c_s, [3, 2, 1])
+    assert_equal(type(c_s), list)
+
+    assert_array_equal(d_s, np.array([['c', 2],
+                                      ['b', 1],
+                                      ['a', 0]],
+                                     dtype=object))
+    assert_equal(type(d_s), MockDataFrame)
+
+    assert_array_equal(e_s.toarray(), np.array([[4, 5],
+                                                [2, 3],
+                                                [0, 1]]))

@@ -1,4 +1,3 @@
-
 # Author: Gael Varoquaux
 # License: BSD 3 clause
 
@@ -81,13 +80,11 @@ class VargEstimator(BaseEstimator):
 # The tests
 
 def test_clone():
-    """Tests that clone creates a correct deep copy.
+    # Tests that clone creates a correct deep copy.
+    # We create an estimator, make a copy of its original state
+    # (which, in this case, is the current state of the estimator),
+    # and check that the obtained copy is a correct deep copy.
 
-    We create an estimator, make a copy of its original state
-    (which, in this case, is the current state of the estimator),
-    and check that the obtained copy is a correct deep copy.
-
-    """
     from sklearn.feature_selection import SelectFpr, f_classif
 
     selector = SelectFpr(f_classif, alpha=0.1)
@@ -101,12 +98,11 @@ def test_clone():
 
 
 def test_clone_2():
-    """Tests that clone doesn't copy everything.
+    # Tests that clone doesn't copy everything.
+    # We first create an estimator, give it an own attribute, and
+    # make a copy of its original state. Then we check that the copy doesn't
+    # have the specific attribute we manually added to the initial estimator.
 
-    We first create an estimator, give it an own attribute, and
-    make a copy of its original state. Then we check that the copy doesn't
-    have the specific attribute we manually added to the initial estimator.
-    """
     from sklearn.feature_selection import SelectFpr, f_classif
 
     selector = SelectFpr(f_classif, alpha=0.1)
@@ -116,7 +112,7 @@ def test_clone_2():
 
 
 def test_clone_buggy():
-    """Check that clone raises an error on buggy estimators."""
+    # Check that clone raises an error on buggy estimators.
     buggy = Buggy()
     buggy.a = 2
     assert_raises(RuntimeError, clone, buggy)
@@ -129,7 +125,7 @@ def test_clone_buggy():
 
 
 def test_clone_empty_array():
-    """Regression test for cloning estimators with empty arrays"""
+    # Regression test for cloning estimators with empty arrays
     clf = MyEstimator(empty=np.array([]))
     clf2 = clone(clf)
     assert_array_equal(clf.empty, clf2.empty)
@@ -140,7 +136,7 @@ def test_clone_empty_array():
 
 
 def test_repr():
-    """Smoke test the repr of the base estimator."""
+    # Smoke test the repr of the base estimator.
     my_estimator = MyEstimator()
     repr(my_estimator)
     test = T(K(), K())
@@ -154,7 +150,7 @@ def test_repr():
 
 
 def test_str():
-    """Smoke test the str of the base estimator"""
+    # Smoke test the str of the base estimator
     my_estimator = MyEstimator()
     str(my_estimator)
 
@@ -200,9 +196,9 @@ def test_set_params():
     # non-existing parameter of pipeline
     assert_raises(ValueError, clf.set_params, svm__stupid_param=True)
     # we don't currently catch if the things in pipeline are estimators
-    #bad_pipeline = Pipeline([("bad", NoEstimator())])
-    #assert_raises(AttributeError, bad_pipeline.set_params,
-    #              bad__stupid_param=True)
+    # bad_pipeline = Pipeline([("bad", NoEstimator())])
+    # assert_raises(AttributeError, bad_pipeline.set_params,
+    #               bad__stupid_param=True)
 
 
 def test_score_sample_weight():

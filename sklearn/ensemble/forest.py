@@ -365,7 +365,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             mask = np.ones(n_samples, dtype=np.bool)
             mask[estimator.indices_] = False
             mask_indices = sample_indices[mask]
-            p_estimator = estimator.predict_proba(X[mask_indices, :])
+            p_estimator = estimator.predict_proba(X[mask_indices, :],
+                                                  check_input=False)
 
             if self.n_outputs_ == 1:
                 p_estimator = [p_estimator]
@@ -508,7 +509,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         # Parallel loop
         all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
                              backend="threading")(
-            delayed(_parallel_helper)(e, 'predict_proba', X)
+            delayed(_parallel_helper)(e, 'predict_proba', X, check_input=False)
             for e in self.estimators_)
 
         # Reduce
@@ -614,6 +615,10 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         # Check data
         X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+        if issparse(X) and (X.indices.dtype != np.intc or
+                            X.indptr.dtype != np.intc):
+            raise ValueError("No support for np.int64 index based "
+                             "sparse matrices")
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, starts = _partition_estimators(self.n_estimators,
@@ -622,7 +627,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         # Parallel loop
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose,
                              backend="threading")(
-            delayed(_parallel_helper)(e, 'predict', X)
+            delayed(_parallel_helper)(e, 'predict', X, check_input=False)
             for e in self.estimators_)
 
         # Reduce
@@ -642,7 +647,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             mask = np.ones(n_samples, dtype=np.bool)
             mask[estimator.indices_] = False
             mask_indices = sample_indices[mask]
-            p_estimator = estimator.predict(X[mask_indices, :])
+            p_estimator = estimator.predict(X[mask_indices, :], check_input=False)
 
             if self.n_outputs_ == 1:
                 p_estimator = p_estimator[:, np.newaxis]

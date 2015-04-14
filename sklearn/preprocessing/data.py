@@ -2,10 +2,12 @@
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
+#          Eric Martin <eric@ericmart.in>
 # License: BSD 3 clause
 
 from itertools import chain, combinations
 import numbers
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -17,6 +19,7 @@ from ..utils import warn_if_not_float
 from ..utils.extmath import row_norms
 from ..utils.fixes import (combinations_with_replacement as combinations_w_r,
                            bincount)
+from ..utils.fixes import isclose
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis)
@@ -56,7 +59,7 @@ def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
     if with_std:
         std_ = Xr.std(axis=0)
         if isinstance(std_, np.ndarray):
-            std_[std_ == 0.0] = 1.0
+            std_[std_ == 0.] = 1.0
         elif std_ == 0.:
             std_ = 1.
     else:
@@ -140,8 +143,35 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         Xr = np.rollaxis(X, axis)
         if with_mean:
             Xr -= mean_
+            mean_1 = Xr.mean(axis=0)
+            # Verify that mean_1 is 'close to zero'. If X contains very
+            # large values, mean_1 can also be very large, due to a lack of
+            # precision of mean_. In this case, a pre-scaling of the
+            # concerned feature is efficient, for instance by its mean or
+            # maximum.
+            if not np.allclose(mean_1, 0):
+                warnings.warn("Numerical issues were encountered "
+                              "when centering the data "
+                              "and might not be solved. Dataset may "
+                              "contain too large values. You may need "
+                              "to prescale your features.")
+                Xr -= mean_1
         if with_std:
             Xr /= std_
+            if with_mean:
+                mean_2 = Xr.mean(axis=0)
+                # If mean_2 is not 'close to zero', it comes from the fact that
+                # std_ is very small so that mean_2 = mean_1/std_ > 0, even if
+                # mean_1 was close to zero. The problem is thus essentially due
+                # to the lack of precision of mean_. A solution is then to
+                # substract the mean again:
+                if not np.allclose(mean_2, 0):
+                    warnings.warn("Numerical issues were encountered "
+                                  "when scaling the data "
+                                  "and might not be solved. The standard "
+                                  "deviation of the data is probably "
+                                  "very close to 0. ")
+                    Xr -= mean_2
     return X
 
 
@@ -442,9 +472,16 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
+    powers_ : array, shape (n_input_features, n_output_features)
+        powers_[i, j] is the exponent of the jth input in the ith output.
 
-    powers_ :
-         powers_[i, j] is the exponent of the jth input in the ith output.
+    n_input_features_ : int
+        The total number of input features.
+
+    n_output_features_ : int
+        The total number of polynomial output features. The number of output
+        features is computed by iterating over all suitably sized combinations
+        of input features.
 
     Notes
     -----
@@ -461,23 +498,32 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         self.include_bias = include_bias
 
     @staticmethod
-    def _power_matrix(n_features, degree, interaction_only, include_bias):
-        """Compute the matrix of polynomial powers"""
+    def _combinations(n_features, degree, interaction_only, include_bias):
         comb = (combinations if interaction_only else combinations_w_r)
         start = int(not include_bias)
-        combn = chain.from_iterable(comb(range(n_features), i)
-                                    for i in range(start, degree + 1))
-        powers = np.vstack(bincount(c, minlength=n_features) for c in combn)
-        return powers
+        return chain.from_iterable(comb(range(n_features), i)
+                                   for i in range(start, degree + 1))
+
+    @property
+    def powers_(self):
+        check_is_fitted(self, 'n_input_features_')
+
+        combinations = self._combinations(self.n_input_features_, self.degree,
+                                          self.interaction_only,
+                                          self.include_bias)
+        return np.vstack(np.bincount(c, minlength=self.n_input_features_)
+                         for c in combinations)
 
     def fit(self, X, y=None):
         """
-        Compute the polynomial feature combinations
+        Compute number of output features.
         """
         n_samples, n_features = check_array(X).shape
-        self.powers_ = self._power_matrix(n_features, self.degree,
+        combinations = self._combinations(n_features, self.degree,
                                           self.interaction_only,
                                           self.include_bias)
+        self.n_input_features_ = n_features
+        self.n_output_features_ = sum(1 for _ in combinations)
         return self
 
     def transform(self, X, y=None):
@@ -494,15 +540,24 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
         """
-        check_is_fitted(self, 'powers_')
+        check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
 
         X = check_array(X)
         n_samples, n_features = X.shape
 
-        if n_features != self.powers_.shape[1]:
+        if n_features != self.n_input_features_:
             raise ValueError("X shape does not match training shape")
 
-        return (X[:, None, :] ** self.powers_).prod(-1)
+        # allocate output data
+        XP = np.empty((n_samples, self.n_output_features_), dtype=X.dtype)
+
+        combinations = self._combinations(n_features, self.degree,
+                                          self.interaction_only,
+                                          self.include_bias)
+        for i, c in enumerate(combinations):
+            XP[:, i] = X[:, c].prod(1)
+
+        return XP
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
@@ -1083,7 +1138,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         # We use only those catgorical features of X that are known using fit.
         # i.e lesser than n_values_ using mask.
         # This means, if self.handle_unknown is "ignore", the row_indices and
-        # col_indices corresponding to the unknown categorical feature are ignored.
+        # col_indices corresponding to the unknown categorical feature are
+        # ignored.
         mask = (X < self.n_values_).ravel()
         if np.any(~mask):
             if self.handle_unknown not in ['error', 'ignore']:

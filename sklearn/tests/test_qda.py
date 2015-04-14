@@ -32,12 +32,9 @@ y5 = np.array([0, 0, 0, 0, 0, 1, 1, 1])
 
 
 def test_qda():
-    """
-    QDA classification.
-
-    This checks that QDA implements fit and predict and returns
-    correct values for a simple toy dataset.
-    """
+    # QDA classification.
+    # This checks that QDA implements fit and predict and returns
+    # correct values for a simple toy dataset.
     clf = qda.QDA()
     y_pred = clf.fit(X, y).predict(X)
     assert_array_equal(y_pred, y)

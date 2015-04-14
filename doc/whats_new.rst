@@ -2,9 +2,62 @@
 
 .. _changes_0_16:
 
+0.16.1
+=======
+
+Changelog
+---------
+
+Bug fixes
+.........
+
+   - Allow input data larger than ``block_size`` in
+     :class:`covariance.LedoitWolf` by `Andreas Müller`_.
+
+   - Fix a bug in :class:`isotonic.IsotonicRegression` deduplication that
+     caused unstable result in :class:`calibration.CalibratedClassifierCV` by
+     `Jan Hendrik Metzen`_.
+
+   - Fix sorting of labels in func:`preprocessing.label_binarize` by Michael Heilman.
+
+   - Fix several stability and convergence issues in
+     :class:`cross_decomposition.CCA` and
+     :class:`cross_decomposition.PLSCanonical` by `Andreas Müller`_
+
+   - Fix a bug in :class:`cluster.KMeans` when ``precompute_distances=False``
+     on fortran-ordered data.
+
+   - Fix a speed regression in :class:`ensemble.RandomForestClassifier`'s ``predict``
+     and ``predict_proba`` by `Andreas Müller`_.
+
+   - Fix a regression where ``utils.shuffle`` converted lists and dataframes to arrays, by `Olivier Grisel`_
+
+
 0.16
 ====
 
+Highlights
+-----------
+
+   - Speed improvements (notably in :class:`cluster.DBSCAN`), reduced memory
+     requirements, bug-fixes and better default settings.
+
+   - Multinomial Logistic regression and a path algorithm in
+     :class:`linear_model.LogisticRegressionCV`.
+
+   - Out-of core learning of PCA via :class:`decomposition.IncrementalPCA`.
+
+   - Probability callibration of classifiers using
+     :class:`calibration.CalibratedClassifierCV`.
+
+   - :class:`cluster.Birch` clustering method for large-scale datasets.
+
+   - Scalable approximate nearest neighbors search with Locality-sensitive
+     hashing forests in :class:`neighbors.LSHForest`.
+
+   - Improved error messages and better validation when using malformed input data.
+
+   - More robust integration with pandas dataframes.
 
 Changelog
 ---------
@@ -171,8 +224,10 @@ Enhancements
 
    - Sparse support for :func:`paired_distances`. By `Joel Nothman`_.
 
-   - DBSCAN now supports sparse input and sample weights, and should be
-     faster in general. By `Joel Nothman`_.
+   - :class:`cluster.DBSCAN` now supports sparse input and sample weights and
+     has been optimized: the inner loop has been rewritten in Cython and
+     radius neighbors queries are now computed in batch. By `Joel Nothman`_
+     and `Lars Buitinck`_.
 
    - Add ``class_weight`` parameter to automatically weight samples by class
      frequency for :class:`ensemble.RandomForestClassifier`,
@@ -199,6 +254,14 @@ Enhancements
    - The outcome of :func:`manifold.spectral_embedding` was made deterministic
      by flipping the sign of eigen vectors. By `Hasil Sharma`_.
 
+   - Significant performance and memory usage improvements in
+     :class:`preprocessing.PolynomialFeatures`. By `Eric Martin`_.
+
+   - Numerical stability improvements for :class:`preprocessing.StandardScaler`
+     and :func:`preprocessing.scale`. By `Nicolas Goix`_
+
+   - :class:`svm.SVC` fitted on sparse input now implements ``decision_function``.
+     By `Rob Zinkov`_ and `Andreas Müller`_.
 
 Documentation improvements
 ..........................
@@ -225,7 +288,7 @@ Documentation improvements
 
    - Added silhouette plots for analysis of KMeans clustering using
      :func:`metrics.silhouette_samples` and :func:`metrics.silhouette_score`.
-     See :ref:`examples_cluster_plot_kmeans_silhouette_analysis.py`
+     See :ref:`example_cluster_plot_kmeans_silhouette_analysis.py`
 
 Bug fixes
 .........
@@ -3343,3 +3406,9 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Hervé Bredin: http://herve.niderb.fr/
 
 .. _Eric Schubert: https://github.com/kno10
+
+.. _Nicolas Goix: https://webperso.telecom-paristech.fr/front/frontoffice.php?SP_ID=241
+
+.. _Dan Blanchard: https://github.com/dan-blanchard
+
+.. _Eric Martin: http://ericmart.in

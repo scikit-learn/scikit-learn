@@ -13,6 +13,7 @@ from nose.tools import assert_raises, assert_true, assert_false, assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
+from sklearn.utils.mocking import MockDataFrame
 from sklearn.utils.estimator_checks import NotAnArray
 from sklearn.random_projection import sparse_random_matrix
 from sklearn.linear_model import ARDRegression
@@ -30,7 +31,7 @@ from sklearn.utils.testing import assert_raise_message
 
 
 def test_as_float_array():
-    """Test function for as_float_array"""
+    # Test function for as_float_array
     X = np.ones((3, 10), dtype=np.int32)
     X = X + np.arange(10, dtype=np.int32)
     # Checks that the return type is ok
@@ -63,7 +64,7 @@ def test_as_float_array():
 
 
 def test_np_matrix():
-    """Confirm that input validation code does not return np.matrix"""
+    # Confirm that input validation code does not return np.matrix
     X = np.arange(12).reshape(3, 4)
 
     assert_false(isinstance(as_float_array(X), np.matrix))
@@ -72,7 +73,7 @@ def test_np_matrix():
 
 
 def test_memmap():
-    """Confirm that input validation code doesn't copy memory mapped arrays"""
+    # Confirm that input validation code doesn't copy memory mapped arrays
 
     asflt = lambda x: as_float_array(x, copy=False)
 
@@ -88,11 +89,9 @@ def test_memmap():
 
 
 def test_ordering():
-    """Check that ordering is enforced correctly by validation utilities.
-
-    We need to check each validation utility, because a 'copy' without
-    'order=K' will kill the ordering.
-    """
+    # Check that ordering is enforced correctly by validation utilities.
+    # We need to check each validation utility, because a 'copy' without
+    # 'order=K' will kill the ordering.
     X = np.ones((10, 5))
     for A in X, X.T:
         for copy in (True, False):
@@ -218,6 +217,25 @@ def test_check_array():
     X_no_array = NotAnArray(X_dense)
     result = check_array(X_no_array)
     assert_true(isinstance(result, np.ndarray))
+
+
+def test_check_array_pandas_dtype_object_conversion():
+    # test that data-frame like objects with dtype object
+    # get converted
+    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.object)
+    X_df = MockDataFrame(X)
+    assert_equal(check_array(X_df).dtype.kind, "f")
+    assert_equal(check_array(X_df, ensure_2d=False).dtype.kind, "f")
+    # smoke-test against dataframes with column named "dtype"
+    X_df.dtype = "Hans"
+    assert_equal(check_array(X_df, ensure_2d=False).dtype.kind, "f")
+
+
+def test_check_array_dtype_stability():
+    # test that lists with ints don't get converted to floats
+    X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    assert_equal(check_array(X).dtype.kind, "i")
+    assert_equal(check_array(X, ensure_2d=False).dtype.kind, "i")
 
 
 def test_check_array_min_samples_and_features_messages():

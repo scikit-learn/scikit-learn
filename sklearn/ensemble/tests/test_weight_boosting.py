@@ -44,7 +44,7 @@ boston.data, boston.target = shuffle(boston.data, boston.target,
 
 
 def test_classification_toy():
-    """Check classification on a toy dataset."""
+    # Check classification on a toy dataset.
     for alg in ['SAMME', 'SAMME.R']:
         clf = AdaBoostClassifier(algorithm=alg, random_state=0)
         clf.fit(X, y_class)
@@ -55,14 +55,14 @@ def test_classification_toy():
 
 
 def test_regression_toy():
-    """Check classification on a toy dataset."""
+    # Check classification on a toy dataset.
     clf = AdaBoostRegressor(random_state=0)
     clf.fit(X, y_regr)
     assert_array_equal(clf.predict(T), y_t_regr)
 
 
 def test_iris():
-    """Check consistency on dataset iris."""
+    # Check consistency on dataset iris.
     classes = np.unique(iris.target)
     clf_samme = prob_samme = None
 
@@ -91,7 +91,7 @@ def test_iris():
 
 
 def test_boston():
-    """Check consistency on dataset boston house prices."""
+    # Check consistency on dataset boston house prices.
     clf = AdaBoostRegressor(random_state=0)
     clf.fit(boston.data, boston.target)
     score = clf.score(boston.data, boston.target)
@@ -99,7 +99,7 @@ def test_boston():
 
 
 def test_staged_predict():
-    """Check staged predictions."""
+    # Check staged predictions.
     rng = np.random.RandomState(0)
     iris_weights = rng.randint(10, size=iris.target.shape)
     boston_weights = rng.randint(10, size=boston.target.shape)
@@ -143,7 +143,7 @@ def test_staged_predict():
 
 
 def test_gridsearch():
-    """Check that base trees can be grid-searched."""
+    # Check that base trees can be grid-searched.
     # AdaBoost classification
     boost = AdaBoostClassifier(base_estimator=DecisionTreeClassifier())
     parameters = {'n_estimators': (1, 2),
@@ -162,7 +162,7 @@ def test_gridsearch():
 
 
 def test_pickle():
-    """Check pickability."""
+    # Check pickability.
     import pickle
 
     # Adaboost classifier
@@ -190,7 +190,7 @@ def test_pickle():
 
 
 def test_importances():
-    """Check variable importances."""
+    # Check variable importances.
     X, y = datasets.make_classification(n_samples=2000,
                                         n_features=10,
                                         n_informative=3,
@@ -211,7 +211,7 @@ def test_importances():
 
 
 def test_error():
-    """Test that it gives proper exception on deficient input."""
+    # Test that it gives proper exception on deficient input.
     assert_raises(ValueError,
                   AdaBoostClassifier(learning_rate=-1).fit,
                   X, y_class)
@@ -226,7 +226,7 @@ def test_error():
 
 
 def test_base_estimator():
-    """Test different base estimators."""
+    # Test different base estimators.
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.svm import SVC
 
@@ -273,7 +273,7 @@ def test_sample_weight_missing():
 
 
 def test_sparse_classification():
-    """Check classification with sparse input."""
+    # Check classification with sparse input.
 
     class CustomSVC(SVC):
         """SVC variant that records the nature of the training set."""
@@ -371,7 +371,7 @@ def test_sparse_classification():
 
 
 def test_sparse_regression():
-    """Check regression with sparse input."""
+    # Check regression with sparse input.
 
     class CustomSVR(SVR):
         """SVR variant that records the nature of the training set."""

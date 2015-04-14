@@ -2,6 +2,7 @@ import warnings
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse
+from distutils.version import LooseVersion
 
 from sklearn.utils.testing import assert_almost_equal, clean_warning_registry
 from sklearn.utils.testing import assert_array_almost_equal
@@ -14,6 +15,7 @@ from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.preprocessing.data import _transform_selected
@@ -40,7 +42,7 @@ def toarray(a):
 
 
 def test_polynomial_features():
-    """Test Polynomial Features"""
+    # Test Polynomial Features
     X1 = np.arange(6)[:, np.newaxis]
     P1 = np.hstack([np.ones_like(X1),
                     X1, X1 ** 2, X1 ** 3])
@@ -68,11 +70,9 @@ def test_polynomial_features():
     X_poly = interact.fit_transform(X)
     assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
 
-    assert_raises(ValueError, interact.transform, X[:, 1:])
-
 
 def test_scaler_1d():
-    """Test scaling of dataset along single axis"""
+    # Test scaling of dataset along single axis
     rng = np.random.RandomState(0)
     X = rng.randn(5)
     X_orig_copy = X.copy()
@@ -101,8 +101,47 @@ def test_scaler_1d():
     assert_array_equal(scale(X, with_mean=False), X)
 
 
+def test_standard_scaler_numerical_stability():
+    """Test numerical stability of scaling"""
+    # np.log(1e-5) is taken because of its floating point representation
+    # was empirically found to cause numerical problems with np.mean & np.std.
+
+    x = np.zeros(8, dtype=np.float64) + np.log(1e-5, dtype=np.float64)
+    if LooseVersion(np.__version__) >= LooseVersion('1.9'):
+        # This does not raise a warning as the number of samples is too low
+        # to trigger the problem in recent numpy
+        x_scaled = assert_no_warnings(scale, x)
+        assert_array_almost_equal(scale(x), np.zeros(8))
+    else:
+        w = "standard deviation of the data is probably very close to 0"
+        x_scaled = assert_warns_message(UserWarning, w, scale, x)
+        assert_array_almost_equal(x_scaled, np.zeros(8))
+
+    # with 2 more samples, the std computation run into numerical issues:
+    x = np.zeros(10, dtype=np.float64) + np.log(1e-5, dtype=np.float64)
+    w = "standard deviation of the data is probably very close to 0"
+    x_scaled = assert_warns_message(UserWarning, w, scale, x)
+    assert_array_almost_equal(x_scaled, np.zeros(10))
+
+    x = np.ones(10, dtype=np.float64) * 1e-100
+    x_small_scaled = assert_no_warnings(scale, x)
+    assert_array_almost_equal(x_small_scaled, np.zeros(10))
+
+    # Large values can cause (often recoverable) numerical stability issues:
+    x_big = np.ones(10, dtype=np.float64) * 1e100
+    w = "Dataset may contain too large values"
+    x_big_scaled = assert_warns_message(UserWarning, w, scale, x_big)
+    assert_array_almost_equal(x_big_scaled, np.zeros(10))
+    assert_array_almost_equal(x_big_scaled, x_small_scaled)
+
+    x_big_centered = assert_warns_message(UserWarning, w, scale, x_big,
+                                          with_std=False)
+    assert_array_almost_equal(x_big_centered, np.zeros(10))
+    assert_array_almost_equal(x_big_centered, x_small_scaled)
+
+
 def test_scaler_2d_arrays():
-    """Test scaling of 2d array along first axis"""
+    # Test scaling of 2d array along first axis
     rng = np.random.RandomState(0)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
@@ -183,7 +222,7 @@ def test_min_max_scaler_iris():
 
 
 def test_min_max_scaler_zero_variance_features():
-    """Check min max scaler on toy data with zero variance features"""
+    # Check min max scaler on toy data with zero variance features
     X = [[0., 1., +0.5],
          [0., 1., -0.1],
          [0., 1., +1.1]]
@@ -218,7 +257,7 @@ def test_min_max_scaler_zero_variance_features():
 
 
 def test_min_max_scaler_1d():
-    """Test scaling of dataset along single axis"""
+    # Test scaling of dataset along single axis
     rng = np.random.RandomState(0)
     X = rng.randn(5)
     X_orig_copy = X.copy()
@@ -380,7 +419,7 @@ def test_scaler_int():
 
 
 def test_scaler_without_copy():
-    """Check that StandardScaler.fit does not change input"""
+    # Check that StandardScaler.fit does not change input
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
@@ -413,7 +452,7 @@ def test_scale_sparse_with_mean_raise_exception():
 
 
 def test_scale_input_finiteness_validation():
-    """Check if non finite inputs raise ValueError"""
+    # Check if non finite inputs raise ValueError
     X = [np.nan, 5, 6, 7, 8]
     assert_raises_regex(ValueError,
                         "Input contains NaN, infinity or a value too large",
@@ -456,7 +495,7 @@ def test_scale_function_without_centering():
 
 
 def test_warning_scaling_integers():
-    """Check warning when scaling integer data"""
+    # Check warning when scaling integer data
     X = np.array([[1, 2, 0],
                   [0, 0, 0]], dtype=np.uint8)
 
@@ -566,7 +605,7 @@ def test_normalizer_l2():
 
 
 def test_normalize():
-    """Test normalize function"""
+    # Test normalize function
     # Only tests functionality not used by the tests for Normalizer.
     X = np.random.RandomState(37).randn(3, 2)
     assert_array_equal(normalize(X, copy=False),
@@ -624,8 +663,8 @@ def test_binarizer():
 
 
 def test_center_kernel():
-    """Test that KernelCenterer is equivalent to StandardScaler
-       in feature space"""
+    # Test that KernelCenterer is equivalent to StandardScaler
+       # in feature space
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
     scaler = StandardScaler(with_std=False)
@@ -685,7 +724,7 @@ def test_add_dummy_feature_csr():
 
 
 def test_one_hot_encoder_sparse():
-    """Test OneHotEncoder's fit and transform."""
+    # Test OneHotEncoder's fit and transform.
     X = [[3, 2, 1], [0, 1, 1]]
     enc = OneHotEncoder()
     # discover max values automatically
@@ -737,8 +776,9 @@ def test_one_hot_encoder_sparse():
     enc.fit([[0], [1]])
     assert_raises(ValueError, enc.transform, [[0], [-1]])
 
+
 def test_one_hot_encoder_dense():
-    """check for sparse=False"""
+    # check for sparse=False
     X = [[3, 2, 1], [0, 1, 1]]
     enc = OneHotEncoder(sparse=False)
     # discover max values automatically
@@ -830,7 +870,7 @@ def test_one_hot_encoder_unknown_transform():
     oh.fit(X)
     assert_array_equal(
         oh.transform(y).toarray(),
-        np.array([[ 0.,  0.,  0.,  0.,  1.,  0.,  0.]])
+        np.array([[0.,  0.,  0.,  0.,  1.,  0.,  0.]])
         )
 
     # Raise error if handle_unknown is neither ignore or error.

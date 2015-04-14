@@ -177,7 +177,7 @@ def test_ball_tree_kde(n_samples=100, n_features=3):
 
 
 def test_gaussian_kde(n_samples=1000):
-    """Compare gaussian KDE results to scipy.stats.gaussian_kde"""
+    # Compare gaussian KDE results to scipy.stats.gaussian_kde
     from scipy.stats import gaussian_kde
     np.random.seed(0)
     x_in = np.random.normal(0, 1, n_samples)

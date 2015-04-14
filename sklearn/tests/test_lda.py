@@ -6,6 +6,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 
 from sklearn.datasets import make_blobs
 from sklearn import lda
@@ -25,11 +26,9 @@ solver_shrinkage = [('svd', None), ('lsqr', None), ('eigen', None),
 
 
 def test_lda_predict():
-    """Test LDA classification.
-
-    This checks that LDA implements fit and predict and returns correct values
-    for simple toy data.
-    """
+    # Test LDA classification.
+    # This checks that LDA implements fit and predict and returns correct values
+    # for simple toy data.
     for test_case in solver_shrinkage:
         solver, shrinkage = test_case
         clf = lda.LDA(solver=solver, shrinkage=shrinkage)
@@ -66,8 +65,7 @@ def test_lda_predict():
 
 
 def test_lda_coefs():
-    """Test if the coefficients of the solvers are approximately the same.
-    """
+    # Test if the coefficients of the solvers are approximately the same.
     n_features = 2
     n_classes = 2
     n_samples = 1000
@@ -88,14 +86,18 @@ def test_lda_coefs():
 
 
 def test_lda_transform():
-    """Test LDA transform.
-    """
+    # Test LDA transform.
     clf = lda.LDA(solver="svd", n_components=1)
     X_transformed = clf.fit(X, y).transform(X)
     assert_equal(X_transformed.shape[1], 1)
     clf = lda.LDA(solver="eigen", n_components=1)
     X_transformed = clf.fit(X, y).transform(X)
     assert_equal(X_transformed.shape[1], 1)
+
+    clf = lda.LDA(solver="lsqr", n_components=1)
+    clf.fit(X, y)
+    msg = "transform not implemented for 'lsqr'"
+    assert_raise_message(NotImplementedError, msg, clf.transform, X)
 
 
 def test_lda_orthogonality():
@@ -118,8 +120,8 @@ def test_lda_orthogonality():
 
     d1 = means_transformed[3] - means_transformed[0]
     d2 = means_transformed[2] - means_transformed[1]
-    d1 /= np.sqrt(np.sum(d1**2))
-    d2 /= np.sqrt(np.sum(d2**2))
+    d1 /= np.sqrt(np.sum(d1 ** 2))
+    d2 /= np.sqrt(np.sum(d2 ** 2))
 
     # the transformed within-class covariance should be the identity matrix
     assert_almost_equal(np.cov(clf.transform(scatter).T), np.eye(2))
@@ -132,8 +134,7 @@ def test_lda_orthogonality():
 
 
 def test_lda_scaling():
-    """Test if classification works correctly with differently scaled features.
-    """
+    # Test if classification works correctly with differently scaled features.
     n = 100
     rng = np.random.RandomState(1234)
     # use uniform distribution of features to make sure there is absolutely no

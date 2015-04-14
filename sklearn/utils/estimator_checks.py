@@ -23,7 +23,6 @@ from sklearn.utils.testing import META_ESTIMATORS
 from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import check_skip_travis
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.base import clone, ClassifierMixin
@@ -62,9 +61,6 @@ def _boston_subset(n_samples=200):
 def set_fast_parameters(estimator):
     # speed up some estimators
     params = estimator.get_params()
-    if estimator.__class__.__name__ == 'OrthogonalMatchingPursuitCV':
-        # FIXME: This test is unstable on Travis, see issue #3190.
-        check_skip_travis()
     if ("n_iter" in params
             and estimator.__class__.__name__ != "TSNE"):
         estimator.set_params(n_iter=5)
@@ -228,10 +224,6 @@ def _check_transformer(name, Transformer, X, y):
     with warnings.catch_warnings(record=True):
         transformer = Transformer()
     set_random_state(transformer)
-
-    if name == "KernelPCA":
-        transformer.remove_zero_eig = False
-
     set_fast_parameters(transformer)
 
     # fit
@@ -285,6 +277,15 @@ def _check_transformer(name, Transformer, X, y):
 
 @ignore_warnings
 def check_pipeline_consistency(name, Estimator):
+    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
+        # Those transformers yield non-deterministic output when executed on
+        # a 32bit Python. The same transformers are stable on 64bit Python.
+        # FIXME: try to isolate a minimalistic reproduction case only depending
+        # scipy and/or maybe generate a test dataset that does not
+        # cause such unstable behaviors.
+        msg = name + ' is non deterministic on 32bit Python'
+        raise SkipTest(msg)
+
     # check that make_pipeline(est) gives same score as est
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)

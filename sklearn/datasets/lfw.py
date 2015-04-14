@@ -30,7 +30,7 @@ import logging
 import numpy as np
 
 try:
-    import urllib.request as urllib #for backwards compatibility
+    import urllib.request as urllib  # for backwards compatibility
 except ImportError:
     import urllib
 
@@ -133,8 +133,8 @@ def _load_imgs(file_paths, slice_, color, resize):
         slice_ = tuple(s or ds for s, ds in zip(slice_, default_slice))
 
     h_slice, w_slice = slice_
-    h = (h_slice.stop - h_slice.start) / (h_slice.step or 1)
-    w = (w_slice.stop - w_slice.start) / (w_slice.step or 1)
+    h = (h_slice.stop - h_slice.start) // (h_slice.step or 1)
+    w = (w_slice.stop - w_slice.start) // (w_slice.step or 1)
 
     if resize is not None:
         resize = float(resize)
@@ -231,33 +231,36 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     picture of a face, find the name of the person given a training set
     (gallery).
 
+    The original images are 250 x 250 pixels, but the default slice and resize
+    arguments reduce them to 62 x 74.
+
     Parameters
     ----------
-    data_home: optional, default: None
+    data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
         all scikit learn data is stored in '~/scikit_learn_data' subfolders.
 
-    funneled: boolean, optional, default: True
+    funneled : boolean, optional, default: True
         Download and use the funneled variant of the dataset.
 
-    resize: float, optional, default 0.5
+    resize : float, optional, default 0.5
         Ratio used to resize the each face picture.
 
-    min_faces_per_person: int, optional, default None
+    min_faces_per_person : int, optional, default None
         The extracted dataset will only retain pictures of people that have at
         least `min_faces_per_person` different pictures.
 
-    color: boolean, optional, default False
+    color : boolean, optional, default False
         Keep the 3 RGB channels instead of averaging them to a single
         gray level channel. If color is True the shape of the data has
         one more dimension than than the shape with color = False.
 
-    slice_: optional
+    slice_ : optional
         Provide a custom 2D slice (height, width) to extract the
         'interesting' part of the jpeg files and avoid use statistical
         correlation from the background
 
-    download_if_missing: optional, True by default
+    download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
@@ -267,11 +270,13 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     dataset.data : numpy array of shape (13233, 2914)
         Each row corresponds to a ravelled face image of original size 62 x 47
-        pixels.
+        pixels. Changing the ``slice_`` or resize parameters will change the shape
+        of the output.
 
     dataset.images : numpy array of shape (13233, 62, 47)
         Each row is a face image corresponding to one of the 5749 people in
-        the dataset.
+        the dataset. Changing the ``slice_`` or resize parameters will change the shape
+        of the output.
 
     dataset.target : numpy array of shape (13233,)
         Labels associated to each face image. Those labels range from 0-5748
@@ -389,36 +394,39 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
 
       .. _`README.txt`: http://vis-www.cs.umass.edu/lfw/README.txt
 
+    The original images are 250 x 250 pixels, but the default slice and resize
+    arguments reduce them to 62 x 74.
+
     Parameters
     ----------
-    subset: optional, default: 'train'
+    subset : optional, default: 'train'
         Select the dataset to load: 'train' for the development training
         set, 'test' for the development test set, and '10_folds' for the
         official evaluation set that is meant to be used with a 10-folds
         cross validation.
 
-    data_home: optional, default: None
+    data_home : optional, default: None
         Specify another download and cache folder for the datasets. By
         default all scikit learn data is stored in '~/scikit_learn_data'
         subfolders.
 
-    funneled: boolean, optional, default: True
+    funneled : boolean, optional, default: True
         Download and use the funneled variant of the dataset.
 
-    resize: float, optional, default 0.5
+    resize : float, optional, default 0.5
         Ratio used to resize the each face picture.
 
-    color: boolean, optional, default False
+    color : boolean, optional, default False
         Keep the 3 RGB channels instead of averaging them to a single
         gray level channel. If color is True the shape of the data has
         one more dimension than than the shape with color = False.
 
-    slice_: optional
+    slice_ : optional
         Provide a custom 2D slice (height, width) to extract the
         'interesting' part of the jpeg files and avoid use statistical
         correlation from the background
 
-    download_if_missing: optional, True by default
+    download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
@@ -427,12 +435,14 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     The data is returned as a Bunch object with the following attributes:
 
     data : numpy array of shape (2200, 5828)
-        Each row corresponds to 2 ravel'd face images of original size 62 x 67
-        pixels.
+        Each row corresponds to 2 ravel'd face images of original size 62 x 47
+        pixels. Changing the ``slice_`` or resize parameters will change the shape
+        of the output.
 
-    pairs : numpy array of shape (2200, 2, 62, 67)
+    pairs : numpy array of shape (2200, 2, 62, 47)
         Each row has 2 face images corresponding to same or different person
-        from the dataset containing 5749 people.
+        from the dataset containing 5749 people. Changing the ``slice_`` or resize
+        parameters will change the shape of the output.
 
     target : numpy array of shape (13233,)
         Labels associated to each pair of images. The two label values being

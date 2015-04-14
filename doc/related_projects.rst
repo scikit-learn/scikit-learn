@@ -30,6 +30,8 @@ Other packages useful for data analysis and machine learning.
 
 - `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and fitting algorithms.
 
+- `sklearn_theano <http://sklearn-theano.github.io/>`_ scikit-learn compatible estimators, transformers, and datasets which use Theano internally
+
 
 Extensions and Algorithms
 -------------------------
@@ -48,7 +50,7 @@ scikit-learn tools.
 - `HMMLearn <https://github.com/hmmlearn/hmmlearn>`_ Implementation of hidden
   markov models that was previously part of scikit-learn.
 
-- `PyStruct <https://pystruct.githup.io>`_ General conditional random fields
+- `PyStruct <https://pystruct.github.io>`_ General conditional random fields
   and structured prediction.
 
 - `py-earth <https://github.com/jcrudy/py-earth>`_ Multivariate adaptive regression splines

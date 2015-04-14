@@ -15,7 +15,7 @@ from sklearn.linear_model.coordinate_descent import (Lasso, ElasticNet,
 
 
 def test_sparse_coef():
-    """ Check that the sparse_coef propery works """
+    # Check that the sparse_coef propery works
     clf = ElasticNet()
     clf.coef_ = [1, 2, 3]
 
@@ -24,7 +24,7 @@ def test_sparse_coef():
 
 
 def test_normalize_option():
-    """ Check that the normalize option in enet works """
+    # Check that the normalize option in enet works
     X = sp.csc_matrix([[-1], [0], [1]])
     y = [-1, 0, 1]
     clf_dense = ElasticNet(fit_intercept=True, normalize=True)
@@ -37,7 +37,7 @@ def test_normalize_option():
 
 
 def test_lasso_zero():
-    """Check that the sparse lasso can handle zero data without crashing"""
+    # Check that the sparse lasso can handle zero data without crashing
     X = sp.csc_matrix((3, 1))
     y = [0, 0, 0]
     T = np.array([[1], [2], [3]])
@@ -49,7 +49,7 @@ def test_lasso_zero():
 
 
 def test_enet_toy_list_input():
-    """Test ElasticNet for various values of alpha and l1_ratio with list X"""
+    # Test ElasticNet for various values of alpha and l1_ratio with list X
 
     X = np.array([[-1], [0], [1]])
     X = sp.csc_matrix(X)
@@ -82,8 +82,7 @@ def test_enet_toy_list_input():
 
 
 def test_enet_toy_explicit_sparse_input():
-    """Test ElasticNet for various values of alpha and l1_ratio with sparse
-    X"""
+    # Test ElasticNet for various values of alpha and l1_ratio with sparse X
     f = ignore_warnings
     # training samples
     X = sp.lil_matrix((3, 1))
