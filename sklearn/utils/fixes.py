@@ -103,7 +103,7 @@ try:
 except TypeError:
     # Compat where astype accepted no copy argument
     def astype(array, dtype, copy=True):
-        if array.dtype == dtype:
+        if not copy and array.dtype == dtype:
             return array
         return array.astype(dtype)
 else:
@@ -226,7 +226,7 @@ except ImportError:
         """
         def within_tol(x, y, atol, rtol):
             with np.errstate(invalid='ignore'):
-                result = np.less_equal(abs(x-y), atol + rtol * abs(y))
+                result = np.less_equal(abs(x - y), atol + rtol * abs(y))
             if np.isscalar(a) and np.isscalar(b):
                 result = bool(result)
             return result

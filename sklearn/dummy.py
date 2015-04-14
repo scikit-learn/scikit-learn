@@ -33,6 +33,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
           set's class distribution.
         * "most_frequent": always predicts the most frequent label in the
           training set.
+        * "prior": always predicts the class that maximizes the class prior
+          (like "most_frequent") and ``predict_proba`` returns the class prior.
         * "uniform": generates predictions uniformly at random.
         * "constant": always predicts a constant label that is provided by
           the user. This is useful for metrics that evaluate a non-majority
@@ -95,7 +97,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             Returns self.
         """
         if self.strategy not in ("most_frequent", "stratified", "uniform",
-                                 "constant"):
+                                 "constant", "prior"):
             raise ValueError("Unknown strategy type.")
 
         if self.strategy == "uniform" and sp.issparse(y):
@@ -147,8 +149,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, X):
-        """
-        Perform classification on test vectors X.
+        """Perform classification on test vectors X.
 
         Parameters
         ----------
@@ -188,7 +189,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         if self.sparse_output_:
             class_prob = None
-            if self.strategy == "most_frequent":
+            if self.strategy in ("most_frequent", "prior"):
                 classes_ = [np.array([cp.argmax()]) for cp in class_prior_]
 
             elif self.strategy == "stratified":
@@ -204,7 +205,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             y = random_choice_csc(n_samples, classes_, class_prob,
                                   self.random_state)
         else:
-            if self.strategy == "most_frequent":
+            if self.strategy in ("most_frequent", "prior"):
                 y = np.tile([classes_[k][class_prior_[k].argmax()] for
                              k in range(self.n_outputs_)], [n_samples, 1])
 
@@ -268,6 +269,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                 ind = np.ones(n_samples, dtype=int) * class_prior_[k].argmax()
                 out = np.zeros((n_samples, n_classes_[k]), dtype=np.float64)
                 out[:, ind] = 1.0
+            elif self.strategy == "prior":
+                out = np.ones((n_samples, 1)) * class_prior_[k]
 
             elif self.strategy == "stratified":
                 out = rs.multinomial(1, class_prior_[k], size=n_samples)

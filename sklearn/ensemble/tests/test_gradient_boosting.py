@@ -1,7 +1,7 @@
 """
 Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
-
+import warnings
 import numpy as np
 
 from sklearn import datasets
@@ -171,8 +171,9 @@ def test_boston():
     for loss in ("ls", "lad", "huber"):
         for subsample in (1.0, 0.5):
             last_y_pred = None
-            for i, sample_weight in enumerate((None, np.ones(len(boston.target)),
-                                            2 * np.ones(len(boston.target)))):
+            for i, sample_weight in enumerate(
+                    (None, np.ones(len(boston.target)),
+                     2 * np.ones(len(boston.target)))):
                 clf = GradientBoostingRegressor(n_estimators=100, loss=loss,
                                                 max_depth=4, subsample=subsample,
                                                 min_samples_split=1,
@@ -343,6 +344,7 @@ def test_check_max_features():
                                     max_features=-0.1)
     assert_raises(ValueError, clf.fit, X, y)
 
+
 def test_max_feature_regression():
     # Test to make sure random state is set properly.
     X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
@@ -455,7 +457,8 @@ def test_staged_functions_defensive():
             if staged_func is None:
                 # regressor has no staged_predict_proba
                 continue
-            staged_result = list(staged_func(X))
+            with warnings.catch_warnings(record=True):
+                staged_result = list(staged_func(X))
             staged_result[1][:] = 0
             assert_true(np.all(staged_result[0] != 0))
 
@@ -843,7 +846,7 @@ def test_complete_classification():
     k = 4
 
     est = GradientBoostingClassifier(n_estimators=20, max_depth=None,
-                                     random_state=1, max_leaf_nodes=k+1)
+                                     random_state=1, max_leaf_nodes=k + 1)
     est.fit(X, y)
 
     tree = est.estimators_[0, 0].tree_
@@ -858,7 +861,7 @@ def test_complete_regression():
     k = 4
 
     est = GradientBoostingRegressor(n_estimators=20, max_depth=None,
-                                    random_state=1, max_leaf_nodes=k+1)
+                                    random_state=1, max_leaf_nodes=k + 1)
     est.fit(boston.data, boston.target)
 
     tree = est.estimators_[-1, 0].tree_
@@ -971,23 +974,37 @@ def test_non_uniform_weights_toy_edge_case_reg():
     X = [[1, 0],
          [1, 0],
          [1, 0],
+         [0, 1]]
+    y = [0, 0, 1, 0]
+    # ignore the first 2 training samples by setting their weight to 0
+    sample_weight = [0, 0, 1, 1]
+    for loss in ('huber', 'ls', 'lad', 'quantile'):
+        gb = GradientBoostingRegressor(learning_rate=1.0, n_estimators=2, loss=loss)
+        gb.fit(X, y, sample_weight=sample_weight)
+        assert_greater(gb.predict([[1, 0]])[0], 0.5)
+
+
+def test_non_uniform_weights_toy_min_weight_leaf():
+    # Regression test for issue #4447
+    X = [[1, 0],
+         [1, 0],
+         [1, 0],
          [0, 1],
         ]
     y = [0, 0, 1, 0]
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
-    for loss in ('ls', 'huber', 'lad', 'quantile'):
-        gb = GradientBoostingRegressor(n_estimators=5)
-        gb.fit(X, y, sample_weight=sample_weight)
-        assert_true(gb.predict([[1, 0]])[0] > 0.5)
+    gb = GradientBoostingRegressor(n_estimators=5, min_weight_fraction_leaf=0.1)
+    gb.fit(X, y, sample_weight=sample_weight)
+    assert_true(gb.predict([[1, 0]])[0] > 0.5)
+    assert_almost_equal(gb.estimators_[0,0].splitter.min_weight_leaf, 0.2)
 
 
 def test_non_uniform_weights_toy_edge_case_clf():
     X = [[1, 0],
          [1, 0],
          [1, 0],
-         [0, 1],
-        ]
+         [0, 1]]
     y = [0, 0, 1, 0]
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]

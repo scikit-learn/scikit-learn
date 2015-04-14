@@ -309,7 +309,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         return self
 
-    def predict(self, X):
+    def predict(self, X, check_input=True):
         """Predict class or regression value for X.
 
         For a classification model, the predicted class for each sample in X is
@@ -323,16 +323,21 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+
         Returns
         -------
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
-        X = check_array(X, dtype=DTYPE, accept_sparse="csr")
-        if issparse(X) and (X.indices.dtype != np.intc or
-                            X.indptr.dtype != np.intc):
-            raise ValueError("No support for np.int64 index based "
-                             "sparse matrices")
+        if check_input:
+            X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+            if issparse(X) and (X.indices.dtype != np.intc or
+                                X.indptr.dtype != np.intc):
+                raise ValueError("No support for np.int64 index based "
+                                 "sparse matrices")
 
         n_samples, n_features = X.shape
 
@@ -369,6 +374,33 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
             else:
                 return proba[:, :, 0]
+
+    def apply(self, X):
+        """
+        Returns the index of the leaf that each sample is predicted as.
+
+        Parameters
+        ----------
+        X : array_like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        X_leaves : array_like, shape = [n_samples,]
+            For each datapoint x in X, return the index of the leaf x
+            ends up in. Leaves are numbered within
+            ``[0; self.tree_.node_count)``, possibly with gaps in the
+            numbering.
+        """
+        if self.tree_ is None:
+            raise NotFittedError("Estimator not fitted, "
+                                 "call `fit` before `apply`.")
+
+        X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+
+        return self.tree_.apply(X)
 
     @property
     def feature_importances_(self):
@@ -541,11 +573,15 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             class_weight=class_weight,
             random_state=random_state)
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, check_input=True):
         """Predict class probabilities of the input samples X.
 
         The predicted class probability is the fraction of samples of the same
         class in a leaf.
+
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
 
         Parameters
         ----------
@@ -562,11 +598,12 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             classes corresponds to that in the attribute `classes_`.
         """
         check_is_fitted(self, 'n_outputs_')
-        X = check_array(X, dtype=DTYPE, accept_sparse="csr")
-        if issparse(X) and (X.indices.dtype != np.intc or
-                            X.indptr.dtype != np.intc):
-            raise ValueError("No support for np.int64 index based "
-                             "sparse matrices")
+        if check_input:
+            X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+            if issparse(X) and (X.indices.dtype != np.intc or
+                                X.indptr.dtype != np.intc):
+                raise ValueError("No support for np.int64 index based "
+                                 "sparse matrices")
 
         n_samples, n_features = X.shape
 

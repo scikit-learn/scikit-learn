@@ -14,7 +14,8 @@ from ..externals.joblib import Parallel, delayed
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import (check_array, check_random_state, check_X_y)
+from ..utils import (check_array, check_random_state, check_X_y,
+                     deprecated)
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted
@@ -974,6 +975,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                          intercept_init=intercept_init,
                          sample_weight=sample_weight)
 
+    @deprecated(" and will be removed in 0.19.")
     def decision_function(self, X):
         """Predict using the linear model
 

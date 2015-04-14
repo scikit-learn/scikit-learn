@@ -14,6 +14,10 @@ import warnings
 import math
 
 
+__all__ = ['check_increasing', 'isotonic_regression',
+           'IsotonicRegression']
+
+
 def check_increasing(x, y):
     """Determine whether y is monotonically correlated with x.
 

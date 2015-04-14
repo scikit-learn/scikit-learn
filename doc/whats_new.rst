@@ -19,17 +19,78 @@ Enhancements
    - :class:`naive_bayes.GaussianNB` now supports fitting with ``sample_weights``.
      By `Jan Hendrik Metzen`_.
 
+   - :class:`dummy.DummyClassifier` now supports a prior fitting strategy.
+     By `Arnaud Joly`_.
+
 Bug fixes
 .........
 
 API changes summary
 -------------------
 
+    - :class:`tree.DecisionTreeClassifier` now exposes an ``apply`` method
+      for retrieving the leaf indices samples are predicted as. By
+      `Daniel Galvez`_ and `Gilles Louppe`_.
+
+.. _changes_0_1_16:
+
+0.16.1
+=======
+
+Changelog
+---------
+
+Bug fixes
+.........
+
+   - Allow input data larger than ``block_size`` in
+     :class:`covariance.LedoitWolf` by `Andreas Müller`_.
+
+   - Fix a bug in :class:`isotonic.IsotonicRegression` deduplication that
+     caused unstable result in :class:`calibration.CalibratedClassifierCV` by
+     `Jan Hendrik Metzen`_.
+
+   - Fix sorting of labels in func:`preprocessing.label_binarize` by Michael Heilman.
+
+   - Fix several stability and convergence issues in
+     :class:`cross_decomposition.CCA` and
+     :class:`cross_decomposition.PLSCanonical` by `Andreas Müller`_
+
+   - Fix a bug in :class:`cluster.KMeans` when ``precompute_distances=False``
+     on fortran-ordered data.
+
+   - Fix a speed regression in :class:`ensemble.RandomForestClassifier`'s ``predict``
+     and ``predict_proba`` by `Andreas Müller`_.
+
+   - Fix a regression where ``utils.shuffle`` converted lists and dataframes to arrays, by `Olivier Grisel`_
+
 .. _changes_0_16:
 
 0.16
 ====
 
+Highlights
+-----------
+
+   - Speed improvements (notably in :class:`cluster.DBSCAN`), reduced memory
+     requirements, bug-fixes and better default settings.
+
+   - Multinomial Logistic regression and a path algorithm in
+     :class:`linear_model.LogisticRegressionCV`.
+
+   - Out-of core learning of PCA via :class:`decomposition.IncrementalPCA`.
+
+   - Probability callibration of classifiers using
+     :class:`calibration.CalibratedClassifierCV`.
+
+   - :class:`cluster.Birch` clustering method for large-scale datasets.
+
+   - Scalable approximate nearest neighbors search with Locality-sensitive
+     hashing forests in :class:`neighbors.LSHForest`.
+
+   - Improved error messages and better validation when using malformed input data.
+
+   - More robust integration with pandas dataframes.
 
 Changelog
 ---------
@@ -231,6 +292,9 @@ Enhancements
 
    - Numerical stability improvements for :class:`preprocessing.StandardScaler`
      and :func:`preprocessing.scale`. By `Nicolas Goix`_
+
+   - :class:`svm.SVC` fitted on sparse input now implements ``decision_function``.
+     By `Rob Zinkov`_ and `Andreas Müller`_.
 
 Documentation improvements
 ..........................
@@ -460,7 +524,7 @@ API changes summary
       :class:`linear_model.PassiveAgressiveRegressor` now defaults to ``True``.
 
     - :class:`cluster.DBSCAN` now uses a deterministic initialization. The
-      `random_state` parameter is deprecated. By `Eric Schubert`_.
+      `random_state` parameter is deprecated. By `Erich Schubert`_.
 
 .. _changes_0_15_2:
 
@@ -3374,7 +3438,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Hervé Bredin: http://herve.niderb.fr/
 
-.. _Eric Schubert: https://github.com/kno10
+.. _Erich Schubert: https://github.com/kno10
 
 .. _Dan Blanchard: https://github.com/dan-blanchard
 

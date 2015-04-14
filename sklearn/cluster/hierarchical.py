@@ -712,6 +712,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
 
+        if self.n_clusters <= 0:
+            raise ValueError("n_clusters should be an integer greater than 0."
+                             " %s was provided." % str(self.n_clusters))
+
         if self.linkage == "ward" and self.affinity != "euclidean":
             raise ValueError("%s was provided as affinity. Ward can only "
                              "work with euclidean distances." %

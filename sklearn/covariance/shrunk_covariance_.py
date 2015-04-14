@@ -240,17 +240,15 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
     X : array-like, shape (n_samples, n_features)
         Data from which to compute the covariance estimate
 
-    assume_centered : Boolean
+    assume_centered : boolean, default=False
         If True, data are not centered before computation.
         Useful to work with data whose mean is significantly equal to
         zero but is not exactly zero.
         If False, data are centered before computation.
 
-    block_size : int,
+    block_size : int, default=1000
         Size of the blocks into which the covariance matrix will be split.
-        If n_features > `block_size`, an error will be raised since the
-        shrunk covariance matrix will be considered as too large regarding
-        the available memory.
+        This is purely a memory optimization and does not affect results.
 
     Returns
     -------
@@ -286,10 +284,6 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
     else:
         n_samples, n_features = X.shape
 
-    if n_features > block_size:
-        raise MemoryError("LW: n_features is too large, " +
-                          "try increasing block_size")
-
     # get Ledoit-Wolf shrinkage
     shrinkage = ledoit_wolf_shrinkage(
         X, assume_centered=assume_centered, block_size=block_size)
@@ -312,21 +306,19 @@ class LedoitWolf(EmpiricalCovariance):
 
     Parameters
     ----------
-    store_precision : bool
+    store_precision : bool, default=True
         Specify if the estimated precision is stored.
 
-    assume_centered : bool
+    assume_centered : bool, default=False
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
         If False (default), data are centered before computation.
 
-    block_size : int,
+    block_size : int, default=1000
         Size of the blocks into which the covariance matrix will be split
-        during its Ledoit-Wolf estimation.
-        If n_features > `block_size`, an error will be raised since the
-        shrunk covariance matrix will be considered as too large regarding
-        the available memory.
+        during its Ledoit-Wolf estimation. This is purely a memory
+        optimization and does not affect results.
 
     Attributes
     ----------
@@ -480,10 +472,10 @@ class OAS(EmpiricalCovariance):
 
     Parameters
     ----------
-    store_precision : bool
+    store_precision : bool, default=True
         Specify if the estimated precision is stored.
 
-    assume_centered: bool
+    assume_centered: bool, default=False
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.

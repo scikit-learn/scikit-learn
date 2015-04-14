@@ -24,7 +24,7 @@ from scipy import sparse
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..utils import as_float_array, check_array, check_X_y
+from ..utils import as_float_array, check_array, check_X_y, deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
@@ -119,6 +119,7 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
     def fit(self, X, y):
         """Fit model."""
 
+    @deprecated(" and will be removed in 0.19.")
     def decision_function(self, X):
         """Decision function of the linear model.
 
@@ -132,6 +133,9 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
         C : array, shape = (n_samples,)
             Returns predicted values.
         """
+        return self._decision_function(X)
+
+    def _decision_function(self, X):
         check_is_fitted(self, "coef_")
 
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
@@ -151,7 +155,7 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
         C : array, shape = (n_samples,)
             Returns predicted values.
         """
-        return self.decision_function(X)
+        return self._decision_function(X)
 
     _center_data = staticmethod(center_data)
 
