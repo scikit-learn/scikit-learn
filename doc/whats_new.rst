@@ -64,6 +64,14 @@ Enhancements
    - Added backlinks from the API reference pages to the user guide. By
      `Andreas Müller`_.
 
+   - The ``labels`` parameter to :func:`sklearn.metrics.f1_score`,
+     :func:`sklearn.metrics.fbeta_score`,
+     :func:`sklearn.metrics.recall_score` and
+     :func:`sklearn.metrics.precision_score` has been extended.
+     It is now possible to ignore one or more labels, such as where
+     a multiclass problem has a majority class to ignore. By `Joel Nothman`_.
+
+
 Bug fixes
 .........
 

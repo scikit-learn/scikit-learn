@@ -155,7 +155,7 @@ take several parameters:
   certainties (``needs_threshold=True``).  The default value is
   False.
 
-* any additional parameters, such as ``beta`` in an :func:`f1_score`.
+* any additional parameters, such as ``beta`` or ``labels`` in :func:`f1_score`.
 
 Here is an example of building custom scorers, and of using the
 ``greater_is_better`` parameter::
@@ -657,8 +657,9 @@ specified by the ``average`` argument to the
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
 :func:`precision_score` and :func:`recall_score` functions, as described
 :ref:`above <average>`. Note that for "micro"-averaging in a multiclass setting
-will produce equal precision, recall and :math:`F`, while "weighted" averaging
-may produce an F-score that is not between precision and recall.
+with all labels included will produce equal precision, recall and :math:`F`,
+while "weighted" averaging may produce an F-score that is not between
+precision and recall.
 
 To make this more explicit, consider the following notation:
 
@@ -708,6 +709,18 @@ Then the metrics are defined as:
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5, average=None)
   ... # doctest: +ELLIPSIS
   (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2]...))
+
+For multiclass classification with a "negative class", it is possible to exclude some labels:
+
+  >>> metrics.recall_score(y_true, y_pred, labels=[1, 2], average='micro')
+  ... # excluding 0, no labels were correctly recalled
+  0.0
+
+Similarly, labels not present in the data sample may be accounted for in macro-averaging.
+
+  >>> metrics.precision_score(y_true, y_pred, labels=[0, 1, 2, 3], average='macro')
+  ... # doctest: +ELLIPSIS
+  0.166...
 
 .. _hinge_loss:
 
