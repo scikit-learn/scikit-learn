@@ -27,6 +27,11 @@ Bug fixes
    - Fix a bug in :class:`cluster.KMeans` when ``precompute_distances=False``
      on fortran-ordered data.
 
+   - Fix a speed regression in :class:`ensemble.RandomForestClassifier`'s ``predict``
+     and ``predict_proba`` by `Andreas Müller`_.
+
+   - Fix a regression where ``utils.shuffle`` converted lists and dataframes to arrays, by `Olivier Grisel`_
+
 
 0.16
 ====
