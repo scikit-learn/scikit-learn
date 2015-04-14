@@ -192,7 +192,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     X, Y = check_pairwise_arrays(X, Y)
 
     if Y_norm_squared is not None:
-        YY = check_array(Y_norm_squared)
+        YY = check_array(np.atleast_2d(Y_norm_squared))
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")

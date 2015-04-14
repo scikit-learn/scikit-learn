@@ -769,9 +769,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Initialize under isotropy assumption
             if verbose:
                 print("Initialize under isotropy assumption...")
-            self.theta0 = check_array(self.theta0.min())
-            self.thetaL = check_array(self.thetaL.min())
-            self.thetaU = check_array(self.thetaU.max())
+            self.theta0 = np.atleast_2d(self.theta0.min())
+            self.thetaL = np.atleast_2d(self.thetaL.min())
+            self.thetaU = np.atleast_2d(self.thetaU.max())
             theta_iso, optimal_rlf_value_iso, par_iso = \
                 self._arg_max_reduced_likelihood_function()
             optimal_theta = theta_iso + np.zeros(theta0.shape)
@@ -782,16 +782,16 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             for i in self.random_state.permutation(theta0.size):
                 if verbose:
                     print("Proceeding along dimension %d..." % (i + 1))
-                self.theta0 = check_array(theta_iso)
-                self.thetaL = check_array(thetaL[0, i])
-                self.thetaU = check_array(thetaU[0, i])
+                self.theta0 = np.atleast_2d(theta_iso)
+                self.thetaL = np.atleast_2d(thetaL[0, i])
+                self.thetaU = np.atleast_2d(thetaU[0, i])
 
                 def corr_cut(t, d):
-                    return corr(check_array(np.hstack([optimal_theta[0][0:i],
-                                                       t[0],
-                                                       optimal_theta[0][(i +
-                                                                         1)::]])),
-                                d)
+                    return corr(
+                        np.atleast_2d(
+                            np.hstack([optimal_theta[0][0:i], t[0],
+                                       optimal_theta[0][(i + 1)::]])),
+                        d)
 
                 self.corr = corr_cut
                 optimal_theta[0, i], optimal_rlf_value, optimal_par = \
@@ -824,7 +824,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Check regression weights if given (Ordinary Kriging)
         if self.beta0 is not None:
-            self.beta0 = check_array(self.beta0)
+            self.beta0 = np.atleast_2d(self.beta0)
             if self.beta0.shape[1] != 1:
                 # Force to column vector
                 self.beta0 = self.beta0.T
@@ -844,12 +844,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                              "'light', %s was given." % self.storage_mode)
 
         # Check correlation parameters
-        self.theta0 = check_array(self.theta0)
+        self.theta0 = np.atleast_2d(self.theta0)
         lth = self.theta0.size
 
         if self.thetaL is not None and self.thetaU is not None:
-            self.thetaL = check_array(self.thetaL)
-            self.thetaU = check_array(self.thetaU)
+            self.thetaL = np.atleast_2d(self.thetaL)
+            self.thetaU = np.atleast_2d(self.thetaU)
             if self.thetaL.size != lth or self.thetaU.size != lth:
                 raise ValueError("theta0, thetaL and thetaU must have the "
                                  "same length.")

@@ -491,7 +491,7 @@ def test_tied_scores():
 
     for n_features in [1, 2, 3]:
         sel = SelectKBest(chi2, k=n_features).fit(X_train, y_train)
-        X_test = sel.transform([0, 1, 2])
+        X_test = sel.transform([[0, 1, 2]])
         assert_array_equal(X_test[0], np.arange(3)[-n_features:])
 
 
