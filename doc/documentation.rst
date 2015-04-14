@@ -2,7 +2,7 @@
 
   <div class="container-index">
 
-Documentation of scikit-learn 0.16.0
+Documentation of scikit-learn 0.16.1
 =======================================
 
 .. raw:: html
