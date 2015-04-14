@@ -32,6 +32,38 @@ API changes summary
       for retrieving the leaf indices samples are predicted as. By
       `Daniel Galvez`_ and `Gilles Louppe`_.
 
+.. _changes_0_1_16:
+
+0.16.1
+=======
+
+Changelog
+---------
+
+Bug fixes
+.........
+
+   - Allow input data larger than ``block_size`` in
+     :class:`covariance.LedoitWolf` by `Andreas Müller`_.
+
+   - Fix a bug in :class:`isotonic.IsotonicRegression` deduplication that
+     caused unstable result in :class:`calibration.CalibratedClassifierCV` by
+     `Jan Hendrik Metzen`_.
+
+   - Fix sorting of labels in func:`preprocessing.label_binarize` by Michael Heilman.
+
+   - Fix several stability and convergence issues in
+     :class:`cross_decomposition.CCA` and
+     :class:`cross_decomposition.PLSCanonical` by `Andreas Müller`_
+
+   - Fix a bug in :class:`cluster.KMeans` when ``precompute_distances=False``
+     on fortran-ordered data.
+
+   - Fix a speed regression in :class:`ensemble.RandomForestClassifier`'s ``predict``
+     and ``predict_proba`` by `Andreas Müller`_.
+
+   - Fix a regression where ``utils.shuffle`` converted lists and dataframes to arrays, by `Olivier Grisel`_
+
 .. _changes_0_16:
 
 0.16
