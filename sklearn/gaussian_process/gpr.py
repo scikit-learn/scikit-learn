@@ -22,7 +22,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     The implementation is based on Algorithm 2.1 of ``Gaussian Processes
     for Machine Learning'' (GPML) by Rasmussen and Williams.
 
-    In addition to standard sklearn estimators, GaussianProcessRegressor:
+    In addition to standard sklearn estimator API, GaussianProcessRegressor:
 
        * allows prediction without prior fitting (based on the GP prior)
        * provides an additional method sample_y(X), which evaluates samples
@@ -87,7 +87,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     alpha_: array-like, shape = (n_samples,)
         Dual coefficients of training data points in kernel space
     """
-
     def __init__(self, kernel=None, sigma_squared_n=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=1,
                  random_state=None):

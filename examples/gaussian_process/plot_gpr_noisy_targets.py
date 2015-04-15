@@ -3,10 +3,10 @@
 Gaussian Processes regression: basic introductory example
 =========================================================
 
-A simple one-dimensional regression exercise computed in two different ways:
+A simple one-dimensional regression example computed in two different ways:
 
 1. A noise-free case
-2. A noisy case with known noise-leve per datapoint
+2. A noisy case with known noise-level per datapoint
 
 In both cases, the kernel's parameters are estimated using the maximum
 likelihood principle.
