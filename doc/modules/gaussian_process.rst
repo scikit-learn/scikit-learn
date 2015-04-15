@@ -8,61 +8,78 @@ Gaussian Processes
 
 .. currentmodule:: sklearn.gaussian_process
 
-**Gaussian Processes for Machine Learning (GPML)** is a generic supervised
-learning method primarily designed to solve *regression* problems. It has also
-been extended to *probabilistic classification*, but in the present
-implementation, this is only a post-processing of the *regression* exercise.
+**Gaussian Processes (GP)** are a generic supervised learning method designed
+to solve *regression* and *probabilistic classification* problems.
 
-The advantages of Gaussian Processes for Machine Learning are:
+The advantages of Gaussian processes are:
 
     - The prediction interpolates the observations (at least for regular
-      correlation models).
+      kernels).
 
     - The prediction is probabilistic (Gaussian) so that one can compute
       empirical confidence intervals and exceedance probabilities that might be
       used to refit (online fitting, adaptive fitting) the prediction in some
       region of interest.
 
-    - Versatile: different :ref:`linear regression models
-      <linear_model>` and :ref:`correlation models
-      <correlation_models>` can be specified. Common models are provided, but
-      it is also possible to specify custom models provided they are
-      stationary.
+    - Versatile: different :ref:`kernels
+      <gp_kernels>` can be specified. Common kernels are provided, but
+      it is also possible to specify custom kernels.
 
-The disadvantages of Gaussian Processes for Machine Learning include:
+The disadvantages of Gaussian processes include:
 
-    - It is not sparse. It uses the whole samples/features information to
+    - They are not sparse, i.e., they use the whole samples/features information to
       perform the prediction.
 
-    - It loses efficiency in high dimensional spaces -- namely when the number
-      of features exceeds a few dozens. It might indeed give poor performance
-      and it loses computational efficiency.
-
-    - Classification is only a post-processing, meaning that one first need
-      to solve a regression problem by providing the complete scalar float
-      precision output :math:`y` of the experiment one attempt to model.
-
-Thanks to the Gaussian property of the prediction, it has been given varied
-applications: e.g. for global optimization, probabilistic classification.
+    - They lose efficiency in high dimensional spaces -- namely when the number
+      of features exceeds a few dozens.
 
 
-Gaussian Process Regression
-===========================
+.. _gpr:
 
-Noise-free and noisy targets
-----------------------------
+Gaussian Process Regression (GPR)
+=================================
 
-.. figure:: ../auto_examples/gaussian_process/images/plot_gpr_noisy_targets_001.png
-   :target: ../auto_examples/gaussian_process/plot_gpr_noisy_targets.html
-   :align: center
+.. currentmodule:: sklearn.gaussian_process
 
-.. figure:: ../auto_examples/gaussian_process/images/plot_gpr_noisy_targets_002.png
-   :target: ../auto_examples/gaussian_process/plot_gpr_noisy_targets.html
-   :align: center
+The :class:`GaussianProcessRegressor` implements Gaussian processes (GP) for
+regression purposes. For this, the prior of the GP needs to be specified. The
+prior mean is assumed to be zero (other constants can be achieved by
+subtracting the specific value externally from all target values). The prior's
+covariance is specified by a passing a :ref:`kernel <gp_kernels>` object. The
+hyperparameters of the kernel are optimized during fitting of
+GaussianProcessRegressor by maximizing the log-marginal-likelihood (LML) based
+on the passed `optimizer`. As the LML may have multiple local optima, the
+optimizer can be started repeatedly by specifying `n_restarts_optimizer`. The
+first run is always conducted starting from the initial hyperparameter values
+of the kernel; subsequent runs are conducted from hyperparameter values
+that have been chosen randomly from the range of allowed values.
+If the initial hyperparameters should be kept fixed, `None` can be passed as
+optimizer.
+
+The noise level in the targets can be specified by passing it via the
+parameter `sigma_squared_n`, either globally as a scalar or per datapoint.
+Note that a moderate noise level can also be helpful for dealing with numeric
+issues during fitting as it is effectively implemented as Tikhonov
+regularization, i.e., by adding it to the diagonal of the kernel matrix. An
+alternative to specifying the noise level explicitly is to include a
+WhiteKernel component into the kernel, which can estimate the global noise
+level from the data (see example below).
+
+The implementation is based on Algorithm 2.1 of [RW2006]_. In addition to
+the API of standard sklearn estimators, GaussianProcessRegressor:
+     * allows prediction without prior fitting (based on the GP prior)
+     * provides an additional method `sample_y(X)`, which evaluates samples
+       drawn from the GPR (prior or posterior) at given inputs
+     * exposes a method `log_marginal_likelihood(theta)`, which can be used
+       externally for other ways of selecting hyperparameters, e.g., via
+       Markov chain Monte Carlo.
 
 
-Gaussian process regression (GPR) with noise-level estimation
--------------------------------------------------------------
+GPR examples
+============
+
+GPR with noise-level estimation
+-------------------------------
 This example illustrates that GPR with a sum-kernel including a WhiteKernel can
 estimate the noise level of data. An illustration of the
 log-marginal-likelihood (LML) landscape shows that there exist two local
@@ -139,8 +156,8 @@ hyperparameter space. The time for predicting is similar; however, generating
 the variance of the predictive distribution of GPR takes considerable longer
 than just predicting the mean.
 
-Gaussian process regression (GPR) on Mauna Loa CO2 data
--------------------------------------------------------
+GPR on Mauna Loa CO2 data
+-------------------------
 
 This example is based on Section 5.4.3 of "Gaussian Processes for Machine
 Learning" [RW2006]_. It illustrates an example of complex kernel engineering and
@@ -198,12 +215,16 @@ until around 2015.
    :target: ../auto_examples/gaussian_process/plot_gpr_co2.html
    :align: center
 
+.. _gpc:
 
-Gaussian Process Classification
-===============================
+Gaussian Process Classification (GPC)
+=====================================
 
-Probabilistic predictions with Gaussian process classification (GPC)
---------------------------------------------------------------------
+GPC examples
+============
+
+Probabilistic predictions with GPC
+----------------------------------
 
 This example illustrates the predicted probability of GPC for an RBF kernel
 with different choices of the hyperparameters. The first figure shows the
@@ -231,21 +252,23 @@ hyperparameters used in the first figure by black dots.
    :align: center
 
 
-Iso-probability lines for Gaussian Processes classification (GPC)
------------------------------------------------------------------
+Iso-probability lines for GPC
+-----------------------------
 
 .. figure:: ../auto_examples/gaussian_process/images/plot_gpc_isoprobability_001.png
    :target: ../auto_examples/gaussian_process/plot_gpc_isoprobability.html
    :align: center
 
 
-Illustration of Gaussian process classification (GPC) on the XOR dataset
-------------------------------------------------------------------------
+Illustration of GPC on the XOR dataset
+--------------------------------------
 
 .. figure:: ../auto_examples/gaussian_process/images/plot_gpc_xor_001.png
    :target: ../auto_examples/gaussian_process/plot_gpc_xor.html
    :align: center
 
+
+.. _gp_kernels:
 
 Kernels for Gaussian Processes
 ==============================
@@ -303,7 +326,7 @@ number of dimensions as the inputs :math:`x` (anisotropic variant of the kernel)
 The kernel given by:
 
 .. math::
-   k(x_i, x_j) = \text{exp}\left(-\frac{1}{2} \vert d(x_i / l, x_j / l)^2\right)
+   k(x_i, x_j) = \text{exp}\left(-\frac{1}{2} d(x_i / l, x_j / l)^2\right)
 
 This kernel is infinitely differentiable, which implies that GPs with this
 kernel as covariance function have mean square derivatives of all orders, and are thus
