@@ -324,21 +324,27 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     if isinstance(accept_sparse, str):
         accept_sparse = [accept_sparse]
 
+    # store whether originally we wanted numeric dtype
+    dtype_numeric = dtype == "numeric"
+
     if sp.issparse(array):
-        if dtype == "numeric":
+        if dtype_numeric:
             dtype = None
         array = _ensure_sparse_format(array, accept_sparse, dtype, order,
                                       copy, force_all_finite)
     else:
         if ensure_2d:
             array = np.atleast_2d(array)
-        if dtype == "numeric":
-            if hasattr(array, "dtype") and array.dtype.kind == "O":
+        if dtype_numeric:
+            if hasattr(array, "dtype") and getattr(array.dtype, "kind", None) == "O":
                 # if input is object, convert to float.
                 dtype = np.float64
             else:
                 dtype = None
         array = np.array(array, dtype=dtype, order=order, copy=copy)
+        # make sure we actually converted to numeric:
+        if dtype_numeric and array.dtype.kind == "O":
+            array = array.astype(np.float64)
         if not allow_nd and array.ndim >= 3:
             raise ValueError("Found array with dim %d. Expected <= 2" %
                              array.ndim)
@@ -352,7 +358,6 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
             raise ValueError("Found array with %d sample(s) (shape=%s) while a"
                              " minimum of %d is required."
                              % (n_samples, shape_repr, ensure_min_samples))
-
 
     if ensure_min_features > 0 and array.ndim == 2:
         n_features = array.shape[1]
