@@ -66,6 +66,7 @@ import numpy as np
 from sklearn.cluster.bicluster import SpectralCoclustering
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.externals import six
+from sklearn.externals.six.moves import xrange
 from sklearn.datasets.twenty_newsgroups import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.cluster import v_measure_score
