@@ -30,15 +30,15 @@ Documentation of scikit-learn 0.17.dev0
                     <ul>
                         <li>scikit-learn 0.17 (development)</li>
                         <li><a href="http://scikit-learn.org/stable/documentation.html">scikit-learn 0.16 (stable)</a></li>
-                        <li><a href="http://scikit-learn.org/0.15/documentation.html">scikit-learn 0.14</a></li>
+                        <li><a href="http://scikit-learn.org/0.15/documentation.html">scikit-learn 0.15</a></li>
                         <li><a href="http://scikit-learn.org/0.14/documentation.html">scikit-learn 0.14</a></li>
                         <li><a href="http://scikit-learn.org/0.13/user_guide.html">scikit-learn 0.13</a></li>
-                        <li><a href="http://scikit-learn.org/0.12/user_guide.html">scikit-learn 0.12</a></li>
                         <li id="other-versions">Older versions
                             <a class="btn dropdown-toggle" data-toggle="dropdown">
                            <span class="caret"></span>
                            </a>
                             <ul class="dropdown-menu">
+                                       <li><a href="http://scikit-learn.org/0.12/user_guide.html">scikit-learn 0.12</a></li>
                                        <li><a href="http://scikit-learn.org/0.11/user_guide.html">scikit-learn 0.11</a></li>
                                        <li><a href="http://scikit-learn.org/0.10/user_guide.html">scikit-learn 0.10</a></li>
                                        <li><a href="http://scikit-learn.org/0.9/user_guide.html">scikit-learn 0.9</a></li>
