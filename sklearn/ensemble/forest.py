@@ -57,7 +57,7 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
-from ..utils.validation import DataConversionWarning, check_is_fitted
+from ..utils.validation import DataConversionWarning, NotFittedError
 from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import bincount
 
@@ -292,8 +292,11 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         return y, None
 
     def _validate_X_predict(self, X):
-        """Validate X whenever one try to predict, apply, predict_proba"""
-        check_is_fitted(self, 'estimators_')
+        """Validate X whenever one tries to predict, apply, predict_proba"""
+        if self.estimators_ is None or len(self.estimators_) == 0:
+            raise NotFittedError("Estimator not fitted, "
+                                 "call `fit` before exploiting the model.")
+
         return self.estimators_[0]._validate_X_predict(X, check_input=True)
 
     @property
