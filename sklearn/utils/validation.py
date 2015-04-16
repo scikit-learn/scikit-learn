@@ -200,7 +200,7 @@ def indexable(*iterables):
     return result
 
 
-def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
+def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
                           force_all_finite):
     """Convert a sparse matrix to a given format.
 
@@ -219,9 +219,6 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
 
     dtype : string, type or None (default=none)
         Data type of result. If None, the dtype of the input is preserved.
-
-    order : 'F', 'C' or None (default=None)
-        Whether an array will be forced to be fortran or c-style.
 
     copy : boolean (default=False)
         Whether a forced copy will be triggered. If copy=False, a copy might
@@ -260,8 +257,6 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
                           % spmatrix.format)
         else:
             _assert_all_finite(spmatrix.data)
-    if hasattr(spmatrix, "data"):
-        spmatrix.data = np.array(spmatrix.data, copy=False, order=order)
     return spmatrix
 
 
@@ -330,8 +325,8 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     if sp.issparse(array):
         if dtype_numeric:
             dtype = None
-        array = _ensure_sparse_format(array, accept_sparse, dtype, order,
-                                      copy, force_all_finite)
+        array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
+                                      force_all_finite)
     else:
         if ensure_2d:
             array = np.atleast_2d(array)
