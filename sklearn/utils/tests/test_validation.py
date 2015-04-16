@@ -92,7 +92,7 @@ def test_ordering():
     # Check that ordering is enforced correctly by validation utilities.
     # We need to check each validation utility, because a 'copy' without
     # 'order=K' will kill the ordering.
-    X = np.ones((10, 5))
+    X = np.arange(50).reshape(10, 5)
     for A in X, X.T:
         for copy in (True, False):
             B = check_array(A, order='C', copy=copy)
@@ -101,14 +101,6 @@ def test_ordering():
             assert_true(B.flags['F_CONTIGUOUS'])
             if copy:
                 assert_false(A is B)
-
-    X = sp.csr_matrix(X)
-    X.data = X.data[::-1]
-    assert_false(X.data.flags['C_CONTIGUOUS'])
-
-    for copy in (True, False):
-        Y = check_array(X, accept_sparse='csr', copy=copy, order='C')
-        assert_true(Y.data.flags['C_CONTIGUOUS'])
 
 
 def test_check_array():
@@ -382,3 +374,7 @@ def test_check_consistent_length():
     assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
                          [1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
+
+
+if __name__ == "__main__":
+    test_ordering()
