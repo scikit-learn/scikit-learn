@@ -160,7 +160,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         X = check_array(X, dtype=DTYPE, accept_sparse="csr")
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                            backend="threading")(
-            delayed(_parallel_helper)(tree.tree_, 'apply', X)
+            delayed(_parallel_helper)(tree, 'apply', X, check_input=False)
             for tree in self.estimators_)
 
         return np.array(results).T
