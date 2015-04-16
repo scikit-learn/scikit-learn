@@ -309,8 +309,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         feature_importances_ : array, shape = [n_features]
         """
         if self.estimators_ is None or len(self.estimators_) == 0:
-            raise ValueError("Estimator not fitted, "
-                             "call `fit` before `feature_importances_`.")
+            raise NotFittedError("Estimator not fitted, "
+                                 "call `fit` before `feature_importances_`.")
 
         all_importances = Parallel(n_jobs=self.n_jobs,
                                    backend="threading")(
