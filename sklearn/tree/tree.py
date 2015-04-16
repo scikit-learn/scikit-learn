@@ -375,7 +375,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 return proba[:, :, 0]
 
-    def apply(self, X):
+    def apply(self, X, check_input=True):
         """
         Returns the index of the leaf that each sample is predicted as.
 
@@ -385,6 +385,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
+
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
 
         Returns
         -------
@@ -398,7 +402,15 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             raise NotFittedError("Estimator not fitted, "
                                  "call `fit` before `apply`.")
 
-        X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+        if check_input:
+            X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+
+        n_features = X.shape[1]
+        if self.n_features_ != n_features:
+            raise ValueError("Number of features of the model must "
+                             " match the input. Model n_features is %s and "
+                             " input n_features is %s "
+                             % (self.n_features_, n_features))
 
         return self.tree_.apply(X)
 
