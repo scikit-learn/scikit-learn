@@ -50,7 +50,10 @@ class Bunch(dict):
         self[key] = value
 
     def __getattr__(self, key):
-        return self[key]
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
 
     def __getstate__(self):
         return self.__dict__
