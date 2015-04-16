@@ -312,7 +312,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
     def _validate_X_predict(self, X, check_input):
         """Validate X whenever one tries to predict, apply, predict_proba"""
         if self.tree_ is None:
-            raise NotFittedError("Tree not initialized. Perform a fit first")
+            raise NotFittedError("Estimator not fitted, "
+                                 "call `fit` before exploiting the model.")
 
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csr")
