@@ -309,6 +309,27 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         return self
 
+    def _validate_X_predict(self, X, check_input):
+        """Validate X whenever one try to predict, apply, predict_proba"""
+        if self.tree_ is None:
+            raise NotFittedError("Tree not initialized. Perform a fit first")
+
+        if check_input:
+            X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+            if issparse(X) and (X.indices.dtype != np.intc or
+                                X.indptr.dtype != np.intc):
+                raise ValueError("No support for np.int64 index based "
+                                 "sparse matrices")
+
+        n_features = X.shape[1]
+        if self.n_features_ != n_features:
+            raise ValueError("Number of features of the model must "
+                             " match the input. Model n_features is %s and "
+                             " input n_features is %s "
+                             % (self.n_features_, n_features))
+
+        return X
+
     def predict(self, X, check_input=True):
         """Predict class or regression value for X.
 
@@ -332,25 +353,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
-        if check_input:
-            X = check_array(X, dtype=DTYPE, accept_sparse="csr")
-            if issparse(X) and (X.indices.dtype != np.intc or
-                                X.indptr.dtype != np.intc):
-                raise ValueError("No support for np.int64 index based "
-                                 "sparse matrices")
-
-        n_samples, n_features = X.shape
-
-        if self.tree_ is None:
-            raise NotFittedError("Tree not initialized. Perform a fit first")
-
-        if self.n_features_ != n_features:
-            raise ValueError("Number of features of the model must "
-                             " match the input. Model n_features is %s and "
-                             " input n_features is %s "
-                             % (self.n_features_, n_features))
-
+        X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
+        n_samples = X.shape[0]
 
         # Classification
         if isinstance(self, ClassifierMixin):
@@ -398,20 +403,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             ``[0; self.tree_.node_count)``, possibly with gaps in the
             numbering.
         """
-        if self.tree_ is None:
-            raise NotFittedError("Estimator not fitted, "
-                                 "call `fit` before `apply`.")
-
-        if check_input:
-            X = check_array(X, dtype=DTYPE, accept_sparse="csr")
-
-        n_features = X.shape[1]
-        if self.n_features_ != n_features:
-            raise ValueError("Number of features of the model must "
-                             " match the input. Model n_features is %s and "
-                             " input n_features is %s "
-                             % (self.n_features_, n_features))
-
+        X = self._validate_X_predict(X, check_input)
         return self.tree_.apply(X)
 
     @property
@@ -609,25 +601,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, 'n_outputs_')
-        if check_input:
-            X = check_array(X, dtype=DTYPE, accept_sparse="csr")
-            if issparse(X) and (X.indices.dtype != np.intc or
-                                X.indptr.dtype != np.intc):
-                raise ValueError("No support for np.int64 index based "
-                                 "sparse matrices")
-
-        n_samples, n_features = X.shape
-
-        if self.tree_ is None:
-            raise NotFittedError("Tree not initialized. Perform a fit first.")
-
-        if self.n_features_ != n_features:
-            raise ValueError("Number of features of the model must "
-                             " match the input. Model n_features is %s and "
-                             " input n_features is %s "
-                             % (self.n_features_, n_features))
-
+        X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
 
         if self.n_outputs_ == 1:
