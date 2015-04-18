@@ -35,6 +35,7 @@ from sklearn.utils.estimator_checks import (
     check_estimators_dtypes,
     check_transformer,
     check_clustering,
+    check_fit_reset,
     check_clusterer_compute_labels_predict,
     check_regressors_int,
     check_regressors_train,
@@ -122,6 +123,8 @@ def test_non_meta_estimators():
             yield check_sparsify_coefficients, name, Estimator
 
         yield check_estimator_sparse_data, name, Estimator
+        # test if fit resets model
+        yield check_fit_reset, name, Alg
 
 
 def test_transformers():
