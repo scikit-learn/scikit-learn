@@ -1009,7 +1009,11 @@ class ShuffleLabelsOut(ShuffleSplit):
         classes, y_indices = np.unique(y, return_inverse=True)
 
         super(ShuffleLabelsOut, self).__init__(
-            len(classes), n_iter, test_size, train_size, random_state)
+            len(classes),
+            n_iter=n_iter,
+            test_size=test_size,
+            train_size=train_size,
+            random_state=random_state)
 
         self.classes = classes
         self.y_indices = y_indices
