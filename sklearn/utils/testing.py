@@ -18,6 +18,8 @@ import platform
 
 import scipy as sp
 import scipy.io
+import numpy as np
+
 from functools import wraps
 try:
     # Python 2
@@ -45,17 +47,18 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
-import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
+           "assert_same_model", "assert_not_same_model",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
-           "assert_less", "assert_less_equal",
-           "assert_greater", "assert_greater_equal"]
+           "assert_array_not_equal", "assert_less", "assert_less_equal",
+           "assert_greater", "assert_greater_equal",
+           "assert_attributes_equal", "assert_attributes_not_equal"]
 
 
 try:
@@ -83,6 +86,12 @@ except ImportError:
             not_raised = True
         except expected_exception as e:
             error_message = str(e)
+            if not isinstance(e, expected_exception):
+                raise AssertionError("Error type should be %r. Raised"
+                                     " exception type was %r." %
+                                     (expected_exception.__name__,
+                                      type(e).__name__))
+
             if not re.compile(expected_regexp).search(error_message):
                 raise AssertionError("Error message should match pattern "
                                      "%r. %r does not." %
@@ -393,6 +402,177 @@ def assert_raise_message(exception, message, function, *args, **kwargs):
         exception, re.escape(message), function, *args, **kwargs)
 
 
+def assert_array_not_equal(x, y, err_msg="The arrays are equal", verbose=True):
+    """Raises an AssertionError if two array-like objects are equal."""
+    try:
+        assert_array_almost_equal(x, y, verbose=verbose)
+    except AssertionError:
+        return
+    raise AssertionError(err_msg)
+
+
+def _assert_same_model_method(method, X, estimator1, estimator2, msg=None):
+    if hasattr(estimator1, method):
+        m = '%r\n\nhas %s, but\n\n%r\n\ndoes not' % (estimator1,
+                                                     method,
+                                                     estimator2)
+
+        if not hasattr(estimator2, method):
+            raise AttributeError(m)
+
+        # Check if the method(X) returns the same for both models.
+        res1 = getattr(estimator1, method)(X)
+        res2 = getattr(estimator2, method)(X)
+        same_model = (res1.shape == res2.shape) and np.allclose(res1, res2)
+
+        if msg is None:
+            msg = ("Models are not equal. \n\n%s method returned"
+                   " different results:\n\n%r\n\n and\n\n%r\n\n for :\n\n%r"
+                   "\n\nand :\n\n%r" % (method, res1, res2,
+                                        estimator1, estimator2))
+
+        assert same_model, msg
+
+
+def _not_same_model_method(method, X, estimator1, estimator2):
+    """Return True if both estimators return same result for given method"""
+    if hasattr(estimator1, method):
+        m = '%r\n\nhas %s, but\n\n%r\n\ndoes not' % (estimator1,
+                                                     method,
+                                                     estimator2)
+
+        if not hasattr(estimator2, method):
+            raise AttributeError(m)
+
+        # Check if the method(X) returns the same result for both models.
+        res1 = getattr(estimator1, method)(X)
+        res2 = getattr(estimator2, method)(X)
+        not_same_model = (res1.shape != res2.shape) or not np.allclose(res1,
+                                                                       res2)
+
+        # NOTE Do not assert here. This is to facilitate checking using any()
+        # of the results of multiple checks.
+        return not_same_model
+    return False  # if the method does not exist.
+
+
+def assert_same_model(X, estimator1, estimator2, msg=None):
+    """Helper function to check if models are same"""
+    _assert_same_model_method('predict', X, estimator1, estimator2, msg)
+    _assert_same_model_method('transform', X, estimator1, estimator2, msg)
+    _assert_same_model_method('decision_function',
+                              X, estimator1, estimator2, msg)
+    _assert_same_model_method('predict_proba',
+                              X, estimator1, estimator2, msg)
+
+    assert_attributes_equal(estimator1, estimator2)
+
+
+def assert_not_same_model(X, estimator1, estimator2, msg=None):
+    """Helper function to check if models are different"""
+    t1 = _not_same_model_method('predict', X, estimator1, estimator2)
+    t2 = _not_same_model_method('transform', X, estimator1, estimator2)
+    t3 = _not_same_model_method('decision_function', X, estimator1, estimator2)
+    t4 = _not_same_model_method('predict_proba', X, estimator1, estimator2)
+
+    if msg is None:
+        msg = ("Models are equal. Both models returned the same results for"
+               " all the methods.")
+
+    any_method_differed = any((t1, t2, t3, t4))
+
+    if not any_method_differed:
+        # If all methods return similar results for both ests or if those
+        # methods are not present
+        assert_attributes_not_equal(estimator1, estimator2)
+
+
+def _compare_attributes(estimator1, estimator2, _invert_logic=False):
+    """Helper function to check if fitted model attributes are equal or not
+
+    Raises AssertionError if the attributes are equal (or not equal, if
+    _invert_logic is True)
+    """
+    # A list of attributes which are known to be inconsistent.
+    skip_attributes = ('embedding_', 'weights_')
+    attr_dict = {}
+    est1_dict = estimator1.__dict__
+    est2_dict = estimator2.__dict__
+    # TODO Add more comparables
+    # TODO Support sparse matrices?
+    comparables = [list, np.ndarray, np.float64, float, int, 'str']
+
+    if not _invert_logic:
+        assert_equality = lambda x, y, message: assert_almost_equal(x, y, err_msg=message)
+        assert_array_equality = lambda x, y, message: assert_array_almost_equal(x, y, err_msg=message)
+    else:
+        assert_equality = assert_not_equal
+        assert_array_equality = assert_array_not_equal
+
+    # Collect all attributes from both the models
+    for e_dict in (est1_dict, est2_dict):
+        for key, value in e_dict.items():
+            if (key.endswith('_') and not key.endswith('estimator_') and
+                    not key.endswith('estimators_') and
+                    type(value) in comparables and
+                    key not in skip_attributes):
+
+                attr_dict[key] = type(value)
+
+    for attr, typ in attr_dict.items():
+        # Check equality of the attributes
+        try:
+            # If the attr types differ
+            if type(est1_dict[attr]) is not type(est2_dict[attr]):
+                raise KeyError("Both attributes are not of similar type")
+
+            # TODO Support sparse matrices?
+            # If the attribute is of list / ndarray type
+            if typ in (np.ndarray, list):
+                # Check if the content(s) of the list are comparable and
+                # that the list is not empty
+                try:
+                    if (type(est1_dict[attr][0]) not in comparables
+                            or type(est2_dict[attr][0]) not in comparables):
+                        continue
+                except IndexError:
+                    # If the list / ndarray is empty
+                    pass
+
+                does_not = " not" if _invert_logic else ""
+                assert_array_equality(est1_dict[attr], est2_dict[attr],
+                                      ("Attribute %s, does%s differ between "
+                                       "the two models") % (attr, does_not))
+
+            # If the attribute is of numerical type
+            if typ in (float, np.float64, int, 'str'):
+                does_not = " not" if _invert_logic else ""
+                assert_equality(est1_dict[attr], est2_dict[attr],
+                                ("Attribute %s, does%s differ between the "
+                                 "two models") % (attr, does_not))
+
+        # If the attr is not present in either of the models or
+        # if attr are of different types
+        except KeyError:
+            # If checking for equality absence of attr should raise AE
+            assert_true(_invert_logic, ("Attribute %s, not present/initialized"
+                                        "in both models") % attr)
+            # NOTE Continue comparisons to check `all` attributes even when
+            # _invert_logic is set to True to be thorough.
+            # If any attributes may be the same irrespective of model, add it
+            # to skip_attributes list as there is no use in comparing that.
+
+
+def assert_attributes_equal(estimator1, estimator2):
+    """Helper function to check if fitted model attributes are equal"""
+    _compare_attributes(estimator1, estimator2, _invert_logic=False)
+
+
+def assert_attributes_not_equal(estimator1, estimator2):
+    """Helper function to check if fitted model attributes are not equal"""
+    _compare_attributes(estimator1, estimator2, _invert_logic=True)
+
+
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):
     """Create a fake mldata data set.
 
@@ -599,8 +779,8 @@ def all_estimators(include_meta_estimators=False,
         estimators = filtered_estimators
         if type_filter:
             raise ValueError("Parameter type_filter must be 'classifier', "
-                             "'regressor', 'transformer', 'cluster' or None, got"
-                             " %s." % repr(type_filter))
+                             "'regressor', 'transformer', 'cluster' or None,"
+                             "got %s." % repr(type_filter))
 
     # drop duplicates, sort for reproducibility
     return sorted(set(estimators))
