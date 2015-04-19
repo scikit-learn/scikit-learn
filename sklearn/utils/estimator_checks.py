@@ -289,6 +289,29 @@ def check_estimator_sparse_data(name, Estimator):
         raise
 
 
+@ignore_warnings
+def check_sample_properties(name, Estimator):
+    # check that estimator takes sample_properties
+    # XXX check that warning is raised once we add the global
+    # warning level flags
+    rnd = np.random.RandomState(0)
+    X = rnd.uniform(size=(10, 3))
+    y = np.arange(10) % 3
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+    set_random_state(estimator)
+    funcs = ["fit", "fit_predict", "fit_transform"]
+    attributes = {'sample_weights': np.ones(10)}
+
+    for func_name in funcs:
+        func = getattr(estimator, func_name, None)
+        if func is not None:
+            func(X, y, attributes=None)
+            func(X, y, attributes=attributes)
+            # XXX check for size of attributes?
+
+
 def check_dtype_object(name, Estimator):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)

@@ -955,7 +955,7 @@ def _index_param_value(X, v, indices):
     return safe_indexing(v, indices)
 
 
-def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
+def cross_val_predict(estimator, X, y=None, attributes=None, cv=None, n_jobs=1,
                       verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Generate cross-validated estimates for each input data point
 
@@ -970,6 +970,10 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     y : array-like, optional, default: None
         The target variable to try to predict in the case of
         supervised learning.
+
+    attributes : dict or dataframe
+        Per-sample attributes like sample groups, sample weights, etc.
+        Each value / key must have length n_samples.
 
     cv : cross-validation generator or int, optional, default: None
         A cross-validation generator to use. If int, determines
@@ -1019,8 +1023,8 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
     preds_blocks = parallel(delayed(_fit_and_predict)(clone(estimator), X, y,
-                                                      train, test, verbose,
-                                                      fit_params)
+                                                      attributes, train, test,
+                                                      verbose, fit_params)
                             for train, test in cv)
     p = np.concatenate([p for p, _ in preds_blocks])
     locs = np.concatenate([loc for _, loc in preds_blocks])
@@ -1031,7 +1035,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     return preds
 
 
-def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
+def _fit_and_predict(estimator, X, y, attributes, train, test, verbose, fit_params):
     """Fit estimator and predict values for a given dataset split.
 
     Parameters
@@ -1042,9 +1046,12 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
     X : array-like of shape at least 2D
         The data to fit.
 
-    y : array-like, optional, default: None
+    y : array-like, optional
         The target variable to try to predict in the case of
         supervised learning.
+
+    attributes : dict or dataframe
+        Values / columns must length n_samples.
 
     train : array-like, shape (n_train_samples,)
         Indices of training samples.
@@ -1071,13 +1078,13 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
     fit_params = dict([(k, _index_param_value(X, v, train))
                       for k, v in fit_params.items()])
 
+    attributes_train = dict([(k, safe_indexing(v, train)) for k, v in
+                             attributes.items()])
+
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
 
-    if y_train is None:
-        estimator.fit(X_train, **fit_params)
-    else:
-        estimator.fit(X_train, y_train, **fit_params)
+    estimator.fit(X_train, y_train, attributes=attributes_train, **fit_params)
     preds = estimator.predict(X_test)
     return preds, test
 
@@ -1106,8 +1113,9 @@ def _check_is_partition(locs, n):
     return True
 
 
-def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
-                    verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+def cross_val_score(estimator, X, y=None, attributes=None, scoring=None,
+                    cv=None, n_jobs=1, verbose=0, fit_params=None,
+                    pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
 
     Parameters
@@ -1121,6 +1129,10 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     y : array-like, optional, default: None
         The target variable to try to predict in the case of
         supervised learning.
+
+    attributes : dict or dataframe
+        Per-sample attributes like sample groups, sample weights, etc.
+        Each value / key must have length n_samples.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -1173,9 +1185,9 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
-                                              train, test, verbose, None,
-                                              fit_params)
+    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y,
+                                              attributes, scorer, train, test,
+                                              verbose, None, fit_params)
                       for train, test in cv)
     return np.array(scores)[:, 0]
 
@@ -1184,7 +1196,7 @@ class FitFailedWarning(RuntimeWarning):
     pass
 
 
-def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
+def _fit_and_score(estimator, X, y, attributes, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, error_score='raise'):
     """Fit estimator and compute scores for a given dataset split.
@@ -1200,6 +1212,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     y : array-like, optional, default: None
         The target variable to try to predict in the case of
         supervised learning.
+
+    attributes : dict or dataframe
+        Per-sample attributes like sample groups, sample weights, etc.
+        Each value / key must have length n_samples.
 
     scorer : callable
         A scorer callable object / function with signature
@@ -1262,6 +1278,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     fit_params = dict([(k, _index_param_value(X, v, train))
                       for k, v in fit_params.items()])
 
+    attributes_train = dict([(k, safe_indexing(v, train)) for k, v in
+                             attributes.items()])
+
     if parameters is not None:
         estimator.set_params(**parameters)
 
@@ -1271,10 +1290,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
     try:
-        if y_train is None:
-            estimator.fit(X_train, **fit_params)
-        else:
-            estimator.fit(X_train, y_train, **fit_params)
+        estimator.fit(X_train, y_train, attributes=attributes_train,
+                      **fit_params)
 
     except Exception as e:
         if error_score == 'raise':
