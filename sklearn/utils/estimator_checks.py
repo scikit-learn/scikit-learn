@@ -14,6 +14,7 @@ import struct
 from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
@@ -313,7 +314,7 @@ def check_dtype_object(name, Estimator):
 
     X[0, 0] = {'foo': 'bar'}
     msg = "argument must be a string or a number"
-    assert_raise_message(TypeError, msg, estimator.fit, X, y)
+    assert_raises_regex(TypeError, msg, estimator.fit, X, y)
 
 
 def check_transformer_general(name, Transformer):
