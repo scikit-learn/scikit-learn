@@ -220,6 +220,40 @@ until around 2015.
 Gaussian Process Classification (GPC)
 =====================================
 
+.. currentmodule:: sklearn.gaussian_process
+
+The :class:`GaussianProcessClassifier` implements Gaussian processes (GP) for
+classification purposes, more specifically for probabilistic classification,
+where test predictions take the form of class probabilities.
+GaussianProcessClassifier places a GP prior on a latent function :math:`f`,
+which is then squashed through a link function to obtain the probabilistic
+classification. The latent function :math:`f` is a so-called nuisance function,
+whose values are not observed and are not relevant by themselves.
+Its purpose is to allow a convenient formulation of the model, and :math:`f`
+is removed (integrated out) during prediction. GaussianProcessClassifier
+implements the logistic link function, for which the integral cannot be
+computed analytically but is easily approximated in the binary case.
+
+In contrast to the regression setting, the posterior of the latent function
+:math:`f` is not Gaussian even for a GP prior since a Gaussian likelihood is
+inappropriate for discrete class labels. Rather, a non-Gaussian likelihood
+corresponding to the logistic link function (logit) is used.
+GaussianProcessClassifier approximates the non-Gaussian posterior with a
+Gaussian based on the Laplace approximation. More details can be found in
+Chapter 3 of [RW2006]_.
+
+The GP prior mean is assumed to be zero. The prior's
+covariance is specified by a passing a :ref:`kernel <gp_kernels>` object. The
+hyperparameters of the kernel are optimized during fitting of
+GaussianProcessRegressor by maximizing the log-marginal-likelihood (LML) based
+on the passed `optimizer`. As the LML may have multiple local optima, the
+optimizer can be started repeatedly by specifying `n_restarts_optimizer`. The
+first run is always conducted starting from the initial hyperparameter values
+of the kernel; subsequent runs are conducted from hyperparameter values
+that have been chosen randomly from the range of allowed values.
+If the initial hyperparameters should be kept fixed, `None` can be passed as
+optimizer.
+
 GPC examples
 ============
 
