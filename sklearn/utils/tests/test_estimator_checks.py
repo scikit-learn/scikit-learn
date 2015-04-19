@@ -1,8 +1,10 @@
 import scipy.sparse as sp
 import numpy as np
+import sys
+from sklearn.externals.six.moves import cStringIO as StringIO
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_raises_regex, assert_true
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.linear_model import LogisticRegression
 from sklearn.utils.validation import check_X_y, check_array
@@ -35,6 +37,9 @@ class NoSparseClassifier(BaseBadClassifier):
 
 
 def test_check_estimator():
+    # tests that the estimator actually fails on "bad" estimators.
+    # not a complete test of all checks, which are very extensive.
+
     # check that we have a set_params and can clone
     msg = "it does not implement a 'get_params' methods"
     assert_raises_regex(TypeError, msg, check_estimator, object)
@@ -45,7 +50,19 @@ def test_check_estimator():
     msg = "Estimator doesn't check for NaN and inf in predict"
     assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)
     msg = "Estimator type doesn't seem to fail gracefully on sparse data"
-    assert_raises_regex(TypeError, msg, check_estimator, NoSparseClassifier)
+    # the check for sparse input handling prints to the stdout,
+    # instead of raising an error, so as not to remove the original traceback.
+    # that means we need to jump through some hoops to catch it.
+    old_stdout = sys.stdout
+    string_buffer = StringIO()
+    sys.stdout = string_buffer
+    try:
+        check_estimator(NoSparseClassifier)
+    except:
+        pass
+    finally:
+        sys.stdout = old_stdout
+    assert_true(msg in string_buffer.getvalue())
 
     # doesn't error on actual estimator
     check_estimator(LogisticRegression)
