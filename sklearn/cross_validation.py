@@ -595,15 +595,50 @@ class LeavePLabelOut(_PartitionIterator):
 class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
-    def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
-                 random_state=None):
-        self.n = n
-        self.n_iter = n_iter
-        self.test_size = test_size
-        self.train_size = train_size
-        self.random_state = random_state
-        self.n_train, self.n_test = _validate_shuffle_split(n, test_size,
-                                                            train_size)
+    def __init__(self, *args, **kwargs):
+        if len(args) == 0:
+            raise ValueError("Parameter n must be specified.")
+        else:
+            self.n = args[0]
+
+        if len(args) > 1:
+            self.n_iter = args[1]
+        elif "n_iter" in kwargs:
+            self.n_iter = kwargs["n_iter"]
+        else:
+            self.n_iter = 10
+
+        if len(args) > 2:
+            self.test_size = args[2]
+        elif "test_size" in kwargs:
+            self.test_size = kwargs["test_size"]
+        else:
+            # we will compute the final value of
+            # test_size in _validate_shuffle_split()
+            self.test_size = None
+
+        if len(args) > 3:
+            self.train_size = args[3]
+        elif "train_size" in kwargs:
+            self.train_size = kwargs["train_size"]
+        else:
+            # we will compute the final value of
+            # test_size in _validate_shuffle_split()
+            self.train_size = None
+
+        if len(args) > 4:
+            self.random_state = args[4]
+        elif "random_state" in kwargs:
+            self.random_state = kwargs["random_state"]
+        else:
+            self.random_state = None
+
+        if len(args) > 5:
+            raise ValueError("Too much parameter specified: %r" % args)
+
+        self.n_train, self.n_test = _validate_shuffle_split(
+            self.n, self.test_size, self.train_size,
+            args, kwargs)
 
     def __iter__(self):
         for train, test in self._iter_indices():
@@ -698,43 +733,95 @@ class ShuffleSplit(BaseShuffleSplit):
         return self.n_iter
 
 
-def _validate_shuffle_split(n, test_size, train_size):
+def _validate_shuffle_split(n, test_size, train_size, param_tuple, param_dict):
     if test_size is None and train_size is None:
-        raise ValueError(
-            'test_size and train_size can not both be None')
+        if "test_size" not in param_dict and \
+           len(param_tuple) < 3:  # user didn't set test_size
+            test_size = 0.1       # we will use default value
+            train_size = 1. - test_size
+        else:
+            raise ValueError(
+                'test_size and train_size can not both be None.')
 
-    if test_size is not None:
+    if test_size is not None and train_size is None:
         if np.asarray(test_size).dtype.kind == 'f':
             if test_size >= 1.:
                 raise ValueError(
                     'test_size=%f should be smaller '
                     'than 1.0 or be an integer' % test_size)
+            train_size = 1. - test_size
         elif np.asarray(test_size).dtype.kind == 'i':
             if test_size >= n:
                 raise ValueError(
                     'test_size=%d should be smaller '
                     'than the number of samples %d' % (test_size, n))
+            train_size = n - test_size
         else:
             raise ValueError("Invalid value for test_size: %r" % test_size)
-
-    if train_size is not None:
+    elif test_size is None and train_size is not None:
         if np.asarray(train_size).dtype.kind == 'f':
             if train_size >= 1.:
                 raise ValueError("train_size=%f should be smaller "
                                  "than 1.0 or be an integer" % train_size)
-            elif np.asarray(test_size).dtype.kind == 'f' and \
-                    train_size + test_size > 1.:
-                raise ValueError('The sum of test_size and train_size = %f, '
-                                 'should be smaller than 1.0. Reduce '
-                                 'test_size and/or train_size.' %
-                                 (train_size + test_size))
+            test_size = 1. - train_size
         elif np.asarray(train_size).dtype.kind == 'i':
             if train_size >= n:
                 raise ValueError("train_size=%d should be smaller "
                                  "than the number of samples %d" %
                                  (train_size, n))
+            test_size = n - train_size
         else:
             raise ValueError("Invalid value for train_size: %r" % train_size)
+    else:  # test_size is not None and train_set is not None:
+        if np.array(test_size).dtype.kind == 'f' and
+        np.array(train_size).dtype.kind == 'f':
+            if test_size >= 1.:
+                raise ValueError('test_size=%f should be smaller '
+                                 'than 1.0 or be an integer' % test_size)
+            if train_size >= 1.:
+                raise ValueError('train_size=%f should be smaller '
+                                 'than 1.0 or be an integer' % train_size)
+            if train_size + test_size > 1.:
+                raise ValueError('The sum of test_size and train_size = %f, '
+                                 'should be smaller than 1.0. Reduce '
+                                 'test_size and/or train_size.' %
+                                 (train_size + test_size))
+        elif np.array(test_size).dtype.kind == 'f' and
+        np.array(train_size).dtype.kind == 'i':
+            raise ValueError(
+                "Type of test_size and train_sizeis not the same, "
+                "test_size: %r, train_size: %r" %
+                (type(test_size), type(train_size)))
+        elif np.array(test_size).dtype.kind == 'i' and
+        np.array(train_size).dtype.kind == 'f':
+            raise ValueError(
+                "Type of test_size and train_sizeis not the same, "
+                "test_size: %r, train_size: %r" %
+                (type(test_size), type(train_size)))
+        elif np.array(test_size).dtype.kind == 'i' and
+        np.array(train_size).dtype.kind == 'i':
+            if test_size >= n:
+                raise ValueError('test_size=%d should be smaller '
+                                 'than the number of samples %d' %
+                                 (test_size, n))
+            if train_size >= n:
+                raise ValueError("train_size=%d should be smaller "
+                                 "than the number of samples %d" %
+                                 (train_size, n))
+            if train_size + test_size > n:
+                raise ValueError('The sum of test_size and train_size = %d, '
+                                 'should be smaller than n. Reduce '
+                                 'test_size and/or train_size.' %
+                                 (train_size + test_size))
+        else:
+            if np.array(test_size).dtype.kind != 'f' and
+            np.array(test_size).dtype.kind != 'i':
+                raise ValueError("Invalid value for test_size: %r" %
+                                 test_size)
+            if np.array(train_size).dtype.kind != 'f' and
+            np.array(train_size).dtype.kind != 'i':
+                raise ValueError("Invalid value for train_size: %r" %
+                                 train_size)
 
     if np.asarray(test_size).dtype.kind == 'f':
         n_test = ceil(test_size * n)
@@ -820,7 +907,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                  random_state=None):
 
         super(StratifiedShuffleSplit, self).__init__(
-            len(y), n_iter, test_size, train_size, random_state)
+            len(y), n_iter=n_iter, test_size=test_size, train_size=train_size,
+            random_state=random_state)
 
         self.y = np.array(y)
         self.classes, self.y_indices = np.unique(y, return_inverse=True)

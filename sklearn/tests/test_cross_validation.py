@@ -362,13 +362,17 @@ def test_shuffle_split():
     ss3 = cval.ShuffleSplit(10, test_size=np.int32(2), random_state=0)
     for typ in six.integer_types:
         ss4 = cval.ShuffleSplit(10, test_size=typ(2), random_state=0)
-    for t1, t2, t3, t4 in zip(ss1, ss2, ss3, ss4):
+    ss5 = cval.ShuffleSplit(10, train_size=0.8, random_state=0)
+    for t1, t2, t3, t4, t5 in zip(ss1, ss2, ss3, ss4, ss5):
         assert_array_equal(t1[0], t2[0])
         assert_array_equal(t2[0], t3[0])
         assert_array_equal(t3[0], t4[0])
+        assert_array_equal(t4[0], t5[0])
         assert_array_equal(t1[1], t2[1])
         assert_array_equal(t2[1], t3[1])
         assert_array_equal(t3[1], t4[1])
+        assert_array_equal(t4[1], t5[1])
+
 
 
 def test_stratified_shuffle_split_init():
