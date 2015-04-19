@@ -63,6 +63,7 @@ from sklearn.utils.estimator_checks import (
     check_non_transformer_estimators_n_iter,
     check_regressors_no_decision_function,
     check_pipeline_consistency,
+    check_get_params_invariance,
     CROSS_DECOMPOSITION)
 
 
@@ -379,3 +380,15 @@ def test_transformer_n_iter():
 
         if hasattr(estimator, "max_iter") and name not in external_solver:
             yield check_transformer_n_iter, name, estimator
+
+def test_get_params_invariance():
+    # Test for estimators that support get_params, that
+    # get_params(deep=False) is a subset of get_params(deep=True)
+    # Related to issue #4465
+    
+    estimators = all_estimators(include_meta_estimators=False, 
+            include_other=True)
+    for name, Estimator in estimators:
+        if hasattr(Estimator, 'get_params'):
+            yield check_get_params_invariance, name, Estimator
+

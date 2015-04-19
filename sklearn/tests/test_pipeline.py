@@ -88,7 +88,9 @@ def test_pipeline_init():
     clf = T()
     pipe = Pipeline([('svc', clf)])
     assert_equal(pipe.get_params(deep=True),
-                 dict(svc__a=None, svc__b=None, svc=clf))
+                 dict(svc__a=None, svc__b=None, svc=clf,
+                     **pipe.get_params(deep=False)
+                     ))
 
     # Check that params are set
     pipe.set_params(svc__a=0.1)
@@ -119,8 +121,15 @@ def test_pipeline_init():
     assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
 
     # Check that apart from estimators, the parameters are the same
-    params = pipe.get_params()
-    params2 = pipe2.get_params()
+    params = pipe.get_params(deep=True)
+    params2 = pipe2.get_params(deep=True)
+    
+    for x in pipe.get_params(deep=False):
+        params.pop(x)
+    
+    for x in pipe2.get_params(deep=False):
+        params2.pop(x)
+    
     # Remove estimators that where copied
     params.pop('svc')
     params.pop('anova')
