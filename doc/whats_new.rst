@@ -13,6 +13,10 @@ Changelog
 New features
 ............
 
+   - The new :class:`ensemble.VotingClassifier` implements a 
+     "majority rule" / "soft voting" ensemble classifier to combine
+     estimators for classification. By `Sebastian Raschka`_.
+
 Enhancements
 ............
 

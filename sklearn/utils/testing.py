@@ -505,12 +505,14 @@ DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
              'ZeroEstimator', 'ScaledLogOddsEstimator',
              'QuantileEstimator', 'MeanEstimator',
              'LogOddsEstimator', 'PriorProbabilityEstimator',
-             '_SigmoidCalibration']
+             '_SigmoidCalibration', 'VotingClassifier']
+
 
 
 def all_estimators(include_meta_estimators=False,
                    include_other=False, type_filter=None,
                    include_dont_test=False):
+                   
     """Get a list of all estimators from sklearn.
 
     This function crawls the module and gets all classes that inherit
