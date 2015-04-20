@@ -16,6 +16,7 @@ from sklearn.utils.validation import check_random_state
 
 from sklearn.utils.testing import assert_raises, clean_warning_registry
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -405,13 +406,15 @@ def test_classification_report_multiclass():
 
     # print classification report with class names
     expected_report = """\
-             precision    recall  f1-score   support
+                      precision    recall  f1-score   support
 
-     setosa       0.83      0.79      0.81        24
- versicolor       0.33      0.10      0.15        31
-  virginica       0.42      0.90      0.57        20
+              setosa       0.83      0.79      0.81        24
+          versicolor       0.33      0.10      0.15        31
+           virginica       0.42      0.90      0.57        20
 
-avg / total       0.51      0.53      0.47        75
+weighted avg / total       0.51      0.53      0.47        75
+   micro avg / total       0.53      0.53      0.53        75
+   macro avg / total       0.53      0.60      0.51        75
 """
     report = classification_report(
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
@@ -419,16 +422,95 @@ avg / total       0.51      0.53      0.47        75
     assert_equal(report, expected_report)
     # print classification report with label detection
     expected_report = """\
-             precision    recall  f1-score   support
+                      precision    recall  f1-score   support
 
-          0       0.83      0.79      0.81        24
-          1       0.33      0.10      0.15        31
-          2       0.42      0.90      0.57        20
+                   0       0.83      0.79      0.81        24
+                   1       0.33      0.10      0.15        31
+                   2       0.42      0.90      0.57        20
 
-avg / total       0.51      0.53      0.47        75
+weighted avg / total       0.51      0.53      0.47        75
+   micro avg / total       0.53      0.53      0.53        75
+   macro avg / total       0.53      0.60      0.51        75
 """
     report = classification_report(y_true, y_pred)
     assert_equal(report, expected_report)
+
+
+def test_classification_report_binary():
+    # Test classification report for a binary classification
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=True)
+
+    # print classification report with class names
+    expected_report = """\
+            precision    recall  f1-score   support
+
+    setosa       0.73      0.88      0.80        25
+versicolor       0.85      0.68      0.76        25
+
+     total          -         -         -        50
+"""
+    # test that specifying an average argument in case of a binary
+    # classification yields error
+    assert_raises_regex(ValueError,
+                        ("Averaging methods are not relevant for binary "
+                         "classification. Please omit average argument."),
+                        classification_report,
+                        y_true, y_pred, average="macro")
+
+    report = classification_report(
+        y_true, y_pred, labels=np.arange(len(iris.target_names[:2])),
+        target_names=iris.target_names[:2])
+    assert_equal(report, expected_report)
+
+
+def test_average_keyword_in_multiclass_classification_report():
+    # Test logic of average keyword in classification report
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
+
+    report_weighted = classification_report(y_true, y_pred, average='weighted')
+    report_weighted_split = report_weighted.splitlines()
+    report_macro = classification_report(y_true, y_pred, average='macro')
+    report_macro_split = report_macro.splitlines()
+    report_weighted_strip = [s.strip() for s in report_weighted_split]
+    report_macro_strip = [s.strip() for s in report_macro_split]
+
+    # all but last line of report must be equal
+    assert_equal(report_weighted_strip[:-1], report_macro_strip[:-1])
+
+    # last line of report is different given averaging method
+    expected_weighted = ("weighted avg / total       0.51      0.53"
+                         "      0.47        75")
+    expected_macro = ("macro avg / total       0.53      0.60      0.51"
+                      "        75")
+    assert_equal(report_weighted_split[-1], expected_weighted)
+    assert_equal(report_macro_split[-1], expected_macro)
+
+    assert_raises_regex(ValueError,
+                        ("average has to be one or more of \(None, 'micro', "
+                         "'macro', 'weighted', 'samples'\)"),
+                        classification_report,
+                        y_true, y_pred, average="dummy")
+
+    assert_raises_regex(ValueError,
+                        ("'samples' averaging method is only allowed for "
+                         "multi-label classifications."),
+                        classification_report,
+                        y_true, y_pred, average="samples")
+
+    report_weighted_micro = classification_report(y_true, y_pred, average=(
+        'weighted', 'macro'))
+    report_weighted_micro_split = report_weighted_micro.splitlines()
+    report_weighted_micro_strip = [s.strip() for s in
+                                   report_weighted_micro_split]
+
+    # all but last 2 lines of report must be equal
+    assert_equal(report_weighted_strip[:-1], report_weighted_micro_strip[:-2])
+
+    # check lines with averages
+    assert_equal(report_weighted_micro_strip[-2], expected_weighted)
+    assert_equal(report_weighted_micro_strip[-1], expected_macro)
 
 
 def test_classification_report_multiclass_with_digits():
@@ -438,13 +520,15 @@ def test_classification_report_multiclass_with_digits():
 
     # print classification report with class names
     expected_report = """\
-             precision    recall  f1-score   support
+                      precision    recall  f1-score   support
 
-     setosa    0.82609   0.79167   0.80851        24
- versicolor    0.33333   0.09677   0.15000        31
-  virginica    0.41860   0.90000   0.57143        20
+              setosa    0.82609   0.79167   0.80851        24
+          versicolor    0.33333   0.09677   0.15000        31
+           virginica    0.41860   0.90000   0.57143        20
 
-avg / total    0.51375   0.53333   0.47310        75
+weighted avg / total    0.51375   0.53333   0.47310        75
+   micro avg / total    0.53333   0.53333   0.53333        75
+   macro avg / total    0.52601   0.59615   0.50998        75
 """
     report = classification_report(
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
@@ -452,13 +536,15 @@ avg / total    0.51375   0.53333   0.47310        75
     assert_equal(report, expected_report)
     # print classification report with label detection
     expected_report = """\
-             precision    recall  f1-score   support
+                      precision    recall  f1-score   support
 
-          0       0.83      0.79      0.81        24
-          1       0.33      0.10      0.15        31
-          2       0.42      0.90      0.57        20
+                   0       0.83      0.79      0.81        24
+                   1       0.33      0.10      0.15        31
+                   2       0.42      0.90      0.57        20
 
-avg / total       0.51      0.53      0.47        75
+weighted avg / total       0.51      0.53      0.47        75
+   micro avg / total       0.53      0.53      0.53        75
+   macro avg / total       0.53      0.60      0.51        75
 """
     report = classification_report(y_true, y_pred)
     assert_equal(report, expected_report)
@@ -471,25 +557,29 @@ def test_classification_report_multiclass_with_string_label():
     y_pred = np.array(["blue", "green", "red"])[y_pred]
 
     expected_report = """\
-             precision    recall  f1-score   support
+                      precision    recall  f1-score   support
 
-       blue       0.83      0.79      0.81        24
-      green       0.33      0.10      0.15        31
-        red       0.42      0.90      0.57        20
+                blue       0.83      0.79      0.81        24
+               green       0.33      0.10      0.15        31
+                 red       0.42      0.90      0.57        20
 
-avg / total       0.51      0.53      0.47        75
+weighted avg / total       0.51      0.53      0.47        75
+   micro avg / total       0.53      0.53      0.53        75
+   macro avg / total       0.53      0.60      0.51        75
 """
     report = classification_report(y_true, y_pred)
     assert_equal(report, expected_report)
 
     expected_report = """\
-             precision    recall  f1-score   support
+                      precision    recall  f1-score   support
 
-          a       0.83      0.79      0.81        24
-          b       0.33      0.10      0.15        31
-          c       0.42      0.90      0.57        20
+                   a       0.83      0.79      0.81        24
+                   b       0.33      0.10      0.15        31
+                   c       0.42      0.90      0.57        20
 
-avg / total       0.51      0.53      0.47        75
+weighted avg / total       0.51      0.53      0.47        75
+   micro avg / total       0.53      0.53      0.53        75
+   macro avg / total       0.53      0.60      0.51        75
 """
     report = classification_report(y_true, y_pred,
                                    target_names=["a", "b", "c"])
@@ -504,13 +594,15 @@ def test_classification_report_multiclass_with_unicode_label():
     y_pred = labels[y_pred]
 
     expected_report = u"""\
-             precision    recall  f1-score   support
+                      precision    recall  f1-score   support
 
-      blue\xa2       0.83      0.79      0.81        24
-     green\xa2       0.33      0.10      0.15        31
-       red\xa2       0.42      0.90      0.57        20
+               blue\xa2       0.83      0.79      0.81        24
+              green\xa2       0.33      0.10      0.15        31
+                red\xa2       0.42      0.90      0.57        20
 
-avg / total       0.51      0.53      0.47        75
+weighted avg / total       0.51      0.53      0.47        75
+   micro avg / total       0.53      0.53      0.53        75
+   macro avg / total       0.53      0.60      0.51        75
 """
     if np_version[:3] < (1, 7, 0):
         expected_message = ("NumPy < 1.7.0 does not implement"
@@ -532,14 +624,17 @@ def test_multilabel_classification_report():
     _, y_pred_ll = make_ml(n_features=1, n_classes=n_classes, random_state=1,
                            n_samples=n_samples)
     expected_report = """\
-             precision    recall  f1-score   support
+                      precision    recall  f1-score   support
 
-          0       0.50      0.67      0.57        24
-          1       0.51      0.74      0.61        27
-          2       0.29      0.08      0.12        26
-          3       0.52      0.56      0.54        27
+                   0       0.50      0.67      0.57        24
+                   1       0.51      0.74      0.61        27
+                   2       0.29      0.08      0.12        26
+                   3       0.52      0.56      0.54        27
 
-avg / total       0.45      0.51      0.46       104
+ samples avg / total       0.46      0.42      0.40       104
+weighted avg / total       0.45      0.51      0.46       104
+   micro avg / total       0.50      0.51      0.50       104
+   macro avg / total       0.45      0.51      0.46       104
 """
 
     lb = MultiLabelBinarizer()
