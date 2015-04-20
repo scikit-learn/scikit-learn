@@ -945,6 +945,15 @@ class PredefinedSplit(_PartitionIterator):
 
 
 ##############################################################################
+def _slice_attributes(attributes, indices):
+    """Private helper to slice dictionaries or dataframes"""
+    try:
+        attributes_train = dict([(k, safe_indexing(v, train)) for k, v in
+                                 attributes.items()])
+    except AttributeError:
+        # doesn't have items, hopefully is a dataframe
+
+
 def _index_param_value(X, v, indices):
     """Private helper function for parameter value indexing."""
     if not _is_arraylike(v) or _num_samples(v) != _num_samples(X):
