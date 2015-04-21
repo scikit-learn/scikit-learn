@@ -23,7 +23,6 @@ The module structure is the following:
 from __future__ import print_function
 from __future__ import division
 from abc import ABCMeta, abstractmethod
-from warnings import warn
 from time import time
 
 import numbers
@@ -36,7 +35,11 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state, check_array, check_X_y, column_or_1d
+from ..utils import check_consistent_length, deprecated
 from ..utils.extmath import logsumexp
+from ..utils.fixes import expit, bincount
+from ..utils.stats import _weighted_percentile
+from ..utils.validation import check_is_fitted, NotFittedError
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
 
@@ -48,18 +51,6 @@ from ..tree._tree import FriedmanMSE
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
 from ._gradient_boosting import _random_sample_mask
-
-
-def _weighted_percentile(array, sample_weight, percentile=50):
-    """Compute the weighted ``percentile`` of ``array`` with ``sample_weight``. """
-    sorted_idx = np.argsort(array)
-
-    # Find index of median prediction for each sample
-    weight_cdf = sample_weight[sorted_idx].cumsum()
-    percentile_or_above = weight_cdf >= (percentile / 100.0) * weight_cdf[-1]
-    percentile_idx = percentile_or_above.argmax()
-
-    return array[sorted_idx[percentile_idx]]
 
 
 class QuantileEstimator(BaseEstimator):
@@ -76,6 +67,8 @@ class QuantileEstimator(BaseEstimator):
             self.quantile = _weighted_percentile(y, sample_weight, self.alpha * 100.0)
 
     def predict(self, X):
+        check_is_fitted(self, 'quantile')
+
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.quantile)
         return y
@@ -90,6 +83,8 @@ class MeanEstimator(BaseEstimator):
             self.mean = np.average(y, weights=sample_weight)
 
     def predict(self, X):
+        check_is_fitted(self, 'mean')
+
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.mean)
         return y
@@ -113,6 +108,8 @@ class LogOddsEstimator(BaseEstimator):
         self.prior = self.scale * np.log(pos / neg)
 
     def predict(self, X):
+        check_is_fitted(self, 'prior')
+
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.prior)
         return y
@@ -129,11 +126,13 @@ class PriorProbabilityEstimator(BaseEstimator):
     """
     def fit(self, X, y, sample_weight=None):
         if sample_weight is None:
-            sample_weight = np.ones_like(y, dtype=np.float)
-        class_counts = np.bincount(y, weights=sample_weight)
+            sample_weight = np.ones_like(y, dtype=np.float64)
+        class_counts = bincount(y, weights=sample_weight)
         self.priors = class_counts / class_counts.sum()
 
     def predict(self, X):
+        check_is_fitted(self, 'priors')
+
         y = np.empty((X.shape[0], self.priors.shape[0]), dtype=np.float64)
         y[:] = self.priors
         return y
@@ -153,6 +152,8 @@ class ZeroEstimator(BaseEstimator):
             self.n_classes = 1
 
     def predict(self, X):
+        check_is_fitted(self, 'n_classes')
+
         y = np.empty((X.shape[0], self.n_classes), dtype=np.float64)
         y.fill(0.0)
         return y
@@ -205,16 +206,24 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
         ----------
         tree : tree.Tree
             The tree object.
-        X : np.ndarray, shape=(n, m)
+        X : ndarray, shape=(n, m)
             The data array.
-        y : np.ndarray, shape=(n,)
+        y : ndarray, shape=(n,)
             The target labels.
-        residual : np.ndarray, shape=(n,)
+        residual : ndarray, shape=(n,)
             The residuals (usually the negative gradient).
-        y_pred : np.ndarray, shape=(n,):
+        y_pred : ndarray, shape=(n,)
             The predictions.
-        sample_weight np.ndarray, shape=(n,):
+        sample_weight : ndarray, shape=(n,)
             The weight of each sample.
+        sample_mask : ndarray, shape=(n,)
+            The sample mask to be used.
+        learning_rate : float, default=0.1
+            learning rate shrinks the contribution of each tree by
+             ``learning_rate``.
+        k : int, default 0
+            The index of the estimator being updated.
+
         """
         # compute leaf for each sample in ``X``.
         terminal_regions = tree.apply(X)
@@ -259,8 +268,8 @@ class LeastSquaresError(RegressionLossFunction):
         if sample_weight is None:
             return np.mean((y - pred.ravel()) ** 2.0)
         else:
-            return (1.0 / sample_weight.sum()) * \
-              np.sum(sample_weight * ((y - pred.ravel()) ** 2.0))
+            return (1.0 / sample_weight.sum() *
+                    np.sum(sample_weight * ((y - pred.ravel()) ** 2.0)))
 
     def negative_gradient(self, y, pred, **kargs):
         return y - pred.ravel()
@@ -289,8 +298,8 @@ class LeastAbsoluteError(RegressionLossFunction):
         if sample_weight is None:
             return np.abs(y - pred.ravel()).mean()
         else:
-            return (1.0 / sample_weight.sum()) * \
-              np.sum(sample_weight * np.abs(y - pred.ravel()))
+            return (1.0 / sample_weight.sum() *
+                    np.sum(sample_weight * np.abs(y - pred.ravel())))
 
     def negative_gradient(self, y, pred, **kargs):
         """1.0 if y - pred > 0.0 else -1.0"""
@@ -311,8 +320,8 @@ class HuberLossFunction(RegressionLossFunction):
 
     M-Regression proposed in Friedman 2001.
 
-    See
-    ---
+    References
+    ----------
     J. Friedman, Greedy Function Approximation: A Gradient Boosting
     Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
     """
@@ -429,7 +438,7 @@ class ClassificationLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
     def _score_to_proba(self, score):
         """Template method to convert scores to probabilities.
 
-        If the loss does not support probabilites raises AttributeError.
+         the does not support probabilites raises AttributeError.
         """
         raise TypeError('%s does not support predict_proba' % type(self).__name__)
 
@@ -469,7 +478,7 @@ class BinomialDeviance(ClassificationLossFunction):
 
     def negative_gradient(self, y, pred, **kargs):
         """Compute the residual (= negative gradient). """
-        return y - 1.0 / (1.0 + np.exp(-pred.ravel()))
+        return y - expit(pred.ravel())
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred, sample_weight):
@@ -574,8 +583,8 @@ class ExponentialLoss(ClassificationLossFunction):
 
     Same loss as AdaBoost.
 
-    See
-    ---
+    References
+    ----------
     Greg Ridgeway, Generalized Boosted Models: A guide to the gbm package, 2007
     """
     def __init__(self, n_classes):
@@ -593,8 +602,8 @@ class ExponentialLoss(ClassificationLossFunction):
         if sample_weight is None:
             return np.mean(np.exp(-(2. * y - 1.) * pred))
         else:
-            return (1.0 / sample_weight.sum()) * \
-              np.sum(sample_weight * np.exp(-(2 * y - 1) * pred))
+            return (1.0 / sample_weight.sum() *
+                    np.sum(sample_weight * np.exp(-(2 * y - 1) * pred)))
 
     def negative_gradient(self, y, pred, **kargs):
         y_ = -(2. * y - 1.)
@@ -631,8 +640,6 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'lad': LeastAbsoluteError,
                   'huber': HuberLossFunction,
                   'quantile': QuantileLossFunction,
-                  'bdeviance': BinomialDeviance,
-                  'mdeviance': MultinomialDeviance,
                   'deviance': None,    # for both, multinomial and binomial
                   'exponential': ExponentialLoss,
                   }
@@ -782,10 +789,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                 or self.loss not in LOSS_FUNCTIONS):
             raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
 
-        if self.loss in ('mdeviance', 'bdeviance'):
-            warn(("Loss '{0:s}' is deprecated as of version 0.14. "
-                 "Use 'deviance' instead. ").format(self.loss))
-
         if self.loss == 'deviance':
             loss_class = (MultinomialDeviance
                           if len(self.classes_) > 2
@@ -838,7 +841,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         elif isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
         else:  # float
-            max_features = int(self.max_features * self.n_features)
+            if 0. < self.max_features <= 1.:
+                max_features = max(int(self.max_features * self.n_features), 1)
+            else:
+                raise ValueError("max_features must be in (0, n_features]")
 
         self.max_features_ = max_features
 
@@ -857,7 +863,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
         # do oob?
         if self.subsample < 1.0:
-            self._oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
             self.oob_improvement_ = np.zeros((self.n_estimators),
                                              dtype=np.float64)
 
@@ -867,8 +872,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             self.estimators_ = np.empty((0, 0), dtype=np.object)
         if hasattr(self, 'train_score_'):
             del self.train_score_
-        if hasattr(self, '_oob_score_'):
-            del self._oob_score_
         if hasattr(self, 'oob_improvement_'):
             del self.oob_improvement_
         if hasattr(self, 'init_'):
@@ -884,15 +887,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         self.estimators_.resize((total_n_estimators, self.loss_.K))
         self.train_score_.resize(total_n_estimators)
-        if (self.subsample < 1
-                or hasattr(self, '_oob_score_')
-                or hasattr(self, 'oob_improvement_')):
+        if (self.subsample < 1 or hasattr(self, 'oob_improvement_')):
             # if do oob resize arrays or create new if not available
-            if hasattr(self, '_oob_score_'):
-                self._oob_score_.resize(total_n_estimators)
-            else:
-                self._oob_score_ = np.zeros((total_n_estimators),
-                                            dtype=np.float64)
             if hasattr(self, 'oob_improvement_'):
                 self.oob_improvement_.resize(total_n_estimators)
             else:
@@ -914,8 +910,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
-            For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``
+            For classification, labels must correspond to classes.
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted. Splits
@@ -944,20 +939,16 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         # Check input
         X, y = check_X_y(X, y, dtype=DTYPE)
-        n_samples, n_features = X.shape
+        n_samples, self.n_features = X.shape
         if sample_weight is None:
             sample_weight = np.ones(n_samples, dtype=np.float32)
         else:
             sample_weight = column_or_1d(sample_weight, warn=True)
 
-        if y.shape[0] != n_samples:
-            raise ValueError('Shape mismatch of X and y: %d != %d' %
-                             (n_samples, y.shape[0]))
-        if n_samples != sample_weight.shape[0]:
-            raise ValueError('Shape mismatch of sample_weight: %d != %d' %
-                             (sample_weight.shape[0], n_samples))
+        check_consistent_length(X, y, sample_weight)
 
-        self.n_features = n_features
+        y = self._validate_y(y)
+
         random_state = check_random_state(self.random_state)
         self._check_params()
 
@@ -993,8 +984,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             self.train_score_ = self.train_score_[:n_stages]
             if hasattr(self, 'oob_improvement_'):
                 self.oob_improvement_ = self.oob_improvement_[:n_stages]
-            if hasattr(self, '_oob_score_'):
-                self._oob_score_ = self._oob_score_[:n_stages]
 
         return self
 
@@ -1013,12 +1002,19 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         n_inbag = max(1, int(self.subsample * n_samples))
         loss_ = self.loss_
 
+        # Set min_weight_leaf from min_weight_fraction_leaf
+        if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
+            min_weight_leaf = (self.min_weight_fraction_leaf *
+                               np.sum(sample_weight))
+        else:
+            min_weight_leaf = 0.
+
         # init criterion and splitter
         criterion = FriedmanMSE(1)
         splitter = PresortBestSplitter(criterion,
                                        self.max_features_,
                                        self.min_samples_leaf,
-                                       self.min_weight_fraction_leaf,
+                                       min_weight_leaf,
                                        random_state)
 
         if self.verbose:
@@ -1048,10 +1044,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                 self.train_score_[i] = loss_(y[sample_mask],
                                              y_pred[sample_mask],
                                              sample_weight[sample_mask])
-                self._oob_score_[i] = loss_(y[~sample_mask],
-                                            y_pred[~sample_mask],
-                                            sample_weight[~sample_mask])
-                self.oob_improvement_[i] = old_oob_score - self._oob_score_[i]
+                self.oob_improvement_[i] = (
+                    old_oob_score - loss_(y[~sample_mask],
+                                          y_pred[~sample_mask],
+                                          sample_weight[~sample_mask]))
             else:
                 # no need to fancy index w/ no subsampling
                 self.train_score_[i] = loss_(y, y_pred, sample_weight)
@@ -1072,8 +1068,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
     def _init_decision_function(self, X):
         """Check input and compute prediction of ``init``. """
         if self.estimators_ is None or len(self.estimators_) == 0:
-            raise ValueError("Estimator not fitted, call `fit` "
-                             "before making predictions`.")
+            raise NotFittedError("Estimator not fitted, call `fit`"
+                                 " before making predictions`.")
         if X.shape[1] != self.n_features:
             raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
                 self.n_features, X.shape[1]))
@@ -1087,6 +1083,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         predict_stages(self.estimators_, X, self.learning_rate, score)
         return score
 
+    @deprecated(" and will be removed in 0.19")
     def decision_function(self, X):
         """Compute the decision function of ``X``.
 
@@ -1109,7 +1106,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             return score.ravel()
         return score
 
-    def staged_decision_function(self, X):
+    def _staged_decision_function(self, X):
         """Compute decision function of ``X`` for each iteration.
 
         This method allows monitoring (i.e. determine error on testing set)
@@ -1132,7 +1129,31 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         score = self._init_decision_function(X)
         for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate, score)
-            yield score
+            yield score.copy()
+
+    @deprecated(" and will be removed in 0.19")
+    def staged_decision_function(self, X):
+        """Compute decision function of ``X`` for each iteration.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        score : generator of array, shape = [n_samples, k]
+            The decision function of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+            Regression and binary classification are special cases with
+            ``k == 1``, otherwise ``k==n_classes``.
+        """
+        for dec in self._staged_decision_function(X):
+            # no yield from in Python2.X
+            yield dec
 
     @property
     def feature_importances_(self):
@@ -1144,8 +1165,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         feature_importances_ : array, shape = [n_features]
         """
         if self.estimators_ is None or len(self.estimators_) == 0:
-            raise ValueError("Estimator not fitted, "
-                             "call `fit` before `feature_importances_`.")
+            raise NotFittedError("Estimator not fitted, call `fit` before"
+                                 " `feature_importances_`.")
 
         total_sum = np.zeros((self.n_features, ), dtype=np.float64)
         for stage in self.estimators_:
@@ -1156,16 +1177,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         importances = total_sum / len(self.estimators_)
         return importances
 
-    @property
-    def oob_score_(self):
-        warn("The oob_score_ argument is replaced by oob_improvement_"
-             " as of version 0.14 and will be removed in 0.16.",
-             DeprecationWarning)
-        try:
-            return self._oob_score_
-        except AttributeError:
-            raise ValueError("Estimator not fitted, "
-                             "call `fit` before `oob_score_`.")
+    def _validate_y(self, y):
+        self.n_classes_ = 1
+        if y.dtype.kind == 'O':
+            y = y.astype(np.float64)
+        # Default implementation
+        return y
 
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
@@ -1184,7 +1201,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         loss function to be optimized. 'deviance' refers to
         deviance (= logistic regression) for classification
         with probabilistic outputs. For loss 'exponential' gradient
-        boosting recoveres the AdaBoost algorithm.
+        boosting recovers the AdaBoost algorithm.
 
     learning_rate : float, optional (default=0.1)
         learning rate shrinks the contribution of each tree by `learning_rate`.
@@ -1200,7 +1217,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
-        Ignored if ``max_samples_leaf`` is not None.
+        Ignored if ``max_leaf_nodes`` is not None.
 
     min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
@@ -1269,12 +1286,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
 
-    oob_score_ : array, shape = [n_estimators]
-        Score of the training dataset obtained using an out-of-bag estimate.
-        The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
-        model at iteration ``i`` on the out-of-bag sample.
-        Deprecated: use `oob_improvement_` instead.
-
     train_score_ : array, shape = [n_estimators]
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the in-bag sample.
@@ -1283,12 +1294,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
-    `init` : BaseEstimator
+    init : BaseEstimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
-    estimators_ : list of DecisionTreeRegressor
-        The collection of fitted sub-estimators.
+    estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, loss_.K]
+        The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
+        classification, otherwise n_classes.
+
 
     See also
     --------
@@ -1306,7 +1319,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
 
-    _SUPPORTED_LOSS = ('deviance', 'mdeviance', 'bdeviance', 'exponential')
+    _SUPPORTED_LOSS = ('deviance', 'exponential')
 
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2,
@@ -1316,53 +1329,101 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  max_leaf_nodes=None, warm_start=False):
 
         super(GradientBoostingClassifier, self).__init__(
-            loss, learning_rate, n_estimators, min_samples_split,
-            min_samples_leaf, min_weight_fraction_leaf,
-            max_depth, init, subsample, max_features,
-            random_state, verbose=verbose, max_leaf_nodes=max_leaf_nodes,
-            warm_start=warm_start)
+            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_depth=max_depth, init=init, subsample=subsample,
+            max_features=max_features,
+            random_state=random_state, verbose=verbose,
+            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
 
-    def fit(self, X, y, sample_weight=None, monitor=None):
-        """Fit the gradient boosting model.
+    def _validate_y(self, y):
+        self.classes_, y = np.unique(y, return_inverse=True)
+        self.n_classes_ = len(self.classes_)
+        return y
+
+    def decision_function(self, X):
+        """Compute the decision function of ``X``.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``.
-
-        sample_weight : array-like, shape = [n_samples] or None
-            Sample weights. If None, then samples are equally weighted. Splits
-            that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. In the case of
-            classification, splits are also ignored if they would result in any
-            single class carrying a negative weight in either child node.
-
-        monitor : callable, optional
-            The monitor is called after each iteration with the current
-            iteration, a reference to the estimator and the local variables of
-            ``_fit_stages`` as keyword arguments ``callable(i, self,
-            locals())``. If the callable returns ``True`` the fitting procedure
-            is stopped. The monitor can be used for various things such as
-            computing held-out estimates, early stopping, model introspect, and
-            snapshoting.
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
 
         Returns
         -------
-        self : object
-            Returns self.
+        score : array, shape = [n_samples, n_classes] or [n_samples]
+            The decision function of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+            Regression and binary classification produce an array of shape
+            [n_samples].
         """
-        y = column_or_1d(y, warn=True)
-        self.classes_, y = np.unique(y, return_inverse=True)
-        self.n_classes_ = len(self.classes_)
-        return super(GradientBoostingClassifier, self).fit(X, y, sample_weight,
-                                                           monitor)
+        X = check_array(X, dtype=DTYPE, order="C")
+        score = self._decision_function(X)
+        if score.shape[1] == 1:
+            return score.ravel()
+        return score
+
+    def staged_decision_function(self, X):
+        """Compute decision function of ``X`` for each iteration.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        score : generator of array, shape = [n_samples, k]
+            The decision function of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+            Regression and binary classification are special cases with
+            ``k == 1``, otherwise ``k==n_classes``.
+        """
+        for dec in self._staged_decision_function(X):
+            # no yield from in Python2.X
+            yield dec
+
+    def predict(self, X):
+        """Predict class for X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y: array of shape = ["n_samples]
+            The predicted values.
+        """
+        score = self.decision_function(X)
+        decisions = self.loss_._score_to_decision(score)
+        return self.classes_.take(decisions, axis=0)
+
+    def staged_predict(self, X):
+        """Predict class at each stage for X.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y : generator of array of shape = [n_samples]
+            The predicted value of the input samples.
+        """
+        for score in self._staged_decision_function(X):
+            decisions = self.loss_._score_to_decision(score)
+            yield self.classes_.take(decisions, axis=0)
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -1386,9 +1447,33 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         score = self.decision_function(X)
         try:
             return self.loss_._score_to_proba(score)
+        except NotFittedError:
+            raise
         except AttributeError:
             raise AttributeError('loss=%r does not support predict_proba' %
                                  self.loss)
+
+    def predict_log_proba(self, X):
+        """Predict class log-probabilities for X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Raises
+        ------
+        AttributeError
+            If the ``loss`` does not support probabilities.
+
+        Returns
+        -------
+        p : array of shape = [n_samples]
+            The class log-probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+        """
+        proba = self.predict_proba(X)
+        return np.log(proba)
 
     def staged_predict_proba(self, X):
         """Predict class probabilities at each stage for X.
@@ -1403,52 +1488,17 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : generator of array of shape = [n_samples]
             The predicted value of the input samples.
         """
         try:
-            for score in self.staged_decision_function(X):
+            for score in self._staged_decision_function(X):
                 yield self.loss_._score_to_proba(score)
+        except NotFittedError:
+            raise
         except AttributeError:
             raise AttributeError('loss=%r does not support predict_proba' %
                                  self.loss)
-
-    def predict(self, X):
-        """Predict class for X.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        y : array of shape = [n_samples]
-            The predicted classes.
-        """
-        score = self.decision_function(X)
-        decisions = self.loss_._score_to_decision(score)
-        return self.classes_.take(decisions, axis=0)
-
-    def staged_predict(self, X):
-        """Predict classes at each stage for X.
-
-        This method allows monitoring (i.e. determine error on testing set)
-        after each stage.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        y : array of shape = [n_samples]
-            The predicted value of the input samples.
-        """
-        for score in self.staged_decision_function(X):
-            decisions = self.loss_._score_to_decision(score)
-            yield self.classes_.take(decisions, axis=0)
 
 
 class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
@@ -1482,6 +1532,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
+        Ignored if ``max_leaf_nodes`` is not None.
 
     min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
@@ -1554,12 +1605,6 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
 
-    oob_score_ : array, shape = [n_estimators]
-        Score of the training dataset obtained using an out-of-bag estimate.
-        The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
-        model at iteration ``i`` on the out-of-bag sample.
-        Deprecated: use `oob_improvement_` instead.
-
     train_score_ : array, shape = [n_estimators]
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the in-bag sample.
@@ -1572,7 +1617,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
-    estimators_ : list of DecisionTreeRegressor
+    estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, 1]
         The collection of fitted sub-estimators.
 
     See also
@@ -1600,51 +1645,14 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  warm_start=False):
 
         super(GradientBoostingRegressor, self).__init__(
-            loss, learning_rate, n_estimators, min_samples_split,
-            min_samples_leaf, min_weight_fraction_leaf,
-            max_depth, init, subsample, max_features,
-            random_state, alpha, verbose, max_leaf_nodes=max_leaf_nodes,
-            warm_start=warm_start)
-
-    def fit(self, X, y, sample_weight=None, monitor=None):
-        """Fit the gradient boosting model.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``.
-
-        sample_weight : array-like, shape = [n_samples] or None
-            Sample weights. If None, then samples are equally weighted. Splits
-            that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. In the case of
-            classification, splits are also ignored if they would result in any
-            single class carrying a negative weight in either child node.
-
-        monitor : callable, optional
-            The monitor is called after each iteration with the current
-            iteration, a reference to the estimator and the local variables of
-            ``_fit_stages`` as keyword arguments ``callable(i, self,
-            locals())``. If the callable returns ``True`` the fitting procedure
-            is stopped. The monitor can be used for various things such as
-            computing held-out estimates, early stopping, model introspect, and
-            snapshoting.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        self.n_classes_ = 1
-        return super(GradientBoostingRegressor, self).fit(X, y, sample_weight,
-                                                          monitor)
+            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_depth=max_depth, init=init, subsample=subsample,
+            max_features=max_features,
+            random_state=random_state, alpha=alpha, verbose=verbose,
+            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -1656,10 +1664,11 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         Returns
         -------
-        y: array of shape = [n_samples]
+        y : array of shape = [n_samples]
             The predicted values.
         """
-        return self.decision_function(X).ravel()
+        X = check_array(X, dtype=DTYPE, order="C")
+        return self._decision_function(X).ravel()
 
     def staged_predict(self, X):
         """Predict regression target at each stage for X.
@@ -1674,8 +1683,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : generator of array of shape = [n_samples]
             The predicted value of the input samples.
         """
-        for y in self.staged_decision_function(X):
+        for y in self._staged_decision_function(X):
             yield y.ravel()

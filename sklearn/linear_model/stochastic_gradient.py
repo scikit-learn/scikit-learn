@@ -14,9 +14,11 @@ from ..externals.joblib import Parallel, delayed
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import (check_array, check_random_state, check_X_y)
+from ..utils import (check_array, check_random_state, check_X_y,
+                     deprecated)
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
+from ..utils.validation import check_is_fitted
 from ..externals import six
 
 from .sgd_fast import plain_sgd, average_sgd
@@ -49,7 +51,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
     """Base class for SGD classification and regression."""
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
-                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=True,
                  verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  warm_start=False, average=False):
@@ -158,7 +160,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             if coef_init is not None:
                 coef_init = np.asarray(coef_init, order="C")
                 if coef_init.shape != (n_classes, n_features):
-                    raise ValueError("Provided coef_ does not match dataset. ")
+                    raise ValueError("Provided ``coef_`` does not match dataset. ")
                 self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros((n_classes, n_features),
@@ -209,13 +211,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             self.average_intercept_ = np.zeros(self.standard_intercept_.shape,
                                                dtype=np.float64,
                                                order="C")
-
-
-def _check_fit_data(X, y):
-    """Check if shape of input data matches. """
-    n_samples, _ = X.shape
-    if n_samples != y.shape[0]:
-        raise ValueError("Shapes of X and y do not match.")
 
 
 def _make_dataset(X, y_i, sample_weight):
@@ -336,7 +331,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
     @abstractmethod
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
-                 fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
+                 fit_intercept=True, n_iter=5, shuffle=True, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  class_weight=None, warm_start=False, average=False):
@@ -363,7 +358,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
 
         n_samples, n_features = X.shape
-        _check_fit_data(X, y)
 
         self._validate_params()
         _check_partial_fit_first_call(self, classes)
@@ -378,6 +372,9 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         if self.coef_ is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
+        elif n_features != self.coef_.shape[-1]:
+            raise ValueError("Number of features %d does not match previous data %d."
+                             % (n_features, self.coef_.shape[-1]))
 
         self.loss_function = self._get_loss_function(loss)
         if self.t_ is None:
@@ -528,8 +525,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                  classes=classes, sample_weight=sample_weight,
                                  coef_init=None, intercept_init=None)
 
-    def fit(self, X, y, coef_init=None, intercept_init=None,
-            class_weight=None, sample_weight=None):
+    def fit(self, X, y, coef_init=None, intercept_init=None, sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -548,7 +544,9 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples.
-            If not provided, uniform weights are assumed.
+            If not provided, uniform weights are assumed. These weights will
+            be multiplied with class_weight (passed through the
+            contructor) if class_weight is specified
 
         Returns
         -------
@@ -568,6 +566,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     each sample at a time and the model is updated along the way with a
     decreasing strength schedule (aka learning rate). SGD allows minibatch
     (online/out-of-core) learning, see the partial_fit method.
+    For best results using the default learning rate schedule, the data should
+    have zero mean and unit variance.
 
     This implementation works with data represented as dense or sparse arrays
     of floating point values for the features. The model it fits can be
@@ -596,7 +596,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         The other losses are designed for regression but can be useful in
         classification as well; see SGDRegressor for a description.
 
-    penalty : str, 'l2' or 'l1' or 'elasticnet'
+    penalty : str, 'none', 'l2', 'l1', or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
@@ -610,27 +610,27 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Defaults to 0.15.
 
-    fit_intercept: bool
+    fit_intercept : bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter: int, optional
+    n_iter : int, optional
         The number of passes over the training data (aka epochs). The number
         of iterations is set to 1 if using partial_fit.
         Defaults to 5.
 
-    shuffle: bool, optional
+    shuffle : bool, optional
         Whether or not the training data should be shuffled after each epoch.
-        Defaults to False.
+        Defaults to True.
 
-    random_state: int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
-    verbose: integer, optional
+    verbose : integer, optional
         The verbosity level
 
-    epsilon: float
+    epsilon : float
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
         For 'huber', determines the threshold at which it becomes less
@@ -638,16 +638,17 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         For epsilon-insensitive, any differences between the current prediction
         and the correct label are ignored if they are less than this threshold.
 
-    n_jobs: integer, optional
+    n_jobs : integer, optional
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
 
     learning_rate : string, optional
-        The learning rate:
+        The learning rate schedule:
         constant: eta = eta0
         optimal: eta = 1.0 / (t + t0) [default]
         invscaling: eta = eta0 / pow(t, power_t)
+        where t0 is chosen by a heuristic proposed by Leon Bottou.
 
     eta0 : double
         The initial learning rate for the 'constant' or 'invscaling'
@@ -657,7 +658,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     power_t : double
         The exponent for inverse scaling learning rate [default 0.5].
 
-    class_weight : dict, {class_label : weight} or "auto" or None, optional
+    class_weight : dict, {class_label: weight} or "auto" or None, optional
         Preset for the class_weight fit parameter.
 
         Weights associated with classes. If not given, all classes
@@ -672,14 +673,14 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
-        result in the coef_ attribute. If set to an int greater than 1,
+        result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
         average. So average=10 will begin averaging after seeing 10 samples.
 
     Attributes
     ----------
-    coef_ : array, shape (1, n_features) if n_classes == 2 else (n_classes,
-    n_features)
+    coef_ : array, shape (1, n_features) if n_classes == 2 else (n_classes,\
+            n_features)
         Weights assigned to the features.
 
     intercept_ : array, shape (1,) if n_classes == 2 else (n_classes,)
@@ -697,7 +698,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
             eta0=0.0, fit_intercept=True, l1_ratio=0.15,
             learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
-            penalty='l2', power_t=0.5, random_state=None, shuffle=False,
+            penalty='l2', power_t=0.5, random_state=None, shuffle=True,
             verbose=0, warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -709,7 +710,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     """
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
-                 fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
+                 fit_intercept=True, n_iter=5, shuffle=True, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  class_weight=None, warm_start=False, average=False):
@@ -722,6 +723,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
             average=average)
 
     def _check_proba(self):
+        check_is_fitted(self, "t_")
+
         if self.loss not in ("log", "modified_huber"):
             raise AttributeError("probability estimates are not available for"
                                  " loss=%r" % self.loss)
@@ -844,7 +847,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     @abstractmethod
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=True,
                  verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
                  warm_start=False, average=False):
@@ -867,7 +870,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         y = y.astype(np.float64)
 
         n_samples, n_features = X.shape
-        _check_fit_data(X, y)
 
         self._validate_params()
 
@@ -877,6 +879,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         if self.coef_ is None:
             self._allocate_parameter_mem(1, n_features,
                                          coef_init, intercept_init)
+        elif n_features != self.coef_.shape[-1]:
+            raise ValueError("Number of features %d does not match previous data %d."
+                             % (n_features, self.coef_.shape[-1]))
         if self.average > 0 and self.average_coef_ is None:
             self.average_coef_ = np.zeros(n_features,
                                           dtype=np.float64,
@@ -970,6 +975,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                          intercept_init=intercept_init,
                          sample_weight=sample_weight)
 
+    @deprecated(" and will be removed in 0.19.")
     def decision_function(self, X):
         """Predict using the linear model
 
@@ -982,6 +988,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape (n_samples,)
            Predicted target values per element in X.
         """
+        check_is_fitted(self, ["t_", "coef_", "intercept_"], all_or_any=all)
+
         X = check_array(X, accept_sparse='csr')
 
         scores = safe_sparse_dot(X, self.coef_.T,
@@ -1103,7 +1111,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         function used in SVR. 'squared_epsilon_insensitive' is the same but
         becomes squared loss past a tolerance of epsilon.
 
-    penalty : str, 'l2' or 'l1' or 'elasticnet'
+    penalty : str, 'none', 'l2', 'l1', or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
@@ -1117,7 +1125,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Defaults to 0.15.
 
-    fit_intercept: bool
+    fit_intercept : bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
@@ -1126,18 +1134,18 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         of iterations is set to 1 if using partial_fit.
         Defaults to 5.
 
-    shuffle: bool, optional
+    shuffle : bool, optional
         Whether or not the training data should be shuffled after each epoch.
-        Defaults to False.
+        Defaults to True.
 
-    random_state: int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
-    verbose: integer, optional
+    verbose : integer, optional
         The verbosity level.
 
-    epsilon: float
+    epsilon : float
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
         For 'huber', determines the threshold at which it becomes less
@@ -1163,14 +1171,14 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
-        result in the coef_ attribute. If set to an int greater than 1,
+        result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
-        average. So average=10 will begin averaging after seeing 10 samples.
+        average. So ``average=10 will`` begin averaging after seeing 10 samples.
 
     Attributes
     ----------
     coef_ : array, shape (n_features,)
-        Weights asigned to the features.
+        Weights assigned to the features.
 
     intercept_ : array, shape (1,)
         The intercept term.
@@ -1195,7 +1203,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     SGDRegressor(alpha=0.0001, average=False, epsilon=0.1, eta0=0.01,
                  fit_intercept=True, l1_ratio=0.15, learning_rate='invscaling',
                  loss='squared_loss', n_iter=5, penalty='l2', power_t=0.25,
-                 random_state=None, shuffle=False, verbose=0, warm_start=False)
+                 random_state=None, shuffle=True, verbose=0, warm_start=False)
 
     See also
     --------
@@ -1203,7 +1211,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=True,
                  verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
                  warm_start=False, average=False):

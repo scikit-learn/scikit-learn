@@ -15,7 +15,7 @@ of the model (``KMeans`` or ``MiniBatchKMeans``) and the init method
 
 The second plot demonstrate one single run of the ``MiniBatchKMeans``
 estimator using a ``init="random"`` and ``n_init=1``. This run leads to
-a bad convergence (local optimum) with estimated centers between stucked
+a bad convergence (local optimum) with estimated centers stuck
 between ground truth clusters.
 
 The dataset used for evaluation is a 2D grid of isotropic Gaussian

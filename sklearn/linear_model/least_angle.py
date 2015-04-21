@@ -21,7 +21,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import arrayfuncs, as_float_array, check_array, check_X_y
+from ..utils import arrayfuncs, as_float_array, check_X_y
 from ..cross_validation import _check_cv as check_cv
 from ..utils import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
@@ -85,22 +85,25 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     verbose : int (default=0)
         Controls output verbosity.
 
-    return_path: bool, (optional=True)
+    return_path : bool, optional (default=True)
         If ``return_path==True`` returns the entire path, else returns only the
         last point of the path.
 
+    return_n_iter : bool, optional (default=False)
+        Whether to return the number of iterations.
+
     Returns
     --------
-    alphas: array, shape: [n_alphas + 1]
+    alphas : array, shape: [n_alphas + 1]
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
         number of nodes in the path with ``alpha >= alpha_min``, whichever
         is smaller.
 
-    active: array, shape [n_alphas]
+    active : array, shape [n_alphas]
         Indices of active variables at the end of the path.
 
-    coefs: array, shape (n_features, n_alphas + 1)
+    coefs : array, shape (n_features, n_alphas + 1)
         Coefficients along the path
 
     n_iter : int
@@ -169,7 +172,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         if X.shape[0] > X.shape[1]:
             Gram = np.dot(X.T, X)
     elif copy_Gram:
-            Gram = Gram.copy()
+        Gram = Gram.copy()
 
     if Xy is None:
         Cov = np.dot(X.T, y)
@@ -419,7 +422,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 for ii in idx:
                     for i in range(ii, n_active):
                         indices[i], indices[i + 1] = indices[i + 1], indices[i]
-                        Gram[i], Gram[i + 1] = swap(Gram[i], Gram[i+1])
+                        Gram[i], Gram[i + 1] = swap(Gram[i], Gram[i + 1])
                         Gram[:, i], Gram[:, i + 1] = swap(Gram[:, i],
                                                           Gram[:, i + 1])
 
@@ -486,7 +489,7 @@ class Lars(LinearModel, RegressorMixin):
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    eps: float, optional
+    eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
@@ -586,8 +589,7 @@ class Lars(LinearModel, RegressorMixin):
         self : object
             returns an instance of self.
         """
-        X = check_array(X)
-        y = np.asarray(y)
+        X, y = check_X_y(X, y, y_numeric=True, multi_output=True)
         n_features = X.shape[1]
 
         X, y, X_mean, y_mean, X_std = self._center_data(X, y,
@@ -909,7 +911,7 @@ class LarsCV(Lars):
         Number of CPUs to use during the cross validation. If ``-1``, use
         all the CPUs
 
-    eps: float, optional
+    eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
@@ -981,7 +983,7 @@ class LarsCV(Lars):
             returns an instance of self.
         """
         self.fit_path = True
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, y_numeric=True)
 
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=False)
@@ -1067,7 +1069,7 @@ class LassoLarsCV(LarsCV):
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter: integer, optional
+    max_iter : integer, optional
         Maximum number of iterations to perform.
 
     cv : cross-validation generator, optional
@@ -1082,7 +1084,7 @@ class LassoLarsCV(LarsCV):
         Number of CPUs to use during the cross validation. If ``-1``, use
         all the CPUs
 
-    eps: float, optional
+    eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
@@ -1152,7 +1154,7 @@ class LassoLarsIC(LassoLars):
 
     Parameters
     ----------
-    criterion: 'bic' | 'aic'
+    criterion : 'bic' | 'aic'
         The type of criterion to use.
 
     fit_intercept : boolean
@@ -1174,11 +1176,11 @@ class LassoLarsIC(LassoLars):
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter: integer, optional
+    max_iter : integer, optional
         Maximum number of iterations to perform. Can be used for
         early stopping.
 
-    eps: float, optional
+    eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
@@ -1248,22 +1250,24 @@ class LassoLarsIC(LassoLars):
     def fit(self, X, y, copy_X=True):
         """Fit the model using X, y as training data.
 
-        parameters
+        Parameters
         ----------
-        x : array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             training data.
 
         y : array-like, shape (n_samples,)
             target values.
+    
+        copy_X : boolean, optional, default True
+            If ``True``, X will be copied; else, it may be overwritten.
 
-        returns
+        Returns
         -------
         self : object
             returns an instance of self.
         """
         self.fit_path = True
-        X = check_array(X)
-        y = np.asarray(y)
+        X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = LinearModel._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)

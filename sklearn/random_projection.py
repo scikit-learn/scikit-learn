@@ -41,7 +41,8 @@ from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
-from .utils.validation import check_array
+from .utils.validation import check_array, NotFittedError
+from .utils import DataDimensionalityWarning
 
 
 __all__ = ["SparseRandomProjection",
@@ -364,7 +365,8 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
                     "The number of components is higher than the number of"
                     " features: n_features < n_components (%s < %s)."
                     "The dimensionality of the problem will not be reduced."
-                    % (n_features, self.n_components))
+                    % (n_features, self.n_components),
+                    DataDimensionalityWarning)
 
             self.n_components_ = self.n_components
 
@@ -400,7 +402,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
         if self.components_ is None:
-            raise ValueError('No random projection matrix had been fit.')
+            raise NotFittedError('No random projection matrix had been fit.')
 
         if X.shape[1] != self.components_.shape[1]:
             raise ValueError(

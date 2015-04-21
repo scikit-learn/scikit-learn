@@ -65,7 +65,9 @@ taking as input a user-specified base estimator along with parameters
 specifying the strategy to draw random subsets. In particular, ``max_samples``
 and ``max_features`` control the size of the subsets (in terms of samples and
 features), while ``bootstrap`` and ``bootstrap_features`` control whether
-samples and features are drawn with or without replacement. As an example, the
+samples and features are drawn with or without replacement. When using a subset
+of the available samples the generalization error can be estimated with the
+out-of-bag samples by setting ``oob_score=True``. As an example, the
 snippet below illustrates how to instantiate a bagging ensemble of
 :class:`KNeighborsClassifier` base estimators, each built on random subsets of
 50% of the samples and 50% of the features.
@@ -108,7 +110,7 @@ construction.  The prediction of the ensemble is given as the averaged
 prediction of the individual classifiers.
 
 As other classifiers, forest classifiers have to be fitted with two
-arrays: an array X of size ``[n_samples, n_features]`` holding the
+arrays: a sparse or dense array X of size ``[n_samples, n_features]`` holding the
 training samples, and an array Y of size ``[n_samples]`` holding the
 target values (class labels) for the training samples::
 
@@ -199,13 +201,17 @@ greater the reduction of variance, but also the greater the increase in
 bias. Empirical good default values are ``max_features=n_features``
 for regression problems, and ``max_features=sqrt(n_features)`` for
 classification tasks (where ``n_features`` is the number of features
-in the data). The best results are also usually reached when setting
-``max_depth=None`` in combination with ``min_samples_split=1`` (i.e.,
-when fully developing the trees). Bear in mind though that these values
-are usually not optimal. The best parameter values should always be cross-
-validated. In addition, note that bootstrap samples are used by default
-in random forests (``bootstrap=True``) while the default strategy is to
-use the original dataset for building extra-trees (``bootstrap=False``).
+in the data). Good results are often achieved when setting ``max_depth=None``
+in combination with ``min_samples_split=1`` (i.e., when fully developing the
+trees). Bear in mind though that these values are usually not optimal, and
+might result in models that consume a lot of ram. The best parameter values
+should always be cross-validated. In addition, note that in random forests,
+bootstrap samples are used by default (``bootstrap=True``)
+while the default strategy for extra-trees is to use the whole dataset
+(``bootstrap=False``).
+When using bootstrap sampling the generalization error can be estimated
+on the left out or out-of-bag samples. This can be enabled by
+setting ``oob_score=True``.
 
 Parallelization
 ---------------

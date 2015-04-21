@@ -19,7 +19,7 @@ def test_kernel_pca():
     X_pred = rng.random_sample((2, 4))
 
     def histogram(x, y, **kwargs):
-        """Histogram kernel implemented as a callable."""
+        # Histogram kernel implemented as a callable.
         assert_equal(kwargs, {})    # no kernel_params that we didn't ask for
         return np.minimum(x, y).sum()
 
@@ -78,8 +78,8 @@ def test_kernel_pca_sparse():
                          X_fit_transformed.shape[1])
 
             # inverse transform
-            #X_pred2 = kpca.inverse_transform(X_pred_transformed)
-            #assert_equal(X_pred2.shape, X_pred.shape)
+            # X_pred2 = kpca.inverse_transform(X_pred_transformed)
+            # assert_equal(X_pred2.shape, X_pred.shape)
 
 
 def test_kernel_pca_linear_kernel():
@@ -187,7 +187,7 @@ def test_gridsearch_pipeline_precomputed():
 
 
 def test_nested_circles():
-    """Test the linear separability of the first 2D KPCA transform"""
+    # Test the linear separability of the first 2D KPCA transform
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
                         random_state=0)
 

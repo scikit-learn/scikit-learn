@@ -27,6 +27,12 @@ specific subject areas:
 Videos
 ======
 
+- An introduction to scikit-learn `Part
+  I <https://conference.scipy.org/scipy2013/tutorial_detail.php?id=107>`_ and
+  `Part II <https://conference.scipy.org/scipy2013/tutorial_detail.php?id=111>`_ at Scipy 2013
+  by `Gael Varoquaux`_, `Jake Vanderplas`_  and `Olivier Grisel`_. Notebooks on
+  `github <https://github.com/jakevdp/sklearn_scipy2013>`_.
+
 - `Introduction to scikit-learn
   <http://videolectures.net/icml2010_varaquaux_scik/>`_ by `Gael Varoquaux`_ at
   ICML 2010

@@ -20,7 +20,7 @@ We add observation noise to these waveforms. We generate very sparse
 noise: only 6% of the time points contain noise. As a result, the
 l1 norm of this noise (ie "cityblock" distance) is much smaller than it's
 l2 norm ("euclidean" distance). This can be seen on the inter-class
-distance matrices: the values on the diagonal, that caracterize the
+distance matrices: the values on the diagonal, that characterize the
 spread of the class, are much bigger for the Euclidean distance than for
 the cityblock distance.
 

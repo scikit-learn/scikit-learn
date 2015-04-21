@@ -10,13 +10,12 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
-from sklearn.metrics.scorer import SCORERS
 from sklearn.metrics import make_scorer
+from sklearn.metrics import get_scorer
 
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.ridge import ridge_regression
@@ -49,11 +48,9 @@ SPARSE_FILTER = lambda X: sp.csr_matrix(X)
 
 
 def test_ridge():
-    """Ridge regression convergence test using score
-
-    TODO: for this test to be robust, we should use a dataset instead
-    of np.random.
-    """
+    # Ridge regression convergence test using score
+    # TODO: for this test to be robust, we should use a dataset instead
+    # of np.random.
     rng = np.random.RandomState(0)
     alpha = 1.0
 
@@ -161,8 +158,7 @@ def test_ridge_sample_weights():
 
 
 def test_ridge_shapes():
-    """Test shape of coef_ and intercept_
-    """
+    # Test shape of coef_ and intercept_
     rng = np.random.RandomState(0)
     n_samples, n_features = 5, 10
     X = rng.randn(n_samples, n_features)
@@ -186,8 +182,7 @@ def test_ridge_shapes():
 
 
 def test_ridge_intercept():
-    """Test intercept with multiple targets GH issue #708
-    """
+    # Test intercept with multiple targets GH issue #708
     rng = np.random.RandomState(0)
     n_samples, n_features = 5, 10
     X = rng.randn(n_samples, n_features)
@@ -205,10 +200,8 @@ def test_ridge_intercept():
 
 
 def test_toy_ridge_object():
-    """Test BayesianRegression ridge classifier
-
-    TODO: test also n_samples > n_features
-    """
+    # Test BayesianRegression ridge classifier
+    # TODO: test also n_samples > n_features
     X = np.array([[1], [2]])
     Y = np.array([1, 2])
     clf = Ridge(alpha=0.0)
@@ -229,7 +222,7 @@ def test_toy_ridge_object():
 
 
 def test_ridge_vs_lstsq():
-    """On alpha=0., Ridge and OLS yield the same solution."""
+    # On alpha=0., Ridge and OLS yield the same solution.
 
     rng = np.random.RandomState(0)
     # we need more samples than features
@@ -250,7 +243,7 @@ def test_ridge_vs_lstsq():
 
 
 def test_ridge_individual_penalties():
-    """Tests the ridge object using individual penalties"""
+    # Tests the ridge object using individual penalties
 
     rng = np.random.RandomState(42)
 
@@ -336,7 +329,7 @@ def _test_ridge_loo(filter_):
     assert_equal(ridge_gcv3.alpha_, alpha_)
 
     # check that we get same best alpha with a scorer
-    scorer = SCORERS['mean_squared_error']
+    scorer = get_scorer('mean_squared_error')
     ridge_gcv4 = RidgeCV(fit_intercept=False, scoring=scorer)
     ridge_gcv4.fit(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv4.alpha_, alpha_)
@@ -459,9 +452,7 @@ def test_ridge_sparse_svd():
 
 
 def test_class_weights():
-    """
-    Test class weights.
-    """
+    # Test class weights.
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
     y = [1, 1, 1, -1, -1]
@@ -497,9 +488,7 @@ def test_class_weights():
 
 
 def test_class_weights_cv():
-    """
-    Test class weights for cross validated ridge classifier.
-    """
+    # Test class weights for cross validated ridge classifier.
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
     y = [1, 1, 1, -1, -1]
@@ -515,9 +504,7 @@ def test_class_weights_cv():
 
 
 def test_ridgecv_store_cv_values():
-    """
-    Test _RidgeCV's store_cv_values attribute.
-    """
+    # Test _RidgeCV's store_cv_values attribute.
     rng = rng = np.random.RandomState(42)
 
     n_samples = 8
@@ -540,49 +527,13 @@ def test_ridgecv_store_cv_values():
     assert_equal(r.cv_values_.shape, (n_samples, n_responses, n_alphas))
 
 
-def test_ridge_sample_weights_in_feature_space():
-    """Check that Cholesky solver in feature space applies sample_weights
-    correctly.
-    """
-
-    rng = np.random.RandomState(42)
-
-    n_samples_list = [5, 6, 7] * 2
-    n_features_list = [7, 6, 5] * 2
-    n_targets_list = [1, 1, 1, 2, 2, 2]
-    noise = 1.
-    alpha = 2.
-    alpha = np.atleast_1d(alpha)
-
-    for n_samples, n_features, n_targets in zip(n_samples_list,
-                                                n_features_list,
-                                                n_targets_list):
-        X = rng.randn(n_samples, n_features)
-        beta = rng.randn(n_features, n_targets)
-        Y = X.dot(beta)
-        Y_noisy = Y + rng.randn(*Y.shape) * np.sqrt((Y ** 2).sum(0)) * noise
-
-        K = X.dot(X.T)
-        sample_weights = 1. + (rng.randn(n_samples) ** 2) * 10
-
-        coef_sample_space = _solve_cholesky_kernel(K, Y_noisy, alpha,
-                                         sample_weight=sample_weights)
-
-        coef_feature_space = _solve_cholesky(X, Y_noisy, alpha,
-                                         sample_weight=sample_weights)
-
-        assert_array_almost_equal(X.T.dot(coef_sample_space),
-                                  coef_feature_space.T)
-
-
 def test_raises_value_error_if_sample_weights_greater_than_1d():
-    """Sample weights must be either scalar or 1D"""
+    # Sample weights must be either scalar or 1D
 
     n_sampless = [2, 3]
     n_featuress = [3, 2]
 
     rng = np.random.RandomState(42)
-
 
     for n_samples, n_features in zip(n_sampless, n_featuress):
         X = rng.randn(n_samples, n_features)
@@ -616,7 +567,7 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
 
 
 def test_sparse_design_with_sample_weights():
-    """Sample weights must work with sparse matrices"""
+    # Sample weights must work with sparse matrices
 
     n_sampless = [2, 3]
     n_featuress = [3, 2]
@@ -646,29 +597,9 @@ def test_sparse_design_with_sample_weights():
                                       decimal=6)
 
 
-def test_deprecation_warning_dense_cholesky():
-    """Tests if DeprecationWarning is raised at instantiation of estimators
-    and when ridge_regression is called"""
-
-    warning_class = DeprecationWarning
-    warning_message = ("The name 'dense_cholesky' is deprecated."
-                       " Using 'cholesky' instead")
-
-    X = np.ones([2, 3])
-    y = np.ones(2)
-    func1 = lambda: Ridge(solver='dense_cholesky').fit(X, y)
-    func2 = lambda: RidgeClassifier(solver='dense_cholesky').fit(X, y)
-    X = np.ones([3, 2])
-    y = np.zeros(3)
-    func3 = lambda: ridge_regression(X, y, alpha=1, solver='dense_cholesky')
-
-    for func in [func1, func2, func3]:
-        assert_warns_message(warning_class, warning_message, func)
-
-
 def test_raises_value_error_if_solver_not_supported():
-    """Tests whether a ValueError is raised if a non-identified solver
-    is passed to ridge_regression"""
+    # Tests whether a ValueError is raised if a non-identified solver
+    # is passed to ridge_regression
 
     wrong_solver = "This is not a solver (MagritteSolveCV QuantumBitcoin)"
 

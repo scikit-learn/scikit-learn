@@ -561,7 +561,7 @@ def test_vectorizer_max_features():
 
 
 def test_count_vectorizer_max_features():
-    """Regression test: max_features didn't work correctly in 0.14."""
+    # Regression test: max_features didn't work correctly in 0.14.
 
     cv_1 = CountVectorizer(max_features=1)
     cv_3 = CountVectorizer(max_features=3)
@@ -715,7 +715,7 @@ def test_count_vectorizer_pipeline_grid_selection():
 
     parameters = {
         'vect__ngram_range': [(1, 1), (1, 2)],
-        'svc__loss': ('l1', 'l2')
+        'svc__loss': ('hinge', 'squared_hinge')
     }
 
     # find the best parameters for both the feature extraction and the
@@ -752,7 +752,7 @@ def test_vectorizer_pipeline_grid_selection():
     parameters = {
         'vect__ngram_range': [(1, 1), (1, 2)],
         'vect__norm': ('l1', 'l2'),
-        'svc__loss': ('l1', 'l2'),
+        'svc__loss': ('hinge', 'squared_hinge'),
     }
 
     # find the best parameters for both the feature extraction and the
@@ -857,6 +857,28 @@ def test_pickling_vectorizer():
         assert_array_equal(
             copy.fit_transform(JUNK_FOOD_DOCS).toarray(),
             orig.fit_transform(JUNK_FOOD_DOCS).toarray())
+
+
+def test_stop_words_removal():
+    # Ensure that deleting the stop_words_ attribute doesn't affect transform
+
+    fitted_vectorizers = (
+        TfidfVectorizer().fit(JUNK_FOOD_DOCS),
+        CountVectorizer(preprocessor=strip_tags).fit(JUNK_FOOD_DOCS),
+        CountVectorizer(strip_accents=strip_eacute).fit(JUNK_FOOD_DOCS)
+    )
+
+    for vect in fitted_vectorizers:
+        vect_transform = vect.transform(JUNK_FOOD_DOCS).toarray()
+
+        vect.stop_words_ = None
+        stop_None_transform = vect.transform(JUNK_FOOD_DOCS).toarray()
+
+        delattr(vect, 'stop_words_')
+        stop_del_transform = vect.transform(JUNK_FOOD_DOCS).toarray()
+
+        assert_array_equal(stop_None_transform, vect_transform)
+        assert_array_equal(stop_del_transform, vect_transform)
 
 
 def test_pickling_transformer():

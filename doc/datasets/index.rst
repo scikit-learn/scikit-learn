@@ -27,15 +27,16 @@ The simplest one is the interface for sample images, which is described
 below in the :ref:`sample_images` section.
 
 The dataset generation functions and the svmlight loader share a simplistic
-interface, returning a tuple ``(X, y)`` consisting of a n_samples x n_features
-numpy array X and an array of length n_samples containing the targets y.
+interface, returning a tuple ``(X, y)`` consisting of a ``n_samples`` *
+``n_features`` numpy array ``X`` and an array of length ``n_samples``
+containing the targets ``y``.
 
 The toy datasets as well as the 'real world' datasets and the datasets
 fetched from mldata.org have more sophisticated structure.
 These functions return a dictionary-like object holding at least two items:
-an array of shape ``n_samples`` * `` n_features`` with key ``data``
+an array of shape ``n_samples`` * ``n_features`` with key ``data``
 (except for 20newsgroups)
-and a NumPy array of length ``n_samples``, containing the target values,
+and a numpy array of length ``n_samples``, containing the target values,
 with key ``target``.
 
 The datasets also contain a description in ``DESCR`` and some contain

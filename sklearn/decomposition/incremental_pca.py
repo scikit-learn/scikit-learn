@@ -174,7 +174,7 @@ class IncrementalPCA(_BasePCA):
             self.partial_fit(X[batch])
         return self
 
-    def partial_fit(self, X):
+    def partial_fit(self, X, y=None):
         """Incremental fit with X. All of X is processed as a single batch.
 
         Parameters

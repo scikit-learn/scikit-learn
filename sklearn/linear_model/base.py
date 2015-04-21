@@ -15,20 +15,20 @@ Generalized Linear models.
 from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 from scipy import sparse
-from scipy.sparse.linalg import lsqr
 
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..utils import as_float_array, check_array
+from ..utils import as_float_array, check_array, check_X_y, deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
+from ..utils.fixes import sparse_lsqr
+from ..utils.validation import NotFittedError, check_is_fitted
 
 
 ###
@@ -119,6 +119,7 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
     def fit(self, X, y):
         """Fit model."""
 
+    @deprecated(" and will be removed in 0.19.")
     def decision_function(self, X):
         """Decision function of the linear model.
 
@@ -132,6 +133,11 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
         C : array, shape = (n_samples,)
             Returns predicted values.
         """
+        return self._decision_function(X)
+
+    def _decision_function(self, X):
+        check_is_fitted(self, "coef_")
+
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         return safe_sparse_dot(X, self.coef_.T,
                                dense_output=True) + self.intercept_
@@ -149,7 +155,7 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
         C : array, shape = (n_samples,)
             Returns predicted values.
         """
-        return self.decision_function(X)
+        return self._decision_function(X)
 
     _center_data = staticmethod(center_data)
 
@@ -189,6 +195,10 @@ class LinearClassifierMixin(ClassifierMixin):
             case, confidence score for self.classes_[1] where >0 means this
             class would be predicted.
         """
+        if not hasattr(self, 'coef_') or self.coef_ is None:
+            raise NotFittedError("This %(name)s instance is not fitted"
+                                 "yet" % {'name': type(self).__name__})
+
         X = check_array(X, accept_sparse='csr')
 
         n_features = self.coef_.shape[1]
@@ -258,8 +268,8 @@ class SparseCoefMixin(object):
         -------
         self: estimator
         """
-        if not hasattr(self, "coef_"):
-            raise ValueError("Estimator must be fitted before densifying.")
+        msg = "Estimator, %(name)s, must be fitted before densifying."
+        check_is_fitted(self, "coef_", msg=msg)
         if sp.issparse(self.coef_):
             self.coef_ = self.coef_.toarray()
         return self
@@ -288,8 +298,8 @@ class SparseCoefMixin(object):
         -------
         self: estimator
         """
-        if not hasattr(self, "coef_"):
-            raise ValueError("Estimator must be fitted before sparsifying.")
+        msg = "Estimator, %(name)s, must be fitted before sparsifying."
+        check_is_fitted(self, "coef_", msg=msg)
         self.coef_ = sp.csr_matrix(self.coef_)
         return self
 
@@ -311,7 +321,8 @@ class LinearRegression(LinearModel, RegressorMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    n_jobs : The number of jobs to use for the computation.
+    n_jobs : int, optional, default 1
+        The number of jobs to use for the computation.
         If -1 all CPUs are used. This will only provide speedup for
         n_targets > 1 and sufficient large problems.
 
@@ -340,7 +351,7 @@ class LinearRegression(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.n_jobs = n_jobs
 
-    def fit(self, X, y, n_jobs=1):
+    def fit(self, X, y):
         """
         Fit linear model.
 
@@ -348,6 +359,7 @@ class LinearRegression(LinearModel, RegressorMixin):
         ----------
         X : numpy array or sparse matrix of shape [n_samples,n_features]
             Training data
+
         y : numpy array of shape [n_samples, n_targets]
             Target values
 
@@ -355,29 +367,22 @@ class LinearRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        if n_jobs != 1:
-            warnings.warn("The n_jobs parameter in fit is deprecated and will "
-                          "be removed in 0.17. It has been moved from the fit "
-                          "method to the LinearRegression class constructor.",
-                          DeprecationWarning, stacklevel=2)
-            n_jobs_ = n_jobs
-        else:
-            n_jobs_ = self.n_jobs
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
-        y = np.asarray(y)
+        n_jobs_ = self.n_jobs
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                         y_numeric=True, multi_output=True)
 
         X, y, X_mean, y_mean, X_std = self._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
 
         if sp.issparse(X):
             if y.ndim < 2:
-                out = lsqr(X, y)
+                out = sparse_lsqr(X, y)
                 self.coef_ = out[0]
                 self.residues_ = out[3]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(lsqr)(X, y[:, j].ravel())
+                    delayed(sparse_lsqr)(X, y[:, j].ravel())
                     for j in range(y.shape[1]))
                 self.coef_ = np.vstack(out[0] for out in outs)
                 self.residues_ = np.vstack(out[3] for out in outs)

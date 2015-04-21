@@ -1,10 +1,10 @@
 """Testing for the boost module (sklearn.ensemble.boost)."""
 
 import numpy as np
-from numpy.testing import assert_array_equal, assert_array_less
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_equal
-from nose.tools import assert_raises
+from sklearn.utils.testing import assert_array_equal, assert_array_less
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises, assert_raises_regexp
 
 from sklearn.cross_validation import train_test_split
 from sklearn.grid_search import GridSearchCV
@@ -44,7 +44,7 @@ boston.data, boston.target = shuffle(boston.data, boston.target,
 
 
 def test_classification_toy():
-    """Check classification on a toy dataset."""
+    # Check classification on a toy dataset.
     for alg in ['SAMME', 'SAMME.R']:
         clf = AdaBoostClassifier(algorithm=alg, random_state=0)
         clf.fit(X, y_class)
@@ -55,14 +55,14 @@ def test_classification_toy():
 
 
 def test_regression_toy():
-    """Check classification on a toy dataset."""
+    # Check classification on a toy dataset.
     clf = AdaBoostRegressor(random_state=0)
     clf.fit(X, y_regr)
     assert_array_equal(clf.predict(T), y_t_regr)
 
 
 def test_iris():
-    """Check consistency on dataset iris."""
+    # Check consistency on dataset iris.
     classes = np.unique(iris.target)
     clf_samme = prob_samme = None
 
@@ -91,7 +91,7 @@ def test_iris():
 
 
 def test_boston():
-    """Check consistency on dataset boston house prices."""
+    # Check consistency on dataset boston house prices.
     clf = AdaBoostRegressor(random_state=0)
     clf.fit(boston.data, boston.target)
     score = clf.score(boston.data, boston.target)
@@ -99,7 +99,7 @@ def test_boston():
 
 
 def test_staged_predict():
-    """Check staged predictions."""
+    # Check staged predictions.
     rng = np.random.RandomState(0)
     iris_weights = rng.randint(10, size=iris.target.shape)
     boston_weights = rng.randint(10, size=boston.target.shape)
@@ -143,7 +143,7 @@ def test_staged_predict():
 
 
 def test_gridsearch():
-    """Check that base trees can be grid-searched."""
+    # Check that base trees can be grid-searched.
     # AdaBoost classification
     boost = AdaBoostClassifier(base_estimator=DecisionTreeClassifier())
     parameters = {'n_estimators': (1, 2),
@@ -162,7 +162,7 @@ def test_gridsearch():
 
 
 def test_pickle():
-    """Check pickability."""
+    # Check pickability.
     import pickle
 
     # Adaboost classifier
@@ -190,7 +190,7 @@ def test_pickle():
 
 
 def test_importances():
-    """Check variable importances."""
+    # Check variable importances.
     X, y = datasets.make_classification(n_samples=2000,
                                         n_features=10,
                                         n_informative=3,
@@ -211,7 +211,7 @@ def test_importances():
 
 
 def test_error():
-    """Test that it gives proper exception on deficient input."""
+    # Test that it gives proper exception on deficient input.
     assert_raises(ValueError,
                   AdaBoostClassifier(learning_rate=-1).fit,
                   X, y_class)
@@ -226,7 +226,7 @@ def test_error():
 
 
 def test_base_estimator():
-    """Test different base estimators."""
+    # Test different base estimators.
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.svm import SVC
 
@@ -247,6 +247,30 @@ def test_base_estimator():
     clf = AdaBoostRegressor(SVR(), random_state=0)
     clf.fit(X, y_regr)
 
+    # Check that an empty discrete ensemble fails in fit, not predict.
+    X_fail = [[1, 1], [1, 1], [1, 1], [1, 1]]
+    y_fail = ["foo", "bar", 1, 2]
+    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    assert_raises_regexp(ValueError, "worse than random",
+                         clf.fit, X_fail, y_fail)
+
+
+def test_sample_weight_missing():
+    from sklearn.linear_model import LinearRegression
+    from sklearn.cluster import KMeans
+
+    clf = AdaBoostClassifier(LinearRegression(), algorithm="SAMME")
+    assert_raises(ValueError, clf.fit, X, y_regr)
+
+    clf = AdaBoostRegressor(LinearRegression())
+    assert_raises(ValueError, clf.fit, X, y_regr)
+
+    clf = AdaBoostClassifier(KMeans(), algorithm="SAMME")
+    assert_raises(ValueError, clf.fit, X, y_regr)
+
+    clf = AdaBoostRegressor(KMeans())
+    assert_raises(ValueError, clf.fit, X, y_regr)
+
 
 def test_sample_weight_missing():
     from sklearn.linear_model import LinearRegression
@@ -266,7 +290,7 @@ def test_sample_weight_missing():
 
 
 def test_sparse_classification():
-    """Check classification with sparse input."""
+    # Check classification with sparse input.
 
     class CustomSVC(SVC):
         """SVC variant that records the nature of the training set."""
@@ -364,7 +388,7 @@ def test_sparse_classification():
 
 
 def test_sparse_regression():
-    """Check regression with sparse input."""
+    # Check regression with sparse input.
 
     class CustomSVR(SVR):
         """SVR variant that records the nature of the training set."""
@@ -387,13 +411,13 @@ def test_sparse_regression():
 
         # Trained on sparse format
         sparse_classifier = AdaBoostRegressor(
-            base_estimator=CustomSVR(probability=True),
+            base_estimator=CustomSVR(),
             random_state=1
         ).fit(X_train_sparse, y_train)
 
         # Trained on dense format
         dense_classifier = dense_results = AdaBoostRegressor(
-            base_estimator=CustomSVR(probability=True),
+            base_estimator=CustomSVR(),
             random_state=1
         ).fit(X_train, y_train)
 

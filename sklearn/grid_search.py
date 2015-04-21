@@ -26,7 +26,9 @@ from .cross_validation import _fit_and_score
 from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import check_random_state
+from .utils.random import sample_without_replacement
 from .utils.validation import _num_samples, indexable
+from .utils.metaestimators import if_delegate_has_method
 from .metrics.scorer import check_scoring
 
 
@@ -112,7 +114,11 @@ class ParameterSampler(object):
     """Generator on parameters sampled from given distributions.
 
     Non-deterministic iterable over random candidate combinations for hyper-
-    parameter search.
+    parameter search. If all parameters are presented as a list,
+    sampling without replacement is performed. If at least one parameter
+    is given as a distribution, sampling with replacement is used.
+    It is highly recommended to use continuous distributions for continuous
+    parameters.
 
     Note that as of SciPy 0.12, the ``scipy.stats.distributions`` do not accept
     a custom RNG instance and always use the singleton RNG from
@@ -164,17 +170,39 @@ class ParameterSampler(object):
         self.random_state = random_state
 
     def __iter__(self):
+        samples = []
+        # check if all distributions are given as lists
+        # in this case we want to sample without replacement
+        all_lists = np.all([not hasattr(v, "rvs")
+                            for v in self.param_distributions.values()])
         rnd = check_random_state(self.random_state)
-        # Always sort the keys of a dictionary, for reproducibility
-        items = sorted(self.param_distributions.items())
-        for _ in range(self.n_iter):
-            params = dict()
-            for k, v in items:
-                if hasattr(v, "rvs"):
-                    params[k] = v.rvs()
-                else:
-                    params[k] = v[rnd.randint(len(v))]
-            yield params
+
+        if all_lists:
+            # get complete grid and yield from it
+            param_grid = list(ParameterGrid(self.param_distributions))
+            grid_size = len(param_grid)
+
+            if grid_size < self.n_iter:
+                raise ValueError(
+                    "The total space of parameters %d is smaller "
+                    "than n_iter=%d." % (grid_size, self.n_iter)
+                    + " For exhaustive searches, use GridSearchCV.")
+            for i in sample_without_replacement(grid_size, self.n_iter,
+                                                random_state=rnd):
+                yield param_grid[i]
+
+        else:
+            # Always sort the keys of a dictionary, for reproducibility
+            items = sorted(self.param_distributions.items())
+            while len(samples) < self.n_iter:
+                params = dict()
+                for k, v in items:
+                    if hasattr(v, "rvs"):
+                        params[k] = v.rvs()
+                    else:
+                        params[k] = v[rnd.randint(len(v))]
+                samples.append(params)
+                yield params
 
     def __len__(self):
         """Number of points that will be sampled."""
@@ -248,7 +276,7 @@ def _check_param_grid(param_grid):
                 raise ValueError("Parameter array should be one-dimensional.")
 
             check = [isinstance(v, k) for k in (list, tuple, np.ndarray)]
-            if not True in check:
+            if True not in check:
                 raise ValueError("Parameter values should be a list.")
 
             if len(v) == 0:
@@ -303,6 +331,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.pre_dispatch = pre_dispatch
         self.error_score = error_score
 
+    @property
+    def _estimator_type(self):
+        return self.estimator._estimator_type
+
     def score(self, X, y=None):
         """Returns the score on the given data, if the estimator has been refit
 
@@ -342,21 +374,101 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                           ChangedBehaviorWarning)
         return self.scorer_(self.best_estimator_, X, y)
 
-    @property
-    def predict(self):
-        return self.best_estimator_.predict
+    @if_delegate_has_method(delegate='estimator')
+    def predict(self, X):
+        """Call predict on the estimator with the best found parameters.
 
-    @property
-    def predict_proba(self):
-        return self.best_estimator_.predict_proba
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict``.
 
-    @property
-    def decision_function(self):
-        return self.best_estimator_.decision_function
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
 
-    @property
-    def transform(self):
-        return self.best_estimator_.transform
+        """
+        return self.best_estimator_.predict(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def predict_proba(self, X):
+        """Call predict_proba on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict_proba``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        return self.best_estimator_.predict_proba(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def predict_log_proba(self, X):
+        """Call predict_log_proba on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict_log_proba``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        return self.best_estimator_.predict_log_proba(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def decision_function(self, X):
+        """Call decision_function on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``decision_function``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        return self.best_estimator_.decision_function(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def transform(self, X):
+        """Call transform on the estimator with the best found parameters.
+
+        Only available if the underlying estimator supports ``transform`` and
+        ``refit=True``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        return self.best_estimator_.transform(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def inverse_transform(self, Xt):
+        """Call inverse_transform on the estimator with the best found parameters.
+
+        Only available if the underlying estimator implements ``inverse_transform`` and
+        ``refit=True``.
+
+        Parameters
+        -----------
+        Xt : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        return self.best_estimator_.transform(Xt)
 
     def _fit(self, X, y, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
@@ -476,8 +588,8 @@ class GridSearchCV(BaseSearchCV):
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int, default 1
+        Number of jobs to run in parallel.
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -496,17 +608,17 @@ class GridSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, optional
+    iid : boolean, default=True
         If True, the data is assumed to be identically distributed across
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
 
-    cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of folds (default 3).
+    cv : integer or cross-validation generator, default=3
+        If an integer is passed, it is the number of folds.
         Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects
 
-    refit : boolean
+    refit : boolean, default=True
         Refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using
         this GridSearchCV instance after fitting.
@@ -555,7 +667,7 @@ class GridSearchCV(BaseSearchCV):
     best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data.
+        on the left out data. Not available if refit=False.
 
     best_score_ : float
         Score of best_estimator on the left out data.
@@ -636,6 +748,12 @@ class RandomizedSearchCV(BaseSearchCV):
     distributions. The number of parameter settings that are tried is
     given by n_iter.
 
+    If all parameters are presented as a list,
+    sampling without replacement is performed. If at least one parameter
+    is given as a distribution, sampling with replacement is used.
+    It is highly recommended to use continuous distributions for continuous
+    parameters.
+
     Parameters
     ----------
     estimator : object type that implements the "fit" and "predict" methods
@@ -659,8 +777,8 @@ class RandomizedSearchCV(BaseSearchCV):
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int, default=1
+        Number of jobs to run in parallel.
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -679,7 +797,7 @@ class RandomizedSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, optional
+    iid : boolean, default=True
         If True, the data is assumed to be identically distributed across
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
@@ -689,7 +807,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects
 
-    refit : boolean
+    refit : boolean, default=True
         Refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using
         this RandomizedSearchCV instance after fitting.
@@ -719,7 +837,7 @@ class RandomizedSearchCV(BaseSearchCV):
     best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data.
+        on the left out data. Not available if refit=False.
 
     best_score_ : float
         Score of best_estimator on the left out data.

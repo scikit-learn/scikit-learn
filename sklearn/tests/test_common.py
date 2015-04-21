@@ -22,24 +22,28 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 
 import sklearn
-from sklearn.base import (ClassifierMixin, RegressorMixin,
-                          TransformerMixin, ClusterMixin)
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_classification
+from sklearn.cluster.bicluster import BiclusterMixin
 
 from sklearn.cross_validation import train_test_split
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
+    check_dtype_object,
     check_parameters_default_constructible,
-    check_regressors_classifiers_sparse_data,
+    check_estimator_sparse_data,
+    check_estimators_dtypes,
     check_transformer,
     check_clustering,
+    check_clusterer_compute_labels_predict,
     check_regressors_int,
     check_regressors_train,
     check_regressors_pickle,
-    check_transformer_sparse_data,
     check_transformer_pickle,
+    check_transformers_unfitted,
+    check_estimators_empty_data_messages,
     check_estimators_nan_inf,
+    check_estimators_unfitted,
     check_classifiers_one_label,
     check_classifiers_train,
     check_classifiers_classes,
@@ -49,14 +53,17 @@ from sklearn.utils.estimator_checks import (
     check_class_weight_auto_classifiers,
     check_class_weight_auto_linear_classifier,
     check_estimators_overwrite_params,
-    check_cluster_overwrite_params,
-    check_sparsify_binary_classifier,
-    check_sparsify_multiclass_classifier,
+    check_estimators_partial_fit_n_features,
+    check_sparsify_coefficients,
     check_classifier_data_not_an_array,
     check_regressor_data_not_an_array,
     check_transformer_data_not_an_array,
     check_transformer_n_iter,
+    check_fit_score_takes_y,
     check_non_transformer_estimators_n_iter,
+    check_regressors_no_decision_function,
+    check_pipeline_consistency,
+    check_get_params_invariance,
     CROSS_DECOMPOSITION)
 
 
@@ -82,14 +89,40 @@ def test_all_estimators():
         yield check_parameters_default_constructible, name, Estimator
 
 
-def test_estimators_sparse_data():
-    # All estimators should either deal with sparse data or raise an
-    # exception with type TypeError and an intelligible error message
+def test_non_meta_estimators():
+    # input validation etc for non-meta estimators
     estimators = all_estimators()
-    estimators = [(name, Estimator) for name, Estimator in estimators
-                  if issubclass(Estimator, (ClassifierMixin, RegressorMixin))]
     for name, Estimator in estimators:
-        yield check_regressors_classifiers_sparse_data, name, Estimator
+        if issubclass(Estimator, BiclusterMixin):
+            continue
+        if name.endswith("HMM") or name.startswith("_"):
+            continue
+        yield check_estimators_dtypes, name, Estimator
+        yield check_fit_score_takes_y, name, Estimator
+        yield check_dtype_object, name, Estimator
+
+        # Check that all estimator yield informative messages when
+        # trained on empty datasets
+        yield check_estimators_empty_data_messages, name, Estimator
+
+        if name not in CROSS_DECOMPOSITION + ['SpectralEmbedding']:
+            # SpectralEmbedding is non-deterministic,
+            # see issue #4236
+            # cross-decomposition's "transform" returns X and Y
+            yield check_pipeline_consistency, name, Estimator
+
+        if name not in ['Imputer']:
+            # Test that all estimators check their input for NaN's and infs
+            yield check_estimators_nan_inf, name, Estimator
+
+        if name not in ['GaussianProcess']:
+            # FIXME!
+            # in particular GaussianProcess!
+            yield check_estimators_overwrite_params, name, Estimator
+        if hasattr(Estimator, 'sparsify'):
+            yield check_sparsify_coefficients, name, Estimator
+
+        yield check_estimator_sparse_data, name, Estimator
 
 
 def test_transformers():
@@ -99,7 +132,6 @@ def test_transformers():
     for name, Transformer in transformers:
         # All transformers should either deal with sparse data or raise an
         # exception with type TypeError and an intelligible error message
-        yield check_transformer_sparse_data, name, Transformer
         yield check_transformer_pickle, name, Transformer
         if name not in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer',
                         'PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']:
@@ -108,19 +140,7 @@ def test_transformers():
         if name not in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer']:
             # basic tests
             yield check_transformer, name, Transformer
-
-
-def test_estimators_nan_inf():
-    # Test that all estimators check their input for NaN's and infs
-    estimators = all_estimators()
-    estimators = [(name, E) for name, E in estimators
-                  if (issubclass(E, ClassifierMixin) or
-                      issubclass(E, RegressorMixin) or
-                      issubclass(E, TransformerMixin) or
-                      issubclass(E, ClusterMixin))]
-    for name, Estimator in estimators:
-        if name not in CROSS_DECOMPOSITION + ['Imputer']:
-            yield check_estimators_nan_inf, name, Estimator
+            yield check_transformers_unfitted, name, Transformer
 
 
 def test_clustering():
@@ -129,11 +149,12 @@ def test_clustering():
     clustering = all_estimators(type_filter='cluster')
     for name, Alg in clustering:
         # test whether any classifier overwrites his init parameters during fit
-        yield check_cluster_overwrite_params, name, Alg
+        yield check_clusterer_compute_labels_predict, name, Alg
         if name not in ('WardAgglomeration', "FeatureAgglomeration"):
             # this is clustering on the features
             # let's not test that here.
             yield check_clustering, name, Alg
+            yield check_estimators_partial_fit_n_features, name, Alg
 
 
 def test_classifiers():
@@ -146,16 +167,20 @@ def test_classifiers():
         yield check_classifiers_one_label, name, Classifier
         yield check_classifiers_classes, name, Classifier
         yield check_classifiers_pickle, name, Classifier
+        yield check_estimators_partial_fit_n_features, name, Classifier
         # basic consistency testing
         yield check_classifiers_train, name, Classifier
         if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]
             # TODO some complication with -1 label
-                and name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
+                and name not in ["DecisionTreeClassifier",
+                                 "ExtraTreeClassifier"]):
                 # We don't raise a warning in these classifiers, as
                 # the column y interface is used by the forests.
 
             # test if classifiers can cope with y.shape = (n_samples, 1)
             yield check_classifiers_input_shapes, name, Classifier
+        # test if NotFittedError is raised
+        yield check_estimators_unfitted, name, Classifier
 
 
 def test_regressors():
@@ -166,12 +191,16 @@ def test_regressors():
         # basic testing
         yield check_regressors_train, name, Regressor
         yield check_regressor_data_not_an_array, name, Regressor
+        yield check_estimators_partial_fit_n_features, name, Regressor
+        yield check_regressors_no_decision_function, name, Regressor
         # Test that estimators can be pickled, and once pickled
         # give the same answer as before.
         yield check_regressors_pickle, name, Regressor
         if name != 'CCA':
             # check that the regressor handles int input
             yield check_regressors_int, name, Regressor
+        # Test if NotFittedError is raised
+        yield check_estimators_unfitted, name, Regressor
 
 
 def test_configure():
@@ -222,7 +251,7 @@ def test_class_weight_classifiers():
 
 
 def test_class_weight_auto_classifiers():
-    """Test that class_weight="auto" improves f1-score"""
+    # Test that class_weight="auto" improves f1-score
 
     # This test is broken; its success depends on:
     # * a rare fortuitous RNG seed for make_classification; and
@@ -280,18 +309,6 @@ def test_class_weight_auto_linear_classifiers():
         yield check_class_weight_auto_linear_classifier, name, Classifier
 
 
-def test_estimators_overwrite_params():
-    # test whether any classifier overwrites his init parameters during fit
-    for est_type in ["classifier", "regressor", "transformer"]:
-        estimators = all_estimators(type_filter=est_type)
-        for name, Estimator in estimators:
-            if (name not in ['CCA', '_CCA', 'PLSCanonical', 'PLSRegression',
-                             'PLSSVD', 'GaussianProcess']):
-                # FIXME!
-                # in particular GaussianProcess!
-                yield check_estimators_overwrite_params, name, Estimator
-
-
 @ignore_warnings
 def test_import_all_consistency():
     # Smoke test to check that any name in a __all__ list is actually defined
@@ -319,29 +336,6 @@ def test_root_import_all_completeness():
         assert_in(modname, sklearn.__all__)
 
 
-def test_sparsify_estimators():
-    #Test if predict with sparsified estimators works.
-    #Tests regression, binary classification, and multi-class classification.
-    estimators = all_estimators()
-
-    # test regression and binary classification
-    for name, Estimator in estimators:
-        try:
-            Estimator.sparsify
-            yield check_sparsify_binary_classifier, name, Estimator
-        except:
-            pass
-
-    # test multiclass classification
-    classifiers = all_estimators(type_filter='classifier')
-    for name, Classifier in classifiers:
-        try:
-            Classifier.sparsify
-            yield check_sparsify_multiclass_classifier, name, Classifier
-        except:
-            pass
-
-
 def test_non_transformer_estimators_n_iter():
     # Test that all estimators of type which are non-transformer
     # and which have an attribute of max_iter, return the attribute
@@ -364,9 +358,8 @@ def test_non_transformer_estimators_n_iter():
                     continue
 
                 # Tested in test_transformer_n_iter below
-                elif name in CROSS_DECOMPOSITION or (
-                    name in ['LinearSVC', 'LogisticRegression']
-                    ):
+                elif (name in CROSS_DECOMPOSITION or
+                      name in ['LinearSVC', 'LogisticRegression']):
                     continue
 
                 else:
@@ -387,3 +380,15 @@ def test_transformer_n_iter():
 
         if hasattr(estimator, "max_iter") and name not in external_solver:
             yield check_transformer_n_iter, name, estimator
+
+def test_get_params_invariance():
+    # Test for estimators that support get_params, that
+    # get_params(deep=False) is a subset of get_params(deep=True)
+    # Related to issue #4465
+    
+    estimators = all_estimators(include_meta_estimators=False, 
+            include_other=True)
+    for name, Estimator in estimators:
+        if hasattr(Estimator, 'get_params'):
+            yield check_get_params_invariance, name, Estimator
+

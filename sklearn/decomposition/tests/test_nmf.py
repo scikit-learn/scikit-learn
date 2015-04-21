@@ -15,12 +15,12 @@ random_state = np.random.mtrand.RandomState(0)
 
 @raises(ValueError)
 def test_initialize_nn_input():
-    """Test NNDSVD behaviour on negative input"""
+    # Test NNDSVD behaviour on negative input
     nmf._initialize_nmf(-np.ones((2, 2)), 2)
 
 
 def test_initialize_nn_output():
-    """Test that NNDSVD does not return negative values"""
+    # Test that NNDSVD does not return negative values
     data = np.abs(random_state.randn(10, 10))
     for var in (None, 'a', 'ar'):
         W, H = nmf._initialize_nmf(data, 10, random_state=0)
@@ -28,11 +28,9 @@ def test_initialize_nn_output():
 
 
 def test_initialize_close():
-    """Test NNDSVD error
-
-    Test that _initialize_nmf error is less than the standard deviation of the
-    entries in the matrix.
-    """
+    # Test NNDSVD error
+    # Test that _initialize_nmf error is less than the standard deviation of
+    # the entries in the matrix.
     A = np.abs(random_state.randn(10, 10))
     W, H = nmf._initialize_nmf(A, 10)
     error = linalg.norm(np.dot(W, H) - A)
@@ -41,11 +39,9 @@ def test_initialize_close():
 
 
 def test_initialize_variants():
-    """Test NNDSVD variants correctness
-
-    Test that the variants 'a' and 'ar' differ from basic NNDSVD only where
-    the basic version has zeros.
-    """
+    # Test NNDSVD variants correctness
+    # Test that the variants 'a' and 'ar' differ from basic NNDSVD only where
+    # the basic version has zeros.
     data = np.abs(random_state.randn(10, 10))
     W0, H0 = nmf._initialize_nmf(data, 10, variant=None)
     Wa, Ha = nmf._initialize_nmf(data, 10, variant='a')
@@ -57,14 +53,14 @@ def test_initialize_variants():
 
 @raises(ValueError)
 def test_projgrad_nmf_fit_nn_input():
-    """Test model fit behaviour on negative input"""
+    # Test model fit behaviour on negative input
     A = -np.ones((2, 2))
     m = nmf.ProjectedGradientNMF(n_components=2, init=None, random_state=0)
     m.fit(A)
 
 
 def test_projgrad_nmf_fit_nn_output():
-    """Test that the decomposition does not contain negative values"""
+    # Test that the decomposition does not contain negative values
     A = np.c_[5 * np.ones(5) - np.arange(1, 6),
               5 * np.ones(5) + np.arange(1, 6)]
     for init in (None, 'nndsvd', 'nndsvda', 'nndsvdar'):
@@ -76,21 +72,21 @@ def test_projgrad_nmf_fit_nn_output():
 
 
 def test_projgrad_nmf_fit_close():
-    """Test that the fit is not too far away"""
+    # Test that the fit is not too far away
     pnmf = nmf.ProjectedGradientNMF(5, init='nndsvda', random_state=0)
     X = np.abs(random_state.randn(6, 5))
     assert_less(pnmf.fit(X).reconstruction_err_, 0.05)
 
 
 def test_nls_nn_output():
-    """Test that NLS solver doesn't return negative values"""
+    # Test that NLS solver doesn't return negative values
     A = np.arange(1, 5).reshape(1, -1)
     Ap, _, _ = nmf._nls_subproblem(np.dot(A.T, -A), A.T, A, 0.001, 100)
     assert_false((Ap < 0).any())
 
 
 def test_nls_close():
-    """Test that the NLS results should be close"""
+    # Test that the NLS results should be close
     A = np.arange(1, 5).reshape(1, -1)
     Ap, _, _ = nmf._nls_subproblem(np.dot(A.T, A), A.T, np.zeros_like(A),
                                    0.001, 100)
@@ -98,10 +94,8 @@ def test_nls_close():
 
 
 def test_projgrad_nmf_transform():
-    """Test that NMF.transform returns close values
-
-    (transform uses scipy.optimize.nnls for now)
-    """
+    # Test that NMF.transform returns close values
+    # (transform uses scipy.optimize.nnls for now)
     A = np.abs(random_state.randn(6, 5))
     m = nmf.ProjectedGradientNMF(n_components=5, init='nndsvd', random_state=0)
     transf = m.fit_transform(A)
@@ -109,18 +103,16 @@ def test_projgrad_nmf_transform():
 
 
 def test_n_components_greater_n_features():
-    """Smoke test for the case of more components than features."""
+    # Smoke test for the case of more components than features.
     A = np.abs(random_state.randn(30, 10))
     nmf.ProjectedGradientNMF(n_components=15, sparseness='data',
                              random_state=0).fit(A)
 
 
 def test_projgrad_nmf_sparseness():
-    """Test sparseness
-
-    Test that sparsity constraints actually increase sparseness in the
-    part where they are applied.
-    """
+    # Test sparseness
+    # Test that sparsity constraints actually increase sparseness in the
+    # part where they are applied.
     A = np.abs(random_state.randn(10, 10))
     m = nmf.ProjectedGradientNMF(n_components=5, random_state=0).fit(A)
     data_sp = nmf.ProjectedGradientNMF(n_components=5, sparseness='data',
@@ -132,7 +124,7 @@ def test_projgrad_nmf_sparseness():
 
 
 def test_sparse_input():
-    """Test that sparse matrices are accepted as input"""
+    # Test that sparse matrices are accepted as input
     from scipy.sparse import csc_matrix
 
     A = np.abs(random_state.randn(10, 10))
@@ -160,7 +152,7 @@ def test_sparse_input():
 
 
 def test_sparse_transform():
-    """Test that transform works on sparse data.  Issue #2124"""
+    # Test that transform works on sparse data.  Issue #2124
     from scipy.sparse import csc_matrix
 
     A = np.abs(random_state.randn(5, 4))

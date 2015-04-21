@@ -161,7 +161,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         for the test set, 'all' for both, with shuffled ordering.
 
     data_home: optional, default: None
-        Specify an download and cache folder for the datasets. If None,
+        Specify a download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     categories: None or collection of string or unicode
@@ -234,10 +234,11 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         data.data = data_lst
         data.target = np.array(target)
         data.filenames = np.array(filenames)
-        data.description = 'the 20 newsgroups by date dataset'
     else:
         raise ValueError(
             "subset can only be 'train', 'test' or 'all', got '%s'" % subset)
+
+    data.description = 'the 20 newsgroups by date dataset'
 
     if 'headers' in remove:
         data.data = [strip_newsgroup_header(text) for text in data.data]

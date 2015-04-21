@@ -12,18 +12,27 @@ at which the fixe is no longer needed.
 
 import inspect
 import warnings
+import sys
+import functools
 
 import numpy as np
 import scipy.sparse as sp
+import scipy
 
-np_version = []
-for x in np.__version__.split('.'):
-    try:
-        np_version.append(int(x))
-    except ValueError:
-        # x may be of the form dev-1ea1592
-        np_version.append(x)
-np_version = tuple(np_version)
+
+def _parse_version(version_string):
+    version = []
+    for x in version_string.split('.'):
+        try:
+            version.append(int(x))
+        except ValueError:
+            # x may be of the form dev-1ea1592
+            version.append(x)
+    return tuple(version)
+
+
+np_version = _parse_version(np.__version__)
+sp_version = _parse_version(scipy.__version__)
 
 
 try:
@@ -94,7 +103,7 @@ try:
 except TypeError:
     # Compat where astype accepted no copy argument
     def astype(array, dtype, copy=True):
-        if array.dtype == dtype:
+        if not copy and array.dtype == dtype:
             return array
         return array.astype(dtype)
 else:
@@ -217,7 +226,7 @@ except ImportError:
         """
         def within_tol(x, y, atol, rtol):
             with np.errstate(invalid='ignore'):
-                result = np.less_equal(abs(x-y), atol + rtol * abs(y))
+                result = np.less_equal(abs(x - y), atol + rtol * abs(y))
             if np.isscalar(a) and np.isscalar(b):
                 result = bool(result)
             return result
@@ -300,3 +309,45 @@ if np_version < (1, 8):
             return flag[indx][rev_idx]
 else:
     from numpy import in1d
+
+
+if sp_version < (0, 15):
+    # Backport fix for scikit-learn/scikit-learn#2986 / scipy/scipy#4142
+    from ._scipy_sparse_lsqr_backport import lsqr as sparse_lsqr
+else:
+    from scipy.sparse.linalg import lsqr as sparse_lsqr
+
+
+if sys.version_info < (2, 7, 0):
+    # partial cannot be pickled in Python 2.6
+    # http://bugs.python.org/issue1398
+    class partial(object):
+        def __init__(self, func, *args, **keywords):
+            functools.update_wrapper(self, func)
+            self.func = func
+            self.args = args
+            self.keywords = keywords
+
+        def __call__(self, *args, **keywords):
+            args = self.args + args
+            kwargs = self.keywords.copy()
+            kwargs.update(keywords)
+            return self.func(*args, **kwargs)
+else:
+    from functools import partial
+
+
+if np_version < (1, 6, 2):
+    # Allow bincount to accept empty arrays
+    # https://github.com/numpy/numpy/commit/40f0844846a9d7665616b142407a3d74cb65a040
+    def bincount(x, weights=None, minlength=None):
+        if len(x) > 0:
+            return np.bincount(x, weights, minlength)
+        else:
+            if minlength is None:
+                minlength = 0
+            minlength = np.asscalar(np.asarray(minlength, dtype=np.intp))
+            return np.zeros(minlength, dtype=np.intp)
+
+else:
+    from numpy import bincount

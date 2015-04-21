@@ -22,6 +22,7 @@ from ..utils.fixes import astype
 from ..utils.fixes import in1d
 from ..utils import deprecated, column_or_1d
 from ..utils.validation import check_array
+from ..utils.validation import _num_samples
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 
@@ -34,6 +35,7 @@ __all__ = [
     'label_binarize',
     'LabelBinarizer',
     'LabelEncoder',
+    'MultiLabelBinarizer',
 ]
 
 
@@ -211,7 +213,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     multilabel_ : boolean
         True if the transformer was fitted on a multilabel rather than a
-        multiclass set of labels. The multilabel_ attribute is deprecated
+        multiclass set of labels. The ``multilabel_`` attribute is deprecated
         and will be removed in 0.18
 
     sparse_input_ : boolean,
@@ -220,7 +222,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     indicator_matrix_ : str
         'sparse' when the input data to tansform is a multilable-indicator and
-        is sparse, None otherwise. The indicator_matrix_ attribute is
+        is sparse, None otherwise. The ``indicator_matrix_`` attribute is
         deprecated as of version 0.16 and will be removed in 0.18
 
 
@@ -237,6 +239,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
            [0, 0, 0, 1]])
 
     Binary targets transform to a column vector
+
     >>> lb = preprocessing.LabelBinarizer()
     >>> lb.fit_transform(['yes', 'no', 'no', 'yes'])
     array([[1],
@@ -244,11 +247,18 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
            [0],
            [1]])
 
+    Passing a 2D matrix for multilabel classification
+
     >>> import numpy as np
     >>> lb.fit(np.array([[0, 1, 1], [1, 0, 0]]))
     LabelBinarizer(neg_label=0, pos_label=1, sparse_output=False)
     >>> lb.classes_
     array([0, 1, 2])
+    >>> lb.transform([0, 1, 2, 1])
+    array([[1, 0, 0],
+           [0, 1, 0],
+           [0, 0, 1],
+           [0, 1, 0]])
 
     See also
     --------
@@ -272,15 +282,15 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self.sparse_output = sparse_output
 
     @property
-    @deprecated("Attribute indicator_matrix_ is deprecated and will be "
-                "removed in 0.17. Use 'y_type_ == 'multilabel-indicator'' "
+    @deprecated("Attribute ``indicator_matrix_`` is deprecated and will be "
+                "removed in 0.17. Use ``y_type_ == 'multilabel-indicator'`` "
                 "instead")
     def indicator_matrix_(self):
         return self.y_type_ == 'multilabel-indicator'
 
     @property
-    @deprecated("Attribute multilabel_ is deprecated and will be removed "
-                "in 0.17. Use 'y_type_.startswith('multilabel')' "
+    @deprecated("Attribute ``multilabel_`` is deprecated and will be removed "
+                "in 0.17. Use ``y_type_.startswith('multilabel')`` "
                 "instead")
     def multilabel_(self):
         return self.y_type_.startswith('multilabel')
@@ -306,6 +316,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         if 'multioutput' in self.y_type_:
             raise ValueError("Multioutput target data is not supported with "
                              "label binarization")
+        if _num_samples(y) == 0:
+            raise ValueError('y has 0 samples: %r' % y)
 
         self.sparse_input_ = sp.issparse(y)
         self.classes_ = unique_labels(y)
@@ -455,7 +467,10 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
     if not isinstance(y, list):
         # XXX Workaround that will be removed when list of list format is
         # dropped
-        y = check_array(y, accept_sparse='csr', ensure_2d=False)
+        y = check_array(y, accept_sparse='csr', ensure_2d=False, dtype=None)
+    else:
+        if _num_samples(y) == 0:
+            raise ValueError('y has 0 samples: %r' % y)
     if neg_label >= pos_label:
         raise ValueError("neg_label={0} must be strictly less than "
                          "pos_label={1}.".format(neg_label, pos_label))
@@ -544,7 +559,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
 
     # preserve label ordering
     if np.any(classes != sorted_class):
-        indices = np.argsort(classes)
+        indices = np.searchsorted(sorted_class, classes)
         Y = Y[:, indices]
 
     if y_type == "binary":
@@ -592,7 +607,7 @@ def _inverse_binarize_multiclass(y, classes):
         samples = np.arange(n_samples)[(row_nnz > 0) &
                                        (row_max.ravel() == 0)]
         for i in samples:
-            ind = y.indices[y.indptr[i]:y.indptr[i+1]]
+            ind = y.indices[y.indptr[i]:y.indptr[i + 1]]
             y_i_argmax[i] = classes[np.setdiff1d(outputs, ind)][0]
 
         return classes[y_i_argmax]

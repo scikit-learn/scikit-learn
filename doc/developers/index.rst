@@ -42,6 +42,23 @@ extension in place::
 
     python setup.py build_ext --inplace
 
+
+Another option is to use the ``develop`` option if you change your code a lot
+and do not want to have to reinstall every time. This basically builds the
+extension in place and creates a link to the development directory (see
+`the setuptool docs <https://pythonhosted.org/setuptools/setuptools.html#development-mode>`_)::
+
+    python setup.py develop
+
+.. note::
+
+    if you decide to do that you have to rerun::
+
+        python setup.py build_ext --inplace
+
+    every time the source code of a compiled extension is
+    changed (for instance when switching branches or pulling changes from upstream).
+
 On Unix-like systems, you can simply type ``make`` in the top-level folder to
 build in-place and launch all the tests. Have a look at the ``Makefile`` for
 additional utilities.
@@ -239,12 +256,28 @@ intuition.
 
 Next, one or two small code examples to show its use can be added.
 
-Finally, any math and equations, followed by references,
+Next, any math and equations, followed by references,
 can be added to further the documentation. Not starting the
 documentation with the maths makes it more friendly towards
 users that are just interested in what the feature will do, as
 opposed to how it works "under the hood".
 
+Finally, follow the formatting rules below to make it consistently good:
+
+    * Add "See also" in docstrings for related classes/functions.
+    
+    * "See also" in docstrings should be one line per reference, 
+      with a colon and an explanation, for example::
+
+        See also
+        --------
+        SelectKBest: Select features based on the k highest scores.
+        SelectFpr: Select features based on a false positive rate test.
+
+    * For unwritten formatting rules, try to follow existing good works:
+    
+        * For "References" in docstrings, see the Silhouette Coefficient
+          (:func:`sklearn.metrics.silhouette_score`).
 
 .. warning:: **Sphinx version**
 
@@ -259,7 +292,7 @@ Testing and improving test coverage
 ------------------------------------
 
 High-quality `unit testing <http://en.wikipedia.org/wiki/Unit_testing>`_
-is a corner-stone of the sciki-learn development process. For this
+is a corner-stone of the scikit-learn development process. For this
 purpose, we use the `nose <http://nose.readthedocs.org/en/latest/>`_
 package. The tests are functions appropriately names, located in `tests`
 subdirectories, that check the validity of the algorithms and the
@@ -420,7 +453,7 @@ See :func:`sklearn.utils.check_random_state` in :ref:`developers-utils`.
 
 Here's a simple example of code using some of the above guidelines::
 
-    from sklearn.utils import array2d, check_random_state
+    from sklearn.utils import check_array, check_random_state
 
     def choose_random_sample(X, random_state=0):
         """
@@ -439,7 +472,7 @@ Here's a simple example of code using some of the above guidelines::
         x : numpy array, shape = (n_features,)
             A random point selected from X
         """
-        X = array2d(X)
+        X = check_array(X)
         random_state = check_random_state(random_state)
         i = random_state.randint(X.shape[0])
         return X[i]
@@ -577,7 +610,7 @@ multiple interfaces):
 
     Classification algorithms usually also offer a way to quantify certainty
     of a prediction, either using ``decision_function`` or ``predict_proba``::
-        
+
       probability = obj.predict_proba(data)
 
 :Transformer:
@@ -699,8 +732,11 @@ is not met, an exception of type ``ValueError`` should be raised.
 ``y`` might be ignored in the case of unsupervised learning. However, to
 make it possible to use the estimator as part of a pipeline that can
 mix both supervised and unsupervised transformers, even unsupervised
-estimators are kindly asked to accept a ``y=None`` keyword argument in
+estimators need to accept a ``y=None`` keyword argument in
 the second position that is just ignored by the estimator.
+For the same reason, ``fit_predict``, ``fit_transform``, ``score``
+and ``partial_fit`` methods need to accept a ``y`` argument in
+the second place if they are implemented.
 
 The method should return the object (``self``). This pattern is useful
 to be able to implement quick one liners in an IPython session such as::
@@ -782,6 +818,7 @@ The default value for ``deep`` should be true.
 
 The ``set_params`` on the other hand takes as input a dict of the form
 ``'parameter': value`` and sets the parameter of the estimator using this dict.
+Return value must be estimator itself.
 
 While the ``get_params`` mechanism is not essential (see :ref:`cloning` below),
 the ``set_params`` function is necessary as it is used to set parameters during
@@ -799,6 +836,7 @@ implement the interface is::
     def set_params(self, **parameters):
         for parameter, value in parameters.items():
             self.setattr(parameter, value)
+        return self
 
 
 Parameters and init
@@ -811,6 +849,11 @@ The easiest and recommended way to accomplish this is to
 **not do any parameter validation in ``__init__``**.
 All logic behind estimator parameters,
 like translating string arguments into functions, should be done in ``fit``.
+
+Also it is expected that parameters with trailing ``_`` are **not to be set
+inside the ``__init__`` method**. All and only the public attributes set by
+fit have a trailing ``_``. As a result the existence of parameters with
+trailing ``_`` is used to check if the estimator has been fitted.
 
 .. _cloning:
 
@@ -835,9 +878,24 @@ last step, it needs to provide a ``fit`` or ``fit_transform`` function.
 To be able to evaluate the pipeline on any data but the training set,
 it also needs to provide a ``transform`` function.
 There are no special requirements for the last step in a pipeline, except that
-it has a ``fit`` function.  All ``fit`` and ``fit_transform`` functions must
-take arguments ``X, y``, even if y is not used.
+it has a ``fit`` function. All ``fit`` and ``fit_transform`` functions must
+take arguments ``X, y``, even if y is not used. Similarly, for ``score`` to be
+usable, the last step of the pipeline needs to have a ``score`` function that
+accepts an optional ``y``.
 
+Estimator types
+---------------
+Some common functionality depends on the kind of estimator passed.
+For example, cross-validation in :class:`grid_search.GridSearchCV` and
+:func:`cross_validation.cross_val_score` defaults to being stratified when used
+on a classifier, but not otherwise. Similarly, scorers for average precision
+that take a continuous prediction need to call ``decision_function`` for classifiers,
+but ``predict`` for regressors. This distinction between classifiers and regressors
+is implemented using the ``_estimator_type`` attribute, which takes a string value.
+It should be ``"classifier"`` for classifiers and ``"regressor"`` for
+regressors and ``"clusterer"`` for clustering methods, to work as expected.
+Inheriting from ``ClassifierMixin``, ``RegressorMixin`` or ``ClusterMixin``
+will set the attribute automatically.
 
 Working notes
 -------------
@@ -863,7 +921,7 @@ The easiest way to achieve this is to put::
     self.classes_, y = np.unique(y, return_inverse=True)
 
 in ``fit``.
-This return a new ``y`` that contains class indexes, rather than labels,
+This returns a new ``y`` that contains class indexes, rather than labels,
 in the range [0, ``n_classes``).
 
 A classifier's ``predict`` method should return
