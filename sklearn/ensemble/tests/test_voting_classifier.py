@@ -141,11 +141,12 @@ def test_predict_proba_on_toy_problem():
                                 ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                                 voting='hard')
         eclf.fit(X, y).predict_proba(X)
-        #raise AssertionError('NotImplementedError not raised')
-    except NotImplementedError:
+
+    except AttributeError:
         pass
     else:
-        raise AssertionError('NotImplementedError not raised')
+        raise AssertionError('AttributeError for voting == "hard"'
+                             ' and with predict_proba not raised')
        
 
 

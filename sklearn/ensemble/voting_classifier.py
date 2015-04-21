@@ -153,6 +153,11 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         maj = self.le_.inverse_transform(maj)
         return maj
+        
+    def _check_proba(self):
+        if self.voting == 'hard':
+            raise AttributeError("predict_proba is not available when"
+                                 " voting=%r" % self.voting)
 
     def predict_proba(self, X):
         """ Predict class probabilities for X in 'soft' voting.
@@ -168,9 +173,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         avg : array-like, shape = [n_samples, n_classes]
             Weighted average probability for each class per sample.
         """
-        if self.voting == 'hard':
-            raise NotImplementedError("predict_proba is only supported in 'soft' voting.")
-        
+        self._check_proba()
         avg = np.average(self._predict_probas(X), axis=0, weights=self.weights)
         return avg
 
