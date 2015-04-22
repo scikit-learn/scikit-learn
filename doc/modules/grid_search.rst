@@ -38,11 +38,6 @@ given number of candidates from a parameter space with a specified
 distribution. After describing these tools we detail
 :ref:`best practice <grid_search_tips>` applicable to both approaches.
 
-.. seealso
-
-   :ref:`pipeline` describes building composite estimators whose
-   parameter space can be searched with these tools.
-
 Exhaustive Grid Search
 ======================
 

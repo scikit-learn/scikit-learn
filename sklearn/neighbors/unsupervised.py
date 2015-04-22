@@ -72,9 +72,6 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     metric_params: dict, optional (default = None)
         additional keyword arguments for the metric function.
 
-    metric_params: dict, optional (default = None)
-        additional keyword arguments for the metric function.
-
     Examples
     --------
       >>> import numpy as np
