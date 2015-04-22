@@ -154,13 +154,23 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         maj = self.le_.inverse_transform(maj)
         return maj
         
+    def _collect_probas(self, X):
+        """ Collect results from clf.predict calls. """
+        return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
+
+    def _predict_proba(self, X):
+        """ Predict class probabilities for X in 'soft' voting """
+        avg = np.average(self._collect_probas(X), axis=0, weights=self.weights)
+        return avg
+        
     def _check_proba(self):
         if self.voting == 'hard':
             raise AttributeError("predict_proba is not available when"
-                                 " voting=%r" % self.voting)
+                                 " voting=%r" % self.voting)    
 
-    def predict_proba(self, X):
-        """ Predict class probabilities for X in 'soft' voting.
+    @property
+    def predict_proba(self):
+        """ Compute probabilities of possible outcomes for samples in X.
 
         Parameters
         ----------
@@ -174,9 +184,8 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
             Weighted average probability for each class per sample.
         """
         self._check_proba()
-        avg = np.average(self._predict_probas(X), axis=0, weights=self.weights)
-        return avg
-
+        return self._predict_proba
+        
     def transform(self, X):
         """ Return class labels or probabilities for X for each estimator.
 
@@ -196,7 +205,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
             Class labels predicted by each classifier.
         """
         if self.voting == 'soft':
-            return self._predict_probas(X)
+            return self._collect_probas(X)
         else:
             return self._predict(X)
 
@@ -215,6 +224,4 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         """ Collect results from clf.predict calls. """
         return np.asarray([clf.predict(X) for clf in self.estimators_]).T
 
-    def _predict_probas(self, X):
-        """ Collect results from clf.predict calls. """
-        return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
+
