@@ -595,50 +595,21 @@ class LeavePLabelOut(_PartitionIterator):
 class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
-    def __init__(self, *args, **kwargs):
-        if len(args) == 0:
-            raise ValueError("Parameter n must be specified.")
-        else:
-            self.n = args[0]
+    def __init__(self, n, n_iter=10, test_size=None, train_size=None,
+                 random_state=None):
+        self.n = n
+        self.n_iter = n_iter
+        self.random_state = random_state
 
-        if len(args) > 1:
-            self.n_iter = args[1]
-        elif "n_iter" in kwargs:
-            self.n_iter = kwargs["n_iter"]
-        else:
-            self.n_iter = 10
+        # we will compute the final value of
+        # test_size in _validate_shuffle_split()
+        self.test_size = test_size
+        # we will compute the final value of
+        # test_size in _validate_shuffle_split()
+        self.train_size = train_size
 
-        if len(args) > 2:
-            self.test_size = args[2]
-        elif "test_size" in kwargs:
-            self.test_size = kwargs["test_size"]
-        else:
-            # we will compute the final value of
-            # test_size in _validate_shuffle_split()
-            self.test_size = None
-
-        if len(args) > 3:
-            self.train_size = args[3]
-        elif "train_size" in kwargs:
-            self.train_size = kwargs["train_size"]
-        else:
-            # we will compute the final value of
-            # test_size in _validate_shuffle_split()
-            self.train_size = None
-
-        if len(args) > 4:
-            self.random_state = args[4]
-        elif "random_state" in kwargs:
-            self.random_state = kwargs["random_state"]
-        else:
-            self.random_state = None
-
-        if len(args) > 5:
-            raise ValueError("Too much parameter specified: %r" % args)
-
-        self.n_train, self.n_test = _validate_shuffle_split(
-            self.n, self.test_size, self.train_size,
-            args, kwargs)
+        self.n_train, self.n_test = _validate_shuffle_split(n, test_size,
+                                                            train_size)
 
     def __iter__(self):
         for train, test in self._iter_indices():
@@ -733,15 +704,12 @@ class ShuffleSplit(BaseShuffleSplit):
         return self.n_iter
 
 
-def _validate_shuffle_split(n, test_size, train_size, param_tuple, param_dict):
+def _validate_shuffle_split(n, test_size, train_size):
     if test_size is None and train_size is None:
-        if "test_size" not in param_dict and \
-           len(param_tuple) < 3:  # user didn't set test_size
-            test_size = 0.1       # we will use default value
-            train_size = 1. - test_size
-        else:
-            raise ValueError(
-                'test_size and train_size can not both be None.')
+        # user didn't set test_size
+        # we will use default value
+        test_size = 0.1
+        train_size = 1. - test_size
 
     if test_size is not None and train_size is None:
         if np.asarray(test_size).dtype.kind == 'f':
