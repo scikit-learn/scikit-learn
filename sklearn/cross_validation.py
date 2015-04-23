@@ -742,7 +742,7 @@ def _validate_shuffle_split(n, test_size, train_size):
             raise ValueError("Invalid value for train_size: %r" % train_size)
     else:  # test_size is not None and train_set is not None:
         if np.array(test_size).dtype.kind == 'f' and \
-        np.array(train_size).dtype.kind == 'f':
+           np.array(train_size).dtype.kind == 'f':
             if test_size >= 1.:
                 raise ValueError('test_size=%f should be smaller '
                                  'than 1.0 or be an integer' % test_size)
@@ -755,19 +755,19 @@ def _validate_shuffle_split(n, test_size, train_size):
                                  'test_size and/or train_size.' %
                                  (train_size + test_size))
         elif np.array(test_size).dtype.kind == 'f' and \
-        np.array(train_size).dtype.kind == 'i':
+                np.array(train_size).dtype.kind == 'i':
             raise ValueError(
                 "Type of test_size and train_sizeis not the same, "
                 "test_size: %r, train_size: %r" %
                 (type(test_size), type(train_size)))
         elif np.array(test_size).dtype.kind == 'i' and \
-        np.array(train_size).dtype.kind == 'f':
+                np.array(train_size).dtype.kind == 'f':
             raise ValueError(
                 "Type of test_size and train_sizeis not the same, "
                 "test_size: %r, train_size: %r" %
                 (type(test_size), type(train_size)))
         elif np.array(test_size).dtype.kind == 'i' and \
-        np.array(train_size).dtype.kind == 'i':
+                np.array(train_size).dtype.kind == 'i':
             if test_size >= n:
                 raise ValueError('test_size=%d should be smaller '
                                  'than the number of samples %d' %
@@ -783,11 +783,11 @@ def _validate_shuffle_split(n, test_size, train_size):
                                  (train_size + test_size))
         else:
             if np.array(test_size).dtype.kind != 'f' and \
-            np.array(test_size).dtype.kind != 'i':
+               np.array(test_size).dtype.kind != 'i':
                 raise ValueError("Invalid value for test_size: %r" %
                                  test_size)
             if np.array(train_size).dtype.kind != 'f' and \
-            np.array(train_size).dtype.kind != 'i':
+               np.array(train_size).dtype.kind != 'i':
                 raise ValueError("Invalid value for train_size: %r" %
                                  train_size)
 

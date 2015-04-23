@@ -374,10 +374,36 @@ def test_shuffle_split():
         assert_array_equal(t4[1], t5[1])
 
     ss6 = cval.ShuffleSplit(10, random_state=0)
-    ss7 = cval.ShuffleSplit(10, test_size=None, train_size=None, random_state=0)
-    for t6, t7 in zip(ss6, ss7):
+    ss7 = cval.ShuffleSplit(10, test_size=None, train_size=None,
+                            random_state=0)
+    ss8 = cval.ShuffleSplit(10, test_size=None, random_state=0)
+    ss9 = cval.ShuffleSplit(10, train_size=None, random_state=0)
+    ss10 = cval.ShuffleSplit(10, test_size=0.1, train_size=0.9,
+                             random_state=0)
+    ss11 = cval.ShuffleSplit(10, test_size=0.1, random_state=0)
+    ss12 = cval.ShuffleSplit(10, train_size=0.9, random_state=0)
+    ss13 = cval.ShuffleSplit(10, test_size=0.1, train_size=None,
+                             random_state=0)
+    ss14 = cval.ShuffleSplit(10, test_size=None, train_size=0.9,
+                             random_state=0)
+    for t6, t7, t8, t9, t10, t11, t12, t13, t14 in \
+            zip(ss6, ss7, ss8, ss9, ss10, ss11, ss12, ss13, ss14):
         assert_array_equal(t6[0], t7[0])
+        assert_array_equal(t7[0], t8[0])
+        assert_array_equal(t8[0], t9[0])
+        assert_array_equal(t9[0], t10[0])
+        assert_array_equal(t10[0], t11[0])
+        assert_array_equal(t11[0], t12[0])
+        assert_array_equal(t12[0], t13[0])
+        assert_array_equal(t13[0], t14[0])
         assert_array_equal(t6[1], t7[1])
+        assert_array_equal(t7[1], t8[1])
+        assert_array_equal(t8[1], t9[1])
+        assert_array_equal(t9[1], t10[1])
+        assert_array_equal(t10[1], t11[1])
+        assert_array_equal(t11[1], t12[1])
+        assert_array_equal(t12[1], t13[1])
+        assert_array_equal(t13[1], t14[1])
 
 
 def test_stratified_shuffle_split_init():
