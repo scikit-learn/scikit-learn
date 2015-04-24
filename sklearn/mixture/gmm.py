@@ -608,8 +608,12 @@ def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
         except linalg.LinAlgError:
             # The model is most probably stuck in a component with too
             # few observations, we need to reinitialize this components
-            cv_chol = linalg.cholesky(cv + min_covar * np.eye(n_dim),
-                                      lower=True)
+            try:
+                cv_chol = linalg.cholesky(cv + min_covar * np.eye(n_dim),
+                                          lower=True)
+            except linalg.LinAlgError:
+                raise ValueError("'covars' must be symmetric, positive-definite")
+
         cv_log_det = 2 * np.sum(np.log(np.diagonal(cv_chol)))
         cv_sol = linalg.solve_triangular(cv_chol, (X - mu).T, lower=True).T
         log_prob[:, c] = - .5 * (np.sum(cv_sol ** 2, axis=1) +
