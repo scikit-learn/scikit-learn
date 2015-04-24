@@ -20,7 +20,7 @@ Data Set Characteristics:
 
   :Attributes:
     :Age:
-    :Aex:
+    :Sex:
     :Body mass index:
     :Average blood pressure:
     :S1:
