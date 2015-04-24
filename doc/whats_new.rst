@@ -22,6 +22,9 @@ Enhancements
    - :class:`dummy.DummyClassifier` now supports a prior fitting strategy.
      By `Arnaud Joly`_.
 
+   - Added the :func:`metrics.label_ranking_loss` metrics.
+     By `Arnaud Joly`_.
+
 Bug fixes
 .........
 
