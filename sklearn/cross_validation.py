@@ -1547,7 +1547,7 @@ def train_test_split(*arrays, **options):
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
 
-    stratify: array-like or None (default is None)
+    stratify : array-like or None (default is None)
         If not None, data is split in a stratified fashion, using this as
         the labels array.
 

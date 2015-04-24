@@ -702,10 +702,13 @@ def test_train_test_split():
                                         [2, 4, 2, 4, 6]):
         train, test = cval.train_test_split(y,
                                             test_size=test_size,
-                                            stratify=y)
+                                            stratify=y,
+                                            random_state=0)
         assert_equal(len(test), exp_test_size)
         assert_equal(len(test) + len(train), len(y))
-        assert_almost_equal(np.sum(y[train] == 1), np.sum(y[train] == 1))
+        # check the 1:1 ratio of ones and twos in the data is preserved
+        assert_equal(np.sum(train == 1), np.sum(train == 2))
+
 
 def train_test_split_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
