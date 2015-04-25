@@ -65,7 +65,7 @@ import numpy as np
 
 from sklearn.cluster.bicluster import SpectralCoclustering
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.externals import six
+from sklearn.externals.six import iteritems
 from sklearn.datasets.twenty_newsgroups import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.cluster import v_measure_score
@@ -143,11 +143,11 @@ def most_common(d):
 
     Like Counter.most_common in Python >=2.7.
     """
-    return sorted(six.iteritems(d), key=operator.itemgetter(1), reverse=True)
+    return sorted(iteritems(d), key=operator.itemgetter(1), reverse=True)
 
 
 bicluster_ncuts = list(bicluster_ncut(i)
-                       for i in xrange(len(newsgroups.target_names)))
+                       for i in range(len(newsgroups.target_names)))
 best_idx = np.argsort(bicluster_ncuts)[:5]
 
 print()

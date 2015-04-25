@@ -204,8 +204,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             self.class_weight, self.penalty, self.dual, self.verbose,
             self.max_iter, self.tol, self.random_state, self.multi_class,
-            self.loss
-            )
+            self.loss)
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
@@ -415,11 +414,11 @@ class SVC(BaseSVC):
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
 
-    probability: boolean, optional (default=False)
+    probability : boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
         to calling `fit`, and will slow down that method.
 
-    shrinking: boolean, optional (default=True)
+    shrinking : boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
     tol : float, optional (default=1e-3)
@@ -535,22 +534,22 @@ class NuSVC(BaseSVC):
          used to precompute the kernel matrix.
 
     degree : int, optional (default=3)
-        Degree of kernel function
-        is significant only in poly, rbf, sigmoid.
+        Degree of the polynomial kernel function ('poly').
+        Ignored by all other kernels.
 
     gamma : float, optional (default=0.0)
-        Kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
-        will be taken.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
+        If gamma is 0.0 then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
-        Independent term in kernel function. It is only significant
-        in poly/sigmoid.
+        Independent term in kernel function.
+        It is only significant in 'poly' and 'sigmoid'.
 
-    probability: boolean, optional (default=False)
+    probability : boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
         to calling `fit`, and will slow down that method.
 
-    shrinking: boolean, optional (default=True)
+    shrinking : boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
     tol : float, optional (default=1e-3)
@@ -659,18 +658,18 @@ class SVR(BaseLibSVM, RegressorMixin):
          used to precompute the kernel matrix.
 
     degree : int, optional (default=3)
-        Degree of kernel function
-        is significant only in poly, rbf, sigmoid.
+        Degree of the polynomial kernel function ('poly').
+        Ignored by all other kernels.
 
     gamma : float, optional (default=0.0)
-        Kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
-        will be taken.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
+        If gamma is 0.0 then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
-        independent term in kernel function. It is only significant
-        in poly/sigmoid.
+        Independent term in kernel function.
+        It is only significant in 'poly' and 'sigmoid'.
 
-    shrinking: boolean, optional (default=True)
+    shrinking : boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
     tol : float, optional (default=1e-3)
@@ -769,18 +768,18 @@ class NuSVR(BaseLibSVM, RegressorMixin):
          used to precompute the kernel matrix.
 
     degree : int, optional (default=3)
-        Degree of kernel function
-        is significant only in poly, rbf, sigmoid.
+        Degree of the polynomial kernel function ('poly').
+        Ignored by all other kernels.
 
     gamma : float, optional (default=0.0)
-        Kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
-        will be taken.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
+        If gamma is 0.0 then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
-        Independent term in kernel function. It is only significant
-        in poly/sigmoid.
+        Independent term in kernel function.
+        It is only significant in 'poly' and 'sigmoid'.
 
-    shrinking: boolean, optional (default=True)
+    shrinking : boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
     tol : float, optional (default=1e-3)
@@ -889,7 +888,7 @@ class OneClassSVM(BaseLibSVM):
     tol : float, optional
         Tolerance for stopping criterion.
 
-    shrinking: boolean, optional
+    shrinking : boolean, optional
         Whether to use the shrinking heuristic.
 
     cache_size : float, optional

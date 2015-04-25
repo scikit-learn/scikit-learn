@@ -13,6 +13,7 @@ from nose.tools import assert_raises, assert_true, assert_false, assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
+from sklearn.utils.mocking import MockDataFrame
 from sklearn.utils.estimator_checks import NotAnArray
 from sklearn.random_projection import sparse_random_matrix
 from sklearn.linear_model import ARDRegression
@@ -104,10 +105,6 @@ def test_ordering():
     X = sp.csr_matrix(X)
     X.data = X.data[::-1]
     assert_false(X.data.flags['C_CONTIGUOUS'])
-
-    for copy in (True, False):
-        Y = check_array(X, accept_sparse='csr', copy=copy, order='C')
-        assert_true(Y.data.flags['C_CONTIGUOUS'])
 
 
 def test_check_array():
@@ -216,6 +213,25 @@ def test_check_array():
     X_no_array = NotAnArray(X_dense)
     result = check_array(X_no_array)
     assert_true(isinstance(result, np.ndarray))
+
+
+def test_check_array_pandas_dtype_object_conversion():
+    # test that data-frame like objects with dtype object
+    # get converted
+    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.object)
+    X_df = MockDataFrame(X)
+    assert_equal(check_array(X_df).dtype.kind, "f")
+    assert_equal(check_array(X_df, ensure_2d=False).dtype.kind, "f")
+    # smoke-test against dataframes with column named "dtype"
+    X_df.dtype = "Hans"
+    assert_equal(check_array(X_df, ensure_2d=False).dtype.kind, "f")
+
+
+def test_check_array_dtype_stability():
+    # test that lists with ints don't get converted to floats
+    X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    assert_equal(check_array(X).dtype.kind, "i")
+    assert_equal(check_array(X, ensure_2d=False).dtype.kind, "i")
 
 
 def test_check_array_min_samples_and_features_messages():

@@ -72,7 +72,7 @@ except ImportError:
 try:
     from nose.tools import assert_raises_regex
 except ImportError:
-    # for Py 2.6
+    # for Python 2
     def assert_raises_regex(expected_exception, expected_regexp,
                             callable_obj=None, *args, **kwargs):
         """Helper function to check for message patterns in exceptions"""
@@ -81,7 +81,7 @@ except ImportError:
         try:
             callable_obj(*args, **kwargs)
             not_raised = True
-        except Exception as e:
+        except expected_exception as e:
             error_message = str(e)
             if not re.compile(expected_regexp).search(error_message):
                 raise AssertionError("Error message should match pattern "
@@ -389,13 +389,8 @@ else:
 
 def assert_raise_message(exception, message, function, *args, **kwargs):
     """Helper function to test error messages in exceptions"""
-
-    try:
-        function(*args, **kwargs)
-        raise AssertionError("Should have raised %r" % exception(message))
-    except exception as e:
-        error_message = str(e)
-        assert_in(message, error_message)
+    assert_raises_regex(
+        exception, re.escape(message), function, *args, **kwargs)
 
 
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):

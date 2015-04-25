@@ -541,10 +541,12 @@ def test_error():
         est = TreeEstimator()
         est.fit(np.dot(X, Xt), y)
         assert_raises(ValueError, est.predict, X)
+        assert_raises(ValueError, est.apply, X)
 
         clf = TreeEstimator()
         clf.fit(X, y)
         assert_raises(ValueError, clf.predict, Xt)
+        assert_raises(ValueError, clf.apply, Xt)
 
         # apply before fitting
         est = TreeEstimator()
