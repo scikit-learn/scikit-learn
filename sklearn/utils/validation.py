@@ -248,11 +248,11 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
                 spmatrix = spmatrix.copy()
         else:
             # convert dtype
-            spmatrix = astype(spmatrix, dtype, copy=False)
+            spmatrix = spmatrix.astype(dtype)
     else:
         # create new
         spmatrix = spmatrix.asformat(accept_sparse[0])
-        spmatrix = astype(spmatrix, dtype, copy=False)
+        spmatrix = spmatrix.astype(dtype)
     if force_all_finite:
         if not hasattr(spmatrix, "data"):
             warnings.warn("Can't check %s sparse matrix for nan or inf."
