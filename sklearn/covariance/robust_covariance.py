@@ -140,11 +140,8 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
 
     previous_dist = dist
     dist = (np.dot(X - location, precision) * (X - location)).sum(axis=1)
-    # Check if best fit already found (det => 0, logdet => -inf)
-    if np.isinf(det):
-        results = location, covariance, det, support, dist
     # Check convergence
-    if np.allclose(det, previous_det):
+    if np.isinf(det) or np.allclose(det, previous_det):
         # c_step procedure converged
         if verbose:
             print("Optimal couple (location, covariance) found before"
