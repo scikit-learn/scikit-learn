@@ -51,6 +51,9 @@ New features
      converts single output regressors to multi-ouput regressors by fitting
      one regressor per output. By `Tim Head`_.
 
+   - Added ``algorithm="elkan"`` to :class:`cluster.KMeans` implementing
+     Elkan's fast K-Means algorithm. By `Andreas Müller`_.
+
 Enhancements
 ............
 

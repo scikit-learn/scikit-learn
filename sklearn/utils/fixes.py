@@ -193,6 +193,15 @@ except ImportError:
     def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         return np.argsort(a, axis=axis, order=order)
 
+try:
+    from numpy import partition
+except ImportError:
+    warnings.warn('Using `sort` instead of parition.'
+                  'Upgrade numpy to 1.8 for better performace on large number'
+                  'of clusters')
+    def partition(a, kth, axis=-1, kind='introselect', order=None):
+        return np.sort(a, axis=axis, order=order)
+
 
 try:
     from itertools import combinations_with_replacement
