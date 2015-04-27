@@ -227,6 +227,13 @@ def confusion_matrix(y_true, y_pred, labels=None):
            [0, 0, 1],
            [1, 0, 2]])
 
+    >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
+    >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
+    >>> confusion_matrix(y_true, y_pred, labels=["ant", "bird", "cat"])
+    array([[2, 0, 0],
+           [0, 0, 1],
+           [1, 0, 2]])
+
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
