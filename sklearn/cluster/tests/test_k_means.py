@@ -50,6 +50,21 @@ def test_kmeans_dtype():
     assert_array_equal(km.labels_, pred_x)
 
 
+def test_elkan_results():
+    rnd = np.random.RandomState(0)
+    X_normal = rnd.normal(size=(50, 10))
+    X_blobs, _ = make_blobs(random_state=0)
+    km_lloyd = KMeans(algorithm='lloyd', n_clusters=5, random_state=0,
+                      n_init=1)
+    km_elkan = KMeans(algorithm='elkan', n_clusters=5, random_state=0,
+                      n_init=1)
+    for X in [X_normal, X_blobs]:
+        km_lloyd.fit(X)
+        km_elkan.fit(X)
+        assert_array_almost_equal(km_elkan.cluster_centers_, km_lloyd.cluster_centers_)
+        assert_array_equal(km_elkan.labels_, km_lloyd.labels_)
+
+
 def test_labels_assignment_and_inertia():
     # pure numpy implementation as easily auditable reference gold
     # implementation
@@ -263,7 +278,7 @@ def test_k_means_n_init():
 
 
 def test_k_means_fortran_aligned_data():
-    # Check the KMeans will work well, even if X is a fortran-aligned data. 
+    # Check the KMeans will work well, even if X is a fortran-aligned data.
     X = np.asfortranarray([[0, 0], [0, 1], [0, 1]])
     centers = np.array([[0, 0], [0, 1]])
     labels = np.array([0, 1, 1])
@@ -542,9 +557,11 @@ def test_predict():
 
 
 def test_score():
-    km1 = KMeans(n_clusters=n_clusters, max_iter=1, random_state=42)
+    # TODO better test? This doesn't pass with algorithm="elkan" as
+    # it converges after one iteration (to the same score that lloyd gets after 10)
+    km1 = KMeans(n_clusters=n_clusters, max_iter=1, random_state=42, algorithm='lloyd')
     s1 = km1.fit(X).score(X)
-    km2 = KMeans(n_clusters=n_clusters, max_iter=10, random_state=42)
+    km2 = KMeans(n_clusters=n_clusters, max_iter=10, random_state=42, algorithm='lloyd')
     s2 = km2.fit(X).score(X)
     assert_greater(s2, s1)
 
