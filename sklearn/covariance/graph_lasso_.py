@@ -79,8 +79,9 @@ def alpha_max(emp_cov):
 # The g-lasso algorithm
 
 def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
-                max_iter=100, verbose=False, return_costs=False,
-                eps=np.finfo(np.float).eps, return_n_iter=False):
+                enet_tol=1e-4, max_iter=100, verbose=False,
+                return_costs=False, eps=np.finfo(np.float64).eps,
+                return_n_iter=False):
     """l1-penalized covariance estimator
 
     Parameters
@@ -103,6 +104,10 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     tol : positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped.
+
+    enet_tol : positive float, optional
+        The tolerance for the elastic net solver used to calculate the descent
+        direction. Only used for mode='cd'.
 
     max_iter : integer, optional
         The maximum number of iterations.
@@ -205,14 +210,13 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                                   / (precision_[idx, idx] + 1000 * eps))
                         coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
                             coefs, alpha, 0, sub_covariance, row, row,
-                            max_iter, tol, check_random_state(None), False)
+                            max_iter, enet_tol, check_random_state(None), False)
                     else:
                         # Use LARS
                         _, _, coefs = lars_path(
                             sub_covariance, row, Xy=row, Gram=sub_covariance,
                             alpha_min=alpha / (n_features - 1), copy_Gram=True,
-                            method='lars')
-                        coefs = coefs[:, -1]
+                            method='lars', return_path=False)
                 # Update the precision matrix
                 precision_[idx, idx] = (
                     1. / (covariance_[idx, idx]
@@ -587,7 +591,7 @@ class GraphLassoCV(GraphLasso):
             last_finite_idx = 0
             for index, (alpha, scores, _) in enumerate(path):
                 this_score = np.mean(scores)
-                if this_score >= .1 / np.finfo(np.float).eps:
+                if this_score >= .1 / np.finfo(np.float64).eps:
                     this_score = np.nan
                 if np.isfinite(this_score):
                     last_finite_idx = index
