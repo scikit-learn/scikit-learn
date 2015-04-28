@@ -8,8 +8,6 @@ pressure, and six blood serum measurements were obtained for each of n =
 442 diabetes patients, as well as the response of interest, a
 quantitative measure of disease progression one year after baseline.
 
-Note that the 10 x variables have been standardized to have mean 0 and squared length = 1 (sum(x^2)=1).
-
 Data Set Characteristics:
 
   :Number of Instances: 442
@@ -29,6 +27,8 @@ Data Set Characteristics:
     :S4:
     :S5:
     :S6:
+
+*Note: Each of these 10 feature variables have been mean centered and scaled by the standard deviation times `n_samples` (i.e. the sum of squares of each column totals 1).
 
 Source URL:
 http://www4.stat.ncsu.edu/~boos/var.select/diabetes.html
