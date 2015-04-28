@@ -381,10 +381,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 return proba[:, :, 0]
 
-
     def decision_paths(self, X):
-        """Predict class or regression value for X and return decision paths leading to the prediction.
-        
+        """Predict class or regression value for X and return decision paths
+        leading to the prediction.
+
 
         Parameters
         ----------
@@ -394,8 +394,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         Returns
         -------
         y : array of shape = [n_samples, max_depth + 1]
-            Decision paths, where each path is an array of node ids, starting with the root node id.
-            If a path is shorter than max_depth + 1, it is padded with -1 on the right.
+            Decision paths, where each path is an array of node ids, starting
+            with the root node id. If a path is shorter than max_depth + 1,
+            it is padded with -1 on the right.
         """
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = check_array(X, dtype=DTYPE)
@@ -438,7 +439,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         X = self._validate_X_predict(X, check_input)
         return self.tree_.apply(X)
-
 
     @property
     def feature_importances_(self):
