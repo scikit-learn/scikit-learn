@@ -410,6 +410,36 @@ class BiclusterMixin(object):
 class TransformerMixin(object):
     """Mixin class for all transformers in scikit-learn."""
 
+    def pipe(self, X=None, y=None):
+        """Transform X and y.
+
+        Default implemenation based on transform that
+        will just pass through y.
+
+        Parameters
+        ----------
+        X : array-like of shape [n_samples, n_features]
+            Data to be transformed
+
+        y : array-like of shape [n_samples]
+            Labels to be handed through.
+
+        Returns
+        -------
+        X_new : numpy-array of shape [n_samples, n_feature_new]
+            Transformed data.
+
+        y : numpy-array of shape [n_samples]
+            Passed-through labels.
+
+        """
+        Xt = self.transform(X)
+        return Xt, y
+
+    def fit_pipe(self, X=None, y=None):
+        self.fit(X, y)
+        return self.pipe(X, y)
+
     def fit_transform(self, X, y=None, **fit_params):
         """Fit to data, then transform it.
 

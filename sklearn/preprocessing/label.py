@@ -10,6 +10,7 @@ from collections import defaultdict
 import itertools
 import array
 import warnings
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 import scipy.sparse as sp
@@ -53,7 +54,27 @@ def _check_numpy_unicode_bug(labels):
                            " NumPy to use LabelEncoder with unicode inputs.")
 
 
-class LabelEncoder(BaseEstimator, TransformerMixin):
+class _LabelTransformer(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
+    """Transformer for labels.
+
+    The pipe-method passes through X and transforms y.
+    """
+    @abstractmethod
+    def fit(self, X=None, y=None):
+        pass
+
+    def pipe(self, X=None, y=None):
+        if y is not None:
+            y = self.transform(y)
+        return X, y
+
+    def fit_pipe(self, X=None, y=None):
+        if y is not None:
+            y = self.fit_transform(y)
+        return X, y
+
+
+class LabelEncoder(_LabelTransformer):
     """Encode labels with value between 0 and n_classes-1.
 
     Attributes
@@ -168,7 +189,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         return self.classes_[y]
 
 
-class LabelBinarizer(BaseEstimator, TransformerMixin):
+class LabelBinarizer(_LabelTransformer):
     """Binarize labels in a one-vs-all fashion
 
     Several regression and binary classification algorithms are
@@ -670,7 +691,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
         raise ValueError("{0} format is not supported".format(output_type))
 
 
-class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
+class MultiLabelBinarizer(_LabelTransformer):
     """Transform between iterable of iterables and a multilabel format
 
     Although a list of sets or tuples is a very intuitive format for multilabel

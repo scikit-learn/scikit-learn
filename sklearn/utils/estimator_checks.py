@@ -189,6 +189,23 @@ def check_transformer(name, Transformer):
     _check_transformer(name, Transformer, X.tolist(), y.tolist())
 
 
+def check_transformer_pipe(name, Transformer):
+    # check that transformers implement pipe and that it does the right thing.
+    # todo: pipe does input validation
+    X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+                      random_state=0, n_features=2, cluster_std=0.1)
+    X = StandardScaler().fit_transform(X)
+    X -= X.min()
+    transformer = Transformer()
+    set_fast_parameters(transformer)
+    set_random_state(transformer)
+    transformer.fit(X, y)
+    Xt, yt = transformer.pipe(X, y)
+    Xt2, yt2 = transformer.fit_pipe(X, y)
+    assert_array_almost_equal(Xt, Xt2)
+    assert_array_almost_equal(yt, yt2)
+
+
 def check_transformer_data_not_an_array(name, Transformer):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
