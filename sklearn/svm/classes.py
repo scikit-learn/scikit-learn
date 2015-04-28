@@ -48,9 +48,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         two classes.
         `ovr` trains n_classes one-vs-rest classifiers, while `crammer_singer`
         optimizes a joint objective over all classes.
-        While `crammer_singer` is as interesting from an theoretical perspective
-        as it is consistent, it is seldom used in practice and rarely leads to
-        better accuracy. It is also more expensive to compute.
+        While `crammer_singer` is interesting from a theoretical perspective
+        as it is consistent, it is seldom used in practice as it rarely leads to
+        better accuracy and is more expensive to compute.
         If `crammer_singer` is chosen, the options loss, penalty and dual will
         be ignored.
 
@@ -107,7 +107,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     The underlying C implementation uses a random number generator to
     select features when fitting the model. It is thus not uncommon
     to have slightly different results for the same input data. If
-    that happens, try with a smaller `tol` parameter.
+    that happens, try with a smaller ``tol`` parameter.
 
     The underlying implementation (liblinear) uses a sparse internal
     representation for the data that will incur a memory copy.
