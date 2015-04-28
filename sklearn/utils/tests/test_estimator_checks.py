@@ -47,9 +47,9 @@ def test_check_estimator():
     msg = "object has no attribute 'fit'"
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator)
     # check that fit does input validation
-    msg = "argument must be a string or a number"
+    msg = "TypeError not raised by fit"
     assert_raises_regex(AssertionError, msg, check_estimator, BaseBadClassifier)
-    # check that predict does input validation
+    # check that predict does input validation (doesn't accept dicts in input)
     msg = "Estimator doesn't check for NaN and inf in predict"
     assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)
     # check for sparse matrix input handling
