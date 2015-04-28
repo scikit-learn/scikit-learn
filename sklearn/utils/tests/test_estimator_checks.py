@@ -43,12 +43,16 @@ def test_check_estimator():
     # check that we have a set_params and can clone
     msg = "it does not implement a 'get_params' methods"
     assert_raises_regex(TypeError, msg, check_estimator, object)
+    # check that we have a fit method
     msg = "object has no attribute 'fit'"
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator)
+    # check that fit does input validation
     msg = "argument must be a string or a number"
     assert_raises_regex(AssertionError, msg, check_estimator, BaseBadClassifier)
+    # check that predict does input validation
     msg = "Estimator doesn't check for NaN and inf in predict"
     assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)
+    # check for sparse matrix input handling
     msg = "Estimator type doesn't seem to fail gracefully on sparse data"
     # the check for sparse input handling prints to the stdout,
     # instead of raising an error, so as not to remove the original traceback.
