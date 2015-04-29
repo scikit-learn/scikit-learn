@@ -23,7 +23,6 @@ import numpy as np
 
 from ..utils import check_random_state
 
-
 class Bunch(dict):
     """Container object for datasets
 

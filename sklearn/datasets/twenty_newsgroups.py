@@ -50,6 +50,7 @@ from .base import get_data_home
 from .base import Bunch
 from .base import load_files
 from ..utils import check_random_state
+from ..utils.fixes import astype
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
 from ..externals import joblib, six
@@ -345,8 +346,8 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None):
 
     # the data is stored as int16 for compactness
     # but normalize needs floats
-    X_train = X_train.astype(np.float64)
-    X_test = X_test.astype(np.float64)
+    X_train = astype(X_train, np.float64, copy=False)
+    X_test = astype(X_test, np.float64, copy=False)
     normalize(X_train, copy=False)
     normalize(X_test, copy=False)
 

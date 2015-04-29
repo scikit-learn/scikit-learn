@@ -37,7 +37,7 @@ from ..base import RegressorMixin
 from ..utils import check_random_state, check_array, check_X_y, column_or_1d
 from ..utils import check_consistent_length, deprecated
 from ..utils.extmath import logsumexp
-from ..utils.fixes import expit, bincount
+from ..utils.fixes import astype, expit, bincount
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted, NotFittedError
 from ..externals import six
@@ -1180,7 +1180,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
     def _validate_y(self, y):
         self.n_classes_ = 1
         if y.dtype.kind == 'O':
-            y = y.astype(np.float64)
+            y = astype(y, np.float64, copy=False)
         # Default implementation
         return y
 

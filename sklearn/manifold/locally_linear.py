@@ -10,6 +10,7 @@ from scipy.sparse import eye, csr_matrix
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
 from ..utils.arpack import eigsh
+from ..utils.fixes import astype
 from ..utils.validation import check_is_fitted
 from ..neighbors import NearestNeighbors
 
@@ -43,9 +44,9 @@ def barycenter_weights(X, Z, reg=1e-3):
 
     n_samples, n_neighbors = X.shape[0], Z.shape[1]
     if X.dtype.kind == 'i':
-        X = X.astype(np.float)
+        X = astype(X, np.float, copy=False)
     if Z.dtype.kind == 'i':
-        Z = Z.astype(np.float)
+        Z = astype(Z, np.float, copy=False)
     B = np.empty((n_samples, n_neighbors), dtype=X.dtype)
     v = np.ones(n_neighbors, dtype=X.dtype)
 

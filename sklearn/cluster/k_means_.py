@@ -770,7 +770,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             warnings.warn("Got data type %s, converted to float "
                           "to avoid overflows" % X.dtype,
                           RuntimeWarning, stacklevel=2)
-            X = X.astype(np.float)
+            X = astype(X, np.float, copy=False)
 
         return X
 

@@ -13,6 +13,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..externals import six
+from .fixes import astype
 from inspect import getargspec
 
 
@@ -250,7 +251,8 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
             spmatrix = spmatrix.astype(dtype)
     else:
         # create new
-        spmatrix = spmatrix.asformat(accept_sparse[0]).astype(dtype)
+        spmatrix = spmatrix.asformat(accept_sparse[0])
+        spmatrix = spmatrix.astype(dtype)
     if force_all_finite:
         if not hasattr(spmatrix, "data"):
             warnings.warn("Can't check %s sparse matrix for nan or inf."
@@ -444,7 +446,7 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
         y = column_or_1d(y, warn=True)
         _assert_all_finite(y)
     if y_numeric and y.dtype.kind == 'O':
-        y = y.astype(np.float64)
+        y = astype(y, np.float64, copy=False)
 
     check_consistent_length(X, y)
 
