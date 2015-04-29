@@ -444,8 +444,10 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
     def predict(self, X):
         """Predict class for X.
 
-        The predicted class of an input sample is computed as the majority
-        prediction of the trees in the forest.
+        The predicted class of an input sample is a vote by the trees in
+        the forest, weighted by their probability estimates. That is,
+        the predicted class is the one with highest mean probability
+        estimate across the trees.
 
         Parameters
         ----------
