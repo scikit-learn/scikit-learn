@@ -280,6 +280,10 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError("Out of bag estimation only available"
                              " if bootstrap=True")
 
+        if self.warm_start and self.oob_score:
+            raise ValueError("Out of bag estimate only available"
+                             " if warm_start=False")
+
         if not self.warm_start:
             # Free allocated memory, if any
             self.estimators_ = []
@@ -326,13 +330,16 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         self.estimators_features_ = list(itertools.chain.from_iterable(
             t[2] for t in all_results))
 
+        if hasattr(self, "oob_score_") and self.warm_start:
+            del self.oob_score_
+
         if self.oob_score:
-            self._set_oob_score(X, y, n_more_estimators)
+            self._set_oob_score(X, y)
 
         return self
 
     @abstractmethod
-    def _set_oob_score(self, X, y, n_more_estimators):
+    def _set_oob_score(self, X, y):
         """Calculate out of bag predictions and score."""
 
     def _validate_y(self, y):
@@ -484,14 +491,14 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         super(BaggingClassifier, self)._validate_estimator(
             default=DecisionTreeClassifier())
 
-    def _set_oob_score(self, X, y, n_more_estimators):
+    def _set_oob_score(self, X, y):
         n_classes_ = self.n_classes_
         classes_ = self.classes_
         n_samples = y.shape[0]
 
         predictions = np.zeros((n_samples, n_classes_))
 
-        for estimator, samples, features in zip(self.estimators_[-n_more_estimators:],
+        for estimator, samples, features in zip(self.estimators_,
                                                 self.estimators_samples_,
                                                 self.estimators_features_):
             mask = np.ones(n_samples, dtype=np.bool)
@@ -875,13 +882,13 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         super(BaggingRegressor, self)._validate_estimator(
             default=DecisionTreeRegressor())
 
-    def _set_oob_score(self, X, y, n_more_estimators):
+    def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
 
         predictions = np.zeros((n_samples,))
         n_predictions = np.zeros((n_samples,))
 
-        for estimator, samples, features in zip(self.estimators_[-n_more_estimators:],
+        for estimator, samples, features in zip(self.estimators_,
                                                 self.estimators_samples_,
                                                 self.estimators_features_):
             mask = np.ones(n_samples, dtype=np.bool)
