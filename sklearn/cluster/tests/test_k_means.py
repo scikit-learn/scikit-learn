@@ -50,19 +50,18 @@ def test_kmeans_dtype():
     assert_array_equal(km.labels_, pred_x)
 
 
-def test_elkan_results():
+def test_triangle_results():
     rnd = np.random.RandomState(0)
     X_normal = rnd.normal(size=(50, 10))
     X_blobs, _ = make_blobs(random_state=0)
-    km_lloyd = KMeans(algorithm='lloyd', n_clusters=5, random_state=0,
-                      n_init=1)
-    km_elkan = KMeans(algorithm='elkan', n_clusters=5, random_state=0,
-                      n_init=1)
+    km_full = KMeans(algorithm='full', n_clusters=5, random_state=0, n_init=1)
+    km_triangle_inequality = KMeans(algorithm='triangle_inequality',
+                                    n_clusters=5, random_state=0, n_init=1)
     for X in [X_normal, X_blobs]:
-        km_lloyd.fit(X)
-        km_elkan.fit(X)
-        assert_array_almost_equal(km_elkan.cluster_centers_, km_lloyd.cluster_centers_)
-        assert_array_equal(km_elkan.labels_, km_lloyd.labels_)
+        km_full.fit(X)
+        km_triangle_inequality.fit(X)
+        assert_array_almost_equal(km_triangle_inequality.cluster_centers_, km_full.cluster_centers_)
+        assert_array_equal(km_triangle_inequality.labels_, km_full.labels_)
 
 
 def test_labels_assignment_and_inertia():
@@ -557,11 +556,11 @@ def test_predict():
 
 
 def test_score():
-    # TODO better test? This doesn't pass with algorithm="elkan" as
-    # it converges after one iteration (to the same score that lloyd gets after 10)
-    km1 = KMeans(n_clusters=n_clusters, max_iter=1, random_state=42, algorithm='lloyd')
+    # TODO better test? This doesn't pass with algorithm="triangle_inequality" as
+    # it converges after one iteration (to the same score that full gets after 10)
+    km1 = KMeans(n_clusters=n_clusters, max_iter=1, random_state=42, algorithm='full')
     s1 = km1.fit(X).score(X)
-    km2 = KMeans(n_clusters=n_clusters, max_iter=10, random_state=42, algorithm='lloyd')
+    km2 = KMeans(n_clusters=n_clusters, max_iter=10, random_state=42, algorithm='full')
     s2 = km2.fit(X).score(X)
     assert_greater(s2, s1)
 

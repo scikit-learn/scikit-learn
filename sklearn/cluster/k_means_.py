@@ -189,11 +189,11 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         If a callable is passed, it should take arguments X, k and
         and a random state and return an initialization.
 
-    algorithm : "auto", "lloyd" or "elkan", default="auto"
-        K-means algorthm to use. The classical EM-style algorithm is "lloyd".
-        The "elkan" variation is more efficient by using the triangle
+    algorithm : "auto", "full" or "triangle_inequality", default="auto"
+        K-means algorthm to use. The classical EM-style algorithm is "full".
+        The "triangle_inequality" variation is more efficient by using the triangle
         inequality, but currently doesn't support sparse data. "auto" chooses
-        "elkan" for dense data and "lloyd" for sparse data.
+        "triangle_inequality" for dense data and "full" for sparse data.
 
     precompute_distances : {'auto', True, False}
         Precompute distances (faster but takes more memory).
@@ -299,17 +299,17 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
 
     best_labels, best_inertia, best_centers = None, None, None
     if n_clusters == 1:
-        # elkan doesn't make sense for a single cluster,
-        # lloyd will produce the right result.
-        algorithm = "lloyd"
+        # triangle_inequality doesn't make sense for a single cluster,
+        # full will produce the right result.
+        algorithm = "full"
     if algorithm == "auto":
-        algorithm = "lloyd" if sp.issparse(X) else 'elkan'
-    if algorithm == "lloyd":
+        algorithm = "full" if sp.issparse(X) else 'triangle_inequality'
+    if algorithm == "full":
         kmeans_single = _kmeans_single
-    elif algorithm == "elkan":
+    elif algorithm == "triangle_inequality":
         kmeans_single = _kmeans_single_elkan
     else:
-        raise ValueError("Algorithm must be 'auto', 'lloyd' or 'elkan', got"
+        raise ValueError("Algorithm must be 'auto', 'full' or 'triangle_inequality', got"
                          " %s" % str(algorithm))
     if n_jobs == 1:
         # For a single thread, less memory is needed if we just store one set
@@ -361,7 +361,7 @@ def _kmeans_single_elkan(X, n_clusters, max_iter=300, init='k-means++',
                          random_state=None, tol=1e-4,
                          precompute_distances=True):
     if sp.issparse(X):
-        raise ValueError("algorithm='elkan' not supported for"
+        raise ValueError("algorithm='triangle_inequality' not supported for"
                          " sparse input X")
     X = check_array(X, order="C")
     random_state = check_random_state(random_state)
@@ -702,11 +702,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    algorithm : "auto", "lloyd" or "elkan", default="auto"
-        K-means algorthm to use. The classical EM-style algorithm is "lloyd".
-        The "elkan" variation is more efficient by using the triangle
+    algorithm : "auto", "full" or "triangle_inequality", default="auto"
+        K-means algorthm to use. The classical EM-style algorithm is "full".
+        The "triangle_inequality" variation is more efficient by using the triangle
         inequality, but currently doesn't support sparse data. "auto" chooses
-        "elkan" for dense data and "lloyd" for sparse data.
+        "triangle_inequality" for dense data and "full" for sparse data.
 
     precompute_distances : {'auto', True, False}
         Precompute distances (faster but takes more memory).
