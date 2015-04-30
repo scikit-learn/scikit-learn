@@ -27,6 +27,7 @@ from ..utils import check_random_state
 from ..utils import as_float_array
 from ..utils import gen_batches
 from ..utils.validation import check_is_fitted
+from ..utils.validation import FLOAT_DTYPES
 from ..utils.random import choice
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
@@ -759,18 +760,14 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         return X
 
     def _check_test_data(self, X):
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
+                        warn_on_dtype=True)
         n_samples, n_features = X.shape
         expected_n_features = self.cluster_centers_.shape[1]
         if not n_features == expected_n_features:
             raise ValueError("Incorrect number of features. "
                              "Got %d features, expected %d" % (
                                  n_features, expected_n_features))
-        if X.dtype.kind != 'f':
-            warnings.warn("Got data type %s, converted to float "
-                          "to avoid overflows" % X.dtype,
-                          RuntimeWarning, stacklevel=2)
-            X = X.astype(np.float)
 
         return X
 

@@ -8,7 +8,7 @@ import operator
 import array
 
 from sklearn.utils import check_random_state
-
+from sklearn.utils.fixes import astype
 from ._random import sample_without_replacement
 
 __all__ = ['sample_without_replacement', 'choice']
@@ -238,7 +238,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
         if classes[j].dtype.kind != 'i':
             raise ValueError("class dtype %s is not supported" %
                              classes[j].dtype)
-        classes[j] = classes[j].astype(int)
+        classes[j] = astype(classes[j], np.int64, copy=False)
 
         # use uniform distribution if no class_probability is given
         if class_probability is None:

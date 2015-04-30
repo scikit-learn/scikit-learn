@@ -263,7 +263,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # problem.
         if not sparse.issparse(laplacian):
             warnings.warn("AMG works better for sparse matrices")
-        laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
+        # lobpcg needs double precision floats
+        laplacian = check_array(laplacian, dtype=np.float64,
+                                accept_sparse=True)
         laplacian = _set_diag(laplacian, 1)
         ml = smoothed_aggregation_solver(check_array(laplacian, 'csr'))
         M = ml.aspreconditioner()
@@ -276,7 +278,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             raise ValueError
 
     elif eigen_solver == "lobpcg":
-        laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
+        # lobpcg needs double precision floats
+        laplacian = check_array(laplacian, dtype=np.float64,
+                                accept_sparse=True)
         if n_nodes < 5 * n_components + 1:
             # see note above under arpack why lobpcg has problems with small
             # number of nodes
@@ -286,8 +290,6 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             lambdas, diffusion_map = eigh(laplacian)
             embedding = diffusion_map.T[:n_components] * dd
         else:
-            # lobpcg needs native floats
-            laplacian = laplacian.astype(np.float)
             laplacian = _set_diag(laplacian, 1)
             # We increase the number of eigenvectors requested, as lobpcg
             # doesn't behave well in low dimension

@@ -29,6 +29,7 @@ from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
+from sklearn.utils.validation import DataConversionWarning
 
 from sklearn import datasets
 
@@ -499,12 +500,12 @@ def test_warning_scaling_integers():
     X = np.array([[1, 2, 0],
                   [0, 0, 0]], dtype=np.uint8)
 
-    w = "assumes floating point values as input, got uint8"
+    w = "Data with input dtype uint8 was converted to float64"
 
     clean_warning_registry()
-    assert_warns_message(UserWarning, w, scale, X)
-    assert_warns_message(UserWarning, w, StandardScaler().fit, X)
-    assert_warns_message(UserWarning, w, MinMaxScaler().fit, X)
+    assert_warns_message(DataConversionWarning, w, scale, X)
+    assert_warns_message(DataConversionWarning, w, StandardScaler().fit, X)
+    assert_warns_message(DataConversionWarning, w, MinMaxScaler().fit, X)
 
 
 def test_normalizer_l1():

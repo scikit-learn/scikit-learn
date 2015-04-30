@@ -472,7 +472,8 @@ class BaseDiscreteNB(BaseNB):
             msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
             raise ValueError(msg % (X.shape[0], y.shape[0]))
 
-        # convert to float to support sample weight consistently
+        # label_binarize() returns arrays with dtype=np.int64.
+        # We convert it to np.float64 to support sample_weight consistently
         Y = Y.astype(np.float64)
         if sample_weight is not None:
             Y *= check_array(sample_weight).T
@@ -520,7 +521,8 @@ class BaseDiscreteNB(BaseNB):
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
-        # convert to float to support sample weight consistently;
+        # LabelBinarizer().fit_transform() returns arrays with dtype=np.int64.
+        # We convert it to np.float64 to support sample_weight consistently;
         # this means we also don't have to cast X to floating point
         Y = Y.astype(np.float64)
         if sample_weight is not None:

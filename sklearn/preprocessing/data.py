@@ -15,16 +15,14 @@ from scipy import sparse
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..utils import check_array
-from ..utils import warn_if_not_float
 from ..utils.extmath import row_norms
-from ..utils.fixes import (combinations_with_replacement as combinations_w_r,
-                           bincount)
-from ..utils.fixes import isclose
+from ..utils.fixes import combinations_with_replacement as combinations_w_r
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis,
                                  min_max_axis)
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+
 
 zip = six.moves.zip
 map = six.moves.map
@@ -115,8 +113,9 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     scaling using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
-    X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False)
-    warn_if_not_float(X, estimator='The scale function')
+    X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False,
+                    warn_on_dtype=True, estimator='the scale function',
+                    dtype=FLOAT_DTYPES)
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
@@ -224,8 +223,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             The data used to compute the per-feature minimum and maximum
             used for later scaling along the features axis.
         """
-        X = check_array(X, copy=self.copy, ensure_2d=False)
-        warn_if_not_float(X, estimator=self)
+        X = check_array(X, copy=self.copy, ensure_2d=False, warn_on_dtype=True,
+                        estimator=self, dtype=FLOAT_DTYPES)
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
             raise ValueError("Minimum of desired feature range must be smaller"
@@ -346,9 +345,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             used for later scaling along the features axis.
         """
         X = check_array(X, accept_sparse='csr', copy=self.copy,
-                        ensure_2d=False)
-        if warn_if_not_float(X, estimator=self):
-            X = X.astype(np.float)
+                        ensure_2d=False, warn_on_dtype=True,
+                        estimator=self, dtype=FLOAT_DTYPES)
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -379,9 +377,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'std_')
 
         copy = copy if copy is not None else self.copy
-        X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False)
-        if warn_if_not_float(X, estimator=self):
-            X = X.astype(np.float)
+        X = check_array(X, accept_sparse='csr', copy=copy,
+                        ensure_2d=False, warn_on_dtype=True,
+                        estimator=self, dtype=FLOAT_DTYPES)
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -600,8 +598,8 @@ def normalize(X, norm='l2', axis=1, copy=True):
     else:
         raise ValueError("'%d' is not a supported axis" % axis)
 
-    X = check_array(X, sparse_format, copy=copy)
-    warn_if_not_float(X, 'The normalize function')
+    X = check_array(X, sparse_format, copy=copy, warn_on_dtype=True,
+                    estimator='the normalize function', dtype=FLOAT_DTYPES)
     if axis == 0:
         X = X.T
 

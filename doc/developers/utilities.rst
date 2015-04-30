@@ -43,9 +43,6 @@ should be used when applicable.
   be sliced or indexed using safe_index.  This is used to validate input for
   cross-validation.
 
-- :func:`warn_if_not_float`: Warn if input is not a floating-point value.
-  the input ``X`` is assumed to have ``X.dtype``.
-
 If your code relies on a random number generator, it should never use
 functions like ``numpy.random.random`` or ``numpy.random.normal``.  This
 approach can lead to repeatability issues in unit tests.  Instead, a
