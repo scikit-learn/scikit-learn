@@ -110,7 +110,7 @@ def test_lmvnpdf_full():
 
 
 def test_lvmpdf_full_cv_non_positive_definite():
-    n_features, n_components, n_samples = 2, 1, 10
+    n_features, n_samples = 2, 10
     rng = np.random.RandomState(0)
     X = rng.randint(10) * rng.rand(n_samples, n_features)
     mu = np.mean(X, 0)
@@ -265,7 +265,7 @@ class GMMTester():
         # Train on 1-D data
         # Create a training set by sampling from the predefined distribution.
         X = rng.randn(100, 1)
-        #X.T[1:] = 0
+        # X.T[1:] = 0
         g = self.model(n_components=2, covariance_type=self.covariance_type,
                        random_state=rng, min_covar=1e-7, n_iter=5,
                        init_params=params)
