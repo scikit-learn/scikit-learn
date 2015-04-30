@@ -1,5 +1,6 @@
 import unittest
 import copy
+import sys
 
 from nose.tools import assert_true
 import numpy as np
@@ -11,6 +12,7 @@ from sklearn.datasets.samples_generator import make_spd_matrix
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.externals.six.moves import cStringIO as StringIO
 
 rng = np.random.RandomState(0)
 
@@ -441,6 +443,34 @@ def test_positive_definite_covars():
     # Check positive definiteness for all covariance types
     for covariance_type in ["full", "tied", "diag", "spherical"]:
         yield check_positive_definite_covars, covariance_type
+
+
+def test_verbose_first_level():
+    # Create sample data
+    X = rng.randn(30, 5)
+    X[:10] += 2
+    g = mixture.GMM(n_components=2, n_init=2, verbose=1)
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        g.fit(X)
+    finally:
+        sys.stdout = old_stdout
+
+
+def test_verbose_second_level():
+    # Create sample data
+    X = rng.randn(30, 5)
+    X[:10] += 2
+    g = mixture.GMM(n_components=2, n_init=2, verbose=2)
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        g.fit(X)
+    finally:
+        sys.stdout = old_stdout
 
 
 if __name__ == '__main__':
