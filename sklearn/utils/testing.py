@@ -88,8 +88,8 @@ except ImportError:
                                      "%r. %r does not." %
                                      (expected_regexp, error_message))
         if not_raised:
-            raise AssertionError("Should have raised %r" %
-                                 expected_exception(expected_regexp))
+            raise AssertionError("%s not raised by %s" %
+                                 (expected_exception.__name__, callable_obj.__name__))
 
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
 # assert_raises_regex but lets keep the bacward compat in scikit-learn with

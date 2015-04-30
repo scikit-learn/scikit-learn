@@ -14,6 +14,7 @@ import struct
 from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
@@ -26,7 +27,8 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 
-from sklearn.base import clone, ClassifierMixin, BaseEstimator
+from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
+                          TransformerMixin, ClusterMixin, BaseEstimator)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.lda import LDA
@@ -44,6 +46,140 @@ from sklearn.datasets import load_iris, load_boston, make_blobs
 
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
+
+
+def _yield_non_meta_checks(name, Estimator):
+    yield check_estimators_dtypes
+    yield check_fit_score_takes_y
+    yield check_dtype_object
+
+    # Check that all estimator yield informative messages when
+    # trained on empty datasets
+    yield check_estimators_empty_data_messages
+
+    if name not in CROSS_DECOMPOSITION + ['SpectralEmbedding']:
+        # SpectralEmbedding is non-deterministic,
+        # see issue #4236
+        # cross-decomposition's "transform" returns X and Y
+        yield check_pipeline_consistency
+
+    if name not in ['Imputer']:
+        # Test that all estimators check their input for NaN's and infs
+        yield check_estimators_nan_inf
+
+    if name not in ['GaussianProcess']:
+        # FIXME!
+        # in particular GaussianProcess!
+        yield check_estimators_overwrite_params
+    if hasattr(Estimator, 'sparsify'):
+        yield check_sparsify_coefficients
+
+    yield check_estimator_sparse_data
+
+
+def _yield_classifier_checks(name, Classifier):
+    # test classfiers can handle non-array data
+    yield check_classifier_data_not_an_array
+    # test classifiers trained on a single label always return this label
+    yield check_classifiers_one_label
+    yield check_classifiers_classes
+    yield check_classifiers_pickle
+    yield check_estimators_partial_fit_n_features
+    # basic consistency testing
+    yield check_classifiers_train
+    if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]
+        # TODO some complication with -1 label
+            and name not in ["DecisionTreeClassifier",
+                             "ExtraTreeClassifier"]):
+            # We don't raise a warning in these classifiers, as
+            # the column y interface is used by the forests.
+
+        # test if classifiers can cope with y.shape = (n_samples, 1)
+        yield check_classifiers_input_shapes
+    # test if NotFittedError is raised
+    yield check_estimators_unfitted
+    if 'class_weight' in Classifier().get_params().keys():
+        yield check_class_weight_classifiers
+
+
+def _yield_regressor_checks(name, Regressor):
+    # TODO: test with intercept
+    # TODO: test with multiple responses
+    # basic testing
+    yield check_regressors_train
+    yield check_regressor_data_not_an_array
+    yield check_estimators_partial_fit_n_features
+    yield check_regressors_no_decision_function
+    # Test that estimators can be pickled, and once pickled
+    # give the same answer as before.
+    yield check_regressors_pickle
+    if name != 'CCA':
+        # check that the regressor handles int input
+        yield check_regressors_int
+    # Test if NotFittedError is raised
+    yield check_estimators_unfitted
+
+
+def _yield_transformer_checks(name, Transformer):
+    # All transformers should either deal with sparse data or raise an
+    # exception with type TypeError and an intelligible error message
+    yield check_transformer_pickle
+    if name not in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer',
+                    'PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']:
+        yield check_transformer_data_not_an_array
+    # these don't actually fit the data, so don't raise errors
+    if name not in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer']:
+        # basic tests
+        yield check_transformer_general
+        yield check_transformers_unfitted
+
+
+def _yield_clustering_checks(name, Clusterer):
+    yield check_clusterer_compute_labels_predict
+    if name not in ('WardAgglomeration', "FeatureAgglomeration"):
+        # this is clustering on the features
+        # let's not test that here.
+        yield check_clustering
+        yield check_estimators_partial_fit_n_features
+
+
+def _yield_all_checks(name, Estimator):
+    #yield check_parameters_default_constructible, name, Estimator
+    for check in _yield_non_meta_checks(name, Estimator):
+        yield check
+    if issubclass(Estimator, ClassifierMixin):
+        for check in _yield_classifier_checks(name, Estimator):
+            yield check
+    if issubclass(Estimator, RegressorMixin):
+        for check in _yield_regressor_checks(name, Estimator):
+            yield check
+    if issubclass(Estimator, TransformerMixin):
+        for check in _yield_transformer_checks(name, Estimator):
+            yield check
+    if issubclass(Estimator, ClusterMixin):
+        for check in _yield_clustering_checks(name, Estimator):
+            yield check
+
+
+def check_estimator(Estimator):
+    """Check if estimator adheres to sklearn conventions.
+
+    This estimator will run an extensive test-suite for input validation,
+    shapes, etc.
+    Additional tests for classifiers, regressors, clustering or transformers
+    will be run if the Estimator class inherits from the corresponding mixin
+    from sklearn.base.
+
+    Parameters
+    ----------
+    Estimator : class
+        Class to check.
+
+    """
+    name = Estimator.__class__.__name__
+    check_parameters_default_constructible(name, Estimator)
+    for check in _yield_all_checks(name, Estimator):
+        check(name, Estimator)
 
 
 def _boston_subset(n_samples=200):
@@ -177,10 +313,11 @@ def check_dtype_object(name, Estimator):
             raise
 
     X[0, 0] = {'foo': 'bar'}
-    assert_raise_message(TypeError, "string or a number", estimator.fit, X, y)
+    msg = "argument must be a string or a number"
+    assert_raises_regex(TypeError, msg, estimator.fit, X, y)
 
 
-def check_transformer(name, Transformer):
+def check_transformer_general(name, Transformer):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
@@ -869,6 +1006,14 @@ def check_regressors_no_decision_function(name, Regressor):
 
 
 def check_class_weight_classifiers(name, Classifier):
+    if name == "NuSVC":
+        # the sparse version has a parameter that doesn't do anything
+        raise SkipTest
+    if name.endswith("NB"):
+        # NaiveBayes classifiers have a somewhat different interface.
+        # FIXME SOON!
+        raise SkipTest
+
     for n_centers in [2, 3]:
         # create a very noisy dataset
         X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20)
@@ -1164,9 +1309,8 @@ def check_get_params_invariance(name, estimator):
     else:
         e = estimator()
 
-
     shallow_params = e.get_params(deep=False)
     deep_params = e.get_params(deep=True)
 
-    assert_true(all(item in deep_params.items() for item in 
-        shallow_params.items()))
+    assert_true(all(item in deep_params.items() for item in
+                    shallow_params.items()))
