@@ -1,4 +1,5 @@
 import unittest
+import sys
 
 import nose
 
@@ -9,6 +10,7 @@ from sklearn.mixture.dpgmm import log_normalize
 from sklearn.datasets import make_blobs
 from sklearn.utils.testing import assert_array_less
 from sklearn.mixture.tests.test_gmm import GMMTester
+from sklearn.externals.six.moves import cStringIO as StringIO
 
 np.seterr(all='warn')
 
@@ -28,6 +30,36 @@ def test_class_weights():
         assert_array_less(.1, dpgmm.weights_[active])
         # others are not
         assert_array_less(dpgmm.weights_[~active], .05)
+
+
+def test_verbose_first_level():
+    # simple 3 cluster dataset
+    X, y = make_blobs(random_state=1)
+    for Model in [DPGMM, VBGMM]:
+        dpgmm = Model(n_components=10, random_state=1, alpha=20, n_iter=50,
+                      verbose=1)
+
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        try:
+            dpgmm.fit(X)
+        finally:
+            sys.stdout = old_stdout
+
+
+def test_verbose_second_level():
+    # simple 3 cluster dataset
+    X, y = make_blobs(random_state=1)
+    for Model in [DPGMM, VBGMM]:
+        dpgmm = Model(n_components=10, random_state=1, alpha=20, n_iter=50,
+                      verbose=2)
+
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        try:
+            dpgmm.fit(X)
+        finally:
+            sys.stdout = old_stdout
 
 
 def test_log_normalize():
