@@ -638,11 +638,13 @@ class ShuffleSplit(BaseShuffleSplit):
     n_iter : int (default 10)
         Number of re-shuffling & splitting iterations.
 
-    test_size : float (default 0.1), int, or None
+    test_size : float (default 0.1), int, or None,
         If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples. If None,
-        the value is automatically set to the complement of the train size.
+        proportion of the dataset to include in the test split.
+        If int, represents the absolute number of test samples.
+        If None, the value is automatically set accroding  to train_size,
+        when test_size and train_size are both None, their values will be
+        computed by default (.1/.9).
 
     train_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
@@ -712,13 +714,14 @@ def _validate_shuffle_split(n, test_size, train_size):
         train_size = 1. - test_size
 
     if test_size is not None and train_size is None:
-        if np.asarray(test_size).dtype.kind == 'f':
+        test_size_kind = np.asarray(test_size).dtype.kind
+        if test_size_kind == 'f':
             if test_size >= 1.:
                 raise ValueError(
                     'test_size=%f should be smaller '
                     'than 1.0 or be an integer' % test_size)
             train_size = 1. - test_size
-        elif np.asarray(test_size).dtype.kind == 'i':
+        elif test_size_kind == 'i':
             if test_size >= n:
                 raise ValueError(
                     'test_size=%d should be smaller '
@@ -727,12 +730,13 @@ def _validate_shuffle_split(n, test_size, train_size):
         else:
             raise ValueError("Invalid value for test_size: %r" % test_size)
     elif test_size is None and train_size is not None:
-        if np.asarray(train_size).dtype.kind == 'f':
+        train_size_kind = np.asarray(train_size).dtype.kind
+        if train_size_kind == 'f':
             if train_size >= 1.:
                 raise ValueError("train_size=%f should be smaller "
                                  "than 1.0 or be an integer" % train_size)
             test_size = 1. - train_size
-        elif np.asarray(train_size).dtype.kind == 'i':
+        elif train_size_kind == 'i':
             if train_size >= n:
                 raise ValueError("train_size=%d should be smaller "
                                  "than the number of samples %d" %
@@ -741,8 +745,10 @@ def _validate_shuffle_split(n, test_size, train_size):
         else:
             raise ValueError("Invalid value for train_size: %r" % train_size)
     else:  # test_size is not None and train_set is not None:
-        if np.array(test_size).dtype.kind == 'f' and \
-           np.array(train_size).dtype.kind == 'f':
+        test_size_kind = np.array(test_size).dtype.kind
+        train_size_kind = np.array(train_size).dtype.kind
+        if test_size_kind == 'f' and \
+           train_size_kind == 'f':
             if test_size >= 1.:
                 raise ValueError('test_size=%f should be smaller '
                                  'than 1.0 or be an integer' % test_size)
@@ -754,20 +760,7 @@ def _validate_shuffle_split(n, test_size, train_size):
                                  'should be smaller than 1.0. Reduce '
                                  'test_size and/or train_size.' %
                                  (train_size + test_size))
-        elif np.array(test_size).dtype.kind == 'f' and \
-                np.array(train_size).dtype.kind == 'i':
-            raise ValueError(
-                "Type of test_size and train_sizeis not the same, "
-                "test_size: %r, train_size: %r" %
-                (type(test_size), type(train_size)))
-        elif np.array(test_size).dtype.kind == 'i' and \
-                np.array(train_size).dtype.kind == 'f':
-            raise ValueError(
-                "Type of test_size and train_sizeis not the same, "
-                "test_size: %r, train_size: %r" %
-                (type(test_size), type(train_size)))
-        elif np.array(test_size).dtype.kind == 'i' and \
-                np.array(train_size).dtype.kind == 'i':
+        elif test_size_kind == 'i' and train_size_kind == 'i':
             if test_size >= n:
                 raise ValueError('test_size=%d should be smaller '
                                  'than the number of samples %d' %
@@ -790,6 +783,10 @@ def _validate_shuffle_split(n, test_size, train_size):
                np.array(train_size).dtype.kind != 'i':
                 raise ValueError("Invalid value for train_size: %r" %
                                  train_size)
+            raise ValueError(
+                "Type of test_size and train_size is not the same, "
+                "test_size: %r, train_size: %r" %
+                (type(test_size), type(train_size)))
 
     if np.asarray(test_size).dtype.kind == 'f':
         n_test = ceil(test_size * n)
@@ -839,9 +836,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     test_size : float (default 0.1), int, or None
         If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples. If None,
-        the value is automatically set to the complement of the train size.
+        proportion of the dataset to include in the test split.
+        If int, represents the absolute number of test samples.
+        If None, the value is automatically set accroding  to train_size,
+        when test_size and train_size are both None, their values will be
+        computed by default (.1/.9).
 
     train_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the

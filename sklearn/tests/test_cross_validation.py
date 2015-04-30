@@ -907,6 +907,26 @@ def test_shufflesplit_errors():
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=10)
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=8, train_size=3)
     assert_raises(ValueError, cval.ShuffleSplit, 10, train_size=1j)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, train_size=".8")
+    assert_raises(ValueError, cval.ShuffleSplit, 10, train_size=".8",
+                  test_size=".2")
+    assert_raises(ValueError, cval.ShuffleSplit, 10, train_size=".8",
+                  test_size=.2)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=".8")
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=".8",
+                  train_size=".2")
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=".8",
+                  train_size=.2)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, train_size=.8j)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, train_size=.8j,
+                  test_size=.2j)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, train_size=.8j,
+                  test_size=.2)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=.8j)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=.8j,
+                  train_size=.2j)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=.8j,
+                  train_size=.2)
 
 
 def test_shufflesplit_reproducible():
