@@ -347,7 +347,7 @@ class GMM(BaseEstimator):
 
         Returns
         -------
-        C : array, shape = (n_samples,)
+        C : array, shape = (n_samples,) component memberships
         """
         logprob, responsibilities = self.score_samples(X)
         return responsibilities.argmax(axis=1)
@@ -411,22 +411,44 @@ class GMM(BaseEstimator):
                     num_comp_in_X, random_state=random_state).T
         return X
 
-    def fit(self, X, y=None):
-        """Estimate model parameters with the expectation-maximization
-        algorithm.
+    def fit_predict(self, X, y=None):
+        """
+        Fit and then predict labels for data.
+        Warning: due to the final maximization step in the EM algorithm,
+        with low iterations the prediction may not be 100% accurate
 
-        A initialization step is performed before entering the em
-        algorithm. If you want to avoid this step, set the keyword
-        argument init_params to the empty string '' when creating the
-        GMM object. Likewise, if you would like just to do an
-        initialization, set n_iter=0.
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = (n_samples,) component memberships
+        """
+        return self._fit(X, y).argmax(axis=1)
+
+    def _fit(self, X, y=None, do_prediction=False):
+        """Estimate model parameters with the EM algorithm.
+
+        A initialization step is performed before entering the
+        expectation-maximization (EM) algorithm. If you want to avoid
+        this step, set the keyword argument init_params to the empty
+        string '' when creating the GMM object. Likewise, if you would
+        like just to do an initialization, set n_iter=0.
 
         Parameters
         ----------
         X : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+
+        Returns
+        -------
+        responsibilities : array, shape (n_samples, n_components)
+            Posterior probabilities of each mixture component for each
+            observation.
         """
+
         # initialization step
         X = check_array(X, dtype=np.float64)
         if X.shape[0] < self.n_components:
@@ -496,15 +518,42 @@ class GMM(BaseEstimator):
                 "EM algorithm was never able to compute a valid likelihood " +
                 "given initial parameters. Try different init parameters " +
                 "(or increasing n_init) or check for degenerate data.")
-        # self.n_iter == 0 occurs when using GMM within HMM
+
         if self.n_iter:
             self.covars_ = best_params['covars']
             self.means_ = best_params['means']
             self.weights_ = best_params['weights']
+        else:  # self.n_iter == 0 occurs when using GMM within HMM
+            # Need to make sure that there are responsibilities to output
+            # Output zeros because it was just a quick initialization
+            responsibilities = np.zeros((X.shape[0], self.n_components))
+
+        return responsibilities
+
+    def fit(self, X, y=None):
+        """Estimate model parameters with the EM algorithm.
+
+        A initialization step is performed before entering the
+        expectation-maximization (EM) algorithm. If you want to avoid
+        this step, set the keyword argument init_params to the empty
+        string '' when creating the GMM object. Likewise, if you would
+        like just to do an initialization, set n_iter=0.
+
+        Parameters
+        ----------
+        X : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
+
+        Returns
+        -------
+        self
+        """
+        self._fit(X, y)
         return self
 
     def _do_mstep(self, X, responsibilities, params, min_covar=0):
-        """ Perform the Mstep of the EM algorithm and return the class weihgts.
+        """ Perform the Mstep of the EM algorithm and return the class weights
         """
         weights = responsibilities.sum(axis=0)
         weighted_X_sum = np.dot(responsibilities.T, X)

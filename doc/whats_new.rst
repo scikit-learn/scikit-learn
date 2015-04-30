@@ -21,6 +21,8 @@ Enhancements
 
    - :class:`dummy.DummyClassifier` now supports a prior fitting strategy.
      By `Arnaud Joly`_.
+   - Added a ``fit_predict`` method for :class:`mixture.GMM` and subclasses.
+     By `Cory Lorenz`_.
 
    - Added the :func:`metrics.label_ranking_loss` metrics.
      By `Arnaud Joly`_.
@@ -3448,3 +3450,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Eric Martin: http://ericmart.in
 
 .. _Nicolas Goix: https://webperso.telecom-paristech.fr/front/frontoffice.php?SP_ID=241
+
+.. _Cory Lorenz: https://github.com/clorenz7

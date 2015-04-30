@@ -1,4 +1,5 @@
 import unittest
+import copy
 
 from nose.tools import assert_true
 import numpy as np
@@ -9,7 +10,7 @@ from sklearn import mixture
 from sklearn.datasets.samples_generator import make_spd_matrix
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
-
+from sklearn.metrics.cluster import adjusted_rand_score
 
 rng = np.random.RandomState(0)
 
@@ -339,6 +340,38 @@ def test_1d_1component():
                         random_state=rng, min_covar=1e-7, n_iter=1)
         g.fit(X)
         assert_array_almost_equal(g.bic(X), g_full_bic)
+
+
+def assert_fit_predict_correct(model, X):
+    model2 = copy.deepcopy(model)
+
+    predictions_1 = model.fit(X).predict(X)
+    predictions_2 = model2.fit_predict(X)
+
+    assert adjusted_rand_score(predictions_1, predictions_2) == 1.0
+
+
+def test_fit_predict():
+    """
+    test that gmm.fit_predict is equivalent to gmm.fit + gmm.predict
+    """
+    lrng = np.random.RandomState(101)
+
+    n_samples, n_dim, n_comps = 100, 2, 2
+    mu = np.array([[8, 8]])
+    component_0 = lrng.randn(n_samples, n_dim)
+    component_1 = lrng.randn(n_samples, n_dim) + mu
+    X = np.vstack((component_0, component_1))
+
+    for m_constructor in (mixture.GMM, mixture.VBGMM, mixture.DPGMM):
+        model = m_constructor(n_components=n_comps, covariance_type='full',
+                              min_covar=1e-7, n_iter=5,
+                              random_state=np.random.RandomState(0))
+        assert_fit_predict_correct(model, X)
+
+    model = mixture.GMM(n_components=n_comps, n_iter=0)
+    z = model.fit_predict(X)
+    assert np.all(z==0), "Quick Initialization Failed!"
 
 
 def test_aic():
