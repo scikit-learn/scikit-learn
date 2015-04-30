@@ -532,7 +532,8 @@ class GMM(BaseEstimator):
                 self._do_mstep(X, responsibilities, self.params,
                                self.min_covar)
                 if self.verbose > 1:
-                    print('\t\tEM iteration '+str(i+1)+' took {0:.5f}s'.format(time()-start_iter_time))
+                    print('\t\tEM iteration '+str(i+1)+' took {0:.5f}s'.format(
+                        time()-start_iter_time))
 
             # if the results are better, keep it
             if self.n_iter:
@@ -545,7 +546,8 @@ class GMM(BaseEstimator):
                         print('\tBetter parameters were found.')
 
             if self.verbose > 1:
-                print('\tInitialization '+str(init+1)+' took {0:.5f}s'.format(time()-start_init_time))
+                print('\tInitialization '+str(init+1)+' took {0:.5f}s'.format(
+                    time()-start_init_time))
 
         # check the existence of an init param that was not subject to
         # likelihood computation issue.
