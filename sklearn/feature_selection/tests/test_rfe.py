@@ -1,7 +1,7 @@
 """
 Testing Recursive feature elimination
 """
-
+import warnings
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from nose.tools import assert_equal, assert_true
@@ -66,9 +66,11 @@ def test_rfe_set_params():
     y_pred = rfe.fit(X, y).predict(X)
 
     clf = SVC()
-    rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1,
-              estimator_params={'kernel': 'linear'})
-    y_pred2 = rfe.fit(X, y).predict(X)
+    with warnings.catch_warnings(record=True):
+        # estimator_params is deprecated
+        rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1,
+                  estimator_params={'kernel': 'linear'})
+        y_pred2 = rfe.fit(X, y).predict(X)
     assert_array_equal(y_pred, y_pred2)
 
 
@@ -78,7 +80,8 @@ def test_rfe_features_importance():
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
 
-    clf = RandomForestClassifier(n_estimators=10, n_jobs=1)
+    clf = RandomForestClassifier(n_estimators=20,
+                                 random_state=generator, max_depth=2)
     rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1)
     rfe.fit(X, y)
     assert_equal(len(rfe.ranking_), X.shape[1])
@@ -88,8 +91,8 @@ def test_rfe_features_importance():
     rfe_svc.fit(X, y)
 
     # Check if the supports are equal
-    diff_support = rfe.get_support() == rfe_svc.get_support()
-    assert_true(sum(diff_support) == len(diff_support))
+    assert_array_equal(rfe.get_support(), rfe_svc.get_support())
+
 
 
 def test_rfe_deprecation_estimator_params():
