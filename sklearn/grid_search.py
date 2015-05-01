@@ -13,7 +13,7 @@ from __future__ import print_function
 from abc import ABCMeta, abstractmethod
 from collections import Mapping, namedtuple, Sized
 from functools import partial, reduce
-from itertools import product, repeat
+from itertools import product
 import operator
 import warnings
 
@@ -193,7 +193,7 @@ class ParameterSampler(object):
         else:
             # Always sort the keys of a dictionary, for reproducibility
             items = sorted(self.param_distributions.items())
-            for _ in repeat(None, self.n_iter):
+            for _ in six.moves.range(self.n_iter):
                 params = dict()
                 for k, v in items:
                     if hasattr(v, "rvs"):
