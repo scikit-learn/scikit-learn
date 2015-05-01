@@ -1189,6 +1189,25 @@ div.container-index {
     display: none;
   }
 
+
+{% if theme_collapsiblesidebar|tobool %}
+  div.content {
+    margin-left: 190px;
+  }
+
+  label[for="nav-trigger"] {
+    margin-left: 190px;
+  }
+
+  .nav-trigger:checked + label {
+    margin-left: 0px;
+  }
+
+  .nav-trigger:checked ~ div.content {
+    margin-left: 0px;
+  }
+
+{%- else %}
   .sphinxsidebar {
     display: none;
   }
@@ -1197,6 +1216,7 @@ div.container-index {
     margin-left: 0;
   }
 
+{% endif %}
 
   div.container-index {
     margin-left: 0;
