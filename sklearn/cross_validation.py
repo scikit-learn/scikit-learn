@@ -775,6 +775,8 @@ def _validate_shuffle_split(n, test_size, train_size):
                                  'test_size and/or train_size.' %
                                  (train_size + test_size))
         else:
+            # test_size_kind != train_size_kin or
+            # their kinds are nether 'f' nor 'i'
             if np.array(test_size).dtype.kind != 'f' and \
                np.array(test_size).dtype.kind != 'i':
                 raise ValueError("Invalid value for test_size: %r" %
