@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.mixture import DPGMM, VBGMM
 from sklearn.mixture.dpgmm import log_normalize
 from sklearn.datasets import make_blobs
-from sklearn.utils.testing import assert_array_less
+from sklearn.utils.testing import assert_array_less, assert_equal
 from sklearn.mixture.tests.test_gmm import GMMTester
 from sklearn.externals.six.moves import cStringIO as StringIO
 
@@ -30,6 +30,33 @@ def test_class_weights():
         assert_array_less(.1, dpgmm.weights_[active])
         # others are not
         assert_array_less(dpgmm.weights_[~active], .05)
+
+
+def test_verbose_boolean():
+    # checks that the output for the verbose output is the same
+    # for the flag values '1' and 'True'
+    # simple 3 cluster dataset
+    X, y = make_blobs(random_state=1)
+    for Model in [DPGMM, VBGMM]:
+        dpgmm_bool = Model(n_components=10, random_state=1, alpha=20,
+                              n_iter=50, verbose=True)
+        dpgmm_int = Model(n_components=10, random_state=1, alpha=20,
+                          n_iter=50, verbose=1)
+
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        try:
+            dpgmm_bool.fit(X)
+            verbose_output = sys.stdout
+            verbose_output.seek(0)
+            bool_output = verbose_output.readline()
+            dpgmm_int.fit(X)
+            verbose_output = sys.stdout
+            verbose_output.seek(0)
+            int_output = verbose_output.readline()
+            assert_equal(bool_output, int_output)
+        finally:
+            sys.stdout = old_stdout
 
 
 def test_verbose_first_level():

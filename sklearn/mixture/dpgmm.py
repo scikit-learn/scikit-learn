@@ -10,7 +10,6 @@ from __future__ import print_function
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #
 
-import warnings
 import numpy as np
 from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg
@@ -159,10 +158,8 @@ class DPGMM(GMM):
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.  Defaults to 'wmc'.
 
-    verbose : boolean, default False
-        Controls output verbosity. This usage of a boolean flag is
-        deprecated as of version 0.17 and will changed to an int
-        in version 0.19.
+    verbose : int, default 0
+        Controls output verbosity.
 
     Attributes
     ----------
@@ -201,10 +198,9 @@ class DPGMM(GMM):
     """
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
-                 random_state=None, thresh=None, tol=1e-3, verbose=False,
+                 random_state=None, thresh=None, tol=1e-3, verbose=0,
                  min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
         self.alpha = alpha
-        self.verbose = verbose
         super(DPGMM, self).__init__(n_components, covariance_type,
                                     random_state=random_state, thresh=thresh,
                                     tol=tol, min_covar=min_covar,
@@ -370,29 +366,12 @@ class DPGMM(GMM):
         expected.
 
         Note: this is very expensive and should not be used by default."""
-        if isinstance(self.verbose, bool):
-            warnings.warn("The parameter 'verbose' is deprecated as of "
-                          "version 0.17 and will be changed in 0.19. The "
-                          "parameter is a boolean but will be changed into "
-                          "an integer to be consistent and work with the GMM "
-                          "class. The changed parameter will use 0 for "
-                          "no output, 1 for only basic output from the GMM "
-                          "class and a value bigger than 1 for detailed "
-                          "output similar to the old output for verbose=True.",
-                          DeprecationWarning)
-            if self.verbose:
-                print("Bound after updating %8s: %f" %
-                      (n, self.lower_bound(X, z)))
-                if end:
-                    print("Cluster proportions:", self.gamma_.T[1])
-                    print("covariance_type:", self.covariance_type)
-        else:
-            if self.verbose > 1:
-                print("Bound after updating %8s: %f" %
-                      (n, self.lower_bound(X, z)))
-                if end:
-                    print("Cluster proportions:", self.gamma_.T[1])
-                    print("covariance_type:", self.covariance_type)
+        if self.verbose > 0:
+            print("Bound after updating %8s: %f" % (n, self.lower_bound(X, z)))
+            if end:
+                print("Cluster proportions:", self.gamma_.T[1])
+                print("covariance_type:", self.covariance_type)
+
 
     def _do_mstep(self, X, z, params):
         """Maximize the variational lower bound
@@ -674,10 +653,8 @@ class VBGMM(DPGMM):
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.  Defaults to 'wmc'.
 
-    verbose : boolean, default False
-        Controls output verbosity. This usage of a boolean flag is
-        deprecated as of version 0.17 and will changed to an int
-        in version 0.19.
+    verbose : int, default 0
+        Controls output verbosity.
 
     Attributes
     ----------
@@ -718,7 +695,7 @@ class VBGMM(DPGMM):
     """
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
-                 random_state=None, thresh=None, tol=1e-3, verbose=False,
+                 random_state=None, thresh=None, tol=1e-3, verbose=0,
                  min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
         super(VBGMM, self).__init__(
             n_components, covariance_type, random_state=random_state,
@@ -802,29 +779,12 @@ class VBGMM(DPGMM):
         expected.
 
         Note: this is very expensive and should not be used by default."""
-        if isinstance(self.verbose, bool):
-            warnings.warn("The parameter 'verbose' is deprecated as of "
-                          "version 0.17 and will be changed in 0.19. The "
-                          "parameter is a boolean but will be changed into "
-                          "an integer to be consistent and work with the GMM "
-                          "class. The changed parameter will use 0 for "
-                          "no output, 1 for only basic output from the GMM "
-                          "class and a value bigger than 1 for detailed "
-                          "output similar to the old output for verbose=True.",
-                          DeprecationWarning)
-            if self.verbose:
-                print("Bound after updating %8s: %f" %
-                      (n, self.lower_bound(X, z)))
-                if end:
-                    print("Cluster proportions:", self.gamma_)
-                    print("covariance_type:", self.covariance_type)
-        else:
-            if self.verbose > 1:
-                print("Bound after updating %8s: %f" %
-                      (n, self.lower_bound(X, z)))
-                if end:
-                    print("Cluster proportions:", self.gamma_)
-                    print("covariance_type:", self.covariance_type)
+        if self.verbose > 0:
+            print("Bound after updating %8s: %f" % (n, self.lower_bound(X, z)))
+            if end:
+                print("Cluster proportions:", self.gamma_)
+                print("covariance_type:", self.covariance_type)
+
 
     def _set_weights(self):
         self.weights_[:] = self.gamma_
