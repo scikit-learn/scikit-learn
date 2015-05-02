@@ -1,21 +1,21 @@
 """
 
-==============================================================
-OOB Error Trace for Random Forests and Extra Trees Classifiers
-==============================================================
+=========================================================
+OOB Errors for Random Forests and Extra Trees Classifiers
+=========================================================
 
-The `RandomForestClassifier` and `ExtraTreesClasifier` are trained using
+The ``RandomForestClassifier`` and ``ExtraTreesClasifier`` are trained using
 *bootstrap aggregation*. During training, each new tree is fit from a
 bootstrap sample of the training observations :math:`z_i = (x_i, y_i)`. The
 *out-of-bag* (OOB) error is the average prediction error for each :math:`z_i`
 from trees that do not contain :math:`z_i` in their respective bootstrap
-sample. This allows models to be simultaneously fit and cross-validated.
+sample. This allows models to be simultaneously fit and cross-validated [1].
 
 The example below demonstrates how the OOB error can be measured at the
-inclusion of each new tree whilst the fitting `RandomForestClassifier` and
-`ExtraTreesClassifier` models. The subsequent plot enables the practitioner to
-approximate the error stabilization point of each model at which training can
-be halted.
+inclusion of each new tree whilst fitting ``RandomForestClassifier`` and
+``ExtraTreesClassifier`` models. The subsequent plot enables the practitioner
+to approximate the error stabilization point of each model at which training
+can be halted.
 
 .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
        Learning Ed. 2", Springer, 2009.
@@ -24,7 +24,7 @@ be halted.
 print(__doc__)
 
 # Author: Kian Ho <hui.kian.ho@gmail.com>
-#         Andreas Mueller <amueller@ais.uni-bonn.de>
+#         Gilles Louppe <g.louppe@gmail.com>
 #         
 # License: BSD 3 Clause
 
@@ -86,5 +86,4 @@ for label, clf_err in error_rate.items():
 pylab.xlabel("n_estimators")
 pylab.ylabel("OOB error rate")
 pylab.legend(loc="upper right")
-pylab.gcf().set_size_inches(8, 6)
 pylab.show()
