@@ -372,7 +372,6 @@ class DPGMM(GMM):
                 print("Cluster proportions:", self.gamma_.T[1])
                 print("covariance_type:", self.covariance_type)
 
-
     def _do_mstep(self, X, z, params):
         """Maximize the variational lower bound
 
@@ -784,7 +783,6 @@ class VBGMM(DPGMM):
             if end:
                 print("Cluster proportions:", self.gamma_)
                 print("covariance_type:", self.covariance_type)
-
 
     def _set_weights(self):
         self.weights_[:] = self.gamma_

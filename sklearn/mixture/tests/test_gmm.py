@@ -373,7 +373,7 @@ def test_fit_predict():
 
     model = mixture.GMM(n_components=n_comps, n_iter=0)
     z = model.fit_predict(X)
-    assert np.all(z==0), "Quick Initialization Failed!"
+    assert np.all(z == 0), "Quick Initialization Failed!"
 
 
 def test_aic():

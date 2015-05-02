@@ -699,7 +699,8 @@ def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
                 cv_chol = linalg.cholesky(cv + min_covar * np.eye(n_dim),
                                           lower=True)
             except linalg.LinAlgError:
-                raise ValueError("'covars' must be symmetric, positive-definite")
+                raise ValueError("'covars' must be symmetric, "
+                                 "positive-definite")
 
         cv_log_det = 2 * np.sum(np.log(np.diagonal(cv_chol)))
         cv_sol = linalg.solve_triangular(cv_chol, (X - mu).T, lower=True).T

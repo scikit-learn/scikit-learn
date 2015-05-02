@@ -39,17 +39,19 @@ def test_verbose_boolean():
     X, y = make_blobs(random_state=1)
     for Model in [DPGMM, VBGMM]:
         dpgmm_bool = Model(n_components=10, random_state=1, alpha=20,
-                              n_iter=50, verbose=True)
+                           n_iter=50, verbose=True)
         dpgmm_int = Model(n_components=10, random_state=1, alpha=20,
                           n_iter=50, verbose=1)
 
         old_stdout = sys.stdout
         sys.stdout = StringIO()
         try:
+            # generate output with the boolean flag
             dpgmm_bool.fit(X)
             verbose_output = sys.stdout
             verbose_output.seek(0)
             bool_output = verbose_output.readline()
+            # generate output with the int flag
             dpgmm_int.fit(X)
             verbose_output = sys.stdout
             verbose_output.seek(0)
