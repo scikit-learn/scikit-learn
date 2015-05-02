@@ -213,8 +213,8 @@ class LeavePOut(_PartitionIterator):
         )
 
     def __len__(self):
-        return int(factorial(self.n) / factorial(self.n - self.p)
-                   / factorial(self.p))
+        return int(factorial(self.n) / factorial(self.n - self.p) /
+                   factorial(self.p))
 
 
 class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
@@ -775,14 +775,12 @@ def _validate_shuffle_split(n, test_size, train_size):
                                  'test_size and/or train_size.' %
                                  (train_size + test_size))
         else:
-            # test_size_kind != train_size_kin or
+            # test_size_kind != train_size_kind or
             # their kinds are nether 'f' nor 'i'
-            if np.array(test_size).dtype.kind != 'f' and \
-               np.array(test_size).dtype.kind != 'i':
+            if test_size_kind not in ['f', 'i']:
                 raise ValueError("Invalid value for test_size: %r" %
                                  test_size)
-            if np.array(train_size).dtype.kind != 'f' and \
-               np.array(train_size).dtype.kind != 'i':
+            if train_size_kind not in ['f', 'i']:
                 raise ValueError("Invalid value for train_size: %r" %
                                  train_size)
             raise ValueError(
