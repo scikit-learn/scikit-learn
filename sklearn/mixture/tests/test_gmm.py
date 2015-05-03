@@ -1,5 +1,6 @@
 import unittest
 import copy
+import sys
 
 from nose.tools import assert_true
 import numpy as np
@@ -11,6 +12,7 @@ from sklearn.datasets.samples_generator import make_spd_matrix
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.externals.six.moves import cStringIO as StringIO
 
 rng = np.random.RandomState(0)
 
@@ -108,7 +110,7 @@ def test_lmvnpdf_full():
 
 
 def test_lvmpdf_full_cv_non_positive_definite():
-    n_features, n_components, n_samples = 2, 1, 10
+    n_features, n_samples = 2, 10
     rng = np.random.RandomState(0)
     X = rng.randint(10) * rng.rand(n_samples, n_features)
     mu = np.mean(X, 0)
@@ -263,7 +265,7 @@ class GMMTester():
         # Train on 1-D data
         # Create a training set by sampling from the predefined distribution.
         X = rng.randn(100, 1)
-        #X.T[1:] = 0
+        # X.T[1:] = 0
         g = self.model(n_components=2, covariance_type=self.covariance_type,
                        random_state=rng, min_covar=1e-7, n_iter=5,
                        init_params=params)
@@ -371,7 +373,7 @@ def test_fit_predict():
 
     model = mixture.GMM(n_components=n_comps, n_iter=0)
     z = model.fit_predict(X)
-    assert np.all(z==0), "Quick Initialization Failed!"
+    assert np.all(z == 0), "Quick Initialization Failed!"
 
 
 def test_aic():
@@ -441,6 +443,34 @@ def test_positive_definite_covars():
     # Check positive definiteness for all covariance types
     for covariance_type in ["full", "tied", "diag", "spherical"]:
         yield check_positive_definite_covars, covariance_type
+
+
+def test_verbose_first_level():
+    # Create sample data
+    X = rng.randn(30, 5)
+    X[:10] += 2
+    g = mixture.GMM(n_components=2, n_init=2, verbose=1)
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        g.fit(X)
+    finally:
+        sys.stdout = old_stdout
+
+
+def test_verbose_second_level():
+    # Create sample data
+    X = rng.randn(30, 5)
+    X[:10] += 2
+    g = mixture.GMM(n_components=2, n_init=2, verbose=2)
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        g.fit(X)
+    finally:
+        sys.stdout = old_stdout
 
 
 if __name__ == '__main__':

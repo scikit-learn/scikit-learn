@@ -158,7 +158,7 @@ class DPGMM(GMM):
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.  Defaults to 'wmc'.
 
-    verbose : boolean, default False
+    verbose : int, default 0
         Controls output verbosity.
 
     Attributes
@@ -198,15 +198,14 @@ class DPGMM(GMM):
     """
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
-                 random_state=None, thresh=None, tol=1e-3, verbose=False,
+                 random_state=None, thresh=None, tol=1e-3, verbose=0,
                  min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
         self.alpha = alpha
-        self.verbose = verbose
         super(DPGMM, self).__init__(n_components, covariance_type,
                                     random_state=random_state, thresh=thresh,
                                     tol=tol, min_covar=min_covar,
                                     n_iter=n_iter, params=params,
-                                    init_params=init_params)
+                                    init_params=init_params, verbose=verbose)
 
     def _get_precisions(self):
         """Return precisions as a full matrix."""
@@ -367,7 +366,7 @@ class DPGMM(GMM):
         expected.
 
         Note: this is very expensive and should not be used by default."""
-        if self.verbose:
+        if self.verbose > 0:
             print("Bound after updating %8s: %f" % (n, self.lower_bound(X, z)))
             if end:
                 print("Cluster proportions:", self.gamma_.T[1])
@@ -653,7 +652,7 @@ class VBGMM(DPGMM):
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.  Defaults to 'wmc'.
 
-    verbose : boolean, default False
+    verbose : int, default 0
         Controls output verbosity.
 
     Attributes
@@ -695,7 +694,7 @@ class VBGMM(DPGMM):
     """
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
-                 random_state=None, thresh=None, tol=1e-3, verbose=False,
+                 random_state=None, thresh=None, tol=1e-3, verbose=0,
                  min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
         super(VBGMM, self).__init__(
             n_components, covariance_type, random_state=random_state,
@@ -779,7 +778,7 @@ class VBGMM(DPGMM):
         expected.
 
         Note: this is very expensive and should not be used by default."""
-        if self.verbose:
+        if self.verbose > 0:
             print("Bound after updating %8s: %f" % (n, self.lower_bound(X, z)))
             if end:
                 print("Cluster proportions:", self.gamma_)
