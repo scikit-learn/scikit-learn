@@ -777,7 +777,13 @@ Rolling your own estimator
 If you want to implement a new estimator that is scikit-learn-compatible,
 whether it is just for you or for contributing it to sklearn, there are several
 internals of scikit-learn that you should be aware of in addition to the
-sklearn API outlined above.
+sklearn API outlined above. You can check whether your estimator
+adheres to the scikit-learn interface and standards by running
+:func:`utils.estimator_checks.check_estimator` on the class::
+
+  >>> from sklearn.utils.estimator_checks import check_estimator
+  >>> from sklearn.svm import LinearSVC
+  >>> check_estimator(LinearSVC)  # passes
 
 The main motivation to make a class compatible to the scikit-learn estimator
 interface might be that you want to use it together with model assessment and

@@ -72,7 +72,7 @@ except ImportError:
 try:
     from nose.tools import assert_raises_regex
 except ImportError:
-    # for Py 2.6
+    # for Python 2
     def assert_raises_regex(expected_exception, expected_regexp,
                             callable_obj=None, *args, **kwargs):
         """Helper function to check for message patterns in exceptions"""
@@ -81,15 +81,15 @@ except ImportError:
         try:
             callable_obj(*args, **kwargs)
             not_raised = True
-        except Exception as e:
+        except expected_exception as e:
             error_message = str(e)
             if not re.compile(expected_regexp).search(error_message):
                 raise AssertionError("Error message should match pattern "
                                      "%r. %r does not." %
                                      (expected_regexp, error_message))
         if not_raised:
-            raise AssertionError("Should have raised %r" %
-                                 expected_exception(expected_regexp))
+            raise AssertionError("%s not raised by %s" %
+                                 (expected_exception.__name__, callable_obj.__name__))
 
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
 # assert_raises_regex but lets keep the bacward compat in scikit-learn with
@@ -389,13 +389,8 @@ else:
 
 def assert_raise_message(exception, message, function, *args, **kwargs):
     """Helper function to test error messages in exceptions"""
-
-    try:
-        function(*args, **kwargs)
-        raise AssertionError("Should have raised %r" % exception(message))
-    except exception as e:
-        error_message = str(e)
-        assert_in(message, error_message)
+    assert_raises_regex(
+        exception, re.escape(message), function, *args, **kwargs)
 
 
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):
@@ -625,8 +620,9 @@ def if_matplotlib(func):
             import matplotlib
             matplotlib.use('Agg', warn=False)
             # this fails if no $DISPLAY specified
-            matplotlib.pylab.figure()
-        except:
+            import matplotlib.pyplot as plt
+            plt.figure()
+        except ImportError:
             raise SkipTest('Matplotlib not available.')
         else:
             return func(*args, **kwargs)

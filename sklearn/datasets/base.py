@@ -25,12 +25,38 @@ from ..utils import check_random_state
 
 
 class Bunch(dict):
-    """Container object for datasets: dictionary-like object that
-       exposes its keys as attributes."""
+    """Container object for datasets
+
+    Dictionary-like object that exposes its keys as attributes.
+
+    >>> b = Bunch(a=1, b=2)
+    >>> b['b']
+    2
+    >>> b.b
+    2
+    >>> b.a = 3
+    >>> b['a']
+    3
+    >>> b.c = 6
+    >>> b['c']
+    6
+
+    """
 
     def __init__(self, **kwargs):
         dict.__init__(self, kwargs)
-        self.__dict__ = self
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+    def __getstate__(self):
+        return self.__dict__
 
 
 def get_data_home(data_home=None):

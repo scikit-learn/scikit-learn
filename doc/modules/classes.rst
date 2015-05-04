@@ -813,7 +813,7 @@ details.
 
    metrics.coverage_error
    metrics.label_ranking_average_precision_score
-
+   metrics.label_ranking_loss
 
 
 Clustering metrics
@@ -1286,5 +1286,6 @@ Low-level methods
    :template: function.rst
 
    utils.check_random_state
+   utils.estimator_checks.check_estimator
    utils.resample
    utils.shuffle

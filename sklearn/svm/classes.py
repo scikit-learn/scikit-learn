@@ -15,8 +15,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     Similar to SVC with parameter kernel='linear', but implemented in terms of
     liblinear rather than libsvm, so it has more flexibility in the choice of
-    penalties and loss functions and should scale better (to large numbers of
-    samples).
+    penalties and loss functions and should scale better to large numbers of
+    samples.
 
     This class supports both dense and sparse input and the multiclass support
     is handled according to a one-vs-the-rest scheme.
@@ -48,8 +48,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         two classes.
         `ovr` trains n_classes one-vs-rest classifiers, while `crammer_singer`
         optimizes a joint objective over all classes.
-        While `crammer_singer` is interesting from an theoretical perspective
-        as it is consistent it is seldom used in practice and rarely leads to
+        While `crammer_singer` is interesting from a theoretical perspective
+        as it is consistent, it is seldom used in practice as it rarely leads to
         better accuracy and is more expensive to compute.
         If `crammer_singer` is chosen, the options loss, penalty and dual will
         be ignored.
@@ -57,7 +57,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     fit_intercept : boolean, optional (default=True)
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be already centered).
 
     intercept_scaling : float, optional (default=1)
         When self.fit_intercept is True, instance vector x becomes
@@ -68,7 +68,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         Note! the synthetic feature weight is subject to l1/l2 regularization
         as all other features.
         To lessen the effect of regularization on synthetic feature weight
-        (and therefore on the intercept) intercept_scaling has to be increased
+        (and therefore on the intercept) intercept_scaling has to be increased.
 
     class_weight : {dict, 'auto'}, optional
         Set the parameter C of class i to class_weight[i]*C for
@@ -94,7 +94,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     coef_ : array, shape = [n_features] if n_classes == 2 \
             else [n_classes, n_features]
         Weights assigned to the features (coefficients in the primal
-        problem). This is only available in the case of linear kernel.
+        problem). This is only available in the case of a linear kernel.
 
         `coef_` is a readonly property derived from `raw_coef_` that \
         follows the internal memory layout of liblinear.
@@ -105,9 +105,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     Notes
     -----
     The underlying C implementation uses a random number generator to
-    select features when fitting the model. It is thus not uncommon,
+    select features when fitting the model. It is thus not uncommon
     to have slightly different results for the same input data. If
-    that happens, try with a smaller tol parameter.
+    that happens, try with a smaller ``tol`` parameter.
 
     The underlying implementation (liblinear) uses a sparse internal
     representation for the data that will incur a memory copy.
@@ -204,8 +204,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             self.class_weight, self.penalty, self.dual, self.verbose,
             self.max_iter, self.tol, self.random_state, self.multi_class,
-            self.loss
-            )
+            self.loss)
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
@@ -221,8 +220,8 @@ class LinearSVR(LinearModel, RegressorMixin):
 
     Similar to SVR with parameter kernel='linear', but implemented in terms of
     liblinear rather than libsvm, so it has more flexibility in the choice of
-    penalties and loss functions and should scale better (to large numbers of
-    samples).
+    penalties and loss functions and should scale better to large numbers of
+    samples.
 
     This class supports both dense and sparse input.
 
@@ -252,7 +251,7 @@ class LinearSVR(LinearModel, RegressorMixin):
     fit_intercept : boolean, optional (default=True)
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be already centered).
 
     intercept_scaling : float, optional (default=1)
         When self.fit_intercept is True, instance vector x becomes
@@ -282,7 +281,7 @@ class LinearSVR(LinearModel, RegressorMixin):
     coef_ : array, shape = [n_features] if n_classes == 2 \
             else [n_classes, n_features]
         Weights assigned to the features (coefficients in the primal
-        problem). This is only available in the case of linear kernel.
+        problem). This is only available in the case of a linear kernel.
 
         `coef_` is a readonly property derived from `raw_coef_` that \
         follows the internal memory layout of liblinear.
@@ -415,11 +414,11 @@ class SVC(BaseSVC):
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
 
-    probability: boolean, optional (default=False)
+    probability : boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
         to calling `fit`, and will slow down that method.
 
-    shrinking: boolean, optional (default=True)
+    shrinking : boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
     tol : float, optional (default=1e-3)
@@ -467,7 +466,7 @@ class SVC(BaseSVC):
 
     coef_ : array, shape = [n_class-1, n_features]
         Weights assigned to the features (coefficients in the primal
-        problem). This is only available in the case of linear kernel.
+        problem). This is only available in the case of a linear kernel.
 
         `coef_` is a readonly property derived from `dual_coef_` and
         `support_vectors_`.
@@ -535,22 +534,22 @@ class NuSVC(BaseSVC):
          used to precompute the kernel matrix.
 
     degree : int, optional (default=3)
-        Degree of kernel function
-        is significant only in poly, rbf, sigmoid.
+        Degree of the polynomial kernel function ('poly').
+        Ignored by all other kernels.
 
     gamma : float, optional (default=0.0)
-        Kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
-        will be taken.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
+        If gamma is 0.0 then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
-        Independent term in kernel function. It is only significant
-        in poly/sigmoid.
+        Independent term in kernel function.
+        It is only significant in 'poly' and 'sigmoid'.
 
-    probability: boolean, optional (default=False)
+    probability : boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
         to calling `fit`, and will slow down that method.
 
-    shrinking: boolean, optional (default=True)
+    shrinking : boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
     tol : float, optional (default=1e-3)
@@ -591,7 +590,7 @@ class NuSVC(BaseSVC):
 
     coef_ : array, shape = [n_class-1, n_features]
         Weights assigned to the features (coefficients in the primal
-        problem). This is only available in the case of linear kernel.
+        problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
@@ -659,18 +658,18 @@ class SVR(BaseLibSVM, RegressorMixin):
          used to precompute the kernel matrix.
 
     degree : int, optional (default=3)
-        Degree of kernel function
-        is significant only in poly, rbf, sigmoid.
+        Degree of the polynomial kernel function ('poly').
+        Ignored by all other kernels.
 
     gamma : float, optional (default=0.0)
-        Kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
-        will be taken.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
+        If gamma is 0.0 then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
-        independent term in kernel function. It is only significant
-        in poly/sigmoid.
+        Independent term in kernel function.
+        It is only significant in 'poly' and 'sigmoid'.
 
-    shrinking: boolean, optional (default=True)
+    shrinking : boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
     tol : float, optional (default=1e-3)
@@ -700,7 +699,7 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     coef_ : array, shape = [1, n_features]
         Weights assigned to the features (coefficients in the primal
-        problem). This is only available in the case of linear kernel.
+        problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
@@ -769,18 +768,18 @@ class NuSVR(BaseLibSVM, RegressorMixin):
          used to precompute the kernel matrix.
 
     degree : int, optional (default=3)
-        Degree of kernel function
-        is significant only in poly, rbf, sigmoid.
+        Degree of the polynomial kernel function ('poly').
+        Ignored by all other kernels.
 
     gamma : float, optional (default=0.0)
-        Kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
-        will be taken.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
+        If gamma is 0.0 then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
-        Independent term in kernel function. It is only significant
-        in poly/sigmoid.
+        Independent term in kernel function.
+        It is only significant in 'poly' and 'sigmoid'.
 
-    shrinking: boolean, optional (default=True)
+    shrinking : boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
     tol : float, optional (default=1e-3)
@@ -810,7 +809,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     coef_ : array, shape = [1, n_features]
         Weights assigned to the features (coefficients in the primal
-        problem). This is only available in the case of linear kernel.
+        problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
@@ -889,7 +888,7 @@ class OneClassSVM(BaseLibSVM):
     tol : float, optional
         Tolerance for stopping criterion.
 
-    shrinking: boolean, optional
+    shrinking : boolean, optional
         Whether to use the shrinking heuristic.
 
     cache_size : float, optional
@@ -920,7 +919,7 @@ class OneClassSVM(BaseLibSVM):
 
     coef_ : array, shape = [n_classes-1, n_features]
         Weights assigned to the features (coefficients in the primal
-        problem). This is only available in the case of linear kernel.
+        problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`

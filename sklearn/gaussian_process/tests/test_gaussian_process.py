@@ -66,8 +66,9 @@ def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
 
     assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.))
 
-    assert_true(np.all(gp.theta_ >= thetaL))  # Lower bounds of hyperparameters
-    assert_true(np.all(gp.theta_ <= thetaU))  # Upper bounds of hyperparameters
+    eps = np.finfo(gp.theta_.dtype).eps
+    assert_true(np.all(gp.theta_ >= thetaL - eps))  # Lower bounds of hyperparameters
+    assert_true(np.all(gp.theta_ <= thetaU + eps))  # Upper bounds of hyperparameters
 
 
 def test_2d_2d(regr=regression.constant, corr=correlation.squared_exponential,

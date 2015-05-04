@@ -29,6 +29,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import raises
 from sklearn.utils.validation import check_random_state
+from sklearn.utils.validation import NotFittedError
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -494,7 +495,7 @@ def test_error():
     for name, TreeEstimator in CLF_TREES.items():
         # predict before fit
         est = TreeEstimator()
-        assert_raises(Exception, est.predict_proba, X)
+        assert_raises(NotFittedError, est.predict_proba, X)
 
         est.fit(X, y)
         X2 = [-2, -1, 1]  # wrong feature shape for sample
@@ -527,7 +528,7 @@ def test_error():
 
         # predict before fitting
         est = TreeEstimator()
-        assert_raises(Exception, est.predict, T)
+        assert_raises(NotFittedError, est.predict, T)
 
         # predict on vector with different dims
         est.fit(X, y)
@@ -540,10 +541,16 @@ def test_error():
         est = TreeEstimator()
         est.fit(np.dot(X, Xt), y)
         assert_raises(ValueError, est.predict, X)
+        assert_raises(ValueError, est.apply, X)
 
         clf = TreeEstimator()
         clf.fit(X, y)
         assert_raises(ValueError, clf.predict, Xt)
+        assert_raises(ValueError, clf.apply, Xt)
+
+        # apply before fitting
+        est = TreeEstimator()
+        assert_raises(NotFittedError, est.apply, T)
 
 
 def test_min_samples_leaf():
@@ -1208,6 +1215,8 @@ def check_explicit_sparse_zeros(tree, max_depth=3,
     Xs = (X_test, X_sparse_test)
     for X1, X2 in product(Xs, Xs):
         assert_array_almost_equal(s.tree_.apply(X1), d.tree_.apply(X2))
+        assert_array_almost_equal(s.apply(X1), d.apply(X2))
+        assert_array_almost_equal(s.apply(X1), s.tree_.apply(X1))
         assert_array_almost_equal(s.predict(X1), d.predict(X2))
 
         if tree in CLF_TREES:
@@ -1266,3 +1275,29 @@ def check_min_weight_leaf_split_level(name):
 def test_min_weight_leaf_split_level():
     for name in ALL_TREES:
         yield check_min_weight_leaf_split_level, name
+
+
+def check_public_apply(name):
+    X_small32 = X_small.astype(tree._tree.DTYPE)
+
+    est = ALL_TREES[name]()
+    est.fit(X_small, y_small)
+    assert_array_equal(est.apply(X_small),
+                       est.tree_.apply(X_small32))
+
+
+def check_public_apply_sparse(name):
+    X_small32 = csr_matrix(X_small.astype(tree._tree.DTYPE))
+
+    est = ALL_TREES[name]()
+    est.fit(X_small, y_small)
+    assert_array_equal(est.apply(X_small),
+                       est.tree_.apply(X_small32))
+
+
+def test_public_apply():
+    for name in ALL_TREES:
+        yield (check_public_apply, name)
+
+    for name in SPARSE_TREES:
+        yield (check_public_apply_sparse, name)

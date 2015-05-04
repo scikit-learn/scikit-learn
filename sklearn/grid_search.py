@@ -170,7 +170,6 @@ class ParameterSampler(object):
         self.random_state = random_state
 
     def __iter__(self):
-        samples = []
         # check if all distributions are given as lists
         # in this case we want to sample without replacement
         all_lists = np.all([not hasattr(v, "rvs")
@@ -194,14 +193,13 @@ class ParameterSampler(object):
         else:
             # Always sort the keys of a dictionary, for reproducibility
             items = sorted(self.param_distributions.items())
-            while len(samples) < self.n_iter:
+            for _ in six.moves.range(self.n_iter):
                 params = dict()
                 for k, v in items:
                     if hasattr(v, "rvs"):
                         params[k] = v.rvs()
                     else:
                         params[k] = v[rnd.randint(len(v))]
-                samples.append(params)
                 yield params
 
     def __len__(self):

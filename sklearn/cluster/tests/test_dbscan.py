@@ -293,3 +293,15 @@ def test_dbscan_core_samples_toy():
                                       min_samples=4)
         assert_array_equal(core_samples, [])
         assert_array_equal(labels, -np.ones(n_samples))
+
+
+def test_dbscan_precomputed_metric_with_degenerate_input_arrays():
+    # see https://github.com/scikit-learn/scikit-learn/issues/4641 for
+    # more details
+    X = np.ones((10, 2))
+    labels = DBSCAN(eps=0.5, metric='precomputed').fit(X).labels_
+    assert_equal(len(set(labels)), 1)
+
+    X = np.zeros((10, 2))
+    labels = DBSCAN(eps=0.5, metric='precomputed').fit(X).labels_
+    assert_equal(len(set(labels)), 1)

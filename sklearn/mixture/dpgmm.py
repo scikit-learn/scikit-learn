@@ -158,7 +158,7 @@ class DPGMM(GMM):
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.  Defaults to 'wmc'.
 
-    verbose : boolean, default False
+    verbose : int, default 0
         Controls output verbosity.
 
     Attributes
@@ -198,15 +198,14 @@ class DPGMM(GMM):
     """
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
-                 random_state=None, thresh=None, tol=1e-3, verbose=False,
+                 random_state=None, thresh=None, tol=1e-3, verbose=0,
                  min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
         self.alpha = alpha
-        self.verbose = verbose
         super(DPGMM, self).__init__(n_components, covariance_type,
                                     random_state=random_state, thresh=thresh,
                                     tol=tol, min_covar=min_covar,
                                     n_iter=n_iter, params=params,
-                                    init_params=init_params)
+                                    init_params=init_params, verbose=verbose)
 
     def _get_precisions(self):
         """Return precisions as a full matrix."""
@@ -367,7 +366,7 @@ class DPGMM(GMM):
         expected.
 
         Note: this is very expensive and should not be used by default."""
-        if self.verbose:
+        if self.verbose > 0:
             print("Bound after updating %8s: %f" % (n, self.lower_bound(X, z)))
             if end:
                 print("Cluster proportions:", self.gamma_.T[1])
@@ -480,7 +479,7 @@ class DPGMM(GMM):
                                                     + self.gamma_[i, 2])
         self.weights_ /= np.sum(self.weights_)
 
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """Estimate model parameters with the variational
         algorithm.
 
@@ -500,6 +499,12 @@ class DPGMM(GMM):
         X : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+
+        Returns
+        -------
+        responsibilities : array, shape (n_samples, n_components)
+            Posterior probabilities of each mixture component for each
+            observation.
         """
         self.random_state_ = check_random_state(self.random_state)
 
@@ -595,9 +600,14 @@ class DPGMM(GMM):
             # Maximization step
             self._do_mstep(X, z, self.params)
 
+        if self.n_iter == 0:
+            # Need to make sure that there is a z value to output
+            # Output zeros because it was just a quick initialization
+            z = np.zeros((X.shape[0], self.n_components))
+
         self._set_weights()
 
-        return self
+        return z
 
 
 class VBGMM(DPGMM):
@@ -642,7 +652,7 @@ class VBGMM(DPGMM):
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.  Defaults to 'wmc'.
 
-    verbose : boolean, default False
+    verbose : int, default 0
         Controls output verbosity.
 
     Attributes
@@ -684,7 +694,7 @@ class VBGMM(DPGMM):
     """
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
-                 random_state=None, thresh=None, tol=1e-3, verbose=False,
+                 random_state=None, thresh=None, tol=1e-3, verbose=0,
                  min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
         super(VBGMM, self).__init__(
             n_components, covariance_type, random_state=random_state,
@@ -768,7 +778,7 @@ class VBGMM(DPGMM):
         expected.
 
         Note: this is very expensive and should not be used by default."""
-        if self.verbose:
+        if self.verbose > 0:
             print("Bound after updating %8s: %f" % (n, self.lower_bound(X, z)))
             if end:
                 print("Cluster proportions:", self.gamma_)

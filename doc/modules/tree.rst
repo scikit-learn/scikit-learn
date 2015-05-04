@@ -90,7 +90,7 @@ Classification
 :class:`DecisionTreeClassifier` is a class capable of performing multi-class
 classification on a dataset.
 
-As other classifiers, :class:`DecisionTreeClassifier` take as input two arrays:
+As with other classifiers, :class:`DecisionTreeClassifier` takes as input two arrays:
 an array X, sparse or dense, of size ``[n_samples, n_features]``  holding the
 training samples, and an array Y of integer values, size ``[n_samples]``,
 holding the class labels for the training samples::

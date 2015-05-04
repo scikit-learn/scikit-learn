@@ -35,6 +35,7 @@ from sklearn.metrics import hamming_loss
 from sklearn.metrics import hinge_loss
 from sklearn.metrics import jaccard_similarity_score
 from sklearn.metrics import label_ranking_average_precision_score
+from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import log_loss
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
@@ -143,7 +144,7 @@ CLASSIFICATION_METRICS = {
 
 THRESHOLDED_METRICS = {
     "coverage_error": coverage_error,
-
+    "label_ranking_loss": label_ranking_loss,
     "log_loss": log_loss,
     "unnormalized_log_loss": partial(log_loss, normalize=False),
 
@@ -200,7 +201,8 @@ METRIC_UNDEFINED_MULTICLASS = [
     "macro_roc_auc",  "samples_roc_auc",
 
     "coverage_error",
-    "brier_score_loss"
+    "brier_score_loss",
+    "label_ranking_loss",
 ]
 
 # Metrics with an "average" argument
@@ -269,7 +271,7 @@ THRESHOLDED_MULTILABEL_METRICS = [
     "samples_average_precision_score", "micro_average_precision_score",
     "macro_average_precision_score",
 
-    "coverage_error",
+    "coverage_error", "label_ranking_loss",
 ]
 
 # Classification metrics with  "multilabel-indicator" and

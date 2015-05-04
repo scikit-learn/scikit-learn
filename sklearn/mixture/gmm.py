@@ -12,6 +12,7 @@ of Gaussian Mixture Models.
 import warnings
 import numpy as np
 from scipy import linalg
+from time import time
 
 from ..base import BaseEstimator
 from ..utils import check_random_state, check_array
@@ -156,6 +157,11 @@ class GMM(BaseEstimator):
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.  Defaults to 'wmc'.
 
+    verbose : int, default: 0
+        Enable verbose output. If 1 then it always prints the current
+        initialization and iteration step. If greater than 1 then
+        it prints additionally the change and time needed for each step.
+
     Attributes
     ----------
     weights_ : array, shape (`n_components`,)
@@ -203,7 +209,7 @@ class GMM(BaseEstimator):
     >>> g.fit(obs) # doctest: +NORMALIZE_WHITESPACE
     GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
-            random_state=None, thresh=None, tol=0.001)
+            random_state=None, thresh=None, tol=0.001, verbose=0)
     >>> np.round(g.weights_, 2)
     array([ 0.75,  0.25])
     >>> np.round(g.means_, 2)
@@ -221,7 +227,7 @@ class GMM(BaseEstimator):
     >>> g.fit(20 * [[0]] +  20 * [[10]]) # doctest: +NORMALIZE_WHITESPACE
     GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
-            random_state=None, thresh=None, tol=0.001)
+            random_state=None, thresh=None, tol=0.001, verbose=0)
     >>> np.round(g.weights_, 2)
     array([ 0.5,  0.5])
 
@@ -229,7 +235,8 @@ class GMM(BaseEstimator):
 
     def __init__(self, n_components=1, covariance_type='diag',
                  random_state=None, thresh=None, tol=1e-3, min_covar=1e-3,
-                 n_iter=100, n_init=1, params='wmc', init_params='wmc'):
+                 n_iter=100, n_init=1, params='wmc', init_params='wmc',
+                 verbose=0):
         if thresh is not None:
             warnings.warn("'thresh' has been replaced by 'tol' in 0.16 "
                           " and will be removed in 0.18.",
@@ -244,6 +251,7 @@ class GMM(BaseEstimator):
         self.n_init = n_init
         self.params = params
         self.init_params = init_params
+        self.verbose = verbose
 
         if covariance_type not in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('Invalid value for covariance_type: %s' %
@@ -347,7 +355,7 @@ class GMM(BaseEstimator):
 
         Returns
         -------
-        C : array, shape = (n_samples,)
+        C : array, shape = (n_samples,) component memberships
         """
         logprob, responsibilities = self.score_samples(X)
         return responsibilities.argmax(axis=1)
@@ -411,22 +419,44 @@ class GMM(BaseEstimator):
                     num_comp_in_X, random_state=random_state).T
         return X
 
-    def fit(self, X, y=None):
-        """Estimate model parameters with the expectation-maximization
-        algorithm.
+    def fit_predict(self, X, y=None):
+        """
+        Fit and then predict labels for data.
+        Warning: due to the final maximization step in the EM algorithm,
+        with low iterations the prediction may not be 100% accurate
 
-        A initialization step is performed before entering the em
-        algorithm. If you want to avoid this step, set the keyword
-        argument init_params to the empty string '' when creating the
-        GMM object. Likewise, if you would like just to do an
-        initialization, set n_iter=0.
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = (n_samples,) component memberships
+        """
+        return self._fit(X, y).argmax(axis=1)
+
+    def _fit(self, X, y=None, do_prediction=False):
+        """Estimate model parameters with the EM algorithm.
+
+        A initialization step is performed before entering the
+        expectation-maximization (EM) algorithm. If you want to avoid
+        this step, set the keyword argument init_params to the empty
+        string '' when creating the GMM object. Likewise, if you would
+        like just to do an initialization, set n_iter=0.
 
         Parameters
         ----------
         X : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+
+        Returns
+        -------
+        responsibilities : array, shape (n_samples, n_components)
+            Posterior probabilities of each mixture component for each
+            observation.
         """
+
         # initialization step
         X = check_array(X, dtype=np.float64)
         if X.shape[0] < self.n_components:
@@ -436,15 +466,26 @@ class GMM(BaseEstimator):
 
         max_log_prob = -np.infty
 
-        for _ in range(self.n_init):
+        if self.verbose > 0:
+            print('Expectation-maximization algorithm started.')
+
+        for init in range(self.n_init):
+            if self.verbose > 0:
+                print('Initialization '+str(init+1))
+                start_init_time = time()
+
             if 'm' in self.init_params or not hasattr(self, 'means_'):
                 self.means_ = cluster.KMeans(
                     n_clusters=self.n_components,
                     random_state=self.random_state).fit(X).cluster_centers_
+                if self.verbose > 1:
+                    print('\tMeans have been initialized.')
 
             if 'w' in self.init_params or not hasattr(self, 'weights_'):
                 self.weights_ = np.tile(1.0 / self.n_components,
                                         self.n_components)
+                if self.verbose > 1:
+                    print('\tWeights have been initialized.')
 
             if 'c' in self.init_params or not hasattr(self, 'covars_'):
                 cv = np.cov(X.T) + self.min_covar * np.eye(X.shape[1])
@@ -453,6 +494,8 @@ class GMM(BaseEstimator):
                 self.covars_ = \
                     distribute_covar_matrix_to_match_covariance_type(
                         cv, self.covariance_type, self.n_components)
+                if self.verbose > 1:
+                    print('\tCovariance matrices have been initialized.')
 
             # EM algorithms
             current_log_likelihood = None
@@ -464,23 +507,33 @@ class GMM(BaseEstimator):
                    else self.thresh / float(X.shape[0]))
 
             for i in range(self.n_iter):
+                if self.verbose > 0:
+                    print('\tEM iteration '+str(i+1))
+                    start_iter_time = time()
                 prev_log_likelihood = current_log_likelihood
                 # Expectation step
                 log_likelihoods, responsibilities = self.score_samples(X)
                 current_log_likelihood = log_likelihoods.mean()
 
                 # Check for convergence.
-                # (should compare to self.tol when dreprecated 'thresh' is
+                # (should compare to self.tol when deprecated 'thresh' is
                 # removed in v0.18)
                 if prev_log_likelihood is not None:
                     change = abs(current_log_likelihood - prev_log_likelihood)
+                    if self.verbose > 1:
+                        print('\t\tChange: '+str(change))
                     if change < tol:
                         self.converged_ = True
+                        if self.verbose > 0:
+                            print('\t\tEM algorithm converged.')
                         break
 
                 # Maximization step
                 self._do_mstep(X, responsibilities, self.params,
                                self.min_covar)
+                if self.verbose > 1:
+                    print('\t\tEM iteration '+str(i+1)+' took {0:.5f}s'.format(
+                        time()-start_iter_time))
 
             # if the results are better, keep it
             if self.n_iter:
@@ -489,6 +542,13 @@ class GMM(BaseEstimator):
                     best_params = {'weights': self.weights_,
                                    'means': self.means_,
                                    'covars': self.covars_}
+                    if self.verbose > 1:
+                        print('\tBetter parameters were found.')
+
+            if self.verbose > 1:
+                print('\tInitialization '+str(init+1)+' took {0:.5f}s'.format(
+                    time()-start_init_time))
+
         # check the existence of an init param that was not subject to
         # likelihood computation issue.
         if np.isneginf(max_log_prob) and self.n_iter:
@@ -496,15 +556,42 @@ class GMM(BaseEstimator):
                 "EM algorithm was never able to compute a valid likelihood " +
                 "given initial parameters. Try different init parameters " +
                 "(or increasing n_init) or check for degenerate data.")
-        # self.n_iter == 0 occurs when using GMM within HMM
+
         if self.n_iter:
             self.covars_ = best_params['covars']
             self.means_ = best_params['means']
             self.weights_ = best_params['weights']
+        else:  # self.n_iter == 0 occurs when using GMM within HMM
+            # Need to make sure that there are responsibilities to output
+            # Output zeros because it was just a quick initialization
+            responsibilities = np.zeros((X.shape[0], self.n_components))
+
+        return responsibilities
+
+    def fit(self, X, y=None):
+        """Estimate model parameters with the EM algorithm.
+
+        A initialization step is performed before entering the
+        expectation-maximization (EM) algorithm. If you want to avoid
+        this step, set the keyword argument init_params to the empty
+        string '' when creating the GMM object. Likewise, if you would
+        like just to do an initialization, set n_iter=0.
+
+        Parameters
+        ----------
+        X : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
+
+        Returns
+        -------
+        self
+        """
+        self._fit(X, y)
         return self
 
     def _do_mstep(self, X, responsibilities, params, min_covar=0):
-        """ Perform the Mstep of the EM algorithm and return the class weihgts.
+        """ Perform the Mstep of the EM algorithm and return the class weights
         """
         weights = responsibilities.sum(axis=0)
         weighted_X_sum = np.dot(responsibilities.T, X)
@@ -608,8 +695,13 @@ def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
         except linalg.LinAlgError:
             # The model is most probably stuck in a component with too
             # few observations, we need to reinitialize this components
-            cv_chol = linalg.cholesky(cv + min_covar * np.eye(n_dim),
-                                      lower=True)
+            try:
+                cv_chol = linalg.cholesky(cv + min_covar * np.eye(n_dim),
+                                          lower=True)
+            except linalg.LinAlgError:
+                raise ValueError("'covars' must be symmetric, "
+                                 "positive-definite")
+
         cv_log_det = 2 * np.sum(np.log(np.diagonal(cv_chol)))
         cv_sol = linalg.solve_triangular(cv_chol, (X - mu).T, lower=True).T
         log_prob[:, c] = - .5 * (np.sum(cv_sol ** 2, axis=1) +

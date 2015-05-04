@@ -57,7 +57,7 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
-from ..utils.validation import DataConversionWarning, check_is_fitted
+from ..utils.validation import DataConversionWarning, NotFittedError
 from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import bincount
 
@@ -155,12 +155,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             For each datapoint x in X and for each tree in the forest,
             return the index of the leaf x ends up in.
         """
-        check_is_fitted(self, 'n_outputs_')
-
-        X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+        X = self._validate_X_predict(X)
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                            backend="threading")(
-            delayed(_parallel_helper)(tree.tree_, 'apply', X)
+            delayed(_parallel_helper)(tree, 'apply', X, check_input=False)
             for tree in self.estimators_)
 
         return np.array(results).T
@@ -293,6 +291,14 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         # Default implementation
         return y, None
 
+    def _validate_X_predict(self, X):
+        """Validate X whenever one tries to predict, apply, predict_proba"""
+        if self.estimators_ is None or len(self.estimators_) == 0:
+            raise NotFittedError("Estimator not fitted, "
+                                 "call `fit` before exploiting the model.")
+
+        return self.estimators_[0]._validate_X_predict(X, check_input=True)
+
     @property
     def feature_importances_(self):
         """Return the feature importances (the higher, the more important the
@@ -302,13 +308,12 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         -------
         feature_importances_ : array, shape = [n_features]
         """
-        check_is_fitted(self, 'n_outputs_')
-
         if self.estimators_ is None or len(self.estimators_) == 0:
-            raise ValueError("Estimator not fitted, "
-                             "call `fit` before `feature_importances_`.")
+            raise NotFittedError("Estimator not fitted, "
+                                 "call `fit` before `feature_importances_`.")
 
-        all_importances = Parallel(n_jobs=self.n_jobs, backend="threading")(
+        all_importances = Parallel(n_jobs=self.n_jobs,
+                                   backend="threading")(
             delayed(getattr)(tree, 'feature_importances_')
             for tree in self.estimators_)
 
@@ -365,7 +370,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             mask = np.ones(n_samples, dtype=np.bool)
             mask[estimator.indices_] = False
             mask_indices = sample_indices[mask]
-            p_estimator = estimator.predict_proba(X[mask_indices, :])
+            p_estimator = estimator.predict_proba(X[mask_indices, :],
+                                                  check_input=False)
 
             if self.n_outputs_ == 1:
                 p_estimator = [p_estimator]
@@ -438,8 +444,10 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
     def predict(self, X):
         """Predict class for X.
 
-        The predicted class of an input sample is computed as the majority
-        prediction of the trees in the forest.
+        The predicted class of an input sample is a vote by the trees in
+        the forest, weighted by their probability estimates. That is,
+        the predicted class is the one with highest mean probability
+        estimate across the trees.
 
         Parameters
         ----------
@@ -453,11 +461,6 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes.
         """
-        check_is_fitted(self, 'n_outputs_')
-
-        # ensure_2d=False because there are actually unit test checking we fail
-        # for 1d.
-        X = check_array(X, ensure_2d=False, accept_sparse="csr")
         proba = self.predict_proba(X)
 
         if self.n_outputs_ == 1:
@@ -496,19 +499,17 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, 'n_outputs_')
-
         # Check data
-        X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+        X = self._validate_X_predict(X)
 
         # Assign chunk of trees to jobs
-        n_jobs, n_trees, starts = _partition_estimators(self.n_estimators,
-                                                        self.n_jobs)
+        n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
         # Parallel loop
         all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
                              backend="threading")(
-            delayed(_parallel_helper)(e, 'predict_proba', X)
+            delayed(_parallel_helper)(e, 'predict_proba', X,
+                                      check_input=False)
             for e in self.estimators_)
 
         # Reduce
@@ -610,19 +611,16 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted values.
         """
-        check_is_fitted(self, 'n_outputs_')
-
         # Check data
-        X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+        X = self._validate_X_predict(X)
 
         # Assign chunk of trees to jobs
-        n_jobs, n_trees, starts = _partition_estimators(self.n_estimators,
-                                                        self.n_jobs)
+        n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
         # Parallel loop
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose,
                              backend="threading")(
-            delayed(_parallel_helper)(e, 'predict', X)
+            delayed(_parallel_helper)(e, 'predict', X, check_input=False)
             for e in self.estimators_)
 
         # Reduce
@@ -642,7 +640,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             mask = np.ones(n_samples, dtype=np.bool)
             mask[estimator.indices_] = False
             mask_indices = sample_indices[mask]
-            p_estimator = estimator.predict(X[mask_indices, :])
+            p_estimator = estimator.predict(X[mask_indices, :], check_input=False)
 
             if self.n_outputs_ == 1:
                 p_estimator = p_estimator[:, np.newaxis]

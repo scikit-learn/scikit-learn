@@ -639,3 +639,38 @@ Trent McConaghy, founder, Solido Design Automation Inc.
   </span>
 
 
+
+`INFONEA <http://www.infonea.com/en/>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/infonea.jpg
+   :target: http://www.infonea.com/en
+
+.. raw:: html
+
+   </div>
+
+We employ scikit-learn for rapid prototyping and custom-made Data Science
+solutions within our in-memory based Business Intelligence Software
+INFONEA®. As a well-documented and comprehensive collection of
+state-of-the-art algorithms and pipelining methods, scikit-learn enables
+us to provide flexible and scalable scientific analysis solutions. Thus,
+scikit-learn is immensely valuable in realizing a powerful integration of
+Data Science technology within self-service business analytics.
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Thorsten Kranz, Data Scientist, Coma Soft AG.
+
+.. raw:: html
+
+  </span>
+
+
+

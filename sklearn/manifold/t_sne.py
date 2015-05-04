@@ -463,6 +463,8 @@ class TSNE(BaseEstimator):
         self.embedding_ = self._tsne(P, alpha, n_samples, random_state,
                                      X_embedded=X_embedded)
 
+        return self
+
     def _tsne(self, P, alpha, n_samples, random_state, X_embedded=None):
         """Runs t-SNE."""
         # t-SNE minimizes the Kullback-Leiber divergence of the Gaussians P

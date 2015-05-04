@@ -5,7 +5,7 @@
 .. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.png?branch=master
 .. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
 
-.. |AppVeyor| image:: https://img.shields.io/appveyor/ci/sklearn-ci/scikit-learn/master.png
+.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/github/scikit-learn/scikit-learn?branch=master&svg=true
 .. _AppVeyor: https://ci.appveyor.com/project/sklearn-ci/scikit-learn/history
 
 scikit-learn

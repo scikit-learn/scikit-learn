@@ -83,10 +83,10 @@ def download_20newsgroups(target_dir, cache_path):
     if os.path.exists(archive_path):
         # Download is not complete as the .tar.gz file is removed after
         # download.
-        logger.warn("Download was incomplete, downloading again.")
+        logger.warning("Download was incomplete, downloading again.")
         os.remove(archive_path)
 
-    logger.warn("Downloading dataset from %s (14 MB)", URL)
+    logger.warning("Downloading dataset from %s (14 MB)", URL)
     opener = urlopen(URL)
     open(archive_path, 'wb').write(opener.read())
 
@@ -161,7 +161,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         for the test set, 'all' for both, with shuffled ordering.
 
     data_home: optional, default: None
-        Specify an download and cache folder for the datasets. If None,
+        Specify a download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     categories: None or collection of string or unicode

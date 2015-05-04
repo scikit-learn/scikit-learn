@@ -226,10 +226,15 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             # needed since _fit_X[np.array([])] doesn't work if _fit_X sparse
             return np.empty(0, dtype=np.int), np.empty(0, dtype=float)
 
-        distances = pairwise_distances(query, self._fit_X[candidates],
+        if sparse.issparse(self._fit_X):
+            candidate_X = self._fit_X[candidates]
+        else:
+            candidate_X = self._fit_X.take(candidates, axis=0, mode='clip')
+        distances = pairwise_distances(query, candidate_X,
                                        metric='cosine')[0]
         distance_positions = np.argsort(distances)
-        return distance_positions, distances[distance_positions]
+        distances = distances.take(distance_positions, mode='clip', axis=0)
+        return distance_positions, distances
 
     def _generate_masks(self):
         """Creates left and right masks for all hash lengths."""
