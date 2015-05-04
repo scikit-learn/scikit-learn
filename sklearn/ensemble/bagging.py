@@ -52,6 +52,8 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
     bootstrap_features = ensemble.bootstrap_features
     support_sample_weight = has_fit_parameter(ensemble.base_estimator_,
                                               "sample_weight")
+    if not support_sample_weight and sample_weight is not None:
+        raise ValueError("The base estimator doesn't support sample weight")
 
     # Build estimators
     estimators = []

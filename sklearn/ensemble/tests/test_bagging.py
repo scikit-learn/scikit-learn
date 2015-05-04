@@ -7,6 +7,8 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 
 import numpy as np
 
+from sklearn.base import BaseEstimator
+
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -550,6 +552,24 @@ def test_bagging_with_pipeline():
                                   max_features=2)
     estimator.fit(iris.data, iris.target)
 
+
+class DummyZeroEstimator(BaseEstimator):
+
+    def fit(self, X, y):
+        self.classes_ = np.unique(y)
+        return self
+
+    def predict(self, X):
+        return self.classes_[np.zeros(X.shape[0], dtype=int)]
+
+
+def test_bagging_sample_weight_unsupported_but_passed():
+    estimator = BaggingClassifier(DummyZeroEstimator())
+    rng = check_random_state(0)
+
+    estimator.fit(iris.data, iris.target).predict(iris.data)
+    assert_raises(ValueError, estimator.fit, iris.data, iris.target,
+                  sample_weight=rng.randint(10, size=(iris.data.shape[0])))
 
 if __name__ == "__main__":
     import nose
