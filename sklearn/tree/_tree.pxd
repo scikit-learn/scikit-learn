@@ -185,12 +185,11 @@ cdef class Tree:
 
     cdef np.ndarray _get_value_ndarray(self)
     cdef np.ndarray _get_node_ndarray(self)
-
     cpdef np.ndarray predict(self, object X)
+    cpdef np.ndarray decision_paths(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef np.ndarray apply(self, object X)
     cdef np.ndarray _apply_dense(self, object X)
     cdef np.ndarray _apply_sparse_csr(self, object X)
-
     cpdef compute_feature_importances(self, normalize=*)
 
 
