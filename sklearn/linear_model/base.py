@@ -196,7 +196,7 @@ class LinearClassifierMixin(ClassifierMixin):
             class would be predicted.
         """
         if not hasattr(self, 'coef_') or self.coef_ is None:
-            raise NotFittedError("This %(name)s instance is not fitted"
+            raise NotFittedError("This %(name)s instance is not fitted "
                                  "yet" % {'name': type(self).__name__})
 
         X = check_array(X, accept_sparse='csr')
