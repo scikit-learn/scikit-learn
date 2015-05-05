@@ -638,11 +638,11 @@ class ShuffleSplit(BaseShuffleSplit):
     n_iter : int (default 10)
         Number of re-shuffling & splitting iterations.
 
-    test_size : float (default 0.1), int, or None,
+    test_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split.
         If int, represents the absolute number of test samples.
-        If None, the value is automatically set accroding  to train_size,
+        If None, the value is automatically set accroding to train_size,
         when test_size and train_size are both None, their values will be
         computed by default (.1/.9).
 
@@ -651,6 +651,9 @@ class ShuffleSplit(BaseShuffleSplit):
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
+        If None, the value is automatically set accroding to test_size,
+        when test_size and train_size are both None, their values will be
+        computed by default (.1/.9).
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
@@ -834,7 +837,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     n_iter : int (default 10)
         Number of re-shuffling & splitting iterations.
 
-    test_size : float (default 0.1), int, or None
+    test_size : float, int, or None (default None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split.
         If int, represents the absolute number of test samples.
@@ -847,6 +850,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
+        If None, the value is automatically set accroding to test_size,
+        when test_size and train_size are both None, their values will be
+        computed by default (.1/.9).
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
@@ -870,7 +876,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     TRAIN: [0 2] TEST: [3 1]
     """
 
-    def __init__(self, y, n_iter=10, test_size=0.1, train_size=None,
+    def __init__(self, y, n_iter=10, test_size=None, train_size=None,
                  random_state=None):
 
         super(StratifiedShuffleSplit, self).__init__(
