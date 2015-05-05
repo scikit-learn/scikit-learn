@@ -837,7 +837,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     n_iter : int (default 10)
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, or None (default None)
+    test_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split.
         If int, represents the absolute number of test samples.
