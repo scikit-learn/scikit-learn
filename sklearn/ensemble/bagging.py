@@ -224,6 +224,9 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         self.random_state = random_state
         self.verbose = verbose
 
+        self.estimators_samples_ = []
+        self.estimators_features_ = []
+
     def fit(self, X, y, sample_weight=None):
         """Build a Bagging ensemble of estimators from the training
            set (X, y).
@@ -287,6 +290,8 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         if not self.warm_start:
             # Free allocated memory, if any
             self.estimators_ = []
+            self.estimators_samples_ = []
+            self.estimators_features_ = []
 
         n_more_estimators = self.n_estimators - len(self.estimators_)
 
@@ -325,9 +330,9 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         # Reduce
         self.estimators_ += list(itertools.chain.from_iterable(
             t[0] for t in all_results))
-        self.estimators_samples_ = list(itertools.chain.from_iterable(
+        self.estimators_samples_ += list(itertools.chain.from_iterable(
             t[1] for t in all_results))
-        self.estimators_features_ = list(itertools.chain.from_iterable(
+        self.estimators_features_ += list(itertools.chain.from_iterable(
             t[2] for t in all_results))
 
         if hasattr(self, "oob_score_") and self.warm_start:
