@@ -3,7 +3,8 @@ The :mod:`sklearn.cluster` module gathers popular unsupervised clustering
 algorithms.
 """
 
-from .spectral import spectral_clustering, SpectralClustering
+from .spectral import (spectral_clustering, SpectralClustering,
+                       diffusion_clustering)
 from .mean_shift_ import (mean_shift, MeanShift,
                           estimate_bandwidth, get_bin_seeds)
 from .affinity_propagation_ import affinity_propagation, AffinityPropagation
@@ -31,6 +32,7 @@ __all__ = ['AffinityPropagation',
            'linkage_tree',
            'mean_shift',
            'spectral_clustering',
+           'diffusion_clustering',
            'ward_tree',
            'SpectralBiclustering',
            'SpectralCoclustering']

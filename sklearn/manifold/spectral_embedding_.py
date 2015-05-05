@@ -17,7 +17,7 @@ from ..utils import check_random_state, check_array, check_symmetric
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.graph import graph_laplacian
 from ..utils.sparsetools import connected_components
-from ..utils.arpack import eigsh
+from ..utils.arpack import eigsh, eigs
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 
@@ -118,9 +118,9 @@ def _set_diag(laplacian, value):
     return laplacian
 
 
-def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
-                       random_state=None, eigen_tol=0.0,
-                       norm_laplacian=True, drop_first=True):
+def _solve_eigenvalue_problem(adjacency, n_components=1, eigen_solver=None,
+                              random_state=None, eigen_tol=0.0,
+                              norm_laplacian=True, mode=None):
     """Project the sample on the first eigen vectors of the graph Laplacian.
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -170,8 +170,12 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     Returns
     -------
-    embedding : array, shape=(n_samples, n_components)
-        The reduced samples.
+    lambdas : array, shape=(n_components,)
+        The eigenvalues of the Laplacian
+    vectors : array, shape=(n_components, n_samples)
+        The eigenvectors of the Laplacian
+    degrees : array, shape=(n_samples,)
+        The degrees of the graph
 
     Notes
     -----
@@ -207,9 +211,23 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     random_state = check_random_state(random_state)
 
     n_nodes = adjacency.shape[0]
+    '''
+<<<<<<< HEAD
+    # Check that the matrices given is symmetric
+    if ((not sparse.isspmatrix(adjacency) and
+         not np.all((adjacency - adjacency.T) < 1e-10)) or
+        (sparse.isspmatrix(adjacency) and
+         not np.all((adjacency - adjacency.T).data < 1e-10))):
+        warnings.warn("Graph adjacency matrix should be symmetric. "
+                      "Converted to be symmetric by average with its "
+                      "transpose.")
+    adjacency = .5 * (adjacency + adjacency.T)
+=======
     # Whether to drop the first eigenvector
     if drop_first:
         n_components = n_components + 1
+>>>>>>> upstream/master
+    '''
 
     if not _graph_is_connected(adjacency):
         warnings.warn("Graph is not fully connected, spectral embedding"
@@ -217,6 +235,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     laplacian, dd = graph_laplacian(adjacency,
                                     normed=norm_laplacian, return_diag=True)
+
     if (eigen_solver == 'arpack'
         or eigen_solver != 'lobpcg' and
             (not sparse.isspmatrix(laplacian)
@@ -250,7 +269,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             lambdas, diffusion_map = eigsh(laplacian, k=n_components,
                                            sigma=1.0, which='LM',
                                            tol=eigen_tol)
-            embedding = diffusion_map.T[n_components::-1] * dd
+            vectors = diffusion_map.T[n_components::-1]
+            lambdas = lambdas[n_components::-1]
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
             # in arpack fails. We fallback to lobpcg
@@ -271,8 +291,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         X[:, 0] = dd.ravel()
         lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
                                         largest=False)
-        embedding = diffusion_map.T * dd
-        if embedding.shape[0] == 1:
+        vectors = diffusion_map.T
+        if vectors.shape[0] == 1:
             raise ValueError
 
     elif eigen_solver == "lobpcg":
@@ -282,9 +302,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             # number of nodes
             # lobpcg will fallback to eigh, so we short circuit it
             if sparse.isspmatrix(laplacian):
-                laplacian = laplacian.toarray()
+                laplacian = laplacian.todense()
             lambdas, diffusion_map = eigh(laplacian)
-            embedding = diffusion_map.T[:n_components] * dd
+            vectors = diffusion_map.T[:n_components]
         else:
             # lobpcg needs native floats
             laplacian = laplacian.astype(np.float)
@@ -295,15 +315,98 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             X[:, 0] = dd.ravel()
             lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
                                             largest=False, maxiter=2000)
-            embedding = diffusion_map.T[:n_components] * dd
-            if embedding.shape[0] == 1:
+            vectors = diffusion_map.T[:n_components]
+            if vectors.shape[0] == 1:
                 raise ValueError
+    return lambdas[:n_components], vectors, dd
 
-    embedding = _deterministic_vector_sign_flip(embedding)
+
+def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
+                       random_state=None, eigen_tol=0.0,
+                       norm_laplacian=True, drop_first=True,
+                       mode=None, diffusion_time=None):
+    """Project the sample on the first eigen vectors of the graph Laplacian
+
+    The adjacency matrix is used to compute a normalized graph Laplacian
+    whose spectrum (especially the eigen vectors associated to the
+    smallest eigen values) has an interpretation in terms of minimal
+    number of cuts necessary to split the graph into comparably sized
+    components.
+
+    This embedding can also 'work' even if the ``adjacency`` variable is
+    not strictly the adjacency matrix of a graph but more generally
+    an affinity or similarity matrix between samples (for instance the
+    heat kernel of a euclidean distance matrix or a k-NN matrix).
+
+    However care must taken to always make the affinity matrix symmetric
+    so that the eigen vector decomposition works as expected.
+
+    Parameters
+    ----------
+    adjacency : array-like or sparse matrix, shape: (n_samples, n_samples)
+        The adjacency matrix of the graph to embed.
+
+    n_components : integer, optional
+        The dimension of the projection subspace.
+
+    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities.
+
+    random_state : int seed, RandomState instance, or None (default)
+        A pseudo random number generator used for the initialization of the
+        lobpcg eigen vectors decomposition when eigen_solver == 'amg'.
+        By default, arpack is used.
+
+    eigen_tol : float, optional, default=0.0
+        Stopping criterion for eigendecomposition of the Laplacian matrix
+        when using arpack eigen_solver.
+
+    drop_first : bool, optional, default=True
+        Whether to drop the first eigenvector. For spectral embedding, this
+        should be True as the first eigenvector should be constant vector for
+        connected graph, but for spectral clustering, this should be kept as
+        False to retain the first eigenvector.
+
+    diffusion_time: float, optional, default=None
+        Determines the scaling of the eigenvalues of the Laplacian
+
+    Returns
+    -------
+    embedding : array, shape=(n_samples, n_components)
+        The reduced samples.
+
+    Notes
+    -----
+    Spectral embedding is most useful when the graph has one connected
+    component. If there graph has many components, the first few eigenvectors
+    will simply uncover the connected components of the graph.
+
+    References
+    ----------
+    * http://en.wikipedia.org/wiki/LOBPCG
+
+    * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
+      Block Preconditioned Conjugate Gradient Method
+      Andrew V. Knyazev
+      http://dx.doi.org/10.1137%2FS1064827500366124
+    """
+    # Whether to drop the first eigenvector
     if drop_first:
-        return embedding[1:n_components].T
+        n_components += 1
+    _, vectors, dd = _solve_eigenvalue_problem(adjacency=adjacency,
+                                               n_components=n_components,
+                                               eigen_solver=eigen_solver,
+                                               random_state=random_state,
+                                               eigen_tol=eigen_tol,
+                                               norm_laplacian=norm_laplacian,
+                                               mode=mode)
+    embedding = _deterministic_vector_sign_flip(vectors * dd)
+    if drop_first:
+        return embedding[1:].T
     else:
-        return embedding[:n_components].T
+        return embedding.T
 
 
 class SpectralEmbedding(BaseEstimator):
@@ -483,3 +586,208 @@ class SpectralEmbedding(BaseEstimator):
         """
         self.fit(X)
         return self.embedding_
+
+
+def diffusion_embedding(adjacency, n_components=8, diffusion_time=None,
+                        eigen_solver=None, random_state=None, eigen_tol=0.0,
+                        norm_laplacian=True):
+    """Project the sample on the first eigenvectors of the graph Laplacian
+
+    The adjacency matrix is used to compute a normalized graph Laplacian
+    whose spectrum (especially the eigen vectors associated to the
+    smallest eigen values) has an interpretation in terms of minimal
+    number of cuts necessary to split the graph into comparably sized
+    components.
+
+    This embedding can also 'work' even if the ``adjacency`` variable is
+    not strictly the adjacency matrix of a graph but more generally
+    an affinity or similarity matrix between samples (for instance the
+    heat kernel of a euclidean distance matrix or a k-NN matrix).
+
+    However care must taken to always make the affinity matrix symmetric
+    so that the eigen vector decomposition works as expected.
+
+    Parameters
+    ----------
+    adjacency : array-like or sparse matrix, shape: (n_samples, n_samples)
+        The adjacency matrix of the graph to embed.
+
+    n_components : integer, optional
+        The dimension of the projection subspace.
+
+    diffusion_time: float, optional, default=None
+        Determines the scaling of the eigenvalues of the Laplacian
+
+    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities.
+
+    random_state : int seed, RandomState instance, or None (default)
+        A pseudo random number generator used for the initialization of the
+        lobpcg eigen vectors decomposition when eigen_solver == 'amg'.
+        By default, arpack is used.
+
+    eigen_tol : float, optional, default=0.0
+        Stopping criterion for eigendecomposition of the Laplacian matrix
+        when using arpack eigen_solver.
+
+    Returns
+    -------
+    embedding : array, shape=(n_samples, n_components)
+        The reduced samples.
+
+    Notes
+    -----
+    Diffusion embedding is most useful when the graph has one connected
+    component. If there graph has many components, the first few eigenvectors
+    will simply uncover the connected components of the graph.
+
+    References
+    ----------
+
+    - Lafon, Stephane, and Ann B. Lee. "Diffusion maps and coarse-graining: A
+      unified framework for dimensionality reduction, graph partitioning, and
+      data set parameterization." Pattern Analysis and Machine Intelligence,
+      IEEE Transactions on 28.9 (2006): 1393-1403.
+    - Coifman, Ronald R., and Stephane Lafon. Diffusion maps. Applied and
+      Computational Harmonic Analysis 21.1 (2006): 5-30.
+
+    """
+
+    if not _graph_is_connected(adjacency):
+        warnings.warn("Graph is not fully connected, spectral embedding"
+                      " may not work as expected.")
+    K = sparse.csr_matrix(adjacency)
+    ndim = K.shape[0]
+    v = np.array(np.sqrt(K.sum(axis=1))).flatten()
+    A = K.copy()
+    del K
+    A.data /= v[A.indices]
+    A = sparse.csr_matrix(A.transpose().toarray())
+    A.data /= v[A.indices]
+    A = sparse.csr_matrix(A.transpose().toarray())
+
+    func = eigs
+    if n_components is not None:
+        lambdas, vectors = func(A, k=n_components + 1)
+    else:
+        lambdas, vectors = func(A, k=max(2, int(np.sqrt(ndim))))
+    del A
+
+    if func == eigsh:
+        lambdas = lambdas[::-1]
+        vectors = vectors[:, ::-1]
+    else:
+        lambdas = np.real(lambdas)
+        vectors = np.real(vectors)
+        lambda_idx = np.argsort(lambdas)[::-1]
+        lambdas = lambdas[lambda_idx]
+        vectors = vectors[:, lambda_idx]
+
+    psi = vectors/vectors[:, [0]]
+    if diffusion_time <= 0:
+        lambdas = lambdas[1:] / (1 - lambdas[1:])
+    else:
+        lambdas = lambdas[1:] ** float(diffusion_time)
+    lambda_ratio = lambdas/lambdas[0]
+    threshold = max(0.05, lambda_ratio[-1])
+
+    n_components_auto = np.amax(np.nonzero(lambda_ratio > threshold)[0])
+    n_components_auto = min(n_components_auto, ndim)
+    if n_components is None:
+        n_components = n_components_auto
+    embedding = psi[:, 1:(n_components + 1)] * lambdas[:n_components][None, :]
+    return embedding
+
+
+class DiffusionEmbedding(SpectralEmbedding):
+    """Diffusion embedding for nonlinear dimensionality reduction
+
+    Diffusion embedding adds an extra parameter `diffusion_time` to spectral
+    embedding.
+
+    Parameters
+    -----------
+    diffusion_time : float
+        Determines the scaling of the eigenvalues of the Laplacian
+
+    For all other parameters see `SpectralEmbedding`
+
+    References
+    ----------
+
+    - Lafon, Stephane, and Ann B. Lee. "Diffusion maps and coarse-graining: A
+      unified framework for dimensionality reduction, graph partitioning, and
+      data set parameterization." Pattern Analysis and Machine Intelligence,
+      IEEE Transactions on 28.9 (2006): 1393-1403.
+    - Coifman, Ronald R., and Stephane Lafon. Diffusion maps. Applied and
+      Computational Harmonic Analysis 21.1 (2006): 5-30.
+
+    """
+
+    def __init__(self, diffusion_time=0., n_components=None,
+                 affinity="nearest_neighbors", gamma=None, random_state=None,
+                 eigen_solver=None, n_neighbors=None):
+        super(DiffusionEmbedding, self).__init__(n_components=n_components,
+                                                 affinity=affinity,
+                                                 gamma=gamma,
+                                                 random_state=random_state,
+                                                 eigen_solver=eigen_solver,
+                                                 n_neighbors=n_neighbors)
+        self.diffusion_time = diffusion_time
+
+    def fit(self, X, y=None):
+        """Fit the model from data in X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+            If affinity is "precomputed"
+            X : array-like, shape (n_samples, n_samples),
+            Interpret X as precomputed adjacency graph computed from
+            samples.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+        random_state = check_random_state(self.random_state)
+        if isinstance(self.affinity, basestring):
+            if self.affinity not in set(("nearest_neighbors", "rbf", "cauchy",
+                                         "precomputed", "markov")):
+                raise ValueError(("%s is not a valid affinity. Expected  'markov', "
+                                  "'precomputed', 'rbf', 'nearest_neighbors' "
+                                  "or a callable.") % self.affinity)
+        elif not hasattr(self.affinity, "__call__"):
+            raise ValueError(("'affinity' is expected to be an an affinity "
+                              "name or a callable. Got: %s") % self.affinity)
+
+        from ..decomposition import RandomizedPCA
+        pca = RandomizedPCA(n_components=self.n_components,
+                            random_state=random_state)
+        #X = pca.fit_transform(X)
+        eps = self.gamma
+        if self.affinity in ['markov', 'cauchy']:
+            from ..metrics import pairwise_distances
+            D = pairwise_distances(X, metric='euclidean') #, squared=True)
+            if eps is None:
+                k = int(max(2, np.round(D.shape[0] * 0.01)))
+                eps = 2 * np.median(np.sort(D, axis=0)[k+1, :])**2
+            if self.affinity == 'markov':
+                affinity_matrix = np.exp(-(D * D) / eps)
+            elif self.affinity == 'cauchy':
+                affinity_matrix = 1./(D * D + eps)
+        else:
+            affinity_matrix = self._get_affinity_matrix(X)
+        self.eps_ = eps
+        self.embedding_ = diffusion_embedding(affinity_matrix,
+                                              n_components=self.n_components,
+                                              eigen_solver=self.eigen_solver,
+                                              random_state=random_state,
+                                              diffusion_time=self.diffusion_time)
+        return self
