@@ -12,7 +12,7 @@ from .validation import (as_float_array,
                          assert_all_finite, warn_if_not_float,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
-                         check_symmetric)
+                         check_symmetric, DataConversionWarning)
 from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
 
@@ -149,7 +149,14 @@ def safe_indexing(X, indices):
     """
     if hasattr(X, "iloc"):
         # Pandas Dataframes and Series
-        return X.iloc[indices]
+        try:
+            return X.iloc[indices]
+        except ValueError:
+            # Cython typed memoryviews internally used in pandas do not support
+            # readonly buffers.
+            warnings.warn("Copying input dataframe for slicing.",
+                          DataConversionWarning)
+            return X.copy().iloc[indices]
     elif hasattr(X, "shape"):
         if hasattr(X, 'take') and (hasattr(indices, 'dtype') and
                                    indices.dtype.kind == 'i'):
