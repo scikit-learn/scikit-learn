@@ -660,9 +660,8 @@ def test_oob_score_removed_on_warm_start():
 
     clf.set_params(warm_start=True, oob_score=False, n_estimators=100)
     clf.fit(X, y)
-    
-    with assert_raises(AttributeError):
-        print clf.oob_score_
+
+    assert_raises(AttributeError, getattr, clf, "oob_score_")
 
 
 if __name__ == "__main__":
