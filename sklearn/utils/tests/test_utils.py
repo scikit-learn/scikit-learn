@@ -6,7 +6,7 @@ from scipy.linalg import pinv2
 
 from sklearn.utils.testing import (assert_equal, assert_raises, assert_true,
                                    assert_almost_equal, assert_array_equal,
-                                   SkipTest)
+                                   SkipTest, assert_warns)
 
 from sklearn.utils import check_random_state
 from sklearn.utils import deprecated
@@ -17,6 +17,7 @@ from sklearn.utils import safe_indexing
 from sklearn.utils import shuffle
 from sklearn.utils.extmath import pinvh
 from sklearn.utils.mocking import MockDataFrame
+from sklearn.utils.validation import DataConversionWarning
 
 
 def test_make_rng():
@@ -167,6 +168,14 @@ def test_safe_indexing_pandas():
     X_df_indexed = safe_indexing(X_df, inds)
     X_indexed = safe_indexing(X_df, inds)
     assert_array_equal(np.array(X_df_indexed), X_indexed)
+    # fun with read-only data in dataframes
+    # this happens in joblib memmapping
+    X.setflags(write=False)
+    X_df_readonly = pd.DataFrame(X)
+    X_df_ro_indexed = assert_warns(DataConversionWarning, safe_indexing,
+                                   X_df_readonly, inds)
+
+    assert_array_equal(np.array(X_df_ro_indexed), X_indexed)
 
 
 def test_safe_indexing_mock_pandas():
