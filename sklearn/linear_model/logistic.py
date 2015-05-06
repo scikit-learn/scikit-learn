@@ -145,8 +145,8 @@ def _logistic_loss(w, X, y, alpha, sample_weight=None):
     return out
 
 
-def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
-    """Computes the logistic loss, gradient and the Hessian.
+def _logistic_grad_hess(w, X, y, alpha, sample_weight=None):
+    """Computes the gradient and the Hessian, in the case of a logistic loss.
 
     Parameters
     ----------
@@ -168,9 +168,6 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
 
     Returns
     -------
-    out : float
-        Logistic loss.
-
     grad : ndarray, shape (n_features,) or (n_features + 1,)
         Logistic gradient.
 
@@ -186,9 +183,6 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
 
     if sample_weight is None:
         sample_weight = np.ones(y.shape[0])
-
-    # Logistic loss is the negative of the log of the logistic function.
-    out = -np.sum(sample_weight * log_logistic(yz)) + .5 * alpha * np.dot(w, w)
 
     z = expit(yz)
     z0 = sample_weight * (z - 1) * y
@@ -225,7 +219,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
             ret[-1] += d.sum() * s[-1]
         return ret
 
-    return out, grad, Hs
+    return grad, Hs
 
 
 def _multinomial_loss(w, X, Y, alpha, sample_weight):
@@ -325,10 +319,9 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
     return loss, grad.ravel(), p
 
 
-def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
+def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
     """
-    Provides multinomial loss, gradient, and a function for computing hessian
-    vector product.
+    Computes the gradient and the Hessian, in the case of a multinomial loss.
 
     Parameters
     ----------
@@ -349,9 +342,6 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
 
     Returns
     -------
-    loss : float
-        Multinomial loss.
-
     grad : array, shape (n_classes * n_features,) or
         (n_classes * (n_features + 1),)
         Ravelled gradient of the multinomial loss.
@@ -369,6 +359,9 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
     n_features = X.shape[1]
     n_classes = Y.shape[1]
     fit_intercept = w.size == (n_classes * (n_features + 1))
+
+    # `loss` is unused. Refactoring to avoid computing it does not
+    # significantly speed up the computation and decreases readability
     loss, grad, p = _multinomial_loss_grad(w, X, Y, alpha, sample_weight)
     sample_weight = sample_weight[:, np.newaxis]
 
@@ -395,7 +388,7 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
             hessProd[:, -1] = r_yhat.sum(axis=0)
         return hessProd.ravel()
 
-    return loss, grad, hessp
+    return grad, hessp
 
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
@@ -624,7 +617,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         elif solver == 'newton-cg':
             func = lambda x, *args: _multinomial_loss(x, *args)[0]
             grad = lambda x, *args: _multinomial_loss_grad(x, *args)[1]
-            hess = _multinomial_loss_grad_hess
+            hess = _multinomial_grad_hess
     else:
         target = y
         if solver == 'lbfgs':
@@ -632,7 +625,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         elif solver == 'newton-cg':
             func = _logistic_loss
             grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
-            hess = _logistic_loss_grad_hess
+            hess = _logistic_grad_hess
 
     coefs = list()
 
