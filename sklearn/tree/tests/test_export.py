@@ -32,10 +32,10 @@ def test_graphviz_toy():
                 "0 [label=\"X[0] <= 0.0000\\ngini = 0.5\\n" \
                 "samples = 6\", shape=\"box\"] ;\n" \
                 "1 [label=\"gini = 0.0000\\nsamples = 3\\n" \
-                "value = [ 3.  0.]\", shape=\"box\"] ;\n" \
+                "value = [-1]\", shape=\"box\"] ;\n" \
                 "0 -> 1 ;\n" \
                 "2 [label=\"gini = 0.0000\\nsamples = 3\\n" \
-                "value = [ 0.  3.]\", shape=\"box\"] ;\n" \
+                "value = [1]\", shape=\"box\"] ;\n" \
                 "0 -> 2 ;\n" \
                 "}"
 
@@ -49,10 +49,10 @@ def test_graphviz_toy():
                 "0 [label=\"feature0 <= 0.0000\\ngini = 0.5\\n" \
                 "samples = 6\", shape=\"box\"] ;\n" \
                 "1 [label=\"gini = 0.0000\\nsamples = 3\\n" \
-                "value = [ 3.  0.]\", shape=\"box\"] ;\n" \
+                "value = [-1]\", shape=\"box\"] ;\n" \
                 "0 -> 1 ;\n" \
                 "2 [label=\"gini = 0.0000\\nsamples = 3\\n" \
-                "value = [ 0.  3.]\", shape=\"box\"] ;\n" \
+                "value = [1]\", shape=\"box\"] ;\n" \
                 "0 -> 2 ;\n" \
                 "}"
 
