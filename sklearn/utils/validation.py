@@ -191,6 +191,7 @@ def indexable(*iterables):
         if sp.issparse(X):
             result.append(X.tocsr())
         elif hasattr(X, "__getitem__") or hasattr(X, "iloc"):
+            # np.array, tuple, list, dict or pandas data frame
             result.append(X)
         elif X is None:
             result.append(X)
