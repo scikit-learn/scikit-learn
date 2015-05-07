@@ -70,6 +70,9 @@ scikit-learn tools.
   Implementation of Nadaraya-Watson kernel regression with automatic bandwidth
   selection
 
+- `gplearn <https://github.com/trevorstephens/gplearn>`_ Genetic Programming
+  for symbolic regression tasks.
+
 
 Domain Specific Packages
 -------------------------
