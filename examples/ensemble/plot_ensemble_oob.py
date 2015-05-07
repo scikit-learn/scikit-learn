@@ -1,23 +1,22 @@
 """
-=========================================================
-OOB Errors for Random Forests and Extra Trees Classifiers
-=========================================================
+=============================
+OOB Errors for Random Forests
+=============================
 
-The ``RandomForestClassifier`` and ``ExtraTreesClasifier`` are trained using
-*bootstrap aggregation*. During training, each new tree is fit from a
-bootstrap sample of the training observations :math:`z_i = (x_i, y_i)`. The
-*out-of-bag* (OOB) error is the average prediction error for each :math:`z_i`
-from trees that do not contain :math:`z_i` in their respective bootstrap
-sample. This allows models to be simultaneously fit and cross-validated [1].
+The ``RandomForestClassifier`` is trained using *bootstrap aggregation*. During
+training, each new tree is fit from a bootstrap sample of the training
+observations :math:`z_i = (x_i, y_i)`. The *out-of-bag* (OOB) error is the
+average prediction error for each :math:`z_i` from trees that do not contain
+:math:`z_i` in their respective bootstrap sample. This allows models to be
+simultaneously fit and validated [1].
 
 The example below demonstrates how the OOB error can be measured at the
-inclusion of each new tree whilst fitting ``RandomForestClassifier`` and
-``ExtraTreesClassifier`` models. The subsequent plot enables the practitioner
-to approximate the error stabilization point of each model at which training
-can be halted.
+inclusion of each new tree whilst fitting ``RandomForestClassifier`` models.
+The subsequent plot enables the practitioner to approximate the error
+stabilization point of each model at which training can be halted.
 
 .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
-       Learning Ed. 2", Springer, 2009.
+       Learning Ed. 2", p592-593, Springer, 2009.
 
 """
 import matplotlib.pyplot as plt
@@ -37,30 +36,26 @@ print(__doc__)
 RANDOM_STATE = 123
 
 # Generate a binary classification dataset.
-X, y = make_classification(n_samples=500, n_features=30,
-                           n_clusters_per_class=1,
+X, y = make_classification(n_samples=500, n_features=25,
+                           n_clusters_per_class=1, n_informative=15,
                            random_state=RANDOM_STATE)
 
 # NOTE: Setting the `warm_start` construction parameter to `True` disables
 # support for paralellised ensembles but is necessary for tracking the OOB
 # error trajectory during training.
 ensemble_clfs = [
-    ("RandomForestClassifier, max_features='auto'",
+    ("RandomForestClassifier, max_features='sqrt'",
         RandomForestClassifier(warm_start=True, oob_score=True,
-                               max_features="auto",
+                               max_features="sqrt",
                                random_state=RANDOM_STATE)),
-    ("RandomForestClassifier, max_features=2",
-        RandomForestClassifier(warm_start=True, max_features=2,
+    ("RandomForestClassifier, max_features='log2'",
+        RandomForestClassifier(warm_start=True, max_features='log2',
                                oob_score=True,
                                random_state=RANDOM_STATE)),
-    ("ExtraTreesClassifier, max_features='auto'",
-        ExtraTreesClassifier(warm_start=True, max_features="auto",
-                             oob_score=True, bootstrap=True,
-                             random_state=RANDOM_STATE)),
-    ("ExtraTreesClassifier, max_features=2",
-        ExtraTreesClassifier(warm_start=True, max_features=2,
-                             oob_score=True, bootstrap=True,
-                             random_state=RANDOM_STATE))
+    ("RandomForestClassifier, max_features=None",
+        RandomForestClassifier(warm_start=True, max_features=None,
+                               oob_score=True,
+                               random_state=RANDOM_STATE))
 ]
 
 # Map a classifier name to a list of (<n_estimators>, <error rate>) pairs.
@@ -68,7 +63,7 @@ error_rate = OrderedDict((label, []) for label, _ in ensemble_clfs)
 
 # Range of `n_estimators` values to explore.
 min_estimators = 15
-max_estimators = 150
+max_estimators = 175
 
 for label, clf in ensemble_clfs:
     for i in range(min_estimators, max_estimators + 1):
