@@ -1,17 +1,23 @@
+import tempfile
+import shutil
+import os.path as op
 from nose.tools import assert_equal
 
 import numpy as np
 from scipy import linalg
 
+from sklearn.cross_validation import train_test_split
+from sklearn.externals import joblib
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import ignore_warnings, assert_warns_message
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_no_warnings, assert_warns
 from sklearn.utils import ConvergenceWarning
 from sklearn import linear_model, datasets
+from sklearn.linear_model.least_angle import _lars_path_residues
 
 diabetes = datasets.load_diabetes()
 X, y = diabetes.data, diabetes.target
@@ -426,6 +432,24 @@ def test_no_warning_for_zero_mse():
     lars = linear_model.LassoLarsIC(normalize=False)
     assert_no_warnings(lars.fit, X, y)
     assert_true(np.any(np.isinf(lars.criterion_)))
+
+
+def test_lars_path_readonly_data():
+    # When using automated memory mapping on large input, the
+    # fold data is in read-only mode
+    # This is a non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/4597
+    splitted_data = train_test_split(X, y, random_state=42)
+    temp_folder = tempfile.mkdtemp()
+    try:
+        fpath = op.join(temp_folder, 'data.pkl')
+        joblib.dump(splitted_data, fpath)
+        X_train, X_test, y_train, y_test = joblib.load(fpath, mmap_mode='r')
+
+        # The following should not fail despite copy=False
+        _lars_path_residues(X_train, y_train, X_test, y_test, copy=False)
+    finally:
+        shutil.rmtree(temp_folder)
 
 
 if __name__ == '__main__':
