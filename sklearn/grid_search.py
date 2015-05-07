@@ -207,8 +207,8 @@ class ParameterSampler(object):
         return self.n_iter
 
 
-def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
-                   verbose, error_score='raise', **fit_params):
+def fit_grid_point(X, y, attributes, estimator, parameters, train, test,
+                   scorer, verbose, error_score='raise', **fit_params):
     """Run fit on one set of parameters.
 
     Parameters
@@ -258,9 +258,10 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     n_samples_test : int
         Number of test samples in this split.
     """
-    score, n_samples_test, _ = _fit_and_score(estimator, X, y, scorer, train,
-                                              test, verbose, parameters,
-                                              fit_params, error_score)
+    score, n_samples_test, _ = _fit_and_score(estimator, X, y, attributes,
+                                              scorer, train, test, verbose,
+                                              parameters, fit_params,
+                                              error_score)
     return score, parameters, n_samples_test
 
 
@@ -468,7 +469,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         return self.best_estimator_.transform(Xt)
 
-    def _fit(self, X, y, parameter_iterable):
+    def _fit(self, X, y, attributes, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
 
         estimator = self.estimator
@@ -500,9 +501,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch
         )(
-            delayed(_fit_and_score)(clone(base_estimator), X, y, self.scorer_,
-                                    train, test, self.verbose, parameters,
-                                    self.fit_params, return_parameters=True,
+            delayed(_fit_and_score)(clone(base_estimator), X, y, attributes,
+                                    self.scorer_, train, test, self.verbose,
+                                    parameters, self.fit_params,
+                                    return_parameters=True,
                                     error_score=self.error_score)
                 for parameters in parameter_iterable
                 for train, test in cv)
@@ -716,7 +718,7 @@ class GridSearchCV(BaseSearchCV):
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, attributes=None):
         """Run fit with all sets of parameters.
 
         Parameters
@@ -731,7 +733,7 @@ class GridSearchCV(BaseSearchCV):
             None for unsupervised learning.
 
         """
-        return self._fit(X, y, ParameterGrid(self.param_grid))
+        return self._fit(X, y, attributes, ParameterGrid(self.param_grid))
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -880,7 +882,7 @@ class RandomizedSearchCV(BaseSearchCV):
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, attributes=None):
         """Run fit on the estimator with randomly drawn parameters.
 
         Parameters
@@ -897,4 +899,4 @@ class RandomizedSearchCV(BaseSearchCV):
         sampled_params = ParameterSampler(self.param_distributions,
                                           self.n_iter,
                                           random_state=self.random_state)
-        return self._fit(X, y, sampled_params)
+        return self._fit(X, y, attributes, sampled_params)
