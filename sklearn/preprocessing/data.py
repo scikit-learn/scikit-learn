@@ -22,7 +22,8 @@ from ..utils.fixes import (combinations_with_replacement as combinations_w_r,
 from ..utils.fixes import isclose
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
-from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis)
+from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis,
+                                 min_max_axis)
 from ..utils.validation import check_is_fitted
 
 zip = six.moves.zip
@@ -610,7 +611,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
         elif norm == 'l2':
             inplace_csr_row_normalize_l2(X)
         elif norm == 'max':
-            norms = X.max(axis=1).toarray()
+            _, norms = min_max_axis(X, 1)
             norms = norms.repeat(np.diff(X.indptr))
             mask = norms != 0
             X.data[mask] /= norms[mask]
