@@ -9,6 +9,7 @@ import numpy as np
 
 from sklearn.base import BaseEstimator
 
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -30,6 +31,7 @@ from sklearn.svm import SVC, SVR
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SelectKBest
 from sklearn.cross_validation import train_test_split
+from sklearn.datasets import make_multilabel_classification
 from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
 
@@ -303,7 +305,6 @@ def test_probability():
 def test_oob_score_classification():
     # Check that oob prediction is a good estimation of the generalization
     # error.
-    rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(iris.data,
                                                         iris.target,
                                                         random_state=rng)
@@ -313,7 +314,7 @@ def test_oob_score_classification():
                                 n_estimators=100,
                                 bootstrap=True,
                                 oob_score=True,
-                                random_state=rng).fit(X_train, y_train)
+                                random_state=0).fit(X_train, y_train)
 
         test_score = clf.score(X_test, y_test)
 
@@ -325,28 +326,45 @@ def test_oob_score_classification():
                                        n_estimators=1,
                                        bootstrap=True,
                                        oob_score=True,
-                                       random_state=rng).fit,
+                                       random_state=0).fit,
                      X_train,
                      y_train)
+
+    # Check for multioutput / multilabel data
+    clf = BaggingClassifier(base_estimator=DecisionTreeClassifier(),
+                            n_estimators=100,
+                            bootstrap=True,
+                            oob_score=True,
+                            random_state=0).fit(X_train, y_train > 1)
+
+    so_oob_df_ = clf.oob_decision_function_
+    clf.fit(X_train, np.vstack([y_train, y_train]).T > 1)
+    for oob_df_k in clf.oob_decision_function_:
+        assert_almost_equal(oob_df_k, so_oob_df_)
 
 
 def test_oob_score_regression():
     # Check that oob prediction is a good estimation of the generalization
     # error.
-    rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
                                                         random_state=rng)
 
-    clf = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
+    est = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
                            n_estimators=50,
                            bootstrap=True,
                            oob_score=True,
-                           random_state=rng).fit(X_train, y_train)
+                           random_state=0).fit(X_train, y_train)
 
-    test_score = clf.score(X_test, y_test)
+    so_oob_prediction_ = est.oob_prediction_
+    test_score = est.score(X_test, y_test)
 
-    assert_less(abs(test_score - clf.oob_score_), 0.1)
+    assert_less(abs(test_score - est.oob_score_), 0.1)
+
+    # multioutput-oob
+    est.fit(X_train, np.vstack([y_train, y_train]).T)
+    assert_array_almost_equal(est.oob_prediction_,
+                              np.vstack(2 * [so_oob_prediction_]).T)
 
     # Test with few estimators
     assert_warns(UserWarning,
@@ -354,7 +372,7 @@ def test_oob_score_regression():
                                   n_estimators=1,
                                   bootstrap=True,
                                   oob_score=True,
-                                  random_state=rng).fit,
+                                  random_state=0).fit,
                  X_train,
                  y_train)
 
@@ -407,7 +425,8 @@ def test_error():
                   BaggingClassifier(base, max_features="foobar").fit, X, y)
 
     # Test support of decision_function
-    assert_false(hasattr(BaggingClassifier(base).fit(X, y), 'decision_function'))
+    assert_false(hasattr(BaggingClassifier(base).fit(X, y),
+                         'decision_function'))
 
 
 def test_parallel_classification():
@@ -619,7 +638,8 @@ def test_warm_start_equal_n_estimators():
     X_train += 1.
 
     assert_warns_message(UserWarning,
-                         "Warm-start fitting without increasing n_estimators does not",
+                         "Warm-start fitting without increasing "
+                         "n_estimators does not",
                          clf.fit, X_train, y_train)
     assert_array_equal(y_pred, clf.predict(X_test))
 
@@ -662,3 +682,27 @@ def test_oob_score_removed_on_warm_start():
     clf.fit(X, y)
 
     assert_raises(AttributeError, getattr, clf, "oob_score_")
+
+
+def test_multioutput():
+    X, y = make_multilabel_classification(n_samples=100, n_labels=1,
+                                          n_classes=5, random_state=0,
+                                          return_indicator=True)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    # no bootstrap is used to get perfect score on training set
+    est = BaggingClassifier(random_state=0, bootstrap=False)
+    est.fit(X_train, y_train)
+
+    assert_almost_equal(est.score(X_train, y_train), 1.)
+
+    y_proba = est.predict_proba(X_test)
+    y_log_proba = est.predict_log_proba(X_test)
+    for p, log_p in zip(y_proba, y_log_proba):
+        assert_array_almost_equal(p, np.exp(log_p))
+
+    # no bootstrap is used to get perfect score on training set
+    est = BaggingRegressor(random_state=0, bootstrap=False)
+    est.fit(X_train, y_train)
+    assert_almost_equal(est.score(X_train, y_train), 1.)
