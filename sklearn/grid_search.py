@@ -552,9 +552,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             best_estimator = clone(base_estimator).set_params(
                 **best.parameters)
             if y is not None:
-                best_estimator.fit(X, y, **self.fit_params)
+                best_estimator.fit(X, y, sample_props=sample_props,
+                                   **self.fit_params)
             else:
-                best_estimator.fit(X, **self.fit_params)
+                best_estimator.fit(X, sample_props=sample_props,
+                                   **self.fit_params)
             self.best_estimator_ = best_estimator
         return self
 

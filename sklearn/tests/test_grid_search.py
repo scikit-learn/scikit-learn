@@ -13,7 +13,9 @@ import sys
 import numpy as np
 import scipy.sparse as sp
 
+
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
@@ -44,7 +46,8 @@ from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
-from sklearn.cross_validation import KFold, StratifiedKFold, FitFailedWarning
+from sklearn.cross_validation import (KFold, StratifiedKFold, FitFailedWarning,
+                                      cross_val_score)
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
@@ -768,3 +771,20 @@ def test_parameters_sampler_replacement():
     sampler = ParameterSampler(params_distribution, n_iter=7)
     samples = list(sampler)
     assert_equal(len(samples), 7)
+
+
+def test_sample_props_slicing():
+    # test that sample_props are properly sliced and forwarded in GridSearchCV
+    # and cross_val_score
+    X, y = make_blobs(random_state=0)
+    params = {'max_depth': [1, 2, 5]}
+
+    # assign non-zero weight only to one class
+    sample_weights = (y == 0).astype(np.float)
+    grid = GridSearchCV(DecisionTreeClassifier(random_state=0, max_depth=5),
+                        params)
+
+    scores = cross_val_score(grid, X, y,
+                             sample_props={'sample_weight': sample_weights})
+    # make sure we are not better than predicting always class 0
+    assert_less(scores.max(), 0.4)
