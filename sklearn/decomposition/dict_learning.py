@@ -372,7 +372,7 @@ def _update_dict(dictionary, Y, code, gain, gain_rate, verbose=False, return_r2=
     return dictionary, gain
 
 
-def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8, gain_rate,
+def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8, gain_rate=0.,
                   method='lars', n_jobs=1, dict_init=None, code_init=None,
                   callback=None, verbose=False, random_state=None,
                   return_n_iter=False):
@@ -546,7 +546,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8, gain_rate,
         return code, dictionary, errors
 
 
-def dict_learning_online(X, n_components=2, alpha=1, n_iter=100, gain_rate,
+def dict_learning_online(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
                          return_code=True, dict_init=None, callback=None,
                          batch_size=3, verbose=False, shuffle=True, n_jobs=1,
                          method='lars', iter_offset=0, random_state=None,
