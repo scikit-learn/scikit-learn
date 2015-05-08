@@ -38,10 +38,11 @@ class CheckingClassifier(BaseEstimator):
     changed the input.
     """
     def __init__(self, check_y=None, check_X=None, check_sample_props=None,
-                 foo_param=0):
+                 foo_param=0, check_all=None):
         self.check_y = check_y
         self.check_X = check_X
         self.check_sample_props = check_sample_props
+        self.check_all = check_all
         self.foo_param = foo_param
 
     def fit(self, X, y, sample_props=None):
@@ -52,6 +53,8 @@ class CheckingClassifier(BaseEstimator):
             assert_true(self.check_y(y))
         if self.check_sample_props is not None:
             assert_true(self.check_sample_props(sample_props))
+        if self.check_all is not None:
+            assert_true(self.check_all(X, y, sample_props))
 
         return self
 

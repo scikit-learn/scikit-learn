@@ -788,3 +788,21 @@ def test_sample_props_slicing():
                              sample_props={'sample_weight': sample_weights})
     # make sure we are not better than predicting always class 0
     assert_less(scores.max(), 0.4)
+
+    # test with checking classifier
+    # make properties dependent on X and y and see that they are passed
+    # correctly for all calls to fit
+    sample_weights = 2 * y
+    other_property = ["foo_%f" % x for x in X[:, 0]]
+    params = {'foo_param': [0, 1]}
+
+    def check_all(X_, y_, sample_props_):
+        assert_array_equal(sample_props_['sample_weight'], 2 * y_)
+        assert_array_equal(sample_props_['other_property'], ["foo_%f" % x for x in X_[:, 0]])
+        return True
+
+    grid = GridSearchCV(CheckingClassifier(check_all=check_all), params)
+
+    cross_val_score(grid, X, y, sample_props={'sample_weight': sample_weights,
+                                              'other_property':
+                                              other_property})
