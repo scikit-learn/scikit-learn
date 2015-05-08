@@ -1119,8 +1119,31 @@ Regression metrics
 
 The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure regression performance. Some of those have been enhanced
-to handle the multioutput case: :func:`mean_absolute_error`,
-:func:`mean_squared_error`, :func:`median_absolute_error` and :func:`r2_score`.
+to handle the multioutput case: :func:`mean_squared_error`,
+:func:`mean_absolute_error`, :func:`explained_variance_score` and
+:func:`r2_score`.
+
+
+These functions have an ``multioutput`` keyword argument which specifies the
+way the scores or losses for each individual target should be averaged. The
+default is ``'uniform_average'``, which specifies a uniformly weighted mean
+over outputs. If an ``ndarray`` of shape ``(n_outputs,)`` is passed, then its
+entries are interpreted as weights and an according weighted average is
+returned. If ``multioutput`` is ``'raw_values'`` is specified, then all
+unaltered individual scores or losses will be returned in an array of shape
+``(n_outputs,)``.
+
+
+The :func:`r2_score` and :func:`explained_variance_score` accept an additional
+value ``'variance_weighted'`` for the ``multioutput`` parameter. This option
+leads to a weighting of each individual score by the variance of the
+corresponding target variable. This setting quantifies the globally captured
+unscaled variance. If the target variables are of different scale, then this
+score puts more importance on well explaining the higher variance variables.
+``multioutput='variance_weighted'`` is the default value for :func:`r2_score`
+for backward compatibility. This will be changed to ``uniform_average`` in the
+future.
+
 
 Explained variance score
 -------------------------
@@ -1147,6 +1170,14 @@ function::
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> explained_variance_score(y_true, y_pred)  # doctest: +ELLIPSIS
     0.957...
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> explained_variance_score(y_true, y_pred, multioutput='raw_values')
+    ... # doctest: +ELLIPSIS
+    array([ 0.967...,  1.        ])
+    >>> explained_variance_score(y_true, y_pred, multioutput=[0.3, 0.7])
+    ... # doctest: +ELLIPSIS
+    0.990...
 
 Mean absolute error
 -------------------
@@ -1175,7 +1206,11 @@ Here is a small example of usage of the :func:`mean_absolute_error` function::
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> mean_absolute_error(y_true, y_pred)
   0.75
-
+  >>> mean_absolute_error(y_true, y_pred, multioutput='raw_values')
+  array([ 0.5,  1. ])
+  >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
+  ... # doctest: +ELLIPSIS
+  0.849...
 
 
 Mean squared error
@@ -1266,8 +1301,20 @@ Here is a small example of usage of the :func:`r2_score` function::
   0.948...
   >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-  >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
+  >>> r2_score(y_true, y_pred, multioutput='variance_weighted')
+  ... # doctest: +ELLIPSIS
   0.938...
+  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+  >>> r2_score(y_true, y_pred, multioutput='uniform_average')
+  ... # doctest: +ELLIPSIS
+  0.936...
+  >>> r2_score(y_true, y_pred, multioutput='raw_values')
+  ... # doctest: +ELLIPSIS
+  array([ 0.965...,  0.908...])
+  >>> r2_score(y_true, y_pred, multioutput=[0.3, 0.7])
+  ... # doctest: +ELLIPSIS
+  0.925...
 
 
 .. topic:: Example:
