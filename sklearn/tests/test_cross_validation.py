@@ -555,22 +555,22 @@ def test_cross_val_score_pandas():
         cval.cross_val_score(clf, X_df, y_ser)
 
 
-def test_cross_val_score_attributes():
-    # check that cross_val_score slices sample attributes
+def test_cross_val_score_sample_props():
+    # check that cross_val_score slices sample sample_props
     # given as dictionaries properly
     n_samples_train = len(X) * 1 // 2
     check_length = lambda x: len(x) == n_samples_train
 
-    def check_attributes(x):
+    def check_sample_props(x):
         type_check = isinstance(x, dict)
         length_check = all(len(value) == n_samples_train for value in x.values())
         key_check = sorted(x.keys()) == ["other_attribute", "sample_weights"]
         return key_check and length_check and type_check
 
     clf = CheckingClassifier(check_X=check_length, check_y=check_length,
-                             check_attributes=check_attributes)
-    attributes = {'sample_weights': np.ones(len(X)), 'other_attribute': np.zeros(len(X))}
-    cval.cross_val_score(clf, X, y, attributes=attributes, cv=2)
+                             check_sample_props=check_sample_props)
+    sample_props = {'sample_weights': np.ones(len(X)), 'other_attribute': np.zeros(len(X))}
+    cval.cross_val_score(clf, X, y, sample_props=sample_props, cv=2)
 
     # test with pandas dataframe if we have pandas
     #try:
@@ -578,15 +578,15 @@ def test_cross_val_score_attributes():
     #except ImportError:
     #    return
 
-    #attributes = pd.DataFame(attributes)
+    #sample_props = pd.DataFame(sample_props)
 
-    #def check_attributes_df(x):
+    #def check_sample_props(x):
     #    type_check = isinstance(x, pd.DataFrame)
     #    length_check = len(x) == n_samples_train
     #    key_check = x.columns == ["sample_weights", "other_attribute"]
     #    return key_check and length_check and type_check
 
-    #cval.cross_val_score(clf, X, y, attributes=attributes)
+    #cval.cross_val_score(clf, X, y, sample_props=sample_props)
 
 
 def test_cross_val_score_mask():

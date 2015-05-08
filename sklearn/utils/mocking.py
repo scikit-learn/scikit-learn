@@ -37,21 +37,21 @@ class CheckingClassifier(BaseEstimator):
     This allows testing whether pipelines / cross-validation or metaestimators
     changed the input.
     """
-    def __init__(self, check_y=None, check_X=None, check_attributes=None,
+    def __init__(self, check_y=None, check_X=None, check_sample_props=None,
                  foo_param=0):
         self.check_y = check_y
         self.check_X = check_X
-        self.check_attributes = check_attributes
+        self.check_sample_props = check_sample_props
         self.foo_param = foo_param
 
-    def fit(self, X, y, attributes=None):
+    def fit(self, X, y, sample_props=None):
         assert_true(len(X) == len(y))
         if self.check_X is not None:
             assert_true(self.check_X(X))
         if self.check_y is not None:
             assert_true(self.check_y(y))
-        if self.check_attributes is not None:
-            assert_true(self.check_attributes(attributes))
+        if self.check_sample_props is not None:
+            assert_true(self.check_sample_props(sample_props))
 
         return self
 

@@ -302,14 +302,14 @@ def check_sample_properties(name, Estimator):
     set_fast_parameters(estimator)
     set_random_state(estimator)
     funcs = ["fit", "fit_predict", "fit_transform"]
-    attributes = {'sample_weights': np.ones(10)}
+    sample_props = {'sample_weights': np.ones(10)}
 
     for func_name in funcs:
         func = getattr(estimator, func_name, None)
         if func is not None:
-            func(X, y, attributes=None)
-            func(X, y, attributes=attributes)
-            # XXX check for size of attributes?
+            func(X, y, sample_props=None)
+            func(X, y, sample_props=sample_props)
+            # XXX check for size of sample_props?
 
 
 def check_dtype_object(name, Estimator):

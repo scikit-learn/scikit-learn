@@ -955,7 +955,7 @@ def _index_param_value(X, v, indices):
     return safe_indexing(v, indices)
 
 
-def cross_val_predict(estimator, X, y=None, attributes=None, cv=None, n_jobs=1,
+def cross_val_predict(estimator, X, y=None, sample_props=None, cv=None, n_jobs=1,
                       verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Generate cross-validated estimates for each input data point
 
@@ -971,8 +971,8 @@ def cross_val_predict(estimator, X, y=None, attributes=None, cv=None, n_jobs=1,
         The target variable to try to predict in the case of
         supervised learning.
 
-    attributes : dict, recarray or dataframe
-        Per-sample attributes like sample groups, sample weights, etc.
+    sample_props : dict, recarray or dataframe
+        Per-sample properties like sample groups, sample weights, etc.
         Each value / key must have length n_samples.
 
     cv : cross-validation generator or int, optional, default: None
@@ -1015,7 +1015,7 @@ def cross_val_predict(estimator, X, y=None, attributes=None, cv=None, n_jobs=1,
     preds : ndarray
         This is the result of calling 'predict'
     """
-    X, y, attributes = indexable(X, y, attributes)
+    X, y, sample_props = indexable(X, y, sample_props)
 
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     # We clone the estimator to make sure that all the folds are
@@ -1023,7 +1023,7 @@ def cross_val_predict(estimator, X, y=None, attributes=None, cv=None, n_jobs=1,
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
     preds_blocks = parallel(delayed(_fit_and_predict)(clone(estimator), X, y,
-                                                      attributes, train, test,
+                                                      sample_props, train, test,
                                                       verbose, fit_params)
                             for train, test in cv)
     p = np.concatenate([p for p, _ in preds_blocks])
@@ -1035,7 +1035,7 @@ def cross_val_predict(estimator, X, y=None, attributes=None, cv=None, n_jobs=1,
     return preds
 
 
-def _fit_and_predict(estimator, X, y, attributes, train, test, verbose, fit_params):
+def _fit_and_predict(estimator, X, y, sample_props, train, test, verbose, fit_params):
     """Fit estimator and predict values for a given dataset split.
 
     Parameters
@@ -1050,8 +1050,8 @@ def _fit_and_predict(estimator, X, y, attributes, train, test, verbose, fit_para
         The target variable to try to predict in the case of
         supervised learning.
 
-    attributes : dict, recarray or dataframe
-        Per-sample attributes like sample groups, sample weights, etc.
+    sample_props : dict, recarray or dataframe
+        Per-sample properties like sample groups, sample weights, etc.
         Each value / key must have length n_samples.
 
     train : array-like, shape (n_train_samples,)
@@ -1079,13 +1079,15 @@ def _fit_and_predict(estimator, X, y, attributes, train, test, verbose, fit_para
     fit_params = dict([(k, _index_param_value(X, v, train))
                       for k, v in fit_params.items()])
 
-    attributes_train = dict([(k, safe_indexing(v, train)) for k, v in
-                             attributes.items()])
+    sample_props_train = dict([(k, safe_indexing(v, train)) for k, v in
+                               sample_props.items()])
 
-    X_train, y_train, attributes = _safe_split(estimator, X, y, attributes, train)
-    X_test, _, _ = _safe_split(estimator, X, y, attributes, test, train)
+    X_train, y_train, sample_props_train = _safe_split(estimator, X, y,
+                                                       sample_props, train)
+    X_test, _, _ = _safe_split(estimator, X, y, sample_props, test, train)
 
-    estimator.fit(X_train, y_train, attributes=attributes_train, **fit_params)
+    estimator.fit(X_train, y_train, sample_props=sample_props_train,
+                  **fit_params)
     preds = estimator.predict(X_test)
     return preds, test
 
@@ -1114,7 +1116,7 @@ def _check_is_partition(locs, n):
     return True
 
 
-def cross_val_score(estimator, X, y=None, attributes=None, scoring=None,
+def cross_val_score(estimator, X, y=None, sample_props=None, scoring=None,
                     cv=None, n_jobs=1, verbose=0, fit_params=None,
                     pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
@@ -1131,8 +1133,8 @@ def cross_val_score(estimator, X, y=None, attributes=None, scoring=None,
         The target variable to try to predict in the case of
         supervised learning.
 
-    attributes : dict, recarray or dataframe
-        Per-sample attributes like sample groups, sample weights, etc.
+    sample_props : dict, recarray or dataframe
+        Per-sample properties like sample groups, sample weights, etc.
         Each value / key must have length n_samples.
 
     scoring : string, callable or None, optional, default: None
@@ -1178,7 +1180,7 @@ def cross_val_score(estimator, X, y=None, attributes=None, scoring=None,
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
     """
-    X, y, attributes = indexable(X, y, attributes)
+    X, y, sample_props = indexable(X, y, sample_props)
 
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
@@ -1187,7 +1189,7 @@ def cross_val_score(estimator, X, y=None, attributes=None, scoring=None,
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
     scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y,
-                                              attributes, scorer, train, test,
+                                              sample_props, scorer, train, test,
                                               verbose, None, fit_params)
                       for train, test in cv)
     return np.array(scores)[:, 0]
@@ -1197,7 +1199,7 @@ class FitFailedWarning(RuntimeWarning):
     pass
 
 
-def _fit_and_score(estimator, X, y, attributes, scorer, train, test, verbose,
+def _fit_and_score(estimator, X, y, sample_props, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, error_score='raise'):
     """Fit estimator and compute scores for a given dataset split.
@@ -1214,8 +1216,8 @@ def _fit_and_score(estimator, X, y, attributes, scorer, train, test, verbose,
         The target variable to try to predict in the case of
         supervised learning.
 
-    attributes : dict, recarray or dataframe
-        Per-sample attributes like sample groups, sample weights, etc.
+    sample_props : dict, recarray or dataframe
+        Per-sample properties like sample groups, sample weights, etc.
         Each value / key must have length n_samples.
 
     scorer : callable
@@ -1284,11 +1286,11 @@ def _fit_and_score(estimator, X, y, attributes, scorer, train, test, verbose,
 
     start_time = time.time()
 
-    X_train, y_train, attributes_train = _safe_split(estimator, X, y, attributes, train)
-    X_test, y_test, attributes_test = _safe_split(estimator, X, y, attributes, test, train)
+    X_train, y_train, sample_props_train = _safe_split(estimator, X, y, sample_props, train)
+    X_test, y_test, sample_props_test = _safe_split(estimator, X, y, sample_props, test, train)
 
     try:
-        estimator.fit(X_train, y_train, attributes=attributes_train,
+        estimator.fit(X_train, y_train, sample_props=sample_props_train,
                       **fit_params)
 
     except Exception as e:
@@ -1327,7 +1329,7 @@ def _fit_and_score(estimator, X, y, attributes, scorer, train, test, verbose,
     return ret
 
 
-def _safe_split(estimator, X, y, attributes, indices, train_indices=None):
+def _safe_split(estimator, X, y, sample_props, indices, train_indices=None):
     """Create subset of dataset and properly handle kernels."""
     if hasattr(estimator, 'kernel') and callable(estimator.kernel):
         # cannot compute the kernel values with custom function
@@ -1352,9 +1354,9 @@ def _safe_split(estimator, X, y, attributes, indices, train_indices=None):
             X_subset = safe_indexing(X, indices)
 
     y_subset = safe_indexing(y, indices)
-    attributes_subset = safe_indexing(attributes, indices)
+    sample_props_subset = safe_indexing(sample_props, indices)
 
-    return X_subset, y_subset, attributes_subset
+    return X_subset, y_subset, sample_props_subset
 
 
 def _score(estimator, X_test, y_test, scorer):
