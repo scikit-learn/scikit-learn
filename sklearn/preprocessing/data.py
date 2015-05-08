@@ -649,7 +649,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    norm : 'l1' or 'l2', optional ('l2' by default)
+    norm : 'l1', 'l2', or 'max', optional ('l2' by default)
         The norm to use to normalize each non zero sample.
 
     copy : boolean, optional, default True
