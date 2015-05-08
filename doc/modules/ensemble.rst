@@ -732,6 +732,7 @@ is too time consuming.
 
  * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
  * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
+ * :ref:`example_ensemble_plot_ensemble_oob.py`
 
 Interpretation
 --------------
