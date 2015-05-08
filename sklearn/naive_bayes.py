@@ -30,6 +30,7 @@ from .utils.extmath import safe_sparse_dot, logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.fixes import in1d
 from .utils.validation import check_is_fitted
+from .utils.deprecations import _deprecate_sample_weight
 from .externals import six
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
@@ -145,7 +146,7 @@ class GaussianNB(BaseNB):
     [1]
     """
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Fit Gaussian Naive Bayes according to X, y
 
         Parameters
@@ -165,6 +166,7 @@ class GaussianNB(BaseNB):
         self : object
             Returns self.
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         X, y = check_X_y(X, y)
         return self._partial_fit(X, y, np.unique(y), _refit=True,
                                  sample_weight=sample_weight)
@@ -491,7 +493,7 @@ class BaseDiscreteNB(BaseNB):
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Fit Naive Bayes classifier according to X, y
 
         Parameters
@@ -513,6 +515,7 @@ class BaseDiscreteNB(BaseNB):
         """
         X, y = check_X_y(X, y, 'csr')
         _, n_features = X.shape
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
 
         labelbin = LabelBinarizer()
         Y = labelbin.fit_transform(y)

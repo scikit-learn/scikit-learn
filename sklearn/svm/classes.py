@@ -160,7 +160,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         self.penalty = penalty
         self.loss = loss
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the model according to the given training data.
 
         Parameters
@@ -323,7 +323,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         self.dual = dual
         self.loss = loss
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the model according to the given training data.
 
         Parameters
