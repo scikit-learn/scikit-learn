@@ -256,8 +256,35 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         code[this_slice] = this_view
     return code
 
+def _update_gain(gain, code, gain_rate, verbose=False):
+    """Update the estimated variance of coefficients in place.
 
-def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
+    Parameters
+    ----------
+    gain: array of shape (n_components) 
+        Value of the components' norm at the previous iteration.
+
+    code: array of shape (n_components, n_samples)
+        Sparse coding of the data against which to optimize the dictionary.
+
+    gain_rate: float
+        Gives the learning parameter for the gain.
+
+    verbose:
+        Degree of output the procedure will print.
+
+    Returns
+    -------
+    gain: array of shape (n_components) 
+        Updated value of the components' norm. 
+
+    """
+    if gain_rate>0.:
+        n_components, n_samples = code.shape
+        gain = (1 - gain_rate)*gain + gain_rate * n_samples * np.sum(code**2, axis=1)/np.sum(code**2)
+    return gain
+
+def _update_dict(dictionary, Y, code, gain, gain_rate, verbose=False, return_r2=False,
                  random_state=None):
     """Update the dense dictionary factor in place.
 
@@ -271,6 +298,12 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
     code: array of shape (n_components, n_samples)
         Sparse coding of the data against which to optimize the dictionary.
+
+    gain: array of shape (n_components) 
+        Value of the components' norm.
+
+    gain_rate: float
+        Gives the learning parameter for the gain.
 
     verbose:
         Degree of output the procedure will print.
@@ -287,10 +320,17 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     dictionary: array of shape (n_features, n_components)
         Updated dictionary.
 
+    gain: array of shape (n_components) 
+        Updated value of the components' norm. 
+
     """
     n_components = len(code)
     n_samples = Y.shape[0]
     random_state = check_random_state(random_state)
+    # Update gain
+    gain = _update_gain(gain, code, gain_rate, verbose=verbose)
+#     if verbose>10: print("Function update dict ", gain)
+
     # Residuals, computed 'in-place' for efficiency
     R = -np.dot(dictionary, code)
     R += Y
@@ -311,10 +351,13 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
             dictionary[:, k] = random_state.randn(n_samples)
             # Setting corresponding coefs to 0
             code[k, :] = 0.0
+            # DICTIONARY NORMALIZATION : norm = 1, as it is for a new random vector <<<<<
             dictionary[:, k] /= sqrt(np.dot(dictionary[:, k],
                                             dictionary[:, k]))
         else:
+            # DICTIONARY NORMALIZATION using the average variance
             dictionary[:, k] /= sqrt(atom_norm_square)
+            dictionary[:, k] /= sqrt(gain[k])
             # R <- -1.0 * U_k * V_k^T + R
             R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
     if return_r2:
@@ -325,11 +368,11 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         # striding
         R = as_strided(R, shape=(R.size, ), strides=(R.dtype.itemsize,))
         R = np.sum(R)
-        return dictionary, R
-    return dictionary
+        return dictionary, gain, R
+    return dictionary, gain
 
 
-def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
+def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8, gain_rate,
                   method='lars', n_jobs=1, dict_init=None, code_init=None,
                   callback=None, verbose=False, random_state=None,
                   return_n_iter=False):
@@ -360,6 +403,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
     tol: float,
         Tolerance for the stopping condition.
+
+    gain_rate: float
+        Gives the learning parameter for the gain.
 
     method: {'lars', 'cd'}
         lars: uses the least angle regression method to solve the lasso problem
@@ -442,6 +488,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         dictionary = np.r_[dictionary,
                            np.zeros((n_components - r, dictionary.shape[1]))]
 
+    gain = np.ones(n_components)
     # Fortran-order dict, as we are going to access its row vectors
     dictionary = np.array(dictionary, order='F')
 
@@ -469,8 +516,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         # Update code
         code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
                              init=code, n_jobs=n_jobs)
+
         # Update dictionary
-        dictionary, residuals = _update_dict(dictionary.T, X.T, code.T,
+        dictionary, gain, residuals = _update_dict(dictionary.T, X.T, code.T, gain, gain_rate,
                                              verbose=verbose, return_r2=True,
                                              random_state=random_state)
         dictionary = dictionary.T
@@ -498,7 +546,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         return code, dictionary, errors
 
 
-def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
+def dict_learning_online(X, n_components=2, alpha=1, n_iter=100, gain_rate,
                          return_code=True, dict_init=None, callback=None,
                          batch_size=3, verbose=False, shuffle=True, n_jobs=1,
                          method='lars', iter_offset=0, random_state=None,
@@ -530,6 +578,9 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
     n_iter : int,
         Number of iterations to perform.
+
+    gain_rate: float
+        Gives the learning parameter for the gain.
 
     return_code : boolean,
         Whether to also return the code U or just the dictionary V.
@@ -635,6 +686,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
     if verbose == 1:
         print('[dict_learning]', end=' ')
+    gain = np.ones(n_components)
 
     n_batches = floor(float(len(X)) / batch_size)
     if shuffle:
@@ -666,6 +718,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
             if verbose > 10 or ii % ceil(100. / verbose) == 0:
                 print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
                        % (ii, dt, dt / 60))
+                print("Gain ", gain)
 
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                   alpha=alpha, n_jobs=n_jobs).T
@@ -682,8 +735,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         B *= beta
         B += np.dot(this_X.T, this_code.T)
 
-        # Update dictionary
-        dictionary = _update_dict(dictionary, B, A, verbose=verbose,
+        # Update dictionary/
+        dictionary, gain = _update_dict(dictionary, B, A, gain, gain_rate, verbose=verbose,
                                   random_state=random_state)
         # XXX: Can the residuals be of any use?
 
@@ -1038,6 +1091,9 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     n_iter : int,
         total number of iterations to perform
 
+    gain_rate: float
+        Gives the learning parameter for the gain.
+
     fit_algorithm : {'lars', 'cd'}
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
@@ -1125,7 +1181,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     MiniBatchSparsePCA
 
     """
-    def __init__(self, n_components=None, alpha=1, n_iter=1000,
+    def __init__(self, n_components=None, alpha=1, n_iter=1000, gain_rate=0.,
                  fit_algorithm='lars', n_jobs=1, batch_size=3,
                  shuffle=True, dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
@@ -1136,6 +1192,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
                                        transform_alpha, split_sign, n_jobs)
         self.alpha = alpha
         self.n_iter = n_iter
+        self.gain_rate = gain_rate
         self.fit_algorithm = fit_algorithm
         self.dict_init = dict_init
         self.verbose = verbose
@@ -1163,8 +1220,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
         U, (A, B), self.n_iter_ = dict_learning_online(
             X, self.n_components, self.alpha,
-            n_iter=self.n_iter, return_code=False,
-            method=self.fit_algorithm,
+            n_iter=self.n_iter, gain_rate = self.gain_rate,
+            return_code=False, method=self.fit_algorithm,
             n_jobs=self.n_jobs, dict_init=self.dict_init,
             batch_size=self.batch_size, shuffle=self.shuffle,
             verbose=self.verbose, random_state=random_state,
@@ -1210,7 +1267,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             iter_offset = getattr(self, 'iter_offset_', 0)
         U, (A, B) = dict_learning_online(
             X, self.n_components, self.alpha,
-            n_iter=self.n_iter, method=self.fit_algorithm,
+            n_iter=self.n_iter, gain_rate = self.gain_rate,
+            method=self.fit_algorithm,
             n_jobs=self.n_jobs, dict_init=dict_init,
             batch_size=len(X), shuffle=False,
             verbose=self.verbose, return_code=False,
