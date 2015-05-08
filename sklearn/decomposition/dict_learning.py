@@ -259,6 +259,20 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 def _update_gain(gain, code, gain_rate, verbose=False):
     """Update the estimated variance of coefficients in place.
 
+    Following the classical SparseNet algorithm from Olshausen, we
+    compute here a "gain vector" for the dictionary. This gain will 
+    be used to tune the weight of each dictionary element.
+
+    The heuristics used here follows the assumption that during learning,
+    some elements that learn first are more responsive to input patches
+    as may be recorded by estimating their mean variance. If we were to 
+    keep their norm fixed, these would be more likely to be selected again,
+    leading to a ``monopolistic'' distribution of dictionary elements,
+    some having learned more often than others. By dividing their norm 
+    by their mean estimated variance, we lower the probability of elements 
+    with high variance to be selected again. This thus helps the learning 
+    to be more balanced.
+
     Parameters
     ----------
     gain: array of shape (n_components) 
@@ -328,7 +342,7 @@ def _update_dict(dictionary, Y, code, gain, gain_rate, verbose=False, return_r2=
     n_samples = Y.shape[0]
     random_state = check_random_state(random_state)
     # Update gain
-    gain = _update_gain(gain, code, gain_rate, verbose=verbose)
+    if gain_rate>0.: gain = _update_gain(gain, code, gain_rate, verbose=verbose)
 #     if verbose>10: print("Function update dict ", gain)
 
     # Residuals, computed 'in-place' for efficiency
@@ -357,7 +371,7 @@ def _update_dict(dictionary, Y, code, gain, gain_rate, verbose=False, return_r2=
         else:
             # DICTIONARY NORMALIZATION using the average variance
             dictionary[:, k] /= sqrt(atom_norm_square)
-            dictionary[:, k] /= sqrt(gain[k])
+            if gain_rate>0.: dictionary[:, k] /= sqrt(gain[k])
             # R <- -1.0 * U_k * V_k^T + R
             R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
     if return_r2:
