@@ -6,9 +6,12 @@ classification estimators.
 
 """
 
-# Authors: Sebastian Raschka <se.raschka@gmail.com>
+# Authors: Sebastian Raschka <se.raschka@gmail.com>,
+#          Gilles Louppe <g.louppe@gmail.com>
 #
 # Licence: BSD 3 clause
+
+import numpy as np
 
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
@@ -16,34 +19,28 @@ from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
 from ..externals import six
-from ..pipeline import _name_estimators
-
-from collections import defaultdict
-import numpy as np
-import operator
 
 
 class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
-
-    """ Soft Voting/Majority Rule classifier for unfitted estimators.
+    """Soft Voting/Majority Rule classifier for unfitted estimators.
 
     Parameters
     ----------
     estimators : list of (string, estimator) tuples
-      Invoking the `fit` method on the `VotingClassifier` will fit clones
-      of those original estimators that will be stored in the class attribute
-      `self.estimators_`.
+        Invoking the `fit` method on the `VotingClassifier` will fit clones
+        of those original estimators that will be stored in the class attribute
+        `self.estimators_`.
 
     voting : str, {'hard', 'soft'} (default='hard')
-      If 'hard', uses predicted class labels for majority rule voting.
-      Else if 'soft', predicts the class label based on the argmax of
-      the sums of the predicted probalities, which is recommended for
-      an ensemble of well-calibrated classifiers.
+        If 'hard', uses predicted class labels for majority rule voting.
+        Else if 'soft', predicts the class label based on the argmax of
+        the sums of the predicted probalities, which is recommended for
+        an ensemble of well-calibrated classifiers.
 
     weights : array-like, shape = [n_classifiers], optional (default=`None`)
-      Sequence of weights (`float` or `int`) to weight the occurances of
-      predicted class labels (`hard` voting) or class probabilities
-      before averaging (`soft` voting). Uses uniform weights if `None`.
+        Sequence of weights (`float` or `int`) to weight the occurances of
+        predicted class labels (`hard` voting) or class probabilities
+        before averaging (`soft` voting). Uses uniform weights if `None`.
 
     Attributes
     ----------
@@ -87,7 +84,6 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.voting = voting
         self.weights = weights
 
-
     def fit(self, X, y):
         """ Fit the estimators.
 
@@ -105,12 +101,12 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         self : object
         """
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
-            raise NotImplementedError('Multilabel and multi-output'\
+            raise NotImplementedError('Multilabel and multi-output'
                                       ' classification is not supported.')
 
         if self.voting not in ('soft', 'hard'):
             raise ValueError("Voting must be 'soft' or 'hard'; got (voting=%r)"
-                             % voting)
+                             % self.voting)
 
         if self.weights and len(self.weights) != len(self.estimators):
             raise ValueError('Number of classifiers and weights must be equal'
@@ -121,9 +117,11 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.le_.fit(y)
         self.classes_ = self.le_.classes_
         self.estimators_ = []
+
         for name, clf in self.estimators:
             fitted_clf = clone(clf).fit(X, self.le_.transform(y))
             self.estimators_.append(fitted_clf)
+
         return self
 
     def predict(self, X):
@@ -142,6 +140,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         """
         if self.voting == 'soft':
             maj = np.argmax(self.predict_proba(X), axis=1)
+
         else:  # 'hard' voting
             predictions = self._predict(X)
             maj = np.apply_along_axis(
@@ -152,20 +151,21 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
                                       arr=predictions)
 
         maj = self.le_.inverse_transform(maj)
+
         return maj
-        
+
     def _collect_probas(self, X):
-        """ Collect results from clf.predict calls. """
+        """Collect results from clf.predict calls. """
         return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
 
     def _predict_proba(self, X):
-        """ Predict class probabilities for X in 'soft' voting """
+        """Predict class probabilities for X in 'soft' voting """
         avg = np.average(self._collect_probas(X), axis=0, weights=self.weights)
         return avg
 
     @property
     def predict_proba(self):
-        """ Compute probabilities of possible outcomes for samples in X.
+        """Compute probabilities of possible outcomes for samples in X.
 
         Parameters
         ----------
@@ -180,11 +180,11 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         """
         if self.voting == 'hard':
             raise AttributeError("predict_proba is not available when"
-                                 " voting=%r" % self.voting)                         
+                                 " voting=%r" % self.voting)
         return self._predict_proba
-        
+
     def transform(self, X):
-        """ Return class labels or probabilities for X for each estimator.
+        """Return class labels or probabilities for X for each estimator.
 
         Parameters
         ----------
@@ -207,7 +207,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
             return self._predict(X)
 
     def get_params(self, deep=True):
-        """ Return estimator parameter names for GridSearch support"""
+        """Return estimator parameter names for GridSearch support"""
         if not deep:
             return super(VotingClassifier, self).get_params(deep=False)
         else:
@@ -218,7 +218,5 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
             return out
 
     def _predict(self, X):
-        """ Collect results from clf.predict calls. """
+        """Collect results from clf.predict calls. """
         return np.asarray([clf.predict(X) for clf in self.estimators_]).T
-
-

@@ -2,8 +2,6 @@
 
 import numpy as np
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_equal
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
@@ -22,7 +20,7 @@ X, y = iris.data[:, 1:3], iris.target
 
 
 def test_majority_label_iris():
-    """ Check classification by majority label on dataset iris."""
+    """Check classification by majority label on dataset iris."""
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     clf3 = GaussianNB()
@@ -38,18 +36,18 @@ def test_majority_label_iris():
 
 
 def test_tie_situation():
-    """ Check voting classifier selects smaller class label in tie situation."""
+    """Check voting classifier selects smaller class label in tie situation."""
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)],
-                        voting='hard')
+                            voting='hard')
     assert_equal(clf1.fit(X, y).predict(X)[73], 2)
     assert_equal(clf2.fit(X, y).predict(X)[73], 1)
     assert_equal(eclf.fit(X, y).predict(X)[73], 1)
 
 
 def test_weights_iris():
-    """ Check classification by average probabilities on dataset iris."""
+    """Check classification by average probabilities on dataset iris."""
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     clf3 = GaussianNB()
@@ -66,7 +64,7 @@ def test_weights_iris():
 
 
 def test_predict_on_toy_problem():
-    """ Manually check predicted class labels for toy dataset."""
+    """Manually check predicted class labels for toy dataset."""
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     clf3 = GaussianNB()
@@ -98,7 +96,7 @@ def test_predict_on_toy_problem():
 
 
 def test_predict_proba_on_toy_problem():
-    """ Calculate predicted probabilities on toy dataset."""
+    """Calculate predicted probabilities on toy dataset."""
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     clf3 = GaussianNB()
@@ -135,7 +133,7 @@ def test_predict_proba_on_toy_problem():
     assert_almost_equal(t11, eclf_res[1][1], decimal=1)
     assert_almost_equal(t21, eclf_res[2][1], decimal=1)
     assert_almost_equal(t31, eclf_res[3][1], decimal=1)
-    
+
     try:
         eclf = VotingClassifier(estimators=[
                                 ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
@@ -147,11 +145,10 @@ def test_predict_proba_on_toy_problem():
     else:
         raise AssertionError('AttributeError for voting == "hard"'
                              ' and with predict_proba not raised')
-       
 
 
 def test_multilabel():
-    """ Check if error is raised for multilabel classification."""
+    """Check if error is raised for multilabel classification."""
     X, y = make_multilabel_classification(n_classes=2, n_labels=1,
                                           allow_unlabeled=False,
                                           return_indicator=True,
@@ -167,7 +164,7 @@ def test_multilabel():
 
 
 def test_gridsearch():
-    """ Check GridSearch support."""
+    """Check GridSearch support."""
     clf1 = LogisticRegression(random_state=1)
     clf2 = RandomForestClassifier(random_state=1)
     clf3 = GaussianNB()
@@ -176,7 +173,7 @@ def test_gridsearch():
                 voting='soft')
 
     params = {'lr__C': [1.0, 100.0],
-              'rf__n_estimators': [20, 200],}
+              'rf__n_estimators': [20, 200]}
 
     grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
     grid.fit(iris.data, iris.target)

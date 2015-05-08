@@ -899,6 +899,7 @@ averaged.
 
  .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm package", 2007
 
+
  .. _voting_classifier:
 
  VotingClassifier
@@ -935,10 +936,8 @@ averaged.
 
  the class label 1 will be assigned to the sample.
 
-
-
  Usage
- ..........................
+ .....
 
  The following example shows how to fit the majority rule classifier:
 
@@ -973,7 +972,6 @@ averaged.
  In contrast to majority voting (hard voting), soft voting
  returns the class label as argmax of the sum of predicted probabilities.
 
-
  Specific weights can be assigned to each classifier via the ``weights``
  parameter. When weights are provided, the predicted class probabilities
  for each classifier are collected, multiplied by the classifier weight,
@@ -986,7 +984,6 @@ averaged.
 
  The weighted average probabilities for a sample would then be
  calculated as follows:
-
 
  ================  ==========    ==========      ==========
  classifier        class 1       class 2         class 3
@@ -1050,7 +1047,7 @@ to tune the hyperparameters of the individual estimators.
     >>> grid = grid.fit(iris.data, iris.target)
 
  Usage
- ..........................
+ .....
 
  In order to predict the class labels based on the predicted
  class-probabilities (scikit-learn estimators in the VotingClassifier
