@@ -36,6 +36,9 @@ Enhancements
      models to increase the size of the ensemble. By
      `Tim Head`_.
 
+   - Added option to use multi-output regression metrics without averaging.
+     By Konstantin Shmelkov and `Michael Eickenberg`_.
+
 
 Bug fixes
 .........
@@ -360,7 +363,7 @@ Bug fixes
 
     - The :class:`decomposition.PCA` now undoes whitening in its
       ``inverse_transform``. Also, its ``components_`` now always have unit
-      length. By Michael Eickenberg.
+      length. By `Michael Eickenberg`_.
 
     - Fix incomplete download of the dataset when
       :func:`datasets.download_20newsgroups` is called. By `Manoj Kumar`_.
