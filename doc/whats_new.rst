@@ -39,6 +39,8 @@ Enhancements
    - Added option to use multi-output regression metrics without averaging.
      By Konstantin Shmelkov and `Michael Eickenberg`_.
 
+   - Added ``stratify`` option to :func:`cross_validation.train_test_split` for stratified splitting.
+     By Miroslav Batchkarov.
 
 Bug fixes
 .........
