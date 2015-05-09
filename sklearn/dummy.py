@@ -15,7 +15,7 @@ from .utils.validation import check_consistent_length
 from .utils.random import random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
-from ..utils.deprecations import _deprecate_sample_weight
+from .utils.deprecations import _deprecate_sample_weight
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
