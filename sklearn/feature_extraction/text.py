@@ -435,7 +435,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         self.non_negative = non_negative
         self.dtype = dtype
 
-    def partial_fit(self, X, y=None):
+    def partial_fit(self, X, y=None, sample_props=None):
         """Does nothing: this transformer is stateless.
 
         This method is just there to mark the fact that this transformer
@@ -444,7 +444,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         """
         return self
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Does nothing: this transformer is stateless."""
         # triggers a parameter validation
         self._get_hasher().fit(X, y=y)
@@ -955,7 +955,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         self.smooth_idf = smooth_idf
         self.sublinear_tf = sublinear_tf
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Learn the idf vector (global term weights)
 
         Parameters

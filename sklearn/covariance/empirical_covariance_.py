@@ -147,7 +147,7 @@ class EmpiricalCovariance(BaseEstimator):
             precision = pinvh(self.covariance_)
         return precision
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fits the Maximum Likelihood Estimator covariance model
         according to the given training data and parameters.
 

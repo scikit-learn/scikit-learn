@@ -597,7 +597,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         self.normalize = normalize
         self.precompute = precompute
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -793,7 +793,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the model using X, y as training data.
 
         Parameters

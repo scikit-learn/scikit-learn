@@ -847,7 +847,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
                                        transform_alpha, split_sign, n_jobs)
         self.components_ = dictionary
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Do nothing and return the estimator unchanged
 
         This method is just there to implement the usual API and hence
@@ -978,7 +978,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.verbose = verbose
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the model from data in X.
 
         Parameters
@@ -1144,7 +1144,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.split_sign = split_sign
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the model from data in X.
 
         Parameters

@@ -137,7 +137,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         self.iterated_power = iterated_power
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the FactorAnalysis model to X using EM
 
         Parameters

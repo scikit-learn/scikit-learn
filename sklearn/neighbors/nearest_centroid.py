@@ -81,7 +81,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         self.metric = metric
         self.shrink_threshold = shrink_threshold
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """
         Fit the NearestCentroid model according to the given training data.
 

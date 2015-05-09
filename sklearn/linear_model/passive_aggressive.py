@@ -221,7 +221,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         self.C = C
         self.loss = loss
 
-    def partial_fit(self, X, y):
+    def partial_fit(self, X, y, sample_props=None):
         """Fit linear model with Passive Aggressive algorithm.
 
         Parameters

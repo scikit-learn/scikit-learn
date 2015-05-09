@@ -479,7 +479,7 @@ class DPGMM(GMM):
                                                     + self.gamma_[i, 2])
         self.weights_ /= np.sum(self.weights_)
 
-    def _fit(self, X, y=None):
+    def _fit(self, X, y=None, sample_props=None):
         """Estimate model parameters with the variational
         algorithm.
 

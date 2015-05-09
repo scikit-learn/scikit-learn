@@ -11,7 +11,7 @@ from sklearn.utils.validation import check_X_y, check_array
 
 
 class BaseBadClassifier(BaseEstimator, ClassifierMixin):
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         return self
 
     def predict(self, X):
@@ -19,13 +19,13 @@ class BaseBadClassifier(BaseEstimator, ClassifierMixin):
 
 
 class NoCheckinPredict(BaseBadClassifier):
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         X, y = check_X_y(X, y)
         return self
 
 
 class NoSparseClassifier(BaseBadClassifier):
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
         if sp.issparse(X):
             raise ValueError("Nonsensical Error")

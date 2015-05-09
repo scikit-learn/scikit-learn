@@ -110,7 +110,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         self.estimator_params = estimator_params
         self.verbose = verbose
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the RFE model and then the underlying estimator on the selected
            features.
 

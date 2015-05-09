@@ -966,7 +966,7 @@ class LarsCV(Lars):
         self.n_jobs = n_jobs
         self.eps = eps
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -1035,7 +1035,7 @@ class LarsCV(Lars):
         # Now compute the full model
         # it will call a lasso internally when self if LassoLarsCV
         # as self.method == 'lasso'
-        Lars.fit(self, X, y)
+        Lars.fit(self, X, y, sample_props=None)
         return self
 
     @property

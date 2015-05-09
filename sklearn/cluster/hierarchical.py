@@ -695,7 +695,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.affinity = affinity
         self.pooling_func = pooling_func
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the hierarchical clustering on the data
 
         Parameters
@@ -849,7 +849,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         are merged to form node `n_features + i`
     """
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None, sample_props=None, **params):
         """Fit the hierarchical clustering on the data
 
         Parameters

@@ -1320,7 +1320,7 @@ def check_get_params_invariance(name, estimator):
         def __init__(self):
             pass
 
-        def fit(self, X, y):
+        def fit(self, X, y, sample_props=None):
             return self
 
     if name in ('FeatureUnion', 'Pipeline'):

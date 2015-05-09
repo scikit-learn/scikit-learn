@@ -114,7 +114,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         self.random_state = random_state
         self.tol = tol
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit LSI model on training data X.
 
         Parameters

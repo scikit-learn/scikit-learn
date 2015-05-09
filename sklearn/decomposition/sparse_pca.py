@@ -91,7 +91,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the model from data in X.
 
         Parameters
@@ -246,7 +246,7 @@ class MiniBatchSparsePCA(SparsePCA):
         self.method = method
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the model from data in X.
 
         Parameters

@@ -563,7 +563,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver)
         self.class_weight = class_weight
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit Ridge regression model.
 
         Parameters

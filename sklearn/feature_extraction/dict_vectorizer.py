@@ -93,7 +93,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         self.sparse = sparse
         self.sort = sort
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Learn a list of feature name -> indices mappings.
 
         Parameters

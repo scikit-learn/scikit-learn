@@ -89,7 +89,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         return self
 
     @abstractmethod
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit model."""
 
     def _validate_params(self):

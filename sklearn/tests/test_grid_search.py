@@ -59,8 +59,8 @@ class MockClassifier(object):
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
-    def fit(self, X, Y):
-        assert_true(len(X) == len(Y))
+    def fit(self, X, Y, sample_props=None):
+        assert_true(len(X) == len(y))
         return self
 
     def predict(self, T):
@@ -414,7 +414,7 @@ class BrokenClassifier(BaseEstimator):
     def __init__(self, parameter=None):
         self.parameter = parameter
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         assert_true(not hasattr(self, 'has_been_fit_'))
         self.has_been_fit_ = True
 
@@ -688,7 +688,7 @@ class FailingClassifier(BaseEstimator):
     def __init__(self, parameter=None):
         self.parameter = parameter
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         if self.parameter == FailingClassifier.FAILING_PARAMETER:
             raise ValueError("Failing classifier failed as required")
 

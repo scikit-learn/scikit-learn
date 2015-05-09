@@ -75,7 +75,7 @@ class ItemSelector(BaseEstimator, TransformerMixin):
     def __init__(self, key):
         self.key = key
 
-    def fit(self, x, y=None):
+    def fit(self, x, y=None, sample_props=None):
         return self
 
     def transform(self, data_dict):
@@ -85,7 +85,7 @@ class ItemSelector(BaseEstimator, TransformerMixin):
 class TextStats(BaseEstimator, TransformerMixin):
     """Extract features from each document for DictVectorizer"""
 
-    def fit(self, x, y=None):
+    def fit(self, x, y=None, sample_props=None):
         return self
 
     def transform(self, posts):
@@ -100,7 +100,7 @@ class SubjectBodyExtractor(BaseEstimator, TransformerMixin):
     Takes a sequence of strings and produces a dict of sequences.  Keys are
     `subject` and `body`.
     """
-    def fit(self, x, y=None):
+    def fit(self, x, y=None, sample_props=None):
         return self
 
     def transform(self, posts):

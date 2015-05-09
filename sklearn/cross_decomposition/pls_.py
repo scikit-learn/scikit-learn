@@ -219,7 +219,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         self.tol = tol
         self.copy = copy
 
-    def fit(self, X, Y):
+    def fit(self, X, Y, sample_props=None):
         """Fit model to data.
 
         Parameters
@@ -416,7 +416,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         Ypred = np.dot(X, self.coef_)
         return Ypred + self.y_mean_
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None, sample_props=None, **fit_params):
         """Learn and apply the dimension reduction on the train data.
 
         Parameters
@@ -721,7 +721,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         self.scale = scale
         self.copy = copy
 
-    def fit(self, X, Y):
+    def fit(self, X, Y, sample_props=None):
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
         X = check_array(X, dtype=np.float64, copy=self.copy)
@@ -769,7 +769,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
             return x_scores, y_scores
         return x_scores
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None, sample_props=None, **fit_params):
         """Learn and apply the dimension reduction on the train data.
 
         Parameters

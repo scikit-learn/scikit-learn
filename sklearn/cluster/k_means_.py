@@ -774,7 +774,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         return X
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Compute k-means clustering.
 
         Parameters
@@ -1196,7 +1196,7 @@ class MiniBatchKMeans(KMeans):
         self.init_size = init_size
         self.reassignment_ratio = reassignment_ratio
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Compute the centroids on X by chunking it into mini-batches.
 
         Parameters
@@ -1358,7 +1358,7 @@ class MiniBatchKMeans(KMeans):
         labels, inertia = zip(*results)
         return np.hstack(labels), np.sum(inertia)
 
-    def partial_fit(self, X, y=None):
+    def partial_fit(self, X, y=None, sample_props=None):
         """Update k means estimate on a single mini-batch X.
 
         Parameters

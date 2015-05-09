@@ -121,7 +121,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.copy = copy
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the imputer on X.
 
         Parameters

@@ -993,7 +993,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.multi_class = multi_class
         self.verbose = verbose
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the model according to the given training data.
 
         Parameters
@@ -1292,7 +1292,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the model according to the given training data.
 
         Parameters

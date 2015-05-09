@@ -8,10 +8,9 @@ from nose.tools import assert_equal, assert_true
 from scipy import sparse
 
 from sklearn.feature_selection.rfe import RFE, RFECV
-from sklearn.datasets import load_iris, make_friedman1, make_regression
+from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
 from sklearn.svm import SVC, SVR
-from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 
 from sklearn.utils import check_random_state
@@ -30,7 +29,7 @@ class MockClassifier(object):
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
-    def fit(self, X, Y):
+    def fit(self, X, Y, sample_props=None):
         assert_true(len(X) == len(Y))
         self.coef_ = np.ones(X.shape[1], dtype=np.float64)
         return self
@@ -92,7 +91,6 @@ def test_rfe_features_importance():
 
     # Check if the supports are equal
     assert_array_equal(rfe.get_support(), rfe_svc.get_support())
-
 
 
 def test_rfe_deprecation_estimator_params():
@@ -289,7 +287,7 @@ def test_number_of_subsets_of_features():
         X = generator.normal(size=(100, n_features))
         y = generator.rand(100).round()
         rfe = RFE(estimator=SVC(kernel="linear"),
-              n_features_to_select=n_features_to_select, step=step)
+                  n_features_to_select=n_features_to_select, step=step)
         rfe.fit(X, y)
         # this number also equals to the maximum of ranking_
         assert_equal(np.max(rfe.ranking_),
@@ -317,6 +315,6 @@ def test_number_of_subsets_of_features():
         rfecv.fit(X, y)
 
         assert_equal(rfecv.grid_scores_.shape[0],
-                 formula1(n_features, n_features_to_select, step))
+                     formula1(n_features, n_features_to_select, step))
         assert_equal(rfecv.grid_scores_.shape[0],
-                 formula2(n_features, n_features_to_select, step))
+                     formula2(n_features, n_features_to_select, step))

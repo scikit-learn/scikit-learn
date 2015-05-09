@@ -95,7 +95,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         if not hasattr(self, "classes_"):
             raise ValueError("LabelEncoder was not fitted yet.")
 
-    def fit(self, y):
+    def fit(self, y, sample_props=None):
         """Fit label encoder
 
         Parameters
@@ -112,7 +112,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self.classes_ = np.unique(y)
         return self
 
-    def fit_transform(self, y):
+    def fit_transform(self, y, sample_props=None):
         """Fit label encoder and return encoded labels
 
         Parameters
@@ -299,7 +299,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         if not hasattr(self, "classes_"):
             raise ValueError("LabelBinarizer was not fitted yet.")
 
-    def fit(self, y):
+    def fit(self, y, sample_props=None):
         """Fit label binarizer
 
         Parameters
@@ -712,7 +712,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         self.classes = classes
         self.sparse_output = sparse_output
 
-    def fit(self, y):
+    def fit(self, y, sample_props=None):
         """Fit the label sets binarizer, storing `classes_`
 
         Parameters
@@ -735,7 +735,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         self.classes_[:] = classes
         return self
 
-    def fit_transform(self, y):
+    def fit_transform(self, y, sample_props=None):
         """Fit the label sets binarizer and transform the given label sets
 
         Parameters
