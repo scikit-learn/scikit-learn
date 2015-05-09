@@ -1547,6 +1547,10 @@ def train_test_split(*arrays, **options):
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
 
+    stratify : array-like or None (default is None)
+        If not None, data is split in a stratified fashion, using this as
+        the labels array.
+
     Returns
     -------
     splitting : list of arrays, length=2 * len(arrays)
@@ -1596,6 +1600,7 @@ def train_test_split(*arrays, **options):
 
     allow_nd = options.pop('allow_nd', None)
     allow_lists = options.pop('allow_lists', None)
+    stratify = options.pop('stratify', None)
 
     if allow_lists is not None:
         warnings.warn("The allow_lists option is deprecated and will be "
@@ -1615,10 +1620,15 @@ def train_test_split(*arrays, **options):
     if test_size is None and train_size is None:
         test_size = 0.25
     arrays = indexable(*arrays)
-    n_samples = _num_samples(arrays[0])
-    cv = ShuffleSplit(n_samples, test_size=test_size,
-                      train_size=train_size,
-                      random_state=random_state)
+    if stratify is not None:
+        cv = StratifiedShuffleSplit(stratify, test_size=test_size,
+                                    train_size=train_size,
+                                    random_state=random_state)
+    else:
+        n_samples = _num_samples(arrays[0])
+        cv = ShuffleSplit(n_samples, test_size=test_size,
+                          train_size=train_size,
+                          random_state=random_state)
 
     train, test = next(iter(cv))
     return list(chain.from_iterable((safe_indexing(a, train),
