@@ -937,7 +937,7 @@ class OneClassSVM(BaseLibSVM):
             shrinking, False, cache_size, None, verbose, max_iter,
             random_state)
 
-    def fit(self, X, y=None, sample_weight=None, **params):
+    def fit(self, X, y=None, sample_weight=None, sample_props=None, **params):
         """
         Detects the soft boundary of the set of samples X.
 
@@ -962,5 +962,5 @@ class OneClassSVM(BaseLibSVM):
 
         """
         super(OneClassSVM, self).fit(X, [], sample_weight=sample_weight,
-                                     **params)
+                                     sample_props=sample_props, **params)
         return self

@@ -50,7 +50,7 @@ class MockClassifier(object):
 
     def fit(self, X, Y=None, sample_weight=None, class_prior=None,
             sparse_sample_weight=None, sparse_param=None, dummy_int=None,
-            dummy_str=None, dummy_obj=None, callback=None):
+            dummy_str=None, dummy_obj=None, callback=None, sample_props=None):
         """The dummy arguments are to test that this fit function can
         accept non-array arguments through cross-validation, such as:
             - int

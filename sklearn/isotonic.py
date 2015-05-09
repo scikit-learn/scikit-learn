@@ -9,6 +9,7 @@ from scipy.stats import spearmanr
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import as_float_array, check_array, check_consistent_length
 from .utils.fixes import astype
+from .utils.deprecations import _deprecate_sample_weight
 from ._isotonic import _isotonic_regression, _make_unique
 import warnings
 import math
@@ -284,7 +285,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         return order_inv
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -309,6 +310,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         X is stored for future use, as `transform` needs X to interpolate
         new input data.
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         # Build y_
         self._build_y(X, y, sample_weight)
 

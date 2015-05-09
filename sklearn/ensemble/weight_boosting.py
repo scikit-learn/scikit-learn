@@ -39,9 +39,8 @@ from ..tree.tree import BaseDecisionTree
 from ..tree._tree import DTYPE
 from ..utils import check_array, check_X_y, check_random_state
 from ..metrics import accuracy_score, r2_score
-from sklearn.utils.validation import (
-        has_fit_parameter,
-        check_is_fitted)
+from ..utils.validation import has_fit_parameter, check_is_fitted
+from ..utils.deprecations import _deprecate_sample_weight
 
 __all__ = [
     'AdaBoostClassifier',
@@ -72,7 +71,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.learning_rate = learning_rate
         self.random_state = random_state
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Build a boosted classifier/regressor from the training set (X, y).
 
         Parameters
@@ -96,6 +95,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self : object
             Returns self.
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         # Check parameters
         if self.learning_rate <= 0:
             raise ValueError("learning_rate must be greater than zero")
@@ -271,6 +271,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         return X
 
+
 def _samme_proba(estimator, n_classes, X):
     """Calculate algorithm 4, step 2, equation c) of Zhu et al [1].
 
@@ -379,7 +380,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         self.algorithm = algorithm
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Build a boosted classifier from the training set (X, y).
 
         Parameters
@@ -400,6 +401,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         self : object
             Returns self.
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         # Check that algorithm is supported
         if self.algorithm not in ('SAMME', 'SAMME.R'):
             raise ValueError("algorithm %s is not supported" % self.algorithm)
@@ -750,7 +752,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             outputs is the same of that of the `classes_` attribute.
         """
         check_is_fitted(self, "n_classes_")
-        
+
         n_classes = self.n_classes_
         X = self._validate_X_predict(X)
 
@@ -923,7 +925,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         self.loss = loss
         self.random_state = random_state
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Build a boosted regressor from the training set (X, y).
 
         Parameters
@@ -950,7 +952,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
                 "loss must be 'linear', 'square', or 'exponential'")
 
         # Fit
-        return super(AdaBoostRegressor, self).fit(X, y, sample_weight)
+        return super(AdaBoostRegressor, self).fit(X, y, sample_weight, sample_props)
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""

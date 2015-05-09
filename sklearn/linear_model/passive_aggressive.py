@@ -114,7 +114,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                                  classes=classes, sample_weight=None,
                                  coef_init=None, intercept_init=None)
 
-    def fit(self, X, y, coef_init=None, intercept_init=None):
+    def fit(self, X, y, sample_props=None, coef_init=None,
+            intercept_init=None):
         """Fit linear model with Passive Aggressive algorithm.
 
         Parameters
@@ -243,7 +244,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
                                  sample_weight=None,
                                  coef_init=None, intercept_init=None)
 
-    def fit(self, X, y, coef_init=None, intercept_init=None):
+    def fit(self, X, y, sample_props=None, coef_init=None,
+            intercept_init=None):
         """Fit linear model with Passive Aggressive algorithm.
 
         Parameters

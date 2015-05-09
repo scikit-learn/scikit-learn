@@ -15,6 +15,7 @@ from .utils.validation import check_consistent_length
 from .utils.random import random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
+from ..utils.deprecations import _deprecate_sample_weight
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
@@ -76,7 +77,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         self.random_state = random_state
         self.constant = constant
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Fit the random classifier.
 
         Parameters
@@ -96,6 +97,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         if self.strategy not in ("most_frequent", "stratified", "uniform",
                                  "constant", "prior"):
             raise ValueError("Unknown strategy type.")
@@ -362,7 +364,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         self.constant = constant
         self.quantile = quantile
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Fit the random regressor.
 
         Parameters
@@ -382,7 +384,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         self : object
             Returns self.
         """
-
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         if self.strategy not in ("mean", "median", "quantile", "constant"):
             raise ValueError("Unknown strategy type: %s, expected "
                              "'mean', 'median', 'quantile' or 'constant'"

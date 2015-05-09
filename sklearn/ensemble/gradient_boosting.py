@@ -40,6 +40,8 @@ from ..utils.extmath import logsumexp
 from ..utils.fixes import expit, bincount
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted, NotFittedError
+from ..utils.deprecations import _deprecate_sample_weight
+
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
 
@@ -60,7 +62,8 @@ class QuantileEstimator(BaseEstimator):
             raise ValueError("`alpha` must be in (0, 1.0) but was %r" % alpha)
         self.alpha = alpha
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         if sample_weight is None:
             self.quantile = stats.scoreatpercentile(y, self.alpha * 100.0)
         else:
@@ -76,7 +79,8 @@ class QuantileEstimator(BaseEstimator):
 
 class MeanEstimator(BaseEstimator):
     """An estimator predicting the mean of the training targets."""
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         if sample_weight is None:
             self.mean = np.mean(y)
         else:
@@ -94,7 +98,8 @@ class LogOddsEstimator(BaseEstimator):
     """An estimator predicting the log odds ratio."""
     scale = 1.0
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         # pre-cond: pos, neg are encoded as 1, 0
         if sample_weight is None:
             pos = np.sum(y)
@@ -124,7 +129,8 @@ class PriorProbabilityEstimator(BaseEstimator):
     """An estimator predicting the probability of each
     class in the training data.
     """
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         if sample_weight is None:
             sample_weight = np.ones_like(y, dtype=np.float64)
         class_counts = bincount(y, weights=sample_weight)
@@ -141,7 +147,8 @@ class PriorProbabilityEstimator(BaseEstimator):
 class ZeroEstimator(BaseEstimator):
     """An estimator that simply predicts zero. """
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         if np.issubdtype(y.dtype, int):
             # classification
             self.n_classes = np.unique(y).shape[0]
@@ -898,7 +905,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
     def _is_initialized(self):
         return len(getattr(self, 'estimators_', [])) > 0
 
-    def fit(self, X, y, sample_weight=None, monitor=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None, monitor=None):
         """Fit the gradient boosting model.
 
         Parameters
@@ -933,6 +940,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         self : object
             Returns self.
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         # if not warmstart - clear the estimator state
         if not self.warm_start:
             self._clear_state()

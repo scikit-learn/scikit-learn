@@ -13,6 +13,8 @@ from ..utils import check_array, check_random_state, column_or_1d
 from ..utils import ConvergenceWarning, compute_class_weight, deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
+from ..utils.deprecations import _deprecate_sample_weight
+
 from ..externals import six
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -96,7 +98,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         kernel = self.kernel
         return kernel == "precomputed" or callable(kernel)
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Fit the SVM model according to the given training data.
 
         Parameters
@@ -129,6 +131,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         matrices as input.
         """
 
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         rnd = check_random_state(self.random_state)
 
         sparse = sp.isspmatrix(X)
