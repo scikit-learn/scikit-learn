@@ -924,7 +924,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                  coef_init=None, intercept_init=None)
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
-             intercept_init=None, sample_weight=None):
+             intercept_init=None, sample_weight=None, sample_props=None):
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         if self.warm_start and self.coef_ is not None:
             if coef_init is None:
                 coef_init = self.coef_
