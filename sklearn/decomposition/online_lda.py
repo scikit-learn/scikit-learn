@@ -251,28 +251,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                  perp_tol=1e-1, mean_change_tol=1e-3, max_doc_update_iter=100,
                  n_jobs=1, verbose=0, random_state=None):
         self.n_topics = n_topics
-        if n_topics <= 0:
-            raise ValueError(
-                'Invalid n_topics parameter: %r' %
-                learning_method)
-
         self.doc_topic_prior = doc_topic_prior
-        if self.doc_topic_prior is None:
-            self.doc_topic_prior_ = 1. / self.n_topics
-        else:
-            self.doc_topic_prior_ = self.doc_topic_prior
-
         self.topic_word_prior = topic_word_prior
-        if self.topic_word_prior is None:
-            self.topic_word_prior_ = 1. / self.n_topics
-        else:
-            self.topic_word_prior_ = self.topic_word_prior
-
         self.learning_method = learning_method
-        if learning_method not in ('batch', 'online'):
-            raise ValueError(
-                'Invalid learning_method parameter: %r' %
-                learning_method)
         self.learning_decay = learning_decay
         self.learning_offset = learning_offset
         self.max_iter = max_iter
@@ -286,6 +267,26 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.random_state = random_state
 
+    def _check_params(self):
+        """
+        check model parameters
+        """
+        if self.n_topics <= 0:
+            err_msg = "Invalid 'n_topics' parameter: %r" % self.n_topics
+            raise ValueError(err_msg)
+
+        if self.total_samples <= 0:
+            err_msg = "Invalid 'total_samples' parameter: %r" % self.total_samples
+            raise ValueError(err_msg)
+
+        if self.learning_offset < 0:
+            err_msg = "Invalid 'learning_offset' parameter: %r" % self.learning_offset
+            raise ValueError(err_msg)
+
+        if self.learning_method not in ("batch", "online"):
+            err_msg = "Invalid 'learning_method' parameter: %r" % self.learning_method
+            raise ValueError(err_msg)
+
     def _init_latent_vars(self, n_features):
         """
         Initialize latent variables.
@@ -293,9 +294,19 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self.rng_ = check_random_state(self.random_state)
         self.n_iter_ = 1
         self.n_features = n_features
+
+        if self.doc_topic_prior is None:
+            self.doc_topic_prior_ = 1. / self.n_topics
+        else:
+            self.doc_topic_prior_ = self.doc_topic_prior
+
+        if self.topic_word_prior is None:
+            self.topic_word_prior_ = 1. / self.n_topics
+        else:
+            self.topic_word_prior_ = self.topic_word_prior
+
         init_gamma = 100.
         init_var = 1. / init_gamma
-
         # In the literature, this is called `lambda`
         self.components_ = self.rng_.gamma(
             init_gamma, init_var, (self.n_topics, n_features))
@@ -429,6 +440,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         doc_topic_distr : array, [n_samples, n_topics]
             Topic distribution for each document.
         """
+        self._check_params()
         X = self._to_csr(X, "LatentDirichletAllocation.fit_transform")
         return self.fit(X).transform(X)
 
@@ -445,7 +457,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         -------
         self
         """
-
+        self._check_params()
         X = self._to_csr(X, "LatentDirichletAllocation.partial_fit")
         n_samples, n_features = X.shape
         batch_size = self.batch_size
@@ -478,7 +490,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         -------
         self
         """
-
+        self._check_params()
         X = self._to_csr(X, "LatentDirichletAllocation.fit")
         n_samples, n_features = X.shape
         max_iter = self.max_iter

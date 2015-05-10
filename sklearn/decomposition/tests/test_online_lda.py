@@ -136,12 +136,19 @@ def test_lda_partial_fit_dim_mismatch():
     assert_raises_regexp(ValueError, r"^Feature dimension", lda.partial_fit, X_2)
 
 
-def test_invalid_learning_method():
-    # test invalid learing method
-    regex = r"^Invalid learning_method parameter"
-    assert_raises_regexp(ValueError, regex, 
-                         LatentDirichletAllocation,
-                         learning_method='unknown')
+def test_invalid_params():
+    # test `_check_params` method
+    X = np.ones((5, 10))
+
+    invalid_models = (
+        ('n_topics', LatentDirichletAllocation(n_topics=0)),
+        ('learning_method', LatentDirichletAllocation(learning_method='unknown')),
+        ('total_samples', LatentDirichletAllocation(total_samples=0)),
+        ('learning_offset', LatentDirichletAllocation(learning_offset=-1)),
+    )
+    for param, model in invalid_models:
+        regex = r"^Invalid %r parameter" % param
+        assert_raises_regexp(ValueError, regex, model.fit, X)
 
 
 def test_lda_negative_input():
