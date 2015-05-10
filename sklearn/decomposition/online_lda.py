@@ -606,17 +606,16 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         score += np.sum(
             gammaln(self.doc_topic_prior_ * self.n_topics) - gammaln(np.sum(doc_topic_distr, 1)))
 
-        # E[log p(beta | eta) - log q (beta | lambda)]
-        score += np.sum((self.topic_word_prior_ - self.components_) * self.dirichlet_component_)
-        score += np.sum(gammaln(self.components_) - gammaln(self.topic_word_prior_))
-        score += np.sum(gammaln(self.topic_word_prior_ * self.n_features)
-                        - gammaln(np.sum(self.components_, 1)))
-
         # Compensate for the subsampling of the population of documents
         if sub_sampling:
             doc_ratio = float(self.n_samples) / n_samples
             score *= doc_ratio
 
+        # E[log p(beta | eta) - log q (beta | lambda)]
+        score += np.sum((self.topic_word_prior_ - self.components_) * self.dirichlet_component_)
+        score += np.sum(gammaln(self.components_) - gammaln(self.topic_word_prior_))
+        score += np.sum(gammaln(self.topic_word_prior_ * self.n_features)
+                        - gammaln(np.sum(self.components_, 1)))
         return score
 
     def score(self, X, y=None):
