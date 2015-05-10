@@ -8,6 +8,7 @@ from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_greater_equal
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import if_not_mac_os
 
 from sklearn.utils.validation import NotFittedError
@@ -15,7 +16,8 @@ from sklearn.externals.six.moves import xrange
 
 
 def _build_sparse_mtx():
-    # Create 3 topics and each have 3 words
+    # Create 3 topics and each topic has 3 disticnt words.
+    # (Each word only belongs to a single topic.)
     n_topics = 3
     doc_topic_prior = 1. / n_topics
     topic_word_prior = 1. / n_topics
@@ -27,9 +29,7 @@ def _build_sparse_mtx():
 
 
 def test_lda_fit_batch():
-    """
-    Test LDA batch learning_offset (`fit` method with 'batch' learning)
-    """
+    # Test LDA batch learning_offset (`fit` method with 'batch' learning)
     rng = np.random.RandomState(0)
     n_topics, doc_topic_prior, topic_word_prior, X = _build_sparse_mtx()
     lda = LatentDirichletAllocation(n_topics=n_topics, doc_topic_prior=doc_topic_prior,
@@ -38,38 +38,36 @@ def test_lda_fit_batch():
     lda.fit(X)
 
     correct_idx_grps = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
-    for c in lda.components_:
-        top_idx = set(c.argsort()[-3:][::-1])
+    for component in lda.components_:
+        # Find top 3 words in each LDA component
+        top_idx = set(component.argsort()[-3:][::-1])
         assert_true(tuple(sorted(top_idx)) in correct_idx_grps)
 
 
 def test_lda_fit_online():
-    """
-    Test LDA online learning (`fit` method with 'online' learning)
-    """
+    # Test LDA online learning (`fit` method with 'online' learning)
     rng = np.random.RandomState(0)
     n_topics, doc_topic_prior, topic_word_prior, X = _build_sparse_mtx()
     lda = LatentDirichletAllocation(n_topics=n_topics, doc_topic_prior=doc_topic_prior,
-                                    topic_word_prior=topic_word_prior, learning_offset=30.,
+                                    topic_word_prior=topic_word_prior, learning_offset=10.,
                                     learning_method='online', random_state=rng)
     lda.fit(X)
 
     correct_idx_grps = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
-    for c in lda.components_:
-        top_idx = set(c.argsort()[-3:][::-1])
+    for component in lda.components_:
+        # Find top 3 words in each LDA component
+        top_idx = set(component.argsort()[-3:][::-1])
         assert_true(tuple(sorted(top_idx)) in correct_idx_grps)
 
 
 def test_lda_partial_fit():
-    """
-    Test LDA online learning (`partial_fit` method)
-    (same as test_lda_batch)
-    """
+    # Test LDA online learning (`partial_fit` method)
+    # (same as test_lda_batch)
     rng = np.random.RandomState(0)
     n_topics, doc_topic_prior, topic_word_prior, X = _build_sparse_mtx()
     lda = LatentDirichletAllocation(n_topics=n_topics, doc_topic_prior=doc_topic_prior,
-                                    topic_word_prior=topic_word_prior, learning_offset=30.,
-                                    random_state=rng)
+                                    topic_word_prior=topic_word_prior, learning_offset=10.,
+                                    total_samples=100, random_state=rng)
     for i in xrange(3):
         lda.partial_fit(X)
 
@@ -80,9 +78,24 @@ def test_lda_partial_fit():
 
 
 def test_lda_dense_input():
-    """
-    Test LDA with dense input.
-    """
+    # Test LDA with dense input.
+    rng = np.random.RandomState(0)
+    n_topics, doc_topic_prior, topic_word_prior, X = _build_sparse_mtx()
+    lda = LatentDirichletAllocation(n_topics=n_topics, doc_topic_prior=doc_topic_prior,
+                                    topic_word_prior=topic_word_prior,
+                                    learning_method='batch', random_state=rng)
+    lda.fit(X.toarray())
+
+    correct_idx_grps = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
+    for component in lda.components_:
+        # Find top 3 words in each LDA component
+        top_idx = set(component.argsort()[-3:][::-1])
+        assert_true(tuple(sorted(top_idx)) in correct_idx_grps)
+
+
+def test_lda_transform():
+    # Test LDA transform.
+    # Transform result cannot be negative
     rng = np.random.RandomState(0)
     X = rng.randint(5, size=(20, 10))
     n_topics = 3
@@ -95,26 +108,19 @@ def test_lda_dense_input():
 
 
 def test_lda_fit_transform():
-    """
-    Test LDA fit_transform & transform
-    fit_transform and transform result should be the same
-    """
+    # Test LDA fit_transform & transform
+    # fit_transform and transform result should be the same
     for method in ('online', 'batch'):
         rng = np.random.RandomState(0)
-        n_topics, doc_topic_prior, topic_word_prior, X = _build_sparse_mtx()
-        lda = LatentDirichletAllocation(n_topics=n_topics, doc_topic_prior=doc_topic_prior,
-                                        topic_word_prior=topic_word_prior,
-                                        learning_method=method, random_state=rng)
+        X = rng.randint(10, size=(50, 20))
+        lda = LatentDirichletAllocation(n_topics=5, learning_method=method, random_state=rng)
         X_fit = lda.fit_transform(X)
         X_trans = lda.transform(X)
         assert_array_almost_equal(X_fit, X_trans, 4)
 
 
-@raises(ValueError)
 def test_lda_partial_fit_dim_mismatch():
-    """
-    test `n_features` mismatch in `partial_fit`
-    """
+    # test `n_features` mismatch in `partial_fit`
     rng = np.random.RandomState(0)
     n_topics = rng.randint(3, 6)
     doc_topic_prior = 1. / n_topics
@@ -126,44 +132,37 @@ def test_lda_partial_fit_dim_mismatch():
     lda = LatentDirichletAllocation(n_topics=n_topics, doc_topic_prior=doc_topic_prior,
                                     topic_word_prior=topic_word_prior, learning_offset=5.,
                                     total_samples=20, random_state=rng)
-    for X in [X_1, X_2]:
-        lda.partial_fit(X)
+    lda.partial_fit(X_1)
+    assert_raises_regexp(ValueError, r"^Feature dimension", lda.partial_fit, X_2)
 
 
-@raises(ValueError)
 def test_invalid_learning_method():
-    """
-    test invalid learing method
-    """
-    lda = LatentDirichletAllocation(learning_method='unknown')
+    # test invalid learing method
+    regex = r"^Invalid learning_method parameter"
+    assert_raises_regexp(ValueError, regex, 
+                         LatentDirichletAllocation,
+                         learning_method='unknown')
 
 
-@raises(ValueError)
 def test_lda_negative_input():
-    """
-    test pass dense matrix with sparse negative input.
-    """
+    # test pass dense matrix with sparse negative input.
     X = -np.ones((5, 10))
     lda = LatentDirichletAllocation()
-    lda.fit(X)
+    regex = r"^Negative values in data passed"
+    assert_raises_regexp(ValueError, regex, lda.fit, X)
 
 
-@raises(NotFittedError)
 def test_lda_transform_before_fit():
-    """
-    test `transform` before `fit`
-    """
+    # test `transform` before `fit`
     rng = np.random.RandomState(0)
     X = rng.randint(4, size=(20, 10))
     lda = LatentDirichletAllocation()
-    lda.transform(X)
+    regex = r"^no 'components_' attribute"
+    assert_raises_regexp(NotFittedError, regex, lda.transform, X)
 
 
-@raises(ValueError)
 def test_lda_transform_mismatch():
-    """
-    test `n_features` mismatch in fit and transform
-    """
+    # test `n_features` mismatch in fit and transform
     rng = np.random.RandomState(0)
     X = rng.randint(4, size=(20, 10))
     X_2 = rng.randint(4, size=(10, 8))
@@ -175,14 +174,13 @@ def test_lda_transform_mismatch():
     lda = LatentDirichletAllocation(n_topics=n_topics, doc_topic_prior=doc_topic_prior,
                                     topic_word_prior=topic_word_prior, random_state=rng)
     lda.partial_fit(X)
-    lda.transform(X_2)
+    regex = r"^Feature dimension"
+    assert_raises_regexp(ValueError, regex, lda.transform, X_2)
 
 
 @if_not_mac_os()
 def test_lda_multi_jobs():
-    """
-    Test LDA batch training with multi CPU
-    """
+    # Test LDA batch training with multi CPU
     for method in ('online', 'batch'):
         rng = np.random.RandomState(0)
         n_topics, doc_topic_prior, topic_word_prior, X = _build_sparse_mtx()
@@ -199,9 +197,7 @@ def test_lda_multi_jobs():
 
 @if_not_mac_os()
 def test_lda_online_multi_jobs():
-    """
-    Test LDA online training with multi CPU
-    """
+    # Test LDA online training with multi CPU
     rng = np.random.RandomState(0)
     n_topics, doc_topic_prior, topic_word_prior, X = _build_sparse_mtx()
     lda = LatentDirichletAllocation(n_topics=n_topics, doc_topic_prior=doc_topic_prior,
@@ -217,10 +213,8 @@ def test_lda_online_multi_jobs():
 
 
 def test_lda_perplexity():
-    """
-    Test LDA perplexity for batch training
-    perplexity should be lower after each iteration
-    """
+    # Test LDA perplexity for batch training
+    # perplexity should be lower after each iteration
     n_topics, doc_topic_prior, topic_word_prior, X = _build_sparse_mtx()
     for method in ('online', 'batch'):
         lda_1 = LatentDirichletAllocation(n_topics=n_topics, doc_topic_prior=doc_topic_prior,
@@ -238,10 +232,8 @@ def test_lda_perplexity():
 
 
 def test_lda_score():
-    """
-    Test LDA score for batch training
-    score should be higher after each iteration
-    """
+    # Test LDA score for batch training
+    # score should be higher after each iteration
     n_topics, doc_topic_prior, topic_word_prior, X = _build_sparse_mtx()
     for method in ('online', 'batch'):
         lda_1 = LatentDirichletAllocation(n_topics=n_topics, doc_topic_prior=doc_topic_prior,
@@ -259,9 +251,7 @@ def test_lda_score():
 
 
 def test_lda_score_perplexity():
-    """
-    Test the relationship between LDA score and perplexity
-    """
+    # Test the relationship between LDA score and perplexity
     n_topics, doc_topic_prior, topic_word_prior, X = _build_sparse_mtx()
     lda = LatentDirichletAllocation(n_topics=n_topics, doc_topic_prior=doc_topic_prior,
                                     topic_word_prior=topic_word_prior, max_iter=10,
