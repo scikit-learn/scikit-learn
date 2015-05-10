@@ -85,7 +85,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior, max_iters
         Stopping tolerance for updating document topic distribution in E-setp.
 
     cal_sstats : boolean
-        parameter that indicate to calculate sufficient statistics or not.
+        Parameter that indicate to calculate sufficient statistics or not.
         Set `cal_sstats` to `True` when we need to run M-step.
 
     Returns
@@ -290,14 +290,14 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         """
         Initialize latent variables.
         """
-        self.rng = check_random_state(self.random_state)
+        self.rng_ = check_random_state(self.random_state)
         self.n_iter_ = 1
         self.n_features = n_features
         init_gamma = 100.
         init_var = 1. / init_gamma
 
         # In the literature, this is called `lambda`
-        self.components_ = self.rng.gamma(
+        self.components_ = self.rng_.gamma(
             init_gamma, init_var, (self.n_topics, n_features))
         # In the literature, this is `E[log(beta)]`
         self.dirichlet_component_ = _log_dirichlet_expectation(self.components_)
@@ -308,13 +308,13 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         """
         E-step
 
-        parameters
+        Parameters
         ----------
         X : sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
 
         cal_sstats : boolean
-            parameter that indicate to calculate sufficient statistics or not.
+            Parameter that indicate whether to calculate sufficient statistics or not.
             Set `cal_sstats` to `True` when we need to run M-step.
 
         Returns
@@ -327,7 +327,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         """
 
-        # parell run e-step
+        # Run e-step in parallel
         if self.n_jobs == -1:
             n_jobs = cpu_count()
         else:
@@ -356,26 +356,26 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
     def _em_step(self, X, total_samples, batch_update):
         """
-        EM update for 1 iteration
-        update `_component` by bath VB or online VB
+        EM update for 1 iteration.
+        update `_component` by batch VB or online VB.
 
-        parameters
+        Parameters
         ----------
         X : sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
 
         total_samples : integer
-            Total umber of document. It is only used when
+            Total umber of documents. It is only used when
             batch_update is `False`.
 
         batch_update : boolean
-            parameter that control updating method.
-            `True` for batch learning, `False` for online learning
+            Parameter that controls updating method.
+            `True` for batch learning, `False` for online learning.
 
         Returns
         -------
         doc_topic_distr : array, shape=(n_samples, n_topics)
-            Unnormailzed document topic distribution.
+            Unnormalized document topic distribution.
         """
 
         # E-step
@@ -403,10 +403,10 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         """
         check & convert X to csr format, and make sure no negative value in X.
 
-        parameters
+        Parameters
         ----------
         X :  array-like
-        
+
         """
         X = check_array(X, accept_sparse='csr')
         _check_non_negative(X, whom)
@@ -417,7 +417,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
     def fit_transform(self, X, y=None):
         """
-        Learn a model for X and returns the transformed data
+        Learn a model for X and return the transformed data
 
         Parameters
         ----------
@@ -456,7 +456,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         if n_features != self.n_features:
             raise ValueError(
-                "feature dimension(vocabulary size) doesn't match.")
+                "Feature dimension (vocabulary size) doesn't match.")
 
         for idx_slice in gen_batches(n_samples, batch_size):
             self._em_step(X[idx_slice, :], total_samples=self.total_samples, batch_update=False)
@@ -466,7 +466,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """
         Learn model from X with variational Bayes method.
-        when `learning_method` is 'online', use min batch update.
+        When `learning_method` is 'online', use mini batch update.
         Otherwise, use batch update.
 
         Parameters
@@ -534,22 +534,21 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             raise NotFittedError(
                 "no 'components_' attribute in model. Please fit model first.")
 
-        # make sure word size is the same in fitted model and new doc
-        # matrix
+        # make sure feature size is the same in fitted model and in X
         X = self._to_csr(X, "LatentDirichletAllocation.transform")
         n_samples, n_features = X.shape
         if n_features != self.n_features:
             raise ValueError(
-                "feature dimension(vocabulary size) does not match.")
+                "Feature dimension (vocabulary size) does not match.")
 
         doc_topic_distr, _ = self._e_step(X, False)
         return doc_topic_distr
 
     def _approx_bound(self, X, doc_topic_distr, sub_sampling):
         """
-        Calculate approximate bound for data X and document topic distribution
-        Since log-likelihood cannot be computed directly, we use this bound
-        estimate it.
+        Estimates the variational bound over "all documents" using only the
+        documents passed in as X. Since log-likelihood of each word cannot
+        be computed directly, we use this bound to estimate it.
 
         Parameters
         ----------
@@ -595,7 +594,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         score += np.sum(
             gammaln(self.doc_topic_prior_ * self.n_topics) - gammaln(np.sum(doc_topic_distr, 1)))
 
-        # Compensate for the subsampling of the population of documents
         # E[log p(beta | eta) - log q (beta | lambda)]
         score += np.sum((self.topic_word_prior_ - self.components_) * self.dirichlet_component_)
         score += np.sum(gammaln(self.components_) - gammaln(self.topic_word_prior_))
