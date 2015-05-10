@@ -42,6 +42,12 @@ Enhancements
    - Added ``stratify`` option to :func:`cross_validation.train_test_split` for stratified splitting.
      By Miroslav Batchkarov.
 
+   - The :func:`tree.export_graphviz` function now supports aesthetic
+     improvements for :class:`tree.DecisionTreeClassifier` and 
+     :class:`tree.DecisionTreeRegressor`, including options for coloring nodes
+     by their majority class or impurity, showing variable names, and using
+     node proportions instead of raw sample counts. By `Trevor Stephens`_.
+
 Bug fixes
 .........
 
