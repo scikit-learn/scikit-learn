@@ -110,19 +110,6 @@ def test_lda_fit_transform():
         assert_array_almost_equal(X_fit, X_trans, 4)
 
 
-def test_lda_normalize_docs():
-    """
-    test sum of topic distribution equals to 1 for each doc
-    """
-    rng = np.random.RandomState(0)
-    n_topics, doc_topic_prior, topic_word_prior, X = _build_sparse_mtx()
-    lda = LatentDirichletAllocation(n_topics=n_topics, doc_topic_prior=doc_topic_prior,
-                                    topic_word_prior=topic_word_prior, normalize_doc=True,
-                                    random_state=rng)
-    X_fit = lda.fit_transform(X)
-    assert_array_almost_equal(X_fit.sum(axis=1), np.ones(X.shape[0]))
-
-
 @raises(ValueError)
 def test_lda_partial_fit_dim_mismatch():
     """
