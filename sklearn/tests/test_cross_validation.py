@@ -1,6 +1,7 @@
 """Test the cross_validation module"""
 from __future__ import division
 import warnings
+import sys
 
 import numpy as np
 from scipy.sparse import coo_matrix
@@ -1101,3 +1102,56 @@ def test_check_is_partition():
 
     p[0] = 23
     assert_false(cval._check_is_partition(p, 100))
+
+
+_atleast_py34 = (sys.version_info.major == 3 and
+                 sys.version_info.minor >= 4)
+
+
+@np.testing.decorators.skipif(not _atleast_py34)
+def test_cv_backend():
+    from multiprocessing import pool
+    backend = pool.get_context(method="forkserver")
+
+    # cross_val_predict
+    boston = load_boston()
+    X, y = boston.data, boston.target
+    cv = cval.KFold(len(boston.target))
+
+    est = Ridge()
+
+    # Naive loop (should be same as cross_val_predict):
+    preds2 = np.zeros_like(y)
+    for train, test in cv:
+        est.fit(X[train], y[train])
+        preds2[test] = est.predict(X[test])
+
+        preds = cval.cross_val_predict(est, X, y, cv=cv, n_jobs=2,
+                                       backend=backend)
+    assert_array_almost_equal(preds, preds2)
+
+    # cross_val_score
+
+    digits = load_digits()
+    X, y = digits.data[:800], digits.target[:800]
+    model = SVC(C=10, gamma=0.005)
+    n = len(y)
+
+    cv = cval.KFold(n, 5, shuffle=False)
+    mean_score = cval.cross_val_score(model, X, y, cv=cv, n_jobs=2,
+                                      backend=backend).mean()
+    assert_greater(0.88, mean_score)
+    assert_greater(mean_score, 0.85)
+
+    # permutation_test_score
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+    svm = SVC(kernel='linear')
+    cv = cval.StratifiedKFold(y, 2)
+
+    score, scores, pvalue = cval.permutation_test_score(
+        svm, X, y, n_permutations=30, cv=cv, scoring="accuracy",
+        n_jobs=2, backend=backend)
+    assert_greater(score, 0.9)
+    assert_almost_equal(pvalue, 0.0, 1)
