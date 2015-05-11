@@ -68,7 +68,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior, max_iters
 
     Parameters
     ----------
-    X : sparse matrix, shape=(n_samples, n_features)
+    X : array-like or sparse matrix, shape=(n_samples, n_features)
         Document word matrix.
 
     exp_topic_word_distr : dense matrix, shape=(n_topics, n_features)
@@ -98,7 +98,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior, max_iters
             When `cal_sstats == False`, this will be None.
 
     """
-
+    is_sparse_x = sp.issparse(X)
     n_samples, n_features = X.shape
     n_topics = exp_topic_word_distr.shape[0]
 
@@ -109,13 +109,18 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior, max_iters
     # diff on `component_` (only calculate it when `cal_diff` is True)
     suff_stats = np.zeros(exp_topic_word_distr.shape) if cal_sstats else None
 
-    X_data = X.data
-    X_indices = X.indices
-    X_indptr = X.indptr
+    if is_sparse_x:
+        X_data = X.data
+        X_indices = X.indices
+        X_indptr = X.indptr
 
     for idx_d in xrange(n_samples):
-        ids = X_indices[X_indptr[idx_d]:X_indptr[idx_d + 1]]
-        cnts = X_data[X_indptr[idx_d]:X_indptr[idx_d + 1]]
+        if is_sparse_x:
+            ids = X_indices[X_indptr[idx_d]:X_indptr[idx_d + 1]]
+            cnts = X_data[X_indptr[idx_d]:X_indptr[idx_d + 1]]
+        else:
+            ids = np.nonzero(X[idx_d, :])[0]
+            cnts = X[idx_d, ids]
 
         doc_topic_d = doc_topic_distr[idx_d, :]
         exp_doc_topic_d = exp_doc_topic[idx_d, :]
@@ -321,7 +326,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : sparse matrix, shape=(n_samples, n_features)
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
 
         cal_sstats : boolean
@@ -372,7 +377,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : sparse matrix, shape=(n_samples, n_features)
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
 
         total_samples : integer
@@ -410,20 +415,17 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self.n_iter_ += 1
         return doc_topic_distr
 
-    def _to_csr(self, X, whom):
+    def _check_non_neg_array(self, X, whom):
         """
         check & convert X to csr format, and make sure no negative value in X.
 
         Parameters
         ----------
-        X :  array-like
+        X :  array-like or sparse matrix
 
         """
         X = check_array(X, accept_sparse='csr')
         _check_non_negative(X, whom)
-        if not sp.issparse(X):
-            X = sp.csr_matrix(X)
-
         return X
 
     def fit_transform(self, X, y=None):
@@ -432,7 +434,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array or sparse matrix, shape=(n_samples, n_features)
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
 
         Returns
@@ -441,7 +443,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             Topic distribution for each document.
         """
         self._check_params()
-        X = self._to_csr(X, "LatentDirichletAllocation.fit_transform")
+        X = self._check_non_neg_array(X, "LatentDirichletAllocation.fit_transform")
         return self.fit(X).transform(X)
 
     def partial_fit(self, X, y=None):
@@ -450,7 +452,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array or sparse matrix, shape=(n_samples, n_features)
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
 
         Returns
@@ -458,7 +460,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self
         """
         self._check_params()
-        X = self._to_csr(X, "LatentDirichletAllocation.partial_fit")
+        X = self._check_non_neg_array(X, "LatentDirichletAllocation.partial_fit")
         n_samples, n_features = X.shape
         batch_size = self.batch_size
 
@@ -483,7 +485,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : sparse matrix, shape=(n_samples, n_features)
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
 
         Returns
@@ -491,7 +493,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self
         """
         self._check_params()
-        X = self._to_csr(X, "LatentDirichletAllocation.fit")
+        X = self._check_non_neg_array(X, "LatentDirichletAllocation.fit")
         n_samples, n_features = X.shape
         max_iter = self.max_iter
         total_samples = n_samples * max_iter
@@ -532,7 +534,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : sparse matrix, shape=(n_samples, n_features)
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
             `n_features` must be the same as `self.n_features`
 
@@ -547,7 +549,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 "no 'components_' attribute in model. Please fit model first.")
 
         # make sure feature size is the same in fitted model and in X
-        X = self._to_csr(X, "LatentDirichletAllocation.transform")
+        X = self._check_non_neg_array(X, "LatentDirichletAllocation.transform")
         n_samples, n_features = X.shape
         if n_features != self.n_features:
             raise ValueError(
@@ -564,7 +566,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : sparse matrix, [n_samples, n_features]
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
 
         doc_topic_distr : array, shape=(n_samples, n_topics)
@@ -579,27 +581,29 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         score : float
 
         """
-
+        is_sparse_x = sp.issparse(X)
         n_samples, n_topics = doc_topic_distr.shape
         score = 0
         dirichlet_doc_topic = _log_dirichlet_expectation(doc_topic_distr)
 
-        X_data = X.data
-        X_indices = X.indices
-        X_indptr = X.indptr
+        if is_sparse_x:
+            X_data = X.data
+            X_indices = X.indices
+            X_indptr = X.indptr
 
         # E[log p(docs | theta, beta)]
         for idx_d in xrange(0, n_samples):
-            ids = X_indices[X_indptr[idx_d]:X_indptr[idx_d + 1]]
-            cnts = X_data[X_indptr[idx_d]:X_indptr[idx_d + 1]]
-            id_length = len(ids)
-            norm_phi = np.zeros(id_length)
-            for i in xrange(0, id_length):
-                temp = dirichlet_doc_topic[idx_d, :] + self.dirichlet_component_[:, ids[i]]
-                tmax = temp.max()
-                norm_phi[i] = np.log(np.sum(np.exp(temp - tmax))) + tmax
-            score += np.sum(cnts * norm_phi)
+            if is_sparse_x:
+                ids = X_indices[X_indptr[idx_d]:X_indptr[idx_d + 1]]
+                cnts = X_data[X_indptr[idx_d]:X_indptr[idx_d + 1]]
+            else:
+                ids = np.nonzero(X[idx_d, :])[0]
+                cnts = X[idx_d, ids]
 
+            temp = dirichlet_doc_topic[idx_d, :, np.newaxis] + self.dirichlet_component_[:, ids]
+            tmax = temp.max(axis=0)
+            norm_phi = np.log(np.sum(np.exp(temp - tmax), axis=0)) + tmax
+            score += np.dot(cnts, norm_phi)
         # compute E[log p(theta | alpha) - log q(theta | gamma)]
         score += np.sum((self.doc_topic_prior_ - doc_topic_distr) * dirichlet_doc_topic)
         score += np.sum(gammaln(doc_topic_distr) - gammaln(self.doc_topic_prior_))
@@ -624,8 +628,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : sparse matrix, shape=(n_samples, n_features)
-             Document word matrix.
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+            Document word matrix.
 
         Returns
         -------
@@ -633,7 +637,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             Use approximate bound as score.
         """
 
-        X = self._to_csr(X, "LatentDirichletAllocation.score")
+        X = self._check_non_neg_array(X, "LatentDirichletAllocation.score")
 
         doc_topic_distr = self.transform(X)
         score = self._approx_bound(X, doc_topic_distr, sub_sampling=False)
@@ -646,7 +650,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : sparse matrix, [n_samples, n_features]
+        X : array-like or sparse matrix, [n_samples, n_features]
             Document word matrix.
 
         doc_topic_distr : array, shape=(n_samples, n_topics)
@@ -657,11 +661,11 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         score : float
             Perplexity score.
         """
-        X = self._to_csr(X, "LatentDirichletAllocation.perplexity")
+        X = self._check_non_neg_array(X, "LatentDirichletAllocation.perplexity")
 
         current_samples = X.shape[0]
         bound = self._approx_bound(X, doc_topic_distr, sub_sampling)
-        perword_bound = bound / np.sum(X.data)
+        perword_bound = bound / X.sum()
 
         if sub_sampling:
             perword_bound = perword_bound * (float(current_samples) / self.n_samples)

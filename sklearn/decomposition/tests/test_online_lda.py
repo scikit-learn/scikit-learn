@@ -257,6 +257,19 @@ def test_lda_score():
         assert_greater_equal(score_2, score_1)
 
 
+def test_perplexity_input_format():
+    # Test LDA perplexity for sparse and dense input
+    # score should be the same for both dense and sparse input
+    n_topics, doc_topic_prior, topic_word_prior, X = _build_sparse_mtx()
+    lda = LatentDirichletAllocation(n_topics=n_topics, doc_topic_prior=doc_topic_prior,
+                                    topic_word_prior=topic_word_prior, max_iter=1,
+                                    learning_method='batch', total_samples=100, random_state=0)
+    distr = lda.fit_transform(X)
+    perp_sparse = lda.perplexity(X, distr, sub_sampling=False)
+    perp_dense = lda.perplexity(X.toarray(), distr, sub_sampling=False)
+    assert_almost_equal(perp_sparse, perp_dense)
+
+
 def test_lda_score_perplexity():
     # Test the relationship between LDA score and perplexity
     n_topics, doc_topic_prior, topic_word_prior, X = _build_sparse_mtx()
