@@ -529,6 +529,10 @@ cdef class Tree:
     value : array of double, shape [node_count, n_outputs, max_n_classes]
         Contains the constant prediction value of each node.
 
+    n_categories : array of int, shape [n_features]
+        Number of expected categorie values for categorical features, or
+        -1 for non-categorical features.
+
     impurity : array of double, shape [node_count]
         impurity[i] holds the impurity (i.e., the value of the splitting
         criterion) at node i.
@@ -580,6 +584,15 @@ cdef class Tree:
     property value:
         def __get__(self):
             return self._get_value_ndarray()[:self.node_count]
+
+    property n_categories:
+        def __get__(self):
+            return self._get_ncat_ndarray()[:self.n_features]
+
+        def __set__(self, np.ndarray[INT32_t, ndim=1] value):
+            cdef SIZE_t i
+            for i in range(self.n_features):
+                self.n_categories[i] = value[i]
 
     def __cinit__(self, int n_features, np.ndarray[SIZE_t, ndim=1] n_classes,
                   int n_outputs):
