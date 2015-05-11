@@ -2,19 +2,22 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
-from sklearn.base import TransformerMixin
-from sklearn.externals import six
-from sklearn.utils import check_random_state
-from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.validation import check_array
+from base import ACTIVATIONS
+
+from ..base import TransformerMixin
+from ..externals import six
+from ..utils import check_random_state
+from ..utils.extmath import safe_sparse_dot
+from ..utils.validation import check_array
 
 
 class RandomActivation(six.with_metaclass(ABCMeta, TransformerMixin)):
     def __init__(self, n_activated_features=10, weight_scale='auto', 
-                 activation=False, intercept=True, random_state=None):
+                 activation='identity', intercept=True, random_state=None):
         self.n_activated_features = n_activated_features
         self.weight_scale = weight_scale
         self.intercept = intercept
+        self.activation = activation
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -24,7 +27,7 @@ class RandomActivation(six.with_metaclass(ABCMeta, TransformerMixin)):
 
         Parameters
         ----------
-        X : numpy array or scipy.sparse of shape [n_samples, n_features].
+        X : numpy array or scipy.sparse of shape (n_samples, n_features).
 
         y : is not used: placeholder to allow for usage in a Pipeline.
 
@@ -52,6 +55,8 @@ class RandomActivation(six.with_metaclass(ABCMeta, TransformerMixin)):
             self.intercept_ = rng.uniform(-weight_init_bound, weight_init_bound,
                                            self.n_activated_features)
 
+        self.activation_function = ACTIVATIONS[self.activation]
+
         return self
 
     def transform(self, X, y=None):
@@ -61,7 +66,7 @@ class RandomActivation(six.with_metaclass(ABCMeta, TransformerMixin)):
 
         Parameters
         ----------
-        X : numpy array or scipy.sparse of shape [n_samples, n_features].
+        X : numpy array or scipy.sparse of shape (n_samples, n_features).
 
         y : is not used: placeholder to allow for usage in a Pipeline.
 
@@ -78,4 +83,4 @@ class RandomActivation(six.with_metaclass(ABCMeta, TransformerMixin)):
         if self.intercept:
             X_new += self.intercept_
 
-        return X_new
+        return self.activation_function(X_new)
