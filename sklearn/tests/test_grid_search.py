@@ -768,3 +768,53 @@ def test_parameters_sampler_replacement():
     sampler = ParameterSampler(params_distribution, n_iter=7)
     samples = list(sampler)
     assert_equal(len(samples), 7)
+
+
+_atleast_py34 = (sys.version_info.major == 3 and
+                 sys.version_info.minor >= 4)
+
+
+@np.testing.decorators.skipif(not _atleast_py34)
+def test_grid_search_backend():
+    # copied from test_grid_search
+    from multiprocessing import pool
+    backend = pool.get_context(method="forkserver")
+
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3,
+                               n_jobs=2, backend=backend)
+
+    # make sure it selects the smallest parameter in case of ties
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    grid_search.fit(X, y)
+    sys.stdout = old_stdout
+    assert_equal(grid_search.best_estimator_.foo_param, 2)
+
+    for i, foo_i in enumerate([1, 2, 3]):
+        assert_true(grid_search.grid_scores_[i][0] == {'foo_param': foo_i})
+
+
+@np.testing.decorators.skipif(not _atleast_py34)
+def test_randomized_search_backend():
+    # copied from test_randomized_grid_scores
+    from multiprocessing import pool
+    backend = pool.get_context(method="forkserver")
+
+    # Make a dataset with a lot of noise to get various kind of prediction
+    # errors across CV folds and parameter settings
+    X, y = make_classification(n_samples=200, n_features=100, n_informative=3,
+                               random_state=0)
+
+    # XXX: as of today (scipy 0.12) it's not possible to set the random seed
+    # of scipy.stats distributions: the assertions in this test should thus
+    # not depend on the randomization
+    params = dict(C=expon(scale=10),
+                  gamma=expon(scale=0.1))
+    n_cv_iter = 3
+    n_search_iter = 30
+    search = RandomizedSearchCV(SVC(), n_iter=n_search_iter, cv=n_cv_iter,
+                                param_distributions=params, iid=False,
+                                n_jobs=2, backend=backend)
+    search.fit(X, y)
+    assert_equal(len(search.grid_scores_), n_search_iter)
