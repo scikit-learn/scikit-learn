@@ -124,6 +124,7 @@ cdef class Splitter:
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                    DOUBLE_t* sample_weight,
+                   INT32_t* n_categories,
                    np.ndarray X_idx_sorted=None) except *:
         """Initialize the splitter.
 
@@ -189,7 +190,8 @@ cdef class Splitter:
         # A value of -1 indicates a non-categorical feature
         safe_realloc(&self.n_categories, n_features)
         for i in range(n_features):
-            self.n_categories[i] = -1
+            self.n_categories[i] = (-1 if n_categories == NULL
+                                    else n_categories[i])
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end,
                          double* weighted_n_node_samples) nogil:
@@ -271,11 +273,12 @@ cdef class BaseDenseSplitter(Splitter):
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                    DOUBLE_t* sample_weight,
+                   INT32_t* n_categories,
                    np.ndarray X_idx_sorted=None) except *:
         """Initialize the splitter."""
 
         # Call parent init
-        Splitter.init(self, X, y, sample_weight)
+        Splitter.init(self, X, y, sample_weight, n_categories)
 
         # Initialize X
         cdef np.ndarray X_ndarray = X
@@ -792,8 +795,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
                     if is_categorical:
                         # split_n_draw is the number of categories to send left
                         # TODO: this should be a binomial draw
-                        split_n_draw = rand_int(
-                            1, self.n_categories[current.feature], random_state)
+                        split_n_draw = rand_int(1, self.n_categories[current.feature],
+                                                random_state) & <SIZE_t>0x7FFFFFFF
                         split_seed = our_rand_r(random_state)
                         current.split_value.cat_split = (
                             (split_seed << 32) | (split_n_draw << 1) | 1)
@@ -916,11 +919,12 @@ cdef class BaseSparseSplitter(Splitter):
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                    DOUBLE_t* sample_weight,
+                   INT32_t* n_categories,
                    np.ndarray X_idx_sorted=None) except *:
         """Initialize the splitter."""
 
         # Call parent init
-        Splitter.init(self, X, y, sample_weight)
+        Splitter.init(self, X, y, sample_weight, n_categories)
 
         if not isinstance(X, csc_matrix):
             raise ValueError("X should be in csc format")

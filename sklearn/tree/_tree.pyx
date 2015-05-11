@@ -97,6 +97,7 @@ cdef class TreeBuilder:
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
+                np.ndarray n_categories=None,
                 np.ndarray X_idx_sorted=None):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -146,6 +147,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
+                np.ndarray n_categories=None,
                 np.ndarray X_idx_sorted=None):
         """Build a decision tree from the training set (X, y)."""
 
@@ -155,6 +157,14 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef DOUBLE_t* sample_weight_ptr = NULL
         if sample_weight is not None:
             sample_weight_ptr = <DOUBLE_t*> sample_weight.data
+
+        cdef INT32_t *n_categories_ptr = NULL
+        if n_categories is not None:
+            if ((n_categories.dtype != np.int32) or
+                    (not n_categories.flags.contiguous)):
+                n_categories = np.asarray(n_categories,
+                                          dtype=np.int32, order="C")
+            n_categories_ptr = <INT32_t *> n_categories.data
 
         # Initial capacity
         cdef int init_capacity
@@ -174,7 +184,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_split = self.min_samples_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
+        splitter.init(X, y, sample_weight_ptr, n_categories_ptr, X_idx_sorted)
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -303,6 +313,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
+                np.ndarray n_categories=None,
                 np.ndarray X_idx_sorted=None):
         """Build a decision tree from the training set (X, y)."""
 
@@ -313,6 +324,14 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         if sample_weight is not None:
             sample_weight_ptr = <DOUBLE_t*> sample_weight.data
 
+        cdef INT32_t *n_categories_ptr = NULL
+        if n_categories is not None:
+            if ((n_categories.dtype != np.int32) or
+                    (not n_categories.flags.contiguous)):
+                n_categories = np.asarray(n_categories,
+                                          dtype=np.int32, order="C")
+            n_categories_ptr = <INT32_t *> n_categories.data
+
         # Parameters
         cdef Splitter splitter = self.splitter
         cdef SIZE_t max_leaf_nodes = self.max_leaf_nodes
@@ -321,7 +340,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_split = self.min_samples_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
+        splitter.init(X, y, sample_weight_ptr, n_categories_ptr, X_idx_sorted)
 
         cdef PriorityHeap frontier = PriorityHeap(INITIAL_STACK_SIZE)
         cdef PriorityHeapRecord record
