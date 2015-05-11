@@ -956,7 +956,8 @@ def _index_param_value(X, v, indices):
 
 
 def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
-                      verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+                      verbose=0, fit_params=None, pre_dispatch='2*n_jobs',
+                      backend='multiprocessing'):
     """Generate cross-validated estimates for each input data point
 
     Parameters
@@ -1006,6 +1007,21 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
+    backend : str, object, or None
+        Specify the parallelization backend implementation.
+        Supported backends are:
+          - "multiprocessing" used by default, can induce some
+            communication and memory overhead when exchanging input and
+            output data with the with the worker Python processes.
+          - "threading" is a very low-overhead backend but it suffers
+            from the Python Global Interpreter Lock if the called function
+            relies a lot on Python objects. "threading" is mostly useful
+            when the execution bottleneck is a compiled extension that
+            explicitly releases the GIL (for instance a Cython loop wrapped
+            in a "with nogil" block or an expensive call to a library such
+            as NumPy).
+        It is possible to pass a custom multiprocessing context as a backend.
+
     Returns
     -------
     preds : ndarray
@@ -1017,7 +1033,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
-                        pre_dispatch=pre_dispatch)
+                        pre_dispatch=pre_dispatch, backend=backend)
     preds_blocks = parallel(delayed(_fit_and_predict)(clone(estimator), X, y,
                                                       train, test, verbose,
                                                       fit_params)
@@ -1107,7 +1123,8 @@ def _check_is_partition(locs, n):
 
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
-                    verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+                    verbose=0, fit_params=None, pre_dispatch='2*n_jobs',
+                    backend='multiprocessing'):
     """Evaluate a score by cross-validation
 
     Parameters
@@ -1160,6 +1177,21 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
+    backend : str, object, or None
+        Specify the parallelization backend implementation.
+        Supported backends are:
+          - "multiprocessing" used by default, can induce some
+            communication and memory overhead when exchanging input and
+            output data with the with the worker Python processes.
+          - "threading" is a very low-overhead backend but it suffers
+            from the Python Global Interpreter Lock if the called function
+            relies a lot on Python objects. "threading" is mostly useful
+            when the execution bottleneck is a compiled extension that
+            explicitly releases the GIL (for instance a Cython loop wrapped
+            in a "with nogil" block or an expensive call to a library such
+            as NumPy).
+        It is possible to pass a custom multiprocessing context as a backend.
+
     Returns
     -------
     scores : array of float, shape=(len(list(cv)),)
@@ -1172,7 +1204,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
-                        pre_dispatch=pre_dispatch)
+                        pre_dispatch=pre_dispatch, backend=backend)
     scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
                                               train, test, verbose, None,
                                               fit_params)
@@ -1429,7 +1461,8 @@ def _check_cv(cv, X=None, y=None, classifier=False):
 
 def permutation_test_score(estimator, X, y, cv=None,
                            n_permutations=100, n_jobs=1, labels=None,
-                           random_state=0, verbose=0, scoring=None):
+                           random_state=0, verbose=0, scoring=None,
+                           backend='multiprocessing'):
     """Evaluate the significance of a cross-validated score with permutations
 
     Parameters
@@ -1472,6 +1505,21 @@ def permutation_test_score(estimator, X, y, cv=None,
     verbose : integer, optional
         The verbosity level.
 
+    backend : str, object, or None
+        Specify the parallelization backend implementation.
+        Supported backends are:
+          - "multiprocessing" used by default, can induce some
+            communication and memory overhead when exchanging input and
+            output data with the with the worker Python processes.
+          - "threading" is a very low-overhead backend but it suffers
+            from the Python Global Interpreter Lock if the called function
+            relies a lot on Python objects. "threading" is mostly useful
+            when the execution bottleneck is a compiled extension that
+            explicitly releases the GIL (for instance a Cython loop wrapped
+            in a "with nogil" block or an expensive call to a library such
+            as NumPy).
+        It is possible to pass a custom multiprocessing context as a backend.
+
     Returns
     -------
     score : float
@@ -1504,7 +1552,8 @@ def permutation_test_score(estimator, X, y, cv=None,
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     score = _permutation_test_score(clone(estimator), X, y, cv, scorer)
-    permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
+    permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose,
+                                  backend=backend)(
         delayed(_permutation_test_score)(
             clone(estimator), X, _shuffle(y, labels, random_state), cv,
             scorer)
