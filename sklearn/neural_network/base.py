@@ -8,21 +8,6 @@ import numpy as np
 
 from ..utils.fixes import expit as logistic_sigmoid
 
-def identity(X):
-    """Returns the input matrix.
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The input data.
-
-    Returns
-    -------
-    X: {array-like, sparse matrix}, shape (n_samples, n_features)
-        The same input data.
-    """
-    return X
-
 
 def logistic(X):
     """Compute the logistic function inplace.
@@ -93,5 +78,4 @@ def softmax(X):
     return X
 
 
-ACTIVATIONS = {'identity':identity, 'tanh': tanh, 
-               'logistic': logistic, 'relu': relu}
+ACTIVATIONS = {'tanh': tanh, 'logistic': logistic, 'relu': relu}

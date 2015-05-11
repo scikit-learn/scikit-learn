@@ -13,7 +13,7 @@ from ..utils.validation import check_array
 
 class RandomActivation(six.with_metaclass(ABCMeta, TransformerMixin)):
     def __init__(self, n_activated_features=10, weight_scale='auto', 
-                 activation='identity', intercept=True, random_state=None):
+                 activation='tanh', intercept=True, random_state=None):
         self.n_activated_features = n_activated_features
         self.weight_scale = weight_scale
         self.intercept = intercept
