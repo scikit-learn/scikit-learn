@@ -22,7 +22,8 @@ from ..utils.fixes import (combinations_with_replacement as combinations_w_r,
 from ..utils.fixes import isclose
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
-from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis)
+from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis,
+                                 min_max_axis)
 from ..utils.validation import check_is_fitted
 
 zip = six.moves.zip
@@ -570,7 +571,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
         scipy.sparse matrices should be in CSR format to avoid an
         un-necessary copy.
 
-    norm : 'l1' or 'l2', optional ('l2' by default)
+    norm : 'l1', 'l2', or 'max', optional ('l2' by default)
         The norm to use to normalize each non zero sample (or each non-zero
         feature if axis is 0).
 
@@ -589,7 +590,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
     using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
-    if norm not in ('l1', 'l2'):
+    if norm not in ('l1', 'l2', 'max'):
         raise ValueError("'%s' is not a supported norm" % norm)
 
     if axis == 0:
@@ -609,13 +610,19 @@ def normalize(X, norm='l2', axis=1, copy=True):
             inplace_csr_row_normalize_l1(X)
         elif norm == 'l2':
             inplace_csr_row_normalize_l2(X)
+        elif norm == 'max':
+            _, norms = min_max_axis(X, 1)
+            norms = norms.repeat(np.diff(X.indptr))
+            mask = norms != 0
+            X.data[mask] /= norms[mask]
     else:
         if norm == 'l1':
             norms = np.abs(X).sum(axis=1)
-            norms[norms == 0.0] = 1.0
         elif norm == 'l2':
             norms = row_norms(X)
-            norms[norms == 0.0] = 1.0
+        elif norm == 'max':
+            norms = np.max(X, axis=1)
+        norms[norms == 0.0] = 1.0
         X /= norms[:, np.newaxis]
 
     if axis == 0:
@@ -643,7 +650,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    norm : 'l1' or 'l2', optional ('l2' by default)
+    norm : 'l1', 'l2', or 'max', optional ('l2' by default)
         The norm to use to normalize each non zero sample.
 
     copy : boolean, optional, default True

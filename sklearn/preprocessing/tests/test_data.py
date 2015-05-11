@@ -604,6 +604,55 @@ def test_normalizer_l2():
         assert_almost_equal(la.norm(X_norm[3]), 0.0)
 
 
+def test_normalizer_max():
+    rng = np.random.RandomState(0)
+    X_dense = rng.randn(4, 5)
+    X_sparse_unpruned = sparse.csr_matrix(X_dense)
+
+    # set the row number 3 to zero
+    X_dense[3, :] = 0.0
+
+    # set the row number 3 to zero without pruning (can happen in real life)
+    indptr_3 = X_sparse_unpruned.indptr[3]
+    indptr_4 = X_sparse_unpruned.indptr[4]
+    X_sparse_unpruned.data[indptr_3:indptr_4] = 0.0
+
+    # build the pruned variant using the regular constructor
+    X_sparse_pruned = sparse.csr_matrix(X_dense)
+
+    # check inputs that support the no-copy optim
+    for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
+
+        normalizer = Normalizer(norm='max', copy=True)
+        X_norm1 = normalizer.transform(X)
+        assert_true(X_norm1 is not X)
+        X_norm1 = toarray(X_norm1)
+
+        normalizer = Normalizer(norm='max', copy=False)
+        X_norm2 = normalizer.transform(X)
+        assert_true(X_norm2 is X)
+        X_norm2 = toarray(X_norm2)
+
+        for X_norm in (X_norm1, X_norm2):
+            row_maxs = X_norm.max(axis=1)
+            for i in range(3):
+                assert_almost_equal(row_maxs[i], 1.0)
+            assert_almost_equal(row_maxs[3], 0.0)
+
+    # check input for which copy=False won't prevent a copy
+    for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
+        X = init(X_dense)
+        X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
+
+        assert_true(X_norm is not X)
+        assert_true(isinstance(X_norm, sparse.csr_matrix))
+
+        X_norm = toarray(X_norm)
+        for i in range(3):
+            assert_almost_equal(row_maxs[i], 1.0)
+        assert_almost_equal(la.norm(X_norm[3]), 0.0)
+
+
 def test_normalize():
     # Test normalize function
     # Only tests functionality not used by the tests for Normalizer.
