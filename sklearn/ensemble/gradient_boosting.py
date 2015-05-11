@@ -1275,6 +1275,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution.
 
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
     Attributes
     ----------
     feature_importances_ : array, shape = [n_features]
@@ -1592,6 +1598,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
 
     Attributes
