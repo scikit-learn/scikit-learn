@@ -24,6 +24,7 @@ from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn import datasets
@@ -802,7 +803,11 @@ def check_class_weight_balanced_and_bootstrap_multi_output(name):
     clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}, {-2: 1., 2: 1.}],
                            random_state=0)
     clf.fit(X, _y)
+    # smoke test for subsample and balanced subsample
+    clf = ForestClassifier(class_weight='balanced_subsample', random_state=0)
+    clf.fit(X, _y)
     clf = ForestClassifier(class_weight='subsample', random_state=0)
+    #assert_warns_message(DeprecationWarning, "balanced_subsample", clf.fit, X, _y)
     clf.fit(X, _y)
 
 
