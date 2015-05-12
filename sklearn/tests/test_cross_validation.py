@@ -491,8 +491,15 @@ def test_shuffle_labels_out():
           ]
 
     for y in ys:
-        slo = cval.ShuffleLabelsOut(y, 6, test_size=0.33,
+        n_iter = 6
+        slo = cval.ShuffleLabelsOut(y, n_iter, test_size=0.33,
                                     random_state=0)
+
+        # Make sure the repr works
+        repr(slo)
+
+        # Test that the length is correct
+        assert_equal(len(slo), n_iter)
 
         for train, test in slo:
             # First test: no train label is in the test set and vice versa
