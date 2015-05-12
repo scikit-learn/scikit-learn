@@ -11,7 +11,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_array
 
 
-class RandomActivation(six.with_metaclass(ABCMeta, TransformerMixin)):
+class RandomBasisFunction(six.with_metaclass(ABCMeta, TransformerMixin)):
     def __init__(self, n_activated_features=10, weight_scale='auto', 
                  activation='tanh', intercept=True, random_state=None):
         self.n_activated_features = n_activated_features
