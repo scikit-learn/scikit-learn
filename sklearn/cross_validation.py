@@ -963,7 +963,7 @@ class ShuffleLabelsOut(ShuffleSplit):
 
     Parameters
     ----------
-    y :  array, [n_samples]
+    labels :  array, [n_samples]
         Labels of samples
 
     n_iter : int (default 5)
@@ -985,10 +985,10 @@ class ShuffleLabelsOut(ShuffleSplit):
         Pseudo-random number generator state used for random sampling.
     '''
 
-    def __init__(self, y, n_iter=5, test_size=0.2, train_size=None,
+    def __init__(self, labels, n_iter=5, test_size=0.2, train_size=None,
                  random_state=None):
 
-        classes, y_indices = np.unique(y, return_inverse=True)
+        classes, label_indices = np.unique(labels, return_inverse=True)
 
         super(ShuffleLabelsOut, self).__init__(
             len(classes),
@@ -997,14 +997,15 @@ class ShuffleLabelsOut(ShuffleSplit):
             train_size=train_size,
             random_state=random_state)
 
+        self.labels = labels
         self.classes = classes
-        self.y_indices = y_indices
+        self.label_indices = label_indices
 
     def __repr__(self):
         return ('%s(labels=%s, n_iter=%d, test_size=%s, '
                 'random_state=%s)' % (
                     self.__class__.__name__,
-                    self.y,
+                    self.labels,
                     self.n_iter,
                     str(self.test_size),
                     self.random_state,
@@ -1015,12 +1016,12 @@ class ShuffleLabelsOut(ShuffleSplit):
 
     def _iter_indices(self):
 
-        for y_train, y_test in super(ShuffleLabelsOut, self)._iter_indices():
+        for label_train, label_test in super(ShuffleLabelsOut, self)._iter_indices():
             # these are the indices of classes in the partition
             # invert them into data indices
 
-            train = np.flatnonzero(np.in1d(self.y_indices, y_train))
-            test = np.flatnonzero(np.in1d(self.y_indices, y_test))
+            train = np.flatnonzero(np.in1d(self.label_indices, label_train))
+            test = np.flatnonzero(np.in1d(self.label_indices, label_test))
 
             yield train, test
 
