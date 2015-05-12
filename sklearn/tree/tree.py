@@ -503,26 +503,32 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     Attributes
     ----------
-    tree_ : Tree object
-        The underlying Tree object.
-
-    max_features_ : int,
-        The inferred value of max_features.
-
     classes_ : array of shape = [n_classes] or a list of such arrays
         The classes labels (single output problem),
         or a list of arrays of class labels (multi-output problem).
-
-    n_classes_ : int or list
-        The number of classes (for single output problems),
-        or a list containing the number of classes for each
-        output (for multi-output problems).
 
     feature_importances_ : array of shape = [n_features]
         The feature importances. The higher, the more important the
         feature. The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance [4]_.
+
+    max_features_ : int,
+        The inferred value of max_features.
+
+    n_classes_ : int or list
+        The number of classes (for single output problems),
+        or a list containing the number of classes for each
+        output (for multi-output problems).
+
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
+    tree_ : Tree object
+        The underlying Tree object.
 
     See also
     --------
@@ -713,18 +719,24 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     Attributes
     ----------
-    tree_ : Tree object
-        The underlying Tree object.
-
-    max_features_ : int,
-        The inferred value of max_features.
-
     feature_importances_ : array of shape = [n_features]
         The feature importances.
         The higher, the more important the feature.
         The importance of a feature is computed as the
         (normalized) total reduction of the criterion brought
         by that feature. It is also known as the Gini importance [4]_.
+
+    max_features_ : int,
+        The inferred value of max_features.
+
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
+    tree_ : Tree object
+        The underlying Tree object.
 
     See also
     --------

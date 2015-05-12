@@ -789,6 +789,12 @@ class RandomForestClassifier(ForestClassifier):
         The number of classes (single output problem), or a list containing the
         number of classes for each output (multi-output problem).
 
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
     feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
@@ -945,6 +951,12 @@ class RandomForestRegressor(ForestRegressor):
 
     feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
+
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
 
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
@@ -1122,6 +1134,12 @@ class ExtraTreesClassifier(ForestClassifier):
     feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
@@ -1279,6 +1297,12 @@ class ExtraTreesRegressor(ForestRegressor):
 
     feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
+
+    n_features_ : int
+        The number of features.
+
+    n_outputs_ : int
+        The number of outputs.
 
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
