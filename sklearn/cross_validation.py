@@ -12,7 +12,7 @@ from __future__ import print_function
 from __future__ import division
 
 import warnings
-from itertools import chain, combinations
+from itertools import chain, combinations, izip_longest
 from math import ceil, floor, factorial
 import numbers
 import time
@@ -37,6 +37,7 @@ __all__ = ['KFold',
            'LeaveOneOut',
            'LeavePLabelOut',
            'LeavePOut',
+           'LabelSegmentedKFold'
            'ShuffleSplit',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
@@ -436,6 +437,83 @@ class StratifiedKFold(_BaseKFold):
             self.__class__.__module__,
             self.__class__.__name__,
             self.y,
+            self.n_folds,
+            self.shuffle,
+            self.random_state,
+        )
+
+    def __len__(self):
+        return self.n_folds
+
+
+class LabelSegmentedKFold(_BaseKFold):
+    """Segmented K-Folds cross validation iterator
+
+    Provides train/test indices to split data in train test sets.
+
+    This cross-validation object is a variation of KFold that
+    returns folds where train and test set are distinct to a third-party
+    provided label.
+
+    The difference between LeavePLabelOut and LabelSegmentedKFold is that
+    the former generates splits using all subsets of size `p` unique labels,
+    while the latter splits the data into k consecutive folds, where each
+    third-party label occurs only once in the test set.
+
+    Parameters
+    ----------
+    labels : array-like of int with shape (n_samples,)
+        Arbitrary domain-specific stratification of the data to be used to draw
+        the splits.
+
+    n_folds : int, default=3
+        Number of folds. Must be at least 2.
+
+    shuffle : boolean, default=False
+        Whether to shuffle each stratification of the data before splitting
+        into batches.
+
+    random_state : None, int or RandomState, default=None
+        Pseudo-random number generator state used for random
+        sampling. If None, use default numpy RNG for shuffling
+
+    Examples
+    --------
+    >>> from sklearn import cross_validation
+    >>> labels = np.array([1, 2, 3, 1, 2, 3, 4, 4, 4])
+    >>> lkf = cross_validation.LabelSegmentedKFold(ylabels, n_folds=3)
+    >>> for train_index, test_index in lkf:
+    ...    print("TRAIN:", labels[train_index], "TEST:", labels[test_index])
+    TRAIN: [2, 3, 2, 3] TEST: [1, 1, 4, 4, 4]
+    TRAIN: [1, 3, 1, 3, 4, 4, 4] TEST: [2, 2]
+    TRAIN: [1, 2, 1, 2, 4, 4, 4] TEST: [3, 3]
+    """
+    def __init__(self, labels, n_folds=3, shuffle=False, random_state=None):
+        self.labels = np.array(labels, copy=True)
+        self.unique_labels = np.unique(labels)
+        super(LabelSegmentedKFold, self).__init__(
+            self.unique_labels.size, n_folds, shuffle, random_state)
+
+        self.n = self.labels.size
+        self.shuffle = shuffle
+        self.n_folds = n_folds
+
+        self.batches = zip(*izip_longest(
+            *[iter(self.unique_labels)]*self.n_folds
+        ))
+        if shuffle:
+            rng = check_random_state(self.random_state)
+            self.batches = np.random.permutation(self.batches)
+
+    def _iter_test_indices(self):
+        for batch in self.batches:
+            yield np.array([l in batch for l in self.labels])
+
+    def __repr__(self):
+        return '%s.%s(labels=%s, n_folds=%i, shuffle=%s, random_state=%s)' % (
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.labels,
             self.n_folds,
             self.shuffle,
             self.random_state,
