@@ -329,7 +329,7 @@ def test_parallel():
         yield check_parallel, name, iris.data, iris.target
 
     for name in FOREST_REGRESSORS:
-        yield check_parallel, name,  boston.data, boston.target
+        yield check_parallel, name, boston.data, boston.target
 
 
 def check_pickle(name, X, y):
@@ -352,7 +352,7 @@ def test_pickle():
         yield check_pickle, name, iris.data[::2], iris.target[::2]
 
     for name in FOREST_REGRESSORS:
-        yield check_pickle, name,  boston.data[::2], boston.target[::2]
+        yield check_pickle, name, boston.data[::2], boston.target[::2]
 
 
 def check_multioutput(name):
@@ -749,10 +749,10 @@ def check_class_weights(name):
     # Check class_weights resemble sample_weights behavior.
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
-    # Iris is balanced, so no effect expected for using 'auto' weights
+    # Iris is balanced, so no effect expected for using 'balanced' weights
     clf1 = ForestClassifier(random_state=0)
     clf1.fit(iris.data, iris.target)
-    clf2 = ForestClassifier(class_weight='auto', random_state=0)
+    clf2 = ForestClassifier(class_weight='balanced', random_state=0)
     clf2.fit(iris.data, iris.target)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
@@ -765,8 +765,8 @@ def check_class_weights(name):
                             random_state=0)
     clf3.fit(iris.data, iris_multi)
     assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
-    # Check against multi-output "auto" which should also have no effect
-    clf4 = ForestClassifier(class_weight='auto', random_state=0)
+    # Check against multi-output "balanced" which should also have no effect
+    clf4 = ForestClassifier(class_weight='balanced', random_state=0)
     clf4.fit(iris.data, iris_multi)
     assert_almost_equal(clf3.feature_importances_, clf4.feature_importances_)
 
@@ -782,7 +782,7 @@ def check_class_weights(name):
 
     # Check that sample_weight and class_weight are multiplicative
     clf1 = ForestClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target, sample_weight**2)
+    clf1.fit(iris.data, iris.target, sample_weight ** 2)
     clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
@@ -793,11 +793,11 @@ def test_class_weights():
         yield check_class_weights, name
 
 
-def check_class_weight_auto_and_bootstrap_multi_output(name):
-    # Test class_weight works for multi-output
+def check_class_weight_balanced_and_bootstrap_multi_output(name):
+    # Test class_weight works for multi-output"""
     ForestClassifier = FOREST_CLASSIFIERS[name]
     _y = np.vstack((y, np.array(y) * 2)).T
-    clf = ForestClassifier(class_weight='auto', random_state=0)
+    clf = ForestClassifier(class_weight='balanced', random_state=0)
     clf.fit(X, _y)
     clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}, {-2: 1., 2: 1.}],
                            random_state=0)
@@ -806,9 +806,9 @@ def check_class_weight_auto_and_bootstrap_multi_output(name):
     clf.fit(X, _y)
 
 
-def test_class_weight_auto_and_bootstrap_multi_output():
+def test_class_weight_balanced_and_bootstrap_multi_output():
     for name in FOREST_CLASSIFIERS:
-        yield check_class_weight_auto_and_bootstrap_multi_output, name
+        yield check_class_weight_balanced_and_bootstrap_multi_output, name
 
 
 def check_class_weight_errors(name):

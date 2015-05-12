@@ -507,10 +507,13 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         ``(2*C)^-1`` in other linear models such as LogisticRegression or
         LinearSVC.
 
-    class_weight : dict, optional
-        Weights associated with classes in the form
-        ``{class_label : weight}``. If not given, all classes are
-        supposed to have weight one.
+    class_weight : dict or 'balanced', optional
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
+
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -994,10 +997,13 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         If None, Generalized Cross-Validation (efficient Leave-One-Out)
         will be used.
 
-    class_weight : dict, optional
-        Weights associated with classes in the form
-        ``{class_label : weight}``. If not given, all classes are
-        supposed to have weight one.
+    class_weight : dict or 'balanced', optional
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
+
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
     Attributes
     ----------

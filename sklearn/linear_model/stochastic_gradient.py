@@ -512,15 +512,15 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
-        if self.class_weight == 'auto':
-            raise ValueError("class_weight 'auto' is not supported for "
-                             "partial_fit. In order to use 'auto' weights, "
-                             "use compute_class_weight('auto', classes, y). "
+        if self.class_weight in ['balanced', 'auto']:
+            raise ValueError("class_weight '{0}' is not supported for "
+                             "partial_fit. In order to use 'balanced' weights, "
+                             "use compute_class_weight('{0}', classes, y). "
                              "In place of y you can us a large enough sample "
                              "of the full training set target to properly "
                              "estimate the class frequency distributions. "
                              "Pass the resulting weights as the class_weight "
-                             "parameter.")
+                             "parameter.".format(self.class_weight))
         return self._partial_fit(X, y, alpha=self.alpha, C=1.0, loss=self.loss,
                                  learning_rate=self.learning_rate, n_iter=1,
                                  classes=classes, sample_weight=sample_weight,
@@ -659,14 +659,15 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     power_t : double
         The exponent for inverse scaling learning rate [default 0.5].
 
-    class_weight : dict, {class_label: weight} or "auto" or None, optional
+    class_weight : dict, {class_label: weight} or "balanced" or None, optional
         Preset for the class_weight fit parameter.
 
         Weights associated with classes. If not given, all classes
         are supposed to have weight one.
 
-        The "auto" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies.
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as

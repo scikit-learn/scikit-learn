@@ -308,7 +308,7 @@ def test_decision_function():
     # kernel binary:
     clf = svm.SVC(kernel='rbf', gamma=1)
     clf.fit(X, Y)
-    
+
     rbfs = rbf_kernel(X, clf.support_vectors_, gamma=clf.gamma)
     dec = np.dot(rbfs, clf.dual_coef_.T) + clf.intercept_
     assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
@@ -381,21 +381,21 @@ def test_auto_weight():
     # We take as dataset the two-dimensional projection of iris so
     # that it is not separable and remove half of predictors from
     # class 1.
-    # We add one to the targets as a non-regression test: class_weight="auto"
+    # We add one to the targets as a non-regression test: class_weight="balanced"
     # used to work only when the labels where a range [0..K).
     from sklearn.utils import compute_class_weight
     X, y = iris.data[:, :2], iris.target + 1
     unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][::2])
 
     classes = np.unique(y[unbalanced])
-    class_weights = compute_class_weight('auto', classes, y[unbalanced])
+    class_weights = compute_class_weight('balanced', classes, y[unbalanced])
     assert_true(np.argmax(class_weights) == 2)
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
                 LogisticRegression()):
-        # check that score is better when class='auto' is set.
+        # check that score is better when class='balanced' is set.
         y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
-        clf.set_params(class_weight='auto')
+        clf.set_params(class_weight='balanced')
         y_pred_balanced = clf.fit(X[unbalanced], y[unbalanced],).predict(X)
         assert_true(metrics.f1_score(y, y_pred, average='weighted')
                     <= metrics.f1_score(y, y_pred_balanced,

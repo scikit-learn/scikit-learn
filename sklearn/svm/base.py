@@ -760,10 +760,15 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         In order to avoid this, one should increase the intercept_scaling.
         such that the feature vector becomes [x, intercept_scaling].
 
-    class_weight : {dict, 'auto'}, optional
-        Weight assigned to each class. If class_weight provided is 'auto',
-        then the weights provided are inverses of the frequency in the
-        target vector.
+    class_weight : {dict, 'balanced'}, optional
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one. For
+        multi-output problems, a list of dicts can be provided in the same
+        order as the columns of y.
+
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
     penalty : str, {'l1', 'l2'}
         The norm of the penalty used in regularization.

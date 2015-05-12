@@ -89,7 +89,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         curr_sample_weight *= sample_counts
 
         if class_weight == 'subsample':
-            curr_sample_weight *= compute_sample_weight('auto', y, indices)
+            curr_sample_weight *= compute_sample_weight('balanced', y, indices)
 
         tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
 
@@ -414,17 +414,17 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             self.n_classes_.append(classes_k.shape[0])
 
         if self.class_weight is not None:
-            valid_presets = ('auto', 'subsample')
+            valid_presets = ('auto', 'balanced', 'subsample', 'auto')
             if isinstance(self.class_weight, six.string_types):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
-                                     '"auto" and "subsample". Given "%s".'
+                                     '"balanced" and "subsample". Given "%s".'
                                      % self.class_weight)
                 if self.warm_start:
-                    warn('class_weight presets "auto" or "subsample" are '
+                    warn('class_weight presets "balanced" or "subsample" are '
                          'not recommended for warm_start if the fitted data '
                          'differs from the full dataset. In order to use '
-                         '"auto" weights, use compute_class_weight("auto", '
+                         '"auto" weights, use compute_class_weight("balanced", '
                          'classes, y). In place of y you can use a large '
                          'enough sample of the full training set target to '
                          'properly estimate the class frequency '
@@ -433,7 +433,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
             if self.class_weight != 'subsample' or not self.bootstrap:
                 if self.class_weight == 'subsample':
-                    class_weight = 'auto'
+                    class_weight = 'balanced'
                 else:
                     class_weight = self.class_weight
                 expanded_class_weight = compute_sample_weight(class_weight,
@@ -758,17 +758,18 @@ class RandomForestClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
-    class_weight : dict, list of dicts, "auto", "subsample" or None, optional
+    class_weight : dict, list of dicts, "balanced", "subsample" or None, optional
 
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
 
-        The "auto" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies in the input data.
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
-        The "subsample" mode is the same as "auto" except that weights are
+        The "subsample" mode is the same as "balanced" except that weights are
         computed based on the bootstrap sample for every tree grown.
 
         For multi-output, the weights of each column of y will be multiplied.
@@ -1100,17 +1101,18 @@ class ExtraTreesClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
-    class_weight : dict, list of dicts, "auto", "subsample" or None, optional
+    class_weight : dict, list of dicts, "balanced", "subsample" or None, optional
 
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
 
-        The "auto" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies in the input data.
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
-        The "subsample" mode is the same as "auto" except that weights are
+        The "subsample" mode is the same as "balanced" except that weights are
         computed based on the bootstrap sample for every tree grown.
 
         For multi-output, the weights of each column of y will be multiplied.

@@ -405,7 +405,7 @@ Tips on Practical Use
     approximates the fraction of training errors and support vectors.
 
   * In :class:`SVC`, if data for classification are unbalanced (e.g. many
-    positive and few negative), set ``class_weight='auto'`` and/or try
+    positive and few negative), set ``class_weight='balanced'`` and/or try
     different penalty parameters ``C``.
 
   * The underlying :class:`LinearSVC` implementation uses a random
