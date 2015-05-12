@@ -21,11 +21,13 @@ example dataset.
 """
 print(__doc__)
 
+import numpy as np
+import matplotlib.pyplot as plt
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import VotingClassifier
-import matplotlib.pyplot as plt
 
 clf1 = LogisticRegression(random_state=123)
 clf2 = RandomForestClassifier(random_state=123)
@@ -41,8 +43,8 @@ eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
 probas = [c.fit(X, y).predict_proba(X) for c in (clf1, clf2, clf3, eclf)]
 
 # get class probabilities for the first sample in the dataset
-class1_1 = [pr[0,0] for pr in probas]
-class2_1 = [pr[0,1] for pr in probas]
+class1_1 = [pr[0, 0] for pr in probas]
+class2_1 = [pr[0, 1] for pr in probas]
 
 
 # plotting
@@ -54,8 +56,8 @@ width = 0.35  # bar width
 fig, ax = plt.subplots()
 
 # bars for classifier 1-3
-p1 = ax.bar(ind, np.hstack(([class1_1[:-1],[0]])), width, color='green')
-p2 = ax.bar(ind + width, np.hstack(([class2_1[:-1],[0]])), width, color='lightgreen')
+p1 = ax.bar(ind, np.hstack(([class1_1[:-1], [0]])), width, color='green')
+p2 = ax.bar(ind + width, np.hstack(([class2_1[:-1], [0]])), width, color='lightgreen')
 
 # bars for VotingClassifier
 p3 = ax.bar(ind, [0, 0, 0, class1_1[-1]], width, color='blue')
@@ -70,7 +72,7 @@ ax.set_xticklabels(['LogisticRegression\nweight 1',
                     'VotingClassifier\n(average probabilities)'],
                    rotation=40,
                    ha='right')
-plt.ylim([0,1])
+plt.ylim([0, 1])
 plt.title('Class probabilities for sample 1 by different classifiers')
-plt.legend([p1[0], p2[0]], ['class 1', 'class 2'] , loc='upper left')
+plt.legend([p1[0], p2[0]], ['class 1', 'class 2'], loc='upper left')
 plt.show()
