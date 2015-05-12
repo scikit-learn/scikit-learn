@@ -1104,8 +1104,8 @@ def test_check_is_partition():
     assert_false(cval._check_is_partition(p, 100))
 
 
-_atleast_py34 = (sys.version_info.major == 3 and
-                 sys.version_info.minor >= 4)
+_atleast_py34 = (sys.version_info[0] == 3 and
+                 sys.version_info[1] >= 4)
 
 
 @np.testing.decorators.skipif(not _atleast_py34)

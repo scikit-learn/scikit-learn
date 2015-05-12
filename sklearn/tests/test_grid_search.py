@@ -770,8 +770,8 @@ def test_parameters_sampler_replacement():
     assert_equal(len(samples), 7)
 
 
-_atleast_py34 = (sys.version_info.major == 3 and
-                 sys.version_info.minor >= 4)
+_atleast_py34 = (sys.version_info[0] == 3 and
+                 sys.version_info[1] >= 4)
 
 
 @np.testing.decorators.skipif(not _atleast_py34)
