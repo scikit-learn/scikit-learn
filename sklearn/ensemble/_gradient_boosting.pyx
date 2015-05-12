@@ -14,6 +14,7 @@ np.import_array()
 
 from sklearn.tree._tree cimport Node
 from sklearn.tree._tree cimport Tree
+from sklearn.tree._utils cimport goes_left
 
 
 ctypedef np.int32_t int32
@@ -31,6 +32,7 @@ from numpy import float64 as np_float64
 DTYPE = np.float32
 ctypedef np.float32_t DTYPE_t
 ctypedef np.npy_intp SIZE_t
+ctypedef np.npy_int32 INT32_t
 
 
 # constant to mark tree leafs
@@ -44,6 +46,7 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
                                                 Py_ssize_t K,
                                                 Py_ssize_t n_samples,
                                                 Py_ssize_t n_features,
+                                                INT32_t* n_categories,
                                                 float64 *out):
     """Predicts output for regression tree and stores it in ``out[i, k]``.
 
@@ -78,6 +81,9 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
         ``n_samples == X.shape[0]``.
     n_features : int
         The number of features; ``n_samples == X.shape[1]``.
+    n_categories : INT32_t pointer
+        Pointer to array of shape [n_features] containing the number of
+        categories for each feature, or -1 for non-categorical features.
     out : np.float64_t pointer
         The pointer to the data array where the predictions are stored.
         ``out`` is assumed to be a two-dimensional array of
@@ -90,7 +96,8 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
         node = root_node
         # While node not a leaf
         while node.left_child != -1 and node.right_child != -1:
-            if X[i * n_features + node.feature] <= node.threshold:
+            if goes_left(X[i * n_features + node.feature], node.split_value,
+                         n_categories[node.feature]):
                 node = root_node + node.left_child
             else:
                 node = root_node + node.right_child
@@ -123,6 +130,7 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
                 <DTYPE_t*> X.data,
                 tree.nodes, tree.value,
                 scale, k, K, X.shape[0], X.shape[1],
+                tree.n_categories,
                 <float64 *> (<np.ndarray> out).data)
             ## out += scale * tree.predict(X).reshape((X.shape[0], 1))
 
@@ -226,7 +234,8 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
                 if feature_index != -1:
                     # split feature in target set
                     # push left or right child on stack
-                    if X[i, feature_index] <= current_node.threshold:
+                    if goes_left(X[i, feature_index], current_node.split_value,
+                                 tree.n_categories[current_node.feature]):
                         # left
                         node_stack[stack_size] = (root_node +
                                                   current_node.left_child)
