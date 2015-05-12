@@ -635,12 +635,11 @@ class _RidgeGCV(LinearModel):
     http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
-
-    def __init__(self, alphas=[0.1, 1.0, 10.0],
+    def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False,
                  scoring=None, copy_X=True,
                  gcv_mode=None, store_cv_values=False):
-        self.alphas = np.asarray(alphas)
+        self.alphas = np.array(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
@@ -816,7 +815,7 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
-    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
+    def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
                  store_cv_values=False):
@@ -886,7 +885,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     Parameters
     ----------
-    alphas : numpy array of shape [n_alphas]
+    alphas : array-like of shape [n_alphas]
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
@@ -970,7 +969,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : numpy array of shape [n_alphas]
+    alphas : array-like of shape [n_alphas]
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
@@ -1026,7 +1025,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
-    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
+    def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
                  normalize=False, scoring=None, cv=None, class_weight=None):
         super(RidgeClassifierCV, self).__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,

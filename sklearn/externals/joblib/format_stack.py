@@ -17,8 +17,6 @@ Adapted from IPython's VerboseTB.
 #            2001-2004, Fernando Perez
 #            2001 Nathaniel Gray
 # License: BSD 3 clause
-
-
 import inspect
 import keyword
 import linecache
@@ -263,6 +261,7 @@ def format_records(records):   # , print_globals=False):
         # we need to store a bit of state in the tokenizer to build
         # dotted names
         tokeneater.name_cont = False
+
 
         def linereader(file=file, lnum=[lnum], getline=linecache.getline):
             line = getline(file, lnum[0])
