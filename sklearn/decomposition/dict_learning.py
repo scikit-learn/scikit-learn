@@ -397,7 +397,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8, gain_rate=0.,
 
         (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                      (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     where V is the dictionary and U is the sparse code.
 
@@ -933,7 +933,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
         (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     Parameters
     ----------
@@ -1092,7 +1092,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     Parameters
     ----------
