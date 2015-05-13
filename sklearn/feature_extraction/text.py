@@ -937,6 +937,10 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     sublinear_tf : boolean, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
+    additional_idf : boolean, default=True
+        If you want to use the canonical formula tf-idf = tf * idf, set this
+        flag to False. Otherwise, the real value of tf-idf is tf * (idf + 1)
+
     References
     ----------
 
@@ -949,11 +953,12 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False):
+                 sublinear_tf=False, additional_idf=True):
         self.norm = norm
         self.use_idf = use_idf
         self.smooth_idf = smooth_idf
         self.sublinear_tf = sublinear_tf
+        self.additional_idf = additional_idf
 
     def fit(self, X, y=None):
         """Learn the idf vector (global term weights)
@@ -975,7 +980,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
             # log1p instead of log makes sure terms with zero idf don't get
             # suppressed entirely
-            idf = np.log(float(n_samples) / df) + 1.0
+            idf = np.log(float(n_samples) / df) + int(self.additional_idf)
             self._idf_diag = sp.spdiags(idf,
                                         diags=0, m=n_features, n=n_features)
 
