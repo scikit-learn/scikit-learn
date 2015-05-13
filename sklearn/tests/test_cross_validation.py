@@ -356,6 +356,29 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     assert_greater(mean_score, 0.85)
 
 
+def test_label_segmented_kfold():
+    labels = np.array([1, 2, 3, 1, 2, 3, 4, 4, 4])
+    expected_train = [
+        np.array([1, 2, 4, 5]),          # labels: 2, 3
+        np.array([0, 2, 3, 5, 6, 7, 8]), # labels: 1, 3, 4
+        np.array([0, 1, 3, 4, 6, 7, 8])  # labels: 1, 2, 4
+    ]
+    expected_test = [
+        np.array([0, 3, 6, 7, 8]), # labels: 1, 4
+        np.array([1, 4]),          # labels: 2
+        np.array([2, 5])           # labels: 3
+    ]
+    lkf = cval.LabelSegmentedKFold(labels, n_folds=3, shuffle=False)
+    assert len(lkf) == 3
+    i = 0
+    for train, test in lkf:
+        assert_array_equal(expected_train[i], train)
+        assert_array_equal(expected_test[i], test)
+        i += 1
+
+    lkf.__repr__()
+
+
 def test_shuffle_split():
     ss1 = cval.ShuffleSplit(10, test_size=0.2, random_state=0)
     ss2 = cval.ShuffleSplit(10, test_size=2, random_state=0)
