@@ -542,7 +542,6 @@ def _update_gain(gain, code, gain_rate, verbose=False):
         gain = (1 - gain_rate)*gain + gain_rate * n_samples * np.sum(code**2, axis=1)/np.sum(code**2)
     return gain
 
-
 def dict_learning_grad(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
                          return_code=True, dict_init=None, callback=None,
                          batch_size=3, verbose=False, shuffle=True, n_jobs=1,
@@ -614,21 +613,9 @@ def dict_learning_grad(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
-    return_inner_stats : boolean, optional
-        Return the inner statistics A (dictionary covariance) and B
-        (data approximation). Useful to restart the algorithm in an
-        online setting. If return_inner_stats is True, return_code is
-        ignored
-
-    inner_stats : tuple of (A, B) ndarrays
-        Inner sufficient statistics that are kept by the algorithm.
-        Passing them at initialization is useful in online settings, to
-        avoid loosing the history of the evolution.
-        A (n_components, n_components) is the dictionary covariance matrix.
-        B (n_features, n_components) is the data approximation matrix
-
     return_n_iter : bool
         Whether or not to return the number of iterations.
+        Overridden by ``return_code``.
 
     Returns
     -------
@@ -694,15 +681,6 @@ def dict_learning_grad(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
     batches = np.array_split(X_train, n_batches)
     batches = itertools.cycle(batches)
 
-    if inner_stats is None:
-        # The covariance of the dictionary
-        A = np.zeros((n_components, n_components))
-        # The data approximation
-        B = np.zeros((n_features, n_components))
-    else:
-        A = inner_stats[0].copy()
-        B = inner_stats[1].copy()
-
     # If n_iter is zero, we need to return zero.
     ii = iter_offset - 1
 
@@ -720,37 +698,21 @@ def dict_learning_grad(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                   alpha=alpha, n_jobs=n_jobs).T
 
-        # Update the auxiliary variables
-        if ii < batch_size - 1:
-            theta = float((ii + 1) * batch_size)
-        else:
-            theta = float(batch_size ** 2 + ii + 1 - batch_size)
-        beta = (theta + 1 - batch_size) / (theta + 1)
-
-        A *= beta
-        A += np.dot(this_code, this_code.T)
-        B *= beta
-        B += np.dot(this_X.T, this_code.T)
-
         # Update dictionary/
         dictionary, gain = _update_dict(dictionary, B, A, gain, gain_rate, verbose=verbose,
                                   random_state=random_state)
-        # XXX: Can the residuals be of any use?
 
         # Update gain
-        if gain_rate>0.: gain = _update_gain(gain, code, gain_rate, verbose=verbose)
-#     if verbose>10: print("Function update dict ", gain)
-        if gain_rate>0.: dictionary[:, k] *= sqrt(gain[k])
+        if gain_rate>0.: 
+            gain = _update_gain(gain, code, gain_rate, verbose=verbose)
+            if verbose>10: print("Function update dict ", gain)
+            dictionary[:, k] *= sqrt(gain[k])
+
         # Maybe we need a stopping criteria based on the amount of
         # modification in the dictionary
         if callback is not None:
             callback(locals())
 
-    if return_inner_stats:
-        if return_n_iter:
-            return dictionary.T, (A, B), ii - iter_offset + 1
-        else:
-            return dictionary.T, (A, B)
     if return_code:
         if verbose > 1:
             print('Learning code...', end=' ')

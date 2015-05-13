@@ -13,11 +13,12 @@ from .truncated_svd import TruncatedSVD
 from .fastica_ import FastICA, fastica
 from .dict_learning import (dict_learning, dict_learning_online, sparse_encode,
                             DictionaryLearning, MiniBatchDictionaryLearning,
-                            SparseCoder)
+                            SparseHebbianLearning, SparseCoder)
 from .factor_analysis import FactorAnalysis
 from ..utils.extmath import randomized_svd
 
 __all__ = ['DictionaryLearning',
+           'SparseHebbianLearning',
            'FastICA',
            'IncrementalPCA',
            'KernelPCA',
@@ -31,6 +32,7 @@ __all__ = ['DictionaryLearning',
            'SparsePCA',
            'dict_learning',
            'dict_learning_online',
+           'dict_learning_grad',
            'fastica',
            'randomized_svd',
            'sparse_encode',
