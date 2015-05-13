@@ -256,6 +256,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         code[this_slice] = this_view
     return code
 
+
 def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
                  random_state=None):
     """Update the dense dictionary factor in place.
@@ -290,7 +291,6 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     n_components = len(code)
     n_samples = Y.shape[0]
     random_state = check_random_state(random_state)
-
     # Residuals, computed 'in-place' for efficiency
     R = -np.dot(dictionary, code)
     R += Y
@@ -471,7 +471,6 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         # Update code
         code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
                              init=code, n_jobs=n_jobs)
-
         # Update dictionary
         dictionary, residuals = _update_dict(dictionary.T, X.T, code.T,
                                              verbose=verbose, return_r2=True,
@@ -539,12 +538,15 @@ def _update_gain(gain, code, gain_rate, verbose=False):
     """
     if gain_rate>0.:
         n_components, n_samples = code.shape
-        gain = (1 - gain_rate)*gain + gain_rate * n_samples * np.sum(code**2, axis=1)/np.sum(code**2)
+        gain_ = np.sum(code**2, axis=1)
+        Z = np.sum(gain_)/n_components
+        if Z>0: gain = (1 - gain_rate)*gain + gain_rate * gain_/Z
+#         print(code.shape, gain_.shape, gain_/Z, np.mean(gain_/Z), Z)
     return gain
 
-def dict_learning_grad(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
+def dict_learning_grad(X, eta=0.02, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
                          return_code=True, dict_init=None, callback=None,
-                         batch_size=3, verbose=False, shuffle=True, n_jobs=1,
+                         batch_size=8, verbose=False, shuffle=True, n_jobs=1,
                          method='lars', iter_offset=0, random_state=None,
                          return_inner_stats=False, inner_stats=None,
                          return_n_iter=False):
@@ -654,19 +656,27 @@ def dict_learning_grad(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
     if n_jobs == -1:
         n_jobs = cpu_count()
 
-    # Init V with SVD of X
-    if dict_init is not None:
-        dictionary = dict_init
-    else:
-        _, S, dictionary = randomized_svd(X, n_components)
-        dictionary = S[:, np.newaxis] * dictionary
-    r = len(dictionary)
-    if n_components <= r:
-        dictionary = dictionary[:n_components, :]
-    else:
-        dictionary = np.r_[dictionary,
-                           np.zeros((n_components - r, dictionary.shape[1]))]
-    dictionary = np.ascontiguousarray(dictionary.T)
+#     # Init V with SVD of X
+#     if dict_init is not None:
+#         dictionary = dict_init
+#     else:
+#         _, S, dictionary = randomized_svd(X, n_components)
+#         dictionary = S[:, np.newaxis] * dictionary
+#     r = len(dictionary)
+#     if n_components <= r:
+#         dictionary = dictionary[:n_components, :]
+#     else:
+#         dictionary = np.r_[dictionary,
+#                            np.zeros((n_components - r, dictionary.shape[1]))]
+#     dictionary = np.ascontiguousarray(dictionary.T)
+# 
+    dictionary = random_state.randn(n_features, n_components)
+    norm = np.ones(n_components)
+    for k in range(n_components):
+        norm[k] = np.sqrt(np.sum(dictionary[:, k]**2))
+    dictionary /= norm[np.newaxis, :]
+    for k in range(n_components):
+        norm[k] = np.sqrt(np.sum(dictionary[:, k]**2))
 
     if verbose == 1:
         print('[dict_learning]', end=' ')
@@ -686,27 +696,28 @@ def dict_learning_grad(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
 
     for ii, this_X in zip(range(iter_offset, iter_offset + n_iter), batches):
         dt = (time.time() - t0)
-        if verbose == 1:
-            sys.stdout.write(".")
-            sys.stdout.flush()
-        elif verbose:
-            if verbose > 10 or ii % ceil(100. / verbose) == 0:
-                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
-                       % (ii, dt, dt / 60))
-                print("Gain ", gain)
+        if  verbose > 0 and ii % verbose == 0:
+            print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
+                   % (ii, dt, dt / 60))
+            print("Gain ", gain)
+            print("Norm ", norm)
 
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                   alpha=alpha, n_jobs=n_jobs).T
 
-        # Update dictionary/
-        dictionary, gain = _update_dict(dictionary, B, A, gain, gain_rate, verbose=verbose,
-                                  random_state=random_state)
+        # Update dictionary
+        residual = this_X - np.dot(this_code.T, dictionary.T)
+        dictionary *= (1-eta)
+        # TODO vectorize
+        for k in range(n_components):
+            dictionary[:, k] += eta * np.dot(residual.T, this_code[k, :])
+            norm[k] = np.sqrt(np.sum(dictionary[:, k]**2))
+        dictionary /= norm[np.newaxis, :]
 
         # Update gain
-        if gain_rate>0.: 
-            gain = _update_gain(gain, code, gain_rate, verbose=verbose)
-            if verbose>10: print("Function update dict ", gain)
-            dictionary[:, k] *= sqrt(gain[k])
+        if gain_rate>0.:
+            gain = _update_gain(gain, this_code, gain_rate, verbose=verbose)
+            dictionary /= np.sqrt(gain)[np.newaxis, :]
 
         # Maybe we need a stopping criteria based on the amount of
         # modification in the dictionary
@@ -734,7 +745,7 @@ def dict_learning_grad(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
         return dictionary.T
 
 
-def dict_learning_online(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
+def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
                          return_code=True, dict_init=None, callback=None,
                          batch_size=3, verbose=False, shuffle=True, n_jobs=1,
                          method='lars', iter_offset=0, random_state=None,
@@ -766,9 +777,6 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
 
     n_iter : int,
         Number of iterations to perform.
-
-    gain_rate: float
-        Gives the learning parameter for the gain.
 
     return_code : boolean,
         Whether to also return the code U or just the dictionary V.
@@ -874,7 +882,6 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
 
     if verbose == 1:
         print('[dict_learning]', end=' ')
-    gain = np.ones(n_components)
 
     n_batches = floor(float(len(X)) / batch_size)
     if shuffle:
@@ -906,7 +913,6 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
             if verbose > 10 or ii % ceil(100. / verbose) == 0:
                 print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
                        % (ii, dt, dt / 60))
-                print("Gain ", gain)
 
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                   alpha=alpha, n_jobs=n_jobs).T
@@ -923,8 +929,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
         B *= beta
         B += np.dot(this_X.T, this_code.T)
 
-        # Update dictionary/
-        dictionary, gain = _update_dict(dictionary, B, A, gain, gain_rate, verbose=verbose,
+        # Update dictionary
+        dictionary = _update_dict(dictionary, B, A, verbose=verbose,
                                   random_state=random_state)
         # XXX: Can the residuals be of any use?
 
@@ -1375,7 +1381,7 @@ class SparseHebbianLearning(BaseEstimator, SparseCodingMixin):
     MiniBatchSparsePCA
 
     """
-    def __init__(self, n_components=None, alpha=1, n_iter=1000, gain_rate=0.,
+    def __init__(self, eta=0.02, n_components=None, alpha=1, n_iter=1000, gain_rate=0.,
                  fit_algorithm='lars', n_jobs=1, batch_size=3,
                  shuffle=True, dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
@@ -1385,6 +1391,7 @@ class SparseHebbianLearning(BaseEstimator, SparseCodingMixin):
                                        transform_n_nonzero_coefs,
                                        transform_alpha, split_sign, n_jobs)
         self.alpha = alpha
+        self.eta = eta
         self.n_iter = n_iter
         self.gain_rate = gain_rate
         self.fit_algorithm = fit_algorithm
@@ -1412,20 +1419,16 @@ class SparseHebbianLearning(BaseEstimator, SparseCodingMixin):
         random_state = check_random_state(self.random_state)
         X = check_array(X)
 
-        U, (A, B), self.n_iter_ = dict_learning_grad(
-            X, self.n_components, self.alpha,
+        U, self.n_iter_ = dict_learning_grad(
+            X, self.eta, self.n_components, self.alpha,
             n_iter=self.n_iter, gain_rate = self.gain_rate,
             return_code=False, method=self.fit_algorithm,
             n_jobs=self.n_jobs, dict_init=self.dict_init,
             batch_size=self.batch_size, shuffle=self.shuffle,
             verbose=self.verbose, random_state=random_state,
-            return_inner_stats=True,
             return_n_iter=True
             )
         self.components_ = U
-        # Keep track of the state of the algorithm to be able to do
-        # some online fitting (partial_fit)
-        self.inner_stats_ = (A, B)
         self.iter_offset_ = self.n_iter
         return self
 
@@ -1577,8 +1580,9 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         X = check_array(X)
 
         U, (A, B), self.n_iter_ = dict_learning_online(
-            X, self.n_components, self.alpha, n_iter=self.n_iter,
-            return_code=False, method=self.fit_algorithm,
+            X, self.n_components, self.alpha,
+            n_iter=self.n_iter, return_code=False,
+            method=self.fit_algorithm,
             n_jobs=self.n_jobs, dict_init=self.dict_init,
             batch_size=self.batch_size, shuffle=self.shuffle,
             verbose=self.verbose, random_state=random_state,
@@ -1623,8 +1627,9 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         if iter_offset is None:
             iter_offset = getattr(self, 'iter_offset_', 0)
         U, (A, B) = dict_learning_online(
-            X, self.n_components, self.alpha, n_iter=self.n_iter,
-            method=self.fit_algorithm, n_jobs=self.n_jobs, dict_init=dict_init,
+            X, self.n_components, self.alpha,
+            n_iter=self.n_iter, method=self.fit_algorithm,
+            n_jobs=self.n_jobs, dict_init=dict_init,
             batch_size=len(X), shuffle=False,
             verbose=self.verbose, return_code=False,
             iter_offset=iter_offset, random_state=self.random_state_,
