@@ -256,49 +256,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         code[this_slice] = this_view
     return code
 
-def _update_gain(gain, code, gain_rate, verbose=False):
-    """Update the estimated variance of coefficients in place.
-
-    Following the classical SparseNet algorithm from Olshausen, we
-    compute here a "gain vector" for the dictionary. This gain will
-    be used to tune the weight of each dictionary element.
-
-    The heuristics used here follows the assumption that during learning,
-    some elements that learn first are more responsive to input patches
-    as may be recorded by estimating their mean variance. If we were to
-    keep their norm fixed, these would be more likely to be selected again,
-    leading to a ``monopolistic'' distribution of dictionary elements,
-    some having learned more often than others. By dividing their norm
-    by their mean estimated variance, we lower the probability of elements
-    with high variance to be selected again. This thus helps the learning
-    to be more balanced.
-
-    Parameters
-    ----------
-    gain: array of shape (n_components)
-        Value of the components' norm at the previous iteration.
-
-    code: array of shape (n_components, n_samples)
-        Sparse coding of the data against which to optimize the dictionary.
-
-    gain_rate: float
-        Gives the learning parameter for the gain.
-
-    verbose:
-        Degree of output the procedure will print.
-
-    Returns
-    -------
-    gain: array of shape (n_components)
-        Updated value of the components' norm.
-
-    """
-    if gain_rate>0.:
-        n_components, n_samples = code.shape
-        gain = (1 - gain_rate)*gain + gain_rate * n_samples * np.sum(code**2, axis=1)/np.sum(code**2)
-    return gain
-
-def _update_dict(dictionary, Y, code, gain, gain_rate, verbose=False, return_r2=False,
+def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
                  random_state=None):
     """Update the dense dictionary factor in place.
 
@@ -312,12 +270,6 @@ def _update_dict(dictionary, Y, code, gain, gain_rate, verbose=False, return_r2=
 
     code: array of shape (n_components, n_samples)
         Sparse coding of the data against which to optimize the dictionary.
-
-    gain: array of shape (n_components)
-        Value of the components' norm.
-
-    gain_rate: float
-        Gives the learning parameter for the gain.
 
     verbose:
         Degree of output the procedure will print.
@@ -334,16 +286,10 @@ def _update_dict(dictionary, Y, code, gain, gain_rate, verbose=False, return_r2=
     dictionary: array of shape (n_features, n_components)
         Updated dictionary.
 
-    gain: array of shape (n_components)
-        Updated value of the components' norm.
-
     """
     n_components = len(code)
     n_samples = Y.shape[0]
     random_state = check_random_state(random_state)
-    # Update gain
-    if gain_rate>0.: gain = _update_gain(gain, code, gain_rate, verbose=verbose)
-#     if verbose>10: print("Function update dict ", gain)
 
     # Residuals, computed 'in-place' for efficiency
     R = -np.dot(dictionary, code)
@@ -371,7 +317,6 @@ def _update_dict(dictionary, Y, code, gain, gain_rate, verbose=False, return_r2=
         else:
             # DICTIONARY NORMALIZATION
             dictionary[:, k] /= np.max((sqrt(atom_norm_square), 1.))
-            if gain_rate>0.: dictionary[:, k] *= sqrt(gain[k])
             # R <- -1.0 * U_k * V_k^T + R
             R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
     if return_r2:
@@ -382,11 +327,11 @@ def _update_dict(dictionary, Y, code, gain, gain_rate, verbose=False, return_r2=
         # striding
         R = as_strided(R, shape=(R.size, ), strides=(R.dtype.itemsize,))
         R = np.sum(R)
-        return dictionary, gain, R
-    return dictionary, gain
+        return dictionary, R
+    return dictionary
 
 
-def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8, gain_rate=0.,
+def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
                   method='lars', n_jobs=1, dict_init=None, code_init=None,
                   callback=None, verbose=False, random_state=None,
                   return_n_iter=False):
@@ -417,9 +362,6 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8, gain_rate=0.,
 
     tol: float,
         Tolerance for the stopping condition.
-
-    gain_rate: float
-        Gives the learning parameter for the gain.
 
     method: {'lars', 'cd'}
         lars: uses the least angle regression method to solve the lasso problem
@@ -502,7 +444,6 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8, gain_rate=0.,
         dictionary = np.r_[dictionary,
                            np.zeros((n_components - r, dictionary.shape[1]))]
 
-    gain = np.ones(n_components)
     # Fortran-order dict, as we are going to access its row vectors
     dictionary = np.array(dictionary, order='F')
 
@@ -532,7 +473,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8, gain_rate=0.,
                              init=code, n_jobs=n_jobs)
 
         # Update dictionary
-        dictionary, gain, residuals = _update_dict(dictionary.T, X.T, code.T, gain, gain_rate,
+        dictionary, residuals = _update_dict(dictionary.T, X.T, code.T,
                                              verbose=verbose, return_r2=True,
                                              random_state=random_state)
         dictionary = dictionary.T
@@ -558,6 +499,277 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8, gain_rate=0.,
         return code, dictionary, errors, ii + 1
     else:
         return code, dictionary, errors
+
+def _update_gain(gain, code, gain_rate, verbose=False):
+    """Update the estimated variance of coefficients in place.
+
+    Following the classical SparseNet algorithm from Olshausen, we
+    compute here a "gain vector" for the dictionary. This gain will
+    be used to tune the weight of each dictionary element.
+
+    The heuristics used here follows the assumption that during learning,
+    some elements that learn first are more responsive to input patches
+    as may be recorded by estimating their mean variance. If we were to
+    keep their norm fixed, these would be more likely to be selected again,
+    leading to a ``monopolistic'' distribution of dictionary elements,
+    some having learned more often than others. By dividing their norm
+    by their mean estimated variance, we lower the probability of elements
+    with high variance to be selected again. This thus helps the learning
+    to be more balanced.
+
+    Parameters
+    ----------
+    gain: array of shape (n_components)
+        Value of the components' norm at the previous iteration.
+
+    code: array of shape (n_components, n_samples)
+        Sparse coding of the data against which to optimize the dictionary.
+
+    gain_rate: float
+        Gives the learning parameter for the gain.
+
+    verbose:
+        Degree of output the procedure will print.
+
+    Returns
+    -------
+    gain: array of shape (n_components)
+        Updated value of the components' norm.
+
+    """
+    if gain_rate>0.:
+        n_components, n_samples = code.shape
+        gain = (1 - gain_rate)*gain + gain_rate * n_samples * np.sum(code**2, axis=1)/np.sum(code**2)
+    return gain
+
+
+def dict_learning_grad(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
+                         return_code=True, dict_init=None, callback=None,
+                         batch_size=3, verbose=False, shuffle=True, n_jobs=1,
+                         method='lars', iter_offset=0, random_state=None,
+                         return_inner_stats=False, inner_stats=None,
+                         return_n_iter=False):
+    """Solves a dictionary learning matrix factorization problem online.
+
+    Finds the best dictionary and the corresponding sparse code for
+    approximating the data matrix X by solving::
+
+        (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
+                     (U,V)
+                     with || V_k ||_2 <= 1 for all  0 <= k < n_components
+
+    where V is the dictionary and U is the sparse code. This is
+    accomplished by repeatedly iterating over mini-batches by slicing
+    the input data.
+
+    Parameters
+    ----------
+    X: array of shape (n_samples, n_features)
+        Data matrix.
+
+    n_components : int,
+        Number of dictionary atoms to extract.
+
+    alpha : float,
+        Sparsity controlling parameter.
+
+    n_iter : int,
+        Number of iterations to perform.
+
+    gain_rate: float
+        Gives the learning parameter for the gain.
+
+    return_code : boolean,
+        Whether to also return the code U or just the dictionary V.
+
+    dict_init : array of shape (n_components, n_features),
+        Initial value for the dictionary for warm restart scenarios.
+
+    callback :
+        Callable that gets invoked every five iterations.
+
+    batch_size : int,
+        The number of samples to take in each batch.
+
+    verbose :
+        Degree of output the procedure will print.
+
+    shuffle : boolean,
+        Whether to shuffle the data before splitting it in batches.
+
+    n_jobs : int,
+        Number of parallel jobs to run, or -1 to autodetect.
+
+    method : {'lars', 'cd'}
+        lars: uses the least angle regression method to solve the lasso problem
+        (linear_model.lars_path)
+        cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). Lars will be faster if
+        the estimated components are sparse.
+
+    iter_offset : int, default 0
+        Number of previous iterations completed on the dictionary used for
+        initialization.
+
+    random_state : int or RandomState
+        Pseudo number generator state used for random sampling.
+
+    return_inner_stats : boolean, optional
+        Return the inner statistics A (dictionary covariance) and B
+        (data approximation). Useful to restart the algorithm in an
+        online setting. If return_inner_stats is True, return_code is
+        ignored
+
+    inner_stats : tuple of (A, B) ndarrays
+        Inner sufficient statistics that are kept by the algorithm.
+        Passing them at initialization is useful in online settings, to
+        avoid loosing the history of the evolution.
+        A (n_components, n_components) is the dictionary covariance matrix.
+        B (n_features, n_components) is the data approximation matrix
+
+    return_n_iter : bool
+        Whether or not to return the number of iterations.
+
+    Returns
+    -------
+    code : array of shape (n_samples, n_components),
+        the sparse code (only returned if `return_code=True`)
+
+    dictionary : array of shape (n_components, n_features),
+        the solutions to the dictionary learning problem
+
+    n_iter : int
+        Number of iterations run. Returned only if `return_n_iter` is
+        set to `True`.
+
+    See also
+    --------
+    dict_learning
+    DictionaryLearning
+    MiniBatchDictionaryLearning
+    SparsePCA
+    MiniBatchSparsePCA
+
+    """
+    if n_components is None:
+        n_components = X.shape[1]
+
+    if method not in ('lars', 'cd'):
+        raise ValueError('Coding method not supported as a fit algorithm.')
+    method = 'lasso_' + method
+
+    t0 = time.time()
+    n_samples, n_features = X.shape
+    # Avoid integer division problems
+    alpha = float(alpha)
+    random_state = check_random_state(random_state)
+
+    if n_jobs == -1:
+        n_jobs = cpu_count()
+
+    # Init V with SVD of X
+    if dict_init is not None:
+        dictionary = dict_init
+    else:
+        _, S, dictionary = randomized_svd(X, n_components)
+        dictionary = S[:, np.newaxis] * dictionary
+    r = len(dictionary)
+    if n_components <= r:
+        dictionary = dictionary[:n_components, :]
+    else:
+        dictionary = np.r_[dictionary,
+                           np.zeros((n_components - r, dictionary.shape[1]))]
+    dictionary = np.ascontiguousarray(dictionary.T)
+
+    if verbose == 1:
+        print('[dict_learning]', end=' ')
+    gain = np.ones(n_components)
+
+    n_batches = floor(float(len(X)) / batch_size)
+    if shuffle:
+        X_train = X.copy()
+        random_state.shuffle(X_train)
+    else:
+        X_train = X
+    batches = np.array_split(X_train, n_batches)
+    batches = itertools.cycle(batches)
+
+    if inner_stats is None:
+        # The covariance of the dictionary
+        A = np.zeros((n_components, n_components))
+        # The data approximation
+        B = np.zeros((n_features, n_components))
+    else:
+        A = inner_stats[0].copy()
+        B = inner_stats[1].copy()
+
+    # If n_iter is zero, we need to return zero.
+    ii = iter_offset - 1
+
+    for ii, this_X in zip(range(iter_offset, iter_offset + n_iter), batches):
+        dt = (time.time() - t0)
+        if verbose == 1:
+            sys.stdout.write(".")
+            sys.stdout.flush()
+        elif verbose:
+            if verbose > 10 or ii % ceil(100. / verbose) == 0:
+                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
+                       % (ii, dt, dt / 60))
+                print("Gain ", gain)
+
+        this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
+                                  alpha=alpha, n_jobs=n_jobs).T
+
+        # Update the auxiliary variables
+        if ii < batch_size - 1:
+            theta = float((ii + 1) * batch_size)
+        else:
+            theta = float(batch_size ** 2 + ii + 1 - batch_size)
+        beta = (theta + 1 - batch_size) / (theta + 1)
+
+        A *= beta
+        A += np.dot(this_code, this_code.T)
+        B *= beta
+        B += np.dot(this_X.T, this_code.T)
+
+        # Update dictionary/
+        dictionary, gain = _update_dict(dictionary, B, A, gain, gain_rate, verbose=verbose,
+                                  random_state=random_state)
+        # XXX: Can the residuals be of any use?
+
+        # Update gain
+        if gain_rate>0.: gain = _update_gain(gain, code, gain_rate, verbose=verbose)
+#     if verbose>10: print("Function update dict ", gain)
+        if gain_rate>0.: dictionary[:, k] *= sqrt(gain[k])
+        # Maybe we need a stopping criteria based on the amount of
+        # modification in the dictionary
+        if callback is not None:
+            callback(locals())
+
+    if return_inner_stats:
+        if return_n_iter:
+            return dictionary.T, (A, B), ii - iter_offset + 1
+        else:
+            return dictionary.T, (A, B)
+    if return_code:
+        if verbose > 1:
+            print('Learning code...', end=' ')
+        elif verbose == 1:
+            print('|', end=' ')
+        code = sparse_encode(X, dictionary.T, algorithm=method, alpha=alpha,
+                             n_jobs=n_jobs)
+        if verbose > 1:
+            dt = (time.time() - t0)
+            print('done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60))
+        if return_n_iter:
+            return code, dictionary.T, ii - iter_offset + 1
+        else:
+            return code, dictionary.T
+
+    if return_n_iter:
+        return dictionary.T, ii - iter_offset + 1
+    else:
+        return dictionary.T
 
 
 def dict_learning_online(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
@@ -1081,18 +1293,18 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.error_ = E
         return self
 
-
-class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
-    """Mini-batch dictionary learning
+class SparseHebbianLearning(BaseEstimator, SparseCodingMixin):
+    """Sparse Hebbian learning
 
     Finds a dictionary (a set of atoms) that can best be used to represent data
     using a sparse code.
 
     Solves the optimization problem::
 
-       (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
+       (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * S( U )
                     (U,V)
                     with || V_k ||_2 <= 1 for all  0 <= k < n_components
+                        and S a sparse representation cost.
 
     Parameters
     ----------
@@ -1184,13 +1396,19 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     -----
     **References:**
 
-    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+    Olshausen BA, Field DJ (1996). 
+    Emergence of simple-cell receptive field properties by learning a sparse code for natural images. 
+    Nature, 381: 607-609. (http://redwood.berkeley.edu/bruno/papers/nature-paper.pdf)
+
+    Olshausen BA, Field DJ (1997) 
+    Sparse Coding with an Overcomplete Basis Set: A Strategy Employed by V1?  
+    Vision Research, 37: 3311-3325.   (http://redwood.berkeley.edu/bruno/papers/VR.pdf)
 
     See also
     --------
     SparseCoder
     DictionaryLearning
+    MiniBatchDictionaryLearning
     SparsePCA
     MiniBatchSparsePCA
 
@@ -1232,9 +1450,172 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         random_state = check_random_state(self.random_state)
         X = check_array(X)
 
-        U, (A, B), self.n_iter_ = dict_learning_online(
+        U, (A, B), self.n_iter_ = dict_learning_grad(
             X, self.n_components, self.alpha,
             n_iter=self.n_iter, gain_rate = self.gain_rate,
+            return_code=False, method=self.fit_algorithm,
+            n_jobs=self.n_jobs, dict_init=self.dict_init,
+            batch_size=self.batch_size, shuffle=self.shuffle,
+            verbose=self.verbose, random_state=random_state,
+            return_inner_stats=True,
+            return_n_iter=True
+            )
+        self.components_ = U
+        # Keep track of the state of the algorithm to be able to do
+        # some online fitting (partial_fit)
+        self.inner_stats_ = (A, B)
+        self.iter_offset_ = self.n_iter
+        return self
+
+
+class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
+    """Mini-batch dictionary learning
+
+    Finds a dictionary (a set of atoms) that can best be used to represent data
+    using a sparse code.
+
+    Solves the optimization problem::
+
+       (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
+                    (U,V)
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
+
+    Parameters
+    ----------
+    n_components : int,
+        number of dictionary elements to extract
+
+    alpha : float,
+        sparsity controlling parameter
+
+    n_iter : int,
+        total number of iterations to perform
+
+    fit_algorithm : {'lars', 'cd'}
+        lars: uses the least angle regression method to solve the lasso problem
+        (linear_model.lars_path)
+        cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). Lars will be faster if
+        the estimated components are sparse.
+
+    transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
+    'threshold'}
+        Algorithm used to transform the data.
+        lars: uses the least angle regression method (linear_model.lars_path)
+        lasso_lars: uses Lars to compute the Lasso solution
+        lasso_cd: uses the coordinate descent method to compute the
+        Lasso solution (linear_model.Lasso). lasso_lars will be faster if
+        the estimated components are sparse.
+        omp: uses orthogonal matching pursuit to estimate the sparse solution
+        threshold: squashes to zero all coefficients less than alpha from
+        the projection dictionary * X'
+
+    transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
+        Number of nonzero coefficients to target in each column of the
+        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
+        and is overridden by `alpha` in the `omp` case.
+
+    transform_alpha : float, 1. by default
+        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
+        penalty applied to the L1 norm.
+        If `algorithm='threshold'`, `alpha` is the absolute value of the
+        threshold below which coefficients will be squashed to zero.
+        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
+        the reconstruction error targeted. In this case, it overrides
+        `n_nonzero_coefs`.
+
+    split_sign : bool, False by default
+        Whether to split the sparse feature vector into the concatenation of
+        its negative part and its positive part. This can improve the
+        performance of downstream classifiers.
+
+    n_jobs : int,
+        number of parallel jobs to run
+
+    dict_init : array of shape (n_components, n_features),
+        initial value of the dictionary for warm restart scenarios
+
+    verbose :
+        degree of verbosity of the printed output
+
+    batch_size : int,
+        number of samples in each mini-batch
+
+    shuffle : bool,
+        whether to shuffle the samples before forming batches
+
+    random_state : int or RandomState
+        Pseudo number generator state used for random sampling.
+
+    Attributes
+    ----------
+    components_ : array, [n_components, n_features]
+        components extracted from the data
+
+    inner_stats_ : tuple of (A, B) ndarrays
+        Internal sufficient statistics that are kept by the algorithm.
+        Keeping them is useful in online settings, to avoid loosing the
+        history of the evolution, but they shouldn't have any use for the
+        end user.
+        A (n_components, n_components) is the dictionary covariance matrix.
+        B (n_features, n_components) is the data approximation matrix
+
+    n_iter_ : int
+        Number of iterations run.
+
+    Notes
+    -----
+    **References:**
+
+    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
+    for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+
+    See also
+    --------
+    SparseCoder
+    DictionaryLearning
+    SparsePCA
+    MiniBatchSparsePCA
+
+    """
+    def __init__(self, n_components=None, alpha=1, n_iter=1000,
+                 fit_algorithm='lars', n_jobs=1, batch_size=3,
+                 shuffle=True, dict_init=None, transform_algorithm='omp',
+                 transform_n_nonzero_coefs=None, transform_alpha=None,
+                 verbose=False, split_sign=False, random_state=None):
+
+        self._set_sparse_coding_params(n_components, transform_algorithm,
+                                       transform_n_nonzero_coefs,
+                                       transform_alpha, split_sign, n_jobs)
+        self.alpha = alpha
+        self.n_iter = n_iter
+        self.fit_algorithm = fit_algorithm
+        self.dict_init = dict_init
+        self.verbose = verbose
+        self.shuffle = shuffle
+        self.batch_size = batch_size
+        self.split_sign = split_sign
+        self.random_state = random_state
+
+    def fit(self, X, y=None):
+        """Fit the model from data in X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+        random_state = check_random_state(self.random_state)
+        X = check_array(X)
+
+        U, (A, B), self.n_iter_ = dict_learning_online(
+            X, self.n_components, self.alpha, n_iter=self.n_iter,
             return_code=False, method=self.fit_algorithm,
             n_jobs=self.n_jobs, dict_init=self.dict_init,
             batch_size=self.batch_size, shuffle=self.shuffle,
@@ -1280,10 +1661,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         if iter_offset is None:
             iter_offset = getattr(self, 'iter_offset_', 0)
         U, (A, B) = dict_learning_online(
-            X, self.n_components, self.alpha,
-            n_iter=self.n_iter, gain_rate = self.gain_rate,
-            method=self.fit_algorithm,
-            n_jobs=self.n_jobs, dict_init=dict_init,
+            X, self.n_components, self.alpha, n_iter=self.n_iter,
+            method=self.fit_algorithm, n_jobs=self.n_jobs, dict_init=dict_init,
             batch_size=len(X), shuffle=False,
             verbose=self.verbose, return_code=False,
             iter_offset=iter_offset, random_state=self.random_state_,
