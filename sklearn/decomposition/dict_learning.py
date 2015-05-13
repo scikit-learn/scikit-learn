@@ -260,22 +260,22 @@ def _update_gain(gain, code, gain_rate, verbose=False):
     """Update the estimated variance of coefficients in place.
 
     Following the classical SparseNet algorithm from Olshausen, we
-    compute here a "gain vector" for the dictionary. This gain will 
+    compute here a "gain vector" for the dictionary. This gain will
     be used to tune the weight of each dictionary element.
 
     The heuristics used here follows the assumption that during learning,
     some elements that learn first are more responsive to input patches
-    as may be recorded by estimating their mean variance. If we were to 
+    as may be recorded by estimating their mean variance. If we were to
     keep their norm fixed, these would be more likely to be selected again,
     leading to a ``monopolistic'' distribution of dictionary elements,
-    some having learned more often than others. By dividing their norm 
-    by their mean estimated variance, we lower the probability of elements 
-    with high variance to be selected again. This thus helps the learning 
+    some having learned more often than others. By dividing their norm
+    by their mean estimated variance, we lower the probability of elements
+    with high variance to be selected again. This thus helps the learning
     to be more balanced.
 
     Parameters
     ----------
-    gain: array of shape (n_components) 
+    gain: array of shape (n_components)
         Value of the components' norm at the previous iteration.
 
     code: array of shape (n_components, n_samples)
@@ -289,8 +289,8 @@ def _update_gain(gain, code, gain_rate, verbose=False):
 
     Returns
     -------
-    gain: array of shape (n_components) 
-        Updated value of the components' norm. 
+    gain: array of shape (n_components)
+        Updated value of the components' norm.
 
     """
     if gain_rate>0.:
@@ -313,7 +313,7 @@ def _update_dict(dictionary, Y, code, gain, gain_rate, verbose=False, return_r2=
     code: array of shape (n_components, n_samples)
         Sparse coding of the data against which to optimize the dictionary.
 
-    gain: array of shape (n_components) 
+    gain: array of shape (n_components)
         Value of the components' norm.
 
     gain_rate: float
@@ -334,8 +334,8 @@ def _update_dict(dictionary, Y, code, gain, gain_rate, verbose=False, return_r2=
     dictionary: array of shape (n_features, n_components)
         Updated dictionary.
 
-    gain: array of shape (n_components) 
-        Updated value of the components' norm. 
+    gain: array of shape (n_components)
+        Updated value of the components' norm.
 
     """
     n_components = len(code)
@@ -365,13 +365,13 @@ def _update_dict(dictionary, Y, code, gain, gain_rate, verbose=False, return_r2=
             dictionary[:, k] = random_state.randn(n_samples)
             # Setting corresponding coefs to 0
             code[k, :] = 0.0
-            # DICTIONARY NORMALIZATION : norm = 1, as it is for a new random vector <<<<<
+            # DICTIONARY NORMALIZATION : norm = 1, as it is for a new random vector
             dictionary[:, k] /= sqrt(np.dot(dictionary[:, k],
                                             dictionary[:, k]))
         else:
-            # DICTIONARY NORMALIZATION using the average variance
-            dictionary[:, k] /= sqrt(atom_norm_square)
-            if gain_rate>0.: dictionary[:, k] /= sqrt(gain[k])
+            # DICTIONARY NORMALIZATION
+            dictionary[:, k] /= np.max((sqrt(atom_norm_square), 1.))
+            if gain_rate>0.: dictionary[:, k] *= sqrt(gain[k])
             # R <- -1.0 * U_k * V_k^T + R
             R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
     if return_r2:
@@ -573,7 +573,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
 
         (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                      (U,V)
-                     with || V_k ||_2 = 1 for all  0 <= k < n_components
+                     with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     where V is the dictionary and U is the sparse code. This is
     accomplished by repeatedly iterating over mini-batches by slicing
@@ -711,8 +711,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
     batches = np.array_split(X_train, n_batches)
     batches = itertools.cycle(batches)
 
-    # The covariance of the dictionary
     if inner_stats is None:
+        # The covariance of the dictionary
         A = np.zeros((n_components, n_components))
         # The data approximation
         B = np.zeros((n_features, n_components))
