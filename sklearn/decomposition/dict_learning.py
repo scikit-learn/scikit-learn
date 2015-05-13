@@ -311,10 +311,12 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
             dictionary[:, k] = random_state.randn(n_samples)
             # Setting corresponding coefs to 0
             code[k, :] = 0.0
+            # DICTIONARY NORMALIZATION : norm = 1, as it is for a new random vector
             dictionary[:, k] /= sqrt(np.dot(dictionary[:, k],
                                             dictionary[:, k]))
         else:
-            dictionary[:, k] /= sqrt(atom_norm_square)
+            # DICTIONARY NORMALIZATION
+            dictionary[:, k] /= np.max((sqrt(atom_norm_square), 1.))
             # R <- -1.0 * U_k * V_k^T + R
             R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
     if return_r2:
@@ -340,7 +342,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
         (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                      (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     where V is the dictionary and U is the sparse code.
 
@@ -511,7 +513,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
         (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                      (U,V)
-                     with || V_k ||_2 = 1 for all  0 <= k < n_components
+                     with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     where V is the dictionary and U is the sparse code. This is
     accomplished by repeatedly iterating over mini-batches by slicing
@@ -645,8 +647,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     batches = np.array_split(X_train, n_batches)
     batches = itertools.cycle(batches)
 
-    # The covariance of the dictionary
     if inner_stats is None:
+        # The covariance of the dictionary
         A = np.zeros((n_components, n_components))
         # The data approximation
         B = np.zeros((n_features, n_components))
@@ -866,7 +868,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
         (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     Parameters
     ----------
@@ -1025,7 +1027,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     Parameters
     ----------
