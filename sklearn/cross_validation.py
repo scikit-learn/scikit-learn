@@ -416,6 +416,8 @@ class DisjointLabelKfold(_BaseKFold):
     """
 
     def __init__(self, y, n_folds=3):
+        # No shuffling implemented yet
+        super(KFold, self).__init__(n, n_folds, False, None)
         self.n_folds = n_folds
         self.n = len(y)
         self.idxs = disjoint_label_folds(y=y, n_folds=n_folds)
