@@ -406,13 +406,13 @@ class DisjointLabelKfold(_BaseKFold):
     ...     print(X_train, X_test, y_train, y_test)
     ... 
     TRAIN: [0 1] TEST: [2 3]
-     [[1 2]
-     [3 4]] [[5 6]
-     [7 8]] [1 2] [3 4]
+    [[1 2]
+    [3 4]] [[5 6]
+    [7 8]] [1 2] [3 4]
     TRAIN: [2 3] TEST: [0 1]
-     [[5 6]
-     [7 8]] [[1 2]
-     [3 4]] [3 4] [1 2]
+    [[5 6]
+    [7 8]] [[1 2]
+    [3 4]] [3 4] [1 2]
     """
 
     def __init__(self, y, n_folds=3):
