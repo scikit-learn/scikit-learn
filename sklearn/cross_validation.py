@@ -796,22 +796,10 @@ def _validate_shuffle_split(n, test_size, train_size):
     elif np.asarray(test_size).dtype.kind == 'i':
         n_test = float(test_size)
 
-    if train_size is None:
-        n_train = n - n_test
-    else:
-        if np.asarray(train_size).dtype.kind == 'f':
-            n_train = floor(train_size * n)
-        else:
-            n_train = float(train_size)
-
-    if test_size is None:
-        n_test = n - n_train
-
-    if n_train + n_test > n:
-        raise ValueError('The sum of train_size and test_size = %d, '
-                         'should be smaller than the number of '
-                         'samples %d. Reduce test_size and/or '
-                         'train_size.' % (n_train + n_test, n))
+    if np.asarray(train_size).dtype.kind == 'f':
+        n_train = floor(train_size * n)
+    elif np.asarray(train_size).dtype.kind == 'i':
+        n_train = float(train_size)
 
     return int(n_train), int(n_test)
 
