@@ -1112,11 +1112,6 @@ def check_estimators_overwrite_params(name, Estimator):
         # catch deprecation warnings
         estimator = Estimator()
 
-    if name == 'MiniBatchDictLearning' or name == 'MiniBatchSparsePCA':
-        # FIXME
-        # for MiniBatchDictLearning and MiniBatchSparsePCA
-        estimator.batch_size = 1
-
     set_fast_parameters(estimator)
     set_random_state(estimator)
 

@@ -17,7 +17,7 @@ from numpy.lib.stride_tricks import as_strided
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import zip
-from ..utils import check_array, check_random_state, gen_even_slices
+from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils.extmath import randomized_svd, row_norms
 from ..utils.validation import check_is_fitted
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
@@ -636,13 +636,13 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     if verbose == 1:
         print('[dict_learning]', end=' ')
 
-    n_batches = floor(float(len(X)) / batch_size)
     if shuffle:
         X_train = X.copy()
         random_state.shuffle(X_train)
     else:
         X_train = X
-    batches = np.array_split(X_train, n_batches)
+
+    batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)
 
     # The covariance of the dictionary
@@ -657,7 +657,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     # If n_iter is zero, we need to return zero.
     ii = iter_offset - 1
 
-    for ii, this_X in zip(range(iter_offset, iter_offset + n_iter), batches):
+    for ii, batch in zip(range(iter_offset, iter_offset + n_iter), batches):
+        this_X = X_train[batch]
         dt = (time.time() - t0)
         if verbose == 1:
             sys.stdout.write(".")
