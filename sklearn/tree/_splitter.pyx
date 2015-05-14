@@ -34,6 +34,7 @@ from ._utils cimport rand_int
 from ._utils cimport rand_uniform
 from ._utils cimport RAND_R_MAX
 from ._utils cimport safe_realloc
+from ._utils cimport make_bit_cache
 from ._utils cimport goes_left
 
 cdef double INFINITY = np.inf
@@ -98,6 +99,7 @@ cdef class Splitter:
         self.y_stride = 0
         self.sample_weight = NULL
         self.n_categories = NULL
+        self._bit_cache = NULL
 
         self.max_features = max_features
         self.min_samples_leaf = min_samples_leaf
@@ -113,6 +115,7 @@ cdef class Splitter:
         free(self.constant_features)
         free(self.feature_values)
         free(self.n_categories)
+        free(self._bit_cache)
 
     def __getstate__(self):
         return {}
@@ -192,6 +195,12 @@ cdef class Splitter:
         for i in range(n_features):
             self.n_categories[i] = (-1 if n_categories == NULL
                                     else n_categories[i])
+
+        # If needed, allocate cache space to hold split info
+        cdef INT32_t max_n_categories = max(
+            [self.n_categories[i] for i in range(n_features)])
+        if max_n_categories > 0:
+            safe_realloc(&self._bit_cache, (max_n_categories + 7) // 8)
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end,
                          double* weighted_n_node_samples) nogil:
@@ -459,7 +468,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                             q = start
                             partition_end = end
                             while q < partition_end:
-                                if ((p >> <SIZE_t>Xf[q]) & 1):
+                                if (p >> <SIZE_t>Xf[q]) & 1:
                                     q += 1
                                 else:
                                     partition_end -= 1
@@ -511,13 +520,16 @@ cdef class BestSplitter(BaseDenseSplitter):
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:
+            make_bit_cache(best.split_value, self.n_categories[best.feature],
+                           self._bit_cache)
             feature_offset = X_feature_stride * best.feature
             partition_end = end
             p = start
 
             while p < partition_end:
                 if goes_left(X[X_sample_stride * samples[p] + feature_offset],
-                             best.split_value, self.n_categories[best.feature]):
+                             best.split_value, self.n_categories[best.feature],
+                             self._bit_cache):
                     p += 1
 
                 else:
@@ -807,12 +819,14 @@ cdef class RandomSplitter(BaseDenseSplitter):
                             current.split_value.threshold = min_feature_value
 
                     # Partition
+                    make_bit_cache(current.split_value, self.n_categories[current.feature],
+                                   self._bit_cache)
                     partition_end = end
                     p = start
                     while p < partition_end:
                         current_feature_value = Xf[p]
                         if goes_left(current_feature_value, current.split_value,
-                                     self.n_categories[current.feature]):
+                                     self.n_categories[current.feature], self._bit_cache):
                             p += 1
                         else:
                             partition_end -= 1
@@ -848,13 +862,16 @@ cdef class RandomSplitter(BaseDenseSplitter):
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         feature_stride = X_feature_stride * best.feature
         if best.pos < end:
+            make_bit_cache(best.split_value, self.n_categories[best.feature],
+                           self._bit_cache)
             if current.feature != best.feature:
                 partition_end = end
                 p = start
 
                 while p < partition_end:
                     if goes_left(X[X_sample_stride * samples[p] + feature_stride],
-                                 best.split_value, self.n_categories[best.feature]):
+                                 best.split_value, self.n_categories[best.feature],
+                                 self._bit_cache):
                         p += 1
 
                     else:

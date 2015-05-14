@@ -35,6 +35,7 @@ from ._utils cimport StackRecord
 from ._utils cimport PriorityHeap
 from ._utils cimport PriorityHeapRecord
 from ._utils cimport safe_realloc
+from ._utils cimport make_bit_cache
 from ._utils cimport goes_left
 from ._utils cimport sizet_ptr_to_ndarray
 
@@ -643,6 +644,7 @@ cdef class Tree:
     def __dealloc__(self):
         """Destructor."""
         # Free all inner structures
+        self.delete_bit_caches()
         free(self.n_classes)
         free(self.value)
         free(self.nodes)
@@ -781,9 +783,38 @@ cdef class Tree:
             node.feature = feature
             node.split_value = split_value
 
+        node._bit_cache = NULL
+
         self.node_count += 1
 
         return node_id
+
+    cdef void populate_bit_caches(self):
+        """Allocates and populates bit caches for nodes that split on
+        categorical features. Should be run before every tree traversal."""
+        cdef Node* node = self.nodes
+        cdef Node* end_node = self.nodes + self.node_count
+        cdef INT32_t n_categories = 0
+
+        while node != end_node:
+            if node.left_child != _TREE_LEAF:
+                n_categories = self.n_categories[node.feature]
+                if n_categories > 0:
+                    safe_realloc(&node._bit_cache, (n_categories + 7) // 8)
+                    make_bit_cache(node.split_value, n_categories,
+                                   node._bit_cache)
+            node += 1
+
+    cdef void delete_bit_caches(self):
+        """Deallocates the bit cache of each node in the tree. Should be run
+        after tree traversal."""
+        cdef Node* node = self.nodes
+        cdef Node* end_node = self.nodes + self.node_count
+
+        while node != end_node:
+            free(node._bit_cache)
+            node._bit_cache = NULL
+            node += 1
 
     cpdef np.ndarray predict(self, object X):
         """Predict target for X."""
@@ -826,6 +857,8 @@ cdef class Tree:
         cdef Node* node = NULL
         cdef SIZE_t i = 0
 
+        self.populate_bit_caches()
+
         with nogil:
             for i in range(n_samples):
                 node = self.nodes
@@ -833,12 +866,14 @@ cdef class Tree:
                 while node.left_child != _TREE_LEAF:
                     # ... and node.right_child != _TREE_LEAF:
                     if goes_left(X_ptr[X_sample_stride * i + X_fx_stride * node.feature],
-                                 node.split_value, self.n_categories[node.feature]):
+                                 node.split_value, self.n_categories[node.feature], node._bit_cache):
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
 
                 out_ptr[i] = <SIZE_t>(node - self.nodes)  # node offset
+
+        self.delete_bit_caches()
 
         return out
 
@@ -905,7 +940,7 @@ cdef class Tree:
                         feature_value = 0.
 
                     if goes_left(feature_value, node.split_value,
-                                 self.n_categories[node.feature]):
+                                 self.n_categories[node.feature], node._bit_cache):
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]

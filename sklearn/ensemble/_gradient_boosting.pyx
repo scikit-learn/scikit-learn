@@ -97,7 +97,7 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
         # While node not a leaf
         while node.left_child != -1 and node.right_child != -1:
             if goes_left(X[i * n_features + node.feature], node.split_value,
-                         n_categories[node.feature]):
+                         n_categories[node.feature], node._bit_cache):
                 node = root_node + node.left_child
             else:
                 node = root_node + node.right_child
@@ -123,6 +123,8 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
         for k in range(K):
             tree = estimators[i, k].tree_
 
+            tree.populate_bit_caches()
+
             # avoid buffer validation by casting to ndarray
             # and get data pointer
             # need brackets because of casting operator priority
@@ -133,6 +135,8 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
                 tree.n_categories,
                 <float64 *> (<np.ndarray> out).data)
             ## out += scale * tree.predict(X).reshape((X.shape[0], 1))
+
+            tree.delete_bit_caches()
 
 
 @cython.nonecheck(False)
@@ -212,6 +216,8 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
     underlying_stack = np_zeros((stack_capacity,), dtype=np.intp)
     node_stack = <Node **>(<np.ndarray> underlying_stack).data
 
+    tree.populate_bit_caches()
+
     for i in range(X.shape[0]):
         # init stacks for new example
         stack_size = 1
@@ -235,7 +241,8 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
                     # split feature in target set
                     # push left or right child on stack
                     if goes_left(X[i, feature_index], current_node.split_value,
-                                 tree.n_categories[current_node.feature]):
+                                 tree.n_categories[current_node.feature],
+                                 current_node._bit_cache):
                         # left
                         node_stack[stack_size] = (root_node +
                                                   current_node.left_child)
@@ -272,6 +279,8 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
         if not (0.999 < total_weight < 1.001):
             raise ValueError("Total weight should be 1.0 but was %.9f" %
                              total_weight)
+
+    tree.delete_bit_caches()
 
 
 def _random_sample_mask(np.npy_intp n_total_samples,

@@ -82,25 +82,48 @@ cdef inline double rand_uniform(double low, double high,
 cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
 
-cdef bint goes_left(DTYPE_t feature_value, SplitValue split,
-                    INT32_t n_categories) nogil:
-    """Determine whether a sample goes to the left or right child node."""
+cdef inline void make_bit_cache(SplitValue split, INT32_t n_categories,
+                                UINT8_t* bit_cache) nogil:
+    """Regenerate and store the random numbers for a split."""
     cdef UINT32_t rng_seed
+    cdef SIZE_t q
+    cdef UINT32_t val, idx, shift
+
+    if (n_categories <= 0):
+        # Non-categorical feature; bit cache not used
+        return
+
+    if (split.cat_split & 1 == 0):
+        # Bitfield model
+        for q in range((n_categories + 7) // 8):
+            bit_cache[q] = (split.cat_split >> (q * 8)) & <SIZE_t>0xFF
+    else:
+        # Random model
+        for q in range((n_categories + 7) // 8):
+            bit_cache[q] = 0
+        rng_seed = split.cat_split >> 32
+        for q in range((split.cat_split & <SIZE_t>0xFFFFFFFF) >> 1):
+            val = rand_int(0, n_categories, &rng_seed)
+            idx = val // 8
+            shift = val % 8
+            bit_cache[idx] |= (1 << shift)
+
+cdef inline bint goes_left(DTYPE_t feature_value, SplitValue split,
+                           INT32_t n_categories, UINT8_t* bit_cache) nogil:
+    """Determine whether a sample goes to the left or right child node."""
+    cdef SIZE_t idx, shift
 
     if n_categories < 1:
         # Non-categorical feature
         return feature_value <= split.threshold
-    elif (split.cat_split & 1 == 0):
-        # Bitfield model
-        return (split.cat_split >> <SIZE_t>feature_value) & 1
     else:
-        # Random model
-        rng_seed = split.cat_split >> 32
-        for q in range((split.cat_split & <SIZE_t>0xFFFFFFFF) >> 1):
-            if (<SIZE_t>feature_value ==
-                    rand_int(0, n_categories, &rng_seed)):
-                return 1
-        return 0
+        # Categorical feature, using bit cache
+        if (<SIZE_t> feature_value) < n_categories:
+            idx = (<SIZE_t> feature_value) // 8
+            shift = (<SIZE_t> feature_value) % 8
+            return (bit_cache[idx] >> shift) & 1
+        else:
+            return 0
 
 
 # =============================================================================

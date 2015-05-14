@@ -15,6 +15,7 @@ from ._splitter cimport SplitValue
 ctypedef np.npy_float32 DTYPE_t          # Type of X
 ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
+ctypedef np.npy_uint8 UINT8_t            # Unsigned 8 bit integer
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
@@ -56,9 +57,13 @@ cdef double rand_uniform(double low, double high,
 
 cdef double log(double x) nogil
 
-# Function for traversing a tree
-cdef bint goes_left(DTYPE_t feature_value, SplitValue split,
-                    INT32_t n_categories) nogil
+
+# Functions for traversing a tree
+cdef inline void make_bit_cache(SplitValue split, INT32_t n_categories,
+                                UINT8_t* bit_cache) nogil
+
+cdef inline bint goes_left(DTYPE_t feature_value, SplitValue split,
+                           INT32_t n_categories, UINT8_t* bit_cache) nogil
 
 # =============================================================================
 # Stack data structure

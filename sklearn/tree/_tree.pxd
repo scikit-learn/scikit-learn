@@ -15,6 +15,7 @@ cimport numpy as np
 ctypedef np.npy_float32 DTYPE_t          # Type of X
 ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
+ctypedef np.npy_uint8 UINT8_t            # Unsigned 8 bit integer
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 ctypedef np.npy_uint64 UINT64_t          # Unsigned 64 bit integer
@@ -34,6 +35,7 @@ cdef struct Node:
     DOUBLE_t impurity                    # Impurity of the node (i.e., the value of the criterion)
     SIZE_t n_node_samples                # Number of samples at the node
     DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
+    UINT8_t* _bit_cache
 
 
 cdef class Tree:
@@ -69,6 +71,8 @@ cdef class Tree:
     cdef np.ndarray _get_value_ndarray(self)
     cdef np.ndarray _get_node_ndarray(self)
     cdef np.ndarray _get_ncat_ndarray(self)
+    cdef void populate_bit_caches(self)
+    cdef void delete_bit_caches(self)
 
     cpdef np.ndarray predict(self, object X)
 
