@@ -52,6 +52,7 @@ def _yield_non_meta_checks(name, Estimator):
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
     yield check_dtype_object
+    yield check_estimators_fit_returns_self
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
@@ -777,6 +778,21 @@ def check_classifiers_train(name, Classifier):
             assert_raises(ValueError, classifier.predict_proba, X.T)
 
 
+def check_estimators_fit_returns_self(name, Estimator):
+    """Check if self is returned when calling fit"""
+    X, y = make_blobs(random_state=0, n_samples=9, n_features=4)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    # some want non-negative input
+    X -= X.min()
+
+    estimator = Estimator()
+
+    set_fast_parameters(estimator)
+    set_random_state(estimator)
+
+    assert_true(estimator.fit(X, y) is estimator)
+
+
 def check_estimators_unfitted(name, Estimator):
     """Check if NotFittedError is raised when calling predict and related
     functions"""
@@ -1202,7 +1218,7 @@ def check_parameters_default_constructible(name, Estimator):
         # test __repr__
         repr(estimator)
         # test that set_params returns self
-        assert_true(isinstance(estimator.set_params(), Estimator))
+        assert_true(estimator.set_params() is estimator)
 
         # test if init does nothing but set parameters
         # this is important for grid_search etc.
