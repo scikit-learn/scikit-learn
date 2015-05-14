@@ -406,18 +406,18 @@ class DisjointLabelKfold(_BaseKFold):
     ...     print(X_train, X_test, y_train, y_test)
     ... 
     TRAIN: [0 1] TEST: [2 3]
-    [[1 2]
-        [3 4]] [[5 6]
-        [7 8]] [1 2] [3 4]
+     [[1 2]
+     [3 4]] [[5 6]
+     [7 8]] [1 2] [3 4]
     TRAIN: [2 3] TEST: [0 1]
-    [[5 6]
-        [7 8]] [[1 2]
-        [3 4]] [3 4] [1 2]
+     [[5 6]
+     [7 8]] [[1 2]
+     [3 4]] [3 4] [1 2]
     """
 
     def __init__(self, y, n_folds=3):
         # No shuffling implemented yet
-        super(KFold, self).__init__(n, n_folds, False, None)
+        super(DisjointLabelKfold, self).__init__(len(y), n_folds, False, None)
         self.n_folds = n_folds
         self.n = len(y)
         self.idxs = disjoint_label_folds(y=y, n_folds=n_folds)
