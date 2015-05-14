@@ -450,6 +450,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         n_categories = self.tree_.n_categories
         categorical_features = np.nonzero(n_categories > 0)[0]
         if categorical_features.size > 0:
+            if issparse(X):
+                raise NotImplementedError("Categorical features not supported"
+                                          " with sparse inputs")
             X = np.copy(X)
         for feature in categorical_features:
             rounded = np.round(X[:, feature]).astype('int64')
