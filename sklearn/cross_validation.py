@@ -376,45 +376,46 @@ def disjoint_label_folds(y, n_folds=3):
 
 
 class DisjointLabelKfold(_BaseKFold):
+    """Creates K approximately equilibrated folds
+        where the same label will not appear in two different folds
+
+    Parameters
+    ----------
+    y : array-like with shape (n_samples, )
+        Contains a label for each sample.
+        The folds are built so that the same label doesn't appear in two different folds.
+
+    n_folds : int, default is 3
+        Number of folds.
+
+    Examples
+    --------
+    >>> from sklearn import cross_validation
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    >>> y = np.array([1, 2, 3, 4])
+    >>> labels = np.array([0, 0, 2, 2])
+    >>> dl_kfold = cross_validation.DisjointLabelKfold(labels, n_folds=2)
+    >>> len(dl_kfold)
+    2
+    >>> print(dl_kfold)
+    sklearn.cross_validation.DisjointLabelKfold(n_labels=4, n_folds=2)
+    >>> for train_index, test_index in dl_kfold:
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
+    ...     print(X_train, X_test, y_train, y_test)
+    ... 
+    TRAIN: [0 1] TEST: [2 3]
+    [[1 2]
+        [3 4]] [[5 6]
+        [7 8]] [1 2] [3 4]
+    TRAIN: [2 3] TEST: [0 1]
+    [[5 6]
+        [7 8]] [[1 2]
+        [3 4]] [3 4] [1 2]
+    """
+
     def __init__(self, y, n_folds=3):
-        """Creates K approximately equilibrated folds
-            where the same label will not appear in two different folds
-
-        Parameters
-        ----------
-        y : array-like with shape (n_samples, )
-            Contains a label for each sample.
-            The folds are built so that the same label doesn't appear in two different folds.
-
-        n_folds : int, default is 3
-            Number of folds.
-
-        Examples
-        --------
-        >>> from sklearn import cross_validation
-        >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-        >>> y = np.array([1, 2, 3, 4])
-        >>> labels = np.array([0, 0, 2, 2])
-        >>> dl_kfold = cross_validation.DisjointLabelKfold(labels, n_folds=2)
-        >>> len(dl_kfold)
-        2
-        >>> print(dl_kfold)
-        sklearn.cross_validation.DisjointLabelKfold(n_labels=4, n_folds=2)
-        >>> for train_index, test_index in dl_kfold:
-        ...     print("TRAIN:", train_index, "TEST:", test_index)
-        ...     X_train, X_test = X[train_index], X[test_index]
-        ...     y_train, y_test = y[train_index], y[test_index]
-        ...     print(X_train, X_test, y_train, y_test)
-        ... 
-        TRAIN: [0 1] TEST: [2 3]
-        [[1 2]
-         [3 4]] [[5 6]
-         [7 8]] [1 2] [3 4]
-        TRAIN: [2 3] TEST: [0 1]
-        [[5 6]
-         [7 8]] [[1 2]
-         [3 4]] [3 4] [1 2]
-        """
         self.n_folds = n_folds
         self.n = len(y)
         self.idxs = disjoint_label_folds(y=y, n_folds=n_folds)
