@@ -335,7 +335,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
             return self
 
-    def transform(self, X, y=None, copy=None):
+    def transform(self, X, y=None):
         """Perform standardization by centering and scaling
 
         Parameters
@@ -345,8 +345,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'std_')
 
-        copy = copy if copy is not None else self.copy
-        X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False)
+        X = check_array(X, accept_sparse='csr', copy=self.copy,
+                        ensure_2d=False)
         if warn_if_not_float(X, estimator=self):
             X = X.astype(np.float)
         if sparse.issparse(X):
@@ -363,7 +363,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 X /= self.std_
         return X
 
-    def inverse_transform(self, X, copy=None):
+    def inverse_transform(self, X):
         """Scale back the data to the original representation
 
         Parameters
@@ -373,7 +373,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'std_')
 
-        copy = copy if copy is not None else self.copy
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -382,13 +381,13 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             if not sparse.isspmatrix_csr(X):
                 X = X.tocsr()
                 copy = False
-            if copy:
+            if self.copy:
                 X = X.copy()
             if self.std_ is not None:
                 inplace_column_scale(X, self.std_)
         else:
             X = np.asarray(X)
-            if copy:
+            if self.copy:
                 X = X.copy()
             if self.with_std:
                 X *= self.std_
@@ -507,10 +506,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         else:
             iqr_scale = self.interquartile_scale
 
-        if copy is None:
-            copy = self.copy
-
-        X = self._check_array(X, copy)
+        X = self._check_array(X, self.copy)
         if self.with_centering:
             self.center_ = np.median(X, axis=0)
 
