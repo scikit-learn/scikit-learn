@@ -464,7 +464,7 @@ def test_robust_scaler_2d_arrays():
     X[:, 0] = 0.0  # first feature is always of zero
 
     scaler = RobustScaler()
-    X_scaled = scaler.fit(X).transform(X, copy=True)
+    X_scaled = scaler.fit(X).transform(X)
 
     assert_array_almost_equal(np.median(X_scaled, axis=0), 5 * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0)[0], 0)
