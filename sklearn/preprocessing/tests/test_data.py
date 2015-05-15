@@ -515,7 +515,7 @@ def test_robust_scale_iqr_errors():
 
 
 def test_robust_scaler_zero_variance_features():
-    """Check min max scaler on toy data with zero variance features"""
+    """Check RobustScaler on toy data with zero variance features"""
     X = [[0., 1., +0.5],
          [0., 1., -0.1],
          [0., 1., +1.1]]
