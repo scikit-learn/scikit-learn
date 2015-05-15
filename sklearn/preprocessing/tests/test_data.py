@@ -558,8 +558,6 @@ def test_warning_scaling_integers():
     assert_warns_message(UserWarning, w, scale, X)
     assert_warns_message(UserWarning, w, StandardScaler().fit, X)
     assert_warns_message(UserWarning, w, MinMaxScaler().fit, X)
-    assert_warns_message(UserWarning, w, robust_scale, X)
-    assert_warns_message(UserWarning, w, RobustScaler().fit, X)
 
 
 def test_normalizer_l1():
