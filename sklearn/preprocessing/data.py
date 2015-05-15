@@ -31,11 +31,13 @@ __all__ = [
     'MinMaxScaler',
     'Normalizer',
     'OneHotEncoder',
+    'RobustScaler',
     'StandardScaler',
     'add_dummy_feature',
     'binarize',
     'normalize',
     'scale',
+    'robust_scale',
 ]
 
 
