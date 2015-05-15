@@ -314,7 +314,7 @@ is the transformed training set with :math:`k` features
 To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
 
 .. math::
-    X' = X V_k^\top
+    X' = X V_k
 
 .. note::
     Most treatments of LSA in the natural language processing (NLP)
