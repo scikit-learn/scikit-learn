@@ -337,7 +337,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
             return self
 
-    def transform(self, X, y=None):
+    def transform(self, X, y=None, copy=None):
         """Perform standardization by centering and scaling
 
         Parameters
@@ -347,8 +347,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'std_')
 
-        X = check_array(X, accept_sparse='csr', copy=self.copy,
-                        ensure_2d=False)
+        copy = copy if copy is not None else self.copy
+        X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False)
         if warn_if_not_float(X, estimator=self):
             X = X.astype(np.float)
         if sparse.issparse(X):
@@ -365,7 +365,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 X /= self.std_
         return X
 
-    def inverse_transform(self, X):
+    def inverse_transform(self, X, copy=None):
         """Scale back the data to the original representation
 
         Parameters
@@ -375,6 +375,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'std_')
 
+        copy = copy if copy is not None else self.copy
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -383,13 +384,13 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             if not sparse.isspmatrix_csr(X):
                 X = X.tocsr()
                 copy = False
-            if self.copy:
+            if copy:
                 X = X.copy()
             if self.std_ is not None:
                 inplace_column_scale(X, self.std_)
         else:
             X = np.asarray(X)
-            if self.copy:
+            if copy:
                 X = X.copy()
             if self.with_std:
                 X *= self.std_
@@ -532,7 +533,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 self.scale_[~np.isfinite(self.scale_)] = 1.0
         return self
 
-    def transform(self, X, y=None, copy=None):
+    def transform(self, X, y=None):
         """Center and scale the data
 
         Parameters
@@ -544,9 +545,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             check_is_fitted(self, 'center_')
         if self.with_scaling:
             check_is_fitted(self, 'scale_')
-        if copy is None:
-            copy = self.copy
-        X = self._check_array(X, copy)
+        X = self._check_array(X, self.copy)
         if sparse.issparse(X):
             if self.with_scaling:
                 if X.shape[0] == 1:
@@ -554,7 +553,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 elif self.axis == 0:
                     inplace_column_scale(X, 1.0 / self.scale_)
         else:
-            if copy:
+            if self.copy:
                 X = X.copy()
             if self.with_centering:
                 X -= self.center_
@@ -562,7 +561,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 X /= self.scale_
         return X
 
-    def inverse_transform(self, X, copy=None):
+    def inverse_transform(self, X):
         """Scale back the data to the original representation
 
         Parameters
@@ -574,9 +573,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             check_is_fitted(self, 'center_')
         if self.with_scaling:
             check_is_fitted(self, 'scale_')
-        if copy is None:
-            copy = self.copy
-        X = self._check_array(X, copy)
+        X = self._check_array(X, self.copy)
         if sparse.issparse(X):
             if self.with_scaling:
                 if X.shape[0] == 1:
@@ -584,7 +581,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 else:
                     inplace_column_scale(X, self.scale_)
         else:
-            if copy:
+            if self.copy:
                 X = X.copy()
 
             if self.with_scaling:
