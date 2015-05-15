@@ -399,7 +399,11 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
 
 class RobustScaler(BaseEstimator, TransformerMixin):
-    """Standardize features by removing the median and scaling to IQR.
+    """Scale features using statistics that are robust to outliers.
+
+    This Scaler removes the median and and scales the data according to
+    the Interquartile Range (IQR). The IQR is the range between the 1st
+    quartile (25th quantile) and the and 3rd quartile (75th quantile).
 
     Centering and scaling happen independently on each feature (or each
     sample, depending on the `axis` argument) by computing the relevant
@@ -455,6 +459,11 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     :class:`sklearn.decomposition.RandomizedPCA` with `whiten=True`
     to further remove the linear correlation across features.
+
+    Notes
+    -----
+    http://en.wikipedia.org/wiki/Median_(statistics)
+    http://en.wikipedia.org/wiki/Interquartile_range
     """
 
     def __init__(self, interquartile_scale="normal", with_centering=True,
