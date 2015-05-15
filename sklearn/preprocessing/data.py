@@ -529,7 +529,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                     self.scale_ = 1.
             else:
                 self.scale_[self.scale_ == 0.0] = 1.0
-                self.scale_[-np.isfinite(self.scale_)] = 1.0
+                self.scale_[~np.isfinite(self.scale_)] = 1.0
         return self
 
     def transform(self, X, y=None, copy=None):
