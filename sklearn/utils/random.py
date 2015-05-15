@@ -264,6 +264,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
             class_prob_j = np.insert(class_prob_j, 0, 0.0)
 
         # If there are nonzero classes choose randomly using class_probability
+        rng = check_random_state(random_state)
         if classes[j].shape[0] > 1:
             p_nonzero = 1 - class_prob_j[classes[j] == 0]
             nnz = int(n_samples * p_nonzero)
@@ -278,7 +279,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
             class_probability_nz_norm = (class_probability_nz /
                                          np.sum(class_probability_nz))
             classes_ind = np.searchsorted(class_probability_nz_norm.cumsum(),
-                                          np.random.rand(nnz))
+                                          rng.rand(nnz))
             data.extend(classes[j][classes_j_nonzero][classes_ind])
         indptr.append(len(indices))
 

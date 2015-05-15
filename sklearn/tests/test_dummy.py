@@ -534,9 +534,9 @@ def test_uniform_strategy_sparse_target_warning():
 
     for k in range(y.shape[1]):
         p = np.bincount(y_pred[:, k]) / float(len(X))
-        assert_almost_equal(p[1], 1/3, decimal=1)
-        assert_almost_equal(p[2], 1/3, decimal=1)
-        assert_almost_equal(p[4], 1/3, decimal=1)
+        assert_almost_equal(p[1], 1 / 3, decimal=1)
+        assert_almost_equal(p[2], 1 / 3, decimal=1)
+        assert_almost_equal(p[4], 1 / 3, decimal=1)
 
 
 def test_stratified_strategy_sparse_target():
