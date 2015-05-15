@@ -414,11 +414,11 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    interquartile_scale: float or string in  ["normal" (default), ],
+    interquartile_scale : float or string in  ["normal" (default), ],
            The interquartile range is divided by this factor. If
            `interquartile_scale` is "normal", the data is scaled so it
-           approximately reaches unit variance. This converge assumes Gaussian
-           input data and will need a large number of samples.
+           approximately reaches unit variance. This convergence assumes
+           Gaussian input data and will need a large number of samples.
 
     with_centering : boolean, True by default
         If True, center the data before scaling.
@@ -489,12 +489,12 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             scale[-np.isfinite(scale)] = 1.0
         return scale
 
-    def fit(self, X, y=None, copy=None):
-        """Compute the mean and std to be used for later scaling.
+    def fit(self, X, y=None):
+        """Compute the mean and quantiles to be used for scaling.
 
         Parameters
         ----------
-        X : array-like or CSR matrix with shape [n_samples, n_features]
+        X : array-like with shape [n_samples, n_features]
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
         """
@@ -528,7 +528,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None, copy=None):
-        """Perform standardization by centering and scaling
+        """Center and scale the data
 
         Parameters
         ----------
@@ -598,14 +598,14 @@ def robust_scale(X, interquartile_scale="normal", axis=0, with_centering=True,
 
     Parameters
     ----------
-    X : array-like or CSR matrix.
+    X : array-like.
         The data to center and scale.
 
-    interquartile_scale: float or string in  ["normal" (default), ],
+    interquartile_scale : float or string in  ["normal" (default), ],
            The interquartile range is divided by this factor. If
            `interquartile_scale` is "normal", the data is scaled so it
-           approximately reaches unit variance. This converge assumes Gaussian
-           input data and will need a large number of samples.
+           approximately reaches unit variance. This convergence assumes
+           Gaussian input data and will need a large number of samples.
 
     axis : int (0 by default)
         axis used to compute the medians and IQR along. If 0,
