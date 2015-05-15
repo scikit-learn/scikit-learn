@@ -28,6 +28,7 @@ from ._online_lda import (mean_change, _dirichlet_expectation_1d,
 
 EPS = np.finfo(np.float).eps
 
+
 def _check_non_negative(X, whom):
     """
     make sure no Negative data in X
@@ -126,7 +127,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior, max_iters
         exp_doc_topic_d = exp_doc_topic[idx_d, :]
         exp_topic_word_d = exp_topic_word_distr[:, ids]
 
-        # The optimal phi_{dwk} is proportional to 
+        # The optimal phi_{dwk} is proportional to
         # exp(E[log(theta_{dk})]) * exp(E[log(beta_{dw})]).
         norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + EPS
 
@@ -585,6 +586,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         n_samples, n_topics = doc_topic_distr.shape
         score = 0
         dirichlet_doc_topic = _log_dirichlet_expectation(doc_topic_distr)
+        doc_topic_prior = self.doc_topic_prior_
+        topic_word_prior = self.topic_word_prior_
 
         if is_sparse_x:
             X_data = X.data
@@ -604,11 +607,12 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             tmax = temp.max(axis=0)
             norm_phi = np.log(np.sum(np.exp(temp - tmax), axis=0)) + tmax
             score += np.dot(cnts, norm_phi)
+
         # compute E[log p(theta | alpha) - log q(theta | gamma)]
-        score += np.sum((self.doc_topic_prior_ - doc_topic_distr) * dirichlet_doc_topic)
-        score += np.sum(gammaln(doc_topic_distr) - gammaln(self.doc_topic_prior_))
+        score += np.sum((doc_topic_prior - doc_topic_distr) * dirichlet_doc_topic)
+        score += np.sum(gammaln(doc_topic_distr) - gammaln(doc_topic_prior))
         score += np.sum(
-            gammaln(self.doc_topic_prior_ * self.n_topics) - gammaln(np.sum(doc_topic_distr, 1)))
+            gammaln(doc_topic_prior * self.n_topics) - gammaln(np.sum(doc_topic_distr, 1)))
 
         # Compensate for the subsampling of the population of documents
         if sub_sampling:
@@ -616,9 +620,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             score *= doc_ratio
 
         # E[log p(beta | eta) - log q (beta | lambda)]
-        score += np.sum((self.topic_word_prior_ - self.components_) * self.dirichlet_component_)
-        score += np.sum(gammaln(self.components_) - gammaln(self.topic_word_prior_))
-        score += np.sum(gammaln(self.topic_word_prior_ * self.n_features)
+        score += np.sum((topic_word_prior - self.components_) * self.dirichlet_component_)
+        score += np.sum(gammaln(self.components_) - gammaln(topic_word_prior))
+        score += np.sum(gammaln(topic_word_prior * self.n_features)
                         - gammaln(np.sum(self.components_, 1)))
         return score
 

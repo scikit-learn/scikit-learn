@@ -4,7 +4,7 @@ Topics extraction with Latent Dirichlet Allocation
 ==================================================
 
 This is an example of showing how to extract topics from
-20 newsgroup dataset with OnlineLDA. Also, It shows how 
+20 newsgroup dataset with OnlineLDA. Also, It shows how
 top words in each topic changed during training.
 
 The code is modified from the
