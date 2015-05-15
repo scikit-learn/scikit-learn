@@ -465,10 +465,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     def _check_array(self, X, copy):
         """Makes sure centering is not enabled for sparse matrices."""
-        X = check_array(X, accept_sparse=('csr', 'csc'),
+        X = check_array(X, accept_sparse=('csr', 'csc'), dtype=np.float,
                         copy=copy, ensure_2d=False)
-        if warn_if_not_float(X, estimator=self):
-            X = X.astype(np.float)
         if sparse.issparse(X):
             if self.with_centering:
                 raise ValueError(
