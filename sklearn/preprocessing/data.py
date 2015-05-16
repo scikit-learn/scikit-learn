@@ -420,12 +420,6 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    interquartile_scale : float or string in  ["normal" (default), ],
-           The interquartile range is divided by this factor. If
-           `interquartile_scale` is "normal", the data is scaled so it
-           approximately reaches unit variance. This convergence assumes
-           Gaussian input data and will need a large number of samples.
-
     with_centering : boolean, True by default
         If True, center the data before scaling.
         This does not work (and will raise an exception) when attempted on
@@ -467,9 +461,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     http://en.wikipedia.org/wiki/Interquartile_range
     """
 
-    def __init__(self, interquartile_scale="normal", with_centering=True,
-                 with_scaling=True, copy=True):
-        self.interquartile_scale = interquartile_scale
+    def __init__(self, with_centering=True, with_scaling=True, copy=True):
         self.with_centering = with_centering
         self.with_scaling = with_scaling
         self.copy = copy
@@ -510,21 +502,13 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         if sparse.issparse(X):
             raise TypeError("RobustScaler cannot be fitted on sparse inputs")
 
-        if not np.isreal(self.interquartile_scale):
-            if self.interquartile_scale != "normal":
-                raise ValueError("Unknown interquartile_scale value.")
-            else:
-                iqr_scale = 1.34898
-        else:
-            iqr_scale = self.interquartile_scale
-
         X = self._check_array(X, self.copy)
         if self.with_centering:
             self.center_ = np.median(X, axis=0)
 
         if self.with_scaling:
             q = np.percentile(X, (25, 75), axis=0)
-            self.scale_ = (q[1] - q[0]) / iqr_scale
+            self.scale_ = (q[1] - q[0])
             if np.isscalar(self.scale_):
                 if self.scale_ == 0:
                     self.scale_ = 1.
