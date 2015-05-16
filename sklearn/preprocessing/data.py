@@ -493,12 +493,12 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         return scale
 
     def fit(self, X, y=None):
-        """Compute the mean and quantiles to be used for scaling.
+        """Compute the median and quantiles to be used for scaling.
 
         Parameters
         ----------
         X : array-like with shape [n_samples, n_features]
-            The data used to compute the mean and standard deviation
+            The data used to compute the median and quantiles
             used for later scaling along the features axis.
         """
         if sparse.issparse(X):
