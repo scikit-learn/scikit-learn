@@ -579,6 +579,14 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         score : float
 
         """
+
+        def _loglikelihood(prior, distr, dirichlet_distr, size):
+            # calcualte log-likelihood
+            score = np.sum((prior - distr) * dirichlet_distr)
+            score += np.sum(gammaln(distr) - gammaln(prior))
+            score += np.sum(gammaln(prior * size) - gammaln(np.sum(distr, 1)))
+            return score
+
         is_sparse_x = sp.issparse(X)
         n_samples, n_topics = doc_topic_distr.shape
         score = 0
@@ -599,17 +607,14 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             else:
                 ids = np.nonzero(X[idx_d, :])[0]
                 cnts = X[idx_d, ids]
-
             temp = dirichlet_doc_topic[idx_d, :, np.newaxis] + self.dirichlet_component_[:, ids]
             tmax = temp.max(axis=0)
             norm_phi = np.log(np.sum(np.exp(temp - tmax), axis=0)) + tmax
             score += np.dot(cnts, norm_phi)
 
         # compute E[log p(theta | alpha) - log q(theta | gamma)]
-        score += np.sum((doc_topic_prior - doc_topic_distr) * dirichlet_doc_topic)
-        score += np.sum(gammaln(doc_topic_distr) - gammaln(doc_topic_prior))
-        score += np.sum(
-            gammaln(doc_topic_prior * self.n_topics) - gammaln(np.sum(doc_topic_distr, 1)))
+        score += _loglikelihood(doc_topic_prior, doc_topic_distr,
+                                dirichlet_doc_topic, self.n_topics)
 
         # Compensate for the subsampling of the population of documents
         if sub_sampling:
@@ -617,10 +622,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             score *= doc_ratio
 
         # E[log p(beta | eta) - log q (beta | lambda)]
-        score += np.sum((topic_word_prior - self.components_) * self.dirichlet_component_)
-        score += np.sum(gammaln(self.components_) - gammaln(topic_word_prior))
-        score += np.sum(gammaln(topic_word_prior * self.n_features)
-                        - gammaln(np.sum(self.components_, 1)))
+        score += _loglikelihood(topic_word_prior, self.components_,
+                                self.dirichlet_component_, self.n_features)
+
         return score
 
     def score(self, X, y=None):

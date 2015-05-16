@@ -45,7 +45,7 @@ def test_lda_fit_online():
     rng = np.random.RandomState(0)
     n_topics, X = _build_sparse_mtx()
     lda = LatentDirichletAllocation(n_topics=n_topics, learning_offset=10.,
-                                    evaluate_every=1,learning_method='online',
+                                    evaluate_every=1, learning_method='online',
                                     random_state=rng)
     lda.fit(X)
 
