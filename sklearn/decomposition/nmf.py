@@ -20,7 +20,7 @@ from scipy.optimize import nnls
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_non_negative
 
 
 def safe_vstack(Xs):
@@ -47,12 +47,6 @@ def _sparseness(x):
     """Hoyer's measure of sparsity for a vector"""
     sqrt_n = np.sqrt(len(x))
     return (sqrt_n - np.linalg.norm(x, 1) / norm(x)) / (sqrt_n - 1)
-
-
-def check_non_negative(X, whom):
-    X = X.data if sp.issparse(X) else X
-    if (X < 0).any():
-        raise ValueError("Negative values in data passed to %s" % whom)
 
 
 def _initialize_nmf(X, n_components, variant=None, eps=1e-6,

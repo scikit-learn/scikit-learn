@@ -18,7 +18,7 @@ from scipy.special import gammaln
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
                      gen_batches, gen_even_slices)
-from ..utils.validation import NotFittedError
+from ..utils.validation import NotFittedError, check_non_negative
 
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import xrange
@@ -27,16 +27,6 @@ from ._online_lda import (mean_change, _dirichlet_expectation_1d,
                           _dirichlet_expectation_2d)
 
 EPS = np.finfo(np.float).eps
-
-
-def _check_non_negative(X, whom):
-    """
-    make sure no Negative data in X
-    (copy from NMF directly)
-    """
-    X = X.data if sp.issparse(X) else X
-    if (X < 0).any():
-        raise ValueError("Negative values in data passed to %s" % whom)
 
 
 def _log_dirichlet_expectation(X):
@@ -426,7 +416,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         """
         X = check_array(X, accept_sparse='csr')
-        _check_non_negative(X, whom)
+        check_non_negative(X, whom)
         return X
 
     def fit_transform(self, X, y=None):
