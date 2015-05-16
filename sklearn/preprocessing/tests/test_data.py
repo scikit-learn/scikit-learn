@@ -472,7 +472,7 @@ def test_robust_scaler_2d_arrays():
 
 def test_robust_scaler_iris():
     X = iris.data
-    scaler = RobustScaler(interquartile_scale=1.0)
+    scaler = RobustScaler()
     X_trans = scaler.fit_transform(X)
     assert_array_almost_equal(np.median(X_trans, axis=0), 0)
     X_trans_inv = scaler.inverse_transform(X_trans)
@@ -484,34 +484,11 @@ def test_robust_scaler_iris():
 
 def test_robust_scale_axis1():
     X = iris.data
-    X_trans = robust_scale(X, interquartile_scale=1.0, axis=1)
+    X_trans = robust_scale(X, axis=1)
     assert_array_almost_equal(np.median(X_trans, axis=1), 0)
     q = np.percentile(X_trans, q=(25, 75), axis=1)
     iqr = q[1] - q[0]
     assert_array_almost_equal(iqr, 1)
-
-
-def test_robust_scaler_iqr_scale():
-    """Does iqr scaling achieve approximately std= 1 on Gaussian data?"""
-    rng = np.random.RandomState(42)
-    X = rng.randn(10000, 4)  # need lots of samples
-    scaler = RobustScaler()
-    X_trans = scaler.fit_transform(X)
-    assert_array_almost_equal(X_trans.std(axis=0), 1,  decimal=2)
-
-
-def test_robust_scale_iqr_errors():
-    """Check that invalid arguments yield ValueError"""
-    rng = np.random.RandomState(42)
-    X = rng.randn(4, 5)
-    assert_raises(ValueError, RobustScaler(interquartile_scale="foo").fit, X)
-    # TODO: for some reason assert_raise doesn't test this correctly
-    did_raise = False
-    try:
-        robust_scale(X, interquartile_scale="foo")
-    except ValueError:
-        did_raise = True
-    assert(did_raise)
 
 
 def test_robust_scaler_zero_variance_features():
@@ -520,7 +497,7 @@ def test_robust_scaler_zero_variance_features():
          [0., 1., -0.1],
          [0., 1., +1.1]]
 
-    scaler = RobustScaler(interquartile_scale=1.0)
+    scaler = RobustScaler()
     X_trans = scaler.fit_transform(X)
 
     # NOTE: for such a small sample size, what we expect in the third column
