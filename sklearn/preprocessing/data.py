@@ -577,8 +577,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         return X
 
 
-def robust_scale(X, interquartile_scale="normal", axis=0, with_centering=True,
-                 with_scaling=True, copy=True):
+def robust_scale(X, axis=0, with_centering=True, with_scaling=True, copy=True):
     """Standardize a dataset along any axis
 
     Center to the median and component wise scale
@@ -588,12 +587,6 @@ def robust_scale(X, interquartile_scale="normal", axis=0, with_centering=True,
     ----------
     X : array-like.
         The data to center and scale.
-
-    interquartile_scale : float or string in  ["normal" (default), ],
-           The interquartile range is divided by this factor. If
-           `interquartile_scale` is "normal", the data is scaled so it
-           approximately reaches unit variance. This convergence assumes
-           Gaussian input data and will need a large number of samples.
 
     axis : int (0 by default)
         axis used to compute the medians and IQR along. If 0,
@@ -631,8 +624,7 @@ def robust_scale(X, interquartile_scale="normal", axis=0, with_centering=True,
     scaling using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
-    s = RobustScaler(interquartile_scale=interquartile_scale,
-                     with_centering=with_centering, with_scaling=with_scaling,
+    s = RobustScaler(with_centering=with_centering, with_scaling=with_scaling,
                      copy=copy)
     if axis == 0:
         return s.fit_transform(X)
