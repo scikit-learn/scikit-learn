@@ -486,7 +486,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         X = self._check_non_neg_array(X, "LatentDirichletAllocation.fit")
         n_samples, n_features = X.shape
         max_iter = self.max_iter
-        total_samples = n_samples * max_iter
         evaluate_every = self.evaluate_every
         learning_method = self.learning_method
         batch_size = self.batch_size
@@ -498,10 +497,10 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         for i in xrange(max_iter):
             if learning_method == 'online':
                 for idx_slice in gen_batches(n_samples, batch_size):
-                    self._em_step(X[idx_slice, :], total_samples=total_samples, batch_update=False)
+                    self._em_step(X[idx_slice, :], total_samples=n_samples, batch_update=False)
             else:
                 # batch update
-                doc_topics = self._em_step(X, total_samples=total_samples, batch_update=True)
+                doc_topics = self._em_step(X, total_samples=n_samples, batch_update=True)
 
             # check perplexity
             if evaluate_every > 0 and (i + 1) % evaluate_every == 0:
