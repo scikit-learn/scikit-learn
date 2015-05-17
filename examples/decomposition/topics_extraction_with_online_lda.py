@@ -4,8 +4,8 @@ Topics extraction with Latent Dirichlet Allocation
 ==================================================
 
 This is an example of showing how to extract topics from
-20 newsgroup dataset with OnlineLDA. Also, It shows how
-top words in each topic changed during training.
+20 newsgroup dataset with Latent Dirichlet Allocation.
+Also, it shows the difference between batch and online udpate.
 
 The code is modified from the
 "Topics extraction with Non-Negative Matrix Factorization"
@@ -21,7 +21,7 @@ from sklearn.utils import gen_batches
 from sklearn.decomposition import LatentDirichletAllocation
 
 
-def online_lda_example():
+def lda_example():
     """
     Example for LDA online update
     """
@@ -63,4 +63,4 @@ def online_lda_example():
 
 
 if __name__ == '__main__':
-    online_lda_example()
+    lda_example()

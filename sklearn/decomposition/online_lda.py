@@ -501,7 +501,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                     self._em_step(X[idx_slice, :], total_samples=total_samples, batch_update=False)
             else:
                 # batch update
-                doc_topics = self._em_step(X, total_samples=total_samples, batch_update=False)
+                doc_topics = self._em_step(X, total_samples=total_samples, batch_update=True)
 
             # check perplexity
             if evaluate_every > 0 and (i + 1) % evaluate_every == 0:
@@ -608,7 +608,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         # Compensate for the subsampling of the population of documents
         if sub_sampling:
-            doc_ratio = float(self.n_samples) / n_samples
+            doc_ratio = float(self.total_samples) / n_samples
             score *= doc_ratio
 
         # E[log p(beta | eta) - log q (beta | lambda)]
@@ -674,9 +674,11 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         current_samples = X.shape[0]
         bound = self._approx_bound(X, doc_topic_distr, sub_sampling)
-        perword_bound = bound / X.sum()
 
         if sub_sampling:
-            perword_bound = perword_bound * (float(current_samples) / self.n_samples)
+            word_cnt = X.sum() * (float(self.total_samples) / current_samples)
+        else:
+            word_cnt = X.sum()
+        perword_bound = bound / word_cnt
 
         return np.exp(-1.0 * perword_bound)

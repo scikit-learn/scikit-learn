@@ -25,6 +25,20 @@ def _build_sparse_mtx():
     return (n_topics, X)
 
 
+def test_lda_default_prior_params():
+    # default prior parameter should be `1 / topics`
+    # and verbose params should not affect result
+    n_topics, X = _build_sparse_mtx()
+    prior = 1. / n_topics
+    lda_1 = LatentDirichletAllocation(n_topics=n_topics, doc_topic_prior=prior,
+                                      topic_word_prior=prior, random_state=0)
+    lda_2 = LatentDirichletAllocation(n_topics=n_topics, random_state=0)
+
+    topic_distr_1 = lda_1.fit_transform(X)
+    topic_distr_2 = lda_2.fit_transform(X)
+    assert_almost_equal(topic_distr_1, topic_distr_2)
+
+
 def test_lda_fit_batch():
     # Test LDA batch learning_offset (`fit` method with 'batch' learning)
     rng = np.random.RandomState(0)
@@ -186,12 +200,12 @@ def test_lda_multi_jobs():
 
 
 @if_not_mac_os()
-def test_lda_online_multi_jobs():
+def test_lda_partial_fit_multi_jobs():
     # Test LDA online training with multi CPU
     rng = np.random.RandomState(0)
     n_topics, X = _build_sparse_mtx()
-    lda = LatentDirichletAllocation(n_topics=n_topics, n_jobs=2,
-                                    learning_offset=5., total_samples=30, random_state=rng)
+    lda = LatentDirichletAllocation(n_topics=n_topics, n_jobs=-1, learning_offset=5.,
+                                    total_samples=30, random_state=rng)
     for i in xrange(3):
         lda.partial_fit(X)
 
@@ -234,6 +248,10 @@ def test_lda_perplexity():
         perp_2 = lda_2.perplexity(X, distr_2, sub_sampling=False)
         assert_greater_equal(perp_1, perp_2)
 
+        perp_1_subsampling = lda_1.perplexity(X, distr_1, sub_sampling=True)
+        perp_2_subsampling = lda_2.perplexity(X, distr_2, sub_sampling=True)
+        assert_greater_equal(perp_1_subsampling, perp_2_subsampling)
+
 
 def test_lda_score():
     # Test LDA score for batch training
@@ -259,9 +277,11 @@ def test_perplexity_input_format():
     lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=1, learning_method='batch',
                                     total_samples=100, random_state=0)
     distr = lda.fit_transform(X)
-    perp_sparse = lda.perplexity(X, distr, sub_sampling=False)
-    perp_dense = lda.perplexity(X.toarray(), distr, sub_sampling=False)
-    assert_almost_equal(perp_sparse, perp_dense)
+    perp_1 = lda.perplexity(X)
+    perp_2 = lda.perplexity(X, distr)
+    perp_3 = lda.perplexity(X.toarray(), distr)
+    assert_almost_equal(perp_1, perp_2)
+    assert_almost_equal(perp_1, perp_3)
 
 
 def test_lda_score_perplexity():
