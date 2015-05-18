@@ -903,160 +903,159 @@ averaged.
 
  .. _voting_classifier:
 
- VotingClassifier
- ========================
+VotingClassifier
+========================
 
- The idea behind the voting classifier implementation is to combine
- conceptually different machine learning classifiers and use a majority vote
- or the average predicted probabilities (soft vote) to predict the class labels.
- Such a classifier can be useful for a set of equally well performing model
- in order to balance out their individual weaknesses.
-
-
- Majority Class Labels (Majority/Hard Voting)
- --------------------------------------------
-
- In majority voting, the predicted class label for a particular sample is
- the class label that represents the majority (mode) of the class labels
- predicted by each individual classifier.
-
- E.g., if the prediction for a given sample is
-
- - classifier 1 -> class 1
- - classifier 2 -> class 1
- - classifier 3 -> class 2
-
- the VotingClassifier (with ``voting='hard'``) would classify the sample
- as "class 1" based on the majority class label.
-
- In the cases of a tie, the `VotingClassifier` will select the class based
- on the ascending sort order. E.g., in the following scenario
-
- - classifier 1 -> class 2
- - classifier 2 -> class 1
-
- the class label 1 will be assigned to the sample.
-
- Usage
- .....
-
- The following example shows how to fit the majority rule classifier:
-
-    >>> from sklearn import datasets
-    >>> from sklearn import cross_validation
-    >>> from sklearn.linear_model import LogisticRegression
-    >>> from sklearn.naive_bayes import GaussianNB
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.ensemble import VotingClassifier
-
-    >>> iris = datasets.load_iris()
-    >>> X, y = iris.data[:, 1:3], iris.target
-
-    >>> clf1 = LogisticRegression(random_state=1)
-    >>> clf2 = RandomForestClassifier(random_state=1)
-    >>> clf3 = GaussianNB()
-
-    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='hard')
-
-    >>> for clf, label in zip([clf1, clf2, clf3, eclf], ['Logistic Regression', 'Random Forest', 'naive Bayes', 'Ensemble']):
-    ...     scores = cross_validation.cross_val_score(clf, X, y, cv=5, scoring='accuracy')
-    ...     print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
-    Accuracy: 0.90 (+/- 0.05) [Logistic Regression]
-    Accuracy: 0.93 (+/- 0.05) [Random Forest]
-    Accuracy: 0.91 (+/- 0.04) [naive Bayes]
-    Accuracy: 0.95 (+/- 0.05) [Ensemble]
+The idea behind the voting classifier implementation is to combine
+conceptually different machine learning classifiers and use a majority vote
+or the average predicted probabilities (soft vote) to predict the class labels.
+Such a classifier can be useful for a set of equally well performing model
+in order to balance out their individual weaknesses.
 
 
- Weighted Average Probabilities (Soft Voting)
- --------------------------------------------
+Majority Class Labels (Majority/Hard Voting)
+--------------------------------------------
 
- In contrast to majority voting (hard voting), soft voting
- returns the class label as argmax of the sum of predicted probabilities.
+In majority voting, the predicted class label for a particular sample is
+the class label that represents the majority (mode) of the class labels
+predicted by each individual classifier.
 
- Specific weights can be assigned to each classifier via the ``weights``
- parameter. When weights are provided, the predicted class probabilities
- for each classifier are collected, multiplied by the classifier weight,
- and averaged. The final class label is then derived from the class label
- with the highest average probability.
+E.g., if the prediction for a given sample is
 
- To illustrate this with a simple example, let's assume we have 3
- classifiers and a 3-class classification problems where we assign
- equal weights to all classifiers: w1=1, w2=1, w3=1.
+- classifier 1 -> class 1
+- classifier 2 -> class 1
+- classifier 3 -> class 2
 
- The weighted average probabilities for a sample would then be
- calculated as follows:
+the VotingClassifier (with ``voting='hard'``) would classify the sample
+as "class 1" based on the majority class label.
 
- ================  ==========    ==========      ==========
- classifier        class 1       class 2         class 3
- ================  ==========    ==========      ==========
- classifier 1	   w1 * 0.2      w1 * 0.5        w1 * 0.3
- classifier 2	   w2 * 0.6      w2 * 0.3        w2 * 0.1
- classifier 3      w3 * 0.3      w3 * 0.4        w3 * 0.3
- weighted average  0.37	         0.4             0.3
- ================  ==========    ==========      ==========
+In the cases of a tie, the `VotingClassifier` will select the class based
+on the ascending sort order. E.g., in the following scenario
 
- Here, the predicted class label is 2, since it has the
- highest average probability.
+- classifier 1 -> class 2
+- classifier 2 -> class 1
 
- The following example illustrates how the decision regions may change
- when a soft `VotingClassifier` is used based on an linear Support
- Vector Machine, a Decision Tree, and a K-nearest neighbor classifier.
+the class label 1 will be assigned to the sample.
 
-    >>> from sklearn import datasets
-    >>> from sklearn.tree import DecisionTreeClassifier
-    >>> from sklearn.neighbors import KNeighborsClassifier
-    >>> from sklearn.svm import SVC
-    >>> from itertools import product
-    >>> from sklearn.ensemble import VotingClassifier
+Usage
+.....
 
-    >>> # Loading some example data
-    >>> iris = datasets.load_iris()
-    >>> X = iris.data[:, [0,2]]
-    >>> y = iris.target
+The following example shows how to fit the majority rule classifier::
 
-    >>> # Training classifiers
-    >>> clf1 = DecisionTreeClassifier(max_depth=4)
-    >>> clf2 = KNeighborsClassifier(n_neighbors=7)
-    >>> clf3 = SVC(kernel='rbf', probability=True)
-    >>> eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)], voting='soft', weights=[2,1,2])
+   >>> from sklearn import datasets
+   >>> from sklearn import cross_validation
+   >>> from sklearn.linear_model import LogisticRegression
+   >>> from sklearn.naive_bayes import GaussianNB
+   >>> from sklearn.ensemble import RandomForestClassifier
+   >>> from sklearn.ensemble import VotingClassifier
 
-    >>> clf1 = clf1.fit(X,y)
-    >>> clf2 = clf2.fit(X,y)
-    >>> clf3 = clf3.fit(X,y)
-    >>> eclf = eclf.fit(X,y)
+   >>> iris = datasets.load_iris()
+   >>> X, y = iris.data[:, 1:3], iris.target
 
- .. figure:: ../auto_examples/ensemble/images/plot_voting_decision_regions_001.png
-     :target: ../auto_examples/ensemble/plot_voting_decision_regions.html
-     :align: center
-     :scale: 75%
+   >>> clf1 = LogisticRegression(random_state=1)
+   >>> clf2 = RandomForestClassifier(random_state=1)
+   >>> clf3 = GaussianNB()
 
- Using the `VotingClassifier` with `GridSearch`
- ---------------------------------------------
+   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='hard')
+
+   >>> for clf, label in zip([clf1, clf2, clf3, eclf], ['Logistic Regression', 'Random Forest', 'naive Bayes', 'Ensemble']):
+   ...     scores = cross_validation.cross_val_score(clf, X, y, cv=5, scoring='accuracy')
+   ...     print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
+   Accuracy: 0.90 (+/- 0.05) [Logistic Regression]
+   Accuracy: 0.93 (+/- 0.05) [Random Forest]
+   Accuracy: 0.91 (+/- 0.04) [naive Bayes]
+   Accuracy: 0.95 (+/- 0.05) [Ensemble]
+
+
+Weighted Average Probabilities (Soft Voting)
+--------------------------------------------
+
+In contrast to majority voting (hard voting), soft voting
+returns the class label as argmax of the sum of predicted probabilities.
+
+Specific weights can be assigned to each classifier via the ``weights``
+parameter. When weights are provided, the predicted class probabilities
+for each classifier are collected, multiplied by the classifier weight,
+and averaged. The final class label is then derived from the class label
+with the highest average probability.
+
+To illustrate this with a simple example, let's assume we have 3
+classifiers and a 3-class classification problems where we assign
+equal weights to all classifiers: w1=1, w2=1, w3=1.
+
+The weighted average probabilities for a sample would then be
+calculated as follows:
+
+================  ==========    ==========      ==========
+classifier        class 1       class 2         class 3
+================  ==========    ==========      ==========
+classifier 1	  w1 * 0.2     w1 * 0.5       w1 * 0.3
+classifier 2	  w2 * 0.6     w2 * 0.3       w2 * 0.1
+classifier 3      w3 * 0.3      w3 * 0.4        w3 * 0.3
+weighted average  0.37	        0.4            0.3
+================  ==========    ==========      ==========
+
+Here, the predicted class label is 2, since it has the
+highest average probability.
+
+The following example illustrates how the decision regions may change
+when a soft `VotingClassifier` is used based on an linear Support
+Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
+
+   >>> from sklearn import datasets
+   >>> from sklearn.tree import DecisionTreeClassifier
+   >>> from sklearn.neighbors import KNeighborsClassifier
+   >>> from sklearn.svm import SVC
+   >>> from itertools import product
+   >>> from sklearn.ensemble import VotingClassifier
+
+   >>> # Loading some example data
+   >>> iris = datasets.load_iris()
+   >>> X = iris.data[:, [0,2]]
+   >>> y = iris.target
+
+   >>> # Training classifiers
+   >>> clf1 = DecisionTreeClassifier(max_depth=4)
+   >>> clf2 = KNeighborsClassifier(n_neighbors=7)
+   >>> clf3 = SVC(kernel='rbf', probability=True)
+   >>> eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)], voting='soft', weights=[2,1,2])
+
+   >>> clf1 = clf1.fit(X,y)
+   >>> clf2 = clf2.fit(X,y)
+   >>> clf3 = clf3.fit(X,y)
+   >>> eclf = eclf.fit(X,y)
+
+.. figure:: ../auto_examples/ensemble/images/plot_voting_decision_regions_001.png
+    :target: ../auto_examples/ensemble/plot_voting_decision_regions.html
+    :align: center
+    :scale: 75%
+
+Using the `VotingClassifier` with `GridSearch`
+---------------------------------------------
 
 The `VotingClassifier` can also be used together with `GridSearch` in order
-to tune the hyperparameters of the individual estimators.
+to tune the hyperparameters of the individual estimators::
 
-    >>> from sklearn.grid_search import GridSearchCV
-    >>> clf1 = LogisticRegression(random_state=1)
-    >>> clf2 = RandomForestClassifier(random_state=1)
-    >>> clf3 = GaussianNB()
-    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
+   >>> from sklearn.grid_search import GridSearchCV
+   >>> clf1 = LogisticRegression(random_state=1)
+   >>> clf2 = RandomForestClassifier(random_state=1)
+   >>> clf3 = GaussianNB()
+   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
 
-    >>> params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200],}
+   >>> params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200],}
 
-    >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
-    >>> grid = grid.fit(iris.data, iris.target)
+   >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
+   >>> grid = grid.fit(iris.data, iris.target)
 
- Usage
- .....
+Usage
+.....
 
- In order to predict the class labels based on the predicted
- class-probabilities (scikit-learn estimators in the VotingClassifier
- must support ``predict_proba`` method):
+In order to predict the class labels based on the predicted
+class-probabilities (scikit-learn estimators in the VotingClassifier
+must support ``predict_proba`` method)::
 
-    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
+   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
 
- Optionally, weights can be provided for the individual classifiers:
+Optionally, weights can be provided for the individual classifiers::
 
-    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft', weights=[2,5,1])
-
+   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft', weights=[2,5,1])
