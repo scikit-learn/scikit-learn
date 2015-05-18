@@ -8,6 +8,7 @@ of Gaussian Mixture Models.
 # Author: Ron Weiss <ronweiss@gmail.com>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
+#         Daniel Bunting <daniel.bunting14@imperial.ac.uk>
 
 import warnings
 import numpy as np
@@ -241,6 +242,7 @@ class GMM(BaseEstimator):
             warnings.warn("'thresh' has been replaced by 'tol' in 0.16 "
                           " and will be removed in 0.18.",
                           DeprecationWarning)
+        print "WOOOOO"
         self.n_components = n_components
         self.covariance_type = covariance_type
         self.thresh = thresh
@@ -463,7 +465,7 @@ class GMM(BaseEstimator):
             raise ValueError(
                 'GMM estimation with %s components, but got only %s samples' %
                 (self.n_components, X.shape[0]))
-
+        self.n_features = X.shape[1]
         max_log_prob = -np.infty
 
         if self.verbose > 0:
@@ -650,12 +652,218 @@ class GMM(BaseEstimator):
         aic: float (the lower the better)
         """
         return - 2 * self.score(X).sum() + 2 * self._n_parameters()
+        
+    def grad(self, X):
+        
+        """
+        The gradient of the total GMM density wrt to the coordinates grad(p(x))
+        
+        As per http://faculty.ucmerced.edu/mcarreira-perpinan/papers/cs-99-03.pdf
+        
+        Parameters
+        -----------
+         X : array-like, shape = [n_samples, n_features]
+         
+        Returns
+        --------
+        grad(p(x)) : array, shape = [n_samples_, n_features]
+        
+        """
+        check_is_fitted(self, 'means_')
+        X = check_array(X)
+        if X.ndim == 1:
+            X = X[:, np.newaxis]
+        if X.size == 0:
+            return np.array([]), np.empty((0, self.n_components))
+        if X.shape[1] != self.means_.shape[1]:
+            raise ValueError('The shape of X  is not compatible with self')
+            
+        accumulator = np.zeros(X.shape)
+
+        # p_{ij} = p(x_i | z_i = j)        
+        p  = np.exp(log_multivariate_normal_density(X, self.means_, self.covars_, self.covariance_type) )
+
+        for i in range(self.n_components):            
+            accumulator += np.transpose(self.weights_[i] * p[:,i] * np.tensordot(np.linalg.inv(self.covars_[i]), self.means_[i,np.newaxis,:] - X, axes=[1,1]))
+        
+        if(X.shape[0] == 1):
+            return(accumulator.reshape(self.n_features))
+        else:
+            return(accumulator)
+        
+    def log_grad(self, X):
+        
+        """
+        The gradient of the log of the total GMM density wrt to the coordinates, grad(ln(p(x)))
+        
+        As per http://faculty.ucmerced.edu/mcarreira-perpinan/papers/cs-99-03.pdf
+        
+        Calculated using  grad(ln(p(x))) = grad(p(x)) / p(x)
+        Parameters
+        -----------
+         X : array-like, shape = [n_samples, n_features]
+         
+        Returns
+        --------
+        ln(grad(p(x))) : array, shape = [n_samples_, n_features]
+        
+        """
+        check_is_fitted(self, 'means_')
+        X = check_array(X)
+        
+        P  = np.exp(self.score(X))
+        if(X.shape[0] == 1):
+            return (self.grad(X)/P[0])   
+        else:
+            return (self.grad(X)/P[:, np.newaxis])   
+      
+    
+    
+    def hessian(self, X):
+        
+        
+        """
+        The Hessian matrix of the total GMM density wrt to the coordinates, del(del(p(x)))
+        
+        As per http://faculty.ucmerced.edu/mcarreira-perpinan/papers/cs-99-03.pdf
+        
+
+        Parameters
+        -----------
+         X : array-like, shape = [n_samples, n_features]
+         
+        Returns
+        --------
+        H(X) : array, shape = [n_samples_, n_features,n_features]
+        
+        """
+        
+        check_is_fitted(self, 'means_')
+        X = check_array(X)
+       
+        n_features = X.shape[1]
+        p = np.exp(log_multivariate_normal_density(X, self.means_, self.covars_, self.covariance_type) )
+        H = np.zeros((X.shape[0], n_features, n_features))
+        
+        for i in range(self.n_components):  
+            covar_i = np.matrix(self.covars_[i])
+            inv_covar_i = np.matrix(np.linalg.inv(self.covars_[i]))
+            
+            for j in range(X.shape[0]):    
+                centered = np.matrix(np.outer(self.means_[i] - X[j], self.means_[i] - X[j]))  
+                H[j] += self.weights_[i]*p[j,i]*inv_covar_i*(centered - covar_i)*inv_covar_i
+        return(H)
+    
+    def log_hessian(self, X):
+        
+        
+        """
+        The Hessian matrix of the log of the total GMM density wrt to the coordinates, del(del(ln(p(x))))
+        
+        As per http://faculty.ucmerced.edu/mcarreira-perpinan/papers/cs-99-03.pdf
+        
+
+        Parameters
+        -----------
+         X : array-like, shape = [n_samples, n_features]
+         
+        Returns
+        --------
+        H_L(X) : array, shape = [n_samples_, n_features,n_features]
+        
+        """
+        
+        check_is_fitted(self, 'means_')
+        X = check_array(X)
+       
+        P  = np.exp(self.score(X))
+        g = self.grad(X)
+        H = self.hessian(X)
+        return(H/P[:,np.newaxis, np.newaxis] - np.outer(g,g)/P[:,np.newaxis, np.newaxis]**2)
+    
+    def get_modes(self, epsilon = 1e-4, theta = 1e-2, max_it = 1000):
+        
+        '''
+        Locates the modes of the posterior distribution. When the components are sufficiently separated 
+        the modes -> the means, but when the components are highly interacting the modes are non-trivial.
+        
+        Uses the gradient-quadratic mode-finding algorithm presented in 
+        http://faculty.ucmerced.edu/mcarreira-perpinan/papers/cs-99-03.pdf
+        
+        Parameters
+        -----------
+         epsilon, theta: Numerical tolerences
+         max_it : Number of iterations
+         
+        Returns
+        --------
+        M: [np.array(n_features), .....] A list of arrays of length n_features. NB len(M) <= n_components
+        
+        '''
+        
+        
+        check_is_fitted(self, 'means_')
+        
+        sigma = np.sqrt(np.min([np.min(np.linalg.eigvals(cv)) for cv in self.covars_]))
+        
+        min_step = sigma**2 * (2*np.pi*sigma**2)**(self.n_features/2.)
+        min_grad = sigma**-1 * (2*np.pi*sigma**2)**(-self.n_features/2.) * epsilon * np.exp(-0.5*epsilon**2)
+        min_diff = 100*epsilon*sigma
+        max_eig = 0
+        
+        
+        s =64*min_step
+        
+        M = []
+        
+        for m in range(self.n_components):
+            x = self.means_[m]
+            p = np.exp(self.score(x))
+            g = self.log_grad(x)
+            H = self.log_hessian(x)
+            i = 0
+
+            while (i < max_it and np.linalg.norm(g) > min_grad):
+                
+                g = self.log_grad(x)
+                H = self.log_hessian(x)
+                
+                x_old = x
+                p_old = p
+                
+                if(is_neg_def(H)):
+                    x = x_old - np.dot(g,np.linalg.inv(H))
+                    p = np.exp(self.score(x))
+                
+                if(not is_neg_def(H) or p < p_old):
+                   
+                    x = x_old + s*g
+                    p = np.exp(self.score(x))
+                    while p < p_old:
+                        s = s/2.
+                        x = x_old + s*g
+                        p = np.exp(self.score(x))
+                    
+                i+=1
+                
+            if np.max(np.linalg.eigvals(H)) < max_eig:
+                N = [v for v in M if np.linalg.norm(v - x) <= min_diff]
+                N.append(x)
+                
+                M = [k for k in M  if not any( (k == x).all() for x in N)]
+                M.append( max([(v, np.exp(self.score(v))) for v in N], key = lambda x:x[1])[0]) 
+        
+        return(M)
+            
+            
 
 
 #########################################################################
 ## some helper routines
 #########################################################################
 
+def is_neg_def(x):
+    return np.all(np.linalg.eigvals(x) < 0)
 
 def _log_multivariate_normal_density_diag(X, means, covars):
     """Compute Gaussian log-density at X for a diagonal model"""
@@ -817,3 +1025,22 @@ _covar_mstep_funcs = {'spherical': _covar_mstep_spherical,
                       'tied': _covar_mstep_tied,
                       'full': _covar_mstep_full,
                       }
+
+   
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
