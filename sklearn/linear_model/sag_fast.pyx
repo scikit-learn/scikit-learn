@@ -1,110 +1,20 @@
 # cython: cdivision=True
+#
+# Authors: Danny Sullivan <dbsullivan23@gmail.com>
+#
+# Licence: BSD 3 clause
 
 import numpy as np
 cimport numpy as np
 import warnings
-from libc.math cimport fmax, fabs, exp, log
+from libc.math cimport fabs, exp, log
 from libc.time cimport time, time_t
+
+from ..utils.seq_dataset cimport SequentialDataset
+from .sgd_fast cimport Log, SquaredLoss, LossFunction
 
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
-
-from sklearn.utils.seq_dataset cimport SequentialDataset
-
-cdef class LossFunction:
-    """Base class for convex loss functions"""
-
-    cdef double loss(self, double p, double y) nogil:
-        """Evaluate the loss function.
-
-        Parameters
-        ----------
-        p : double
-            The prediction, p = w^T x
-        y : double
-            The true value (aka target)
-
-        Returns
-        -------
-        double
-            The loss evaluated at `p` and `y`.
-        """
-        pass
-
-    def dloss(self, double p, double y):
-        """Evaluate the derivative of the loss function with respect to
-        the prediction `p`.
-
-        Parameters
-        ----------
-        p : double
-            The prediction, p = w^T x
-        y : double
-            The true value (aka target)
-        Returns
-        -------
-        double
-            The derivative of the loss function with regards to `p`.
-        """
-        return self._dloss(p, y)
-
-    cdef double _dloss(self, double p, double y) nogil:
-        pass
-
-
-cdef class Regression(LossFunction):
-    """Base class for loss functions for regression"""
-
-    cdef double loss(self, double p, double y) nogil:
-        pass
-
-    cdef double _dloss(self, double p, double y) nogil:
-        pass
-
-cdef class Classification(LossFunction):
-    """Base class for loss functions for classification"""
-
-    cdef double loss(self, double p, double y) nogil:
-        return 0.
-
-    cdef double _dloss(self, double p, double y) nogil:
-        return 0.
-
-cdef class Log(Classification):
-    """Logistic regression loss for binary classification with y in {-1, 1}"""
-
-    cdef double loss(self, double p, double y) nogil:
-        cdef double z = p * y
-        # approximately equal and saves the computation of the log
-        if z > 18:
-            return exp(-z)
-        if z < -18:
-            return -z
-        return log(1.0 + exp(-z))
-
-    cdef double _dloss(self, double p, double y) nogil:
-        cdef double z = p * y
-        # approximately equal and saves the computation of the log
-        if z > 18.0:
-            return exp(-z) * -y
-        if z < -18.0:
-            return -y
-        return -y / (exp(z) + 1.0)
-
-    def __reduce__(self):
-        return Log, ()
-
-
-cdef class SquaredLoss(Regression):
-    """Squared loss traditional used in linear regression."""
-    cdef double loss(self, double p, double y) nogil:
-        return 0.5 * (p - y) * (p - y)
-
-    cdef double _dloss(self, double p, double y) nogil:
-        return p - y
-
-    def __reduce__(self):
-        return SquaredLoss, ()
 
 # This sparse implementation is taken from section 4.3 of "Minimizing Finite
 # Sums with the Stochastic Average Gradient" by
@@ -112,26 +22,33 @@ cdef class SquaredLoss(Regression):
 #
 # https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
 
-def sag_sparse(SequentialDataset dataset,
-               np.ndarray[double, ndim=1, mode='c'] weights_array,
-               double intercept,
-               int n_samples,
-               int n_features,
-               double tol,
-               int max_iter,
-               LossFunction loss,
-               double eta,
-               double alpha,
-               np.ndarray[double, ndim=1, mode='c'] sum_gradient_init,
-               np.ndarray[double, ndim=1, mode='c'] gradient_memory_init,
-               np.ndarray[bint, ndim=1, mode='c'] seen_init,
-               int num_seen,
-               double weight_pos,
-               double weight_neg,
-               bint fit_intercept,
-               double intercept_sum_gradient,
-               double intercept_decay,
-               bint verbose):
+
+cdef inline double fmax(double x, double y) nogil:
+    if x > y:
+        return x
+    return y
+
+
+def sag(SequentialDataset dataset,
+        np.ndarray[double, ndim=1, mode='c'] weights_array,
+        double intercept,
+        int n_samples,
+        int n_features,
+        double tol,
+        int max_iter,
+        LossFunction loss,
+        double eta,
+        double alpha,
+        np.ndarray[double, ndim=1, mode='c'] sum_gradient_init,
+        np.ndarray[double, ndim=1, mode='c'] gradient_memory_init,
+        np.ndarray[bint, ndim=1, mode='c'] seen_init,
+        int num_seen,
+        double weight_pos,
+        double weight_neg,
+        bint fit_intercept,
+        double intercept_sum_gradient,
+        double intercept_decay,
+        bint verbose):
 
     # true if the weights or intercept are NaN or infinity
     cdef bint infinity = False
@@ -167,6 +84,8 @@ def sag_sparse(SequentialDataset dataset,
     cdef time_t start_time
     # the end time of the fit
     cdef time_t end_time
+    # precomputation since eta does not change in this implementation
+    cdef double one_minus_eta_alpha = 1.0 - eta * alpha
 
     # vector of booleans indicating whether this sample has been seen
     cdef bint* seen = <bint*> seen_init.data
@@ -215,12 +134,6 @@ def sag_sparse(SequentialDataset dataset,
                                                &xnnz,
                                                &y,
                                                &sample_weight)
-                # dataset.next(&x_data_ptr,
-                #              &x_ind_ptr,
-                #              &xnnz,
-                #              &y,
-                #              &sample_weight)
-                # current_index = itr
 
                 # update the number of samples seen and the seen array
                 if seen[current_index] == 0:
@@ -283,7 +196,7 @@ def sag_sparse(SequentialDataset dataset,
                 # update the gradient memory for this sample
                 gradient_memory[current_index] = gradient
 
-                wscale *= 1.0 - eta * alpha
+                wscale *= one_minus_eta_alpha
 
                 if itr == 0:
                     cumulative_sums[0] = eta / (wscale * num_seen)
@@ -307,7 +220,7 @@ def sag_sparse(SequentialDataset dataset,
             scale_weights(weights, wscale, n_features, n_samples, n_samples - 1,
                           cumulative_sums, feature_hist, sum_gradient)
             wscale = 1.0
-
+            
             max_change = 0.0
             max_weight = 0.0
             for j in range(n_features):
@@ -325,6 +238,7 @@ def sag_sparse(SequentialDataset dataset,
                               ((total_iter / n_samples),
                               (end_time - start_time)))
                 break
+
             if total_iter / n_samples >= max_iter:
                 if verbose:
                     end_time = time(NULL)
@@ -343,6 +257,7 @@ def sag_sparse(SequentialDataset dataset,
 
     return intercept, num_seen, max_iter_reached, intercept_sum_gradient
 
+
 cdef void scale_weights(double* weights, double wscale, int n_features,
                         int n_samples, int total_iter, double* cumulative_sums,
                         int* feature_hist, double* sum_gradient) nogil:
@@ -358,6 +273,7 @@ cdef void scale_weights(double* weights, double wscale, int n_features,
         feature_hist[j] = (total_iter + 1) % n_samples
 
     cumulative_sums[total_iter % n_samples] = 0.0
+
 
 def get_auto_eta(SequentialDataset dataset, double alpha,
                  int n_samples, LossFunction loss, bint fit_intercept):
@@ -384,12 +300,17 @@ def get_auto_eta(SequentialDataset dataset, double alpha,
                 max_squared_sum = current_squared_sum
             current_squared_sum = 0.0
 
-    if isinstance(loss, Classification):
+    if isinstance(loss, Log):
         # Lipschitz for log loss
         return 4.0 / (max_squared_sum + fit_intercept + 4.0 * alpha)
-    else:
+    elif isinstance(loss, SquaredLoss):
         # Lipschitz for squared loss
         return 1.0 / (max_squared_sum + fit_intercept + alpha)
+    else:
+        raise ValueError("Unknown loss function for SAG solver, got %s "
+                         "instead of Log or SquaredLoss"
+                         % loss.__class__.__name__)
+
 
 cdef double dot(double* x_data_ptr, int* x_ind_ptr, double* w_data_ptr,
                 int xnnz) nogil:

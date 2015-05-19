@@ -41,11 +41,11 @@ LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
 PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 
 SPARSE_INTERCEPT_DECAY = 0.01
-"""For sparse data intercept updates are scaled by this decay factor to avoid
-intercept oscillation."""
+# For sparse data intercept updates are scaled by this decay factor to avoid
+# intercept oscillation.
 
 DEFAULT_EPSILON = 0.1
-"""Default value of ``epsilon`` parameter. """
+# Default value of ``epsilon`` parameter.
 
 
 class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):

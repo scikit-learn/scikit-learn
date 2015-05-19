@@ -1,478 +1,92 @@
+"""Solvers for Ridge and LogisticRegression using SAG algorithm"""
+
+# Authors: Danny Sullivan <dbsullivan23@gmail.com>
+#          Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
+#
+# Licence: BSD 3 clause
+
 import numpy as np
 import scipy.sparse as sp
-
-from abc import ABCMeta
 import warnings
 
-from .base import LinearClassifierMixin, LinearModel, SparseCoefMixin
-from ..base import RegressorMixin, BaseEstimator
-from ..utils import check_X_y, compute_class_weight, check_random_state
 from ..utils import ConvergenceWarning
+from ..utils.fixes import astype
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
-from ..externals import six
-from ..externals.joblib import Parallel, delayed
-from .sag_fast import Log, SquaredLoss
-from .sag_fast import sag_sparse, get_auto_eta
+from .sgd_fast import Log, SquaredLoss
+from .sag_fast import sag, get_auto_eta
 
-MAX_INT = np.iinfo(np.int32).max
+from .stochastic_gradient import SPARSE_INTERCEPT_DECAY
 
-"""For sparse data intercept updates are scaled by this decay factor to avoid
-intercept oscillation."""
-SPARSE_INTERCEPT_DECAY = 0.01
 
+def make_dataset(X, y, sample_weight, random_state):
+    # check which type of Sequential Dataset is needed
+    y = astype(y, dtype=np.float64, copy=False)
+    seed = random_state.randint(0, np.iinfo(np.int32).max)
 
-# taken from http://stackoverflow.com/questions/1816958
-# useful for passing instance methods to Parallel
-def multiprocess_method(instance, name, args=()):
-    "indirect caller for instance methods and multiprocessing"
-    return getattr(instance, name)(*args)
+    if sp.issparse(X):
+        dataset = CSRDataset(X.data, X.indptr, X.indices,
+                             y, sample_weight, seed=seed)
+        intercept_decay = SPARSE_INTERCEPT_DECAY
+    else:
+        dataset = ArrayDataset(X, y, sample_weight, seed=seed)
+        intercept_decay = 1.0
 
+    return dataset, intercept_decay
 
-# The inspiration for SAG comes from:
-# "Minimizing Finite Sums with the Stochastic Average Gradient" by
-# Mark Schmidt, Nicolas Le Roux, Francis Bach. 2013. <hal-00860051>
-#
-# https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
-class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
-    def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
-                 tol=0.001, verbose=0,
-                 random_state=None, eta0='auto', warm_start=False):
-        self.alpha = alpha
-        self.fit_intercept = fit_intercept
-        self.max_iter = max_iter
-        self.tol = tol
-        self.verbose = verbose
-        self.eta0 = eta0
-        self.random_state = random_state
-        self.warm_start = warm_start
 
-        self._validate_params()
-
-        self.coef_ = None
-        self.intercept_ = None
-
-        self.num_seen_ = None
-        self.seen_ = None
-        self.sum_gradient_ = None
-        self.gradient_memory_ = None
-        self.intercept_sum_gradient_ = None
-
-    def _validate_params(self):
-        if not isinstance(self.max_iter, int):
-            raise ValueError("max_iter must be an integer")
-        if self.max_iter < 1:
-            raise ValueError("max_iter must be greater than 0")
-
-    def _fit(self, X, y, coef_init=None, intercept_init=None,
-             sample_weight=None, sum_gradient_init=None,
-             gradient_memory_init=None, seen_init=None, num_seen_init=None,
-             intercept_sum_gradient_init=None,
-             weight_pos=1.0, weight_neg=1.0):
-
-        n_samples, n_features = X.shape[0], X.shape[1]
-
-        # initialize all parameters if there is no init
-        if sample_weight is None:
-            sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
-
-        if intercept_init is None:
-            intercept_init = 0.0
-
-        if intercept_sum_gradient_init is None:
-            intercept_sum_gradient_init = 0.0
-
-        if coef_init is None:
-            coef_init = np.zeros(n_features, dtype=np.float64, order='C')
-
-        if sum_gradient_init is None:
-            sum_gradient_init = np.zeros(n_features, dtype=np.float64,
-                                         order='C')
-
-        if gradient_memory_init is None:
-            gradient_memory_init = np.zeros(n_samples, dtype=np.float64,
-                                            order='C')
-
-        if seen_init is None:
-            seen_init = np.zeros(n_samples, dtype=np.int32, order='C')
-
-        if num_seen_init is None:
-            num_seen_init = 0
-
-        random_state = check_random_state(self.random_state)
-
-        # check which type of Sequential Dataset is needed
-        if sp.issparse(X):
-            dataset = CSRDataset(X.data, X.indptr, X.indices,
-                                 y, sample_weight,
-                                 seed=random_state.randint(MAX_INT))
-            intercept_decay = SPARSE_INTERCEPT_DECAY
-        else:
-            dataset = ArrayDataset(X, y, sample_weight,
-                                   seed=random_state.randint(MAX_INT))
-            intercept_decay = 1.0
-
-        # set the eta0 if needed, 'auto' is 1 / 4L where L is the max sum of
-        # squares for over all samples
-        if self.eta0 == 'auto':
-            step_size = get_auto_eta(dataset, self.alpha, n_samples,
-                                     self.loss_function, self.fit_intercept)
-        else:
-            step_size = self.eta0
-
-        intercept_, num_seen, max_iter_reached, intercept_sum_gradient = \
-            sag_sparse(dataset, coef_init.ravel(),
-                       intercept_init, n_samples,
-                       n_features, self.tol,
-                       self.max_iter,
-                       self.loss_function,
-                       step_size, self.alpha,
-                       sum_gradient_init.ravel(),
-                       gradient_memory_init.ravel(),
-                       seen_init.ravel(),
-                       num_seen_init, weight_pos,
-                       weight_neg,
-                       self.fit_intercept,
-                       intercept_sum_gradient_init,
-                       intercept_decay,
-                       self.verbose)
-
-        if max_iter_reached:
-            warnings.warn("The max_iter was reached which means "
-                          "the coef_ did not converge", ConvergenceWarning)
-
-        return (coef_init.reshape(1, -1), intercept_,
-                sum_gradient_init.reshape(1, -1),
-                gradient_memory_init.reshape(1, -1),
-                seen_init.reshape(1, -1),
-                num_seen, intercept_sum_gradient)
-
-
-class SAGClassifier(BaseSAG, LinearClassifierMixin, BaseEstimator):
-    """Linear classifiers (SVM, logistic regression, a.o.) with SAG training.
-
-    This estimator implements regularized linear models with stochastic
-    average gradient (SAG) learning: the gradient of the loss is estimated
-    using a random sample from the dataset. The weights are then updated
-    according to the sum of gradients seen thus far divided by the number of
-    unique samples seen. The inspiration for SAG comes from "Minimizing Finite
-    Sums with the Stochastic Average Gradient" by Mark Schmidt, Nicolas Le
-    Roux, and Francis Bach. 2013. <hal-00860051>
-    https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
-
-    IMPORTANT NOTE: SAGClassifier and models from linear_model in general
-    depend on columns that are on the same scale. You can make sure that the
-    data will be normalized by using sklearn.preprocessing.StandardScaler on
-    your data before passing it to the fit method.
-
-    This implementation works with data represented as dense or sparse arrays
-    of floating point values for the features. It will fit the data according
-    to log loss.
-
-    The regularizer is a penalty added to the loss function that shrinks model
-    parameters towards the zero vector using either the squared euclidean norm
-    L2.
-
-    Parameters
-    ----------
-    alpha : float, optional
-        Constant that multiplies the regularization term. Defaults to 0.0001
-
-    fit_intercept: bool, optional
-        Whether the intercept should be estimated or not. If False, the
-        data is assumed to be already centered. Defaults to True.
-
-    max_iter: int, optional
-        The max number of passes over the training data if the stopping
-        criterea is not reached. Defaults to 1000.
-
-    tol: double, optional
-        The stopping criterea for the weights. THe iterations will stop when
-        max(change in weights) / max(weights) < tol. Defaults to .001
-
-    random_state: int or numpy.random.RandomState, optional
-        The random_state of the pseudo random number generator to use when
-        sampling the data.
-
-    verbose: integer, optional
-        The verbosity level
-
-    n_jobs: integer, optional
-        The number of CPUs to use to do the OVA (One Versus All, for
-        multi-class problems) computation. -1 means 'all CPUs'. Defaults
-        to 1.
-
-    eta0 : double or "auto"
-        The initial learning rate. The default value is 0.001.
-
-    class_weight : dict, {class_label : weight} or "auto" or None, optional
-        Preset for the class_weight fit parameter.
-
-        Weights associated with classes. If not given, all classes
-        are supposed to have weight one.
-
-        The "auto" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies.
-
-    warm_start : bool, optional
-        When set to True, reuse the solution of the previous call to fit as
-        initialization, otherwise, just erase the previous solution.
-
-
-    Attributes
-    ----------
-    coef_ : array, shape (1, n_features) if n_classes == 2 else (n_classes,
-    n_features)
-        Weights assigned to the features.
-
-    intercept_ : array, shape (1,) if n_classes == 2 else (n_classes,)
-        Constants in decision function.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn import linear_model
-    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> Y = np.array([1, 1, 2, 2])
-    >>> clf = linear_model.SAGClassifier()
-    >>> clf.fit(X, Y)
-    ... #doctest: +NORMALIZE_WHITESPACE
-    SAGClassifier(alpha=0.0001, class_weight=None,
-                  eta0='auto', fit_intercept=True,
-                  max_iter=1000, n_jobs=1, random_state=None,
-                  tol=0.001, verbose=0, warm_start=False)
-    >>> print(clf.predict([[-0.8, -1]]))
-    [1]
-
-    See also
-    --------
-    SGDClassifier, LinearSVC, LogisticRegression, Perceptron
-
-    """
-    def __init__(self, alpha=0.0001,
-                 fit_intercept=True, max_iter=1000, tol=0.001, verbose=0,
-                 n_jobs=1, random_state=None,
-                 eta0='auto', class_weight=None, warm_start=False):
-        self.n_jobs = n_jobs
-        self.class_weight = class_weight
-        self.loss_function = Log()
-        super(SAGClassifier, self).__init__(alpha=alpha,
-                                            fit_intercept=fit_intercept,
-                                            max_iter=max_iter,
-                                            verbose=verbose,
-                                            random_state=random_state,
-                                            tol=tol,
-                                            eta0=eta0,
-                                            warm_start=warm_start)
-
-    """Fit linear model with Stochastic Average Gradient.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data
-
-        y : numpy array, shape (n_samples,)
-            Target values
-
-        sample_weight : array-like, shape (n_samples,), optional
-            Weights applied to individual samples (1. for unweighted).
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-    def fit(self, X, y, sample_weight=None):
-        X, y = check_X_y(X, y, "csr", copy=False, order='C',
-                         dtype=np.float64)
-        n_samples, n_features = X.shape[0], X.shape[1]
-
-        self.classes_ = np.unique(y)
-        self.expanded_class_weight_ = compute_class_weight(self.class_weight,
-                                                           self.classes_, y)
-
-        if self.classes_.shape[0] <= 1:
-            # there is only one class
-            raise ValueError("The number of class labels must be "
-                             "greater than one.")
-        elif self.classes_.shape[0] == 2:
-            # binary classifier
-            (coef, intercept, sum_gradient, gradient_memory,
-             seen, num_seen, intercept_sum_gradient) = \
-                self._fit_target_class(X, y, self.classes_[1], sample_weight)
-        else:
-            # multiclass classifier
-            coef = []
-            intercept = []
-            sum_gradient = []
-            gradient_memory = []
-            seen = []
-            num_seen = []
-            intercept_sum_gradient = []
-
-            # perform a fit for all classes, one verse all
-            results = Parallel(n_jobs=self.n_jobs,
-                               backend="threading",
-                               verbose=self.verbose)(
-                # we have to use a call to multiprocess_method instead of the
-                # plain instance method because pickle will not work on
-                # instance methods in python 2.6 and 2.7
-                delayed(multiprocess_method)(self, "_fit_target_class",
-                                             (X, y, cl, sample_weight))
-                for cl in self.classes_)
-
-            # append results to the correct array
-            for (coef_cl, intercept_cl, sum_gradient_cl, gradient_memory_cl,
-                 seen_cl, num_seen_cl, intercept_sum_gradient_cl) in results:
-                coef.append(coef_cl)
-                intercept.append(intercept_cl)
-                sum_gradient.append(sum_gradient_cl)
-                gradient_memory.append(gradient_memory_cl)
-                seen.append(seen_cl)
-                num_seen.append(num_seen_cl)
-                intercept_sum_gradient.append(intercept_sum_gradient_cl)
-
-            # stack all arrays to transform into np arrays
-            coef = np.vstack(coef)
-            intercept = np.array(intercept)
-            sum_gradient = np.vstack(sum_gradient)
-            gradient_memory = np.vstack(gradient_memory)
-            seen = np.vstack(seen)
-            num_seen = np.array(num_seen)
-            intercept_sum_gradient = np.array(intercept_sum_gradient)
-
-        self.coef_ = coef
-        self.intercept_ = intercept
-        self.sum_gradient_ = sum_gradient
-        self.gradient_memory_ = gradient_memory
-        self.seen_ = seen
-        self.num_seen_ = num_seen
-        self.intercept_sum_gradient_ = intercept_sum_gradient
-
-        return self
-
-    def _fit_target_class(self, X, y, target_class, sample_weight=None):
-        coef_init = None
-        intercept_init = None
-        sum_gradient_init = None
-        gradient_memory_init = None
-        seen_init = None
-        num_seen_init = None
-        intercept_sum_gradient_init = None
-
-        if self.classes_.shape[0] == 2:
-            if self.warm_start:
-                # init parameters for binary classifier
-                coef_init = self.coef_
-                intercept_init = self.intercept_
-                sum_gradient_init = self.sum_gradient_
-                gradient_memory_init = self.gradient_memory_
-                seen_init = self.seen_
-                num_seen_init = self.num_seen_
-                intercept_sum_gradient_init = \
-                    self.intercept_sum_gradient_
-
-            weight_pos = self.expanded_class_weight_[1]
-            weight_neg = self.expanded_class_weight_[0]
-        else:
-            class_index = np.where(self.classes_ == target_class)[0][0]
-            if self.warm_start:
-                # init parameters for multi-class classifier
-                if self.coef_ is not None:
-                    coef_init = self.coef_[class_index]
-                if self.intercept_ is not None:
-                    intercept_init = self.intercept_[class_index]
-                if self.sum_gradient_ is not None:
-                    sum_gradient_init = self.sum_gradient_[class_index]
-                if self.gradient_memory_ is not None:
-                    gradient_memory_init = self.gradient_memory_[class_index]
-                if self.seen_ is not None:
-                    seen_init = self.seen_[class_index]
-                if self.num_seen_ is not None:
-                    num_seen_init = self.num_seen_[class_index]
-                if self.intercept_sum_gradient_ is not None:
-                    intercept_sum_gradient_init = \
-                        self.intercept_sum_gradient_[class_index]
-
-            weight_pos = self.expanded_class_weight_[class_index]
-            weight_neg = 1.0
-
-        n_samples, n_features = X.shape[0], X.shape[1]
-
-        y_encoded = np.ones(n_samples)
-        y_encoded[y != target_class] = -1.0
-
-        return super(SAGClassifier, self).\
-            _fit(X, y_encoded,
-                 coef_init, intercept_init,
-                 sample_weight,
-                 sum_gradient_init,
-                 gradient_memory_init,
-                 seen_init, num_seen_init,
-                 intercept_sum_gradient_init,
-                 weight_pos, weight_neg)
-
-
-class SAGRegressor(BaseSAG, LinearModel, RegressorMixin,
-                   BaseEstimator):
-    """Linear model fitted by minimizing a regularized empirical loss with SAG
+def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
+              verbose=0, random_state=None):
+    """SAG solver for Ridge regression
 
     SAG stands for Stochastic Average Gradient: the gradient of the loss is
     estimated each sample at a time and the model is updated along the way with
-    a constant learning rate. The inspiration for SAG comes from "Minimizing
-    Finite Sums with the Stochastic Average Gradient" by Mark Schmidt,
-    Nicolas Le Roux, and Francis Bach. 2013. <hal-00860051>
-    https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
+    a constant learning rate.
 
-    IMPORTANT NOTE: SAGRegressor and models from linear_model in general depend
-    on columns that are on the same scale. You can make sure that the data will
-    be normalized by using sklearn.preprocessing.StandardScaler on your data
-    before passing it to the fit method.
+    IMPORTANT NOTE: Ridge regressor with 'sag' solver converges faster on
+    columns that are on the same scale. You can normalize the data by using
+    sklearn.preprocessing.StandardScaler on your data before passing it to the
+    fit method.
 
     The regularizer is a penalty added to the loss function that shrinks model
     parameters towards the zero vector using the squared euclidean norm
     L2.
 
-    This implementation works with data represented as dense or sparse numpy
-    arrays of floating point values for the features.
+    This implementation works with data represented as dense numpy arrays or
+    sparse scipy arrays of floating point values for the features.
 
     Parameters
     ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data
+
+    y : numpy array, shape (n_samples,)
+        Target values
+
+    sample_weight : array-like, shape (n_samples,), optional
+        Weights applied to individual samples (1. for unweighted).
+
     alpha : float, optional
         Constant that multiplies the regularization term. Defaults to 0.0001
-
-    fit_intercept: bool, optional
-        Whether the intercept should be estimated or not. If False, the
-        data is assumed to be already centered. Defaults to True.
 
     max_iter: int, optional
         The max number of passes over the training data if the stopping
         criterea is not reached. Defaults to 1000.
 
     tol: double, optional
-        The stopping criterea for the weights. THe iterations will stop when
+        The stopping criterea for the weights. The iterations will stop when
         max(change in weights) / max(weights) < tol. Defaults to .001
-
-    random_state: int or numpy.random.RandomState, optional
-        The random_state of the pseudo random number generator to use when
-        sampling the data.
 
     verbose: integer, optional
         The verbosity level.
 
-    eta0 : double or "auto"
-        The initial learning rate [default 0.01].
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data. Used in 'sag' solver.
 
-    warm_start : bool, optional
-        When set to True, reuse the solution of the previous call to fit as
-        initialization, otherwise, just erase the previous solution.
-
-    Attributes
-    ----------
-    coef_ : array, shape (n_features,)
-        Weights asigned to the features.
-
-    intercept_ : array, shape (1,)
-        The intercept term.
+    Returns
+    -------
+    coef_ : array, shape (n_features)
+        Weight vector.
 
     Examples
     --------
@@ -482,79 +96,255 @@ class SAGRegressor(BaseSAG, LinearModel, RegressorMixin,
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = linear_model.SAGRegressor()
+    >>> clf = linear_model.Ridge(solver='sag')
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
-    SAGRegressor(alpha=0.0001, eta0='auto',
-                 fit_intercept=True, max_iter=1000, random_state=None,
-                 tol=0.001, verbose=0, warm_start=False)
+    Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
+          normalize=False, random_state=None, solver='sag', tol=0.001)
+
+    Reference
+    ---------
+    Schmidt, M., Roux, N. L., & Bach, F. (2013).
+    Minimizing finite sums with the stochastic average gradient
+    https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
 
     See also
     --------
-    SGDRegressor, Ridge, ElasticNet, Lasso, SVR
-
+    Ridge, SGDRegressor, ElasticNet, Lasso, SVR
     """
-    def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
-                 tol=0.001, verbose=0, random_state=None, eta0='auto',
-                 warm_start=False):
+    if max_iter is None:
+        max_iter = 1000
 
-        self.loss_function = SquaredLoss()
-        super(SAGRegressor, self).__init__(alpha=alpha,
-                                           fit_intercept=fit_intercept,
-                                           max_iter=max_iter,
-                                           verbose=verbose,
-                                           random_state=random_state,
-                                           tol=tol,
-                                           eta0=eta0,
-                                           warm_start=warm_start)
+    n_samples, n_features = X.shape[0], X.shape[1]
+    alpha = float(alpha) / n_samples
+    fit_intercept = False
 
-    """Fit linear model with Stochastic Average Gradient.
+    # initialization
+    if sample_weight is None:
+        sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
+    weight_pos = 1.0
+    weight_neg = 1.0
 
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data
+    # These parameters could be saved between two similar fits, to speed up
+    # convergence (see warm starting behavior of sag_logistic()).
+    # But current Ridge does not have a warm_start parameter, and current
+    # RidgeCV never uses sag solver.
+    coef_ = np.zeros(n_features, dtype=np.float64, order='C')
+    intercept_init = 0.0
+    intercept_sum_gradient_init = 0.0
+    sum_gradient_init = np.zeros(n_features, dtype=np.float64, order='C')
+    gradient_memory_init = np.zeros(n_samples, dtype=np.float64, order='C')
+    seen_init = np.zeros(n_samples, dtype=np.int32, order='C')
+    num_seen_init = 0
 
-        y : numpy array, shape (n_samples,)
-            Target values
+    dataset, intercept_decay = make_dataset(X, y, sample_weight, random_state)
 
-        sample_weight : array-like, shape (n_samples,), optional
+    # set the step_size at 1 / (alpha + L) where L is the max sum of
+    # squares for over all samples
+    step_size = get_auto_eta(dataset, alpha, n_samples, SquaredLoss(),
+                             fit_intercept)
+    if step_size * alpha == 1:
+        raise ZeroDivisionError("Current sag implementation does not handle "
+                                "the case step_size * alpha == 1")
+
+    intercept_, num_seen, max_iter_reached, intercept_sum_gradient = \
+        sag(dataset, coef_.ravel(),
+            intercept_init, n_samples,
+            n_features, tol,
+            max_iter,
+            SquaredLoss(),
+            step_size, alpha,
+            sum_gradient_init.ravel(),
+            gradient_memory_init.ravel(),
+            seen_init.ravel(),
+            num_seen_init,
+            weight_pos, weight_neg,
+            fit_intercept,
+            intercept_sum_gradient_init,
+            intercept_decay,
+            verbose)
+
+    if max_iter_reached:
+        warnings.warn("The max_iter was reached which means "
+                      "the coef_ did not converge", ConvergenceWarning)
+
+    return coef_
+
+
+def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
+                 tol=0.001, verbose=0, random_state=None,
+                 warm_start_mem=dict()):
+    """SAG solver for LogisticRegression
+
+    SAG stands for Stochastic Average Gradient: the gradient of the loss is
+    estimated each sample at a time and the model is updated along the way with
+    a constant learning rate.
+
+    IMPORTANT NOTE: LinearRegression with with 'sag' solver converges faster on
+    columns that are on the same scale. You can normalize the data by using
+    sklearn.preprocessing.StandardScaler on your data before passing it to the
+    fit method.
+
+    This implementation works with data represented as dense numpy arrays or
+    sparse scipy arrays of floating point values for the features. It will
+    fit the data according to log loss.
+
+    The regularizer is a penalty added to the loss function that shrinks model
+    parameters towards the zero vector using either the squared euclidean norm
+    L2.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data
+
+    y : numpy array, shape (n_samples,)
+        Target values
+
+    sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples (1. for unweighted).
 
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-    def fit(self, X, y, sample_weight=None):
-        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
-        y = y.astype(np.float64)
+    alpha : float, optional
+        Constant that multiplies the regularization term. Defaults to 0.0001
 
-        coef_init = None
-        intercept_init = None
-        sum_gradient_init = None
-        gradient_memory_init = None
-        seen_init = None
-        num_seen_init = None
-        intercept_sum_gradient_init = None
+    max_iter: int, optional
+        The max number of passes over the training data if the stopping
+        criterea is not reached. Defaults to 1000.
 
-        if self.warm_start:
-            coef_init = self.coef_
-            intercept_init = self.intercept_
-            sum_gradient_init = self.sum_gradient_
-            gradient_memory_init = self.gradient_memory_
-            seen_init = self.seen_
-            num_seen_init = self.num_seen_
-            intercept_sum_gradient_init = self.intercept_sum_gradient_
+    tol: double, optional
+        The stopping criterea for the weights. The iterations will stop when
+        max(change in weights) / max(weights) < tol. Defaults to 0.001
 
-        (self.coef_, self.intercept_, self.sum_gradient_,
-         self.gradient_memory_, self.seen_, self.num_seen_,
-         self.intercept_sum_gradient_) = \
-            super(SAGRegressor, self)._fit(X, y, coef_init,
-                                           intercept_init,
-                                           sample_weight,
-                                           sum_gradient_init,
-                                           gradient_memory_init,
-                                           seen_init, num_seen_init,
-                                           intercept_sum_gradient_init)
+    verbose: integer, optional
+        The verbosity level
 
-        return self
+    random_state: int or numpy.random.RandomState, optional
+        The random_state of the pseudo random number generator to use when
+        sampling the data.
+
+    warm_start_mem: dict, optional
+        The initialization parameters used for warm starting. It is used for
+        example in LogisticRegresionCV. If an intercept needs to be fitted,
+        warm_start_mem must contains a 'coef' key, with an array of length
+        (n_features + 1).
+
+    Returns
+    -------
+    warm_start_mem : dict
+        Contains a 'coef' key with the fitted result, and eventually the
+        fitted intercept at the end of the array. Contains also other keys
+        used for warm starting.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn import linear_model
+    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
+    >>> y = np.array([1, 1, 2, 2])
+    >>> clf = linear_model.LogisticRegression(solver='sag')
+    >>> clf.fit(X, y)
+    ... #doctest: +NORMALIZE_WHITESPACE
+    LogisticRegression(C=1.0, class_weight=None, dual=False,
+        fit_intercept=True, intercept_scaling=1, max_iter=100,
+        multi_class='ovr', penalty='l2', random_state=None, solver='sag',
+        tol=0.0001, verbose=0, warm_start=False)
+    >>> print(clf.predict([[-0.8, -1]]))
+    [1]
+
+    Reference
+    ---------
+    Schmidt, M., Roux, N. L., & Bach, F. (2013).
+    Minimizing finite sums with the stochastic average gradient
+    https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
+
+    See also
+    --------
+    LogisticRegression, SGDClassifier, LinearSVC, Perceptron
+
+    """
+    n_samples, n_features = X.shape[0], X.shape[1]
+    alpha = float(alpha) / n_samples
+
+    if sample_weight is None:
+        sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
+
+    if 'coef' in warm_start_mem.keys():
+        coef_init = warm_start_mem['coef']
+    else:
+        coef_init = np.zeros(n_features, dtype=np.float64, order='C')
+
+    # coef_init contains eventually the intercept_init at the end.
+    fit_intercept = coef_init.size == (n_features + 1)
+    if fit_intercept:
+        intercept_init = coef_init[-1]
+        coef_init = coef_init[:-1]
+    else:
+        intercept_init = 0.0
+
+    if 'intercept_sum_gradient' in warm_start_mem.keys():
+        intercept_sum_gradient_init = warm_start_mem['intercept_sum_gradient']
+    else:
+        intercept_sum_gradient_init = 0.0
+
+    if 'gradient_memory' in warm_start_mem.keys():
+        gradient_memory_init = warm_start_mem['gradient_memory']
+    else:
+        gradient_memory_init = np.zeros(n_samples, dtype=np.float64,
+                                        order='C')
+    if 'sum_gradient' in warm_start_mem.keys():
+        sum_gradient_init = warm_start_mem['sum_gradient']
+    else:
+        sum_gradient_init = np.zeros(n_features, dtype=np.float64, order='C')
+
+    if 'seen' in warm_start_mem.keys():
+        seen_init = warm_start_mem['seen']
+    else:
+        seen_init = np.zeros(n_samples, dtype=np.int32, order='C')
+
+    if 'num_seen' in warm_start_mem.keys():
+        num_seen_init = warm_start_mem['num_seen']
+    else:
+        num_seen_init = 0
+
+    weight_pos = 1.0
+    weight_neg = 1.0
+
+    dataset, intercept_decay = make_dataset(X, y, sample_weight, random_state)
+
+    # set the step_size at 4 / (4 * alpha + L + fit_intercept) where L is the
+    # max sum of squares for over all samples
+    step_size = get_auto_eta(dataset, alpha, n_samples, Log(),
+                             fit_intercept)
+    if step_size * alpha == 1.:
+        raise ZeroDivisionError("Current sag implementation does not handle "
+                                "the case step_size * alpha == 1")
+
+    intercept_, num_seen, max_iter_reached, intercept_sum_gradient = \
+        sag(dataset, coef_init.ravel(),
+            intercept_init, n_samples,
+            n_features, tol,
+            max_iter,
+            Log(),
+            step_size, alpha,
+            sum_gradient_init.ravel(),
+            gradient_memory_init.ravel(),
+            seen_init.ravel(),
+            num_seen_init,
+            weight_pos, weight_neg,
+            fit_intercept,
+            intercept_sum_gradient_init,
+            intercept_decay,
+            verbose)
+
+    if max_iter_reached:
+        warnings.warn("The max_iter was reached which means "
+                      "the coef_ did not converge", ConvergenceWarning)
+    if fit_intercept:
+        coef_init = np.append(coef_init, intercept_)
+
+    warm_start_mem = {'coef': coef_init, 'sum_gradient': sum_gradient_init,
+                      'intercept_sum_gradient': intercept_sum_gradient,
+                      'gradient_memory': gradient_memory_init,
+                      'seen': seen_init, 'num_seen': num_seen}
+
+    return warm_start_mem

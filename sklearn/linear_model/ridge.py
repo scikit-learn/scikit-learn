@@ -18,9 +18,11 @@ from scipy import sparse
 from scipy.sparse import linalg as sp_linalg
 
 from .base import LinearClassifierMixin, LinearModel, _rescale_data
+from .sag import sag_ridge
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import check_X_y
+from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
@@ -185,9 +187,8 @@ def _solve_svd(X, y, alpha):
     return np.dot(Vt.T, d_UT_y).T
 
 
-
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
-                     max_iter=None, tol=1e-3, verbose=0):
+                     max_iter=None, tol=1e-3, verbose=0, random_state=None):
     """Solve the ridge equation by the method of normal equations.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
@@ -208,11 +209,12 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     max_iter : int, optional
         Maximum number of iterations for conjugate gradient solver.
-        The default value is determined by scipy.sparse.linalg.
+        For 'sparse_cg' and 'lsqr' solvers, the default value is determined
+        by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
 
     sample_weight : float or numpy array of shape [n_samples]
-        Individual weights for each sample. If sample_weight is set, then
-        the solver will automatically be set to 'cholesky'
+        Individual weights for each sample. If sample_weight is not None and
+        solver='auto', the solver will be set to 'cholesky'.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational routines:
@@ -236,14 +238,22 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
           scipy.sparse.linalg.lsqr. It is the fatest but may not be available
           in old scipy versions. It also uses an iterative procedure.
 
-        All three solvers support both dense and sparse data.
+        - 'sag' uses a Stochastic Average Gradient descent. It also uses an
+          iterative procedure, and is faster than other solvers when both
+          n_samples and n_features are large.
+
+        All last four solvers support both dense and sparse data.
 
     tol : float
         Precision of the solution.
 
     verbose : int
-        Verbosity level. Setting verbose > 0 will display additional information
-        depending on the solver used.
+        Verbosity level. Setting verbose > 0 will display additional
+        information depending on the solver used.
+
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data. Used in 'sag' solver.
 
     Returns
     -------
@@ -290,8 +300,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         if np.atleast_1d(sample_weight).ndim > 1:
             raise ValueError("Sample weights must be 1D array or scalar")
 
-        # Sample weight can be implemented via a simple rescaling.
-        X, y = _rescale_data(X, y, sample_weight)
+        if solver != 'sag':
+            # SAG supports sample_weight directly. For other solvers,
+            # we implement sample_weight via a simple rescaling.
+            X, y = _rescale_data(X, y, sample_weight)
 
     # There should be either 1 or n_targets penalties
     alpha = np.asarray(alpha).ravel()
@@ -303,13 +315,13 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     if alpha.size == 1 and n_targets > 1:
         alpha = np.repeat(alpha, n_targets)
 
-    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr'):
+    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'sag'):
         raise ValueError('Solver %s not understood' % solver)
 
     if solver == 'sparse_cg':
         coef = _solve_sparse_cg(X, y, alpha, max_iter, tol, verbose)
 
-    elif solver == "lsqr":
+    elif solver == 'lsqr':
         coef = _solve_lsqr(X, y, alpha, max_iter, tol)
 
     elif solver == 'cholesky':
@@ -330,6 +342,14 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                 # use SVD solver if matrix is singular
                 solver = 'svd'
 
+    elif solver == 'sag':
+        random_state = check_random_state(random_state)
+
+        coef = [sag_ridge(X, target.ravel(), sample_weight, alpha_i,
+                          max_iter, tol, verbose, random_state)
+                for alpha_i, target in zip(alpha, y.T)]
+        coef = np.asarray(coef)
+
     if solver == 'svd':
         if sparse.issparse(X):
             raise TypeError('SVD solver does not support sparse'
@@ -347,7 +367,8 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
 
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=None, tol=1e-3, solver="auto"):
+                 copy_X=True, max_iter=None, tol=1e-3, solver="auto",
+                 random_state=None):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -355,6 +376,7 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.max_iter = max_iter
         self.tol = tol
         self.solver = solver
+        self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float,
@@ -373,7 +395,8 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
                                       sample_weight=sample_weight,
                                       max_iter=self.max_iter,
                                       tol=self.tol,
-                                      solver=self.solver)
+                                      solver=self.solver,
+                                      random_state=self.random_state)
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
@@ -395,7 +418,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         shape = [n_targets]
         Small positive values of alpha improve the conditioning of the problem
         and reduce the variance of the estimates.  Alpha corresponds to
-        ``(2*C)^-1`` in other linear models such as LogisticRegression or
+        ``C^-1`` in other linear models such as LogisticRegression or
         LinearSVC. If an array is passed, penalties are assumed to be specific
         to the targets. Hence they must correspond in number.
 
@@ -409,12 +432,13 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     max_iter : int, optional
         Maximum number of iterations for conjugate gradient solver.
-        The default value is determined by scipy.sparse.linalg.
+        For 'sparse_cg' and 'lsqr' solvers, the default value is determined
+        by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag'}
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -435,10 +459,18 @@ class Ridge(_BaseRidge, RegressorMixin):
           scipy.sparse.linalg.lsqr. It is the fatest but may not be available
           in old scipy versions. It also uses an iterative procedure.
 
-        All three solvers support both dense and sparse data.
+        - 'sag' uses a Stochastic Average Gradient descent. It also uses an
+          iterative procedure, and is faster than other solvers when both
+          n_samples and n_features are large.
+
+        All last four solvers support both dense and sparse data.
 
     tol : float
         Precision of the solution.
+
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data. Used in 'sag' solver.
 
     Attributes
     ----------
@@ -464,13 +496,16 @@ class Ridge(_BaseRidge, RegressorMixin):
     >>> clf = Ridge(alpha=1.0)
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
-          normalize=False, solver='auto', tol=0.001)
+          normalize=False, random_state=None, solver='auto', tol=0.001)
+
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=None, tol=1e-3, solver="auto"):
+                 copy_X=True, max_iter=None, tol=1e-3, solver="auto",
+                 random_state=None):
         super(Ridge, self).__init__(alpha=alpha, fit_intercept=fit_intercept,
                                     normalize=normalize, copy_X=copy_X,
-                                    max_iter=max_iter, tol=tol, solver=solver)
+                                    max_iter=max_iter, tol=tol, solver=solver,
+                                    random_state=random_state)
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
@@ -503,7 +538,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     alpha : float
         Small positive values of alpha improve the conditioning of the problem
         and reduce the variance of the estimates.  Alpha corresponds to
-        ``(2*C)^-1`` in other linear models such as LogisticRegression or
+        ``C^-1`` in other linear models such as LogisticRegression or
         LinearSVC.
 
     class_weight : dict or 'balanced', optional
@@ -529,18 +564,37 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
-        Solver to use in the computational
-        routines. 'svd' will use a Singular value decomposition to obtain
-        the solution, 'cholesky' will use the standard
-        scipy.linalg.solve function, 'sparse_cg' will use the
-        conjugate gradient solver as found in
-        scipy.sparse.linalg.cg while 'auto' will chose the most
-        appropriate depending on the matrix X. 'lsqr' uses
-        a direct regularized least-squares routine provided by scipy.
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag'}
+        Solver to use in the computational routines:
+
+        - 'auto' chooses the solver automatically based on the type of data.
+
+        - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
+          coefficients. More stable for singular matrices than
+          'cholesky'.
+
+        - 'cholesky' uses the standard scipy.linalg.solve function to
+          obtain a closed-form solution.
+
+        - 'sparse_cg' uses the conjugate gradient solver as found in
+          scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
+          more appropriate than 'cholesky' for large-scale data
+          (possibility to set `tol` and `max_iter`).
+
+        - 'lsqr' uses the dedicated regularized least-squares routine
+          scipy.sparse.linalg.lsqr. It is the fatest but may not be available
+          in old scipy versions. It also uses an iterative procedure.
+
+        - 'sag' uses a Stochastic Average Gradient descent. It also uses an
+          iterative procedure, and is faster than other solvers when both
+          n_samples and n_features are large.
 
     tol : float
         Precision of the solution.
+
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data. Used in 'sag' solver.
 
     Attributes
     ----------
@@ -563,10 +617,11 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
-                 solver="auto"):
+                 solver="auto", random_state=None):
         super(RidgeClassifier, self).__init__(
             alpha=alpha, fit_intercept=fit_intercept, normalize=normalize,
-            copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver)
+            copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver,
+            random_state=random_state)
         self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=None):
@@ -899,7 +954,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
-        Alpha corresponds to ``(2*C)^-1`` in other linear models such as
+        Alpha corresponds to ``C^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
@@ -985,7 +1040,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
-        Alpha corresponds to ``(2*C)^-1`` in other linear models such as
+        Alpha corresponds to ``C^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
 
     fit_intercept : boolean

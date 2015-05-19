@@ -8,7 +8,6 @@
 
 cimport cython
 from libc.limits cimport INT_MAX
-from libc.stdlib cimport rand, srand, RAND_MAX
 cimport numpy as np
 import numpy as np
 
@@ -92,7 +91,9 @@ cdef class SequentialDataset:
 
     cdef int _get_random_index(self) nogil:
         cdef int n = self.n_samples
-        return (int)(1.0 * rand() / RAND_MAX * n)
+        cdef int current_index = our_rand_r(&self.seed) % n
+        self.current_index = current_index
+        return current_index
 
     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
                       int *nnz, double *y, double *sample_weight,
@@ -110,7 +111,7 @@ cdef class ArrayDataset(SequentialDataset):
     def __cinit__(self, np.ndarray[double, ndim=2, mode='c'] X,
                   np.ndarray[double, ndim=1, mode='c'] Y,
                   np.ndarray[double, ndim=1, mode='c'] sample_weights,
-                  int seed=0):
+                  np.uint32_t seed=0):
         """A ``SequentialDataset`` backed by a two-dimensional numpy array.
 
         Parameters
@@ -148,7 +149,7 @@ cdef class ArrayDataset(SequentialDataset):
             np.arange(0, self.n_samples, dtype=np.intc)
         self.index = index
         self.index_data_ptr = <int *>index.data
-        srand(seed)
+        self.seed = seed
 
     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
                       int *nnz, double *y, double *sample_weight,
@@ -162,11 +163,6 @@ cdef class ArrayDataset(SequentialDataset):
         nnz[0] = self.n_features
         sample_weight[0] = self.sample_weight_data[sample_idx]
 
-    cdef void next(self, double **x_data_ptr, int **x_ind_ptr,
-                   int *nnz, double *y, double *sample_weight) nogil:
-        cdef int current_index = self._get_next_index()
-        self._sample(x_data_ptr, x_ind_ptr, nnz, y,
-                     sample_weight, current_index)
 
 cdef class CSRDataset(SequentialDataset):
     """A ``SequentialDataset`` backed by a scipy sparse CSR matrix. """
@@ -176,7 +172,7 @@ cdef class CSRDataset(SequentialDataset):
                   np.ndarray[int, ndim=1, mode='c'] X_indices,
                   np.ndarray[double, ndim=1, mode='c'] Y,
                   np.ndarray[double, ndim=1, mode='c'] sample_weight,
-                  int seed=0):
+                  np.uint32_t seed=0):
         """Dataset backed by a scipy sparse CSR matrix.
 
         The feature indices of ``x`` are given by x_ind_ptr[0:nnz].
@@ -213,7 +209,7 @@ cdef class CSRDataset(SequentialDataset):
                                                                dtype=np.intc)
         self.index = idx
         self.index_data_ptr = <int *>idx.data
-        srand(seed)
+        self.seed = seed
 
     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
                       int *nnz, double *y, double *sample_weight,

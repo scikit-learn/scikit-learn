@@ -41,6 +41,8 @@ New features
      conditioned on a label array. By `Brian McFee`_, Jean Kossaifi and
      `Gilles Louppe`_.
 
+   - The new solver ``sag`` implements a Stochastic Average Gradient descent
+     and is available in both :class:`linear_model.LogisticRegression` and :class:`linear_model.Ridge`. This solver is very efficient for large datasets. By `Danny Sullivan`_ and `Tom Dupre la Tour`_.
 
 Enhancements
 ............
@@ -156,10 +158,18 @@ Enhancements
      visible with extra trees and on datasets with categorical or sparse
      features. By `Arnaud Joly`_.
 
+<<<<<<< HEAD
    - :class:`ensemble.GradientBoostingRegressor` and
      :class:`ensemble.GradientBoostingClassifier` now expose an ``apply``
      method for retrieving the leaf indices each sample ends up in under
      each try. By `Jacob Schreiber`_.
+=======
+   - Added optional parameter ``random_state`` in :class:`linear_model.Ridge`
+     , to set the seed of the pseudo random generator used in ``sag`` solver.By `Tom Dupre la Tour`_.
+
+   - Added optional parameter ``warm_start`` in
+     :class:`linear_model.LogisticRegression`. If set to True, the solvers ``lbfgs``, ``newton-cg`` and ``sag`` will be initialized with the coefficients computed in the previous fit. By `Tom Dupre la Tour`_.
+>>>>>>> ENH add sag solver in LogisticRegression and Ridge
 
 Bug fixes
 .........
