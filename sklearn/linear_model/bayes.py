@@ -118,7 +118,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the model
 
         Parameters
@@ -324,7 +324,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the ARDRegression model according to the given training data
         and parameters.
 

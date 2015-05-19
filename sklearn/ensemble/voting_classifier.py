@@ -84,7 +84,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.voting = voting
         self.weights = weights
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """ Fit the estimators.
 
         Parameters

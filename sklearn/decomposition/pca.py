@@ -204,7 +204,7 @@ class PCA(BaseEstimator, TransformerMixin):
         self.copy = copy
         self.whiten = whiten
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the model with X.
 
         Parameters
@@ -550,7 +550,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self.whiten = whiten
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the model with X by extracting the first principal components.
 
         Parameters

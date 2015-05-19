@@ -405,7 +405,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.coef0 = coef0
         self.kernel_params = kernel_params
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Creates an affinity matrix for X using the selected affinity,
         then applies spectral clustering to this affinity matrix.
 

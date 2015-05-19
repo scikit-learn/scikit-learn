@@ -11,6 +11,7 @@ from .metrics.pairwise import pairwise_kernels
 from .linear_model.ridge import _solve_cholesky_kernel
 from .utils import check_X_y
 from .utils.validation import check_is_fitted
+from .utils.deprecations import _deprecate_sample_weight
 
 
 class KernelRidge(BaseEstimator, RegressorMixin):
@@ -122,7 +123,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
     def _pairwise(self):
         return self.kernel == "precomputed"
 
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y=None, sample_weight=None, sample_props=None):
         """Fit Kernel Ridge regression model
 
         Parameters
@@ -140,10 +141,10 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         -------
         self : returns an instance of self.
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         # Convert data
         X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True)
 
-        n_samples = X.shape[0]
         K = self._get_kernel(X)
         alpha = np.atleast_1d(self.alpha)
 

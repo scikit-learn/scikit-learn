@@ -456,7 +456,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
         return H, gradH, iterH
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, sample_props=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
         This is more efficient than calling fit followed by transform.
@@ -535,7 +535,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         self.n_iter_ = n_iter
         return W
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None, sample_props=None, **params):
         """Learn a NMF model for the data X.
 
         Parameters

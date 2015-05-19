@@ -409,7 +409,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         self.compute_labels = compute_labels
         self.copy = copy
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """
         Build a CF Tree for the input data.
 

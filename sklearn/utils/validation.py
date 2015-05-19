@@ -110,6 +110,13 @@ def _num_samples(x):
         # Don't get num_samples from an ensembles length!
         raise TypeError('Expected sequence or array-like, got '
                         'estimator %s' % x)
+    if isinstance(x, dict):
+        n_samples = [_num_samples(xx) for xx in x.values()]
+        unique_samples = np.unique(n_samples)
+        if len(unique_samples) > 1:
+            raise ValueError("Inconsistent number of samples in dictionary: %s"
+                             % (unique_samples))
+        return n_samples[0]
     if not hasattr(x, '__len__') and not hasattr(x, 'shape'):
         if hasattr(x, '__array__'):
             x = np.asarray(x)
@@ -193,6 +200,7 @@ def indexable(*iterables):
         if sp.issparse(X):
             result.append(X.tocsr())
         elif hasattr(X, "__getitem__") or hasattr(X, "iloc"):
+            # np.array, tuple, list, dict or pandas data frame
             result.append(X)
         elif X is None:
             result.append(X)

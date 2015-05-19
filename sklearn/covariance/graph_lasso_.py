@@ -320,7 +320,7 @@ class GraphLasso(EmpiricalCovariance):
         # The base class needs this for the score method
         self.store_precision = True
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         X = check_array(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
@@ -520,7 +520,7 @@ class GraphLassoCV(GraphLasso):
         # The base class needs this for the score method
         self.store_precision = True
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fits the GraphLasso covariance model to X.
 
         Parameters

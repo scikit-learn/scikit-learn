@@ -138,7 +138,7 @@ class IncrementalPCA(_BasePCA):
         self.copy = copy
         self.batch_size = batch_size
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the model with X, using minibatches of size batch_size.
 
         Parameters
@@ -174,7 +174,7 @@ class IncrementalPCA(_BasePCA):
             self.partial_fit(X[batch])
         return self
 
-    def partial_fit(self, X, y=None):
+    def partial_fit(self, X, y=None, sample_props=None):
         """Incremental fit with X. All of X is processed as a single batch.
 
         Parameters

@@ -269,7 +269,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     def _pairwise(self):
         return self.affinity == "precomputed"
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """ Create affinity matrix from negative euclidean distances, then
         apply affinity propagation clustering.
 

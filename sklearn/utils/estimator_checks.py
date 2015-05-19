@@ -292,6 +292,29 @@ def check_estimator_sparse_data(name, Estimator):
         raise
 
 
+@ignore_warnings
+def check_sample_properties(name, Estimator):
+    # check that estimator takes sample_properties
+    # XXX check that warning is raised once we add the global
+    # warning level flags
+    rnd = np.random.RandomState(0)
+    X = rnd.uniform(size=(10, 3))
+    y = np.arange(10) % 3
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+    set_random_state(estimator)
+    funcs = ["fit", "fit_predict", "fit_transform"]
+    sample_props = {'sample_weights': np.ones(10)}
+
+    for func_name in funcs:
+        func = getattr(estimator, func_name, None)
+        if func is not None:
+            func(X, y, sample_props=None)
+            func(X, y, sample_props=sample_props)
+            # XXX check for size of sample_props?
+
+
 def check_dtype_object(name, Estimator):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
@@ -1312,7 +1335,7 @@ def check_get_params_invariance(name, estimator):
         def __init__(self):
             pass
 
-        def fit(self, X, y):
+        def fit(self, X, y, sample_props=None):
             return self
 
     if name in ('FeatureUnion', 'Pipeline'):

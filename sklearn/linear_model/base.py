@@ -116,7 +116,7 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for Linear Models"""
 
     @abstractmethod
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit model."""
 
     @deprecated(" and will be removed in 0.19.")
@@ -351,7 +351,7 @@ class LinearRegression(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """
         Fit linear model.
 

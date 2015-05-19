@@ -318,7 +318,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
 
         """
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Generate a sparse random projection matrix
 
         Parameters

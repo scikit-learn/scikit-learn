@@ -181,7 +181,7 @@ def predict_proba_ovr(estimators, X, is_multilabel):
 
 class _ConstantPredictor(BaseEstimator):
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         self.y_ = y
         return self
 
@@ -251,7 +251,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit underlying estimators.
 
         Parameters
@@ -484,7 +484,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit underlying estimators.
 
         Parameters
@@ -698,7 +698,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self.random_state = random_state
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit underlying estimators.
 
         Parameters

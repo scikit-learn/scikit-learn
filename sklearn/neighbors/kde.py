@@ -110,7 +110,7 @@ class KernelDensity(BaseEstimator):
         else:
             raise ValueError("invalid algorithm: '{0}'".format(algorithm))
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the Kernel Density model on the data.
 
         Parameters

@@ -58,6 +58,7 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
 from ..utils.validation import DataConversionWarning, NotFittedError
+from ..utils.deprecations import _deprecate_sample_weight
 from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import bincount
 
@@ -163,7 +164,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         return np.array(results).T
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Build a forest of trees from the training set (X, y).
 
         Parameters
@@ -189,6 +190,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         self : object
             Returns self.
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         # Validate or convert input data
         X = check_array(X, dtype=DTYPE, accept_sparse="csc")
         if issparse(X):
@@ -1476,7 +1478,7 @@ class RandomTreesEmbedding(BaseForest):
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
 
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y=None, sample_weight=None, sample_props=None):
         """Fit estimator.
 
         Parameters
@@ -1492,10 +1494,11 @@ class RandomTreesEmbedding(BaseForest):
             Returns self.
 
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         self.fit_transform(X, y, sample_weight=sample_weight)
         return self
 
-    def fit_transform(self, X, y=None, sample_weight=None):
+    def fit_transform(self, X, y=None, sample_weight=None, sample_props=None):
         """Fit estimator and transform dataset.
 
         Parameters
@@ -1509,6 +1512,7 @@ class RandomTreesEmbedding(BaseForest):
         X_transformed : sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         # ensure_2d=False because there are actually unit test checking we fail
         # for 1d.
         X = check_array(X, accept_sparse=['csc'], ensure_2d=False)

@@ -86,7 +86,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             raise ValueError("input_type must be 'dict', 'pair' or 'string',"
                              " got %r." % input_type)
 
-    def fit(self, X=None, y=None):
+    def fit(self, X=None, y=None, sample_props=None):
         """No-op.
 
         This method doesn't do anything. It exists purely for compatibility

@@ -389,7 +389,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         self.coef_ = np.dot(coef, self.scalings_.T)
         self.intercept_ -= np.dot(self.xbar_, self.coef_.T)
 
-    def fit(self, X, y, store_covariance=False, tol=1.0e-4):
+    def fit(self, X, y, sample_props=None, store_covariance=False, tol=1.0e-4):
         """Fit LDA model according to the given training data and parameters.
 
         Parameters

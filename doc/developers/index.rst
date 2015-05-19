@@ -802,7 +802,7 @@ E.g., here's a custom classifier::
   ...     """Predicts the majority class of its training data."""
   ...     def __init__(self):
   ...         pass
-  ...     def fit(self, X, y):
+  ...     def fit(self, X, y, sample_props=None):
   ...         self.classes_, indices = np.unique(["foo", "bar", "foo"],
   ...                                            return_inverse=True)
   ...         self.majority_ = np.argmax(np.bincount(indices))

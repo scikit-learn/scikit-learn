@@ -502,7 +502,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         """
         return self._fit(X, compute_sources=True)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the model to X.
 
         Parameters

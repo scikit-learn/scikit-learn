@@ -22,7 +22,7 @@ __all__ = ['learning_curve', 'validation_curve']
 
 def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
                    cv=None, scoring=None, exploit_incremental_learning=False,
-                   n_jobs=1, pre_dispatch="all", verbose=0):
+                   n_jobs=1, pre_dispatch="all", verbose=0, sample_props=None):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -104,7 +104,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
         raise ValueError("An estimator must support the partial_fit interface "
                          "to exploit incremental learning")
 
-    X, y = indexable(X, y)
+    X, y, sample_props = indexable(X, y, sample_props)
     # Make a list since we will be iterating multiple times over the folds
     cv = list(_check_cv(cv, X, y, classifier=is_classifier(estimator)))
     scorer = check_scoring(estimator, scoring=scoring)
@@ -131,11 +131,11 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
     if exploit_incremental_learning:
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
-            clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose) for train, test in cv)
+            clone(estimator), X, y, sample_props, classes, train, test,
+            train_sizes_abs, scorer, verbose) for train, test in cv)
     else:
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train[:n_train_samples], test,
+            clone(estimator), X, y, sample_props, scorer, train[:n_train_samples], test,
             verbose, parameters=None, fit_params=None, return_train_score=True)
             for train, test in cv for n_train_samples in train_sizes_abs)
         out = np.array(out)[:, :2]
@@ -206,17 +206,19 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     return train_sizes_abs
 
 
-def _incremental_fit_estimator(estimator, X, y, classes, train, test,
-                               train_sizes, scorer, verbose):
+def _incremental_fit_estimator(estimator, X, y, sample_props, classes, train,
+                               test, train_sizes, scorer, verbose):
     """Train estimator on training subsets incrementally and compute scores."""
     train_scores, test_scores = [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
-        X_train, y_train = _safe_split(estimator, X, y, train_subset)
-        X_partial_train, y_partial_train = _safe_split(estimator, X, y,
-                                                       partial_train)
-        X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
+        X_train, y_train, _ = _safe_split(
+            estimator, X, y, sample_props, train_subset)
+        X_partial_train, y_partial_train, _ = _safe_split(
+            estimator, X, y, sample_props, partial_train)
+        X_test, y_test, _ = _safe_split(estimator, X, y, sample_props, test,
+                                        train_subset)
         if y_partial_train is None:
             estimator.partial_fit(X_partial_train, classes=classes)
         else:
@@ -228,7 +230,8 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 
 
 def validation_curve(estimator, X, y, param_name, param_range, cv=None,
-                     scoring=None, n_jobs=1, pre_dispatch="all", verbose=0):
+                     scoring=None, n_jobs=1, pre_dispatch="all", verbose=0,
+                     sample_props=None):
     """Validation curve.
 
     Determine training and test scores for varying parameter values.
@@ -292,14 +295,14 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     :ref:`examples/model_selection/plot_validation_curve.py
     <example_model_selection_plot_validation_curve.py>`
     """
-    X, y = indexable(X, y)
+    X, y, sample_props = indexable(X, y, sample_props)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
-        estimator, X, y, scorer, train, test, verbose,
+        estimator, X, y, sample_props, scorer, train, test, verbose,
         parameters={param_name: v}, fit_params=None, return_train_score=True)
         for train, test in cv for v in param_range)
 

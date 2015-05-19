@@ -181,7 +181,7 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
                            random_state=random_state)
         OutlierDetectionMixin.__init__(self, contamination=contamination)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         MinCovDet.fit(self, X)
         self.threshold_ = sp.stats.scoreatpercentile(
             self.dist_, 100. * (1. - self.contamination))

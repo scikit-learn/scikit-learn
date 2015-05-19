@@ -24,6 +24,7 @@ from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .cross_validation import _check_cv
 from .metrics.classification import _check_binary_probabilistic_predictions
+from .utils.deprecations import _deprecate_sample_weight
 
 
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
@@ -87,7 +88,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         self.method = method
         self.cv = cv
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Fit the calibrated model
 
         Parameters
@@ -106,6 +107,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         self : object
             Returns an instance of self.
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         X, y = check_X_y(X, y, accept_sparse=['csc', 'csr', 'coo'],
                          force_all_finite=False)
         X, y = indexable(X, y)

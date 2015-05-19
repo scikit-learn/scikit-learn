@@ -19,6 +19,7 @@ from ..utils import (check_array, check_random_state, check_X_y,
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted
+from ..utils.deprecations import _deprecate_sample_weight
 from ..externals import six
 
 from .sgd_fast import plain_sgd, average_sgd
@@ -90,7 +91,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         return self
 
     @abstractmethod
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit model."""
 
     def _validate_params(self):
@@ -397,7 +398,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         return self
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
-             intercept_init=None, sample_weight=None):
+             intercept_init=None, sample_weight=None, sample_props=None):
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         if hasattr(self, "classes_"):
             self.classes_ = None
 
@@ -526,7 +528,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                  classes=classes, sample_weight=sample_weight,
                                  coef_init=None, intercept_init=None)
 
-    def fit(self, X, y, coef_init=None, intercept_init=None, sample_weight=None):
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            sample_weight=None, sample_props=None):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -556,7 +559,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
-                         sample_weight=sample_weight)
+                         sample_weight=sample_weight, sample_props=sample_props)
 
 
 class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
@@ -922,7 +925,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                  coef_init=None, intercept_init=None)
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
-             intercept_init=None, sample_weight=None):
+             intercept_init=None, sample_weight=None, sample_props=None):
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         if self.warm_start and self.coef_ is not None:
             if coef_init is None:
                 coef_init = self.coef_
@@ -946,7 +950,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                  coef_init, intercept_init)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
-            sample_weight=None):
+            sample_weight=None, sample_props=None):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -974,7 +978,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init,
                          intercept_init=intercept_init,
-                         sample_weight=sample_weight)
+                         sample_weight=sample_weight, sample_props=sample_props)
 
     @deprecated(" and will be removed in 0.19.")
     def decision_function(self, X):

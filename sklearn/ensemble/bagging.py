@@ -22,6 +22,7 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils.fixes import bincount
 from ..utils.metaestimators import if_delegate_has_method
+from ..utils.deprecations import _deprecate_sample_weight
 
 from .base import BaseEnsemble, _partition_estimators
 
@@ -224,7 +225,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         self.random_state = random_state
         self.verbose = verbose
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Build a Bagging ensemble of estimators from the training
            set (X, y).
 
@@ -249,6 +250,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
             Returns self.
         """
         random_state = check_random_state(self.random_state)
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
 
         # Convert data
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])

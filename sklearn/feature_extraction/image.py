@@ -447,7 +447,7 @@ class PatchExtractor(BaseEstimator):
         self.max_patches = max_patches
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Do nothing and return the estimator unchanged
 
         This method is just there to implement the usual API and hence

@@ -191,7 +191,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         probabilities /= normalizer
         return probabilities
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit a semi-supervised label propagation model based
 
         All the input data is provided matrix X (labeled and unlabeled)

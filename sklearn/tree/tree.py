@@ -26,7 +26,8 @@ from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_array, check_random_state, compute_sample_weight
-from ..utils.validation import NotFittedError, check_is_fitted
+from ..utils.validation import NotFittedError
+from ..utils.deprecations import _deprecate_sample_weight
 
 
 from ._tree import Criterion
@@ -102,7 +103,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.tree_ = None
         self.max_features_ = None
 
-    def fit(self, X, y, sample_weight=None, check_input=True):
+    def fit(self, X, y, sample_weight=None, sample_props=None, check_input=True):
         """Build a decision tree from the training set (X, y).
 
         Parameters
@@ -133,6 +134,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self : object
             Returns self.
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         random_state = check_random_state(self.random_state)
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csc")

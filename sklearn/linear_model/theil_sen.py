@@ -326,7 +326,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
 
         return n_subsamples, n_subpopulation
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit linear model.
 
         Parameters

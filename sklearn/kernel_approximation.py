@@ -56,7 +56,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         self.n_components = n_components
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the model with X.
 
         Samples random projection according to n_features.
@@ -142,7 +142,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         self.n_components = n_components
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the model with X.
 
         Samples random projection according to n_features.
@@ -248,7 +248,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Set parameters."""
         X = check_array(X, accept_sparse='csr')
         if self.sample_interval is None:
@@ -433,7 +433,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         self.n_components = n_components
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit estimator to data.
 
         Samples a subset of training points, computes kernel

@@ -407,7 +407,7 @@ class TSNE(BaseEstimator):
         self.verbose = verbose
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the model using X as training data.
 
         Parameters

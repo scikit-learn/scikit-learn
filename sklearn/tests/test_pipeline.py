@@ -46,7 +46,7 @@ class IncorrectT(object):
 
 class T(IncorrectT):
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         return self
 
     def get_params(self, deep=False):
@@ -71,7 +71,7 @@ class FitParamT(object):
         self.successful = False
         pass
 
-    def fit(self, X, y, should_succeed=False):
+    def fit(self, X, y, should_succeed=False, sample_props=None):
         self.successful = should_succeed
 
     def predict(self, X):
@@ -89,8 +89,7 @@ def test_pipeline_init():
     pipe = Pipeline([('svc', clf)])
     assert_equal(pipe.get_params(deep=True),
                  dict(svc__a=None, svc__b=None, svc=clf,
-                     **pipe.get_params(deep=False)
-                     ))
+                      **pipe.get_params(deep=False)))
 
     # Check that params are set
     pipe.set_params(svc__a=0.1)
@@ -123,13 +122,13 @@ def test_pipeline_init():
     # Check that apart from estimators, the parameters are the same
     params = pipe.get_params(deep=True)
     params2 = pipe2.get_params(deep=True)
-    
+
     for x in pipe.get_params(deep=False):
         params.pop(x)
-    
+
     for x in pipe2.get_params(deep=False):
         params2.pop(x)
-    
+
     # Remove estimators that where copied
     params.pop('svc')
     params.pop('anova')

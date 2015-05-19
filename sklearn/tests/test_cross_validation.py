@@ -50,7 +50,7 @@ class MockClassifier(object):
 
     def fit(self, X, Y=None, sample_weight=None, class_prior=None,
             sparse_sample_weight=None, sparse_param=None, dummy_int=None,
-            dummy_str=None, dummy_obj=None, callback=None):
+            dummy_str=None, dummy_obj=None, callback=None, sample_props=None):
         """The dummy arguments are to test that this fit function can
         accept non-array arguments through cross-validation, such as:
             - int
@@ -553,6 +553,40 @@ def test_cross_val_score_pandas():
         check_series = lambda x: isinstance(x, TargetType)
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)
         cval.cross_val_score(clf, X_df, y_ser)
+
+
+def test_cross_val_score_sample_props():
+    # check that cross_val_score slices sample sample_props
+    # given as dictionaries properly
+    n_samples_train = len(X) * 1 // 2
+    check_length = lambda x: len(x) == n_samples_train
+
+    def check_sample_props(x):
+        type_check = isinstance(x, dict)
+        length_check = all(len(value) == n_samples_train for value in x.values())
+        key_check = sorted(x.keys()) == ["other_attribute", "sample_weights"]
+        return key_check and length_check and type_check
+
+    clf = CheckingClassifier(check_X=check_length, check_y=check_length,
+                             check_sample_props=check_sample_props)
+    sample_props = {'sample_weights': np.ones(len(X)), 'other_attribute': np.zeros(len(X))}
+    cval.cross_val_score(clf, X, y, sample_props=sample_props, cv=2)
+
+    # test with pandas dataframe if we have pandas
+    #try:
+    #    import pandas as pd
+    #except ImportError:
+    #    return
+
+    #sample_props = pd.DataFame(sample_props)
+
+    #def check_sample_props(x):
+    #    type_check = isinstance(x, pd.DataFrame)
+    #    length_check = len(x) == n_samples_train
+    #    key_check = x.columns == ["sample_weights", "other_attribute"]
+    #    return key_check and length_check and type_check
+
+    #cval.cross_val_score(clf, X, y, sample_props=sample_props)
 
 
 def test_cross_val_score_mask():

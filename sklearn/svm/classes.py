@@ -160,7 +160,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         self.penalty = penalty
         self.loss = loss
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the model according to the given training data.
 
         Parameters
@@ -323,7 +323,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         self.dual = dual
         self.loss = loss
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the model according to the given training data.
 
         Parameters
@@ -937,7 +937,7 @@ class OneClassSVM(BaseLibSVM):
             shrinking, False, cache_size, None, verbose, max_iter,
             random_state)
 
-    def fit(self, X, y=None, sample_weight=None, **params):
+    def fit(self, X, y=None, sample_weight=None, sample_props=None, **params):
         """
         Detects the soft boundary of the set of samples X.
 
@@ -962,5 +962,5 @@ class OneClassSVM(BaseLibSVM):
 
         """
         super(OneClassSVM, self).fit(X, [], sample_weight=sample_weight,
-                                     **params)
+                                     sample_props=sample_props, **params)
         return self

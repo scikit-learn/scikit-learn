@@ -116,7 +116,7 @@ class Pipeline(BaseEstimator):
 
     # Estimator interface
 
-    def _pre_transform(self, X, y=None, **fit_params):
+    def _pre_transform(self, X, y=None, sample_props=None, **fit_params):
         fit_params_steps = dict((step, {}) for step, _ in self.steps)
         for pname, pval in six.iteritems(fit_params):
             step, param = pname.split('__', 1)
@@ -124,13 +124,13 @@ class Pipeline(BaseEstimator):
         Xt = X
         for name, transform in self.steps[:-1]:
             if hasattr(transform, "fit_transform"):
-                Xt = transform.fit_transform(Xt, y, **fit_params_steps[name])
+                Xt = transform.fit_transform(Xt, y, sample_props=None, **fit_params_steps[name])
             else:
-                Xt = transform.fit(Xt, y, **fit_params_steps[name]) \
-                              .transform(Xt)
+                Xt = transform.fit(Xt, y, sample_props=None,
+                                   **fit_params_steps[name]) .transform(Xt)
         return Xt, fit_params_steps[self.steps[-1][0]]
 
-    def fit(self, X, y=None, **fit_params):
+    def fit(self, X, y=None, sample_props=None, **fit_params):
         """Fit all the transforms one after the other and transform the
         data, then fit the transformed data using the final estimator.
 
@@ -143,11 +143,11 @@ class Pipeline(BaseEstimator):
             Training targets. Must fulfill label requirements for all steps of
             the pipeline.
         """
-        Xt, fit_params = self._pre_transform(X, y, **fit_params)
-        self.steps[-1][-1].fit(Xt, y, **fit_params)
+        Xt, fit_params = self._pre_transform(X, y, sample_props=None, **fit_params)
+        self.steps[-1][-1].fit(Xt, y, sample_props=None, **fit_params)
         return self
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None, sample_props=None, **fit_params):
         """Fit all the transforms one after the other and transform the
         data, then use fit_transform on transformed data using the final
         estimator.
@@ -186,7 +186,7 @@ class Pipeline(BaseEstimator):
         return self.steps[-1][-1].predict(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def fit_predict(self, X, y=None, **fit_params):
+    def fit_predict(self, X, y=None, sample_props=None, **fit_params):
         """Applies fit_predict of last step in pipeline after transforms.
 
         Applies fit_transforms of a pipeline to the data, followed by the
@@ -440,7 +440,7 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
                                   trans.get_feature_names()])
         return feature_names
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit all transformers using X.
 
         Parameters
@@ -454,7 +454,7 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
         self._update_transformer_list(transformers)
         return self
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None, sample_props=None, **fit_params):
         """Fit all transformers using X, transform the data and concatenate
         results.
 

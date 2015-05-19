@@ -13,7 +13,9 @@ import sys
 import numpy as np
 import scipy.sparse as sp
 
+
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
@@ -44,7 +46,8 @@ from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
-from sklearn.cross_validation import KFold, StratifiedKFold, FitFailedWarning
+from sklearn.cross_validation import (KFold, StratifiedKFold, FitFailedWarning,
+                                      cross_val_score)
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
@@ -56,8 +59,8 @@ class MockClassifier(object):
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
-    def fit(self, X, Y):
-        assert_true(len(X) == len(Y))
+    def fit(self, X, Y, sample_props=None):
+        assert_true(len(X) == len(y))
         return self
 
     def predict(self, T):
@@ -411,7 +414,7 @@ class BrokenClassifier(BaseEstimator):
     def __init__(self, parameter=None):
         self.parameter = parameter
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         assert_true(not hasattr(self, 'has_been_fit_'))
         self.has_been_fit_ = True
 
@@ -685,7 +688,7 @@ class FailingClassifier(BaseEstimator):
     def __init__(self, parameter=None):
         self.parameter = parameter
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         if self.parameter == FailingClassifier.FAILING_PARAMETER:
             raise ValueError("Failing classifier failed as required")
 
@@ -768,3 +771,38 @@ def test_parameters_sampler_replacement():
     sampler = ParameterSampler(params_distribution, n_iter=7)
     samples = list(sampler)
     assert_equal(len(samples), 7)
+
+
+def test_sample_props_slicing():
+    # test that sample_props are properly sliced and forwarded in GridSearchCV
+    # and cross_val_score
+    X, y = make_blobs(random_state=0)
+    params = {'max_depth': [1, 2, 5]}
+
+    # assign non-zero weight only to one class
+    sample_weights = (y == 0).astype(np.float)
+    grid = GridSearchCV(DecisionTreeClassifier(random_state=0, max_depth=5),
+                        params)
+
+    scores = cross_val_score(grid, X, y,
+                             sample_props={'sample_weight': sample_weights})
+    # make sure we are not better than predicting always class 0
+    assert_less(scores.max(), 0.4)
+
+    # test with checking classifier
+    # make properties dependent on X and y and see that they are passed
+    # correctly for all calls to fit
+    sample_weights = 2 * y
+    other_property = ["foo_%f" % x for x in X[:, 0]]
+    params = {'foo_param': [0, 1]}
+
+    def check_all(X_, y_, sample_props_):
+        assert_array_equal(sample_props_['sample_weight'], 2 * y_)
+        assert_array_equal(sample_props_['other_property'], ["foo_%f" % x for x in X_[:, 0]])
+        return True
+
+    grid = GridSearchCV(CheckingClassifier(check_all=check_all), params)
+
+    cross_val_score(grid, X, y, sample_props={'sample_weight': sample_weights,
+                                              'other_property':
+                                              other_property})

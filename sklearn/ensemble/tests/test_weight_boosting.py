@@ -228,7 +228,6 @@ def test_error():
 def test_base_estimator():
     # Test different base estimators.
     from sklearn.ensemble import RandomForestClassifier
-    from sklearn.svm import SVC
 
     # XXX doesn't work with y_class because RF doesn't support classes_
     # Shouldn't AdaBoost run a LabelBinarizer?
@@ -239,7 +238,6 @@ def test_base_estimator():
     clf.fit(X, y_class)
 
     from sklearn.ensemble import RandomForestRegressor
-    from sklearn.svm import SVR
 
     clf = AdaBoostRegressor(RandomForestRegressor(), random_state=0)
     clf.fit(X, y_regr)
@@ -278,9 +276,10 @@ def test_sparse_classification():
     class CustomSVC(SVC):
         """SVC variant that records the nature of the training set."""
 
-        def fit(self, X, y, sample_weight=None):
+        def fit(self, X, y, sample_weight=None, sample_props=None):
             """Modification on fit caries data type for later verification."""
-            super(CustomSVC, self).fit(X, y, sample_weight=sample_weight)
+            super(CustomSVC, self).fit(X, y, sample_weight=sample_weight,
+                                       sample_props=sample_props)
             self.data_type_ = type(X)
             return self
 
@@ -376,9 +375,10 @@ def test_sparse_regression():
     class CustomSVR(SVR):
         """SVR variant that records the nature of the training set."""
 
-        def fit(self, X, y, sample_weight=None):
+        def fit(self, X, y, sample_weight=None, sample_props=None):
             """Modification on fit caries data type for later verification."""
-            super(CustomSVR, self).fit(X, y, sample_weight=sample_weight)
+            super(CustomSVR, self).fit(X, y, sample_weight=sample_weight,
+                                       sample_props=sample_props)
             self.data_type_ = type(X)
             return self
 

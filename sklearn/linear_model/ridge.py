@@ -23,6 +23,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils import check_X_y
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
+from ..utils.deprecations import _deprecate_sample_weight
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 from ..externals import six
@@ -365,7 +366,8 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.tol = tol
         self.solver = solver
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float,
                          multi_output=True, y_numeric=True)
 
@@ -475,7 +477,7 @@ class Ridge(_BaseRidge, RegressorMixin):
                                     normalize=normalize, copy_X=copy_X,
                                     max_iter=max_iter, tol=tol, solver=solver)
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Fit Ridge regression model
 
         Parameters
@@ -493,7 +495,8 @@ class Ridge(_BaseRidge, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        return super(Ridge, self).fit(X, y, sample_weight=sample_weight)
+        return super(Ridge, self).fit(X, y, sample_weight=sample_weight,
+                                      sample_props=sample_props)
 
 
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
@@ -563,7 +566,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver)
         self.class_weight = class_weight
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit Ridge regression model.
 
         Parameters
@@ -712,7 +715,7 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return y - (c / G_diag), c
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Fit Ridge regression model
 
         Parameters
@@ -730,6 +733,7 @@ class _RidgeGCV(LinearModel):
         -------
         self : Returns self.
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float,
                          multi_output=True, y_numeric=True)
 
@@ -828,7 +832,7 @@ class _BaseRidgeCV(LinearModel):
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Fit Ridge regression model
 
         Parameters
@@ -846,6 +850,7 @@ class _BaseRidgeCV(LinearModel):
         -------
         self : Returns self.
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         if self.cv is None:
             estimator = _RidgeGCV(self.alphas,
                                   fit_intercept=self.fit_intercept,
@@ -853,7 +858,8 @@ class _BaseRidgeCV(LinearModel):
                                   scoring=self.scoring,
                                   gcv_mode=self.gcv_mode,
                                   store_cv_values=self.store_cv_values)
-            estimator.fit(X, y, sample_weight=sample_weight)
+            estimator.fit(X, y, sample_weight=sample_weight,
+                          sample_props=sample_props)
             self.alpha_ = estimator.alpha_
             if self.store_cv_values:
                 self.cv_values_ = estimator.cv_values_
@@ -868,7 +874,7 @@ class _BaseRidgeCV(LinearModel):
             fit_params = {}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
                               parameters, fit_params=fit_params, cv=self.cv)
-            gs.fit(X, y)
+            gs.fit(X, y, sample_props=sample_props)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
 
@@ -1033,7 +1039,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             scoring=scoring, cv=cv)
         self.class_weight = class_weight
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sample_props=None):
         """Fit the ridge classifier.
 
         Parameters
@@ -1053,6 +1059,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         self : object
             Returns self.
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         if sample_weight is None:
             sample_weight = 1.
 

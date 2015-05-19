@@ -568,7 +568,7 @@ class GMM(BaseEstimator):
 
         return responsibilities
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Estimate model parameters with the EM algorithm.
 
         A initialization step is performed before entering the

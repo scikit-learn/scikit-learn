@@ -108,7 +108,7 @@ class ShrunkCovariance(EmpiricalCovariance):
                                      assume_centered=assume_centered)
         self.shrinkage = shrinkage
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """ Fits the shrunk covariance model
         according to the given training data and parameters.
 
@@ -356,7 +356,7 @@ class LedoitWolf(EmpiricalCovariance):
                                      assume_centered=assume_centered)
         self.block_size = block_size
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """ Fits the Ledoit-Wolf shrunk covariance model
         according to the given training data and parameters.
 
@@ -511,7 +511,7 @@ class OAS(EmpiricalCovariance):
 
     """
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """ Fits the Oracle Approximating Shrinkage covariance model
         according to the given training data and parameters.
 

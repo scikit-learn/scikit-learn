@@ -214,7 +214,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         self.feature_range = feature_range
         self.copy = copy
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Compute the minimum and maximum to be used for later scaling.
 
         Parameters
@@ -335,7 +335,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         self.with_std = with_std
         self.copy = copy
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Compute the mean and std to be used for later scaling.
 
         Parameters
@@ -513,7 +513,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         return np.vstack(np.bincount(c, minlength=self.n_input_features_)
                          for c in combinations)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """
         Compute number of output features.
         """
@@ -671,7 +671,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         self.norm = norm
         self.copy = copy
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Do nothing and return the estimator unchanged
 
         This method is just there to implement the usual API and hence
@@ -775,7 +775,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         self.threshold = threshold
         self.copy = copy
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Do nothing and return the estimator unchanged
 
         This method is just there to implement the usual API and hence
@@ -808,7 +808,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.StandardScaler(with_std=False).
     """
 
-    def fit(self, K, y=None):
+    def fit(self, K, y=None, sample_props=None):
         """Fit KernelCenterer
 
         Parameters
@@ -1057,7 +1057,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         self.sparse = sparse
         self.handle_unknown = handle_unknown
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit OneHotEncoder to X.
 
         Parameters

@@ -568,7 +568,7 @@ class Lars(LinearModel, RegressorMixin):
             Gram = None
         return Gram
 
-    def fit(self, X, y, Xy=None):
+    def fit(self, X, y, Xy=None, sample_props=None):
         """Fit the model using X, y as training data.
 
         parameters
@@ -966,7 +966,7 @@ class LarsCV(Lars):
         self.n_jobs = n_jobs
         self.eps = eps
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -1035,7 +1035,7 @@ class LarsCV(Lars):
         # Now compute the full model
         # it will call a lasso internally when self if LassoLarsCV
         # as self.method == 'lasso'
-        Lars.fit(self, X, y)
+        Lars.fit(self, X, y, sample_props=None)
         return self
 
     @property
@@ -1257,7 +1257,7 @@ class LassoLarsIC(LassoLars):
 
         y : array-like, shape (n_samples,)
             target values.
-    
+
         copy_X : boolean, optional, default True
             If ``True``, X will be copied; else, it may be overwritten.
 

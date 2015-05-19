@@ -53,13 +53,13 @@ class EstimatorWithoutFit(object):
 
 class EstimatorWithFit(BaseEstimator):
     """Dummy estimator to test check_scoring"""
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         return self
 
 
 class EstimatorWithFitAndScore(object):
     """Dummy estimator to test check_scoring"""
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         return self
 
     def score(self, X, y):
@@ -68,7 +68,7 @@ class EstimatorWithFitAndScore(object):
 
 class EstimatorWithFitAndPredict(object):
     """Dummy estimator to test check_scoring"""
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         self.y = y
         return self
 

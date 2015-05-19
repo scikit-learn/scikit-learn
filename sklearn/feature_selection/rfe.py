@@ -110,7 +110,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         self.estimator_params = estimator_params
         self.verbose = verbose
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the RFE model and then the underlying estimator on the selected
            features.
 
@@ -363,7 +363,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.estimator_params = estimator_params
         self.verbose = verbose
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the RFE model and automatically tune the number of selected
            features.
 
@@ -395,15 +395,18 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Cross-validation
         for n, (train, test) in enumerate(cv):
-            X_train, y_train = _safe_split(self.estimator, X, y, train)
-            X_test, y_test = _safe_split(self.estimator, X, y, test, train)
+            X_train, y_train, sample_props = _safe_split(self.estimator, X, y,
+                                                         sample_props, train)
+            X_test, y_test, sample_props = _safe_split(self.estimator, X, y,
+                                                       sample_props, test,
+                                                       train)
 
             rfe = RFE(estimator=self.estimator,
                       n_features_to_select=n_features_to_select,
                       step=self.step, estimator_params=self.estimator_params,
                       verbose=self.verbose - 1)
 
-            rfe._fit(X_train, y_train, lambda estimator, features:
+            rfe._fit(X_train, y_train, sample_props, lambda estimator, features:
                      _score(estimator, X_test[:, features], y_test, scorer))
             scores.append(np.array(rfe.scores_[::-1]).reshape(1, -1))
         scores = np.sum(np.concatenate(scores, 0), 0)
@@ -419,7 +422,7 @@ class RFECV(RFE, MetaEstimatorMixin):
                   n_features_to_select=n_features_to_select,
                   step=self.step, estimator_params=self.estimator_params)
 
-        rfe.fit(X, y)
+        rfe.fit(X, y, sample_props=sample_props)
 
         # Set final attributes
         self.support_ = rfe.support_

@@ -19,6 +19,7 @@ from ..utils import check_array, check_consistent_length
 from ..neighbors import NearestNeighbors
 
 from ._dbscan_inner import dbscan_inner
+from ..utils.deprecations import _deprecate_sample_weight
 
 
 def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
@@ -214,7 +215,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         self.p = p
         self.random_state = random_state
 
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y=None, sample_weight=None, sample_props=None):
         """Perform DBSCAN clustering from features or distance matrix.
 
         Parameters
@@ -229,6 +230,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         X = check_array(X, accept_sparse='csr')
         clust = dbscan(X, sample_weight=sample_weight, **self.get_params())
         self.core_sample_indices_, self.labels_ = clust
@@ -240,7 +242,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             self.components_ = np.empty((0, X.shape[1]))
         return self
 
-    def fit_predict(self, X, y=None, sample_weight=None):
+    def fit_predict(self, X, y=None, sample_weight=None, sample_props=None):
         """Performs clustering on X and returns cluster labels.
 
         Parameters
@@ -260,5 +262,6 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         y : ndarray, shape (n_samples,)
             cluster labels
         """
+        sample_weight = _deprecate_sample_weight(sample_weight, sample_props)
         self.fit(X, sample_weight=sample_weight)
         return self.labels_

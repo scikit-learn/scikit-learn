@@ -29,6 +29,7 @@ from sklearn.utils.estimator_checks import (
     check_parameters_default_constructible,
     check_class_weight_auto_linear_classifier,
     check_transformer_n_iter,
+    check_sample_properties,
     check_non_transformer_estimators_n_iter,
     check_get_params_invariance)
 
@@ -193,7 +194,8 @@ def test_get_params_invariance():
     # get_params(deep=False) is a subset of get_params(deep=True)
     # Related to issue #4465
 
-    estimators = all_estimators(include_meta_estimators=False, include_other=True)
+    estimators = all_estimators(include_meta_estimators=False,
+                                include_other=True)
     for name, Estimator in estimators:
         if hasattr(Estimator, 'get_params'):
             yield check_get_params_invariance, name, Estimator

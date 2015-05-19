@@ -72,7 +72,7 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
 
     _center_data = staticmethod(center_data)
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit the model using X, y as training data.
 
         Parameters

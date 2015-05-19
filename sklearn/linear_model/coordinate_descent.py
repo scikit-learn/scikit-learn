@@ -593,7 +593,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.random_state = random_state
         self.selection = selection
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit model with coordinate descent.
 
         Parameters
@@ -983,7 +983,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.random_state = random_state
         self.selection = selection
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit linear model with coordinate descent
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
@@ -1564,7 +1564,7 @@ class MultiTaskElasticNet(Lasso):
         self.random_state = random_state
         self.selection = selection
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_props=None):
         """Fit MultiTaskLasso model with coordinate descent
 
         Parameters

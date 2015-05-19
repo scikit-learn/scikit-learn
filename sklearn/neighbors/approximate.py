@@ -332,7 +332,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             max_depth = max_depth - 1
         return total_neighbors, total_distances
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_props=None):
         """Fit the LSH forest on the data.
 
         This creates binary hashes of input data points by getting the
@@ -502,7 +502,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         else:
             return _array_of_arrays(neighbors)
 
-    def partial_fit(self, X, y=None):
+    def partial_fit(self, X, y=None, sample_props=None):
         """
         Inserts new data into the already fitted LSH Forest.
         Cost is proportional to new total size, so additions

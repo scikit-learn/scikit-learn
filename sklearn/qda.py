@@ -81,7 +81,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
 
-    def fit(self, X, y, store_covariances=False, tol=1.0e-4):
+    def fit(self, X, y, sample_props=None, store_covariances=False, tol=1.0e-4):
         """
         Fit the QDA model according to the given training data and parameters.
 
@@ -97,7 +97,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         store_covariances : boolean
             If True the covariance matrices are computed and stored in the
             `self.covariances_` attribute.
-        
+
         tol : float, optional, default 1.0e-4
             Threshold used for rank estimation.
         """
