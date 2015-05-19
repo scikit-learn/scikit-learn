@@ -1024,7 +1024,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
                             for train, test in cv)
     p = np.concatenate([p for p, _ in preds_blocks])
     locs = np.concatenate([loc for _, loc in preds_blocks])
-    if not _check_is_partition(locs, X.shape[0]):
+    if not _check_is_partition(locs, _num_samples(X)):
         raise ValueError('cross_val_predict only works for partitions')
     preds = p.copy()
     preds[locs] = p
