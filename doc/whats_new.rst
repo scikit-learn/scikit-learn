@@ -46,6 +46,11 @@ New features
      inference. By `Chyi-Kwei Yau`_, with code based on an implementation
      by Matt Hoffman. (`#3659 <https://github.com/scikit-learn/scikit-learn/pull/3659>`_)
 
+   - The new solver ``sag`` implements a Stochastic Average Gradient descent
+     and is available in both :class:`linear_model.LogisticRegression` and
+     :class:`linear_model.Ridge`. This solver is very efficient for large
+     datasets. By `Danny Sullivan`_ and `Tom Dupre la Tour`_.
+     (`#4738 <https://github.com/scikit-learn/scikit-learn/pull/4738>`_)
 
 Enhancements
 ............
@@ -166,12 +171,20 @@ Enhancements
      method for retrieving the leaf indices each sample ends up in under
      each try. By `Jacob Schreiber`_.
 
+<<<<<<< HEAD
    - Add ``sample_weight`` support to :class:`linear_model.LinearRegression`.
      By Sonny Hu. (`#4481 <https://github.com/scikit-learn/scikit-learn/pull/4881>`_)
 
    - Add ``n_iter_without_progress`` to :class:`manifold.TSNE` to control
      the stopping criterion. By Santi Villalba.
      (`#5185 <https://github.com/scikit-learn/scikit-learn/pull/5186>`_)
+=======
+   - Added optional parameter ``random_state`` in :class:`linear_model.Ridge`
+     , to set the seed of the pseudo random generator used in ``sag`` solver. By `Tom Dupre la Tour`_.
+
+   - Added optional parameter ``warm_start`` in
+     :class:`linear_model.LogisticRegression`. If set to True, the solvers ``lbfgs``, ``newton-cg`` and ``sag`` will be initialized with the coefficients computed in the previous fit. By `Tom Dupre la Tour`_.
+>>>>>>> ENH add sag solver in LogisticRegression and Ridge
 
 Bug fixes
 .........

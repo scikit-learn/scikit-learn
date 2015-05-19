@@ -10,6 +10,7 @@ cdef class SequentialDataset:
     cdef np.ndarray index
     cdef int *index_data_ptr
     cdef Py_ssize_t n_samples
+    cdef np.uint32_t seed
 
     cdef void next(self, double **x_data_ptr, int **x_ind_ptr,
                    int *nnz, double *y, double *sample_weight) nogil
@@ -25,6 +26,9 @@ cdef class SequentialDataset:
 
 
 cdef class ArrayDataset(SequentialDataset):
+    cdef np.ndarray X
+    cdef np.ndarray Y
+    cdef np.ndarray sample_weights
     cdef Py_ssize_t n_features
     cdef int stride
     cdef double *X_data_ptr
@@ -34,6 +38,11 @@ cdef class ArrayDataset(SequentialDataset):
     cdef double *sample_weight_data
 
 cdef class CSRDataset(SequentialDataset):
+    cdef np.ndarray X_data
+    cdef np.ndarray X_indptr
+    cdef np.ndarray X_indices
+    cdef np.ndarray Y
+    cdef np.ndarray sample_weights
     cdef int stride
     cdef double *X_data_ptr
     cdef int *X_indptr_ptr

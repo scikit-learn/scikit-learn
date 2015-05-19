@@ -15,8 +15,9 @@ import matplotlib.pyplot as plt
 from sklearn import datasets
 
 from sklearn.cross_validation import train_test_split
-from sklearn.linear_model import SGDClassifier, Perceptron, SAGClassifier
+from sklearn.linear_model import SGDClassifier, Perceptron
 from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.linear_model import LogisticRegression
 
 heldout = [0.95, 0.90, 0.75, 0.50, 0.01]
 rounds = 20
@@ -31,7 +32,7 @@ classifiers = [
                                                          C=1.0)),
     ("Passive-Aggressive II", PassiveAggressiveClassifier(loss='squared_hinge',
                                                           C=1.0)),
-    ("SAGClassifier", SAGClassifier(random_state=77, tol=.1))
+    ("SAG", LogisticRegression(solver='sag', tol=1e-1, C=1.e4 / X.shape[0]))
 ]
 
 xx = 1. - np.array(heldout)

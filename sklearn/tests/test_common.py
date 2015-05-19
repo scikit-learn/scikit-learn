@@ -162,8 +162,7 @@ def test_non_transformer_estimators_n_iter():
                 # libsvm and accessing the iter parameter is non-trivial.
                 if name in (['Ridge', 'SVR', 'NuSVR', 'NuSVC',
                              'RidgeClassifier', 'SVC', 'RandomizedLasso',
-                             'LogisticRegressionCV', 'SAGClassifier',
-                             'SAGRegressor']):
+                             'LogisticRegressionCV']):
                     continue
 
                 # Tested in test_transformer_n_iter below
