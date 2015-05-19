@@ -319,7 +319,7 @@ To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
 .. note::
     Most treatments of LSA in the natural language processing (NLP)
     and information retrieval (IR) literature
-    swap the axis of the matrix :math:`X` so that it has shape
+    swap the axes of the matrix :math:`X` so that it has shape
     ``n_features`` × ``n_samples``.
     We present LSA in a different way that matches the scikit-learn API better,
     but the singular values found are the same.
