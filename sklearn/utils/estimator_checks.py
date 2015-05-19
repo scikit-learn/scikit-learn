@@ -961,7 +961,8 @@ def check_regressors_train(name, Regressor):
     set_random_state(regressor)
     regressor.fit(X, y_)
     regressor.fit(X.tolist(), y_.tolist())
-    regressor.predict(X)
+    y_pred = regressor.predict(X)
+    assert_equal(y_pred.shape, y_.shape)
 
     # TODO: find out why PLS and CCA fail. RANSAC is random
     # and furthermore assumes the presence of outliers, hence

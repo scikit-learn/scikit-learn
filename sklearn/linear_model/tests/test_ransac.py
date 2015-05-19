@@ -135,7 +135,7 @@ def test_ransac_predict():
                                        residual_threshold=0.5, random_state=0)
     ransac_estimator.fit(X, y)
 
-    assert_equal(ransac_estimator.predict(X), np.zeros((100, 1)))
+    assert_equal(ransac_estimator.predict(X), np.zeros(100))
 
 
 def test_ransac_sparse_coo():
@@ -201,7 +201,7 @@ def test_ransac_none_estimator():
 def test_ransac_min_n_samples():
     base_estimator = LinearRegression()
     ransac_estimator1 = RANSACRegressor(base_estimator, min_samples=2,
-                                        residual_threshold=5,  random_state=0)
+                                        residual_threshold=5, random_state=0)
     ransac_estimator2 = RANSACRegressor(base_estimator,
                                         min_samples=2. / X.shape[0],
                                         residual_threshold=5, random_state=0)
