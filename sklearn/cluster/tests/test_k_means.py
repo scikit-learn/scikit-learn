@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import if_not_mac_os
 
+from sklearn.utils.validation import DataConversionWarning
 from sklearn.utils.extmath import row_norms
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
@@ -45,7 +46,7 @@ def test_kmeans_dtype():
     X = rnd.normal(size=(40, 2))
     X = (X * 10).astype(np.uint8)
     km = KMeans(n_init=1).fit(X)
-    pred_x = assert_warns(RuntimeWarning, km.predict, X)
+    pred_x = assert_warns(DataConversionWarning, km.predict, X)
     assert_array_equal(km.labels_, pred_x)
 
 

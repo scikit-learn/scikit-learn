@@ -212,7 +212,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
             raise AssertionError("No warning raised when calling %s"
                                  % func.__name__)
 
-        found = [warning.category is warning_class for warning in w]
+        found = [issubclass(warning.category, warning_class) for warning in w]
         if not any(found):
             raise AssertionError("No warning raised for %s with class "
                                  "%s"
@@ -235,8 +235,8 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
         if not message_found:
             raise AssertionError("Did not receive the message you expected "
-                                 "('%s') for <%s>."
-                                 % (message, func.__name__))
+                                 "('%s') for <%s>, got: '%s'"
+                                 % (message, func.__name__, msg))
 
     return result
 
