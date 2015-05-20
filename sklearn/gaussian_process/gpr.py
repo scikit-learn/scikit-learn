@@ -61,6 +61,16 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         from the space of allowed theta-values. If greater than 1, all bounds
         must be finite.
 
+    normalize_y: boolean, optional (default: False)
+        Whether the target values y are normalized, i.e., mean and standard
+        deviation of observed target values become zero and one, respectively.
+        This parameter should be set to True if the target values' mean is
+        expected to differ considerable from zero or if the standard deviation
+        of the target values is very small or large. When enabled, the
+        normalization effectively modifies the GP's prior based on the data,
+        which contradicts the likelihood principle; normalization is thus
+        disabled per default.
+
     random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
@@ -89,11 +99,12 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     """
     def __init__(self, kernel=None, sigma_squared_n=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=1,
-                 random_state=None):
+                 normalize_y=False, random_state=None):
         self.kernel = kernel
         self.sigma_squared_n = sigma_squared_n
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
+        self.normalize_y = normalize_y
         self.rng = check_random_state(random_state)
 
     def fit(self, X, y):
@@ -118,11 +129,26 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
         X, y = check_X_y(X, y)
 
+        # Normalize target value
+        if self.normalize_y:
+            self.y_fit_mean = np.mean(y, axis=0)
+            self.y_fit_std = np.atleast_1d(np.std(y, axis=0))
+            self.y_fit_std[self.y_fit_std == 0.] = 1.
+            # center and scale y (and sigma_squared_n)
+            y = (y - self.y_fit_mean) / self.y_fit_std
+            self.sigma_squared_n /= self.y_fit_std**2
+        else:
+            self.y_fit_mean = np.zeros(1)
+            self.y_fit_std = np.ones(1)
+
         if np.iterable(self.sigma_squared_n) \
            and self.sigma_squared_n.shape[0] != y.shape[0]:
-            raise ValueError("sigma_n_squared must be a scalar or an array "
-                             "with same number of entries as y. (%d != %d)"
-                              % (self.sigma_squared_n.shape[0], y.shape[0]))
+            if self.sigma_squared_n.shape[0] == 1:
+                self.sigma_squared_n = self.sigma_squared_n[0]
+            else:
+                raise ValueError("sigma_n_squared must be a scalar or an array"
+                                 " with same number of entries as y.(%d != %d)"
+                                 % (self.sigma_squared_n.shape[0], y.shape[0]))
 
         self.X_fit_ = X
         self.y_fit_ = y
@@ -227,10 +253,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:  # Predict based on GP posterior
             K_trans = self.kernel_(X, self.X_fit_)
             y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
+            y_mean = self.y_fit_mean + self.y_fit_std * y_mean  # undo normal.
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
-                return y_mean, y_cov
+                return y_mean, y_cov * self.y_fit_std ** 2
             elif return_std:
                 # compute inverse K_inv of K based on its Cholesky
                 # decomposition L and its inverse L_inv
@@ -241,7 +268,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 y_var -= np.sum(K_trans.T[:, np.newaxis] * K_trans.T
                                 * K_inv[:, :, np.newaxis],
                                 axis=0).sum(axis=0)  # axis=(0, 1) in np >= 1.7
-                return y_mean, np.sqrt(y_var)
+                return y_mean, np.sqrt(y_var) * self.y_fit_std
             else:
                 return y_mean
 
