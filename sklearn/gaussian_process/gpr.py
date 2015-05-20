@@ -153,7 +153,9 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.X_fit_ = X
         self.y_fit_ = y
 
-        if self.optimizer in ["fmin_l_bfgs_b"]:
+        if self.kernel_.n_dims == 0:  # no tunable hyperparameters
+            self.theta_ = self.kernel_.theta   # actually an empty sequence
+        elif self.optimizer in ["fmin_l_bfgs_b"]:
             # Choose hyperparameters based on maximizing the log-marginal
             # likelihood (potentially starting from several initial values)
             def obj_func(theta):
