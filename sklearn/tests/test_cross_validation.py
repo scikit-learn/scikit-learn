@@ -95,7 +95,7 @@ class MockClassifier(object):
     def predict(self, T):
         if self.allow_nd:
             T = T.reshape(len(T), -1)
-        return T.shape[0]
+        return T[:, 0]
 
     def score(self, X=None, Y=None):
         return 1. / (1 + np.abs(self.a))
@@ -1033,6 +1033,56 @@ def test_cross_val_predict():
             yield np.array([0, 1, 2, 3]), np.array([4, 5, 6, 7, 8])
 
     assert_raises(ValueError, cval.cross_val_predict, est, X, y, cv=bad_cv())
+
+
+def test_cross_val_predict_input_types():
+    clf = Ridge()
+    # Smoke test
+    predictions = cval.cross_val_predict(clf, X, y)
+    assert_equal(predictions.shape, (10,))
+
+    # test with multioutput y
+    predictions = cval.cross_val_predict(clf, X_sparse, X)
+    assert_equal(predictions.shape, (10, 2))
+
+    predictions = cval.cross_val_predict(clf, X_sparse, y)
+    assert_array_equal(predictions.shape, (10,))
+
+    # test with multioutput y
+    predictions = cval.cross_val_predict(clf, X_sparse, X)
+    assert_array_equal(predictions.shape, (10, 2))
+
+    # test with X and y as list
+    list_check = lambda x: isinstance(x, list)
+    clf = CheckingClassifier(check_X=list_check)
+    predictions = cval.cross_val_predict(clf, X.tolist(), y.tolist())
+
+    clf = CheckingClassifier(check_y=list_check)
+    predictions = cval.cross_val_predict(clf, X, y.tolist())
+
+    # test with 3d X and
+    X_3d = X[:, :, np.newaxis]
+    check_3d = lambda x: x.ndim == 3
+    clf = CheckingClassifier(check_X=check_3d)
+    predictions = cval.cross_val_predict(clf, X_3d, y)
+    assert_array_equal(predictions.shape, (10,))
+
+
+def test_cross_val_predict_pandas():
+    # check cross_val_score doesn't destroy pandas dataframe
+    types = [(MockDataFrame, MockDataFrame)]
+    try:
+        from pandas import Series, DataFrame
+        types.append((Series, DataFrame))
+    except ImportError:
+        pass
+    for TargetType, InputFeatureType in types:
+        # X dataframe, y series
+        X_df, y_ser = InputFeatureType(X), TargetType(y)
+        check_df = lambda x: isinstance(x, InputFeatureType)
+        check_series = lambda x: isinstance(x, TargetType)
+        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
+        cval.cross_val_predict(clf, X_df, y_ser)
 
 
 def test_sparse_fit_params():
