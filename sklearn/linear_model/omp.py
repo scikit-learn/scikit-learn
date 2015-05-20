@@ -211,7 +211,12 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     n_active = 0
 
     max_features = len(Gram) if tol is not None else n_nonzero_coefs
-    L = np.empty((max_features, max_features), dtype=Gram.dtype)
+    if solve_triangular_args:
+        # new scipy, don't need to initialize because check_finite=False
+        L = np.empty((max_features, max_features), dtype=Gram.dtype)
+    else:
+        # old scipy, we need the garbage upper triangle to be non-Inf
+        L = np.zeros((max_features, max_features), dtype=Gram.dtype)
     L[0, 0] = 1.
     if return_path:
         coefs = np.empty_like(L)
@@ -369,7 +374,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
         else:
             norms_squared = None
         return orthogonal_mp_gram(G, Xy, n_nonzero_coefs, tol, norms_squared,
-                                  copy_Gram=copy_X, copy_Xy=False, return_path=return_path)
+                                  copy_Gram=copy_X, copy_Xy=False,
+                                  return_path=return_path)
 
     if return_path:
         coef = np.zeros((X.shape[1], y.shape[1], X.shape[1]))
