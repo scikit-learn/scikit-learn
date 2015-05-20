@@ -174,3 +174,36 @@ def test_random_starts():
         lml = gp.log_marginal_likelihood(gp.theta_)
         assert_greater(lml, last_lml - np.finfo(np.float32).eps)
         last_lml = lml
+
+def test_y_normalization():
+    """ Test normalization of the target values in GP
+
+    Fitting non-normalizing GP on normalized y and fitting normalizing GP
+    on unnormalized y should yield identical results
+    """
+    y_mean, y_std = y.mean(0), y.std(0)
+    y_norm = (y - y_mean) / y_std
+    for kernel in kernels:
+        # Fit non-normalizing GP on normalized y
+        gpr = GaussianProcessRegressor(kernel=kernel,
+                                       sigma_squared_n=1e-10 / y_std**2)
+        gpr.fit(X, y_norm)
+        # Fit normalizing GP on unnormalized y
+        gpr_norm = GaussianProcessRegressor(kernel=kernel,
+                                            sigma_squared_n=1e-10,
+                                            normalize_y=True)
+        gpr_norm.fit(X, y)
+
+        # Compare predicted mean, std-devs and covariances
+        y_pred, y_pred_std = gpr.predict(X2, return_std=True)
+        y_pred = y_mean + y_pred * y_std
+        y_pred_std *= y_std
+        y_pred_norm, y_pred_std_norm = gpr_norm.predict(X2, return_std=True)
+
+        assert_almost_equal(y_pred, y_pred_norm)
+        assert_almost_equal(y_pred_std, y_pred_std_norm)
+
+        _, y_cov = gpr.predict(X2, return_cov=True)
+        y_cov *= y_std ** 2
+        _, y_cov_norm = gpr_norm.predict(X2, return_cov=True)
+        assert_almost_equal(y_cov, y_cov_norm)
