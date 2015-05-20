@@ -207,3 +207,47 @@ def test_y_normalization():
         y_cov *= y_std ** 2
         _, y_cov_norm = gpr_norm.predict(X2, return_cov=True)
         assert_almost_equal(y_cov, y_cov_norm)
+
+
+def test_y_multioutput():
+    """
+    """
+    y_2d = np.vstack((y, y*2)).T
+
+    # Test for fixed kernel that first dimension of 2d GP equals the output
+    # of 1d GP and that second dimension is twice as large
+    kernel = RBF(l=1.0)
+
+    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None,
+                                   normalize_y=False)
+    gpr.fit(X, y)
+
+    gpr_2d = GaussianProcessRegressor(kernel=kernel, optimizer=None,
+                                      normalize_y=False)
+    gpr_2d.fit(X, y_2d)
+
+    y_pred_1d, y_std_1d = gpr.predict(X2, return_std=True)
+    y_pred_2d, y_std_2d = gpr_2d.predict(X2, return_std=True)
+    _, y_cov_1d = gpr.predict(X2, return_cov=True)
+    _, y_cov_2d = gpr_2d.predict(X2, return_cov=True)
+
+    assert_almost_equal(y_pred_1d, y_pred_2d[:, 0])
+    assert_almost_equal(y_pred_1d, y_pred_2d[:, 1] / 2)
+
+    # Standard deviation and covariance do not depend on output
+    assert_almost_equal(y_std_1d, y_std_2d)
+    assert_almost_equal(y_cov_1d, y_cov_2d)
+
+    y_sample_1d = gpr.sample_y(X2, n_samples=10)
+    y_sample_2d = gpr_2d.sample_y(X2, n_samples=10)
+    assert_almost_equal(y_sample_1d, y_sample_2d[:, 0])
+
+    # Test hyperparameter optimization
+    for kernel in kernels:
+        gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+        gpr.fit(X, y)
+
+        gpr_2d = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+        gpr_2d.fit(X, np.vstack((y, y)).T)
+
+        assert_almost_equal(gpr.kernel_.theta, gpr_2d.kernel_.theta, 4)
