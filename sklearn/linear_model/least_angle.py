@@ -782,6 +782,12 @@ class LassoLars(Lars):
 ###############################################################################
 # Cross-validated estimator classes
 
+def _check_copy_and_writeable(array, copy=False):
+    if copy or not array.flags.writeable:
+        return array.copy()
+    return array
+
+
 def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
                         copy=True, method='lars', verbose=False,
                         fit_intercept=True, normalize=True, max_iter=500,
@@ -842,11 +848,10 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     residues : array, shape (n_alphas, n_samples)
         Residues of the prediction on the test data
     """
-    if copy:
-        X_train = X_train.copy()
-        y_train = y_train.copy()
-        X_test = X_test.copy()
-        y_test = y_test.copy()
+    X_train = _check_copy_and_writeable(X_train, copy)
+    y_train = _check_copy_and_writeable(y_train, copy)
+    X_test = _check_copy_and_writeable(X_test, copy)
+    y_test = _check_copy_and_writeable(y_test, copy)
 
     if fit_intercept:
         X_mean = X_train.mean(axis=0)
