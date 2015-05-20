@@ -81,7 +81,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     X_fit_ : array-like, shape = (n_samples, n_features)
         Feature values in training data (also required for prediction)
 
-    y_fit_: array-like, shape = (n_samples,)
+    y_fit_: array-like, shape = (n_samples, [n_output_dims])
         Target values in training data (also required for prediction)
 
     kernel_: kernel object
@@ -115,7 +115,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         X : array-like, shape = (n_samples, n_features)
             Training data
 
-        y : array-like, shape = (n_samples, )
+        y : array-like, shape = (n_samples, [n_output_dims])
             Target values
 
         Returns
@@ -127,12 +127,12 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:
             self.kernel_ = clone(self.kernel)
 
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, multi_output=True)
 
         # Normalize target value
         if self.normalize_y:
             self.y_fit_mean = np.mean(y, axis=0)
-            self.y_fit_std = np.atleast_1d(np.std(y, axis=0))
+            self.y_fit_std = np.atleast_1d(np.std(y))  # XXX: std per dim?
             self.y_fit_std[self.y_fit_std == 0.] = 1.
             # center and scale y (and sigma_squared_n)
             y = (y - self.y_fit_mean) / self.y_fit_std
@@ -222,16 +222,16 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        y_mean : array, shape = (n_samples,)
+        y_mean : array, shape = (n_samples, [n_output_dims])
             Mean of predictive distribution a query points
 
         y_std : array, shape = (n_samples,), optional
-            Standard deviation of predictive distribution a query points.
-            Only returned when return_std is True
+            Standard deviation of predictive distribution at query points.
+            Only returned when return_std is True.
 
         y_cov : array, shape = (n_samples, n_samples), optional
             Covariance of joint predictive distribution a query points.
-            Only returned when return_cov is True
+            Only returned when return_cov is True.
         """
         if return_std and return_cov:
             raise RuntimeError(
@@ -257,7 +257,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
-                return y_mean, y_cov * self.y_fit_std ** 2
+                y_cov *= self.y_fit_std ** 2  # undo normalization
+                return y_mean, y_cov
             elif return_std:
                 # compute inverse K_inv of K based on its Cholesky
                 # decomposition L and its inverse L_inv
@@ -268,7 +269,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 y_var -= np.sum(K_trans.T[:, np.newaxis] * K_trans.T
                                 * K_inv[:, :, np.newaxis],
                                 axis=0).sum(axis=0)  # axis=(0, 1) in np >= 1.7
-                return y_mean, np.sqrt(y_var) * self.y_fit_std
+                y_std = np.sqrt(y_var) * self.y_fit_std  # undo normalization
+                return y_mean, y_std
             else:
                 return y_mean
 
@@ -288,14 +290,21 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        y_samples : array, shape = (n_samples_X, n_samples)
+        y_samples : array, shape = (n_samples_X, [n_output_dims], n_samples)
             Values of n_samples samples drawn from Gaussian process and
             evaluated at query points.
         """
         rng = check_random_state(random_state)
 
         y_mean, y_cov = self.predict(X, return_cov=True)
-        y_samples = rng.multivariate_normal(y_mean, y_cov, n_samples).T
+        if y_mean.ndim == 1:
+            y_samples = rng.multivariate_normal(y_mean, y_cov, n_samples).T
+        else:
+            y_samples = \
+                [rng.multivariate_normal(y_mean[:, i], y_cov,
+                                         n_samples).T[:, np.newaxis]
+                 for i in range(y_mean.shape[1])]
+            y_samples = np.hstack(y_samples)
         return y_samples
 
     def log_marginal_likelihood(self, theta, eval_gradient=False):
@@ -336,21 +345,35 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             return (-np.inf, np.zeros_like(theta)) \
                 if eval_gradient else -np.inf
 
-        alpha = cho_solve((L, True), self.y_fit_)  # Line 3
+        log_likelihood = 0
+        if eval_gradient:
+            log_likelihood_gradient = 0
 
-        # Compute log-likelihood (compare line 7)
-        log_likelihood = -0.5*self.y_fit_.dot(alpha)
-        log_likelihood -= np.log(np.diag(L)).sum()
-        log_likelihood -= K.shape[0] / 2 * np.log(2 * np.pi)
+        # Iterate over output dimensions of self.y_fit_
+        y_fit = self.y_fit_
+        if y_fit.ndim == 1:
+            y_fit = y_fit[:, np.newaxis]
+        for i in range(y_fit.shape[1]):
+            alpha = cho_solve((L, True), y_fit[:, i])  # Line 3
 
-        if eval_gradient:  # compare Equation 5.9 from GPML
-            tmp = np.outer(alpha, alpha)
-            tmp -= cho_solve((L, True), np.eye(K.shape[0]))
-            # Compute "0.5 * trace(tmp.dot(K_gradient))" without constructing
-            # the full matrix tmp.dot(K_gradient) since only its diagonal is
-            # required
-            log_likelihood_gradient = \
-                0.5 * np.einsum("ij,ijk->k", tmp, K_gradient)
+            # Compute log-likelihood of output dimension (compare line 7)
+            log_likelihood_dim = -0.5 * y_fit[:, i].dot(alpha)
+            log_likelihood_dim -= np.log(np.diag(L)).sum()
+            log_likelihood_dim -= K.shape[0] / 2 * np.log(2 * np.pi)
+
+            log_likelihood += log_likelihood_dim
+
+            if eval_gradient:  # compare Equation 5.9 from GPML
+                tmp = np.outer(alpha, alpha)
+                tmp -= cho_solve((L, True), np.eye(K.shape[0]))
+                # Compute "0.5 * trace(tmp.dot(K_gradient))" without
+                # constructing the full matrix tmp.dot(K_gradient) since only
+                # its diagonal is required
+                log_likelihood_gradient_dim = \
+                    0.5 * np.einsum("ij,ijk->k", tmp, K_gradient)
+                log_likelihood_gradient += log_likelihood_gradient_dim
+
+        if eval_gradient:
             return log_likelihood, log_likelihood_gradient
         else:
             return log_likelihood
