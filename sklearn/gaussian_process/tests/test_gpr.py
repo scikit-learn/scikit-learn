@@ -210,8 +210,7 @@ def test_y_normalization():
 
 
 def test_y_multioutput():
-    """
-    """
+    """ Test that GPR can deal with multi-dimensional target values"""
     y_2d = np.vstack((y, y*2)).T
 
     # Test for fixed kernel that first dimension of 2d GP equals the output
@@ -251,3 +250,26 @@ def test_y_multioutput():
         gpr_2d.fit(X, np.vstack((y, y)).T)
 
         assert_almost_equal(gpr.kernel_.theta, gpr_2d.kernel_.theta, 4)
+
+
+def test_custom_optimizer():
+    """ Test that GPR can use externally defined optimizers. """
+    # Define a dummy optimizer that simply tests 1000 random hyperparameters
+    def optimizer(obj_func, initial_theta, bounds):
+        rng = np.random.RandomState(0)
+        theta_opt, func_min = \
+            initial_theta, obj_func(initial_theta, eval_gradient=False)
+        for _ in range(1000):
+            theta = np.atleast_1d(rng.uniform(np.maximum(1e-2, bounds[:, 0]),
+                                              np.minimum(10, bounds[:, 1])))
+            f = obj_func(theta, eval_gradient=False)
+            if f < func_min:
+                theta_opt, func_min = theta, f
+        return theta_opt, func_min
+
+    for kernel in kernels:
+        gpr = GaussianProcessRegressor(kernel=kernel, optimizer=optimizer)
+        gpr.fit(X, y)
+        # Checks that optimizer improved marginal likelihood
+        assert_greater(gpr.log_marginal_likelihood(gpr.kernel_.theta),
+                       gpr.log_marginal_likelihood(gpr.kernel.theta))
