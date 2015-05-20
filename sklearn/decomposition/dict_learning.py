@@ -538,24 +538,26 @@ def _update_gain(gain, code, gain_rate, verbose=False):
     """
     if gain_rate>0.:
         n_components, n_samples = code.shape
-        gain_ = np.sum(code**2, axis=1)
-        Z = np.sum(gain_)/n_components
-        if Z>0: gain = (1 - gain_rate)*gain + gain_rate * gain_/Z
+        gain = (1 - gain_rate)*gain + gain_rate * np.sum(code**2, axis=1)/n_samples
+#         gain_ = np.sum(code**2, axis=1)
+#         Z = np.sum(gain_)/n_components
+#         if Z>0: gain = (1 - gain_rate)*gain + gain_rate * gain_/Z
 #         print(code.shape, gain_.shape, gain_/Z, np.mean(gain_/Z), Z)
     return gain
 
-def dict_learning_grad(X, eta=0.02, n_components=2, alpha=1, n_iter=100, gain_rate=0.,
-                         return_code=True, dict_init=None, callback=None,
-                         batch_size=8, verbose=False, shuffle=True, n_jobs=1,
-                         method='lars', iter_offset=0, random_state=None,
-                         return_inner_stats=False, inner_stats=None,
-                         return_n_iter=False):
+def dict_learning_grad(X, eta=0.02, n_components=2, transform_n_nonzero_coefs=10, n_iter=100, 
+                       gain_rate=0.001, alpha_homeo=0.02,
+                       return_code=True, dict_init=None, callback=None,
+                       batch_size=100, verbose=False, shuffle=True, n_jobs=1,
+                       method='omp', iter_offset=0, random_state=None,
+                       return_inner_stats=False, inner_stats=None,
+                       return_n_iter=False):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
     approximating the data matrix X by solving::
 
-        (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
+        (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_0
                      (U,V)
                      with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
@@ -579,6 +581,9 @@ def dict_learning_grad(X, eta=0.02, n_components=2, alpha=1, n_iter=100, gain_ra
 
     gain_rate: float
         Gives the learning parameter for the gain.
+
+    alpha_homeo: float
+        Gives the smoothing exponent for the gain.
 
     return_code : boolean,
         Whether to also return the code U or just the dictionary V.
@@ -634,6 +639,7 @@ def dict_learning_grad(X, eta=0.02, n_components=2, alpha=1, n_iter=100, gain_ra
     See also
     --------
     dict_learning
+    SparseHebbianLearning
     DictionaryLearning
     MiniBatchDictionaryLearning
     SparsePCA
@@ -643,14 +649,14 @@ def dict_learning_grad(X, eta=0.02, n_components=2, alpha=1, n_iter=100, gain_ra
     if n_components is None:
         n_components = X.shape[1]
 
-    if method not in ('lars', 'cd'):
-        raise ValueError('Coding method not supported as a fit algorithm.')
-    method = 'lasso_' + method
+#     if method not in ('lars', 'cd'):
+#         raise ValueError('Coding method not supported as a fit algorithm.')
+#     method = 'lasso_' + method
 
     t0 = time.time()
     n_samples, n_features = X.shape
     # Avoid integer division problems
-    alpha = float(alpha)
+#     alpha = float(alpha)
     random_state = check_random_state(random_state)
 
     if n_jobs == -1:
@@ -681,6 +687,7 @@ def dict_learning_grad(X, eta=0.02, n_components=2, alpha=1, n_iter=100, gain_ra
     if verbose == 1:
         print('[dict_learning]', end=' ')
     gain = np.ones(n_components)
+    gain_ = np.ones(n_components)
 
     n_batches = floor(float(len(X)) / batch_size)
     if shuffle:
@@ -689,26 +696,27 @@ def dict_learning_grad(X, eta=0.02, n_components=2, alpha=1, n_iter=100, gain_ra
     else:
         X_train = X
     batches = np.array_split(X_train, n_batches)
-    batches = itertools.cycle(batches)
+    batches = itertools.cycle(batches) # Return elements from list of batches until it is exhausted. Then repeat the sequence indefinitely.
 
     # If n_iter is zero, we need to return zero.
     ii = iter_offset - 1
 
     for ii, this_X in zip(range(iter_offset, iter_offset + n_iter), batches):
         dt = (time.time() - t0)
-        if  verbose > 0 and ii % verbose == 0:
-            print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
-                   % (ii, dt, dt / 60))
-            print("Gain ", gain)
-            print("Norm ", norm)
+        if verbose > 0:
+            if ii % int(n_iter/verbose) == 0:
+                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
+                       % (ii, dt, dt / 60))
+                print("Norm ", norm.min(), norm.max(), norm.argmin())
+                print("Gain ", gain.min(), gain.max(), gain.argmax())
 
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
-                                  alpha=alpha, n_jobs=n_jobs).T
+                                  n_nonzero_coefs=transform_n_nonzero_coefs, n_jobs=n_jobs).T
 
         # Update dictionary
         residual = this_X - np.dot(this_code.T, dictionary.T)
         dictionary *= (1-eta)
-        # TODO vectorize
+        # TODO vectorize self.psi += self.nu * np.outer(residual, a)
         for k in range(n_components):
             dictionary[:, k] += eta * np.dot(residual.T, this_code[k, :])
             norm[k] = np.sqrt(np.sum(dictionary[:, k]**2))
@@ -716,9 +724,10 @@ def dict_learning_grad(X, eta=0.02, n_components=2, alpha=1, n_iter=100, gain_ra
 
         # Update gain
         if gain_rate>0.:
-            gain = _update_gain(gain, this_code, gain_rate, verbose=verbose)
-            dictionary /= np.sqrt(gain)[np.newaxis, :]
-
+            gain_ = _update_gain(gain_, this_code, gain_rate, verbose=verbose)
+            gain = gain * (gain_**alpha_homeo)
+            dictionary /= gain[np.newaxis, :]
+#             dictionary /= np.sqrt(gain)[np.newaxis, :]
         # Maybe we need a stopping criteria based on the amount of
         # modification in the dictionary
         if callback is not None:
@@ -729,7 +738,7 @@ def dict_learning_grad(X, eta=0.02, n_components=2, alpha=1, n_iter=100, gain_ra
             print('Learning code...', end=' ')
         elif verbose == 1:
             print('|', end=' ')
-        code = sparse_encode(X, dictionary.T, algorithm=method, alpha=alpha,
+        code = sparse_encode(X, dictionary.T, algorithm=method, n_nonzero_coefs=transform_n_nonzero_coefs,
                              n_jobs=n_jobs)
         if verbose > 1:
             dt = (time.time() - t0)
@@ -1381,8 +1390,9 @@ class SparseHebbianLearning(BaseEstimator, SparseCodingMixin):
     MiniBatchSparsePCA
 
     """
-    def __init__(self, eta=0.02, n_components=None, alpha=1, n_iter=1000, gain_rate=0.,
-                 fit_algorithm='lars', n_jobs=1, batch_size=3,
+    def __init__(self, eta=0.02, n_components=None, n_iter=40000,
+                 gain_rate=0.001, alpha_homeo=0.02,
+                 fit_algorithm='omp', n_jobs=1, batch_size=100,
                  shuffle=True, dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  verbose=False, split_sign=False, random_state=None):
@@ -1390,10 +1400,11 @@ class SparseHebbianLearning(BaseEstimator, SparseCodingMixin):
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
                                        transform_alpha, split_sign, n_jobs)
-        self.alpha = alpha
+        self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
         self.eta = eta
         self.n_iter = n_iter
         self.gain_rate = gain_rate
+        self.alpha_homeo = alpha_homeo
         self.fit_algorithm = fit_algorithm
         self.dict_init = dict_init
         self.verbose = verbose
@@ -1420,8 +1431,8 @@ class SparseHebbianLearning(BaseEstimator, SparseCodingMixin):
         X = check_array(X)
 
         U, self.n_iter_ = dict_learning_grad(
-            X, self.eta, self.n_components, self.alpha,
-            n_iter=self.n_iter, gain_rate = self.gain_rate,
+            X, self.eta, self.n_components, self.transform_n_nonzero_coefs,
+            n_iter=self.n_iter, gain_rate=self.gain_rate, alpha_homeo=self.alpha_homeo,
             return_code=False, method=self.fit_algorithm,
             n_jobs=self.n_jobs, dict_init=self.dict_init,
             batch_size=self.batch_size, shuffle=self.shuffle,
