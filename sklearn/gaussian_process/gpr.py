@@ -45,11 +45,28 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         passed, it must have the same number of entries as the data used for
         fitting and is used as datapoint-dependent noise level.
 
-    optimizer : string, optional (default: "fmin_l_bfgs_b")
-        A string specifying the optimization algorithm used for optimizing the
-        kernel's parameters. Default uses 'fmin_l_bfgs_b' algorithm from
-        scipy.optimize. If None, the kernel's parameters are kept fixed.
-        Available optimizers are::
+    optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
+        Can either be one of the internally supported optimizers for optimizing
+        the kernel's parameters, specified by a string, or an externally
+        defined optimizer passed as a callable. If a callable is passed, it
+        must have the  signature::
+
+            def optimizer(obj_func, initial_theta, bounds):
+                # * 'obj_func' is the objective function to be maximized, which
+                #   takes the hyperparameters theta as parameter and an
+                #   optional flag eval_gradient, which determines if the
+                #   gradient is returned additional to the function value
+                # * 'initial_theta': the initial value for theta, which can be
+                #   used by local optimizers
+                # * 'bounds': the bounds on the values of theta
+                ....
+                # Returned are the best found hyperparameters theta and the
+                # the corresponding value of the target function.
+                return theta_opt, func_min
+
+        Per default, the 'fmin_l_bfgs_b' algorithm from scipy.optimize
+        is used. If None is passed, the kernel's parameters are kept fixed.
+        Available internal optimizers are::
 
             'fmin_l_bfgs_b'
 
@@ -155,13 +172,16 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
         if self.kernel_.n_dims == 0:  # no tunable hyperparameters
             self.theta_ = self.kernel_.theta   # actually an empty sequence
-        elif self.optimizer in ["fmin_l_bfgs_b"]:
+        elif self.optimizer is not None:
             # Choose hyperparameters based on maximizing the log-marginal
             # likelihood (potentially starting from several initial values)
-            def obj_func(theta):
-                lml, grad = self.log_marginal_likelihood(theta,
-                                                         eval_gradient=True)
-                return -lml, -grad
+            def obj_func(theta, eval_gradient=True):
+                if eval_gradient:
+                    lml, grad = self.log_marginal_likelihood(
+                        theta, eval_gradient=True)
+                    return -lml, -grad
+                else:
+                    return -self.log_marginal_likelihood(theta)
 
             # First optimize starting from theta specified in kernel
             optima = [(self._constrained_optimization(obj_func,
@@ -186,11 +206,9 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             # likelihood
             self.theta_ = optima[np.argmin(map(itemgetter(1), optima))][0]
             self.kernel_.theta = self.theta_
-        elif self.optimizer is None:
+        else:
             # Use initially provided hyperparameters
             self.theta_ = self.kernel_.theta
-        else:
-            raise ValueError("Unknown optimizer %s." % self.optimizer)
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
@@ -381,7 +399,13 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             return log_likelihood
 
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
-        if self.optimizer in ["fmin_l_bfgs_b"]:
+        if self.optimizer == "fmin_l_bfgs_b":
             theta_opt, func_min, _ = \
                 fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds)
+        elif callable(self.optimizer):
+            theta_opt, func_min = \
+                self.optimizer(obj_func, initial_theta, bounds=bounds)
+        else:
+            raise ValueError("Unknown optimizer %s." % self.optimizer)
+
         return theta_opt, func_min
