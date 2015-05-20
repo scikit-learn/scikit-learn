@@ -399,11 +399,18 @@ def test_ovr_pipeline():
 
 
 def test_ovr_coef_():
-    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-    ovr.fit(iris.data, iris.target)
-    shape = ovr.coef_.shape
-    assert_equal(shape[0], n_classes)
-    assert_equal(shape[1], iris.data.shape[1])
+    for base_classifier in [SVC(kernel='linear', random_state=0), LinearSVC(random_state=0)]:
+        # SVC has sparse coef with sparse input data
+
+        ovr = OneVsRestClassifier(base_classifier)
+        for X in [iris.data, sp.csr_matrix(iris.data)]:
+            # test with dense and sparse coef
+            ovr.fit(X, iris.target)
+            shape = ovr.coef_.shape
+            assert_equal(shape[0], n_classes)
+            assert_equal(shape[1], iris.data.shape[1])
+            # don't densify sparse coefficients
+            assert_equal(sp.issparse(ovr.estimators_[0].coef_), sp.issparse(ovr.coef_))
 
 
 def test_ovr_coef_exceptions():

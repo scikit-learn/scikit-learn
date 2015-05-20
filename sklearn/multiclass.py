@@ -400,7 +400,10 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         if not hasattr(self.estimators_[0], "coef_"):
             raise AttributeError(
                 "Base estimator doesn't have a coef_ attribute.")
-        return np.array([e.coef_.ravel() for e in self.estimators_])
+        coefs = [e.coef_ for e in self.estimators_]
+        if sp.issparse(coefs[0]):
+            return sp.vstack(coefs)
+        return np.vstack(coefs)
 
     @property
     def intercept_(self):
