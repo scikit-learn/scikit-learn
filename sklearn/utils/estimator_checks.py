@@ -38,6 +38,9 @@ from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 from sklearn.pipeline import make_pipeline
+
+from sklearn.utils import ConvergenceWarning
+
 from sklearn.utils.validation import DataConversionWarning, NotFittedError
 from sklearn.cross_validation import train_test_split
 
@@ -204,7 +207,7 @@ def set_fast_parameters(estimator):
             and estimator.__class__.__name__ != "TSNE"):
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
-        # NMF
+        warnings.simplefilter("ignore", ConvergenceWarning)
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
         # LinearSVR
@@ -841,6 +844,7 @@ def check_classifiers_input_shapes(name, Classifier):
         warnings.simplefilter("always", DataConversionWarning)
         warnings.simplefilter("ignore", RuntimeWarning)
         classifier.fit(X, y[:, np.newaxis])
+    assert_true(issubclass(w[0].category, DataConversionWarning))
     msg = "expected 1 DataConversionWarning, got: %s" % (
         ", ".join([str(w_x) for w_x in w]))
     assert_equal(len(w), 1, msg)
