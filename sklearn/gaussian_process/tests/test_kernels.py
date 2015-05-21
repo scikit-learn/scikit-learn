@@ -25,10 +25,11 @@ X = np.random.normal(0, 1, (10, 2))
 
 kernels = [RBF(l=2.0), RBF(l_bounds=(0.5, 2.0)),
            ConstantKernel(c=10.0),
-           2.0 * RBF(l=0.5), RBF(l=2.0) + WhiteKernel(c=1.0),
-           RationalQuadratic(l=1.0, alpha=1.0),
-           ExpSineSquared(l=1.0, p=1.0),
-           DotProduct(sigma_0=1.0), DotProduct(sigma_0=1.0) ** 2]
+           2.0 * RBF(l=0.5), RBF(l=2.0) + WhiteKernel(c=3.0),
+           2.0 * RBF(l=[0.5, 2.0]),
+           RationalQuadratic(l=0.5, alpha=1.5),
+           ExpSineSquared(l=0.5, p=1.5),
+           DotProduct(sigma_0=2.0), DotProduct(sigma_0=2.0) ** 2]
 for metric in PAIRWISE_KERNEL_FUNCTIONS:
     if metric in ["additive_chi2", "chi2"]:
         continue
@@ -75,9 +76,9 @@ def test_kernel_theta():
         assert_equal(kernel.theta_vars, theta_vars)
 
         # Check that values returned in theta are consistent with
-        # hyperparameter values
+        # hyperparameter values (being their logarithms)
         for i, theta_var in enumerate(theta_vars):
-            assert_equal(theta[i], getattr(kernel, theta_var))
+            assert_equal(theta[i], np.log(getattr(kernel, theta_var)))
 
         # Fixed kernel parameters must be excluded from theta and gradient.
         for i, theta_var in enumerate(theta_vars):
@@ -102,12 +103,12 @@ def test_kernel_theta():
 
         # Check that values of theta are modified correctly
         for i, theta_var in enumerate(theta_vars):
-            theta[i] = 42
+            theta[i] = np.log(42)
             kernel.theta = theta
-            assert_equal(getattr(kernel, theta_var), 42)
+            assert_almost_equal(getattr(kernel, theta_var), 42)
 
             setattr(kernel, theta_var, 43)
-            assert_equal(kernel.theta[i], 43)
+            assert_almost_equal(kernel.theta[i], np.log(43))
 
 
 def test_auto_vs_cross():
@@ -153,8 +154,8 @@ def test_kernel_anisotropic():
     assert_almost_equal(K, K2)
 
     # Check getting and setting via theta
-    kernel.theta = kernel.theta * 2
-    assert_array_equal(kernel.theta, [6.0, 1.0, 4.0])
+    kernel.theta = kernel.theta + np.log(2)
+    assert_array_equal(kernel.theta, np.log([6.0, 1.0, 4.0]))
     assert_array_equal(kernel.k2.l, [1.0, 4.0])
 
 

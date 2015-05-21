@@ -26,9 +26,9 @@ y = f(X).ravel()
 kernels = [RBF(l=1.0), RBF(l=1.0, l_bounds=(1e-3, 1e3)),
            C(1.0, (1e-2, 1e2)) * RBF(l=1.0, l_bounds=(1e-3, 1e3)),
            C(1.0, (1e-2, 1e2)) * RBF(l=1.0, l_bounds=(1e-3, 1e3))
-               + C(0.0, (0.0, 1e2)),
+               + C(1e-5, (1e-5, 1e2)),
            C(0.1, (1e-2, 1e2)) * RBF(l=1.0, l_bounds=(1e-3, 1e3))
-               + C(0.0, (0.0, 1e2))]
+               + C(1e-5, (1e-5, 1e2))]
 
 
 def test_gpr_interpolation():
@@ -57,7 +57,7 @@ def test_converged_to_local_maximum():
         lml, lml_gradient = \
             gpr.log_marginal_likelihood(gpr.kernel_.theta, True)
 
-        assert_true(np.all((np.abs(lml_gradient) < 1e-5)
+        assert_true(np.all((np.abs(lml_gradient) < 1e-4)
                            | (gpr.kernel_.theta == gpr.kernel_.bounds[:, 0])
                            | (gpr.kernel_.theta == gpr.kernel_.bounds[:, 1])))
 
@@ -101,7 +101,7 @@ def test_prior():
         assert_almost_equal(y_mean, 0, 5)
         if len(gpr.kernel.theta) > 1:
             # XXX: quite hacky, works only for current kernels
-            assert_almost_equal(np.diag(y_cov), kernel.theta[0] , 5)
+            assert_almost_equal(np.diag(y_cov), np.exp(kernel.theta[0]) , 5)
         else:
             assert_almost_equal(np.diag(y_cov), 1, 5)
 
@@ -125,8 +125,8 @@ def test_no_optimizer():
     """ Test that kernel parameters are unmodified when optimizer is None."""
     kernel = RBF(1.0)
     gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(X, y)
-    assert_equal(gpr.kernel_.theta, 1.0)
-    assert_equal(gpr.theta_, 1.0)
+    assert_equal(np.exp(gpr.kernel_.theta), 1.0)
+    assert_equal(np.exp(gpr.theta_), 1.0)
 
 
 def test_predict_cov_vs_std():
@@ -149,7 +149,9 @@ def test_anisotropic_kernel():
 
     kernel = RBF([1.0, 1.0])
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert_greater(gpr.kernel_.theta[1], gpr.kernel_.theta[0] * 5)
+    assert_greater(np.exp(gpr.kernel_.theta[1]),
+                   np.exp(gpr.kernel_.theta[0]) * 5)
+
 
 def test_random_starts():
     """
@@ -174,6 +176,7 @@ def test_random_starts():
         lml = gp.log_marginal_likelihood(gp.theta_)
         assert_greater(lml, last_lml - np.finfo(np.float32).eps)
         last_lml = lml
+
 
 def test_y_normalization():
     """ Test normalization of the target values in GP
@@ -260,8 +263,8 @@ def test_custom_optimizer():
         theta_opt, func_min = \
             initial_theta, obj_func(initial_theta, eval_gradient=False)
         for _ in range(1000):
-            theta = np.atleast_1d(rng.uniform(np.maximum(1e-2, bounds[:, 0]),
-                                              np.minimum(10, bounds[:, 1])))
+            theta = np.atleast_1d(rng.uniform(np.maximum(-2, bounds[:, 0]),
+                                              np.minimum(1, bounds[:, 1])))
             f = obj_func(theta, eval_gradient=False)
             if f < func_min:
                 theta_opt, func_min = theta, f
