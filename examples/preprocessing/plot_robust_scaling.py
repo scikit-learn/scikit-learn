@@ -29,11 +29,11 @@ from sklearn.preprocessing import StandardScaler, RobustScaler
 # Create training and test data
 np.random.seed(42)
 n_datapoints = 100
-C=[[0.9, 0.0],[0.0, 20.0]]
+Cov = [[0.9, 0.0], [0.0, 20.0]]
 mu1 = [100.0, -3.0]
 mu2 = [101.0, -3.0]
-X1 = np.random.multivariate_normal(mean=mu1, cov=C, size=n_datapoints)
-X2 = np.random.multivariate_normal(mean=mu2, cov=C, size=n_datapoints)
+X1 = np.random.multivariate_normal(mean=mu1, cov=Cov, size=n_datapoints)
+X2 = np.random.multivariate_normal(mean=mu2, cov=Cov, size=n_datapoints)
 Y_train = np.hstack([[-1]*n_datapoints, [1]*n_datapoints])
 X_train = np.vstack([X1, X2])
 

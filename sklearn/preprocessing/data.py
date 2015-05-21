@@ -402,9 +402,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 class RobustScaler(BaseEstimator, TransformerMixin):
     """Scale features using statistics that are robust to outliers.
 
-    This Scaler removes the median and and scales the data according to
+    This Scaler removes the median and scales the data according to
     the Interquartile Range (IQR). The IQR is the range between the 1st
-    quartile (25th quantile) and the and 3rd quartile (75th quantile).
+    quartile (25th quantile) and the 3rd quartile (75th quantile).
 
     Centering and scaling happen independently on each feature (or each
     sample, depending on the `axis` argument) by computing the relevant
