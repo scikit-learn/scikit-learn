@@ -55,11 +55,28 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         Larger values correspond to increased noise level in the observations
         and reduce potential numerical issue during fitting.
 
-    optimizer : string, optional (default: "fmin_l_bfgs_b")
-        A string specifying the optimization algorithm used for optimizing the
-        kernel's parameters. Default uses 'fmin_l_bfgs_b' algorithm from
-        scipy.optimize. If None, the kernel's parameters are kept fixed.
-        Available optimizers are::
+    optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
+        Can either be one of the internally supported optimizers for optimizing
+        the kernel's parameters, specified by a string, or an externally
+        defined optimizer passed as a callable. If a callable is passed, it
+        must have the  signature::
+
+            def optimizer(obj_func, initial_theta, bounds):
+                # * 'obj_func' is the objective function to be maximized, which
+                #   takes the hyperparameters theta as parameter and an
+                #   optional flag eval_gradient, which determines if the
+                #   gradient is returned additionally to the function value
+                # * 'initial_theta': the initial value for theta, which can be
+                #   used by local optimizers
+                # * 'bounds': the bounds on the values of theta
+                ....
+                # Returned are the best found hyperparameters theta and
+                # the corresponding value of the target function.
+                return theta_opt, func_min
+
+        Per default, the 'fmin_l_bfgs_b' algorithm from scipy.optimize
+        is used. If None is passed, the kernel's parameters are kept fixed.
+        Available internal optimizers are::
 
             'fmin_l_bfgs_b'
 
@@ -157,13 +174,18 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
                           % self.classes_)
             self.classes_ = np.array([self.classes_[0], self.classes_[0]])
 
-        if self.optimizer in ["fmin_l_bfgs_b"]:
+        if self.kernel_.n_dims == 0:  # no tunable hyperparameters
+            pass
+        elif self.optimizer is not None:
             # Choose hyperparameters based on maximizing the log-marginal
             # likelihood (potentially starting from several initial values)
-            def obj_func(theta):
-                lml, grad = self.log_marginal_likelihood(theta,
-                                                         eval_gradient=True)
-                return -lml, -grad
+            def obj_func(theta, eval_gradient=True):
+                if eval_gradient:
+                    lml, grad = self.log_marginal_likelihood(
+                        theta, eval_gradient=True)
+                    return -lml, -grad
+                else:
+                    return -self.log_marginal_likelihood(theta)
 
             # First optimize starting from theta specified in kernel
             optima = [(self._constrained_optimization(obj_func,
@@ -187,10 +209,6 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
             # Select result from run with minimal (negative) log-marginal
             # likelihood
             self.kernel_.theta = optima[np.argmin(map(itemgetter(1), optima))][0]
-        elif self.optimizer is None:
-            pass
-        else:
-            raise ValueError("Unknown optimizer %s." % self.optimizer)
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
@@ -379,7 +397,13 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
             return log_marginal_likelihood
 
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
-        if self.optimizer in ["fmin_l_bfgs_b"]:
+        if self.optimizer == "fmin_l_bfgs_b":
             theta_opt, func_min, _ = \
                 fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds)
+        elif callable(self.optimizer):
+            theta_opt, func_min = \
+                self.optimizer(obj_func, initial_theta, bounds=bounds)
+        else:
+            raise ValueError("Unknown optimizer %s." % self.optimizer)
+
         return theta_opt, func_min
