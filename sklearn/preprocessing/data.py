@@ -536,8 +536,6 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 elif self.axis == 0:
                     inplace_column_scale(X, 1.0 / self.scale_)
         else:
-            if self.copy:
-                X = X.copy()
             if self.with_centering:
                 X -= self.center_
             if self.with_scaling:
@@ -564,9 +562,6 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 else:
                     inplace_column_scale(X, self.scale_)
         else:
-            if self.copy:
-                X = X.copy()
-
             if self.with_scaling:
                 X *= self.scale_
             if self.with_centering:
