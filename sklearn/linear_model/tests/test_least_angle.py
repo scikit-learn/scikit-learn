@@ -1,6 +1,7 @@
 import tempfile
 import shutil
 import os.path as op
+import warnings
 from nose.tools import assert_equal
 
 import numpy as np
@@ -449,7 +450,13 @@ def test_lars_path_readonly_data():
         # The following should not fail despite copy=False
         _lars_path_residues(X_train, y_train, X_test, y_test, copy=False)
     finally:
-        shutil.rmtree(temp_folder)
+        # try to release the mmap file handle in time to be able to delete
+        # the temporary folder under windows
+        del X_train, X_test, y_train, y_test
+        try:
+            shutil.rmtree(temp_folder)
+        except shutil.WindowsError:
+            warnings.warn("Could not delete temporary folder %s" % temp_folder)
 
 
 if __name__ == '__main__':
