@@ -444,7 +444,7 @@ def r2_score(y_true, y_pred,
     # arbitrary set to zero to avoid -inf scores, having a constant
     # y_true is not interesting for scoring a regression anyway
     output_scores[nonzero_numerator & ~nonzero_denominator] = 0.
-    if multioutput is None:
+    if multioutput is None and y_true.shape[1] != 1:
         # @FIXME change in 0.18
         warnings.warn("Default 'multioutput' behavior now corresponds to "
                       "'variance_weighted' value, it will be changed "
