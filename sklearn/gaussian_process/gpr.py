@@ -79,14 +79,12 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         must be finite.
 
     normalize_y: boolean, optional (default: False)
-        Whether the target values y are normalized, i.e., mean and standard
-        deviation of observed target values become zero and one, respectively.
-        This parameter should be set to True if the target values' mean is
-        expected to differ considerable from zero or if the standard deviation
-        of the target values is very small or large. When enabled, the
-        normalization effectively modifies the GP's prior based on the data,
-        which contradicts the likelihood principle; normalization is thus
-        disabled per default.
+        Whether the target values y are normalized, i.e., the mean of the
+        observed target values become zero. This parameter should be set to
+        True if the target values' mean is expected to differ considerable from
+        zero. When enabled, the normalization effectively modifies the GP's
+        prior based on the data, which contradicts the likelihood principle;
+        normalization is thus disabled per default.
 
     random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
@@ -146,14 +144,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         # Normalize target value
         if self.normalize_y:
             self.y_fit_mean = np.mean(y, axis=0)
-            self.y_fit_std = np.atleast_1d(np.std(y))  # XXX: std per dim?
-            self.y_fit_std[self.y_fit_std == 0.] = 1.
-            # center and scale y (and sigma_squared_n)
-            y = (y - self.y_fit_mean) / self.y_fit_std
-            self.sigma_squared_n /= self.y_fit_std**2
+            # demean y
+            y = y - self.y_fit_mean
         else:
             self.y_fit_mean = np.zeros(1)
-            self.y_fit_std = np.ones(1)
 
         if np.iterable(self.sigma_squared_n) \
            and self.sigma_squared_n.shape[0] != y.shape[0]:
@@ -266,11 +260,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:  # Predict based on GP posterior
             K_trans = self.kernel_(X, self.X_fit_)
             y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
-            y_mean = self.y_fit_mean + self.y_fit_std * y_mean  # undo normal.
+            y_mean = self.y_fit_mean + y_mean  # undo normal.
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
-                y_cov *= self.y_fit_std ** 2  # undo normalization
                 return y_mean, y_cov
             elif return_std:
                 # compute inverse K_inv of K based on its Cholesky
@@ -282,8 +275,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 y_var -= np.sum(K_trans.T[:, np.newaxis] * K_trans.T
                                 * K_inv[:, :, np.newaxis],
                                 axis=0).sum(axis=0)  # axis=(0, 1) in np >= 1.7
-                y_std = np.sqrt(y_var) * self.y_fit_std  # undo normalization
-                return y_mean, y_std
+                return y_mean, np.sqrt(y_var)
             else:
                 return y_mean
 

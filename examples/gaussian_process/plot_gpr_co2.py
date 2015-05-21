@@ -69,7 +69,6 @@ from sklearn.datasets import fetch_mldata
 data = fetch_mldata('mauna-loa-atmospheric-co2').data
 X = data[:, [1]]
 y = data[:, 0]
-y_mean = y.mean()
 
 # Kernel with parameters given in GPML book
 k1 = 66.0**2 * RBF(l=67.0)  # long term smooth rising trend
@@ -79,7 +78,7 @@ k4 = 0.18**2 * RBF(l=0.134) + WhiteKernel(c=0.19**2) # noise terms
 kernel_gpml = k1 + k2 + k3 + k4
 
 gp = GaussianProcessRegressor(kernel=kernel_gpml, sigma_squared_n=0,
-							         optimizer=None)
+							         optimizer=None, normalize_y=True)
 gp.fit(X, y)
 
 print("GPML kernel: %s" % gp.kernel_)
@@ -95,8 +94,9 @@ k4 = 0.1**2 * RBF(l=0.1) + WhiteKernel(c=0.1**2,
 									   c_bounds=(1e-3, np.inf))  # noise terms
 kernel = k1 + k2 + k3 + k4
 
-gp = GaussianProcessRegressor(kernel=kernel, sigma_squared_n=0)
-gp.fit(X, y - y_mean)
+gp = GaussianProcessRegressor(kernel=kernel, sigma_squared_n=0,
+                              normalize_y=True)
+gp.fit(X, y)
 
 print("\nLearned kernel: %s" % gp.kernel_)
 print("Log-marginal-likelihood: %.3f"
@@ -104,7 +104,6 @@ print("Log-marginal-likelihood: %.3f"
 
 X_ = np.linspace(X.min(), X.max() + 30, 1000)[:, np.newaxis]
 y_pred, y_std = gp.predict(X_, return_std=True)
-y_pred += y_mean
 
 # Illustration
 plt.scatter(X, y, c='k')
