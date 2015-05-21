@@ -180,13 +180,13 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
                     raise ValueError(
                         "Multiple optimizer restarts (n_restarts_optimizer>1) "
                         "requires that all bounds are finite.")
-                log_bounds = np.log(self.kernel_.bounds)
+                bounds = self.kernel_.bounds
                 for iteration in range(1, self.n_restarts_optimizer):
-                    theta_initial = np.exp(self.rng.uniform(log_bounds[:, 0],
-                                                            log_bounds[:, 1]))
+                    theta_initial = np.exp(self.rng.uniform(bounds[:, 0],
+                                                            bounds[:, 1]))
                     optima.append(
                         self._constrained_optimization(obj_func, theta_initial,
-                                                       self.kernel_.bounds))
+                                                       bounds))
             # Select result from run with minimal (negative) log-marginal
             # likelihood
             self.theta_ = optima[np.argmin(map(itemgetter(1), optima))][0]

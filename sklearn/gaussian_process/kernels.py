@@ -80,37 +80,42 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
     @property
     def theta(self):
-        """Returns the (flattened) non-fixed hyperparameters of the kernel.
+        """Returns the (flattened, log-transformed) non-fixed hyperparameters.
+
+        Note that theta are typically the log-transformed values of the
+        kernel's hyperparameters as this representation of the search space
+        is more amenable for hyperparameter search, as hyperparameters like
+        length-scales naturally live on a log-scale.
 
         Returns
         -------
         theta : array, shape (n_dims,)
-            The non-fixed hyperparameters of the kernel
+            The non-fixed, log-transformed hyperparameters of the kernel
         """
         theta = []
         for var_name in self.theta_vars:
             if not isinstance(var_name, basestring):  # vector-valued parameter
                 var_name, _ = var_name
             theta.append(getattr(self, var_name))
-        return np.array(theta).ravel()
+        return np.log(theta).ravel()
 
     @theta.setter
     def theta(self, theta):
-        """Sets the (flattened) non-fixed hyperparameters of the kernel.
+        """Sets the (flattened, log-transformed) non-fixed hyperparameters.
 
         Parameters
         ----------
         theta : array, shape (n_dims,)
-            The non-fixed hyperparameters of the kernel
+            The non-fixed, log-transformed hyperparameters of the kernel
         """
         i = 0
         for var_name in self.theta_vars:
             if not isinstance(var_name, basestring):  # vector-valued parameter
                 var_name, var_length = var_name
-                setattr(self, var_name, theta[i:i + var_length])
+                setattr(self, var_name, np.exp(theta[i:i + var_length]))
                 i += var_length
             else:
-                setattr(self, var_name, theta[i])
+                setattr(self, var_name, np.exp(theta[i]))
                 i += 1
 
         if i != len(theta):
@@ -120,12 +125,12 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
     @property
     def bounds(self):
-        """Returns the bounds on the kernel's hyperparameters.
+        """Returns the bounds on the kernel's hyperparameters theta.
 
         Returns
         -------
         bounds : array, shape (n_dims, 2)
-            The bounds on the kernel's hyperparameters
+            The bounds on the kernel's hyperparameters theta
         """
         bounds = []
         for var_name in self.theta_vars:
@@ -142,25 +147,26 @@ class Kernel(six.with_metaclass(ABCMeta)):
                 bounds.append(var_bounds)
             else:
                 bounds.append(getattr(self, var_name + "_bounds"))
-        return np.vstack(bounds)
+        return np.log(np.vstack(bounds))
 
     @bounds.setter
     def bounds(self, bounds):
-        """Sets the bounds on the kernel's hyperparameters.
+        """Sets the bounds on the kernel's hyperparameters theta.
 
         Parameters
         ----------
         bounds : array, shape (n_dims, 2)
-            The bounds on the kernel's hyperparameters
+            The bounds on the kernel's hyperparameters theta
         """
         i = 0
         for var_name in self.theta_vars:
             if not isinstance(var_name, basestring):  # vector-valued parameter
                 var_name, var_length = var_name
-                setattr(self, var_name + "_bounds", bounds[i:i + var_length])
+                setattr(self, var_name + "_bounds",
+                        np.exp(bounds[i:i + var_length]))
                 i += var_length
             else:
-                setattr(self, var_name + "_bounds", bounds[i])
+                setattr(self, var_name + "_bounds", np.exp(bounds[i]))
                 i += 1
 
         if i != len(bounds):
@@ -213,7 +219,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
         """Returns the diagonal of the kernel k(X, X).
 
         The result of this method is identical to np.diag(self(X)); however,
-        it can be evaluted more efficiently since only the diagonal is
+        it can be evaluated more efficiently since only the diagonal is
         evaluated.
 
         Parameters
@@ -259,23 +265,28 @@ class KernelOperator(Kernel):
 
     @property
     def theta(self):
-        """Returns the (flattened) non-fixed hyperparameters of the kernel.
+        """Returns the (flattened, log-transformed) non-fixed hyperparameters.
+
+        Note that theta are typically the log-transformed values of the
+        kernel's hyperparameters as this representation of the search space
+        is more amenable for hyperparameter search, as hyperparameters like
+        length-scales naturally live on a log-scale.
 
         Returns
         -------
         theta : array, shape (n_dims,)
-            The non-fixed hyperparameters of the kernel
+            The non-fixed, log-transformed hyperparameters of the kernel
         """
         return np.append(self.k1.theta, self.k2.theta)
 
     @theta.setter
     def theta(self, theta):
-        """Sets the (flattened) non-fixed hyperparameters of the kernel.
+        """Sets the (flattened, log-transformed) non-fixed hyperparameters.
 
         Parameters
         ----------
         theta : array, shape (n_dims,)
-            The non-fixed hyperparameters of the kernel
+            The non-fixed, log-transformed hyperparameters of the kernel
         """
         k1_dims = self.k1.n_dims
         self.k1.theta = theta[:k1_dims]
@@ -283,12 +294,12 @@ class KernelOperator(Kernel):
 
     @property
     def bounds(self):
-        """Returns the bounds on the kernel's hyperparameters.
+        """Returns the bounds on the kernel's hyperparameters theta.
 
         Returns
         -------
         bounds : array, shape (n_dims, 2)
-            The bounds on the kernel's hyperparameters
+            The bounds on the kernel's hyperparameters theta
         """
         if self.k1.bounds.size == 0:
             return self.k2.bounds
@@ -298,12 +309,12 @@ class KernelOperator(Kernel):
 
     @bounds.setter
     def bounds(self, bounds):
-        """Sets the bounds on the kernel's hyperparameters.
+        """Sets the bounds on the kernel's hyperparameters theta.
 
         Parameters
         ----------
         bounds : array, shape (n_dims, 2)
-            The bounds on the kernel's hyperparameters
+            The bounds on the kernel's hyperparameters theta
         """
         k1_dims = self.k1.n_dims
         self.k1.bounds = bounds[:k1_dims]
@@ -357,7 +368,7 @@ class Sum(KernelOperator):
             Kernel k(X, Y)
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
-            The gradient of the kernel k(X, X) with repect to the
+            The gradient of the kernel k(X, X) with respect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
@@ -372,7 +383,7 @@ class Sum(KernelOperator):
         """Returns the diagonal of the kernel k(X, X).
 
         The result of this method is identical to np.diag(self(X)); however,
-        it can be evaluted more efficiently since only the diagonal is
+        it can be evaluated more efficiently since only the diagonal is
         evaluated.
 
         Parameters
@@ -428,7 +439,7 @@ class Product(KernelOperator):
             Kernel k(X, Y)
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
-            The gradient of the kernel k(X, X) with repect to the
+            The gradient of the kernel k(X, X) with respect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
@@ -444,7 +455,7 @@ class Product(KernelOperator):
         """Returns the diagonal of the kernel k(X, X).
 
         The result of this method is identical to np.diag(self(X)); however,
-        it can be evaluted more efficiently since only the diagonal is
+        it can be evaluated more efficiently since only the diagonal is
         evaluated.
 
         Parameters
@@ -501,45 +512,50 @@ class Exponentiation(Kernel):
 
     @property
     def theta(self):
-        """Returns the (flattened) non-fixed hyperparameters of the kernel.
+        """Returns the (flattened, log-transformed) non-fixed hyperparameters.
+
+        Note that theta are typically the log-transformed values of the
+        kernel's hyperparameters as this representation of the search space
+        is more amenable for hyperparameter search, as hyperparameters like
+        length-scales naturally live on a log-scale.
 
         Returns
         -------
         theta : array, shape (n_dims,)
-            The non-fixed hyperparameters of the kernel
+            The non-fixed, log-transformed hyperparameters of the kernel
         """
         return self.kernel.theta
 
     @theta.setter
     def theta(self, theta):
-        """Sets the (flattened) non-fixed hyperparameters of the kernel.
+        """Sets the (flattened, log-transformed) non-fixed hyperparameters.
 
         Parameters
         ----------
         theta : array, shape (n_dims,)
-            The non-fixed hyperparameters of the kernel
+            The non-fixed, log-transformed hyperparameters of the kernel
         """
         self.kernel.theta = theta
 
     @property
     def bounds(self):
-        """Returns the bounds on the kernel's hyperparameters.
+        """Returns the bounds on the kernel's hyperparameters theta.
 
         Returns
         -------
         bounds : array, shape (n_dims, 2)
-            The bounds on the kernel's hyperparameters
+            The bounds on the kernel's hyperparameters theta
         """
         return self.kernel.bounds
 
     @bounds.setter
     def bounds(self, bounds):
-        """Sets the bounds on the kernel's hyperparameters.
+        """Sets the bounds on the kernel's hyperparameters theta.
 
         Parameters
         ----------
         bounds : array, shape (n_dims, 2)
-            The bounds on the kernel's hyperparameters
+            The bounds on the kernel's hyperparameters theta
         """
         self.kernel.bounds = bounds
 
@@ -570,7 +586,7 @@ class Exponentiation(Kernel):
             Kernel k(X, Y)
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
-            The gradient of the kernel k(X, X) with repect to the
+            The gradient of the kernel k(X, X) with respect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
@@ -587,7 +603,7 @@ class Exponentiation(Kernel):
         """Returns the diagonal of the kernel k(X, X).
 
         The result of this method is identical to np.diag(self(X)); however,
-        it can be evaluted more efficiently since only the diagonal is
+        it can be evaluated more efficiently since only the diagonal is
         evaluated.
 
         Parameters
@@ -624,10 +640,10 @@ class ConstantKernel(Kernel):
     c : float, default: 1.0
         The constant value which defines the covariance: k(x_1, x_2) = c
 
-    c_bounds : pair of floats >= 0, default: (0, np.inf)
+    c_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on c
     """
-    def __init__(self, c=1.0, c_bounds=(0, np.inf)):
+    def __init__(self, c=1.0, c_bounds=(1e-5, 1e5)):
         self.c = c
         self.c_bounds = c_bounds
 
@@ -655,7 +671,7 @@ class ConstantKernel(Kernel):
             Kernel k(X, Y)
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
-            The gradient of the kernel k(X, X) with repect to the
+            The gradient of the kernel k(X, X) with respect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
@@ -668,7 +684,7 @@ class ConstantKernel(Kernel):
         K = self.c * np.ones((X.shape[0], Y.shape[0]))
         if eval_gradient:
             if self.c_bounds is not "fixed":
-                return K, np.ones((X.shape[0], X.shape[0], 1))
+                return K, self.c * np.ones((X.shape[0], X.shape[0], 1))
             else:
                 return K, np.empty((X.shape[0], X.shape[0], 0))
         else:
@@ -678,7 +694,7 @@ class ConstantKernel(Kernel):
         """Returns the diagonal of the kernel k(X, X).
 
         The result of this method is identical to np.diag(self(X)); however,
-        it can be evaluted more efficiently since only the diagonal is
+        it can be evaluated more efficiently since only the diagonal is
         evaluated.
 
         Parameters
@@ -711,10 +727,10 @@ class WhiteKernel(Kernel):
     c : float, default: 1.0
         Parameter controlling the noise level
 
-    c_bounds : pair of floats >= 0, default: (0.0, np.inf)
+    c_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on c
     """
-    def __init__(self, c=1.0, c_bounds=(0.0, np.inf)):
+    def __init__(self, c=1.0, c_bounds=(1e-5, 1e5)):
         self.c = c
         self.c_bounds = c_bounds
 
@@ -742,7 +758,7 @@ class WhiteKernel(Kernel):
             Kernel k(X, Y)
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
-            The gradient of the kernel k(X, X) with repect to the
+            The gradient of the kernel k(X, X) with respect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
@@ -754,7 +770,7 @@ class WhiteKernel(Kernel):
             K = self.c * np.eye(X.shape[0])
             if eval_gradient:
                 if self.c_bounds is not "fixed":
-                    return K, np.eye(X.shape[0])[:, :, np.newaxis]
+                    return K, self.c * np.eye(X.shape[0])[:, :, np.newaxis]
                 else:
                     return K, np.empty((X.shape[0], X.shape[0], 0))
             else:
@@ -769,7 +785,7 @@ class WhiteKernel(Kernel):
         """Returns the diagonal of the kernel k(X, X).
 
         The result of this method is identical to np.diag(self(X)); however,
-        it can be evaluted more efficiently since only the diagonal is
+        it can be evaluated more efficiently since only the diagonal is
         evaluated.
 
         Parameters
@@ -810,10 +826,10 @@ class RBF(Kernel):
         used. If an array, an anisotropic kernel is used where each dimension
         of l defines the length-scale of the respective feature dimension.
 
-    l_bounds : pair of floats >= 0, default: (1e-5, np.inf)
+    l_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on l
     """
-    def __init__(self, l=1.0, l_bounds=(1e-5, np.inf)):
+    def __init__(self, l=1.0, l_bounds=(1e-5, 1e5)):
         if np.iterable(l):
             self.l = np.asarray(l, dtype=np.float)
         else:
@@ -849,7 +865,7 @@ class RBF(Kernel):
             Kernel k(X, Y)
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
-            The gradient of the kernel k(X, X) with repect to the
+            The gradient of the kernel k(X, X) with respect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
@@ -872,12 +888,12 @@ class RBF(Kernel):
                 return K, np.empty((X.shape[0], X.shape[0], 0))
             elif not np.iterable(self.l) or self.l.shape[0] == 1:
                 K_gradient = \
-                    (K * squareform(dists) / self.l)[:, :, np.newaxis]
+                    (K * squareform(dists))[:, :, np.newaxis]
                 return K, K_gradient
             elif self.l.shape[0] == X.shape[1]:
                 # We need to recompute the pairwise dimension-wise distances
                 D = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 \
-                    / (self.l ** 3)
+                    / (self.l ** 2)
                 K_gradient = K[..., np.newaxis] * D
                 return K, K_gradient
             else:
@@ -904,7 +920,7 @@ class RationalQuadratic(Kernel):
     alpha>0 Only the isotropic variant where l is a scalar is supported at the
     moment. The kernel given by:
 
-    k(x_i, x_j) = (1 + d(x_i, x_j)^2 / (2*alpha l^2))^alpha
+    k(x_i, x_j) = (1 + d(x_i, x_j)^2 / (2*alpha l^2))^-alpha
 
     Parameters
     ----------
@@ -914,14 +930,14 @@ class RationalQuadratic(Kernel):
     alpha : float > 0, default: 1.0
         Scale mixture parameter
 
-    l_bounds : pair of floats >= 0, default: (1e-5, np.inf)
+    l_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on l
 
-    alpha_bounds : pair of floats >= 0, default: (1e-5, np.inf)
+    alpha_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on alpha
     """
-    def __init__(self, l=1.0, alpha=1.0, l_bounds=(1e-5, np.inf),
-                 alpha_bounds=(1e-5, np.inf)):
+    def __init__(self, l=1.0, alpha=1.0, l_bounds=(1e-5, 1e5),
+                 alpha_bounds=(1e-5, 1e5)):
         self.l = l
         self.alpha = alpha
         self.l_bounds = l_bounds
@@ -953,7 +969,7 @@ class RationalQuadratic(Kernel):
             Kernel k(X, Y)
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
-            The gradient of the kernel k(X, X) with repect to the
+            The gradient of the kernel k(X, X) with respect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
@@ -981,7 +997,9 @@ class RationalQuadratic(Kernel):
 
             # gradient with respect to alpha
             if "alpha" in self.theta_vars:
-                alpha_gradient = K * (-np.log(base) + tmp / base)
+                alpha_gradient = \
+                    K * (-self.alpha * np.log(base)
+                         + dists / (2 * self.l ** 2 * base))
                 alpha_gradient = alpha_gradient[:, :, np.newaxis]
             else:  # alpha is kept fixed
                 alpha_gradient = np.empty((K.shape[0], K.shape[1], 0))
@@ -1013,14 +1031,14 @@ class ExpSineSquared(Kernel):
     p : float > 0, default: 1.0
         The periodicity of the kernel.
 
-    l_bounds : pair of floats >= 0, default: (1e-5, np.inf)
+    l_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on l
 
-    p_bounds : pair of floats >= 0, default: (1e-5, np.inf)
+    p_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on p
     """
-    def __init__(self, l=1.0, p=1.0, l_bounds=(1e-5, np.inf),
-                 p_bounds=(1e-5, np.inf)):
+    def __init__(self, l=1.0, p=1.0, l_bounds=(1e-5, 1e5),
+                 p_bounds=(1e-5, 1e5)):
         self.l = l
         self.p = p
         self.l_bounds = l_bounds
@@ -1052,7 +1070,7 @@ class ExpSineSquared(Kernel):
             Kernel k(X, Y)
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
-            The gradient of the kernel k(X, X) with repect to the
+            The gradient of the kernel k(X, X) with respect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
@@ -1073,13 +1091,13 @@ class ExpSineSquared(Kernel):
             cos_of_arg = np.cos(arg)
             # gradient with respect to l
             if "l" in self.theta_vars:
-                l_gradient = 4 / self.l**3 * sin_of_arg**2 * K
+                l_gradient = 4 / self.l**2 * sin_of_arg**2 * K
                 l_gradient = l_gradient[:, :, np.newaxis]
             else:  # l is kept fixed
                 l_gradient = np.empty((K.shape[0], K.shape[1], 0))
             # gradient with respect to p
             if "p" in self.theta_vars:
-                p_gradient = 4 * arg / (self.l**2 * self.p) * cos_of_arg \
+                p_gradient = 4 * arg / self.l**2 * cos_of_arg \
                     * sin_of_arg * K
                 p_gradient = p_gradient[:, :, np.newaxis]
             else:  # p is kept fixed
@@ -1115,11 +1133,11 @@ class DotProduct(Kernel):
         Parameter controlling the inhomogenity of the kernel. If sigma_0=0,
         the kernel is homogenous.
 
-    sigma_0_bounds : pair of floats >= 0, default: (1e-5, np.inf)
+    sigma_0_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on l
     """
 
-    def __init__(self, sigma_0=1.0, sigma_0_bounds=(1e-5, np.inf)):
+    def __init__(self, sigma_0=1.0, sigma_0_bounds=(1e-5, 1e5)):
         self.sigma_0 = sigma_0
         self.sigma_0_bounds = sigma_0_bounds
 
@@ -1147,7 +1165,7 @@ class DotProduct(Kernel):
             Kernel k(X, Y)
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
-            The gradient of the kernel k(X, X) with repect to the
+            The gradient of the kernel k(X, X) with respect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
@@ -1163,7 +1181,7 @@ class DotProduct(Kernel):
         if eval_gradient:
             if self.sigma_0_bounds is not "fixed":
                 K_gradient = np.empty((K.shape[0], K.shape[1], 1))
-                K_gradient[..., 0] = 2 * self.sigma_0
+                K_gradient[..., 0] = 2 * self.sigma_0 ** 2
                 return K, K_gradient
             else:
                 return K, np.empty((X.shape[0], X.shape[0], 0))
@@ -1174,7 +1192,7 @@ class DotProduct(Kernel):
         """Returns the diagonal of the kernel k(X, X).
 
         The result of this method is identical to np.diag(self(X)); however,
-        it can be evaluted more efficiently since only the diagonal is
+        it can be evaluated more efficiently since only the diagonal is
         evaluated.
 
         Parameters
@@ -1228,7 +1246,7 @@ class PairwiseKernel(Kernel):
     gam ma: float >= 0, default: 1.0
         Parameter gamma of the pairwise kernel specified by metric
 
-    gamma_bounds : pair of floats >= 0, default: (1e-5, np.inf)
+    gamma_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on gamma
 
     metric : string, or callable
@@ -1245,7 +1263,7 @@ class PairwiseKernel(Kernel):
         Any further parameters are passed directly to the kernel function.
     """
 
-    def __init__(self, gamma=1.0, gamma_bounds=(1e-5, np.inf),
+    def __init__(self, gamma=1.0, gamma_bounds=(1e-5, 1e5),
                  metric="linear", **kwargs):
         self.gamma = gamma
         self.gamma_bounds = gamma_bounds
@@ -1277,7 +1295,7 @@ class PairwiseKernel(Kernel):
             Kernel k(X, Y)
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
-            The gradient of the kernel k(X, X) with repect to the
+            The gradient of the kernel k(X, X) with respect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
@@ -1291,7 +1309,7 @@ class PairwiseKernel(Kernel):
                 # approximate gradient numerically
                 def f(gamma):  # helper function
                     return pairwise_kernels(
-                        X, Y, metric=self.metric, gamma=gamma,
+                        X, Y, metric=self.metric, gamma=np.exp(gamma),
                         filter_params=True, **self.kwargs)
                 return K, _approx_fprime(self.theta, f, 1e-10)
         else:
@@ -1301,7 +1319,7 @@ class PairwiseKernel(Kernel):
         """Returns the diagonal of the kernel k(X, X).
 
         The result of this method is identical to np.diag(self(X)); however,
-        it can be evaluted more efficiently since only the diagonal is
+        it can be evaluated more efficiently since only the diagonal is
         evaluated.
 
         Parameters
