@@ -47,9 +47,12 @@ def test_converged_to_local_maximum():
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
 
-        lml, lml_gradient = gpc.log_marginal_likelihood(gpc.kernel_.theta, True)
+        lml, lml_gradient = \
+            gpc.log_marginal_likelihood(gpc.kernel_.theta, True)
 
-        assert_almost_equal(lml_gradient, 0, 2)
+        assert_true(np.all((np.abs(lml_gradient) < 1e-4)
+                           | (gpc.kernel_.theta == gpc.kernel_.bounds[:, 0])
+                           | (gpc.kernel_.theta == gpc.kernel_.bounds[:, 1])))
 
 
 def test_lml_gradient():
