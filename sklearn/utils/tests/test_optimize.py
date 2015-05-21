@@ -23,8 +23,10 @@ def test_newton_cg():
     def hess(x, p):
         return p.dot(A.T.dot(A.dot(x.all())))
 
-    def func_grad_hess(x):
-        return func(x), grad(x), lambda x: A.T.dot(A.dot(x))
+    def grad_hess(x):
+        return grad(x), lambda x: A.T.dot(A.dot(x))
 
-    assert_array_almost_equal(newton_cg(func_grad_hess, func, grad, x0, tol=1e-10),
-                              fmin_ncg(f=func, x0=x0, fprime=grad, fhess_p=hess))
+    assert_array_almost_equal(
+        newton_cg(grad_hess, func, grad, x0, tol=1e-10),
+        fmin_ncg(f=func, x0=x0, fprime=grad, fhess_p=hess)
+        )

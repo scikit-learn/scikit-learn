@@ -18,8 +18,8 @@ from sklearn.utils import ConvergenceWarning
 from sklearn.linear_model.logistic import (
     LogisticRegression,
     logistic_regression_path, LogisticRegressionCV,
-    _logistic_loss_and_grad, _logistic_loss_grad_hess,
-    _multinomial_loss_grad_hess
+    _logistic_loss_and_grad, _logistic_grad_hess,
+    _multinomial_grad_hess, _logistic_loss,
     )
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.datasets import load_iris, make_classification
@@ -259,7 +259,7 @@ def test_logistic_loss_and_grad():
         assert_array_almost_equal(grad_interp, approx_grad, decimal=2)
 
 
-def test_logistic_loss_grad_hess():
+def test_logistic_grad_hess():
     rng = np.random.RandomState(0)
     n_samples, n_features = 50, 5
     X_ref = rng.randn(n_samples, n_features)
@@ -272,10 +272,10 @@ def test_logistic_loss_grad_hess():
     for X in (X_ref, X_sp):
         w = .1 * np.ones(n_features)
 
-        # First check that _logistic_loss_grad_hess is consistent
+        # First check that _logistic_grad_hess is consistent
         # with _logistic_loss_and_grad
         loss, grad = _logistic_loss_and_grad(w, X, y, alpha=1.)
-        loss_2, grad_2, hess = _logistic_loss_grad_hess(w, X, y, alpha=1.)
+        grad_2, hess = _logistic_grad_hess(w, X, y, alpha=1.)
         assert_array_almost_equal(grad, grad_2)
 
         # Now check our hessian along the second direction of the grad
@@ -301,11 +301,9 @@ def test_logistic_loss_grad_hess():
 
         # Second check that our intercept implementation is good
         w = np.zeros(n_features + 1)
-        loss_interp, grad_interp = _logistic_loss_and_grad(
-            w, X, y, alpha=1.
-            )
-        loss_interp_2, grad_interp_2, hess = \
-            _logistic_loss_grad_hess(w, X, y, alpha=1.)
+        loss_interp, grad_interp = _logistic_loss_and_grad(w, X, y, alpha=1.)
+        loss_interp_2 = _logistic_loss(w, X, y, alpha=1.)
+        grad_interp_2, hess = _logistic_grad_hess(w, X, y, alpha=1.)
         assert_array_almost_equal(loss_interp, loss_interp_2)
         assert_array_almost_equal(grad_interp, grad_interp_2)
 
@@ -359,13 +357,14 @@ def test_intercept_logistic_helper():
     # Fit intercept case.
     alpha = 1.
     w = np.ones(n_features + 1)
-    loss_interp, grad_interp, hess_interp = _logistic_loss_grad_hess(
-        w, X, y, alpha)
+    grad_interp, hess_interp = _logistic_grad_hess(w, X, y, alpha)
+    loss_interp = _logistic_loss(w, X, y, alpha)
 
     # Do not fit intercept. This can be considered equivalent to adding
     # a feature vector of ones, i.e column of one vectors.
     X_ = np.hstack((X, np.ones(10)[:, np.newaxis]))
-    loss, grad, hess = _logistic_loss_grad_hess(w, X_, y, alpha)
+    grad, hess = _logistic_grad_hess(w, X_, y, alpha)
+    loss = _logistic_loss(w, X_, y, alpha)
 
     # In the fit_intercept=False case, the feature vector of ones is
     # penalized. This should be taken care of.
@@ -540,7 +539,7 @@ def test_logistic_regression_multinomial():
         assert_almost_equal(clf_path.intercept_, clf_int.intercept_, decimal=3)
 
 
-def test_multinomial_loss_grad_hess():
+def test_multinomial_grad_hess():
     rng = np.random.RandomState(0)
     n_samples, n_features, n_classes = 100, 5, 3
     X = rng.randn(n_samples, n_features)
@@ -550,20 +549,20 @@ def test_multinomial_loss_grad_hess():
     Y[range(0, n_samples), ind] = 1
     w = w.ravel()
     sample_weights = np.ones(X.shape[0])
-    _, grad, hessp = _multinomial_loss_grad_hess(w, X, Y, alpha=1.,
-                                                 sample_weight=sample_weights)
+    grad, hessp = _multinomial_grad_hess(w, X, Y, alpha=1.,
+                                         sample_weight=sample_weights)
     # extract first column of hessian matrix
     vec = np.zeros(n_features * n_classes)
     vec[0] = 1
     hess_col = hessp(vec)
 
     # Estimate hessian using least squares as done in
-    # test_logistic_loss_grad_hess
+    # test_logistic_grad_hess
     e = 1e-3
     d_x = np.linspace(-e, e, 30)
     d_grad = np.array([
-        _multinomial_loss_grad_hess(w + t * vec, X, Y, alpha=1.,
-                                    sample_weight=sample_weights)[1]
+        _multinomial_grad_hess(w + t * vec, X, Y, alpha=1.,
+                               sample_weight=sample_weights)[0]
         for t in d_x
         ])
     d_grad -= d_grad.mean(axis=0)
