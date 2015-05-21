@@ -90,3 +90,26 @@ def test_random_starts():
         lml = gp.log_marginal_likelihood(gp.kernel_.theta)
         assert_greater(lml, last_lml - np.finfo(np.float32).eps)
         last_lml = lml
+
+
+def test_custom_optimizer():
+    """ Test that GPC can use externally defined optimizers. """
+    # Define a dummy optimizer that simply tests 1000 random hyperparameters
+    def optimizer(obj_func, initial_theta, bounds):
+        rng = np.random.RandomState(0)
+        theta_opt, func_min = \
+            initial_theta, obj_func(initial_theta, eval_gradient=False)
+        for _ in range(1000):
+            theta = np.atleast_1d(rng.uniform(np.maximum(-2, bounds[:, 0]),
+                                              np.minimum(1, bounds[:, 1])))
+            f = obj_func(theta, eval_gradient=False)
+            if f < func_min:
+                theta_opt, func_min = theta, f
+        return theta_opt, func_min
+
+    for kernel in kernels:
+        gpc = GaussianProcessClassifier(kernel=kernel, optimizer=optimizer)
+        gpc.fit(X, y)
+        # Checks that optimizer improved marginal likelihood
+        assert_greater(gpc.log_marginal_likelihood(gpc.kernel_.theta),
+                       gpc.log_marginal_likelihood(gpc.kernel.theta))
