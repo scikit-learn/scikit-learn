@@ -13,7 +13,7 @@ LML, they perform slightly worse according to the log-loss on test data. The
 figure shows that this is because they exhibit a steep change of the class
 probabilities at the class boundaries (which is good) but have predicted
 probabilities close to 0.5 far away from the class boundaries (which is bad)
-This undiesirable effect is caused by the Laplace approximation used
+This undesirable effect is caused by the Laplace approximation used
 internally by GPC.
 
 The second figure shows the log-marginal-likelihood for different choices of
@@ -82,11 +82,11 @@ plt.figure(1)
 theta0 = np.logspace(0, 8, 30)
 theta1 = np.logspace(-1, 1, 29)
 Theta0, Theta1 = np.meshgrid(theta0, theta1)
-LML = [[gp_opt.log_marginal_likelihood([Theta0[i, j], Theta1[i, j]])
+LML = [[gp_opt.log_marginal_likelihood(np.log([Theta0[i, j], Theta1[i, j]]))
         for i in range(Theta0.shape[0])] for j in range(Theta0.shape[1])]
 LML = np.array(LML).T
-plt.plot(gp_fix.theta_[0], gp_fix.theta_[1], 'ko', zorder=10)
-plt.plot(gp_opt.theta_[0], gp_opt.theta_[1], 'ko', zorder=10)
+plt.plot(np.exp(gp_fix.theta_)[0], np.exp(gp_fix.theta_)[1], 'ko', zorder=10)
+plt.plot(np.exp(gp_opt.theta_)[0], np.exp(gp_opt.theta_)[1], 'ko', zorder=10)
 plt.pcolor(Theta0, Theta1, LML)
 plt.xscale("log")
 plt.yscale("log")

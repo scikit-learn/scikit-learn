@@ -35,18 +35,18 @@ different properties of the signal:
    and the RBF's length scale are further free parameters.
 
 Maximizing the log-marginal-likelihood after subtracting the target's mean
-yields the following kernel with an LML of -84.483:
-   2.5e+03 * RBF(l=49.8)
-   + 6.68 * RBF(l=100) * ExpSineSquared(l=1.37, p=1)
-   + 0.215 * RationalQuadratic(alpha=3.98, l=0.982)
-   + 0.0381 * RBF(l=0.136) + WhiteKernel(c=0.0335)
-Thus, most of the target signal (sqrt(2.5e+03)ppm = 50ppm) is explained by a
-long-term rising trend (length-scale 49.8 years). The periodic component has
-an amplitude of sqrt(6.68)ppm = 2.58ppm, a decay time of 100 years and a
-length-scale of 1.37. The long decay time indicates that we have a locally very
+yields the following kernel with an LML of -83.214:
+   1.19e+03 * RBF(l=41.8)
+   + 10.7 * RBF(l=180) * ExpSineSquared(l=1.44, p=1)
+   + 0.199 * RationalQuadratic(alpha=17.7, l=0.957)
+   + 0.0389 * RBF(l=0.138) + WhiteKernel(c=0.0336)
+Thus, most of the target signal (sqrt(1.19e+03)ppm = 34.5ppm) is explained by a
+long-term rising trend (length-scale 41.8 years). The periodic component has
+an amplitude of sqrt(10.7)ppm = 3.27ppm, a decay time of 180 years and a
+length-scale of 1.44. The long decay time indicates that we have a locally very
 close to periodic seasonal component. The correlated noise has an amplitude of
-sqrt(0.0381)ppm = 0.195ppm with a length scale of 0.136 years and a white-noise
-contribution of sqrt(0.0335)ppm = 0.183pm. Thus, the overall noise level is
+sqrt(0.0389)ppm = 0.197ppm with a length scale of 0.138 years and a white-noise
+contribution of sqrt(0.0336)ppm = 0.183pm. Thus, the overall noise level is
 very small, indicating that the data can be very well explained by the model.
 The figure shows also that the model makes very confident predictions until
 around 2015.
@@ -79,8 +79,8 @@ k4 = 0.18**2 * RBF(l=0.134) + WhiteKernel(c=0.19**2) # noise terms
 kernel_gpml = k1 + k2 + k3 + k4
 
 gp = GaussianProcessRegressor(kernel=kernel_gpml, sigma_squared_n=0,
-							  optimizer=None)
-gp.fit(X, y - y_mean)
+							         optimizer=None)
+gp.fit(X, y)
 
 print("GPML kernel: %s" % gp.kernel_)
 print("Log-marginal-likelihood: %.3f" % gp.log_marginal_likelihood(gp.theta_))
