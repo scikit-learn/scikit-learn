@@ -356,7 +356,8 @@ class Imputer(BaseEstimator, TransformerMixin):
             indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
                                 np.diff(X.indptr))[mask]
 
-            X.data[mask] = valid_statistics[indexes].astype(X.dtype)
+            X.data[mask] = astype(valid_statistics[indexes], X.dtype,
+                                  copy=False)
         else:
             if sparse.issparse(X):
                 X = X.toarray()
