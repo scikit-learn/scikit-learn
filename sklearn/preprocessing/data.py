@@ -439,13 +439,10 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     `center_` : array of floats
-        The median value for each feature in the training set, unless axis=1,
-        in which case it contains the median value for each sample
+        The median value for each feature in the training set.
 
     `scale_` : array of floats
-        The (scaled) interquartile range for each feature in the training set,
-        unless axis=1, in which case it contains the median value for each
-        sample.
+        The (scaled) interquartile range for each feature in the training set.
 
     See also
     --------
@@ -489,7 +486,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 scale = 1.
         elif isinstance(scale, np.ndarray):
             scale[scale == 0.0] = 1.0
-            scale[-np.isfinite(scale)] = 1.0
+            scale[~np.isfinite(scale)] = 1.0
         return scale
 
     def fit(self, X, y=None):
