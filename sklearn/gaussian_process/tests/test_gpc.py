@@ -87,6 +87,6 @@ def test_random_starts():
         gp = GaussianProcessClassifier(
             kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
             random_state=0,).fit(X, y)
-        lml = gp.log_marginal_likelihood(gp.theta_)
+        lml = gp.log_marginal_likelihood(gp.kernel_.theta)
         assert_greater(lml, last_lml - np.finfo(np.float32).eps)
         last_lml = lml

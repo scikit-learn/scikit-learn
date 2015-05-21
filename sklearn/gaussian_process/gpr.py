@@ -105,9 +105,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
-    theta_: array-like, shape =(n_kernel_params,)
-        Selected kernel hyperparameters
-
     L_: array-like, shape = (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in X_fit_
 
@@ -171,7 +168,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.y_fit_ = y
 
         if self.kernel_.n_dims == 0:  # no tunable hyperparameters
-            self.theta_ = self.kernel_.theta   # actually an empty sequence
+            pass
         elif self.optimizer is not None:
             # Choose hyperparameters based on maximizing the log-marginal
             # likelihood (potentially starting from several initial values)
@@ -204,11 +201,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                                                        bounds))
             # Select result from run with minimal (negative) log-marginal
             # likelihood
-            self.theta_ = optima[np.argmin(map(itemgetter(1), optima))][0]
-            self.kernel_.theta = self.theta_
-        else:
-            # Use initially provided hyperparameters
-            self.theta_ = self.kernel_.theta
+            self.kernel_.theta = optima[np.argmin(map(itemgetter(1), optima))][0]
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
