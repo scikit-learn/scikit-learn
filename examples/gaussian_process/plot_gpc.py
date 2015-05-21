@@ -50,9 +50,9 @@ gp_opt = GaussianProcessClassifier(kernel=1.0 * RBF(l=1.0))
 gp_opt.fit(X[:train_size], y[:train_size])
 
 print("Log Marginal Likelihood (initial): %.3f"
-      % gp_fix.log_marginal_likelihood(gp_fix.theta_))
+      % gp_fix.log_marginal_likelihood(gp_fix.kernel_.theta))
 print("Log Marginal Likelihood (optimized): %.3f"
-      % gp_opt.log_marginal_likelihood(gp_opt.theta_))
+      % gp_opt.log_marginal_likelihood(gp_opt.kernel_.theta))
 
 print("Accuracy: %.3f (initial) %.3f (optimized)"
       % (accuracy_score(y[:train_size], gp_fix.predict(X[:train_size])),
@@ -85,8 +85,10 @@ Theta0, Theta1 = np.meshgrid(theta0, theta1)
 LML = [[gp_opt.log_marginal_likelihood(np.log([Theta0[i, j], Theta1[i, j]]))
         for i in range(Theta0.shape[0])] for j in range(Theta0.shape[1])]
 LML = np.array(LML).T
-plt.plot(np.exp(gp_fix.theta_)[0], np.exp(gp_fix.theta_)[1], 'ko', zorder=10)
-plt.plot(np.exp(gp_opt.theta_)[0], np.exp(gp_opt.theta_)[1], 'ko', zorder=10)
+plt.plot(np.exp(gp_fix.kernel_.theta)[0], np.exp(gp_fix.kernel_.theta)[1],
+         'ko', zorder=10)
+plt.plot(np.exp(gp_opt.kernel_.theta)[0], np.exp(gp_opt.kernel_.theta)[1],
+         'ko', zorder=10)
 plt.pcolor(Theta0, Theta1, LML)
 plt.xscale("log")
 plt.yscale("log")

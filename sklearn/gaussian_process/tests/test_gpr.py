@@ -126,7 +126,6 @@ def test_no_optimizer():
     kernel = RBF(1.0)
     gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(X, y)
     assert_equal(np.exp(gpr.kernel_.theta), 1.0)
-    assert_equal(np.exp(gpr.theta_), 1.0)
 
 
 def test_predict_cov_vs_std():
@@ -173,7 +172,7 @@ def test_random_starts():
         gp = GaussianProcessRegressor(
             kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
             random_state=0,).fit(X, y)
-        lml = gp.log_marginal_likelihood(gp.theta_)
+        lml = gp.log_marginal_likelihood(gp.kernel_.theta)
         assert_greater(lml, last_lml - np.finfo(np.float32).eps)
         last_lml = lml
 

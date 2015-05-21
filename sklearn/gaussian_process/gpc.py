@@ -98,9 +98,6 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
-    theta_: array-like, shape = (n_kernel_params,)
-        Selected kernel hyperparameters
-
     L_: array-like, shape = (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in X_fit_
 
@@ -189,10 +186,9 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
                                                        bounds))
             # Select result from run with minimal (negative) log-marginal
             # likelihood
-            self.theta_ = optima[np.argmin(map(itemgetter(1), optima))][0]
-            self.kernel_.theta = self.theta_
+            self.kernel_.theta = optima[np.argmin(map(itemgetter(1), optima))][0]
         elif self.optimizer is None:
-            self.theta_ = self.kernel_.theta
+            pass
         else:
             raise ValueError("Unknown optimizer %s." % self.optimizer)
 

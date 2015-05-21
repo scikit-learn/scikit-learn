@@ -83,7 +83,8 @@ gp = GaussianProcessRegressor(kernel=kernel_gpml, sigma_squared_n=0,
 gp.fit(X, y)
 
 print("GPML kernel: %s" % gp.kernel_)
-print("Log-marginal-likelihood: %.3f" % gp.log_marginal_likelihood(gp.theta_))
+print("Log-marginal-likelihood: %.3f"
+      % gp.log_marginal_likelihood(gp.kernel_.theta))
 
 # Kernel with optimized parameters
 k1 = 50.0**2 * RBF(l=50.0) # long term smooth rising trend
@@ -98,7 +99,8 @@ gp = GaussianProcessRegressor(kernel=kernel, sigma_squared_n=0)
 gp.fit(X, y - y_mean)
 
 print("\nLearned kernel: %s" % gp.kernel_)
-print("Log-marginal-likelihood: %.3f" % gp.log_marginal_likelihood(gp.theta_))
+print("Log-marginal-likelihood: %.3f"
+      % gp.log_marginal_likelihood(gp.kernel_.theta))
 
 X_ = np.linspace(X.min(), X.max() + 30, 1000)[:, np.newaxis]
 y_pred, y_std = gp.predict(X_, return_std=True)
