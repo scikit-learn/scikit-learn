@@ -6,8 +6,17 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_raises_regex, assert_true
 from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.linear_model import LogisticRegression
 from sklearn.utils.validation import check_X_y, check_array
+
+
+class CorrectNotFittedError(ValueError):
+    """Exception class to raise if estimator is used before fitting.
+
+    Like NotFittedError, it inherits from ValueError, but not from
+    AttributeError. Used for testing only.
+    """
 
 
 class BaseBadClassifier(BaseEstimator, ClassifierMixin):
@@ -32,6 +41,19 @@ class NoSparseClassifier(BaseBadClassifier):
         return self
 
     def predict(self, X):
+        X = check_array(X)
+        return np.ones(X.shape[0])
+
+
+class CorrectNotFittedErrorClassifier(BaseBadClassifier):
+    def fit(self, X, y):
+        X, y = check_X_y(X, y)
+        self.coef_ = np.ones(X.shape[1])
+        return self
+
+    def predict(self, X):
+        if not hasattr(self, 'coef_'):
+            raise CorrectNotFittedError("estimator is not fitted yet")
         X = check_array(X)
         return np.ones(X.shape[0])
 
@@ -70,3 +92,15 @@ def test_check_estimator():
 
     # doesn't error on actual estimator
     check_estimator(LogisticRegression)
+
+
+def test_check_estimators_unfitted():
+    # check that a ValueError/AttributeError is raised when calling predict
+    # on an unfitted estimator
+    msg = "AttributeError or ValueError not raised by predict"
+    assert_raises_regex(AssertionError, msg, check_estimators_unfitted,
+                        "estimator", NoSparseClassifier)
+
+    # check that CorrectNotFittedError inherit from either ValueError
+    # or AttributeError
+    check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier)

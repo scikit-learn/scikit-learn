@@ -38,7 +38,7 @@ from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 from sklearn.pipeline import make_pipeline
-from sklearn.utils.validation import DataConversionWarning, NotFittedError
+from sklearn.utils.validation import DataConversionWarning
 from sklearn.cross_validation import train_test_split
 
 from sklearn.utils import shuffle
@@ -347,7 +347,7 @@ def check_transformers_unfitted(name, Transformer):
     with warnings.catch_warnings(record=True):
         transformer = Transformer()
 
-    assert_raises(NotFittedError, transformer.transform, X)
+    assert_raises((AttributeError, ValueError), transformer.transform, X)
 
 
 def _check_transformer(name, Transformer, X, y):
@@ -796,8 +796,12 @@ def check_estimators_fit_returns_self(name, Estimator):
 
 
 def check_estimators_unfitted(name, Estimator):
-    """Check if NotFittedError is raised when calling predict and related
-    functions"""
+    """Check that predict raises an exception in an unfitted estimator.
+
+    Unfitted estimators should raise either AttributeError or ValueError.
+    The specific exception type NotFittedError inherits from both and can
+    therefore be adequately raised for that purpose.
+    """
 
     # Common test for Regressors as well as Classifiers
     X, y = _boston_subset()
@@ -805,19 +809,22 @@ def check_estimators_unfitted(name, Estimator):
     with warnings.catch_warnings(record=True):
         est = Estimator()
 
-    assert_raises(NotFittedError, est.predict, X)
-
+    msg = "fit"
     if hasattr(est, 'predict'):
-        assert_raises(NotFittedError, est.predict, X)
+        assert_raise_message((AttributeError, ValueError), msg,
+                             est.predict, X)
 
     if hasattr(est, 'decision_function'):
-        assert_raises(NotFittedError, est.decision_function, X)
+        assert_raise_message((AttributeError, ValueError), msg,
+                             est.decision_function, X)
 
     if hasattr(est, 'predict_proba'):
-        assert_raises(NotFittedError, est.predict_proba, X)
+        assert_raise_message((AttributeError, ValueError), msg,
+                             est.predict_proba, X)
 
     if hasattr(est, 'predict_log_proba'):
-        assert_raises(NotFittedError, est.predict_log_proba, X)
+        assert_raise_message((AttributeError, ValueError), msg,
+                             est.predict_log_proba, X)
 
 
 def check_classifiers_input_shapes(name, Classifier):
