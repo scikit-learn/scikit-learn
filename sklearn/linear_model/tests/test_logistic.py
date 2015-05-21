@@ -5,6 +5,7 @@ from scipy import linalg, optimize, sparse
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
@@ -67,7 +68,23 @@ def test_predict_2_classes():
 
 def test_error():
     # Test for appropriate exception on errors
-    assert_raises(ValueError, LogisticRegression(C=-1).fit, X, Y1)
+    msg = "Penalty term must be positive"
+    assert_raises_regexp(ValueError, msg,
+                         LogisticRegression(C=-1).fit, X, Y1)
+    assert_raises_regexp(ValueError, msg,
+                         LogisticRegression(C="test").fit, X, Y1)
+
+    msg = "Tolerance for stopping criteria must be positive"
+    assert_raises_regexp(ValueError, msg,
+                         LogisticRegression(tol=-1).fit, X, Y1)
+    assert_raises_regexp(ValueError, msg,
+                         LogisticRegression(tol="test").fit, X, Y1)
+
+    msg = "Maximum number of iteration must be positive"
+    assert_raises_regexp(ValueError, msg,
+                         LogisticRegression(max_iter=-1).fit, X, Y1)
+    assert_raises_regexp(ValueError, msg,
+                         LogisticRegression(max_iter="test").fit, X, Y1)
 
 
 def test_predict_3_classes():

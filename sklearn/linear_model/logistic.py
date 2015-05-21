@@ -1003,9 +1003,15 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self : object
             Returns self.
         """
-        if self.C < 0:
+        if not isinstance(self.C, numbers.Number) or self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
+        if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
+            raise ValueError("Maximum number of iteration must be positive;"
+                             " got (max_iter=%r)" % self.max_iter)
+        if not isinstance(self.tol, numbers.Number) or self.tol < 0:
+            raise ValueError("Tolerance for stopping criteria must be "
+                             "positive; got (tol=%r)" % self.tol)
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
         self.classes_ = np.unique(y)
