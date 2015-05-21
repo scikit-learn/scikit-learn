@@ -78,7 +78,7 @@ stime = time.time()
 kr.fit(X, y)
 print("Time for KRR fitting: %.3f" % (time.time() - stime))
 
-gp_kernel = ExpSineSquared(1.0, 5.0) + WhiteKernel(1e-1)
+gp_kernel = ExpSineSquared(1.0, 5.0, p_bounds=(1e-2, 1e1)) + WhiteKernel(1e-1)
 gpr = GaussianProcessRegressor(kernel=gp_kernel)
 stime = time.time()
 gpr.fit(X, y)

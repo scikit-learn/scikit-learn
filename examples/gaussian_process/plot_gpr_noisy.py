@@ -36,7 +36,8 @@ y = 0.5 * np.sin(3 * X[:, 0]) + rng.normal(0, 0.5, X.shape[0])
 
 # First run
 plt.figure(0)
-kernel = 1.0 * RBF(l=100.0) + WhiteKernel(c=1e-5, c_bounds=(1e-10, 1e+1))
+kernel = 1.0 * RBF(l=100.0, l_bounds=(1e-2, 1e3)) \
+  + WhiteKernel(c=1, c_bounds=(1e-10, 1e+1))
 gp = GaussianProcessRegressor(kernel=kernel,
                               sigma_squared_n=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)
@@ -52,9 +53,10 @@ plt.title("Initial: %s\nOptimum: %s\nLog-Marginal-Likelihood: %s"
              gp.log_marginal_likelihood(gp.kernel_.theta)))
 plt.tight_layout()
 
-# First run
+# Second run
 plt.figure(1)
-kernel = 1.0 * RBF(l=1.0) + WhiteKernel(c=1e-5, c_bounds=(1e-10, 1e+1))
+kernel = 1.0 * RBF(l=1.0, l_bounds=(1e-2, 1e3)) \
+  + WhiteKernel(c=1e-5, c_bounds=(1e-10, 1e+1))
 gp = GaussianProcessRegressor(kernel=kernel,
                               sigma_squared_n=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)
@@ -75,7 +77,7 @@ plt.figure(2)
 theta0 = np.logspace(-2, 3, 49)
 theta1 = np.logspace(-2, 0, 50)
 Theta0, Theta1 = np.meshgrid(theta0, theta1)
-LML = [[gp.log_marginal_likelihood([0.36, Theta0[i, j], Theta1[i, j]])
+LML = [[gp.log_marginal_likelihood(np.log([0.36, Theta0[i, j], Theta1[i, j]]))
         for i in range(Theta0.shape[0])] for j in range(Theta0.shape[1])]
 LML = np.array(LML).T
 
