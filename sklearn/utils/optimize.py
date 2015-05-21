@@ -10,7 +10,7 @@ significant speedups.
 """
 # This is a modified file from scipy.optimize
 # Original authors: Travis Oliphant, Eric Jones
-# Modifications by Gael Varoquaux
+# Modifications by Gael Varoquaux, Mathieu Blondel and Tom Dupre la Tour
 # License: BSD
 
 import numpy as np

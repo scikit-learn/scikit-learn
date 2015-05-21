@@ -48,6 +48,8 @@ Enhancements
      by their majority class or impurity, showing variable names, and using
      node proportions instead of raw sample counts. By `Trevor Stephens`_.
 
+   - Improved speed of ``newton-cg`` solver in :class:`linear_model.LogisticRegression`, by avoiding loss computation. By `Mathieu Blondel`_ and `Tom Dupre la Tour`_.
+
 Bug fixes
 .........
 
@@ -3475,3 +3477,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Cory Lorenz: https://github.com/clorenz7
 
 .. _Tim Head: https://github.com/betatim
+
+.. _Tom Dupre la Tour: https://github.com/TomDLT
