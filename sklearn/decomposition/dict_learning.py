@@ -8,7 +8,7 @@ import time
 import sys
 import itertools
 
-from math import sqrt, floor, ceil
+from math import sqrt, ceil
 
 import numpy as np
 from scipy import linalg
@@ -17,7 +17,8 @@ from numpy.lib.stride_tricks import as_strided
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import zip
-from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
+from ..utils import (check_array, check_random_state, gen_even_slices,
+                     gen_batches, _get_n_jobs)
 from ..utils.extmath import randomized_svd, row_norms
 from ..utils.validation import check_is_fitted
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
@@ -243,7 +244,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
     # Enter parallel code block
     code = np.empty((n_samples, n_components))
-    slices = list(gen_even_slices(n_samples, n_jobs))
+    slices = list(gen_even_slices(n_samples, _get_n_jobs(n_jobs)))
 
     code_views = Parallel(n_jobs=n_jobs)(
         delayed(_sparse_encode)(
@@ -1009,8 +1010,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             dict_init=self.dict_init,
             verbose=self.verbose,
             random_state=random_state,
-            return_n_iter=True
-            )
+            return_n_iter=True)
         self.components_ = U
         self.error_ = E
         return self
@@ -1170,8 +1170,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             batch_size=self.batch_size, shuffle=self.shuffle,
             verbose=self.verbose, random_state=random_state,
             return_inner_stats=True,
-            return_n_iter=True
-            )
+            return_n_iter=True)
         self.components_ = U
         # Keep track of the state of the algorithm to be able to do
         # some online fitting (partial_fit)
@@ -1216,8 +1215,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             batch_size=len(X), shuffle=False,
             verbose=self.verbose, return_code=False,
             iter_offset=iter_offset, random_state=self.random_state_,
-            return_inner_stats=True, inner_stats=inner_stats,
-            )
+            return_inner_stats=True, inner_stats=inner_stats)
         self.components_ = U
 
         # Keep track of the state of the algorithm to be able to do
