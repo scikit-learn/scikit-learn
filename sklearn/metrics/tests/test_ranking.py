@@ -21,7 +21,6 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
@@ -308,7 +307,7 @@ def test_roc_curve_toydata():
     tpr, fpr, _ = roc_curve(y_true, y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
     assert_array_almost_equal(tpr, [0., 0.5, 1.])
-    assert_array_almost_equal(fpr, [np.nan,  np.nan,  np.nan])
+    assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
 
     y_true = [1, 1]
     y_score = [0.25, 0.75]
@@ -743,7 +742,7 @@ def check_lrap_without_tie_and_increasing_score(lrap_score):
 
         # Check for growing number of consecutive relevant label
         for n_relevant in range(1, n_labels):
-           # Check for a bunch of position
+            # Check for a bunch of position
             for pos in range(n_labels - n_relevant):
                 y_true = np.zeros((1, n_labels))
                 y_true[0, pos:pos + n_relevant] = 1
