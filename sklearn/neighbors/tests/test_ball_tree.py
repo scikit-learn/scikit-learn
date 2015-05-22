@@ -1,3 +1,4 @@
+import pickle
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 from sklearn.neighbors.ball_tree import (BallTree, NeighborsHeap,
@@ -27,6 +28,10 @@ DISCRETE_METRICS = ['hamming',
 BOOLEAN_METRICS = ['matching', 'jaccard', 'dice', 'kulsinski',
                    'rogerstanimoto', 'russellrao', 'sokalmichener',
                    'sokalsneath']
+
+
+def dist_func(x1, x2, p):
+    return np.sum((x1 - x2) ** p) ** (1. / p)
 
 
 def brute_force_neighbors(X, Y, k, metric, **kwargs):
@@ -216,18 +221,31 @@ def test_ball_tree_two_point(n_samples=100, n_features=3):
 
 
 def test_ball_tree_pickle():
-    import pickle
     np.random.seed(0)
     X = np.random.random((10, 3))
+
     bt1 = BallTree(X, leaf_size=1)
+    # Test if BallTree with callable metric is picklable
+    bt1_pyfunc = BallTree(X, metric=dist_func, leaf_size=1, p=2)
+
     ind1, dist1 = bt1.query(X)
+    ind1_pyfunc, dist1_pyfunc = bt1_pyfunc.query(X)
 
     def check_pickle_protocol(protocol):
         s = pickle.dumps(bt1, protocol=protocol)
         bt2 = pickle.loads(s)
+
+        s_pyfunc = pickle.dumps(bt1_pyfunc, protocol=protocol)
+        bt2_pyfunc = pickle.loads(s_pyfunc)
+
         ind2, dist2 = bt2.query(X)
+        ind2_pyfunc, dist2_pyfunc = bt2_pyfunc.query(X)
+
         assert_array_almost_equal(ind1, ind2)
         assert_array_almost_equal(dist1, dist2)
+
+        assert_array_almost_equal(ind1_pyfunc, ind2_pyfunc)
+        assert_array_almost_equal(dist1_pyfunc, dist2_pyfunc)
 
     for protocol in (0, 1, 2):
         yield check_pickle_protocol, protocol

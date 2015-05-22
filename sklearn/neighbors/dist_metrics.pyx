@@ -224,6 +224,8 @@ cdef class DistanceMetric:
         """
         get state for pickling
         """
+        if self.__class__.__name__ == "PyFuncDistance":
+            return (float(self.p), self.vec, self.mat, self.func, self.kwargs)
         return (float(self.p), self.vec, self.mat)
 
     def __setstate__(self, state):
@@ -233,6 +235,9 @@ cdef class DistanceMetric:
         self.p = state[0]
         self.vec = state[1]
         self.mat = state[2]
+        if self.__class__.__name__ == "PyFuncDistance":
+            self.func = state[3]
+            self.kwargs = state[4]
         self.vec_ptr = get_vec_ptr(self.vec)
         self.mat_ptr = get_mat_ptr(self.mat)
         self.size = 1
