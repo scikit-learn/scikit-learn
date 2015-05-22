@@ -361,7 +361,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         n_samples, n_features = X.shape
 
         self._validate_params()
-        _check_partial_fit_first_call(self, classes)
+        _check_partial_fit_first_call(self, y, classes)
 
         n_classes = self.classes_.shape[0]
 
@@ -374,8 +374,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
         elif n_features != self.coef_.shape[-1]:
-            raise ValueError("Number of features %d does not match previous data %d."
-                             % (n_features, self.coef_.shape[-1]))
+            raise ValueError("Number of features %d does not match previous "
+                             "data %d." % (n_features, self.coef_.shape[-1]))
 
         self.loss_function = self._get_loss_function(loss)
         if self.t_ is None:
@@ -884,8 +884,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             self._allocate_parameter_mem(1, n_features,
                                          coef_init, intercept_init)
         elif n_features != self.coef_.shape[-1]:
-            raise ValueError("Number of features %d does not match previous data %d."
-                             % (n_features, self.coef_.shape[-1]))
+            raise ValueError(("Number of features %d does not match previous "
+                              "data %d.") % (n_features, self.coef_.shape[-1]))
         if self.average > 0 and self.average_coef_ is None:
             self.average_coef_ = np.zeros(n_features,
                                           dtype=np.float64,

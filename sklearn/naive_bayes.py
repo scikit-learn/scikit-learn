@@ -28,7 +28,6 @@ from .preprocessing import label_binarize
 from .utils import check_X_y, check_array
 from .utils.extmath import safe_sparse_dot, logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.fixes import in1d
 from .utils.validation import check_is_fitted
 from .externals import six
 
@@ -325,7 +324,7 @@ class GaussianNB(BaseNB):
         if _refit:
             self.classes_ = None
 
-        if _check_partial_fit_first_call(self, classes):
+        if _check_partial_fit_first_call(self, y, classes):
             # This is the first call to partial_fit:
             # initialize various cumulative counters
             n_features = X.shape[1]
@@ -341,18 +340,10 @@ class GaussianNB(BaseNB):
             # Put epsilon back in each time
             self.sigma_[:, :] -= epsilon
 
-        classes = self.classes_
-
         unique_y = np.unique(y)
-        unique_y_in_classes = in1d(unique_y, classes)
-
-        if not np.all(unique_y_in_classes):
-            raise ValueError("The target label(s) %s in y do not exist in the "
-                             "initial classes %s" %
-                             (y[~unique_y_in_classes], classes))
 
         for y_i in unique_y:
-            i = classes.searchsorted(y_i)
+            i = self.classes_.searchsorted(y_i)
             X_i = X[y == y_i, :]
 
             if sample_weight is not None:
@@ -453,7 +444,7 @@ class BaseDiscreteNB(BaseNB):
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         _, n_features = X.shape
 
-        if _check_partial_fit_first_call(self, classes):
+        if _check_partial_fit_first_call(self, y, classes):
             # This is the first call to partial_fit:
             # initialize various cumulative counters
             n_effective_classes = len(classes) if len(classes) > 1 else 2
