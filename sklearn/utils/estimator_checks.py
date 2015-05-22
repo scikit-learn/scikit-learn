@@ -27,11 +27,14 @@ from sklearn.utils.testing import META_ESTIMATORS
 from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import assert_same_model
+from sklearn.utils.testing import assert_not_same_model
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
                           TransformerMixin, ClusterMixin, BaseEstimator)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
+
 
 from sklearn.lda import LDA
 from sklearn.random_projection import BaseRandomProjection
@@ -44,7 +47,6 @@ from sklearn.cross_validation import train_test_split
 from sklearn.utils import shuffle
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris, load_boston, make_blobs
-
 
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
@@ -87,7 +89,6 @@ def _yield_classifier_checks(name, Classifier):
     yield check_classifiers_one_label
     yield check_classifiers_classes
     yield check_classifiers_pickle
-    yield check_estimators_partial_fit_n_features
     # basic consistency testing
     yield check_classifiers_train
     if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]
@@ -111,7 +112,6 @@ def _yield_regressor_checks(name, Regressor):
     # basic testing
     yield check_regressors_train
     yield check_regressor_data_not_an_array
-    yield check_estimators_partial_fit_n_features
     yield check_regressors_no_decision_function
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
@@ -143,7 +143,6 @@ def _yield_clustering_checks(name, Clusterer):
         # this is clustering on the features
         # let's not test that here.
         yield check_clustering
-        yield check_estimators_partial_fit_n_features
 
 
 def _yield_all_checks(name, Estimator):
@@ -160,6 +159,9 @@ def _yield_all_checks(name, Estimator):
             yield check
     if issubclass(Estimator, ClusterMixin):
         for check in _yield_clustering_checks(name, Estimator):
+            yield check
+    if callable(getattr(Estimator, 'partial_fit', None)):
+        for check in _yield_partial_fit_checks(name, Estimator):
             yield check
 
 
@@ -221,6 +223,8 @@ def set_fast_parameters(estimator):
     if "n_init" in params:
         # K-Means
         estimator.set_params(n_init=2)
+    if type(estimator).__name__ == "MiniBatchDictionaryLearning":
+        estimator.set_params(n_components=2)
 
     if estimator.__class__.__name__ == "SelectFdr":
         # be tolerant of noisy datasets (not actually speed)
@@ -255,6 +259,17 @@ class NotAnArray(object):
 def _is_32bit():
     """Detect if process is 32bit Python."""
     return struct.calcsize('P') * 8 == 32
+
+
+def _partial_fit(estimator, X, y=None, classes=None):
+    """Call partial_fit on the estimator with the appropriate parameters"""
+    if isinstance(estimator, ClassifierMixin):
+        return_val = estimator.partial_fit(X, y, classes=classes)
+    elif isinstance(estimator, RegressorMixin):
+        return_val = estimator.partial_fit(X, y)
+    else:
+        return_val = estimator.partial_fit(X)
+    return return_val
 
 
 def check_estimator_sparse_data(name, Estimator):
@@ -528,7 +543,7 @@ def check_estimators_nan_inf(name, Estimator):
             estimator = Estimator()
             set_fast_parameters(estimator)
             set_random_state(estimator, 1)
-            # try to fit
+
             try:
                 estimator.fit(X_train, y)
             except ValueError as e:
@@ -542,6 +557,7 @@ def check_estimators_nan_inf(name, Estimator):
                 raise exc
             else:
                 raise AssertionError(error_string_fit, Estimator)
+
             # actually fit
             estimator.fit(X_train_finite, y)
 
@@ -607,56 +623,198 @@ def check_transformer_pickle(name, Transformer):
     assert_array_almost_equal(pickled_X_pred, X_pred)
 
 
-def check_estimators_partial_fit_n_features(name, Alg):
-    # check if number of features changes between calls to partial_fit.
-    if not hasattr(Alg, 'partial_fit'):
-        return
+@ignore_warnings
+def check_partial_fit_n_features(name, Estimator):
+    # Check if ValueError is raised if number of features changes between
+    # multiple partial_fit calls.
+    name  # avoids unused argument error
+
     X, y = make_blobs(n_samples=50, random_state=1)
     X -= X.min()
-    with warnings.catch_warnings(record=True):
-        alg = Alg()
-    set_fast_parameters(alg)
-    if isinstance(alg, ClassifierMixin):
-        classes = np.unique(y)
-        alg.partial_fit(X, y, classes=classes)
-    else:
-        alg.partial_fit(X, y)
 
-    assert_raises(ValueError, alg.partial_fit, X[:, :-1], y)
+    estimator = Estimator()
+
+    set_random_state(estimator)
+    set_fast_parameters(estimator)
+
+    classes = np.unique(y)
+    _partial_fit(estimator, X, y, classes)
+    assert_raises(ValueError, _partial_fit, estimator, X[:, :-1], y)
 
 
-def check_clustering(name, Alg):
+@ignore_warnings
+def check_partial_fit_clone_consistency(name, Estimator):
+    # General tests for partial_fit method
+
+    X, y = make_blobs(n_samples=50, random_state=0)
+    test_X, _ = make_blobs(n_samples=50, random_state=1)
+
+    if name in ("MultinomialNB",):
+        X -= X.min()
+        test_X -= test_X.min()
+
+    estimator = Estimator()
+
+    set_random_state(estimator)
+    set_fast_parameters(estimator)
+
+    cloned = clone(estimator)
+
+    msg = ("partial_fit of the clone of estimator %s returned a different"
+           " model" % name)
+
+    classes = np.unique(y)
+    ret_val = _partial_fit(estimator, X, y, classes=classes)
+
+    # Check if the partial_fit of cloned returns the same model
+    assert_same_model(test_X, estimator,
+                      _partial_fit(cloned, X, y, classes), msg)
+
+    # Check if returns self
+    msg = "partial_fit of estimator %s did not return self" % name
+    assert ret_val is estimator, msg
+
+
+@ignore_warnings
+def check_partial_fit_reset_when_fit(name, Estimator):
+    # Check if the estimators get reset when fit is applied after a
+    # partial fit.
+
+    X, y = make_blobs(n_samples=50, n_features=4, random_state=0)
+    test_X, _ = make_blobs(n_samples=50, n_features=4, random_state=1)
+
+    if name in ("MultinomialNB",):
+        X -= X.min()
+        test_X -= test_X.min()
+
+    estimator_1 = Estimator()
+    estimator_2 = Estimator()
+
+    set_random_state(estimator_1)
+    set_fast_parameters(estimator_1)
+
+    set_random_state(estimator_2)
+    set_fast_parameters(estimator_2)
+
+    # Initial call to fit
+    estimator_1.fit(X, y)
+    estimator_2.fit(X, y)
+
+    # Run 2 iterations of full set of partial_fit with batches of size 10
+    classes = np.unique(y)
+    for i in range(2):
+        (X_s, y_s) = shuffle(X, y, random_state=i)
+        for j in range(0, 50, 10):
+            _partial_fit(estimator_2, X_s[j:10 + j], y_s[j:10 + j],
+                         classes=classes)
+
+    # Test that change in features does not raise any error
+    estimator_2.fit(X[:, :-1], y)
+
+    # Finally call fit to reset the estimator
+    estimator_2.fit(X, y)
+
+    # Compare with the first fit model.
+    assert_same_model(test_X, estimator_1, estimator_2)
+
+
+@ignore_warnings
+def check_partial_fit_effect(name, Estimator):
+    X, y = make_blobs(n_samples=100, centers=8, n_features=8, random_state=1)
+    # Smaller data set for 2nd partial_fit
+    dX, dy = make_blobs(n_samples=10, centers=8, n_features=8, random_state=2)
+    # Test data set to compare model
+    test_X, _ = make_blobs(n_samples=50, centers=8, n_features=8,
+                           random_state=3)
+
+    if name in ("MultinomialNB",):
+        X -= X.min()
+        dX -= dX.min()
+        test_X -= test_X.min()
+
+    estimator_1 = Estimator()
+    estimator_2 = Estimator()
+    estimator_3 = Estimator()
+
+    set_random_state(estimator_1)
+    set_fast_parameters(estimator_1)
+
+    set_random_state(estimator_2)
+    set_fast_parameters(estimator_2)
+
+    set_random_state(estimator_3)
+    set_fast_parameters(estimator_3)
+
+    classes = np.unique(y)
+    _partial_fit(estimator_1, dX, dy, classes)
+    _partial_fit(estimator_2, X, y, classes)
+    _partial_fit(estimator_2, dX, dy, classes)
+    _partial_fit(estimator_3, dX, dy, classes)
+    _partial_fit(estimator_3, X, y, classes)
+
+    # Assert that the partial_fit did not overwrite the model.
+    assert_not_same_model(test_X, estimator_1, estimator_2)
+    assert_not_same_model(test_X, estimator_1, estimator_3)
+
+
+@ignore_warnings
+def check_partial_fit_classes_arg(name, Estimator):
+    # Check if the classes argument is correctly passed and validated.
+
+    # Only classifiers use the classes arg
+    if not issubclass(Estimator, ClassifierMixin):
+        return
+
+    X, y = make_blobs(n_samples=50, random_state=1)
+    if name in ("MultinomialNB",):
+        X -= X.min()
+
+    estimator = Estimator()
+
+    set_random_state(estimator)
+    set_fast_parameters(estimator)
+
+    # Check if ValueError is raised if parital_fit is called without classes
+    # arg for the first time
+    assert_raises(ValueError, estimator.partial_fit, X, y)
+
+    classes = np.unique(y)
+    # Check if incorrect classes argument raises ValueError
+    assert_raises(ValueError, estimator.partial_fit, X, y, classes[:-1])
+
+
+def check_clustering(name, Estimator):
     X, y = make_blobs(n_samples=50, random_state=1)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     n_samples, n_features = X.shape
     # catch deprecation and neighbors warnings
     with warnings.catch_warnings(record=True):
-        alg = Alg()
-    set_fast_parameters(alg)
-    if hasattr(alg, "n_clusters"):
-        alg.set_params(n_clusters=3)
-    set_random_state(alg)
+        estimator = Estimator()
+    set_fast_parameters(estimator)
+    if hasattr(estimator, "n_clusters"):
+        estimator.set_params(n_clusters=3)
+    set_random_state(estimator)
     if name == 'AffinityPropagation':
-        alg.set_params(preference=-100)
-        alg.set_params(max_iter=100)
+        estimator.set_params(preference=-100)
+        estimator.set_params(max_iter=100)
 
     # fit
-    alg.fit(X)
+    estimator.fit(X)
     # with lists
-    alg.fit(X.tolist())
+    estimator.fit(X.tolist())
 
-    assert_equal(alg.labels_.shape, (n_samples,))
-    pred = alg.labels_
+    assert_equal(estimator.labels_.shape, (n_samples,))
+    pred = estimator.labels_
     assert_greater(adjusted_rand_score(pred, y), 0.4)
     # fit another time with ``fit_predict`` and compare results
     if name is 'SpectralClustering':
         # there is no way to make Spectral clustering deterministic :(
         return
-    set_random_state(alg)
+    set_random_state(estimator)
     with warnings.catch_warnings(record=True):
-        pred2 = alg.fit_predict(X)
-    assert_array_equal(pred, pred2)
+        pred2 = estimator.fit_predict(X)
+    assert_array_almost_equal(pred, pred2)
 
 
 def check_clusterer_compute_labels_predict(name, Clusterer):
@@ -1276,6 +1434,7 @@ def multioutput_estimator_convert_y_2d(name, y):
 
 def check_non_transformer_estimators_n_iter(name, estimator,
                                             multi_output=False):
+    name  # avoids unused argument error
     # Check if all iterative solvers, run for more than one iteratiom
 
     iris = load_iris()
@@ -1285,10 +1444,7 @@ def check_non_transformer_estimators_n_iter(name, estimator,
         y_ = y_[:, np.newaxis]
 
     set_random_state(estimator, 0)
-    if name == 'AffinityPropagation':
-        estimator.fit(X)
-    else:
-        estimator.fit(X, y_)
+    estimator.fit(X, y_)
     assert_greater(estimator.n_iter_, 0)
 
 
@@ -1338,3 +1494,19 @@ def check_get_params_invariance(name, estimator):
 
     assert_true(all(item in deep_params.items() for item in
                     shallow_params.items()))
+
+
+def _yield_partial_fit_checks(name, Estimator):
+    # Tests estimators which support partial_fit
+    if name in ("HashingVectorizer",):
+        return
+    # General tests for partial_fit method of estimators
+    yield check_partial_fit_clone_consistency
+    # Test if change in features in 2nd call raises ValueError
+    yield check_partial_fit_n_features
+    # Test if fit after multiple partial_fits resets the estimator
+    yield check_partial_fit_reset_when_fit
+    # Check the correct parsing of the classes argument
+    yield check_partial_fit_classes_arg
+    # Test to assert that partial_fit does not overwrite previous model.
+    yield check_partial_fit_effect
