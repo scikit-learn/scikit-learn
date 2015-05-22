@@ -88,7 +88,8 @@ def download_20newsgroups(target_dir, cache_path):
 
     logger.warning("Downloading dataset from %s (14 MB)", URL)
     opener = urlopen(URL)
-    open(archive_path, 'wb').write(opener.read())
+    with open(archive_path, 'wb') as f:
+        f.write(opener.read())
 
     logger.info("Decompressing %s", archive_path)
     tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
@@ -98,7 +99,8 @@ def download_20newsgroups(target_dir, cache_path):
     cache = dict(train=load_files(train_path, encoding='latin1'),
                  test=load_files(test_path, encoding='latin1'))
     compressed_content = codecs.encode(pickle.dumps(cache), 'zlib_codec')
-    open(cache_path, 'wb').write(compressed_content)
+    with open(cache_path, 'wb') as f:
+        f.write(compressed_content)
 
     shutil.rmtree(target_dir)
     return cache
