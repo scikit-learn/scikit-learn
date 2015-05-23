@@ -196,8 +196,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         """
         X = check_array(X, accept_sparse='csr')
         y = check_array(y, ensure_2d=False)
-        if y.ndim == 1:
-            y = y.reshape(-1, 1)
         check_consistent_length(X, y)
 
         if self.base_estimator is not None:
@@ -278,10 +276,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
             # residuals of all data for current random sample model
             y_pred = base_estimator.predict(X)
-            if y_pred.ndim == 1:
-                y_pred = y_pred[:, None]
-
-            residuals_subset = residual_metric(y_pred - y)
+            diff = y_pred - y
+            if diff.ndim == 1:
+                diff = diff.reshape(-1, 1)
+            residuals_subset = residual_metric(diff)
 
             # classify data into inliers and outliers
             inlier_mask_subset = residuals_subset < residual_threshold
