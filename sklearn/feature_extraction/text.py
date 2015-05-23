@@ -973,8 +973,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             df += int(self.smooth_idf)
             n_samples += int(self.smooth_idf)
 
-            # log1p instead of log makes sure terms with zero idf don't get
-            # suppressed entirely
+            # log+1 instead of log makes sure terms with zero idf don't get
+            # suppressed entirely.
             idf = np.log(float(n_samples) / df) + 1.0
             self._idf_diag = sp.spdiags(idf,
                                         diags=0, m=n_features, n=n_features)
