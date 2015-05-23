@@ -871,10 +871,7 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
-            # FIXME: sample_weight must be split into training/validation data
-            #        too!
-            #fit_params = {'sample_weight' : sample_weight}
-            fit_params = {}
+            fit_params = {'sample_weight' : sample_weight}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
                               parameters, fit_params=fit_params, cv=self.cv)
             gs.fit(X, y)
