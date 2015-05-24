@@ -8,7 +8,8 @@ cimport cython
 import numpy as np
 cimport numpy as np
 
-cdef np.ndarray[np.double_t, ndim=2] mst_core_linkage(np.ndarray[np.double_t, ndim=2] distance_matrix):
+cdef np.ndarray[np.double_t, ndim=2] mst_linkage_core(
+                               np.ndarray[np.double_t, ndim=2] distance_matrix):
 
     cdef np.ndarray[np.long_t, ndim=1] node_labels
     cdef np.ndarray[np.long_t, ndim=1] current_labels
@@ -47,8 +48,8 @@ cdef np.ndarray[np.double_t, ndim=2] mst_core_linkage(np.ndarray[np.double_t, nd
     
 cdef class UnionFind (object):
 
-    cdef np.ndarray[np.long_t, ndim=1] parent
-    cdef np.ndarray[np.long_t, ndim=1] size
+    cdef np.ndarray parent
+    cdef np.ndarray size
     cdef int next_label
     
     def __init__(self, N):
@@ -89,7 +90,7 @@ cdef np.ndarray[np.double_t, ndim=2] label(np.ndarray[np.double_t, ndim=2] L,
     cdef int N, a, aa, b, bb, idx
     cdef float delta
     
-    result = np.zeros(L.shape)
+    result = np.zeros((L.shape[0], L.shape[1]))
     N = L.shape[0] + 1
     U = UnionFind(N)
     
@@ -103,11 +104,12 @@ cdef np.ndarray[np.double_t, ndim=2] label(np.ndarray[np.double_t, ndim=2] L,
         result[index, 1] = bb
         result[index, 2] = U.size[aa] + U.size[bb]
         
-       U.union(aa, bb)
+        U.union(aa, bb)
        
-   return result
+    return result
 
-cpdef np.ndarray[np.double_t, ndim=2] single_linkage(np.ndarray[np.double_t, ndim=2] distance_matrix):
+cpdef np.ndarray[np.double_t, ndim=2] single_linkage(
+                               np.ndarray[np.double_t, ndim=2] distance_matrix):
     
     cdef np.ndarray[np.double_t, ndim=2] hierarchy
     cdef np.ndarray[np.int64_t, ndim=2] sort_order
