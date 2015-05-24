@@ -4,7 +4,7 @@
 # License: 3-clause BSD
 
 import numpy as np
-cimport numpy as an
+cimport numpy as np
 
 import igraph
 import pandas as pd
@@ -55,10 +55,10 @@ cpdef object igraph_to_tree(np.ndarray[np.double_t, ndim=2] hierarchy):
         node_attr_dict['dist'][parent] = row[2]
         node_attr_dict['count'][parent] = int(row[3])
         node_attr_dict['points'][parent] = \
-            node_attr_dict['points'][left_child] + \
-            node_attr_dict['points'][right_child]
-            
-    return igraph.Graph(n=max_node, edges=vint(edge_list).tolist()),
+                                      node_attr_dict['points'][left_child] + \
+                                      node_attr_dict['points'][right_child]
+
+    return igraph.Graph(n=max_node, edges=vint(edge_list).tolist(), 
                         directed=True, vertex_attrs=node_attr_dict)
                         
 cpdef object igraph_condense_tree(object tree, int min_cluster_size=10):
@@ -189,7 +189,7 @@ cpdef list igraph_get_clusters(object tree, dict stability):
                                  tree.successors(node)])
         if tree.vs[node]['stability'] < subtree_stability:
             tree.vs[node]['is_cluster'] = False
-            tree.vs[node]['stability'] subtree_stability            
+            tree.vs[node]['stability'] = subtree_stability            
         else:
             for sub_node in tree.bfsiter(node):
                 if sub_node.index != node:
