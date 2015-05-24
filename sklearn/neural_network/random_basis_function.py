@@ -88,6 +88,18 @@ class RandomBasisFunction(BaseEstimator, TransformerMixin):
         self
 
         """
+        # Sanity checks
+        if self.n_activated_features <= 0:
+            raise ValueError("n_activated_features must be > 0, got %s." % 
+                             self.n_activated_features)
+        if self.alpha < 0.0:
+            raise ValueError("alpha must be >= 0, got %s." % self.alpha)
+
+        if self.activation not in ACTIVATIONS:
+            raise ValueError("The activation %s is not supported. Supported "
+                             "activations are %s." % (self.activation,
+                                                      ACTIVATIONS))
+
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
         n_samples, n_features = X.shape
