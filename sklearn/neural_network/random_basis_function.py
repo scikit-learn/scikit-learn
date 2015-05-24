@@ -4,14 +4,66 @@ import numpy as np
 
 from base import ACTIVATIONS
 
-from ..base import TransformerMixin
+from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_array
 
 
-class RandomBasisFunction(six.with_metaclass(ABCMeta, TransformerMixin)):
+class RandomBasisFunction(BaseEstimator, TransformerMixin):
+    """Random basis activation.
+
+    The algorithm uses the number of features of the input data to randomly 
+    generate coefficient parameters based on the uniform probability 
+    distribution.
+
+    Using these coefficient parameters, the algorithm can transform 
+    the data into a different dimensional space.
+
+    Parameters
+    ----------
+    intercept : boolean, default True
+        Whether to randomly generate an intercept. 
+
+    weight_scale : float, default 'auto'
+        Initializes and scales the input-to-hidden weights.
+        The weight values will range between plus and minus
+        'sqrt(weight_scale * 6. / (n_features + n_hidden))' based on the
+        uniform distribution.
+
+    n_activated_features : int, default 10
+        The number of units in the hidden layer.
+
+    activation : {'logistic', 'tanh', 'relu'}, default 'tanh'
+        Activation function for the hidden layer.
+
+         - 'logistic', the logistic sigmoid function,
+            returns f(x) = 1 / (1 + exp(x)).
+
+         - 'tanh', the hyperbolic tan function,
+            returns f(x) = tanh(x).
+
+         - 'relu', the rectified linear unit function,
+            returns f(x) = max(0, x).
+
+    random_state : int or RandomState, optional, default None
+        State of or seed for random number generator.
+
+    Attributes
+    ----------
+    `coef_` : array-like, shape (n_features, n_hidden)
+        The input-to-hidden weights.
+
+    `intercept_` : array-like, shape (n_hidden,)
+        The bias added to the hidden layer neurons.
+
+    References
+    ----------
+    Glorot, Xavier, and Yoshua Bengio. "Understanding the difficulty of
+        training deep feedforward neural networks." International Conference
+        on Artificial Intelligence and Statistics. 2010.
+    """
     def __init__(self, n_activated_features=10, weight_scale='auto', 
                  activation='tanh', intercept=True, random_state=None):
         self.n_activated_features = n_activated_features
