@@ -285,19 +285,33 @@ div.sphinxsidebarwrapper {
     clip: rect(0, 0, 0, 0);
 }
 
+.nav-trigger + label:after {
+    content: '>>';
+}
+
 label[for="nav-trigger"] {
     position: fixed;
-    margin-top: 55px;
     margin-left: 0px;
+    padding-top: 100px;
     z-index: 2;
-      width: 30px;
-    height: 30px;
+    width: 15px;
+    height: 60%;
     cursor: pointer;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' x='0px' y='0px' width='30px' height='30px' viewBox='0 0 30 30' enable-background='new 0 0 30 30' xml:space='preserve'><rect width='30' height='6'/><rect y='24' width='30' height='6'/><rect y='12' width='30' height='6'/></svg>");
     background-size: contain;
+    background-color: #F6F6F6;
+    border-radius: 0px 10px 10px 0px;
 }
+
+label[for="nav-trigger"]:hover {
+    background-color: #D0D0D0;
+}
+
 .nav-trigger:checked + label {
     margin-left: 190px;
+}
+
+.nav-trigger:checked + label:after {
+    content: '<<';
 }
 
 .nav-trigger:checked ~ div.content {
@@ -1194,7 +1208,9 @@ div.container-index {
   div.content {
     margin-left: 190px;
   }
-
+  .nav-trigger + label:after {
+    content: '<<';
+  }
   label[for="nav-trigger"] {
     margin-left: 190px;
   }
@@ -1202,7 +1218,9 @@ div.container-index {
   .nav-trigger:checked + label {
     margin-left: 0px;
   }
-
+  .nav-trigger:checked + label:after {
+    content: '>>';
+  }
   .nav-trigger:checked ~ div.content {
     margin-left: 0px;
   }
