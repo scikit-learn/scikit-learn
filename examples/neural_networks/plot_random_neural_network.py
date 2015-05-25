@@ -31,7 +31,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 
-from sklearn.decomposition import PCA
 from sklearn.cross_validation import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_moons, make_circles, make_classification
@@ -50,6 +49,7 @@ rng = np.random.RandomState(1)
 
 alpha_list = np.logspace(-4, 4, 5)
 weight_scale_list = np.logspace(-2, 2, 5)
+
 
 def plot(names, classifiers, title):
     X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
