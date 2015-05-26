@@ -100,6 +100,7 @@ of :class:`StandardScaler`.
 
 Scaling features to a range
 ---------------------------
+
 An alternative standardization is scaling features to
 lie between a given minimum and maximum value, often between zero and one.
 This can be achieved using :class:`MinMaxScaler`.
@@ -144,6 +145,17 @@ full formula is::
     X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
 
     X_scaled = X_std / (max - min) + min
+
+
+Scaling data with outliers
+--------------------------
+
+If your data contains many outliers, scaling using the mean and variance
+of the data is likely to not work very well. In these cases, you can use
+:func:`robust_scale` and :class:`RobustScaler` as drop-in replacements
+instead. They use more robust estimates for the center and range of your
+data.
+
 
 .. topic:: References:
 

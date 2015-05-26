@@ -27,6 +27,8 @@ from sklearn.preprocessing.data import OneHotEncoder
 from sklearn.preprocessing.data import StandardScaler
 from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
+from sklearn.preprocessing.data import RobustScaler
+from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
 from sklearn.utils.validation import DataConversionWarning
@@ -493,6 +495,73 @@ def test_scale_function_without_centering():
     X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis(X_csr_scaled, 0)
     assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
     assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
+
+
+def test_robust_scaler_2d_arrays():
+    """Test robust scaling of 2d array along first axis"""
+    rng = np.random.RandomState(0)
+    X = rng.randn(4, 5)
+    X[:, 0] = 0.0  # first feature is always of zero
+
+    scaler = RobustScaler()
+    X_scaled = scaler.fit(X).transform(X)
+
+    assert_array_almost_equal(np.median(X_scaled, axis=0), 5 * [0.0])
+    assert_array_almost_equal(X_scaled.std(axis=0)[0], 0)
+
+
+def test_robust_scaler_iris():
+    X = iris.data
+    scaler = RobustScaler()
+    X_trans = scaler.fit_transform(X)
+    assert_array_almost_equal(np.median(X_trans, axis=0), 0)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+    q = np.percentile(X_trans, q=(25, 75), axis=0)
+    iqr = q[1] - q[0]
+    assert_array_almost_equal(iqr, 1)
+
+
+def test_robust_scale_axis1():
+    X = iris.data
+    X_trans = robust_scale(X, axis=1)
+    assert_array_almost_equal(np.median(X_trans, axis=1), 0)
+    q = np.percentile(X_trans, q=(25, 75), axis=1)
+    iqr = q[1] - q[0]
+    assert_array_almost_equal(iqr, 1)
+
+
+def test_robust_scaler_zero_variance_features():
+    """Check RobustScaler on toy data with zero variance features"""
+    X = [[0., 1., +0.5],
+         [0., 1., -0.1],
+         [0., 1., +1.1]]
+
+    scaler = RobustScaler()
+    X_trans = scaler.fit_transform(X)
+
+    # NOTE: for such a small sample size, what we expect in the third column
+    # depends HEAVILY on the method used to calculate quantiles. The values
+    # here were calculated to fit the quantiles produces by np.percentile
+    # using numpy 1.9 Calculating quantiles with
+    # scipy.stats.mstats.scoreatquantile or scipy.stats.mstats.mquantiles
+    # would yield very different results!
+    X_expected = [[0., 0., +0.0],
+                  [0., 0., -1.0],
+                  [0., 0., +1.0]]
+    assert_array_almost_equal(X_trans, X_expected)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+
+    # make sure new data gets transformed correctly
+    X_new = [[+0., 2., 0.5],
+             [-1., 1., 0.0],
+             [+0., 1., 1.5]]
+    X_trans_new = scaler.transform(X_new)
+    X_expected_new = [[+0., 1., +0.],
+                      [-1., 0., -0.83333],
+                      [+0., 0., +1.66667]]
+    assert_array_almost_equal(X_trans_new, X_expected_new, decimal=3)
 
 
 def test_warning_scaling_integers():
