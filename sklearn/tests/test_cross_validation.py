@@ -2,6 +2,7 @@
 from __future__ import division
 import warnings
 import sys
+import os
 
 import numpy as np
 from scipy.sparse import coo_matrix
@@ -1106,12 +1107,13 @@ def test_check_is_partition():
 
 _atleast_py34 = (sys.version_info[0] == 3 and
                  sys.version_info[1] >= 4)
+_fork_method = "spawn" if os.name == "nt" else "forkserver"
 
 
 @np.testing.decorators.skipif(not _atleast_py34)
 def test_cv_backend():
     from multiprocessing import pool
-    backend = pool.get_context(method="forkserver")
+    backend = pool.get_context(method=_fork_method)
 
     # cross_val_predict
     boston = load_boston()

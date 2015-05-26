@@ -9,6 +9,7 @@ from sklearn.externals.six.moves import xrange
 from itertools import chain, product
 import pickle
 import sys
+import os
 
 import numpy as np
 import scipy.sparse as sp
@@ -772,13 +773,14 @@ def test_parameters_sampler_replacement():
 
 _atleast_py34 = (sys.version_info[0] == 3 and
                  sys.version_info[1] >= 4)
+_fork_method = "spawn" if os.name == "nt" else "forkserver"
 
 
 @np.testing.decorators.skipif(not _atleast_py34)
 def test_grid_search_backend():
     # copied from test_grid_search
     from multiprocessing import pool
-    backend = pool.get_context(method="forkserver")
+    backend = pool.get_context(method=_fork_method)
 
     clf = MockClassifier()
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3,
@@ -799,7 +801,7 @@ def test_grid_search_backend():
 def test_randomized_search_backend():
     # copied from test_randomized_grid_scores
     from multiprocessing import pool
-    backend = pool.get_context(method="forkserver")
+    backend = pool.get_context(method=_fork_method)
 
     # Make a dataset with a lot of noise to get various kind of prediction
     # errors across CV folds and parameter settings
