@@ -27,6 +27,9 @@ Two feature extraction methods can be used in this example:
 Two algorithms are demoed: ordinary k-means and its more scalable cousin
 minibatch k-means.
 
+Additionally, latent sematic analysis can also be used to reduce dimensionality
+and discover latent patterns in the data. 
+
 It can be noted that k-means (and minibatch k-means) are very sensitive to
 feature scaling and that in this case the IDF weighting helps improve the
 quality of the clustering by quite a lot as measured against the "ground truth"
@@ -160,7 +163,8 @@ if opts.n_components:
     # spherical k-means for better results. Since LSA/SVD results are
     # not normalized, we have to redo the normalization.
     svd = TruncatedSVD(opts.n_components)
-    lsa = make_pipeline(svd, Normalizer(copy=False))
+    normalizer = Normalizer(copy=False)
+    lsa = make_pipeline(svd, normalizer)
 
     X = lsa.fit_transform(X)
 
@@ -199,9 +203,16 @@ print("Silhouette Coefficient: %0.3f"
 
 print()
 
-if not (opts.n_components or opts.use_hashing):
+
+if not opts.use_hashing:
     print("Top terms per cluster:")
-    order_centroids = km.cluster_centers_.argsort()[:, ::-1]
+
+    if opts.n_components:
+        original_space_centroids = svd.inverse_transform(km.cluster_centers_)
+        order_centroids = original_space_centroids.argsort()[:, ::-1]
+    else:
+        order_centroids = km.cluster_centers_.argsort()[:, ::-1]
+
     terms = vectorizer.get_feature_names()
     for i in range(true_k):
         print("Cluster %d:" % i, end='')
