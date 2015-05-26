@@ -146,7 +146,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior, max_iters
 class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
     """
-    Online Latent Dirichlet Allocation implementation with variational inference
+    Latent Dirichlet Allocation with online variational Bayes algorithm
 
     Parameters
     ----------
@@ -181,7 +181,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         When the value is 0.0 and batch_size is `n_samples`, the update method is same as
         batch learning. In the literature, this is called `kappa`.
 
-    learning_offset : float, optional (default=1000.)
+    learning_offset : float, optional (default=10.)
         A (positive) parameter that downweights early iterations in online learning.
         It should be greater than 1.0. In the literature, this is called `tau0`.
 
@@ -234,15 +234,18 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     References
     ----------
     [1] "Online Learning for Latent Dirichlet Allocation", Matthew D. Hoffman,
-        David M. Blei, Francis Bach
+        David M. Blei, Francis Bach, 2010
 
-    [2] Matthew D. Hoffman's onlineldavb code. Link:
+    [2] "Stochastic Variational Inference", Matthew D. Hoffman,, David M. Blei,
+        Chong Wang, John Paisley, 2013
+
+    [3] Matthew D. Hoffman's onlineldavb code. Link:
         http://www.cs.princeton.edu/~mdhoffma/code/onlineldavb.tar
 
     """
 
     def __init__(self, n_topics=10, doc_topic_prior=None, topic_word_prior=None,
-                 learning_method='online', learning_decay=.7, learning_offset=1000.,
+                 learning_method='online', learning_decay=.7, learning_offset=10.,
                  max_iter=10, batch_size=128, evaluate_every=-1, total_samples=1e6,
                  perp_tol=1e-1, mean_change_tol=1e-3, max_doc_update_iter=100,
                  n_jobs=1, verbose=0, random_state=None):

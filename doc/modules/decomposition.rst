@@ -726,3 +726,53 @@ the data.
       matrix factorization"
       <http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf>`_
       C. Boutsidis, E. Gallopoulos, 2008
+
+
+.. _LatentDirichletAllocation:
+
+Latent Dirichlet Allocation (LDA)
+=================================
+
+Latent Dirichlet Allocation is a generative probabilistic model for collections of discrete
+dataset such as text corpora. It is also a topic model that used for discovering abstract
+topics from a collection of docuements.
+
+:class:`LatentDirichletAllocation` implements online variational Bayes algorithm and supports
+both online and batch update method.
+In batch method, global variational variables are udpated after each full pass through the data.
+Unlike batch method, online method computes intermediate variational variables from mini-batch
+data points and updates the variational variables as a weighted average of the intermediate
+variables and their current values.
+Therefore, online method usually converges faster than batch method.
+
+.. note::
+
+  Although online method is guaranteed to converge to a local optimum point, the quality of
+  the optimum point and the speed of convergence may depend on mini-batch size and
+  attributes related to learning rate setting.
+
+When :class:`LatentDirichletAllocation` is applied on a "document-term" matrix, the matrix
+will be decomposed into a "topic-term" matrix and a "document-topic" matrix. While
+"topic-term" matrix is stored as :attr:`components_` in the model, "document-topic" matrix
+can be calculated from ``transform`` method.
+
+:class:`LatentDirichletAllocation` also implements ``partial_fit`` method. This is used
+when data can be fetched sequentially.
+
+.. topic:: Examples:
+
+    * :ref:`example_decomposition_topics_extraction_with_online_lda.py`
+
+.. topic:: References:
+
+    * `"Latent Dirichlet Allocation"
+      <https://www.cs.princeton.edu/~blei/papers/BleiNgJordan2003.pdf>`_
+      D. Blei, A. Ng, M. Jordan, 2003
+
+    * `"Online Learning for Latent Dirichlet Allocation”
+      <https://www.cs.princeton.edu/~blei/papers/HoffmanBleiBach2010b.pdf>`_
+      M. Hoffman, D. Blei, F. Bach, 2010
+
+    * `"Stochastic Variational Inference"
+      <http://www.columbia.edu/~jwp2128/Papers/HoffmanBleiWangPaisley2013.pdf>`_
+      M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
