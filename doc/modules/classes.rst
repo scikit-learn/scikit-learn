@@ -289,6 +289,7 @@ Samples generator
    decomposition.SparseCoder
    decomposition.DictionaryLearning
    decomposition.MiniBatchDictionaryLearning
+   decomposition.LatentDirichletAllocation
 
 .. autosummary::
    :toctree: generated/
