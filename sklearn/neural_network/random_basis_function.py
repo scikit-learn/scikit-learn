@@ -1,6 +1,6 @@
 import numpy as np
 
-from base import ACTIVATIONS
+from .base import ACTIVATIONS
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state
