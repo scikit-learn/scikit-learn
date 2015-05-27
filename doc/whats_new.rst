@@ -19,7 +19,7 @@ New features
 
    - The new class :class:`preprocessing.RobustScaler` provides an
      alternative to :class:`preprocessing.StandardScaler` for feature-wise
-     centering and range normalization that is robust to outliers. By `untom`_.
+     centering and range normalization that is robust to outliers. By `Thomas Unterthiner`_.
 
 Enhancements
 ............
@@ -193,7 +193,7 @@ New features
 
    - Added :class:`cross_validation.PredefinedSplit` cross-validation
      for fixed user-provided cross-validation folds.
-     By `untom`_.
+     By `Thomas Unterthiner`_.
 
    - Added :class:`calibration.CalibratedClassifierCV`, an approach for
      calibrating the predicted probabilities of a classifier.
@@ -3488,4 +3488,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Sebastian Raschka: http://sebastianraschka.com
 
-.. _untom: https://github.com/untom
+.. _Thomas Unterthiner: https://github.com/untom
