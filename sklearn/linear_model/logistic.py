@@ -391,6 +391,28 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
     return grad, hessp
 
 
+def _check_solver_option(solver, multi_class, penalty, dual):
+    if solver not in ['liblinear', 'newton-cg', 'lbfgs']:
+        raise ValueError("Logistic Regression supports only liblinear,"
+                         " newton-cg and lbfgs solvers, got %s" % solver)
+
+    if multi_class not in ['multinomial', 'ovr']:
+        raise ValueError("multi_class should be either multinomial or "
+                         "ovr, got %s" % multi_class)
+
+    if multi_class == 'multinomial' and solver == 'liblinear':
+        raise ValueError("Solver %s does not support "
+                         "a multinomial backend." % solver)
+
+    if solver != 'liblinear':
+        if penalty != 'l2':
+            raise ValueError("Solver %s supports only l2 penalties, "
+                             "got %s penalty." % (solver, penalty))
+        if dual:
+            raise ValueError("Solver %s supports only "
+                             "dual=False, got dual=%s" % (solver, dual))
+
+
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
                              solver='lbfgs', coef=None, copy=True,
@@ -501,25 +523,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
 
-    if multi_class not in ['multinomial', 'ovr']:
-        raise ValueError("multi_class can be either 'multinomial' or 'ovr'"
-                         "got %s" % multi_class)
+    _check_solver_option(solver, multi_class, penalty, dual)
 
-    if solver not in ['liblinear', 'newton-cg', 'lbfgs']:
-        raise ValueError("Logistic Regression supports only liblinear,"
-                         " newton-cg and lbfgs solvers. got %s" % solver)
-
-    if multi_class == 'multinomial' and solver == 'liblinear':
-        raise ValueError("Solver %s cannot solve problems with "
-                         "a multinomial backend." % solver)
-
-    if solver != 'liblinear':
-        if penalty != 'l2':
-            raise ValueError("newton-cg and lbfgs solvers support only "
-                             "l2 penalties, got %s penalty." % penalty)
-        if dual:
-            raise ValueError("newton-cg and lbfgs solvers support only "
-                             "dual=False, got dual=%s" % dual)
     # Preprocessing.
     X = check_array(X, accept_sparse='csr', dtype=np.float64)
     y = check_array(y, ensure_2d=False, copy=copy, dtype=None)
@@ -781,6 +786,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     scores : ndarray, shape (n_cs,)
         Scores obtained for each Cs.
     """
+    _check_solver_option(solver, multi_class, penalty, dual)
 
     log_reg = LogisticRegression(fit_intercept=fit_intercept)
 
@@ -1015,18 +1021,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
         self.classes_ = np.unique(y)
-        if self.solver not in ['liblinear', 'newton-cg', 'lbfgs']:
-            raise ValueError(
-                "Logistic Regression supports only liblinear, newton-cg and "
-                "lbfgs solvers, Got solver=%s" % self.solver
-                )
 
-        if self.solver == 'liblinear' and self.multi_class == 'multinomial':
-            raise ValueError("Solver %s does not support a multinomial "
-                             "backend." % self.solver)
-        if self.multi_class not in ['ovr', 'multinomial']:
-            raise ValueError("multi_class should be either ovr or multinomial "
-                             "got %s" % self.multi_class)
+        _check_solver_option(self.solver, self.multi_class, self.penalty,
+                             self.dual)
 
         if self.solver == 'liblinear':
             self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
@@ -1308,21 +1305,18 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self : object
             Returns self.
         """
-        if self.solver != 'liblinear':
-            if self.penalty != 'l2':
-                raise ValueError("newton-cg and lbfgs solvers support only "
-                                 "l2 penalties.")
-            if self.dual:
-                raise ValueError("newton-cg and lbfgs solvers support only "
-                                 "the primal form.")
+        _check_solver_option(self.solver, self.multi_class, self.penalty,
+                             self.dual)
+
+        if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
+            raise ValueError("Maximum number of iteration must be positive;"
+                             " got (max_iter=%r)" % self.max_iter)
+        if not isinstance(self.tol, numbers.Number) or self.tol < 0:
+            raise ValueError("Tolerance for stopping criteria must be "
+                             "positive; got (tol=%r)" % self.tol)
 
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         y = check_array(y, ensure_2d=False, dtype=None)
-
-        if self.multi_class not in ['ovr', 'multinomial']:
-            raise ValueError("multi_class backend should be either "
-                             "'ovr' or 'multinomial'"
-                             " got %s" % self.multi_class)
 
         if y.ndim == 2 and y.shape[1] == 1:
             warnings.warn(
