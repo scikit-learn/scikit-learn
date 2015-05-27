@@ -13,9 +13,13 @@ Changelog
 New features
 ............
 
-   - The new :class:`ensemble.VotingClassifier` implements a 
+   - The new class :class:`ensemble.VotingClassifier` implements a
      "majority rule" / "soft voting" ensemble classifier to combine
      estimators for classification. By `Sebastian Raschka`_.
+
+   - The new class :class:`preprocessing.RobustScaler` provides an
+     alternative to :class:`preprocessing.StandardScaler` for feature-wise
+     centering and range normalization that is robust to outliers. By `untom`_.
 
 Enhancements
 ............
@@ -39,16 +43,18 @@ Enhancements
    - Added option to use multi-output regression metrics without averaging.
      By Konstantin Shmelkov and `Michael Eickenberg`_.
 
-   - Added ``stratify`` option to :func:`cross_validation.train_test_split` for stratified splitting.
-     By Miroslav Batchkarov.
+   - Added ``stratify`` option to :func:`cross_validation.train_test_split`
+     for stratified splitting. By Miroslav Batchkarov.
 
    - The :func:`tree.export_graphviz` function now supports aesthetic
-     improvements for :class:`tree.DecisionTreeClassifier` and 
+     improvements for :class:`tree.DecisionTreeClassifier` and
      :class:`tree.DecisionTreeRegressor`, including options for coloring nodes
      by their majority class or impurity, showing variable names, and using
      node proportions instead of raw sample counts. By `Trevor Stephens`_.
 
-   - Improved speed of ``newton-cg`` solver in :class:`linear_model.LogisticRegression`, by avoiding loss computation. By `Mathieu Blondel`_ and `Tom Dupre la Tour`_.
+   - Improved speed of ``newton-cg`` solver in
+     :class:`linear_model.LogisticRegression`, by avoiding loss computation.
+     By `Mathieu Blondel`_ and `Tom Dupre la Tour`_.
 
 Bug fixes
 .........
@@ -187,7 +193,7 @@ New features
 
    - Added :class:`cross_validation.PredefinedSplit` cross-validation
      for fixed user-provided cross-validation folds.
-     By `untom <https://github.com/untom>`_.
+     By `untom`_.
 
    - Added :class:`calibration.CalibratedClassifierCV`, an approach for
      calibrating the predicted probabilities of a classifier.
@@ -3479,3 +3485,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Tim Head: https://github.com/betatim
 
 .. _Tom Dupre la Tour: https://github.com/TomDLT
+
+.. _Sebastian Raschka: http://sebastianraschka.com
+
+.. _untom: https://github.com/untom

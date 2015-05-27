@@ -351,6 +351,7 @@ Samples generator
    ensemble.RandomForestClassifier
    ensemble.RandomTreesEmbedding
    ensemble.RandomForestRegressor
+   ensemble.VotingClassifier
 
 .. autosummary::
    :toctree: generated/
@@ -1112,8 +1113,9 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
-   preprocessing.StandardScaler
    preprocessing.PolynomialFeatures
+   preprocessing.RobustScaler
+   preprocessing.StandardScaler
 
 .. autosummary::
    :toctree: generated/
