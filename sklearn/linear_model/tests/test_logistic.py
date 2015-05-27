@@ -266,13 +266,22 @@ def test_consistency_path():
         assert_array_almost_equal(lr_coef, coefs[0], decimal=4)
 
 
-def test_liblinear_random_state():
+def test_liblinear_dual_random_state():
+    # random_state is relevant for liblinear solver only if dual=True
     X, y = make_classification(n_samples=20)
-    lr1 = LogisticRegression(random_state=0)
+    lr1 = LogisticRegression(random_state=0, dual=True, max_iter=1, tol=1e-15)
     lr1.fit(X, y)
-    lr2 = LogisticRegression(random_state=0)
+    lr2 = LogisticRegression(random_state=0, dual=True, max_iter=1, tol=1e-15)
     lr2.fit(X, y)
+    lr3 = LogisticRegression(random_state=8, dual=True, max_iter=1, tol=1e-15)
+    lr3.fit(X, y)
+
+    # same result for same random state
     assert_array_almost_equal(lr1.coef_, lr2.coef_)
+    # different results for different random states
+    msg = "Arrays are not almost equal to 6 decimals"
+    assert_raise_message(AssertionError, msg,
+                         assert_array_almost_equal, lr1.coef_, lr3.coef_)
 
 
 def test_logistic_loss_and_grad():

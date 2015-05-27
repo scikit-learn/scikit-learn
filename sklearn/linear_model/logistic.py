@@ -20,6 +20,7 @@ from ..feature_selection.from_model import _LearntSelectorMixin
 from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm.base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
+from ..utils import check_random_state
 from ..utils.extmath import (logsumexp, log_logistic, safe_sparse_dot,
                              squared_norm)
 from ..utils.optimize import newton_cg
@@ -417,7 +418,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
                              solver='lbfgs', coef=None, copy=True,
                              class_weight=None, dual=False, penalty='l2',
-                             intercept_scaling=1., multi_class='ovr'):
+                             intercept_scaling=1., multi_class='ovr',
+                             random_state=None):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -502,8 +504,12 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
-        the entire probability distribution. Works only for the 'lbfgs'
-        solver.
+        the entire probability distribution. Works only for the 'lbfgs' and
+        'newton-cg' solvers.
+
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
 
     Returns
     -------
@@ -531,6 +537,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     _, n_features = X.shape
     check_consistent_length(X, y)
     classes = np.unique(y)
+    random_state = check_random_state(random_state)
 
     if pos_class is None and multi_class != 'multinomial':
         if (classes.size > 2):
@@ -659,7 +666,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         elif solver == 'liblinear':
             coef_, intercept_, _, = _fit_liblinear(
                 X, y, C, fit_intercept, intercept_scaling, class_weight,
-                penalty, dual, verbose, max_iter, tol,
+                penalty, dual, verbose, max_iter, tol, random_state
                 )
             if fit_intercept:
                 w0 = np.concatenate([coef_.ravel(), intercept_])
@@ -1029,7 +1036,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
                 X, y, self.C, self.fit_intercept, self.intercept_scaling,
                 self.class_weight, self.penalty, self.dual, self.verbose,
-                self.max_iter, self.tol
+                self.max_iter, self.tol, self.random_state
                 )
             return self
 
