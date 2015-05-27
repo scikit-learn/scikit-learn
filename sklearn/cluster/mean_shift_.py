@@ -13,8 +13,13 @@ Seeding is performed using a binning technique for scalability.
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 
+# Modified: Martino Sorbaro <martino.sorbaro@ed.ac.uk>
+# (each seed's iterative loop is now in a separate function executed in parallel
+# by par_mean_shift, which is called by the method fit_parallel)
+
 import numpy as np
 import warnings
+import multiprocessing as mp
 
 from collections import defaultdict
 from ..externals import six
@@ -64,6 +69,109 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
         bandwidth += np.max(d, axis=1).sum()
 
     return bandwidth / X.shape[0]
+
+#separate function for each seed's iterative loop
+def _iter_loop((my_mean,X,nbrs,max_iter)):
+    # For each seed, climb gradient until convergence or max_iter
+    bandwidth = nbrs.get_params()['radius']
+    stop_thresh = 1e-3 * bandwidth  # when mean has converged
+    completed_iterations = 0
+    while True:
+        # Find mean of points within bandwidth
+        i_nbrs = nbrs.radius_neighbors([my_mean], bandwidth,
+                                   return_distance=False)[0]
+        points_within = X[i_nbrs]
+        if len(points_within) == 0:
+        break  # Depending on seeding strategy this condition may occur
+        my_old_mean = my_mean  # save the old mean
+        my_mean = np.mean(points_within, axis=0)
+        # If converged or at max_iter, adds the cluster
+        if (extmath.norm(my_mean - my_old_mean) < stop_thresh or
+            completed_iterations == max_iter):
+        #center_intensity_dict[tuple(my_mean)] = len(points_within)
+        return tuple(my_mean), len(points_within)
+        completed_iterations += 1
+
+def par_mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
+               min_bin_freq=1, cluster_all=True, max_iter=300,
+               max_iterations=None,n_proc=None):
+    """Perform mean shift clustering of data using a flat kernel. Computation is
+    performed in parallel on all seeds; the function is in all other respects identical
+    to mean_shift.
+
+    Parameters
+    ----------
+
+    n_proc: int, optional
+        The number of worker processes to use. If None, the number returned by cpu_count()
+        is used.
+
+    See documentation of mean_shift for all the other parameters.
+    """
+    # FIXME To be removed in 0.18
+    if max_iterations is not None:
+        warnings.warn("The `max_iterations` parameter has been renamed to "
+                      "`max_iter` from version 0.16. The `max_iterations` "
+                      "parameter will be removed in 0.18", DeprecationWarning)
+        max_iter = max_iterations
+
+    if bandwidth is None:
+        bandwidth = estimate_bandwidth(X)
+    elif bandwidth <= 0:
+        raise ValueError("bandwidth needs to be greater than zero or None, got %f" %
+                         bandwidth)
+
+    if seeds is None:
+        if bin_seeding:
+            seeds = get_bin_seeds(X, bandwidth, min_bin_freq)
+        else:
+            seeds = X
+    n_samples, n_features = X.shape
+    
+    center_intensity_dict = {}
+    nbrs = NearestNeighbors(radius=bandwidth).fit(X)
+
+    #execute iterations on all seeds in parallel
+    pool = mp.Pool(processes=n_proc)
+    all_res = pool.map(_iter_loop,((seed,X,nbrs,max_iter) for seed in seeds))
+    #copy results in a dictionary
+    for i in range(len(seeds)):
+    	    center_intensity_dict[all_res[i][0]] = all_res[i][1]
+
+    if not center_intensity_dict:
+        # nothing near seeds
+        raise ValueError("No point was within bandwidth=%f of any seed."
+                         " Try a different seeding strategy or increase the bandwidth."
+                         % bandwidth)
+
+    # POST PROCESSING: remove near duplicate points
+    # If the distance between two kernels is less than the bandwidth,
+    # then we have to remove one because it is a duplicate. Remove the
+    # one with fewer points.
+    sorted_by_intensity = sorted(center_intensity_dict.items(),
+                                 key=lambda tup: tup[1], reverse=True)
+    sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
+    unique = np.ones(len(sorted_centers), dtype=np.bool)
+    nbrs = NearestNeighbors(radius=bandwidth).fit(sorted_centers)
+    for i, center in enumerate(sorted_centers):
+        if unique[i]:
+            neighbor_idxs = nbrs.radius_neighbors([center],
+                                                  return_distance=False)[0]
+            unique[neighbor_idxs] = 0
+            unique[i] = 1  # leave the current point as unique
+    cluster_centers = sorted_centers[unique]
+
+    # ASSIGN LABELS: a point belongs to the cluster that it is closest to
+    nbrs = NearestNeighbors(n_neighbors=1).fit(cluster_centers)
+    labels = np.zeros(n_samples, dtype=np.int)
+    distances, idxs = nbrs.kneighbors(X)
+    if cluster_all:
+        labels = idxs.flatten()
+    else:
+        labels.fill(-1)
+        bool_selector = distances.flatten() <= bandwidth
+        labels[bool_selector] = idxs.flatten()[bool_selector]
+    return cluster_centers, labels
 
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
@@ -348,6 +456,26 @@ class MeanShift(BaseEstimator, ClusterMixin):
                        min_bin_freq=self.min_bin_freq,
                        bin_seeding=self.bin_seeding,
                        cluster_all=self.cluster_all)
+        return self
+
+    def fit_parallel(self, X, n_proc=None, y=None):
+        """Perform clustering with parallel processes.
+
+        Parameters
+        -----------
+        X : array-like, shape=[n_samples, n_features]
+            Samples to cluster.
+
+        n_proc: int, optional
+             The number of worker processes to use. If None, the number
+             returned by cpu_count() is used.
+        """
+        X = check_array(X)
+        self.cluster_centers_, self.labels_ = \
+            par_mean_shift(X, bandwidth=self.bandwidth, seeds=self.seeds,
+                       min_bin_freq=self.min_bin_freq,
+                       bin_seeding=self.bin_seeding,
+                       cluster_all=self.cluster_all,n_proc=n_proc)
         return self
 
     def predict(self, X):
