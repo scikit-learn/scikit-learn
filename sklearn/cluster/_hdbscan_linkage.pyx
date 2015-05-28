@@ -16,7 +16,7 @@ cdef np.ndarray[np.double_t, ndim=2] mst_linkage_core(
     cdef np.ndarray[np.double_t, ndim=1] current_distances
     cdef np.ndarray[np.double_t, ndim=1] left
     cdef np.ndarray[np.double_t, ndim=1] right
-    cdef np.ndarray[np.double_t, ndim=1] result
+    cdef np.ndarray[np.double_t, ndim=2] result
     
     cdef np.ndarray label_filter
     
