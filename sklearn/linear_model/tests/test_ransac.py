@@ -340,7 +340,3 @@ def test_ransac_dynamic_max_trials():
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        stop_probability=1.1)
     assert_raises(ValueError, ransac_estimator.fit, X, y)
-
-
-if __name__ == "__main__":
-    np.testing.run_module_suite()

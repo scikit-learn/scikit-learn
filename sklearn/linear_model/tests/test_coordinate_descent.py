@@ -604,8 +604,3 @@ def test_sparse_dense_descent_paths():
         _, coefs, _ = path(X, y, fit_intercept=False)
         _, sparse_coefs, _ = path(csr, y, fit_intercept=False)
         assert_array_almost_equal(coefs, sparse_coefs)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

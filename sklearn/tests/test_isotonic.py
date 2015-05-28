@@ -346,8 +346,3 @@ def test_isotonic_zero_weight_loop():
 
     # This will hang in failure case.
     regression.fit(x, y, sample_weight=w)
-
-
-if __name__ == "__main__":
-    import nose
-    nose.run(argv=['', __file__])

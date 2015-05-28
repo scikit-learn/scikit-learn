@@ -180,8 +180,3 @@ def test_random_choice_csc_errors():
     class_probabilites = [np.array([0.5, 0.6]), np.array([0.6, 0.1, 0.3])]
     assert_raises(ValueError, random_choice_csc, 4, classes,
                   class_probabilites, 1)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

@@ -662,8 +662,3 @@ def test_oob_score_removed_on_warm_start():
     clf.fit(X, y)
 
     assert_raises(AttributeError, getattr, clf, "oob_score_")
-
-
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()

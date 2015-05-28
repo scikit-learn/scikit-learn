@@ -121,8 +121,3 @@ def test_singular_matrix():
     f = ignore_warnings
     assert_raises(ValueError, f(manifold.locally_linear_embedding),
                   M, 2, 1, method='standard', eigen_solver='arpack')
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()
