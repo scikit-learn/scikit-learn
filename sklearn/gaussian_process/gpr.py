@@ -188,14 +188,15 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                         "requires that all bounds are finite.")
                 bounds = self.kernel_.bounds
                 for iteration in range(1, self.n_restarts_optimizer):
-                    theta_initial = np.exp(self.rng.uniform(bounds[:, 0],
-                                                            bounds[:, 1]))
+                    theta_initial = \
+                        self.rng.uniform(bounds[:, 0], bounds[:, 1])
                     optima.append(
                         self._constrained_optimization(obj_func, theta_initial,
                                                        bounds))
             # Select result from run with minimal (negative) log-marginal
             # likelihood
-            self.kernel_.theta = optima[np.argmin(map(itemgetter(1), optima))][0]
+            self.kernel_.theta = \
+                optima[np.argmin(map(itemgetter(1), optima))][0]
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
