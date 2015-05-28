@@ -145,7 +145,7 @@ div.content {
     z-index: 1;
     position: relative;
     background-color: #FFF;
-    padding-left: 25px;
+    padding-left: 15px;
 }
 
 div.example_digits {
@@ -295,11 +295,11 @@ label[for="nav-trigger"] {
     padding-top: 100px;
     z-index: 2;
     width: 15px;
-    height: 60%;
+    height: 80%;
     cursor: pointer;
     background-size: contain;
     background-color: #F6F6F6;
-    border-radius: 0px 10px 10px 0px;
+    border-radius: 10px 0px 0px 10px;
 }
 
 label[for="nav-trigger"]:hover {
@@ -307,7 +307,7 @@ label[for="nav-trigger"]:hover {
 }
 
 .nav-trigger:checked + label {
-    margin-left: 190px;
+    margin-left: 200px;
 }
 
 .nav-trigger:checked + label:after {
@@ -315,7 +315,7 @@ label[for="nav-trigger"]:hover {
 }
 
 .nav-trigger:checked ~ div.content {
-    margin-left: 190px;
+    margin-left: 200px;
 }
 .nav-trigger + label, div.content {
     transition: left 0.4s;
@@ -1206,13 +1206,13 @@ div.container-index {
 
 {% if theme_collapsiblesidebar|tobool %}
   div.content {
-    margin-left: 190px;
+    margin-left: 200px;
   }
   .nav-trigger + label:after {
     content: '<<';
   }
   label[for="nav-trigger"] {
-    margin-left: 190px;
+    margin-left: 200px;
   }
 
   .nav-trigger:checked + label {
