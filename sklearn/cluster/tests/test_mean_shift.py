@@ -47,8 +47,8 @@ def test_mean_shift():
     assert_equal(n_clusters_, n_clusters)
 
 def test_parallel():
-    ms1 = MeanShift()
-    ms1.fit_parallel(X,n_proc=None)
+    ms1 = MeanShift(n_jobs=-1)
+    ms1.fit(X)
     
     ms2 = MeanShift()
     ms2.fit(X)
