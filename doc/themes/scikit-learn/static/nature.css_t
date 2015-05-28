@@ -286,7 +286,7 @@ div.sphinxsidebarwrapper {
 }
 
 .nav-trigger + label:after {
-    content: '>>';
+    content: '»';
 }
 
 label[for="nav-trigger"] {
@@ -311,7 +311,7 @@ label[for="nav-trigger"]:hover {
 }
 
 .nav-trigger:checked + label:after {
-    content: '<<';
+    content: '«';
 }
 
 .nav-trigger:checked ~ div.content {
@@ -1209,7 +1209,7 @@ div.container-index {
     margin-left: 200px;
   }
   .nav-trigger + label:after {
-    content: '<<';
+    content: '«';
   }
   label[for="nav-trigger"] {
     margin-left: 200px;
@@ -1219,7 +1219,7 @@ div.container-index {
     margin-left: 0px;
   }
   .nav-trigger:checked + label:after {
-    content: '>>';
+    content: '»';
   }
   .nav-trigger:checked ~ div.content {
     margin-left: 0px;
