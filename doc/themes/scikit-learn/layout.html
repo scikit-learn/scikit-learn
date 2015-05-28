@@ -5,7 +5,6 @@
     Layout for scikit-learn, after a design made by Angel Soler
     (http://angelsoler.net)
 
-    Update: Collapsable sidebar added - 13/03/2012 - Jaques Grobler
     Update: Next-page button added - 16/03/2012 - Jaques Grobler
 
 
@@ -25,9 +24,6 @@
 
 {% block extrahead %}
   {% if pagename != 'index' %}
-   {% if theme_collapsiblesidebar|tobool %}
-       <script type="text/javascript" src="{{ pathto('_static/sidebar.js', 1) }}"></script>
-   {% endif %}
   {% endif %}
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}" type="text/javascript"></script>
@@ -42,9 +38,6 @@
            $(this).css('background-color', '#A7D6E2');
        }
     );
-    var bodywrapper = $('.bodywrapper');
-    var sidebarbutton = $('#sidebarbutton');
-    sidebarbutton.css({'height': '900px'});
   </script>
 {% endblock %}
 
@@ -276,6 +269,10 @@
     {{ toc }}
     </div>
 </div>
+{% if theme_collapsiblesidebar|tobool %}
+<input type="checkbox" id="nav-trigger" class="nav-trigger" checked />
+<label for="nav-trigger"></label>
+{% endif %}
 {% endif %}
 
 

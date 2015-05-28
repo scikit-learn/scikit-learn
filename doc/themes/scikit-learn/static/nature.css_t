@@ -142,8 +142,10 @@ div.content-wrapper {
 }
 
 div.content {
-    margin-left: 210px;
-    padding-bottom: 10px;
+    z-index: 1;
+    position: relative;
+    background-color: #FFF;
+    padding-left: 15px;
 }
 
 div.example_digits {
@@ -254,6 +256,7 @@ div.sphinxsidebar {
     border-left-width: 0;
     border-bottom-width: 0;
     margin-top: 0;
+    position: absolute;
 }
 
 div.sphinxsidebar h3 {
@@ -277,9 +280,45 @@ div.sphinxsidebarwrapper {
 
 {% if theme_collapsiblesidebar|tobool %}
 /* for collapsible sidebar */
-div#sidebarbutton {
+.nav-trigger {
+    position: fixed;
+    clip: rect(0, 0, 0, 0);
+}
+
+.nav-trigger + label:after {
+    content: '»';
+}
+
+label[for="nav-trigger"] {
+    position: fixed;
+    margin-left: 0px;
+    padding-top: 100px;
+    z-index: 2;
+    width: 15px;
+    height: 80%;
+    cursor: pointer;
+    background-size: contain;
     background-color: #F6F6F6;
-    position: relative;
+    border-radius: 10px 0px 0px 10px;
+}
+
+label[for="nav-trigger"]:hover {
+    background-color: #D0D0D0;
+}
+
+.nav-trigger:checked + label {
+    margin-left: 200px;
+}
+
+.nav-trigger:checked + label:after {
+    content: '«';
+}
+
+.nav-trigger:checked ~ div.content {
+    margin-left: 200px;
+}
+.nav-trigger + label, div.content {
+    transition: left 0.4s;
 }
 {% endif %}
 
@@ -1164,6 +1203,29 @@ div.container-index {
     display: none;
   }
 
+
+{% if theme_collapsiblesidebar|tobool %}
+  div.content {
+    margin-left: 200px;
+  }
+  .nav-trigger + label:after {
+    content: '«';
+  }
+  label[for="nav-trigger"] {
+    margin-left: 200px;
+  }
+
+  .nav-trigger:checked + label {
+    margin-left: 0px;
+  }
+  .nav-trigger:checked + label:after {
+    content: '»';
+  }
+  .nav-trigger:checked ~ div.content {
+    margin-left: 0px;
+  }
+
+{%- else %}
   .sphinxsidebar {
     display: none;
   }
@@ -1172,6 +1234,7 @@ div.container-index {
     margin-left: 0;
   }
 
+{% endif %}
 
   div.container-index {
     margin-left: 0;
