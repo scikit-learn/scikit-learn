@@ -92,9 +92,6 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
             curr_sample_weight *= compute_sample_weight('auto', y, indices)
 
         tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
-
-        tree.indices_ = sample_counts > 0.
-
     else:
         tree.fit(X, y, sample_weight=sample_weight, check_input=False)
 
@@ -367,8 +364,14 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         sample_indices = np.arange(n_samples)
         for estimator in self.estimators_:
+            # Generate indices_map using same random seed
+            random_state = check_random_state(estimator.random_state)
+            indices = random_state.randint(0, n_samples, n_samples)
+            sample_counts = bincount(indices, minlength=n_samples)
+            indices_map = sample_counts > 0.
+
             mask = np.ones(n_samples, dtype=np.bool)
-            mask[estimator.indices_] = False
+            mask[indices_map] = False
             mask_indices = sample_indices[mask]
             p_estimator = estimator.predict_proba(X[mask_indices, :],
                                                   check_input=False)
@@ -637,8 +640,14 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         sample_indices = np.arange(n_samples)
         for estimator in self.estimators_:
+            # Generate indices_ using same random seed
+            random_state = check_random_state(estimator.random_state)
+            indices = random_state.randint(0, n_samples, n_samples)
+            sample_counts = bincount(indices, minlength=n_samples)
+            indices_map = sample_counts > 0.
+
             mask = np.ones(n_samples, dtype=np.bool)
-            mask[estimator.indices_] = False
+            mask[indices_map] = False
             mask_indices = sample_indices[mask]
             p_estimator = estimator.predict(X[mask_indices, :], check_input=False)
 
