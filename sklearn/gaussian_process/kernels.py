@@ -97,7 +97,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
             if not isinstance(var_name, basestring):  # vector-valued parameter
                 var_name, _ = var_name
             theta.append(getattr(self, var_name))
-        return np.log(theta).ravel()
+        return np.log(np.hstack(theta))
 
     @theta.setter
     def theta(self, theta):
@@ -710,7 +710,7 @@ class ConstantKernel(Kernel):
         return self.c * np.ones(X.shape[0])
 
     def __repr__(self):
-        return "{0:.3g}".format(self.c)
+        return "{0:.3g}**2".format(np.sqrt(self.c))
 
 
 class WhiteKernel(Kernel):
@@ -778,7 +778,7 @@ class WhiteKernel(Kernel):
         else:
             K = np.zeros((X.shape[0], Y.shape[0]))
             # entries which are sufficiently similar to be considered identical
-            K[cdist(X, Y) < 1e-10] = self.c
+            #K[cdist(X, Y) < 1e-10] = self.c
             return K
 
     def diag(self, X):
