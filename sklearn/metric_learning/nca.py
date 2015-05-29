@@ -58,8 +58,19 @@ def vectorized_nca(X, y, params):
         if params.method == 'gd':
             for it in range(params.max_iter):
                 fnc, grad = oracle(L)
-                L -= params.learning_rate * grad.reshape(L.shape)
+                grad = grad.reshape(L.shape)
+                L -= params.learning_rate * grad
                 if params.verbose:
+                    print("Iteration {} :: Target = {}".format(it + 1, fnc))
+
+        elif params.method == 'adagrad':
+            grad_history = np.zeros_like(L)
+            for it in range(params.max_iter):
+                fnc, grad = oracle(L)
+                grad = grad.reshape(L.shape)
+                grad_history += grad * grad
+                L -= params.learning_rate / np.sqrt(grad_history) * grad
+                if params.verbose > 0:
                     print("Iteration {} :: Target = {}".format(it + 1, fnc))
 
         elif params.method == 'scipy':
@@ -70,7 +81,7 @@ def vectorized_nca(X, y, params):
                 if params.verbose:
                     print("Iteration {} :: Target = {}".format(state['it'], fnc))
 
-            options = {'maxiter' : params.max_iter, "disp" : True}
+            options = {'maxiter' : params.max_iter, "disp" : params.verbose > 0}
             res = sp.optimize.minimize(fun=oracle, x0=L, jac=True, tol=params.tol,
                                        options=options, callback=callback)
             L = res.x.reshape(L.shape)
