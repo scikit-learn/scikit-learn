@@ -12,10 +12,7 @@ Seeding is performed using a binning technique for scalability.
 # Authors: Conrad Lee <conradlee@gmail.com>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
-
-# Modified: Martino Sorbaro <martino.sorbaro@ed.ac.uk>
-# (each seed's iterative loop is now in a separate function executed in parallel
-# by par_mean_shift, which is called by the method fit_parallel)
+#          Martino Sorbaro <martino.sorbaro@ed.ac.uk>
 
 import numpy as np
 import warnings
@@ -72,7 +69,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
     return bandwidth / X.shape[0]
 
 #separate function for each seed's iterative loop
-def _iter_loop(my_mean,X,nbrs,max_iter):
+def _mean_shift_single_seed(my_mean,X,nbrs,max_iter):
     # For each seed, climb gradient until convergence or max_iter
     bandwidth = nbrs.get_params()['radius']
     stop_thresh = 1e-3 * bandwidth  # when mean has converged
@@ -186,8 +183,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     all_res = Parallel(n_jobs=n_jobs)(delayed(_iter_loop)(seed,X,nbrs,max_iter) for seed in seeds)
     #copy results in a dictionary
     for i in range(len(seeds)):
-            if all_res[i] is not None:
-    	        center_intensity_dict[all_res[i][0]] = all_res[i][1]
+        if all_res[i] is not None:
+            center_intensity_dict[all_res[i][0]] = all_res[i][1]
 
     if not center_intensity_dict:
         # nothing near seeds
