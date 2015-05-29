@@ -12,6 +12,8 @@ import time
 
 import numpy as np
 from scipy import linalg
+from scipy.sparse.csr import csr_matrix
+from scipy.sparse.csgraph import connected_components
 
 from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
                                     log_likelihood)
@@ -190,9 +192,13 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     covariance_ *= 0.95
     diagonal = emp_cov.flat[::n_features + 1]
     covariance_.flat[::n_features + 1] = diagonal
+    # Fit each connected component of the thresholded sample covariance;
+    # see http://faculty.washington.edu/dwitten/Papers/jcgs.2011.pdf
+    cov_thresh = csr_matrix(np.abs(emp_cov) > alpha)  # workaround for scipy#3819
+    n_comp, comp_labels = connected_components(cov_thresh)
+    covariance_[np.not_equal.outer(comp_labels, comp_labels)] = 0.0
     precision_ = linalg.pinvh(covariance_)
 
-    indices = np.arange(n_features)
     costs = list()
     # The different l1 regression solver have different numerical errors
     if mode == 'cd':
@@ -200,45 +206,56 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     else:
         errors = dict(invalid='raise')
     try:
+        cost_by_comp = np.inf * np.ones(n_comp)
         # be robust to the max_iter=0 edge case, see:
         # https://github.com/scikit-learn/scikit-learn/issues/4134
-        d_gap = np.inf
+        d_gap_by_comp = np.inf * np.ones(n_comp)
         for i in range(max_iter):
-            for idx in range(n_features):
-                sub_covariance = np.ascontiguousarray(
-                    covariance_[indices != idx].T[indices != idx])
-                row = emp_cov[idx, indices != idx]
-                with np.errstate(**errors):
-                    if mode == 'cd':
-                        # Use coordinate descent
-                        coefs = -(precision_[indices != idx, idx]
-                                  / (precision_[idx, idx] + 1000 * eps))
-                        coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
-                            coefs, alpha, 0, sub_covariance, row, row,
-                            max_iter, enet_tol, check_random_state(None), False)
-                    else:
-                        # Use LARS
-                        _, _, coefs = lars_path(
-                            sub_covariance, row, Xy=row, Gram=sub_covariance,
-                            alpha_min=alpha / (n_features - 1), copy_Gram=True,
-                            eps=eps, method='lars', return_path=False)
-                # Update the precision matrix
-                precision_[idx, idx] = (
-                    1. / (covariance_[idx, idx]
-                          - np.dot(covariance_[indices != idx, idx], coefs)))
-                precision_[indices != idx, idx] = (- precision_[idx, idx]
-                                                   * coefs)
-                precision_[idx, indices != idx] = (- precision_[idx, idx]
-                                                   * coefs)
-                coefs = np.dot(sub_covariance, coefs)
-                covariance_[idx, indices != idx] = coefs
-                covariance_[indices != idx, idx] = coefs
-            d_gap = _dual_gap(emp_cov, precision_, alpha)
-            cost = _objective(emp_cov, precision_, alpha)
+            for comp_idx in range(n_comp):
+                indices = np.where(comp_labels == comp_idx)[0]
+                comp_size = len(indices)
+                # closed-form solution for disconnected node
+                if comp_size == 1:
+                    covariance_[indices, indices] = emp_cov[indices, indices]
+                    precision_[indices, indices] = 1. / emp_cov[indices, indices]
+                else:
+                    for idx in indices:
+                        other_inds = indices[indices != idx]
+                        sub_covariance = np.ascontiguousarray(
+                            covariance_[other_inds].T[other_inds])
+                        row = emp_cov[idx, other_inds]
+                        with np.errstate(**errors):
+                            if mode == 'cd':
+                                # Use coordinate descent
+                                coefs = -(precision_[other_inds, idx] /
+                                          (precision_[idx, idx] + 1000 * eps))
+                                coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
+                                    coefs, alpha, 0, sub_covariance, row, row,
+                                    max_iter, enet_tol, check_random_state(None), False)
+                            else:
+                                # Use LARS
+                                _, _, coefs = lars_path(
+                                    sub_covariance, row, Xy=row, Gram=sub_covariance,
+                                    alpha_min=alpha / (comp_size - 1), copy_Gram=True,
+                                    eps=eps, method='lars', return_path=False)
+                        # Update the precision matrix
+                        precision_[idx, idx] = (
+                            1. / (covariance_[idx, idx]
+                                  - np.dot(covariance_[other_inds, idx], coefs)))
+                        precision_[other_inds, idx] = -precision_[idx, idx] * coefs
+                        precision_[idx, other_inds] = -precision_[idx, idx] * coefs
+                        coefs = np.dot(sub_covariance, coefs)
+                        covariance_[idx, other_inds] = coefs
+                        covariance_[other_inds, idx] = coefs
+                cost_by_comp[comp_idx] = _objective(emp_cov[indices].T[indices],
+                                                    precision_[indices].T[indices], alpha)
+                d_gap_by_comp[comp_idx] = _dual_gap(emp_cov[indices].T[indices],
+                                                    precision_[indices].T[indices], alpha)
+            cost = cost_by_comp.sum()
+            d_gap = d_gap_by_comp.sum()
             if verbose:
-                print(
-                    '[graph_lasso] Iteration % 3i, cost % 3.2e, dual gap %.3e'
-                    % (i, cost, d_gap))
+                print('[graph_lasso] Iteration % 3i, cost % 3.2e, dual gap %.3e'
+                      % (i, cost, d_gap))
             if return_costs:
                 costs.append((cost, d_gap))
             if np.abs(d_gap) < tol:
@@ -248,7 +265,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                                          'too ill-conditioned for this solver')
         else:
             warnings.warn('graph_lasso: did not converge after %i iteration:'
-                          ' dual gap: %.3e' % (max_iter, d_gap),
+                          ' dual gap: %.3e' % (max_iter, d_gap_by_comp.sum()),
                           ConvergenceWarning)
     except FloatingPointError as e:
         e.args = (e.args[0]
