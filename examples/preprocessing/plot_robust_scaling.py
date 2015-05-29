@@ -37,8 +37,8 @@ X2 = np.random.multivariate_normal(mean=mu2, cov=Cov, size=n_datapoints)
 Y_train = np.hstack([[-1]*n_datapoints, [1]*n_datapoints])
 X_train = np.vstack([X1, X2])
 
-X1 = np.random.multivariate_normal(mean=mu1, cov=C, size=n_datapoints)
-X2 = np.random.multivariate_normal(mean=mu2, cov=C, size=n_datapoints)
+X1 = np.random.multivariate_normal(mean=mu1, cov=Cov, size=n_datapoints)
+X2 = np.random.multivariate_normal(mean=mu2, cov=Cov, size=n_datapoints)
 Y_test = np.hstack([[-1]*n_datapoints, [1]*n_datapoints])
 X_test = np.vstack([X1, X2])
 

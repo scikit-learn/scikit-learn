@@ -5,7 +5,6 @@ from scipy import linalg, optimize, sparse
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
@@ -69,22 +68,19 @@ def test_predict_2_classes():
 def test_error():
     # Test for appropriate exception on errors
     msg = "Penalty term must be positive"
-    assert_raises_regexp(ValueError, msg,
+    assert_raise_message(ValueError, msg,
                          LogisticRegression(C=-1).fit, X, Y1)
-    assert_raises_regexp(ValueError, msg,
+    assert_raise_message(ValueError, msg,
                          LogisticRegression(C="test").fit, X, Y1)
 
-    msg = "Tolerance for stopping criteria must be positive"
-    assert_raises_regexp(ValueError, msg,
-                         LogisticRegression(tol=-1).fit, X, Y1)
-    assert_raises_regexp(ValueError, msg,
-                         LogisticRegression(tol="test").fit, X, Y1)
+    for LR in [LogisticRegression, LogisticRegressionCV]:
+        msg = "Tolerance for stopping criteria must be positive"
+        assert_raise_message(ValueError, msg, LR(tol=-1).fit, X, Y1)
+        assert_raise_message(ValueError, msg, LR(tol="test").fit, X, Y1)
 
-    msg = "Maximum number of iteration must be positive"
-    assert_raises_regexp(ValueError, msg,
-                         LogisticRegression(max_iter=-1).fit, X, Y1)
-    assert_raises_regexp(ValueError, msg,
-                         LogisticRegression(max_iter="test").fit, X, Y1)
+        msg = "Maximum number of iteration must be positive"
+        assert_raise_message(ValueError, msg, LR(max_iter=-1).fit, X, Y1)
+        assert_raise_message(ValueError, msg, LR(max_iter="test").fit, X, Y1)
 
 
 def test_predict_3_classes():
@@ -124,6 +120,39 @@ def test_multinomial_validation():
     for solver in ['lbfgs', 'newton-cg']:
         lr = LogisticRegression(C=-1, solver=solver, multi_class='multinomial')
         assert_raises(ValueError, lr.fit, [[0, 1], [1, 0]], [0, 1])
+
+
+def test_check_solver_option():
+    X, y = iris.data, iris.target
+    for LR in [LogisticRegression, LogisticRegressionCV]:
+
+        msg = ("Logistic Regression supports only liblinear, newton-cg and"
+               " lbfgs solvers, got wrong_name")
+        lr = LR(solver="wrong_name")
+        assert_raise_message(ValueError, msg, lr.fit, X, y)
+
+        msg = "multi_class should be either multinomial or ovr, got wrong_name"
+        lr = LR(solver='newton-cg', multi_class="wrong_name")
+        assert_raise_message(ValueError, msg, lr.fit, X, y)
+
+        # all solver except 'newton-cg' and 'lfbgs'
+        for solver in ['liblinear']:
+            msg = ("Solver %s does not support a multinomial backend." %
+                   solver)
+            lr = LR(solver=solver, multi_class='multinomial')
+            assert_raise_message(ValueError, msg, lr.fit, X, y)
+
+        # all solvers except 'liblinear'
+        for solver in ['newton-cg', 'lbfgs']:
+            msg = ("Solver %s supports only l2 penalties, got l1 penalty." %
+                   solver)
+            lr = LR(solver=solver, penalty='l1')
+            assert_raise_message(ValueError, msg, lr.fit, X, y)
+
+            msg = ("Solver %s supports only dual=False, got dual=True" %
+                   solver)
+            lr = LR(solver=solver, dual=True)
+            assert_raise_message(ValueError, msg, lr.fit, X, y)
 
 
 def test_multinomial_binary():
@@ -237,13 +266,22 @@ def test_consistency_path():
         assert_array_almost_equal(lr_coef, coefs[0], decimal=4)
 
 
-def test_liblinear_random_state():
+def test_liblinear_dual_random_state():
+    # random_state is relevant for liblinear solver only if dual=True
     X, y = make_classification(n_samples=20)
-    lr1 = LogisticRegression(random_state=0)
+    lr1 = LogisticRegression(random_state=0, dual=True, max_iter=1, tol=1e-15)
     lr1.fit(X, y)
-    lr2 = LogisticRegression(random_state=0)
+    lr2 = LogisticRegression(random_state=0, dual=True, max_iter=1, tol=1e-15)
     lr2.fit(X, y)
+    lr3 = LogisticRegression(random_state=8, dual=True, max_iter=1, tol=1e-15)
+    lr3.fit(X, y)
+
+    # same result for same random state
     assert_array_almost_equal(lr1.coef_, lr2.coef_)
+    # different results for different random states
+    msg = "Arrays are not almost equal to 6 decimals"
+    assert_raise_message(AssertionError, msg,
+                         assert_array_almost_equal, lr1.coef_, lr3.coef_)
 
 
 def test_logistic_loss_and_grad():
