@@ -69,6 +69,22 @@ __all__ = ["RandomForestClassifier",
 
 MAX_INT = np.iinfo(np.int32).max
 
+def _generate_sample_indices(tree, n_samples):
+    """Private function used to _parallel_build_trees function."""
+    random_state = check_random_state(tree.random_state)
+    sample_indices = random_state.randint(0, n_samples, n_samples)
+
+    return sample_indices
+
+def _generate_unsampled_indices(tree, n_samples):
+    """Private function used to forest._set_oob_score fuction."""
+    sample_indices = _generate_sample_indices(tree, n_samples)
+    sample_counts = bincount(sample_indices, minlength=n_samples)
+    unsampled_mask = sample_counts == 0
+    indices_range = np.arange(n_samples)
+    unsampled_indices = indices_range[unsampled_mask]
+
+    return unsampled_indices
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                           verbose=0, class_weight=None):
@@ -83,8 +99,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         else:
             curr_sample_weight = sample_weight.copy()
 
-        random_state = check_random_state(tree.random_state)
-        indices = random_state.randint(0, n_samples, n_samples)
+        indices = _generate_sample_indices(tree, n_samples)
         sample_counts = bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
 
@@ -362,15 +377,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         for k in range(self.n_outputs_):
             predictions.append(np.zeros((n_samples, n_classes_[k])))
 
-        sample_indices = np.arange(n_samples)
         for estimator in self.estimators_:
-            # Generate indices_map using same random seed
-            random_state = check_random_state(estimator.random_state)
-            indices = random_state.randint(0, n_samples, n_samples)
-            sample_counts = bincount(indices, minlength=n_samples)
-            mask = sample_counts == 0
-
-            mask_indices = sample_indices[mask]
+            mask_indices = _generate_unsampled_indices(estimator, n_samples)
             p_estimator = estimator.predict_proba(X[mask_indices, :],
                                                   check_input=False)
 
@@ -636,15 +644,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         predictions = np.zeros((n_samples, self.n_outputs_))
         n_predictions = np.zeros((n_samples, self.n_outputs_))
 
-        sample_indices = np.arange(n_samples)
         for estimator in self.estimators_:
-            # Generate indices_ using same random seed
-            random_state = check_random_state(estimator.random_state)
-            indices = random_state.randint(0, n_samples, n_samples)
-            sample_counts = bincount(indices, minlength=n_samples)
-            mask = sample_counts == 0
-
-            mask_indices = sample_indices[mask]
+            mask_indices = _generate_unsampled_indices(estimator, n_samples)
             p_estimator = estimator.predict(X[mask_indices, :], check_input=False)
 
             if self.n_outputs_ == 1:
