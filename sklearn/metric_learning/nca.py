@@ -71,7 +71,7 @@ def vectorized_nca(X, y, params):
                     print("Iteration {} :: Target = {}".format(state['it'], fnc))
 
             options = {'maxiter' : params.max_iter, "disp" : True}
-            res = sp.optimize.minimize(fun=oracle, method='CG', x0=L, jac=True, tol=params.tol,
+            res = sp.optimize.minimize(fun=oracle, x0=L, jac=True, tol=params.tol,
                                        options=options, callback=callback)
             L = res.x.reshape(L.shape)
             fnc, grad = oracle(L)
