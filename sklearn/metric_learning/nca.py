@@ -4,6 +4,9 @@ import numpy as np
 import scipy as sp
 import scipy.misc
 import scipy.optimize
+import time
+
+import sys
 
 def nca_vectorized_oracle(X, y, params):
     dX = X[:, None, :] - X[None, :, :]  # n_samples x n_samples x n_comp
@@ -33,10 +36,19 @@ def nca_vectorized_oracle(X, y, params):
 
         p_i = (p * class_neighbours).sum(axis=1)
 
-        grad = np.sum(np.sum(p[:, :, None, None] * outer, axis=0) * p_i[:, None, None], axis=0)
+        if params.loss == 'l1':
+            grad = np.sum(np.sum(p[:, :, None, None] * outer, axis=0) * p_i[:, None, None], axis=0)
+        else:
+            grad = np.sum(np.sum(p[:, :, None, None] * outer, axis=0), axis=0)
+
         assert grad.shape == (n_features, n_features)
 
-        snd = np.sum(class_neighbours[:, :, None, None] * p[:, :, None, None] * outer, axis=(0, 1))
+        if params.loss == 'l1':
+            snd = np.sum(class_neighbours[:, :, None, None] * p[:, :, None, None] * outer, axis=(0, 1))
+        else:
+            snd = np.sum(class_neighbours[:, :, None, None] * p[:, :, None, None] * outer, axis=0) / p_i[:, None, None]
+            snd = np.sum(snd, axis=0)
+
         assert snd.shape == (n_features, n_features)
         grad -= snd
 
@@ -103,7 +115,7 @@ def optimize_nca(X, y, params, cache_size=200*1024*1024):
     n_samples, n_features = X.shape
 
     rng = np.random.RandomState(params.random_state)
-    best_fnc = None
+    best_fnc = np.inf
     best_L = None
 
     outer_products_size = (n_samples * n_features) ** 2
@@ -114,6 +126,7 @@ def optimize_nca(X, y, params, cache_size=200*1024*1024):
         oracle = nca_loopy_oracle(X, y, params)
 
     for _ in range(params.n_init):
+        start = time.clock()
         L = rng.uniform(0, 1, (params.n_components, n_features))
 
         if params.method == 'gd':
@@ -121,8 +134,10 @@ def optimize_nca(X, y, params, cache_size=200*1024*1024):
                 fnc, grad = oracle(L)
                 grad = grad.reshape(L.shape)
                 L -= params.learning_rate * grad
-                if params.verbose:
-                    print("Iteration {} :: Target = {}".format(it + 1, fnc))
+                if params.verbose > 1:
+                    percent = 100. * (it + 1) / params.max_iter
+                    sys.stdout.write("\rProgress {:.2f}% :: Target = {}".format(percent, fnc))
+                    sys.stdout.flush()
 
         elif params.method == 'adagrad':
             grad_history = np.zeros_like(L)
@@ -131,26 +146,39 @@ def optimize_nca(X, y, params, cache_size=200*1024*1024):
                 grad = grad.reshape(L.shape)
                 grad_history += grad * grad
                 L -= params.learning_rate / np.sqrt(grad_history) * grad
-                if params.verbose > 0:
-                    print("Iteration {} :: Target = {}".format(it + 1, fnc))
+                if params.verbose > 1:
+                    percent = 100. * (it + 1) / params.max_iter
+                    sys.stdout.write("\rProgress {:.2f}% :: Target = {}".format(percent, fnc))
+                    sys.stdout.flush()
 
         elif params.method == 'scipy':
             state = {'it' : 0}
             def callback(L):
                 fnc, _ = oracle(L)
                 state['it'] += 1
-                if params.verbose:
-                    print("Iteration {} :: Target = {}".format(state['it'], fnc))
+                if params.verbose > 1:
+                    percent = 100. * (state['it'] + 1) / params.max_iter
+                    sys.stdout.write("\rProgress {:.2f}% :: Target = {}".format(percent, fnc))
+                    sys.stdout.flush()
 
-            options = {'maxiter' : params.max_iter, "disp" : params.verbose > 0}
+            options = {'maxiter' : params.max_iter, "disp" : params.verbose > 1}
             res = sp.optimize.minimize(fun=oracle, x0=L, jac=True, tol=params.tol,
                                        options=options, callback=callback)
             L = res.x.reshape(L.shape)
             fnc, grad = oracle(L)
 
-        if fnc > best_fnc:
+        exec_time = time.clock() - start
+        if params.verbose > 0:
+            sys.stdout.write("\rInit {} / {} completed"
+                             " :: Time: {:.2f}s :: Loss = {}\n".format(_+1, params.n_init, exec_time, fnc))
+            sys.stdout.flush()
+
+        if fnc < best_fnc:
             best_fnc = fnc
             best_L = L
+
+    if params.verbose > 0:
+        print("\rCompleted" + " " * 80)
 
     return best_L
 
