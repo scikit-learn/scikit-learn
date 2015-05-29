@@ -39,10 +39,10 @@ cdef np.ndarray[np.double_t, ndim=2] mst_linkage_core(
         
         new_node_index = np.argmin(current_distances)
         new_node = current_labels[new_node_index]
-        result[i - 1, 0] = current_node
-        result[i - 1, 1] = new_node
+        result[i - 1, 0] = <double> current_node
+        result[i - 1, 1] = <double> new_node
         result[i - 1, 2] = current_distances[new_node_index]
-        currnt_node = new_node
+        current_node = new_node
         
     return result
     
@@ -112,7 +112,7 @@ cpdef np.ndarray[np.double_t, ndim=2] single_linkage(
                                np.ndarray[np.double_t, ndim=2] distance_matrix):
     
     cdef np.ndarray[np.double_t, ndim=2] hierarchy
-    cdef np.ndarray[np.int64_t, ndim=2] sort_order
+    cdef np.ndarray[np.int64_t, ndim=1] sort_order
     cdef np.ndarray[np.double_t, ndim=2] for_labelling
     
     hierarchy = mst_linkage_core(distance_matrix)
