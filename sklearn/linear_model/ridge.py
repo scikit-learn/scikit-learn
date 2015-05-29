@@ -1012,6 +1012,7 @@ class _RidgeGCV(LinearModel):
 
         if error:
             best = cv_values.mean(axis=0).argmin()
+            best_score = cv_values.mean(axis=0)[best]
         else:
             # The scorer want an object that will make the predictions but
             # they are already computed efficiently by _RidgeGCV. This
@@ -1024,10 +1025,12 @@ class _RidgeGCV(LinearModel):
             out = [scorer(identity_estimator, y.ravel(), cv_values[:, i])
                    for i in range(len(self.alphas))]
             best = np.argmax(out)
+            best_score = out[best]
 
         self.alpha_ = self.alphas[best]
         self.dual_coef_ = C[best]
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
+        self.best_score_ = best_score
 
         self._set_intercept(X_offset, y_offset, X_scale)
 
@@ -1081,6 +1084,7 @@ class _BaseRidgeCV(LinearModel):
                                   store_cv_values=self.store_cv_values)
             estimator.fit(X, y, sample_weight=sample_weight)
             self.alpha_ = estimator.alpha_
+            self.best_score_ = estimator.best_score_
             if self.store_cv_values:
                 self.cv_values_ = estimator.cv_values_
         else:
@@ -1092,9 +1096,11 @@ class _BaseRidgeCV(LinearModel):
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
                               parameters, fit_params=fit_params, cv=self.cv,
                               scoring=self.scoring)
+
             gs.fit(X, y)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
+            self.best_score_ = gs.best_score_
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
@@ -1195,6 +1201,10 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     alpha_ : float
         Estimated regularization parameter.
 
+    best_score_ : float
+        Score of best_estimator on the left out data.  
+
+
     See also
     --------
     Ridge: Ridge regression
@@ -1281,6 +1291,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     alpha_ : float
         Estimated regularization parameter
+
+    best_score_ : float
+        Score of best_estimator on the left out data.
 
     See also
     --------
