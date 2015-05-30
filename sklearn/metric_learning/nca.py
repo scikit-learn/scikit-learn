@@ -61,7 +61,7 @@ def nca_vectorized_oracle(X, y, params):
     return oracle
 
 
-def nca_loopy_oracle(X, y, params, threshold=None):
+def nca_semivectorized_oracle(X, y, params, threshold=None):
     n_samples, n_features = X.shape
     n_components = params.n_components
 
@@ -81,7 +81,7 @@ def nca_loopy_oracle(X, y, params, threshold=None):
             A = Lx[i, :] - Lx  # n_samples x n_comp
             assert A.shape == (n_samples, n_components)
 
-            logp = -(A*A).sum(axis=2)  # n_samples
+            logp = -(A*A).sum(axis=1)  # n_samples
             logp[i] = -np.inf
             logp -= sp.misc.logsumexp(logp)
             assert logp.shape == (n_samples, )
@@ -92,16 +92,17 @@ def nca_loopy_oracle(X, y, params, threshold=None):
             class_neighbours = y == y[i]
             p_i = (p * class_neighbours).sum()
 
-            for j in range(n_samples):
-                a = p[j] * (p_i if params.loss == 'l1' else 1)
-                if a > threshold:
-                    Xij = X[i] - X[j]
-                    grad += a * np.outer(Xij, Xij)
+            a = p * (p_i if params.loss == 'l1' else 1)  # n_samples
+            a_mask = a > threshold
 
-                b = p[j] / (1 if params.loss == 'l1' else p_i)
-                if b > threshold and y[j] == y[i]:
-                    Xij = X[i] - X[j]
-                    grad -= b * np.outer(Xij, Xij)
+            Xij = X[i] - X[a_mask, :]  # n_relevant x n_features
+            grad += (a[a_mask, None, None] * (Xij[:, :, None] * Xij[:, None, :])).sum(axis=0)
+
+            b = p / (1 if params.loss == 'l1' else p_i) * (y == y[i])  # n_samples
+            b_mask = b > threshold
+
+            Xij = X[i] - X[b_mask, :]  # n_relevant x n_features
+            grad -= (b[b_mask, None, None] * (Xij[:, :, None] * Xij[:, None, :])).sum(axis=0)
 
             fnc += p_i if params.loss == 'l1' else np.log(p_i)
 
@@ -111,7 +112,7 @@ def nca_loopy_oracle(X, y, params, threshold=None):
 
     return oracle
 
-def optimize_nca(X, y, params, cache_size=200*1024*1024):
+def optimize_nca(X, y, params):
     n_samples, n_features = X.shape
 
     rng = np.random.RandomState(params.random_state)
@@ -119,37 +120,36 @@ def optimize_nca(X, y, params, cache_size=200*1024*1024):
     best_L = None
 
     outer_products_size = (n_samples * n_features) ** 2
-    memory_permits = outer_products_size < cache_size
+    memory_permits = outer_products_size < params.cache_size
     if memory_permits:
         oracle = nca_vectorized_oracle(X, y, params)
     else:
-        oracle = nca_loopy_oracle(X, y, params)
+        oracle = nca_semivectorized_oracle(X, y, params)
 
     for _ in range(params.n_init):
         start = time.clock()
         L = rng.uniform(0, 1, (params.n_components, n_features))
 
-        if params.method == 'gd':
+        if params.method in ['gd', 'adagrad']:
+            is_adagrad = params.method == 'adagrad'
+            grad_history = 1e-3 * np.ones_like(L) if is_adagrad else None
+
             for it in range(params.max_iter):
                 fnc, grad = oracle(L)
                 grad = grad.reshape(L.shape)
+                if is_adagrad:
+                    grad_history += grad * grad
+                    grad /= np.sqrt(grad_history)
+
                 L -= params.learning_rate * grad
                 if params.verbose > 1:
                     percent = 100. * (it + 1) / params.max_iter
                     sys.stdout.write("\rProgress {:.2f}% :: Target = {}".format(percent, fnc))
                     sys.stdout.flush()
 
-        elif params.method == 'adagrad':
-            grad_history = np.zeros_like(L)
-            for it in range(params.max_iter):
-                fnc, grad = oracle(L)
-                grad = grad.reshape(L.shape)
-                grad_history += grad * grad
-                L -= params.learning_rate / np.sqrt(grad_history) * grad
-                if params.verbose > 1:
-                    percent = 100. * (it + 1) / params.max_iter
-                    sys.stdout.write("\rProgress {:.2f}% :: Target = {}".format(percent, fnc))
-                    sys.stdout.flush()
+                # FIXME?
+                if np.abs(grad).max() < params.tol:
+                    break
 
         elif params.method == 'scipy':
             state = {'it' : 0}
@@ -182,9 +182,9 @@ def optimize_nca(X, y, params, cache_size=200*1024*1024):
 
     return best_L
 
-
 class BaseNCA(BaseEstimator):
-    def __init__(self, n_components, method, tol, loss, learning_rate, max_iter, n_init, random_state, verbose):
+    def __init__(self, n_components=None, method='adagrad', learning_rate=1.0, tol=1e-5, loss='kl',
+                 max_iter=100, n_init=1, random_state=None, verbose=0, cache_size=100*1024*1024):
         self.n_components = n_components
         self.random_state = random_state
         self.max_iter = max_iter
@@ -194,9 +194,22 @@ class BaseNCA(BaseEstimator):
         self.verbose = verbose
         self.method = method
         self.tol = tol
+        self.cache_size = cache_size
 
     def fit(self, X, y):
-        self.L = optimize_nca(X, y, self)
+        n_features = X.shape[1]
+        params = self.get_params()
+
+        if params['method'] not in ['adagrad', 'gd', 'scipy']:
+            raise ValueError("Unsupported optimization method: %s" % params['method'])
+
+        if self.n_components is None:
+            params['n_components'] = n_features
+
+        from collections import namedtuple
+        params = namedtuple('ParamSet', params.keys())(*params.values())
+
+        self.L = optimize_nca(X, y, params)
         return self
 
     def transform(self, X):
