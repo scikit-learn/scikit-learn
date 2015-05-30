@@ -1,12 +1,15 @@
 .. -*- mode: rst -*-
 
-|Travis|_ |AppVeyor|_
+|Travis|_ |AppVeyor|_ |Coveralls|_
 
 .. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.png?branch=master
 .. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
 
 .. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/github/scikit-learn/scikit-learn?branch=master&svg=true
 .. _AppVeyor: https://ci.appveyor.com/project/sklearn-ci/scikit-learn/history
+
+.. |Coveralls| image:: https://img.shields.io/coveralls/scikit-learn/scikit-learn.svg
+.. _Coveralls: https://coveralls.io/r/scikit-learn/scikit-learn
 
 scikit-learn
 ============
