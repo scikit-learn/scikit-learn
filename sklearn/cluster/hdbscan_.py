@@ -82,7 +82,7 @@ def compute_stability(cluster_tree):
     2013
     """
     births = cluster_tree.groupby('child').min()[['lambda']]
-    biths_and_deaths = cluster_tree.join(births,
+    births_and_deaths = cluster_tree.join(births,
                                          on='parent',
                                          lsuffix='_death',
                                          rsuffix='_birth')
