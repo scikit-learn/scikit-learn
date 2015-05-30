@@ -1312,7 +1312,6 @@ static char __pyx_k_successors[] = "successors";
 static char __pyx_k_RuntimeError[] = "RuntimeError";
 static char __pyx_k_vertex_attrs[] = "vertex_attrs";
 static char __pyx_k_min_cluster_size[] = "min_cluster_size";
-static char __pyx_k_set_attrbute_values[] = "set_attrbute_values";
 static char __pyx_k_topological_sorting[] = "topological_sorting";
 static char __pyx_k_set_attribute_values[] = "set_attribute_values";
 static char __pyx_k_igraph_tree_to_dataframe[] = "igraph_tree_to_dataframe";
@@ -1380,7 +1379,6 @@ static PyObject *__pyx_n_s_parent;
 static PyObject *__pyx_n_s_pd;
 static PyObject *__pyx_n_s_points;
 static PyObject *__pyx_n_s_range;
-static PyObject *__pyx_n_s_set_attrbute_values;
 static PyObject *__pyx_n_s_set_attribute_values;
 static PyObject *__pyx_n_s_size;
 static PyObject *__pyx_n_s_sklearn_cluster__hdbscan_tree;
@@ -6638,7 +6636,7 @@ static PyObject *__pyx_f_7sklearn_7cluster_13_hdbscan_tree_igraph_get_clusters(P
   /* "sklearn/cluster/_hdbscan_tree.pyx":322
  * 
  *     # Set stability for nodes that have it
- *     tree.vs[stability.keys()].set_attrbute_values('stability',             # <<<<<<<<<<<<<<
+ *     tree.vs[stability.keys()].set_attribute_values('stability',             # <<<<<<<<<<<<<<
  *                                                   stability.values())
  * 
  */
@@ -6654,13 +6652,13 @@ static PyObject *__pyx_f_7sklearn_7cluster_13_hdbscan_tree_igraph_get_clusters(P
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_set_attrbute_values); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 322; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_set_attribute_values); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 322; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
   /* "sklearn/cluster/_hdbscan_tree.pyx":323
  *     # Set stability for nodes that have it
- *     tree.vs[stability.keys()].set_attrbute_values('stability',
+ *     tree.vs[stability.keys()].set_attribute_values('stability',
  *                                                   stability.values())             # <<<<<<<<<<<<<<
  * 
  *     # We ignore the root for stability
@@ -9399,7 +9397,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_pd, __pyx_k_pd, sizeof(__pyx_k_pd), 0, 0, 1, 1},
   {&__pyx_n_s_points, __pyx_k_points, sizeof(__pyx_k_points), 0, 0, 1, 1},
   {&__pyx_n_s_range, __pyx_k_range, sizeof(__pyx_k_range), 0, 0, 1, 1},
-  {&__pyx_n_s_set_attrbute_values, __pyx_k_set_attrbute_values, sizeof(__pyx_k_set_attrbute_values), 0, 0, 1, 1},
   {&__pyx_n_s_set_attribute_values, __pyx_k_set_attribute_values, sizeof(__pyx_k_set_attribute_values), 0, 0, 1, 1},
   {&__pyx_n_s_size, __pyx_k_size, sizeof(__pyx_k_size), 0, 0, 1, 1},
   {&__pyx_n_s_sklearn_cluster__hdbscan_tree, __pyx_k_sklearn_cluster__hdbscan_tree, sizeof(__pyx_k_sklearn_cluster__hdbscan_tree), 0, 0, 1, 1},

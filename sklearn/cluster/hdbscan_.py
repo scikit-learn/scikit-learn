@@ -8,7 +8,6 @@ HDBSCAN: Hierarchical Density-Based Spatial Clustering
 #         John Healy <jchealy@gmail.com>
 #
 # License: BSD 3 clause
-
 import warnings
 
 import numpy as np
@@ -87,7 +86,7 @@ def compute_stability(cluster_tree):
                                          lsuffix='_death',
                                          rsuffix='_birth')
     births_and_deaths['stability'] = (births_and_deaths['lambda_death'] -
-                                      births_and_deaths['lambd_birth']) \
+                                      births_and_deaths['lambda_birth']) \
                                      * births_and_deaths['child_size']
     raw_stability = births_and_deaths.groupby('parent')[['stability']].sum()
     normalization = pd.DataFrame(births_and_deaths.parent.value_counts(),
@@ -154,7 +153,7 @@ def hdbscan(X, min_cluster_size=5, min_samples=None, metric='minkowski', p=2):
     condensed_tree = igraph_condense_tree(igraph_tree, min_cluster_size)
     tree_dataframe = igraph_tree_to_dataframe(condensed_tree)
     stability_dict = compute_stability(tree_dataframe).to_dict()["stability"]
-    cluster_list = igraph.get_clusters(condensed_tree, stability_dict)
+    cluster_list = igraph_get_clusters(condensed_tree, stability_dict)
     
     labels = -1 * np.ones(distance_matrix.shape[0])
     for index, cluster in enumerate(cluster_list):

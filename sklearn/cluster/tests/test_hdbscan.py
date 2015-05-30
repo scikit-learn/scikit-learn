@@ -86,7 +86,7 @@ def test_hdbscan_badargs():
     assert_raises(ValueError,
                   hdbscan,
                   X, metric=None) 
-    assert_raises(ValueError,
+    assert_raises(TypeError,
                   hdbscan,
                   X, p=None)
     assert_raises(ValueError,
