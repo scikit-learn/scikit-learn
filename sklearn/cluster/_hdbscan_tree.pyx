@@ -172,7 +172,7 @@ cpdef list igraph_get_clusters(object tree, dict stability):
     tree.vs.set_attribute_values('stability', 0.0)
     
     # Set stability for nodes that have it
-    tree.vs[stability.keys()].set_attrbute_values('stability', 
+    tree.vs[stability.keys()].set_attribute_values('stability', 
                                                   stability.values())
     
     # We ignore the root for stability
