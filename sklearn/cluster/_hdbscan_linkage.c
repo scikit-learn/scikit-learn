@@ -1292,7 +1292,6 @@ static PyArrayObject *__pyx_f_7sklearn_7cluster_16_hdbscan_linkage_mst_linkage_c
   int __pyx_v_new_node_index;
   int __pyx_v_new_node;
   int __pyx_v_i;
-  CYTHON_UNUSED int __pyx_v_currnt_node;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_current_distances;
   __Pyx_Buffer __pyx_pybuffer_current_distances;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_current_labels;
@@ -1803,7 +1802,7 @@ static PyArrayObject *__pyx_f_7sklearn_7cluster_16_hdbscan_linkage_mst_linkage_c
  * 
  *         new_node_index = np.argmin(current_distances)             # <<<<<<<<<<<<<<
  *         new_node = current_labels[new_node_index]
- *         result[i - 1, 0] = current_node
+ *         result[i - 1, 0] = <double> current_node
  */
     __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 40; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_5);
@@ -1843,8 +1842,8 @@ static PyArrayObject *__pyx_f_7sklearn_7cluster_16_hdbscan_linkage_mst_linkage_c
  * 
  *         new_node_index = np.argmin(current_distances)
  *         new_node = current_labels[new_node_index]             # <<<<<<<<<<<<<<
- *         result[i - 1, 0] = current_node
- *         result[i - 1, 1] = new_node
+ *         result[i - 1, 0] = <double> current_node
+ *         result[i - 1, 1] = <double> new_node
  */
     __pyx_t_16 = __pyx_v_new_node_index;
     __pyx_v_new_node = (*__Pyx_BufPtrStrided1d(__pyx_t_5numpy_long_t *, __pyx_pybuffernd_current_labels.rcbuffer->pybuffer.buf, __pyx_t_16, __pyx_pybuffernd_current_labels.diminfo[0].strides));
@@ -1852,30 +1851,30 @@ static PyArrayObject *__pyx_f_7sklearn_7cluster_16_hdbscan_linkage_mst_linkage_c
     /* "sklearn/cluster/_hdbscan_linkage.pyx":42
  *         new_node_index = np.argmin(current_distances)
  *         new_node = current_labels[new_node_index]
- *         result[i - 1, 0] = current_node             # <<<<<<<<<<<<<<
- *         result[i - 1, 1] = new_node
+ *         result[i - 1, 0] = <double> current_node             # <<<<<<<<<<<<<<
+ *         result[i - 1, 1] = <double> new_node
  *         result[i - 1, 2] = current_distances[new_node_index]
  */
     __pyx_t_20 = (__pyx_v_i - 1);
     __pyx_t_21 = 0;
-    *__Pyx_BufPtrStrided2d(__pyx_t_5numpy_double_t *, __pyx_pybuffernd_result.rcbuffer->pybuffer.buf, __pyx_t_20, __pyx_pybuffernd_result.diminfo[0].strides, __pyx_t_21, __pyx_pybuffernd_result.diminfo[1].strides) = __pyx_v_current_node;
+    *__Pyx_BufPtrStrided2d(__pyx_t_5numpy_double_t *, __pyx_pybuffernd_result.rcbuffer->pybuffer.buf, __pyx_t_20, __pyx_pybuffernd_result.diminfo[0].strides, __pyx_t_21, __pyx_pybuffernd_result.diminfo[1].strides) = ((double)__pyx_v_current_node);
 
     /* "sklearn/cluster/_hdbscan_linkage.pyx":43
  *         new_node = current_labels[new_node_index]
- *         result[i - 1, 0] = current_node
- *         result[i - 1, 1] = new_node             # <<<<<<<<<<<<<<
+ *         result[i - 1, 0] = <double> current_node
+ *         result[i - 1, 1] = <double> new_node             # <<<<<<<<<<<<<<
  *         result[i - 1, 2] = current_distances[new_node_index]
- *         currnt_node = new_node
+ *         current_node = new_node
  */
     __pyx_t_22 = (__pyx_v_i - 1);
     __pyx_t_23 = 1;
-    *__Pyx_BufPtrStrided2d(__pyx_t_5numpy_double_t *, __pyx_pybuffernd_result.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_result.diminfo[0].strides, __pyx_t_23, __pyx_pybuffernd_result.diminfo[1].strides) = __pyx_v_new_node;
+    *__Pyx_BufPtrStrided2d(__pyx_t_5numpy_double_t *, __pyx_pybuffernd_result.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_result.diminfo[0].strides, __pyx_t_23, __pyx_pybuffernd_result.diminfo[1].strides) = ((double)__pyx_v_new_node);
 
     /* "sklearn/cluster/_hdbscan_linkage.pyx":44
- *         result[i - 1, 0] = current_node
- *         result[i - 1, 1] = new_node
+ *         result[i - 1, 0] = <double> current_node
+ *         result[i - 1, 1] = <double> new_node
  *         result[i - 1, 2] = current_distances[new_node_index]             # <<<<<<<<<<<<<<
- *         currnt_node = new_node
+ *         current_node = new_node
  * 
  */
     __pyx_t_24 = __pyx_v_new_node_index;
@@ -1884,17 +1883,17 @@ static PyArrayObject *__pyx_f_7sklearn_7cluster_16_hdbscan_linkage_mst_linkage_c
     *__Pyx_BufPtrStrided2d(__pyx_t_5numpy_double_t *, __pyx_pybuffernd_result.rcbuffer->pybuffer.buf, __pyx_t_25, __pyx_pybuffernd_result.diminfo[0].strides, __pyx_t_26, __pyx_pybuffernd_result.diminfo[1].strides) = (*__Pyx_BufPtrStrided1d(__pyx_t_5numpy_double_t *, __pyx_pybuffernd_current_distances.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_current_distances.diminfo[0].strides));
 
     /* "sklearn/cluster/_hdbscan_linkage.pyx":45
- *         result[i - 1, 1] = new_node
+ *         result[i - 1, 1] = <double> new_node
  *         result[i - 1, 2] = current_distances[new_node_index]
- *         currnt_node = new_node             # <<<<<<<<<<<<<<
+ *         current_node = new_node             # <<<<<<<<<<<<<<
  * 
  *     return result
  */
-    __pyx_v_currnt_node = __pyx_v_new_node;
+    __pyx_v_current_node = __pyx_v_new_node;
   }
 
   /* "sklearn/cluster/_hdbscan_linkage.pyx":47
- *         currnt_node = new_node
+ *         current_node = new_node
  * 
  *     return result             # <<<<<<<<<<<<<<
  * 
@@ -3163,17 +3162,17 @@ static PyArrayObject *__pyx_f_7sklearn_7cluster_16_hdbscan_linkage_single_linkag
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_sort_order.rcbuffer->pybuffer);
-    __pyx_t_2 = __Pyx_GetBufferAndValidate(&__pyx_pybuffernd_sort_order.rcbuffer->pybuffer, (PyObject*)__pyx_t_10, &__Pyx_TypeInfo_nn___pyx_t_5numpy_int64_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack);
+    __pyx_t_2 = __Pyx_GetBufferAndValidate(&__pyx_pybuffernd_sort_order.rcbuffer->pybuffer, (PyObject*)__pyx_t_10, &__Pyx_TypeInfo_nn___pyx_t_5numpy_int64_t, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack);
     if (unlikely(__pyx_t_2 < 0)) {
       PyErr_Fetch(&__pyx_t_5, &__pyx_t_4, &__pyx_t_3);
-      if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_sort_order.rcbuffer->pybuffer, (PyObject*)__pyx_v_sort_order, &__Pyx_TypeInfo_nn___pyx_t_5numpy_int64_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) {
+      if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_sort_order.rcbuffer->pybuffer, (PyObject*)__pyx_v_sort_order, &__Pyx_TypeInfo_nn___pyx_t_5numpy_int64_t, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {
         Py_XDECREF(__pyx_t_5); Py_XDECREF(__pyx_t_4); Py_XDECREF(__pyx_t_3);
         __Pyx_RaiseBufferFallbackError();
       } else {
         PyErr_Restore(__pyx_t_5, __pyx_t_4, __pyx_t_3);
       }
     }
-    __pyx_pybuffernd_sort_order.diminfo[0].strides = __pyx_pybuffernd_sort_order.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_sort_order.diminfo[0].shape = __pyx_pybuffernd_sort_order.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_sort_order.diminfo[1].strides = __pyx_pybuffernd_sort_order.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_sort_order.diminfo[1].shape = __pyx_pybuffernd_sort_order.rcbuffer->pybuffer.shape[1];
+    __pyx_pybuffernd_sort_order.diminfo[0].strides = __pyx_pybuffernd_sort_order.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_sort_order.diminfo[0].shape = __pyx_pybuffernd_sort_order.rcbuffer->pybuffer.shape[0];
     if (unlikely(__pyx_t_2 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 119; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_t_10 = 0;
