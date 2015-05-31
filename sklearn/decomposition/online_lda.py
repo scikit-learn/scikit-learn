@@ -17,10 +17,10 @@ from scipy.special import gammaln
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
-                     gen_batches, gen_even_slices)
+                     gen_batches, gen_even_slices, _get_n_jobs)
 from ..utils.validation import NotFittedError, check_non_negative
 
-from ..externals.joblib import Parallel, delayed, cpu_count
+from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
 
 from ._online_lda import (mean_change, _dirichlet_expectation_1d,
@@ -221,7 +221,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Max number of iterations for updating document topic distribution in E-step.
 
     n_jobs : int, optional (default=1)
-        The number of jobs to use in E-step. If -1 all CPUs are used.
+        The number of jobs to use in E-step. If -1 all CPUs are used. For n_jobs
+        below -1, (n_cpus + 1 + n_jobs) are used.
 
     verbose : int, optional (default=0)
         Verbosity level.
@@ -245,7 +246,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     [1] "Online Learning for Latent Dirichlet Allocation", Matthew D. Hoffman,
         David M. Blei, Francis Bach, 2010
 
-    [2] "Stochastic Variational Inference", Matthew D. Hoffman,, David M. Blei,
+    [2] "Stochastic Variational Inference", Matthew D. Hoffman, David M. Blei,
         Chong Wang, John Paisley, 2013
 
     [3] Matthew D. Hoffman's onlineldavb code. Link:
@@ -351,11 +352,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         """
 
         # Run e-step in parallel
-        if self.n_jobs == -1:
-            n_jobs = cpu_count()
-        else:
-            n_jobs = self.n_jobs
-
+        n_jobs = _get_n_jobs(self.n_jobs)
         rng = self.rng_ if random_init else None
 
         results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
@@ -436,24 +433,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse='csr')
         check_non_negative(X, whom)
         return X
-
-    def fit_transform(self, X, y=None):
-        """
-        Learn a model for X and return the transformed data
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
-            Document word matrix.
-
-        Returns
-        -------
-        doc_topic_distr : array, [n_samples, n_topics]
-            Topic distribution for each document.
-        """
-        self._check_params()
-        X = self._check_non_neg_array(X, "LatentDirichletAllocation.fit_transform")
-        return self.fit(X).transform(X)
 
     def partial_fit(self, X, y=None):
         """

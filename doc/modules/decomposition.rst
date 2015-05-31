@@ -735,15 +735,13 @@ Latent Dirichlet Allocation (LDA)
 
 Latent Dirichlet Allocation is a generative probabilistic model for collections of discrete
 dataset such as text corpora. It is also a topic model that used for discovering abstract
-topics from a collection of docuements.
+topics from a collection of documents.
 
 :class:`LatentDirichletAllocation` implements online variational Bayes algorithm and supports
 both online and batch update method.
-In batch method, global variational variables are udpated after each full pass through the data.
-Unlike batch method, online method computes intermediate variational variables from mini-batch
-data points and updates the variational variables as a weighted average of the intermediate
-variables and their current values.
-Therefore, online method usually converges faster than batch method.
+While batch method updates variational variables after each full pass through the data,
+online method updates variational variables from mini-batch data points. Therefore,
+online method usually converges faster than batch method.
 
 .. note::
 
