@@ -185,8 +185,8 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
                     sys.stdout.write("\rProgress {:.2f}% :: Target = {}".format(percent, value))
                     sys.stdout.flush()
 
-            options = {'maxiter': max_iter, "disp": verbose > 1}
-            res = sp.optimize.minimize(fun=oracle, x0=L, jac=True, tol=tol,
+            options = {'maxiter': max_iter, "disp": verbose > 1, "gtol" : tol}
+            res = sp.optimize.minimize(fun=oracle, x0=L, jac=True,
                                        options=options, callback=callback)
             L = res.x.reshape(L.shape)
             value, grad = oracle(L)
