@@ -3,7 +3,6 @@ The :mod:`sklearn.metric_learning` module includes models attributed to
 Metric Learning field.
 """
 
-# TODO: don't export BaseNCA
-from .nca import BaseNCA
+from .nca import NCATransformer
 
-__all__ = ['BaseNCA']
+__all__ = ['NCATransformer']
