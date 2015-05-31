@@ -10,8 +10,7 @@ import time
 import sys
 
 
-
-def nca_vectorized_oracle(X, y, n_components, loss, threshold=0):
+def nca_vectorized_oracle(X, y, n_components, loss, threshold=0.0):
     dx = X[:, np.newaxis, :] - X[np.newaxis, :, :]  # n_samples x n_samples x n_features
     outer = dx[:, :, np.newaxis, :] * dx[:, :, :, np.newaxis]  # n_samples x n_samples x n_features x n_features
 
@@ -38,7 +37,6 @@ def nca_vectorized_oracle(X, y, n_components, loss, threshold=0):
 
         p_i = (p * class_neighbours).sum(axis=1)
 
-
         proba = np.copy(p)
         if loss == 'l1':
             proba *= p_i[:, np.newaxis]
@@ -60,6 +58,7 @@ def nca_vectorized_oracle(X, y, n_components, loss, threshold=0):
         assert neighbours_term.shape == (n_features, n_features)
         grad -= neighbours_term
 
+        function_value = 0
         if loss == 'l1':
             function_value = p_i.sum()
         elif loss == 'kl':
@@ -72,7 +71,7 @@ def nca_vectorized_oracle(X, y, n_components, loss, threshold=0):
     return oracle
 
 
-def nca_semivectorized_oracle(X, y, n_components, loss, threshold=0):
+def nca_semivectorized_oracle(X, y, n_components, loss, threshold=0.0):
     n_samples, n_features = X.shape
 
     def oracle(L):
