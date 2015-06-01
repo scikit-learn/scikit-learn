@@ -17,6 +17,7 @@ from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.decomposition import PCA, RandomizedPCA, TruncatedSVD
@@ -164,6 +165,27 @@ def test_pipeline_fit_params():
     assert_true(pipe.named_steps['transf'].a is None)
     assert_true(pipe.named_steps['transf'].b is None)
 
+
+def test_pipeline_raise_set_params_error():
+
+    svm  = Pipeline([('kbest', SelectKBest()),
+                     ('cls', SVC())])
+
+    pipe = Pipeline([('pca', PCA()),
+                     ('ova_svm', OneVsRestClassifier(svm))])
+    
+    # check top level parameter
+    with assert_raises(ValueError) as cm:
+        pipe.set_params(ova_svm__scaler=2)
+    exp = cm.exception
+    assert_equal('Invalid parameter scaler for estimator OneVsRestClassifier. Check the list of available parameters with `estimator.get_params().keys()`.', str(exp))
+    
+    # check nested parameter
+    with assert_raises(ValueError) as cm:
+        pipe.set_params(ova_svm__estimator__cls__fake=2)
+    exp = cm.exception
+    assert_equal('Invalid parameter fake for estimator SVC. Check the list of available parameters with `estimator.get_params().keys()`.', str(exp))
+        
 
 def test_pipeline_methods_pca_svm():
     # Test the various methods of the pipeline (pca + svm).
