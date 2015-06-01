@@ -5,7 +5,7 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.externals.six.moves import zip
-from sklearn.utils.testing import assert_raises, assert_raises_regex
+from sklearn.utils.testing import assert_raises, assert_raises_regex, assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
@@ -174,24 +174,26 @@ def test_pipeline_raise_set_params_error():
     pipe = Pipeline([('pca', PCA()),
                      ('ova_svm', OneVsRestClassifier(svm))])
     
+    # expected error message
+    error_msg = 'Invalid parameter %s for estimator %s. Check the list of available parameters with `estimator.get_params().keys()`.'
+
     # top level check
-    with assert_raises(ValueError) as cm:
-        pipe.set_params(fake="nope")
-    exp = cm.exception
-    assert_equal('Invalid parameter fake for estimator Pipeline. Check the list of available parameters with `estimator.get_params().keys()`.', str(exp))
+    assert_raise_message(ValueError, 
+                         error_msg % ('fake', 'Pipeline'),
+                         pipe.set_params,
+                         fake='nope')
     
     # mid level check
-    with assert_raises(ValueError) as cm:
-        pipe.set_params(ova_svm__fake="nope")
-    exp = cm.exception
-    assert_equal('Invalid parameter fake for estimator OneVsRestClassifier. Check the list of available parameters with `estimator.get_params().keys()`.', str(exp))
+    assert_raise_message(ValueError,
+                         error_msg % ('fake', 'OneVsRestClassifier'),
+                         pipe.set_params,
+                         ova_svm__fake='nope')
     
     # nested model check
-    with assert_raises(ValueError) as cm:
-        pipe.set_params(ova_svm__estimator__cls__fake=2)
-    exp = cm.exception
-    assert_equal('Invalid parameter fake for estimator SVC. Check the list of available parameters with `estimator.get_params().keys()`.', str(exp))
-        
+    assert_raise_message(ValueError,
+                         error_msg % ('fake', 'SVC'),
+                         pipe.set_params,
+                         ova_svm__estimator__cls__fake='nope') 
 
 def test_pipeline_methods_pca_svm():
     # Test the various methods of the pipeline (pca + svm).
