@@ -190,7 +190,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         and a random state and return an initialization.
 
     algorithm : "auto", "full" or "triangle_inequality", default="auto"
-        K-means algorthm to use. The classical EM-style algorithm is "full".
+        K-means algorithm to use. The classical EM-style algorithm is "full".
         The "triangle_inequality" variation is more efficient by using the triangle
         inequality, but currently doesn't support sparse data. "auto" chooses
         "triangle_inequality" for dense data and "full" for sparse data.
@@ -305,7 +305,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
     if algorithm == "auto":
         algorithm = "full" if sp.issparse(X) else 'triangle_inequality'
     if algorithm == "full":
-        kmeans_single = _kmeans_single
+        kmeans_single = _kmeans_single_lloyd
     elif algorithm == "triangle_inequality":
         kmeans_single = _kmeans_single_elkan
     else:
@@ -378,9 +378,10 @@ def _kmeans_single_elkan(X, n_clusters, max_iter=300, init='k-means++',
     return labels, inertia, centers, n_iter
 
 
-def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
-                   verbose=False, x_squared_norms=None, random_state=None,
-                   tol=1e-4, precompute_distances=True):
+def _kmeans_single_lloyd(X, n_clusters, max_iter=300, init='k-means++',
+                         verbose=False, x_squared_norms=None,
+                         random_state=None, tol=1e-4,
+                         precompute_distances=True):
     """A single run of k-means, assumes preparation completed prior.
 
     Parameters
@@ -703,7 +704,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         and gives the initial centers.
 
     algorithm : "auto", "full" or "triangle_inequality", default="auto"
-        K-means algorthm to use. The classical EM-style algorithm is "full".
+        K-means algorithm to use. The classical EM-style algorithm is "full".
         The "triangle_inequality" variation is more efficient by using the triangle
         inequality, but currently doesn't support sparse data. "auto" chooses
         "triangle_inequality" for dense data and "full" for sparse data.

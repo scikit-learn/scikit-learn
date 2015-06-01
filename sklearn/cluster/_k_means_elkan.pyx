@@ -31,8 +31,10 @@ cdef double d(double* a, double* b, int n_features) nogil:
         result += tmp * tmp
     return sqrt(result)
 
-cdef assign_labels(double* X, double* centers, double[:, :]
-                   center_distances, int[:] labels, double[:, :] lower_bounds, double[:] distances, int n_samples, int n_features, int n_clusters):
+
+cdef assign_labels(double* X, double* centers, double[:, :] center_distances,
+                   int[:] labels, double[:, :] lower_bounds, double[:]
+                   distances, int n_samples, int n_features, int n_clusters):
     # assigns closest center to X
     # uses triangle inequality
     cdef double* x
@@ -74,7 +76,8 @@ def k_means_elkan(X_, int n_clusters, init, float tol=1e-4, int max_iter=30, ver
     cdef int[:] labels = labels_
     upper_bounds_ = np.empty(n_samples, dtype=np.float)
     cdef double[:] upper_bounds = upper_bounds_
-    assign_labels(X_p, centers_p, center_distances, labels, lower_bounds, upper_bounds, n_samples, n_features, n_clusters)
+    assign_labels(X_p, centers_p, center_distances, labels, lower_bounds,
+                  upper_bounds, n_samples, n_features, n_clusters)
     cdef np.uint8_t[:] bounds_tight = np.ones(n_samples, dtype=np.uint8)
     cdef np.uint8_t[:] points_to_update = np.zeros(n_samples, dtype=np.uint8)
     for iteration in range(max_iter):
