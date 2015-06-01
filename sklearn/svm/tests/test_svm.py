@@ -308,7 +308,7 @@ def test_decision_function():
     # kernel binary:
     clf = svm.SVC(kernel='rbf', gamma=1)
     clf.fit(X, Y)
-    
+
     rbfs = rbf_kernel(X, clf.support_vectors_, gamma=clf.gamma)
     dec = np.dot(rbfs, clf.dual_coef_.T) + clf.intercept_
     assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
@@ -330,7 +330,7 @@ def test_svr_decision_function():
 
     # rbf kernel
     reg = svm.SVR(kernel='rbf', gamma=1).fit(X, y)
-    
+
     rbfs = rbf_kernel(X, reg.support_vectors_, gamma=reg.gamma)
     dec = np.dot(rbfs, reg.dual_coef_.T) + reg.intercept_
     assert_array_almost_equal(dec.ravel(), reg.decision_function(X).ravel())
@@ -813,8 +813,3 @@ def test_lsvc_intercept_scaling_zero():
     lsvc = svm.LinearSVC(fit_intercept=False)
     lsvc.fit(X, Y)
     assert_equal(lsvc.intercept_, 0.)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

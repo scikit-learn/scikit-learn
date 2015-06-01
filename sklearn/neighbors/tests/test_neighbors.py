@@ -1082,8 +1082,3 @@ def test_include_self_neighbors_graph():
         X, 5.0, include_self=False).A
     assert_array_equal(rng, [[1., 1.], [1., 1.]])
     assert_array_equal(rng_not_self, [[0., 1.], [1., 0.]])
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

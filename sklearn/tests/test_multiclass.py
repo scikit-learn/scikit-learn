@@ -616,8 +616,3 @@ def test_deprecated():
             assert_almost_equal(predict_func(estimators_, classes_or_lb,
                                              codebook, X_test),
                                 meta_est.predict(X_test))
-
-
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()

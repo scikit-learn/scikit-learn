@@ -465,8 +465,3 @@ def test_vector_sign_flip():
     assert_array_equal(max_abs_rows, max_rows)
     signs = np.sign(data[range(data.shape[0]), max_abs_rows])
     assert_array_equal(data, data_flipped * signs[:, np.newaxis])
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

@@ -329,7 +329,7 @@ def test_parallel():
         yield check_parallel, name, iris.data, iris.target
 
     for name in FOREST_REGRESSORS:
-        yield check_parallel, name,  boston.data, boston.target
+        yield check_parallel, name, boston.data, boston.target
 
 
 def check_pickle(name, X, y):
@@ -352,7 +352,7 @@ def test_pickle():
         yield check_pickle, name, iris.data[::2], iris.target[::2]
 
     for name in FOREST_REGRESSORS:
-        yield check_pickle, name,  boston.data[::2], boston.target[::2]
+        yield check_pickle, name, boston.data[::2], boston.target[::2]
 
 
 def check_multioutput(name):
@@ -782,7 +782,7 @@ def check_class_weights(name):
 
     # Check that sample_weight and class_weight are multiplicative
     clf1 = ForestClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target, sample_weight**2)
+    clf1.fit(iris.data, iris.target, sample_weight ** 2)
     clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
@@ -973,8 +973,3 @@ def test_warm_start_oob():
         yield check_warm_start_oob, name
     for name in FOREST_REGRESSORS:
         yield check_warm_start_oob, name
-
-
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()

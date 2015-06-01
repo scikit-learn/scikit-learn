@@ -392,8 +392,3 @@ def test_class_distribution():
         assert_array_almost_equal(classes_sp[k], classes_expected[k])
         assert_array_almost_equal(n_classes_sp[k], n_classes_expected[k])
         assert_array_almost_equal(class_prior_sp[k], class_prior_expected[k])
-
-
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()

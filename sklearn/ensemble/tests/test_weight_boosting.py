@@ -419,8 +419,3 @@ def test_sparse_regression():
 
         assert all([(t == csc_matrix or t == csr_matrix)
                    for t in types])
-
-
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()

@@ -1,8 +1,6 @@
 import unittest
 import sys
 
-import nose
-
 import numpy as np
 
 from sklearn.mixture import DPGMM, VBGMM
@@ -157,7 +155,3 @@ class TestVBGMMWithTiedCovars(unittest.TestCase, VBGMMTester):
 class TestVBGMMWithFullCovars(unittest.TestCase, VBGMMTester):
     covariance_type = 'full'
     setUp = GMMTester._setUp
-
-
-if __name__ == '__main__':
-    nose.runmodule()
