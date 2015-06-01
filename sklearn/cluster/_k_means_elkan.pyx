@@ -32,9 +32,10 @@ cdef double d(double* a, double* b, int n_features) nogil:
     return sqrt(result)
 
 
-cdef assign_labels(double* X, double* centers, double[:, :] center_distances,
-                   int[:] labels, double[:, :] lower_bounds, double[:]
-                   distances, int n_samples, int n_features, int n_clusters):
+cdef update_labels_distances_inplace(
+        double* X, double* centers, double[:, :] center_distances, int[:] labels,
+        double[:, :] lower_bounds, double[:] distances, int n_samples, int
+        n_features, int n_clusters):
     # assigns closest center to X
     # uses triangle inequality
     cdef double* x
@@ -60,6 +61,28 @@ cdef assign_labels(double* X, double* centers, double[:, :] center_distances,
 
 
 def k_means_elkan(X_, int n_clusters, init, float tol=1e-4, int max_iter=30, verbose=False):
+    """Run Elkan's k-means.
+
+    Parameters
+    ----------
+    X_ : nd-array, shape (n_samples, n_features)
+
+    n_clusters : int
+        Number of clusters to find.
+
+    init : nd-array, shape (n_clusters, n_features)
+        Initial position of centers.
+
+    tol : float, default=1e-4
+        The relative increment in cluster means before declaring convergence.
+    
+    max_iter : int, default=30
+        Maximum number of passes over the dataset.
+
+    verbose : bool, default=False
+        Whether to be verbose.
+        
+    """
     #initialize
     centers_ = init
     cdef double* centers_p = getfloatpointer(centers_)
@@ -76,8 +99,9 @@ def k_means_elkan(X_, int n_clusters, init, float tol=1e-4, int max_iter=30, ver
     cdef int[:] labels = labels_
     upper_bounds_ = np.empty(n_samples, dtype=np.float)
     cdef double[:] upper_bounds = upper_bounds_
-    assign_labels(X_p, centers_p, center_distances, labels, lower_bounds,
-                  upper_bounds, n_samples, n_features, n_clusters)
+    update_labels_distances_inplace(X_p, centers_p, center_distances, labels,
+                                    lower_bounds, upper_bounds, n_samples,
+                                    n_features, n_clusters)
     cdef np.uint8_t[:] bounds_tight = np.ones(n_samples, dtype=np.uint8)
     cdef np.uint8_t[:] points_to_update = np.zeros(n_samples, dtype=np.uint8)
     for iteration in range(max_iter):
