@@ -43,7 +43,7 @@ def nca_vectorized_oracle(X, y, n_components, loss, threshold=0.0):
         mask = proba > threshold
         proba *= mask
 
-        grad = np.sum(proba[:, :, np.newaxis, np.newaxis] * outer, axis=1).sum(axis=0)
+        grad = np.einsum("ij,ijkl", proba, outer)
         assert grad.shape == (n_features, n_features)
 
         neighbours_proba = class_neighbours * p
@@ -53,7 +53,7 @@ def nca_vectorized_oracle(X, y, n_components, loss, threshold=0.0):
         neighbours_mask = neighbours_proba > threshold
         neighbours_proba *= neighbours_mask
 
-        neighbours_term = np.sum(neighbours_proba[:, :, np.newaxis, np.newaxis] * outer, axis=1).sum(axis=0)
+        neighbours_term = np.einsum("ij,ijkl", neighbours_proba, outer)
 
         assert neighbours_term.shape == (n_features, n_features)
         grad -= neighbours_term
@@ -106,7 +106,7 @@ def nca_semivectorized_oracle(X, y, n_components, loss, threshold=0.0):
 
             Xij = X[i] - X[mask, :]  # n_relevant x n_features
             Xij_outer = (Xij[:, :, np.newaxis] * Xij[:, np.newaxis, :])
-            grad += (samples_proba[mask, np.newaxis, np.newaxis] * Xij_outer).sum(axis=0)
+            grad += np.einsum("i,ijk", samples_proba[mask], Xij_outer)
 
             if loss == 'l1':
                 neighbours_proba = p * (y == y[i])
@@ -116,7 +116,7 @@ def nca_semivectorized_oracle(X, y, n_components, loss, threshold=0.0):
 
             Xij = X[i] - X[mask, :]  # n_relevant x n_features
             Xij_outer = (Xij[:, :, np.newaxis] * Xij[:, np.newaxis, :])
-            grad -= (neighbours_proba[mask, np.newaxis, np.newaxis] * Xij_outer).sum(axis=0)
+            grad -= np.einsum("i,ijk", neighbours_proba[mask], Xij_outer)
 
             if loss == 'l1':
                 function_value += p_i
