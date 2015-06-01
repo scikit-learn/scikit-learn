@@ -12,7 +12,6 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import coo_matrix
 
 from sklearn.random_projection import sparse_random_matrix
-from sklearn.utils.random import sample_without_replacement
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
@@ -859,10 +858,10 @@ def check_class_weights(name):
     """Check class_weights resemble sample_weights behavior."""
     TreeClassifier = CLF_TREES[name]
 
-    # Iris is balanced, so no effect expected for using 'auto' weights
+    # Iris is balanced, so no effect expected for using 'balanced' weights
     clf1 = TreeClassifier(random_state=0)
     clf1.fit(iris.data, iris.target)
-    clf2 = TreeClassifier(class_weight='auto', random_state=0)
+    clf2 = TreeClassifier(class_weight='balanced', random_state=0)
     clf2.fit(iris.data, iris.target)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
@@ -876,7 +875,7 @@ def check_class_weights(name):
     clf3.fit(iris.data, iris_multi)
     assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
     # Check against multi-output "auto" which should also have no effect
-    clf4 = TreeClassifier(class_weight='auto', random_state=0)
+    clf4 = TreeClassifier(class_weight='balanced', random_state=0)
     clf4.fit(iris.data, iris_multi)
     assert_almost_equal(clf3.feature_importances_, clf4.feature_importances_)
 
@@ -892,7 +891,7 @@ def check_class_weights(name):
 
     # Check that sample_weight and class_weight are multiplicative
     clf1 = TreeClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target, sample_weight**2)
+    clf1.fit(iris.data, iris.target, sample_weight ** 2)
     clf2 = TreeClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)

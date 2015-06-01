@@ -24,6 +24,7 @@ from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn import datasets
@@ -749,10 +750,10 @@ def check_class_weights(name):
     # Check class_weights resemble sample_weights behavior.
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
-    # Iris is balanced, so no effect expected for using 'auto' weights
+    # Iris is balanced, so no effect expected for using 'balanced' weights
     clf1 = ForestClassifier(random_state=0)
     clf1.fit(iris.data, iris.target)
-    clf2 = ForestClassifier(class_weight='auto', random_state=0)
+    clf2 = ForestClassifier(class_weight='balanced', random_state=0)
     clf2.fit(iris.data, iris.target)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
@@ -765,8 +766,8 @@ def check_class_weights(name):
                             random_state=0)
     clf3.fit(iris.data, iris_multi)
     assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
-    # Check against multi-output "auto" which should also have no effect
-    clf4 = ForestClassifier(class_weight='auto', random_state=0)
+    # Check against multi-output "balanced" which should also have no effect
+    clf4 = ForestClassifier(class_weight='balanced', random_state=0)
     clf4.fit(iris.data, iris_multi)
     assert_almost_equal(clf3.feature_importances_, clf4.feature_importances_)
 
@@ -793,22 +794,26 @@ def test_class_weights():
         yield check_class_weights, name
 
 
-def check_class_weight_auto_and_bootstrap_multi_output(name):
-    # Test class_weight works for multi-output
+def check_class_weight_balanced_and_bootstrap_multi_output(name):
+    # Test class_weight works for multi-output"""
     ForestClassifier = FOREST_CLASSIFIERS[name]
     _y = np.vstack((y, np.array(y) * 2)).T
-    clf = ForestClassifier(class_weight='auto', random_state=0)
+    clf = ForestClassifier(class_weight='balanced', random_state=0)
     clf.fit(X, _y)
     clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}, {-2: 1., 2: 1.}],
                            random_state=0)
     clf.fit(X, _y)
+    # smoke test for subsample and balanced subsample
+    clf = ForestClassifier(class_weight='balanced_subsample', random_state=0)
+    clf.fit(X, _y)
     clf = ForestClassifier(class_weight='subsample', random_state=0)
+    #assert_warns_message(DeprecationWarning, "balanced_subsample", clf.fit, X, _y)
     clf.fit(X, _y)
 
 
-def test_class_weight_auto_and_bootstrap_multi_output():
+def test_class_weight_balanced_and_bootstrap_multi_output():
     for name in FOREST_CLASSIFIERS:
-        yield check_class_weight_auto_and_bootstrap_multi_output, name
+        yield check_class_weight_balanced_and_bootstrap_multi_output, name
 
 
 def check_class_weight_errors(name):

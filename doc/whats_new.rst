@@ -56,6 +56,11 @@ Enhancements
      :class:`linear_model.LogisticRegression`, by avoiding loss computation.
      By `Mathieu Blondel`_ and `Tom Dupre la Tour`_.
 
+   - The ``class_weight="auto"`` heuristic in classifiers supporting 
+     ``class_weight`` was deprecated and replaced by the ``class_weight="balanced"``
+     option, which has a simpler forumlar and interpretation.
+     By Hanna Wallach and `Andreas Müller`_.
+
 Bug fixes
 .........
 
@@ -339,6 +344,7 @@ Enhancements
    - :class:`svm.SVC` fitted on sparse input now implements ``decision_function``.
      By `Rob Zinkov`_ and `Andreas Müller`_.
 
+
 Documentation improvements
 ..........................
 
@@ -462,7 +468,7 @@ Bug fixes
       in GMM. By `Alexis Mignon`_.
 
     - Fixed a error in the computation of conditional probabilities in
-      :class:`naive_bayes.BernoulliNB`. By `Hanna Wallach`_.
+      :class:`naive_bayes.BernoulliNB`. By Hanna Wallach.
 
     - Make the method ``radius_neighbors`` of
       :class:`neighbors.NearestNeighbors` return the samples lying on the
