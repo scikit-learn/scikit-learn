@@ -6,6 +6,7 @@ normalization, binarization and imputation methods.
 from .data import Binarizer
 from .data import KernelCenterer
 from .data import MinMaxScaler
+from .data import MaxAbsScaler
 from .data import Normalizer
 from .data import RobustScaler
 from .data import StandardScaler
@@ -14,6 +15,7 @@ from .data import binarize
 from .data import normalize
 from .data import scale
 from .data import robust_scale
+from .data import maxabs_scale
 from .data import OneHotEncoder
 
 from .data import PolynomialFeatures
@@ -33,6 +35,7 @@ __all__ = [
     'LabelEncoder',
     'MultiLabelBinarizer',
     'MinMaxScaler',
+    'MaxAbsScaler',
     'Normalizer',
     'OneHotEncoder',
     'RobustScaler',
@@ -43,5 +46,6 @@ __all__ = [
     'normalize',
     'scale',
     'robust_scale',
+    'maxabs_scale',
     'label_binarize',
 ]

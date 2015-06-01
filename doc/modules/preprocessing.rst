@@ -102,8 +102,10 @@ Scaling features to a range
 ---------------------------
 
 An alternative standardization is scaling features to
-lie between a given minimum and maximum value, often between zero and one.
-This can be achieved using :class:`MinMaxScaler`.
+lie between a given minimum and maximum value, often between zero and one,
+or so that the maximum absolute value of each feature is scaled to unit size.
+This can be achieved using :class:`MinMaxScaler` or :class:`MaxAbsScaler`,
+respectively.
 
 The motivation to use this scaling include robustness to very small
 standard deviations of features and preserving zero entries in sparse data.
@@ -146,6 +148,62 @@ full formula is::
 
     X_scaled = X_std / (max - min) + min
 
+:class:`MaxAbsScaler` works in a very similar fashion, but scales in a way
+that the training data lies within the range ``[-1, 1]`` by dividing through
+the largest maximum value in each feature. It is meant for data
+that is already centered at zero or sparse data.
+
+Here is how to use the toy data from the previous example with this scaler::
+
+  >>> X_train = np.array([[ 1., -1.,  2.],
+  ...                     [ 2.,  0.,  0.],
+  ...                     [ 0.,  1., -1.]])
+  ...
+  >>> max_abs_scaler = preprocessing.MaxAbsScaler()
+  >>> X_train_maxabs = max_abs_scaler.fit_transform(X_train)
+  >>> X_train_maxabs                # doctest +NORMALIZE_WHITESPACE^
+  array([[ 0.5, -1. ,  1. ],
+         [ 1. ,  0. ,  0. ],
+         [ 0. ,  1. , -0.5]])
+  >>> X_test = np.array([[ -3., -1.,  4.]])
+  >>> X_test_maxabs = max_abs_scaler.transform(X_test)
+  >>> X_test_maxabs                 # doctest: +NORMALIZE_WHITESPACE
+  array([[-1.5, -1. ,  2. ]])
+  >>> max_abs_scaler.scale_         # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+  array([ 2.,  1.,  2.])
+
+
+As with :func:`scale`, the module further provides a
+convenience function :func:`maxabs_scale` if you don't want to
+create an object.
+
+
+Scaling sparse data
+-------------------
+Centering sparse data would destroy the sparseness structure in the data, and
+thus rarely is a sensible thing to do. However, it can make sense to scale
+sparse inputs, especially if features are on different scales.
+
+:class:`MaxAbsScaler`  and :func:`maxabs_scale` were specifically designed
+for scaling sparse data, and are the recommended way to go about this.
+However, :func:`scale` and :class:`StandardScaler` can accept ``scipy.sparse``
+matrices  as input, as long as ``with_centering=False`` is explicitly passed
+to the constructor. Otherwise a ``ValueError`` will be raised as
+silently centering would break the sparsity and would often crash the
+execution by allocating excessive amounts of memory unintentionally.
+:class:`RobustScaler` cannot be fited to sparse inputs, but you can use
+the ``transform`` method on sparse inputs.
+
+Note that the scalers accept both Compressed Sparse Rows and Compressed
+Sparse Columns format (see ``scipy.sparse.csr_matrix`` and
+``scipy.sparse.csc_matrix``). Any other sparse input will be **converted to
+the Compressed Sparse Rows representation**.  To avoid unnecessary memory
+copies, it is recommended to choose the CSR or CSC representation upstream.
+
+Finally, if the centered data is expected to be small enough, explicitly
+converting the input to an array using the ``toarray`` method of sparse matrices
+is another option.
+
 
 Scaling data with outliers
 --------------------------
@@ -172,23 +230,6 @@ data.
   To address this issue you can use :class:`sklearn.decomposition.PCA`
   or :class:`sklearn.decomposition.RandomizedPCA` with ``whiten=True``
   to further remove the linear correlation across features.
-
-.. topic:: Sparse input
-
-  :func:`scale` and :class:`StandardScaler` accept ``scipy.sparse`` matrices
-  as input **only when with_mean=False is explicitly passed to the
-  constructor**. Otherwise a ``ValueError`` will be raised as
-  silently centering would break the sparsity and would often crash the
-  execution by allocating excessive amounts of memory unintentionally.
-
-  If the centered data is expected to be small enough, explicitly convert
-  the input to an array using the ``toarray`` method of sparse matrices
-  instead.
-
-  For sparse input the data is **converted to the Compressed Sparse Rows
-  representation** (see ``scipy.sparse.csr_matrix``).
-  To avoid unnecessary memory copies, it is recommended to choose the CSR
-  representation upstream.
 
 .. topic:: Scaling target variables in regression
 

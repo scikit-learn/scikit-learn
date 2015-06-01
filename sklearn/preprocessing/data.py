@@ -32,6 +32,7 @@ __all__ = [
     'Binarizer',
     'KernelCenterer',
     'MinMaxScaler',
+    'MaxAbsScaler',
     'Normalizer',
     'OneHotEncoder',
     'RobustScaler',
@@ -41,6 +42,7 @@ __all__ = [
     'normalize',
     'scale',
     'robust_scale',
+    'maxabs_scale',
 ]
 
 
@@ -59,14 +61,26 @@ def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
 
     if with_std:
         std_ = Xr.std(axis=0)
-        if isinstance(std_, np.ndarray):
-            std_[std_ == 0.] = 1.0
-        elif std_ == 0.:
-            std_ = 1.
+        std_ = _handle_zeros_in_scale(std_)
     else:
         std_ = None
 
     return mean_, std_
+
+
+def _handle_zeros_in_scale(scale):
+    ''' Makes sure that whenever scale is zero, we handle it correctly.
+
+    This happens in most scalers when we have constant features.'''
+
+    # if we are fitting on 1D arrays, scale might be a scalar
+    if np.isscalar(scale):
+        if scale == 0:
+            scale = 1.
+    elif isinstance(scale, np.ndarray):
+        scale[scale == 0.0] = 1.0
+        scale[~np.isfinite(scale)] = 1.0
+    return scale
 
 
 def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
@@ -132,7 +146,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         if copy:
             X = X.copy()
         _, var = mean_variance_axis(X, axis=0)
-        var[var == 0.0] = 1.0
+        var = _handle_zeros_in_scale(var)
         inplace_column_scale(X, 1 / np.sqrt(var))
     else:
         X = np.asarray(X)
@@ -233,11 +247,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
                              " than maximum. Got %s." % str(feature_range))
         data_min = np.min(X, axis=0)
         data_range = np.max(X, axis=0) - data_min
-        # Do not scale constant features
-        if isinstance(data_range, np.ndarray):
-            data_range[data_range == 0.0] = 1.0
-        elif data_range == 0.:
-            data_range = 1.
+        data_range = _handle_zeros_in_scale(data_range)
         self.scale_ = (feature_range[1] - feature_range[0]) / data_range
         self.min_ = feature_range[0] - data_min * self.scale_
         self.data_range = data_range
@@ -359,7 +369,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             if self.with_std:
                 var = mean_variance_axis(X, axis=0)[1]
                 self.std_ = np.sqrt(var)
-                self.std_[var == 0.0] = 1.0
+                self.std_ = _handle_zeros_in_scale(self.std_)
             else:
                 self.std_ = None
             return self
@@ -430,6 +440,119 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         return X
 
 
+class MaxAbsScaler(BaseEstimator, TransformerMixin):
+    """Scale each feature by its maximum absolute value.
+
+    This estimator scales and translates each feature individually such
+    that the maximal absolute value of each feature in the
+    training set will be 1.0. It does not shift/center the data, and
+    thus does not destroy any sparsity.
+
+    This scaler can also be applied to sparse CSR or CSC matrices.
+
+    Parameters
+    ----------
+    copy : boolean, optional, default is True
+        Set to False to perform inplace scaling and avoid a copy (if the input
+        is already a numpy array).
+
+    Attributes
+    ----------
+    scale_ : ndarray, shape (n_features,)
+        Per feature relative scaling of the data.
+    """
+
+    def __init__(self, copy=True):
+        self.copy = copy
+
+    def fit(self, X, y=None):
+        """Compute the minimum and maximum to be used for later scaling.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            The data used to compute the per-feature minimum and maximum
+            used for later scaling along the features axis.
+        """
+        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
+        if sparse.issparse(X):
+            mins, maxs = min_max_axis(X, axis=0)
+            scales = np.maximum(np.abs(mins), np.abs(maxs))
+        else:
+            scales = np.abs(X).max(axis=0)
+        scales = np.array(scales)
+        scales = scales.reshape(-1)
+        self.scale_ = _handle_zeros_in_scale(scales)
+        return self
+
+    def transform(self, X, y=None):
+        """Scale the data
+
+        Parameters
+        ----------
+        X : array-like or CSR matrix.
+            The data that should be scaled.
+        """
+        check_is_fitted(self, 'scale_')
+        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
+        if sparse.issparse(X):
+            if X.shape[0] == 1:
+                inplace_row_scale(X, 1.0 / self.scale_)
+            else:
+                inplace_column_scale(X, 1.0 / self.scale_)
+        else:
+            X /= self.scale_
+        return X
+
+    def inverse_transform(self, X):
+        """Scale back the data to the original representation
+
+        Parameters
+        ----------
+        X : array-like or CSR matrix.
+            The data that should be transformed back.
+        """
+        check_is_fitted(self, 'scale_')
+        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
+        if sparse.issparse(X):
+            if X.shape[0] == 1:
+                inplace_row_scale(X, self.scale_)
+            else:
+                inplace_column_scale(X, self.scale_)
+        else:
+            X *= self.scale_
+        return X
+
+
+def maxabs_scale(X, axis=0, copy=True):
+    """Scale each feature to the [-1, 1] range without breaking the sparsity.
+
+    This estimator scales each feature individually such
+    that the maximal absolute value of each feature in the
+    training set will be 1.0.
+
+    This scaler can also be applied to sparse CSR or CSC matrices.
+
+    Parameters
+    ----------
+    axis : int (0 by default)
+        axis used to scale along. If 0, independently scale each feature,
+        otherwise (if 1) scale each sample.
+
+    copy : boolean, optional, default is True
+        Set to False to perform inplace scaling and avoid a copy (if the input
+        is already a numpy array).
+    """
+    s = MaxAbsScaler(copy=copy)
+    if axis == 0:
+        return s.fit_transform(X)
+    else:
+        return s.fit_transform(X.T).T
+
+
 class RobustScaler(BaseEstimator, TransformerMixin):
     """Scale features using statistics that are robust to outliers.
 
@@ -498,27 +621,14 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     def _check_array(self, X, copy):
         """Makes sure centering is not enabled for sparse matrices."""
-        X = check_array(X, accept_sparse=('csr', 'csc'), dtype=np.float,
-                        copy=copy, ensure_2d=False)
+        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
         if sparse.issparse(X):
             if self.with_centering:
                 raise ValueError(
                     "Cannot center sparse matrices: use `with_centering=False`"
                     " instead. See docstring for motivation and alternatives.")
         return X
-
-    def _handle_zeros_in_scale(self, scale):
-        ''' Makes sure that whenever scale is zero, we handle it correctly.
-
-        This happens in most scalers when we have constant features.'''
-        # if we are fitting on 1D arrays, scale might be a scalar
-        if np.isscalar(scale):
-            if scale == 0:
-                scale = 1.
-        elif isinstance(scale, np.ndarray):
-            scale[scale == 0.0] = 1.0
-            scale[~np.isfinite(scale)] = 1.0
-        return scale
 
     def fit(self, X, y=None):
         """Compute the median and quantiles to be used for scaling.
@@ -539,12 +649,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         if self.with_scaling:
             q = np.percentile(X, (25, 75), axis=0)
             self.scale_ = (q[1] - q[0])
-            if np.isscalar(self.scale_):
-                if self.scale_ == 0:
-                    self.scale_ = 1.
-            else:
-                self.scale_[self.scale_ == 0.0] = 1.0
-                self.scale_[~np.isfinite(self.scale_)] = 1.0
+            self.scale_ = _handle_zeros_in_scale(self.scale_)
         return self
 
     def transform(self, X, y=None):
@@ -847,7 +952,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
             norms = row_norms(X)
         elif norm == 'max':
             norms = np.max(X, axis=1)
-        norms[norms == 0.0] = 1.0
+        norms = _handle_zeros_in_scale(norms)
         X /= norms[:, np.newaxis]
 
     if axis == 0:
