@@ -56,8 +56,10 @@ Enhancements
      :class:`linear_model.LogisticRegression`, by avoiding loss computation.
      By `Mathieu Blondel`_ and `Tom Dupre la Tour`_.
 
-   - Improved heuristic for ``class_weight="auto"`` for classifiers supporting
-     ``class_weight`` by Hanna Wallach and `Andreas Müller`_
+   - The ``class_weight="auto"`` heuristic in classifiers supporting 
+     ``class_weight`` was deprecated and replaced by the ``class_weight="balanced"``
+     option, which has a simpler forumlar and interpretation.
+     By Hanna Wallach and `Andreas Müller`_.
 
 Bug fixes
 .........

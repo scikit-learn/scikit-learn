@@ -1087,7 +1087,7 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
     """Test class weights with non-contiguous class labels."""
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
-    y = [1, 1, 1, -1, -1]
+    y = np.array([1, 1, 1, -1, -1])
 
     with warnings.catch_warnings(record=True):
         classifier = Classifier()
@@ -1102,10 +1102,11 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
     coef_balanced = classifier.fit(X, y).coef_.copy()
 
     # Count each label occurrence to reweight manually
-    class_weight = {
-        1: 5. / (2 * 3),
-        -1: 5. / (2 * 2)
-    }
+    n_samples = len(y)
+    n_classes = len(np.unique(y))
+
+    class_weight = {1: n_samples / (np.sum(y == 1) * n_classes),
+                    -1: n_samples / (np.sum(y == -1) * n_classes)}
     classifier.set_params(class_weight=class_weight)
     coef_manual = classifier.fit(X, y).coef_.copy()
 

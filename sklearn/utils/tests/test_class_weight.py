@@ -39,15 +39,15 @@ def test_compute_class_weight_not_present():
 
 
 def test_compute_class_weight_invariance():
-    # test that results with class_weight="balanced" is invariant against
-    # class imbalance if the number of samples is identical
-    # the test uses a balanced two class dataset with 100 datapoints.
-    # it then creates three versions, one where class 1 is duplicated
+    # Test that results with class_weight="balanced" is invariant wrt
+    # class imbalance if the number of samples is identical.
+    # The test uses a balanced two class dataset with 100 datapoints.
+    # It creates three versions, one where class 1 is duplicated
     # resulting in 150 points of class 1 and 50 of class 0,
     # one where there are 50 points in class 1 and 150 in class 0,
     # and one where there are 100 points of each class (this one is balanced
     # again).
-    # with balancing class weights, all three should give the same model.
+    # With balancing class weights, all three should give the same model.
     X, y = make_blobs(centers=2, random_state=0)
     # create dataset where class 1 is duplicated twice
     X_1 = np.vstack([X] + [X[y == 1]] * 2)
