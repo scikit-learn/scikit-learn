@@ -508,3 +508,23 @@ The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(
 Note that polynomial features are used implicitily in `kernel methods <http://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
 See :ref:`example_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
+
+Custom Transformers
+===================
+
+Often, you will want to convert an existing python function into a transformer
+to assist in data cleaning or processing. Users may implement a transformer from
+an arbitrary callable with :class:`CallableTransformer`. For example, one could
+apply a log transformation in a pipeline like::
+
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import CallableTransformer
+    >>> transformer = CallableTransformer(np.log)
+    >>> X = np.array([[1, 2], [3, 4]])
+    >>> transformer.transform(X)
+    array([[ 0.        ,  0.69314718],
+           [ 1.09861229,  1.38629436]])
+
+For a full code example that demonstrates using a :class:`CallableTransformer`
+to do column selection,
+see :ref:`example_preprocessing_plot_callable_transformer.py`
