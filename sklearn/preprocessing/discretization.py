@@ -29,8 +29,8 @@ class MDLP(object):
         """Finds the intervals of interest from the input data.
         """
         self.continuous_columns = continuous_columns
-        assert type(X) is np.ndarray, "Currently only supporting numpy" \
-                                      "ndarrays for X." \
+        assert type(X) is np.ndarray, "Currently only supporting numpy " \
+                                      "ndarrays for X. " \
                                       "X is type {0}".format(type(X))
         for index, col in enumerate(X.T):
             if index not in self.continuous_columns:
@@ -44,7 +44,7 @@ class MDLP(object):
         """Converts the continuous values in X into ascii character
         values. The mapping is defined by self.intervals.
         """
-        assert self.continuous_columns is not None, "You must fit the object" \
+        assert self.continuous_columns is not None, "You must fit the object " \
                                                     "before transforming data."
         discretized = list()
         for index, col in enumerate(X.T):
