@@ -1103,7 +1103,7 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
 
     # Count each label occurrence to reweight manually
     n_samples = len(y)
-    n_classes = len(np.unique(y))
+    n_classes = float(len(np.unique(y)))
 
     class_weight = {1: n_samples / (np.sum(y == 1) * n_classes),
                     -1: n_samples / (np.sum(y == -1) * n_classes)}
