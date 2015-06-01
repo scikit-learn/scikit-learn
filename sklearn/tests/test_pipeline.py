@@ -174,13 +174,19 @@ def test_pipeline_raise_set_params_error():
     pipe = Pipeline([('pca', PCA()),
                      ('ova_svm', OneVsRestClassifier(svm))])
     
-    # check top level parameter
+    # top level check
     with assert_raises(ValueError) as cm:
-        pipe.set_params(ova_svm__scaler=2)
+        pipe.set_params(fake="nope")
     exp = cm.exception
-    assert_equal('Invalid parameter scaler for estimator OneVsRestClassifier. Check the list of available parameters with `estimator.get_params().keys()`.', str(exp))
+    assert_equal('Invalid parameter fake for estimator Pipeline. Check the list of available parameters with `estimator.get_params().keys()`.', str(exp))
     
-    # check nested parameter
+    # mid level check
+    with assert_raises(ValueError) as cm:
+        pipe.set_params(ova_svm__fake="nope")
+    exp = cm.exception
+    assert_equal('Invalid parameter fake for estimator OneVsRestClassifier. Check the list of available parameters with `estimator.get_params().keys()`.', str(exp))
+    
+    # nested model check
     with assert_raises(ValueError) as cm:
         pipe.set_params(ova_svm__estimator__cls__fake=2)
     exp = cm.exception
