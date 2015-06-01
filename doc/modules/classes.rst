@@ -1105,6 +1105,7 @@ See the :ref:`metrics` section of the user guide for further details.
    :template: class.rst
 
    preprocessing.Binarizer
+   preprocessing.CallableTransformer
    preprocessing.Imputer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
