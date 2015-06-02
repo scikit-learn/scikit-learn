@@ -61,6 +61,9 @@ Enhancements
      option, which has a simpler forumlar and interpretation.
      By Hanna Wallach and `Andreas Müller`_.
 
+   - Added ``algorithm="triangle_inequality"`` to :class:`cluster.KMeans`
+     implementing Elkan's fast K-Means algorithm. By `Andreas Müller`_.
+
 Bug fixes
 .........
 

@@ -39,7 +39,7 @@ algorithms. The simplest clustering algorithm is
 
     >>> k_means = cluster.KMeans(n_clusters=3)
     >>> k_means.fit(X_iris) # doctest: +ELLIPSIS
-    KMeans(copy_x=True, init='k-means++', ...
+    KMeans(algorithm='auto', copy_x=True, init='k-means++', ...
     >>> print(k_means.labels_[::10])
     [1 1 1 1 1 0 0 0 0 0 2 2 2 2 2]
     >>> print(y_iris[::10])
@@ -118,7 +118,7 @@ algorithms. The simplest clustering algorithm is
     	>>> X = lena.reshape((-1, 1)) # We need an (n_sample, n_feature) array
     	>>> k_means = cluster.KMeans(n_clusters=5, n_init=1)
     	>>> k_means.fit(X) # doctest: +ELLIPSIS
-    	KMeans(copy_x=True, init='k-means++', ...
+    	KMeans(algorithm='auto', copy_x=True, init='k-means++', ...
     	>>> values = k_means.cluster_centers_.squeeze()
     	>>> labels = k_means.labels_
     	>>> lena_compressed = np.choose(labels, values)

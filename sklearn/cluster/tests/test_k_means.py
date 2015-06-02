@@ -50,6 +50,20 @@ def test_kmeans_dtype():
     assert_array_equal(km.labels_, pred_x)
 
 
+def test_triangle_results():
+    rnd = np.random.RandomState(0)
+    X_normal = rnd.normal(size=(50, 10))
+    X_blobs, _ = make_blobs(random_state=0)
+    km_full = KMeans(algorithm='full', n_clusters=5, random_state=0, n_init=1)
+    km_triangle_inequality = KMeans(algorithm='triangle_inequality',
+                                    n_clusters=5, random_state=0, n_init=1)
+    for X in [X_normal, X_blobs]:
+        km_full.fit(X)
+        km_triangle_inequality.fit(X)
+        assert_array_almost_equal(km_triangle_inequality.cluster_centers_, km_full.cluster_centers_)
+        assert_array_equal(km_triangle_inequality.labels_, km_full.labels_)
+
+
 def test_labels_assignment_and_inertia():
     # pure numpy implementation as easily auditable reference gold
     # implementation
@@ -263,7 +277,7 @@ def test_k_means_n_init():
 
 
 def test_k_means_fortran_aligned_data():
-    # Check the KMeans will work well, even if X is a fortran-aligned data. 
+    # Check the KMeans will work well, even if X is a fortran-aligned data.
     X = np.asfortranarray([[0, 0], [0, 1], [0, 1]])
     centers = np.array([[0, 0], [0, 1]])
     labels = np.array([0, 1, 1])
@@ -542,9 +556,11 @@ def test_predict():
 
 
 def test_score():
-    km1 = KMeans(n_clusters=n_clusters, max_iter=1, random_state=42)
+    # TODO better test? This doesn't pass with algorithm="triangle_inequality" as
+    # it converges after one iteration (to the same score that full gets after 10)
+    km1 = KMeans(n_clusters=n_clusters, max_iter=1, random_state=42, algorithm='full')
     s1 = km1.fit(X).score(X)
-    km2 = KMeans(n_clusters=n_clusters, max_iter=10, random_state=42)
+    km2 = KMeans(n_clusters=n_clusters, max_iter=10, random_state=42, algorithm='full')
     s2 = km2.fit(X).score(X)
     assert_greater(s2, s1)
 
