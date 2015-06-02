@@ -31,6 +31,8 @@ class MDLP(object):
         self.continuous_columns = continuous_columns
         if type(X) is list:
             X = np.array(X)
+        if len(self.continuous_columns) == 0:
+            self.continuous_columns = range(X.shape[1])
         assert len(X.shape) == 2, "MDLP can ony be applied to ndarrays of " \
                                   "size 2."
         for index, col in enumerate(X.T):
@@ -176,7 +178,7 @@ class MDLP(object):
         gain = big_entropy - 1 / float(N) * ((k - start) * entropy1 +
                                              (end - k) * entropy2)
 
-        return gain <= 1/N * (log2(N - 1) + delta)
+        return gain <= 1 / float(N) * (log2(N - 1) + delta)
 
     def _find_cut(self, attr_list, start, end):
         """Finds the best cut between the specified interval.
@@ -202,10 +204,10 @@ class MDLP(object):
         length = end - start
 
         def partition_entropy(ind):
-            first_half = (ind - start) / length \
-                    * self._entropy(attr_list, start, ind)
-            second_half = (end - ind) / length \
-                    * self._entropy(attr_list, ind, end)
+            first_half = (ind - start) / float(length) * \
+                    self._entropy(attr_list, start, ind)
+            second_half = (end - ind) / float(length) * \
+                    self._entropy(attr_list, ind, end)
             return first_half + second_half
 
         """
@@ -246,5 +248,5 @@ class MDLP(object):
         """A helper function, specifically if you have counted already.
         """
         length = end - start
-        return -sum(count/length * log2(count / length)
+        return -sum(count / float(length) * log2(count / float(length))
                     for count in counter.itervalues())
