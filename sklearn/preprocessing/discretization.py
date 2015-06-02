@@ -9,10 +9,6 @@ import numpy as np
 from scipy.stats import entropy
 from sklearn.base import BaseEstimator
 
-def log2(x):
-    return log(x, 2) if x > 0 else 0
-
-
 class MDLP(BaseEstimator):
     """Implements the MDLP discretization criterion from Usama Fayyad's
     paper "Multi-Interval Discretization of Continuous-Valued Attributes
@@ -28,7 +24,7 @@ class MDLP(BaseEstimator):
 
     def set_params(self, **params):
         self.continuous_columns = params.get("continous_columns")
-        self.min_depth = params.get("min_depth")
+        self.min_depth = params.get("min_depth", 0)
         return self
 
     def fit(self, X, y):
@@ -36,6 +32,8 @@ class MDLP(BaseEstimator):
         """
         if type(X) is list:
             X = np.array(X)
+        if type(y) is list:
+            y = np.array(y)
         if self.continuous_columns is None:
             self.continuous_columns = range(X.shape[1])
         if(len(X.shape) != 2):
@@ -164,7 +162,7 @@ class MDLP(BaseEstimator):
         """
         counts = np.bincount(y[start:end])
         vals = counts / (end - start)
-        return entropy(vals, base=2), np.sum(vals != 0)
+        return entropy(vals), np.sum(vals != 0)
 
     @staticmethod
     def _reject_split(y, start, end, k):
@@ -181,9 +179,9 @@ class MDLP(BaseEstimator):
         gain = whole_entropy - 1 / N * ((start - k) * entropy1 +
                                         (end - k) * entropy2)
         entropy_diff = k * whole_entropy - k1 * entropy1 - k2 * entropy2
-        delta = log2(3**k - 2) - entropy_diff
+        delta = log(3**k - 2) - entropy_diff
 
-        return gain <= 1 / N * (log2(N - 1) + delta)
+        return gain <= 1 / N * (log(N - 1) + delta)
 
     @staticmethod
     def _find_cut(y, start, end):
@@ -216,11 +214,11 @@ class MDLP(BaseEstimator):
         """
         prev_entropy = float("inf")
         k = -1
-        for ind in xrange(start + 1, end - 1):
+        for ind in range(start + 1, end - 1):
 
             # I choose not to use a `min` function here for this optimization.
-            if y[ind-1] == y[ind]:
-                continue
+#            if y[ind-1] == y[ind]:
+#                continue
 
             curr_entropy = partition_entropy(ind)
             if prev_entropy > curr_entropy:
