@@ -1,13 +1,13 @@
 .. _lda_qda:
 
 ==========================================
-Linear and quadratic discriminant analysis
+Linear and Quadratic Discriminant Analysis
 ==========================================
 
 .. currentmodule:: sklearn
 
-Linear discriminant analysis (:class:`lda.LDA`) and
-quadratic discriminant analysis (:class:`qda.QDA`)
+Linear Discriminant Analysis (:class:`discriminant_analysis.LinearDiscriminantAnalysis`) and
+Quadratic Discriminant Analysis (:class:`discriminant_analysis.QuadraticDiscriminantAnalysis`)
 are two classic classifiers, with, as their names suggest, a linear and a
 quadratic decision surface, respectively.
 
@@ -22,8 +22,9 @@ Also there are no parameters to tune for these algorithms.
 
 .. centered:: |ldaqda|
 
-The plot shows decision boundaries for LDA and QDA. The bottom row
-demonstrates that LDA can only learn linear boundaries, while QDA can learn
+The plot shows decision boundaries for Linear Discriminant Analysis and
+Quadratic Discriminant Analysis. The bottom row demonstrates that Linear Discriminant Analysis
+can only learn linear boundaries, while Quadratic Discriminant Analysis can learn
 quadratic boundaries and is therefore more flexible.
 
 .. topic:: Examples:
@@ -31,15 +32,16 @@ quadratic boundaries and is therefore more flexible.
     :ref:`example_classification_plot_lda_qda.py`: Comparison of LDA and QDA on synthetic data.
 
 
-Dimensionality reduction using LDA
-==================================
+Dimensionality reduction using Linear Discriminant Analysis
+===========================================================
 
-:class:`lda.LDA` can be used to perform supervised dimensionality reduction by
-projecting the input data to a subspace consisting of the most
+:class:`discriminant_analysis.LinearDiscriminantAnalysis` can be used to perform
+supervised dimensionality reduction by projecting the input data to a subspace consisting of the most
 discriminant directions.
-This is implemented in :func:`lda.LDA.transform`. The desired
+This is implemented in :func:`discriminant_analysis.LinearDiscriminantAnalysis.transform`. The desired
 dimensionality can be set using the ``n_components`` constructor
-parameter. This parameter has no influence on :func:`lda.LDA.fit` or :func:`lda.LDA.predict`.
+parameter. This parameter has no influence on :func:`discriminant_analysis.LinearDiscriminantAnalysis.fit`
+or :func:`discriminant_analysis.LinearDiscriminantAnalysis.predict`.
 
 
 Mathematical Idea
@@ -53,12 +55,13 @@ for each class :math:`k`. Predictions can be obtained by using Bayes' rule:
 
 In linear and quadratic discriminant analysis, :math:`P(X|y)`
 is modelled as a Gaussian distribution.
-In the case of LDA, the Gaussians for each class are assumed to share the same covariance matrix.
+In the case of Linear Discriminant Analysis, the Gaussians for each class are assumed to share
+the same covariance matrix.
 This leads to a linear decision surface, as can be seen by comparing the the log-probability rations
 :math:`log[P(y=k | X) / P(y=l | X)]`.
 
-In the case of QDA, there are no assumptions on the covariance matrices of the Gaussians,
-leading to a quadratic decision surface.
+In the case of Quadratic Discriminant Analysis, there are no assumptions on the
+covariance matrices of the Gaussians, leading to a quadratic decision surface.
 
 
 Shrinkage
@@ -67,11 +70,11 @@ Shrinkage
 Shrinkage is a tool to improve estimation of covariance matrices in situations
 where the number of training samples is small compared to the number of
 features. In this scenario, the empirical sample covariance is a poor
-estimator. Shrinkage LDA can be used by setting the ``shrinkage`` parameter of
-the :class:`lda.LDA` class to 'auto'. This automatically determines the
-optimal shrinkage parameter in an analytic way following the lemma introduced
-by Ledoit and Wolf. Note that currently shrinkage only works when setting the
-``solver`` parameter to 'lsqr' or 'eigen'.
+estimator. Shrinkage Linear Discriminant Analysis can be used by setting the
+``shrinkage`` parameter of the :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+class to 'auto'. This automatically determines the optimal shrinkage parameter in an analytic way
+following the lemma introduced by Ledoit and Wolf. Note that currently shrinkage
+only works when setting the ``solver`` parameter to 'lsqr' or 'eigen'.
 
 The ``shrinkage`` parameter can also be manually set between 0 and 1. In
 particular, a value of 0 corresponds to no shrinkage (which means the empirical
