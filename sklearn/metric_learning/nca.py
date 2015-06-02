@@ -10,124 +10,122 @@ import time
 import sys
 
 
-def nca_vectorized_oracle(X, y, n_components, loss, threshold=0.0):
-    dx = X[:, np.newaxis, :] - X[np.newaxis, :, :]  # n_samples x n_samples x n_features
-    outer = dx[:, :, np.newaxis, :] * dx[:, :, :, np.newaxis]  # n_samples x n_samples x n_features x n_features
-
+def nca_vectorized_oracle(L, X, y, n_components, loss, outer, threshold=0.0):
     n_samples, n_features = X.shape
 
-    def oracle(L):
-        L = L.reshape((n_components, n_features))
+    L = L.reshape((n_components, n_features))
 
-        Lx = np.dot(X, L.T)  # n_samples x n_components
-        assert Lx.shape == (n_samples, n_components)
+    Lx = np.dot(X, L.T)  # n_samples x n_components
+    assert Lx.shape == (n_samples, n_components)
 
-        A = Lx[np.newaxis, :, :] - Lx[:, np.newaxis, :]  # n_samples x n_samples x n_components
-        assert A.shape == (n_samples, n_samples, n_components)
+    A = Lx[np.newaxis, :, :] - Lx[:, np.newaxis, :]  # n_samples x n_samples x n_components
+    assert A.shape == (n_samples, n_samples, n_components)
 
-        logp = -(A * A).sum(axis=2)  # n_samples x n_samples
-        np.fill_diagonal(logp, -np.inf)
-        logp -= sp.misc.logsumexp(logp, axis=1)[:, np.newaxis]
-        assert logp.shape == (n_samples, n_samples)
+    logp = -np.einsum("ijk,ijk->ij", A, A)  # n_samples x n_samples
+    np.fill_diagonal(logp, -np.inf)
+    logZ = sp.misc.logsumexp(logp, axis=1)
+    logp -= logZ[:, np.newaxis]
+    assert logp.shape == (n_samples, n_samples)
 
-        p = np.exp(logp)  # n_samples x n_samples
-        assert p.shape == (n_samples, n_samples)
+    p = np.exp(logp)  # n_samples x n_samples
+    assert p.shape == (n_samples, n_samples)
 
-        class_neighbours = y[:, np.newaxis] == y[np.newaxis, :]
+    class_neighbours = y[:, np.newaxis] == y[np.newaxis, :]
 
-        p_i = (p * class_neighbours).sum(axis=1)
+    p_i = np.einsum("ij,ij->i", p, class_neighbours)
 
-        proba = np.copy(p)
+    proba = np.copy(p)
+    if loss == 'l1':
+        proba *= p_i[:, np.newaxis]
+    mask = proba > threshold
+    proba *= mask
+
+    grad = np.einsum("ij,ijkl", proba, outer)
+    assert grad.shape == (n_features, n_features)
+
+    neighbours_proba = class_neighbours * p
+    if loss == 'kl':
+        nonzero = p_i > 1e-10
+        neighbours_proba[nonzero, :] /= p_i[nonzero, np.newaxis]
+
+    neighbours_mask = neighbours_proba > threshold
+    neighbours_proba *= neighbours_mask
+
+    neighbours_term = np.einsum("ij,ijkl", neighbours_proba, outer)
+
+    assert neighbours_term.shape == (n_features, n_features)
+    grad -= neighbours_term
+
+    function_value = 0
+    if loss == 'l1':
+        function_value = p_i.sum()
+    elif loss == 'kl':
+        function_value = np.log(p_i).sum()
+
+    grad = 2 * np.dot(L, grad)
+
+    return [-function_value, -grad.flatten()]
+
+
+def nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=0.0):
+    n_samples, n_features = X.shape
+    L = L.reshape((n_components, n_features))
+
+    Lx = np.dot(X, L.T)  # n_samples x n_components
+    assert Lx.shape == (n_samples, n_components)
+
+    grad = np.zeros((n_features, n_features))
+    function_value = 0
+
+    distances = np.zeros((n_samples, n_samples))
+    for i in range(n_samples):
+        js = np.arange(i)
+        diff = Lx[i, :] - Lx[js, :]
+        distance = -np.einsum("ij,ij->i", diff, diff)
+        distances[i, js] = distance
+        distances[js, i] = distance
+        distances[i, i] = -np.inf
+
+    for i in range(n_samples):
+        logp = distances[i] - sp.misc.logsumexp(distances[i])
+        assert logp.shape == (n_samples, )
+
+        p = np.exp(logp)  # n_samples
+        assert p.shape == (n_samples, )
+
+        class_neighbours = y == y[i]
+        p_i = (p * class_neighbours).sum()
+
+        samples_proba = np.copy(p)
         if loss == 'l1':
-            proba *= p_i[:, np.newaxis]
-        mask = proba > threshold
-        proba *= mask
+            samples_proba *= p_i
+        mask = samples_proba > threshold  # n_samples
 
-        grad = np.einsum("ij,ijkl", proba, outer)
-        assert grad.shape == (n_features, n_features)
+        Xij = X[i] - X[mask, :]  # n_relevant x n_features
+        Xij_outer = (Xij[:, :, np.newaxis] * Xij[:, np.newaxis, :])
+        grad += np.einsum("i,ijk", samples_proba[mask], Xij_outer)
 
-        neighbours_proba = class_neighbours * p
-        if loss == 'kl':
-            neighbours_proba /= p_i[:, np.newaxis]
+        neighbours_proba = p * (y == y[i])
+        if loss == 'kl' and p_i > 1e-10:
+            neighbours_proba /= p_i
+        mask = neighbours_proba > threshold  # n_samples
 
-        neighbours_mask = neighbours_proba > threshold
-        neighbours_proba *= neighbours_mask
+        Xij = X[i] - X[mask, :]  # n_relevant x n_features
+        Xij_outer = (Xij[:, :, np.newaxis] * Xij[:, np.newaxis, :])
+        grad -= np.einsum("i,ijk", neighbours_proba[mask], Xij_outer)
 
-        neighbours_term = np.einsum("ij,ijkl", neighbours_proba, outer)
-
-        assert neighbours_term.shape == (n_features, n_features)
-        grad -= neighbours_term
-
-        function_value = 0
         if loss == 'l1':
-            function_value = p_i.sum()
+            function_value += p_i
         elif loss == 'kl':
-            function_value = np.log(p_i).sum()
-
-        grad = 2 * np.dot(L, grad)
-
-        return [-function_value, -grad.flatten()]
-
-    return oracle
-
-
-def nca_semivectorized_oracle(X, y, n_components, loss, threshold=0.0):
-    n_samples, n_features = X.shape
-
-    def oracle(L):
-        L = L.reshape((n_components, n_features))
-
-        Lx = np.dot(X, L.T)  # n_samples x n_components
-        assert Lx.shape == (n_samples, n_components)
-
-        grad = np.zeros((n_features, n_features))
-        function_value = 0
-
-        for i in range(n_samples):
-            A = Lx[i, :] - Lx  # n_samples x n_components
-            assert A.shape == (n_samples, n_components)
-
-            logp = -(A * A).sum(axis=1)  # n_samples
-            logp[i] = -np.inf
-            logp -= sp.misc.logsumexp(logp)
-            assert logp.shape == (n_samples, )
-
-            p = np.exp(logp)  # n_samples
-            assert p.shape == (n_samples, )
-
-            class_neighbours = y == y[i]
-            p_i = (p * class_neighbours).sum()
-
-            if loss == 'l1':
-                samples_proba = p * p_i
-            elif loss == 'kl':
-                samples_proba = p
-            mask = samples_proba > threshold  # n_samples
-
-            Xij = X[i] - X[mask, :]  # n_relevant x n_features
-            Xij_outer = (Xij[:, :, np.newaxis] * Xij[:, np.newaxis, :])
-            grad += np.einsum("i,ijk", samples_proba[mask], Xij_outer)
-
-            if loss == 'l1':
-                neighbours_proba = p * (y == y[i])
-            elif loss == 'kl':
-                neighbours_proba = p / p_i * (y == y[i])
-            mask = neighbours_proba > threshold  # n_samples
-
-            Xij = X[i] - X[mask, :]  # n_relevant x n_features
-            Xij_outer = (Xij[:, :, np.newaxis] * Xij[:, np.newaxis, :])
-            grad -= np.einsum("i,ijk", neighbours_proba[mask], Xij_outer)
-
-            if loss == 'l1':
-                function_value += p_i
-            elif loss == 'kl':
+            if p_i > 1e-10:
                 function_value += np.log(p_i)
+            else:
+                # FIXME
+                function_value += 0
 
-        grad = 2 * np.dot(L, grad)
+    grad = 2 * np.dot(L, grad)
 
-        return [-function_value, -grad.flatten()]
-
-    return oracle
+    return [-function_value, -grad.flatten()]
 
 
 def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
@@ -144,9 +142,11 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
     outer_products_size = (n_samples * n_features) ** 2
     memory_permits = outer_products_size < cache_size
     if memory_permits:
-        oracle = nca_vectorized_oracle(X, y, n_components, loss, threshold=threshold)
+        dx = X[:, np.newaxis, :] - X[np.newaxis, :, :]  # n_samples x n_samples x n_features
+        outer = dx[:, :, np.newaxis, :] * dx[:, :, :, np.newaxis]  # n_samples x n_samples x n_features x n_features
+        oracle = lambda L: nca_vectorized_oracle(L, X, y, n_components, loss, outer, threshold=threshold)
     else:
-        oracle = nca_semivectorized_oracle(X, y, n_components, loss, threshold=threshold)
+        oracle = lambda L: nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=threshold)
 
     for _ in range(n_init):
         start = time.clock()
