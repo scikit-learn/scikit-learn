@@ -7,45 +7,55 @@ from __future__ import division
 from math import log
 import numpy as np
 from scipy.stats import entropy
-
+from sklearn.base import BaseEstimator
 
 def log2(x):
     return log(x, 2) if x > 0 else 0
 
 
-class MDLP(object):
+class MDLP(BaseEstimator):
     """Implements the MDLP discretization criterion from Usama Fayyad's
     paper "Multi-Interval Discretization of Continuous-Valued Attributes
     for Classification Learning"
     """
 
     def __init__(self, **params):
-        self.intervals_ = dict()
-        self.num_classes_ = None
         self.set_params(**params)
+
+    def get_params(self, deep=True):
+        return {"continuous_columns": self.continuous_columns,
+                "min_depth": self.min_depth}
 
     def set_params(self, **params):
         self.continuous_columns = params.get("continous_columns")
         self.min_depth = params.get("min_depth")
+        return self
 
-    def fit(self, X, Y):
+    def fit(self, X, y):
         """Finds the intervals of interest from the input data.
         """
         if type(X) is list:
             X = np.array(X)
         if self.continuous_columns is None:
             self.continuous_columns = range(X.shape[1])
-        assert len(X.shape) == 2, "MDLP can ony be applied to ndarrays of " \
-                                  "size 2."
-        self.num_classes_ = set(Y)
+        if(len(X.shape) != 2):
+            raise ValueError("MDLP can ony be applied to input ndarrays of "
+                             "size 2.")
+        if(X.shape[0] != y.shape[0]):
+            raise ValueError("Number of samples in X does not match number "
+                             "of targets in y")
+
+        self.num_classes_ = set(y)
+        self.intervals_ = dict()
 
         for index, col in enumerate(X.T):
             if index not in self.continuous_columns:
                 continue
-            intervals = self._mdlp(col, Y, self.min_depth)
+            intervals = self._mdlp(col, y)
             intervals.sort(key=lambda interval: interval[0])
             self.intervals_[index] = [(interval, i)
                                      for i, interval in enumerate(intervals)]
+        return self
 
     def transform(self, X):
         """Converts the continuous values in X into ascii character
@@ -103,7 +113,7 @@ class MDLP(object):
         assert len(categorical) == len(col)
         return np.array(categorical)
 
-    def _mdlp(self, attributes, Y, min_depth):
+    def _mdlp(self, attributes, Y):
         """
         *attributes*: A numpy 1 dimensional ndarray
 
@@ -119,7 +129,7 @@ class MDLP(object):
         intervals = list()
 
         def get_cut(ind):
-            return ((x[ind-1] + x[ind]) / 2)
+            return (x[ind-1] + x[ind]) / 2
 
         # Now we do a depth first search to create intervals
         num_samples = len(x)
@@ -133,7 +143,7 @@ class MDLP(object):
             # Need to see whether the "front" and "back" of the intervals need
             # to be float("-inf") or float("inf")
             if (k == -1) or (self._reject_split(y, start, end, k) and
-                             depth >= min_depth):
+                             depth >= self.min_depth):
                 front = float("-inf") if (start == 0) else get_cut(start)
                 back = float("inf") if (end == num_samples) else get_cut(end)
 
@@ -147,7 +157,8 @@ class MDLP(object):
 
         return intervals
 
-    def _slice_entropy(self, y, start, end):
+    @staticmethod
+    def _slice_entropy(y, start, end):
         """Returns the entropy of the given slice of y. Also returns the
         number of classes within the interval.
         """
@@ -155,15 +166,16 @@ class MDLP(object):
         vals = counts / (end - start)
         return entropy(vals, base=2), np.sum(vals != 0)
 
-    def _reject_split(self, y, start, end, k):
+    @staticmethod
+    def _reject_split(y, start, end, k):
         """Using the minimum description length principal, determines
         whether it is appropriate to stop cutting.
         """
 
         N = end - start
-        entropy1, k1 = self._slice_entropy(y, start, k)
-        entropy2, k2 = self._slice_entropy(y, k, end)
-        whole_entropy, k = self._slice_entropy(y, start, end)
+        entropy1, k1 = MDLP._slice_entropy(y, start, k)
+        entropy2, k2 = MDLP._slice_entropy(y, k, end)
+        whole_entropy, k = MDLP._slice_entropy(y, start, end)
 
         # Calculate the final values
         gain = whole_entropy - 1 / N * ((start - k) * entropy1 +
@@ -173,7 +185,8 @@ class MDLP(object):
 
         return gain <= 1 / N * (log2(N - 1) + delta)
 
-    def _find_cut(self, y, start, end):
+    @staticmethod
+    def _find_cut(y, start, end):
         """Finds the best cut between the specified interval.
 
         Returns a candidate cut point index k. k == -1 if there is no good cut,
@@ -187,9 +200,9 @@ class MDLP(object):
 
         def partition_entropy(ind):
             first_half = (ind - start) / length * \
-                    self._slice_entropy(y, start, ind)[0]
+                    MDLP._slice_entropy(y, start, ind)[0]
             second_half = (end - ind) / length * \
-                    self._slice_entropy(y, ind, end)[0]
+                    MDLP._slice_entropy(y, ind, end)[0]
             return first_half + second_half
 
         """
