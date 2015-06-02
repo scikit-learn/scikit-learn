@@ -29,9 +29,10 @@ class MDLP(object):
         """Finds the intervals of interest from the input data.
         """
         self.continuous_columns = continuous_columns
-        assert type(X) is np.ndarray, "Currently only supporting numpy " \
-                                      "ndarrays for X. " \
-                                      "X is type {0}".format(type(X))
+        if type(X) is list:
+            X = np.array(X)
+        assert len(X.shape) == 2, "MDLP can ony be applied to ndarrays of " \
+                                  "size 2."
         for index, col in enumerate(X.T):
             if index not in self.continuous_columns:
                 continue
@@ -80,7 +81,7 @@ class MDLP(object):
         mappings = self.intervals[index]
         for (a, b), _ in mappings:
             if a < attr <= b: return (a, b)
-        raise ValueError("Why life whyyyy")
+        raise ValueError("Numeric value did not fit in any interval")
 
     def cts2cat(self, index, col):
         """Converts each continuous value into a categorical value.
