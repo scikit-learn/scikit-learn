@@ -378,7 +378,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             predictions.append(np.zeros((n_samples, n_classes_[k])))
 
         for estimator in self.estimators_:
-            unsampled_indices = _generate_unsampled_indices(estimator.random_state, n_samples)
+            unsampled_indices = _generate_unsampled_indices(
+                estimator.random_state, n_samples)
             p_estimator = estimator.predict_proba(X[unsampled_indices, :],
                                                   check_input=False)
 
@@ -645,8 +646,10 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         n_predictions = np.zeros((n_samples, self.n_outputs_))
 
         for estimator in self.estimators_:
-            unsampled_indices = _generate_unsampled_indices(estimator.random_state, n_samples)
-            p_estimator = estimator.predict(X[unsampled_indices, :], check_input=False)
+            unsampled_indices = _generate_unsampled_indices(
+                estimator.random_state, n_samples)
+            p_estimator = estimator.predict(
+                X[unsampled_indices, :], check_input=False)
 
             if self.n_outputs_ == 1:
                 p_estimator = p_estimator[:, np.newaxis]
