@@ -427,6 +427,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     to speed up computations along the set of solutions, making it faster
     than sequentially calling LogisticRegression for the different parameters.
 
+    Read more in the :ref:`User Guide <logistic_regression>`.
+
     Parameters
     ----------
     X : array-like or sparse matrix, shape (n_samples, n_features)
@@ -601,8 +603,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             if coef.size not in (n_features, w0.size):
                 raise ValueError(
                     'Initialization coef is of shape %d, expected shape '
-                    '%d or %d' % (coef.size, n_features, w0.size)
-                    )
+                    '%d or %d' % (coef.size, n_features, w0.size))
             w0[:coef.size] = coef
         else:
             # For binary problems coef.shape[0] should be 1, otherwise it
@@ -617,9 +618,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                     'Initialization coef is of shape (%d, %d), expected '
                     'shape (%d, %d) or (%d, %d)' % (
                         coef.shape[0], coef.shape[1], classes.size,
-                        n_features, classes.size, n_features + 1
-                        )
-                    )
+                        n_features, classes.size, n_features + 1))
             w0[:, :coef.shape[1]] = coef
 
     if multi_class == 'multinomial':
@@ -649,15 +648,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 w0, loss, info = optimize.fmin_l_bfgs_b(
                     func, w0, fprime=None,
                     args=(X, target, 1. / C, sample_weight),
-                    iprint=(verbose > 0) - 1, pgtol=tol, maxiter=max_iter
-                    )
+                    iprint=(verbose > 0) - 1, pgtol=tol, maxiter=max_iter)
             except TypeError:
                 # old scipy doesn't have maxiter
                 w0, loss, info = optimize.fmin_l_bfgs_b(
                     func, w0, fprime=None,
                     args=(X, target, 1. / C, sample_weight),
-                    iprint=(verbose > 0) - 1, pgtol=tol
-                    )
+                    iprint=(verbose > 0) - 1, pgtol=tol)
             if info["warnflag"] == 1 and verbose > 0:
                 warnings.warn("lbfgs failed to converge. Increase the number "
                               "of iterations.")
@@ -668,8 +665,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         elif solver == 'liblinear':
             coef_, intercept_, _, = _fit_liblinear(
                 X, y, C, fit_intercept, intercept_scaling, class_weight,
-                penalty, dual, verbose, max_iter, tol, random_state
-                )
+                penalty, dual, verbose, max_iter, tol, random_state)
             if fit_intercept:
                 w0 = np.concatenate([coef_.ravel(), intercept_])
             else:
@@ -875,6 +871,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     formulation. The liblinear solver supports both L1 and L2 regularization,
     with a dual formulation only for the L2 penalty.
 
+    Read more in the :ref:`User Guide <logistic_regression>`.
+
     Parameters
     ----------
     penalty : str, 'l1' or 'l2'
@@ -1042,8 +1040,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
                 X, y, self.C, self.fit_intercept, self.intercept_scaling,
                 self.class_weight, self.penalty, self.dual, self.verbose,
-                self.max_iter, self.tol, self.random_state
-                )
+                self.max_iter, self.tol, self.random_state)
             return self
 
         n_classes = len(self.classes_)
@@ -1142,6 +1139,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     For a multiclass problem, the hyperparameters for each class are computed
     using the best scores got by doing a one-vs-rest in parallel across all
     folds and classes. Hence this is not the true multinomial loss.
+
+    Read more in the :ref:`User Guide <logistic_regression>`.
 
     Parameters
     ----------
@@ -1340,8 +1339,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 "A column-vector y was passed when a 1d array was"
                 " expected. Please change the shape of y to "
                 "(n_samples, ), for example using ravel().",
-                DataConversionWarning
-                )
+                DataConversionWarning)
             y = np.ravel(y)
 
         check_consistent_length(X, y)
@@ -1456,10 +1454,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 # Take the best scores across every fold and the average of all
                 # coefficients corresponding to the best scores.
                 best_indices = np.argmax(scores, axis=1)
-                w = np.mean([
-                    coefs_paths[i][best_indices[i]]
-                    for i in range(len(folds))
-                    ], axis=0)
+                w = np.mean([coefs_paths[i][best_indices[i]]
+                             for i in range(len(folds))], axis=0)
                 self.C_.append(np.mean(self.Cs_[best_indices]))
 
             if self.multi_class == 'multinomial':

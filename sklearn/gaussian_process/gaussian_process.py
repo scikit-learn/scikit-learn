@@ -59,6 +59,8 @@ def l1_cross_distances(X):
 class GaussianProcess(BaseEstimator, RegressorMixin):
     """The Gaussian Process model class.
 
+    Read more in the :ref:`User Guide <gaussian_process>`.
+
     Parameters
     ----------
     regr : string or callable, optional

@@ -125,6 +125,8 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     the set of labels predicted for a sample must *exactly* match the
     corresponding set of labels in y_true.
 
+    Read more in the :ref:`User Guide <accuracy_score>`.
+
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
@@ -192,6 +194,8 @@ def confusion_matrix(y_true, y_pred, labels=None):
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
     is equal to the number of observations known to be in group :math:`i` but
     predicted to be in group :math:`j`.
+
+    Read more in the :ref:`User Guide <confusion_matrix>`.
 
     Parameters
     ----------
@@ -270,6 +274,8 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     the size of the intersection divided by the size of the union of two label
     sets, is used to compare set of predicted labels for a sample to the
     corresponding set of labels in ``y_true``.
+
+    Read more in the :ref:`User Guide <jaccard_similarity_score>`.
 
     Parameters
     ----------
@@ -365,6 +371,8 @@ def matthews_corrcoef(y_true, y_pred):
     Only in the binary case does this relate to information about true and
     false positives and negatives. See references below.
 
+    Read more in the :ref:`User Guide <matthews_corrcoef>`.
+
     Parameters
     ----------
     y_true : array, shape = [n_samples]
@@ -422,6 +430,8 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
     If normalize is ``True``, return the fraction of misclassifications
     (float), else it returns the number of misclassifications (int). The best
     performance is 0.
+
+    Read more in the :ref:`User Guide <zero_one_loss>`.
 
     Parameters
     ----------
@@ -496,6 +506,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
     In the multi-class and multi-label case, this is the weighted average of
     the F1 score of each class.
+
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
     ----------
@@ -588,6 +600,8 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
     favors recall (``beta -> 0`` considers only precision, ``beta -> inf``
     only recall).
+
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
     ----------
@@ -756,6 +770,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     If ``pos_label is None`` and in binary classification, this function
     returns the average precision, recall and F-measure if ``average``
     is one of ``'micro'``, ``'macro'``, ``'weighted'`` or ``'samples'``.
+
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
     ----------
@@ -1009,6 +1025,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     The best value is 1 and the worst value is 0.
 
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
@@ -1100,6 +1118,8 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
     The best value is 1 and the worst value is 0.
 
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
@@ -1183,6 +1203,8 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 def classification_report(y_true, y_pred, labels=None, target_names=None,
                           sample_weight=None, digits=2):
     """Build a text report showing the main classification metrics
+
+    Read more in the :ref:`User Guide <classification_report>`.
 
     Parameters
     ----------
@@ -1281,6 +1303,8 @@ def hamming_loss(y_true, y_pred, classes=None):
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
 
+    Read more in the :ref:`User Guide <hamming_loss>`.
+
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
@@ -1366,6 +1390,8 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None):
     estimated probability yp that yt = 1, the log loss is
 
         -log P(yt|yp) = -(yt log(yp) + (1 - yt) log(1 - yp))
+
+    Read more in the :ref:`User Guide <log_loss>`.
 
     Parameters
     ----------
@@ -1454,6 +1480,8 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     contains all the labels. The multilabel margin is calculated according
     to Crammer-Singer's method. As in the binary case, the cumulated hinge loss
     is an upper bound of the number of mistakes made by the classifier.
+
+    Read more in the :ref:`User Guide <hinge_loss>`.
 
     Parameters
     ----------
@@ -1605,6 +1633,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     "distant" from one another). Which label is considered to be the positive
     label is controlled via the parameter pos_label, which defaults to 1.
 
+    Read more in the :ref:`User Guide <calibration>`.
 
     Parameters
     ----------

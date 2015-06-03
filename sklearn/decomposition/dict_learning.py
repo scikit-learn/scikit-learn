@@ -150,6 +150,8 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
         X ~= code * dictionary
 
+    Read more in the :ref:`User Guide <SparseCoder>`.
+
     Parameters
     ----------
     X: array of shape (n_samples, n_features)
@@ -345,6 +347,8 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
     where V is the dictionary and U is the sparse code.
 
+    Read more in the :ref:`User Guide <DictionaryLearning>`.
+
     Parameters
     ----------
     X: array of shape (n_samples, n_features)
@@ -517,6 +521,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     where V is the dictionary and U is the sparse code. This is
     accomplished by repeatedly iterating over mini-batches by slicing
     the input data.
+
+    Read more in the :ref:`User Guide <DictionaryLearning>`.
 
     Parameters
     ----------
@@ -787,6 +793,8 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
         X ~= code * dictionary
 
+    Read more in the :ref:`User Guide <SparseCoder>`.
+
     Parameters
     ----------
     dictionary : array, [n_components, n_features]
@@ -870,6 +878,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
+
+    Read more in the :ref:`User Guide <DictionaryLearning>`.
 
     Parameters
     ----------
@@ -1028,6 +1038,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
+
+    Read more in the :ref:`User Guide <DictionaryLearning>`.
 
     Parameters
     ----------

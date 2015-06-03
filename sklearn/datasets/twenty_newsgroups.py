@@ -156,6 +156,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
                        download_if_missing=True):
     """Load the filenames and data from the 20 newsgroups dataset.
 
+    Read more in the :ref:`User Guide <20newsgroups>`.
+
     Parameters
     ----------
     subset: 'train' or 'test', 'all', optional
@@ -286,6 +288,8 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None):
     default settings for `sklearn.feature_extraction.text.Vectorizer`. For more
     advanced usage (stopword filtering, n-gram extraction, etc.), combine
     fetch_20newsgroups with a custom `Vectorizer` or `CountVectorizer`.
+
+    Read more in the :ref:`User Guide <20newsgroups>`.
 
     Parameters
     ----------

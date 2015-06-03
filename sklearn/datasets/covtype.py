@@ -45,6 +45,8 @@ def fetch_covtype(data_home=None, download_if_missing=True,
                   random_state=None, shuffle=False):
     """Load the covertype dataset, downloading it if necessary.
 
+    Read more in the :ref:`User Guide <datasets>`.
+
     Parameters
     ----------
     data_home : string, optional

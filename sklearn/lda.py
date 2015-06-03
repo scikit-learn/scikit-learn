@@ -136,6 +136,8 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
     The fitted model can also be used to reduce the dimensionality of the input
     by projecting it to the most discriminative directions.
 
+    Read more in the :ref:`User Guide <lda_qda>`.
+
     Parameters
     ----------
     solver : string, optional

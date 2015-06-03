@@ -201,6 +201,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3, verbose=0):
     """Solve the ridge equation by the method of normal equations.
 
+    Read more in the :ref:`User Guide <ridge_regression>`.
+
     Parameters
     ----------
     X : {array-like, sparse matrix, LinearOperator},
@@ -396,6 +398,8 @@ class Ridge(_BaseRidge, RegressorMixin):
     This estimator has built-in support for multi-variate regression
     (i.e., when y is a 2d-array of shape [n_samples, n_targets]).
 
+    Read more in the :ref:`User Guide <ridge_regression>`.
+
     Parameters
     ----------
     alpha : {float, array-like}
@@ -498,6 +502,8 @@ class Ridge(_BaseRidge, RegressorMixin):
 
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     """Classifier using Ridge regression.
+
+    Read more in the :ref:`User Guide <ridge_regression>`.
 
     Parameters
     ----------
@@ -887,6 +893,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation.
 
+    Read more in the :ref:`User Guide <ridge_regression>`.
+
     Parameters
     ----------
     alphas : numpy array of shape [n_alphas]
@@ -970,6 +978,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation. Currently, only the n_features >
     n_samples case is handled efficiently.
+
+    Read more in the :ref:`User Guide <ridge_regression>`.
 
     Parameters
     ----------

@@ -24,6 +24,8 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     The target is predicted by local interpolation of the targets
     associated of the nearest neighbors in the training set.
 
+    Read more in the :ref:`User Guide <regression>`.
+
     Parameters
     ----------
     n_neighbors : int, optional (default = 5)
@@ -163,6 +165,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
     The target is predicted by local interpolation of the targets
     associated of the nearest neighbors in the training set.
+
+    Read more in the :ref:`User Guide <regression>`.
 
     Parameters
     ----------

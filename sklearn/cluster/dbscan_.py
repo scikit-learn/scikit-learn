@@ -26,6 +26,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
            random_state=None):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
+    Read more in the :ref:`User Guide <dbscan>`.
+
     Parameters
     ----------
     X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
@@ -147,6 +149,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     DBSCAN - Density-Based Spatial Clustering of Applications with Noise.
     Finds core samples of high density and expands clusters from them.
     Good for data which contains clusters of similar density.
+
+    Read more in the :ref:`User Guide <dbscan>`.
 
     Parameters
     ----------

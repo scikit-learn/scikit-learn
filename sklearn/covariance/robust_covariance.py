@@ -298,6 +298,8 @@ def fast_mcd(X, support_fraction=None,
              random_state=None):
     """Estimates the Minimum Covariance Determinant matrix.
 
+    Read more in the :ref:`User Guide <robust_covariance>`.
+
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
@@ -510,6 +512,8 @@ class MinCovDet(EmpiricalCovariance):
     likely to fail in such a case).
     One should consider projection pursuit methods to deal with multi-modal
     datasets.
+
+    Read more in the :ref:`User Guide <robust_covariance>`.
 
     Parameters
     ----------

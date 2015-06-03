@@ -60,6 +60,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     A detailed description of the algorithm can be found in the documentation
     of the ``linear_model`` sub-package.
 
+    Read more in the :ref:`User Guide <RansacRegression>`.
+
     Parameters
     ----------
     base_estimator : object, optional

@@ -113,6 +113,8 @@ class GaussianNB(BaseNB):
 
         http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf
 
+    Read more in the :ref:`User Guide <gaussian_naive_bayes>`.
+
     Attributes
     ----------
     class_prior_ : array, shape (n_classes,)
@@ -564,6 +566,8 @@ class MultinomialNB(BaseDiscreteNB):
     multinomial distribution normally requires integer feature counts. However,
     in practice, fractional counts such as tf-idf may also work.
 
+    Read more in the :ref:`User Guide <multinomial_naive_bayes>`.
+
     Parameters
     ----------
     alpha : float, optional (default=1.0)
@@ -664,6 +668,8 @@ class BernoulliNB(BaseDiscreteNB):
     Like MultinomialNB, this classifier is suitable for discrete data. The
     difference is that while MultinomialNB works with occurrence counts,
     BernoulliNB is designed for binary/boolean features.
+
+    Read more in the :ref:`User Guide <bernoulli_naive_bayes>`.
 
     Parameters
     ----------

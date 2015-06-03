@@ -129,6 +129,8 @@ def load_files(container_path, description=None, categories=None,
     Similar feature extractors should be built for other kind of unstructured
     data input such as images, audio, video, ...
 
+    Read more in the :ref:`User Guide <datasets>`.
+
     Parameters
     ----------
     container_path : string or unicode
@@ -241,6 +243,8 @@ def load_iris():
     Features            real, positive
     =================   ==============
 
+    Read more in the :ref:`User Guide <datasets>`.
+
     Returns
     -------
     data : Bunch
@@ -299,6 +303,7 @@ def load_digits(n_class=10):
     Features             integers 0-16
     =================   ==============
 
+    Read more in the :ref:`User Guide <datasets>`.
 
     Parameters
     ----------
@@ -358,6 +363,8 @@ def load_diabetes():
     Features            real, -.2 < x < .2
     Targets             integer 25 - 346
     ==============      ==================
+
+    Read more in the :ref:`User Guide <datasets>`.
 
     Returns
     -------

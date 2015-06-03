@@ -328,6 +328,8 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     centroid closest to the new sample. This is done recursively till it
     ends up at the subcluster of the leaf of the tree has the closest centroid.
 
+    Read more in the :ref:`User Guide <birch>`.
+
     Parameters
     ----------
     threshold : float, default 0.5

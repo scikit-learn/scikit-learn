@@ -34,6 +34,8 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
     test set will be computed. Afterwards, the scores will be averaged over
     all k runs for each training subset size.
 
+    Read more in the :ref:`User Guide <learning_curves>`.
+
     Parameters
     ----------
     estimator : object type that implements the "fit" and "predict" methods
@@ -237,6 +239,8 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     parameter. This is similar to grid search with one parameter. However, this
     will also compute training scores and is merely a utility for plotting the
     results.
+
+    Read more in the :ref:`User Guide <validation_curve>`.
 
     Parameters
     ----------

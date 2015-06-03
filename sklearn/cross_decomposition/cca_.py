@@ -8,6 +8,8 @@ class CCA(_PLS):
 
     CCA inherits from PLS with mode="B" and deflation_mode="canonical".
 
+    Read more in the :ref:`User Guide <cross_decomposition>`.
+
     Parameters
     ----------
     n_components : int, (default 2).

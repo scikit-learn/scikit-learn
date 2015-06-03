@@ -32,6 +32,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     That procedure is recursively repeated on the pruned set until the desired
     number of features to select is eventually reached.
 
+    Read more in the :ref:`User Guide <rfe>`.
+
     Parameters
     ----------
     estimator : object
@@ -268,6 +270,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 class RFECV(RFE, MetaEstimatorMixin):
     """Feature ranking with recursive feature elimination and cross-validated
     selection of the best number of features.
+
+    Read more in the :ref:`User Guide <rfe>`.
 
     Parameters
     ----------

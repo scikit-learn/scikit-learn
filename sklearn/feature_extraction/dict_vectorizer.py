@@ -40,6 +40,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     Features that do not occur in a sample (mapping) will have a zero value
     in the resulting array/matrix.
 
+    Read more in the :ref:`User Guide <dict_feature_extraction>`.
+
     Parameters
     ----------
     dtype : callable, optional
@@ -322,7 +324,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             Boolean mask or list of indices (as returned by the get_support
             member of feature selectors).
         indices : boolean, optional
-            Whether support is a list of indices. 
+            Whether support is a list of indices.
 
         Returns
         -------

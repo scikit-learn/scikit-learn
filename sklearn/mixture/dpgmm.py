@@ -125,6 +125,8 @@ class DPGMM(GMM):
     Initialization is with normally-distributed means and identity
     covariance, for proper convergence.
 
+    Read more in the :ref:`User Guide <dpgmm>`.
+
     Parameters
     ----------
     n_components: int, default 1
@@ -620,6 +622,8 @@ class VBGMM(DPGMM):
 
     Initialization is with normally-distributed means and identity
     covariance, for proper convergence.
+
+    Read more in the :ref:`User Guide <vbgmm>`.
 
     Parameters
     ----------

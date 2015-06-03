@@ -29,6 +29,8 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     overlapping clusters. Negative values generally indicate that a sample has
     been assigned to the wrong cluster, as a different cluster is more similar.
 
+    Read more in the :ref:`User Guide <silhouette_coefficient>`.
+
     Parameters
     ----------
     X : array [n_samples_a, n_samples_a] if metric == "precomputed", or, \
@@ -112,6 +114,8 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     The best value is 1 and the worst value is -1. Values near 0 indicate
     overlapping clusters.
+
+    Read more in the :ref:`User Guide <silhouette_coefficient>`.
 
     Parameters
     ----------

@@ -39,9 +39,7 @@ from ..tree.tree import BaseDecisionTree
 from ..tree._tree import DTYPE
 from ..utils import check_array, check_X_y, check_random_state
 from ..metrics import accuracy_score, r2_score
-from sklearn.utils.validation import (
-        has_fit_parameter,
-        check_is_fitted)
+from sklearn.utils.validation import has_fit_parameter, check_is_fitted
 
 __all__ = [
     'AdaBoostClassifier',
@@ -271,6 +269,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         return X
 
+
 def _samme_proba(estimator, n_classes, X):
     """Calculate algorithm 4, step 2, equation c) of Zhu et al [1].
 
@@ -301,6 +300,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     more on difficult cases.
 
     This class implements the algorithm known as AdaBoost-SAMME [2].
+
+    Read more in the :ref:`User Guide <adaboost>`.
 
     Parameters
     ----------
@@ -750,7 +751,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             outputs is the same of that of the `classes_` attribute.
         """
         check_is_fitted(self, "n_classes_")
-        
+
         n_classes = self.n_classes_
         X = self._validate_X_predict(X)
 
@@ -855,6 +856,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     subsequent regressors focus more on difficult cases.
 
     This class implements the algorithm known as AdaBoost.R2 [2].
+
+    Read more in the :ref:`User Guide <adaboost>`.
 
     Parameters
     ----------

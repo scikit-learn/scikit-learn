@@ -110,6 +110,8 @@ class PCA(BaseEstimator, TransformerMixin):
     The time complexity of this implementation is ``O(n ** 3)`` assuming
     n ~ n_samples ~ n_features.
 
+    Read more in the :ref:`User Guide <PCA>`.
+
     Parameters
     ----------
     n_components : int, None or string
@@ -415,7 +417,6 @@ class PCA(BaseEstimator, TransformerMixin):
         else:
             return fast_dot(X, self.components_) + self.mean_
 
-
     def score_samples(self, X):
         """Return the log-likelihood of each sample
 
@@ -471,6 +472,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     Linear dimensionality reduction using approximated Singular Value
     Decomposition of the data and keeping only the most significant
     singular vectors to project the data to a lower dimensional space.
+
+    Read more in the :ref:`User Guide <RandomizedPCA>`.
 
     Parameters
     ----------

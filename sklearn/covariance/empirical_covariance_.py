@@ -85,6 +85,8 @@ def empirical_covariance(X, assume_centered=False):
 class EmpiricalCovariance(BaseEstimator):
     """Maximum likelihood covariance estimator
 
+    Read more in the :ref:`User Guide <covariance>`.
+
     Parameters
     ----------
     store_precision : bool

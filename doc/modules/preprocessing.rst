@@ -196,6 +196,7 @@ data.
     This is very useful for scaling the target / response variables used
     for regression.
 
+.. _kernel_centering:
 
 Centering kernel matrices
 -------------------------
@@ -206,6 +207,7 @@ a :class:`KernelCenterer` can transform the kernel matrix
 so that it contains inner products in the feature space
 defined by :math:`phi` followed by removal of the mean in that space.
 
+.. _preprocessing_normalization:
 
 Normalization
 =============
@@ -267,6 +269,7 @@ The normalizer instance can then be used on sample vectors as any transformer::
   efficient Cython routines. To avoid unnecessary memory copies, it is
   recommended to choose the CSR representation upstream.
 
+.. _preprocessing_binarization:
 
 Binarization
 ============

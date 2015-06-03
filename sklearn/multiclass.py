@@ -221,6 +221,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     In the multilabel learning literature, OvR is also known as the binary
     relevance method.
 
+    Read more in the :ref:`User Guide <ovr_classification>`.
+
     Parameters
     ----------
     estimator : estimator object
@@ -462,6 +464,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     a small subset of the data whereas, with one-vs-the-rest, the complete
     dataset is used `n_classes` times.
 
+    Read more in the :ref:`User Guide <ovo_classification>`.
+
     Parameters
     ----------
     estimator : estimator object
@@ -642,6 +646,8 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     that the number of classifiers used can be controlled by the user, either
     for compressing the model (0 < code_size < 1) or for making the model more
     robust to errors (code_size > 1). See the documentation for more details.
+
+    Read more in the :ref:`User Guide <ecoc>`.
 
     Parameters
     ----------

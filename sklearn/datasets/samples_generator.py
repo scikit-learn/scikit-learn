@@ -52,6 +52,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     features, "redundant" linear combinations of these, "repeated" duplicates
     of sampled features, and arbitrary noise for and remaining features.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     n_samples : int, optional (default=100)
@@ -263,6 +265,8 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     n is never zero or more than `n_classes`, and that the document length
     is never zero. Likewise, we reject classes which have already been chosen.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     n_samples : int, optional (default=100)
@@ -404,6 +408,8 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
 
       y[i] = 1 if np.sum(X[i] ** 2) > 9.34 else -1
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     n_samples : int, optional (default=12000)
@@ -456,6 +462,8 @@ def make_regression(n_samples=100, n_features=100, n_informative=10,
     regression model with `n_informative` nonzero regressors to the previously
     generated input and some gaussian centered noise with some adjustable
     scale.
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -570,6 +578,8 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     A simple toy dataset to visualize clustering and classification
     algorithms.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     n_samples : int, optional (default=100)
@@ -635,6 +645,8 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Returns
     -------
     X : array of shape [n_samples, 2]
@@ -671,6 +683,8 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
 def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
                center_box=(-10.0, 10.0), shuffle=True, random_state=None):
     """Generate isotropic Gaussian blobs for clustering.
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -773,6 +787,8 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
 
     The number of features has to be >= 5.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     n_samples : int, optional (default=100)
@@ -835,6 +851,8 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
 
         y(X) = (X[:, 0] ** 2 + (X[:, 1] * X[:, 2] \
  - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 + noise * N(0, 1).
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -899,6 +917,8 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
 
         y(X) = arctan((X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) \
 / X[:, 0]) + noise * N(0, 1).
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -967,6 +987,8 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
      - gray level pictures of faces
      - TF-IDF vectors of text documents crawled from the web
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     n_samples : int, optional (default=100)
@@ -1020,6 +1042,8 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
     Returns a matrix Y = DX, such as D is (n_features, n_components),
     X is (n_components, n_samples) and each column of X has exactly
     n_nonzero_coefs non-zero elements.
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -1082,6 +1106,8 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
     Only the first 4 features are informative. The remaining features are
     useless.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     n_samples : int, optional (default=100)
@@ -1124,6 +1150,8 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
 def make_spd_matrix(n_dim, random_state=None):
     """Generate a random symmetric, positive-definite matrix.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     n_dim : int
@@ -1157,6 +1185,8 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
                            smallest_coef=.1, largest_coef=.9,
                            random_state=None):
     """Generate a sparse symmetric definite positive matrix.
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -1228,6 +1258,8 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
 def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     """Generate a swiss roll dataset.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     n_samples : int, optional (default=100)
@@ -1279,6 +1311,8 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
 def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     """Generate an S curve dataset.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     n_samples : int, optional (default=100)
@@ -1326,6 +1360,8 @@ def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
     standard normal distribution and defining classes separated by nested
     concentric multi-dimensional spheres such that roughly equal numbers of
     samples are in each class (quantiles of the :math:`\chi^2` distribution).
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -1416,6 +1452,8 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
     """Generate an array with constant block diagonal structure for
     biclustering.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     shape : iterable (n_rows, n_cols)
@@ -1503,8 +1541,11 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
 
 def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
                       maxval=100, shuffle=True, random_state=None):
+
     """Generate an array with block checkerboard structure for
     biclustering.
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
