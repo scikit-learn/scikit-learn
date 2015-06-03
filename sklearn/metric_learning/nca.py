@@ -1,4 +1,5 @@
 from ..base import BaseEstimator, TransformerMixin
+from ..metrics import euclidean_distances
 from ..utils.validation import check_is_fitted
 
 import numpy as np
@@ -76,17 +77,10 @@ def nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=0.0):
     grad = np.zeros((n_features, n_features))
     function_value = 0
 
-    distances = np.zeros((n_samples, n_samples))
-    for i in range(n_samples):
-        js = np.arange(i)
-        diff = Lx[i, :] - Lx[js, :]
-        distance = -np.einsum("ij,ij->i", diff, diff)
-        distances[i, js] = distance
-        distances[js, i] = distance
-        distances[i, i] = -np.inf
-
-    logp = distances - sp.misc.logsumexp(distances, axis=1)[:, np.newaxis]
-    p = np.exp(logp)
+    distances = -euclidean_distances(Lx, squared=True)
+    np.fill_diagonal(distances, -np.inf)
+    p = distances - sp.misc.logsumexp(distances, axis=1)[:, np.newaxis]
+    np.exp(p, out=p)
 
     for i in range(n_samples):
         class_neighbours = y == y[i]
