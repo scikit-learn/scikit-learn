@@ -317,6 +317,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 
     The hash function employed is the signed 32-bit version of Murmurhash3.
 
+    Read more in the :ref:`User Guide <text_feature_extraction>`.
+
     Parameters
     ----------
 
@@ -502,6 +504,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     If you do not provide an a-priori dictionary and you do not use an analyzer
     that does some kind of feature selection then the number of features will
     be equal to the vocabulary size found by analyzing the data.
+
+    Read more in the :ref:`User Guide <text_feature_extraction>`.
 
     Parameters
     ----------
@@ -921,6 +925,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     Idf is "t" when use_idf is given, "n" (none) otherwise.
     Normalization is "c" (cosine) when norm='l2', "n" (none) when norm=None.
 
+    Read more in the :ref:`User Guide <text_feature_extraction>`.
+
     Parameters
     ----------
     norm : 'l1', 'l2' or None, optional
@@ -1038,6 +1044,8 @@ class TfidfVectorizer(CountVectorizer):
     """Convert a collection of raw documents to a matrix of TF-IDF features.
 
     Equivalent to CountVectorizer followed by TfidfTransformer.
+
+    Read more in the :ref:`User Guide <text_feature_extraction>`.
 
     Parameters
     ----------

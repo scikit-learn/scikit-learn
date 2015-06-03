@@ -1195,6 +1195,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     binomial or multinomial deviance loss function. Binary classification
     is a special case where only a single regression tree is induced.
 
+    Read more in the :ref:`User Guide <gradient_boosting>`.
+
     Parameters
     ----------
     loss : {'deviance', 'exponential'}, optional (default='deviance')
@@ -1514,6 +1516,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     it allows for the optimization of arbitrary differentiable loss functions.
     In each stage a regression tree is fit on the negative gradient of the
     given loss function.
+
+    Read more in the :ref:`User Guide <gradient_boosting>`.
 
     Parameters
     ----------

@@ -9,6 +9,7 @@ import warnings
 from .base import KNeighborsMixin, RadiusNeighborsMixin
 from .unsupervised import NearestNeighbors
 
+
 def _check_params(X, metric, p, metric_params):
     """Check the validity of the input parameters"""
     params = zip(['metric', 'p', 'metric_params'],
@@ -49,6 +50,8 @@ def _query_include_self(X, include_self, mode):
 def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
                      p=2, metric_params=None, include_self=None):
     """Computes the (weighted) graph of k-Neighbors for points in X
+
+    Read more in the :ref:`User Guide <unsupervised_neighbors>`.
 
     Parameters
     ----------
@@ -105,9 +108,8 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
     radius_neighbors_graph
     """
     if not isinstance(X, KNeighborsMixin):
-        X = NearestNeighbors(
-            n_neighbors, metric=metric, p=p, metric_params=metric_params
-            ).fit(X)
+        X = NearestNeighbors(n_neighbors, metric=metric, p=p,
+                             metric_params=metric_params).fit(X)
     else:
         _check_params(X, metric, p, metric_params)
 
@@ -121,6 +123,8 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
 
     Neighborhoods are restricted the points at a distance lower than
     radius.
+
+    Read more in the :ref:`User Guide <unsupervised_neighbors>`.
 
     Parameters
     ----------
@@ -177,10 +181,8 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
     kneighbors_graph
     """
     if not isinstance(X, RadiusNeighborsMixin):
-        X = NearestNeighbors(
-            radius=radius, metric=metric, p=p,
-            metric_params=metric_params
-            ).fit(X)
+        X = NearestNeighbors(radius=radius, metric=metric, p=p,
+                             metric_params=metric_params).fit(X)
     else:
         _check_params(X, metric, p, metric_params)
 

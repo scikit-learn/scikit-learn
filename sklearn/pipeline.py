@@ -37,6 +37,8 @@ class Pipeline(BaseEstimator):
     For this, it enables setting parameters of the various steps using their
     names and the parameter name separated by a '__', as in the example below.
 
+    Read more in the :ref:`User Guide <pipeline>`.
+
     Parameters
     ----------
     steps : list
@@ -418,6 +420,8 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
     This estimator applies a list of transformer objects in parallel to the
     input data, then concatenates the results. This is useful to combine
     several feature extraction mechanisms into a single transformer.
+
+    Read more in the :ref:`User Guide <feature_union>`.
 
     Parameters
     ----------

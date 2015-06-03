@@ -31,6 +31,8 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     where memory is tight, e.g. when running prediction code on embedded
     devices.
 
+    Read more in the :ref:`User Guide <feature_hashing>`.
+
     Parameters
     ----------
     n_features : integer, optional

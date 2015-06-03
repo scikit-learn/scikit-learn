@@ -21,6 +21,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     This class supports both dense and sparse input and the multiclass support
     is handled according to a one-vs-the-rest scheme.
 
+    Read more in the :ref:`User Guide <svm_classification>`.
+
     Parameters
     ----------
     C : float, optional (default=1.0)
@@ -226,6 +228,8 @@ class LinearSVR(LinearModel, RegressorMixin):
 
     This class supports both dense and sparse input.
 
+    Read more in the :ref:`User Guide <svm_regression>`.
+
     Parameters
     ----------
     C : float, optional (default=1.0)
@@ -389,7 +393,7 @@ class SVC(BaseSVC):
     other, see the corresponding section in the narrative documentation:
     :ref:`svm_kernels`.
 
-    .. The narrative documentation is available at http://scikit-learn.org/
+    Read more in the :ref:`User Guide <svm_classification>`.
 
     Parameters
     ----------
@@ -521,6 +525,8 @@ class NuSVC(BaseSVC):
 
     The implementation is based on libsvm.
 
+    Read more in the :ref:`User Guide <svm_classification>`.
+
     Parameters
     ----------
     nu : float, optional (default=0.5)
@@ -641,6 +647,8 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     The implementation is based on libsvm.
 
+    Read more in the :ref:`User Guide <svm_regression>`.
+
     Parameters
     ----------
     C : float, optional (default=1.0)
@@ -752,6 +760,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     The implementation is based on libsvm.
 
+    Read more in the :ref:`User Guide <svm_regression>`.
+
     Parameters
     ----------
     C : float, optional (default=1.0)
@@ -859,6 +869,8 @@ class OneClassSVM(BaseLibSVM):
     Estimate the support of a high-dimensional distribution.
 
     The implementation is based on libsvm.
+
+    Read more in the :ref:`User Guide <svm_outlier_detection>`.
 
     Parameters
     ----------

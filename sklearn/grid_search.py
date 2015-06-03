@@ -42,6 +42,8 @@ class ParameterGrid(object):
     Can be used to iterate over parameter value combinations with the
     Python built-in function iter.
 
+    Read more in the :ref:`User Guide <grid_search>`.
+
     Parameters
     ----------
     param_grid : dict of string to sequence, or sequence of such
@@ -125,6 +127,8 @@ class ParameterSampler(object):
     ``numpy.random``. Hence setting ``random_state`` will not guarantee a
     deterministic iteration whenever ``scipy.stats`` distributions are used to
     define the parameter search space.
+
+    Read more in the :ref:`User Guide <grid_search>`.
 
     Parameters
     ----------
@@ -566,6 +570,8 @@ class GridSearchCV(BaseSearchCV):
     any classifier except that the parameters of the classifier
     used to predict is optimized by cross-validation.
 
+    Read more in the :ref:`User Guide <grid_search>`.
+
     Parameters
     ----------
     estimator : object type that implements the "fit" and "predict" methods
@@ -750,6 +756,8 @@ class RandomizedSearchCV(BaseSearchCV):
     is given as a distribution, sampling with replacement is used.
     It is highly recommended to use continuous distributions for continuous
     parameters.
+
+    Read more in the :ref:`User Guide <randomized_parameter_search>`.
 
     Parameters
     ----------

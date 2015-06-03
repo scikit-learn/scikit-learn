@@ -826,6 +826,7 @@ Some tips and tricks:
 Customizing the vectorizer can also be useful when handling Asian languages
 that do not use an explicit word separator such as whitespace.
 
+.. _image_feature_extraction:
 
 Image feature extraction
 ========================

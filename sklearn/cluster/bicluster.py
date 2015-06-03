@@ -182,6 +182,8 @@ class SpectralCoclustering(BaseSpectral):
 
     Supports sparse matrices, as long as they are nonnegative.
 
+    Read more in the :ref:`User Guide <spectral_coclustering>`.
+
     Parameters
     ----------
     n_clusters : integer, optional, default: 3
@@ -293,6 +295,8 @@ class SpectralBiclustering(BaseSpectral):
     belong to three biclusters, and each column will belong to two
     biclusters. The outer product of the corresponding row and column
     label vectors gives this checkerboard structure.
+
+    Read more in the :ref:`User Guide <spectral_biclustering>`.
 
     Parameters
     ----------

@@ -61,6 +61,9 @@ Enhancements
      option, which has a simpler forumlar and interpretation.
      By Hanna Wallach and `Andreas Müller`_.
 
+   - Added backlinks from the API reference pages to the user guide. By
+     `Andreas Müller`_.
+
 Bug fixes
 .........
 

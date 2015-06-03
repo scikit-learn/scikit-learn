@@ -274,6 +274,8 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
 class MDS(BaseEstimator):
     """Multidimensional scaling
 
+    Read more in the :ref:`User Guide <multidimensional_scaling>`.
+
     Parameters
     ----------
     metric : boolean, optional, default: True

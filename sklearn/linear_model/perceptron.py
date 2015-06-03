@@ -8,6 +8,8 @@ from ..feature_selection.from_model import _LearntSelectorMixin
 class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
     """Perceptron
 
+    Read more in the :ref:`User Guide <perceptron>`.
+
     Parameters
     ----------
 

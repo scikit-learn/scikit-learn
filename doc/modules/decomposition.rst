@@ -554,9 +554,9 @@ structure of the error covariance :math:`\Psi`:
 * :math:`\Psi = \sigma^2 \mathbf{I}`: This assumption leads to
   the probabilistic model of :class:`PCA`.
 
-* :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called Factor
-  Analysis, a classical statistical model. The matrix W is sometimes called
-  the "factor loading matrix".
+* :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called
+  :class:`FactorAnalysis`, a classical statistical model. The matrix W is
+  sometimes called the "factor loading matrix".
 
 Both model essentially estimate a Gaussian with a low-rank covariance matrix.
 Because both models are probabilistic they can be integrated in more complex

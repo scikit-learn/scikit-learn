@@ -37,6 +37,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     fitted already and all data is used for calibration. Note that
     data for fitting the classifier and for calibrating it must be disjpint.
 
+    Read more in the :ref:`User Guide <calibration>`.
+
     Parameters
     ----------
     base_estimator : instance BaseEstimator
@@ -477,6 +479,8 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
 
 def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
     """Compute true and predicted probabilities for a calibration curve.
+
+    Read more in the :ref:`User Guide <calibration>`.
 
     Parameters
     ----------

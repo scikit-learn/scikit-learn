@@ -582,6 +582,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     update is truncated to 0.0 to allow for learning sparse models and achieve
     online feature selection.
 
+    Read more in the :ref:`User Guide <sgd>`.
+
     Parameters
     ----------
     loss : str, 'hinge', 'log', 'modified_huber', 'squared_hinge',\
@@ -1100,6 +1102,8 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     This implementation works with data represented as dense numpy arrays of
     floating point values for the features.
+
+    Read more in the :ref:`User Guide <sgd>`.
 
     Parameters
     ----------

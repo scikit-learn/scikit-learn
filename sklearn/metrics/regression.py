@@ -106,6 +106,8 @@ def mean_absolute_error(y_true, y_pred,
                         multioutput='uniform_average'):
     """Mean absolute error regression loss
 
+    Read more in the :ref:`User Guide <mean_absolute_error>`.
+
     Parameters
     ----------
     y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
@@ -174,6 +176,8 @@ def mean_squared_error(y_true, y_pred,
                        multioutput='uniform_average'):
     """Mean squared error regression loss
 
+    Read more in the :ref:`User Guide <mean_squared_error>`.
+
     Parameters
     ----------
     y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
@@ -237,6 +241,8 @@ def mean_squared_error(y_true, y_pred,
 def median_absolute_error(y_true, y_pred):
     """Median absolute error regression loss
 
+    Read more in the :ref:`User Guide <median_absolute_error>`.
+
     Parameters
     ----------
     y_true : array-like of shape = (n_samples)
@@ -272,6 +278,8 @@ def explained_variance_score(y_true, y_pred,
     """Explained variance regression score function
 
     Best possible score is 1.0, lower values are worse.
+
+    Read more in the :ref:`User Guide <explained_variance_score>`.
 
     Parameters
     ----------
@@ -361,6 +369,8 @@ def r2_score(y_true, y_pred,
     """R^2 (coefficient of determination) regression score function.
 
     Best possible score is 1.0, lower values are worse.
+
+    Read more in the :ref:`User Guide <r2_score>`.
 
     Parameters
     ----------

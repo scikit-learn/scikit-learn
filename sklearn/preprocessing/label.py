@@ -56,6 +56,8 @@ def _check_numpy_unicode_bug(labels):
 class LabelEncoder(BaseEstimator, TransformerMixin):
     """Encode labels with value between 0 and n_classes-1.
 
+    Read more in the :ref:`User Guide <preprocessing_targets>`.
+
     Attributes
     ----------
     classes_ : array of shape (n_class,)
@@ -185,6 +187,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     At prediction time, one assigns the class for which the corresponding
     model gave the greatest confidence. LabelBinarizer makes this easy
     with the inverse_transform method.
+
+    Read more in the :ref:`User Guide <preprocessing_targets>`.
 
     Parameters
     ----------

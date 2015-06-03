@@ -105,6 +105,8 @@ format.
          [1, 1, 1, 1, 1],
          [1, 1, 1, 0, 0]])
 
+.. _ovr_classification:
+
 One-Vs-The-Rest
 ===============
 
@@ -155,6 +157,7 @@ To use this feature, feed the classifier an indicator matrix, in which cell
 
     * :ref:`example_plot_multilabel.py`
 
+.. _ovo_classification:
 
 One-Vs-One
 ==========
@@ -199,6 +202,7 @@ Below is an example of multiclass learning using OvO::
     .. [1] "Pattern Recognition and Machine Learning. Springer",
         Christopher M. Bishop, page 183, (First Edition)
 
+.. _ecoc:
 
 Error-Correcting Output-Codes
 =============================

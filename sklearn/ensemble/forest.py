@@ -693,6 +693,8 @@ class RandomForestClassifier(ForestClassifier):
     classifiers on various sub-samples of the dataset and use averaging to
     improve the predictive accuracy and control over-fitting.
 
+    Read more in the :ref:`User Guide <forest>`.
+
     Parameters
     ----------
     n_estimators : integer, optional (default=10)
@@ -880,6 +882,8 @@ class RandomForestRegressor(ForestRegressor):
     decision trees on various sub-samples of the dataset and use averaging
     to improve the predictive accuracy and control over-fitting.
 
+    Read more in the :ref:`User Guide <forest>`.
+
     Parameters
     ----------
     n_estimators : integer, optional (default=10)
@@ -1035,6 +1039,8 @@ class ExtraTreesClassifier(ForestClassifier):
     randomized decision trees (a.k.a. extra-trees) on various sub-samples
     of the dataset and use averaging to improve the predictive accuracy
     and control over-fitting.
+
+    Read more in the :ref:`User Guide <forest>`.
 
     Parameters
     ----------
@@ -1226,6 +1232,8 @@ class ExtraTreesRegressor(ForestRegressor):
     of the dataset and use averaging to improve the predictive accuracy
     and control over-fitting.
 
+    Read more in the :ref:`User Guide <forest>`.
+
     Parameters
     ----------
     n_estimators : integer, optional (default=10)
@@ -1389,6 +1397,8 @@ class RandomTreesEmbedding(BaseForest):
     The dimensionality of the resulting representation is
     ``n_out <= n_estimators * max_leaf_nodes``. If ``max_leaf_nodes == None``,
     the number of leaf nodes is at most ``n_estimators * 2 ** max_depth``.
+
+    Read more in the :ref:`User Guide <random_trees_embedding>`.
 
     Parameters
     ----------

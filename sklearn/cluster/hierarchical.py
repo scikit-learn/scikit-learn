@@ -98,6 +98,8 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
     This is the structured version, that takes into account some topological
     structure between samples.
 
+    Read more in the :ref:`User Guide <hierarchical_clustering>`.
+
     Parameters
     ----------
     X : array, shape (n_samples, n_features)
@@ -310,6 +312,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
 
     This is the structured version, that takes into account some topological
     structure between samples.
+
+    Read more in the :ref:`User Guide <hierarchical_clustering>`.
 
     Parameters
     ----------
@@ -607,6 +611,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     Recursively merges the pair of clusters that minimally increases
     a given linkage distance.
 
+    Read more in the :ref:`User Guide <hierarchical_clustering>`.
+
     Parameters
     ----------
     n_clusters : int, default=2
@@ -775,6 +781,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     Similar to AgglomerativeClustering, but recursively merges features
     instead of samples.
+
+    Read more in the :ref:`User Guide <hierarchical_clustering>`.
 
     Parameters
     ----------

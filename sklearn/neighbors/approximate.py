@@ -122,6 +122,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     points. Its value does not depend on the norm of the vector points but
     only on their relative angles.
 
+    Read more in the :ref:`User Guide <approximate_nearest_neighbors>`.
+
     Parameters
     ----------
 

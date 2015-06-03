@@ -448,6 +448,8 @@ class PLSRegression(_PLS):
     This class inherits from _PLS with mode="A", deflation_mode="regression",
     norm_y_weights=False and algorithm="nipals".
 
+    Read more in the :ref:`User Guide <cross_decomposition>`.
+
     Parameters
     ----------
     n_components : int, (default 2)
@@ -569,6 +571,8 @@ class PLSCanonical(_PLS):
     norm_y_weights=True and algorithm="nipals", but svd should provide similar
     results up to numerical errors.
 
+    Read more in the :ref:`User Guide <cross_decomposition>`.
+
     Parameters
     ----------
     scale : boolean, scale data? (default True)
@@ -684,6 +688,8 @@ class PLSSVD(BaseEstimator, TransformerMixin):
 
     Simply perform a svd on the crosscovariance matrix: X'Y
     There are no iterative deflation here.
+
+    Read more in the :ref:`User Guide <cross_decomposition>`.
 
     Parameters
     ----------

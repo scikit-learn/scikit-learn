@@ -84,6 +84,8 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 return_n_iter=False):
     """l1-penalized covariance estimator
 
+    Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
+
     Parameters
     ----------
     emp_cov : 2D ndarray, shape (n_features, n_features)
@@ -267,6 +269,8 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
 class GraphLasso(EmpiricalCovariance):
     """Sparse inverse covariance estimation with an l1-penalized estimator.
 
+    Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
+
     Parameters
     ----------
     alpha : positive float, default 0.01
@@ -348,6 +352,8 @@ class GraphLasso(EmpiricalCovariance):
 def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
                      tol=1e-4, enet_tol=1e-4, max_iter=100, verbose=False):
     """l1-penalized covariance estimator along a path of decreasing alphas
+
+    Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
     Parameters
     ----------
@@ -440,6 +446,8 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 class GraphLassoCV(GraphLasso):
     """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
 
+    Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
+
     Parameters
     ----------
     alphas : integer, or list positive float, optional
@@ -487,7 +495,6 @@ class GraphLassoCV(GraphLasso):
         Useful when working with data whose mean is almost, but not exactly
         zero.
         If False, data are centered before computation.
-
 
     Attributes
     ----------

@@ -37,7 +37,7 @@ def _color_brew(n):
     c = s * v
     m = v - c
 
-    for h in np.arange(25, 385, 360./n).astype(int):
+    for h in np.arange(25, 385, 360. / n).astype(int):
         # Calculate some intermediate values
         h_bar = h / 60.
         x = c * (1 - abs((h_bar % 2) - 1))
@@ -75,6 +75,8 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
 
     The sample counts that are shown are weighted with any sample_weights that
     might be present.
+
+    Read more in the :ref:`User Guide <tree>`.
 
     Parameters
     ----------
@@ -304,11 +306,11 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
                     if tree.n_outputs != 1:
                         # Find max and min impurities for multi-output
                         colors['bounds'] = (np.min(-tree.impurity),
-                                             np.max(-tree.impurity))
+                                            np.max(-tree.impurity))
                     elif tree.n_classes[0] == 1:
                         # Find max and min values in leaf nodes for regression
                         colors['bounds'] = (np.min(tree.value),
-                                             np.max(tree.value))
+                                            np.max(tree.value))
                 if tree.n_outputs == 1:
                     node_val = (tree.value[node_id][0, :] /
                                 tree.weighted_n_node_samples[node_id])

@@ -26,7 +26,7 @@ from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_array, check_random_state, compute_sample_weight
-from ..utils.validation import NotFittedError, check_is_fitted
+from ..utils.validation import NotFittedError
 
 
 from ._tree import Criterion
@@ -433,6 +433,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """A decision tree classifier.
 
+    Read more in the :ref:`User Guide <tree>`.
+
     Parameters
     ----------
     criterion : string, optional (default="gini")
@@ -665,6 +667,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     """A decision tree regressor.
 
+    Read more in the :ref:`User Guide <tree>`.
+
     Parameters
     ----------
     criterion : string, optional (default="mse")
@@ -805,6 +809,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Warning: Extra-trees should only be used within ensemble methods.
 
+    Read more in the :ref:`User Guide <tree>`.
+
     See also
     --------
     ExtraTreeRegressor, ExtraTreesClassifier, ExtraTreesRegressor
@@ -850,6 +856,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     decision tree.
 
     Warning: Extra-trees should only be used within ensemble methods.
+
+    Read more in the :ref:`User Guide <tree>`.
 
     See also
     --------

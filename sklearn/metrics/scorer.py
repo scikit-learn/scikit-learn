@@ -255,6 +255,8 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     ``mean_squared_error``, ``adjusted_rand_index`` or ``average_precision``
     and returns a callable that scores an estimator's output.
 
+    Read more in the :ref:`User Guide <scoring>`.
+
     Parameters
     ----------
     score_func : callable,

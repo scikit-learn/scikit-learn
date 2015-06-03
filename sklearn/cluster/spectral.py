@@ -170,6 +170,8 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     If affinity is the adjacency matrix of a graph, this method can be
     used to find normalized graph cuts.
 
+    Read more in the :ref:`User Guide <spectral_clustering>`.
+
     Parameters
     -----------
     affinity : array-like or sparse matrix, shape: (n_samples, n_samples)
@@ -286,6 +288,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     Alternatively, using ``precomputed``, a user-provided affinity
     matrix can be used.
+
+    Read more in the :ref:`User Guide <spectral_clustering>`.
 
     Parameters
     -----------
