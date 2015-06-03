@@ -7,7 +7,8 @@ from __future__ import division
 from math import log
 import numpy as np
 from scipy.stats import entropy
-from sklearn.base import BaseEstimator
+from ..base import BaseEstimator
+from ..utils import check_array, check_consistent_length, column_or_1d
 
 class MDLP(BaseEstimator):
     """Implements the MDLP discretization criterion from Usama Fayyad's
@@ -58,7 +59,7 @@ class MDLP(BaseEstimator):
     >>> mdlp.cat2intervals(conv_X, 2)
 
     which would return a list of tuples `(a, b)`. Each tuple represents the
-    continuous interval (a, b], where `a` can be `float("-inf")`, and `b` can
+    contnuous interval (a, b], where `a` can be `float("-inf")`, and `b` can
     be `float("inf")`.
     """
 
@@ -69,18 +70,11 @@ class MDLP(BaseEstimator):
     def fit(self, X, y):
         """Finds the intervals of interest from the input data.
         """
-        if type(X) is list:
-            X = np.array(X)
-        if type(y) is list:
-            y = np.array(y)
+        X = check_array(X, force_all_finite=True, estimator="MDLP discretizer")
+        y = column_or_1d(y)
+        check_consistent_length(X, y)
         if self.continuous_features_ is None:
             self.continuous_features_ = range(X.shape[1])
-        if(len(X.shape) != 2):
-            raise ValueError("MDLP can ony be applied to input ndarrays of "
-                             "size 2.")
-        if(X.shape[0] != y.shape[0]):
-            raise ValueError("Number of samples in X does not match number "
-                             "of targets in y")
 
         self.num_classes_ = set(y)
         self.intervals_ = dict()
@@ -99,8 +93,9 @@ class MDLP(BaseEstimator):
         0... k-1 (`k` is the number of intervals the discretizer created
         from a given continuous feature.)
         """
-        assert self.continuous_features_ is not None, "You must fit the object " \
-                                                    "before transforming data."
+        if self.continuous_features_ is None:
+            raise ValueError("You must fit the MDLP discretizer before "
+                             "transforming data.")
         discretized = list()
         for index, col in enumerate(X.T):
             if index not in self.continuous_features_:
@@ -139,12 +134,12 @@ class MDLP(BaseEstimator):
                                  "in this column.".format(cat))
         return out_intervals
 
-    def bin(self, index, attr):
-        """Bins an attribute into its appropriate interval.
+    def bin(self, value, index):
+        """Bins a continuous feature into its appropriate interval.
         """
         mappings = self.intervals_[index]
         for (a, b), _ in mappings:
-            if a < attr <= b: return a, b
+            if a < value <= b: return a, b
         raise ValueError("Numeric value did not fit in any interval")
 
     def cts2cat(self, index, col):
