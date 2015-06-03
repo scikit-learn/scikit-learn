@@ -1,6 +1,6 @@
-#title          :discretization.py
-#description    :Implementation of a few discretization algorithms
-#author         :Henry Lin <hlin117@gmail.com>
+# Title          : discretization.py
+# Author         : Henry Lin <hlin117@gmail.com>
+# License        : BSD 3 clause
 #==============================================================================
 
 from __future__ import division
@@ -12,20 +12,59 @@ from sklearn.base import BaseEstimator
 class MDLP(BaseEstimator):
     """Implements the MDLP discretization criterion from Usama Fayyad's
     paper "Multi-Interval Discretization of Continuous-Valued Attributes
-    for Classification Learning"
+    for Classification Learning". Given the class labels for each sample,
+    this transformer attempts to discretize a continuous attribute by
+    minimizing the entropy at each interval.
+
+    Attributes
+    ----------
+    min_depth : The minimum depth of the interval splitting. Overrides the
+        MDLP stopping criterion. If the entropy at a given interval is
+        found to be zero before `min_depth`, the algorithm will automatically
+        stop.
+
+        Defaults to 0.
+
+    num_classes_ : The number of classes the discretizer was fit to in `y`.
+
+    intervals_ : A dictionary from indices to lists. Each list contains
+        tuples of the form (interval, cat), where `interval` is a pair
+        `(a, b)`, and `cat` is an integer from 0... k-1 (`k` is the number
+        of intervals a continuous attribute has.)
+
+    continuous_features_ : A list of indices indicating which columns should
+        be discretized.
+
+        Defaults to `range(X.shape[1])` if not specified.
+
+    Examples
+    --------
+
+    >>> from sklearn.preprocessing import MDLP
+    >>> from sklearn.datasets import load_iris
+    >>> iris = load_iris()
+    >>> X = iris.data
+    >>> y = iris.target
+    >>> mdlp = MDLP()
+    >>> conv_X = mdlp.fit_transform(X, y)
+
+    `conv_X` will be the same shape as `X`, except it will contain
+    integers instead of continuous attributes representing the results of
+    the discretization process.
+
+    To retrieve the explicit intervals of the discretization of, say, the
+    third column (index 2), one can do
+
+    >>> mdlp.cat2intervals(conv_X, 2)
+
+    which would return a list of tuples `(a, b)`. Each tuple represents the
+    continuous interval (a, b], where `a` can be `float("-inf")`, and `b` can
+    be `float("inf")`.
     """
 
-    def __init__(self, **params):
-        self.set_params(**params)
-
-    def get_params(self, deep=True):
-        return {"continuous_columns": self.continuous_columns,
-                "min_depth": self.min_depth}
-
-    def set_params(self, **params):
-        self.continuous_columns = params.get("continous_columns")
-        self.min_depth = params.get("min_depth", 0)
-        return self
+    def __init__(self, continuous_features=None, min_depth=0):
+        self.continuous_features_ = continuous_features
+        self.min_depth = min_depth
 
     def fit(self, X, y):
         """Finds the intervals of interest from the input data.
@@ -34,8 +73,8 @@ class MDLP(BaseEstimator):
             X = np.array(X)
         if type(y) is list:
             y = np.array(y)
-        if self.continuous_columns is None:
-            self.continuous_columns = range(X.shape[1])
+        if self.continuous_features_ is None:
+            self.continuous_features_ = range(X.shape[1])
         if(len(X.shape) != 2):
             raise ValueError("MDLP can ony be applied to input ndarrays of "
                              "size 2.")
@@ -47,7 +86,7 @@ class MDLP(BaseEstimator):
         self.intervals_ = dict()
 
         for index, col in enumerate(X.T):
-            if index not in self.continuous_columns:
+            if index not in self.continuous_features_:
                 continue
             intervals = self._mdlp(col, y)
             intervals.sort(key=lambda interval: interval[0])
@@ -55,15 +94,16 @@ class MDLP(BaseEstimator):
                                      for i, interval in enumerate(intervals)]
         return self
 
-    def transform(self, X):
-        """Converts the continuous values in X into ascii character
-        values. The mapping is defined by self.intervals.
+    def transform(self, X, y=None):
+        """Converts the continuous features in X into integers from
+        0... k-1 (`k` is the number of intervals the discretizer created
+        from a given continuous feature.)
         """
-        assert self.continuous_columns is not None, "You must fit the object " \
+        assert self.continuous_features_ is not None, "You must fit the object " \
                                                     "before transforming data."
         discretized = list()
         for index, col in enumerate(X.T):
-            if index not in self.continuous_columns:
+            if index not in self.continuous_features_:
                 discretized.append(col.reshape(len(X), 1))
             transformed = self.cts2cat(index, col)
             discretized.append(transformed.reshape(len(X), 1))
@@ -75,19 +115,28 @@ class MDLP(BaseEstimator):
         self.fit(X, Y)
         return self.transform(X)
 
-    def cat2intervals(self, index, col):
-        """Converts a categorical column into an interval. This is the naive
-        linear search method, but in practice, because there won't be many
-        intervals to search through (usually at most 5), this works effectively
-        without an interval tree.
+    def cat2intervals(self, X, index):
+        """Converts a categorical feature into a list of intervals.
+        This is the naive linear search method, but in practice, because
+        there will not  be many intervals to search through (usually at
+        most 5), this works effectively without an interval tree.
         """
+        if index not in self.continuous_features_:
+            raise ValueError("The input index {0} is not listed as a "
+                             "continuous feature".format(index))
+        col = X.T[index]
         mappings = self.intervals_[index]
         out_intervals = list()
         for cat in col:
+            converted = False
             for interval, currcat in mappings:
                 if cat == currcat:
                     out_intervals.append(interval)
+                    converted = True
                     break
+            if not converted:
+                raise ValueError("The categorical value {0} was not found "
+                                 "in this column.".format(cat))
         return out_intervals
 
     def bin(self, index, attr):
@@ -99,7 +148,7 @@ class MDLP(BaseEstimator):
         raise ValueError("Numeric value did not fit in any interval")
 
     def cts2cat(self, index, col):
-        """Converts each continuous value into a categorical value.
+        """Converts each continuous feature into a categorical feature.
         """
         mappings = self.intervals_[index]
         categorical = list()
@@ -111,18 +160,18 @@ class MDLP(BaseEstimator):
         assert len(categorical) == len(col)
         return np.array(categorical)
 
-    def _mdlp(self, attributes, Y):
+    def _mdlp(self, x, y):
         """
         *attributes*: A numpy 1 dimensional ndarray
 
-        *Y*: A python list of numeric class labels.
+        *y*: A python list of numeric class labels.
 
         Returns a list of intervals, based upon the MDLP stopping criterion.
         """
 
-        order = np.argsort(attributes)
-        x = attributes[order]
-        y = Y[order]
+        order = np.argsort(x)
+        x = x[order]
+        y = y[order]
 
         intervals = list()
 
@@ -217,8 +266,8 @@ class MDLP(BaseEstimator):
         for ind in range(start + 1, end - 1):
 
             # I choose not to use a `min` function here for this optimization.
-#            if y[ind-1] == y[ind]:
-#                continue
+            if y[ind-1] == y[ind]:
+                continue
 
             curr_entropy = partition_entropy(ind)
             if prev_entropy > curr_entropy:
