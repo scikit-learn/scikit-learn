@@ -471,8 +471,3 @@ def test_verbose_second_level():
         g.fit(X)
     finally:
         sys.stdout = old_stdout
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

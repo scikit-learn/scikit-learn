@@ -309,8 +309,3 @@ def test_query_haversine():
 
     assert_array_almost_equal(dist1, dist2)
     assert_array_almost_equal(ind1, ind2)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

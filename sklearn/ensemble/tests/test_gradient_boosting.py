@@ -1012,8 +1012,3 @@ def test_non_uniform_weights_toy_edge_case_clf():
         gb = GradientBoostingClassifier(n_estimators=5)
         gb.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(gb.predict([[1, 0]]), [1])
-
-
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()

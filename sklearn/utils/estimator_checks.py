@@ -1065,8 +1065,8 @@ def check_class_weight_classifiers(name, Classifier):
         assert_greater(np.mean(y_pred == 0), 0.89)
 
 
-def check_class_weight_auto_classifiers(name, Classifier, X_train, y_train,
-                                        X_test, y_test, weights):
+def check_class_weight_balanced_classifiers(name, Classifier, X_train, y_train,
+                                            X_test, y_test, weights):
     with warnings.catch_warnings(record=True):
         classifier = Classifier()
     if hasattr(classifier, "n_iter"):
@@ -1076,18 +1076,18 @@ def check_class_weight_auto_classifiers(name, Classifier, X_train, y_train,
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
 
-    classifier.set_params(class_weight='auto')
+    classifier.set_params(class_weight='balanced')
     classifier.fit(X_train, y_train)
-    y_pred_auto = classifier.predict(X_test)
-    assert_greater(f1_score(y_test, y_pred_auto, average='weighted'),
+    y_pred_balanced = classifier.predict(X_test)
+    assert_greater(f1_score(y_test, y_pred_balanced, average='weighted'),
                    f1_score(y_test, y_pred, average='weighted'))
 
 
-def check_class_weight_auto_linear_classifier(name, Classifier):
+def check_class_weight_balanced_linear_classifier(name, Classifier):
     """Test class weights with non-contiguous class labels."""
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
-    y = [1, 1, 1, -1, -1]
+    y = np.array([1, 1, 1, -1, -1])
 
     with warnings.catch_warnings(record=True):
         classifier = Classifier()
@@ -1098,19 +1098,19 @@ def check_class_weight_auto_linear_classifier(name, Classifier):
     set_random_state(classifier)
 
     # Let the model compute the class frequencies
-    classifier.set_params(class_weight='auto')
-    coef_auto = classifier.fit(X, y).coef_.copy()
+    classifier.set_params(class_weight='balanced')
+    coef_balanced = classifier.fit(X, y).coef_.copy()
 
     # Count each label occurrence to reweight manually
-    mean_weight = (1. / 3 + 1. / 2) / 2
-    class_weight = {
-        1: 1. / 3 / mean_weight,
-        -1: 1. / 2 / mean_weight,
-    }
+    n_samples = len(y)
+    n_classes = float(len(np.unique(y)))
+
+    class_weight = {1: n_samples / (np.sum(y == 1) * n_classes),
+                    -1: n_samples / (np.sum(y == -1) * n_classes)}
     classifier.set_params(class_weight=class_weight)
     coef_manual = classifier.fit(X, y).coef_.copy()
 
-    assert_array_almost_equal(coef_auto, coef_manual)
+    assert_array_almost_equal(coef_balanced, coef_manual)
 
 
 def check_estimators_overwrite_params(name, Estimator):

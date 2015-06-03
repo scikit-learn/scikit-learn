@@ -496,6 +496,7 @@ def test_n_components():
     for linkage_func in _TREE_BUILDERS.values():
         assert_equal(ignore_warnings(linkage_func)(X, connectivity)[1], 5)
 
+
 def test_agg_n_clusters():
     # Test that an error is raised when n_clusters <= 0
 
@@ -506,7 +507,3 @@ def test_agg_n_clusters():
         msg = ("n_clusters should be an integer greater than 0."
                " %s was provided." % str(agc.n_clusters))
         assert_raise_message(ValueError, msg, agc.fit, X)
-
-if __name__ == '__main__':
-    import nose
-    nose.run(argv=['', __file__])

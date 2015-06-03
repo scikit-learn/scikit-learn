@@ -306,7 +306,6 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     y = y.squeeze()
     lars_alphas, _, lars_coef = linear_model.lars_path(X, y, method='lasso')
 
-
     _, lasso_coef2, _ = linear_model.lasso_path(X, y,
                                                 alphas=lars_alphas,
                                                 tol=1e-6,
@@ -457,8 +456,3 @@ def test_lars_path_readonly_data():
             shutil.rmtree(temp_folder)
         except shutil.WindowsError:
             warnings.warn("Could not delete temporary folder %s" % temp_folder)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

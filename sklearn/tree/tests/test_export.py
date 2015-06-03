@@ -223,8 +223,3 @@ def test_graphviz_errors():
     # Check class_names error
     out = StringIO()
     assert_raises(IndexError, export_graphviz, clf, out, class_names=[])
-
-
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()

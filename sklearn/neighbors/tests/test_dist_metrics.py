@@ -145,8 +145,3 @@ def test_pyfunc_metric():
 
     assert_array_almost_equal(D1, D2)
     assert_array_almost_equal(D1_pkl, D2_pkl)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

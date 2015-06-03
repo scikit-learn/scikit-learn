@@ -8,15 +8,16 @@ from nose.tools import assert_equal, assert_true
 from scipy import sparse
 
 from sklearn.feature_selection.rfe import RFE, RFECV
-from sklearn.datasets import load_iris, make_friedman1, make_regression
+from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
 from sklearn.svm import SVC, SVR
-from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.cross_validation import cross_val_score
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_greater
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
@@ -92,7 +93,6 @@ def test_rfe_features_importance():
 
     # Check if the supports are equal
     assert_array_equal(rfe.get_support(), rfe_svc.get_support())
-
 
 
 def test_rfe_deprecation_estimator_params():
@@ -240,6 +240,15 @@ def test_rfecv_mockclassifier():
     assert_equal(len(rfecv.ranking_), X.shape[1])
 
 
+def test_rfe_estimator_tags():
+    rfe = RFE(SVC(kernel='linear'))
+    assert_equal(rfe._estimator_type, "classifier")
+    # make sure that cross-validation is stratified
+    iris = load_iris()
+    score = cross_val_score(rfe, iris.data, iris.target)
+    assert_greater(score.min(), .7)
+
+
 def test_rfe_min_step():
     n_features = 10
     X, y = make_friedman1(n_samples=50, n_features=n_features, random_state=0)
@@ -289,7 +298,7 @@ def test_number_of_subsets_of_features():
         X = generator.normal(size=(100, n_features))
         y = generator.rand(100).round()
         rfe = RFE(estimator=SVC(kernel="linear"),
-              n_features_to_select=n_features_to_select, step=step)
+                  n_features_to_select=n_features_to_select, step=step)
         rfe.fit(X, y)
         # this number also equals to the maximum of ranking_
         assert_equal(np.max(rfe.ranking_),
@@ -317,6 +326,6 @@ def test_number_of_subsets_of_features():
         rfecv.fit(X, y)
 
         assert_equal(rfecv.grid_scores_.shape[0],
-                 formula1(n_features, n_features_to_select, step))
+                     formula1(n_features, n_features_to_select, step))
         assert_equal(rfecv.grid_scores_.shape[0],
-                 formula2(n_features, n_features_to_select, step))
+                     formula2(n_features, n_features_to_select, step))

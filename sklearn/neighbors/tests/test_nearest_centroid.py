@@ -134,8 +134,3 @@ def test_manhattan_metric():
     clf.fit(X_csr, y)
     assert_array_equal(clf.centroids_, dense_centroid)
     assert_array_equal(dense_centroid, [[-1, -1], [1, 1]])
-
-
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()

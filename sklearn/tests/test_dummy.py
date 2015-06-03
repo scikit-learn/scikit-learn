@@ -597,8 +597,3 @@ def test_dummy_regressor_sample_weight(n_samples=10):
     est = DummyRegressor(strategy="quantile", quantile=.95).fit(X, y,
                                                                 sample_weight)
     assert_equal(est.constant_, _weighted_percentile(y, sample_weight, 95.))
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

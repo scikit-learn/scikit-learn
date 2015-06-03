@@ -528,14 +528,14 @@ def test_logistic_regressioncv_class_weights():
     clf_lib.fit(X, y_)
     assert_array_equal(clf_lib.classes_, [0, 1])
 
-    # Test for class_weight=auto
+    # Test for class_weight=balanced
     X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
                                random_state=0)
     clf_lbf = LogisticRegressionCV(solver='lbfgs', fit_intercept=False,
-                                   class_weight='auto')
+                                   class_weight='balanced')
     clf_lbf.fit(X, y)
     clf_lib = LogisticRegressionCV(solver='liblinear', fit_intercept=False,
-                                   class_weight='auto')
+                                   class_weight='balanced')
     clf_lib.fit(X, y)
     assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=4)
 
