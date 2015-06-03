@@ -789,3 +789,20 @@ def test_errors_and_values_svd_helper():
 def test_ridge_classifier_no_support_multilabel():
     X, y = make_multilabel_classification(n_samples=10, random_state=0)
     assert_raises(ValueError, RidgeClassifier().fit, X, y)
+
+
+def test_best_score_():
+
+    def fit_and_get_best_score_(reg):
+        reg.fit(X_diabetes,y_diabetes)
+        assert_equal(type(reg.best_score_), np.float64)
+        
+    reg  = RidgeCV()
+    reg2 = RidgeCV(scoring='mean_absolute_error')
+    reg3 = RidgeCV(cv=5,scoring='mean_absolute_error')
+    reg4 = RidgeCV(cv=5,scoring='median_absolute_error')
+    
+    for i in (reg, reg2, reg3, reg4):
+        fit_and_get_best_score_(i)
+
+    assert_true(reg3.best_score_ is not reg4.best_score_, True)
