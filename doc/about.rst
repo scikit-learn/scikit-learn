@@ -10,7 +10,7 @@ About us
 Citing scikit-learn
 -------------------
 
-If you use scikit-learn in scientific publication, we would appreciate
+If you use scikit-learn in a scientific publication, we would appreciate
 citations to the following paper:
 
  `Scikit-learn: Machine Learning in Python
