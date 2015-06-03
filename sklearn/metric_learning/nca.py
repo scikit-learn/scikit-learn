@@ -23,8 +23,7 @@ def nca_vectorized_oracle(L, X, y, n_components, loss, outer, threshold=0.0):
 
     logp = -np.einsum("ijk,ijk->ij", A, A)  # n_samples x n_samples
     np.fill_diagonal(logp, -np.inf)
-    logZ = sp.misc.logsumexp(logp, axis=1)
-    logp -= logZ[:, np.newaxis]
+    logp -= sp.misc.logsumexp(logp, axis=1)[:, np.newaxis]
     assert logp.shape == (n_samples, n_samples)
 
     p = np.exp(logp)  # n_samples x n_samples
@@ -86,11 +85,10 @@ def nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=0.0):
         distances[js, i] = distance
         distances[i, i] = -np.inf
 
-    for i in range(n_samples):
-        logp = distances[i] - sp.misc.logsumexp(distances[i])
-        assert logp.shape == (n_samples, )
+    logp = distances - sp.misc.logsumexp(distances, axis=1)[:, np.newaxis]
 
-        p = np.exp(logp)  # n_samples
+    for i in range(n_samples):
+        p = np.exp(logp[i])  # n_samples
         assert p.shape == (n_samples, )
 
         class_neighbours = y == y[i]
@@ -144,9 +142,11 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
     if memory_permits:
         dx = X[:, np.newaxis, :] - X[np.newaxis, :, :]  # n_samples x n_samples x n_features
         outer = dx[:, :, np.newaxis, :] * dx[:, :, :, np.newaxis]  # n_samples x n_samples x n_features x n_features
-        oracle = lambda L: nca_vectorized_oracle(L, X, y, n_components, loss, outer, threshold=threshold)
+        extra_args = (X, y, n_components, loss, outer, threshold)
+        oracle = nca_vectorized_oracle
     else:
-        oracle = lambda L: nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=threshold)
+        extra_args = (X, y, n_components, loss, threshold)
+        oracle = nca_semivectorized_oracle
 
     for _ in range(n_init):
         start = time.clock()
@@ -157,7 +157,7 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
             grad_history = 1e-3 * np.ones_like(L) if is_adagrad else None
 
             for it in range(max_iter):
-                value, grad = oracle(L)
+                value, grad = oracle(L, *extra_args)
                 grad = grad.reshape(L.shape)
                 if is_adagrad:
                     grad_history += grad * grad
@@ -179,14 +179,13 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
             def callback(L):
                 state['it'] += 1
                 if verbose > 1:
-                    value, _ = oracle(L)
+                    value, _ = oracle(L, *extra_args)
                     percent = 100. * (state['it'] + 1) / max_iter
                     sys.stdout.write("\rProgress {:.2f}% :: Target = {}".format(percent, value))
                     sys.stdout.flush()
 
             options = {'maxiter': max_iter, "disp": verbose > 1, "gtol" : tol}
-            res = sp.optimize.minimize(fun=oracle, x0=L, jac=True,
-                                       options=options, callback=callback)
+            res = sp.optimize.minimize(fun=oracle, x0=L, args=extra_args, jac=True, options=options, callback=callback)
             L = res.x.reshape(L.shape)
             value, grad = oracle(L)
 
