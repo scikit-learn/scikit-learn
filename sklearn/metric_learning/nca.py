@@ -86,15 +86,13 @@ def nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=0.0):
         distances[i, i] = -np.inf
 
     logp = distances - sp.misc.logsumexp(distances, axis=1)[:, np.newaxis]
+    p = np.exp(logp)
 
     for i in range(n_samples):
-        p = np.exp(logp[i])  # n_samples
-        assert p.shape == (n_samples, )
-
         class_neighbours = y == y[i]
-        p_i = (p * class_neighbours).sum()
+        p_i = (p[i] * class_neighbours).sum()
 
-        samples_proba = np.copy(p)
+        samples_proba = np.copy(p[i])
         if loss == 'l1':
             samples_proba *= p_i
         mask = samples_proba > threshold  # n_samples
@@ -103,7 +101,7 @@ def nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=0.0):
         Xij_outer = (Xij[:, :, np.newaxis] * Xij[:, np.newaxis, :])
         grad += np.einsum("i,ijk", samples_proba[mask], Xij_outer)
 
-        neighbours_proba = p * (y == y[i])
+        neighbours_proba = p[i] * (y == y[i])
         if loss == 'kl' and p_i > 1e-10:
             neighbours_proba /= p_i
         mask = neighbours_proba > threshold  # n_samples
