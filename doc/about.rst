@@ -31,6 +31,28 @@ citations to the following paper:
     year={2011}
    }
 
+If you want to cite scikit-learn for its API or design, you may also want to consider the
+following paper:
+
+`API design for machine learning software: experiences from the scikit-learn
+project <http://arxiv.org/abs/1309.0238>`_, Buitinck *et al.*, 2013.
+
+Bibtex entry::
+
+    @article{sklearn_api,
+      author    = {Lars Buitinck and Gilles Louppe and Mathieu Blondel and
+                   Fabian Pedregosa and Andreas Mueller and Olivier Grisel and
+                   Vlad Niculae and Peter Prettenhofer and Alexandre Gramfort
+                   and Jaques Grobler and Robert Layton and Jake VanderPlas and
+                   Arnaud Joly and Brian Holt and Ga{\"{e}}l Varoquaux},
+      title     = {{API} design for machine learning software: experiences from the scikit-learn
+                   project},
+      year      = {2013},
+      url       = {http://arxiv.org/abs/1309.0238},
+      eprinttype  = {arxiv},
+      eprint      = {abs/1309.0238}
+    }
+
 Artwork
 -------
 
