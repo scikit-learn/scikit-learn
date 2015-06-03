@@ -133,6 +133,12 @@ def test_precomputed():
         assert_array_almost_equal(dist_X, dist_D)
         assert_array_almost_equal(ind_X, ind_D)
 
+        # Check X=None in prediction
+        dist_X, ind_X = getattr(nbrs_X, method)(None)
+        dist_D, ind_D = getattr(nbrs_D, method)(None)
+        assert_array_almost_equal(dist_X, dist_D)
+        assert_array_almost_equal(ind_X, ind_D)
+
         # Must raise a ValueError if the matrix is not of correct shape
         assert_raises(ValueError, getattr(nbrs_D, method), X)
 
