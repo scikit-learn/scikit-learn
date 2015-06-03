@@ -331,8 +331,6 @@ class KNeighborsMixin(object):
         if self._fit_method is None:
             raise NotFittedError("Must fit neighbors before querying.")
 
-        X = check_array(X, accept_sparse='csr')
-
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
