@@ -263,6 +263,40 @@ def test_infer_dim_3():
     assert_greater(_infer_dimension_(spect, n, p), 2)
 
 
+def test_infer_dim_bad_spec():
+    """
+    Test that we deal with a spectrum that drops to near zero
+    see issue https://github.com/scikit-learn/scikit-learn/issues/4441
+    """
+    spectrum = np.array([1.02875554e-03,
+                         7.06329556e-30,
+                         2.93889872e-31,
+                         2.22470973e-31,
+                         2.22470973e-31])
+    n_samples = 10
+    n_features = 5
+    ret = _infer_dimension_(spectrum, n_samples, n_features)
+    assert_equal(ret, 0)
+
+
+def test_assess_dimension_tiny_eigenvals():
+    """
+    Test that we deal with tiny eigenvalues appropriately when
+    `mle` inferring `n_components`
+    see issue https://github.com/scikit-learn/scikit-learn/issues/4441
+    """
+    spectrum = np.array([1.02875554e-03,
+                         7.06329556e-30,
+                         2.93889872e-31,
+                         2.22470973e-31,
+                         2.22470973e-31])
+    n_samples = 10
+    n_features = 5
+    rank = 4
+    ret = _assess_dimension_(spectrum, rank, n_samples, n_features)
+    assert_equal(ret, -np.inf)
+
+
 def test_infer_dim_by_explained_variance():
     X = iris.data
     pca = PCA(n_components=0.95)
