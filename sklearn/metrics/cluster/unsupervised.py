@@ -161,8 +161,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     B = np.array([_nearest_cluster_distance(distances[i], labels, i)
                   for i in range(n)])
     sil_samples = (B - A) / np.maximum(A, B)
-    # nan values are for clusters of size 1, and should be 0
-    return np.nan_to_num(sil_samples)
+    return sil_samples
 
 
 def _intra_cluster_distance(distances_row, labels, i):
@@ -187,6 +186,9 @@ def _intra_cluster_distance(distances_row, labels, i):
     """
     mask = labels == labels[i]
     mask[i] = False
+    if not np.any(mask):
+        # cluster of size 1
+        return 0
     a = np.mean(distances_row[mask])
     return a
 

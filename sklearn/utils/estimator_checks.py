@@ -147,7 +147,6 @@ def _yield_clustering_checks(name, Clusterer):
 
 
 def _yield_all_checks(name, Estimator):
-    #yield check_parameters_default_constructible, name, Estimator
     for check in _yield_non_meta_checks(name, Estimator):
         yield check
     if issubclass(Estimator, ClassifierMixin):
@@ -795,6 +794,7 @@ def check_estimators_fit_returns_self(name, Estimator):
     assert_true(estimator.fit(X, y) is estimator)
 
 
+@ignore_warnings
 def check_estimators_unfitted(name, Estimator):
     """Check that predict raises an exception in an unfitted estimator.
 

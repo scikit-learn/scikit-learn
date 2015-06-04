@@ -21,6 +21,7 @@ from sklearn.utils import ConvergenceWarning
 from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
 from sklearn.utils.testing import assert_warns_message, assert_raise_message
+from sklearn.utils.testing import ignore_warnings
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -767,6 +768,8 @@ def test_unfitted():
                          clf.predict, X)
 
 
+# ignore convergence warnings from max_iter=1
+@ignore_warnings
 def test_consistent_proba():
     a = svm.SVC(probability=True, max_iter=1, random_state=0)
     proba_1 = a.fit(X, Y).predict_proba(X)

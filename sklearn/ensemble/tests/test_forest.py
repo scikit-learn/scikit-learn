@@ -24,7 +24,6 @@ from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn import datasets
@@ -415,10 +414,8 @@ def test_classes_shape():
 
 
 def test_random_trees_dense_type():
-    '''
-    Test that the `sparse_output` parameter of RandomTreesEmbedding
-    works by returning a dense array.
-    '''
+    # Test that the `sparse_output` parameter of RandomTreesEmbedding
+    # works by returning a dense array.
 
     # Create the RTE with sparse=False
     hasher = RandomTreesEmbedding(n_estimators=10, sparse_output=False)
@@ -430,11 +427,8 @@ def test_random_trees_dense_type():
 
 
 def test_random_trees_dense_equal():
-    '''
-    Test that the `sparse_output` parameter of RandomTreesEmbedding
-    works by returning the same array for both argument
-    values.
-    '''
+    # Test that the `sparse_output` parameter of RandomTreesEmbedding
+    # works by returning the same array for both argument values.
 
     # Create the RTEs
     hasher_dense = RandomTreesEmbedding(n_estimators=10, sparse_output=False,
@@ -807,8 +801,7 @@ def check_class_weight_balanced_and_bootstrap_multi_output(name):
     clf = ForestClassifier(class_weight='balanced_subsample', random_state=0)
     clf.fit(X, _y)
     clf = ForestClassifier(class_weight='subsample', random_state=0)
-    #assert_warns_message(DeprecationWarning, "balanced_subsample", clf.fit, X, _y)
-    clf.fit(X, _y)
+    ignore_warnings(clf.fit)(X, _y)
 
 
 def test_class_weight_balanced_and_bootstrap_multi_output():
