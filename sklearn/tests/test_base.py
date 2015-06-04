@@ -14,7 +14,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection.search import GridSearchCV
 from sklearn.utils import deprecated
 
 

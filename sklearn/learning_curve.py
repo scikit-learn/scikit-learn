@@ -17,6 +17,11 @@ from .utils import indexable
 from .utils.fixes import astype
 
 
+warnings.warn("This module has been deprecated in favor of the "
+              "model_selection module into which all the functions are moved.",
+              DeprecationWarning)
+
+
 __all__ = ['learning_curve', 'validation_curve']
 
 

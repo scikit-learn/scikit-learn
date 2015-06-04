@@ -21,7 +21,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
                                   Perceptron, LogisticRegression)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets

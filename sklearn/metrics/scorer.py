@@ -4,9 +4,9 @@ interface for model selection and evaluation using
 arbitrary score functions.
 
 A scorer object is a callable that can be passed to
-:class:`sklearn.grid_search.GridSearchCV` or
-:func:`sklearn.cross_validation.cross_val_score` as the ``scoring`` parameter,
-to specify how a model should be evaluated.
+:class:`sklearn.model_selection.search.GridSearchCV` or
+:func:`sklearn.model_selection.validation.cross_val_score` as the ``scoring``
+parameter, to specify how a model should be evaluated.
 
 The signature of the call is ``(estimator, X, y)`` where ``estimator``
 is the model to be evaluated, ``X`` is the test data and ``y`` is the
@@ -294,7 +294,7 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
     >>> ftwo_scorer
     make_scorer(fbeta_score, beta=2)
-    >>> from sklearn.grid_search import GridSearchCV
+    >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer)
