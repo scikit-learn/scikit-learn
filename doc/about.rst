@@ -39,7 +39,7 @@ project <http://arxiv.org/abs/1309.0238>`_, Buitinck *et al.*, 2013.
 
 Bibtex entry::
 
-    @article{sklearn_api,
+    @inproceedings{sklearn_api,
       author    = {Lars Buitinck and Gilles Louppe and Mathieu Blondel and
                    Fabian Pedregosa and Andreas Mueller and Olivier Grisel and
                    Vlad Niculae and Peter Prettenhofer and Alexandre Gramfort
@@ -47,10 +47,9 @@ Bibtex entry::
                    Arnaud Joly and Brian Holt and Ga{\"{e}}l Varoquaux},
       title     = {{API} design for machine learning software: experiences from the scikit-learn
                    project},
+      booktitle = {ECML PKDD Workshop: Languages for Data Mining and Machine Learning},
       year      = {2013},
-      url       = {http://arxiv.org/abs/1309.0238},
-      eprinttype  = {arxiv},
-      eprint      = {abs/1309.0238}
+      pages = {108--122},
     }
 
 Artwork
