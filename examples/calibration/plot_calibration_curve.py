@@ -45,6 +45,7 @@ print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+#         Alejandro Correa Bahnsen <al.bahnsen@gmail.com>
 # License: BSD Style.
 
 import matplotlib.pyplot as plt
@@ -77,6 +78,9 @@ def plot_calibration_curve(est, name, fig_index):
     # Calibrated with sigmoid calibration
     sigmoid = CalibratedClassifierCV(est, cv=2, method='sigmoid')
 
+    # Calibrated with ROC convex hull calibration
+    rocch = CalibratedClassifierCV(est, cv=2, method='rocch')
+
     # Logistic regression with no calibration as baseline
     lr = LogisticRegression(C=1., solver='lbfgs')
 
@@ -88,7 +92,8 @@ def plot_calibration_curve(est, name, fig_index):
     for clf, name in [(lr, 'Logistic'),
                       (est, name),
                       (isotonic, name + ' + Isotonic'),
-                      (sigmoid, name + ' + Sigmoid')]:
+                      (sigmoid, name + ' + Sigmoid'),
+                      (rocch, name + ' + ROCConvexHull')]:
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         if hasattr(clf, "predict_proba"):
@@ -100,7 +105,7 @@ def plot_calibration_curve(est, name, fig_index):
 
         clf_score = brier_score_loss(y_test, prob_pos, pos_label=y.max())
         print("%s:" % name)
-        print("\tBrier: %1.3f" % (clf_score))
+        print("\tBrier: %1.4f" % (clf_score))
         print("\tPrecision: %1.3f" % precision_score(y_test, y_pred))
         print("\tRecall: %1.3f" % recall_score(y_test, y_pred))
         print("\tF1: %1.3f\n" % f1_score(y_test, y_pred))
@@ -109,7 +114,7 @@ def plot_calibration_curve(est, name, fig_index):
             calibration_curve(y_test, prob_pos, n_bins=10)
 
         ax1.plot(mean_predicted_value, fraction_of_positives, "s-",
-                 label="%s (%1.3f)" % (name, clf_score))
+                 label="%s (%1.4f)" % (name, clf_score))
 
         ax2.hist(prob_pos, range=(0, 1), bins=10, label=name,
                  histtype="step", lw=2)

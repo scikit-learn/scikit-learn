@@ -26,6 +26,7 @@ print(__doc__)
 #         Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #         Balazs Kegl <balazs.kegl@gmail.com>
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+#         Alejandro Correa Bahnsen <al.bahnsen@gmail.com>
 # License: BSD Style.
 
 import numpy as np
@@ -72,16 +73,24 @@ clf_sigmoid = CalibratedClassifierCV(clf, cv=2, method='sigmoid')
 clf_sigmoid.fit(X_train, y_train, sw_train)
 prob_pos_sigmoid = clf_sigmoid.predict_proba(X_test)[:, 1]
 
+# Gaussian Naive-Bayes with rocch calibration
+clf_rocch = CalibratedClassifierCV(clf, cv=2, method='rocch')
+clf_rocch.fit(X_train, y_train, sw_train)
+prob_pos_rocch = clf_rocch.predict_proba(X_test)[:, 1]
+
 print("Brier scores: (the smaller the better)")
 
 clf_score = brier_score_loss(y_test, prob_pos_clf, sw_test)
-print("No calibration: %1.3f" % clf_score)
+print("No calibration: %1.4f" % clf_score)
 
 clf_isotonic_score = brier_score_loss(y_test, prob_pos_isotonic, sw_test)
-print("With isotonic calibration: %1.3f" % clf_isotonic_score)
+print("With isotonic calibration: %1.4f" % clf_isotonic_score)
 
 clf_sigmoid_score = brier_score_loss(y_test, prob_pos_sigmoid, sw_test)
-print("With sigmoid calibration: %1.3f" % clf_sigmoid_score)
+print("With sigmoid calibration: %1.4f" % clf_sigmoid_score)
+
+clf_rocch_score = brier_score_loss(y_test, prob_pos_rocch, sw_test)
+print("With rocch calibration: %1.4f" % clf_rocch_score)
 
 ###############################################################################
 # Plot the data and the predicted probabilities
@@ -103,6 +112,8 @@ plt.plot(prob_pos_isotonic[order], 'g', linewidth=3,
          label='Isotonic calibration (%1.3f)' % clf_isotonic_score)
 plt.plot(prob_pos_sigmoid[order], 'b', linewidth=3,
          label='Sigmoid calibration (%1.3f)' % clf_sigmoid_score)
+plt.plot(prob_pos_rocch[order], 'r', linewidth=3,
+         label='ROCConvexHull calibration (%1.3f)' % clf_rocch_score)
 plt.plot(np.linspace(0, y_test.size, 51)[1::2],
          y_test[order].reshape(25, -1).mean(1),
          'k', linewidth=3, label=r'Empirical')

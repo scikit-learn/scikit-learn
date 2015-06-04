@@ -4,6 +4,7 @@
 #         Balazs Kegl <balazs.kegl@gmail.com>
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #         Mathieu Blondel <mathieu@mblondel.org>
+#         Alejandro Correa Bahnsen <al.bahnsen@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -24,6 +25,8 @@ from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .cross_validation import _check_cv
 from .metrics.classification import _check_binary_probabilistic_predictions
+from .metrics import roc_curve
+from scipy.spatial import ConvexHull
 
 
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
@@ -44,12 +47,13 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         to offer more accurate predict_proba outputs. If cv=prefit, the
         classifier must have been fit already on data.
 
-    method : 'sigmoid' | 'isotonic'
+    method : 'sigmoid' | 'isotonic' | 'rocch'
         The method to use for calibration. Can be 'sigmoid' which
-        corresponds to Platt's method or 'isotonic' which is a
-        non-parameteric approach. It is not advised to use isotonic calibration
-        with too few calibration samples (<<1000) since it tends to overfit.
-        Use sigmoids (Platt's calibration) in this case.
+        corresponds to Platt's method, 'isotonic' which is a
+        non-parameteric approach or 'rocch' which corresponds to calibration
+        using the ROC convex hull method. It is not advised to use isotonic
+        calibration with too few calibration samples (<<1000) since it tends
+        to overfit. Use sigmoids (Platt's calibration) in this case.
 
     cv : integer or cross-validation generator or "prefit", optional
         If an integer is passed, it is the number of folds (default 3).
@@ -81,6 +85,10 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
 
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
+
+    .. [5] A Unified View of Performance Metrics : Translating Threshold Choice
+           into Expected Classification Loss. J. Hernandez-Orallo & P. Flach &
+           C. Ferri. JMLR 2012.
     """
     def __init__(self, base_estimator=None, method='sigmoid', cv=3):
         self.base_estimator = base_estimator
@@ -219,7 +227,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
 
 
 class _CalibratedClassifier(object):
-    """Probability calibration with isotonic regression or sigmoid.
+    """Probability calibration with isotonic regression, sigmoid or
+     ROC convex hull.
 
     It assumes that base_estimator has already been fit, and trains the
     calibration on the input set of the fit function. Note that this class
@@ -233,10 +242,12 @@ class _CalibratedClassifier(object):
         to offer more accurate predict_proba outputs. No default value since
         it has to be an already fitted estimator.
 
-    method : 'sigmoid' | 'isotonic'
+    method : 'sigmoid' | 'isotonic' | 'rocch'
         The method to use for calibration. Can be 'sigmoid' which
-        corresponds to Platt's method or 'isotonic' which is a
-        non-parameteric approach based on isotonic regression.
+        corresponds to Platt's method, 'isotonic' which is a
+        non-parameteric approach based on isotonic regression or
+        'rocch' which corresponds to calibration using the
+        ROC convex hull method.
 
     References
     ----------
@@ -251,6 +262,10 @@ class _CalibratedClassifier(object):
 
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
+
+    .. [5] A Unified View of Performance Metrics : Translating Threshold Choice
+           into Expected Classification Loss. J. Hernandez-Orallo & P. Flach &
+           C. Ferri. JMLR 2012.
     """
     def __init__(self, base_estimator, method='sigmoid'):
         self.base_estimator = base_estimator
@@ -305,9 +320,11 @@ class _CalibratedClassifier(object):
                 calibrator = IsotonicRegression(out_of_bounds='clip')
             elif self.method == 'sigmoid':
                 calibrator = _SigmoidCalibration()
+            elif self.method == 'rocch':
+                calibrator = _ROCCHCalibration()
             else:
                 raise ValueError('method should be "sigmoid" or '
-                                 '"isotonic". Got %s.' % self.method)
+                                 '"isotonic" or "rocch". Got %s.' % self.method)
             calibrator.fit(this_df, Y[:, k], sample_weight)
             self.calibrators_.append(calibrator)
 
@@ -532,3 +549,93 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
     prob_pred = (bin_sums[nonzero] / bin_total[nonzero])
 
     return prob_true, prob_pred
+
+
+class _ROCCHCalibration(BaseEstimator, RegressorMixin):
+    """Implementation the the calibration method ROCConvexHull
+
+    Attributes
+    ----------
+    `calibration_map` : array-like
+        calibration map for mapping the raw probabilities to the calibrated probabilities.
+
+    References
+    ----------
+    .. [5] A Unified View of Performance Metrics : Translating Threshold Choice
+           into Expected Classification Loss. J. Hernandez-Orallo & P. Flach &
+           C. Ferri. JMLR 2012.
+
+    """
+    def fit(self, df, y, sample_weight=None):
+        """Fit the model using X, y as training data.
+
+        Parameters
+        ----------
+        df : ndarray, shape (n_samples,)
+            The decision function or predict proba for the samples.
+
+        y : ndarray, shape (n_samples,)
+            The targets.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted.
+
+        Returns
+        -------
+        self : object
+            Returns an instance of self.
+        """
+
+        df = column_or_1d(df)
+        y = column_or_1d(y)
+        df, y = indexable(df, y)
+
+        # Calculate the roc curve
+        fpr, tpr, thresholds = roc_curve(y, df, sample_weight=sample_weight)
+
+        # Calculate convex hull
+        temp_ch = np.vstack((fpr,tpr)).T
+        hull = ConvexHull(temp_ch)
+        hull_idx = np.sort(hull.vertices)
+
+        # Get new thresholds and invert order
+        ch_thresholds = thresholds[hull_idx]
+        ch_thresholds = ch_thresholds[::-1]
+
+        # Fix to generalize
+        ch_thresholds[0] = -np.inf
+        ch_thresholds[-1] = np.inf
+
+        # Distribution between new thresholds
+        binids = np.digitize(df, ch_thresholds) - 1
+
+        bin_true = np.bincount(binids, weights=y, minlength=len(ch_thresholds))
+        bin_total = np.bincount(binids, minlength=len(ch_thresholds))
+
+        nonzero = bin_total != 0
+        prob_true = (bin_true[nonzero] / bin_total[nonzero])
+
+        self.calibration_map = (ch_thresholds, prob_true)
+
+        return self
+
+    def predict(self, T):
+        """Predict new data by applying the calibration map
+
+        Parameters
+        ----------
+        T : array-like, shape (n_samples,)
+            Data to predict from.
+
+        Returns
+        -------
+        `T_` : array, shape (n_samples,)
+            The predicted data.
+        """
+        T = column_or_1d(T)
+
+        ch_thresholds, prob_true = self.calibration_map
+
+        T_ = np.digitize(T, ch_thresholds) - 1
+
+        return prob_true[T_]
