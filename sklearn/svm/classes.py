@@ -411,9 +411,9 @@ class SVC(BaseSVC):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default=0.0)
+    gamma : float, optional (default='auto')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
-        If gamma is 0.0 then 1/n_features will be used instead.
+        If gamma is 'auto' then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -489,7 +489,7 @@ class SVC(BaseSVC):
     >>> clf = SVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-        gamma=0.0, kernel='rbf', max_iter=-1, probability=False,
+        gamma='auto', kernel='rbf', max_iter=-1, probability=False,
         random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -506,7 +506,7 @@ class SVC(BaseSVC):
 
     """
 
-    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
                  verbose=False, max_iter=-1, random_state=None):
@@ -545,9 +545,9 @@ class NuSVC(BaseSVC):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default=0.0)
+    gamma : float, optional (default='auto')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
-        If gamma is 0.0 then 1/n_features will be used instead.
+        If gamma is 'auto' then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -614,7 +614,7 @@ class NuSVC(BaseSVC):
     >>> from sklearn.svm import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    NuSVC(cache_size=200, coef0=0.0, degree=3, gamma=0.0, kernel='rbf',
+    NuSVC(cache_size=200, coef0=0.0, degree=3, gamma='auto', kernel='rbf',
           max_iter=-1, nu=0.5, probability=False, random_state=None,
           shrinking=True, tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
@@ -630,7 +630,7 @@ class NuSVC(BaseSVC):
         liblinear.
     """
 
-    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
+    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, verbose=False, max_iter=-1,
                  random_state=None):
@@ -671,9 +671,9 @@ class SVR(BaseLibSVM, RegressorMixin):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default=0.0)
+    gamma : float, optional (default='auto')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
-        If gamma is 0.0 then 1/n_features will be used instead.
+        If gamma is 'auto' then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -727,7 +727,7 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.0,
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma='auto',
         kernel='rbf', max_iter=-1, shrinking=True, tol=0.001, verbose=False)
 
     See also
@@ -740,9 +740,9 @@ class SVR(BaseLibSVM, RegressorMixin):
         Scalable Linear Support Vector Machine for regression
         implemented using liblinear.
     """
-    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0, tol=1e-3,
-                 C=1.0, epsilon=0.1, shrinking=True, cache_size=200,
-                 verbose=False, max_iter=-1):
+    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0, 
+                 tol=1e-3, C=1.0, epsilon=0.1, shrinking=True, 
+                 cache_size=200, verbose=False, max_iter=-1):
 
         super(SVR, self).__init__(
             'epsilon_svr', kernel=kernel, degree=degree, gamma=gamma,
@@ -783,9 +783,9 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default=0.0)
+    gamma : float, optional (default='auto')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
-        If gamma is 0.0 then 1/n_features will be used instead.
+        If gamma is 'auto' then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -839,8 +839,9 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)  #doctest: +NORMALIZE_WHITESPACE
-    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.0, kernel='rbf',
-          max_iter=-1, nu=0.1, shrinking=True, tol=0.001, verbose=False)
+    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma='auto', 
+          kernel='rbf', max_iter=-1, nu=0.1, shrinking=True, tol=0.001, 
+          verbose=False)
 
     See also
     --------
@@ -853,7 +854,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     """
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
-                 gamma=0.0, coef0=0.0, shrinking=True, tol=1e-3,
+                 gamma='auto', coef0=0.0, shrinking=True, tol=1e-3,
                  cache_size=200, verbose=False, max_iter=-1):
 
         super(NuSVR, self).__init__(
@@ -891,9 +892,9 @@ class OneClassSVM(BaseLibSVM):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default=0.0)
+    gamma : float, optional (default='auto')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
-        If gamma is 0.0 then 1/n_features will be used instead.
+        If gamma is 'auto' then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -942,9 +943,9 @@ class OneClassSVM(BaseLibSVM):
         Constants in decision function.
 
     """
-    def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0, tol=1e-3,
-                 nu=0.5, shrinking=True, cache_size=200, verbose=False,
-                 max_iter=-1, random_state=None):
+    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0, 
+                 tol=1e-3, nu=0.5, shrinking=True, cache_size=200, 
+                 verbose=False, max_iter=-1, random_state=None):
 
         super(OneClassSVM, self).__init__(
             'one_class', kernel, degree, gamma, coef0, tol, 0., nu, 0.,

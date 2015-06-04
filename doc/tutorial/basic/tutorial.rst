@@ -214,9 +214,9 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
-    kernel='rbf', max_iter=-1, probability=False, random_state=None,
-    shrinking=True, tol=0.001, verbose=False)
+  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
+    gamma='auto', kernel='rbf', max_iter=-1, probability=False,
+    random_state=None, shrinking=True, tol=0.001, verbose=False)
 
   >>> import pickle
   >>> s = pickle.dumps(clf)
@@ -287,17 +287,17 @@ maintained::
     >>> iris = datasets.load_iris()
     >>> clf = SVC()
     >>> clf.fit(iris.data, iris.target)
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
-      kernel='rbf', max_iter=-1, probability=False, random_state=None,
-      shrinking=True, tol=0.001, verbose=False)
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
+      gamma='auto', kernel='rbf', max_iter=-1, probability=False,
+      random_state=None, shrinking=True, tol=0.001, verbose=False)
 
     >>> list(clf.predict(iris.data[:3]))
     [0, 0, 0]
 
     >>> clf.fit(iris.data, iris.target_names[iris.target])
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
-      kernel='rbf', max_iter=-1, probability=False, random_state=None,
-      shrinking=True, tol=0.001, verbose=False)
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
+      gamma='auto', kernel='rbf', max_iter=-1, probability=False,
+      random_state=None, shrinking=True, tol=0.001, verbose=False)
 
     >>> list(clf.predict(iris.data[:3]))  # doctest: +NORMALIZE_WHITESPACE
     ['setosa', 'setosa', 'setosa']
@@ -324,16 +324,16 @@ more than once will overwrite what was learned by any previous ``fit()``::
 
   >>> clf = SVC()
   >>> clf.set_params(kernel='linear').fit(X, y)
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
-    kernel='linear', max_iter=-1, probability=False, random_state=None,
-    shrinking=True, tol=0.001, verbose=False)
+  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
+    gamma='auto', kernel='linear', max_iter=-1, probability=False,
+    random_state=None, shrinking=True, tol=0.001, verbose=False)
   >>> clf.predict(X_test)
   array([1, 0, 1, 1, 0])
 
   >>> clf.set_params(kernel='rbf').fit(X, y)
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
-    kernel='rbf', max_iter=-1, probability=False, random_state=None,
-    shrinking=True, tol=0.001, verbose=False)
+  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
+    gamma='auto', kernel='rbf', max_iter=-1, probability=False,
+    random_state=None, shrinking=True, tol=0.001, verbose=False)
   >>> clf.predict(X_test)
   array([0, 0, 0, 1, 0])
 
