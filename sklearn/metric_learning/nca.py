@@ -19,16 +19,12 @@ def nca_vectorized_oracle(L, X, y, n_components, loss, outer, threshold=0.0):
     Lx = np.dot(X, L.T)  # n_samples x n_components
     assert Lx.shape == (n_samples, n_components)
 
-    A = Lx[np.newaxis, :, :] - Lx[:, np.newaxis, :]  # n_samples x n_samples x n_components
-    assert A.shape == (n_samples, n_samples, n_components)
-
-    logp = -np.einsum("ijk,ijk->ij", A, A)  # n_samples x n_samples
-    np.fill_diagonal(logp, -np.inf)
-    logp -= sp.misc.logsumexp(logp, axis=1)[:, np.newaxis]
-    assert logp.shape == (n_samples, n_samples)
-
-    p = np.exp(logp)  # n_samples x n_samples
+    p = -euclidean_distances(Lx, squared=True)
+    np.fill_diagonal(p, -np.inf)
+    p -= sp.misc.logsumexp(p, axis=1)[:, np.newaxis]
     assert p.shape == (n_samples, n_samples)
+    
+    np.exp(p, out=p)  # n_samples x n_samples
 
     class_neighbours = y[:, np.newaxis] == y[np.newaxis, :]
 
@@ -77,9 +73,9 @@ def nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=0.0):
     grad = np.zeros((n_features, n_features))
     function_value = 0
 
-    distances = -euclidean_distances(Lx, squared=True)
-    np.fill_diagonal(distances, -np.inf)
-    p = distances - sp.misc.logsumexp(distances, axis=1)[:, np.newaxis]
+    p = -euclidean_distances(Lx, squared=True)
+    np.fill_diagonal(p, -np.inf)
+    p -= sp.misc.logsumexp(p, axis=1)[:, np.newaxis]
     np.exp(p, out=p)
 
     for i in range(n_samples):
