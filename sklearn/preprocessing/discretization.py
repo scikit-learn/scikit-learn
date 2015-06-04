@@ -21,17 +21,14 @@ class MDLP(BaseEstimator):
     ----------
     min_depth : The minimum depth of the interval splitting. Overrides the
         MDLP stopping criterion. If the entropy at a given interval is
-        found to be zero before `min_depth`, the algorithm will automatically
-        stop.
+        found to be zero before `min_depth`, the algorithm will stop.
 
         Defaults to 0.
 
     num_classes_ : The number of classes the discretizer was fit to in `y`.
 
-    intervals_ : A dictionary from indices to lists. Each list contains
-        tuples of the form (interval, cat), where `interval` is a pair
-        `(a, b)`, and `cat` is an integer from 0... k-1 (`k` is the number
-        of intervals a continuous attribute has.)
+    cut_points_ : A dictionary mapping indices to a numpy array. Each
+    numpy array is a sorted list of cut points found from discretization.
 
     continuous_features_ : A list of indices indicating which columns should
         be discretized.
@@ -69,6 +66,14 @@ class MDLP(BaseEstimator):
 
     def fit(self, X, y):
         """Finds the intervals of interest from the input data.
+
+        Parameters
+        ----------
+        X : The array containing features to be discretized. Continuous
+            features should be specified by the `continuous_features`
+            attribute.
+
+        y : A list or array of class labels corresponding to `X`.
         """
         X = check_array(X, force_all_finite=True, estimator="MDLP discretizer")
         y = column_or_1d(y)
@@ -77,15 +82,13 @@ class MDLP(BaseEstimator):
             self.continuous_features_ = range(X.shape[1])
 
         self.num_classes_ = set(y)
-        self.intervals_ = dict()
+        self.cut_points_ = dict()
 
         for index, col in enumerate(X.T):
             if index not in self.continuous_features_:
                 continue
-            intervals = self._mdlp(col, y)
-            intervals.sort(key=lambda interval: interval[0])
-            self.intervals_[index] = [(interval, i)
-                                     for i, interval in enumerate(intervals)]
+            cut_points = self._mdlp(col, y)
+            self.cut_points_[index] = np.array(cut_points)
         return self
 
     def transform(self, X, y=None):
@@ -96,13 +99,11 @@ class MDLP(BaseEstimator):
         if self.continuous_features_ is None:
             raise ValueError("You must fit the MDLP discretizer before "
                              "transforming data.")
-        discretized = list()
-        for index, col in enumerate(X.T):
-            if index not in self.continuous_features_:
-                discretized.append(col.reshape(len(X), 1))
-            transformed = self.cts2cat(index, col)
-            discretized.append(transformed.reshape(len(X), 1))
-        return np.hstack(discretized)
+
+        output = X.copy()
+        for i in self.continuous_features_:
+            output[:, i] = np.searchsorted(self.cut_points_[i], X[:, i])
+        return output
 
     def fit_transform(self, X, Y):
         """Performs the fitting and the data transformations.
@@ -112,69 +113,58 @@ class MDLP(BaseEstimator):
 
     def cat2intervals(self, X, index):
         """Converts a categorical feature into a list of intervals.
-        This is the naive linear search method, but in practice, because
-        there will not  be many intervals to search through (usually at
-        most 5), this works effectively without an interval tree.
         """
-        if index not in self.continuous_features_:
-            raise ValueError("The input index {0} is not listed as a "
-                             "continuous feature".format(index))
-        col = X.T[index]
-        mappings = self.intervals_[index]
-        out_intervals = list()
-        for cat in col:
-            converted = False
-            for interval, currcat in mappings:
-                if cat == currcat:
-                    out_intervals.append(interval)
-                    converted = True
-                    break
-            if not converted:
-                raise ValueError("The categorical value {0} was not found "
-                                 "in this column.".format(cat))
-        return out_intervals
+        cp_indices = X.T[index]
+        return self._assign_intervals(cp_indices, index)
 
-    def bin(self, value, index):
+    def _assign_intervals(self, cp_indices, index):
+        """Assigns the cut point indices `cp_indices` (representing
+        categorical features) into a list of intervals.
+        """
+
+        non_zero_mask = cp_indices[cp_indices - 1 != -1].astype(int) - 1
+        fronts = np.zeros(cp_indices.shape)
+        fronts[cp_indices == 0] = float("-inf")
+        fronts[cp_indices != 0] = self.cut_points_[index][non_zero_mask]
+
+        numCuts = len(self.cut_points_[index])
+        non_numCuts_mask = cp_indices[cp_indices != 2].astype(int)
+        backs = np.zeros(cp_indices.shape)
+        backs[cp_indices == numCuts] = float("inf")
+        backs[cp_indices != numCuts] = self.cut_points_[index][non_numCuts_mask]
+
+        return [(front, back) for front, back in zip(fronts, backs)]
+
+
+    def cts2intervals(self, col, index):
         """Bins a continuous feature into its appropriate interval.
+
+        TODO: There's probably a more elegant way of going about this
+        when `col` is a scalar.
         """
-        mappings = self.intervals_[index]
-        for (a, b), _ in mappings:
-            if a < value <= b: return a, b
-        raise ValueError("Numeric value did not fit in any interval")
+        cp_indices = self.cts2cat(col, index)
+        if cp_indices is not np.array:
+            cp_indices = np.array([cp_indices])
+        return self._assign_intervals(cp_indices, index)
 
-    def cts2cat(self, index, col):
-        """Converts each continuous feature into a categorical feature.
+    def cts2cat(self, col, index):
+        """Converts each continuous feature from index `index` into
+        a categorical feature from the input column `col`.
         """
-        mappings = self.intervals_[index]
-        categorical = list()
-        for attr in col:
-            for (a, b), cat in mappings:
-                if a < attr <= b:
-                    categorical.append(cat)
-                    break
-        assert len(categorical) == len(col)
-        return np.array(categorical)
+        return np.searchsorted(self.cut_points_[index], col)
 
-    def _mdlp(self, x, y):
-        """
-        *attributes*: A numpy 1 dimensional ndarray
-
-        *y*: A python list of numeric class labels.
-
-        Returns a list of intervals, based upon the MDLP stopping criterion.
-        """
-
-        order = np.argsort(x)
-        x = x[order]
+    def _mdlp(self, col, y):
+        order = np.argsort(col)
+        col = col[order]
         y = y[order]
 
-        intervals = list()
+        cut_points = set()
 
         def get_cut(ind):
-            return (x[ind-1] + x[ind]) / 2
+            return (col[ind-1] + col[ind]) / 2
 
-        # Now we do a depth first search to create intervals
-        num_samples = len(x)
+        # Now we do a depth first search to create cut_points
+        num_samples = len(col)
         search_intervals = list()
         search_intervals.append((0, num_samples, 0))
         while len(search_intervals) > 0:
@@ -182,22 +172,24 @@ class MDLP(BaseEstimator):
 
             k = self._find_cut(y, start, end)
 
-            # Need to see whether the "front" and "back" of the intervals need
+            # Need to see whether the "front" and "back" of the interval need
             # to be float("-inf") or float("inf")
-            if (k == -1) or (self._reject_split(y, start, end, k) and
-                             depth >= self.min_depth):
+            if (k == -1) or (depth >= self.min_depth and
+                             self._reject_split(y, start, end, k)):
                 front = float("-inf") if (start == 0) else get_cut(start)
                 back = float("inf") if (end == num_samples) else get_cut(end)
 
-                # Corner case: If front == back, don't add it in
-                if front < back:
-                    intervals.append((front, back))
+                if front == back: continue  # Corner case
+                if front != float("-inf"): cut_points.add(front)
+                if back != float("inf"): cut_points.add(back)
                 continue
 
             search_intervals.append((start, k, depth + 1))
             search_intervals.append((k, end, depth + 1))
 
-        return intervals
+        cut_points = list(cut_points)
+        cut_points.sort()
+        return cut_points
 
     @staticmethod
     def _slice_entropy(y, start, end):
