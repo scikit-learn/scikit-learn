@@ -232,13 +232,6 @@ class MDLP(BaseEstimator):
         # and [ind, end).
         length = end - start
 
-        def partition_entropy(ind):
-            first_half = (ind - start) / length * \
-                    MDLP._slice_entropy(y, start, ind)[0]
-            second_half = (end - ind) / length * \
-                    MDLP._slice_entropy(y, ind, end)[0]
-            return first_half + second_half
-
         """
         For each iteration, we'll have start != ind and ind != end
         We'll also have the length of both partitions at least 1
@@ -256,7 +249,13 @@ class MDLP(BaseEstimator):
             if y[ind-1] == y[ind]:
                 continue
 
-            curr_entropy = partition_entropy(ind)
+            # Finds the partition entropy, and see if this entropy is minimum
+            first_half = (ind - start) / length * \
+                    MDLP._slice_entropy(y, start, ind)[0]
+            second_half = (end - ind) / length * \
+                    MDLP._slice_entropy(y, ind, end)[0]
+            curr_entropy = first_half + second_half
+
             if prev_entropy > curr_entropy:
                 prev_entropy = curr_entropy
                 k = ind
