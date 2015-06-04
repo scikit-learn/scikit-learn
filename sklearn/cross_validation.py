@@ -34,6 +34,14 @@ from .utils.fixes import bincount
 from .gaussian_process.kernels import Kernel as GPKernel
 from .exceptions import FitFailedWarning
 
+
+warnings.warn("This module has been deprecated in favor of the "
+              "model_selection module into which all the refactored classes "
+              "and functions are moved. Also note that the interface of the "
+              "new CV iterators are different from that of this module. "
+              "This module will be removed in 0.19.", DeprecationWarning)
+
+
 __all__ = ['KFold',
            'LabelKFold',
            'LeaveOneLabelOut',
@@ -304,7 +312,7 @@ class KFold(_BaseKFold):
 
     See also
     --------
-    StratifiedKFold: take label information into account to avoid building
+    StratifiedKFold take label information into account to avoid building
     folds with imbalanced class distributions (for binary or multiclass
     classification tasks).
 

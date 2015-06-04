@@ -6,7 +6,8 @@ from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix)
 
 from sklearn import metrics
-from sklearn.cross_validation import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises

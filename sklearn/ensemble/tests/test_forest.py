@@ -38,7 +38,7 @@ from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomTreesEmbedding
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
 from sklearn.utils.fixes import bincount
 from sklearn.utils.validation import check_random_state

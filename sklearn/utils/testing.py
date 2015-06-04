@@ -20,6 +20,7 @@ import platform
 import scipy as sp
 import scipy.io
 from functools import wraps
+from operator import itemgetter
 try:
     # Python 2
     from urllib2 import urlopen
@@ -604,7 +605,7 @@ def all_estimators(include_meta_estimators=False,
     path = sklearn.__path__
     for importer, modname, ispkg in pkgutil.walk_packages(
             path=path, prefix='sklearn.', onerror=lambda x: None):
-        if ".tests." in modname:
+        if (".tests." in modname):
             continue
         module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
@@ -648,7 +649,9 @@ def all_estimators(include_meta_estimators=False,
                              " %s." % repr(type_filter))
 
     # drop duplicates, sort for reproducibility
-    return sorted(set(estimators))
+    # itemgetter is used to ensure the sort does not extend to the 2nd item of
+    # the tuple
+    return sorted(set(estimators), key=itemgetter(0))
 
 
 def set_random_state(estimator, random_state=0):

@@ -22,7 +22,10 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
-from sklearn import cross_validation as cval
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    from sklearn import cross_validation as cval
+
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_digits

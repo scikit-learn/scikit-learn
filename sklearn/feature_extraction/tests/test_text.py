@@ -12,9 +12,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
-from sklearn.cross_validation import train_test_split
-from sklearn.cross_validation import cross_val_score
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 

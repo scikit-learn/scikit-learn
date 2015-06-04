@@ -3,7 +3,7 @@ from nose.tools import assert_equal
 import numpy as np
 from scipy import linalg
 
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less

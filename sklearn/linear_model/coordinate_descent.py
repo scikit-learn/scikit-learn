@@ -17,7 +17,7 @@ from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
 from ..utils import check_array, check_X_y, deprecated
 from ..utils.validation import check_random_state
-from ..cross_validation import check_cv
+from ..model_selection import check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
@@ -1120,10 +1120,10 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             path_params['copy_X'] = False
 
         # init cross-validation generator
-        cv = check_cv(self.cv, X)
+        cv = check_cv(self.cv)
 
         # Compute path for all folds and compute MSE to get the best alpha
-        folds = list(cv)
+        folds = list(cv.split(X))
         best_mse = np.inf
 
         # We do a double for loop folded in one, in order to be able to
