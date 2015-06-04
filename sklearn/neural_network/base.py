@@ -194,3 +194,109 @@ def log_loss(y_true, y_prob):
 
 
 LOSS_FUNCTIONS = {'squared_loss': squared_loss, 'log_loss': log_loss}
+
+class learning_rate_class():
+    def __init__(self, learning_rate='rprop', 
+                       learning_rate_init=0.1,
+                       momentum=0.1,
+                       nesterovs_momentum=False):
+        self.learning_rate = learning_rate
+        self.learning_rate_init = learning_rate_init
+        self.momentum = momentum
+        self.nesterovs_momentum = nesterovs_momentum
+
+        self.learning_rate_list = None
+        self.update_value_list = None
+
+        self.velocity = None
+        self.r = None
+        self.historical_grad = 0
+        self.count = 0
+
+        
+
+    def get_update(self, grad_list, theta, nerf=0.5, buff=1.2):
+        n_parameters = grad_list.shape
+        self.count += 1
+
+        if self.learning_rate == 'constant':
+            # momentum
+            if self.velocity is None:
+                self.velocity = np.zeros(n_parameters)
+
+            self.velocity = (self.momentum * self.velocity
+                             - self.learning_rate_init * grad_list)
+
+
+            if self.nesterovs_momentum:
+                return - (self.momentum * self.velocity 
+                          - self.learning_rate_init * grad_list)
+
+            return - self.velocity
+
+        elif self.learning_rate == 'constant_avg':
+            self.historical_grad += grad_list
+
+            if self.count > 1:
+                self.historical_grad *= (self.count - 1)
+                self.historical_grad /= self.count
+
+            return self.learning_rate_init * self.historical_grad
+
+        elif self.learning_rate == 'rprop':
+            grad_sign_list = np.sign(grad_list)
+
+            if self.learning_rate_list is None:
+                # Initialize learning rates
+                self.learning_rate_list = np.ones(n_parameters) * self.learning_rate_init
+
+            else:
+                # Update learning rates
+                result_grad_sign_list = grad_sign_list * self.old_grad_sign_list
+
+                self.learning_rate_list[result_grad_sign_list > 0] *= buff
+                self.learning_rate_list[result_grad_sign_list < 0] *= nerf
+
+            self.old_grad_sign_list = grad_sign_list.copy()
+
+            return self.learning_rate_list * grad_sign_list 
+
+        elif self.learning_rate == 'bordes':
+            if self.r is None:
+                self.r = 1
+                self.t0 = self.learning_rate_init
+                self.t = 0.
+
+                self.hess_approx = np.ones(n_parameters)
+
+            else:
+                self.r += 1
+                self.t += 1
+
+                self.hess_approx += (2./ self.r) * ((theta - self.old_theta) / 
+                                                   (grad_list -  self.old_grad_list) -  self.hess_approx)
+
+            self.old_theta = theta.copy()
+            self.old_grad_list = grad_list.copy()
+
+            return self.hess_approx * (1. / (self.t0 + self.t)) * grad_list
+
+        elif self.learning_rate == 'adagrad':
+            fudge_factor = 1e-6 
+            
+            self.historical_grad += grad_list ** 2
+
+            adjusted_grad = grad_list / (fudge_factor + np.sqrt(self.historical_grad))
+         
+            return self.learning_rate_init * adjusted_grad
+
+        elif self.learning_rate == 'rmsprop':
+            if self.r is None:
+                self.decay = 0.8
+                self.r = 0
+
+            self.r = (1 - self.decay) * grad_list ** 2 + self.decay * self.r
+
+            update = (self.learning_rate_init / np.sqrt(self.r)) * grad_list
+         
+            return update
