@@ -292,23 +292,43 @@ class NCATransformer(BaseNCA, TransformerMixin):
         Specifies dimensionality of the target space. If None,
         n_features will be used.
 
-    solver: string
+    solver: 'adagrad', 'gd' or 'scipy'
+        Solver to use for optimization. 'gd' stands for gradient descent,
+        'adagrad' stands for gradient descent with AdaGrad heuristic,
+        'scipy' means forwarding optimization to scipy.optimization,
+        which usually selects LBFGS.
 
     learning_rate: float
+        The learning rate. Used only by gradient descent-based solvers
 
     tol: float
-
-    loss: string
+        Stopping criteria for gradient
 
     max_iter: int
+        Maximal number of iterations for solver
 
     n_init: int
+        Number of random restarts
 
     random_state: int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        initializing the matrix.
 
     method: 'vectorized' | 'semivectorized' | 'stochastic'
+        Level of vectorization of cost and gradient functions.
+        'vectorized' is the fastest, but requires O(N^2 M^2) memory and
+        time which doesn't work for medium-size datasets.
+        'semivectorized' uses O(N M^2) memory and has the same time
+        complexity as the fuly vectorized one.
+        'stochastic' is designed to work on really big datasets,
+        FIXME!
+
+    minibatch_size: int
+        Size of a minibatch for gradient descent-based method.
 
     verbose: int
+        Level of verbosity of debug output. 0 means no output, 1 - basic
+        information about initialization runs, 2 - detailed output of each iteration
 
     """
     def __init__(self, n_components=None, solver='adagrad', learning_rate=1.0, tol=1e-5, loss='kl',
