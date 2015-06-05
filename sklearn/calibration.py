@@ -595,8 +595,10 @@ class _ROCCHCalibration(BaseEstimator, RegressorMixin):
 
         # Calculate convex hull
         temp_ch = np.vstack((fpr,tpr)).T
+        # Close the plane to avoid issues when points are on the right of the diag
+        temp_ch = np.r_[temp_ch, np.array([[1, 0]])]
         hull = ConvexHull(temp_ch)
-        hull_idx = np.sort(hull.vertices)
+        hull_idx = np.sort(hull.vertices)[:-1]
 
         # Get new thresholds and invert order
         ch_thresholds = thresholds[hull_idx]
