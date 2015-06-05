@@ -12,10 +12,23 @@ from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
-                         check_symmetric, DataConversionWarning)
+                         check_symmetric)
 from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
+from .exceptions import ConvergenceWarning
+from .exceptions import DataConversionWarning as DataConversionWarning_
+from .utils import deprecated
 
+
+ConvergenceWarning = deprecated("ConvergenceWarning has been moved "
+                                "into the sklearn.exceptions module. "
+                                "It will not be available here from "
+                                "version 0.19")(ConvergenceWarning)
+
+DataConversionWarning = deprecated("DataConversionWarning has been moved "
+                                   "into the sklearn.exceptions module. "
+                                   "It will not be available here from "
+                                   "version 0.19")(DataConversionWarning_)
 
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
@@ -154,7 +167,7 @@ def safe_indexing(X, indices):
             # Cython typed memoryviews internally used in pandas do not support
             # readonly buffers.
             warnings.warn("Copying input dataframe for slicing.",
-                          DataConversionWarning)
+                          DataConversionWarning_)
             return X.copy().iloc[indices]
     elif hasattr(X, "shape"):
         if hasattr(X, 'take') and (hasattr(indices, 'dtype') and
@@ -471,9 +484,3 @@ def tosequence(x):
         return list(x)
 
 
-class ConvergenceWarning(UserWarning):
-    """Custom warning to capture convergence problems"""
-
-
-class DataDimensionalityWarning(UserWarning):
-    """Custom warning to notify potential issues with data dimensionality"""

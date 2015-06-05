@@ -9,10 +9,13 @@ import numpy as np
 from scipy import sparse
 from .externals import six
 from .utils.fixes import signature
+from .exceptions import ChangedBehaviorWarning
 
 
-class ChangedBehaviorWarning(UserWarning):
-    pass
+ChangedBehaviorWarning = deprecated("ChangedBehaviorWarning has been moved "
+                                    "into the sklearn.exceptions module. "
+                                    "It will not be available here from "
+                                    "version 0.19")(ChangedBehaviorWarning)
 
 
 ##############################################################################

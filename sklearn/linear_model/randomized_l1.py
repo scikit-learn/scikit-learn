@@ -20,10 +20,11 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.joblib import Memory, Parallel, delayed
 from ..utils import (as_float_array, check_random_state, check_X_y,
-                     check_array, safe_mask, ConvergenceWarning)
+                     check_array, safe_mask)
 from ..utils.validation import check_is_fitted
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
+from ..exceptions import ConvergenceWarning
 
 
 ###############################################################################

@@ -20,10 +20,6 @@ from ..utils import check_array, check_consistent_length
 from ..utils.multiclass import type_of_target
 
 
-class UndefinedMetricWarning(UserWarning):
-    pass
-
-
 def _average_binary_score(binary_metric, y_true, y_score, average,
                           sample_weight=None):
     """Average a binary metric for multilabel classification

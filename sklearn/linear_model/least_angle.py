@@ -23,7 +23,7 @@ from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import arrayfuncs, as_float_array, check_X_y
 from ..cross_validation import check_cv
-from ..utils import ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
 from ..externals.six import string_types

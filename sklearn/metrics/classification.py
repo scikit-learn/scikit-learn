@@ -38,8 +38,7 @@ from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
 from ..utils.fixes import bincount
-
-from .base import UndefinedMetricWarning
+from ..exceptions import UndefinedMetricWarning
 
 
 def _check_targets(y_true, y_pred):

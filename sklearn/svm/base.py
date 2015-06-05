@@ -7,15 +7,19 @@ from abc import ABCMeta, abstractmethod
 
 from . import libsvm, liblinear
 from . import libsvm_sparse
-from ..base import BaseEstimator, ClassifierMixin, ChangedBehaviorWarning
+from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..multiclass import _ovr_decision_function
 from ..utils import check_array, check_random_state, column_or_1d
-from ..utils import ConvergenceWarning, compute_class_weight, deprecated
+from ..utils import compute_class_weight, deprecated
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted, NotFittedError
+from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..externals import six
+from ..exceptions import ChangedBehaviorWarning
+from ..exceptions import ConvergenceWarning
+from ..exceptions import NotFittedError
+
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 

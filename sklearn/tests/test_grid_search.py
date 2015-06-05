@@ -33,9 +33,9 @@ from sklearn.base import BaseEstimator
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
-from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
-                                 ParameterGrid, ParameterSampler,
-                                 ChangedBehaviorWarning)
+from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
+from sklearn.grid_search import ParameterGrid, ParameterSampler
+from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
@@ -44,7 +44,8 @@ from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
-from sklearn.cross_validation import KFold, StratifiedKFold, FitFailedWarning
+from sklearn.cross_validation import KFold, StratifiedKFold
+from sklearn.exceptions import FitFailedWarning
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 

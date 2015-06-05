@@ -24,7 +24,7 @@ from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
-from ..utils import ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 
 from . import cd_fast
 

@@ -41,8 +41,8 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import NMF, ProjectedGradientNMF
-from sklearn.utils.validation import DataConversionWarning
-from sklearn.utils import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import DataConversionWarning
 from sklearn.cross_validation import train_test_split
 
 from sklearn.utils import shuffle
