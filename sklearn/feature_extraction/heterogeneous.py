@@ -141,7 +141,8 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
         return Xs
 
     def _update_transformers(self, transformers):
-        self.transformers.update({
-            name: (new, column)
-            for ((name, (old, column)), new) in zip(self.transformers.items(), transformers)}
+        # use a dict constructor instaed of a dict comprehension for python2.6
+        self.transformers.update(dict(
+            (name, (new, column))
+            for ((name, (old, column)), new) in zip(self.transformers.items(), transformers))
         )
