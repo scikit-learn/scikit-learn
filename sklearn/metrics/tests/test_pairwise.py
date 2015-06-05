@@ -2,6 +2,7 @@ import numpy as np
 from numpy import linalg
 
 from scipy.sparse import dok_matrix, csr_matrix, issparse
+from scipy.sparse.base import spmatrix
 from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
 
 from sklearn.utils.testing import assert_greater
@@ -443,6 +444,22 @@ def test_rbf_kernel():
     K = rbf_kernel(X, X)
     # the diagonal elements of a rbf kernel are 1
     assert_array_almost_equal(K.flat[::6], np.ones(5))
+
+
+def test_cosine_similarity_spase_output():
+    # Test if cosine_similarity correctly produces sparse output.
+
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((3, 4))
+    Xcsr = csr_matrix(X)
+    Ycsr = csr_matrix(Y)
+
+    K1 = cosine_similarity(X, Y, dense_output=False)
+    assert_true(isinstance(K1, spmatrix))
+
+    K2 = pairwise_kernels(Xcsr, Y=Ycsr, metric="cosine")
+    assert_array_almost_equal(K1.todense(), K2)
 
 
 def test_cosine_similarity():

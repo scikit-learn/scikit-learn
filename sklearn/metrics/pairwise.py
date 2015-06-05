@@ -791,7 +791,7 @@ def rbf_kernel(X, Y=None, gamma=None):
     return K
 
 
-def cosine_similarity(X, Y=None):
+def cosine_similarity(X, Y=None, dense_output=True):
     """Compute cosine similarity between samples in X and Y.
 
     Cosine similarity, or the cosine kernel, computes similarity as the
@@ -811,6 +811,9 @@ def cosine_similarity(X, Y=None):
     Y : array_like, sparse matrix (optional)
         with shape (n_samples_Y, n_features).
 
+    dense_output : boolean (optional)
+        Return sparse output.
+
     Returns
     -------
     kernel matrix : array
@@ -826,7 +829,7 @@ def cosine_similarity(X, Y=None):
     else:
         Y_normalized = normalize(Y, copy=True)
 
-    K = safe_sparse_dot(X_normalized, Y_normalized.T, dense_output=True)
+    K = safe_sparse_dot(X_normalized, Y_normalized.T, dense_output=dense_output)
 
     return K
 
