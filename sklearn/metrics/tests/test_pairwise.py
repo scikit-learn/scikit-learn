@@ -2,7 +2,6 @@ import numpy as np
 from numpy import linalg
 
 from scipy.sparse import dok_matrix, csr_matrix, issparse
-from scipy.sparse.base import spmatrix
 from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
 
 from sklearn.utils.testing import assert_greater
@@ -456,7 +455,7 @@ def test_cosine_similarity_sparse_output():
     Ycsr = csr_matrix(Y)
 
     K1 = cosine_similarity(Xcsr, Ycsr, dense_output=False)
-    assert_true(isinstance(K1, spmatrix))
+    assert_true(issparse(K1))
 
     K2 = pairwise_kernels(Xcsr, Y=Ycsr, metric="cosine")
     assert_array_almost_equal(K1.todense(), K2)

@@ -812,7 +812,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
         with shape (n_samples_Y, n_features).
 
     dense_output : boolean (optional)
-        Return sparse output.
+        Whether to return sparse output.
 
     Returns
     -------
