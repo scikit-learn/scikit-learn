@@ -112,7 +112,7 @@ def _num_samples(x):
         raise TypeError('Expected sequence or array-like, got '
                         'estimator %s' % x)
 
-    if isinstance(x, Mapping):
+    if isinstance(x, Mapping) and not sp.issparse(x):
         n_samples = [_num_samples(xx) for xx in x.values()]
         unique_samples = np.unique(n_samples)
         if len(unique_samples) > 1:
