@@ -89,8 +89,7 @@ def test_pipeline_init():
     pipe = Pipeline([('svc', clf)])
     assert_equal(pipe.get_params(deep=True),
                  dict(svc__a=None, svc__b=None, svc=clf,
-                     **pipe.get_params(deep=False)
-                     ))
+                      **pipe.get_params(deep=False)))
 
     # Check that params are set
     pipe.set_params(svc__a=0.1)
@@ -123,13 +122,13 @@ def test_pipeline_init():
     # Check that apart from estimators, the parameters are the same
     params = pipe.get_params(deep=True)
     params2 = pipe2.get_params(deep=True)
-    
+
     for x in pipe.get_params(deep=False):
         params.pop(x)
-    
+
     for x in pipe2.get_params(deep=False):
         params2.pop(x)
-    
+
     # Remove estimators that where copied
     params.pop('svc')
     params.pop('anova')
@@ -439,23 +438,3 @@ def test_classes_property():
     assert_raises(AttributeError, getattr, clf, "classes_")
     clf.fit(X, y)
     assert_array_equal(clf.classes_, np.unique(y))
-
-
-def test_fields():
-    # dictionary
-    X_dict = {'first': [[0], [1], [2]],
-              'second': [[2], [4], [6]]}
-    # recarray
-    X_recarray = np.recarray((3, 1),
-                             dtype=[('first', np.int), ('second', np.int)])
-    X_recarray['first'] = X_dict['first']
-    X_recarray['second'] = X_dict['second']
-
-    for X in [X_dict, X_recarray]:
-        first_feat = FeatureUnion([('trans', TransfT())], fields=['first'])
-        second_feat = FeatureUnion([('trans', TransfT())], fields=['second'])
-        both = FeatureUnion([('trans', TransfT()), ('trans', TransfT())],
-                            fields=['first', 'second'])
-        assert_array_equal(first_feat.fit_transform(X), X['first'])
-        assert_array_equal(second_feat.fit_transform(X), X['second'])
-        assert_array_equal(both.fit_transform(X), np.hstack([X['first'], X['second']]))

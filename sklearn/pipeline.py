@@ -438,14 +438,13 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    >>> from sklearn.preprocessing import Normalizer
+    >>> from sklearn.decomposition import PCA, TruncatedSVD
     >>> union = FeatureUnion([("pca", PCA()),  \
-                              ("ica", FastICA())])
-    >>> X = [[0., 1.], [2., 2.]]
-    >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE
-    array([[ 0. ,  1. ,  0.5,  0.5],
-           [ 0.5,  0.5,  0. ,  1. ]])
-
+                              ("svd", TruncatedSVD())])
+    >>> X = [[0., 1., 3], [2., 2., 5]]
+    >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    array([[-1.5       ,  0.        ,  3.0..., -0.8...],
+           [ 1.5       ,  0.        ,  5.7...,  0.4...]])
     """
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
         self.transformer_list = transformer_list
