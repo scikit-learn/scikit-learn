@@ -83,7 +83,7 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
             Input data, used to fit transformers.
         """
         transformers = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_one_transformer)(trans, name, X[column], y)
+            delayed(_fit_one_transformer)(trans, X[column], y)
             for name, (trans, column) in sorted(self.transformers.items()))
         self._update_transformers(transformers)
         return self
@@ -143,5 +143,5 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
     def _update_transformers(self, transformers):
         self.transformers.update({
             name: (new, column)
-            for ((name, (column, old)), new) in zip(self.transformers.items(), transformers)}
+            for ((name, (old, column)), new) in zip(self.transformers.items(), transformers)}
         )

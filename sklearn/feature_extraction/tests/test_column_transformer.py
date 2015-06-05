@@ -32,3 +32,7 @@ def test_fields():
         assert_array_equal(first_feat.fit_transform(X), X['first'])
         assert_array_equal(second_feat.fit_transform(X), X['second'])
         assert_array_equal(both.fit_transform(X), np.hstack([X['first'], X['second']]))
+        # fit then transform
+        assert_array_equal(first_feat.fit(X).transform(X), X['first'])
+        assert_array_equal(second_feat.fit(X).transform(X), X['second'])
+        assert_array_equal(both.fit(X).transform(X), np.hstack([X['first'], X['second']]))

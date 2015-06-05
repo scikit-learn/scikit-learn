@@ -91,7 +91,6 @@ pipeline = Pipeline([
     # Use FeatureUnion to combine the features from subject and body
     ('union', ColumnTransformer(
         {
-
             # Pulling features from the post's subject line
             'subject': (TfidfVectorizer(min_df=50), 'subject'),
 
