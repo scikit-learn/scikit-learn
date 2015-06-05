@@ -439,3 +439,23 @@ def test_classes_property():
     assert_raises(AttributeError, getattr, clf, "classes_")
     clf.fit(X, y)
     assert_array_equal(clf.classes_, np.unique(y))
+
+
+def test_fields():
+    # dictionary
+    X_dict = {'first': [[0], [1], [2]],
+              'second': [[2], [4], [6]]}
+    # recarray
+    X_recarray = np.recarray((3, 1),
+                             dtype=[('first', np.int), ('second', np.int)])
+    X_recarray['first'] = X_dict['first']
+    X_recarray['second'] = X_dict['second']
+
+    for X in [X_dict, X_recarray]:
+        first_feat = FeatureUnion([('trans', TransfT())], fields=['first'])
+        second_feat = FeatureUnion([('trans', TransfT())], fields=['second'])
+        both = FeatureUnion([('trans', TransfT()), ('trans', TransfT())],
+                            fields=['first', 'second'])
+        assert_array_equal(first_feat.fit_transform(X), X['first'])
+        assert_array_equal(second_feat.fit_transform(X), X['second'])
+        assert_array_equal(both.fit_transform(X), np.hstack([X['first'], X['second']]))

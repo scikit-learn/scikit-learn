@@ -217,6 +217,9 @@ New features
      By `Alexandre Gramfort`_, `Jan Hendrik Metzen`_, `Mathieu Blondel`_
      and `Balazs Kegl`_.
 
+   - :class:`pipeline.FeatureUnion` now allows the extraction of particular
+     features from dictionaries or pandas dataframes via the ``fields``
+     parameter. By `Andreas Müller`_.
 
 Enhancements
 ............

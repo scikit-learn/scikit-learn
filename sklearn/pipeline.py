@@ -425,16 +425,26 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    transformer_list: list of (string, transformer) tuples
+    transformer_list : list of (string, transformer) tuples
         List of transformer objects to be applied to the data. The first
         half of each tuple is the name of the transformer.
 
-    n_jobs: int, optional
+    n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
 
-    transformer_weights: dict, optional
+    transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import Normalizer
+    >>> union = FeatureUnion([("pca", PCA()),  \
+                              ("ica", FastICA())])
+    >>> X = [[0., 1.], [2., 2.]]
+    >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE
+    array([[ 0. ,  1. ,  0.5,  0.5],
+           [ 0.5,  0.5,  0. ,  1. ]])
 
     """
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):

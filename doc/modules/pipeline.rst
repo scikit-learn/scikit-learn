@@ -122,9 +122,11 @@ FeatureUnion: composite feature spaces
 :class:`FeatureUnion` combines several transformer objects into a new
 transformer that combines their output. A :class:`FeatureUnion` takes
 a list of transformer objects. During fitting, each of these
-is fit to the data independently. For transforming data, the
-transformers are applied in parallel, and the sample vectors they output
-are concatenated end-to-end into larger vectors.
+is fit to the data independently. It can also be used to apply different
+transformations to each field of the data, producing a homogeneous feature
+matrix from a heterogeneous data source.
+The transformers are applied in parallel, and the feature matrices they output
+are concatenated side-by-side into a larger matrix.
 
 :class:`FeatureUnion` serves the same purposes as :class:`Pipeline` -
 convenience and joint parameter estimation and validation.
@@ -152,7 +154,7 @@ and ``value`` is an estimator object::
     >>> estimators = [('linear_pca', PCA()), ('kernel_pca', KernelPCA())]
     >>> combined = FeatureUnion(estimators)   
     >>> combined # doctest: +NORMALIZE_WHITESPACE
-    FeatureUnion(n_jobs=1, transformer_list=[('linear_pca', PCA(copy=True,
+    FeatureUnion(fields=None, n_jobs=1, transformer_list=[('linear_pca', PCA(copy=True,
         n_components=None, whiten=False)), ('kernel_pca', KernelPCA(alpha=1.0,
         coef0=1, degree=3, eigen_solver='auto', fit_inverse_transform=False,
         gamma=None, kernel='linear', kernel_params=None, max_iter=None,
@@ -166,4 +168,4 @@ Like pipelines, feature unions have a shorthand constructor called
 .. topic:: Examples:
 
  * :ref:`example_feature_stacker.py`
- * :ref:`example_hetero_feature_union.py`
+ * :ref:`example_hetero_feature_union.py` illustrates the ``fields`` parameter.
