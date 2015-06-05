@@ -15,6 +15,8 @@ import numpy as np
 from scipy import linalg
 from scipy.special import gammaln
 
+import sys
+
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, as_float_array
 from ..utils import check_array
@@ -68,6 +70,9 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
         v = np.sum(spectrum[rank:]) / (n_features - rank)
         pv = -np.log(v) * n_samples * (n_features - rank) / 2.
 
+    if sys.float_info.epsilon > abs(v):
+        return -np.inf
+
     m = n_features * rank - rank * (rank + 1.) / 2.
     pp = log(2. * np.pi) * (m + rank + 1.) / 2.
 
@@ -75,6 +80,8 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     spectrum_ = spectrum.copy()
     spectrum_[rank:n_features] = v
     for i in range(rank):
+        if spectrum_[i] < sys.float_info.epsilon:
+            break
         for j in range(i + 1, len(spectrum)):
             pa += log((spectrum[i] - spectrum[j]) *
                       (1. / spectrum_[j] - 1. / spectrum_[i])) + log(n_samples)
