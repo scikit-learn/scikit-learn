@@ -20,7 +20,7 @@ import warnings
 import numpy as np
 
 from .base import BaseEstimator, is_classifier, clone
-from .base import MetaEstimatorMixin
+from .base import MetaEstimatorMixin, ChangedBehaviorWarning
 from .cross_validation import _check_cv as check_cv
 from .cross_validation import _fit_and_score
 from .externals.joblib import Parallel, delayed
@@ -302,10 +302,6 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
             self.mean_validation_score,
             np.std(self.cv_validation_scores),
             self.parameters)
-
-
-class ChangedBehaviorWarning(UserWarning):
-    pass
 
 
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
@@ -642,9 +638,10 @@ class GridSearchCV(BaseSearchCV):
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None, error_score=...,
            estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
-                         degree=..., gamma=..., kernel='rbf', max_iter=-1,
-                         probability=False, random_state=None, shrinking=True,
-                         tol=..., verbose=False),
+                         decision_function_shape=None, degree=..., gamma=...,
+                         kernel='rbf', max_iter=-1, probability=False,
+                         random_state=None, shrinking=True, tol=...,
+                         verbose=False),
            fit_params={}, iid=..., n_jobs=1,
            param_grid=..., pre_dispatch=..., refit=...,
            scoring=..., verbose=...)
