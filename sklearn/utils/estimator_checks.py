@@ -616,6 +616,11 @@ def check_estimators_partial_fit_n_features(name, Alg):
     X -= X.min()
     with warnings.catch_warnings(record=True):
         alg = Alg()
+
+    if not hasattr(alg, 'partial_fit'):
+        # check again as for mlp this depends on algorithm
+        return
+
     set_fast_parameters(alg)
     try:
         if isinstance(alg, ClassifierMixin):
