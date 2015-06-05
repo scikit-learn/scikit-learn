@@ -36,7 +36,7 @@ def test_pca():
     assert_array_almost_equal(X_r, X_r2)
 
     # Test get_covariance and get_precision with n_components == n_features
-    # with n_components < n_features and with n_components == 0
+    # with n_components < n_features and with n_components == 0.
     for n_components in [0, 2, X.shape[1]]:
         pca.n_components = n_components
         pca.fit(X)
