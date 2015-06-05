@@ -992,6 +992,20 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape (n_samples,)
            Predicted target values per element in X.
         """
+        return self._decision_function(X)
+
+    def _decision_function(self, X):
+        """Predict using the linear model
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+
+        Returns
+        -------
+        array, shape (n_samples,)
+           Predicted target values per element in X.
+        """
         check_is_fitted(self, ["t_", "coef_", "intercept_"], all_or_any=all)
 
         X = check_array(X, accept_sparse='csr')
@@ -1012,7 +1026,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape (n_samples,)
            Predicted target values per element in X.
         """
-        return self.decision_function(X)
+        return self._decision_function(X)
 
     def _fit_regressor(self, X, y, alpha, C, loss, learning_rate,
                        sample_weight, n_iter):
