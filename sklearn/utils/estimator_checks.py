@@ -877,6 +877,7 @@ def check_classifiers_classes(name, Classifier):
         if name == 'BernoulliNB':
             classifier.set_params(binarize=X.mean())
         set_fast_parameters(classifier)
+        set_random_state(classifier)
         # fit
         classifier.fit(X, y_)
 
