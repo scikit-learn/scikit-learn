@@ -814,12 +814,19 @@ def check_estimators_partial_fit_n_features(name, Alg):
     X -= X.min()
     with warnings.catch_warnings(record=True):
         alg = Alg()
+    if not hasattr(alg, 'partial_fit'):
+        # check again as for mlp this depends on algorithm
+        return
+
     set_testing_parameters(alg)
-    if isinstance(alg, ClassifierMixin):
-        classes = np.unique(y)
-        alg.partial_fit(X, y, classes=classes)
-    else:
-        alg.partial_fit(X, y)
+    try:
+        if isinstance(alg, ClassifierMixin):
+            classes = np.unique(y)
+            alg.partial_fit(X, y, classes=classes)
+        else:
+            alg.partial_fit(X, y)
+    except NotImplementedError:
+        return
 
     assert_raises(ValueError, alg.partial_fit, X[:, :-1], y)
 

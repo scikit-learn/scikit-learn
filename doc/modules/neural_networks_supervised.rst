@@ -33,10 +33,10 @@ layer transforms the values from the previous layer by a weighted linear summati
 :math:`g(\cdot):R \rightarrow R` - like the hyperbolic tan function. The output layer
 receives the values from the last hidden layer and transforms them into output values.
 
-The module contains the public attributes ``layers_coef_`` and ``layers_intercept_``.
-``layers_coef_`` is a list of weight matrices, where weight matrix at index
+The module contains the public attributes ``coefs_`` and ``intercepts_``.
+``coefs_`` is a list of weight matrices, where weight matrix at index
 :math:`i` represents the weights between layer :math:`i` and layer 
-:math:`i+1`. ``layers_intercept_`` is a list of bias vectors, where the vector
+:math:`i+1`. ``intercepts_`` is a list of bias vectors, where the vector
 at index :math:`i` represents the bias values added to layer :math:`i+1`.
 
 The advantages of Multi-layer Perceptron are:
@@ -68,7 +68,7 @@ some of these disadvantages.
 Classification
 ==============
 
-Class :class:`MultilayerPerceptronClassifier` implements  
+Class :class:`MLPClassifier` implements  
 a multi layer perceptron (MLP) algorithm that trains using Backpropagation. 
 
 MLP trains on two arrays: array X of size (n_samples, n_features), which holds 
@@ -76,37 +76,37 @@ the training samples represented as floating point feature vectors; and array
 y of size (n_samples,), which holds the target values (class labels) for the 
 training samples::
 
-    >>> from sklearn.neural_network import MultilayerPerceptronClassifier
+    >>> from sklearn.neural_network import MLPClassifier
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
-    >>> clf = MultilayerPerceptronClassifier(hidden_layer_sizes=(5, 2), random_state=1)
-    >>> clf.fit(X, y)
-    MultilayerPerceptronClassifier(activation='relu', algorithm='l-bfgs',
-                    alpha=1e-05, batch_size=200, hidden_layer_sizes=(5, 2),
-                    learning_rate='constant', learning_rate_init=0.5,
-                    max_iter=200, power_t=0.5, random_state=1, shuffle=False,
-                    tol=1e-05, verbose=False, warm_start=False)
+    >>> clf = MLPClassifier(hidden_layer_sizes=(5, 2), random_state=1)
+    >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
+    MLPClassifier(activation='relu', algorithm='l-bfgs', alpha=1e-05,
+        batch_size=200, early_stopping=False, hidden_layer_sizes=(5, 2),
+        learning_rate='constant', learning_rate_init=0.2, max_iter=200,
+        momentum=0.9, nesterovs_momentum=True, power_t=0.5, random_state=1,
+        shuffle=True, tol=0.0001, verbose=False, warm_start=False)
 
 After fitting (training), the model can predict labels for new samples::
 
     >>> clf.predict([[2., 2.], [-1., -2.]]) 
     array([1, 0])
 
-MLP can fit a non-linear model to the training data. ``clf.layers_coef_`` 
+MLP can fit a non-linear model to the training data. ``clf.coefs_`` 
 contains the weight matrices that constitute the model parameters::
 
-    >>> [coef.shape for coef in clf.layers_coef_]
+    >>> [coef.shape for coef in clf.coefs_]
     [(2, 5), (5, 2), (2, 1)]
 
 To get the raw values before applying the output activation function, run the
 following command,
 
-use :meth:`MultilayerPerceptronClassifier.decision_function`::
+use :meth:`MLPClassifier.decision_function`::
 
     >>> clf.decision_function([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
-    array([ 11.55...,  11.55...])
+    array([ 47.6...,  47.6...])
 
-Currently, :class:`MultilayerPerceptronClassifier` supports only the 
+Currently, :class:`MLPClassifier` supports only the 
 Cross-Entropy loss function, which allows probability estimates by running the 
 ``predict_proba`` method.
 
@@ -115,36 +115,36 @@ Cross-Entropy loss function, giving a vector of probability estimates
 :math:`P(y|x)` per sample :math:`x`:: 
 
     >>> clf.predict_proba([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
-    array([[  9.5...e-06,   9.99...e-01],
-           [  9.5...e-06,   9.99...e-01]])
+    array([[ 0.,  1.],
+           [ 0.,  1.]])
 
-:class:`MultilayerPerceptronClassifier` supports multi-class classification by 
+:class:`MLPClassifier` supports multi-class classification by 
 applying `Softmax <http://en.wikipedia.org/wiki/Softmax_activation_function>`_
 as the output function. 
 
 Further, the algorithm supports :ref:`multi-label classification <multiclass>` 
 in which a sample can belong to more than one class. For each class, the output 
-of :meth:`MultilayerPerceptronClassifier.decision_function` passes through the 
+of :meth:`MLPClassifier.decision_function` passes through the 
 logistic function. Values larger or equal to `0.5` are rounded to `1`, 
 otherwise to `0`. For a predicted output of a sample, the indices where the
 value is `1` represents the assigned classes of that samples::
 
     >>> X = [[0., 0.], [1., 1.]]
-    >>> y = [[0, 1], [1]]
-    >>> clf = MultilayerPerceptronClassifier(hidden_layer_sizes=(15,), random_state=1)
+    >>> y = [[0, 1], [1, 1]]
+    >>> clf = MLPClassifier(hidden_layer_sizes=(15,), random_state=1)
     >>> clf.fit(X, y)
-    MultilayerPerceptronClassifier(activation='relu', algorithm='l-bfgs',
-                    alpha=1e-05, batch_size=200, hidden_layer_sizes=(15,),
-                    learning_rate='constant', learning_rate_init=0.5,
-                    max_iter=200, power_t=0.5, random_state=1, shuffle=False,
-                    tol=1e-05, verbose=False, warm_start=False)
+    MLPClassifier(activation='relu', algorithm='l-bfgs', alpha=1e-05,
+           batch_size=200, early_stopping=False, hidden_layer_sizes=(15,),
+           learning_rate='constant', learning_rate_init=0.2, max_iter=200,
+           momentum=0.9, nesterovs_momentum=True, power_t=0.5, random_state=1,
+           shuffle=True, tol=0.0001, verbose=False, warm_start=False)
     >>> clf.predict([1., 2.])
-    [(1,)]
+    array([[1, 1]])
     >>> clf.predict([0., 0.])
-    [(0, 1)]
+    array([[0, 1]])
 
 See the examples below and the doc string of 
-:meth:`MultilayerPerceptronClassifier.fit` for further information.
+:meth:`MLPClassifier.fit` for further information.
 
 .. topic:: Examples:
 
@@ -155,12 +155,12 @@ See the examples below and the doc string of
 Regression
 ==========
 
-Class :class:`MultilayerPerceptronRegressor` implements  
+Class :class:`MLPRegressor` implements  
 a multi layer perceptron (MLP) that trains using backpropagation with no 
 activation function in the output layer. Therefore, it uses the square error as 
 the loss function, and the output is a set of continuous values.
 
-:class:`MultilayerPerceptronRegressor` also supports multi-output regression, in 
+:class:`MLPRegressor` also supports multi-output regression, in 
 which a sample can have more than one target.
 
 
@@ -308,9 +308,22 @@ Tips on Practical Use
   * Empirically, we observed that `L-BFGS` converges faster and
     with better solutions than `SGD`. Therefore, if mini-batch
     and online learning are unnecessary, it is best advised
-    to set :meth:`MultilayerPerceptronClassifier.algorithm` as
+    to set :meth:`MLPClassifier.algorithm` as
     'l-bfgs'.
 
+More control with warm_start
+============================
+If you want more control over stopping criteria or learning rate in SGD,
+or want to do additional monitoring, using ``warm_start=True`` and
+``max_iter=1`` and iterating yourself can be helpful::
+
+    >>> X = [[0., 0.], [1., 1.]]
+    >>> y = [0, 1]
+    >>> clf = MLPClassifier(hidden_layer_sizes=(15,), random_state=1, max_iter=1)
+    >>> for i in range(10):
+    ...     clf.fit(X, y)
+    ...     # additional monitoring / inspection # doctest: +ELLIPSIS
+    MLPClassifier(...
 
 .. topic:: References:
 

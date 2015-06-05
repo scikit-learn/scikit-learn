@@ -7,9 +7,9 @@ networks.
 
 from .rbm import BernoulliRBM
 
-from .multilayer_perceptron import MultilayerPerceptronClassifier
-from .multilayer_perceptron import MultilayerPerceptronRegressor
+from .multilayer_perceptron import MLPClassifier
+from .multilayer_perceptron import MLPRegressor
 
 __all__ = ["BernoulliRBM",
-           "MultilayerPerceptronClassifier",
-           "MultilayerPerceptronRegressor"]
+           "MLPClassifier",
+           "MLPRegressor"]

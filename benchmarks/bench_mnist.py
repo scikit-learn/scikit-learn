@@ -9,20 +9,19 @@ and 784 features. Here, we consider the task of predicting
 covertype dataset, the feature space is homogenous.
 
 Example of output :
-
     [..]
+
     Classification performance:
     ===========================
-    Classifier               train-time   test-time   error-rat
+    Classifier               train-time   test-time   error-rate
     ------------------------------------------------------------
-    MultilayerPerceptron       1308.66s       0.31s       0.0184
-    Nystroem-SVM                105.07s       0.91s       0.0227
-    ExtraTrees                   48.20s       1.22s       0.0288
-    RandomForest                 47.17s       1.21s       0.0304
-    SampledRBF-SVM              140.45s       0.84s       0.0486
-    CART                         22.84s       0.16s       0.1214
-    dummy                         0.01s       0.02s       0.8973
-
+    MultilayerPerceptron        475.76s       1.31s       0.0201
+    Nystroem-SVM                218.38s      17.86s       0.0229
+    ExtraTrees                   45.54s       0.52s       0.0288
+    RandomForest                 44.79s       0.32s       0.0304
+    SampledRBF-SVM              265.64s      19.78s       0.0488
+    CART                         21.13s       0.01s       0.1214
+    dummy                         0.01s       0.01s       0.8973
 """
 from __future__ import division, print_function
 
@@ -49,7 +48,7 @@ from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_array
 from sklearn.linear_model import LogisticRegression
-from sklearn.neural_network import MultilayerPerceptronClassifier
+from sklearn.neural_network import MLPClassifier
 
 # Memoize the data extraction and memory map the resulting
 # train / test splits in readonly mode
@@ -91,7 +90,7 @@ ESTIMATORS = {
     'SampledRBF-SVM':
     make_pipeline(RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100)),
     'LinearRegression-SAG': LogisticRegression(solver='sag', tol=1e-1, C=1e4)
-    'MultilayerPerceptron': MultilayerPerceptronClassifier(
+    'MultilayerPerceptron': MLPClassifier(
         hidden_layer_sizes=(100, 100), max_iter=400, alpha=1e-4,
         algorithm='sgd', learning_rate_init=0.5, momentum=0.9, verbose=1,
         tol=1e-4, random_state=1)

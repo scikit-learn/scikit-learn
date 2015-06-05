@@ -28,18 +28,18 @@ from matplotlib.colors import ListedColormap
 from sklearn.cross_validation import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_moons, make_circles, make_classification
-from sklearn.neural_network import MultilayerPerceptronClassifier
+from sklearn.neural_network import MLPClassifier
 
 h = .02  # step size in the mesh
 
-alphas = np.logspace(-4, 4, 5)
+alphas = np.logspace(-5, 3, 5)
 names = []
 for i in alphas:
     names.append('alpha ' + str(i))
 
 classifiers = []
 for i in alphas:
-    classifiers.append(MultilayerPerceptronClassifier(alpha=i, random_state=1))
+    classifiers.append(MLPClassifier(alpha=i, random_state=1))
 
 X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
                            random_state=0, n_clusters_per_class=1)
