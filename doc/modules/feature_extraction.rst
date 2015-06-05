@@ -121,9 +121,27 @@ objects that implement ``getattr`` so select a certain attribute or column.
     ``1`` for each sample (``X_columns[1].shape == (n_samples,)``).
 
 To each column, a different transformation can be applied, such as
-preprocessing of specific feature extraction.
+preprocessing or a specific feature extraction method::
 
+  >>> X = {'city': ['London', 'London', 'Paris', 'New York'],
+  ...      'title': ["His Last Bow", "How Watson Learned the Trick", "A Moveable Feast", "The Great Gatsby"]}
 
+In contrast to the :class:`DictVectorizer` here the whole dataset is a dict,
+with each value having the same lenght ``n_samples``.
+For this data, we might want to apply a :class:`OneHotEncoder` to the
+``'city'`` column, but a :class:`CountVectorizer` to the ``'title'`` column.
+As we might use multiple feature extraction methods on the same column, we give each
+transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
+
+  >>> from sklearn.feature_extraction import ColumnTransformer
+  >>> from sklearn.preprocessing import OneHotEncoder
+  >>> from sklearn.feature_extraction.text import CountVectorizer
+  >>> column_trans = ColumnTransformer({'city_category': (OneHotEncoder(), 'city'),
+  ...                                   'title_bow': (CountVectorizer(), 'title')})
+
+  >>> column_trans.fit(X)
+  >>> column_trans.transform(X)
+  >>> column_trans.get_feature_names()
 
 .. _feature_hashing:
 
