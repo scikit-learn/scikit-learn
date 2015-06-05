@@ -14,8 +14,9 @@ returned probabilities using Brier's score
 (see http://en.wikipedia.org/wiki/Brier_score).
 
 Compared are the estimated probability using a Gaussian naive Bayes classifier
-without calibration, with a sigmoid calibration, and with a non-parametric
-isotonic calibration. One can observe that only the non-parametric model is able
+without calibration, with a sigmoid calibration, with a non-parametric
+isotonic calibration and with a non-parametric ROC convex hull calibration.
+One can observe that only the non-parametric models are able
 to provide a probability calibration that returns probabilities close to the
 expected 0.5 for most of the samples belonging to the middle cluster with
 heterogeneous labels. This results in a significantly improved Brier score.
