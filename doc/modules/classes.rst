@@ -392,6 +392,7 @@ partial dependence
 
    feature_extraction.DictVectorizer
    feature_extraction.FeatureHasher
+   feature_extraction.ColumnTransformer
 
 From images
 -----------

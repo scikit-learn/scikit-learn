@@ -5,9 +5,10 @@ images.
 """
 
 from .dict_vectorizer import DictVectorizer
+from .heterogeneous import ColumnTransformer
 from .hashing import FeatureHasher
 from .image import img_to_graph, grid_to_graph
 from . import text
 
 __all__ = ['DictVectorizer', 'image', 'img_to_graph', 'grid_to_graph', 'text',
-           'FeatureHasher']
+           'FeatureHasher', 'ColumnTransformer']

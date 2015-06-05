@@ -425,17 +425,26 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    transformer_list: list of (string, transformer) tuples
+    transformer_list : list of (string, transformer) tuples
         List of transformer objects to be applied to the data. The first
         half of each tuple is the name of the transformer.
 
-    n_jobs: int, optional
+    n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
 
-    transformer_weights: dict, optional
+    transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
 
+    Examples
+    --------
+    >>> from sklearn.decomposition import PCA, TruncatedSVD
+    >>> union = FeatureUnion([("pca", PCA()),  \
+                              ("svd", TruncatedSVD())])
+    >>> X = [[0., 1., 3], [2., 2., 5]]
+    >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    array([[-1.5       ,  0.        ,  3.0..., -0.8...],
+           [ 1.5       ,  0.        ,  5.7...,  0.4...]])
     """
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
         self.transformer_list = transformer_list
