@@ -74,6 +74,9 @@ Enhancements
    - Add ``sample_weight`` support to :class:`linear_model.RidgeClassifier`.
      By `Trevor Stephens`_.
 
+   - Provide an option for sparse output from
+     :func:`sklearn.metrics.pairwise.cosine_similarity`. By `Jaidev Deshpande`_.
+
 Bug fixes
 .........
 
