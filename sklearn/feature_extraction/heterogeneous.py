@@ -2,7 +2,7 @@ from scipy import sparse
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin
-from ..pipeline import FeatureUnion, _fit_one_transformer, _fit_transform_one, _transform_one
+from ..pipeline import _fit_one_transformer, _fit_transform_one, _transform_one
 from ..externals.joblib import Parallel, delayed
 from ..externals.six import iteritems
 
@@ -65,13 +65,13 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
 
     def get_params(self, deep=True):
         if not deep:
-            return super(FeatureUnion, self).get_params(deep=False)
+            return super(ColumnTransformer, self).get_params(deep=False)
         else:
             out = dict(self.transformers)
             for name, (trans, _) in self.transformers.items():
                 for key, value in iteritems(trans.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value
-            out.update(super(FeatureUnion, self).get_params(deep=False))
+            out.update(super(ColumnTransformer, self).get_params(deep=False))
             return out
 
     def fit(self, X, y=None):

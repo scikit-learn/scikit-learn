@@ -1327,6 +1327,9 @@ def check_get_params_invariance(name, estimator):
     if name in ('FeatureUnion', 'Pipeline'):
         e = estimator([('clf', T())])
 
+    elif name == 'ColumnTransformer':
+        e = estimator({'clf': (T(), 'some_column')})
+
     elif name in ('GridSearchCV' 'RandomizedSearchCV'):
         return
 
