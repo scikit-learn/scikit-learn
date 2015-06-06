@@ -72,6 +72,15 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         if impl not in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
+       
+        # FIXME Remove gamma=0.0 support in 0.18 
+        if gamma == 0:
+            msg = ("gamma=%s has been deprecated in favor of "
+                   "gamma='%s' as of 0.17. Backward compatibility"
+                   " for gamma=%s will be removed in %s")
+            invalid_gamma = 0.0
+            warnings.warn(msg % (invalid_gamma, "auto", 
+                invalid_gamma, "0.18"), DeprecationWarning)
 
         self._impl = impl
         self.kernel = kernel
@@ -159,10 +168,14 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                              "Note: Sparse matrices cannot be indexed w/"
                              "boolean masks (use `indices=True` in CV)."
                              % (sample_weight.shape, X.shape))
-
-        if (self.kernel in ['poly', 'rbf']) and (self.gamma == 0):
+        
+        # FIXME remove (self.gamma == 0) in 0.18
+        if (self.kernel in ['poly', 'rbf']) and ((self.gamma == 0) 
+                or (self.gamma == 'auto')):
             # if custom gamma is not provided ...
             self._gamma = 1.0 / X.shape[1]
+        elif self.gamma == 'auto':
+            self._gamma = 0.0
         else:
             self._gamma = self.gamma
 
