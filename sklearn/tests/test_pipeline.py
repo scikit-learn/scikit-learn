@@ -17,6 +17,7 @@ from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.decomposition import PCA, RandomizedPCA, TruncatedSVD
@@ -174,7 +175,6 @@ def test_pipeline_raise_set_params_error():
                  'Check the list of available parameters ' 
                  'with `estimator.get_params().keys()`.' )
 
-    # simple object check
     assert_raise_message(ValueError, 
                          error_msg % ('fake', 'Pipeline'),
                          pipe.set_params,

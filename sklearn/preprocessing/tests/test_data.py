@@ -576,7 +576,6 @@ def test_warning_scaling_integers():
     assert_warns_message(DataConversionWarning, w, StandardScaler().fit, X)
     assert_warns_message(DataConversionWarning, w, MinMaxScaler().fit, X)
 
-
 def test_normalizer_l1():
     rng = np.random.RandomState(0)
     X_dense = rng.randn(4, 5)
