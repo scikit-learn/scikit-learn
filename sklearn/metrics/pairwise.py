@@ -812,7 +812,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
         Input data. If ``None``, the output will be the pairwise
         similarities between all samples in ``X``.
 
-    dense_output : boolean (optional)
+    dense_output : boolean (optional), default True
         Whether to return dense output even when the input is sparse. If
         ``False``, the output is sparse if both input arrays are sparse.
 
