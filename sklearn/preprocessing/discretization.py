@@ -122,16 +122,18 @@ class MDLP(BaseEstimator):
         categorical features) into a list of intervals.
         """
 
+        cut_points = self.cut_points_[index]
+
         non_zero_mask = cp_indices[cp_indices - 1 != -1].astype(int) - 1
         fronts = np.zeros(cp_indices.shape)
         fronts[cp_indices == 0] = float("-inf")
-        fronts[cp_indices != 0] = self.cut_points_[index][non_zero_mask]
+        fronts[cp_indices != 0] = cut_points[non_zero_mask]
 
-        numCuts = len(self.cut_points_[index])
-        non_numCuts_mask = cp_indices[cp_indices != 2].astype(int)
+        numCuts = len(cut_points)
         backs = np.zeros(cp_indices.shape)
+        non_numCuts_mask = cp_indices[cp_indices != 2].astype(int)
         backs[cp_indices == numCuts] = float("inf")
-        backs[cp_indices != numCuts] = self.cut_points_[index][non_numCuts_mask]
+        backs[cp_indices != numCuts] = cut_points[non_numCuts_mask]
 
         return [(front, back) for front, back in zip(fronts, backs)]
 
@@ -154,6 +156,12 @@ class MDLP(BaseEstimator):
         return np.searchsorted(self.cut_points_[index], col)
 
     def _mdlp(self, col, y):
+
+        # Shuffle array, and then reorder them
+        shuffled_order = np.random.permutation(len(y))
+        col = col[shuffled_order]
+        y = y[shuffled_order]
+
         order = np.argsort(col)
         col = col[order]
         y = y[order]
