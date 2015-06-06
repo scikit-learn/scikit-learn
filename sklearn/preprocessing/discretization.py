@@ -60,9 +60,10 @@ class MDLP(BaseEstimator):
     be `float("inf")`.
     """
 
-    def __init__(self, continuous_features=None, min_depth=0):
+    def __init__(self, continuous_features=None, min_depth=0, shuffle=True):
         self.continuous_features_ = continuous_features
         self.min_depth = min_depth
+        self.shuffle = shuffle
 
     def fit(self, X, y):
         """Finds the intervals of interest from the input data.
@@ -158,9 +159,10 @@ class MDLP(BaseEstimator):
     def _mdlp(self, col, y):
 
         # Shuffle array, and then reorder them
-        shuffled_order = np.random.permutation(len(y))
-        col = col[shuffled_order]
-        y = y[shuffled_order]
+        if self.shuffle:
+            shuffled_order = np.random.permutation(len(y))
+            col = col[shuffled_order]
+            y = y[shuffled_order]
 
         order = np.argsort(col)
         col = col[order]
