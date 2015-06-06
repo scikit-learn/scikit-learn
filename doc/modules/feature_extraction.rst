@@ -136,12 +136,28 @@ transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
   >>> from sklearn.feature_extraction import ColumnTransformer
   >>> from sklearn.preprocessing import OneHotEncoder
   >>> from sklearn.feature_extraction.text import CountVectorizer
-  >>> column_trans = ColumnTransformer({'city_category': (OneHotEncoder(), 'city'),
+  >>> column_trans = ColumnTransformer({'city_category': (CountVectorizer(analyzer=lambda x: x), 'city'),
   ...                                   'title_bow': (CountVectorizer(), 'title')})
 
-  >>> column_trans.fit(X)
-  >>> column_trans.transform(X)
-  >>> column_trans.get_feature_names()
+  >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  ColumnTransformer(n_jobs=1, transformer_weights=None,
+      transformers={'title_bow': (CountVectorizer(analyzer=..., binary=False,
+      decode_error=u'strict', dtype=<type 'numpy.int64'>, encoding=u'utf-8', input=u'content', lowercase=True, max_df=1.0,
+      max_features=None, min_df=1, ngram_range=(1, 1), prep...accents=None, token_pattern=...,
+      tokenizer=None, vocabulary=None), 'city')})
+  >>> column_trans.transform(X).toarray() # doctest: +NORMALIZE_WHITESPACE
+  array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 2, 1],
+         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1, 0, 0, 0, 2, 1, 3, 1, 1, 2, 2, 2, 1, 1],
+         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 3, 0, 0, 0, 1, 0, 1, 0],
+         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 1, 1, 0]])
+  >>> column_trans.get_feature_names() # doctest: +NORMALIZE_WHITESPACE
+  [u'city_category__bow', u'city_category__feast', u'city_category__gatsby',
+  u'city_category__great', u'city_category__his', u'city_category__how',
+  u'city_category__last', u'city_category__learned', u'city_category__moveable',
+  u'city_category__the', u'city_category__trick', u'city_category__watson',
+  'title_bow__ ', 'title_bow__L', 'title_bow__N', 'title_bow__P', 'title_bow__Y',
+  'title_bow__a', 'title_bow__d', 'title_bow__e', 'title_bow__i', 'title_bow__k',
+  'title_bow__n', 'title_bow__o', 'title_bow__r', 'title_bow__s', 'title_bow__w']
 
 .. _feature_hashing:
 
