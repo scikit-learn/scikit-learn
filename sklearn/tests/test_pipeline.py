@@ -17,7 +17,6 @@ from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
-from sklearn.multiclass import OneVsRestClassifier
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.decomposition import PCA, RandomizedPCA, TruncatedSVD
@@ -167,33 +166,26 @@ def test_pipeline_fit_params():
 
 
 def test_pipeline_raise_set_params_error():
-
-    svm  = Pipeline([('kbest', SelectKBest()),
-                     ('cls', SVC())])
-
-    pipe = Pipeline([('pca', PCA()),
-                     ('ova_svm', OneVsRestClassifier(svm))])
-    
+    # Test pipeline raises set params error message for nested models.
+    pipe  = Pipeline([('cls', LinearRegression())])
+ 
     # expected error message
-    error_msg = 'Invalid parameter %s for estimator %s. Check the list of available parameters with `estimator.get_params().keys()`.'
+    error_msg = ('Invalid parameter %s for estimator %s. ' 
+                 'Check the list of available parameters ' 
+                 'with `estimator.get_params().keys()`.' )
 
-    # top level check
+    # simple object check
     assert_raise_message(ValueError, 
                          error_msg % ('fake', 'Pipeline'),
                          pipe.set_params,
                          fake='nope')
     
-    # mid level check
-    assert_raise_message(ValueError,
-                         error_msg % ('fake', 'OneVsRestClassifier'),
-                         pipe.set_params,
-                         ova_svm__fake='nope')
-    
     # nested model check
     assert_raise_message(ValueError,
-                         error_msg % ('fake', 'SVC'),
+                         error_msg % ("fake", pipe),
                          pipe.set_params,
-                         ova_svm__estimator__cls__fake='nope') 
+                         fake__estimator='nope') 
+
 
 def test_pipeline_methods_pca_svm():
     # Test the various methods of the pipeline (pca + svm).
