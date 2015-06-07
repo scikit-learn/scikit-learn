@@ -37,8 +37,8 @@ if __name__ == '__main__':
     print(separator)
 
     knn1_nca = Pipeline([
-                ('nca', NCATransformer(learning_rate=1, loss='kl', max_iter=100, method='adagrad',
-                                       random_state=0, verbose=2, n_init=3, cost='semivectorized')),
+                ('nca', NCATransformer(learning_rate=1, loss='kl', max_iter=100, solver='adagrad',
+                                       random_state=0, verbose=2, n_init=3, method='semivectorized')),
                 ('knn', KNeighborsClassifier(n_neighbors=1))
         ])
 
@@ -49,8 +49,8 @@ if __name__ == '__main__':
     print(separator)
 
     knn1_nca = Pipeline([
-                ('nca', NCATransformer(learning_rate=1, loss='kl', max_iter=100, method='adagrad',
-                                       random_state=0, verbose=2, n_init=3, cost='vectorized')),
+                ('nca', NCATransformer(learning_rate=1, loss='kl', max_iter=100, solver='adagrad',
+                                       random_state=0, verbose=2, n_init=3, method='vectorized')),
                 ('knn', KNeighborsClassifier(n_neighbors=1))
         ])
 

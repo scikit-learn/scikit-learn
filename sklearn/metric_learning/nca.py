@@ -251,7 +251,7 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
 
 class BaseNCA(BaseEstimator):
     def __init__(self, n_components, solver, learning_rate, tol, loss, max_iter,
-                 n_init, random_state, verbose, method):
+                 n_init, random_state, verbose, method, minitbatch_size):
         self.n_components = n_components
         self.random_state = random_state
         self.max_iter = max_iter
@@ -262,6 +262,7 @@ class BaseNCA(BaseEstimator):
         self.solver = solver
         self.tol = tol
         self.method = method
+        self.minitbatch_size = minitbatch_size
 
     def fit(self, X, y):
         n_features = X.shape[1]
@@ -275,7 +276,8 @@ class BaseNCA(BaseEstimator):
 
         self.matrix_ = optimize_nca(X, y, self.learning_rate, n_components, self.loss,
                                     self.n_init, self.max_iter, self.solver, self.tol,
-                                    self.random_state, self.method, self.verbose)
+                                    self.random_state, self.method, self.minitbatch_size,
+                                    self.verbose)
         return self
 
 
