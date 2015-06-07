@@ -1033,7 +1033,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     """
     X, y = indexable(X, y)
 
-    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
@@ -1191,7 +1191,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     """
     X, y = indexable(X, y)
 
-    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -1428,11 +1428,6 @@ def check_cv(cv, X=None, y=None, classifier=False):
         The return value is guaranteed to be a cv generator instance, whatever
         the input type.
     """
-    return _check_cv(cv, X=X, y=y, classifier=classifier)
-
-
-def _check_cv(cv, X=None, y=None, classifier=False):
-    # This exists for internal use while indices is being deprecated.
     is_sparse = sp.issparse(X)
     if cv is None:
         cv = 3
@@ -1523,7 +1518,7 @@ def permutation_test_score(estimator, X, y, cv=None,
 
     """
     X, y = indexable(X, y)
-    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
     random_state = check_random_state(random_state)
 
