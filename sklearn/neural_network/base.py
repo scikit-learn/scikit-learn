@@ -58,24 +58,4 @@ def relu(X):
     return X
 
 
-def softmax(X):
-    """Compute the  K-way softmax function inplace.
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The input data.
-
-    Returns
-    -------
-    X_new : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The transformed data.
-    """
-    tmp = X - X.max(axis=1)[:, np.newaxis]
-    np.exp(tmp, out=X)
-    X /= X.sum(axis=1)[:, np.newaxis]
-
-    return X
-
-
 ACTIVATIONS = {'tanh': tanh, 'logistic': logistic, 'relu': relu}

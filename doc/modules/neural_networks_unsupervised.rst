@@ -1,5 +1,131 @@
 .. _neural_network:
 
+==================================
+Neural network models (supervised)
+==================================
+
+.. currentmodule:: sklearn.neural_network
+
+.. _random_basis_function:
+
+Random basis function
+=====================
+
+Random basis function :math: `f(X): R \rightarrow R` that projects matrix
+:math: `X` into another feature space where the number of features is less, equal
+or higher than the original feature space. The output matrix :math: `H` is
+computed as follows:
+
+.. math::
+
+   H = g(Xw + b)
+
+where :math: `g(\cdot): R \rightarrow R` is the activation function, :math: `w`
+is the weight parameter vector, and :math: `b` is the intercept vector.
+
+:math: `w \in R^{d \times k}`, and :math: `b \in R^{d}` are generated based
+on the uniform distribution scaled between two values, set by the user.
+
+
+The example code below illustrates using this function::
+
+    >>> from sklearn.neural_network import RandomBasisFunction
+    >>> X = [[0, 0], [1, 1]]
+    >>> rbf = RandomBasisFunction(random_state=1, n_activated_features=2)
+    >>> rbf.fit(X, y)
+    RandomBasisFunction(activation='tanh', intercept=True, n_activated_features=2,
+            random_state=1, weight_scale='auto')
+    >>> rbf.transform(X)
+    [[-0.69896184 -0.76098975]
+    [-0.97981807 -0.73662692]]
+
+This function can be useful for training some neural network structures as 
+described in the next section.
+
+
+Randomly weighted neural networks
+=================================
+
+Randomly weighted neural networks (RW-NN) is a supervised learning algorithm
+that trains a single-hidden layer feedforward network with the help of randomization. 
+It computes :math:`\w1 \in R^{d \times h}`, :math:`\w2 \in R^{h \times o}`, and 
+:math:`\b \in R^{d}` to solve the following equation:
+
+.. math::
+
+   g(Xw1 + b)w2 = y
+
+where :math:`g(\cdot): R \rightarrow R` is the activation function; :math:`w1 \in R^{d \times k}`
+is the weight parameter vector between the input layer of the network and
+the hidden layer;  :math:`w2 \in R^{k \times o}` is the weight parameter vector between the hidden 
+layer of the network and the output layer;  :math:`b \in R^{d}` is the intercept vector
+for the hidden layer. Figure 1 shows an example of such network.
+
+.. figure:: ../auto_examples/neural_networks/images/plot_slfn_001.png
+   :target: ../auto_examples/neural_networks/plot_slfn.html
+   :align: center
+   :scale: 100%
+
+The algorithm takes the following steps:
+
+  *  Generate the matrices :math:`w1 \in R^{d \times k}` and :math:`b \in R^d` with random values using the uniform distribution;
+  *  compute :math:`H = g(Xw1 + b)`; and then
+  *  solve for :math:`w2` using the ridge implementation as :math:`(H^T H + (1 / C) * I)^{-1} H^T y` - where 
+     `C` is the regularization term.
+
+:math:`k` is the number of hidden neurons. Larger :math:`k` allows for higher capacity to learn complex functions. 
+It allows the neural network to have more feature detectors in the hidden layer that characterize the training dataset.
+
+For classification, one can use a pipeline comprising the :class:`RandomBasisFunction` and :class:`RidgeClassifier` as
+shown in the following example::
+
+    >>> from sklearn.neural_network import RandomBasisFunction
+    >>> from sklearn.linear_model import RidgeClassifier
+    >>> from sklearn.pipeline import make_pipeline
+
+    >>> X = [[0, 0], [1, 1]]
+    >>> y = [0, 1]
+
+    >>> reg = make_pipeline(RandomBasisFunction(random_state=1), RidgeClassifier(alpha=0))
+    >>> reg.fit(X, y)
+    Pipeline(steps=[('randombasisfunction', RandomBasisFunction(activation='tanh', intercept=True,
+          n_activated_features=10, random_state=1, weight_scale='auto')), ('ridgeclassifier', RidgeClassifier(alpha=0, class_weight=None, copy_X=True, fit_intercept=True, max_iter=None, normalize=False, solver='auto', tol=0.001))])
+
+    >>> reg.predict(X)
+    [0.5  0.2]
+
+For regression, one can use a pipeline comprising the :class:`RandomBasisFunction` and :class:`Ridge` as
+shown in the following example::
+
+    >>> from sklearn.neural_network import RandomBasisFunction
+    >>> from sklearn.linear_model import Ridge
+    >>> from sklearn.pipeline import make_pipeline
+
+    >>> X = [[0, 0], [1, 1]]
+    >>> y = [0.5, 0.2]
+
+    >>> reg = make_pipeline(RandomBasisFunction(random_state=1), Ridge(alpha=0))
+    >>> reg.fit(X, y)
+    Pipeline(steps=[('randombasisfunction', RandomBasisFunction(activation='tanh', intercept=True,
+          n_activated_features=10, random_state=1, weight_scale='auto')), ('ridge', Ridge(alpha=0, copy_X=True, fit_intercept=True, max_iter=None, normalize=False, solver='auto', tol=0.001))])
+
+    >>> reg.predict(X)
+    [0.5  0.2]
+
+The references below show examples of how tuning some of the hyper-parameters of the pipeline affect the resulting
+decision function::
+
+  * :ref:`example_neural_networks_plot_random_neural_network.py`
+
+  * :ref:`example_neural_networks_plot_random_nn_overfitting.py`
+
+.. topic:: References:
+
+  * Schmidt, Wouter F., Martin A. Kraaijveld, and Robert PW Duin. 
+    "Feedforward neural networks with random weights." Pattern Recognition, 
+    1992. Vol. II. Conference B: Pattern Recognition Methodology and Systems, 
+    Proceedings., 11th IAPR International Conference on. IEEE, 1992.
+
 ====================================
 Neural network models (unsupervised)
 ====================================
