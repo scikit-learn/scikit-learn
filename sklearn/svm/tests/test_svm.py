@@ -839,3 +839,13 @@ def test_lsvc_intercept_scaling_zero():
     lsvc = svm.LinearSVC(fit_intercept=False)
     lsvc.fit(X, Y)
     assert_equal(lsvc.intercept_, 0.)
+
+
+def test_trick_proba():
+    # Test that the right error message is thrown when self.probability is manually set to be True
+
+    G = svm.SVC()
+    G.fit(iris.data, iris.target)
+    G.probability = True
+    msg = "predict_proba is not available when fitted with probability=False"
+    assert_raise_message(AttributeError, msg, getattr, G, "predict_proba")
