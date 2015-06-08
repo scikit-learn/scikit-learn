@@ -10,8 +10,8 @@ from sklearn.utils.testing import assert_raises
 from sklearn import datasets
 from sklearn.decomposition import PCA
 from sklearn.decomposition import RandomizedPCA
-from sklearn.decomposition.pca import _assess_dimension_
-from sklearn.decomposition.pca import _infer_dimension_
+from sklearn.decomposition.pca import _assess_dimension
+from sklearn.decomposition.pca import _infer_dimension
 
 iris = datasets.load_iris()
 
@@ -231,7 +231,7 @@ def test_infer_dim_1():
     spect = pca.explained_variance_
     ll = []
     for k in range(p):
-        ll.append(_assess_dimension_(spect, k, n, p))
+        ll.append(_assess_dimension(spect, k, n, p))
     ll = np.array(ll)
     assert_greater(ll[1], ll.max() - .01 * n)
 
@@ -247,7 +247,7 @@ def test_infer_dim_2():
     pca = PCA(n_components=p)
     pca.fit(X)
     spect = pca.explained_variance_
-    assert_greater(_infer_dimension_(spect, n, p), 1)
+    assert_greater(_infer_dimension(spect, n, p), 1)
 
 
 def test_infer_dim_3():
@@ -260,7 +260,7 @@ def test_infer_dim_3():
     pca = PCA(n_components=p)
     pca.fit(X)
     spect = pca.explained_variance_
-    assert_greater(_infer_dimension_(spect, n, p), 2)
+    assert_greater(_infer_dimension(spect, n, p), 2)
 
 
 def test_infer_dim_bad_spec():
@@ -268,14 +268,10 @@ def test_infer_dim_bad_spec():
     Test that we deal with a spectrum that drops to near zero
     see issue https://github.com/scikit-learn/scikit-learn/issues/4441
     """
-    spectrum = np.array([1.02875554e-03,
-                         7.06329556e-30,
-                         2.93889872e-31,
-                         2.22470973e-31,
-                         2.22470973e-31])
+    spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
     n_samples = 10
     n_features = 5
-    ret = _infer_dimension_(spectrum, n_samples, n_features)
+    ret = _infer_dimension(spectrum, n_samples, n_features)
     assert_equal(ret, 0)
 
 
@@ -285,15 +281,11 @@ def test_assess_dimension_tiny_eigenvals():
     `mle` inferring `n_components`
     see issue https://github.com/scikit-learn/scikit-learn/issues/4441
     """
-    spectrum = np.array([1.02875554e-03,
-                         7.06329556e-30,
-                         2.93889872e-31,
-                         2.22470973e-31,
-                         2.22470973e-31])
+    spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
     n_samples = 10
     n_features = 5
     rank = 4
-    ret = _assess_dimension_(spectrum, rank, n_samples, n_features)
+    ret = _assess_dimension(spectrum, rank, n_samples, n_features)
     assert_equal(ret, -np.inf)
 
 

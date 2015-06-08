@@ -15,8 +15,6 @@ import numpy as np
 from scipy import linalg
 from scipy.special import gammaln
 
-import sys
-
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, as_float_array
 from ..utils import check_array
@@ -24,7 +22,7 @@ from ..utils.extmath import fast_dot, fast_logdet, randomized_svd
 from ..utils.validation import check_is_fitted
 
 
-def _assess_dimension_(spectrum, rank, n_samples, n_features):
+def _assess_dimension(spectrum, rank, n_samples, n_features, rcond=1e-15):
     """Compute the likelihood of a rank ``rank`` dataset
 
     The dataset is assumed to be embedded in gaussian noise of shape(n,
@@ -40,6 +38,9 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
         Number of samples.
     n_features: int
         Number of features.
+    rcond : float
+        Cutoff for values in `spectrum`. Any values lower than this
+        will be ignored (`default=1e-15`)
 
     Returns
     -------
@@ -68,10 +69,9 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
         v = 1
     else:
         v = np.sum(spectrum[rank:]) / (n_features - rank)
+        if rcond > abs(v):
+            return -np.inf
         pv = -np.log(v) * n_samples * (n_features - rank) / 2.
-
-    if sys.float_info.epsilon > abs(v):
-        return -np.inf
 
     m = n_features * rank - rank * (rank + 1.) / 2.
     pp = log(2. * np.pi) * (m + rank + 1.) / 2.
@@ -80,7 +80,7 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     spectrum_ = spectrum.copy()
     spectrum_[rank:n_features] = v
     for i in range(rank):
-        if spectrum_[i] < sys.float_info.epsilon:
+        if spectrum_[i] < rcond:
             break
         for j in range(i + 1, len(spectrum)):
             pa += log((spectrum[i] - spectrum[j]) *
@@ -91,7 +91,7 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     return ll
 
 
-def _infer_dimension_(spectrum, n_samples, n_features):
+def _infer_dimension(spectrum, n_samples, n_features):
     """Infers the dimension of a dataset of shape (n_samples, n_features)
 
     The dataset is described by its spectrum `spectrum`.
@@ -99,7 +99,7 @@ def _infer_dimension_(spectrum, n_samples, n_features):
     n_spectrum = len(spectrum)
     ll = np.empty(n_spectrum)
     for rank in range(n_spectrum):
-        ll[rank] = _assess_dimension_(spectrum, rank, n_samples, n_features)
+        ll[rank] = _assess_dimension(spectrum, rank, n_samples, n_features)
     return ll.argmax()
 
 
@@ -292,8 +292,8 @@ class PCA(BaseEstimator, TransformerMixin):
                 raise ValueError("n_components='mle' is only supported "
                                  "if n_samples >= n_features")
 
-            n_components = _infer_dimension_(explained_variance_,
-                                             n_samples, n_features)
+            n_components = _infer_dimension(explained_variance_,
+                                            n_samples, n_features)
         elif not 0 <= n_components <= n_features:
             raise ValueError("n_components=%r invalid for n_features=%d"
                              % (n_components, n_features))
