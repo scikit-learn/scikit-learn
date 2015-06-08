@@ -11,6 +11,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
 from sklearn.metrics import mean_squared_error
 from sklearn.utils import check_random_state, tosequence
+from sklearn.utils.fixes import expit
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -963,7 +964,7 @@ def test_probability_exponential():
     assert np.all(y_proba <= 1.0)
     score = clf.decision_function(T).ravel()
     assert_array_equal(y_proba[:, 1],
-                       1.0 / (1.0 + np.exp(-2 * score)))
+                       expit(-2.0 * score))
 
     # derive predictions from probabilities
     y_pred = clf.classes_.take(y_proba.argmax(axis=1), axis=0)
