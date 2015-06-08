@@ -432,7 +432,7 @@ estimator that supports imputation. See :ref:`example_missing_values.py`
 Generating polynomial features
 ==============================
 
-Often it's useful to add complexity to the model by considering nonlinearity within input data. One basic representation is to use polynomial to get features' high-order and interaction terms, which is implemented in :class:`PolynomialFeatures`::
+Often it's useful to add complexity to the model by considering nonlinear features of the input data. A simple and common method to use is polynomial features, which can get features' high-order and interaction terms. It is implemented in :class:`PolynomialFeatures`::
 
     >>> import numpy as np
     >>> from sklearn.preprocessing import PolynomialFeatures
@@ -450,6 +450,7 @@ Often it's useful to add complexity to the model by considering nonlinearity wit
 The features of X have been transformed from :math:`(X_1, X_2)` to :math:`(1, X_1, X_2, X_1^2, X_1X_2, X_2^2)`.
 
 In some cases, only interaction terms among features are required, and it can be gotten with the setting ``interaction_only=True``::
+
     >>> X = np.arange(9).reshape(3, 3)
     >>> X                                                 # doctest: +ELLIPSIS
     array([[0, 1, 2],
@@ -463,4 +464,6 @@ In some cases, only interaction terms among features are required, and it can be
 
 The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
 
-See :ref:`example_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created ploynomial features.  
+Note that polynomial features are used implicitily in `kernel methods <http://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
+
+See :ref:`example_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.  
