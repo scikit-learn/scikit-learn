@@ -185,7 +185,7 @@ def test_randomized_pca_check_list():
 
 
 def test_randomized_pca_inverse():
-    # Test that RandomizedPCA is inversible on dense data
+    # Test that RandomizedPCA is invertible on dense data
     rng = np.random.RandomState(0)
     n, p = 50, 3
     X = rng.randn(n, p)  # spherical data

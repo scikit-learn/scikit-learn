@@ -25,7 +25,7 @@ from ..utils.validation import check_is_fitted
 def _assess_dimension(spectrum, rank, n_samples, n_features, rcond=1e-15):
     """Compute the likelihood of a rank ``rank`` dataset
 
-    The dataset is assumed to be embedded in gaussian noise of shape(n,
+    The dataset is assumed to be embedded in Gaussian noise of shape(n,
     dimf) having spectrum ``spectrum``.
 
     Parameters
@@ -39,7 +39,7 @@ def _assess_dimension(spectrum, rank, n_samples, n_features, rcond=1e-15):
     n_features: int
         Number of features.
     rcond : float
-        Cutoff for values in `spectrum`. Any values lower than this
+        Cut-off for values in `spectrum`. Any values lower than this
         will be ignored (`default=1e-15`)
 
     Returns
