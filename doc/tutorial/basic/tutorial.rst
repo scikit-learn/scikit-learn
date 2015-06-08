@@ -284,7 +284,6 @@ Regression targets are cast to ``float64``, classification targets are
 maintained::
     >>> from sklearn import datasets
     >>> from sklearn.svm import SVC
-
     >>> iris = datasets.load_iris()
     >>> clf = SVC()
     >>> clf.fit(iris.data, iris.target)
