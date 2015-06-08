@@ -7,8 +7,9 @@ from abc import ABCMeta, abstractmethod
 
 from . import libsvm, liblinear
 from . import libsvm_sparse
-from ..base import BaseEstimator, ClassifierMixin
+from ..base import BaseEstimator, ClassifierMixin, ChangedBehaviorWarning
 from ..preprocessing import LabelEncoder
+from ..multiclass import _ovr_decision_function
 from ..utils import check_array, check_random_state, column_or_1d
 from ..utils import ConvergenceWarning, compute_class_weight, deprecated
 from ..utils.extmath import safe_sparse_dot
@@ -72,14 +73,14 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         if impl not in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
-       
-        # FIXME Remove gamma=0.0 support in 0.18 
+
+        # FIXME Remove gamma=0.0 support in 0.18
         if gamma == 0:
             msg = ("gamma=%s has been deprecated in favor of "
                    "gamma='%s' as of 0.17. Backward compatibility"
                    " for gamma=%s will be removed in %s")
             invalid_gamma = 0.0
-            warnings.warn(msg % (invalid_gamma, "auto", 
+            warnings.warn(msg % (invalid_gamma, "auto",
                 invalid_gamma, "0.18"), DeprecationWarning)
 
         self._impl = impl
@@ -168,9 +169,9 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                              "Note: Sparse matrices cannot be indexed w/"
                              "boolean masks (use `indices=True` in CV)."
                              % (sample_weight.shape, X.shape))
-        
+
         # FIXME remove (self.gamma == 0) in 0.18
-        if (self.kernel in ['poly', 'rbf']) and ((self.gamma == 0) 
+        if (self.kernel in ['poly', 'rbf']) and ((self.gamma == 0)
                 or (self.gamma == 'auto')):
             # if custom gamma is not provided ...
             self._gamma = 1.0 / X.shape[1]
@@ -494,8 +495,19 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return safe_sparse_dot(self._dual_coef_, self.support_vectors_)
 
 
-class BaseSVC(BaseLibSVM, ClassifierMixin):
+class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
     """ABC for LibSVM-based classifiers."""
+    @abstractmethod
+    def __init__(self, impl, kernel, degree, gamma, coef0, tol, C, nu,
+                 shrinking, probability, cache_size, class_weight, verbose,
+                 max_iter, decision_function_shape, random_state):
+        self.decision_function_shape = decision_function_shape
+        super(BaseSVC, self).__init__(
+            impl=impl, kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
+            tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
+            probability=probability, cache_size=cache_size,
+            class_weight=class_weight, verbose=verbose, max_iter=max_iter,
+            random_state=random_state)
 
     def _validate_targets(self, y):
         y_ = column_or_1d(y, warn=True)
@@ -519,11 +531,21 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 
         Returns
         -------
-        X : array-like, shape (n_samples, n_class * (n_class-1) / 2)
+        X : array-like, shape (n_samples, n_classes * (n_classes-1) / 2)
             Returns the decision function of the sample for each class
             in the model.
+            If decision_function_shape='ovr', the shape is (n_samples,
+            n_classes)
         """
-        return self._decision_function(X)
+        dec = self._decision_function(X)
+        if self.decision_function_shape is None and len(self.classes_) > 2:
+            warnings.warn("The decision_function_shape default value will "
+                          "change from 'ovo' to 'ovr' in 0.18. This will change "
+                          "the shape of the decision function returned by "
+                          "SVC.", ChangedBehaviorWarning)
+        if self.decision_function_shape == 'ovr':
+            return _ovr_decision_function(dec < 0, dec, len(self.classes_))
+        return dec
 
     def predict(self, X):
         """Perform classification on samples in X.

@@ -139,13 +139,11 @@ def test_svc_iris():
 
 
 def test_sparse_decision_function():
-    """
-    Test decision_function
+    #Test decision_function
 
-    Sanity check, test that decision_function implemented in python
-    returns the same as the one in libsvm
+    #Sanity check, test that decision_function implemented in python
+    #returns the same as the one in libsvm
 
-    """
     # multi class:
     clf = svm.SVC(kernel='linear', C=0.1).fit(iris.data, iris.target)
 

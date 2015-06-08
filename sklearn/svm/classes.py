@@ -51,8 +51,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         `ovr` trains n_classes one-vs-rest classifiers, while `crammer_singer`
         optimizes a joint objective over all classes.
         While `crammer_singer` is interesting from a theoretical perspective
-        as it is consistent, it is seldom used in practice as it rarely leads to
-        better accuracy and is more expensive to compute.
+        as it is consistent, it is seldom used in practice as it rarely leads
+        to better accuracy and is more expensive to compute.
         If `crammer_singer` is chosen, the options loss, penalty and dual will
         be ignored.
 
@@ -448,6 +448,15 @@ class SVC(BaseSVC):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
+    decision_function_shape : 'ovo', 'ovr' or None, default=None
+        Whether to return a one-vs-rest ('ovr') ecision function of shape
+        (n_samples, n_classes) as all other classifiers, or the original
+        one-vs-one ('ovo') decision function of libsvm which has shape
+        (n_samples, n_classes * (n_classes - 1) / 2).
+        The default of None will currently behave as 'ovo' for backward
+        compatibility and raise a deprecation warning, but will change 'ovr'
+        in 0.18.
+
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data for probability estimation.
@@ -488,9 +497,10 @@ class SVC(BaseSVC):
     >>> from sklearn.svm import SVC
     >>> clf = SVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-        gamma='auto', kernel='rbf', max_iter=-1, probability=False,
-        random_state=None, shrinking=True, tol=0.001, verbose=False)
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+        decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+        max_iter=-1, probability=False, random_state=None, shrinking=True,
+        tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -509,12 +519,16 @@ class SVC(BaseSVC):
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
-                 verbose=False, max_iter=-1, random_state=None):
+                 verbose=False, max_iter=-1, decision_function_shape=None,
+                 random_state=None):
 
         super(SVC, self).__init__(
-            'c_svc', kernel, degree, gamma, coef0, tol, C, 0., 0., shrinking,
-            probability, cache_size, class_weight, verbose, max_iter,
-            random_state)
+            impl='c_svc', kernel=kernel, degree=degree, gamma=gamma,
+            coef0=coef0, tol=tol, C=C, nu=0., shrinking=shrinking,
+            probability=probability, cache_size=cache_size,
+            class_weight=class_weight, verbose=verbose, max_iter=max_iter,
+            decision_function_shape=decision_function_shape,
+            random_state=random_state)
 
 
 class NuSVC(BaseSVC):
@@ -566,6 +580,13 @@ class NuSVC(BaseSVC):
     cache_size : float, optional
         Specify the size of the kernel cache (in MB).
 
+    class_weight : {dict, 'auto'}, optional
+        Set the parameter C of class i to class_weight[i]*C for
+        SVC. If not given, all classes are supposed to have
+        weight one. The 'auto' mode uses the values of y to
+        automatically adjust weights inversely proportional to
+        class frequencies.
+
     verbose : bool, default: False
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in libsvm that, if enabled, may not work
@@ -573,6 +594,15 @@ class NuSVC(BaseSVC):
 
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
+
+    decision_function_shape : 'ovo', 'ovr' or None, default=None
+        Whether to return a one-vs-rest ('ovr') ecision function of shape
+        (n_samples, n_classes) as all other classifiers, or the original
+        one-vs-one ('ovo') decision function of libsvm which has shape
+        (n_samples, n_classes * (n_classes - 1) / 2).
+        The default of None will currently behave as 'ovo' for backward
+        compatibility and raise a deprecation warning, but will change 'ovr'
+        in 0.18.
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
@@ -587,7 +617,7 @@ class NuSVC(BaseSVC):
         Support vectors.
 
     n_support_ : array-like, dtype=int32, shape = [n_class]
-        Number of support vector for each class.
+        Number of support vectors for each class.
 
     dual_coef_ : array, shape = [n_class-1, n_SV]
         Coefficients of the support vector in the decision function. \
@@ -614,7 +644,8 @@ class NuSVC(BaseSVC):
     >>> from sklearn.svm import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    NuSVC(cache_size=200, coef0=0.0, degree=3, gamma='auto', kernel='rbf',
+    NuSVC(cache_size=200, class_weight=None, coef0=0.0,
+          decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
           max_iter=-1, nu=0.5, probability=False, random_state=None,
           shrinking=True, tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
@@ -632,12 +663,16 @@ class NuSVC(BaseSVC):
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto',
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, verbose=False, max_iter=-1,
-                 random_state=None):
+                 tol=1e-3, cache_size=200, class_weight=None, verbose=False,
+                 max_iter=-1, decision_function_shape=None, random_state=None):
 
         super(NuSVC, self).__init__(
-            'nu_svc', kernel, degree, gamma, coef0, tol, 0., nu, 0., shrinking,
-            probability, cache_size, None, verbose, max_iter, random_state)
+            impl='nu_svc', kernel=kernel, degree=degree, gamma=gamma,
+            coef0=coef0, tol=tol, C=0., nu=nu, shrinking=shrinking,
+            probability=probability, cache_size=cache_size,
+            class_weight=class_weight, verbose=verbose, max_iter=max_iter,
+            decision_function_shape=decision_function_shape,
+            random_state=random_state)
 
 
 class SVR(BaseLibSVM, RegressorMixin):
@@ -740,8 +775,8 @@ class SVR(BaseLibSVM, RegressorMixin):
         Scalable Linear Support Vector Machine for regression
         implemented using liblinear.
     """
-    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0, 
-                 tol=1e-3, C=1.0, epsilon=0.1, shrinking=True, 
+    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
+                 tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1):
 
         super(SVR, self).__init__(
@@ -839,8 +874,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)  #doctest: +NORMALIZE_WHITESPACE
-    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma='auto', 
-          kernel='rbf', max_iter=-1, nu=0.1, shrinking=True, tol=0.001, 
+    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma='auto',
+          kernel='rbf', max_iter=-1, nu=0.1, shrinking=True, tol=0.001,
           verbose=False)
 
     See also
@@ -943,8 +978,8 @@ class OneClassSVM(BaseLibSVM):
         Constants in decision function.
 
     """
-    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0, 
-                 tol=1e-3, nu=0.5, shrinking=True, cache_size=200, 
+    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
+                 tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1, random_state=None):
 
         super(OneClassSVM, self).__init__(
@@ -979,3 +1014,18 @@ class OneClassSVM(BaseLibSVM):
         super(OneClassSVM, self).fit(X, [], sample_weight=sample_weight,
                                      **params)
         return self
+
+    def decision_function(self, X):
+        """Distance of the samples X to the separating hyperplane.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+
+        Returns
+        -------
+        X : array-like, shape (n_samples,)
+            Returns the decision function of the samples.
+        """
+        dec = self._decision_function(X)
+        return dec
