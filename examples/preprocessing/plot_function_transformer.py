@@ -1,11 +1,11 @@
 """
 =========================================================
-Using CallableTransformer to select columns
+Using FunctionTransformer to select columns
 =========================================================
 
-Shows how to use a callable transformer in a pipeline. If you know your
+Shows how to use a function transformer in a pipeline. If you know your
 dataset's first principle component is irrelevant for a classification task,
-you can use the CallableTransformer to select all but the first column of the
+you can use the FunctionTransformer to select all but the first column of the
 PCA transformed data.
 """
 import matplotlib.pyplot as plt
@@ -14,7 +14,7 @@ import numpy as np
 from sklearn.cross_validation import train_test_split
 from sklearn.decomposition import PCA
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import CallableTransformer
+from sklearn.preprocessing import FunctionTransformer
 
 
 def _generate_vector(shift=0.5, noise=15):
@@ -38,7 +38,7 @@ def generate_dataset():
     )), np.hstack((np.zeros(1000), np.ones(1000)))
 
 
-def all_but_first_column(X, y):
+def all_but_first_column(X):
     return X[:, 1:]
 
 
@@ -48,7 +48,7 @@ def drop_first_component(X, y):
     transform the dataset.
     """
     pipeline = make_pipeline(
-        PCA(), CallableTransformer(all_but_first_column),
+        PCA(), FunctionTransformer(all_but_first_column),
     )
     X_train, X_test, y_train, y_test = train_test_split(X, y)
     pipeline.fit(X_train, y_train)
