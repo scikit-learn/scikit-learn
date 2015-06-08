@@ -111,8 +111,8 @@ then submit a "pull request" (PR):
 
 Finally, go to the web page of the your fork of the scikit-learn repo,
 and click 'Pull request' to send your changes to the maintainers for review.
-request. This will send an email to the committers, but might also send an
-email to the mailing list in order to get more visibility.
+You may want to consider sending an email to the mailing list for more
+visibility.
 
 .. note::
 
@@ -240,7 +240,7 @@ compromise between mathematical and algorithmic details, and give
 intuition to the reader on what the algorithm does.
 
 Basically, to elaborate on the above, it is best to always
-start with a small paragraph with a hand-waiving explanation of what the
+start with a small paragraph with a hand-waving explanation of what the
 method does to the data. Then, it is very helpful
 to point out why the feature is useful and when it should be used -
 the latter also including "big O"
@@ -265,8 +265,8 @@ opposed to how it works "under the hood".
 Finally, follow the formatting rules below to make it consistently good:
 
     * Add "See also" in docstrings for related classes/functions.
-    
-    * "See also" in docstrings should be one line per reference, 
+
+    * "See also" in docstrings should be one line per reference,
       with a colon and an explanation, for example::
 
         See also
@@ -275,7 +275,7 @@ Finally, follow the formatting rules below to make it consistently good:
         SelectFpr: Select features based on a false positive rate test.
 
     * For unwritten formatting rules, try to follow existing good works:
-    
+
         * For "References" in docstrings, see the Silhouette Coefficient
           (:func:`sklearn.metrics.silhouette_score`).
 
@@ -294,7 +294,7 @@ Testing and improving test coverage
 High-quality `unit testing <http://en.wikipedia.org/wiki/Unit_testing>`_
 is a corner-stone of the scikit-learn development process. For this
 purpose, we use the `nose <http://nose.readthedocs.org/en/latest/>`_
-package. The tests are functions appropriately names, located in `tests`
+package. The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
 different options of the code.
 
@@ -406,7 +406,7 @@ In addition, we add the following guidelines:
       that is implemented in ``sklearn.foo.bar.baz``,
       the test should import it from ``sklearn.foo``.
 
-    * **Please don't use ``import *`` in any case**. It is considered harmful
+    * **Please don't use** ``import *`` **in any case**. It is considered harmful
       by the `official Python recommendations
       <http://docs.python.org/howto/doanddont.html#from-module-import>`_.
       It makes the code harder to read as the origin of symbols is no
@@ -670,7 +670,7 @@ are always remembered by the estimator.
 Also note that they should not be documented under the "Attributes" section,
 but rather under the "Parameters" section for that estimator.
 
-In addition, **every keyword argument accepted by ``__init__`` should
+In addition, **every keyword argument accepted by** ``__init__`` **should
 correspond to an attribute on the instance**. Scikit-learn relies on this to
 find the relevant attributes to set on an estimator when doing model selection.
 
@@ -802,11 +802,13 @@ E.g., here's a custom classifier::
   ...     """Predicts the majority class of its training data."""
   ...     def __init__(self):
   ...         pass
+  ...
   ...     def fit(self, X, y):
   ...         self.classes_, indices = np.unique(["foo", "bar", "foo"],
   ...                                            return_inverse=True)
   ...         self.majority_ = np.argmax(np.bincount(indices))
   ...         return self
+  ...
   ...     def predict(self, X):
   ...         return np.repeat(self.classes_[self.majority_], len(X))
 
@@ -852,12 +854,12 @@ to apply parameter setting to estimators,
 it is essential that calling ``set_params`` has the same effect
 as setting parameters using the ``__init__`` method.
 The easiest and recommended way to accomplish this is to
-**not do any parameter validation in ``__init__``**.
+**not do any parameter validation in** ``__init__``.
 All logic behind estimator parameters,
 like translating string arguments into functions, should be done in ``fit``.
 
 Also it is expected that parameters with trailing ``_`` are **not to be set
-inside the ``__init__`` method**. All and only the public attributes set by
+inside the** ``__init__`` **method**. All and only the public attributes set by
 fit have a trailing ``_``. As a result the existence of parameters with
 trailing ``_`` is used to check if the estimator has been fitted.
 

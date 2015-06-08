@@ -144,7 +144,7 @@ efficiently process ``scipy.sparse`` data.
 
 - :func:`sparsefuncs.inplace_csr_row_normalize_l1` and
   :func:`sparsefuncs.inplace_csr_row_normalize_l2`: can be used to normalize
-  individual sparse samples to unit l1 or l2 norm as done in
+  individual sparse samples to unit L1 or L2 norm as done in
   :class:`sklearn.preprocessing.Normalizer`.
 
 - :func:`sparsefuncs.inplace_csr_column_scale`: can be used to multiply the
@@ -159,7 +159,8 @@ Graph Routines
 - :func:`graph.single_source_shortest_path_length`:
   (not currently used in scikit-learn)
   Return the shortest path from a single source
-  to all connected nodes on a graph.  Code is adapted from networkx.
+  to all connected nodes on a graph.  Code is adapted from `networkx
+  <https://networkx.github.io/>`_.
   If this is ever needed again, it would be far faster to use a single
   iteration of Dijkstra's algorithm from ``graph_shortest_path``.
 
@@ -169,7 +170,7 @@ Graph Routines
   both dense and sparse connectivity matrices.
 
 - :func:`graph_shortest_path.graph_shortest_path`:
-  (used in :class:``sklearn.manifold.Isomap``)
+  (used in :class:`sklearn.manifold.Isomap`)
   Return the shortest path between all pairs of connected points on a directed
   or undirected graph.  Both the Floyd-Warshall algorithm and Dijkstra's
   algorithm are available.  The algorithm is most efficient when the
@@ -235,7 +236,7 @@ Testing Functions
   requests to mldata.org. Used in tests of :mod:`sklearn.datasets`.
 
 - :func:`testing.all_estimators` : returns a list of all estimators in
-  sklearn to test for consistent behavior and interfaces.
+  scikit-learn to test for consistent behavior and interfaces.
 
 Multiclass and multilabel utility function
 ==========================================
