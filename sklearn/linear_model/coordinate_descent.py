@@ -17,7 +17,7 @@ from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
 from ..utils import check_array, check_X_y, deprecated
 from ..utils.validation import check_random_state
-from ..cross_validation import _check_cv as check_cv
+from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
