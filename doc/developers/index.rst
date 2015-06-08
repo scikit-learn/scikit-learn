@@ -111,8 +111,8 @@ then submit a "pull request" (PR):
 
 Finally, go to the web page of the your fork of the scikit-learn repo,
 and click 'Pull request' to send your changes to the maintainers for review.
-This will send an email to the committers, but might also send an
-email to the mailing list in order to get more visibility.
+You may want to consider sending an email to the mailing list for more
+visibility.
 
 .. note::
 
