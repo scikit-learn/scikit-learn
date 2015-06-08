@@ -406,7 +406,7 @@ In addition, we add the following guidelines:
       that is implemented in ``sklearn.foo.bar.baz``,
       the test should import it from ``sklearn.foo``.
 
-    * **Please don't use ``import *`` in any case**. It is considered harmful
+    * **Please don't use** ``import *`` **in any case**. It is considered harmful
       by the `official Python recommendations
       <http://docs.python.org/howto/doanddont.html#from-module-import>`_.
       It makes the code harder to read as the origin of symbols is no
@@ -859,7 +859,7 @@ All logic behind estimator parameters,
 like translating string arguments into functions, should be done in ``fit``.
 
 Also it is expected that parameters with trailing ``_`` are **not to be set
-inside the** ``__init__`` **method. All and only the public attributes set by
+inside the** ``__init__`` **method**. All and only the public attributes set by
 fit have a trailing ``_``. As a result the existence of parameters with
 trailing ``_`` is used to check if the estimator has been fitted.
 
