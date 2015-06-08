@@ -505,7 +505,7 @@ class BinomialDeviance(ClassificationLossFunction):
 
     def _score_to_proba(self, score):
         proba = np.ones((score.shape[0], 2), dtype=np.float64)
-        proba[:, 1] = 1.0 / (1.0 + np.exp(-score.ravel()))
+        proba[:, 1] = expit(score.ravel())
         proba[:, 0] -= proba[:, 1]
         return proba
 
@@ -628,7 +628,7 @@ class ExponentialLoss(ClassificationLossFunction):
 
     def _score_to_proba(self, score):
         proba = np.ones((score.shape[0], 2), dtype=np.float64)
-        proba[:, 1] = 1.0 / (1.0 + np.exp(-2.0 * score.ravel()))
+        proba[:, 1] = expit(2.0 * score.ravel())
         proba[:, 0] -= proba[:, 1]
         return proba
 
