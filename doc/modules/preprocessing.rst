@@ -426,3 +426,41 @@ values than observed values.
 
 :class:`Imputer` can be used in a Pipeline as a way to build a composite
 estimator that supports imputation. See :ref:`example_missing_values.py`
+
+.. _polynomial_features:
+
+Generating polynomial features
+==============================
+
+Often it's useful to add complexity to the model by considering nonlinearity within input data. One basic representation is to use polynomial to get features' high-order and interaction terms, which is implemented in :class:`PolynomialFeatures`::
+
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import PolynomialFeatures
+    >>> X = np.arange(6).reshape(3, 2)
+    >>> X                                                 # doctest: +ELLIPSIS
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
+    >>> poly = PolynomialFeatures(2)
+    >>> poly.fit_transform(X)                             # doctest: +ELLIPSIS
+    array([[ 1,  0,  1,  0,  0,  1],
+           [ 1,  2,  3,  4,  6,  9],
+           [ 1,  4,  5, 16, 20, 25]])
+
+The features of X have been transformed from :math:`(X_1, X_2)` to :math:`(1, X_1, X_2, X_1^2, X_1X_2, X_2^2)`.
+
+In some cases, only interaction terms among features are required, and it can be gotten with the setting ``interaction_only=True``::
+    >>> X = np.arange(9).reshape(3, 3)
+    >>> X                                                 # doctest: +ELLIPSIS
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+    >>> poly = PolynomialFeatures(degree=3, interaction_only=True)
+    >>> poly.fit_transform(X)                             # doctest: +ELLIPSIS
+    array([[  1,   0,   1,   2,   0,   0,   2,   0],
+           [  1,   3,   4,   5,  12,  15,  20,  60],
+           [  1,   6,   7,   8,  42,  48,  56, 336]])
+
+The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
+
+See :ref:`example_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created ploynomial features.  
