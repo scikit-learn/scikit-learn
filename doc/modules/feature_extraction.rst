@@ -153,11 +153,11 @@ transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
   u'title_bow__learned', u'title_bow__moveable', u'title_bow__the',
   u'title_bow__trick', u'title_bow__watson']
 
-  >>> column_trans.transform(X).toarray() # doctest: +NORMALIZE_WHITESPACE
+  >>> column_trans.transform(X).toarray() # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   array([[1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
          [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1],
          [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-         [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0]])
+         [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0]]...)
 
 .. _feature_hashing:
 
