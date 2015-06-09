@@ -27,6 +27,8 @@ from sklearn.linear_model.ridge import RidgeClassifierCV
 from sklearn.linear_model.ridge import _solve_cholesky
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
 
+from sklearn.grid_search import GridSearchCV
+
 from sklearn.cross_validation import KFold
 
 
@@ -525,6 +527,32 @@ def test_ridgecv_store_cv_values():
     y = rng.randn(n_samples, n_responses)
     r.fit(x, y)
     assert_equal(r.cv_values_.shape, (n_samples, n_responses, n_alphas))
+
+
+def test_ridgecv_sample_weight():
+    rng = np.random.RandomState(0)
+    alphas = (0.1, 1.0, 10.0)
+
+    # There are different algorithms for n_samples > n_features
+    # and the opposite, so test them both.
+    for n_samples, n_features in ((6, 5), (5, 10)):
+        y = rng.randn(n_samples)
+        X = rng.randn(n_samples, n_features)
+        sample_weight = 1 + rng.rand(n_samples)
+
+        cv = KFold(n_samples, 5)
+        ridgecv = RidgeCV(alphas=alphas, cv=cv)
+        ridgecv.fit(X, y, sample_weight=sample_weight)
+
+        # Check using GridSearchCV directly
+        parameters = {'alpha': alphas}
+        fit_params = {'sample_weight': sample_weight}
+        gs = GridSearchCV(Ridge(), parameters, fit_params=fit_params,
+                          cv=cv)
+        gs.fit(X, y)
+
+        assert_equal(ridgecv.alpha_, gs.best_estimator_.alpha)
+        assert_array_almost_equal(ridgecv.coef_, gs.best_estimator_.coef_)
 
 
 def test_raises_value_error_if_sample_weights_greater_than_1d():
