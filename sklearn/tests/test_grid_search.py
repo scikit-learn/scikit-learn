@@ -92,6 +92,10 @@ X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
 y = np.array([1, 1, 2, 2])
 
 
+def assert_grid_iter_equals_getitem(grid):
+    assert_equal(list(grid), [grid[i] for i in range(len(grid))])
+
+
 def test_parameter_grid():
     # Test basic properties of ParameterGrid.
     params1 = {"foo": [1, 2, 3]}
@@ -99,6 +103,7 @@ def test_parameter_grid():
     assert_true(isinstance(grid1, Iterable))
     assert_true(isinstance(grid1, Sized))
     assert_equal(len(grid1), 3)
+    assert_grid_iter_equals_getitem(grid1)
 
     params2 = {"foo": [4, 2],
                "bar": ["ham", "spam", "eggs"]}
@@ -113,14 +118,19 @@ def test_parameter_grid():
                      set(("bar", x, "foo", y)
                          for x, y in product(params2["bar"], params2["foo"])))
 
+    assert_grid_iter_equals_getitem(grid2)
+
     # Special case: empty grid (useful to get default estimator settings)
     empty = ParameterGrid({})
     assert_equal(len(empty), 1)
     assert_equal(list(empty), [{}])
+    assert_grid_iter_equals_getitem(empty)
+    assert_raises(IndexError, lambda: empty[1])
 
-    has_empty = ParameterGrid([{'C': [1, 10]}, {}])
-    assert_equal(len(has_empty), 3)
-    assert_equal(list(has_empty), [{'C': 1}, {'C': 10}, {}])
+    has_empty = ParameterGrid([{'C': [1, 10]}, {}, {'C': [.5]}])
+    assert_equal(len(has_empty), 4)
+    assert_equal(list(has_empty), [{'C': 1}, {'C': 10}, {}, {'C': .5}])
+    assert_grid_iter_equals_getitem(has_empty)
 
 
 def test_grid_search():
