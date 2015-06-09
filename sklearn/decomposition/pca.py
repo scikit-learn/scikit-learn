@@ -69,7 +69,7 @@ def _assess_dimension(spectrum, rank, n_samples, n_features, rcond=1e-15):
         v = 1
     else:
         v = np.sum(spectrum[rank:]) / (n_features - rank)
-        if rcond > abs(v):
+        if rcond > v:
             return -np.inf
         pv = -np.log(v) * n_samples * (n_features - rank) / 2.
 

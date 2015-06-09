@@ -289,6 +289,19 @@ def test_assess_dimension_tiny_eigenvals():
     assert_equal(ret, -np.inf)
 
 
+def test_infer_dim_mle():
+    """
+    Test that we deal with tiny eigenvalues appropriately when
+    `mle` inferring `n_components` with a pathalogical `X` dastaset
+    see issue https://github.com/scikit-learn/scikit-learn/issues/4441
+    """
+    X, _ = datasets.make_classification(n_informative=1, n_repeated=18,
+                                        n_redundant=1, n_clusters_per_class=1,
+                                        random_state=20150609)
+    pca = PCA(n_components='mle').fit(X)
+    assert_equal(pca.n_components_, 0)
+
+
 def test_infer_dim_by_explained_variance():
     X = iris.data
     pca = PCA(n_components=0.95)
