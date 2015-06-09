@@ -90,6 +90,7 @@ def nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=0.0):
         Xij = X[i] - X[mask, :]  # n_relevant x n_features
         Xij_outer = (Xij[:, :, np.newaxis] * Xij[:, np.newaxis, :])
         grad += np.einsum("i,ijk", samples_proba[mask], Xij_outer)
+        # grad += np.einsum("i,ij,ik", samples_proba[mask], Xij, Xij)
 
         neighbours_proba = p[i] * (y == y[i])
         if loss == 'kl' and p_i > 1e-10:
@@ -171,14 +172,15 @@ def nca_stochastic_oracle(L, X, y, n_components, loss, minibatch_size, threshold
 
 
 def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
-                 solver, tol, random_state, method, minibatch_size, verbose):
+                 solver, tol, random_state, method, minibatch_size, verbose, threshold):
     n_samples, n_features = X.shape
 
     rng = np.random.RandomState(random_state)
     best_value = np.inf
     best_L = None
 
-    threshold = 1e-3 / np.abs(X).max() ** 2  # FIXME
+    if threshold is None:
+        threshold = min(1e-6, 1e-3 / np.abs(X).max() ** 2)  # FIXME
 
     if method == 'vectorized':
         dx = X[:, np.newaxis, :] - X[np.newaxis, :, :]  # n_samples x n_samples x n_features
@@ -251,7 +253,7 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
 
 class BaseNCA(BaseEstimator):
     def __init__(self, n_components, solver, learning_rate, tol, loss, max_iter,
-                 n_init, random_state, verbose, method, minitbatch_size):
+                 n_init, random_state, verbose, method, minitbatch_size, threshold):
         self.n_components = n_components
         self.random_state = random_state
         self.max_iter = max_iter
@@ -263,6 +265,7 @@ class BaseNCA(BaseEstimator):
         self.tol = tol
         self.method = method
         self.minitbatch_size = minitbatch_size
+        self.threshold = threshold
 
     def fit(self, X, y):
         n_features = X.shape[1]
@@ -277,7 +280,7 @@ class BaseNCA(BaseEstimator):
         self.matrix_ = optimize_nca(X, y, self.learning_rate, n_components, self.loss,
                                     self.n_init, self.max_iter, self.solver, self.tol,
                                     self.random_state, self.method, self.minitbatch_size,
-                                    self.verbose)
+                                    self.verbose, self.threshold)
         return self
 
 
@@ -334,9 +337,11 @@ class NCATransformer(BaseNCA, TransformerMixin):
 
     """
     def __init__(self, n_components=None, solver='adagrad', learning_rate=1.0, tol=1e-5, loss='kl',
-                 max_iter=100, n_init=1, random_state=None, verbose=0, method='stochastic', minibatch_size=100):
+                 max_iter=100, n_init=1, random_state=None, verbose=0, method='stochastic', minibatch_size=100,
+                 threshold=None):
         super(NCATransformer, self).__init__(n_components, solver, learning_rate, tol, loss,
-                                             max_iter, n_init, random_state, verbose, method, minibatch_size)
+                                             max_iter, n_init, random_state, verbose, method,
+                                             minibatch_size, threshold)
 
     def transform(self, X):
         check_is_fitted(self, 'matrix_')
