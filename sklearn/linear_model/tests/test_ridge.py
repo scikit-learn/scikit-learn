@@ -489,6 +489,35 @@ def test_class_weights():
     assert_array_almost_equal(clf.intercept_, clfa.intercept_)
 
 
+def test_class_weight_vs_sample_weight():
+    """Check class_weights resemble sample_weights behavior."""
+    for clf in (RidgeClassifier, RidgeClassifierCV):
+
+        # Iris is balanced, so no effect expected for using 'balanced' weights
+        clf1 = clf()
+        clf1.fit(iris.data, iris.target)
+        clf2 = clf(class_weight='balanced')
+        clf2.fit(iris.data, iris.target)
+        assert_almost_equal(clf1.coef_, clf2.coef_)
+
+        # Inflate importance of class 1, check against user-defined weights
+        sample_weight = np.ones(iris.target.shape)
+        sample_weight[iris.target == 1] *= 100
+        class_weight = {0: 1., 1: 100., 2: 1.}
+        clf1 = clf()
+        clf1.fit(iris.data, iris.target, sample_weight)
+        clf2 = clf(class_weight=class_weight)
+        clf2.fit(iris.data, iris.target)
+        assert_almost_equal(clf1.coef_, clf2.coef_)
+
+        # Check that sample_weight and class_weight are multiplicative
+        clf1 = clf()
+        clf1.fit(iris.data, iris.target, sample_weight ** 2)
+        clf2 = clf(class_weight=class_weight)
+        clf2.fit(iris.data, iris.target, sample_weight)
+        assert_almost_equal(clf1.coef_, clf2.coef_)
+
+
 def test_class_weights_cv():
     # Test class weights for cross validated ridge classifier.
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],

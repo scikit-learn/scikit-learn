@@ -572,7 +572,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver)
         self.class_weight = class_weight
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model.
 
         Parameters
@@ -583,20 +583,24 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         y : array-like, shape = [n_samples]
             Target values
 
+        sample_weight : float or numpy array of shape (n_samples,)
+            Sample weight.
+
         Returns
         -------
         self : returns an instance of self.
         """
+        if sample_weight is None:
+            sample_weight = 1.
+
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.y_type_.startswith('multilabel'):
             y = column_or_1d(y, warn=True)
 
-        if self.class_weight:
-            # get the class weight corresponding to each sample
-            sample_weight = compute_sample_weight(self.class_weight, y)
-        else:
-            sample_weight = None
+        # modify the sample weights with the corresponding class weight
+        sample_weight = (sample_weight *
+                         compute_sample_weight(self.class_weight, y))
 
         super(RidgeClassifier, self).fit(X, Y, sample_weight=sample_weight)
         return self

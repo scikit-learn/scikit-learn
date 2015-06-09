@@ -71,6 +71,8 @@ Enhancements
      It is now possible to ignore one or more labels, such as where
      a multiclass problem has a majority class to ignore. By `Joel Nothman`_.
 
+   - Add ``sample_weight`` support to :class:`linear_model.RidgeClassifier`.
+     By `Trevor Stephens`_.
 
 Bug fixes
 .........
