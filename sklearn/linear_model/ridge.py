@@ -201,6 +201,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3, verbose=0):
     """Solve the ridge equation by the method of normal equations.
 
+    Read more in the :ref:`User Guide <ridge_regression>`.
+
     Parameters
     ----------
     X : {array-like, sparse matrix, LinearOperator},
@@ -396,6 +398,8 @@ class Ridge(_BaseRidge, RegressorMixin):
     This estimator has built-in support for multi-variate regression
     (i.e., when y is a 2d-array of shape [n_samples, n_targets]).
 
+    Read more in the :ref:`User Guide <ridge_regression>`.
+
     Parameters
     ----------
     alpha : {float, array-like}
@@ -499,6 +503,8 @@ class Ridge(_BaseRidge, RegressorMixin):
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     """Classifier using Ridge regression.
 
+    Read more in the :ref:`User Guide <ridge_regression>`.
+
     Parameters
     ----------
     alpha : float
@@ -566,7 +572,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver)
         self.class_weight = class_weight
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model.
 
         Parameters
@@ -577,20 +583,24 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         y : array-like, shape = [n_samples]
             Target values
 
+        sample_weight : float or numpy array of shape (n_samples,)
+            Sample weight.
+
         Returns
         -------
         self : returns an instance of self.
         """
+        if sample_weight is None:
+            sample_weight = 1.
+
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.y_type_.startswith('multilabel'):
             y = column_or_1d(y, warn=True)
 
-        if self.class_weight:
-            # get the class weight corresponding to each sample
-            sample_weight = compute_sample_weight(self.class_weight, y)
-        else:
-            sample_weight = None
+        # modify the sample weights with the corresponding class weight
+        sample_weight = (sample_weight *
+                         compute_sample_weight(self.class_weight, y))
 
         super(RidgeClassifier, self).fit(X, Y, sample_weight=sample_weight)
         return self
@@ -865,10 +875,7 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
-            # FIXME: sample_weight must be split into training/validation data
-            #        too!
-            #fit_params = {'sample_weight' : sample_weight}
-            fit_params = {}
+            fit_params = {'sample_weight' : sample_weight}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
                               parameters, fit_params=fit_params, cv=self.cv)
             gs.fit(X, y)
@@ -886,6 +893,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation.
+
+    Read more in the :ref:`User Guide <ridge_regression>`.
 
     Parameters
     ----------
@@ -970,6 +979,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation. Currently, only the n_features >
     n_samples case is handled efficiently.
+
+    Read more in the :ref:`User Guide <ridge_regression>`.
 
     Parameters
     ----------

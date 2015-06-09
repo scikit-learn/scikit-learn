@@ -22,7 +22,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import arrayfuncs, as_float_array, check_X_y
-from ..cross_validation import _check_cv as check_cv
+from ..cross_validation import check_cv
 from ..utils import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
@@ -46,6 +46,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     in the case of method='lars', the objective function is only known in
     the form of an implicit equation (see discussion in [1])
+
+    Read more in the :ref:`User Guide <least_angle_regression>`.
 
     Parameters
     -----------
@@ -465,6 +467,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 class Lars(LinearModel, RegressorMixin):
     """Least Angle Regression model a.k.a. LAR
 
+    Read more in the :ref:`User Guide <least_angle_regression>`.
+
     Parameters
     ----------
     n_nonzero_coefs : int, optional
@@ -671,6 +675,8 @@ class LassoLars(Lars):
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
+    Read more in the :ref:`User Guide <least_angle_regression>`.
+
     Parameters
     ----------
     alpha : float
@@ -798,32 +804,43 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     -----------
     X_train : array, shape (n_samples, n_features)
         The data to fit the LARS on
+
     y_train : array, shape (n_samples)
         The target variable to fit LARS on
+
     X_test : array, shape (n_samples, n_features)
         The data to compute the residues on
+
     y_test : array, shape (n_samples)
         The target variable to compute the residues on
+
     Gram : None, 'auto', array, shape: (n_features, n_features), optional
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features
+
     copy : boolean, optional
         Whether X_train, X_test, y_train and y_test should be copied;
         if False, they may be overwritten.
+
     method : 'lar' | 'lasso'
         Specifies the returned model. Select ``'lar'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
+
     verbose : integer, optional
         Sets the amount of verbosity
+
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
+
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+
     max_iter : integer, optional
         Maximum number of iterations to perform.
+
     eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
@@ -879,6 +896,8 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
 class LarsCV(Lars):
     """Cross-validated Least Angle Regression model
+
+    Read more in the :ref:`User Guide <least_angle_regression>`.
 
     Parameters
     ----------
@@ -1056,6 +1075,8 @@ class LassoLarsCV(LarsCV):
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
+    Read more in the :ref:`User Guide <least_angle_regression>`.
+
     Parameters
     ----------
     fit_intercept : boolean
@@ -1156,6 +1177,8 @@ class LassoLarsIC(LassoLars):
     of the regularization parameter by making a trade-off between the
     goodness of fit and the complexity of the model. A good model should
     explain well the data while being simple.
+
+    Read more in the :ref:`User Guide <least_angle_regression>`.
 
     Parameters
     ----------
@@ -1262,7 +1285,7 @@ class LassoLarsIC(LassoLars):
 
         y : array-like, shape (n_samples,)
             target values.
-    
+
         copy_X : boolean, optional, default True
             If ``True``, X will be copied; else, it may be overwritten.
 

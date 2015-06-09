@@ -369,6 +369,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     on subsets of both samples and features, then the method is known as
     Random Patches [4]_.
 
+    Read more in the :ref:`User Guide <bagging>`.
+
     Parameters
     ----------
     base_estimator : object or None, optional (default=None)
@@ -731,6 +733,8 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
     is known as Random Subspaces [3]_. Finally, when base estimators are built
     on subsets of both samples and features, then the method is known as
     Random Patches [4]_.
+
+    Read more in the :ref:`User Guide <bagging>`.
 
     Parameters
     ----------

@@ -17,6 +17,8 @@ class Isomap(BaseEstimator, TransformerMixin):
 
     Non-linear dimensionality reduction through Isometric Mapping
 
+    Read more in the :ref:`User Guide <isomap>`.
+
     Parameters
     ----------
     n_neighbors : integer

@@ -155,6 +155,8 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
             return_n_iter=False):
     """K-means clustering algorithm.
 
+    Read more in the :ref:`User Guide <k_means>`.
+
     Parameters
     ----------
     X : array-like or sparse matrix, shape (n_samples, n_features)
@@ -627,6 +629,8 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
 class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     """K-Means clustering
+
+    Read more in the :ref:`User Guide <k_means>`.
 
     Parameters
     ----------

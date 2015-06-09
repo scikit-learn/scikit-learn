@@ -879,12 +879,10 @@ classes according to some similarity metric.
 
 .. currentmodule:: sklearn.metrics
 
+.. _adjusted_rand_score:
 
 Adjusted Rand index
 -------------------
-
-Presentation and usage
-~~~~~~~~~~~~~~~~~~~~~~
 
 Given the knowledge of the ground truth class assignments ``labels_true``
 and our clustering algorithm assignments of the same samples
@@ -1000,12 +998,10 @@ random labelings by defining the adjusted Rand index as follows:
  * `Wikipedia entry for the adjusted Rand index
    <http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
 
+.. _mutual_info_score:
 
 Mutual Information based scores
 -------------------------------
-
-Presentation and usage
-~~~~~~~~~~~~~~~~~~~~~~
 
 Given the knowledge of the ground truth class assignments ``labels_true`` and
 our clustering algorithm assignments of the same samples ``labels_pred``, the
@@ -1168,11 +1164,10 @@ calculated using a similar form to that of the adjusted Rand index:
  * `Wikipedia entry for the Adjusted Mutual Information
    <http://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
 
+.. _homogeneity_completeness:
+
 Homogeneity, completeness and V-measure
 ---------------------------------------
-
-Presentation and usage
-~~~~~~~~~~~~~~~~~~~~~~
 
 Given the knowledge of the ground truth class assignments of the samples,
 it is possible to define some intuitive metric using conditional entropy
@@ -1328,9 +1323,6 @@ mean of homogeneity and completeness**:
 
 Silhouette Coefficient
 ----------------------
-
-Presentation and usage
-~~~~~~~~~~~~~~~~~~~~~~
 
 If the ground truth labels are not known, evaluation must be performed using
 the model itself. The Silhouette Coefficient

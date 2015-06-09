@@ -52,6 +52,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     `loading` matrix, the transformation of the latent variables to the
     observed ones, using expectation-maximization (EM).
 
+    Read more in the :ref:`User Guide <FA>`.
+
     Parameters
     ----------
     n_components : int | None
@@ -316,7 +318,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             Log-likelihood of each sample under the current model
         """
         check_is_fitted(self, 'components_')
-        
+
         Xr = X - self.mean_
         precision = self.get_precision()
         n_features = X.shape[1]

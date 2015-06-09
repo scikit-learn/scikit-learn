@@ -24,6 +24,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
     This classifier is useful as a simple baseline to compare with other
     (real) classifiers. Do not use it for real problems.
 
+    Read more in the :ref:`User Guide <dummy_estimators>`.
+
     Parameters
     ----------
     strategy : str
@@ -322,6 +324,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
     This regressor is useful as a simple baseline to compare with other
     (real) regressors. Do not use it for real problems.
+
+    Read more in the :ref:`User Guide <dummy_estimators>`.
 
     Parameters
     ----------

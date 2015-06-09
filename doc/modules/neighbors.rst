@@ -456,6 +456,7 @@ leaf nodes.  The level of this switch can be specified with the parameter
 
 ``leaf_size`` is not referenced for brute force queries.
 
+.. _nearest_centroid_classifier:
 
 Nearest Centroid Classifier
 ===========================
@@ -510,6 +511,8 @@ the model from 0.81 to 0.82.
 
   * :ref:`example_neighbors_plot_nearest_centroid.py`: an example of
     classification using nearest centroid with different shrink thresholds.
+
+.. _approximate_nearest_neighbors:
 
 Approximate Nearest Neighbors
 =============================

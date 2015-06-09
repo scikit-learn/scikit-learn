@@ -10,6 +10,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
                        RadiusNeighborsMixin, UnsupervisedMixin):
     """Unsupervised learner for implementing neighbor searches.
 
+    Read more in the :ref:`User Guide <unsupervised_neighbors>`.
+
     Parameters
     ----------
     n_neighbors : int, optional (default = 5)
@@ -42,7 +44,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
- 
+
     metric : string or callable, default 'minkowski'
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.

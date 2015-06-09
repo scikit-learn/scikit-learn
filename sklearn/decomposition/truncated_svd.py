@@ -38,6 +38,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     a "naive" algorithm that uses ARPACK as an eigensolver on (X * X.T) or
     (X.T * X), whichever is more efficient.
 
+    Read more in the :ref:`User Guide <LSA>`.
+
     Parameters
     ----------
     n_components : int, default = 2

@@ -505,7 +505,7 @@ class BinomialDeviance(ClassificationLossFunction):
 
     def _score_to_proba(self, score):
         proba = np.ones((score.shape[0], 2), dtype=np.float64)
-        proba[:, 1] = 1.0 / (1.0 + np.exp(-score.ravel()))
+        proba[:, 1] = expit(score.ravel())
         proba[:, 0] -= proba[:, 1]
         return proba
 
@@ -628,7 +628,7 @@ class ExponentialLoss(ClassificationLossFunction):
 
     def _score_to_proba(self, score):
         proba = np.ones((score.shape[0], 2), dtype=np.float64)
-        proba[:, 1] = 1.0 / (1.0 + np.exp(-2.0 * score.ravel()))
+        proba[:, 1] = expit(2.0 * score.ravel())
         proba[:, 0] -= proba[:, 1]
         return proba
 
@@ -1195,6 +1195,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     binomial or multinomial deviance loss function. Binary classification
     is a special case where only a single regression tree is induced.
 
+    Read more in the :ref:`User Guide <gradient_boosting>`.
+
     Parameters
     ----------
     loss : {'deviance', 'exponential'}, optional (default='deviance')
@@ -1514,6 +1516,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     it allows for the optimization of arbitrary differentiable loss functions.
     In each stage a regression tree is fit on the negative gradient of the
     given loss function.
+
+    Read more in the :ref:`User Guide <gradient_boosting>`.
 
     Parameters
     ----------

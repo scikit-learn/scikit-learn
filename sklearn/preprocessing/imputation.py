@@ -64,6 +64,8 @@ def _most_frequent(array, extra_value, n_repeat):
 class Imputer(BaseEstimator, TransformerMixin):
     """Imputation transformer for completing missing values.
 
+    Read more in the :ref:`User Guide <imputation>`.
+
     Parameters
     ----------
     missing_values : integer or "NaN", optional (default="NaN")

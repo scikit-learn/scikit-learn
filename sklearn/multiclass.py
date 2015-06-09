@@ -221,6 +221,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     In the multilabel learning literature, OvR is also known as the binary
     relevance method.
 
+    Read more in the :ref:`User Guide <ovr_classification>`.
+
     Parameters
     ----------
     estimator : estimator object
@@ -462,6 +464,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     a small subset of the data whereas, with one-vs-the-rest, the complete
     dataset is used `n_classes` times.
 
+    Read more in the :ref:`User Guide <ovo_classification>`.
+
     Parameters
     ----------
     estimator : estimator object
@@ -552,36 +556,58 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """
         check_is_fitted(self, 'estimators_')
 
-        n_samples = X.shape[0]
-        n_classes = self.classes_.shape[0]
-        votes = np.zeros((n_samples, n_classes))
-        sum_of_confidences = np.zeros((n_samples, n_classes))
+        predictions = np.vstack([est.predict(X) for est in self.estimators_]).T
+        confidences = np.vstack([_predict_binary(est, X) for est in self.estimators_]).T
+        return _ovr_decision_function(predictions, confidences,
+                                      len(self.classes_))
 
-        k = 0
-        for i in range(n_classes):
-            for j in range(i + 1, n_classes):
-                pred = self.estimators_[k].predict(X)
-                confidence_levels_ij = _predict_binary(self.estimators_[k], X)
-                sum_of_confidences[:, i] -= confidence_levels_ij
-                sum_of_confidences[:, j] += confidence_levels_ij
-                votes[pred == 0, i] += 1
-                votes[pred == 1, j] += 1
-                k += 1
 
-        max_confidences = sum_of_confidences.max()
-        min_confidences = sum_of_confidences.min()
+def _ovr_decision_function(predictions, confidences, n_classes):
+    """Compute a continuous, tie-breaking ovr decision function.
 
-        if max_confidences == min_confidences:
-            return votes
+    It is important to include a continuous value, not only votes,
+    to make computing AUC or calibration meaningful.
 
-        # Scale the sum_of_confidences to (-0.5, 0.5) and add it with votes.
-        # The motivation is to use confidence levels as a way to break ties in
-        # the votes without switching any decision made based on a difference
-        # of 1 vote.
-        eps = np.finfo(sum_of_confidences.dtype).eps
-        max_abs_confidence = max(abs(max_confidences), abs(min_confidences))
-        scale = (0.5 - eps) / max_abs_confidence
-        return votes + sum_of_confidences * scale
+    Parameters
+    ----------
+    predictions : array-like, shape (n_samples, n_classifiers)
+        Predicted classes for each binary classifier.
+
+    confidences : array-like, shape (n_samples, n_classifiers)
+        Decision functions or predicted probabilities for positive class
+        for each binary classifier.
+
+    n_classes : int
+        Number of classes. n_classifiers must be
+        ``n_classes * (n_classes - 1 ) / 2``
+    """
+    n_samples = predictions.shape[0]
+    votes = np.zeros((n_samples, n_classes))
+    sum_of_confidences = np.zeros((n_samples, n_classes))
+
+    k = 0
+    for i in range(n_classes):
+        for j in range(i + 1, n_classes):
+            sum_of_confidences[:, i] -= confidences[:, k]
+            sum_of_confidences[:, j] += confidences[:, k]
+            votes[predictions[:, k] == 0, i] += 1
+            votes[predictions[:, k] == 1, j] += 1
+            k += 1
+
+    max_confidences = sum_of_confidences.max()
+    min_confidences = sum_of_confidences.min()
+
+    if max_confidences == min_confidences:
+        return votes
+
+    # Scale the sum_of_confidences to (-0.5, 0.5) and add it with votes.
+    # The motivation is to use confidence levels as a way to break ties in
+    # the votes without switching any decision made based on a difference
+    # of 1 vote.
+    eps = np.finfo(sum_of_confidences.dtype).eps
+    max_abs_confidence = max(abs(max_confidences), abs(min_confidences))
+    scale = (0.5 - eps) / max_abs_confidence
+    return votes + sum_of_confidences * scale
 
 
 @deprecated("fit_ecoc is deprecated and will be removed in 0.18."
@@ -642,6 +668,8 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     that the number of classifiers used can be controlled by the user, either
     for compressing the model (0 < code_size < 1) or for making the model more
     robust to errors (code_size > 1). See the documentation for more details.
+
+    Read more in the :ref:`User Guide <ecoc>`.
 
     Parameters
     ----------

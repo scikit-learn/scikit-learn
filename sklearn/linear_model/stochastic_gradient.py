@@ -582,6 +582,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     update is truncated to 0.0 to allow for learning sparse models and achieve
     online feature selection.
 
+    Read more in the :ref:`User Guide <sgd>`.
+
     Parameters
     ----------
     loss : str, 'hinge', 'log', 'modified_huber', 'squared_hinge',\
@@ -990,6 +992,20 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape (n_samples,)
            Predicted target values per element in X.
         """
+        return self._decision_function(X)
+
+    def _decision_function(self, X):
+        """Predict using the linear model
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+
+        Returns
+        -------
+        array, shape (n_samples,)
+           Predicted target values per element in X.
+        """
         check_is_fitted(self, ["t_", "coef_", "intercept_"], all_or_any=all)
 
         X = check_array(X, accept_sparse='csr')
@@ -1010,7 +1026,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape (n_samples,)
            Predicted target values per element in X.
         """
-        return self.decision_function(X)
+        return self._decision_function(X)
 
     def _fit_regressor(self, X, y, alpha, C, loss, learning_rate,
                        sample_weight, n_iter):
@@ -1100,6 +1116,8 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     This implementation works with data represented as dense numpy arrays of
     floating point values for the features.
+
+    Read more in the :ref:`User Guide <sgd>`.
 
     Parameters
     ----------

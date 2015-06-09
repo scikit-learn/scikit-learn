@@ -74,6 +74,7 @@ it is known to be a bad estimator, so the probability outputs from
    <http://www.cs.unb.ca/profs/hzhang/publications/FLAIRS04ZhangH.pdf>`_
    Proc. FLAIRS.
 
+.. _gaussian_naive_bayes:
 
 Gaussian Naive Bayes
 --------------------

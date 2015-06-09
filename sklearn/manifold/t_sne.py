@@ -304,6 +304,8 @@ class TSNE(BaseEstimator):
     noise and speed up the computation of pairwise distances between
     samples. For more tips see Laurens van der Maaten's FAQ [2].
 
+    Read more in the :ref:`User Guide <t_sne>`.
+
     Parameters
     ----------
     n_components : int, optional (default: 2)

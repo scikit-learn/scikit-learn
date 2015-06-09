@@ -107,6 +107,8 @@ class LeaveOneOut(_PartitionIterator):
     For large datasets one should favor KFold, StratifiedKFold or
     ShuffleSplit.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     n : int
@@ -165,6 +167,8 @@ class LeavePOut(_PartitionIterator):
     Due to the high number of iterations which grows combinatorically with the
     number of samples this cross validation method can be very costly. For
     large datasets one should favor KFold, StratifiedKFold or ShuffleSplit.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -254,6 +258,8 @@ class KFold(_BaseKFold):
     Each fold is then used a validation set once while the k - 1 remaining
     fold form the training set.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     n : int
@@ -340,6 +346,8 @@ class StratifiedKFold(_BaseKFold):
     This cross-validation object is a variation of KFold that
     returns stratified folds. The folds are made by preserving
     the percentage of samples for each class.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -455,6 +463,8 @@ class LeaveOneLabelOut(_PartitionIterator):
     For instance the labels could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     labels : array-like of int with shape (n_samples,)
@@ -524,6 +534,8 @@ class LeavePLabelOut(_PartitionIterator):
     the former builds the test sets with all the samples assigned to
     ``p`` different values of the labels while the latter uses samples
     all assigned the same labels.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -623,6 +635,8 @@ class ShuffleSplit(BaseShuffleSplit):
     Note: contrary to other cross-validation strategies, random splits
     do not guarantee that all folds will be different, although this is
     still very likely for sizeable datasets.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -774,6 +788,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     do not guarantee that all folds will be different, although this is
     still very likely for sizeable datasets.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     y : array, [n_samples]
@@ -898,6 +914,8 @@ class PredefinedSplit(_PartitionIterator):
     scheme. Each sample can be assigned to at most one test set fold, as
     specified by the user through the ``test_fold`` parameter.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     test_fold : "array-like, shape (n_samples,)
@@ -959,6 +977,8 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
                       verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Generate cross-validated estimates for each input data point
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     estimator : estimator object implementing 'fit' and 'predict'
@@ -1013,7 +1033,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     """
     X, y = indexable(X, y)
 
-    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
@@ -1033,6 +1053,8 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
 
 def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
     """Fit estimator and predict values for a given dataset split.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -1110,6 +1132,8 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                     verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     estimator : estimator object implementing 'fit'
@@ -1167,7 +1191,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     """
     X, y = indexable(X, y)
 
-    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -1404,11 +1428,6 @@ def check_cv(cv, X=None, y=None, classifier=False):
         The return value is guaranteed to be a cv generator instance, whatever
         the input type.
     """
-    return _check_cv(cv, X=X, y=y, classifier=classifier)
-
-
-def _check_cv(cv, X=None, y=None, classifier=False):
-    # This exists for internal use while indices is being deprecated.
     is_sparse = sp.issparse(X)
     if cv is None:
         cv = 3
@@ -1431,6 +1450,8 @@ def permutation_test_score(estimator, X, y, cv=None,
                            n_permutations=100, n_jobs=1, labels=None,
                            random_state=0, verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -1497,7 +1518,7 @@ def permutation_test_score(estimator, X, y, cv=None,
 
     """
     X, y = indexable(X, y)
-    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
     random_state = check_random_state(random_state)
 
@@ -1524,6 +1545,8 @@ def train_test_split(*arrays, **options):
     ``next(iter(ShuffleSplit(n_samples)))`` and application to input
     data into a single call for splitting (and optionally subsampling)
     data in a oneliner.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------

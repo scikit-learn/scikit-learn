@@ -95,7 +95,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
 
     References
     ----------
-    C. Boutsidis, E. Gallopoulos: SVD based initialization: A head start for 
+    C. Boutsidis, E. Gallopoulos: SVD based initialization: A head start for
     nonnegative matrix factorization - Pattern Recognition, 2008
 
     http://tinyurl.com/nndsvd
@@ -256,6 +256,8 @@ def _nls_subproblem(V, W, H, tol, max_iter, sigma=0.01, beta=0.1):
 
 class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     """Non-Negative matrix factorization by Projected Gradient (NMF)
+
+    Read more in the :ref:`User Guide <NMF>`.
 
     Parameters
     ----------

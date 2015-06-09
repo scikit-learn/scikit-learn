@@ -122,6 +122,8 @@ class GMM(BaseEstimator):
     Initializes parameters such that every mixture component has zero
     mean and identity covariance.
 
+    Read more in the :ref:`User Guide <gmm>`.
+
     Parameters
     ----------
     n_components : int, optional
@@ -473,7 +475,7 @@ class GMM(BaseEstimator):
 
         for init in range(self.n_init):
             if self.verbose > 0:
-                print('Initialization '+str(init+1))
+                print('Initialization ' + str(init + 1))
                 start_init_time = time()
 
             if 'm' in self.init_params or not hasattr(self, 'means_'):
@@ -510,7 +512,7 @@ class GMM(BaseEstimator):
 
             for i in range(self.n_iter):
                 if self.verbose > 0:
-                    print('\tEM iteration '+str(i+1))
+                    print('\tEM iteration ' + str(i + 1))
                     start_iter_time = time()
                 prev_log_likelihood = current_log_likelihood
                 # Expectation step
@@ -523,7 +525,7 @@ class GMM(BaseEstimator):
                 if prev_log_likelihood is not None:
                     change = abs(current_log_likelihood - prev_log_likelihood)
                     if self.verbose > 1:
-                        print('\t\tChange: '+str(change))
+                        print('\t\tChange: ' + str(change))
                     if change < tol:
                         self.converged_ = True
                         if self.verbose > 0:
@@ -534,8 +536,8 @@ class GMM(BaseEstimator):
                 self._do_mstep(X, responsibilities, self.params,
                                self.min_covar)
                 if self.verbose > 1:
-                    print('\t\tEM iteration '+str(i+1)+' took {0:.5f}s'.format(
-                        time()-start_iter_time))
+                    print('\t\tEM iteration ' + str(i + 1) + ' took {0:.5f}s'.format(
+                        time() - start_iter_time))
 
             # if the results are better, keep it
             if self.n_iter:
@@ -548,8 +550,8 @@ class GMM(BaseEstimator):
                         print('\tBetter parameters were found.')
 
             if self.verbose > 1:
-                print('\tInitialization '+str(init+1)+' took {0:.5f}s'.format(
-                    time()-start_init_time))
+                print('\tInitialization ' + str(init + 1) + ' took {0:.5f}s'.format(
+                    time() - start_init_time))
 
         # check the existence of an init param that was not subject to
         # likelihood computation issue.

@@ -21,7 +21,7 @@ from ..utils.extmath import pinvh
 from ..utils.validation import check_random_state, check_array
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
-from ..cross_validation import _check_cv as check_cv, cross_val_score
+from ..cross_validation import check_cv, cross_val_score
 from ..externals.joblib import Parallel, delayed
 import collections
 
@@ -83,6 +83,8 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 return_costs=False, eps=np.finfo(np.float64).eps,
                 return_n_iter=False):
     """l1-penalized covariance estimator
+
+    Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
     Parameters
     ----------
@@ -267,6 +269,8 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
 class GraphLasso(EmpiricalCovariance):
     """Sparse inverse covariance estimation with an l1-penalized estimator.
 
+    Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
+
     Parameters
     ----------
     alpha : positive float, default 0.01
@@ -348,6 +352,8 @@ class GraphLasso(EmpiricalCovariance):
 def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
                      tol=1e-4, enet_tol=1e-4, max_iter=100, verbose=False):
     """l1-penalized covariance estimator along a path of decreasing alphas
+
+    Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
     Parameters
     ----------
@@ -440,6 +446,8 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 class GraphLassoCV(GraphLasso):
     """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
 
+    Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
+
     Parameters
     ----------
     alphas : integer, or list positive float, optional
@@ -487,7 +495,6 @@ class GraphLassoCV(GraphLasso):
         Useful when working with data whose mean is almost, but not exactly
         zero.
         If False, data are centered before computation.
-
 
     Attributes
     ----------

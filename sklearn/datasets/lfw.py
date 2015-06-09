@@ -402,6 +402,8 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     The original images are 250 x 250 pixels, but the default slice and resize
     arguments reduce them to 62 x 74.
 
+    Read more in the :ref:`User Guide <labeled_faces_in_the_wild>`.
+
     Parameters
     ----------
     subset : optional, default: 'train'

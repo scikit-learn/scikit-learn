@@ -149,6 +149,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             return_n_iter=False):
     """Perform Fast Independent Component Analysis.
 
+    Read more in the :ref:`User Guide <ICA>`.
+
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
@@ -372,6 +374,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
 class FastICA(BaseEstimator, TransformerMixin):
     """FastICA: a fast algorithm for Independent Component Analysis.
+
+    Read more in the :ref:`User Guide <ICA>`.
 
     Parameters
     ----------

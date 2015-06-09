@@ -20,7 +20,7 @@ from ..utils.fixes import combinations_with_replacement as combinations_w_r
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis,
-                                 min_max_axis)
+                                 min_max_axis, inplace_row_scale)
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 
 
@@ -73,6 +73,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     """Standardize a dataset along any axis
 
     Center to the mean and component wise scale to unit variance.
+
+    Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
     Parameters
     ----------
@@ -194,6 +196,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     This standardization is often used as an alternative to zero mean,
     unit variance scaling.
 
+    Read more in the :ref:`User Guide <preprocessing_scaler>`.
+
     Parameters
     ----------
     feature_range: tuple (min, max), default=(0, 1)
@@ -295,6 +299,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     order. If a feature has a variance that is orders of magnitude larger
     that others, it might dominate the objective function and make the
     estimator unable to learn from other features correctly as expected.
+
+    Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
     Parameters
     ----------
@@ -448,6 +454,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     and scaling to unit variance. However, outliers can often influence the
     sample mean / variance in a negative way. In such cases, the median and
     the interquartile range often give better results.
+
+    Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
     Parameters
     ----------
@@ -605,6 +613,8 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True, copy=True):
 
     Center to the median and component wise scale
     according to the interquartile range.
+
+    Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
     Parameters
     ----------
@@ -789,6 +799,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 def normalize(X, norm='l2', axis=1, copy=True):
     """Scale input vectors individually to unit norm (vector length).
 
+    Read more in the :ref:`User Guide <preprocessing_normalization>`.
+
     Parameters
     ----------
     X : array or scipy.sparse matrix with shape [n_samples, n_features]
@@ -873,6 +885,8 @@ class Normalizer(BaseEstimator, TransformerMixin):
     of the vectors and is the base similarity metric for the Vector
     Space Model commonly used by the Information Retrieval community.
 
+    Read more in the :ref:`User Guide <preprocessing_normalization>`.
+
     Parameters
     ----------
     norm : 'l1', 'l2', or 'max', optional ('l2' by default)
@@ -923,6 +937,8 @@ class Normalizer(BaseEstimator, TransformerMixin):
 
 def binarize(X, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix
+
+    Read more in the :ref:`User Guide <preprocessing_binarization>`.
 
     Parameters
     ----------
@@ -979,6 +995,8 @@ class Binarizer(BaseEstimator, TransformerMixin):
     consider boolean random variables (e.g. modelled using the Bernoulli
     distribution in a Bayesian setting).
 
+    Read more in the :ref:`User Guide <preprocessing_binarization>`.
+
     Parameters
     ----------
     threshold : float, optional (0.0 by default)
@@ -1033,6 +1051,8 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
     normalize to have zero mean) the data without explicitly computing phi(x).
     It is equivalent to centering phi(x) with
     sklearn.preprocessing.StandardScaler(with_std=False).
+
+    Read more in the :ref:`User Guide <kernel_centering>`.
     """
 
     def fit(self, K, y=None):
@@ -1206,6 +1226,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     This encoding is needed for feeding categorical data to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
+
+    Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
     Parameters
     ----------

@@ -180,6 +180,8 @@ def locally_linear_embedding(
         random_state=None):
     """Perform a Locally Linear Embedding analysis on the data.
 
+    Read more in the :ref:`User Guide <locally_linear_embedding>`.
+
     Parameters
     ----------
     X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
@@ -496,6 +498,8 @@ def locally_linear_embedding(
 
 class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
     """Locally Linear Embedding
+
+    Read more in the :ref:`User Guide <locally_linear_embedding>`.
 
     Parameters
     ----------

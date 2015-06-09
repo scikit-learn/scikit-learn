@@ -112,6 +112,8 @@ def average_precision_score(y_true, y_score, average="macro",
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task.
 
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
@@ -180,6 +182,8 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
 
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task in label indicator format.
+
+    Read more in the :ref:`User Guide <roc_metrics>`.
 
     Parameters
     ----------
@@ -349,6 +353,8 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     have a corresponding threshold.  This ensures that the graph starts on the
     x axis.
 
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+
     Parameters
     ----------
     y_true : array, shape = [n_samples]
@@ -411,6 +417,8 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None):
     """Compute Receiver operating characteristic (ROC)
 
     Note: this implementation is restricted to the binary classification task.
+
+    Read more in the :ref:`User Guide <roc_metrics>`.
 
     Parameters
     ----------
@@ -516,6 +524,8 @@ def label_ranking_average_precision_score(y_true, y_score):
     The obtained score is always strictly greater than 0 and
     the best value is 1.
 
+    Read more in the :ref:`User Guide <label_ranking_average_precision>`.
+
     Parameters
     ----------
     y_true : array or sparse matrix, shape = [n_samples, n_labels]
@@ -586,6 +596,8 @@ def coverage_error(y_true, y_score, sample_weight=None):
     Ties in ``y_scores`` are broken by giving maximal rank that would have
     been assigned to all tied values.
 
+    Read more in the :ref:`User Guide <coverage_error>`.
+
     Parameters
     ----------
     y_true : array, shape = [n_samples, n_labels]
@@ -638,6 +650,8 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
     This is similar to the error set size, but weighted by the number of
     relevant and irrelevant labels. The best performance is achieved with
     a ranking loss of zero.
+
+    Read more in the :ref:`User Guide <label_ranking_loss>`.
 
     Parameters
     ----------

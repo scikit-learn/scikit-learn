@@ -27,6 +27,8 @@ from ..utils import check_array
 def shrunk_covariance(emp_cov, shrinkage=0.1):
     """Calculates a covariance matrix shrunk on the diagonal
 
+    Read more in the :ref:`User Guide <shrunk_covariance>`.
+
     Parameters
     ----------
     emp_cov : array-like, shape (n_features, n_features)
@@ -63,6 +65,8 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
 class ShrunkCovariance(EmpiricalCovariance):
     """Covariance estimator with shrinkage
+
+    Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     Parameters
     ----------
@@ -145,6 +149,8 @@ class ShrunkCovariance(EmpiricalCovariance):
 
 def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     """Estimates the shrunk Ledoit-Wolf covariance matrix.
+
+    Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     Parameters
     ----------
@@ -235,6 +241,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 def ledoit_wolf(X, assume_centered=False, block_size=1000):
     """Estimates the shrunk Ledoit-Wolf covariance matrix.
 
+    Read more in the :ref:`User Guide <shrunk_covariance>`.
+
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
@@ -303,6 +311,8 @@ class LedoitWolf(EmpiricalCovariance):
     described in "A Well-Conditioned Estimator for Large-Dimensional
     Covariance Matrices", Ledoit and Wolf, Journal of Multivariate
     Analysis, Volume 88, Issue 2, February 2004, pages 365-411.
+
+    Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     Parameters
     ----------
@@ -461,6 +471,8 @@ def oas(X, assume_centered=False):
 
 class OAS(EmpiricalCovariance):
     """Oracle Approximating Shrinkage Estimator
+
+    Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     OAS is a particular form of shrinkage described in
     "Shrinkage Algorithms for MMSE Covariance Estimation"

@@ -780,6 +780,8 @@ accessed via the ``feature_importances_`` property::
 
 .. currentmodule:: sklearn.ensemble.partial_dependence
 
+.. _partial_dependence:
+
 Partial dependence
 ..................
 
@@ -989,10 +991,10 @@ calculated as follows:
 ================  ==========    ==========      ==========
 classifier        class 1       class 2         class 3
 ================  ==========    ==========      ==========
-classifier 1	  w1 * 0.2     w1 * 0.5       w1 * 0.3
-classifier 2	  w2 * 0.6     w2 * 0.3       w2 * 0.1
+classifier 1	  w1 * 0.2      w1 * 0.5        w1 * 0.3
+classifier 2	  w2 * 0.6      w2 * 0.3        w2 * 0.1
 classifier 3      w3 * 0.3      w3 * 0.4        w3 * 0.3
-weighted average  0.37	        0.4            0.3
+weighted average  0.37	        0.4             0.3
 ================  ==========    ==========      ==========
 
 Here, the predicted class label is 2, since it has the
@@ -1031,7 +1033,7 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
     :scale: 75%
 
 Using the `VotingClassifier` with `GridSearch`
----------------------------------------------
+----------------------------------------------
 
 The `VotingClassifier` can also be used together with `GridSearch` in order
 to tune the hyperparameters of the individual estimators::

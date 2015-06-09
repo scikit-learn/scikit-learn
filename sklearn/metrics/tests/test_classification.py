@@ -11,6 +11,7 @@ from sklearn import svm
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
+from sklearn.preprocessing import label_binarize
 from sklearn.utils.fixes import np_version
 from sklearn.utils.validation import check_random_state
 
@@ -173,6 +174,73 @@ def test_precision_recall_f_binary_single_class():
     assert_equal(0., f1_score([-1, -1], [-1, -1]))
 
 
+@ignore_warnings
+def test_precision_recall_f_extra_labels():
+    """Test handling of explicit additional (not in input) labels to PRF
+    """
+    y_true = [1, 3, 3, 2]
+    y_pred = [1, 1, 3, 2]
+    y_true_bin = label_binarize(y_true, classes=np.arange(5))
+    y_pred_bin = label_binarize(y_pred, classes=np.arange(5))
+    data = [(y_true, y_pred),
+            (y_true_bin, y_pred_bin)]
+
+    for i, (y_true, y_pred) in enumerate(data):
+        # No average: zeros in array
+        actual = recall_score(y_true, y_pred, labels=[0, 1, 2, 3, 4],
+                              average=None)
+        assert_array_almost_equal([0., 1., 1., .5, 0.], actual)
+
+        # Macro average is changed
+        actual = recall_score(y_true, y_pred, labels=[0, 1, 2, 3, 4],
+                              average='macro')
+        assert_array_almost_equal(np.mean([0., 1., 1., .5, 0.]), actual)
+
+        # No effect otheriwse
+        for average in ['micro', 'weighted', 'samples']:
+            if average == 'samples' and i == 0:
+                continue
+            assert_almost_equal(recall_score(y_true, y_pred,
+                                             labels=[0, 1, 2, 3, 4],
+                                             average=average),
+                                recall_score(y_true, y_pred, labels=None,
+                                             average=average))
+
+    # Error when introducing invalid label in multilabel case
+    # (although it would only affect performance if average='macro'/None)
+    for average in [None, 'macro', 'micro', 'samples']:
+        assert_raises(ValueError, recall_score, y_true_bin, y_pred_bin,
+                      labels=np.arange(6), average=average)
+        assert_raises(ValueError, recall_score, y_true_bin, y_pred_bin,
+                      labels=np.arange(-1, 4), average=average)
+
+
+@ignore_warnings
+def test_precision_recall_f_ignored_labels():
+    """Test a subset of labels may be requested for PRF"""
+    y_true = [1, 1, 2, 3]
+    y_pred = [1, 3, 3, 3]
+    y_true_bin = label_binarize(y_true, classes=np.arange(5))
+    y_pred_bin = label_binarize(y_pred, classes=np.arange(5))
+    data = [(y_true, y_pred),
+            (y_true_bin, y_pred_bin)]
+
+    for i, (y_true, y_pred) in enumerate(data):
+        recall_13 = partial(recall_score, y_true, y_pred, labels=[1, 3])
+        recall_all = partial(recall_score, y_true, y_pred, labels=None)
+
+        assert_array_almost_equal([.5, 1.], recall_13(average=None))
+        assert_almost_equal((.5 + 1.) / 2, recall_13(average='macro'))
+        assert_almost_equal((.5 * 2 + 1. * 1) / 3,
+                            recall_13(average='weighted'))
+        assert_almost_equal(2. / 3, recall_13(average='micro'))
+
+        # ensure the above were meaningful tests:
+        for average in ['macro', 'weighted', 'micro']:
+            assert_not_equal(recall_13(average=average),
+                             recall_all(average=average))
+
+
 def test_average_precision_score_score_non_binary_class():
     # Test that average_precision_score function returns an error when trying
     # to compute average_precision_score for multiclass task.
@@ -315,7 +383,7 @@ def test_precision_refcall_f1_score_multilabel_unordered_labels():
     y_pred = np.array([[0, 0, 1, 1]])
     for average in ['samples', 'micro', 'macro', 'weighted', None]:
         p, r, f, s = precision_recall_fscore_support(
-            y_true, y_pred, labels=[4, 1, 2, 3], warn_for=[], average=average)
+            y_true, y_pred, labels=[3, 0, 1, 2], warn_for=[], average=average)
         assert_array_equal(p, 0)
         assert_array_equal(r, 0)
         assert_array_equal(f, 0)

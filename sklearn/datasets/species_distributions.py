@@ -134,6 +134,8 @@ def fetch_species_distributions(data_home=None,
                                 download_if_missing=True):
     """Loader for species distribution dataset from Phillips et. al. (2006)
 
+    Read more in the :ref:`User Guide <datasets>`.
+
     Parameters
     ----------
     data_home : optional, default: None

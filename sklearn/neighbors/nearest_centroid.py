@@ -13,7 +13,6 @@ import numpy as np
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, ClassifierMixin
-from ..externals.six.moves import xrange
 from ..metrics.pairwise import pairwise_distances
 from ..preprocessing import LabelEncoder
 from ..utils.validation import check_array, check_X_y, check_is_fitted
@@ -25,6 +24,8 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
 
     Each class is represented by its centroid, with test samples classified to
     the class with the nearest centroid.
+
+    Read more in the :ref:`User Guide <nearest_centroid_classifier>`.
 
     Parameters
     ----------

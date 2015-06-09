@@ -15,7 +15,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from ..utils import as_float_array, check_array, check_X_y
-from ..cross_validation import _check_cv as check_cv
+from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 
 import scipy
@@ -281,6 +281,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     When parametrized by error using the parameter `tol`:
     argmin ||\gamma||_0 subject to ||y - X\gamma||^2 <= tol
 
+    Read more in the :ref:`User Guide <omp>`.
+
     Parameters
     ----------
     X : array, shape (n_samples, n_features)
@@ -414,6 +416,8 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
 
     Solves n_targets Orthogonal Matching Pursuit problems using only
     the Gram matrix X.T * X and the product X.T * y.
+
+    Read more in the :ref:`User Guide <omp>`.
 
     Parameters
     ----------
@@ -561,6 +565,8 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         calculations. Improves performance when `n_targets` or `n_samples` is
         very large. Note that if you already have such matrices, you can pass
         them directly to the fit method.
+
+    Read more in the :ref:`User Guide <omp>`.
 
     Attributes
     ----------
@@ -759,6 +765,8 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
+
+    Read more in the :ref:`User Guide <omp>`.
 
     Attributes
     ----------

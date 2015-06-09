@@ -137,6 +137,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     However care must taken to always make the affinity matrix symmetric
     so that the eigenvector decomposition works as expected.
 
+    Read more in the :ref:`User Guide <spectral_embedding>`.
+
     Parameters
     ----------
     adjacency : array-like or sparse matrix, shape: (n_samples, n_samples)
@@ -315,6 +317,8 @@ class SpectralEmbedding(BaseEstimator):
     applies spectral decomposition to the corresponding graph laplacian.
     The resulting transformation is given by the value of the
     eigenvectors for each data point.
+
+    Read more in the :ref:`User Guide <spectral_embedding>`.
 
     Parameters
     -----------

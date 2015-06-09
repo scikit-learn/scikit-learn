@@ -27,6 +27,8 @@ from sklearn.linear_model.ridge import RidgeClassifierCV
 from sklearn.linear_model.ridge import _solve_cholesky
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
 
+from sklearn.grid_search import GridSearchCV
+
 from sklearn.cross_validation import KFold
 
 
@@ -487,6 +489,35 @@ def test_class_weights():
     assert_array_almost_equal(clf.intercept_, clfa.intercept_)
 
 
+def test_class_weight_vs_sample_weight():
+    """Check class_weights resemble sample_weights behavior."""
+    for clf in (RidgeClassifier, RidgeClassifierCV):
+
+        # Iris is balanced, so no effect expected for using 'balanced' weights
+        clf1 = clf()
+        clf1.fit(iris.data, iris.target)
+        clf2 = clf(class_weight='balanced')
+        clf2.fit(iris.data, iris.target)
+        assert_almost_equal(clf1.coef_, clf2.coef_)
+
+        # Inflate importance of class 1, check against user-defined weights
+        sample_weight = np.ones(iris.target.shape)
+        sample_weight[iris.target == 1] *= 100
+        class_weight = {0: 1., 1: 100., 2: 1.}
+        clf1 = clf()
+        clf1.fit(iris.data, iris.target, sample_weight)
+        clf2 = clf(class_weight=class_weight)
+        clf2.fit(iris.data, iris.target)
+        assert_almost_equal(clf1.coef_, clf2.coef_)
+
+        # Check that sample_weight and class_weight are multiplicative
+        clf1 = clf()
+        clf1.fit(iris.data, iris.target, sample_weight ** 2)
+        clf2 = clf(class_weight=class_weight)
+        clf2.fit(iris.data, iris.target, sample_weight)
+        assert_almost_equal(clf1.coef_, clf2.coef_)
+
+
 def test_class_weights_cv():
     # Test class weights for cross validated ridge classifier.
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
@@ -525,6 +556,32 @@ def test_ridgecv_store_cv_values():
     y = rng.randn(n_samples, n_responses)
     r.fit(x, y)
     assert_equal(r.cv_values_.shape, (n_samples, n_responses, n_alphas))
+
+
+def test_ridgecv_sample_weight():
+    rng = np.random.RandomState(0)
+    alphas = (0.1, 1.0, 10.0)
+
+    # There are different algorithms for n_samples > n_features
+    # and the opposite, so test them both.
+    for n_samples, n_features in ((6, 5), (5, 10)):
+        y = rng.randn(n_samples)
+        X = rng.randn(n_samples, n_features)
+        sample_weight = 1 + rng.rand(n_samples)
+
+        cv = KFold(n_samples, 5)
+        ridgecv = RidgeCV(alphas=alphas, cv=cv)
+        ridgecv.fit(X, y, sample_weight=sample_weight)
+
+        # Check using GridSearchCV directly
+        parameters = {'alpha': alphas}
+        fit_params = {'sample_weight': sample_weight}
+        gs = GridSearchCV(Ridge(), parameters, fit_params=fit_params,
+                          cv=cv)
+        gs.fit(X, y)
+
+        assert_equal(ridgecv.alpha_, gs.best_estimator_.alpha)
+        assert_array_almost_equal(ridgecv.coef_, gs.best_estimator_.coef_)
 
 
 def test_raises_value_error_if_sample_weights_greater_than_1d():

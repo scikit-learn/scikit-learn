@@ -88,6 +88,8 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
         - y_[i] are fitted
         - w[i] are optional strictly positive weights (default to 1.0)
 
+    Read more in the :ref:`User Guide <isotonic>`.
+
     Parameters
     ----------
     y : iterable of floating-point values
@@ -162,6 +164,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         - ``X`` specifies the order.
           If ``X`` is non-decreasing then ``y_`` is non-decreasing.
         - ``w[i]`` are optional strictly positive weights (default to 1.0)
+
+    Read more in the :ref:`User Guide <isotonic>`.
 
     Parameters
     ----------

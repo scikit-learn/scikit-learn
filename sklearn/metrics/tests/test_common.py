@@ -1085,9 +1085,9 @@ def test_no_averaging_labels():
     # in multi-class and multi-label cases
     y_true_multilabel = np.array([[1, 1, 0, 0], [1, 1, 0, 0]])
     y_pred_multilabel = np.array([[0, 0, 1, 1], [0, 1, 1, 0]])
-    y_true_multiclass = np.array([1, 2, 3])
-    y_pred_multiclass = np.array([1, 3, 4])
-    labels = np.array([4, 1, 2, 3])
+    y_true_multiclass = np.array([0, 1, 2])
+    y_pred_multiclass = np.array([0, 2, 3])
+    labels = np.array([3, 0, 1, 2])
     _, inverse_labels = np.unique(labels, return_inverse=True)
 
     for name in METRICS_WITH_AVERAGING:

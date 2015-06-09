@@ -155,7 +155,7 @@ take several parameters:
   certainties (``needs_threshold=True``).  The default value is
   False.
 
-* any additional parameters, such as ``beta`` in an :func:`f1_score`.
+* any additional parameters, such as ``beta`` or ``labels`` in :func:`f1_score`.
 
 Here is an example of building custom scorers, and of using the
 ``greater_is_better`` parameter::
@@ -307,6 +307,7 @@ array of class labels, multilabel data is specified as an indicator matrix,
 in which cell ``[i, j]`` has value 1 if sample ``i`` has label ``j`` and value
 0 otherwise.
 
+.. _accuracy_score:
 
 Accuracy score
 --------------
@@ -352,6 +353,8 @@ In the multilabel case with binary label indicators: ::
     for an example of accuracy score usage using permutations of
     the dataset.
 
+.. _confusion_matrix:
+
 Confusion matrix
 ----------------
 
@@ -393,6 +396,7 @@ from the :ref:`example_model_selection_plot_confusion_matrix.py` example):
     for an example of using a confusion matrix to classify text
     documents.
 
+.. _classification_report:
 
 Classification report
 ----------------------
@@ -428,6 +432,8 @@ and inferred labels::
   * See :ref:`example_model_selection_grid_search_digits.py`
     for an example of classification report usage for
     grid search with nested cross-validation.
+
+.. _hamming_loss:
 
 Hamming loss
 -------------
@@ -469,6 +475,8 @@ In the multilabel case with binary label indicators: ::
     loss, is always between zero and one, inclusive; and predicting a proper subset
     or superset of the true labels will give a Hamming loss between
     zero and one, exclusive.
+
+.. _jaccard_similarity_score:
 
 Jaccard similarity coefficient score
 -------------------------------------
@@ -649,8 +657,9 @@ specified by the ``average`` argument to the
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
 :func:`precision_score` and :func:`recall_score` functions, as described
 :ref:`above <average>`. Note that for "micro"-averaging in a multiclass setting
-will produce equal precision, recall and :math:`F`, while "weighted" averaging
-may produce an F-score that is not between precision and recall.
+with all labels included will produce equal precision, recall and :math:`F`,
+while "weighted" averaging may produce an F-score that is not between
+precision and recall.
 
 To make this more explicit, consider the following notation:
 
@@ -701,6 +710,19 @@ Then the metrics are defined as:
   ... # doctest: +ELLIPSIS
   (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2]...))
 
+For multiclass classification with a "negative class", it is possible to exclude some labels:
+
+  >>> metrics.recall_score(y_true, y_pred, labels=[1, 2], average='micro')
+  ... # excluding 0, no labels were correctly recalled
+  0.0
+
+Similarly, labels not present in the data sample may be accounted for in macro-averaging.
+
+  >>> metrics.precision_score(y_true, y_pred, labels=[0, 1, 2, 3], average='macro')
+  ... # doctest: +ELLIPSIS
+  0.166...
+
+.. _hinge_loss:
 
 Hinge loss
 ----------
@@ -769,6 +791,7 @@ with a svm classifier in a multiclass problem::
   >>> hinge_loss(y_true, pred_decision, labels)  #doctest: +ELLIPSIS
   0.56...
 
+.. _log_loss:
 
 Log loss
 --------
@@ -821,6 +844,7 @@ method.
 The first ``[.9, .1]`` in ``y_pred`` denotes 90% probability that the first
 sample has label 0.  The log loss is non-negative.
 
+.. _matthews_corrcoef:
 
 Matthews correlation coefficient
 ---------------------------------
@@ -1002,6 +1026,8 @@ In multilabel learning, each sample can have any number of ground truth labels
 associated with it. The goal is to give high scores and better rank to
 the ground truth labels.
 
+.. _coverage_error:
+
 Coverage error
 --------------
 
@@ -1033,6 +1059,8 @@ Here is a small example of usage of this function::
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> coverage_error(y_true, y_score)
     2.5
+
+.. _label_ranking_average_precision:
 
 Label ranking average precision
 -------------------------------
@@ -1074,6 +1102,8 @@ Here is a small example of usage of this function::
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> label_ranking_average_precision_score(y_true, y_score) # doctest: +ELLIPSIS
     0.416...
+
+.. _label_ranking_loss:
 
 Ranking loss
 ------------
@@ -1144,6 +1174,7 @@ score puts more importance on well explaining the higher variance variables.
 for backward compatibility. This will be changed to ``uniform_average`` in the
 future.
 
+.. _explained_variance_score:
 
 Explained variance score
 -------------------------
@@ -1179,6 +1210,8 @@ function::
     ... # doctest: +ELLIPSIS
     0.990...
 
+.. _mean_absolute_error:
+
 Mean absolute error
 -------------------
 
@@ -1212,6 +1245,7 @@ Here is a small example of usage of the :func:`mean_absolute_error` function::
   ... # doctest: +ELLIPSIS
   0.849...
 
+.. _mean_squared_error:
 
 Mean squared error
 -------------------
@@ -1248,6 +1282,8 @@ function::
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
 
+.. _median_absolute_error:
+
 Median absolute error
 ---------------------
 
@@ -1273,6 +1309,8 @@ function::
   >>> y_pred = [2.5, 0.0, 2, 8]
   >>> median_absolute_error(y_true, y_pred)
   0.5
+
+.. _r2_score:
 
 R² score, the coefficient of determination
 -------------------------------------------
