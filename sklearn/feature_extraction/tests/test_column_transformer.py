@@ -1,9 +1,10 @@
 import numpy as np
+import scipy.sparse as sp
 
 from sklearn.base import BaseEstimator
 from sklearn.feature_extraction import ColumnTransformer
 
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_equal, assert_equal, assert_true
 from sklearn.utils.validation import check_array
 
 
@@ -13,6 +14,15 @@ class Trans(BaseEstimator):
 
     def transform(self, X, y=None):
         return check_array(X).reshape(-1, 1)
+
+
+class SparseMatrixTrans(BaseEstimator):
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        n_samples = len(X)
+        return sp.eye(n_samples, n_samples).tocsr()
 
 
 def test_column_selection():
@@ -61,3 +71,15 @@ def test_column_selection():
         assert_array_equal(both.fit_transform(X), res)
         # fit then transform
         assert_array_equal(both.fit(X).transform(X), res)
+
+
+def test_sparse_stacking():
+    X_dict = {'first': [0, 1, 2],
+              'second': [2, 4, 6]}
+    col_trans = ColumnTransformer({'trans1': (Trans(), 'first'), 'trans2':
+                                   (SparseMatrixTrans(), 'second')})
+    col_trans.fit(X_dict)
+    X_trans = col_trans.transform(X_dict)
+    assert_true(sp.issparse(X_trans))
+    assert_equal(X_trans.shape, (X_trans.shape[0], X_trans.shape[0] + 1))
+    assert_array_equal(X_trans.toarray()[:, 1:], np.eye(X_trans.shape[0]))

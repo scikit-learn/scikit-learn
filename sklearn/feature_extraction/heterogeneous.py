@@ -144,5 +144,5 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
         # use a dict constructor instaed of a dict comprehension for python2.6
         self.transformers.update(dict(
             (name, (new, column))
-            for ((name, (old, column)), new) in zip(self.transformers.items(), transformers))
+            for ((name, (old, column)), new) in zip(sorted(self.transformers.items()), transformers))
         )
