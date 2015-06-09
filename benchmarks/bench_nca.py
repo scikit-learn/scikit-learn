@@ -16,52 +16,38 @@ from sklearn.cross_validation import KFold
 from sklearn.utils.bench import total_seconds
 from sklearn.datasets import fetch_mldata
 
-
-def evaluate(est, X, y, scorer, k=10, train_size=0.7):
-    kf = KFold(len(X), n_folds=k)
-    scores = []
-    
-    for train_index, test_index in kf:
-        X_train, X_test = X[train_index], X[test_index]
-        y_train, y_test = y[train_index], y[test_index]
-        est = clone(est).fit(X_train, y_train)
-        scores.append(scorer(est, X_test, y_test))
-        
-    return np.mean(scores)
+def get_params(learning_rate=1, loss='kl', max_iter=100, solver='adagrad',
+        random_state=0, verbose=2, n_init=10, method='semivectorized',
+        threshold=None):
+    return {
+            "learning_rate" : learning_rate,
+            "loss" : loss,
+            "max_iter" : max_iter,
+            "solver" : solver,
+            "random_state" : random_state,
+            "verbose" : verbose,
+            "n_init" : n_init,
+            "method" : method,
+            "threshold" : threshold,
+        }
 
 if __name__ == '__main__':
 
-    separator = "=" * 30
+    separator = "=" * 30 + "\n"
     wine_ds = fetch_mldata('wine')
     print("Loaded UCI Wine dataset")
     print(separator)
 
-    knn1_nca = Pipeline([
-                ('nca', NCATransformer(learning_rate=1, loss='kl', max_iter=100, solver='adagrad',
-                                       random_state=0, verbose=2, n_init=3, method='semivectorized')),
-                ('knn', KNeighborsClassifier(n_neighbors=1))
-        ])
+    params = [
+            get_params(method='vectorized'),
+            get_params(method='semivectorized'),
+            get_params(method='vectorized', threshold=0),
+            get_params(method='semivectorized', threshold=0),
+        ]
 
-    print("Running 10-fold cross validation on Pipeline(NCA [semivectorized], 1NN)")
-    nca_score = evaluate(knn1_nca, wine_ds.data, wine_ds.target, metrics.make_scorer(metrics.accuracy_score))
-    print("Semivectorized NCA-assisted 1NN: accuracy_score = {:.5f}".format(nca_score))
-
-    print(separator)
-
-    knn1_nca = Pipeline([
-                ('nca', NCATransformer(learning_rate=1, loss='kl', max_iter=100, solver='adagrad',
-                                       random_state=0, verbose=2, n_init=3, method='vectorized')),
-                ('knn', KNeighborsClassifier(n_neighbors=1))
-        ])
-
-    print("Running 10-fold cross validation on Pipeline(NCA [vectorized], 1NN)")
-    nca_score = evaluate(knn1_nca, wine_ds.data, wine_ds.target, metrics.make_scorer(metrics.accuracy_score))
-    print("Vectorized NCA-assisted 1NN: accuracy_score = {:.5f}".format(nca_score))
-
-    print(separator)
-
-    knn1 = KNeighborsClassifier(n_neighbors=1)
-    print("Running 10-fold cross validation on 1NN")
-    nca_score = evaluate(knn1, wine_ds.data, wine_ds.target, metrics.make_scorer(metrics.accuracy_score))
-    print("1NN: accuracy_score = {:.5f}".format(nca_score))
+    for args in params:
+        nca = NCATransformer(**args)
+        print(nca)
+        nca.fit(wine_ds.data, wine_ds.target)
+        print(separator)
 
