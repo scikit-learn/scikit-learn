@@ -11,7 +11,11 @@ from scipy import sparse
 from .externals import six
 
 
-###############################################################################
+class ChangedBehaviorWarning(UserWarning):
+    pass
+
+
+##############################################################################
 def clone(estimator, safe=True):
     """Constructs a new estimator with the same parameters.
 

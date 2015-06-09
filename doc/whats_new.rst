@@ -83,6 +83,11 @@ API changes summary
       for retrieving the leaf indices samples are predicted as. By
       `Daniel Galvez`_ and `Gilles Louppe`_.
 
+    - :class:`svm.SVC`` and :class:`svm.NuSVC` now have an ``decision_function_shape``
+      parameter to make their decision function of shape ``(n_samples, n_classes)``
+      by setting ``decision_function_shape='ovr'``. This will be the default behavior
+      starting in 0.19. By `Andreas Müller`_.
+
 .. _changes_0_1_16:
 
 0.16.1
