@@ -10,7 +10,7 @@ from ..externals.six import iteritems
 class ColumnTransformer(BaseEstimator, TransformerMixin):
     """Applies transformers to columns of a dataframe / dict.
 
-    This estimator applies a transformer objects to each column or field of the
+    This estimator applies transformer objects to columns or fields of the
     input, then concatenates the results. This is useful for heterogeneous or
     columnar data, to combine several feature extraction mechanisms into a
     single transformer.

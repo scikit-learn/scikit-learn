@@ -141,17 +141,15 @@ transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
 
   >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   ColumnTransformer(n_jobs=1, transformer_weights=None,
-      transformers={'title_bow': (CountVectorizer(analyzer=..., binary=False,
-      decode_error=u'strict', dtype=<type 'numpy.int64'>, encoding=u'utf-8', input=u'content', lowercase=True, max_df=1.0,
-      max_features=None, min_df=1, ngram_range=(1, 1), ...,
-      tokenizer=None, vocabulary=None), 'city')})
+      transformers=...)
 
-  >>> column_trans.get_feature_names() # doctest: +NORMALIZE_WHITESPACE
-  ['city_category__London', 'city_category__New York', 'city_category__Paris',
-  u'title_bow__bow', u'title_bow__feast', u'title_bow__gatsby',
-  u'title_bow__great', u'title_bow__his', u'title_bow__how', u'title_bow__last',
-  u'title_bow__learned', u'title_bow__moveable', u'title_bow__the',
-  u'title_bow__trick', u'title_bow__watson']
+  >>> column_trans.get_feature_names() == [
+  ...    'city_category__London', 'city_category__New York', 'city_category__Paris',
+  ...    'title_bow__bow', 'title_bow__feast', 'title_bow__gatsby',
+  ...    'title_bow__great', 'title_bow__his', 'title_bow__how', 'title_bow__last',
+  ...    'title_bow__learned', 'title_bow__moveable', 'title_bow__the',
+  ...    'title_bow__trick', 'title_bow__watson']
+  True
 
   >>> column_trans.transform(X).toarray() # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   array([[1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
