@@ -78,6 +78,24 @@ def _safe_compute_error(X, W, H):
     return error
 
 
+def _compute_regularization(alpha, l1_ratio, regularization, n_samples,
+                            n_features):
+    """Compute L1 and L2 regularization coefficients for W and H"""
+    alpha_H = 0.
+    alpha_W = 0.
+    # The priors for W and H are scaled differently.
+    if regularization in ('both', 'components'):
+        alpha_H = float(alpha) * n_samples
+    if regularization in ('both', 'transformation'):
+        alpha_W = float(alpha) * n_features
+
+    l1_reg_W = alpha_W * l1_ratio
+    l1_reg_H = alpha_H * l1_ratio
+    l2_reg_W = alpha_W * (1. - l1_ratio)
+    l2_reg_H = alpha_H * (1. - l1_ratio)
+    return l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H
+
+
 def _check_string_param(sparseness, solver):
     allowed_sparseness = (None, 'data', 'components')
     if sparseness not in allowed_sparseness:
@@ -228,7 +246,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     return W, H
 
 
-def _nls_subproblem(V, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
+def _nls_subproblem(V, W, H, tol, max_iter, l1_reg=0., l2_reg=0.,
                     sigma=0.01, beta=0.1):
     """Non-negative least square solver
 
@@ -252,15 +270,11 @@ def _nls_subproblem(V, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
     max_iter : int
         Maximum number of iterations before timing out.
 
-    alpha : double, default: 0.
-        Constant that multiplies the regularization terms. Set it to zero to
-        have no regularization.
+    l1_reg : double, default: 0.
+        L1 regularization parameter.
 
-    l1_ratio : double, default: 0.
-        The regularization mixing parameter, with 0 <= l1_ratio <= 1.
-        For l1_ratio = 0 the penalty is an L2 penalty.
-        For l1_ratio = 1 it is an L1 penalty.
-        For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
+    l2_reg : double, default: 0.
+        L2 regularization parameter.
 
     sigma : float
         Constant used in the sufficient decrease condition checked by the line
@@ -300,10 +314,11 @@ def _nls_subproblem(V, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
     gamma = 1
     for n_iter in range(1, max_iter + 1):
         grad = np.dot(WtW, H) - WtV
-        if alpha > 0 and l1_ratio == 1.:
-            grad += alpha
-        elif alpha > 0:
-            grad += alpha * (l1_ratio + (1 - l1_ratio) * H)
+
+        if l1_reg > 0:
+            grad += l1_reg
+        if l2_reg > 0:
+            grad += l2_reg * H
 
         # The following multiplication with a boolean array is more than twice
         # as fast as indexing into grad.
@@ -343,7 +358,7 @@ def _nls_subproblem(V, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
     return H, grad, n_iter
 
 
-def _update_projected_gradient_w(X, W, H, tolW, nls_max_iter, alpha, l1_ratio,
+def _update_projected_gradient_w(X, W, H, tolW, nls_max_iter, l1_reg, l2_reg,
                                  sparseness, beta, eta):
     """Helper function for _fit_projected_gradient"""
     n_samples, n_features = X.shape
@@ -351,25 +366,26 @@ def _update_projected_gradient_w(X, W, H, tolW, nls_max_iter, alpha, l1_ratio,
 
     if sparseness is None:
         Wt, gradW, iterW = _nls_subproblem(X.T, H.T, W.T, tolW, nls_max_iter,
-                                           alpha=alpha, l1_ratio=l1_ratio)
+                                           l1_reg=l1_reg, l2_reg=l2_reg)
     elif sparseness == 'data':
         Wt, gradW, iterW = _nls_subproblem(
             safe_vstack([X.T, np.zeros((1, n_samples))]),
             safe_vstack([H.T, np.sqrt(beta) * np.ones((1,
                          n_components_))]),
-            W.T, tolW, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
+            W.T, tolW, nls_max_iter, l1_reg=l1_reg, l2_reg=l2_reg)
+
     elif sparseness == 'components':
         Wt, gradW, iterW = _nls_subproblem(
             safe_vstack([X.T,
                          np.zeros((n_components_, n_samples))]),
             safe_vstack([H.T,
                          np.sqrt(eta) * np.eye(n_components_)]),
-            W.T, tolW, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
+            W.T, tolW, nls_max_iter, l1_reg=l1_reg, l2_reg=l2_reg)
 
     return Wt.T, gradW.T, iterW
 
 
-def _update_projected_gradient_h(X, W, H, tolH, nls_max_iter, alpha, l1_ratio,
+def _update_projected_gradient_h(X, W, H, tolH, nls_max_iter, l1_reg, l2_reg,
                                  sparseness, beta, eta):
     """Helper function for _fit_projected_gradient"""
     n_samples, n_features = X.shape
@@ -377,24 +393,24 @@ def _update_projected_gradient_h(X, W, H, tolH, nls_max_iter, alpha, l1_ratio,
 
     if sparseness is None:
         H, gradH, iterH = _nls_subproblem(X, W, H, tolH, nls_max_iter,
-                                          alpha=alpha, l1_ratio=l1_ratio)
+                                          l1_reg=l1_reg, l2_reg=l2_reg)
     elif sparseness == 'data':
         H, gradH, iterH = _nls_subproblem(
             safe_vstack([X, np.zeros((n_components_, n_features))]),
             safe_vstack([W,
                          np.sqrt(eta) * np.eye(n_components_)]),
-            H, tolH, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
+            H, tolH, nls_max_iter, l1_reg=l1_reg, l2_reg=l2_reg)
     elif sparseness == 'components':
         H, gradH, iterH = _nls_subproblem(
             safe_vstack([X, np.zeros((1, n_features))]),
             safe_vstack([W, np.sqrt(beta) * np.ones((1, n_components_))]),
-            H, tolH, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
+            H, tolH, nls_max_iter, l1_reg=l1_reg, l2_reg=l2_reg)
 
     return H, gradH, iterH
 
 
-def _fit_projected_gradient(X, W, H, tol, max_iter,
-                            nls_max_iter, alpha, l1_ratio,
+def _fit_projected_gradient(X, W, H, tol, max_iter, nls_max_iter,
+                            l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H,
                             sparseness, beta, eta):
     """Compute Non-negative Matrix Factorization (NMF) with Projected Gradient
 
@@ -429,7 +445,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter,
         # update W
         W, gradW, iterW = _update_projected_gradient_w(X, W, H, tolW,
                                                        nls_max_iter,
-                                                       alpha, l1_ratio,
+                                                       l1_reg_W, l2_reg_W,
                                                        sparseness, beta, eta)
         if iterW == 1:
             tolW = 0.1 * tolW
@@ -437,7 +453,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter,
         # update H
         H, gradH, iterH = _update_projected_gradient_h(X, W, H, tolH,
                                                        nls_max_iter,
-                                                       alpha, l1_ratio,
+                                                       l1_reg_H, l2_reg_H,
                                                        sparseness, beta, eta)
         if iterH == 1:
             tolH = 0.1 * tolH
@@ -446,7 +462,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter,
 
     if n_iter == max_iter:
         W, _, _ = _update_projected_gradient_w(X, W, H, tol, nls_max_iter,
-                                               alpha, l1_ratio, sparseness,
+                                               l1_reg_W, l2_reg_W, sparseness,
                                                beta, eta)
 
     return W, H, n_iter
@@ -483,9 +499,10 @@ def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle,
     return _update_cdnmf_fast(W, HHt, XHt, permutation)
 
 
-def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, alpha=0.001,
-                            l1_ratio=0., regularization=None, update_H=True,
-                            verbose=0, shuffle=False, random_state=None):
+def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0.,
+                            l1_reg_H=0., l2_reg_W=0., l2_reg_H=0.,
+                            update_H=True, verbose=0, shuffle=False,
+                            random_state=None):
     """Compute Non-negative Matrix Factorization (NMF) with Coordinate Descent
 
     The objective function is minimized with an alternating minimization of W
@@ -509,18 +526,17 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, alpha=0.001,
     max_iter : integer, default: 200
         Maximum number of iterations before timing out.
 
-    alpha : double, default: 0.
-        Constant that multiplies the regularization terms.
+    l1_reg_W : double, default: 0.
+        L1 regularization parameter for W.
 
-    l1_ratio : double, default: 0.
-        The regularization mixing parameter, with 0 <= l1_ratio <= 1.
-        For l1_ratio = 0 the penalty is an L2 penalty.
-        For l1_ratio = 1 it is an L1 penalty.
-        For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
+    l1_reg_H : double, default: 0.
+        L1 regularization parameter for H.
 
-    regularization : 'both' | 'components' | 'transformation' | None
-        Select whether the regularization affects the components (H), the
-        transformation (W), both or none of them.
+    l2_reg_W : double, default: 0.
+        L2 regularization parameter for W.
+
+    l2_reg_H : double, default: 0.
+        L2 regularization parameter for H.
 
     update_H : boolean, default: True
         Set to True, both W and H will be estimated from initial guesses.
@@ -557,29 +573,18 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, alpha=0.001,
     Ht = check_array(H.T, order='C')
     X = check_array(X, accept_sparse='csr')
 
-    # L1 and L2 regularization
-    l1_H, l2_H, l1_W, l2_W = 0, 0, 0, 0
-    if regularization in ('both', 'components'):
-        alpha = float(alpha)
-        l1_H = l1_ratio * alpha
-        l2_H = (1. - l1_ratio) * alpha
-    if regularization in ('both', 'transformation'):
-        alpha = float(alpha)
-        l1_W = l1_ratio * alpha
-        l2_W = (1. - l1_ratio) * alpha
-
     rng = check_random_state(random_state)
 
     for n_iter in range(max_iter):
         violation = 0.
 
         # Update W
-        violation += _update_coordinate_descent(X, W, Ht, l1_W, l2_W,
-                                                shuffle, rng)
+        violation += _update_coordinate_descent(X, W, Ht, l1_reg_W,
+                                                l2_reg_W, shuffle, rng)
         # Update H
         if update_H:
-            violation += _update_coordinate_descent(X.T, Ht, W, l1_H, l2_H,
-                                                    shuffle, rng)
+            violation += _update_coordinate_descent(X.T, Ht, W, l1_reg_H,
+                                                    l2_reg_H, shuffle, rng)
 
         if n_iter == 0:
             violation_init = violation
@@ -613,10 +618,10 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     The objective function is::
 
         0.5 * ||X - WH||_Fro^2
-        + alpha * l1_ratio * ||vec(W)||_1
-        + alpha * l1_ratio * ||vec(H)||_1
-        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
-        + 0.5 * alpha * (1 - l1_ratio) * ||H||_Fro^2
+        + alpha * l1_ratio * ||vec(W)||_1 * n_features
+        + alpha * l1_ratio * ||vec(H)||_1 * n_samples
+        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2 * n_features
+        + 0.5 * alpha * (1 - l1_ratio) * ||H||_Fro^2 * n_samples
 
     Where::
 
@@ -768,6 +773,10 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         W, H = _initialize_nmf(X, n_components, init=init,
                                random_state=random_state)
 
+    n_samples, n_features = X.shape
+    l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
+        alpha, l1_ratio, regularization, n_samples, n_features)
+
     if solver == 'pg':
         warnings.warn("'pg' solver will be removed in release 0.19."
                       " Use 'cd' solver instead.", DeprecationWarning)
@@ -775,20 +784,21 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
             W, H, n_iter = _fit_projected_gradient(X, W, H, tol,
                                                    max_iter,
                                                    nls_max_iter,
-                                                   alpha, l1_ratio,
+                                                   l1_reg_W, l1_reg_H,
+                                                   l2_reg_W, l2_reg_H,
                                                    sparseness,
                                                    beta, eta)
         else:  # transform
             W, H, n_iter = _update_projected_gradient_w(X, W, H,
                                                         tol, nls_max_iter,
-                                                        alpha, l1_ratio,
+                                                        l1_reg_W, l2_reg_W,
                                                         sparseness, beta,
                                                         eta)
     elif solver == 'cd':
         W, H, n_iter = _fit_coordinate_descent(X, W, H, tol,
                                                max_iter,
-                                               alpha, l1_ratio,
-                                               regularization,
+                                               l1_reg_W, l1_reg_H,
+                                               l2_reg_W, l2_reg_H,
                                                update_H=update_H,
                                                verbose=verbose,
                                                shuffle=shuffle,
@@ -813,10 +823,10 @@ class NMF(BaseEstimator, TransformerMixin):
     The objective function is::
 
         0.5 * ||X - WH||_Fro^2
-        + alpha * l1_ratio * ||vec(W)||_1
-        + alpha * l1_ratio * ||vec(H)||_1
-        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
-        + 0.5 * alpha * (1 - l1_ratio) * ||H||_Fro^2
+        + alpha * l1_ratio * ||vec(W)||_1 * n_features
+        + alpha * l1_ratio * ||vec(H)||_1 * n_samples
+        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2 * n_features
+        + 0.5 * alpha * (1 - l1_ratio) * ||H||_Fro^2 * n_samples
 
     Where::
 

@@ -705,20 +705,22 @@ to regularize the model. The L2 prior uses the Frobenius norm, while the L1
 prior uses an elementwise L1 norm. As in :class:`ElasticNet`, we control the
 combination of L1 and L2 with the :attr:`l1_ratio` (:math:`\rho`) parameter,
 and the intensity of the regularization with the :attr:`alpha`
-(:math:`\alpha`) parameter. Then the priors terms are:
+(:math:`\alpha`) parameter. The priors are appropriately scaled by the number
+of samples (:math:`n_{samples}`) and the number of features
+(:math:`n_{features}`). Then the priors terms are:
 
 .. math::
-    \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{Fro} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{Fro} ^ 2
+    \alpha \rho ||W||_1 * n_{features} + \alpha \rho ||H||_1 * n_{samples}
+    + \frac{\alpha(1-\rho)}{2} ||W||_{Fro} ^ 2 * n_{features}
+    + \frac{\alpha(1-\rho)}{2} ||H||_{Fro} ^ 2 * n_{samples}
 
 and the regularized objective function is:
 
 .. math::
     \frac{1}{2}||X - WH||_{Fro}^2
-    + \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{Fro} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{Fro} ^ 2
+    + \alpha \rho ||W||_1 * n_{features} + \alpha \rho ||H||_1 * n_{samples}
+    + \frac{\alpha(1-\rho)}{2} ||W||_{Fro} ^ 2 * n_{features}
+    + \frac{\alpha(1-\rho)}{2} ||H||_{Fro} ^ 2 * n_{samples}
 
 :class:`NMF` regularizes both W and H. The public function
 :func:`non_negative_factorization` allows a finer control through the
