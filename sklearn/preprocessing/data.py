@@ -327,7 +327,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         The mean value for each feature in the training set.
 
     std_ : array of floats with shape [n_features]
-        The standard deviation for each feature in the training set.
+        The standard deviation for each feature in the training set. 
+        Set to one if the standard deviation is zero for a given feature.
 
     See also
     --------
