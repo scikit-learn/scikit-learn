@@ -52,6 +52,16 @@ New features
      datasets. By `Danny Sullivan`_ and `Tom Dupre la Tour`_.
      (`#4738 <https://github.com/scikit-learn/scikit-learn/pull/4738>`_)
 
+   - The new solver ``cd`` implements a Coordinate Descent in
+     :class:`decomposition.NMF`. Previous solver based on Projected Gradient is
+     still available setting new parameter ``solver`` to ``pg``, but is
+     deprecated and will be removed in 0.19, along with
+     :class:`decompositionProjectedGradientNMF` and parameters``sparseness``,
+     ``eta``, ``beta`` and ``nls_max_iter``. New parameters ``alpha`` and
+     ``l1_ratio`` control L1 and L2 regularizations, and ``shuffle`` adds a
+     shuffling step in ``cd`` solver.
+     By `Tom Dupre la Tour`_ and `Mathieu Blondel`_.
+
 Enhancements
 ............
    - :class:`manifold.TSNE` now supports approximate optimization via the
@@ -191,7 +201,6 @@ Enhancements
 
    - Added ``sample_weight`` support to :class:`linear_model.LogisticRegression` for
      the ``lbfgs``, ``newton-cg``, and ``sag`` solvers. By `Valentin Stolbunov`_.
-
 
 Bug fixes
 .........
