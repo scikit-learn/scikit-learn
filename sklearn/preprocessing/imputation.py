@@ -8,6 +8,7 @@ import numpy.ma as ma
 from scipy import sparse
 from scipy import stats
 
+from ..neighbors import KDTree, NearestNeighbors
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils import as_float_array
@@ -61,6 +62,7 @@ def _most_frequent(array, extra_value, n_repeat):
             return extra_value
 
 
+
 class Imputer(BaseEstimator, TransformerMixin):
     """Imputation transformer for completing missing values.
 
@@ -82,6 +84,8 @@ class Imputer(BaseEstimator, TransformerMixin):
           the axis.
         - If "most_frequent", then replace missing using the most frequent
           value along the axis.
+        - If "knn", then replace missing using the mean of the k-nearest neighbors
+          along the axis.
 
     axis : integer, optional (default=0)
         The axis along which to impute.
@@ -102,6 +106,10 @@ class Imputer(BaseEstimator, TransformerMixin):
         - If `axis=0` and X is encoded as a CSR matrix;
         - If `axis=1` and X is encoded as a CSC matrix.
 
+    kneighbor : int, optional (default=1)
+        It only has effect if the strategy is "knn". It controls the number of nearest
+        neighbors used to compute the mean along the axis.
+
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
@@ -116,12 +124,13 @@ class Imputer(BaseEstimator, TransformerMixin):
       contain missing values).
     """
     def __init__(self, missing_values="NaN", strategy="mean",
-                 axis=0, verbose=0, copy=True):
+                 axis=0, verbose=0, copy=True, kneighbor=1):
         self.missing_values = missing_values
         self.strategy = strategy
         self.axis = axis
         self.verbose = verbose
         self.copy = copy
+        self.kneighbor = kneighbor
 
     def fit(self, X, y=None):
         """Fit the imputer on X.
@@ -138,7 +147,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             Returns self.
         """
         # Check parameters
-        allowed_strategies = ["mean", "median", "most_frequent"]
+        allowed_strategies = ["mean", "median", "most_frequent", "knn"]
         if self.strategy not in allowed_strategies:
             raise ValueError("Can only use these strategies: {0} "
                              " got strategy={1}".format(allowed_strategies,
@@ -248,6 +257,10 @@ class Imputer(BaseEstimator, TransformerMixin):
 
                 return most_frequent
 
+            elif strategy == "knn":
+                raise ValueError("Sparse matrix not supported!")
+
+
     def _dense_fit(self, X, strategy, missing_values, axis):
         """Fit the transformer on dense data."""
         X = check_array(X, force_all_finite=False)
@@ -299,6 +312,22 @@ class Imputer(BaseEstimator, TransformerMixin):
 
             return most_frequent
 
+        # KNN
+        elif strategy == "knn":
+
+            if axis == 1:
+                X = X.copy().transpose()
+
+            full_data = X[np.logical_not(mask.any(1))]
+            if full_data.size == 0:
+                raise ValueError("There is no row with complete data!")
+            if full_data.shape[0] < self.kneighbor:
+                raise ValueError("There are at most %d neighbors!" %(full_data.shape[0]))
+            if axis == 1:
+                full_data = full_data.transpose()
+
+            return full_data
+
     def transform(self, X):
         """Impute all missing values in X.
 
@@ -341,7 +370,9 @@ class Imputer(BaseEstimator, TransformerMixin):
         valid_mask = np.logical_not(invalid_mask)
         valid_statistics = statistics[valid_mask]
         valid_statistics_indexes = np.where(valid_mask)[0]
-        missing = np.arange(X.shape[not self.axis])[invalid_mask]
+
+        if self.strategy != "knn":
+            missing = np.arange(X.shape[not self.axis])[invalid_mask]
 
         if self.axis == 0 and invalid_mask.any():
             if self.verbose:
@@ -366,13 +397,37 @@ class Imputer(BaseEstimator, TransformerMixin):
 
             mask = _get_mask(X, self.missing_values)
             n_missing = np.sum(mask, axis=self.axis)
-            values = np.repeat(valid_statistics, n_missing)
 
-            if self.axis == 0:
-                coordinates = np.where(mask.transpose())[::-1]
+            if self.strategy == 'knn':
+                if self.axis == 1:
+                    X = X.transpose()
+                    mask = mask.transpose()
+                    statistics = statistics.transpose()
+                missing_index = np.where(mask.any(1))[0]
+                for i, row in zip(missing_index, X[missing_index]):
+                    col_index = np.where(np.logical_not(np.isnan(row)))[0]
+                    impute_index = np.where(np.isnan(row))[0]
+                    neigh = NearestNeighbors(self.kneighbor)
+                    neigh = neigh.fit(statistics[:, col_index])
+                    _dist, ind = neigh.kneighbors(row[np.logical_not(np.isnan(row))],
+                                           self.kneighbor)
+                    #tree = KDTree(statistics[:, col_index])
+                    #dist, ind = tree.query(row[np.logical_not(np.isnan(row))],
+                    #                       k=self.kneighbor)
+                    nn_index = ind[0]
+                    X[i][impute_index] = statistics[nn_index][:, impute_index].mean(0)
+
+                if self.axis == 1:
+                    X = X.transpose()
+
             else:
-                coordinates = mask
+                values = np.repeat(valid_statistics, n_missing)
 
-            X[coordinates] = values
+                if self.axis == 0:
+                    coordinates = np.where(mask.transpose())[::-1]
+                else:
+                    coordinates = mask
+
+                X[coordinates] = values
 
         return X
