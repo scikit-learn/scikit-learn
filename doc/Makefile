@@ -100,3 +100,6 @@ download-data:
 optipng:
 	find _build auto_examples */generated -name '*.png' -print0 \
 	  | xargs -0 -n 1 -P 4 optipng -o10
+
+authors:
+	python gen_authors.py > authors.rst
