@@ -19,8 +19,11 @@ import re
 import platform
 import struct
 
-import scipy as sp
+import scipy
 import scipy.io
+import scipy.sparse as sp
+import numpy as np
+
 from functools import wraps
 from operator import itemgetter
 try:
@@ -71,9 +74,10 @@ from sklearn.cluster import DBSCAN
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
-           "assert_array_almost_equal", "assert_array_less",
-           "assert_less", "assert_less_equal",
-           "assert_greater", "assert_greater_equal",
+           "assert_allclose", "assert_array_almost_equal", "assert_array_less",
+           "assert_less", "assert_less_equal", "assert_greater",
+           "assert_greater_equal", "assert_same_model",
+           "assert_not_same_model", "assert_fitted_attributes_almost_equal",
            "assert_approx_equal"]
 
 
@@ -383,14 +387,52 @@ except ImportError:
     assert_greater = _assert_greater
 
 
+def _sparse_dense_allclose(val1, val2, rtol=1e-7, atol=0):
+    """Check if two objects are close up to the preset tolerance.
+
+    The objects can be scalars, lists, tuples, ndarrays or sparse matrices.
+    """
+    if isinstance(val1, (int, float)) and isinstance(val2, (int, float)):
+        return np.allclose(float(val1), float(val2), rtol, atol)
+
+    if type(val1) is not type(val2):
+        return False
+
+    comparables = (float, list, tuple, np.ndarray, sp.spmatrix)
+
+    if not (isinstance(val1, comparables) or isinstance(val2, comparables)):
+        raise ValueError("The objects, %s and %s, are neither scalar nor "
+                         "array-like." % (val1, val2))
+
+    # list/tuple (or list/tuple of ndarrays/spmatrices)
+    if isinstance(val1, (tuple, list)):
+        if (len(val1) == 0) and (len(val2) == 0):
+            return True
+        if len(val1) != len(val2):
+            return False
+        while isinstance(val1[0], (tuple, list, np.ndarray, sp.spmatrix)):
+            return all(_sparse_dense_allclose(val1_i, val2[i], rtol, atol)
+                       for i, val1_i in enumerate(val1))
+        # Compare the lists, if they are not nested or singleton
+        return np.allclose(val1, val2, rtol, atol)
+
+    same_shape = val1.shape == val2.shape
+    if sp.issparse(val1) or sp.issparse(val2):
+        return same_shape and np.allclose(val1.toarray(), val2.toarray(),
+                                          rtol, atol)
+    else:
+        return same_shape and np.allclose(val1, val2, rtol, atol)
+
+
 def _assert_allclose(actual, desired, rtol=1e-7, atol=0,
                      err_msg='', verbose=True):
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
     if np.allclose(actual, desired, rtol=rtol, atol=atol):
         return
-    msg = ('Array not equal to tolerance rtol=%g, atol=%g: '
-           'actual %s, desired %s') % (rtol, atol, actual, desired)
-    raise AssertionError(msg)
+    if err_msg == '':
+        err_msg = ('Array not equal to tolerance rtol=%g, atol=%g: '
+                   'actual %s, desired %s') % (rtol, atol, actual, desired)
+    raise AssertionError(err_msg)
 
 
 if hasattr(np.testing, 'assert_allclose'):
@@ -433,6 +475,166 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
                              (names, function.__name__))
 
 
+def _assert_same_model_method(method, X, estimator1, estimator2, msg=None):
+    method_err = '%r\n\nhas %s, but\n\n%r\n\ndoes not.'
+    # If the method is absent in only one model consider them different
+    if hasattr(estimator1, method) and not hasattr(estimator2, method):
+        raise AssertionError(method_err % (estimator1, method, estimator2))
+    if hasattr(estimator2, method) and not hasattr(estimator1, method):
+        raise AssertionError(method_err % estimator2, method, estimator1)
+
+    if not hasattr(estimator1, method):
+        return
+
+    # Check if the method(X) returns the same for both models.
+    res1, res2 = getattr(estimator1, method)(X), getattr(estimator2, method)(X)
+    if not _sparse_dense_allclose(res1, res2):
+        if msg is None:
+            msg = ("Models are not equal. \n\n%s method returned different "
+                   "results:\n\n%s\n\n for :\n\n%s and\n\n%s\n\n for :\n\n%s."
+                   % (method, res1, estimator1, res2, estimator2))
+        raise AssertionError(msg)
+
+
+def assert_same_model(X, estimator1, estimator2, msg=None):
+    """Helper function to check if the models are similar.
+
+    The check is done by comparing the outputs of the methods ``predict``,
+    ``transform``, ``decision_function`` and the ``predict_proba`` provided
+    they exist in both the models. If any of those methods do not exist in
+    one model alone, the models are considered different.
+
+    If the outputs from both the models for each of the available above listed
+    function(s) are similar, a comparison of the attributes of the models
+    that end with ``_`` is done to ascertain the similarity of the model.
+
+    If the models are different an AssertionError with the given error message
+    is raised.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        Input data, for the fitted models, used for comparing them.
+
+    estimator1 : An estimator object.
+        The first fitted model to be compared.
+
+    estimator2 : An estimator object.
+        The second fitted model to be compared.
+
+    msg : str
+        The error message to be used while raising the AssertionError if the
+        models are similar.
+
+    Notes
+    -----
+    This check is not exhaustive since all attributes of the model are assumed
+    to end with ``_``. If that is not the case, it could lead to false
+    positives.
+    """
+    _assert_same_model_method('predict', X, estimator1, estimator2, msg)
+    _assert_same_model_method('transform', X, estimator1, estimator2, msg)
+    _assert_same_model_method('decision_function',
+                              X, estimator1, estimator2, msg)
+    _assert_same_model_method('predict_proba', X, estimator1, estimator2, msg)
+    assert_fitted_attributes_almost_equal(estimator1, estimator2)
+
+
+def assert_not_same_model(X, estimator1, estimator2, msg=None):
+    """Helper function to check if the models are different.
+
+    The check is done by comparing the outputs of the methods ``predict``,
+    ``transform``, ``decision_function`` and the ``predict_proba``, provided
+    they exist in both the models. If any of those methods do not exist in
+    one model alone, the models are considered different.
+
+    If the outputs from both the models for each of the available, above listed
+    function(s) are similar, a comparison of the attributes of the models
+    that end with ``_`` is done to ascertain the similarity of the model.
+
+    If the models are similar an AssertionError with the given error message
+    is raised.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        Input data, for the fitted models, used for comparing them.
+
+    estimator1 : An estimator object.
+        The first fitted model to be compared.
+
+    estimator2 : An estimator object.
+        The second fitted model to be compared.
+
+    msg : str
+        The error message to be used while raising the AssertionError if the
+        models are similar.
+
+    Notes
+    -----
+    This check is not exhaustive since all attributes of the model are assumed
+    to end with ``_``. If that is not the case, it could lead to false
+    negatives.
+    """
+    try:
+        assert_same_model(X, estimator1, estimator2)
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError(msg)
+
+
+def assert_fitted_attributes_almost_equal(estimator1, estimator2, msg=None):
+    """Helper function to check if the fitted model attributes are similar.
+
+    This check is done by comparing the attributes from both the models that
+    end in ``_``.
+
+    If the fitted models attributes are different an AssertionError with the
+    given error message is raised.
+
+    Parameters
+    ----------
+    estimator1 : An estimator object.
+        The first fitted model whose attributes are to be compared.
+
+    estimator2 : An estimator object.
+        The second fitted model whose attributes are to be compared.
+
+    msg : str
+        The error message to be used while raising the AssertionError, if the
+        fitted models attributes are different.
+
+    Notes
+    -----
+    This check is not exhaustive since all attributes of the model are assumed
+    to end with ``_``. If that is not the case, it could lead to false
+    positives.
+    """
+    est1_dict, est2_dict = estimator1.__dict__, estimator2.__dict__
+    assert_array_equal(est1_dict.keys(), est2_dict.keys(),
+                       "The attributes of both the estimators do not match.")
+
+    non_attributes = ("estimators_", "estimator_", "tree_", "base_estimator_",
+                      "random_state_")
+    for attr in est1_dict:
+        val1, val2 = est1_dict[attr], est2_dict[attr]
+
+        # Consider keys that end in ``_`` only as attributes.
+        if (attr.endswith('_') and attr not in non_attributes):
+            if msg is None:
+                msg = ("Attributes do not match. \nThe attribute, %s, in "
+                       "estimator1,\n\n%r\n\n is %r and in estimator2,"
+                       "\n\n%r\n\n is %r.\n") % (attr, estimator1, val1,
+                                                 estimator2, val2)
+            if isinstance(val1, str) and isinstance(val2, str):
+                attr_similar = val1 == val2
+            else:
+                attr_similar = _sparse_dense_allclose(val1, val2)
+            if not attr_similar:
+                raise AssertionError(msg)
+
+
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):
     """Create a fake mldata data set.
 
@@ -465,7 +667,7 @@ def fake_mldata(columns_dict, dataname, matfile, ordering=None):
         ordering = sorted(list(datasets.keys()))
     # NOTE: setting up this array is tricky, because of the way Matlab
     # re-packages 1D arrays
-    datasets['mldata_descr_ordering'] = sp.empty((1, len(ordering)),
+    datasets['mldata_descr_ordering'] = np.empty((1, len(ordering)),
                                                  dtype='object')
     for i, name in enumerate(ordering):
         datasets['mldata_descr_ordering'][0, i] = name
