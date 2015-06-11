@@ -810,7 +810,7 @@ of the classifier given the true label:
 
 .. math::
 
-    L_{\log}(y, p) = -\log \operatorname{Pr}(y|p) = -(y \log p) + (1 - y) \log (1 - p))
+    L_{\log}(y, p) = -\log \operatorname{Pr}(y|p) = -(y \log (p) + (1 - y) \log (1 - p))
 
 This extends to the multiclass case as follows.
 Let the true labels for a set of samples
