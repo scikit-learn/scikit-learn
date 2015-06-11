@@ -527,6 +527,7 @@ to ``zero_one`` and call ``zero_one_loss`` from that function::
 
     def zero_one_loss(y_true, y_pred, normalize=True):
         # actual implementation
+        pass
 
     @deprecated("Function 'zero_one' has been renamed to "
                 "'zero_one_loss' and will be removed in release 0.15."
