@@ -20,7 +20,9 @@ from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_X_y, check_array
 from ..utils.random import sample_without_replacement
-from ..utils.validation import has_fit_parameter, check_is_fitted
+from ..utils.validation import check_is_fitted
+from ..utils.validation import DataConversionWarning
+from ..utils.validation import has_fit_parameter
 from ..utils.fixes import bincount
 from ..utils.metaestimators import if_delegate_has_method
 
@@ -289,6 +291,13 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
 
         # Remap output
         n_samples, self.n_features_ = X.shape
+
+        y = np.atleast_1d(y)
+        if y.ndim == 2 and y.shape[1] == 1:
+            warn("A column-vector y was passed when a 1d array was"
+                 " expected. Please change the shape of y to "
+                 "(n_samples,), for example using ravel().",
+                 DataConversionWarning, stacklevel=2)
         self.n_outputs_ = 1 if y.ndim == 1 else y.shape[1]
         y = self._validate_y(y)
 
@@ -384,7 +393,8 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         return y
 
     def _validate_X_predict(self, X):
-        check_is_fitted(self, "estimators_")
+        check_is_fitted(self, ["estimators_", "n_features_", "n_outputs_"])
+
         # Check data
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
@@ -725,6 +735,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
+        check_is_fitted(self, "base_estimator_")
+
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
             X = self._validate_X_predict(X)
