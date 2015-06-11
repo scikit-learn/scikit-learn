@@ -279,10 +279,9 @@
                 <ul>
                 <li><em>About us</em> See <a href="about.html#people">authors</a></li>
                 <li><em>More Machine Learning</em> Find <a href="related_projects.html">related projects</a></li>
-                <li><em>Questions?</em> See <a href="faq/">FAQ</a> and <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a> #scikit-learn</li>
+                <li><em>Questions?</em> See <a href="faq/">FAQ</a> and <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
                 <li><em>Mailing list:</em> <a href="https://lists.sourceforge.net/lists/listinfo/scikit-learn-general">scikit-learn-general@lists.sourceforge.net</a></li>
                 <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
-                <li><em>Want to contribute?</em> See <a href="developers/">developers' guide</li>
                 </ul>
 
                 <form target="_top" id="paypal-form" method="post" action="https://www.paypal.com/cgi-bin/webscr">
