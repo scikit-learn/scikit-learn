@@ -15,7 +15,7 @@ from ..utils import as_float_array
 from ..utils.fixes import astype
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
-
+from ..utils import gen_batches
 from ..externals import six
 
 zip = six.moves.zip
@@ -404,7 +404,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                     mask = mask.transpose()
                     statistics = statistics.transpose()
                 missing_index = np.where(mask.any(1))[0]
-                if True:
+                if False:
                     for i, row in zip(missing_index, X[missing_index]):
                         col_na_mask = np.isnan(row)
                         col_full_mask = np.logical_not(col_na_mask)
@@ -419,14 +419,19 @@ class Imputer(BaseEstimator, TransformerMixin):
                 else:
 
                     #@jnothman 's method
-
-                    D2 = (X[missing_index, np.newaxis] - statistics) ** 2
-                    D2[np.isnan(D2)] = 0
-                    missing_row, missing_col = np.where(np.isnan(X))
-                    sqdist = D2.sum(axis=2)
-                    ind = np.argsort(sqdist, axis=1)[:, :self.n_neighbors]
-                    means = np.mean(statistics[ind], axis=1)
-                    X[missing_row, missing_col] = means[np.where(np.isnan(X[missing_index]))[0], missing_col]
+                    for sl in list(gen_batches(len(missing_index),100)):
+                        index_start, index_stop = missing_index[sl][0],missing_index[sl][-1]+1
+                        X_sl = X[index_start: index_stop].copy()
+                        mask_sl = _get_mask(X_sl, self.missing_values)
+                        missing_index_sl = np.where(mask_sl.any(1))[0]
+                        D2 = (X_sl[missing_index_sl, np.newaxis] - statistics) ** 2
+                        D2[np.isnan(D2)] = 0
+                        missing_row, missing_col = np.where(np.isnan(X_sl))
+                        sqdist = D2.sum(axis=2)
+                        ind = np.argsort(sqdist, axis=1)[:, :self.n_neighbors]
+                        means = np.mean(statistics[ind], axis=1)
+                        X_sl[missing_row, missing_col] = means[np.where(np.isnan(X_sl[missing_index_sl]))[0], missing_col]
+                        X[index_start: index_stop] = X_sl
 
                 if self.axis == 1:
                     X = X.transpose()
