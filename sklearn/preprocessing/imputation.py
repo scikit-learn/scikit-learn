@@ -106,7 +106,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         - If `axis=0` and X is encoded as a CSR matrix;
         - If `axis=1` and X is encoded as a CSC matrix.
 
-    kneighbor : int, optional (default=1)
+    n_neighbors : int, optional (default=1)
         It only has effect if the strategy is "knn". It controls the number of nearest
         neighbors used to compute the mean along the axis.
 
@@ -124,13 +124,13 @@ class Imputer(BaseEstimator, TransformerMixin):
       contain missing values).
     """
     def __init__(self, missing_values="NaN", strategy="mean",
-                 axis=0, verbose=0, copy=True, kneighbor=1):
+                 axis=0, verbose=0, copy=True, n_neighbors=1):
         self.missing_values = missing_values
         self.strategy = strategy
         self.axis = axis
         self.verbose = verbose
         self.copy = copy
-        self.kneighbor = kneighbor
+        self.n_neighbors = n_neighbors
 
     def fit(self, X, y=None):
         """Fit the imputer on X.
@@ -258,7 +258,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                 return most_frequent
 
             elif strategy == "knn":
-                raise ValueError("Sparse matrix not supported!")
+                raise ValueError("strategy='knn' does not support sparse matrix input")
 
 
     def _dense_fit(self, X, strategy, missing_values, axis):
@@ -320,9 +320,9 @@ class Imputer(BaseEstimator, TransformerMixin):
 
             full_data = X[np.logical_not(mask.any(1))]
             if full_data.size == 0:
-                raise ValueError("There is no row with complete data!")
-            if full_data.shape[0] < self.kneighbor:
-                raise ValueError("There are at most %d neighbors!" %(full_data.shape[0]))
+                raise ValueError("There is no sample with complete data.")
+            if full_data.shape[0] < self.n_neighbors:
+                raise ValueError("There are only %d complete samples, but n_neighbors=%d." %(full_data.shape[0], self.n_neighbors))
             if axis == 1:
                 full_data = full_data.transpose()
 
@@ -404,18 +404,29 @@ class Imputer(BaseEstimator, TransformerMixin):
                     mask = mask.transpose()
                     statistics = statistics.transpose()
                 missing_index = np.where(mask.any(1))[0]
-                for i, row in zip(missing_index, X[missing_index]):
-                    col_index = np.where(np.logical_not(np.isnan(row)))[0]
-                    impute_index = np.where(np.isnan(row))[0]
-                    neigh = NearestNeighbors(self.kneighbor)
-                    neigh = neigh.fit(statistics[:, col_index])
-                    _dist, ind = neigh.kneighbors(row[np.logical_not(np.isnan(row))],
-                                           self.kneighbor)
-                    #tree = KDTree(statistics[:, col_index])
-                    #dist, ind = tree.query(row[np.logical_not(np.isnan(row))],
-                    #                       k=self.kneighbor)
-                    nn_index = ind[0]
-                    X[i][impute_index] = statistics[nn_index][:, impute_index].mean(0)
+                if True:
+                    for i, row in zip(missing_index, X[missing_index]):
+                        col_na_mask = np.isnan(row)
+                        col_full_mask = np.logical_not(col_na_mask)
+                        col_index = np.where(col_full_mask)[0]
+                        impute_index = np.where(col_na_mask)[0]
+                        neigh = NearestNeighbors(self.n_neighbors)
+                        neigh = neigh.fit(statistics[:, col_index])
+                        _dist, ind = neigh.kneighbors(row[col_full_mask],
+                                                       self.n_neighbors)
+                        nn_index = ind[0]
+                        X[i][impute_index] = statistics[nn_index][:, impute_index].mean(0)
+                else:
+
+                    #@jnothman 's method
+
+                    D2 = (X[missing_index, np.newaxis] - statistics) ** 2
+                    D2[np.isnan(D2)] = 0
+                    missing_row, missing_col = np.where(np.isnan(X))
+                    sqdist = D2.sum(axis=2)
+                    ind = np.argsort(sqdist, axis=1)[:, :self.n_neighbors]
+                    means = np.mean(statistics[ind], axis=1)
+                    X[missing_row, missing_col] = means[np.where(np.isnan(X[missing_index]))[0], missing_col]
 
                 if self.axis == 1:
                     X = X.transpose()

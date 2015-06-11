@@ -16,7 +16,7 @@ from sklearn.random_projection import sparse_random_matrix
 
 
 def _check_statistics(X, X_true,
-                      strategy, statistics, missing_values, kneighbor=1):
+                      strategy, statistics, missing_values):
     """Utility function for testing imputation for a given strategy.
 
     Test:
@@ -370,6 +370,13 @@ def test_imputation_knn():
         [-1,  2,  3,  np.nan],
     ])
 
+    X4 = np.array([
+        [np.nan, -1,  0,  5],
+        [np.nan,  2, -1,  3],
+        [-1,  -1,  0, 5],
+        [0,  2,  -1,  6],
+    ])
+
     X_true_1 = np.array([
         [-1, -1,  0,  5],
         [0,  2, -1,  3],
@@ -384,28 +391,39 @@ def test_imputation_knn():
         [-1,  2,  3,  7],
     ])
 
+    X_true_4 = np.array([
+        [-1, -1,  0,  5],
+        [0,  2, -1,  3],
+        [-1,  -1,  0, 5],
+        [0,  2, -1,  6],
+    ])
 
-    imputer = Imputer(missing_values='NaN', strategy="knn", axis=0, kneighbor=1)
+    imputer = Imputer(missing_values='NaN', strategy="knn", axis=0, n_neighbors=1)
     X_impute = imputer.fit(X).transform(X)
     assert_array_equal(X_true_1, X_impute)
 
-    imputer = Imputer(missing_values='NaN', strategy="knn", axis=1, kneighbor=1)
+    imputer = Imputer(missing_values='NaN', strategy="knn", axis=1, n_neighbors=1)
     X_impute = imputer.fit(X.transpose()).transform(X.transpose())
     assert_array_equal(X_true_1.transpose(), X_impute)
 
-    imputer = Imputer(missing_values='NaN', strategy="knn", axis=0, kneighbor=2)
+    imputer = Imputer(missing_values='NaN', strategy="knn", axis=0, n_neighbors=2)
     X_impute = imputer.fit(X).transform(X)
     assert_array_equal(X_true_2, X_impute)
 
-    imputer = Imputer(missing_values='NaN', strategy="knn", axis=0, kneighbor=1)
+    imputer = Imputer(missing_values='NaN', strategy="knn", axis=0, n_neighbors=1)
     X_impute = imputer.fit(X2).transform(X2)
     assert_array_equal(X_true_1, X_impute)
 
+    imputer = Imputer(missing_values='NaN', strategy="knn", axis=0, n_neighbors=1)
+    X_impute = imputer.fit(X4).transform(X4)
+    assert_array_equal(X_true_4, X_impute)
+
     imputer = Imputer(missing_values='NaN', strategy="knn", axis=0)
-    msg = "There is no row with complete data!"
+    msg = "There is no sample with complete data."
     assert_raise_message(ValueError, msg, imputer.fit, X3)
 
-    imputer = Imputer(missing_values='NaN', strategy="knn", axis=0, kneighbor=4)
-    msg = "There are at most 3 neighbors!"
+    imputer = Imputer(missing_values='NaN', strategy="knn", axis=0, n_neighbors=4)
+    msg = "There are only 3 complete samples, but n_neighbors=4."
     assert_raise_message(ValueError, msg, imputer.fit, X)
+
 
