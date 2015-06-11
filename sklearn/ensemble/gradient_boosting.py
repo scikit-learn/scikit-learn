@@ -39,7 +39,7 @@ from ..utils import check_consistent_length, deprecated
 from ..utils.extmath import logsumexp
 from ..utils.fixes import expit, bincount
 from ..utils.stats import _weighted_percentile
-from ..utils.validation import check_is_fitted, NotFittedError
+from ..utils.validation import check_is_fitted, has_fit_parameter, NotFittedError
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
 
@@ -956,8 +956,11 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             # init state
             self._init_state()
 
-            # fit initial model - FIXME make sample_weight optional
-            self.init_.fit(X, y, sample_weight)
+            # fit initial model
+            if has_fit_parameter(self.init_, 'sample_weight'):
+                self.init_.fit(X, y, sample_weight=sample_weight)
+            else:
+                self.init_.fit(X, y)
 
             # init predictions
             y_pred = self.init_.predict(X)

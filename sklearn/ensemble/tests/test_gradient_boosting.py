@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 
 from sklearn import datasets
-from sklearn.base import clone
+from sklearn.base import clone, BaseEstimator
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
@@ -1012,3 +1012,27 @@ def test_non_uniform_weights_toy_edge_case_clf():
         gb = GradientBoostingClassifier(n_estimators=5)
         gb.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(gb.predict([[1, 0]]), [1])
+
+
+def test_init_prediction_estimator_without_sample_weights():
+    # Test if initial prediction estimator that
+    # doesn't accept sample_weights argument works with BaseGradientBoosting
+
+    class TestEstimator(BaseEstimator):
+        def __init__(self, estimator):
+            self._estimator = estimator
+
+        def fit(self, X, y):
+            self._estimator.fit(X, y)
+
+        def predict(self, X):
+            return self._estimator.predict(X)
+
+    init = TestEstimator(ZeroEstimator())
+    X = iris.data
+    y = np.array(iris.target)
+
+    est = GradientBoostingClassifier(n_estimators=20, max_depth=1,
+                                     random_state=1, init=init)
+    est.fit(X, y)
+    assert est.score(X, y) > 0.96
