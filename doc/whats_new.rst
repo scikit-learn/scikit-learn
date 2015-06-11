@@ -21,6 +21,11 @@ New features
      alternative to :class:`preprocessing.StandardScaler` for feature-wise
      centering and range normalization that is robust to outliers. By `Thomas Unterthiner`_.
 
+   - The new class :class:`preprocessing.MaxAbsScaler` provides an
+     alternative to :class:`preprocessing.MinMaxScaler` for feature-wise
+     range normalization when the data is already centered or sparse.
+     By `Thomas Unterthiner`_.
+
 Enhancements
 ............
 
