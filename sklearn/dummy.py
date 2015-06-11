@@ -66,7 +66,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
     outputs_2d_ : bool,
         True if the output at fit is 2d, else false.
 
-    `sparse_output_` : bool,
+    sparse_output_ : bool,
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input y is passed in sparse format.
 

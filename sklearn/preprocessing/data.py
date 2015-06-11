@@ -478,10 +478,10 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `center_` : array of floats
+    center_ : array of floats
         The median value for each feature in the training set.
 
-    `scale_` : array of floats
+    scale_ : array of floats
         The (scaled) interquartile range for each feature in the training set.
 
     See also
