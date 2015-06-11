@@ -254,15 +254,19 @@ class BaseEstimator(object):
                 # nested objects case
                 name, sub_name = split
                 if name not in valid_params:
-                    raise ValueError('Invalid parameter %s for estimator %s' %
+                    raise ValueError('Invalid parameter %s for estimator %s. ' 
+                                     'Check the list of available parameters '
+                                     'with `estimator.get_params().keys()`.' %
                                      (name, self))
                 sub_object = valid_params[name]
                 sub_object.set_params(**{sub_name: value})
             else:
                 # simple objects case
                 if key not in valid_params:
-                    raise ValueError('Invalid parameter %s ' 'for estimator %s'
-                                     % (key, self.__class__.__name__))
+                    raise ValueError('Invalid parameter %s for estimator %s. '
+                                     'Check the list of available parameters '
+                                     'with `estimator.get_params().keys()`.' %
+                                     (key, self.__class__.__name__))
                 setattr(self, key, value)
         return self
 
