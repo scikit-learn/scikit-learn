@@ -148,7 +148,7 @@ def test_dict_learning_online_initialization():
     assert_array_equal(dico.components_, V)
 
 
-def test_dict_learning_online_partial_fit():
+def test_dict_learning_online():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
@@ -156,9 +156,11 @@ def test_dict_learning_online_partial_fit():
     dict1 = MiniBatchDictionaryLearning(n_components, n_iter=10 * len(X),
                                         batch_size=1,
                                         alpha=1, shuffle=False, dict_init=V,
+                                        verbose=1,
                                         random_state=0).fit(X)
     dict2 = MiniBatchDictionaryLearning(n_components, alpha=1,
-                                        n_iter=1, dict_init=V,
+                                        n_iter=1, dict_init=V, verbose=1,
+                                        shuffle=False,
                                         random_state=0)
     for i in range(10):
         for sample in X:
@@ -166,8 +168,84 @@ def test_dict_learning_online_partial_fit():
 
     assert_true(not np.all(sparse_encode(X, dict1.components_, alpha=1) ==
                            0))
-    assert_array_almost_equal(dict1.components_, dict2.components_,
-                              decimal=2)
+    assert_array_almost_equal(dict1.components_, dict2.components_, decimal=6)
+
+
+def test_dict_learning_online_partial_fit_new():
+    for l1_gamma, algorithm in zip([0.1], ['ridge']):
+        n_components = 12
+        rng = np.random.RandomState(0)
+        V = rng.randn(n_components, n_features)  # random init
+        V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+        dict1 = MiniBatchDictionaryLearning(n_components, n_iter=10 * len(X),
+                                            batch_size=1,
+                                            fit_algorithm=algorithm,
+                                            verbose=10,
+                                            alpha=1, shuffle=False,
+                                            dict_init=V,
+                                            l1_gamma=l1_gamma,
+                                            random_state=0).fit(X)
+        dict2 = MiniBatchDictionaryLearning(n_components, alpha=1,
+                                            n_iter=1, dict_init=V,
+                                            batch_size=1,
+                                            fit_algorithm=algorithm,
+                                            shuffle=False,
+                                            verbose=10,
+                                            l1_gamma=l1_gamma,
+                                            random_state=0)
+        for i in range(10):
+            for sample in X:
+                dict2.partial_fit(sample, deprecated=False)
+
+        assert_true(not np.all(sparse_encode(X, dict1.components_, alpha=1) ==
+                               0))
+        assert_array_almost_equal(dict1.components_, dict2.components_,
+                                  decimal=6)
+
+
+def test_dict_learning_online_fit_convergence():
+    for l1_gamma, algorithm in zip([0.0, 0.1], ['cd', 'ridge']):
+        n_components = 12
+        rng = np.random.RandomState(0)
+        V = rng.randn(n_components, n_features)  # random init
+        V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+        dict1 = MiniBatchDictionaryLearning(n_components, n_iter=100 * len(X),
+                                            batch_size=1,
+                                            fit_algorithm=algorithm,
+                                            verbose=1,
+                                            tol=1e-2,
+                                            alpha=1, shuffle=False,
+                                            dict_init=V,
+                                            l1_gamma=l1_gamma,
+                                            random_state=0)
+        dict1.fit(X)
+        assert_true(dict1.n_iter_ < 100 * len(X) - 1)
+
+
+def test_dict_learning_online_deterministic():
+    for l1_gamma, algorithm in zip([0.0, 0.1], ['cd', 'ridge']):
+        n_components = 12
+        rng = np.random.RandomState(0)
+        V = rng.randn(n_components, n_features)  # random init
+        V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+        dict1 = MiniBatchDictionaryLearning(n_components, n_iter=10 * len(X),
+                                            batch_size=1,
+                                            fit_algorithm=algorithm,
+                                            verbose=1,
+                                            alpha=1, shuffle=False,
+                                            dict_init=V,
+                                            l1_gamma=l1_gamma,
+                                            random_state=0).fit(X)
+        dict2 = MiniBatchDictionaryLearning(n_components, n_iter=10 * len(X),
+                                            batch_size=1,
+                                            fit_algorithm=algorithm,
+                                            verbose=1,
+                                            alpha=1, shuffle=False,
+                                            dict_init=V,
+                                            l1_gamma=l1_gamma,
+                                            random_state=0).fit(X)
+        assert_array_almost_equal(dict1.components_, dict2.components_,
+                                  decimal=6)
 
 
 def test_sparse_encode_shapes():
