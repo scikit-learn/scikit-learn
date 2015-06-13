@@ -6,43 +6,6 @@ Neural network models (supervised)
 
 .. currentmodule:: sklearn.neural_network
 
-.. _random_basis_function:
-
-Random basis function
-=====================
-
-Random basis function :math: `f(X): R \rightarrow R` that projects matrix
-:math: `X` into another feature space where the number of features is less, equal
-or higher than the original feature space. The output matrix :math: `H` is
-computed as follows:
-
-.. math::
-
-   H = g(Xw + b)
-
-where :math: `g(\cdot): R \rightarrow R` is the activation function, :math: `w`
-is the weight parameter vector, and :math: `b` is the intercept vector.
-
-:math: `w \in R^{d \times k}`, and :math: `b \in R^{d}` are generated based
-on the uniform distribution scaled between two values, set by the user.
-
-
-The example code below illustrates using this function::
-
-    >>> from sklearn.neural_network import RandomBasisFunction
-    >>> X = [[0, 0], [1, 1]]
-    >>> rbf = RandomBasisFunction(random_state=1, n_activated_features=2)
-    >>> rbf.fit(X, y)
-    RandomBasisFunction(activation='tanh', intercept=True, n_activated_features=2,
-            random_state=1, weight_scale='auto')
-    >>> rbf.transform(X)
-    [[-0.69896184 -0.76098975]
-    [-0.97981807 -0.73662692]]
-
-This function can be useful for training some neural network structures as 
-described in the next section.
-
-
 Randomly weighted neural networks
 =================================
 
@@ -74,7 +37,9 @@ The algorithm takes the following steps:
      `C` is the regularization term.
 
 :math:`k` is the number of hidden neurons. Larger :math:`k` allows for higher capacity to learn complex functions. 
-It allows the neural network to have more feature detectors in the hidden layer that characterize the training dataset.
+It allows the neural network to have randomly combined features in the hidden layer that characterize the training dataset.
+This technique is shallow (cannot learn highly complex functions) since the errors resulting from solving :math:`w2` using ridge
+are not propagated to the previous layer for better approximation.
 
 For classification, one can use a pipeline comprising the :class:`RandomBasisFunction` and :class:`RidgeClassifier` as
 shown in the following example::
@@ -89,7 +54,7 @@ shown in the following example::
     >>> reg = make_pipeline(RandomBasisFunction(random_state=1), RidgeClassifier(alpha=0))
     >>> reg.fit(X, y)
     Pipeline(steps=[('randombasisfunction', RandomBasisFunction(activation='tanh', intercept=True,
-          n_activated_features=10, random_state=1, weight_scale='auto')), ('ridgeclassifier', RidgeClassifier(alpha=0, class_weight=None, copy_X=True, fit_intercept=True, max_iter=None, normalize=False, solver='auto', tol=0.001))])
+          n_outputs=10, random_state=1, weight_scale='auto')), ('ridgeclassifier', RidgeClassifier(alpha=0, class_weight=None, copy_X=True, fit_intercept=True, max_iter=None, normalize=False, solver='auto', tol=0.001))])
 
     >>> reg.predict(X)
     [0.5  0.2]
@@ -107,7 +72,7 @@ shown in the following example::
     >>> reg = make_pipeline(RandomBasisFunction(random_state=1), Ridge(alpha=0))
     >>> reg.fit(X, y)
     Pipeline(steps=[('randombasisfunction', RandomBasisFunction(activation='tanh', intercept=True,
-          n_activated_features=10, random_state=1, weight_scale='auto')), ('ridge', Ridge(alpha=0, copy_X=True, fit_intercept=True, max_iter=None, normalize=False, solver='auto', tol=0.001))])
+          n_outputs=10, random_state=1, weight_scale='auto')), ('ridge', Ridge(alpha=0, copy_X=True, fit_intercept=True, max_iter=None, normalize=False, solver='auto', tol=0.001))])
 
     >>> reg.predict(X)
     [0.5  0.2]
@@ -131,6 +96,42 @@ Neural network models (unsupervised)
 ====================================
 
 .. currentmodule:: sklearn.neural_network
+
+.. _random_basis_function:
+
+Random basis function
+=====================
+
+Random basis function :math: `f(X): R \rightarrow R` that projects matrix
+:math: `X` into another feature space where the number of features is less, equal
+or higher than the original feature space. The output matrix :math: `H` is
+computed as follows:
+
+.. math::
+
+   H = g(Xw + b)
+
+where :math: `g(\cdot): R \rightarrow R` is the activation function, :math: `w`
+is the weight parameter vector, and :math: `b` is the intercept vector.
+
+:math: `w \in R^{d \times k}`, and :math: `b \in R^{d}` are generated based
+on the uniform distribution scaled between two values, set by the user.
+
+
+The example code below illustrates using this function::
+
+    >>> from sklearn.neural_network import RandomBasisFunction
+    >>> X = [[0, 0], [1, 1]]
+    >>> fe = RandomBasisFunction(random_state=1, n_outputs=2)
+    >>> fe.fit(X)
+    RandomBasisFunction(activation='tanh', intercept=True, n_outputs=2,
+            random_state=1, weight_scale='auto')
+    >>> fe.transform(X)
+    [[-0.69896184 -0.76098975]
+    [-0.97981807 -0.73662692]]
+
+This function can be useful for training some neural network structures as 
+described in the next section.
 
 
 .. _rbm:
