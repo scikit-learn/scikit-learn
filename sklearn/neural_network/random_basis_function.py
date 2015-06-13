@@ -9,7 +9,6 @@ from ..utils.validation import check_array
 
 
 class RandomBasisFunction(BaseEstimator, TransformerMixin):
-
     """Random basis activation.
 
     The algorithm uses the number of features of the input data to randomly 
@@ -21,20 +20,20 @@ class RandomBasisFunction(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
+    n_outputs : int, default 10
+        The number of output features to generate.
+
+    weight_scale : float, default 'auto'
+        If 'auto', `coef_` and `intercept_` get values ranging between 
+        plus/minus 'sqrt(6. / (n_features + n_outputs))' based on 
+        the uniform distribution; otherwise, between +weight_scale and 
+        -weight_scale.
+
     intercept : boolean, default True
         Whether to randomly generate an intercept. 
 
-    weight_scale : float, default 'auto'
-        Initializes and scales the input-to-hidden weights.
-        The weight values will range between plus and minus
-        'sqrt(weight_scale * 6. / (n_features + n_hidden))' based on the
-        uniform distribution.
-
-    n_activated_features : int, default 10
-        The number of units in the hidden layer.
-
     activation : {'logistic', 'tanh', 'relu'}, default 'tanh'
-        Activation function for the hidden layer.
+        Activation function for the output features.
 
          - 'logistic', the logistic sigmoid function,
             returns f(x) = 1 / (1 + exp(x)).
@@ -50,22 +49,30 @@ class RandomBasisFunction(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `coef_` : array-like, shape (n_features, n_hidden)
-        The input-to-hidden weights.
+    `coef_` : array-like, shape (n_features, n_outputs)
+        The coefficient parameters used to generate the output features.
 
-    `intercept_` : array-like, shape (n_hidden,)
-        The bias added to the hidden layer neurons.
+    `intercept_` : array-like, shape (n_outputs,)
+        An intercept parameter added to the output features.
 
     References
     ----------
     Glorot, Xavier, and Yoshua Bengio. "Understanding the difficulty of
         training deep feedforward neural networks." International Conference
         on Artificial Intelligence and Statistics. 2010.
-    """
 
-    def __init__(self, n_activated_features=10, weight_scale='auto',
+    See also
+    --------
+    `sklearn.random_projection` contains algorithms that are similar to
+    `RandomBasisFunction` in that they transform the input features to another
+    dimensional space. However, `RandomBasisFunction` is more general in that
+    the user defines the number of features to generate and the function to 
+    apply on these output features.
+
+    """
+    def __init__(self, n_outputs=10, weight_scale='auto',
                  activation='tanh', intercept=True, random_state=None):
-        self.n_activated_features = n_activated_features
+        self.n_outputs = n_outputs
         self.weight_scale = weight_scale
         self.intercept = intercept
         self.activation = activation
@@ -88,9 +95,9 @@ class RandomBasisFunction(BaseEstimator, TransformerMixin):
 
         """
         # Sanity checks
-        if self.n_activated_features <= 0:
-            raise ValueError("n_activated_features must be > 0, got %s." %
-                             self.n_activated_features)
+        if self.n_outputs <= 0:
+            raise ValueError("n_outputs must be > 0, got %s." %
+                             self.n_outputs)
 
         if self.activation not in ACTIVATIONS:
             raise ValueError("The activation %s is not supported. Supported "
@@ -104,17 +111,16 @@ class RandomBasisFunction(BaseEstimator, TransformerMixin):
         rng = check_random_state(self.random_state)
 
         if self.weight_scale == 'auto':
-            weight_init_bound = np.sqrt(6. / (n_features +
-                                              self.n_activated_features))
+            weight_init_bound = np.sqrt(6. / (n_features + self.n_outputs))
         else:
             weight_init_bound = self.weight_scale
 
         self.coef_ = rng.uniform(-weight_init_bound, weight_init_bound,
-                                 (n_features, self.n_activated_features))
+                                 (n_features, self.n_outputs))
 
         if self.intercept:
             self.intercept_ = rng.uniform(-weight_init_bound, weight_init_bound,
-                                          self.n_activated_features)
+                                          self.n_outputs)
 
         self.activation_function = ACTIVATIONS[self.activation]
 
