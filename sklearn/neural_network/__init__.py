@@ -4,5 +4,6 @@ networks.
 """
 
 from .rbm import BernoulliRBM
+from .random_basis_function import RandomBasisFunction
 
-__all__ = ['BernoulliRBM']
+__all__ = ['BernoulliRBM', 'RandomBasisFunction']
