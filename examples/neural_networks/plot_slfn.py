@@ -1,7 +1,7 @@
 """
-===========================================
+============================================
 Plot single-hidden layer feedforward network
-===========================================
+============================================
 
 This example plots a single-hidden layer feedforward network. It also allows
 users to generate networks of different number of layers and
