@@ -1189,10 +1189,6 @@ li#other-versions {
   z-index: 100;
 }
 
-div.container-index {
-  margin-left: -210px;
-}
-
 
 @media all and (max-width: 780px) {
   .fork-me {
