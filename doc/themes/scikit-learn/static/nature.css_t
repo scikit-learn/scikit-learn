@@ -1233,7 +1233,7 @@ li#other-versions {
 {% endif %}
 
   div.container-index {
-    margin-left: 0;
+    margin-left: -215px;
   }
 
 }
