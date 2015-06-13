@@ -1,7 +1,7 @@
 """
-========================================================================
-Impact of varying hyperparameters alpha and weight_scale on toy datasets
-========================================================================
+=====================================================================
+The impact of varying alpha and weight_scale on the decision function
+=====================================================================
 
 This illustrates how the random neural network behaves when varying the 
 regularization terms, weight_scale and alpha. Regularization usually
@@ -12,12 +12,13 @@ They control regularization in that they constrain the coefficients of the
 decision function.
 
 If there is high bias - as can be indicated by a high training
-error, decreasing alpha or increasing weight_scale would decrease bias and 
+error - decreasing alpha or increasing weight_scale would decrease bias and 
 therefore reduce underfitting. Similarly, if there is high variance - as can be 
-indicated by a low training error, increasing alpha or decreasing weight_scale 
+indicated by a low training error - increasing alpha or decreasing weight_scale 
 would decrease variance and therefore reduce overfitting. Therefore, it is best
 to find a balance between bias and variance (or parameter values that are not 
-too high nor too low) by testing a range of values as seen in this example.
+too high nor too low) by testing a range of values as seen in this example. 
+This can be achieved using cross-validation.
 
 """
 print(__doc__)
@@ -35,6 +36,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_moons, make_circles, make_classification
 from sklearn.neural_network import RandomBasisFunction
+from sklearn.learning_curve import validation_curve
 from sklearn.linear_model import Ridge
 from sklearn.pipeline import make_pipeline
 from sklearn.utils.fixes import expit as logistic_sigmoid
@@ -53,10 +55,8 @@ weight_scale_list = np.logspace(-2, 2, 5)
 
 def plot(names, classifiers, title):
     X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
-                               random_state=rng,
-                               n_clusters_per_class=1)
+                               random_state=rng, n_clusters_per_class=1)
 
-    X += 2 * rng.uniform(size=X.shape)
     linearly_separable = (X, y)
 
     datasets = [make_moons(noise=0.3, random_state=rng),
@@ -131,8 +131,7 @@ def plot(names, classifiers, title):
 classifiers = []
 names = []
 for alpha in alpha_list:
-    clf = make_pipeline(RandomBasisFunction(weight_scale=1.), Ridge(alpha=1.))
-    clf.set_params(ridge__alpha=alpha)
+    clf = make_pipeline(RandomBasisFunction(weight_scale=1.), Ridge(alpha=alpha))
 
     classifiers.append(clf)
     names.append("alpha = " + str(alpha))
@@ -143,8 +142,7 @@ plot(names, classifiers, title)
 classifiers = []
 names = []
 for weight_scale in weight_scale_list:
-    clf = make_pipeline(RandomBasisFunction(weight_scale=1.), Ridge(alpha=1.))
-    clf.set_params(randombasisfunction__weight_scale=weight_scale)
+    clf = make_pipeline(RandomBasisFunction(weight_scale=weight_scale), Ridge(alpha=1.))
 
     classifiers.append(clf)
     names.append("weight_scale = " + str(weight_scale))

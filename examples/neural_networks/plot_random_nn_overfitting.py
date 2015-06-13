@@ -22,6 +22,7 @@ import numpy as np
 from sklearn.neural_network import RandomBasisFunction
 from sklearn.linear_model import Ridge
 from sklearn.pipeline import make_pipeline
+from sklearn.learning_curve import validation_curve
 
 ###############################################################################
 # Generate sample data
@@ -44,14 +45,12 @@ n_hidden_list = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
 rnn = make_pipeline(RandomBasisFunction(), Ridge(alpha=0))
 
-train_errors = list()
-test_errors = list()
-for n_hidden in n_hidden_list:
-    rnn.set_params(randombasisfunction__n_activated_features=n_hidden)
-    rnn.fit(X_train, y_train)
+train_scores, test_scores = validation_curve(rnn, X, y, 
+    param_name="randombasisfunction__n_outputs", 
+    param_range=n_hidden_list, scoring='r2')
 
-    train_errors.append(rnn.score(X_train, y_train))
-    test_errors.append(rnn.score(X_test, y_test))
+train_scores_mean = np.mean(train_scores, axis=1)
+test_scores_mean = np.mean(test_scores, axis=1)
 
 
 ###############################################################################
@@ -59,8 +58,8 @@ for n_hidden in n_hidden_list:
 
 import pylab as pl
 
-pl.plot(n_hidden_list, train_errors, label='Train')
-pl.plot(n_hidden_list, test_errors, label='Test')
+pl.plot(n_hidden_list, train_scores_mean, label='Train')
+pl.plot(n_hidden_list, test_scores_mean, label='Test')
 
 pl.legend(loc='lower left')
 pl.title("Random neural network on training vs. testing scores")
