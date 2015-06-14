@@ -77,7 +77,7 @@ shown in the following example::
        normalize=False, solver='auto', tol=0.001))])
 
     >>> reg.predict(X)
-     array([ 0.5,  0.2])
+    array([ 0.5,  0.2])
      
 The references below show examples of how tuning some of the hyper-parameters of the pipeline affect the resulting
 decision function::
