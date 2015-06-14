@@ -56,7 +56,8 @@ def nca_vectorized_oracle(L, X, y, n_components, loss, outer, threshold=0.0):
     if loss == 'l1':
         function_value = p_i.sum()
     elif loss == 'kl':
-        function_value = np.log(p_i).sum()
+        mask = p_i > 0
+        function_value = np.log(p_i[mask]).sum()
 
     grad = 2 * np.dot(L, grad)
 
@@ -90,7 +91,6 @@ def nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=0.0):
         Xij = X[i] - X[mask, :]  # n_relevant x n_features
         Xij_outer = (Xij[:, :, np.newaxis] * Xij[:, np.newaxis, :])
         grad += np.einsum("i,ijk", samples_proba[mask], Xij_outer)
-        # grad += np.einsum("i,ij,ik", samples_proba[mask], Xij, Xij)
 
         neighbours_proba = p[i] * (y == y[i])
         if loss == 'kl' and p_i > 1e-10:

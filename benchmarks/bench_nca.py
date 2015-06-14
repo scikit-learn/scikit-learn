@@ -14,7 +14,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.cross_validation import KFold
 
 from sklearn.utils.bench import total_seconds
-from sklearn.datasets import fetch_mldata
+from sklearn.datasets import fetch_mldata, make_classification
 
 def get_params(learning_rate=1, loss='kl', max_iter=100, solver='adagrad',
         random_state=0, verbose=2, n_init=10, method='semivectorized',
@@ -35,19 +35,27 @@ if __name__ == '__main__':
 
     separator = "=" * 30 + "\n"
     wine_ds = fetch_mldata('wine')
-    print("Loaded UCI Wine dataset")
-    print(separator)
 
-    params = [
-            get_params(method='vectorized'),
-            get_params(method='semivectorized'),
-            get_params(method='vectorized', threshold=0),
-            get_params(method='semivectorized', threshold=0),
+    datasets = [
+            ('UCI Wine', (wine_ds.data, wine_ds.target)),
+            ('mk_cls', make_classification(n_samples=300, n_features=20, n_informative=2, n_classes=2))
         ]
 
-    for args in params:
-        nca = NCATransformer(**args)
-        print(nca)
-        nca.fit(wine_ds.data, wine_ds.target)
+    params = [
+            get_params(method='semivectorized'),
+            get_params(method='vectorized'),
+            get_params(method='semivectorized', threshold=0),
+            get_params(method='vectorized', threshold=0),
+        ]
+
+    for name, (X, y) in datasets:
         print(separator)
+        print("Using {} dataset".format(name))
+        print(separator)
+
+        for args in params:
+            nca = NCATransformer(**args)
+            print(nca)
+            nca.fit(X, y)
+            print(separator)
 
