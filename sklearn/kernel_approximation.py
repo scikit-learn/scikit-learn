@@ -245,9 +245,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     References
     ----------
     See `"Efficient additive kernels via explicit feature maps"
-    <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
-    Vedaldi, A. and Zisserman, A., Computer Vision and Pattern Recognition 2010
-
+    <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>`_
+    A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence,
+    2011
     """
 
     def __init__(self, sample_steps=2, sample_interval=None):
