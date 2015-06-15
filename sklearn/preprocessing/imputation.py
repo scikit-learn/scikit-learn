@@ -425,7 +425,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                         X_sl = X[index_start: index_stop]
                         mask_sl = _get_mask(X_sl, self.missing_values)
                         missing_index_sl = np.where(mask_sl.any(1))[0]
-                        D2 = (X_sl[missing_index_sl, np.newaxis, :] - statistics) ** 2
+                        D2 = (X_sl[missing_index_sl][:, np.newaxis, :] - statistics) ** 2
                         D2[np.isnan(D2)] = 0
                         missing_row, missing_col = np.where(np.isnan(X_sl))
                         sqdist = D2.sum(axis=2)
