@@ -8,7 +8,7 @@ import numpy.ma as ma
 from scipy import sparse
 from scipy import stats
 
-from ..neighbors import KDTree, NearestNeighbors
+from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils import as_float_array
@@ -322,7 +322,8 @@ class Imputer(BaseEstimator, TransformerMixin):
             if full_data.size == 0:
                 raise ValueError("There is no sample with complete data.")
             if full_data.shape[0] < self.n_neighbors:
-                raise ValueError("There are only %d complete samples, but n_neighbors=%d." %(full_data.shape[0], self.n_neighbors))
+                raise ValueError("There are only %d complete samples, but n_neighbors=%d."
+                                 % (full_data.shape[0], self.n_neighbors))
             if axis == 1:
                 full_data = full_data.transpose()
 
@@ -413,25 +414,25 @@ class Imputer(BaseEstimator, TransformerMixin):
                         neigh = NearestNeighbors(self.n_neighbors)
                         neigh = neigh.fit(statistics[:, col_index])
                         _dist, ind = neigh.kneighbors(row[col_full_mask],
-                                                       self.n_neighbors)
+                                                      self.n_neighbors)
                         nn_index = ind[0]
                         X[i][impute_index] = statistics[nn_index][:, impute_index].mean(0)
-                else:
+                elif True:
 
                     #@jnothman 's method
-                    for sl in list(gen_batches(len(missing_index),100)):
-                        index_start, index_stop = missing_index[sl][0],missing_index[sl][-1]+1
-                        X_sl = X[index_start: index_stop].copy()
+                    for sl in list(gen_batches(len(missing_index), 100)):
+                        index_start, index_stop = missing_index[sl][0], missing_index[sl][-1]+1
+                        X_sl = X[index_start: index_stop]
                         mask_sl = _get_mask(X_sl, self.missing_values)
                         missing_index_sl = np.where(mask_sl.any(1))[0]
-                        D2 = (X_sl[missing_index_sl, np.newaxis] - statistics) ** 2
+                        D2 = (X_sl[missing_index_sl, np.newaxis, :] - statistics) ** 2
                         D2[np.isnan(D2)] = 0
                         missing_row, missing_col = np.where(np.isnan(X_sl))
                         sqdist = D2.sum(axis=2)
                         ind = np.argsort(sqdist, axis=1)[:, :self.n_neighbors]
                         means = np.mean(statistics[ind], axis=1)
-                        X_sl[missing_row, missing_col] = means[np.where(np.isnan(X_sl[missing_index_sl]))[0], missing_col]
-                        X[index_start: index_stop] = X_sl
+                        X_sl[missing_row, missing_col] = means[np.where(np.isnan(X_sl[missing_index_sl]))[0],
+                                                               missing_col]
 
                 if self.axis == 1:
                     X = X.transpose()

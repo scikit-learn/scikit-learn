@@ -425,5 +425,3 @@ def test_imputation_knn():
     imputer = Imputer(missing_values='NaN', strategy="knn", axis=0, n_neighbors=4)
     msg = "There are only 3 complete samples, but n_neighbors=4."
     assert_raise_message(ValueError, msg, imputer.fit, X)
-
-
