@@ -30,7 +30,8 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
-
+from sklearn.utils.testing import assert_same_model
+from sklearn.utils.testing import assert_not_same_model
 
 from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
                           TransformerMixin, ClusterMixin, BaseEstimator)
@@ -107,6 +108,8 @@ def _yield_non_meta_checks(name, Estimator):
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
     yield check_estimators_pickle
+    if name not in ('SpectralEmbedding',):
+        yield check_estimator_fit_reset
 
 
 def _yield_classifier_checks(name, Classifier):
@@ -1553,3 +1556,44 @@ def check_classifiers_regression_target(name, Estimator):
     e = Estimator()
     msg = 'Unknown label type: '
     assert_raises_regex(ValueError, msg, e.fit, X, y)
+
+
+@ignore_warnings
+def check_estimator_fit_reset(name, Estimator):
+    X1, y1 = make_blobs(n_samples=50, n_features=2, center_box=(-200, -150),
+                        centers=2, random_state=0)
+    X2, y2 = make_blobs(n_samples=50, n_features=2, center_box=(200, 150),
+                        centers=2, random_state=1)
+    X3, y3 = make_blobs(n_samples=50, n_features=2, center_box=(-200, 150),
+                        centers=3, random_state=2)
+    X4, y4 = make_blobs(n_samples=50, n_features=5, center_box=(-200, -150),
+                        centers=2, random_state=0)
+    X5, y5 = make_blobs(n_samples=50, n_features=5, center_box=(200, 150),
+                        centers=2, random_state=1)
+    X6, y6 = make_blobs(n_samples=50, n_features=5, center_box=(-200, 150),
+                        centers=3, random_state=2)
+
+    # Some estimators work only on non-negative inputs
+    if name in ('AdditiveChi2Sampler', 'SkewedChi2Sampler',
+                'NMF', 'MultinomialNB', 'ProjectedGradientNMF'):
+        X1 -= X1.min(), X2, X3, X4, X5, X6 = map(np.fabs, (X1, X2, X3, X4, X5, X6))
+
+    y1, y2, y3, y4, y5, y6 = map(multioutput_estimator_convert_y_2d,
+                                 (name,)*6, (y1, y2, y3, y4, y5, y6))
+    estimator_1 = Estimator()
+    estimator_2 = Estimator()
+
+    set_testing_parameters(estimator_1)
+    set_testing_parameters(estimator_2)
+
+    set_random_state(estimator_1)
+    set_random_state(estimator_2)
+
+    assert_not_same_model(X3, estimator_1.fit(X1, y1), estimator_2.fit(X2, y2))
+    assert_same_model(X3, estimator_1.fit(X2, y2), estimator_2)
+    assert_same_model(X2, estimator_1.fit(X1, y1), estimator_2.fit(X1, y1))
+
+    # Fitting new data with 5 features
+    assert_not_same_model(X6, estimator_1.fit(X4, y4), estimator_2.fit(X5, y5))
+    assert_same_model(X6, estimator_1.fit(X5, y5), estimator_2)
+    assert_same_model(X5, estimator_1.fit(X4, y4), estimator_2.fit(X4, y4))
