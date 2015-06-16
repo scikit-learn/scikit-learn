@@ -2,13 +2,12 @@
 # License: BSD 3 clause
 
 import warnings
-
+import itertools
 import numpy as np
 import numpy.ma as ma
 from scipy import sparse
 from scipy import stats
 
-from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils import as_float_array
@@ -404,21 +403,8 @@ class Imputer(BaseEstimator, TransformerMixin):
                     X = X.transpose()
                     mask = mask.transpose()
                     statistics = statistics.transpose()
-                missing_index = np.where(mask.any(1))[0]
                 if False:
-                    for i, row in zip(missing_index, X[missing_index]):
-                        col_na_mask = np.isnan(row)
-                        col_full_mask = np.logical_not(col_na_mask)
-                        col_index = np.where(col_full_mask)[0]
-                        impute_index = np.where(col_na_mask)[0]
-                        neigh = NearestNeighbors(self.n_neighbors)
-                        neigh = neigh.fit(statistics[:, col_index])
-                        _dist, ind = neigh.kneighbors(row[col_full_mask],
-                                                      self.n_neighbors)
-                        nn_index = ind[0]
-                        X[i][impute_index] = statistics[nn_index][:, impute_index].mean(0)
-                elif True:
-
+                    missing_index = np.where(mask.any(1))[0]
                     #@jnothman 's method
                     for sl in list(gen_batches(len(missing_index), 100)):
                         index_start, index_stop = missing_index[sl][0], missing_index[sl][-1]+1
@@ -433,6 +419,29 @@ class Imputer(BaseEstimator, TransformerMixin):
                         means = np.mean(statistics[ind], axis=1)
                         X_sl[missing_row, missing_col] = means[np.where(np.isnan(X_sl[missing_index_sl]))[0],
                                                                missing_col]
+                else:
+                    # group by missing features and batch within group
+                    group_index = np.unique(mask.astype('u1').view((np.void, X.shape[1])), return_inverse=True)[1]
+                    for group_number in range(max(group_index)+1):
+                        if group_number == 0:
+                            continue
+                        else:
+                            missing_index = np.where(group_index == group_number)[0]
+                            batch_slice = list(gen_batches(len(missing_index), 100))
+                            for sl in batch_slice:
+                                index_sl = missing_index[sl]
+                                X_sl = X[index_sl]
+                                D2 = (X_sl[:][:, np.newaxis, :] - statistics) ** 2
+                                D2[np.isnan(D2)] = 0
+                                missing_row, missing_col = np.where(np.isnan(X_sl))
+                                sqdist = D2.sum(axis=2)
+                                ind = np.argsort(sqdist, axis=1)[:, :self.n_neighbors]
+                                means = np.mean(statistics[ind], axis=1)
+                                X_sl[missing_row, missing_col] = means[np.where(np.isnan(X_sl))[0],
+                                                                       missing_col]
+                                X[index_sl] = X_sl
+
+
 
                 if self.axis == 1:
                     X = X.transpose()
