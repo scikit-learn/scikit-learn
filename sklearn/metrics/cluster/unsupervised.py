@@ -1,17 +1,18 @@
 """ Unsupervised evaluation metrics. """
 
 # Authors: Robert Layton <robertlayton@gmail.com>
+#          Joel Nothman <joel.nothman@gmail.com>
 #
 # License: BSD 3 clause
 
 import numpy as np
 
-from ...utils import check_random_state
+from ...utils import check_random_state, check_array, check_X_y
 from ..pairwise import pairwise_distances
 
 
 def silhouette_score(X, labels, metric='euclidean', sample_size=None,
-                     random_state=None, **kwds):
+                     sample_weight=None, random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
@@ -50,6 +51,12 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     sample_size : int or None
         The size of the sample to use when computing the Silhouette
         Coefficient. If ``sample_size is None``, no sampling is used.
+        Note this does not take ``sample_weight`` into account.
+
+    sample_weight : array, shape = [n_samples], optional
+        The weight for each sample, where samples would usually be weighted 1.
+        Thus intra-cluster distance for point i will incorporate a
+        zero-distance with weight ``sample_weight[i] - 1``.
 
     random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
@@ -91,10 +98,15 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
             X, labels = X[indices].T[indices].T, labels[indices]
         else:
             X, labels = X[indices], labels[indices]
-    return np.mean(silhouette_samples(X, labels, metric=metric, **kwds))
+        if sample_weight is not None:
+            sample_weight = sample_weight[indices]
+    return np.average(silhouette_samples(X, labels, metric=metric,
+                                         sample_weight=sample_weight, **kwds),
+                      weights=sample_weight)
 
 
-def silhouette_samples(X, labels, metric='euclidean', **kwds):
+def silhouette_samples(X, labels, metric='euclidean', sample_weight=None,
+                       **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
     The Silhouette Coefficient is a measure of how well samples are clustered
@@ -132,6 +144,11 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
         allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
         the distance array itself, use "precomputed" as the metric.
 
+    sample_weight : array, shape = [n_samples], optional
+        The weight for each sample, where samples would usually be weighted 1.
+        Thus intra-cluster distance for point i will incorporate a
+        zero-distance with weight ``sample_weight[i] - 1``.
+
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a ``scipy.spatial.distance`` metric, the parameters are still
@@ -154,66 +171,38 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
        <http://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
+    check_array(labels)
     distances = pairwise_distances(X, metric=metric, **kwds)
+    if sample_weight is not None:
+        # weight each column
+        distances = distances * sample_weight
+    X, labels = check_X_y(X, labels)
     n = labels.shape[0]
-    A = np.array([_intra_cluster_distance(distances[i], labels, i)
-                  for i in range(n)])
-    B = np.array([_nearest_cluster_distance(distances[i], labels, i)
-                  for i in range(n)])
-    sil_samples = (B - A) / np.maximum(A, B)
-    return sil_samples
 
+    # relabel to range [0, #labels - 1]:
+    unique_labels, labels = np.unique(labels, return_inverse=True)
+    n_labels = len(unique_labels)
 
-def _intra_cluster_distance(distances_row, labels, i):
-    """Calculate the mean intra-cluster distance for sample i.
+    # calculate sum of distances between each point and each cluster:
+    sum_distances = np.zeros((n, n_labels))
+    # Shorthand available from numpy 1.8.0:
+    # np.add.at(sum_distances.T, labels, distances)
+    for label in range(n_labels):
+        sum_distances[:, label] = np.sum(distances[:, labels == label],
+                                         axis=-1)
 
-    Parameters
-    ----------
-    distances_row : array, shape = [n_samples]
-        Pairwise distance matrix between sample i and each sample.
+    # Calculate distance between each point and co-clustered points
+    cluster_sizes = np.bincount(labels, weights=sample_weight)
+    intra_cluster = (sum_distances[np.arange(n), labels] /
+                     (cluster_sizes[labels] - 1))
+    intra_cluster[cluster_sizes[labels] == 1] = 0
 
-    labels : array, shape = [n_samples]
-        label values for each sample
+    # Calculate minimum distance between each point and another cluster
+    sum_distances[np.arange(n), labels] = np.inf
+    mean_distances = sum_distances / cluster_sizes
+    nearest_cluster = np.min(mean_distances, axis=1)
 
-    i : int
-        Sample index being calculated. It is excluded from calculation and
-        used to determine the current label
-
-    Returns
-    -------
-    a : float
-        Mean intra-cluster distance for sample i
-    """
-    mask = labels == labels[i]
-    mask[i] = False
-    if not np.any(mask):
-        # cluster of size 1
-        return 0
-    a = np.mean(distances_row[mask])
-    return a
-
-
-def _nearest_cluster_distance(distances_row, labels, i):
-    """Calculate the mean nearest-cluster distance for sample i.
-
-    Parameters
-    ----------
-    distances_row : array, shape = [n_samples]
-        Pairwise distance matrix between sample i and each sample.
-
-    labels : array, shape = [n_samples]
-        label values for each sample
-
-    i : int
-        Sample index being calculated. It is used to determine the current
-        label.
-
-    Returns
-    -------
-    b : float
-        Mean nearest-cluster distance for sample i
-    """
-    label = labels[i]
-    b = np.min([np.mean(distances_row[labels == cur_label])
-               for cur_label in set(labels) if not cur_label == label])
-    return b
+    sil_samples = ((nearest_cluster - intra_cluster) /
+                   np.maximum(intra_cluster, nearest_cluster))
+    # nan values are for clusters of size 1, and should be 0
+    return np.nan_to_num(sil_samples)
