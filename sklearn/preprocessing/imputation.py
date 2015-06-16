@@ -2,7 +2,6 @@
 # License: BSD 3 clause
 
 import warnings
-import itertools
 import numpy as np
 import numpy.ma as ma
 from scipy import sparse
@@ -403,15 +402,22 @@ class Imputer(BaseEstimator, TransformerMixin):
                     X = X.transpose()
                     mask = mask.transpose()
                     statistics = statistics.transpose()
+
+                batch_size = 10  # set batch size for block query
                 if False:
                     missing_index = np.where(mask.any(1))[0]
                     #@jnothman 's method
-                    for sl in list(gen_batches(len(missing_index), 100)):
+                    for sl in list(gen_batches(len(missing_index), batch_size)):
                         index_start, index_stop = missing_index[sl][0], missing_index[sl][-1]+1
                         X_sl = X[index_start: index_stop]
                         mask_sl = _get_mask(X_sl, self.missing_values)
                         missing_index_sl = np.where(mask_sl.any(1))[0]
-                        D2 = (X_sl[missing_index_sl][:, np.newaxis, :] - statistics) ** 2
+                        t1 = time()
+                        fancy_index = X_sl[missing_index_sl][:, np.newaxis, :]
+                        D2 = np.square(fancy_index - statistics)
+                        #D2 = (X_sl[missing_index_sl][:, np.newaxis, :] - statistics) ** 2
+                        t2 = time()
+                        time_1 = time_1 + (t2-t1)
                         D2[np.isnan(D2)] = 0
                         missing_row, missing_col = np.where(np.isnan(X_sl))
                         sqdist = D2.sum(axis=2)
@@ -427,7 +433,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                             continue
                         else:
                             missing_index = np.where(group_index == group_number)[0]
-                            batch_slice = list(gen_batches(len(missing_index), 100))
+                            batch_slice = list(gen_batches(len(missing_index), batch_size))
                             for sl in batch_slice:
                                 index_sl = missing_index[sl]
                                 X_sl = X[index_sl]
@@ -457,3 +463,4 @@ class Imputer(BaseEstimator, TransformerMixin):
                 X[coordinates] = values
 
         return X
+
