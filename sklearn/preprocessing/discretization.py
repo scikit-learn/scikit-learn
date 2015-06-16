@@ -132,7 +132,7 @@ class MDLP(BaseEstimator):
 
         numCuts = len(cut_points)
         backs = np.zeros(cp_indices.shape)
-        non_numCuts_mask = cp_indices[cp_indices != 2].astype(int)
+        non_numCuts_mask = cp_indices[cp_indices != numCuts].astype(int)
         backs[cp_indices == numCuts] = float("inf")
         backs[cp_indices != numCuts] = cut_points[non_numCuts_mask]
 
