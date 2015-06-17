@@ -105,13 +105,14 @@ class Imputer(BaseEstimator, TransformerMixin):
         - If `axis=1` and X is encoded as a CSC matrix.
 
     n_neighbors : int, optional (default=1)
-        It only has effect if the strategy is "knn". It controls the number of nearest
+        It only has effect if the `strategy=knn`. It controls the number of nearest
         neighbors used to compute the mean along the axis.
 
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
         The imputation fill value for each feature if axis == 0.
+        If `strategy=knn`, then it contains those samples having no missing value.
 
     Notes
     -----
@@ -120,6 +121,7 @@ class Imputer(BaseEstimator, TransformerMixin):
     - When ``axis=1``, an exception is raised if there are rows for which it is
       not possible to fill in the missing values (e.g., because they only
       contain missing values).
+    - Knn strategy currently doesn't support sparse matrix.
     """
     def __init__(self, missing_values="NaN", strategy="mean",
                  axis=0, verbose=0, copy=True, n_neighbors=1):
@@ -316,7 +318,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             if axis == 1:
                 X = X.copy().transpose()
 
-            full_data = X[np.logical_not(mask.any(1))]
+            full_data = X[np.logical_not(mask.any(axis=1))]
             if full_data.size == 0:
                 raise ValueError("There is no sample with complete data.")
             if full_data.shape[0] < self.n_neighbors:
@@ -405,21 +407,21 @@ class Imputer(BaseEstimator, TransformerMixin):
 
                 batch_size = 10  # set batch size for block query
                 if False:
-                    missing_index = np.where(mask.any(1))[0]
+                    missing_index = np.where(mask.any(axis=1))[0]
                     #@jnothman 's method
                     for sl in list(gen_batches(len(missing_index), batch_size)):
-                        index_start, index_stop = missing_index[sl][0], missing_index[sl][-1]+1
-                        X_sl = X[index_start: index_stop]
-                        mask_sl = _get_mask(X_sl, self.missing_values)
-                        missing_index_sl = np.where(mask_sl.any(1))[0]
-                        D2 = (X_sl[missing_index_sl][:, np.newaxis, :] - statistics) ** 2
+                        X_sl = X[missing_index[sl]]
+                        test1 = X_sl[:][:, np.newaxis, :] - statistics
+                        D2 = test1 ** 2
+                        #D2 = (X_sl[missing_index_sl][:, np.newaxis, :] - statistics) ** 2
                         D2[np.isnan(D2)] = 0
                         missing_row, missing_col = np.where(np.isnan(X_sl))
                         sqdist = D2.sum(axis=2)
                         ind = np.argsort(sqdist, axis=1)[:, :self.n_neighbors]
                         means = np.mean(statistics[ind], axis=1)
-                        X_sl[missing_row, missing_col] = means[np.where(np.isnan(X_sl[missing_index_sl]))[0],
+                        X_sl[missing_row, missing_col] = means[np.where(np.isnan(X_sl))[0],
                                                                missing_col]
+                        X[missing_index[sl]] = X_sl
                 else:
                     # group by missing features and batch within group
                     group_index = np.unique(mask.astype('u1').view((np.void, X.shape[1])), return_inverse=True)[1]
