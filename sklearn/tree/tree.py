@@ -344,7 +344,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             rounded = np.round(X[:, feature]).astype(np.int64)
             self.category_map_[feature] = dict(izip(set(rounded), count()))
             X[:, feature] = np.array([self.category_map_[feature][x]
-                                       for x in rounded]).astype(DTYPE)
+                                      for x in rounded]).astype(DTYPE)
             n_categories[feature] = len(self.category_map_[feature])
 
         # Set min_weight_leaf from min_weight_fraction_leaf
@@ -400,6 +400,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                                 min_weight_leaf,
                                                 random_state,
                                                 self.presort)
+
+        if (not isinstance(self.splitter, _splitter.RandomSplitter) and
+                np.max(n_categories) > 64):
+            raise ValueError('A feature with {} categories was detected; to'
+                             ' use more than 64, use ExtraTree rather than'
+                             ' DecisionTree.'.format(np.max(n_categories)))
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
         self.tree_.n_categories = n_categories
