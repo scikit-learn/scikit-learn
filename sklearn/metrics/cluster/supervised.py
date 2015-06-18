@@ -70,7 +70,7 @@ def contingency_matrix(labels_true, labels_pred, eps=None, max_n_classes=5000):
     contingency: array, shape=[n_classes_true, n_classes_pred]
         Matrix :math:`C` such that :math:`C_{i, j}` is the number of samples in
         true class :math:`i` and in predicted class :math:`j`. If
-        ``eps is None``, the dtype of this array will be integer. If ``eps`` is
+        ``eps=None``, the dtype of this array will be integer. If ``eps`` is
         given, the dtype will be float.
     """
     classes, class_idx = np.unique(labels_true, return_inverse=True)

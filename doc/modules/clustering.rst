@@ -1402,4 +1402,29 @@ Drawbacks
  * :ref:`example_cluster_plot_kmeans_silhouette_analysis.py` : In this example
    the silhouette analysis is used to choose an optimal value for n_clusters.
 
+.. _contingency_matrix:
+
+Contingency Matrix
+----------------------
+
+Contingency matrix is a format describing the relationship between discrete-valued random variables.
+It shows the multivariate frequency distribution of the variables.
+
+Let the true label set be :math:`T`, and the predicted label set be :math:`P`. In a contingency matrix :math:`M`, entry :math:`M(i, j)` 
+is the number of observations actually in group :math:`T_i` and predicted to be in group :math:`P_j`. 
+
+Here is an example::
+
+  >>> from sklearn.metrics.cluster import contingency_matrix
+  >>> labels_true = [0, 0, 0, 1, 1, 1]
+  >>> labels_pred = [0, 0, 1, 1, 2, 2]
+
+  >>> contingency_matrix(labels_true, labels_pred)  # doctest: +NORMALIZE_WHITESPACE
+  array([[2, 1, 0],
+         [0, 1, 2]])
+
+.. topic:: References
+
+ * `Wikipedia entry for contingency matrix
+   <https://en.wikipedia.org/wiki/Contingency_table>`_
 
