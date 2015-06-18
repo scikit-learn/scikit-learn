@@ -1407,11 +1407,12 @@ Drawbacks
 Contingency Matrix
 ----------------------
 
-Contingency matrix is a format describing the relationship between discrete-valued random variables.
-It shows the multivariate frequency distribution of the variables.
+Contingency matrix is a format displaying the multivariate frequency distribution of the variables. In a typical contingency matrix, rows are true labels, and columns are predicted labels, which can be different from true labels. Each cell represents the interaction of true and predicted labels.
 
 Let the true label set be :math:`T`, and the predicted label set be :math:`P`. In a contingency matrix :math:`M`, entry :math:`M(i, j)` 
 is the number of observations actually in group :math:`T_i` and predicted to be in group :math:`P_j`. 
+
+Note that confusion matrix (:func:`sklearn.metrics.confusion_matrix`) is also a kind of contingency table, only that true label set :math:`T` and predicted label set :math:`P` are the same.
 
 Here is an example::
 
