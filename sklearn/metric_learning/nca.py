@@ -71,7 +71,7 @@ def nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=0.0):
     Lx = np.dot(X, L.T)  # n_samples x n_components
     assert Lx.shape == (n_samples, n_components)
 
-    grad = np.zeros((n_features, n_features))
+    grad = np.zeros((n_components, n_features))
     function_value = 0
 
     p = -euclidean_distances(Lx, squared=True)
@@ -88,8 +88,12 @@ def nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=0.0):
             samples_proba *= p_i
         mask = samples_proba > threshold  # n_samples
 
+        Lxij = Lx[i] - Lx[mask, :]  # n_relevant x n_components
         Xij = X[i] - X[mask, :]  # n_relevant x n_features
-        Xij_outer = (Xij[:, :, np.newaxis] * Xij[:, np.newaxis, :])
+
+        # n_relevant x n_components x n_features
+        Xij_outer = Lxij[:, :, np.newaxis] * Xij[:, np.newaxis, :]
+
         grad += np.einsum("i,ijk", samples_proba[mask], Xij_outer)
 
         neighbours_proba = p[i] * (y == y[i])
@@ -97,8 +101,9 @@ def nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=0.0):
             neighbours_proba /= p_i
         mask = neighbours_proba > threshold  # n_samples
 
+        Lxij = Lx[i] - Lx[mask, :]
         Xij = X[i] - X[mask, :]  # n_relevant x n_features
-        Xij_outer = (Xij[:, :, np.newaxis] * Xij[:, np.newaxis, :])
+        Xij_outer = (Lxij[:, :, np.newaxis] * Xij[:, np.newaxis, :])
         grad -= np.einsum("i,ijk", neighbours_proba[mask], Xij_outer)
 
         if loss == 'l1':
@@ -110,7 +115,7 @@ def nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=0.0):
                 # FIXME
                 function_value += 0
 
-    grad = 2 * np.dot(L, grad)
+    grad *= 2  # np.dot(L, grad)
 
     return [-function_value, -grad.flatten()]
 
