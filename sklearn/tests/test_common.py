@@ -61,7 +61,7 @@ def test_non_meta_estimators():
     for name, Estimator in estimators:
         if issubclass(Estimator, BiclusterMixin):
             continue
-        if name.endswith("HMM") or name.startswith("_"):
+        if name.startswith("_"):
             continue
         for check in _yield_all_checks(name, Estimator):
             yield check, name, Estimator
