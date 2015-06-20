@@ -68,8 +68,9 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
 
     return bandwidth / X.shape[0]
 
-#separate function for each seed's iterative loop
-def _mean_shift_single_seed(my_mean,X,nbrs,max_iter):
+
+# separate function for each seed's iterative loop
+def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
     # For each seed, climb gradient until convergence or max_iter
     bandwidth = nbrs.get_params()['radius']
     stop_thresh = 1e-3 * bandwidth  # when mean has converged
@@ -77,7 +78,7 @@ def _mean_shift_single_seed(my_mean,X,nbrs,max_iter):
     while True:
         # Find mean of points within bandwidth
         i_nbrs = nbrs.radius_neighbors([my_mean], bandwidth,
-                                   return_distance=False)[0]
+                                       return_distance=False)[0]
         points_within = X[i_nbrs]
         if len(points_within) == 0:
             break  # Depending on seeding strategy this condition may occur
@@ -85,7 +86,7 @@ def _mean_shift_single_seed(my_mean,X,nbrs,max_iter):
         my_mean = np.mean(points_within, axis=0)
         # If converged or at max_iter, adds the cluster
         if (extmath.norm(my_mean - my_old_mean) < stop_thresh or
-            completed_iterations == max_iter):
+                completed_iterations == max_iter):
             return tuple(my_mean), len(points_within)
         completed_iterations += 1
 
@@ -168,8 +169,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     if bandwidth is None:
         bandwidth = estimate_bandwidth(X)
     elif bandwidth <= 0:
-        raise ValueError("bandwidth needs to be greater than zero or None, got %f" %
-                         bandwidth)
+        raise ValueError("bandwidth needs to be greater than zero or None,\
+            got %f" % bandwidth)
     if seeds is None:
         if bin_seeding:
             seeds = get_bin_seeds(X, bandwidth, min_bin_freq)
@@ -179,9 +180,11 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     center_intensity_dict = {}
     nbrs = NearestNeighbors(radius=bandwidth).fit(X)
 
-    #execute iterations on all seeds in parallel
-    all_res = Parallel(n_jobs=n_jobs)(delayed(_mean_shift_single_seed)(seed,X,nbrs,max_iter) for seed in seeds)
-    #copy results in a dictionary
+    # execute iterations on all seeds in parallel
+    all_res = Parallel(n_jobs=n_jobs)(
+        delayed(_mean_shift_single_seed)
+        (seed, X, nbrs, max_iter) for seed in seeds)
+    # copy results in a dictionary
     for i in range(len(seeds)):
         if all_res[i] is not None:
             center_intensity_dict[all_res[i][0]] = all_res[i][1]
@@ -189,7 +192,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     if not center_intensity_dict:
         # nothing near seeds
         raise ValueError("No point was within bandwidth=%f of any seed."
-                         " Try a different seeding strategy or increase the bandwidth."
+                         " Try a different seeding strategy \
+                         or increase the bandwidth."
                          % bandwidth)
 
     # POST PROCESSING: remove near duplicate points
@@ -262,8 +266,8 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     bin_seeds = np.array([point for point, freq in six.iteritems(bin_sizes) if
                           freq >= min_bin_freq], dtype=np.float32)
     if len(bin_seeds) == len(X):
-        warnings.warn("Binning data failed with provided bin_size=%f, using data"
-                      " points as seeds." % bin_size)
+        warnings.warn("Binning data failed with provided bin_size=%f,"
+                      " using data points as seeds." % bin_size)
         return X
     bin_seeds = bin_seeds * bin_size
     return bin_seeds
@@ -379,7 +383,6 @@ class MeanShift(BaseEstimator, ClusterMixin):
                        bin_seeding=self.bin_seeding,
                        cluster_all=self.cluster_all, n_jobs=self.n_jobs)
         return self
-
 
     def predict(self, X):
         """Predict the closest cluster each sample in X belongs to.
