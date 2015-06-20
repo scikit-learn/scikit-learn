@@ -28,9 +28,7 @@ class ConvexHull():
 
     References
     ----------
-    .. [1] Alex Martelli, Ann
-        for point in c_points:
-            print np.nonzero(points[:, 0] == point[0])a Ravenscroft, David Ascher, 'Python Cookbook', O'Reilly Media, Inc., 2005.
+    .. [1] Alex Martelli, Anna Ravenscroft, David Ascher, 'Python Cookbook', O'Reilly Media, Inc., 2005.
 
     """
 
