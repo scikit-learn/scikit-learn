@@ -26,7 +26,7 @@ from .svm import LinearSVC
 from .cross_validation import _check_cv
 from .metrics.classification import _check_binary_probabilistic_predictions
 from .metrics import roc_curve
-from scipy.spatial import ConvexHull
+from .utils.fixes import ConvexHull
 
 
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):

@@ -7,6 +7,7 @@ at which the fixe is no longer needed.
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
 #          Lars Buitinck
+#          Alejandro Correa Bahnsen <al.bahnsen@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -351,3 +352,10 @@ if np_version < (1, 6, 2):
 
 else:
     from numpy import bincount
+
+
+if sp_version < (0, 12):
+    # Backport ConvexHull function from scipy < 0.12
+    from ._scipy_convexhull_backport import ConvexHull
+else:
+    from scipy.spatial import ConvexHull
