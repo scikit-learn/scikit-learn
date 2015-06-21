@@ -24,7 +24,7 @@ from scipy import sparse
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..utils import as_float_array, check_array, check_X_y, deprecated
+from ..utils import as_float_array, check_array, check_X_y, deprecated, column_or_1d
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
@@ -110,6 +110,18 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True,
         X_std = np.ones(X.shape[1])
         y_mean = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
     return X, y, X_mean, y_mean, X_std
+
+
+def _rescale_data(X, y, sample_weight):
+    """Rescale data so as to support sample_weight"""
+    n_samples = X.shape[0]
+    sample_weight = sample_weight * np.ones(n_samples)
+    sample_weight = np.sqrt(sample_weight)
+    sw_matrix = sparse.dia_matrix((sample_weight, 0),
+                                  shape=(n_samples, n_samples))
+    X = safe_sparse_dot(sw_matrix, X)
+    y = safe_sparse_dot(sw_matrix, y)
+    return X, y
 
 
 class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
@@ -351,7 +363,7 @@ class LinearRegression(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """
         Fit linear model.
 
@@ -363,16 +375,28 @@ class LinearRegression(LinearModel, RegressorMixin):
         y : numpy array of shape [n_samples, n_targets]
             Target values
 
+        sample_weight : numpy array of shape [n_samples]
+            Individual weights for each sample
+
         Returns
         -------
         self : returns an instance of self.
         """
+
         n_jobs_ = self.n_jobs
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          y_numeric=True, multi_output=True)
+        
+        if ((sample_weight is not None) and np.atleast_1d(sample_weight).ndim > 1):
+            sample_weight = column_or_1d(sample_weight, warn=True)
 
         X, y, X_mean, y_mean, X_std = self._center_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
+            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            sample_weight=sample_weight)
+
+        if sample_weight is not None:
+            # Sample weight can be implemented via a simple rescaling.
+            X, y = _rescale_data(X, y, sample_weight)
 
         if sp.issparse(X):
             if y.ndim < 2:

@@ -17,7 +17,7 @@ from scipy import linalg
 from scipy import sparse
 from scipy.sparse import linalg as sp_linalg
 
-from .base import LinearClassifierMixin, LinearModel
+from .base import LinearClassifierMixin, LinearModel, _rescale_data
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import check_X_y
@@ -184,17 +184,6 @@ def _solve_svd(X, y, alpha):
     d_UT_y = d * UTy
     return np.dot(Vt.T, d_UT_y).T
 
-
-def _rescale_data(X, y, sample_weight):
-    """Rescale data so as to support sample_weight"""
-    n_samples = X.shape[0]
-    sample_weight = sample_weight * np.ones(n_samples)
-    sample_weight = np.sqrt(sample_weight)
-    sw_matrix = sparse.dia_matrix((sample_weight, 0),
-                                  shape=(n_samples, n_samples))
-    X = safe_sparse_dot(sw_matrix, X)
-    y = safe_sparse_dot(sw_matrix, y)
-    return X, y
 
 
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
