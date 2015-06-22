@@ -194,6 +194,7 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
         extra_args = (X, y, n_components, loss, minibatch_size, threshold)
         oracle = nca_stochastic_oracle
 
+    exec_times = []
     for _ in range(n_init):
         start = time.clock()
         L = rng.uniform(0, 1, (n_components, n_features))
@@ -236,6 +237,7 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
             value, grad = oracle(L)
 
         exec_time = time.clock() - start
+        exec_times.append(exec_time)
         if verbose > 0:
             sys.stdout.write("\rInit {} / {} completed"
                              " :: Time: {:.2f}s :: Loss = {}\n".format(_ + 1, n_init, exec_time, value))
@@ -246,7 +248,9 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
             best_L = L
 
     if verbose > 0:
-        print("\rCompleted" + " " * 80)
+        mean = np.mean(exec_times)
+        std = np.std(exec_times)
+        print("\rCompleted. Avg. time: {:.2f} +/- {:.2f}s".format(mean, std) + " " * 80)
 
     return best_L
 
