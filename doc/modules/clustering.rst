@@ -1407,18 +1407,25 @@ Drawbacks
 Contingency Matrix
 ----------------------
 
-Contingency matrix is a format displaying the multivariate frequency distribution of the variables. In a typical contingency matrix, rows are true labels, and columns are predicted labels, which can be different from true labels. Each cell represents the interaction of true and predicted labels.
+Contingency matrix is a format displaying the multivariate frequency distribution
+of two discrete variables. In a contingency matrix, rows are true labels, 
+and columns are predicted labels, which can be different from true labels. 
+Each cell represents the interaction of true and predicted labels.
 
-Let the true label set be :math:`T`, and the predicted label set be :math:`P`. In a contingency matrix :math:`M`, entry :math:`M(i, j)` 
-is the number of observations actually in group :math:`T_i` and predicted to be in group :math:`P_j`. 
+Let the true label set be :math:`T`, and the predicted label set be :math:`P`. 
+In a contingency matrix :math:`M`, entry :math:`M(i, j)` 
+is the number of observations actually in group :math:`T_i` and predicted to be 
+in group :math:`P_j`. 
 
-Note that confusion matrix (:func:`sklearn.metrics.confusion_matrix`) is also a kind of contingency table, only that true label set :math:`T` and predicted label set :math:`P` are the same.
+Note that confusion matrix (:func:`sklearn.metrics.confusion_matrix`) is also a kind 
+of contingency table, only that true label set :math:`T` and predicted label set 
+:math:`P` are the same.
 
 Here is an example::
 
   >>> from sklearn.metrics.cluster import contingency_matrix
   >>> labels_true = [0, 0, 0, 1, 1, 1]
-  >>> labels_pred = [0, 0, 1, 1, 2, 2]
+  >>> labels_pred = ["red", "red", "green", "green", "blue", "blue"]
 
   >>> contingency_matrix(labels_true, labels_pred)  # doctest: +NORMALIZE_WHITESPACE
   array([[2, 1, 0],
