@@ -1428,8 +1428,8 @@ Here is an example::
   >>> labels_pred = ["red", "red", "green", "green", "blue", "blue"]
 
   >>> contingency_matrix(labels_true, labels_pred)  # doctest: +NORMALIZE_WHITESPACE
-  array([[2, 1, 0],
-         [0, 1, 2]])
+  array([[0, 1, 2],
+         [2, 1, 0]])
 
 .. topic:: References
 
