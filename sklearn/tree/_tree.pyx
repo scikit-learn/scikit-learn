@@ -75,9 +75,10 @@ SPLITVALUE_DTYPE = np.dtype({
 })
 NODE_DTYPE = np.dtype({
     'names': ['left_child', 'right_child', 'feature', 'split_value',
-              'impurity', 'n_node_samples', 'weighted_n_node_samples'],
+              'impurity', 'n_node_samples', 'weighted_n_node_samples',
+              '_bit_cache'],
     'formats': [np.intp, np.intp, np.intp, SPLITVALUE_DTYPE, np.float64,
-                np.intp, np.float64],
+                np.intp, np.float64, np.intp],
     'offsets': [
         <Py_ssize_t> &(<Node*> NULL).left_child,
         <Py_ssize_t> &(<Node*> NULL).right_child,
@@ -85,7 +86,8 @@ NODE_DTYPE = np.dtype({
         <Py_ssize_t> &(<Node*> NULL).split_value,
         <Py_ssize_t> &(<Node*> NULL).impurity,
         <Py_ssize_t> &(<Node*> NULL).n_node_samples,
-        <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples
+        <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples,
+        <Py_ssize_t> &(<Node*> NULL)._bit_cache
     ]
 })
 
