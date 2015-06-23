@@ -358,22 +358,22 @@ def disjoint_label_folds(y, n_folds=3):
     unique_labels, y = np.unique(labels, return_inverse=True)
     
     # number of occurrence of each label (its "weight")
-    weight_per_label = np.bincount(y)
-    # We want to distribute the heaviest weights first
-    ind = np.argsort(weight_per_label)[::-1]
-    weight_per_label = weight_per_label[ind]
+    samples_per_label = np.bincount(y)
+    # We want to distribute the most frequent labels first
+    ind = np.argsort(samples_per_label)[::-1]
+    samples_per_label = samples_per_label[ind]
 
     # Total weight of each fold
-    weight_per_fold = np.zeros(n_folds)
+    samples_per_fold = np.zeros(n_folds)
 
     # Mapping from label index to fold index
     label_to_fold = np.zeros(len(unique_labels))
     
     # While there are weights, distribute them
     # Specifically, add the biggest weight to the lightest fold
-    for label_index, w in enumerate(weight_per_label):
-        ind_min = np.argmin(weight_per_fold)
-        weight_per_fold[ind_min] += w
+    for label_index, w in enumerate(samples_per_label):
+        ind_min = np.argmin(samples_per_fold)
+        samples_per_fold[ind_min] += w
         label_to_fold[ind[label_index]] = ind_min
     
     folds = label_to_fold[y]
