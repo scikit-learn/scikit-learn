@@ -218,69 +218,71 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
 
     tree.populate_bit_caches()
 
-    for i in range(X.shape[0]):
-        # init stacks for new example
-        stack_size = 1
-        node_stack[0] = root_node
-        weight_stack[0] = 1.0
-        total_weight = 0.0
+    try:
+        for i in range(X.shape[0]):
+            # init stacks for new example
+            stack_size = 1
+            node_stack[0] = root_node
+            weight_stack[0] = 1.0
+            total_weight = 0.0
 
-        while stack_size > 0:
-            # get top node on stack
-            stack_size -= 1
-            current_node = node_stack[stack_size]
+            while stack_size > 0:
+                # get top node on stack
+                stack_size -= 1
+                current_node = node_stack[stack_size]
 
-            if current_node.left_child == LEAF:
-                out[i] += weight_stack[stack_size] * value[current_node - root_node] * \
-                          learn_rate
-                total_weight += weight_stack[stack_size]
-            else:
-                # non-terminal node
-                feature_index = array_index(current_node.feature, target_feature)
-                if feature_index != -1:
-                    # split feature in target set
-                    # push left or right child on stack
-                    if goes_left(X[i, feature_index], current_node.split_value,
-                                 tree.n_categories[current_node.feature],
-                                 current_node._bit_cache):
-                        # left
-                        node_stack[stack_size] = (root_node +
-                                                  current_node.left_child)
-                    else:
-                        # right
-                        node_stack[stack_size] = (root_node +
-                                                  current_node.right_child)
-                    stack_size += 1
+                if current_node.left_child == LEAF:
+                    out[i] += weight_stack[stack_size] * value[current_node - root_node] * \
+                              learn_rate
+                    total_weight += weight_stack[stack_size]
                 else:
-                    # split feature in complement set
-                    # push both children onto stack
+                    # non-terminal node
+                    feature_index = array_index(current_node.feature, target_feature)
+                    if feature_index != -1:
+                        # split feature in target set
+                        # push left or right child on stack
+                        if goes_left(X[i, feature_index], current_node.split_value,
+                                     tree.n_categories[current_node.feature],
+                                     current_node._bit_cache):
+                            # left
+                            node_stack[stack_size] = (root_node +
+                                                      current_node.left_child)
+                        else:
+                            # right
+                            node_stack[stack_size] = (root_node +
+                                                      current_node.right_child)
+                        stack_size += 1
+                    else:
+                        # split feature in complement set
+                        # push both children onto stack
 
-                    # push left child
-                    node_stack[stack_size] = root_node + current_node.left_child
-                    current_weight = weight_stack[stack_size]
-                    left_sample_frac = root_node[current_node.left_child].n_node_samples / \
-                                       <double>current_node.n_node_samples
-                    if left_sample_frac <= 0.0 or left_sample_frac >= 1.0:
-                        raise ValueError("left_sample_frac:%f, "
-                                         "n_samples current: %d, "
-                                         "n_samples left: %d"
-                                         % (left_sample_frac,
-                                            current_node.n_node_samples,
-                                            root_node[current_node.left_child].n_node_samples))
-                    weight_stack[stack_size] = current_weight * left_sample_frac
-                    stack_size +=1
+                        # push left child
+                        node_stack[stack_size] = root_node + current_node.left_child
+                        current_weight = weight_stack[stack_size]
+                        left_sample_frac = root_node[current_node.left_child].n_node_samples / \
+                                           <double>current_node.n_node_samples
+                        if left_sample_frac <= 0.0 or left_sample_frac >= 1.0:
+                            raise ValueError("left_sample_frac:%f, "
+                                             "n_samples current: %d, "
+                                             "n_samples left: %d"
+                                             % (left_sample_frac,
+                                                current_node.n_node_samples,
+                                                root_node[current_node.left_child].n_node_samples))
+                        weight_stack[stack_size] = current_weight * left_sample_frac
+                        stack_size +=1
 
-                    # push right child
-                    node_stack[stack_size] = root_node + current_node.right_child
-                    weight_stack[stack_size] = current_weight * \
-                                               (1.0 - left_sample_frac)
-                    stack_size +=1
+                        # push right child
+                        node_stack[stack_size] = root_node + current_node.right_child
+                        weight_stack[stack_size] = current_weight * \
+                                                   (1.0 - left_sample_frac)
+                        stack_size +=1
 
-        if not (0.999 < total_weight < 1.001):
-            raise ValueError("Total weight should be 1.0 but was %.9f" %
-                             total_weight)
+            if not (0.999 < total_weight < 1.001):
+                raise ValueError("Total weight should be 1.0 but was %.9f" %
+                                 total_weight)
 
-    tree.delete_bit_caches()
+    finally:
+        tree.delete_bit_caches()
 
 
 def _random_sample_mask(np.npy_intp n_total_samples,
