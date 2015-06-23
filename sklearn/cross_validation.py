@@ -960,6 +960,13 @@ class ShuffleLabelsOut(ShuffleSplit):
     whereas ShuffleLabelsOut generates a user-determined number of random
     test splits, each with a user-determined fraction of unique labels.
 
+    For example, a less computationally intensive alternative to
+    `LeavePLabelOut(labels, p=10)` would be
+    `ShuffleLabelsOut(labels, test_size=10, n_iter=100)`.
+
+    Note: The parameters `test_size` and `train_size` refer to labels, and not
+    to samples, as in ShuffleSplit.
+
 
     Parameters
     ----------

@@ -13,6 +13,10 @@ Changelog
 New features
 ............
 
+   - :class:`cross_validation.ShuffleLabelsOut` generates random train-test splits,
+     similer to `ShuffleSplit`, except that the splits are conditioned on a label array.
+     By `Brian McFee`_.
+
 Enhancements
 ............
 
@@ -3445,3 +3449,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Eric Martin: http://ericmart.in
 
 .. _Nicolas Goix: https://webperso.telecom-paristech.fr/front/frontoffice.php?SP_ID=241
+
+.. _Brian McFee: https://bmcfee.github.io
