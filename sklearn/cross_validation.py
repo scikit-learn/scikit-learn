@@ -337,11 +337,11 @@ def disjoint_label_folds(y, n_folds=3):
     
     Parameters
     ----------
-    y : iterable of shape (n_samples,)
+    y: numpy array, shape (n_samples,)
         Contains an id for each sample.
         The folds are built so that the same id doesn't appear in two different folds.
     
-    n_folds: int, default is 3
+    n_folds: int, default=3
         Number of folds to split the data into.
         
     Returns
