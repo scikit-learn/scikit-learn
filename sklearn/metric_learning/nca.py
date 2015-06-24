@@ -64,35 +64,50 @@ def nca_vectorized_oracle(L, X, y, n_components, loss, outer, threshold=0.0):
     return [-function_value, -grad.flatten()]
 
 
-def nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=0.0):
+def nca_semivectorized_oracle(L, X, y, n_components, loss, propagate_L=False, threshold=0.0):
+    """
+
+    :type y: np.multiarray.ndarray
+    """
     n_samples, n_features = X.shape
     L = L.reshape((n_components, n_features))
 
     Lx = np.dot(X, L.T)  # n_samples x n_components
     assert Lx.shape == (n_samples, n_components)
 
-    grad = np.zeros((n_components, n_features))
+    if propagate_L:
+        grad = np.zeros((n_components, n_features))
+    else:
+        grad = np.zeros((n_features, n_features))
     function_value = 0
 
     p = -euclidean_distances(Lx, squared=True)
     np.fill_diagonal(p, -np.inf)
     p -= sp.misc.logsumexp(p, axis=1)[:, np.newaxis]
-    np.exp(p, out=p)
+    p = np.exp(p)
 
     for i in range(n_samples):
-        class_neighbours = y == y[i]
-        p_i = (p[i] * class_neighbours).sum()
+        p_i = np.dot(p[i, :], y == y[i])
 
-        samples_proba = np.copy(p[i])
+        if p_i < 1e-10:
+            continue
+
+        proto_mask = p[i, :] / p_i > threshold  # n_samples
+
+        Xij = X[i] - X[proto_mask, :]  # n_samples x n_features
+        if propagate_L:
+            Lxij = Lx[i] - Lx[proto_mask, :]  # n_samples x n_components
+        else:
+            Lxij = Xij
+
+        samples_proba = np.copy(p[i, :])
         if loss == 'l1':
             samples_proba *= p_i
         mask = samples_proba > threshold  # n_samples
-
-        Lxij = Lx[i] - Lx[mask, :]  # n_relevant x n_components
-        Xij = X[i] - X[mask, :]  # n_relevant x n_features
+        X_mask = mask[proto_mask]
 
         # n_relevant x n_components x n_features
-        Xij_outer = Lxij[:, :, np.newaxis] * Xij[:, np.newaxis, :]
+        Xij_outer = Lxij[X_mask, :, np.newaxis] * Xij[X_mask, np.newaxis, :]
 
         grad += np.einsum("i,ijk", samples_proba[mask], Xij_outer)
 
@@ -100,10 +115,9 @@ def nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=0.0):
         if loss == 'kl' and p_i > 1e-10:
             neighbours_proba /= p_i
         mask = neighbours_proba > threshold  # n_samples
+        X_mask = mask[proto_mask]
 
-        Lxij = Lx[i] - Lx[mask, :]
-        Xij = X[i] - X[mask, :]  # n_relevant x n_features
-        Xij_outer = (Lxij[:, :, np.newaxis] * Xij[:, np.newaxis, :])
+        Xij_outer = Lxij[X_mask, :, np.newaxis] * Xij[X_mask, np.newaxis, :]
         grad -= np.einsum("i,ijk", neighbours_proba[mask], Xij_outer)
 
         if loss == 'l1':
@@ -111,16 +125,19 @@ def nca_semivectorized_oracle(L, X, y, n_components, loss, threshold=0.0):
         elif loss == 'kl':
             if p_i > 1e-10:
                 function_value += np.log(p_i)
-            else:
-                # FIXME
-                function_value += 0
 
-    grad *= 2  # np.dot(L, grad)
+    grad *= 2
+    if not propagate_L:
+        grad = np.dot(L, grad)
 
     return [-function_value, -grad.flatten()]
 
 
 def nca_stochastic_oracle(L, X, y, n_components, loss, minibatch_size, threshold=0.0):
+    """
+
+    :type y: np.multiarray.ndarray
+    """
     n_samples, n_features = X.shape
     L = L.reshape((n_components, n_features))
 
@@ -129,7 +146,6 @@ def nca_stochastic_oracle(L, X, y, n_components, loss, minibatch_size, threshold
 
     grad = np.zeros((n_features, n_features))
     function_value = 0
-
 
     samples = np.arange(n_samples)
     np.random.shuffle(samples)  # FIXME use seeded rng
@@ -141,8 +157,7 @@ def nca_stochastic_oracle(L, X, y, n_components, loss, minibatch_size, threshold
         np.exp(p, out=p)
         assert p.shape == (n_samples,)
 
-        class_neighbours = y == y[i]
-        p_i = (p * class_neighbours).sum()
+        p_i = np.dot(p, y == y[i])
 
         samples_proba = np.copy(p)
         if loss == 'l1':
@@ -176,8 +191,8 @@ def nca_stochastic_oracle(L, X, y, n_components, loss, minibatch_size, threshold
     return [-function_value, -grad.flatten()]
 
 
-def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
-                 solver, tol, random_state, method, minibatch_size, verbose, threshold):
+def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter, solver,
+                 tol, random_state, method, minibatch_size, verbose, threshold, propagate_L=False):
     n_samples, n_features = X.shape
 
     rng = np.random.RandomState(random_state)
@@ -193,14 +208,15 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
         extra_args = (X, y, n_components, loss, outer, threshold)
         oracle = nca_vectorized_oracle
     elif method == 'semivectorized':
-        extra_args = (X, y, n_components, loss, threshold)
+        extra_args = (X, y, n_components, loss, propagate_L, threshold)
         oracle = nca_semivectorized_oracle
     elif method == 'stochastic':
         extra_args = (X, y, n_components, loss, minibatch_size, threshold)
         oracle = nca_stochastic_oracle
 
     exec_times = []
-    for _ in range(n_init):
+    history = []
+    for j in range(n_init):
         start = time.clock()
         L = rng.uniform(0, 1, (n_components, n_features))
 
@@ -228,12 +244,12 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
         elif solver == 'scipy':
             state = {'it': 0}
 
-            def callback(L):
+            def callback(mat):
                 state['it'] += 1
                 if verbose > 1:
-                    value, _ = oracle(L, *extra_args)
-                    percent = 100. * (state['it'] + 1) / max_iter
-                    sys.stdout.write("\rProgress {:.2f}% :: Target = {}".format(percent, value))
+                    val, _ = oracle(mat, *extra_args)
+                    progress = 100. * (state['it'] + 1) / max_iter
+                    sys.stdout.write("\rProgress {:.2f}% :: Target = {}".format(progress, val))
                     sys.stdout.flush()
 
             options = {'maxiter': max_iter, "disp": verbose > 1, "gtol": tol}
@@ -245,8 +261,10 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
         exec_times.append(exec_time)
         if verbose > 0:
             sys.stdout.write("\rInit {} / {} completed"
-                             " :: Time: {:.2f}s :: Loss = {}\n".format(_ + 1, n_init, exec_time, value))
+                             " :: Time: {:.2f}s :: Loss = {}\n".format(j + 1, n_init, exec_time, value))
             sys.stdout.flush()
+
+        history.append((exec_time, value))
 
         if value < best_value:
             best_value = value
@@ -257,7 +275,7 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter,
         std = np.std(exec_times)
         print("\rCompleted. Avg. time: {:.2f} +/- {:.2f}s".format(mean, std) + " " * 80)
 
-    return best_L
+    return best_L, history
 
 
 class BaseNCA(BaseEstimator):
@@ -289,7 +307,7 @@ class BaseNCA(BaseEstimator):
         self.matrix_ = optimize_nca(X, y, self.learning_rate, n_components, self.loss,
                                     self.n_init, self.max_iter, self.solver, self.tol,
                                     self.random_state, self.method, self.minitbatch_size,
-                                    self.verbose, self.threshold)
+                                    self.verbose, self.threshold)[0]
         return self
 
 
