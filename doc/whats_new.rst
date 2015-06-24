@@ -97,6 +97,9 @@ Bug fixes
     - Fixed bug in :class:`decomposition.DictLearning` when ``n_jobs < 0``. By
       `Andreas Müller`_.
 
+    - Fixed bug where :class:`grid_search.RandomizedSearchCV` could consume a
+      lot of memory for large discrete grids. By `Joel Nothman`_.
+
 API changes summary
 -------------------
 

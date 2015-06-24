@@ -70,6 +70,8 @@ class ParameterGrid(object):
     ...                               {'kernel': 'rbf', 'gamma': 1},
     ...                               {'kernel': 'rbf', 'gamma': 10}]
     True
+    >>> ParameterGrid(grid)[1] == {'kernel': 'rbf', 'gamma': 1}
+    True
 
     See also
     --------
@@ -110,6 +112,47 @@ class ParameterGrid(object):
         product = partial(reduce, operator.mul)
         return sum(product(len(v) for v in p.values()) if p else 1
                    for p in self.param_grid)
+
+    def __getitem__(self, ind):
+        """Get the parameters that would be ``ind``th in iteration
+
+        Parameters
+        ----------
+        ind : int
+            The iteration index
+
+        Returns
+        -------
+        params : dict of string to any
+            Equal to list(self)[ind]
+        """
+        # This is used to make discrete sampling without replacement memory
+        # efficient.
+        for sub_grid in self.param_grid:
+            # XXX: could memoize information used here
+            if not sub_grid:
+                if ind == 0:
+                    return {}
+                else:
+                    ind -= 1
+                    continue
+
+            # Reverse so most frequent cycling parameter comes first
+            keys, values_lists = zip(*sorted(sub_grid.items())[::-1])
+            sizes = [len(v_list) for v_list in values_lists]
+            total = np.product(sizes)
+
+            if ind >= total:
+                # Try the next grid
+                ind -= total
+            else:
+                out = {}
+                for key, v_list, n in zip(keys, values_lists, sizes):
+                    ind, offset = divmod(ind, n)
+                    out[key] = v_list[offset]
+                return out
+
+        raise IndexError('ParameterGrid index out of range')
 
 
 class ParameterSampler(object):
@@ -181,8 +224,8 @@ class ParameterSampler(object):
         rnd = check_random_state(self.random_state)
 
         if all_lists:
-            # get complete grid and yield from it
-            param_grid = list(ParameterGrid(self.param_distributions))
+            # look up sampled parameter settings in parameter grid
+            param_grid = ParameterGrid(self.param_distributions)
             grid_size = len(param_grid)
 
             if grid_size < self.n_iter:
