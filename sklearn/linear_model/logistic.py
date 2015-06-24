@@ -1445,6 +1445,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     X, y, pos_class=label, Cs=[C_], solver=self.solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol,
+                    penalty=self.penalty,
                     class_weight=self.class_weight,
                     multi_class=self.multi_class,
                     verbose=max(0, self.verbose - 1))
