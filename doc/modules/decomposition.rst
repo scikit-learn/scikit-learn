@@ -706,7 +706,7 @@ the data.
 .. topic:: Examples:
 
     * :ref:`example_decomposition_plot_faces_decomposition.py`
-    * :ref:`example_applications_topics_extraction_with_nmf.py`
+    * :ref:`example_applications_topics_extraction_with_nmf_lda.py`
 
 .. topic:: References:
 
@@ -759,7 +759,7 @@ when data can be fetched sequentially.
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_topics_extraction_with_online_lda.py`
+    * :ref:`example_applications_topics_extraction_with_nmf_lda.py`
 
 .. topic:: References:
 
