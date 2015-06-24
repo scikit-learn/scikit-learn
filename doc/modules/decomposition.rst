@@ -733,9 +733,44 @@ the data.
 Latent Dirichlet Allocation (LDA)
 =================================
 
-Latent Dirichlet Allocation is a generative probabilistic model for collections of discrete
-dataset such as text corpora. It is also a topic model that used for discovering abstract
-topics from a collection of documents.
+Latent Dirichlet Allocation is a generative probabilistic model for collections of
+discrete dataset such as text corpora. It is also a topic model that used for
+discovering abstract topics from a collection of documents.
+
+The graphical model of LDA is a three-level Bayesian model:
+
+.. image:: ../images/lda_model_graph.png
+   :align: center
+
+When modeling text corpora, the model assumes the following generative process for
+a corpus with :math:`D` documents and :math:`K` topics:
+
+  1. For each topic :math:`k`, draw :math:`\beta_k \sim Dirichlet(\eta),\: k =1...K`
+
+  2. For each document :math:`d`, draw :math:`\theta_d \sim Dirichlet(\alpha), \: d=1...D`
+
+  3. For each word :math:`i` in document :math:`d`:
+    a. Draw a topic index :math:`z_{di} \sim Multinomial(\theta_d)`
+    b. Draw the observed word :math:`w_{ij} \sim Multinomial(beta_{z_{di}}.)`
+
+For parameter estimation, the posterior distribution is:
+
+.. math::
+  p(z, \theta, \beta |w, \alpha, \eta) =
+    \frac{p(z, \theta, \beta|\alpha, \eta)}{p(w|\alpha, \eta)}
+
+Since the posterior is intractable, variational Bayesian method
+uses a simpler distribution :math:`q(z,\theta,\beta | \lambda, \phi, \gamma)`
+to approximate it, and those variational parameters :math:`\lambda`, :math:`\phi`,
+:math:`\gamma` are optimized to maximize the Evidence Lower Bound(ELBO):
+
+.. math::
+  log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
+    E_{q}[log\:p(w,z,\theta,\beta|\alpha,\eta)] - E_{q}[log\:q(z, \theta, \beta)]
+
+Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence 
+between :math:`q(z,\theta,\beta)` and the true posterior
+:math:`p(z, \theta, \beta |w, \alpha, \eta)`.
 
 :class:`LatentDirichletAllocation` implements online variational Bayes algorithm and supports
 both online and batch update method.
