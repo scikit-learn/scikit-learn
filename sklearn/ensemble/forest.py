@@ -90,8 +90,8 @@ def _generate_unsampled_indices(random_state, n_samples):
 
     return unsampled_indices
 
-def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
-                          verbose=0, class_weight=None):
+def _parallel_build_trees(tree, forest, X, y, sample_weight, categorical,
+                          tree_idx, n_trees, verbose=0, class_weight=None):
     """Private function used to fit a single tree in parallel."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
@@ -114,9 +114,11 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         elif class_weight == 'balanced_subsample':
             curr_sample_weight *= compute_sample_weight('balanced', y, indices)
 
-        tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
+        tree.fit(X, y, sample_weight=curr_sample_weight,
+                 categorical=categorical, check_input=False)
     else:
-        tree.fit(X, y, sample_weight=sample_weight, check_input=False)
+        tree.fit(X, y, sample_weight=sample_weight,
+                 categorical=categorical, check_input=False)
 
     return tree
 
@@ -211,7 +213,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         return sparse_hstack(indicators).tocsr(), n_nodes_ptr
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, categorical='None'):
         """Build a forest of trees from the training set (X, y).
 
         Parameters
@@ -231,6 +233,19 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             ignored while searching for a split in each node. In the case of
             classification, splits are also ignored if they would result in any
             single class carrying a negative weight in either child node.
+
+        categorical : array-like or str
+            Array of feature indices, boolean array of length
+            n_features, ``'All'``, or ``'None'``.  Indicates which
+            features should be considered as categorical rather than
+            ordinal. For decision trees, the maximum number of
+            categories per feature is 64, though the real-world limit
+            will be much lower because evaluating splits has
+            :math:`O(2^N)` time complexity, for :math:`N`
+            categories. Extra-randomized trees do not have this
+            limitation because they do not try to find the best
+            split. For these trees, the maximum number of categories
+            per feature is :math:`2^{31}`.
 
         Returns
         -------
@@ -315,7 +330,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                              backend="threading")(
                 delayed(_parallel_build_trees)(
-                    t, self, X, y, sample_weight, i, len(trees),
+                    t, self, X, y, sample_weight, categorical, i, len(trees),
                     verbose=self.verbose, class_weight=self.class_weight)
                 for i, t in enumerate(trees))
 

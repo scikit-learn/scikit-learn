@@ -746,7 +746,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
     def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
-                   random_state, X_idx_sorted, X_csc=None, X_csr=None):
+                   categorical, random_state, X_idx_sorted, X_csc=None,
+                   X_csr=None):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
 
         assert sample_mask.dtype == np.bool
@@ -777,22 +778,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                 # no inplace multiplication!
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
-            if X_csc is not None:
-                tree.fit(X_csc, residual, sample_weight=sample_weight,
-                         check_input=False, X_idx_sorted=X_idx_sorted)
-            else:
-                tree.fit(X, residual, sample_weight=sample_weight,
-                         check_input=False, X_idx_sorted=X_idx_sorted)
+            tree.fit(X_csc if X_csc is not None else X, residual,
+                     sample_weight=sample_weight, categorical=categorical,
+                     check_input=False, X_idx_sorted=X_idx_sorted)
 
             # update tree leaves
-            if X_csr is not None:
-                loss.update_terminal_regions(tree.tree_, X_csr, y, residual, y_pred,
-                                             sample_weight, sample_mask,
-                                             self.learning_rate, k=k)
-            else:
-                loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
-                                             sample_weight, sample_mask,
-                                             self.learning_rate, k=k)
+            loss.update_terminal_regions(
+                tree.tree_, X_csr if X_csr is not None else X, y, residual,
+                y_pred, sample_weight, sample_mask, self.learning_rate, k=k)
 
             # add tree to ensemble
             self.estimators_[i, k] = tree
@@ -928,7 +921,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             raise NotFittedError("Estimator not fitted, call `fit`"
                                  " before making predictions`.")
 
-    def fit(self, X, y, sample_weight=None, monitor=None):
+    def fit(self, X, y, sample_weight=None, categorical='None', monitor=None):
         """Fit the gradient boosting model.
 
         Parameters
@@ -948,6 +941,15 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             ignored while searching for a split in each node. In the case of
             classification, splits are also ignored if they would result in any
             single class carrying a negative weight in either child node.
+
+        categorical : array-like or str
+            Array of feature indices, boolean array of length
+            n_features, ``'All'``, or ``'None'``.  Indicates which
+            features should be considered as categorical rather than
+            ordinal. The maximum number of categories per feature is
+            64, though the real-world limit will be much lower because
+            evaluating splits has :math:`O(2^N)` time complexity, for
+            :math:`N` categories.
 
         monitor : callable, optional
             The monitor is called after each iteration with the current
@@ -1022,8 +1024,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                                                  dtype=np.int32)
 
         # fit the boosting stages
-        n_stages = self._fit_stages(X, y, y_pred, sample_weight, random_state,
-                                    begin_at_stage, monitor, X_idx_sorted)
+        n_stages = self._fit_stages(X, y, y_pred, sample_weight, categorical,
+                                    random_state, begin_at_stage, monitor,
+                                    X_idx_sorted)
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
             self.estimators_ = self.estimators_[:n_stages]
@@ -1033,8 +1036,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         return self
 
-    def _fit_stages(self, X, y, y_pred, sample_weight, random_state,
-                    begin_at_stage=0, monitor=None, X_idx_sorted=None):
+    def _fit_stages(self, X, y, y_pred, sample_weight, categorical,
+                    random_state, begin_at_stage=0, monitor=None,
+                    X_idx_sorted=None):
         """Iteratively fits the stages.
 
         For each stage it computes the progress (OOB, train score)
@@ -1077,8 +1081,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
             # fit next stage of trees
             y_pred = self._fit_stage(i, X, y, y_pred, sample_weight,
-                                     sample_mask, random_state, X_idx_sorted,
-                                     X_csc, X_csr)
+                                     sample_mask, categorical, random_state,
+                                     X_idx_sorted, X_csc, X_csr)
 
             # track deviance (= loss)
             if do_oob:
