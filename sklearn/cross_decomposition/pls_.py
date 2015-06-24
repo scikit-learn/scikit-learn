@@ -58,10 +58,8 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
         ## 2.2 Normalize y_weights
         if norm_y_weights:
             y_weights /= np.sqrt(np.dot(y_weights.T, y_weights)) + eps
-        else:
-            y_weights += eps
         # 2.3 Update y_score: the Y latent scores
-        y_score = np.dot(Y, y_weights) / np.dot(y_weights.T, y_weights)
+        y_score = np.dot(Y, y_weights) / (np.dot(y_weights.T, y_weights) + eps)
         ## y_score = np.dot(Y, y_weights) / np.dot(y_score.T, y_score) ## BUG
         x_weights_diff = x_weights - x_weights_old
         if np.dot(x_weights_diff.T, x_weights_diff) < tol or Y.shape[1] == 1:
