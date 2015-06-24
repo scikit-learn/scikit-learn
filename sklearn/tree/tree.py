@@ -166,10 +166,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             if self.class_weight is not None:
                 y_original = np.copy(y)
 
+            y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
             for k in range(self.n_outputs_):
-                classes_k, y[:, k] = np.unique(y[:, k], return_inverse=True)
+                classes_k, y_store_unique_indices[:, k] = np.unique(y[:, k], return_inverse=True)
                 self.classes_.append(classes_k)
                 self.n_classes_.append(classes_k.shape[0])
+            y = y_store_unique_indices
 
             if self.class_weight is not None:
                 expanded_class_weight = compute_sample_weight(

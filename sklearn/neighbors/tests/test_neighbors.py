@@ -1082,3 +1082,13 @@ def test_include_self_neighbors_graph():
         X, 5.0, include_self=False).A
     assert_array_equal(rng, [[1., 1.], [1., 1.]])
     assert_array_equal(rng_not_self, [[0., 1.], [1., 0.]])
+
+
+def test_dtype_convert():
+    classifier = neighbors.KNeighborsClassifier(n_neighbors=1)
+    CLASSES = 15
+    X = np.eye(CLASSES)
+    y = [ch for ch in 'ABCDEFGHIJKLMNOPQRSTU'[:CLASSES]]
+
+    result = classifier.fit(X, y).predict(X)
+    assert_array_equal(result, y)
