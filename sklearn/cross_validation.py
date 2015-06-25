@@ -360,7 +360,7 @@ def disjoint_label_folds(y, n_folds=3):
     # number of occurrence of each label (its "weight")
     samples_per_label = np.bincount(y)
     # We want to distribute the most frequent labels first
-    ind = np.argsort(samples_per_label)[::-1]
+    ind = np.argsort(samples_per_label, kind='mergesort')[::-1]
     samples_per_label = samples_per_label[ind]
 
     # Total weight of each fold
