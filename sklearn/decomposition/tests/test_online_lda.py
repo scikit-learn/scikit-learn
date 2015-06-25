@@ -294,8 +294,3 @@ def test_lda_score_perplexity():
     score = lda.score(X)
     perplexity_2 = np.exp(-1. * (score / np.sum(X.data)))
     assert_almost_equal(perplexity_1, perplexity_2)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.run(argv=['', __file__])
