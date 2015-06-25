@@ -450,7 +450,10 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             self._init_latent_vars(n_features)
 
         if n_features != self.components_.shape[1]:
-            raise ValueError("Feature dimension (vocabulary size) doesn't match.")
+            raise ValueError(
+                "The provided data has %d dimensions while "
+                "the model was trained with feature size %d." %
+                (n_features, self.components_.shape[1]))
 
         for idx_slice in gen_batches(n_samples, batch_size):
             self._em_step(X[idx_slice, :], total_samples=self.total_samples, batch_update=False)
@@ -526,7 +529,10 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         X = self._check_non_neg_array(X, "LatentDirichletAllocation.transform")
         n_samples, n_features = X.shape
         if n_features != self.components_.shape[1]:
-            raise ValueError("Feature dimension (vocabulary size) does not match.")
+            raise ValueError(
+                "The provided data has %d dimensions while "
+                "the model was trained with feature size %d." %
+                (n_features, self.components_.shape[1]))
 
         doc_topic_distr, _ = self._e_step(X, cal_sstats=False, random_init=False)
         return doc_topic_distr

@@ -134,7 +134,7 @@ def test_lda_partial_fit_dim_mismatch():
     lda = LatentDirichletAllocation(n_topics=n_topics, learning_offset=5.,
                                     total_samples=20, random_state=rng)
     lda.partial_fit(X_1)
-    assert_raises_regexp(ValueError, r"^Feature dimension", lda.partial_fit, X_2)
+    assert_raises_regexp(ValueError, r"^The provided data has", lda.partial_fit, X_2)
 
 
 def test_invalid_params():
@@ -179,8 +179,7 @@ def test_lda_transform_mismatch():
     n_topics = rng.randint(3, 6)
     lda = LatentDirichletAllocation(n_topics=n_topics, random_state=rng)
     lda.partial_fit(X)
-    regex = r"^Feature dimension"
-    assert_raises_regexp(ValueError, regex, lda.transform, X_2)
+    assert_raises_regexp(ValueError, r"^The provided data has", lda.partial_fit, X_2)
 
 
 @if_not_mac_os()
