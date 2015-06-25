@@ -53,7 +53,7 @@ def _log_dirichlet_expectation(X):
 
 
 def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior, max_iters,
-                             mean_change_tol, cal_sstats, rng):
+                             mean_change_tol, cal_sstats, random_state):
     """E-step: update document-topic distribution.
 
     Parameters
@@ -78,9 +78,9 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior, max_iters
         Parameter that indicate to calculate sufficient statistics or not.
         Set `cal_sstats` to `True` when we need to run M-step.
 
-    rng : RandomState instance or None
+    random_state : RandomState instance or None
         Parameter that indicate how to initialize document topic distribution.
-        Set `rng` to None will initialize document topic distribution to a
+        Set `random_state` to None will initialize document topic distribution to a
         constant number.
 
     Returns
@@ -97,8 +97,8 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior, max_iters
     n_samples, n_features = X.shape
     n_topics = exp_topic_word_distr.shape[0]
 
-    if rng:
-        doc_topic_distr = rng.gamma(100., 0.01, (n_samples, n_topics))
+    if random_state:
+        doc_topic_distr = random_state.gamma(100., 0.01, (n_samples, n_topics))
     else:
         doc_topic_distr = np.ones((n_samples, n_topics))
 
@@ -346,12 +346,12 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         # Run e-step in parallel
         n_jobs = _get_n_jobs(self.n_jobs)
-        rng = self.random_state_ if random_init else None
+        random_state = self.random_state_ if random_init else None
 
         results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_update_doc_distribution)
             (X[idx_slice, :], self.exp_dirichlet_component_, self.doc_topic_prior_,
-             self.max_doc_update_iter, self.mean_change_tol, cal_sstats, rng)
+             self.max_doc_update_iter, self.mean_change_tol, cal_sstats, random_state)
             for idx_slice in gen_even_slices(X.shape[0], n_jobs))
 
         # merge result
