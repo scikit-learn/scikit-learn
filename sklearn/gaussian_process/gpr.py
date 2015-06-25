@@ -4,6 +4,7 @@
 #
 # License: BSD 3 clause
 
+import warnings
 from operator import itemgetter
 
 import numpy as np
@@ -276,6 +277,13 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 y_var -= np.sum(K_trans.T[:, np.newaxis] * K_trans.T
                                 * K_inv[:, :, np.newaxis],
                                 axis=0).sum(axis=0)  # axis=(0, 1) in np >= 1.7
+                # Check if any of the variances is negative because of
+                # numerical issues. If yes: set the the variance to 0.
+                y_var_negative = y_var < 0
+                if np.any(y_var_negative):
+                    warnings.warn("Predicted variances smaller than 0. "
+                                  "Setting those variances to 0.")
+                    y_var[y_var_negative] = 0.0
                 return y_mean, np.sqrt(y_var)
             else:
                 return y_mean
