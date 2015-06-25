@@ -30,7 +30,8 @@ EPS = np.finfo(np.float).eps
 
 
 def _log_dirichlet_expectation(X):
-    """
+    """Calculate log Dirichlet expectation.
+
     For an array theta ~ Dir(X), computes `E[log(theta)]` given X.
 
     Parameters
@@ -53,9 +54,7 @@ def _log_dirichlet_expectation(X):
 
 def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior, max_iters,
                              mean_change_tol, cal_sstats, rng):
-    """
-    E-step: update document topic distribution.
-    (In the literature, this is called `gamma`.)
+    """E-step: update document-topic distribution.
 
     Parameters
     ----------
@@ -153,9 +152,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior, max_iters
 
 
 class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
-
-    """
-    Latent Dirichlet Allocation with online variational Bayes algorithm
+    """Latent Dirichlet Allocation with online variational Bayes algorithm
 
     Parameters
     ----------
@@ -180,7 +177,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
             'batch': Batch variational Bayes method. Use all training data in each EM update.
                 Old `components_` will be overwritten in each iteration.
-            'online': Online variational Bayes method. In each EM update, use min batch of
+            'online': Online variational Bayes method. In each EM update, use mini-batch of
                 training data to update the `components_` variable incrementally. The learning
                 rate is controlled by the `learning_decay` and the `learning_offset` parameter.
 
@@ -277,9 +274,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self.random_state = random_state
 
     def _check_params(self):
-        """
-        check model parameters
-        """
+        """Check model parameters."""
+
         if self.n_topics <= 0:
             err_msg = "Invalid 'n_topics' parameter: %r" % self.n_topics
             raise ValueError(err_msg)
@@ -297,10 +293,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             raise ValueError(err_msg)
 
     def _init_latent_vars(self, n_features):
-        """
-        Initialize latent variables.
-        """
-        self.rng_ = check_random_state(self.random_state)
+        """Initialize latent variables."""
+
+        self.random_state_ = check_random_state(self.random_state)
         self.n_iter_ = 1
         self.n_features = n_features
 
@@ -317,7 +312,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         init_gamma = 100.
         init_var = 1. / init_gamma
         # In the literature, this is called `lambda`
-        self.components_ = self.rng_.gamma(
+        self.components_ = self.random_state_.gamma(
             init_gamma, init_var, (self.n_topics, n_features))
         # In the literature, this is `E[log(beta)]`
         self.dirichlet_component_ = _log_dirichlet_expectation(self.components_)
@@ -325,8 +320,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self.exp_dirichlet_component_ = np.exp(self.dirichlet_component_)
 
     def _e_step(self, X, cal_sstats, random_init):
-        """
-        E-step
+        """E-step in EM update.
 
         Parameters
         ----------
@@ -353,7 +347,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         # Run e-step in parallel
         n_jobs = _get_n_jobs(self.n_jobs)
-        rng = self.rng_ if random_init else None
+        rng = self.random_state_ if random_init else None
 
         results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_update_doc_distribution)
@@ -377,8 +371,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         return (doc_topic_distr, suff_stats)
 
     def _em_step(self, X, total_samples, batch_update):
-        """
-        EM update for 1 iteration.
+        """EM update for 1 iteration.
+
         update `_component` by batch VB or online VB.
 
         Parameters
@@ -422,8 +416,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         return
 
     def _check_non_neg_array(self, X, whom):
-        """
-        check & convert X to csr format, and make sure no negative value in X.
+        """check X format
+
+        check X format and make sure no negative value in X.
 
         Parameters
         ----------
@@ -435,8 +430,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         return X
 
     def partial_fit(self, X, y=None):
-        """
-        Online VB with Min-Batch update.
+        """Online VB with Mini-Batch update.
 
         Parameters
         ----------
@@ -465,9 +459,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         return self
 
     def fit(self, X, y=None):
-        """
-        Learn model from X with variational Bayes method.
-        When `learning_method` is 'online', use mini batch update.
+        """Learn model for the data X with variational Bayes method.
+
+        When `learning_method` is 'online', use mini-batch update.
         Otherwise, use batch update.
 
         Parameters
@@ -513,8 +507,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        """
-        Transform data X according to the fitted model.
+        """Transform data X according to the fitted model.
 
         Parameters
         ----------
@@ -541,8 +534,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         return doc_topic_distr
 
     def _approx_bound(self, X, doc_topic_distr, sub_sampling):
-        """
-        Estimates the variational bound over "all documents" using only the
+        """Estimate the variational bound.
+
+        Estimate the variational bound over "all documents" using only the
         documents passed in as X. Since log-likelihood of each word cannot
         be computed directly, we use this bound to estimate it.
 
@@ -612,8 +606,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         return score
 
     def score(self, X, y=None):
-        """
-        use approximate log-likelihood as score
+        """Calculate approximate log-likelihood as score.
 
         Parameters
         ----------
@@ -633,8 +626,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         return score
 
     def perplexity(self, X, doc_topic_distr=None, sub_sampling=False):
-        """
-        calculate approximate perplexity for data X and topic distribution `gamma`.
+        """Calculate approximate perplexity for data X and topic distribution `gamma`.
+
         Perplexity is defined as exp(-1. * log-likelihood per word)
 
         Parameters

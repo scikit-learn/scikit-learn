@@ -11,9 +11,9 @@ The output is a list of topics, each represented as a list of terms
 
 The default parameters (n_samples / n_features / n_topics) should make
 the example runnable in a couple of tens of seconds. You can try to
-increase the dimensions of the problem, but be aware than the time complexity
-is polynomial.
-
+increase the dimensions of the problem, but be aware that the time
+complexity is polynomial in NMF. In LDA, the time complexity is
+proportional to (n_samples * iterations).
 """
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
