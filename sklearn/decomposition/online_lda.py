@@ -297,7 +297,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         self.random_state_ = check_random_state(self.random_state)
         self.n_iter_ = 1
-        self.n_features_ = n_features
 
         if self.doc_topic_prior is None:
             self.doc_topic_prior_ = 1. / self.n_topics
@@ -450,7 +449,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         if not hasattr(self, 'components_'):
             self._init_latent_vars(n_features)
 
-        if n_features != self.n_features_:
+        if n_features != self.components_.shape[1]:
             raise ValueError("Feature dimension (vocabulary size) doesn't match.")
 
         for idx_slice in gen_batches(n_samples, batch_size):
@@ -513,7 +512,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
-            `n_features` must be the same as `self.n_features_`
 
         Returns
         -------
@@ -527,7 +525,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         # make sure feature size is the same in fitted model and in X
         X = self._check_non_neg_array(X, "LatentDirichletAllocation.transform")
         n_samples, n_features = X.shape
-        if n_features != self.n_features_:
+        if n_features != self.components_.shape[1]:
             raise ValueError("Feature dimension (vocabulary size) does not match.")
 
         doc_topic_distr, _ = self._e_step(X, cal_sstats=False, random_init=False)
@@ -567,6 +565,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         is_sparse_x = sp.issparse(X)
         n_samples, n_topics = doc_topic_distr.shape
+        n_features = self.components_.shape[1]
         score = 0
         dirichlet_doc_topic = _log_dirichlet_expectation(doc_topic_distr)
         doc_topic_prior = self.doc_topic_prior_
@@ -601,7 +600,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         # E[log p(beta | eta) - log q (beta | lambda)]
         score += _loglikelihood(topic_word_prior, self.components_,
-                                self.dirichlet_component_, self.n_features_)
+                                self.dirichlet_component_, n_features)
 
         return score
 
