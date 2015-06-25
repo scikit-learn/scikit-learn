@@ -332,12 +332,12 @@ class KFold(_BaseKFold):
         return self.n_folds
 
 
-def disjoint_label_folds(y, n_folds=3):
+def disjoint_label_folds(labels, n_folds=3):
     """Creates folds where a same label is not in two different folds.
     
     Parameters
     ----------
-    y: numpy array, shape (n_samples,)
+    labels: numpy array, shape (n_samples,)
         Contains an id for each sample.
         The folds are built so that the same id doesn't appear in two different folds.
     
@@ -354,11 +354,11 @@ def disjoint_label_folds(y, n_folds=3):
     -----
     The folds are built by distributing the labels by frequency of appearance.
     """
-    labels = np.array(y)
-    unique_labels, y = np.unique(labels, return_inverse=True)
+    labels = np.array(labels)
+    unique_labels, labels = np.unique(labels, return_inverse=True)
     
     # number of occurrence of each label (its "weight")
-    samples_per_label = np.bincount(y)
+    samples_per_label = np.bincount(labels)
     # We want to distribute the most frequent labels first
     ind = np.argsort(samples_per_label, kind='mergesort')[::-1]
     samples_per_label = samples_per_label[ind]
@@ -376,7 +376,7 @@ def disjoint_label_folds(y, n_folds=3):
         samples_per_fold[ind_min] += w
         label_to_fold[ind[label_index]] = ind_min
     
-    folds = label_to_fold[y]
+    folds = label_to_fold[labels]
 
     return folds
 
@@ -388,7 +388,7 @@ class DisjointLabelKFold(_BaseKFold):
 
     Parameters
     ----------
-    y : array-like with shape (n_samples, )
+    labels : array-like with shape (n_samples, )
         Contains a label for each sample.
         The folds are built so that the same label doesn't appear in two different folds.
 
@@ -422,12 +422,12 @@ class DisjointLabelKFold(_BaseKFold):
      [3 4]] [3 4] [1 2]
     """
 
-    def __init__(self, y, n_folds=3):
+    def __init__(self, labels, n_folds=3):
         # No shuffling implemented yet
-        super(DisjointLabelKFold, self).__init__(len(y), n_folds, False, None)
+        super(DisjointLabelKFold, self).__init__(len(labels), n_folds, False, None)
         self.n_folds = n_folds
-        self.n = len(y)
-        self.idxs = disjoint_label_folds(y=y, n_folds=n_folds)
+        self.n = len(labels)
+        self.idxs = disjoint_label_folds(labels=labels, n_folds=n_folds)
 
     def _iter_test_indices(self):
         for i in range(self.n_folds):
