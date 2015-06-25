@@ -5,7 +5,7 @@ from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
 from sklearn.neighbors.ball_tree import kernel_norm
 from sklearn.pipeline import make_pipeline
 from sklearn.datasets import make_blobs
-from sklearn.model_selection.search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 
 

@@ -21,8 +21,8 @@ import numpy as np
 
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin, ChangedBehaviorWarning
-from .split import check_cv
-from .validate import _fit_and_score
+from ._split import check_cv
+from ._validation import _fit_and_score
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..utils import check_random_state
@@ -267,7 +267,10 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         Targets for input data.
 
     estimator : estimator object
-        This estimator will be cloned and then fitted.
+        A object of that type is instantiated for each grid point.
+        This is assumed to implement the scikit-learn estimator interface.
+        Either estimator needs to provide a ``score`` function,
+        or ``scoring`` must be passed.
 
     parameters : dict
         Parameters to be set on estimator for this grid point.
@@ -377,7 +380,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         return self.estimator._estimator_type
 
     def score(self, X, y=None):
-        """Returns the score on the given data, if the estimator has been refit
+        """Returns the score on the given data, if the estimator has been refit.
 
         This uses the score defined by ``scoring`` where provided, and the
         ``best_estimator_.score`` method otherwise.
@@ -527,7 +530,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                  'of samples (%i) than data (X: %i samples)'
                                  % (len(y), n_samples))
         cv = check_cv(cv, y, classifier=is_classifier(estimator))
-        len_cv = cv.n_splits(X, y, labels)
+        len_cv = cv.get_n_splits(X, y, labels)
 
         if self.verbose > 0:
             if isinstance(parameter_iterable, Sized):
@@ -552,16 +555,15 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # Out is a list of triplet: score, estimator, n_test_samples
         n_fits = len(out)
-        n_folds = cv.n_splits(X, y, labels)
 
         scores = list()
         grid_scores = list()
-        for grid_start in range(0, n_fits, n_folds):
+        for grid_start in range(0, n_fits, len_cv):
             n_test_samples = 0
             score = 0
             all_scores = []
             for this_score, this_n_test_samples, _, parameters in \
-                    out[grid_start:grid_start + n_folds]:
+                    out[grid_start:grid_start + len_cv]:
                 all_scores.append(this_score)
                 if self.iid:
                     this_score *= this_n_test_samples
@@ -570,7 +572,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             if self.iid:
                 score /= float(n_test_samples)
             else:
-                score /= float(n_folds)
+                score /= float(len_cv)
             scores.append((score, parameters))
             # TODO: shall we also store the test_fold_sizes?
             grid_scores.append(_CVScoreTuple(
@@ -605,16 +607,22 @@ class GridSearchCV(BaseSearchCV):
 
     Important members are fit, predict.
 
-    GridSearchCV implements a "fit" method and a "predict" method like
-    any classifier except that the parameters of the classifier
-    used to predict is optimized by cross-validation.
+    GridSearchCV implements a "fit" and a "score" method.
+    It also implements "predict", "predict_proba", "decision_function",
+    "transform" and "inverse_transform" if they are implemented in the
+    estimator used.
+
+    The parameters of the estimator used to apply these methods are optimized
+    by cross-validated grid-search over a parameter grid.
 
     Read more in the :ref:`User Guide <grid_search>`.
 
     Parameters
     ----------
-    estimator : object type that implements the "fit" and "predict" methods
-        A object of that type is instantiated for each grid point.
+    estimator : estimator object.
+        This is assumed to implement the scikit-learn estimator interface.
+        Either estimator needs to provide a ``score`` function,
+        or ``scoring`` must be passed.
 
     param_grid : dict or list of dictionaries
         Dictionary with parameters names (string) as keys and lists of
@@ -623,15 +631,16 @@ class GridSearchCV(BaseSearchCV):
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+        If ``None``, the ``score`` method of the estimator is used.
 
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-    n_jobs : int, default 1
+    n_jobs : int, default=1
         Number of jobs to run in parallel.
 
     pre_dispatch : int, or string, optional
@@ -667,10 +676,10 @@ class GridSearchCV(BaseSearchCV):
         For integer/None inputs, ``StratifiedKFold`` is used for classification
         tasks, when ``y`` is binary or multiclass.
 
-        See the :mod:`sklearn.model_selection.split` module for the list of
-        cross-validation generators that can be used here.
+        See the :mod:`sklearn.model_selection` module for the list of
+        cross-validation strategies that can be used here.
 
-        Also refer :ref:`cross-validation documentation <_cross_validation>`
+        Also refer :ref:`cross-validation documentation <cross_validation>`
 
     refit : boolean, default=True
         Refit the best estimator with the entire dataset.
@@ -679,10 +688,6 @@ class GridSearchCV(BaseSearchCV):
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
-
-    random_state : int or RandomState
-        Pseudo random number generator state used for random uniform sampling
-        from lists of possible values instead of scipy.stats distributions.
 
     error_score : 'raise' (default) or numeric
         Value to assign to the score if an error occurs in estimator fitting.
@@ -801,9 +806,13 @@ class GridSearchCV(BaseSearchCV):
 class RandomizedSearchCV(BaseSearchCV):
     """Randomized search on hyper parameters.
 
-    RandomizedSearchCV implements a "fit" method and a "predict" method like
-    any classifier except that the parameters of the classifier
-    used to predict is optimized by cross-validation.
+    RandomizedSearchCV implements a "fit" and a "score" method.
+    It also implements "predict", "predict_proba", "decision_function",
+    "transform" and "inverse_transform" if they are implemented in the
+    estimator used.
+
+    The parameters of the estimator used to apply these methods are optimized
+    by cross-validated search over parameter settings.
 
     In contrast to GridSearchCV, not all parameter values are tried out, but
     rather a fixed number of parameter settings is sampled from the specified
@@ -820,8 +829,11 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Parameters
     ----------
-    estimator : object type that implements the "fit" and "predict" methods
-        A object of that type is instantiated for each parameter setting.
+    estimator : estimator object.
+        A object of that type is instantiated for each grid point.
+        This is assumed to implement the scikit-learn estimator interface.
+        Either estimator needs to provide a ``score`` function,
+        or ``scoring`` must be passed.
 
     param_distributions : dict
         Dictionary with parameters names (string) as keys and distributions
@@ -833,10 +845,11 @@ class RandomizedSearchCV(BaseSearchCV):
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+        If ``None``, the ``score`` method of the estimator is used.
 
     fit_params : dict, optional
         Parameters to pass to the fit method.
@@ -877,10 +890,10 @@ class RandomizedSearchCV(BaseSearchCV):
         For integer/None inputs, ``StratifiedKFold`` is used for classification
         tasks, when ``y`` is binary or multiclass.
 
-        See the :mod:`sklearn.model_selection.split` module for the list of
-        cross-validation generators that can be used here.
+        See the :mod:`sklearn.model_selection` module for the list of
+        cross-validation strategies that can be used here.
 
-        Also refer :ref:`cross-validation documentation <_cross_validation>`
+        Also refer :ref:`cross-validation documentation <cross_validation>`
 
     refit : boolean, default=True
         Refit the best estimator with the entire dataset.
@@ -890,12 +903,15 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
+    random_state : int or RandomState
+        Pseudo random number generator state used for random uniform sampling
+        from lists of possible values instead of scipy.stats distributions.
+
     error_score : 'raise' (default) or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
-
 
     Attributes
     ----------

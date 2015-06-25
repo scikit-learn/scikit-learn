@@ -1,48 +1,35 @@
-from .split import KFold
-from .split import StratifiedKFold
-from .split import LeaveOneLabelOut
-from .split import LeaveOneOut
-from .split import LeavePLabelOut
-from .split import LeavePOut
-from .split import ShuffleSplit
-from .split import StratifiedShuffleSplit
-from .split import PredefinedSplit
-from .split import train_test_split
-from .split import check_cv
+from ._split import BaseCrossValidator
+from ._split import KFold
+from ._split import LabelKFold
+from ._split import StratifiedKFold
+from ._split import LeaveOneLabelOut
+from ._split import LeaveOneOut
+from ._split import LeavePLabelOut
+from ._split import LeavePOut
+from ._split import ShuffleSplit
+from ._split import LabelShuffleSplit
+from ._split import StratifiedShuffleSplit
+from ._split import PredefinedSplit
+from ._split import train_test_split
+from ._split import check_cv
 
-from .validate import cross_val_score
-from .validate import cross_val_predict
-from .validate import learning_curve
-from .validate import permutation_test_score
-from .validate import validation_curve
+from ._validation import cross_val_score
+from ._validation import cross_val_predict
+from ._validation import learning_curve
+from ._validation import permutation_test_score
+from ._validation import validation_curve
 
-from .search import GridSearchCV
-from .search import RandomizedSearchCV
-from .search import ParameterGrid
-from .search import ParameterSampler
-from .search import fit_grid_point
+from ._search import GridSearchCV
+from ._search import RandomizedSearchCV
+from ._search import ParameterGrid
+from ._search import ParameterSampler
+from ._search import fit_grid_point
 
-__all__ = ('split',
-           'validate',
-           'search',
-           'KFold',
-           'StratifiedKFold',
-           'LeaveOneLabelOut',
-           'LeaveOneOut',
-           'LeavePLabelOut',
-           'LeavePOut',
-           'ShuffleSplit',
-           'StratifiedShuffleSplit',
-           'PredefinedSplit',
-           'train_test_split',
-           'check_cv',
-           'cross_val_score',
-           'cross_val_predict',
-           'permutation_test_score',
-           'learning_curve',
-           'validation_curve',
-           'GridSearchCV',
-           'ParameterGrid',
-           'fit_grid_point',
-           'ParameterSampler',
-           'RandomizedSearchCV')
+__all__ = ('BaseCrossValidator', 'GridSearchCV', 'KFold', 'LabelKFold',
+           'LeaveOneLabelOut', 'LeaveOneOut', 'LeavePLabelOut', 'LeavePOut',
+           'ParameterGrid', 'ParameterSampler', 'PredefinedSplit',
+           'RandomizedSearchCV', 'ShuffleSplit', 'LabelShuffleSplit',
+           'StratifiedKFold', 'StratifiedShuffleSplit', 'check_cv',
+           'cross_val_predict', 'cross_val_score', 'fit_grid_point',
+           'learning_curve', 'permutation_test_score', 'train_test_split',
+           'validation_curve')

@@ -1,6 +1,4 @@
-"""
-Testing for grid search module (sklearn.grid_search)
-"""
+"""Test the search module"""
 
 from collections import Iterable, Sized
 from sklearn.externals.six.moves import cStringIO as StringIO
@@ -42,7 +40,7 @@ from sklearn.model_selection import ParameterSampler
 
 # TODO Import from sklearn.exceptions once merged.
 from sklearn.base import ChangedBehaviorWarning
-from sklearn.model_selection.validate import FitFailedWarning
+from sklearn.model_selection._validation import FitFailedWarning
 
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
@@ -435,6 +433,7 @@ class BrokenClassifier(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
+@ignore_warnings
 def test_refit():
     # Regression test for bug in refitting
     # Simulates re-fitting a broken estimator; this used to break with

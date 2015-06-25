@@ -1089,7 +1089,7 @@ class LarsCV(Lars):
                 method=self.method, verbose=max(0, self.verbose - 1),
                 normalize=self.normalize, fit_intercept=self.fit_intercept,
                 max_iter=self.max_iter, eps=self.eps, positive=self.positive)
-            for train, test in cv)
+            for train, test in cv.split(X, y))
         all_alphas = np.concatenate(list(zip(*cv_paths))[0])
         # Unique also sorts
         all_alphas = np.unique(all_alphas)

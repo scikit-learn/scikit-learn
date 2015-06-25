@@ -5,7 +5,7 @@ functions to validate the model.
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>,
-#         Olivier Girsel <olivier.grisel@ensta.org>
+#         Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
 
@@ -25,16 +25,12 @@ from ..utils.fixes import astype
 from ..utils.validation import _is_arraylike, _num_samples
 from ..externals.joblib import Parallel, delayed, logger
 from ..metrics.scorer import check_scoring
-from .split import check_cv, _safe_split
+from ._split import check_cv, _safe_split
+from ..exceptions import FitFailedWarning
 
 
 __all__ = ['cross_val_score', 'cross_val_predict', 'permutation_test_score',
            'learning_curve', 'validation_curve']
-
-
-# TODO Move this into sklearn.exceptions
-class FitFailedWarning(RuntimeWarning):
-    pass
 
 
 def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
@@ -56,9 +52,9 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
         The target variable to try to predict in the case of
         supervised learning.
 
-    labels : array-like of int with shape (n_samples,), optional
-        Arbitrary domain-specific stratification of the data to be used
-        to draw the splits by the cross validation iterator.
+    labels : array-like, with shape (n_samples,), optional
+        Group labels for the samples used while splitting the dataset into
+        train/test set.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -76,10 +72,10 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
         For integer/None inputs, ``StratifiedKFold`` is used for classification
         tasks, when ``y`` is binary or multiclass.
 
-        See the :mod:`sklearn.model_selection.split` module for the list of
-        cross-validation generators that can be used here.
+        See the :mod:`sklearn.model_selection` module for the list of
+        cross-validation strategies that can be used here.
 
-        Also refer :ref:`cross-validation documentation <_cross_validation>`
+        Also refer :ref:`cross-validation documentation <cross_validation>`
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -235,8 +231,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         else:
             raise ValueError("error_score must be the string 'raise' or a"
                              " numeric value. (Hint: if using 'raise', please"
-                             " make sure that it has been spelled correctly.)"
-                             )
+                             " make sure that it has been spelled correctly.)")
 
     else:
         test_score = _score(estimator, X_test, y_test, scorer)
@@ -288,9 +283,9 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
         The target variable to try to predict in the case of
         supervised learning.
 
-    labels : array-like of int with shape (n_samples,), optional
-        Arbitrary domain-specific stratification of the data to be used
-        to draw the splits by the cross validation iterator.
+    labels : array-like, with shape (n_samples,), optional
+        Group labels for the samples used while splitting the dataset into
+        train/test set.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -303,8 +298,8 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
         For integer/None inputs, ``StratifiedKFold`` is used for classification
         tasks, when ``y`` is binary or multiclass.
 
-        See the :mod:`sklearn.model_selection.split` module for the list of
-        cross-validation generators that can be used here.
+        See the :mod:`sklearn.model_selection` module for the list of
+        cross-validation strategies that can be used here.
 
         Also refer :ref:`cross-validation documentation <_cross_validation>`
 
@@ -351,13 +346,22 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
                                                       train, test, verbose,
                                                       fit_params)
                             for train, test in cv.split(X, y, labels))
-    p = np.concatenate([p for p, _ in preds_blocks])
+
+    preds = [p for p, _ in preds_blocks]
     locs = np.concatenate([loc for _, loc in preds_blocks])
+
     if not _check_is_permutation(locs, _num_samples(X)):
         raise ValueError('cross_val_predict only works for partitions')
-    preds = p.copy()
-    preds[locs] = p
-    return preds
+
+    inv_locs = np.empty(len(locs), dtype=int)
+    inv_locs[locs] = np.arange(len(locs))
+
+    # Check for sparse predictions
+    if sp.issparse(preds[0]):
+        preds = sp.vstack(preds, format=preds[0].format)
+    else:
+        preds = np.concatenate(preds)
+    return preds[inv_locs]
 
 
 def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
@@ -466,9 +470,9 @@ def permutation_test_score(estimator, X, y, labels=None, cv=None,
         The target variable to try to predict in the case of
         supervised learning.
 
-    labels : array-like of int with shape (n_samples,), optional
-        Arbitrary domain-specific stratification of the data to be used
-        to draw the splits by the cross validation iterator.
+    labels : array-like, with shape (n_samples,), optional
+        Group labels for the samples used while splitting the dataset into
+        train/test set.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -486,8 +490,8 @@ def permutation_test_score(estimator, X, y, labels=None, cv=None,
         For integer/None inputs, ``StratifiedKFold`` is used for classification
         tasks, when ``y`` is binary or multiclass.
 
-        See the :mod:`sklearn.model_selection.split` module for the list of
-        cross-validation generators that can be used here.
+        See the :mod:`sklearn.model_selection` module for the list of
+        cross-validation strategies that can be used here.
 
         Also refer :ref:`cross-validation documentation <_cross_validation>`
 
@@ -602,9 +606,9 @@ def learning_curve(estimator, X, y, labels=None,
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
-    labels : array-like of int with shape (n_samples,), optional
-        Arbitrary domain-specific stratification of the data to be used
-        to draw the splits by the cross validation iterator.
+    labels : array-like, with shape (n_samples,), optional
+        Group labels for the samples used while splitting the dataset into
+        train/test set.
 
     train_sizes : array-like, shape (n_ticks,), dtype float or int
         Relative or absolute numbers of training examples that will be used to
@@ -627,8 +631,8 @@ def learning_curve(estimator, X, y, labels=None,
         For integer/None inputs, ``StratifiedKFold`` is used for classification
         tasks, when ``y`` is binary or multiclass.
 
-        See the :mod:`sklearn.model_selection.split` module for the list of
-        cross-validation generators that can be used here.
+        See the :mod:`sklearn.model_selection` module for the list of
+        cross-validation strategies that can be used here.
 
         Also refer :ref:`cross-validation documentation <_cross_validation>`
 
@@ -834,9 +838,9 @@ def validation_curve(estimator, X, y, param_name, param_range, labels=None,
     param_range : array-like, shape (n_values,)
         The values of the parameter that will be evaluated.
 
-    labels : array-like of int with shape (n_samples,), optional
-        Arbitrary domain-specific stratification of the data to be used
-        to draw the splits by the cross validation iterator.
+    labels : array-like, with shape (n_samples,), optional
+        Group labels for the samples used while splitting the dataset into
+        train/test set.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -849,8 +853,8 @@ def validation_curve(estimator, X, y, param_name, param_range, labels=None,
         For integer/None inputs, ``StratifiedKFold`` is used for classification
         tasks, when ``y`` is binary or multiclass.
 
-        See the :mod:`sklearn.model_selection.split` module for the list of
-        cross-validation generators that can be used here.
+        See the :mod:`sklearn.model_selection` module for the list of
+        cross-validation strategies that can be used here.
 
         Also refer :ref:`cross-validation documentation <_cross_validation>`
 

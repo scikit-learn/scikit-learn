@@ -1,4 +1,3 @@
-
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
@@ -455,16 +454,24 @@ def test_ovr_multinomial_iris():
     train, target = iris.data, iris.target
     n_samples, n_features = train.shape
 
-    # Use pre-defined fold as folds generated for different y
+    # The cv indices from stratified kfold (where stratification is done based
+    # on the fine-grained iris classes, i.e, before the classes 0 and 1 are
+    # conflated) is used for both clf and clf1
     cv = StratifiedKFold(3)
-    clf = LogisticRegressionCV(cv=cv)
+    precomputed_folds = list(cv.split(train, target))
+
+    # Train clf on the original dataset where classes 0 and 1 are separated
+    clf = LogisticRegressionCV(cv=precomputed_folds)
     clf.fit(train, target)
 
-    clf1 = LogisticRegressionCV(cv=cv)
+    # Conflate classes 0 and 1 and train clf1 on this modifed dataset
+    clf1 = LogisticRegressionCV(cv=precomputed_folds)
     target_copy = target.copy()
     target_copy[target_copy == 0] = 1
     clf1.fit(train, target_copy)
 
+    # Ensure that what OvR learns for class2 is same regardless of whether
+    # classes 0 and 1 are separated or not
     assert_array_almost_equal(clf.scores_[2], clf1.scores_[2])
     assert_array_almost_equal(clf.intercept_[2:], clf1.intercept_)
     assert_array_almost_equal(clf.coef_[2][np.newaxis, :], clf1.coef_)

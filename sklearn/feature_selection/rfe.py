@@ -15,7 +15,7 @@ from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
 from ..model_selection import check_cv
-from ..model_selection.validate import _safe_split, _score
+from ..model_selection._validation import _safe_split, _score
 from ..metrics.scorer import check_scoring
 from .base import SelectorMixin
 
@@ -414,7 +414,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(self.transform(X), y)
 
-        # Fixing a normalization error, n is equal to len_cv - 1
-        # here, the scores are normalized by len_cv
-        self.grid_scores_ = scores / cv.n_splits(X, y)
+        # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
+        # here, the scores are normalized by get_n_splits(X, y)
+        self.grid_scores_ = scores / cv.get_n_splits(X, y)
         return self

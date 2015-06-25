@@ -1310,7 +1310,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     cv : integer or cross-validation generator
         The default cross-validation generator used is Stratified K-Folds.
         If an integer is provided, then it is the number of folds used.
-        See the module :mod:`sklearn.model_selection.split` module for the
+        See the module :mod:`sklearn.model_selection` module for the
         list of possible cross-validation objects.
 
     penalty : str, 'l1' or 'l2'

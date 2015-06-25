@@ -1,11 +1,11 @@
-"""Test the cross_validation module"""
+"""Test the validation module"""
 from __future__ import division
 
 import sys
 import warnings
 
 import numpy as np
-from scipy.sparse import coo_matrix
+from scipy.sparse import coo_matrix, csr_matrix
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
@@ -16,13 +16,18 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
-from sklearn.model_selection import (
-    cross_val_score, cross_val_predict, permutation_test_score, KFold,
-    StratifiedKFold, LeaveOneOut, learning_curve, validation_curve)
-from sklearn.model_selection.validate import _check_is_permutation
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import permutation_test_score
+from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import LeaveOneOut
+from sklearn.model_selection import learning_curve
+from sklearn.model_selection import validation_curve
+from sklearn.model_selection._validation import _check_is_permutation
 
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
@@ -30,7 +35,6 @@ from sklearn.datasets import load_iris
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import precision_score
-
 
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import PassiveAggressiveClassifier
@@ -43,9 +47,11 @@ from sklearn.pipeline import Pipeline
 
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.base import BaseEstimator
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.datasets import make_classification
+from sklearn.datasets import make_multilabel_classification
 
-from test_split import MockClassifier, X, y, X_sparse, W_sparse, P_sparse
+from test_split import MockClassifier
 
 
 class MockImprovingEstimator(BaseEstimator):
@@ -110,8 +116,16 @@ class MockEstimatorWithParameter(BaseEstimator):
         return X is self.X_subset
 
 
+# XXX: use 2D array, since 1D X is being detected as a single sample in
+# check_consistent_length
+X = np.ones((10, 2))
+X_sparse = coo_matrix(X)
+y = np.arange(10) // 2
+
+
 def test_cross_val_score():
     clf = MockClassifier()
+
     for a in range(-10, 10):
         clf.a = a
         # Smoke test
@@ -171,11 +185,11 @@ def test_cross_val_score_mask():
     svm = SVC(kernel="linear")
     iris = load_iris()
     X, y = iris.data, iris.target
-    cv_indices = KFold(5)
-    scores_indices = cross_val_score(svm, X, y, cv=cv_indices)
-    cv_indices = KFold(5)
+    kfold = KFold(5)
+    scores_indices = cross_val_score(svm, X, y, cv=kfold)
+    kfold = KFold(5)
     cv_masks = []
-    for train, test in cv_indices.split(X, y):
+    for train, test in kfold.split(X, y):
         mask_train = np.zeros(len(y), dtype=np.bool)
         mask_test = np.zeros(len(y), dtype=np.bool)
         mask_train[train] = 1
@@ -210,6 +224,10 @@ def test_cross_val_score_fit_params():
     clf = MockClassifier()
     n_samples = X.shape[0]
     n_classes = len(np.unique(y))
+
+    W_sparse = coo_matrix((np.array([1]), (np.array([1]), np.array([0]))),
+                          shape=(10, 1))
+    P_sparse = coo_matrix(np.eye(5))
 
     DUMMY_INT = 42
     DUMMY_STR = '42'
@@ -674,3 +692,18 @@ def test_check_is_permutation():
 
     p[0] = 23
     assert_false(_check_is_permutation(p, 100))
+
+
+def test_cross_val_predict_sparse_prediction():
+    # check that cross_val_predict gives same result for sparse and dense input
+    X, y = make_multilabel_classification(n_classes=2, n_labels=1,
+                                          allow_unlabeled=False,
+                                          return_indicator=True,
+                                          random_state=1)
+    X_sparse = csr_matrix(X)
+    y_sparse = csr_matrix(y)
+    classif = OneVsRestClassifier(SVC(kernel='linear'))
+    preds = cross_val_predict(classif, X, y, cv=10)
+    preds_sparse = cross_val_predict(classif, X_sparse, y_sparse, cv=10)
+    preds_sparse = preds_sparse.toarray()
+    assert_array_almost_equal(preds_sparse, preds)

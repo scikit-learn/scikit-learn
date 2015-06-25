@@ -1361,7 +1361,6 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-<<<<<<< HEAD
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -1374,13 +1373,6 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-=======
-    cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific cross-validation objects can be passed, see the
-        :mod:`sklearn.model_selection.split` module for the list of
-        possible objects.
->>>>>>> ENH introduce the model_selection module
 
     verbose : bool or integer
         Amount of verbosity.
@@ -1857,7 +1849,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-<<<<<<< HEAD
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -1870,13 +1861,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-=======
-    cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific cross-validation objects can be passed, see the
-        :mod:`sklearn.model_selection.split` module for the list of
-        possible objects.
->>>>>>> ENH introduce the model_selection module
 
     verbose : bool or integer
         Amount of verbosity.
@@ -2022,7 +2006,6 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-<<<<<<< HEAD
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -2035,13 +2018,6 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-=======
-    cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific cross-validation objects can be passed, see the
-        :mod:`sklearn.model_selection.split` module for the list of
-        possible objects.
->>>>>>> ENH introduce the model_selection module
 
     verbose : bool or integer
         Amount of verbosity.
