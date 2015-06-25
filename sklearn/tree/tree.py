@@ -20,6 +20,7 @@ import numbers
 from abc import ABCMeta
 from abc import abstractmethod
 from math import ceil
+from itertools import izip, count
 
 import numpy as np
 from scipy.sparse import issparse
@@ -106,6 +107,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.n_outputs_ = None
         self.classes_ = None
         self.n_classes_ = None
+        self.category_map_ = None
 
         self.tree_ = None
         self.max_features_ = None
@@ -309,6 +311,42 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 sample_weight = expanded_class_weight
 
+        if isinstance(categorical, str):
+            if categorical == "None":
+                categorical = np.array([])
+            elif categorical == "All":
+                categorical = np.arange(self.n_features_)
+            else:
+                raise ValueError("Invalid value for categorical: %s. Allowed"
+                                 " strings are 'All' or 'None'" % categorical)
+        categorical = np.atleast_1d(categorical).flatten()
+        if categorical.dtype == np.bool:
+            if categorical.size != self.n_features_:
+                raise ValueError("Shape of boolean parameter categorical must"
+                                 " be [n_features]")
+            categorical = np.nonzero(categorical)[0]
+        if (categorical.size > self.n_features_ or
+            (categorical.size > 0 and
+             (np.min(categorical) < 0 or
+              np.max(categorical) >= self.n_features_))):
+            raise ValueError("Invalid shape or invalid feature index for"
+                             " parameter categorical")
+        if issparse(X) and len(categorical) > 0:
+            raise NotImplementedError("Categorical features not supported with"
+                                      " sparse inputs")
+
+        # Determine the number of categories in each categorical feature
+        n_categories = np.zeros(self.n_features_, dtype=np.int32) - 1
+        self.category_map_ = [None] * self.n_features_
+        if categorical.size > 0:
+            X = np.copy(X)
+        for feature in categorical:
+            rounded = np.round(X[:, feature]).astype(np.int64)
+            self.category_map_[feature] = dict(izip(set(rounded), count()))
+            X[:, feature] = np.array([self.category_map_[feature][x]
+                                       for x in rounded]).astype(DTYPE)
+            n_categories[feature] = len(self.category_map_[feature])
+
         # Set min_weight_leaf from min_weight_fraction_leaf
         if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
             min_weight_leaf = (self.min_weight_fraction_leaf *
@@ -364,6 +402,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                                 self.presort)
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
+        self.tree_.n_categories = n_categories
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
@@ -378,7 +417,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                            max_depth,
                                            max_leaf_nodes)
 
-        builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
+        builder.build(self.tree_, X, y, sample_weight, n_categories,
+                      X_idx_sorted)
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
@@ -405,6 +445,19 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                              "match the input. Model n_features is %s and "
                              "input n_features is %s "
                              % (self.n_features_, n_features))
+
+        # Map categorical features onto integers
+        n_categories = self.tree_.n_categories
+        categorical_features = np.nonzero(n_categories > 0)[0]
+        if categorical_features.size > 0:
+            X = np.copy(X)
+        for feature in categorical_features:
+            rounded = np.round(X[:, feature]).astype('int64')
+            new_cat = set(rounded) - set(self.category_map_[feature])
+            new_cat_map = dict(izip(new_cat, count(n_categories[feature])))
+            X[:, feature] = np.array(
+                [self.category_map_[feature].get(x, new_cat_map.get(x))
+                 for x in rounded]).astype(DTYPE)
 
         return X
 
