@@ -385,6 +385,11 @@ def linkage_tree(X, connectivity=None, n_components=None,
     --------
     ward_tree : hierarchical clustering with ward linkage
     """
+    if len(X.shape) != 2 or X.shape[0] != X.shape[1]:
+        raise ValueError('Matrix should be an upper triangular square matrix, as returned by pdist, '
+                         'found dimensionality %s' %
+                         'x'.join(map(str, X.shape)))
+
     X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
@@ -630,6 +635,9 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
+        For 'precomputed' the first free argument of fit should be an upper
+        triangular square matrix as returned by pdist.
+
 
     memory : Instance of joblib.Memory or string (optional)
         Used to cache the output of the computation of the tree.
