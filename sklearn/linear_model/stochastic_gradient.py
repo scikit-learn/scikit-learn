@@ -1203,10 +1203,10 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     intercept_ : array, shape (1,)
         The intercept term.
 
-    `average_coef_` : array, shape (n_features,)
+    average_coef_ : array, shape (n_features,)
         Averaged weights assigned to the features.
 
-    `average_intercept_` : array, shape (1,)
+    average_intercept_ : array, shape (1,)
         The averaged intercept term.
 
     Examples

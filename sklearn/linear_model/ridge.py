@@ -590,17 +590,17 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         -------
         self : returns an instance of self.
         """
-        if sample_weight is None:
-            sample_weight = 1.
-
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.y_type_.startswith('multilabel'):
             y = column_or_1d(y, warn=True)
 
-        # modify the sample weights with the corresponding class weight
-        sample_weight = (sample_weight *
-                         compute_sample_weight(self.class_weight, y))
+        if self.class_weight:
+            if sample_weight is None:
+                sample_weight = 1.
+            # modify the sample weights with the corresponding class weight
+            sample_weight = (sample_weight *
+                             compute_sample_weight(self.class_weight, y))
 
         super(RidgeClassifier, self).fit(X, Y, sample_weight=sample_weight)
         return self
@@ -1070,16 +1070,18 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         self : object
             Returns self.
         """
-        if sample_weight is None:
-            sample_weight = 1.
-
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.y_type_.startswith('multilabel'):
             y = column_or_1d(y, warn=True)
-        # modify the sample weights with the corresponding class weight
-        sample_weight = (sample_weight *
-                         compute_sample_weight(self.class_weight, y))
+
+        if self.class_weight:
+            if sample_weight is None:
+                sample_weight = 1.
+            # modify the sample weights with the corresponding class weight
+            sample_weight = (sample_weight *
+                             compute_sample_weight(self.class_weight, y))
+
         _BaseRidgeCV.fit(self, X, Y, sample_weight=sample_weight)
         return self
 

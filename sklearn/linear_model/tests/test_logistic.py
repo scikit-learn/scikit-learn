@@ -665,3 +665,13 @@ def test_logreg_intercept_scaling_zero():
     clf = LogisticRegression(fit_intercept=False)
     clf.fit(X, Y1)
     assert_equal(clf.intercept_, 0.)
+
+
+def test_logreg_cv_penalty():
+    # Test that the correct penalty is passed to the final fit.
+    X, y = make_classification(n_samples=50, n_features=20, random_state=0)
+    lr_cv = LogisticRegressionCV(penalty="l1", Cs=[1.0], solver='liblinear')
+    lr_cv.fit(X, y)
+    lr = LogisticRegression(penalty="l1", C=1.0, solver='liblinear')
+    lr.fit(X, y)
+    assert_equal(np.count_nonzero(lr_cv.coef_), np.count_nonzero(lr.coef_))

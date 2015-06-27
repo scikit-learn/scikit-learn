@@ -971,3 +971,13 @@ def test_warm_start_oob():
         yield check_warm_start_oob, name
     for name in FOREST_REGRESSORS:
         yield check_warm_start_oob, name
+
+
+def test_dtype_convert():
+    classifier = RandomForestClassifier()
+    CLASSES = 15
+    X = np.eye(CLASSES)
+    y = [ch for ch in 'ABCDEFGHIJKLMNOPQRSTU'[:CLASSES]]
+
+    result = classifier.fit(X, y).predict(X)
+    assert_array_equal(result, y)

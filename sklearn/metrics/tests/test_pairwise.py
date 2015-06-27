@@ -445,6 +445,22 @@ def test_rbf_kernel():
     assert_array_almost_equal(K.flat[::6], np.ones(5))
 
 
+def test_cosine_similarity_sparse_output():
+    # Test if cosine_similarity correctly produces sparse output.
+
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((3, 4))
+    Xcsr = csr_matrix(X)
+    Ycsr = csr_matrix(Y)
+
+    K1 = cosine_similarity(Xcsr, Ycsr, dense_output=False)
+    assert_true(issparse(K1))
+
+    K2 = pairwise_kernels(Xcsr, Y=Ycsr, metric="cosine")
+    assert_array_almost_equal(K1.todense(), K2)
+
+
 def test_cosine_similarity():
     # Test the cosine_similarity.
 

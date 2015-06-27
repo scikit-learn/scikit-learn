@@ -2,6 +2,9 @@
 
 .. _changes_0_17:
 
+===============
+Release history
+===============
 
 0.17
 ====
@@ -20,6 +23,11 @@ New features
    - The new class :class:`preprocessing.RobustScaler` provides an
      alternative to :class:`preprocessing.StandardScaler` for feature-wise
      centering and range normalization that is robust to outliers. By `Thomas Unterthiner`_.
+
+   - The new class :class:`preprocessing.MaxAbsScaler` provides an
+     alternative to :class:`preprocessing.MinMaxScaler` for feature-wise
+     range normalization when the data is already centered or sparse.
+     By `Thomas Unterthiner`_.
 
 Enhancements
 ............
@@ -74,6 +82,9 @@ Enhancements
    - Add ``sample_weight`` support to :class:`linear_model.RidgeClassifier`.
      By `Trevor Stephens`_.
 
+   - Provide an option for sparse output from
+     :func:`sklearn.metrics.pairwise.cosine_similarity`. By `Jaidev Deshpande`_.
+
 Bug fixes
 .........
 
@@ -85,6 +96,9 @@ Bug fixes
 
     - Fixed bug in :class:`decomposition.DictLearning` when ``n_jobs < 0``. By
       `Andreas Müller`_.
+
+    - Fixed bug where :class:`grid_search.RandomizedSearchCV` could consume a
+      lot of memory for large discrete grids. By `Joel Nothman`_.
 
 API changes summary
 -------------------

@@ -428,10 +428,10 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
 
     Attributes
     ----------
-    `a_` : float
+    a_ : float
         The slope.
 
-    `b_` : float
+    b_ : float
         The intercept.
     """
     def fit(self, X, y, sample_weight=None):
@@ -470,7 +470,7 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        `T_` : array, shape (n_samples,)
+        T_ : array, shape (n_samples,)
             The predicted data.
         """
         T = column_or_1d(T)

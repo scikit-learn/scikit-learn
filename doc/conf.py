@@ -170,7 +170,7 @@ html_static_path = ['images']
 #html_additional_pages = {}
 
 # If false, no module index is generated.
-html_use_modindex = False
+html_domain_indices = False
 
 # If false, no index is generated.
 html_use_index = False
@@ -225,7 +225,7 @@ latex_preamble = r"""
 #latex_appendices = []
 
 # If false, no module index is generated.
-#latex_use_modindex = True
+latex_domain_indices = False
 
 trim_doctests_flags = True
 
