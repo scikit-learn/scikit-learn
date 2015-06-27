@@ -1,3 +1,4 @@
+import warnings
 from ..base import BaseEstimator, TransformerMixin
 from ..metrics import euclidean_distances
 from ..utils.validation import check_is_fitted
@@ -24,7 +25,7 @@ def nca_vectorized_oracle(L, X, y, n_components, loss, outer, threshold=0.0):
     p -= sp.misc.logsumexp(p, axis=1)[:, np.newaxis]
     assert p.shape == (n_samples, n_samples)
 
-    np.exp(p, out=p)  # n_samples x n_samples
+    p = np.exp(p)  # n_samples x n_samples
 
     class_neighbours = y[:, np.newaxis] == y[np.newaxis, :]
 
@@ -64,35 +65,66 @@ def nca_vectorized_oracle(L, X, y, n_components, loss, outer, threshold=0.0):
     return [-function_value, -grad.flatten()]
 
 
-def nca_semivectorized_oracle(L, X, y, n_components, loss, propagate_L=False, threshold=0.0):
+def nca_cost_and_grad(L, X, y, n_components, loss, rng, minibatch_size, invalidate_neighbors_every,
+                      data, precompute_distances, propagate_L=False, threshold=0.0):
     """
-
     :type y: np.multiarray.ndarray
     """
+
+    iteration = data.get('iteration', 0)
+    neighbors = data.get('neighbors', {})
+
+    use_neighbors_heuristic = invalidate_neighbors_every > 0
+
+    if use_neighbors_heuristic:
+        if iteration % invalidate_neighbors_every == 0:
+            compute_neighbors(L, X, threshold, neighbors)
+    iteration += 1
+
+    data['iteration'] = iteration
+    data['neighbors'] = neighbors
+
     n_samples, n_features = X.shape
     L = L.reshape((n_components, n_features))
 
     Lx = np.dot(X, L.T)  # n_samples x n_components
     assert Lx.shape == (n_samples, n_components)
 
-    if propagate_L:
-        grad = np.zeros((n_components, n_features))
-    else:
-        grad = np.zeros((n_features, n_features))
+    p_precomputed = None
+    if precompute_distances:
+        p_precomputed = -euclidean_distances(Lx, squared=True)
+        np.fill_diagonal(p_precomputed, -np.inf)
+        p_precomputed -= sp.misc.logsumexp(p_precomputed, axis=1)[:, np.newaxis]
+        p_precomputed = np.exp(p_precomputed)
+
+
+    grad = np.zeros((n_components if propagate_L else n_features, n_features))
     function_value = 0
 
-    p = -euclidean_distances(Lx, squared=True)
-    np.fill_diagonal(p, -np.inf)
-    p -= sp.misc.logsumexp(p, axis=1)[:, np.newaxis]
-    p = np.exp(p)
+    samples = np.arange(n_samples)
+    rng.shuffle(samples)
+    for i in samples[:minibatch_size]:
+        if use_neighbors_heuristic:
+            neighbors_i = neighbors[i]
+        else:
+            neighbors_i = slice(None)
 
-    for i in range(n_samples):
-        p_i = np.dot(p[i, :], y == y[i])
+        if precompute_distances:
+            p = p_precomputed[i]
+        else:
+            A = Lx[i] - Lx[neighbors_i]
+            p = -np.einsum("ij,ij->i", A, A)
+            # p[i] is already ruled out by neighbors_i
+            p -= sp.misc.logsumexp(p)
+            p = np.exp(p)
+
+        class_neighbors = y[neighbors_i] == y[i]
+        p_i = np.dot(p, class_neighbors)
 
         if p_i < 1e-10:
             continue
 
-        proto_mask = p[i, :] / p_i > threshold  # n_samples
+        proto_mask = p / p_i > threshold  # n_samples
 
         Xij = X[i] - X[proto_mask, :]  # n_samples x n_features
         if propagate_L:
@@ -100,81 +132,22 @@ def nca_semivectorized_oracle(L, X, y, n_components, loss, propagate_L=False, th
         else:
             Lxij = Xij
 
-        samples_proba = np.copy(p[i, :])
-        if loss == 'l1':
-            samples_proba *= p_i
-        mask = samples_proba > threshold  # n_samples
-        X_mask = mask[proto_mask]
-
-        # n_relevant x n_components x n_features
-        Xij_outer = Lxij[X_mask, :, np.newaxis] * Xij[X_mask, np.newaxis, :]
-
-        grad += np.einsum("i,ijk", samples_proba[mask], Xij_outer)
-
-        neighbours_proba = p[i] * (y == y[i])
-        if loss == 'kl' and p_i > 1e-10:
-            neighbours_proba /= p_i
-        mask = neighbours_proba > threshold  # n_samples
-        X_mask = mask[proto_mask]
-
-        Xij_outer = Lxij[X_mask, :, np.newaxis] * Xij[X_mask, np.newaxis, :]
-        grad -= np.einsum("i,ijk", neighbours_proba[mask], Xij_outer)
-
-        if loss == 'l1':
-            function_value += p_i
-        elif loss == 'kl':
-            if p_i > 1e-10:
-                function_value += np.log(p_i)
-
-    grad *= 2
-    if not propagate_L:
-        grad = np.dot(L, grad)
-
-    return [-function_value, -grad.flatten()]
-
-
-def nca_stochastic_oracle(L, X, y, n_components, loss, minibatch_size, threshold=0.0):
-    """
-
-    :type y: np.multiarray.ndarray
-    """
-    n_samples, n_features = X.shape
-    L = L.reshape((n_components, n_features))
-
-    Lx = np.dot(X, L.T)  # n_samples x n_components
-    assert Lx.shape == (n_samples, n_components)
-
-    grad = np.zeros((n_features, n_features))
-    function_value = 0
-
-    samples = np.arange(n_samples)
-    np.random.shuffle(samples)  # FIXME use seeded rng
-    for i in samples[:minibatch_size]:
-        A = Lx[i] - Lx
-        p = -np.einsum("ij,ij->i", A, A)
-        p[i] = -np.inf
-        p -= sp.misc.logsumexp(p)
-        np.exp(p, out=p)
-        assert p.shape == (n_samples,)
-
-        p_i = np.dot(p, y == y[i])
-
         samples_proba = np.copy(p)
         if loss == 'l1':
             samples_proba *= p_i
         mask = samples_proba > threshold  # n_samples
+        X_mask = mask[proto_mask]
 
-        Xij = X[i] - X[mask, :]  # n_relevant x n_features
-        Xij_outer = (Xij[:, :, np.newaxis] * Xij[:, np.newaxis, :])
+        Xij_outer = Lxij[X_mask, :, np.newaxis] * Xij[X_mask, np.newaxis, :]
         grad += np.einsum("i,ijk", samples_proba[mask], Xij_outer)
 
-        neighbours_proba = p * (y == y[i])
+        neighbours_proba = p * class_neighbors
         if loss == 'kl' and p_i > 1e-10:
             neighbours_proba /= p_i
         mask = neighbours_proba > threshold  # n_samples
+        X_mask = mask[proto_mask]
 
-        Xij = X[i] - X[mask, :]  # n_relevant x n_features
-        Xij_outer = (Xij[:, :, np.newaxis] * Xij[:, np.newaxis, :])
+        Xij_outer = Lxij[X_mask, :, np.newaxis] * Xij[X_mask, np.newaxis, :]
         grad -= np.einsum("i,ijk", neighbours_proba[mask], Xij_outer)
 
         if loss == 'l1':
@@ -183,21 +156,29 @@ def nca_stochastic_oracle(L, X, y, n_components, loss, minibatch_size, threshold
             if p_i > 1e-10:
                 function_value += np.log(p_i)
             else:
-                # FIXME
-                function_value += 0
+                warnings.warn("Got zero probability, resultant loss is actually infinite")
 
-    grad = 2 * np.dot(L, grad)
+    grad *= 2
+    if not propagate_L:
+        grad = np.dot(L, grad)
 
     return [-function_value, -grad.flatten()]
 
 
 def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter, solver,
-                 tol, random_state, method, minibatch_size, verbose, threshold, propagate_L=False):
+                 tol, random_state, method, minibatch_size, verbose, invalidate_neighbors_every,
+                 precompute_distances, threshold, propagate_L=False):
     n_samples, n_features = X.shape
 
     rng = np.random.RandomState(random_state)
     best_value = np.inf
     best_L = None
+
+    if invalidate_neighbors_every is None:
+        invalidate_neighbors_every = max(max_iter / 10, 1)
+
+    if minibatch_size < 0:
+        minibatch_size = n_samples
 
     if threshold is None:
         threshold = min(1e-6, 1e-3 / np.abs(X).max() ** 2)  # FIXME
@@ -208,11 +189,11 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter, solv
         extra_args = (X, y, n_components, loss, outer, threshold)
         oracle = nca_vectorized_oracle
     elif method == 'semivectorized':
-        extra_args = (X, y, n_components, loss, propagate_L, threshold)
-        oracle = nca_semivectorized_oracle
-    elif method == 'stochastic':
-        extra_args = (X, y, n_components, loss, minibatch_size, threshold)
-        oracle = nca_stochastic_oracle
+        data = {}
+        propagate_L = False
+        extra_args = (X, y, n_components, loss, rng, minibatch_size, invalidate_neighbors_every,
+                      data, precompute_distances, propagate_L, threshold)
+        oracle = nca_cost_and_grad
 
     exec_times = []
     history = []
@@ -278,9 +259,21 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter, solv
     return best_L, history
 
 
+def compute_neighbors(L, X, threshold, neighbors):
+    n_samples, _ = X.shape
+    Lx = np.dot(X, L.T)
+    p = -euclidean_distances(Lx, squared=True)
+    np.fill_diagonal(p, -np.inf)
+    p -= sp.misc.logsumexp(p, axis=1)[:, np.newaxis]
+    p = np.exp(p)
+    for i in range(n_samples):
+        neighbors[i] = np.where(p[i] > threshold)[0]
+
+
 class BaseNCA(BaseEstimator):
     def __init__(self, n_components, solver, learning_rate, tol, loss, max_iter,
-                 n_init, random_state, verbose, method, minitbatch_size, threshold):
+                 n_init, random_state, verbose, method, minitbatch_size, precompute_distances,
+                 invalidate_neighbors_every, threshold):
         self.n_components = n_components
         self.random_state = random_state
         self.max_iter = max_iter
@@ -293,6 +286,8 @@ class BaseNCA(BaseEstimator):
         self.method = method
         self.minitbatch_size = minitbatch_size
         self.threshold = threshold
+        self.invalidate_neighbors_every = invalidate_neighbors_every
+        self.precompute_distances = precompute_distances
 
     def fit(self, X, y):
         n_features = X.shape[1]
@@ -307,7 +302,8 @@ class BaseNCA(BaseEstimator):
         self.matrix_ = optimize_nca(X, y, self.learning_rate, n_components, self.loss,
                                     self.n_init, self.max_iter, self.solver, self.tol,
                                     self.random_state, self.method, self.minitbatch_size,
-                                    self.verbose, self.threshold)[0]
+                                    self.verbose, self.invalidate_neighbors_every, self.precompute_distances,
+                                    self.threshold)[0]
         return self
 
 
@@ -346,13 +342,12 @@ class NCATransformer(BaseNCA, TransformerMixin):
         The seed of the pseudo random number generator to use when
         initializing the matrix.
 
-    method: 'vectorized' | 'semivectorized' | 'stochastic'
+    method: 'vectorized' | 'semivectorized'
         Level of vectorization of cost and gradient functions.
         'vectorized' is the fastest, but requires O(N^2 M^2) memory and
         time which doesn't work for medium-size datasets.
         'semivectorized' uses O(N M^2) memory and has the same time
         complexity as the fuly vectorized one.
-        'stochastic' is designed to work on really big datasets,
         FIXME!
 
     minibatch_size: int
@@ -364,11 +359,12 @@ class NCATransformer(BaseNCA, TransformerMixin):
 
     """
     def __init__(self, n_components=None, solver='adagrad', learning_rate=1.0, tol=1e-5, loss='kl',
-                 max_iter=100, n_init=1, random_state=None, verbose=0, method='stochastic', minibatch_size=100,
-                 threshold=None):
+                 max_iter=100, n_init=1, random_state=None, verbose=0, method='semivectorized', minibatch_size=100,
+                 invalidate_neighbors_every=-1, precompute_distances=True, threshold=None):
         super(NCATransformer, self).__init__(n_components, solver, learning_rate, tol, loss,
                                              max_iter, n_init, random_state, verbose, method,
-                                             minibatch_size, threshold)
+                                             minibatch_size, precompute_distances,
+                                             invalidate_neighbors_every, threshold)
 
     def transform(self, X):
         check_is_fitted(self, 'matrix_')
