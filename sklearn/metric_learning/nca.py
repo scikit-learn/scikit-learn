@@ -97,7 +97,6 @@ def nca_cost_and_grad(L, X, y, n_components, loss, rng, minibatch_size, invalida
         p_precomputed -= sp.misc.logsumexp(p_precomputed, axis=1)[:, np.newaxis]
         p_precomputed = np.exp(p_precomputed)
 
-
     grad = np.zeros((n_components if propagate_L else n_features, n_features))
     function_value = 0
 
@@ -190,7 +189,6 @@ def optimize_nca(X, y, learning_rate, n_components, loss, n_init, max_iter, solv
         oracle = nca_vectorized_oracle
     elif method == 'semivectorized':
         data = {}
-        propagate_L = False
         extra_args = (X, y, n_components, loss, rng, minibatch_size, invalidate_neighbors_every,
                       data, precompute_distances, propagate_L, threshold)
         oracle = nca_cost_and_grad
