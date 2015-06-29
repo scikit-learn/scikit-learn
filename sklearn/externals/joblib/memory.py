@@ -26,11 +26,13 @@ import warnings
 import inspect
 import json
 import weakref
+import io
 
 # Local imports
 from . import hashing
 from .func_inspect import get_func_code, get_func_name, filter_args
 from .func_inspect import format_signature, format_call
+from ._memory_helpers import open_py_source
 from .logger import Logger, format_time, pformat
 from . import numpy_pickle
 from .disk import mkdirp, rm_subdirs
@@ -540,8 +542,8 @@ class MemorizedFunc(Logger):
         # sometimes have several functions named the same way in a
         # file. This is bad practice, but joblib should be robust to bad
         # practice.
-        func_code = '%s %i\n%s' % (FIRST_LINE_TEXT, first_line, func_code)
-        with open(filename, 'w') as out:
+        func_code = u'%s %i\n%s' % (FIRST_LINE_TEXT, first_line, func_code)
+        with io.open(filename, 'w', encoding="UTF-8") as out:
             out.write(func_code)
         # Also store in the in-memory store of function hashes
         is_named_callable = False
@@ -590,7 +592,7 @@ class MemorizedFunc(Logger):
         func_code_file = os.path.join(func_dir, 'func_code.py')
 
         try:
-            with open(func_code_file) as infile:
+            with io.open(func_code_file, encoding="UTF-8") as infile:
                 old_func_code, old_first_line = \
                             extract_first_line(infile.read())
         except IOError:
@@ -624,7 +626,7 @@ class MemorizedFunc(Logger):
             if os.path.exists(source_file):
                 _, func_name = get_func_name(self.func, resolv_alias=False)
                 num_lines = len(func_code.split('\n'))
-                with open(source_file) as f:
+                with open_py_source(source_file) as f:
                     on_disk_func_code = f.readlines()[
                         old_first_line - 1:old_first_line - 1 + num_lines - 1]
                 on_disk_func_code = ''.join(on_disk_func_code)

@@ -14,7 +14,7 @@ import os
 
 from ._compat import _basestring
 from .logger import pformat
-
+from ._memory_helpers import open_py_source
 
 def get_func_code(func):
     """ Attempts to retrieve a reliable function code hash.
@@ -54,7 +54,7 @@ def get_func_code(func):
                 source_file = '<doctest %s>' % source_file
             return source_code, source_file, line_no
         # Try to retrieve the source code.
-        with open(source_file) as source_file_obj:
+        with open_py_source(source_file) as source_file_obj:
             first_line = code.co_firstlineno
             # All the lines after the function definition:
             source_lines = list(islice(source_file_obj, first_line - 1, None))
@@ -74,12 +74,13 @@ def get_func_code(func):
 
 
 def _clean_win_chars(string):
-    "Windows cannot encode some characters in filenames"
+    """Windows cannot encode some characters in filename."""
     import urllib
     if hasattr(urllib, 'quote'):
         quote = urllib.quote
     else:
         # In Python 3, quote is elsewhere
+        import urllib.parse
         quote = urllib.parse.quote
     for char in ('<', '>', '!', ':', '\\'):
         string = string.replace(char, quote(char))
