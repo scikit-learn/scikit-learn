@@ -43,7 +43,12 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
 
     for x in raw_X:
         for f, v in x:
-            value = v
+            if isinstance(v, unicode):
+                v = v.encode("utf-8")
+            if isinstance(v, (basestring, str, unicode)):
+                value = murmurhash3_bytes_s32(v, 0)
+            else:
+                value = v
             if value == 0:
                 continue
 

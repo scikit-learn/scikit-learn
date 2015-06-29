@@ -12,7 +12,7 @@ def test_feature_hasher_dicts():
     h = FeatureHasher(n_features=16)
     assert_equal("dict", h.input_type)
 
-    raw_X = [{"dada": 42, "tzara": 37}, {"gaga": 17}]
+    raw_X = [{"dada": 42, "tzara": "37"}, {"gaga": 17}]
     X1 = FeatureHasher(n_features=16).transform(raw_X)
     gen = (iter(d.items()) for d in raw_X)
     X2 = FeatureHasher(n_features=16, input_type="pair").transform(gen)
@@ -43,13 +43,15 @@ def test_feature_hasher_strings():
 
 
 def test_feature_hasher_pairs():
-    raw_X = (iter(d.items()) for d in [{"foo": 1, "bar": 2},
+    raw_X = (iter(d.items()) for d in [{"foo": 1, "bar": "a"},
                                        {"baz": 3, "quux": 4, "foo": -1}])
     h = FeatureHasher(n_features=16, input_type="pair")
     x1, x2 = h.transform(raw_X).toarray()
     x1_nz = sorted(np.abs(x1[x1 != 0]))
     x2_nz = sorted(np.abs(x2[x2 != 0]))
-    assert_equal([1, 2], x1_nz)
+    print x1_nz
+    print x2_nz
+    assert_equal([1, 1009084850], x1_nz)
     assert_equal([1, 3, 4], x2_nz)
 
 
