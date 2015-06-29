@@ -26,7 +26,6 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
 
     """
     assert n_features > 0
-
     cdef np.int32_t h
     cdef double value
 
@@ -43,16 +42,24 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
 
     for x in raw_X:
         for f, v in x:
-            value = v
-            if value == 0:
-                continue
-
             if isinstance(f, unicode):
                 f = f.encode("utf-8")
             # Need explicit type check because Murmurhash does not propagate
             # all exceptions. Add "except *" there?
             elif not isinstance(f, bytes):
                 raise TypeError("feature names must be strings")
+
+            if isinstance(v, unicode):
+                v = v.encode("utf-8")
+            if isinstance(v, (basestring, str, unicode)):
+                f = f + v
+                value = 1.
+            else :
+                value = v
+
+            if value == 0:
+                continue
+
             h = murmurhash3_bytes_s32(f, 0)
 
             array.resize_smart(indices, len(indices) + 1)
