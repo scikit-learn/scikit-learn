@@ -353,6 +353,7 @@ def disjoint_label_folds(labels, n_folds=3):
     Notes
     -----
     The folds are built by distributing the labels by frequency of appearance.
+    The number of labels has to be at least equal to the number of folds.
     """
     labels = np.array(labels)
     unique_labels, labels = np.unique(labels, return_inverse=True)
@@ -389,7 +390,8 @@ def disjoint_label_folds(labels, n_folds=3):
 class DisjointLabelKFold(_BaseKFold):
     """Creates K approximately equilibrated folds.
     
-    The same label will not appear in two different folds.
+    The same label will not appear in two different folds
+    (the number of labels has to be at least equal to the number of folds).
 
     Parameters
     ----------
