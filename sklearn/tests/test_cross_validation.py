@@ -1093,3 +1093,6 @@ def test_disjoint_label_folds():
     for label in np.unique(labels):
         assert_equal(len(np.unique(folds[labels == label])), 1)
         
+    # Should fail if there are more folds than labels
+    labels = np.array([1, 1, 1, 2, 2])
+    assert_raises(ValueError, cval.disjoint_label_folds, labels, n_folds=3)

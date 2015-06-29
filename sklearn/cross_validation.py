@@ -356,6 +356,11 @@ def disjoint_label_folds(labels, n_folds=3):
     """
     labels = np.array(labels)
     unique_labels, labels = np.unique(labels, return_inverse=True)
+    n_labels = len(unique_labels)
+    if n_folds > n_labels:
+        raise ValueError(
+                ("Cannot have number of folds n_folds={0} greater"
+                 " than the number of labels: {1}.").format(n_folds, n_labels))
     
     # number of occurrence of each label (its "weight")
     samples_per_label = np.bincount(labels)
