@@ -2146,9 +2146,7 @@ class AdaptiveLasso(Lasso):
             
         if self.gamma <= 0:
             raise ValueError('gamma must be positive.')
-        else:
-            self.update_ = lambda w: np.power(np.abs(w) + eps_, -self.gamma)
-        
+
         alphas = column_or_1d(np.atleast_1d(self.alpha))
         
         if alphas.shape[0] != 1 and alphas.shape[0] != self.n_lasso_iterations:
@@ -2172,6 +2170,6 @@ class AdaptiveLasso(Lasso):
             self.alpha = alphas[k]
             super(AdaptiveLasso, self).fit(X_w, y)
             self.coef_ /= weights
-            weights = self.update_(self.coef_)
-            
+            weights = np.power(np.abs(self.coef_) + eps_, -self.gamma)
+
         return self
