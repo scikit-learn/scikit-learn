@@ -18,9 +18,10 @@ from ..metrics import pairwise_distances
 from ..utils import check_array, check_consistent_length
 
 from ._hdbscan_linkage import single_linkage
-from ._hdbscan_tree import condense_tree, \
-                           compute_stability, \
-                           get_clusters
+from ._hdbscan_tree import (get_points,
+                            condense_tree, 
+                            compute_stability, 
+                            get_clusters)
                            
 def mutual_reachability(distance_matrix, min_points=5):
     """Compute the weighted adjacency matrix of the mutual reachability
@@ -168,10 +169,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
     def __init__(self, min_cluster_size=5, min_samples=None, 
                  metric='euclidean', p=None):
         self.min_cluster_size = min_cluster_size
-        if min_samples is None:
-            self.min_samples = min_cluster_size
-        else:
-            self.min_samples = min_samples
+        self.min_samples = min_samples
             
         self.metric = metric
         self.p = p

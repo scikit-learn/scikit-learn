@@ -53,7 +53,7 @@ cdef list bfs_from_hierarchy(np.ndarray[np.double_t, ndim=2] hierarchy, int bfs_
         to_process = [(x - num_points) for x in 
                           to_process if x >= num_points]
         if to_process:
-            to_process = to_process.flatten().tolist()
+            to_process = hierarchy[to_process,:2].flatten().tolist()
 
     return result
         
@@ -192,7 +192,7 @@ cdef list bfs_from_cluster_tree(np.ndarray tree, int bfs_root):
 
     return result
 
-cdef list get_clusters(np.ndarray tree, dict stability, list points):
+cpdef list get_clusters(np.ndarray tree, dict stability, list points):
     
     cdef list node_list
     cdef np.ndarray cluster_tree
