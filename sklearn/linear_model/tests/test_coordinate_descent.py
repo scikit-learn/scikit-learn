@@ -604,3 +604,12 @@ def test_sparse_dense_descent_paths():
         _, coefs, _ = path(X, y, fit_intercept=False)
         _, sparse_coefs, _ = path(csr, y, fit_intercept=False)
         assert_array_almost_equal(coefs, sparse_coefs)
+
+def test_adaptive_lasso_same_as_lasso():
+    # Test that the adaptive lasso gives the same results as the Lasso when
+    # n_lasso_iterations is 1
+    X, y, X_test, y_test = build_dataset()
+    max_iter = 150
+    clf1 = AdaptiveLasso(max_iter=max_iter, n_lasso_iterations=1).fit(X, y)
+    clf2 = Lasso(max_iter=max_iter).fit(X, y)
+    assert_array_almost_equal(clf1.coef_,clf2.coef_)
