@@ -571,6 +571,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
     # probabilities are not available depending on a setting, introduce two
     # estimators.
     def _check_proba(self):
+        check_is_fitted(self, 'support_')
         if not self.probability or self.probA_.size == 0 or self.probB_.size == 0:
             raise AttributeError("predict_proba is not available when fitted with"
                                  " probability=False")
