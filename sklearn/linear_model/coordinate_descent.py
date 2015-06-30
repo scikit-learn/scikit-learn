@@ -15,7 +15,7 @@ from scipy import sparse
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
-from ..utils import check_array, check_X_y, deprecated
+from ..utils import check_array, check_X_y, column_or_1d, deprecated
 from ..utils.validation import check_random_state
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
@@ -2033,3 +2033,143 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
             max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
             selection=selection)
+
+class AdaptiveLasso(Lasso):
+    """
+    The multi-step adaptive Lasso iteratively solves Lasso estimates with 
+    penalty weights applied to the regularization of the coefficients.
+    The optimization objective for the adaptive Lasso is::
+        1/n * ||y - X Beta||^2_2 + alpha * w |Beta|_1
+
+    Where w is a weight vector calculated in the previous stage by::
+        w_j = alpha/(|Beta_j|^gamma + eps)
+
+    Parameters
+    ----------
+    n_lasso_iterations : integer, optional (default=5)
+        Number of lasso iterations to fit. n_lasso_iterations = 1 is equivalent 
+        to a Lasso, solved by the :class:`Lasso`, and n_lasso_iterations = 2 is
+        equivalent to an adaptive Lasso.
+    gamma : float, optional (default=1.0)
+        The exponent to raise the previous iteration's estimate by. 
+        Common choices are 0.5, 1 and 2.
+    alpha : float or array of floats, shape = [n_lasso_iterations], optional (default=1.0)
+        Regularization term that multiplies the L1 term at each iteration.
+        ``alpha = 0`` is equivalent to an ordinary least square, solved
+        by the :class:`LinearRegression` object. For numerical
+        reasons, using ``alpha = 0`` is with the Lasso object is not advised
+        and you should prefer the LinearRegression object.
+        - if float: each iteration will use the same regularization.
+        - if array-like: each iteration uses the specified regularization.
+    eps : float, optional
+        Stability parameter to ensure that a zero valued coefficient does not 
+        prohibit a nonzero estimate in the next iteration.
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+    normalize : boolean, optional, default False
+        If ``True``, the regressors X will be normalized before regression.
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to ``'auto'`` let us decide. The Gram
+        matrix can also be passed as argument. For sparse input
+        this option is always ``True`` to preserve sparsity.
+        WARNING : The ``'auto'`` option is deprecated and will
+        be removed in 0.18.
+    max_iter : int, optional
+        The maximum number of iterations
+    tol : float, optional
+        The tolerance for the optimization: if the updates are
+        smaller than ``tol``, the optimization code checks the
+        dual gap for optimality and continues until it is smaller
+        than ``tol``.
+    positive : bool, optional
+        When set to ``True``, forces the coefficients to be positive.
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
+
+    Notes
+    -----
+    The algorithm for the iterative reweighting is described in:
+    Enhancing Sparsity by Reweighted L1 Minimization, Candes, Emmanuel J., 
+    Michael B. Wakin, and Stephen P. Boyd. 
+    Journal of Fourier Analysis and Applications 2008-10-15
+    
+    The algorithm for the adaptive lasso is described in:
+    The Adaptive Lasso and Its Oracle Properties, Zou, Hui. 
+    Journal of the American Statistical Association
+
+    See also
+    --------
+    Lasso
+    """
+    
+    def __init__(self, n_lasso_iterations = 5, gamma = 1, alpha=1.0,
+                 eps = None, fit_intercept=True, normalize=False,
+                 precompute=False, copy_X=True, max_iter=1000,
+                 tol=1e-4, positive=False,
+                 random_state=None, selection='cyclic'):
+        super(AdaptiveLasso, self).__init__(
+            alpha=alpha, fit_intercept=fit_intercept,
+            normalize=normalize, precompute=precompute, copy_X=copy_X,
+            max_iter=max_iter, tol=tol, warm_start=False,
+            positive=positive, random_state=random_state,
+            selection=selection)
+        self.n_lasso_iterations = n_lasso_iterations
+        self.gamma = gamma
+        self.eps = eps
+        
+    def fit(self, X, y):
+        """
+        Fit Lasso models, each with coordinate descent.
+        Parameters
+        -----------
+        X : ndarray or scipy.sparse matrix, (n_samples, n_features)
+            Data
+        y : ndarray, shape = (n_samples,) or (n_samples, n_targets)
+            Target
+        """
+        if self.eps is None:
+            self.eps = np.finfo(float).eps
+            
+        if self.gamma <= 0:
+            raise ValueError('gamma must be positive.')
+        else:
+            self.update_ = lambda w: np.power(np.abs(w) + self.eps, -self.gamma)
+        
+        alphas = column_or_1d(np.atleast_1d(self.alpha))
+        
+        if alphas.shape[0] != 1 and alphas.shape[0] != self.n_lasso_iterations:
+            raise ValueError("alpha must be a float or an array of length=%s" % repr(self.n_lasso_iterations))
+        if alphas.shape[0] != self.n_lasso_iterations:
+            alphas = column_or_1d(np.repeat(np.atleast_1d(self.alpha),  self.n_lasso_iterations))
+        
+        X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
+                 order='F', copy=self.copy_X and self.fit_intercept,
+                 multi_output=True, y_numeric=True)
+
+        X, y, X_mean, y_mean, X_std, precompute, Xy = \
+            _pre_fit(X, y, None, self.precompute, self.normalize,
+                     self.fit_intercept, copy=True)
+        
+        n_samples, n_features = X.shape
+        weights = np.ones(n_features)
+
+        for k in range(self.n_lasso_iterations):
+            X_w = X / weights[np.newaxis, :]
+            self.alpha = alphas[k]
+            super(AdaptiveLasso, self).fit(X_w, y)
+            self.coef_ /= weights
+            weights = self.update_(self.coef_)
+            
+        return self
