@@ -9,6 +9,10 @@ cimport numpy as np
 import itertools
 
 cpdef np.ndarray get_points(np.ndarray[np.double_t, ndim=2] hierarchy):
+    """
+    Extract original point information from the single linkage hierarchy
+    providing a list of points for each node in the hierarchy tree.
+    """
 
     cdef int max_node
     cdef int num_points
@@ -36,6 +40,10 @@ cpdef np.ndarray get_points(np.ndarray[np.double_t, ndim=2] hierarchy):
 
 cdef list bfs_from_hierarchy(np.ndarray[np.double_t, ndim=2] hierarchy, int bfs_root):
 
+    """
+    Perform a breadth first search on a tree in scipy hclust format.
+    """
+    
     cdef list to_process
     cdef int max_node
     cdef int num_points
@@ -50,10 +58,10 @@ cdef list bfs_from_hierarchy(np.ndarray[np.double_t, ndim=2] hierarchy, int bfs_
 
     while to_process:
         result.extend(to_process)
-        to_process = [(x - num_points) for x in 
+        to_process = [int(x - num_points) for x in 
                           to_process if x >= num_points]
         if to_process:
-            to_process = to_process.flatten().tolist()
+            to_process = hierarchy[to_process,:2].flatten().tolist()
 
     return result
         
@@ -192,8 +200,11 @@ cdef list bfs_from_cluster_tree(np.ndarray tree, int bfs_root):
 
     return result
 
-cdef list get_clusters(np.ndarray tree, dict stability, list points):
-    
+cpdef list get_clusters(np.ndarray tree, dict stability, list points):
+    """
+    The tree is assumed to have numeric node ids such that a reverse numeric
+    sort is equivalent to a topological sort.
+    """
     cdef list node_list
     cdef np.ndarray cluster_tree
     cdef np.ndarray child_selection

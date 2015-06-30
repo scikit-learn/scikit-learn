@@ -18,10 +18,10 @@ from ..metrics import pairwise_distances
 from ..utils import check_array, check_consistent_length
 
 from ._hdbscan_linkage import single_linkage
-from ._hdbscan_tree import igraph_to_tree, \
-                           igraph_condense_tree, \
-                           igraph_tree_to_dataframe, \
-                           igraph_get_clusters
+from ._hdbscan_tree import get_points, \
+                           condense_tree, \
+                           compute_stability, \
+                           get_clusters
                            
 def mutual_reachability(distance_matrix, min_points=5):
     """Compute the weighted adjacency matrix of the mutual reachability
@@ -58,42 +58,7 @@ def mutual_reachability(distance_matrix, min_points=5):
     result = np.where(core_distances > stage1.T,
                       core_distances.T, stage1.T).T
     return result
-    
-def compute_stability(cluster_tree):
-    """Compute the stability of clusters.
-    
-    Parameters
-    ----------
-    cluster_tree : dataframe
-        A dataframe giving the cluster tree specifying the parent id, child id, 
-        and lambda value and size of splits in the tree.
         
-    Returns
-    -------
-    stability : dataframe
-        A dataframe indexed by clusters giving their stability values.
-        
-    References
-    ----------
-    R. Campello, D. Moulavi, and J. Sander, "Density-Based Clustering Based on
-    Hierarchical Density Estimates"
-    In: Advances in Knowledge Discovery and Data Mining, Springer, pp 160-172.
-    2013
-    """
-    births = cluster_tree.groupby('child').min()[['lambda']]
-    births_and_deaths = cluster_tree.join(births,
-                                         on='parent',
-                                         lsuffix='_death',
-                                         rsuffix='_birth')
-    births_and_deaths['stability'] = (births_and_deaths['lambda_death'] -
-                                      births_and_deaths['lambda_birth']) \
-                                     * births_and_deaths['child_size']
-    raw_stability = births_and_deaths.groupby('parent')[['stability']].sum()
-    normalization = pd.DataFrame(births_and_deaths.parent.value_counts(),
-                                 columns=['stability'])
-    normalized_stability = raw_stability / normalization
-    return normalized_stability
-    
 def hdbscan(X, min_cluster_size=5, min_samples=None, metric='minkowski', p=2):
     """Perform HDBSCAN clustering from a vector array or distance matrix.
     
@@ -149,11 +114,9 @@ def hdbscan(X, min_cluster_size=5, min_samples=None, metric='minkowski', p=2):
     mutual_reachability_graph = mutual_reachability(distance_matrix,
                                                     min_samples)
     raw_tree = single_linkage(mutual_reachability_graph)
-    igraph_tree = igraph_to_tree(raw_tree)
-    condensed_tree = igraph_condense_tree(igraph_tree, min_cluster_size)
-    tree_dataframe = igraph_tree_to_dataframe(condensed_tree)
-    stability_dict = compute_stability(tree_dataframe).to_dict()["stability"]
-    cluster_list = igraph_get_clusters(condensed_tree, stability_dict)
+    condensed_tree, new_points = condense_tree(raw_tree, get_points(raw_tree), min_cluster_size)
+    stability_dict = compute_stability(condensed_tree)
+    cluster_list = get_clusters(condensed_tree, stability_dict, new_points)
     
     labels = -1 * np.ones(distance_matrix.shape[0])
     for index, cluster in enumerate(cluster_list):
@@ -206,10 +169,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
     def __init__(self, min_cluster_size=5, min_samples=None, 
                  metric='euclidean', p=None):
         self.min_cluster_size = min_cluster_size
-        if min_samples is None:
-            self.min_samples = min_cluster_size
-        else:
-            self.min_samples = min_samples
+        self.min_samples = min_samples
             
         self.metric = metric
         self.p = p

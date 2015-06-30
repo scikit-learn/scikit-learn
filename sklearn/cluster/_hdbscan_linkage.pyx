@@ -1,4 +1,4 @@
-#cython: boundscheck=False, wraparound=False
+#cython: boundscheck=False, nonecheck=False
 # Minimum spanning tree single linkage implementation for hdbscan
 # Authors: Leland McInnes, Steve Astels
 # License: 3-clause BSD
@@ -11,8 +11,8 @@ cimport numpy as np
 cdef np.ndarray[np.double_t, ndim=2] mst_linkage_core(
                                np.ndarray[np.double_t, ndim=2] distance_matrix):
 
-    cdef np.ndarray[np.long_t, ndim=1] node_labels
-    cdef np.ndarray[np.long_t, ndim=1] current_labels
+    cdef np.ndarray[np.int64_t, ndim=1] node_labels
+    cdef np.ndarray[np.int64_t, ndim=1] current_labels
     cdef np.ndarray[np.double_t, ndim=1] current_distances
     cdef np.ndarray[np.double_t, ndim=1] left
     cdef np.ndarray[np.double_t, ndim=1] right
@@ -26,7 +26,7 @@ cdef np.ndarray[np.double_t, ndim=2] mst_linkage_core(
     cdef int i
     
     result = np.zeros((distance_matrix.shape[0] - 1, 3))
-    node_labels = np.arange(distance_matrix.shape[0])
+    node_labels = np.arange(distance_matrix.shape[0], dtype=np.int64)
     current_node = 0
     current_distances = np.infty * np.ones(distance_matrix.shape[0])
     current_labels = node_labels
@@ -90,7 +90,7 @@ cdef np.ndarray[np.double_t, ndim=2] label(np.ndarray[np.double_t, ndim=2] L,
     cdef int N, a, aa, b, bb, idx
     cdef float delta
     
-    result = np.zeros((L.shape[0], L.shape[1]))
+    result = np.zeros((L.shape[0], L.shape[1] + 1))
     N = L.shape[0] + 1
     U = UnionFind(N)
     
@@ -102,7 +102,8 @@ cdef np.ndarray[np.double_t, ndim=2] label(np.ndarray[np.double_t, ndim=2] L,
             
         result[index, 0] = aa
         result[index, 1] = bb
-        result[index, 2] = U.size[aa] + U.size[bb]
+        result[index, 2] = delta
+        result[index, 3] = U.size[aa] + U.size[bb]
         
         U.union(aa, bb)
        
@@ -112,12 +113,10 @@ cpdef np.ndarray[np.double_t, ndim=2] single_linkage(
                                np.ndarray[np.double_t, ndim=2] distance_matrix):
     
     cdef np.ndarray[np.double_t, ndim=2] hierarchy
-    cdef np.ndarray[np.int64_t, ndim=1] sort_order
     cdef np.ndarray[np.double_t, ndim=2] for_labelling
     
     hierarchy = mst_linkage_core(distance_matrix)
-    sort_order = np.argsort(hierarchy.T[2])
-    for_labelling = hierarchy[sort_order, :]
+    for_labelling = hierarchy[np.argsort(hierarchy.T[2]), :]
     return label(for_labelling)
     
     
