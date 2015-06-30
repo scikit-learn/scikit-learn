@@ -48,6 +48,17 @@ print(lasso)
 print("r^2 on test data : %f" % r2_score_lasso)
 
 ###############################################################################
+# Adaptive Lasso
+from sklearn.linear_model import AdaptiveLasso
+
+ada_lasso = AdaptiveLasso(alpha=alpha)
+
+y_pred_ada_lasso = ada_lasso.fit(X_train, y_train).predict(X_test)
+r2_score_ada_lasso = r2_score(y_test, y_pred_ada_lasso)
+print(ada_lasso)
+print("r^2 on test data : %f" % r2_score_ada_lasso)
+
+###############################################################################
 # ElasticNet
 from sklearn.linear_model import ElasticNet
 
@@ -58,10 +69,12 @@ r2_score_enet = r2_score(y_test, y_pred_enet)
 print(enet)
 print("r^2 on test data : %f" % r2_score_enet)
 
+
 plt.plot(enet.coef_, label='Elastic net coefficients')
 plt.plot(lasso.coef_, label='Lasso coefficients')
+plt.plot(ada_lasso.coef_, label='Adaptive Lasso coefficients')
 plt.plot(coef, '--', label='original coefficients')
 plt.legend(loc='best')
-plt.title("Lasso R^2: %f, Elastic Net R^2: %f"
-          % (r2_score_lasso, r2_score_enet))
+plt.title("Lasso R^2: %f, Adaptive Lasso R^2: %f, Elastic Net R^2: %f"
+          % (r2_score_lasso, r2_score_ada_lasso, r2_score_enet))
 plt.show()
