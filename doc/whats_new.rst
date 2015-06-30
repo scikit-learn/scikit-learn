@@ -91,6 +91,9 @@ Enhancements
    - ``dump_svmlight_file`` now handles multi-label datasets.
      By Chih-Wei Chang.
 
+   - RCV1 dataset loader (:func:`sklearn.datasets.fetch_rcv1`).
+     By `Tom Dupre la Tour`_.
+
 Bug fixes
 .........
 
