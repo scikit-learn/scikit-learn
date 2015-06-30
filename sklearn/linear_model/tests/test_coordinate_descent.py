@@ -20,7 +20,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_array_equal
 
-from sklearn.linear_model.coordinate_descent import Lasso, \
+from sklearn.linear_model.coordinate_descent import Lasso, AdaptiveLasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
     MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
