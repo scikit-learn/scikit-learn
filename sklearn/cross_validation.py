@@ -297,6 +297,8 @@ class KFold(_BaseKFold):
     StratifiedKFold: take label information into account to avoid building
     folds with imbalanced class distributions (for binary or multiclass
     classification tasks).
+
+    DisjointLabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, n, n_folds=3, shuffle=False,
@@ -388,10 +390,13 @@ def disjoint_label_folds(labels, n_folds=3):
 
 
 class DisjointLabelKFold(_BaseKFold):
-    """Creates K approximately equilibrated folds.
-    
-    The same label will not appear in two different folds
-    (the number of labels has to be at least equal to the number of folds).
+    """K-fold iterator variant with non-overlapping labels.
+
+    The same label will not appear in two different folds (the number of
+    labels has to be at least equal to the number of folds).
+
+    The folds are approximately balanced in the sense so that the number of
+    distinct labels is approximately the same in each fold.
 
     Parameters
     ----------
@@ -427,8 +432,12 @@ class DisjointLabelKFold(_BaseKFold):
     [[5 6]
      [7 8]] [[1 2]
      [3 4]] [3 4] [1 2]
-    """
 
+    See also
+    --------
+    LeaveOneLabelOut for splitting the data according to explicit,
+    domain-specific stratification of the dataset.
+    """
     def __init__(self, labels, n_folds=3):
         # No shuffling implemented yet
         super(DisjointLabelKFold, self).__init__(len(labels), n_folds, False, None)
@@ -500,6 +509,9 @@ class StratifiedKFold(_BaseKFold):
     All the folds have size trunc(n_samples / n_folds), the last one has the
     complementary.
 
+    See also
+    --------
+    DisjointLabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, y, n_folds=3, shuffle=False,
@@ -606,6 +618,9 @@ class LeaveOneLabelOut(_PartitionIterator):
      [3 4]] [[5 6]
      [7 8]] [1 2] [1 2]
 
+    See also
+    --------
+    DisjointLabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, labels):
@@ -679,6 +694,10 @@ class LeavePLabelOut(_PartitionIterator):
     TRAIN: [0] TEST: [1 2]
     [[1 2]] [[3 4]
      [5 6]] [1] [2 1]
+
+    See also
+    --------
+    DisjointLabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, labels, p):
