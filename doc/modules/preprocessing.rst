@@ -173,9 +173,9 @@ Here is how to use the toy data from the previous example with this scaler::
   array([ 2.,  1.,  2.])
 
 
-As with :func:`scale`, the module further provides a
-convenience function :func:`maxabs_scale` if you don't want to
-create an object.
+As with :func:`scale`, the module further provides
+convenience functions :func:`minmax_scale` and :func:`maxabs_scale` if you
+don't want to create an object.
 
 
 Scaling sparse data
@@ -507,4 +507,4 @@ The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(
 
 Note that polynomial features are used implicitily in `kernel methods <http://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
-See :ref:`example_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.  
+See :ref:`example_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.

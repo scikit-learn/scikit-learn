@@ -64,7 +64,7 @@ Enhancements
      :class:`linear_model.LogisticRegression`, by avoiding loss computation.
      By `Mathieu Blondel`_ and `Tom Dupre la Tour`_.
 
-   - The ``class_weight="auto"`` heuristic in classifiers supporting 
+   - The ``class_weight="auto"`` heuristic in classifiers supporting
      ``class_weight`` was deprecated and replaced by the ``class_weight="balanced"``
      option, which has a simpler forumlar and interpretation.
      By Hanna Wallach and `Andreas Müller`_.
@@ -84,6 +84,9 @@ Enhancements
 
    - Provide an option for sparse output from
      :func:`sklearn.metrics.pairwise.cosine_similarity`. By `Jaidev Deshpande`_.
+
+   - Add :func:`minmax_scale` to provide a function interface for
+     :class:`MinMaxScaler`. By `Thomas Unterthiner`_.
 
 Bug fixes
 .........

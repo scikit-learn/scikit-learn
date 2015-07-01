@@ -43,6 +43,7 @@ __all__ = [
     'scale',
     'robust_scale',
     'maxabs_scale',
+    'minmax_scale',
 ]
 
 
@@ -289,6 +290,45 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         return X
 
 
+def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
+    """Standardizes features by scaling each feature to a given range.
+
+    This estimator scales and translates each feature individually such
+    that it is in the given range on the training set, i.e. between
+    zero and one.
+
+    The standardization is given by::
+
+        X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+        X_scaled = X_std * (max - min) + min
+
+    where min, max = feature_range.
+
+    This standardization is often used as an alternative to zero mean,
+    unit variance scaling.
+
+    Read more in the :ref:`User Guide <preprocessing_scaler>`.
+
+    Parameters
+    ----------
+    feature_range: tuple (min, max), default=(0, 1)
+        Desired range of transformed data.
+
+    axis : int (0 by default)
+        axis used to scale along. If 0, independently scale each feature,
+        otherwise (if 1) scale each sample.
+
+    copy : boolean, optional, default is True
+        Set to False to perform inplace scaling and avoid a copy (if the input
+        is already a numpy array).
+    """
+    s = MinMaxScaler(feature_range=feature_range, copy=copy)
+    if axis == 0:
+        return s.fit_transform(X)
+    else:
+        return s.fit_transform(X.T).T
+
+
 class StandardScaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
@@ -337,7 +377,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         The mean value for each feature in the training set.
 
     std_ : array of floats with shape [n_features]
-        The standard deviation for each feature in the training set. 
+        The standard deviation for each feature in the training set.
         Set to one if the standard deviation is zero for a given feature.
 
     See also
