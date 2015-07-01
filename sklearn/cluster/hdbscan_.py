@@ -18,10 +18,10 @@ from ..metrics import pairwise_distances
 from ..utils import check_array, check_consistent_length
 
 from ._hdbscan_linkage import single_linkage
-from ._hdbscan_tree import get_points, \
-                           condense_tree, \
-                           compute_stability, \
-                           get_clusters
+from ._hdbscan_tree import (get_points,
+                            condense_tree, 
+                            compute_stability, 
+                            get_clusters)
                            
 def mutual_reachability(distance_matrix, min_points=5):
     """Compute the weighted adjacency matrix of the mutual reachability
@@ -59,7 +59,7 @@ def mutual_reachability(distance_matrix, min_points=5):
     result = np.where(core_distances > stage1.T,
                       core_distances.T, stage1.T).T
     return result
-        
+
 def hdbscan(X, min_cluster_size=5, min_samples=None, metric='minkowski', p=2):
     """Perform HDBSCAN clustering from a vector array or distance matrix.
     

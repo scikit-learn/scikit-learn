@@ -109,8 +109,7 @@ cdef np.ndarray[np.double_t, ndim=2] label(np.ndarray[np.double_t, ndim=2] L,
        
     return result
 
-cpdef np.ndarray[np.double_t, ndim=2] single_linkage(
-                               np.ndarray[np.double_t, ndim=2] distance_matrix):
+cpdef np.ndarray[np.double_t, ndim=2] single_linkage(distance_matrix):
     
     cdef np.ndarray[np.double_t, ndim=2] hierarchy
     cdef np.ndarray[np.double_t, ndim=2] for_labelling
