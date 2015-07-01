@@ -1055,7 +1055,7 @@ def test_disjoint_label_folds():
     
     # Construct the test data
     tolerance = 0.05 * n_samples # 5 percent error allowed
-    labels = np.random.randint(0, n_labels, n_samples)
+    labels = rng.randint(0, n_labels, n_samples)
     folds = cval.disjoint_label_folds(labels, n_folds)
     ideal_n_labels_per_fold = n_samples // n_folds
     
@@ -1064,9 +1064,14 @@ def test_disjoint_label_folds():
     for i in np.unique(folds):
         assert_greater_equal(tolerance, abs(sum(folds == i) - ideal_n_labels_per_fold))
     
-    # Check that each subjects appears only in 1 fold
+    # Check that each label appears only in 1 fold
     for label in np.unique(labels):
         assert_equal(len(np.unique(folds[labels == label])), 1)
+
+    # Check that no label is on both sides of the split
+    labels = np.asarray(labels, dtype=object)  # to allow fancy indexing on labels
+    for train, test in cval.DisjointLabelKFold(labels, n_folds=n_folds):
+        assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
         
     # Construct the test data
     labels = ['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
@@ -1089,9 +1094,14 @@ def test_disjoint_label_folds():
     for i in np.unique(folds):
         assert_greater_equal(tolerance, abs(sum(folds == i) - ideal_n_labels_per_fold))
     
-    # Check that each subjects appears only in 1 fold
+    # Check that each label appears only in 1 fold
     for label in np.unique(labels):
         assert_equal(len(np.unique(folds[labels == label])), 1)
+
+    # Check that no label is on both sides of the split
+    labels = np.asarray(labels, dtype=object)  # to allow fancy indexing on labels
+    for train, test in cval.DisjointLabelKFold(labels, n_folds=n_folds):
+        assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
         
     # Should fail if there are more folds than labels
     labels = np.array([1, 1, 1, 2, 2])
