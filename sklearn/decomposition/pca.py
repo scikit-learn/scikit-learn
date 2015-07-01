@@ -143,12 +143,13 @@ class PCA(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     components_ : array, [n_components, n_features]
-        Components with maximum variance.
+        Principal axes in feature space, representing the directions of
+        maximum variance in the data.
 
     explained_variance_ratio_ : array, [n_components]
-        Percentage of variance explained by each of the selected components. \
-        k is not set then all components are stored and the sum of explained \
-        variances is equal to 1.0
+        Percentage of variance explained by each of the selected components.
+        If ``n_components`` is not set then all components are stored and the
+        sum of explained variances is equal to 1.0
 
     mean_ : array, [n_features]
         Per-feature empirical mean, estimated from the training set.
