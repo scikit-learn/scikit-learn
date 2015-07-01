@@ -372,10 +372,10 @@ def disjoint_label_folds(labels, n_folds=3):
     samples_per_label = samples_per_label[ind]
 
     # Total weight of each fold
-    samples_per_fold = np.zeros(n_folds)
+    samples_per_fold = np.zeros(n_folds, dtype=np.uint64)
 
     # Mapping from label index to fold index
-    label_to_fold = np.zeros(len(unique_labels))
+    label_to_fold = np.zeros(len(unique_labels), dtype=np.uintp)
     
     # While there are weights, distribute them
     # Specifically, add the biggest weight to the lightest fold
