@@ -12,6 +12,10 @@ environment:
     WHEELHOUSE_UPLOADER_SECRET:
       secure: BQm8KfEj6v2Y+dQxb2syQvTFxDnHXvaNktkLcYSq7jfbTOO6eH9n09tfQzFUVcWZ
 
+    # Make sure we don't download large datasets when running the test on
+    # continuous integration platform
+    SKLEARN_SKIP_NETWORK_TESTS: 1
+
   matrix:
     - PYTHON: "C:\\Python27"
       PYTHON_VERSION: "2.7.8"
