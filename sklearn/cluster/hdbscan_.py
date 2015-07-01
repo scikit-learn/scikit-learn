@@ -49,6 +49,7 @@ def mutual_reachability(distance_matrix, min_points=5):
     2013
     """
     dim = distance_matrix.shape[0]
+    min_points = min(dim - 1, min_points)
     core_distances = np.partition(distance_matrix, 
                                   min_points, 
                                   axis=0)[min_points]
@@ -101,12 +102,20 @@ def hdbscan(X, min_cluster_size=5, min_samples=None, metric='minkowski', p=2):
     """
     if min_samples is None:
         min_samples = min_cluster_size
-        
+
+    if type(min_samples) is not int or type(min_cluster_size) is not int:
+        raise ValueError('Min samples and min cluster size must be integers!')
+
+    if min_samples <= 0 or min_cluster_size <= 0:
+        raise ValueError('Min samples and Min cluster size must be positive integers')
+    
     X = check_array(X, accept_sparse='csr')
     
     if metric == 'minkowski':
         if p is None:
-            raise TypeError('Minkowski metrix given but no p value supplied!')
+            raise TypeError('Minkowski metric given but no p value supplied!')
+        if p < 0:
+            raise ValueError('Minkowski metric with negative p value is not defined!')
         distance_matrix = pairwise_distances(X, metric=metric, p=p)
     else:
         distance_matrix = pairwise_distances(X, metric=metric)

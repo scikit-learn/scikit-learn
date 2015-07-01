@@ -82,6 +82,9 @@ def test_hdbscan_badargs():
                   X, min_samples='fail')
     assert_raises(ValueError,
                   hdbscan,
+                  X, min_samples=-1)
+    assert_raises(ValueError,
+                  hdbscan,
                   X, metric='imperial')
     assert_raises(ValueError,
                   hdbscan,
