@@ -8,13 +8,7 @@ import warnings
 
 import numpy as np
 
-from .base import is_classifier, clone
-from .cross_validation import check_cv
-from .externals.joblib import Parallel, delayed
-from .cross_validation import _safe_split, _score, _fit_and_score
-from .metrics.scorer import check_scoring
-from .utils import indexable
-from .utils.fixes import astype
+from . import model_selection
 
 
 warnings.warn("This module has been deprecated in favor of the "
@@ -119,131 +113,11 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
     See :ref:`examples/model_selection/plot_learning_curve.py
     <example_model_selection_plot_learning_curve.py>`
     """
-    if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
-        raise ValueError("An estimator must support the partial_fit interface "
-                         "to exploit incremental learning")
-
-    X, y = indexable(X, y)
-    # Make a list since we will be iterating multiple times over the folds
-    cv = list(check_cv(cv, X, y, classifier=is_classifier(estimator)))
-    scorer = check_scoring(estimator, scoring=scoring)
-
-    # HACK as long as boolean indices are allowed in cv generators
-    if cv[0][0].dtype == bool:
-        new_cv = []
-        for i in range(len(cv)):
-            new_cv.append((np.nonzero(cv[i][0])[0], np.nonzero(cv[i][1])[0]))
-        cv = new_cv
-
-    n_max_training_samples = len(cv[0][0])
-    # Because the lengths of folds can be significantly different, it is
-    # not guaranteed that we use all of the available training data when we
-    # use the first 'n_max_training_samples' samples.
-    train_sizes_abs = _translate_train_sizes(train_sizes,
-                                             n_max_training_samples)
-    n_unique_ticks = train_sizes_abs.shape[0]
-    if verbose > 0:
-        print("[learning_curve] Training set sizes: " + str(train_sizes_abs))
-
-    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
-                        verbose=verbose)
-    if exploit_incremental_learning:
-        classes = np.unique(y) if is_classifier(estimator) else None
-        out = parallel(delayed(_incremental_fit_estimator)(
-            clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose) for train, test in cv)
-    else:
-        out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train[:n_train_samples], test,
-            verbose, parameters=None, fit_params=None, return_train_score=True)
-            for train, test in cv for n_train_samples in train_sizes_abs)
-        out = np.array(out)[:, :2]
-        n_cv_folds = out.shape[0] // n_unique_ticks
-        out = out.reshape(n_cv_folds, n_unique_ticks, 2)
-
-    out = np.asarray(out).transpose((2, 1, 0))
-
-    return train_sizes_abs, out[0], out[1]
-
-
-def _translate_train_sizes(train_sizes, n_max_training_samples):
-    """Determine absolute sizes of training subsets and validate 'train_sizes'.
-
-    Examples:
-        _translate_train_sizes([0.5, 1.0], 10) -> [5, 10]
-        _translate_train_sizes([5, 10], 10) -> [5, 10]
-
-    Parameters
-    ----------
-    train_sizes : array-like, shape (n_ticks,), dtype float or int
-        Numbers of training examples that will be used to generate the
-        learning curve. If the dtype is float, it is regarded as a
-        fraction of 'n_max_training_samples', i.e. it has to be within (0, 1].
-
-    n_max_training_samples : int
-        Maximum number of training samples (upper bound of 'train_sizes').
-
-    Returns
-    -------
-    train_sizes_abs : array, shape (n_unique_ticks,), dtype int
-        Numbers of training examples that will be used to generate the
-        learning curve. Note that the number of ticks might be less
-        than n_ticks because duplicate entries will be removed.
-    """
-    train_sizes_abs = np.asarray(train_sizes)
-    n_ticks = train_sizes_abs.shape[0]
-    n_min_required_samples = np.min(train_sizes_abs)
-    n_max_required_samples = np.max(train_sizes_abs)
-    if np.issubdtype(train_sizes_abs.dtype, np.float):
-        if n_min_required_samples <= 0.0 or n_max_required_samples > 1.0:
-            raise ValueError("train_sizes has been interpreted as fractions "
-                             "of the maximum number of training samples and "
-                             "must be within (0, 1], but is within [%f, %f]."
-                             % (n_min_required_samples,
-                                n_max_required_samples))
-        train_sizes_abs = astype(train_sizes_abs * n_max_training_samples,
-                                 dtype=np.int, copy=False)
-        train_sizes_abs = np.clip(train_sizes_abs, 1,
-                                  n_max_training_samples)
-    else:
-        if (n_min_required_samples <= 0 or
-                n_max_required_samples > n_max_training_samples):
-            raise ValueError("train_sizes has been interpreted as absolute "
-                             "numbers of training samples and must be within "
-                             "(0, %d], but is within [%d, %d]."
-                             % (n_max_training_samples,
-                                n_min_required_samples,
-                                n_max_required_samples))
-
-    train_sizes_abs = np.unique(train_sizes_abs)
-    if n_ticks > train_sizes_abs.shape[0]:
-        warnings.warn("Removed duplicate entries from 'train_sizes'. Number "
-                      "of ticks will be less than than the size of "
-                      "'train_sizes' %d instead of %d)."
-                      % (train_sizes_abs.shape[0], n_ticks), RuntimeWarning)
-
-    return train_sizes_abs
-
-
-def _incremental_fit_estimator(estimator, X, y, classes, train, test,
-                               train_sizes, scorer, verbose):
-    """Train estimator on training subsets incrementally and compute scores."""
-    train_scores, test_scores = [], []
-    partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
-    for n_train_samples, partial_train in partitions:
-        train_subset = train[:n_train_samples]
-        X_train, y_train = _safe_split(estimator, X, y, train_subset)
-        X_partial_train, y_partial_train = _safe_split(estimator, X, y,
-                                                       partial_train)
-        X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
-        if y_partial_train is None:
-            estimator.partial_fit(X_partial_train, classes=classes)
-        else:
-            estimator.partial_fit(X_partial_train, y_partial_train,
-                                  classes=classes)
-        train_scores.append(_score(estimator, X_train, y_train, scorer))
-        test_scores.append(_score(estimator, X_test, y_test, scorer))
-    return np.array((train_scores, test_scores)).T
+    return model_selection.learning_curve(
+        estimator, X, y, labels=None, train_sizes=train_sizes, cv=cv,
+        scoring=scoring, n_jobs=n_jobs, pre_dispatch=pre_dispatch,
+        exploit_incremental_learning=exploit_incremental_learning,
+        verbose=verbose)
 
 
 def validation_curve(estimator, X, y, param_name, param_range, cv=None,
@@ -324,20 +198,7 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     :ref:`examples/model_selection/plot_validation_curve.py
     <example_model_selection_plot_validation_curve.py>`
     """
-    X, y = indexable(X, y)
-    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = check_scoring(estimator, scoring=scoring)
-
-    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
-                        verbose=verbose)
-    out = parallel(delayed(_fit_and_score)(
-        estimator, X, y, scorer, train, test, verbose,
-        parameters={param_name: v}, fit_params=None, return_train_score=True)
-        for train, test in cv for v in param_range)
-
-    out = np.asarray(out)[:, :2]
-    n_params = len(param_range)
-    n_cv_folds = out.shape[0] // n_params
-    out = out.reshape(n_cv_folds, n_params, 2).transpose((2, 1, 0))
-
-    return out[0], out[1]
+    return model_selection.validation_curve(
+        estimator, X, y, labels=None, param_name=param_name,
+        param_range=param_range, cv=cv, scoring=scoring, n_jobs=n_jobs,
+        pre_dispatch=pre_dispatch, verbose=verbose)

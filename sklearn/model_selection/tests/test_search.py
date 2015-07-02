@@ -44,8 +44,7 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
 
-# TODO Import from sklearn.exceptions once merged.
-from sklearn.base import ChangedBehaviorWarning
+from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.model_selection._validation import FitFailedWarning
 
 from sklearn.svm import LinearSVC, SVC

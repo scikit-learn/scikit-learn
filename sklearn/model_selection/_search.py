@@ -20,7 +20,7 @@ import warnings
 import numpy as np
 
 from ..base import BaseEstimator, is_classifier, clone
-from ..base import MetaEstimatorMixin, ChangedBehaviorWarning
+from ..base import MetaEstimatorMixin
 from ._split import check_cv
 from ._validation import _fit_and_score
 from ..externals.joblib import Parallel, delayed
@@ -31,6 +31,7 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import _num_samples, indexable
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics.scorer import check_scoring
+from ..exceptions import ChangedBehaviorWarning
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
