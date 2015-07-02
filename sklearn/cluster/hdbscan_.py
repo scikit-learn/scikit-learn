@@ -58,7 +58,7 @@ def mutual_reachability(distance_matrix, min_points=5):
                       core_distances, distance_matrix)
     result = np.where(core_distances > stage1.T,
                       core_distances.T, stage1.T).T
-    return result
+    return result.astype(np.double)
 
 def hdbscan(X, min_cluster_size=5, min_samples=None, metric='minkowski', p=2):
     """Perform HDBSCAN clustering from a vector array or distance matrix.
@@ -197,7 +197,7 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         self.labels_ = hdbscan(X, **self.get_params())
         return self
         
-    def fit_predict(self, X, y=None, sample_weight=None):
+    def fit_predict(self, X, y=None):
         """Performs clustering on X and returns cluster labels.
 
         Parameters
@@ -212,5 +212,5 @@ class HDBSCAN(BaseEstimator, ClusterMixin):
         y : ndarray, shape (n_samples,)
             cluster labels
         """
-        self.fit(X, sample_weight=sample_weight)
+        self.fit(X)
         return self.labels_
