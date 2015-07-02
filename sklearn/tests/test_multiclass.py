@@ -107,7 +107,6 @@ def test_ovr_fit_predict_sparse():
                                                        n_labels=3,
                                                        length=50,
                                                        allow_unlabeled=True,
-                                                       return_indicator=True,
                                                        random_state=0)
 
         X_train, Y_train = X[:80], Y[:80]
@@ -230,35 +229,19 @@ def test_ovr_binary():
         conduct_test(base_clf, test_predict_proba=True)
 
 
-@ignore_warnings
 def test_ovr_multilabel():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 4, 5], [0, 5, 0], [3, 3, 3], [4, 0, 6], [6, 0, 0]])
-    y = [["spam", "eggs"], ["spam"], ["ham", "eggs", "spam"],
-         ["ham", "eggs"], ["ham"]]
-    # y = [[1, 2], [1], [0, 1, 2], [0, 2], [0]]
-    Y = np.array([[0, 1, 1],
+    y = np.array([[0, 1, 1],
                   [0, 1, 0],
                   [1, 1, 1],
                   [1, 0, 1],
                   [1, 0, 0]])
 
-    classes = set("ham eggs spam".split())
-
     for base_clf in (MultinomialNB(), LinearSVC(random_state=0),
                      LinearRegression(), Ridge(),
                      ElasticNet(), Lasso(alpha=0.5)):
-        # test input as lists of tuples
-        clf = assert_warns(DeprecationWarning,
-                           OneVsRestClassifier(base_clf).fit,
-                           X, y)
-        assert_equal(set(clf.classes_), classes)
-        y_pred = clf.predict([[0, 4, 4]])[0]
-        assert_equal(set(y_pred), set(["spam", "eggs"]))
-        assert_true(clf.multilabel_)
-
-        # test input as label indicator matrix
-        clf = OneVsRestClassifier(base_clf).fit(X, Y)
+        clf = OneVsRestClassifier(base_clf).fit(X, y)
         y_pred = clf.predict([[0, 4, 4]])[0]
         assert_array_equal(y_pred, [0, 1, 1])
         assert_true(clf.multilabel_)
@@ -280,7 +263,6 @@ def test_ovr_multilabel_dataset():
                                                        n_labels=2,
                                                        length=50,
                                                        allow_unlabeled=au,
-                                                       return_indicator=True,
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test, Y_test = X[80:], Y[80:]
@@ -305,7 +287,6 @@ def test_ovr_multilabel_predict_proba():
                                                        n_labels=3,
                                                        length=50,
                                                        allow_unlabeled=au,
-                                                       return_indicator=True,
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test = X[80:]
@@ -357,7 +338,6 @@ def test_ovr_multilabel_decision_function():
                                                    n_labels=3,
                                                    length=50,
                                                    allow_unlabeled=True,
-                                                   return_indicator=True,
                                                    random_state=0)
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]

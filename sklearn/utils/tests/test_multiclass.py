@@ -2,8 +2,6 @@ from __future__ import division
 import numpy as np
 import scipy.sparse as sp
 
-from itertools import product
-from functools import partial
 from sklearn.externals.six.moves import xrange
 from sklearn.externals.six import iteritems
 
@@ -20,15 +18,13 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
 
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.multiclass import is_label_indicator_matrix
 from sklearn.utils.multiclass import is_multilabel
-from sklearn.utils.multiclass import is_sequence_of_sequences
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.multiclass import class_distribution
+from sklearn.utils.multiclass import _is_sequence_of_sequences
 
 
 class NotAnArray(object):
@@ -59,18 +55,6 @@ EXAMPLES = {
         np.array([[-1, 1], [1, -1]]),
         np.array([[-3, 3], [3, -3]]),
         NotAnArray(np.array([[-3, 3], [3, -3]])),
-    ],
-    'multilabel-sequences': [
-        [[0, 1]],
-        [[0], [1]],
-        [[1, 2, 3]],
-        [[1, 2, 1]],  # duplicate values, why not?
-        [[1], [2], [0, 1]],
-        [[1], [2]],
-        [[]],
-        [()],
-        np.array([[], [1, 2]], dtype='object'),
-        NotAnArray(np.array([[], [1, 2]], dtype='object')),
     ],
     'multiclass': [
         [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
@@ -133,20 +117,40 @@ EXAMPLES = {
         np.array([[0, .5]]),
     ],
     'unknown': [
-        # empty second dimension
-        np.array([[], []]),
-        # 3d
-        np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]]),
-        # not currently supported sequence of sequences
+        # multilabel sequences
+        [[0, 1]],
+        [[0], [1]],
+        [[1, 2, 3]],
+        [[1, 2, 1]],  # duplicated label in seq. of seq
+        [[1], [2], [0, 1]],
+        [(), (2), (0, 1)],
+        [[]],
+        [()],
+        np.array([[], [1, 2]], dtype='object'),
+        NotAnArray(np.array([[], [1, 2]], dtype='object')),
+
+        # NOTE: First 10 items are of sequence of sequence type that were
+        # previously supported. This list is split based on this index
+        # of 10 in test_is_sequence_of_sequences.
+
+        # Hence, PLEASE ADD FURTHER UNKNOWN TYPES AFTER THESE 10 ENTRIES.
+
+        # sequence of sequences that were'nt supported even before deprecation
         np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
         [np.array([]), np.array([1, 2, 3])],
         [set([1, 2, 3]), set([1, 2])],
         [frozenset([1, 2, 3]), frozenset([1, 2])],
+
         # and also confusable as sequences of sequences
         [{0: 'a', 1: 'b'}, {0: 'a'}],
+
+        # empty second dimension
+        np.array([[], []]),
+
+        # 3d
+        np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]]),
     ]
 }
-
 
 NON_ARRAY_LIKE_EXAMPLES = [
     set([1, 2, 3]),
@@ -167,16 +171,7 @@ def test_unique_labels():
     assert_array_equal(unique_labels(np.arange(10)), np.arange(10))
     assert_array_equal(unique_labels([4, 0, 2]), np.array([0, 2, 4]))
 
-    # Multilabels
-    assert_array_equal(assert_warns(DeprecationWarning,
-                                    unique_labels,
-                                    [(0, 1, 2), (0,), tuple(), (2, 1)]),
-                       np.arange(3))
-    assert_array_equal(assert_warns(DeprecationWarning,
-                                    unique_labels,
-                                    [[0, 1, 2], [0], list(), [2, 1]]),
-                       np.arange(3))
-
+    # Multilabel indicator
     assert_array_equal(unique_labels(np.array([[0, 0, 1],
                                                [1, 0, 1],
                                                [0, 0, 0]])),
@@ -198,22 +193,12 @@ def test_unique_labels():
     assert_array_equal(unique_labels(np.ones((4, 5)), np.ones((5, 5))),
                        np.arange(5))
 
-    # Some tests with strings input
-    assert_array_equal(unique_labels(["a", "b", "c"], ["d"]),
-                       ["a", "b", "c", "d"])
 
-    assert_array_equal(assert_warns(DeprecationWarning, unique_labels,
-                                    [["a", "b"], ["c"]], [["d"]]),
-                       ["a", "b", "c", "d"])
-
-
-@ignore_warnings
 def test_unique_labels_non_specific():
     # Test unique_labels with a variety of collected examples
 
     # Smoke test for all supported format
-    for format in ["binary", "multiclass", "multilabel-sequences",
-                   "multilabel-indicator"]:
+    for format in ["binary", "multiclass", "multilabel-indicator"]:
         for y in EXAMPLES[format]:
             unique_labels(y)
 
@@ -227,38 +212,6 @@ def test_unique_labels_non_specific():
             assert_raises(ValueError, unique_labels, example)
 
 
-@ignore_warnings
-def test_unique_labels_mixed_types():
-    # Mix of multilabel-indicator and multilabel-sequences
-    mix_multilabel_format = product(EXAMPLES["multilabel-indicator"],
-                                    EXAMPLES["multilabel-sequences"])
-    for y_multilabel, y_multiclass in mix_multilabel_format:
-        assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
-        assert_raises(ValueError, unique_labels, y_multilabel, y_multiclass)
-
-    # Mix with binary or multiclass and multilabel
-    mix_clf_format = product(EXAMPLES["multilabel-indicator"] +
-                             EXAMPLES["multilabel-sequences"],
-                             EXAMPLES["multiclass"] +
-                             EXAMPLES["binary"])
-
-    for y_multilabel, y_multiclass in mix_clf_format:
-        assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
-        assert_raises(ValueError, unique_labels, y_multilabel, y_multiclass)
-
-    # Mix string and number input type
-    assert_raises(ValueError, unique_labels, [[1, 2], [3]],
-                  [["a", "d"]])
-    assert_raises(ValueError, unique_labels, ["1", 2])
-    assert_raises(ValueError, unique_labels, [["1", 2], [3]])
-    assert_raises(ValueError, unique_labels, [["1", "2"], [3]])
-
-    assert_array_equal(unique_labels([(2,), (0, 2,)], [(), ()]), [0, 2])
-    assert_array_equal(unique_labels([("2",), ("0", "2",)], [(), ()]),
-                       ["0", "2"])
-
-
-@ignore_warnings
 def test_is_multilabel():
     for group, group_examples in iteritems(EXAMPLES):
         if group.startswith('multilabel'):
@@ -313,21 +266,20 @@ def test_is_label_indicator_matrix():
 
 def test_is_sequence_of_sequences():
     for group, group_examples in iteritems(EXAMPLES):
-        if group == 'multilabel-sequences':
-            assert_, exp = assert_true, 'True'
-            check = partial(assert_warns, DeprecationWarning,
-                            is_sequence_of_sequences)
-        else:
-            assert_, exp = assert_false, 'False'
-            check = is_sequence_of_sequences
-        for example in group_examples:
-            assert_(check(example),
-                    msg='is_sequence_of_sequences(%r) should be %s'
-                    % (example, exp))
+        for i, example in enumerate(group_examples):
+            # The 1st 10 entries of EXAMPLES['unknown'] are seq of seq
+            if (i < 10) and (group == "unknown"):
+                assert_true(_is_sequence_of_sequences(example),
+                            msg=('_is_sequence_of_sequences(%r) should '
+                                 'be True' % example))
+            else:
+                assert_false(_is_sequence_of_sequences(example),
+                             msg=('_is_sequence_of_sequences(%r) should '
+                                  'be False' % example))
 
 
-@ignore_warnings
 def test_type_of_target():
+    # seq of seq is included in the 'unknown' list
     for group, group_examples in iteritems(EXAMPLES):
         for example in group_examples:
             assert_equal(type_of_target(example), group,

@@ -250,8 +250,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
 def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
                                    n_labels=2, length=50, allow_unlabeled=True,
-                                   sparse=False, return_indicator=False,
-                                   return_distributions=False,
+                                   sparse=False, return_distributions=False,
                                    random_state=None):
     """Generate a random multilabel classification problem.
 
@@ -294,10 +293,6 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
 
     sparse : bool, optional (default=False)
         If ``True``, return a sparse feature matrix
-
-    return_indicator : bool, optional (default=False),
-        If ``True``, return ``Y`` in the binary indicator format, else
-        return a tuple of lists of labels.
 
     return_distributions : bool, optional (default=False)
         If ``True``, return the prior class probability and conditional
@@ -383,16 +378,8 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     if not sparse:
         X = X.toarray()
 
-    if return_indicator:
-        lb = MultiLabelBinarizer()
-        Y = lb.fit([range(n_classes)]).transform(Y)
-    else:
-        warnings.warn('Support for the sequence of sequences multilabel '
-                      'representation is being deprecated and replaced with '
-                      'a sparse indicator matrix. '
-                      'return_indicator will default to True from version '
-                      '0.17.',
-                      DeprecationWarning)
+    lb = MultiLabelBinarizer()
+    Y = lb.fit([range(n_classes)]).transform(Y)
 
     if return_distributions:
         return X, Y, p_c, p_w_c
