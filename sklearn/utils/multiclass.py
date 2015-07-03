@@ -9,7 +9,6 @@ Multi-class / multi-label utility function
 from __future__ import division
 from collections import Sequence
 from itertools import chain
-import warnings
 
 from scipy.sparse import issparse
 from scipy.sparse.base import spmatrix
@@ -32,12 +31,6 @@ def _unique_multiclass(y):
         return set(y)
 
 
-def _unique_sequence_of_sequence(y):
-    if hasattr(y, '__array__'):
-        y = np.asarray(y)
-    return set(chain.from_iterable(y))
-
-
 def _unique_indicator(y):
     return np.arange(check_array(y, ['csr', 'csc', 'coo']).shape[1])
 
@@ -45,7 +38,6 @@ def _unique_indicator(y):
 _FN_UNIQUE_LABELS = {
     'binary': _unique_multiclass,
     'multiclass': _unique_multiclass,
-    'multilabel-sequences': _unique_sequence_of_sequence,
     'multilabel-indicator': _unique_indicator,
 }
 
@@ -96,7 +88,8 @@ def unique_labels(*ys):
 
     # Check consistency for the indicator format
     if (label_type == "multilabel-indicator" and
-            len(set(check_array(y, ['csr', 'csc', 'coo']).shape[1] for y in ys)) > 1):
+            len(set(check_array(y, ['csr', 'csc', 'coo']).shape[1]
+                    for y in ys)) > 1):
         raise ValueError("Multi-label binary indicator input with "
                          "different numbers of labels")
 
@@ -123,9 +116,8 @@ def is_label_indicator_matrix(y):
 
     Parameters
     ----------
-    y : numpy array of shape [n_samples] or sequence of sequences
-        Target values. In the multilabel case the nested sequences can
-        have variable lengths.
+    y : numpy array of shape [n_samples]
+        Target values.
 
     Returns
     -------
@@ -167,20 +159,8 @@ def is_label_indicator_matrix(y):
                                     _is_integral_float(labels))
 
 
-def is_sequence_of_sequences(y):
-    """ Check if ``y`` is in the sequence of sequences format (multilabel).
-
-    This format is DEPRECATED.
-
-    Parameters
-    ----------
-    y : sequence or array.
-
-    Returns
-    -------
-    out : bool,
-        Return ``True``, if ``y`` is a sequence of sequences else ``False``.
-    """
+def _is_sequence_of_sequences(y):
+    """Check if ``y`` is in the  deprecated sequence of sequences format."""
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
     try:
@@ -190,12 +170,6 @@ def is_sequence_of_sequences(y):
                and not isinstance(y[0], string_types))
     except (IndexError, TypeError):
         return False
-    if out:
-        warnings.warn('Direct support for sequence of sequences multilabel '
-                      'representation will be unavailable from version 0.17. '
-                      'Use sklearn.preprocessing.MultiLabelBinarizer to '
-                      'convert to a label indicator representation.',
-                      DeprecationWarning)
     return out
 
 
@@ -204,9 +178,8 @@ def is_multilabel(y):
 
     Parameters
     ----------
-    y : numpy array of shape [n_samples] or sequence of sequences
-        Target values. In the multilabel case the nested sequences can
-        have variable lengths.
+    y : numpy array of shape [n_samples]
+        Target values.
 
     Returns
     -------
@@ -227,7 +200,7 @@ def is_multilabel(y):
     True
 
     """
-    return is_label_indicator_matrix(y) or is_sequence_of_sequences(y)
+    return is_label_indicator_matrix(y)
 
 
 def type_of_target(y):
@@ -252,13 +225,11 @@ def type_of_target(y):
         * 'multiclass-multioutput': `y` is a 2d array that contains more
           than two discrete values, is not a sequence of sequences, and both
           dimensions are of size > 1.
-        * 'multilabel-sequences': `y` is a sequence of sequences, a 1d
-          array-like of objects that are sequences of labels.
         * 'multilabel-indicator': `y` is a label indicator matrix, an array
           of two dimensions with at least two columns, and at most 2 unique
           values.
         * 'unknown': `y` is array-like but none of the above, such as a 3d
-          array, or an array of non-sequence objects.
+          array, sequence of sequences, or an array of non-sequence objects.
 
     Examples
     --------
@@ -286,10 +257,11 @@ def type_of_target(y):
         raise ValueError('Expected array-like (array or non-string sequence), '
                          'got %r' % y)
 
-    if is_sequence_of_sequences(y):
-        return 'multilabel-sequences'
-    elif is_label_indicator_matrix(y):
+    if is_label_indicator_matrix(y):
         return 'multilabel-indicator'
+
+    if _is_sequence_of_sequences(y):
+        return 'unknown'
 
     try:
         y = np.asarray(y)
