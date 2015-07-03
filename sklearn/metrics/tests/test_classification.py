@@ -24,6 +24,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_not_equal
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
@@ -158,8 +159,10 @@ def test_precision_recall_f_binary_single_class():
     assert_equal(0., f1_score([-1, -1], [-1, -1]))
 
 
+@ignore_warnings
 def test_precision_recall_f_extra_labels():
-    """Test handling of explicit additional (not in input) labels to PRF"""
+    """Test handling of explicit additional (not in input) labels to PRF
+    """
     y_true = [1, 3, 3, 2]
     y_pred = [1, 1, 3, 2]
     y_true_bin = label_binarize(y_true, classes=np.arange(5))
@@ -197,6 +200,7 @@ def test_precision_recall_f_extra_labels():
                       labels=np.arange(-1, 4), average=average)
 
 
+@ignore_warnings
 def test_precision_recall_f_ignored_labels():
     """Test a subset of labels may be requested for PRF"""
     y_true = [1, 1, 2, 3]
@@ -710,7 +714,7 @@ def test_precision_recall_f1_score_multilabel_1():
                                     average="micro"),
                         (1 + 4) * p * r / (4 * p + r))
 
-    # Check weigted
+    # Check weighted
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
                                                  average="weighted")
     assert_almost_equal(p, 1.5 / 4)
@@ -720,7 +724,7 @@ def test_precision_recall_f1_score_multilabel_1():
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="weighted"),
                         np.average(f2, weights=support))
-    # Check weigted
+    # Check samples
     # |h(x_i) inter y_i | = [0, 1, 1]
     # |y_i| = [1, 1, 2]
     # |h(x_i)| = [1, 1, 2]
@@ -787,7 +791,7 @@ def test_precision_recall_f1_score_multilabel_2():
 
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
                                                  average="samples")
-    # Check weigted
+    # Check samples
     # |h(x_i) inter y_i | = [0, 0, 1]
     # |y_i| = [1, 1, 2]
     # |h(x_i)| = [1, 1, 2]
