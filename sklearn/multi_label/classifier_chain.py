@@ -5,7 +5,7 @@ Use classifier chain as a meta-algorithm to
 combine classifiers for each label.
 """
 
-# Author: Chih-Wei Chang <jrweizhang@gmail.com>
+# Author: Chih-Wei (Bert) Chang <bert.cwchang@gmail.com>
 
 import numpy as np
 
@@ -43,12 +43,17 @@ class ClassifierChain(BaseEstimator):
     >>> from sklearn.datasets import make_multilabel_classification
     >>> from sklearn.multi_label import ClassifierChain
     >>> from sklearn.svm import LinearSVC
-    >>> X, Y = make_multilabel_classification(return_indicator=True, random_state=0)
+    >>> X, Y = make_multilabel_classification(return_indicator=True,
+    ...                                       random_state=0)
     >>> cc = ClassifierChain(base_estimator=LinearSVC())
     >>> cc.fit(X, Y) #doctest: +NORMALIZE_WHITESPACE
-    ClassifierChain(base_estimator=LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-        intercept_scaling=1, loss='l2', max_iter=1000, multi_class='ovr',
-        penalty='l2', random_state=None, tol=0.0001, verbose=0))
+    ClassifierChain(base_estimator=LinearSVC(C=1.0, class_weight=None,
+                                             dual=True, fit_intercept=True,
+                                             intercept_scaling=1,
+                                             loss='squared_hinge',
+                                             max_iter=1000, multi_class='ovr',
+                                             penalty='l2', random_state=None,
+                                             tol=0.0001, verbose=0))
     """
 
     def __init__(self, base_estimator):
@@ -73,7 +78,7 @@ class ClassifierChain(BaseEstimator):
         self.n_labels_ = Y.shape[1]
         self.classifiers_ = []
 
-        for i in xrange(self.n_labels_):
+        for i in range(self.n_labels_):
             y = Y[:, i]
 
             clf = clone(self.base_estimator)
