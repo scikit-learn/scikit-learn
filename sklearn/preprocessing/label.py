@@ -481,6 +481,8 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
     if 'multioutput' in y_type:
         raise ValueError("Multioutput target data is not supported with label "
                          "binarization")
+    if y_type == 'unknown':
+        raise ValueError("The type of target data is not known")
 
     n_samples = y.shape[0] if sp.issparse(y) else len(y)
     n_classes = len(classes)
@@ -512,13 +514,15 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
         data.fill(pos_label)
         Y = sp.csr_matrix((data, indices, indptr),
                           shape=(n_samples, n_classes))
-
     elif y_type == "multilabel-indicator":
         Y = sp.csr_matrix(y)
         if pos_label != 1:
             data = np.empty_like(Y.data)
             data.fill(pos_label)
             Y.data = data
+    else:
+        raise ValueError("%s target data is not supported with label "
+                         "binarization" % y_type)
 
     if not sparse_output:
         Y = Y.toarray()
