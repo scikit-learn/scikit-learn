@@ -24,7 +24,6 @@ from sklearn.utils.multiclass import is_label_indicator_matrix
 from sklearn.utils.multiclass import is_multilabel
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.multiclass import class_distribution
-from sklearn.utils.multiclass import _is_sequence_of_sequences
 
 
 class NotAnArray(object):
@@ -128,13 +127,6 @@ EXAMPLES = {
         [()],
         np.array([[], [1, 2]], dtype='object'),
         NotAnArray(np.array([[], [1, 2]], dtype='object')),
-
-        # NOTE: First 10 items are of sequence of sequence type that were
-        # previously supported. This list is split based on this index
-        # of 10 in test_is_sequence_of_sequences.
-
-        # Hence, PLEASE ADD FURTHER UNKNOWN TYPES AFTER THESE 10 ENTRIES.
-
         # sequence of sequences that were'nt supported even before deprecation
         np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
         [np.array([]), np.array([1, 2, 3])],
@@ -262,20 +254,6 @@ def test_is_label_indicator_matrix():
             dense_assert_(is_label_indicator_matrix(example),
                           msg='is_label_indicator_matrix(%r) should be %s'
                           % (example, dense_exp))
-
-
-def test_is_sequence_of_sequences():
-    for group, group_examples in iteritems(EXAMPLES):
-        for i, example in enumerate(group_examples):
-            # The 1st 10 entries of EXAMPLES['unknown'] are seq of seq
-            if (i < 10) and (group == "unknown"):
-                assert_true(_is_sequence_of_sequences(example),
-                            msg=('_is_sequence_of_sequences(%r) should '
-                                 'be True' % example))
-            else:
-                assert_false(_is_sequence_of_sequences(example),
-                             msg=('_is_sequence_of_sequences(%r) should '
-                                  'be False' % example))
 
 
 def test_type_of_target():

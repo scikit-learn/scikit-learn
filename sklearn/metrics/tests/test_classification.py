@@ -1120,7 +1120,7 @@ def test__check_targets():
             assert_raises(ValueError, _check_targets, y1[:-1], y2)
 
     # Make sure seq of seq is not supported
-    y1 = [(1, 2,), (0, 2,)]
+    y1 = [(1, 2,), (0, 2, 3)]
     y2 = [(2,), (0, 2,)]
     assert_raise_message(ValueError, "unknown is not supported",
                          _check_targets, y1, y2)

@@ -159,20 +159,6 @@ def is_label_indicator_matrix(y):
                                     _is_integral_float(labels))
 
 
-def _is_sequence_of_sequences(y):
-    """Check if ``y`` is in the  deprecated sequence of sequences format."""
-    # the explicit check for ndarray is for forward compatibility; future
-    # versions of Numpy might want to register ndarray as a Sequence
-    try:
-        if hasattr(y, '__array__'):
-            y = np.asarray(y)
-        out = (not hasattr(y[0], '__array__') and isinstance(y[0], Sequence)
-               and not isinstance(y[0], string_types))
-    except (IndexError, TypeError):
-        return False
-    return out
-
-
 def is_multilabel(y):
     """ Check if ``y`` is in a multilabel format.
 
@@ -260,21 +246,27 @@ def type_of_target(y):
     if is_label_indicator_matrix(y):
         return 'multilabel-indicator'
 
-    if _is_sequence_of_sequences(y):
-        return 'unknown'
-
     try:
         y = np.asarray(y)
     except ValueError:
         # known to fail in numpy 1.3 for array of arrays
         return 'unknown'
+
     if y.ndim > 2 or (y.dtype == object and len(y) and
                       not isinstance(y.flat[0], string_types)):
         return 'unknown'
+
     if y.ndim == 2 and y.shape[1] == 0:
         return 'unknown'
-    elif y.ndim == 2 and y.shape[1] > 1:
+
+    # Check if y is in the  deprecated sequence of sequences format
+    if (not hasattr(y[0], '__array__') and isinstance(y[0], Sequence)
+            and not isinstance(y[0], string_types)):
+        return "unknown"
+
+    if y.ndim == 2 and y.shape[1] > 1:
         suffix = '-multioutput'
+
     else:
         # column vector or 1d
         suffix = ''
