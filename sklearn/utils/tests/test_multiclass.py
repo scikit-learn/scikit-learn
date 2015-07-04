@@ -22,7 +22,6 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 
 from sklearn.utils.multiclass import unique_labels
-from sklearn.utils.multiclass import is_label_indicator_matrix
 from sklearn.utils.multiclass import is_multilabel
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.multiclass import class_distribution
@@ -221,17 +220,6 @@ def test_unique_labels_mixed_types():
 
 def test_is_multilabel():
     for group, group_examples in iteritems(EXAMPLES):
-        if group.startswith('multilabel'):
-            assert_, exp = assert_true, 'True'
-        else:
-            assert_, exp = assert_false, 'False'
-        for example in group_examples:
-            assert_(is_multilabel(example),
-                    msg='is_multilabel(%r) should be %s' % (example, exp))
-
-
-def test_is_label_indicator_matrix():
-    for group, group_examples in iteritems(EXAMPLES):
         if group in ['multilabel-indicator']:
             dense_assert_, dense_exp = assert_true, 'True'
         else:
@@ -257,8 +245,8 @@ def test_is_label_indicator_matrix():
                                                          dok_matrix,
                                                          lil_matrix]]
                 for exmpl_sparse in examples_sparse:
-                    sparse_assert_(is_label_indicator_matrix(exmpl_sparse),
-                                   msg=('is_label_indicator_matrix(%r)'
+                    sparse_assert_(is_multilabel(exmpl_sparse),
+                                   msg=('is_multilabel(%r)'
                                    ' should be %s')
                                    % (exmpl_sparse, sparse_exp))
 
@@ -266,8 +254,8 @@ def test_is_label_indicator_matrix():
             if issparse(example):
                 example = example.toarray()
 
-            dense_assert_(is_label_indicator_matrix(example),
-                          msg='is_label_indicator_matrix(%r) should be %s'
+            dense_assert_(is_multilabel(example),
+                          msg='is_multilabel(%r) should be %s'
                           % (example, dense_exp))
 
 
