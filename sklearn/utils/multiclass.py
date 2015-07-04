@@ -259,10 +259,13 @@ def type_of_target(y):
     if y.ndim == 2 and y.shape[1] == 0:
         return 'unknown'
 
-    # Check if y is in the  deprecated sequence of sequences format
-    if (not hasattr(y[0], '__array__') and isinstance(y[0], Sequence)
-            and not isinstance(y[0], string_types)):
-        return "unknown"
+    try:
+        # Check if y is in the  deprecated sequence of sequences format
+        if (not hasattr(y[0], '__array__') and isinstance(y[0], Sequence)
+                and not isinstance(y[0], string_types)):
+            return "unknown"
+    except IndexError:
+        pass
 
     if y.ndim == 2 and y.shape[1] > 1:
         suffix = '-multioutput'
