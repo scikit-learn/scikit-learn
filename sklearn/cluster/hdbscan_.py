@@ -11,7 +11,6 @@ HDBSCAN: Hierarchical Density-Based Spatial Clustering
 import warnings
 
 import numpy as np
-import pandas as pd
 
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
