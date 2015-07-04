@@ -1,6 +1,8 @@
+
 from __future__ import division
 import numpy as np
 import scipy.sparse as sp
+from itertools import product
 
 from sklearn.externals.six.moves import xrange
 from sklearn.externals.six import iteritems
@@ -199,6 +201,22 @@ def test_unique_labels_non_specific():
                    'multiclass-multioutput']:
         for example in EXAMPLES[y_type]:
             assert_raises(ValueError, unique_labels, example)
+
+
+def test_unique_labels_mixed_types():
+    # Mix with binary or multiclass and multilabel
+    mix_clf_format = product(EXAMPLES["multilabel-indicator"],
+                             EXAMPLES["multiclass"] +
+                             EXAMPLES["binary"])
+
+    for y_multilabel, y_multiclass in mix_clf_format:
+        assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
+        assert_raises(ValueError, unique_labels, y_multilabel, y_multiclass)
+
+    assert_raises(ValueError, unique_labels, [[1, 2]], [["a", "d"]])
+    assert_raises(ValueError, unique_labels, ["1", 2])
+    assert_raises(ValueError, unique_labels, [["1", 2], [1, 3]])
+    assert_raises(ValueError, unique_labels, [["1", "2"], [2, 3]])
 
 
 def test_is_multilabel():
