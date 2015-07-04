@@ -1570,6 +1570,10 @@ def train_test_split(*arrays, **options):
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
 
+    return_indices: boolean (default is False)
+        If True, the indices of the train and test split will additionally be
+        returned.
+
     stratify : array-like or None (default is None)
         If not None, data is split in a stratified fashion, using this as
         the labels array.
@@ -1577,7 +1581,9 @@ def train_test_split(*arrays, **options):
     Returns
     -------
     splitting : list of arrays, length=2 * len(arrays)
-        List containing train-test split of input array.
+        List containing train-test split of input array. If return_indices
+        is True, the indices of the train and test split will additionally be
+        returned.
 
     Examples
     --------
@@ -1616,6 +1622,7 @@ def train_test_split(*arrays, **options):
     test_size = options.pop('test_size', None)
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
+    return_indices = options.pop('return_indices', False)
     dtype = options.pop('dtype', None)
     if dtype is not None:
         warnings.warn("dtype option is ignored and will be removed in 0.18.",
@@ -1654,8 +1661,12 @@ def train_test_split(*arrays, **options):
                           random_state=random_state)
 
     train, test = next(iter(cv))
-    return list(chain.from_iterable((safe_indexing(a, train),
-                                     safe_indexing(a, test)) for a in arrays))
+    splitted = list(chain.from_iterable((safe_indexing(a, train),
+                                         safe_indexing(a, test))
+                                        for a in arrays))
+    if return_indices:
+        splitted += list((train, test))
+    return splitted
 
 
 train_test_split.__test__ = False  # to avoid a pb with nosetests
