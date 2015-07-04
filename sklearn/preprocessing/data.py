@@ -195,20 +195,20 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
 
 class MinMaxScaler(BaseEstimator, TransformerMixin):
-    """Standardizes features by scaling each feature to a given range.
+    """Transforms features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
     that it is in the given range on the training set, i.e. between
     zero and one.
 
-    The standardization is given by::
+    The transformation is given by::
 
         X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
         X_scaled = X_std * (max - min) + min
 
     where min, max = feature_range.
 
-    This standardization is often used as an alternative to zero mean,
+    This transformation is often used as an alternative to zero mean,
     unit variance scaling.
 
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
@@ -291,20 +291,20 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
 
 def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
-    """Standardizes features by scaling each feature to a given range.
+    """Transforms features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
     that it is in the given range on the training set, i.e. between
     zero and one.
 
-    The standardization is given by::
+    The transformation is given by::
 
         X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
         X_scaled = X_std * (max - min) + min
 
     where min, max = feature_range.
 
-    This standardization is often used as an alternative to zero mean,
+    This transformation is often used as an alternative to zero mean,
     unit variance scaling.
 
     Read more in the :ref:`User Guide <preprocessing_scaler>`.

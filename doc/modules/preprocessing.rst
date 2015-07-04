@@ -173,9 +173,9 @@ Here is how to use the toy data from the previous example with this scaler::
   array([ 2.,  1.,  2.])
 
 
-As with :func:`scale`, the module further provides
-convenience functions :func:`minmax_scale` and :func:`maxabs_scale` if you
-don't want to create an object.
+As with :func:`scale`, the module further provides convenience functions
+:func:`minmax_scale` and :func:`maxabs_scale` if you don't want to create
+an object.
 
 
 Scaling sparse data
