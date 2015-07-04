@@ -49,9 +49,13 @@ def mutual_reachability(distance_matrix, min_points=5):
     """
     dim = distance_matrix.shape[0]
     min_points = min(dim - 1, min_points)
-    core_distances = np.partition(distance_matrix, 
-                                  min_points, 
-                                  axis=0)[min_points]
+    try:
+        core_distances = np.partition(distance_matrix, 
+                                      min_points, 
+                                      axis=0)[min_points]
+    except AttributeError:
+        core_distances = np.sort(distance_matrix,
+                                 axis=0)[min_points]        
                                   
     stage1 = np.where(core_distances > distance_matrix, 
                       core_distances, distance_matrix)
