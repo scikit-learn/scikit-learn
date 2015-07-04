@@ -118,9 +118,6 @@ EXAMPLES = {
     'unknown': [
         # multilabel sequences
         [[0, 1]],
-        [[0], [1]],
-        [[1, 2, 3]],
-        [[1, 2, 1]],  # duplicated label in seq. of seq
         [[1], [2], [0, 1]],
         [(), (2), (0, 1)],
         [[]],
@@ -261,8 +258,8 @@ def test_type_of_target():
     for group, group_examples in iteritems(EXAMPLES):
         for example in group_examples:
             assert_equal(type_of_target(example), group,
-                         msg='type_of_target(%r) should be %r, got %r'
-                         % (example, group, type_of_target(example)))
+                         msg=('type_of_target(%r) should be %r, got %r'
+                              % (example, group, type_of_target(example))))
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
         assert_raises(ValueError, type_of_target, example)

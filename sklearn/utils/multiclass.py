@@ -1,3 +1,4 @@
+
 # Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
 #
 # License: BSD 3 clause
@@ -269,7 +270,6 @@ def type_of_target(y):
 
     if y.ndim == 2 and y.shape[1] > 1:
         suffix = '-multioutput'
-
     else:
         # column vector or 1d
         suffix = ''
@@ -278,7 +278,8 @@ def type_of_target(y):
     if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
         return 'continuous' + suffix
     if len(np.unique(y)) <= 2:
-        assert not suffix, "2d binary array-like should be multilabel"
+        if suffix == "-multioutput":
+            return 'unknown'  # [[1, 2, 3]]
         return 'binary'
     else:
         return 'multiclass' + suffix
