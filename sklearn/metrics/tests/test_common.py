@@ -664,6 +664,10 @@ def test_multilabel_representation_invariance():
                                            random_state=1, n_samples=n_samples,
                                            allow_unlabeled=True)
 
+    # To make sure at least one empty label is present
+    y1 += [0]*n_classes
+    y2 += [0]*n_classes
+
     y1_sparse_indicator = sp.coo_matrix(y1)
     y2_sparse_indicator = sp.coo_matrix(y2)
 
@@ -738,7 +742,7 @@ def test_normalize_option_multilabel_classification():
     n_classes = 4
     n_samples = 100
 
-    # for both random_state 0 and 1, y_true and y_pred has atleast one
+    # for both random_state 0 and 1, y_true and y_pred has at least one
     # unlabelled entry
     _, y_true = make_multilabel_classification(n_features=1,
                                                n_classes=n_classes,
@@ -750,6 +754,10 @@ def test_normalize_option_multilabel_classification():
                                                random_state=1,
                                                allow_unlabeled=True,
                                                n_samples=n_samples)
+
+    # To make sure at least one empty label is present
+    y_true += [0]*n_classes
+    y_pred += [0]*n_classes
 
     for name in METRICS_WITH_NORMALIZE_OPTION:
         metrics = ALL_METRICS[name]
