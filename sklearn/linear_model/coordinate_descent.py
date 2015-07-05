@@ -24,6 +24,7 @@ from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..utils import ConvergenceWarning
+from ..utils.sparsefuncs import inplace_csr_column_scale
 
 from . import cd_fast
 
@@ -604,7 +605,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         Parameters
         -----------
-        X : ndarray or scipy.sparse matrix, (n_samples, n_features)
+        X : ndarray or scipy.sparse matrix, shape (n_samples, n_features)
             Data
 
         y : ndarray, shape (n_samples,) or (n_samples, n_targets)
@@ -2034,35 +2035,46 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
             cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
             selection=selection)
 
+
 class AdaptiveLasso(Lasso):
-    """
-    The multi-step adaptive Lasso iteratively solves Lasso estimates with 
+    """The multi-step adaptive Lasso iteratively solves Lasso estimates with
     penalty weights applied to the regularization of the coefficients.
-    The optimization objective for the adaptive Lasso is::
-        1/n * ||y - X Beta||^2_2 + alpha * w |Beta|_1
+
+    The optimization objective for the AdaptiveLasso is::
+
+        (1 / (2 * n_samples)) * ||y - X Beta||^2_2
+        + alpha * p(|Beta|_1 + eps)
+
+    Where p is defined by ::
+
+        p'(x) = 1 / (|x|^gamma)
+
+    In each step in the AdaptiveLasso, the optimization objective is::
+
+        (1 / (2 * n_samples)) * ||y - X Beta||^2_2
+        + alpha * w * |Beta|_1
 
     Where w is a weight vector calculated in the previous stage by::
-        w_j = alpha/(|Beta_j|^gamma + eps)
+
+        w_j = alpha * 1 / (|Beta_j| ^ gamma + eps)
 
     Parameters
     ----------
-    n_lasso_iterations : integer, optional (default=5)
-        Number of lasso iterations to fit. n_lasso_iterations = 1 is equivalent 
+    n_lasso_iterations : integer, optional (default=2)
+        Number of lasso iterations to fit. n_lasso_iterations = 1 is equivalent
         to a Lasso, solved by the :class:`Lasso`, and n_lasso_iterations = 2 is
         equivalent to an adaptive Lasso.
     gamma : float, optional (default=1.0)
-        The exponent to raise the previous iteration's estimate by. 
+        The exponent to raise the previous iteration's estimate by.
         Common choices are 0.5, 1 and 2.
-    alpha : float or array of floats, shape = [n_lasso_iterations], optional (default=1.0)
+    alpha : float, optional (default=1.0)
         Regularization term that multiplies the L1 term at each iteration.
         ``alpha = 0`` is equivalent to an ordinary least square, solved
         by the :class:`LinearRegression` object. For numerical
         reasons, using ``alpha = 0`` is with the Lasso object is not advised
         and you should prefer the LinearRegression object.
-        - if float: each iteration will use the same regularization.
-        - if array-like: each iteration uses the specified regularization.
-    eps : float, optional
-        Stability parameter to ensure that a zero valued coefficient does not 
+    eps : float, optional (default=1e-3)
+        Stability parameter to ensure that a zero valued coefficient does not
         prohibit a nonzero estimate in the next iteration.
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -2098,24 +2110,45 @@ class AdaptiveLasso(Lasso):
         a random feature to update. Useful only when selection is set to
         'random'.
 
-    Notes
-    -----
-    The algorithm for the iterative reweighting is described in:
-    Enhancing Sparsity by Reweighted L1 Minimization, Candes, Emmanuel J., 
-    Michael B. Wakin, and Stephen P. Boyd. 
-    Journal of Fourier Analysis and Applications 2008-10-15
-    
-    The algorithm for the adaptive lasso is described in:
-    The Adaptive Lasso and Its Oracle Properties, Zou, Hui. 
-    Journal of the American Statistical Association
+    Attributes
+    ----------
+    coef_ : array, shape (n_features,) | (n_targets, n_features)
+        parameter vector (w in the cost function formula)
+
+    sparse_coef_ : scipy.sparse matrix, shape (n_features, 1) | \
+            (n_targets, n_features)
+        ``sparse_coef_`` is a readonly property derived from ``coef_``
+
+    intercept_ : float | array, shape (n_targets,)
+        independent term in decision function.
+
+    n_iter_ : int | array-like, shape (n_targets,)
+        number of iterations run by the coordinate descent solver to reach
+        the specified tolerance.
 
     See also
     --------
     Lasso
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    Zou, H., & Li, R.
+    One-step sparse estimates in nonconcave penalized likelihood models.
+    The Annals of Statistics Ann. Statist., 1509-1533.
+
+    Buhlmann, P., & Meier, L.
+    Discussion: One-step sparse estimates in nonconcave penalized likelihood
+    models.
+    The Annals of Statistics Ann. Statist., 1534-1541.
+
+    Zou, Hui.
+    The Adaptive Lasso and Its Oracle Properties
+    Journal of the American Statistical Association
     """
-    
-    def __init__(self, n_lasso_iterations = 5, gamma = 1, alpha=1.0,
-                 eps = None, fit_intercept=True, normalize=False,
+    def __init__(self, n_lasso_iterations=2, gamma=1, alpha=1.0,
+                 eps=1e-3, fit_intercept=True, normalize=False,
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, positive=False,
                  random_state=None, selection='cyclic'):
@@ -2128,48 +2161,41 @@ class AdaptiveLasso(Lasso):
         self.n_lasso_iterations = n_lasso_iterations
         self.gamma = gamma
         self.eps = eps
-        
+
     def fit(self, X, y):
         """
         Fit Lasso models, each with coordinate descent.
+        
         Parameters
         -----------
-        X : ndarray or scipy.sparse matrix, (n_samples, n_features)
+        X : ndarray or scipy.sparse matrix, shape (n_samples, n_features)
             Data
-        y : ndarray, shape = (n_samples,) or (n_samples, n_targets)
+        y : ndarray, shape (n_samples,) or (n_samples, n_targets)
             Target
         """
-        if self.eps is None:
-            eps_ = np.finfo(float).eps
-        else:
-            eps_ = self.eps
-            
         if self.gamma <= 0:
             raise ValueError('gamma must be positive.')
 
-        alphas = column_or_1d(np.atleast_1d(self.alpha))
-        
-        if alphas.shape[0] != 1 and alphas.shape[0] != self.n_lasso_iterations:
-            raise ValueError("alpha must be a float or an array of length=%s" % repr(self.n_lasso_iterations))
-        if alphas.shape[0] != self.n_lasso_iterations:
-            alphas = column_or_1d(np.repeat(np.atleast_1d(self.alpha),  self.n_lasso_iterations))
-        
         X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
-                 order='F', copy=self.copy_X and self.fit_intercept,
-                 multi_output=True, y_numeric=True)
+                         order='F', copy=self.copy_X and self.fit_intercept,
+                         multi_output=True, y_numeric=True)
 
         X, y, X_mean, y_mean, X_std, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
                      self.fit_intercept, copy=True)
-        
+
         n_samples, n_features = X.shape
         weights = np.ones(n_features)
+        X_sparse = sparse.isspmatrix(X)
 
         for k in range(self.n_lasso_iterations):
-            X_w = np.divide(X,weights[np.newaxis, :])
-            self.alpha = alphas[k]
+            if X_sparse:
+                X_w = X.copy()
+                inplace_csr_column_scale(X_w, weights)
+            else:
+                X_w = np.divide(X, weights[np.newaxis, :])
             super(AdaptiveLasso, self).fit(X_w, y)
             self.coef_ /= weights
-            weights = np.power(np.abs(self.coef_) + eps_, -self.gamma)
+            weights = np.power(np.abs(self.coef_) + self.eps, -self.gamma)
 
         return self
