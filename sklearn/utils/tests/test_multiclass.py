@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.multiclass import is_multilabel
@@ -117,14 +118,8 @@ EXAMPLES = {
         np.array([[0, .5]]),
     ],
     'unknown': [
-        # multilabel sequences
-        [[0, 1]],
-        [[1], [2], [0, 1]],
-        [(), (2), (0, 1)],
         [[]],
         [()],
-        np.array([[], [1, 2]], dtype='object'),
-        NotAnArray(np.array([[], [1, 2]], dtype='object')),
         # sequence of sequences that were'nt supported even before deprecation
         np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
         [np.array([]), np.array([1, 2, 3])],
@@ -149,6 +144,13 @@ NON_ARRAY_LIKE_EXAMPLES = [
     'abc',
     frozenset([1, 2, 3]),
     None,
+]
+
+MULTILABEL_SEQUENCES = [
+    [[1], [2], [0, 1]],
+    [(), (2), (0, 1)],
+    np.array([[], [1, 2]], dtype='object'),
+    NotAnArray(np.array([[], [1, 2]], dtype='object'))
 ]
 
 
@@ -260,7 +262,6 @@ def test_is_multilabel():
 
 
 def test_type_of_target():
-    # seq of seq is included in the 'unknown' list
     for group, group_examples in iteritems(EXAMPLES):
         for example in group_examples:
             assert_equal(type_of_target(example), group,
@@ -268,7 +269,14 @@ def test_type_of_target():
                               % (example, group, type_of_target(example))))
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
-        assert_raises(ValueError, type_of_target, example)
+        msg_regex = 'Expected array-like \(array or non-string sequence\).*'
+        assert_raises_regex(ValueError, msg_regex, type_of_target, example)
+
+    for example in MULTILABEL_SEQUENCES:
+        msg = ('You appear to be using a legacy multi-label data '
+               'representation. Sequence of sequences are no longer supported;'
+               ' use a binary array or sparse matrix instead.')
+        assert_raises_regex(ValueError, msg, type_of_target, example)
 
 
 def test_class_distribution():

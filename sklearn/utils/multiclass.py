@@ -195,11 +195,17 @@ def type_of_target(y):
     'binary'
     >>> type_of_target(['a', 'b', 'a'])
     'binary'
+    >>> type_of_target([1.0, 2.0])
+    'binary'
     >>> type_of_target([1, 0, 2])
+    'multiclass'
+    >>> type_of_target([1.0, 0.0, 3.0])
     'multiclass'
     >>> type_of_target(['a', 'b', 'c'])
     'multiclass'
     >>> type_of_target(np.array([[1, 2], [3, 1]]))
+    'multiclass-multioutput'
+    >>> type_of_target([[1, 2]])
     'multiclass-multioutput'
     >>> type_of_target(np.array([[1.5, 2.0], [3.0, 1.6]]))
     'continuous-multioutput'
@@ -208,6 +214,7 @@ def type_of_target(y):
     """
     valid = ((isinstance(y, (Sequence, spmatrix)) or hasattr(y, '__array__'))
              and not isinstance(y, string_types))
+
     if not valid:
         raise ValueError('Expected array-like (array or non-string sequence), '
                          'got %r' % y)
@@ -218,39 +225,42 @@ def type_of_target(y):
     try:
         y = np.asarray(y)
     except ValueError:
-        # known to fail in numpy 1.3 for array of arrays
+        # Known to fail in numpy 1.3 for array of arrays
         return 'unknown'
 
-    if y.ndim > 2 or (y.dtype == object and len(y) and
-                      not isinstance(y.flat[0], string_types)):
-        return 'unknown'
-
-    if y.ndim == 2 and y.shape[1] == 0:
-        return 'unknown'
-
+    # The old sequence of sequences format
     try:
-        # Check if y is in the  deprecated sequence of sequences format
         if (not hasattr(y[0], '__array__') and isinstance(y[0], Sequence)
                 and not isinstance(y[0], string_types)):
-            return "unknown"
+            raise ValueError('You appear to be using a legacy multi-label data'
+                             ' representation. Sequence of sequences are no'
+                             ' longer supported; use a binary array or sparse'
+                             ' matrix instead.')
     except IndexError:
         pass
 
-    if y.ndim == 2 and y.shape[1] > 1:
-        suffix = '-multioutput'
-    else:
-        # column vector or 1d
-        suffix = ''
+    # Invalid inputs
+    if y.ndim > 2 or (y.dtype == object and len(y) and
+                      not isinstance(y.flat[0], string_types)):
+        return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
 
-    # check float and contains non-integer float values:
-    if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
-        return 'continuous' + suffix
-    if len(np.unique(y)) <= 2:
-        if suffix == "-multioutput":
-            return 'unknown'  # [[1, 2, 3]]
-        return 'binary'
+    if y.ndim == 2 and y.shape[1] == 0:
+        return 'unknown'  # [[]]
+
+    if y.ndim == 2 and y.shape[1] > 1:
+        suffix = "-multioutput"  # [[1, 2], [1, 2]]
     else:
-        return 'multiclass' + suffix
+        suffix = ""  # [1, 2, 3] or [[1], [2], [3]]
+
+    # check float and contains non-integer float values
+    if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
+        # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
+        return 'continuous' + suffix
+
+    if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
+        return 'multiclass' + suffix  # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
+    else:
+        return 'binary'  # [1, 2] or [["a"], ["b"]]
 
 
 def _check_partial_fit_first_call(clf, classes=None):
