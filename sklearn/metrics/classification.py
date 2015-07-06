@@ -976,7 +976,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         labels = np.hstack([labels, np.setdiff1d(present_labels, labels,
                                                  assume_unique=True)])
 
-    ###Calculate tp_sum, pred_sum, true_sum ###
+    ### Calculate tp_sum, pred_sum, true_sum ###
 
     if y_type.startswith('multilabel'):
         sum_axis = 1 if average == 'samples' else 0
@@ -1047,7 +1047,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         pred_sum = np.array([pred_sum.sum()])
         true_sum = np.array([true_sum.sum()])
 
-    ###Finally, we have all our sufficient statistics. Divide! ###
+    ### Finally, we have all our sufficient statistics. Divide! ###
 
     beta2 = beta ** 2
     with np.errstate(divide='ignore', invalid='ignore'):
