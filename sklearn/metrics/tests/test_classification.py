@@ -1122,8 +1122,10 @@ def test__check_targets():
     # Make sure seq of seq is not supported
     y1 = [(1, 2,), (0, 2, 3)]
     y2 = [(2,), (0, 2,)]
-    assert_raise_message(ValueError, "unknown is not supported",
-                         _check_targets, y1, y2)
+    msg = ('You appear to be using a legacy multi-label data representation. '
+           'Sequence of sequences are no longer supported; use a binary array'
+           ' or sparse matrix instead.')
+    assert_raise_message(ValueError, msg, _check_targets, y1, y2)
 
 
 def test_hinge_loss_binary():
