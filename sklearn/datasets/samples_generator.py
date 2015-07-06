@@ -7,7 +7,6 @@ Generate samples of synthetic data sets.
 # License: BSD 3 clause
 
 import numbers
-import warnings
 import array
 import numpy as np
 from scipy import linalg
