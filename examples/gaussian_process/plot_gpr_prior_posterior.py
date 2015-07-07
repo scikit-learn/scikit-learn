@@ -18,8 +18,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels \
-    import RBF, RationalQuadratic, ExpSineSquared, DotProduct, ConstantKernel
+from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
+    ExpSineSquared, DotProduct, ConstantKernel)
 
 
 kernels = [1.0 * RBF(l=1.0, l_bounds=(1e-1, 10.0)),
@@ -27,11 +27,10 @@ kernels = [1.0 * RBF(l=1.0, l_bounds=(1e-1, 10.0)),
            1.0 * ExpSineSquared(l=1.0, p=3.0, l_bounds=(0.1, 10.0),
                                 p_bounds=(1.0, 10.0)),
            ConstantKernel(0.1, (0.01, 10.0)) \
-                * (DotProduct(sigma_0=1.0, sigma_0_bounds=(0.0, 10.0)) ** 2)]
+                * (DotProduct(sigma_0=1.0, sigma_0_bounds=(0.0, 10.0)) ** 2),
+           1.0 * Matern(l=1.0, l_bounds=(1e-1, 10.0), nu=1.5)]
 
 for fig_index, kernel in enumerate(kernels):
-    if fig_index > 3: continue
-
     # Specify Gaussian Process
     gp = GaussianProcessRegressor(kernel=kernel)
 
@@ -70,7 +69,8 @@ for fig_index, kernel in enumerate(kernels):
     plt.scatter(X[:, 0], y, c='r', s=50, zorder=10)
     plt.xlim(0, 5)
     plt.ylim(-3, 3)
-    plt.title("Posterior (kernel: %s)" % gp.kernel_)
+    plt.title("Posterior (kernel: %s)\n Log-Likelihood: %.3f"
+              % (gp.kernel_, gp.log_marginal_likelihood(gp.kernel_.theta)))
     plt.tight_layout()
 
 plt.show()

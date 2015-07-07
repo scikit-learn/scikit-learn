@@ -10,23 +10,32 @@ import numpy as np
 
 from scipy.optimize import approx_fprime
 
-from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
+from sklearn.metrics.pairwise \
+    import PAIRWISE_KERNEL_FUNCTIONS, euclidean_distances
 from sklearn.gaussian_process.kernels \
-    import (RBF, RationalQuadratic, ExpSineSquared, DotProduct,
+    import (RBF, Matern, RationalQuadratic, ExpSineSquared, DotProduct,
             ConstantKernel, WhiteKernel, PairwiseKernel, KernelOperator,
             Exponentiation)
 from sklearn.base import clone
 
 from sklearn.utils.testing import (assert_equal, assert_almost_equal,
-    assert_not_equal, assert_array_equal)
+    assert_not_equal, assert_array_equal, assert_array_almost_equal)
 
 
-X = np.random.normal(0, 1, (10, 2))
+X = np.random.RandomState(0).normal(0, 1, (10, 2))
 
 kernels = [RBF(l=2.0), RBF(l_bounds=(0.5, 2.0)),
            ConstantKernel(c=10.0),
+           2.0 * RBF(l=0.33, l_bounds="fixed"),
            2.0 * RBF(l=0.5), RBF(l=2.0) + WhiteKernel(c=3.0),
            2.0 * RBF(l=[0.5, 2.0]),
+           2.0 * Matern(l=0.33, l_bounds="fixed"),
+           2.0 * Matern(l=0.5, nu=0.5),
+           2.0 * Matern(l=1.5, nu=1.5),
+           2.0 * Matern(l=2.5, nu=2.5),
+           2.0 * Matern(l=[0.5, 2.0], nu=0.5),
+           3.0 * Matern(l=[2.0, 0.5], nu=1.5),
+           4.0 * Matern(l=[0.5, 0.5], nu=2.5),
            RationalQuadratic(l=0.5, alpha=1.5),
            ExpSineSquared(l=0.5, p=1.5),
            DotProduct(sigma_0=2.0), DotProduct(sigma_0=2.0) ** 2]
@@ -185,3 +194,22 @@ def test_kernel_clone():
             if not isinstance(attr_value, Hashable):
                 # modifiable attributes must not be identical
                 assert_not_equal(id(attr_value), id(attr_value_cloned))
+
+
+def test_matern_kernel():
+    """ Test consistency of Matern kernel for special values of nu. """
+    K = Matern(nu=1.5, l=1.0)(X)
+    # the diagonal elements of a matern kernel are 1
+    assert_array_almost_equal(np.diag(K), np.ones(X.shape[0]))
+    # matern kernel for coef0==0.5 is equal to absolute exponential kernel
+    K_absexp = np.exp(-euclidean_distances(X, X, squared=False))
+    K = Matern(nu=0.5, l=1.0)(X)
+    assert_array_almost_equal(K, K_absexp)
+    # test that special cases of matern kernel (coef0 in [0.5, 1.5, 2.5])
+    # result in nearly identical results as the general case for coef0 in
+    # [0.5 + tiny, 1.5 + tiny, 2.5 + tiny]
+    tiny = 1e-10
+    for nu in [0.5, 1.5, 2.5]:
+        K1 = Matern(nu=nu, l=1.0)(X)
+        K2 = Matern(nu=nu + tiny, l=1.0)(X)
+        assert_array_almost_equal(K1, K2)
