@@ -20,6 +20,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
+from sklearn.utils.validation import NotFittedError
 from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
 from sklearn.utils.testing import assert_warns_message, assert_raise_message
@@ -844,11 +845,23 @@ def test_lsvc_intercept_scaling_zero():
     assert_equal(lsvc.intercept_, 0.)
 
 
-def test_trick_proba():
-    # Test that the right error message is thrown when self.probability is manually set to be True
+def test_hasattr_predict_proba():
+    # Method must be (un)available before or after fit, switched by
+    # `probability` param
 
-    G = svm.SVC()
+    G = svm.SVC(probability=True)
+    assert_true(hasattr(G, 'predict_proba'))
     G.fit(iris.data, iris.target)
+    assert_true(hasattr(G, 'predict_proba'))
+
+    G = svm.SVC(probability=False)
+    assert_false(hasattr(G, 'predict_proba'))
+    G.fit(iris.data, iris.target)
+    assert_false(hasattr(G, 'predict_proba'))
+
+    # Switching to `probability=True` after fitting should make
+    # predict_proba available, but calling it must not work:
     G.probability = True
+    assert_true(hasattr(G, 'predict_proba'))
     msg = "predict_proba is not available when fitted with probability=False"
-    assert_raise_message(AttributeError, msg, getattr, G, "predict_proba")
+    assert_raise_message(NotFittedError, msg, G.predict_proba, iris.data)
