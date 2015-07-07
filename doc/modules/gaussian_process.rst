@@ -182,7 +182,7 @@ different properties of the signal:
  - smaller, medium term irregularities are to be explained by a
    RationalQuadratic kernel component, whose length-scale and alpha parameter,
    which determines the diffuseness of the length-scales, are to be determined.
-   According to [RW2006], these irregularities can better be explained by
+   According to [RW2006]_, these irregularities can better be explained by
    a RationalQuadratic than an RBF kernel component, probably because it can
    accommodate several length-scales.
  - a "noise" term, consisting of an RBF kernel contribution, which shall
@@ -323,19 +323,63 @@ The :class:`RBF` kernel is a stationary kernel. It is also known as the "squared
 exponential" kernel. It is parameterized by a length-scale parameter :math:`l>0`, which
 can either be a scalar (isotropic variant of the kernel) or a vector with the same
 number of dimensions as the inputs :math:`x` (anisotropic variant of the kernel).
-The kernel given by:
+The kernel is given by:
 
 .. math::
    k(x_i, x_j) = \text{exp}\left(-\frac{1}{2} d(x_i / l, x_j / l)^2\right)
 
 This kernel is infinitely differentiable, which implies that GPs with this
 kernel as covariance function have mean square derivatives of all orders, and are thus
-very smooth. The prior and posterior of a GP resulting from an RBF kernel is shown in
+very smooth. The prior and posterior of a GP resulting from an RBF kernel are shown in
 the following figure:
 
 .. figure:: ../auto_examples/gaussian_process/images/plot_gpr_prior_posterior_000.png
    :target: ../auto_examples/gaussian_process/plot_gpr_prior_posterior.html
    :align: center
+
+
+Matérn kernel
+-------------
+The :class:`Matern` kernel is a stationary kernel and a generalization of the
+:class:`RBF` kernel. It has an additional parameter :math:`\nu` which controls
+the smoothness of the resulting function. It is parameterized by a length-scale parameter :math:`l>0`, which can either be a scalar (isotropic variant of the kernel) or a vector with the same number of dimensions as the inputs :math:`x` (anisotropic variant of the kernel). The kernel is given by:
+
+.. math::
+
+    k(x_i, x_j) = \sigma^2\frac{1}{\Gamma(\nu)2^{\nu-1}}\Bigg(\gamma\sqrt{2\nu} d(x_i / l, x_j / l)\Bigg)^\nu K_\nu\Bigg(\gamma\sqrt{2\nu} d(x_i / l, x_j / l)\Bigg),
+
+As :math:`\nu\rightarrow\infty`, the Matérn kernel converges to the RBF kernel.
+When :math:`\nu = 1/2`, the Matérn kernel becomes identical to the absolute
+exponential kernel, i.e.,
+
+.. math::
+    k(x_i, x_j) = \sigma^2 \exp \Bigg(-\gamma d(x_i / l, x_j / l) \Bigg) \quad \quad \nu= \tfrac{1}{2}
+
+In particular, :math:`\nu = 3/2`:
+
+.. math::
+    k(x_i, x_j) = \sigma^2 \Bigg(1 + \gamma \sqrt{3} d(x_i / l, x_j / l)\Bigg) \exp \Bigg(-\gamma \sqrt{3}d(x_i / l, x_j / l) \Bigg) \quad \quad \nu= \tfrac{3}{2}
+
+and :math:`\nu = 5/2`:
+
+.. math::
+    k(x_i, x_j) = \sigma^2 \Bigg(1 + \gamma \sqrt{5}d(x_i / l, x_j / l) +\frac{5}{3} \gamma^2d(x_i / l, x_j / l)^2 \Bigg) \exp \Bigg(-\gamma \sqrt{5}d(x_i / l, x_j / l) \Bigg) \quad \quad \nu= \tfrac{5}{2}
+
+are popular choices for learning functions that are not infinitely
+differentiable (as assumed by the RBF kernel) but at least once (:math:`\nu =
+3/2`) or twice differentiable (:math:`\nu = 5/2`).
+
+The flexibility of controlling the smoothness of the learned function via :math:`\nu`
+allows adapting to the properties of the true underlying functional relation.
+The prior and posterior of a GP resulting from a Matérn kernel are shown in
+the following figure:
+
+.. figure:: ../auto_examples/gaussian_process/images/plot_gpr_prior_posterior_004.png
+   :target: ../auto_examples/gaussian_process/plot_gpr_prior_posterior.html
+   :align: center
+
+See [RW2006]_, pp84 for further details regarding the
+different variants of the Matérn kernel.
 
 Rational quadratic kernel
 -------------------------
@@ -344,12 +388,12 @@ The :class:`RationalQuadratic` kernel can be seen as a scale mixture (an infinit
 of :class:`RBF` kernels with different characteristic length-scales. It is parameterized
 by a length-scale parameter :math:`l>0` and a scale mixture parameter  :math:`\alpha>0`
 Only the isotropic variant where :math:`l` is a scalar is supported at the moment.
-The kernel given by:
+The kernel is given by:
 
 .. math::
    k(x_i, x_j) = \left(1 + \frac{d(x_i, x_j)^2}{2\alpha l^2}\right)^\alpha
 
-The prior and posterior of a GP resulting from an RBF kernel is shown in
+The prior and posterior of a GP resulting from an RBF kernel are shown in
 the following figure:
 
 .. figure:: ../auto_examples/gaussian_process/images/plot_gpr_prior_posterior_001.png
@@ -362,12 +406,12 @@ Exp-Sine-Squared kernel
 The :class:`ExpSineSquared` kernel allows modeling periodic functions.
 It is parameterized by a length-scale parameter :math:`l>0` and a periodicity parameter
 :math:`p>0`. Only the isotropic variant where :math:`l` is a scalar is supported at the moment.
-The kernel given by:
+The kernel is given by:
 
 .. math::
    k(x_i, x_j) = \text{exp}\left(-2 \text{sin}(\pi / p * d(x_i, x_j)) / l\right)^2
 
-The prior and posterior of a GP resulting from an ExpSineSquared kernel is shown in
+The prior and posterior of a GP resulting from an ExpSineSquared kernel are shown in
 the following figure:
 
 .. figure:: ../auto_examples/gaussian_process/images/plot_gpr_prior_posterior_002.png
