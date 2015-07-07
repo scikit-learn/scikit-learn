@@ -510,6 +510,7 @@ Kernels:
   gaussian_process.kernels.ConstantKernel
   gaussian_process.kernels.WhiteKernel
   gaussian_process.kernels.RBF
+  gaussian_process.kernels.Matern
   gaussian_process.kernels.RationalQuadratic
   gaussian_process.kernels.ExpSineSquared
   gaussian_process.kernels.DotProduct
