@@ -55,12 +55,12 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
         else:
             # Mode A regress each Y column on x_score
             y_weights = np.dot(Y.T, x_score) / np.dot(x_score.T, x_score)
-        ## 2.2 Normalize y_weights
+        # 2.2 Normalize y_weights
         if norm_y_weights:
             y_weights /= np.sqrt(np.dot(y_weights.T, y_weights)) + eps
         # 2.3 Update y_score: the Y latent scores
         y_score = np.dot(Y, y_weights) / (np.dot(y_weights.T, y_weights) + eps)
-        ## y_score = np.dot(Y, y_weights) / np.dot(y_score.T, y_score) ## BUG
+        # y_score = np.dot(Y, y_weights) / np.dot(y_score.T, y_score) ## BUG
         x_weights_diff = x_weights - x_weights_old
         if np.dot(x_weights_diff.T, x_weights_diff) < tol or Y.shape[1] == 1:
             break
@@ -277,7 +277,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
                 # Yk constant
                 warnings.warn('Y residual constant at iteration %s' % k)
                 break
-            #1) weights estimation (inner loop)
+            # 1) weights estimation (inner loop)
             # -----------------------------------
             if self.algorithm == "nipals":
                 x_weights, y_weights, n_iter_ = \
@@ -298,7 +298,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             if np.dot(x_scores.T, x_scores) < np.finfo(np.double).eps:
                 warnings.warn('X scores are null at iteration %s' % k)
                 break
-            #2) Deflation (in place)
+            # 2) Deflation (in place)
             # ----------------------
             # Possible memory footprint reduction may done here: in order to
             # avoid the allocation of a data chunk for the rank-one
@@ -556,13 +556,6 @@ class PLSRegression(_PLS):
                       norm_y_weights=False, max_iter=max_iter, tol=tol,
                       copy=copy)
 
-    @property
-    def coefs(self):
-        check_is_fitted(self, 'coef_')
-        DeprecationWarning("``coefs`` attribute has been deprecated and will be "
-                           "removed in version 0.17. Use ``coef_`` instead")
-        return self.coef_
-
 
 class PLSCanonical(_PLS):
     """ PLSCanonical implements the 2 blocks canonical PLS of the original Wold
@@ -737,8 +730,8 @@ class PLSSVD(BaseEstimator, TransformerMixin):
             Y = Y.reshape(-1, 1)
 
         if self.n_components > max(Y.shape[1], X.shape[1]):
-            raise ValueError("Invalid number of components n_components=%d with "
-                             "X of shape %s and Y of shape %s."
+            raise ValueError("Invalid number of components n_components=%d"
+                             " with X of shape %s and Y of shape %s."
                              % (self.n_components, str(X.shape), str(Y.shape)))
 
         # Scale (in place)
