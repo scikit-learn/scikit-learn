@@ -455,6 +455,17 @@ def test_precision_recall_curve():
     assert_equal(p.size, t.size + 1)
 
 
+def test_precision_recall_interpolate():
+    labels = [1, 0, 0, 1]
+    predict_probas = [1, 2, 3, 4]
+    p, r, t = precision_recall_curve(labels, predict_probas, interpolate=True)
+    assert_array_almost_equal(p, np.array([0.5, 0.5, 0.5, 1., 1.]))
+    assert_array_almost_equal(r, np.array([1., 0.5, 0.5, 0.5, 0.]))
+    assert_array_almost_equal(t, np.array([1, 2, 3, 4]))
+    assert_equal(p.size, r.size)
+    assert_equal(p.size, t.size + 1)
+
+
 def test_precision_recall_curve_pos_label():
     y_true, _, probas_pred = make_prediction(binary=False)
     pos_label = 2

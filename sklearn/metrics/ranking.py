@@ -364,10 +364,13 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
         Estimated probabilities or decision function.
 
     pos_label : int, optional (default=None)
-        The label of the positive class
+        The label of the positive class.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
+
+    interpolate : boolean, optional (default=False)
+        Interpolates precision score, to de-noise PR curve.
 
     Returns
     -------
@@ -411,9 +414,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     last_ind = tps.searchsorted(tps[-1])
     sl = slice(last_ind, None, -1)
 
-    if interpolate is False:
-        return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
-    else:
+    if interpolate:
         prec = np.r_[precision[sl], 1]
         p_temp = prec[0]
         n = len(prec)
@@ -423,6 +424,9 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
             else:
                 p_temp = prec[i]
         return prec, np.r_[recall[sl], 0], thresholds[sl]
+
+    else:
+        return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
 
 
 def roc_curve(y_true, y_score, pos_label=None, sample_weight=None):
