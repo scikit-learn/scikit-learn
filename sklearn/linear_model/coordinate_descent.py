@@ -2064,26 +2064,33 @@ class AdaptiveLasso(Lasso):
         Number of lasso iterations to fit. n_lasso_iterations = 1 is equivalent
         to a Lasso, solved by the :class:`Lasso`, and n_lasso_iterations = 2 is
         equivalent to an adaptive Lasso.
+
     gamma : float, optional (default=1.0)
         The exponent to raise the previous iteration's estimate by.
         Common choices are 0.5, 1 and 2.
+
     alpha : float, optional (default=1.0)
         Regularization term that multiplies the L1 term at each iteration.
         ``alpha = 0`` is equivalent to an ordinary least square, solved
         by the :class:`LinearRegression` object. For numerical
         reasons, using ``alpha = 0`` is with the Lasso object is not advised
         and you should prefer the LinearRegression object.
+
     eps : float, optional (default=1e-3)
         Stability parameter to ensure that a zero valued coefficient does not
         prohibit a nonzero estimate in the next iteration.
+
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
+
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
+
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
+
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
@@ -2091,20 +2098,25 @@ class AdaptiveLasso(Lasso):
         this option is always ``True`` to preserve sparsity.
         WARNING : The ``'auto'`` option is deprecated and will
         be removed in 0.18.
+
     max_iter : int, optional
         The maximum number of iterations
+
     tol : float, optional
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
+
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
+
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
+
     random_state : int, RandomState instance, or None (default)
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
@@ -2133,6 +2145,11 @@ class AdaptiveLasso(Lasso):
     Notes
     -----
     The algorithm used to fit the model is coordinate descent.
+
+    Gasso, G., Rakotomamonjy, A., & Canu, S.
+    Recovering Sparse Signals With a Certain Family of Nonconvex
+    Penalties and DC Programming
+    IEEE Trans. Signal Process., 4686-4698.
 
     Zou, H., & Li, R.
     One-step sparse estimates in nonconcave penalized likelihood models.
@@ -2165,11 +2182,12 @@ class AdaptiveLasso(Lasso):
     def fit(self, X, y):
         """
         Fit Lasso models, each with coordinate descent.
-        
+
         Parameters
         -----------
         X : ndarray or scipy.sparse matrix, shape (n_samples, n_features)
             Data
+
         y : ndarray, shape (n_samples,) or (n_samples, n_targets)
             Target
         """
