@@ -49,6 +49,12 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    average : bool or int, optional
+        When set to True, computes the averaged SGD weights and stores the
+        result in the ``coef_`` attribute. If set to an int greater than 1,
+        averaging will begin once the total number of samples seen reaches
+        average. So average=10 will begin averaging after seeing 10 samples.
+
     Attributes
     ----------
     coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
@@ -73,7 +79,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     """
     def __init__(self, C=1.0, fit_intercept=True,
                  n_iter=5, shuffle=True, verbose=0, loss="hinge",
-                 n_jobs=1, random_state=None, warm_start=False):
+                 n_jobs=1, random_state=None, warm_start=False, average=False):
         BaseSGDClassifier.__init__(self,
                                    penalty=None,
                                    fit_intercept=fit_intercept,
@@ -83,6 +89,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                                    random_state=random_state,
                                    eta0=1.0,
                                    warm_start=warm_start,
+                                   average=average,
                                    n_jobs=n_jobs)
         self.C = C
         self.loss = loss
@@ -186,6 +193,12 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    average : bool or int, optional
+        When set to True, computes the averaged SGD weights and stores the
+        result in the ``coef_`` attribute. If set to an int greater than 1,
+        averaging will begin once the total number of samples seen reaches
+        average. So average=10 will begin averaging after seeing 10 samples.
+
     Attributes
     ----------
     coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
@@ -210,7 +223,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     def __init__(self, C=1.0, fit_intercept=True, n_iter=5, shuffle=True,
                  verbose=0, loss="epsilon_insensitive",
                  epsilon=DEFAULT_EPSILON, random_state=None, class_weight=None,
-                 warm_start=False):
+                 warm_start=False, average=False):
         BaseSGDRegressor.__init__(self,
                                   penalty=None,
                                   l1_ratio=0,
@@ -221,7 +234,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
                                   shuffle=shuffle,
                                   verbose=verbose,
                                   random_state=random_state,
-                                  warm_start=warm_start)
+                                  warm_start=warm_start,
+                                  average=average)
         self.C = C
         self.loss = loss
 
