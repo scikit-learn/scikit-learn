@@ -14,7 +14,11 @@ from scipy.special import psi
 @cython.wraparound(False)
 def mean_change(np.ndarray[ndim=1, dtype=np.float64_t] arr_1,
                np.ndarray[ndim=1, dtype=np.float64_t] arr_2):
-    
+    """Calculate the mean difference between two arrarys
+
+    It is the same as `np.abs(arr_1 - arr2).mean()`
+    """
+
     cdef np.float64_t total, diff
     cdef np.npy_intp i, size
 
@@ -30,6 +34,11 @@ def mean_change(np.ndarray[ndim=1, dtype=np.float64_t] arr_1,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=np.float64_t] arr):
+    """Calculate 1 dimension dirichlet expectation
+
+    It is the same as `psi(arr) - psi(np.sum(arr))`
+    """
+
     cdef np.float64_t total, psi_total
     cdef np.ndarray[ndim=1, dtype=np.float64_t] d_exp
     cdef np.npy_intp i, size
@@ -51,6 +60,11 @@ def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=np.float64_t] arr):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=np.float64_t] arr):
+    """Calculate 2 dimension dirichlet expectation
+
+    It is the same as `psi(arr) - psi(np.sum(arr, 1))[:, np.newaxis]`
+    """
+
     cdef np.float64_t total, psi_total
     cdef np.ndarray[ndim=2, dtype=np.float64_t] d_exp
     cdef np.ndarray[ndim=1, dtype=np.float64_t] psi_row
