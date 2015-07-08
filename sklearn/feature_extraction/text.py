@@ -768,9 +768,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        j_indices = frombuffer_empty(j_indices, dtype=np.intc)
-        indptr = np.frombuffer(indptr, dtype=np.intc)
-        values = np.frombuffer(values, dtype=np.intc)
+        j_indices = frombuffer_empty(j_indices, dtype=np.int64)
+        indptr = np.frombuffer(indptr, dtype=np.int64)
+        values = np.frombuffer(values, dtype=np.int64)
 
         X = sp.csr_matrix((values, j_indices, indptr),
                           shape=(len(indptr) - 1, len(vocabulary)),
@@ -913,7 +913,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
 def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""
-    return array.array(str("i"))
+    return array.array(str("l"))
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
