@@ -770,7 +770,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         j_indices = frombuffer_empty(j_indices, dtype=np.int64)
         indptr = np.frombuffer(indptr, dtype=np.int64)
-        values = np.frombuffer(values, dtype=np.int64)
+        values = frombuffer_empty(values, dtype=np.int64)
 
         X = sp.csr_matrix((values, j_indices, indptr),
                           shape=(len(indptr) - 1, len(vocabulary)),
