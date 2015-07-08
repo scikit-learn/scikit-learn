@@ -335,7 +335,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
 
 def precision_recall_curve(y_true, probas_pred, pos_label=None,
-                           sample_weight=None):
+                           sample_weight=None, interpolate=False):
     """Compute precision-recall pairs for different probability thresholds
 
     Note: this implementation is restricted to the binary classification task.
@@ -410,7 +410,19 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     # and reverse the outputs so recall is decreasing
     last_ind = tps.searchsorted(tps[-1])
     sl = slice(last_ind, None, -1)
-    return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
+
+    if interpolate is False:
+        return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
+    else:
+        prec = np.r_[precision[sl], 1]
+        p_temp = prec[0]
+        n = len(prec)
+        for i in range(n):
+            if prec[i] < p_temp:
+                prec[i] = p_temp
+            else:
+                p_temp = prec[i]
+        return prec, np.r_[recall[sl], 0], thresholds[sl]
 
 
 def roc_curve(y_true, y_score, pos_label=None, sample_weight=None):
