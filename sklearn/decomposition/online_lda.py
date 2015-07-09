@@ -19,7 +19,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
                      gen_batches, gen_even_slices, _get_n_jobs)
 from ..utils.validation import NotFittedError, check_non_negative
-
+from ..utils.extmath import logsumexp
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
 
@@ -591,8 +591,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 ids = np.nonzero(X[idx_d, :])[0]
                 cnts = X[idx_d, ids]
             temp = dirichlet_doc_topic[idx_d, :, np.newaxis] + self.dirichlet_component_[:, ids]
-            tmax = temp.max(axis=0)
-            norm_phi = np.log(np.sum(np.exp(temp - tmax), axis=0)) + tmax
+            norm_phi = logsumexp(temp)
             score += np.dot(cnts, norm_phi)
 
         # compute E[log p(theta | alpha) - log q(theta | gamma)]
