@@ -82,6 +82,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                  max_features,
                  max_leaf_nodes,
                  random_state,
+                 monotonicity=None,
                  class_weight=None):
         self.criterion = criterion
         self.splitter = splitter
@@ -93,6 +94,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.random_state = random_state
         self.max_leaf_nodes = max_leaf_nodes
         self.class_weight = class_weight
+        self.monotonicity = monotonicity
 
         self.n_features_ = None
         self.n_outputs_ = None
@@ -251,6 +253,23 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                 raise ValueError("Number of weights=%d does not match "
                                  "number of samples=%d" %
                                  (len(sample_weight), n_samples))
+        # Validate monotonicity array
+        if self.monotonicity is not None:
+            if (getattr(self.monotonicity, "dtype", None) != np.int64 or
+                    not self.monotonicity.flags.contiguous):
+                self.monotonicity = np.ascontiguousarray(
+                    self.monotonicity, dtype=np.int64)
+            if len(self.monotonicity.shape) > 1:
+                raise ValueError("Monotonicity array has more "
+                                 "than one dimension: %d" %
+                                 len(self.monotonicity.shape))
+            if len(self.monotonicity) != self.n_features_:
+                raise ValueError("Number of monotonicity constraints=%d"
+                                 " does not match number of features=%d" %
+                                 (len(self.monotonicity), self.n_features_))
+
+            if not np.all([elem in [-1, 0, 1] for elem in self.monotonicity]):
+                raise ValueError("Illegal values passed for monotonicity.")
 
         if expanded_class_weight is not None:
             if sample_weight is not None:
@@ -303,7 +322,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                            max_depth,
                                            max_leaf_nodes)
 
-        builder.build(self.tree_, X, y, sample_weight)
+        builder.build(self.tree_, X, y, sample_weight, self.monotonicity)
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
@@ -726,6 +745,15 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    monotonicity : array-like, shape = [n_features] or None
+        Specifies the required monotonicity of outputs with
+        respect to each feature. Only decision trees which respect this
+        monotonicity are built. Values are -1 (output must be decreasing),
+        1 (output must be increasing), and 0 (no monotonicity constraint
+        is enforced).
+        Default value of None is equivalent to passing in
+        an array of all zeros.
+
     Attributes
     ----------
     feature_importances_ : array of shape = [n_features]
@@ -787,7 +815,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  min_weight_fraction_leaf=0.,
                  max_features=None,
                  random_state=None,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None,
+                 monotonicity=None):
         super(DecisionTreeRegressor, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -797,7 +826,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
-            random_state=random_state)
+            random_state=random_state,
+            monotonicity=monotonicity)
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -881,7 +911,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None,
+                 monotonicity=None):
         super(ExtraTreeRegressor, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -891,4 +922,5 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
-            random_state=random_state)
+            random_state=random_state,
+            monotonicity=monotonicity)

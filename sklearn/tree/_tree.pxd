@@ -32,6 +32,9 @@ cdef class Criterion:
     cdef SIZE_t y_stride                 # Stride in y (since n_outputs >= 1)
     cdef DOUBLE_t* sample_weight         # Sample weights
 
+    cdef long* monotonicity              # Required monotonicity (for each output)
+    cdef SIZE_t monotonicity_stride      # Stride in monotonicity (since n_outputs >= 1)
+
     cdef SIZE_t* samples                 # Sample indices in X, y
     cdef SIZE_t start                    # samples[start:pos] are the samples in the left node
     cdef SIZE_t pos                      # samples[pos:end] are the samples in the right node
@@ -49,6 +52,7 @@ cdef class Criterion:
 
     # Methods
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                   long* monotonicity, SIZE_t monotonicity_stride,
                    double weighted_n_samples, SIZE_t* samples, SIZE_t start,
                    SIZE_t end) nogil
     cdef void reset(self) nogil
@@ -58,6 +62,7 @@ cdef class Criterion:
                                 double* impurity_right) nogil
     cdef void node_value(self, double* dest) nogil
     cdef double impurity_improvement(self, double impurity) nogil
+    cdef int node_satisfies_monotonicity(self, SIZE_t feature) nogil
 
 
 # =============================================================================
@@ -106,6 +111,9 @@ cdef class Splitter:
     cdef SIZE_t y_stride
     cdef DOUBLE_t* sample_weight
 
+    cdef long* monotonicity          # Required monotonicity (for each output)
+    cdef SIZE_t monotonicity_stride      # Stride in monotonicity (since n_outputs >= 1)
+
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
     # `node_split` reorganizes the node samples `samples[start:end]` in two
@@ -124,7 +132,7 @@ cdef class Splitter:
 
     # Methods
     cdef void init(self, object X, np.ndarray y,
-                   DOUBLE_t* sample_weight) except *
+                   DOUBLE_t* sample_weight, np.ndarray monotonicity=*) except *
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end,
                          double* weighted_n_node_samples) nogil
@@ -214,5 +222,5 @@ cdef class TreeBuilder:
     cdef SIZE_t max_depth           # Maximal tree depth
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=*)
+                np.ndarray sample_weight=*, np.ndarray monotonicity=*)
     cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)

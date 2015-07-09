@@ -711,7 +711,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                  min_samples_leaf, min_weight_fraction_leaf,
                  max_depth, init, subsample, max_features,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False):
+                 warm_start=False, monotonicity=None):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -728,6 +728,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.verbose = verbose
         self.max_leaf_nodes = max_leaf_nodes
         self.warm_start = warm_start
+        self.monotonicity = monotonicity
 
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
@@ -756,14 +757,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                 min_weight_fraction_leaf=self.min_weight_fraction_leaf,
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
-                random_state=random_state)
+                random_state=random_state,
+                monotonicity=self.monotonicity)
 
             if self.subsample < 1.0:
                 # no inplace multiplication!
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
-            tree.fit(X, residual, sample_weight=sample_weight,
-                     check_input=False)
+            tree.fit(X, residual, sample_weight=sample_weight, check_input=False)
 
             # update tree leaves
             loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
@@ -944,8 +945,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             sample_weight = np.ones(n_samples, dtype=np.float32)
         else:
             sample_weight = column_or_1d(sample_weight, warn=True)
+        if self.monotonicity is not None:
+            self.monotonicity = column_or_1d(self.monotonicity, warn=True)
+            if not np.all([elem in [-1, 0, 1] for elem in self.monotonicity]):
+                raise ValueError("Illegal values passed for monotonicity.")
 
         check_consistent_length(X, y, sample_weight)
+        check_consistent_length(np.transpose(X), self.monotonicity)
 
         y = self._validate_y(y)
 
@@ -987,8 +993,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         return self
 
-    def _fit_stages(self, X, y, y_pred, sample_weight, random_state,
-                    begin_at_stage=0, monitor=None):
+    def _fit_stages(self, X, y, y_pred, sample_weight,
+                    random_state, begin_at_stage=0, monitor=None):
         """Iteratively fits the stages.
 
         For each stage it computes the progress (OOB, train score)
@@ -1036,8 +1042,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
             # fit next stage of trees
             y_pred = self._fit_stage(i, X, y, y_pred, sample_weight,
-                                     sample_mask, criterion, splitter,
-                                     random_state)
+                                     sample_mask, criterion,
+                                     splitter, random_state)
 
             # track deviance (= loss)
             if do_oob:
@@ -1283,6 +1289,17 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    monotonicity : array-like, shape = [n_features] or None
+        Specifies the required monotonicity of outputs with respect to each
+        feature. Only decision trees which respect this monotonicity are
+        built. Values are -1 (output must be decreasing), 1 (output must be
+        increasing), and 0 (no monotonicity constraint is enforced). In the
+        case of classification, this argument constrains the monotonicity
+        of the probability corrections which are then used for
+        classification. Default value of None is equivalent to passing in
+        an array of all zeros.
+        This does not constrain the monotonicity of the base estimator.
+
     Attributes
     ----------
     feature_importances_ : array, shape = [n_features]
@@ -1334,7 +1351,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, init=None, random_state=None,
                  max_features=None, verbose=0,
-                 max_leaf_nodes=None, warm_start=False):
+                 max_leaf_nodes=None, warm_start=False, monotonicity=None):
 
         super(GradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1344,7 +1361,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             max_depth=max_depth, init=init, subsample=subsample,
             max_features=max_features,
             random_state=random_state, verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
+            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
+            monotonicity=monotonicity)
 
     def _validate_y(self, y):
         self.classes_, y = np.unique(y, return_inverse=True)
@@ -1609,6 +1627,13 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    monotonicity : array-like, shape = [n_features] or None
+        Specifies the required monotonicity of outputs with respect to each
+        feature. Only decision trees which respect this monotonicity are
+        built. Values are -1 (output must be decreasing), 1 (output must be
+        increasing), and 0 (no monotonicity constraint is enforced).
+        This does not constrain the monotonicity of the base estimator.
+
 
     Attributes
     ----------
@@ -1658,7 +1683,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False):
+                 warm_start=False, monotonicity=None):
 
         super(GradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1668,7 +1693,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             max_depth=max_depth, init=init, subsample=subsample,
             max_features=max_features,
             random_state=random_state, alpha=alpha, verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
+            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
+            monotonicity=monotonicity)
 
     def predict(self, X):
         """Predict regression target for X.

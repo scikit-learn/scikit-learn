@@ -29,6 +29,26 @@ y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
 
+# small dataset designed to test monotonicity (has many data points that differ
+# in value by only a single feature)
+X_monotone = np.array([
+    [2, 3, 3, 3, ],
+    [3, 3, 3, 3, ],
+    [4, 3, 3, 3, ],
+    [0, 1, 3, 7, ],
+    [0, 3, 3, 7, ],
+    [0, 5, 3, 7, ],
+    [6, 1, 0, 4, ],
+    [6, 1, 2, 4, ],
+    [6, 1, 3, 4, ],
+    [2, 3, 4, 1, ],
+    [2, 3, 4, 2, ],
+    [2, 3, 4, 8, ]])
+# For each feature, there are 3 data points that agree on all other featues
+X_monotone_rows_per_feature = 3
+# Random regression values
+y_monotone = [1.0, 2.1, 1.2, 0.05, 10, 2.4, 3.1, 1.01, 0.01, 2.98, 3.1, 1.1]
+
 rng = np.random.RandomState(0)
 # also load the boston dataset
 # and randomly permute it
@@ -1012,3 +1032,35 @@ def test_non_uniform_weights_toy_edge_case_clf():
         gb = GradientBoostingClassifier(n_estimators=5)
         gb.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(gb.predict([[1, 0]]), [1])
+
+
+def test_monotonicity():
+    n_samples, n_features = X_monotone.shape
+    # Choose monotonicity values of -1 or 1
+    monotonicity = [1, 1, 1, -1]
+    reg = GradientBoostingRegressor(n_estimators=100, max_depth=3,
+                  monotonicity=monotonicity).fit(
+                  X_monotone, y_monotone)
+    pred = reg.predict(X_monotone)
+    # For each feature, check that it's monotone
+    for f_ind, f_mono in enumerate(monotonicity):
+        row_min = f_ind * X_monotone_rows_per_feature
+        row_max = (f_ind + 1) * X_monotone_rows_per_feature
+        # Will store tuples (X[row, f_ind], pred[row]) for this feature
+        feature_prediction_pairs = []
+        for row in range(row_min, row_max):
+            row_val = X_monotone[row, f_ind]
+            feature_prediction_pairs.append((row_val, pred[row]))
+        feature_prediction_pairs.sort()
+        # Check whether predictions are sorted
+        is_increasing = all(feature_prediction_pairs[i][1]
+            <= feature_prediction_pairs[i + 1][1] for i
+            in range(len(feature_prediction_pairs) - 1))
+        # Check whether predictions are reverse sorted
+        is_decreasing = all(feature_prediction_pairs[i][1]
+            >= feature_prediction_pairs[i + 1][1] for i
+            in range(len(feature_prediction_pairs) - 1))
+        if f_mono == 1:
+            assert is_increasing
+        if f_mono == -1:
+            assert is_decreasing

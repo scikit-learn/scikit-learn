@@ -103,6 +103,7 @@ cdef class Criterion:
     """
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                   long* monotonicity, SIZE_t monotonicity_stride,
                    double weighted_n_samples, SIZE_t* samples, SIZE_t start,
                    SIZE_t end) nogil:
         """Placeholder for a method which will initialize the criterion.
@@ -196,6 +197,12 @@ cdef class Criterion:
         """
 
         pass
+
+    cdef int node_satisfies_monotonicity(self, SIZE_t feature) nogil:
+        """Return whether the current split satisfies monotonicity
+           conditions."""
+        pass
+
 
     cdef double impurity_improvement(self, double impurity) nogil:
         """Placeholder for improvement in impurity after a split.
@@ -319,7 +326,9 @@ cdef class ClassificationCriterion(Criterion):
         pass
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride,
-                   DOUBLE_t* sample_weight, double weighted_n_samples,
+                   DOUBLE_t* sample_weight,
+                   long* monotonicity, SIZE_t monotonicity_stride,
+                   double weighted_n_samples,
                    SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
         children samples[start:start] and samples[start:end].
@@ -494,6 +503,12 @@ cdef class ClassificationCriterion(Criterion):
             memcpy(dest, label_count_total, n_classes[k] * sizeof(double))
             dest += label_count_stride
             label_count_total += label_count_stride
+
+    cdef int node_satisfies_monotonicity(self, SIZE_t feature) nogil:
+        """Monotonicity is meaningless for decision tree classifiers, as
+        classes are not comparable. So always return 1 indicating all splits
+        are acceptable."""
+        return 1
 
 
 cdef class Entropy(ClassificationCriterion):
@@ -823,6 +838,7 @@ cdef class RegressionCriterion(Criterion):
         pass
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                   long* monotonicity, SIZE_t monotonicity_stride,
                    double weighted_n_samples, SIZE_t* samples, SIZE_t start,
                    SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
@@ -831,6 +847,8 @@ cdef class RegressionCriterion(Criterion):
         self.y = y
         self.y_stride = y_stride
         self.sample_weight = sample_weight
+        self.monotonicity = monotonicity
+        self.monotonicity_stride = monotonicity_stride
         self.samples = samples
         self.start = start
         self.end = end
@@ -1000,6 +1018,38 @@ cdef class RegressionCriterion(Criterion):
                                 double* impurity_right) nogil:
         pass
 
+    cdef int node_satisfies_monotonicity(self, SIZE_t feature) nogil:
+        """Return 0 if the current split violates desired monotonicity, causing
+        the split to be rejected. Return 1 if current split satisfies
+        monotonicity, or if no desired monotonicity is specified."""
+
+        cdef SIZE_t n_outputs = self.n_outputs
+        cdef long* monotonicity = self.monotonicity
+        cdef SIZE_t monotonicity_stride = self.monotonicity_stride
+        cdef DOUBLE_t desired_monotonicity = 0
+        cdef int current_split_monotonicity = 0
+
+        cdef double* mean_left = self.mean_left
+        cdef double* mean_right = self.mean_right
+
+        cdef SIZE_t k
+
+        # If there is no required monotonicity, then all splits are satisfactory
+        if monotonicity == NULL:
+            return 1
+        # For each output, make sure the monotonicity of that output is correct with respect to the split
+        for k in range(n_outputs):
+            desired_monotonicity = monotonicity[feature*monotonicity_stride + k]
+            if mean_right[k] > mean_left[k]:
+                current_split_monotonicity = 1
+            elif mean_left[k] > mean_right[k]:
+                current_split_monotonicity = -1
+            # Reject splits where desired and current don't match, and where both are nonzero.
+            if desired_monotonicity*current_split_monotonicity == -1:
+                return 0
+        # Accept splits where all outputs satisfy monotonicity
+        return 1
+
     cdef void node_value(self, double* dest) nogil:
         """Compute the node value of samples[start:end] into dest."""
         memcpy(dest, self.mean_total, self.n_outputs * sizeof(double))
@@ -1135,6 +1185,8 @@ cdef class Splitter:
         self.y = NULL
         self.y_stride = 0
         self.sample_weight = NULL
+        self.monotonicity = NULL
+        self.monotonicity_stride = 0
 
         self.max_features = max_features
         self.min_samples_leaf = min_samples_leaf
@@ -1158,10 +1210,12 @@ cdef class Splitter:
     cdef void init(self,
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight) except *:
+                   DOUBLE_t* sample_weight,
+                   np.ndarray monotonicity=None) except *:
         """Initialize the splitter.
 
-        Take in the input data X, the target Y, and optional sample weights.
+        Take in the input data X, the target Y, and optional sample weights
+        and monotonicity constraints.
 
         Parameters
         ----------
@@ -1175,8 +1229,12 @@ cdef class Splitter:
             The weights of the samples, where higher weighted samples are fit
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight.
-        """
 
+        monotonicity: numpy.ndarray, dtype=int (optional)
+            The desired monotonicity of splits created by this splitter. All
+            splits that do not fit this monotonicity are rejected.
+        """
+        # Reset random state
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
         cdef SIZE_t n_samples = X.shape[0]
 
@@ -1214,10 +1272,15 @@ cdef class Splitter:
         safe_realloc(&self.feature_values, n_samples)
         safe_realloc(&self.constant_features, n_features)
 
+        # Initialize y, sample_weight, monotonicity
         self.y = <DOUBLE_t*> y.data
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
 
         self.sample_weight = sample_weight
+        # If monotonicity is None, then self.monotonicity stays NULL
+        if monotonicity is not None:
+            self.monotonicity = <long*> monotonicity.data
+            self.monotonicity_stride = <SIZE_t> monotonicity.strides[0] / <SIZE_t> monotonicity.itemsize
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end,
                          double* weighted_n_node_samples) nogil:
@@ -1239,6 +1302,8 @@ cdef class Splitter:
         self.criterion.init(self.y,
                             self.y_stride,
                             self.sample_weight,
+                            self.monotonicity,
+                            self.monotonicity_stride,
                             self.weighted_n_samples,
                             self.samples,
                             start,
@@ -1283,11 +1348,12 @@ cdef class BaseDenseSplitter(Splitter):
     cdef void init(self,
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight) except *:
+                   DOUBLE_t* sample_weight,
+                   np.ndarray monotonicity=None) except *:
         """Initialize the splitter."""
 
         # Call parent init
-        Splitter.init(self, X, y, sample_weight)
+        Splitter.init(self, X, y, sample_weight, monotonicity)
 
         # Initialize X
         cdef np.ndarray X_ndarray = X
@@ -1440,6 +1506,10 @@ cdef class BestSplitter(BaseDenseSplitter):
                             # Reject if min_weight_leaf is not satisfied
                             if ((self.criterion.weighted_n_left < min_weight_leaf) or
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
+                                continue
+
+                            # Reject if split does not satisfy desired monotonicity
+                            if self.criterion.node_satisfies_monotonicity(current.feature) == 0:
                                 continue
 
                             current.improvement = self.criterion.impurity_improvement(impurity)
@@ -1759,6 +1829,10 @@ cdef class RandomSplitter(BaseDenseSplitter):
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
 
+                    # Reject if split does not satisfy desired monotonicity
+                    if self.criterion.node_satisfies_monotonicity(current.feature) == 0:
+                        continue
+
                     current.improvement = self.criterion.impurity_improvement(impurity)
 
                     if current.improvement > best.improvement:
@@ -1831,12 +1905,13 @@ cdef class PresortBestSplitter(BaseDenseSplitter):
 
     cdef void init(self, object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight) except *:
+                   DOUBLE_t* sample_weight,
+                   np.ndarray monotonicity=None) except *:
 
         cdef void* sample_mask = NULL
 
         # Call parent initializer
-        BaseDenseSplitter.init(self, X, y, sample_weight)
+        BaseDenseSplitter.init(self, X, y, sample_weight, monotonicity)
 
         cdef np.ndarray X_ndarray = X
 
@@ -1998,6 +2073,10 @@ cdef class PresortBestSplitter(BaseDenseSplitter):
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
 
+                            # Reject if split does not satisfy desired monotonicity
+                            if self.criterion.node_satisfies_monotonicity(current.feature) == 0:
+                                continue
+
                             current.improvement = self.criterion.impurity_improvement(impurity)
 
                             if current.improvement > best.improvement:
@@ -2078,11 +2157,12 @@ cdef class BaseSparseSplitter(Splitter):
     cdef void init(self,
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight) except *:
+                   DOUBLE_t* sample_weight,
+                   np.ndarray monotonicity=None) except *:
         """Initialize the splitter."""
 
         # Call parent init
-        Splitter.init(self, X, y, sample_weight)
+        Splitter.init(self, X, y, sample_weight, monotonicity)
 
         if not isinstance(X, csc_matrix):
             raise ValueError("X should be in csc format")
@@ -2548,6 +2628,10 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
 
+                            # Reject if split does not satisfy desired monotonicity
+                            if self.criterion.node_satisfies_monotonicity(current.feature) == 0:
+                                continue
+
                             current.improvement = self.criterion.impurity_improvement(impurity)
                             if current.improvement > best.improvement:
                                 self.criterion.children_impurity(&current.impurity_left,
@@ -2767,6 +2851,10 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
 
+                    # Reject if split does not satisfy desired monotonicity
+                    if self.criterion.node_satisfies_monotonicity(current.feature) == 0:
+                        continue
+
                     current.improvement = self.criterion.impurity_improvement(impurity)
 
                     if current.improvement > best.improvement:
@@ -2804,7 +2892,7 @@ cdef class TreeBuilder:
     """Interface for different tree building strategies."""
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=None):
+                np.ndarray sample_weight=None, np.ndarray monotonicity=None):
         """Build a decision tree from the training set (X, y)."""
         pass
 
@@ -2852,7 +2940,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         self.max_depth = max_depth
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=None):
+                np.ndarray sample_weight=None, np.ndarray monotonicity=None):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
@@ -2880,7 +2968,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_split = self.min_samples_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr)
+        splitter.init(X, y, sample_weight_ptr, monotonicity)
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -3009,7 +3097,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.max_leaf_nodes = max_leaf_nodes
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=None):
+                np.ndarray sample_weight=None, np.ndarray monotonicity=None):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
@@ -3027,7 +3115,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_split = self.min_samples_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr)
+        splitter.init(X, y, sample_weight_ptr, monotonicity)
 
         cdef PriorityHeap frontier = PriorityHeap(INITIAL_STACK_SIZE)
         cdef PriorityHeapRecord record
