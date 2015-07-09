@@ -64,9 +64,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     >>> h = FeatureHasher(n_features=10)
     >>> D = [{'dog': 1, 'cat':2, 'elephant':4},{'dog': 2, 'run': 5}]
     >>> f = h.transform(D)
-    >>> f
-    <2x10 sparse matrix of type '<class 'numpy.float64'>'
-            with 5 stored elements in Compressed Sparse Row format>
     >>> f.toarray()
     array([[ 0.,  0., -4., -1.,  0.,  0.,  0.,  0.,  0.,  2.],
            [ 0.,  0.,  0., -2., -5.,  0.,  0.,  0.,  0.,  0.]])
