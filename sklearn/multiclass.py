@@ -884,7 +884,7 @@ class LabelPowerSetClassifier(BaseEstimator, ClassifierMixin,
         if self.label_binarizer_.y_type_ == "binary":
             binary_code_size = 1
 
-        shifting_vector =  2 ** np.arange(binary_code_size)
+        shifting_vector = 2 ** np.arange(binary_code_size)
 
         # Shift the binary representation of a class
         y_shifted = y_coded.reshape((-1, 1)) // shifting_vector
@@ -894,7 +894,6 @@ class LabelPowerSetClassifier(BaseEstimator, ClassifierMixin,
         y_decoded = np.bitwise_and(0x1, y_shifted)
 
         return self.label_binarizer_.inverse_transform(y_decoded)
-
 
     def predict_proba(self, X):
         """Predict class probabilities of the input samples X.
@@ -917,19 +916,21 @@ class LabelPowerSetClassifier(BaseEstimator, ClassifierMixin,
         if self.label_binarizer_.y_type_ == "binary":
             binary_code_size = 1
 
-        print binary_code_size
+        print(binary_code_size)
         if len(y_coded_proba.shape) != binary_code_size:
             # Make sure to have the empty label set
             y_coded_proba = np.hstack([np.zeros((y_coded_proba.shape[0], 1)),
                                        y_coded_proba])
+            assert False
 
         mask_code = np.array(list(product([0, 1], repeat=binary_code_size))).T
         y_proba = []
         for k in range(binary_code_size):
-            print y_coded_proba.shape
-            print mask_code[k]
-            proba_k = y_coded_proba[:, mask_code[k]].sum(axis=0)
-            y_proba.append(np.hstack([1 - proba_k, proba_k]))
+            print(y_coded_proba.shape)
+            print(mask_code[k])
+            # print(y_coded_proba)
+            proba_k = y_coded_proba[:, mask_code[k]].sum(axis=1)
+            print(proba_k.shape)
+            y_proba.append(np.vstack([1 - proba_k, proba_k]).T)
 
         return y_proba
-

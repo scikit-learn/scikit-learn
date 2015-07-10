@@ -670,6 +670,7 @@ def test_lps_multilabel(n_samples=50):
 
     y_predict_proba = lps.predict_proba(X_test)
     for proba_k in y_predict_proba:
-        assert_equal(proba_k.shape, (n_samples, 2))
+        print(proba_k)
+        assert_equal(proba_k.shape, (X_test.shape[0], 2))
 
     assert False
