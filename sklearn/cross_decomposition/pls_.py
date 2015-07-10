@@ -20,7 +20,7 @@ __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
 
 def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
-                                 norm_y_weights=False):
+                                 norm_y_weights=False, sample_weight=None):
     """Inner loop of the iterative NIPALS algorithm.
 
     Provides an alternative to the svd(X'Y); returns the first left and right
@@ -28,6 +28,12 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
     similar to the Power method for determining the eigenvectors and
     eigenvalues of a X'Y.
     """
+
+    if sample_weight is not None:
+        w_sqrt = sample_weight[:, np.newaxis]**0.5
+        X = X * w_sqrt
+        Y = Y * w_sqrt
+        
     y_score = Y[:, [0]]
     x_weights_old = 0
     ite = 1
@@ -72,37 +78,59 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
     return x_weights, y_weights, ite
 
 
-def _svd_cross_product(X, Y):
-    C = np.dot(X.T, Y)
+def _svd_cross_product(X, Y, sample_weight=None):
+
+    if sample_weight is None:
+        C = np.dot(X.T, Y)
+    else:
+        C = np.dot(np.dot(X.T, np.diag(sample_weight)),
+                   Y)
+
     U, s, Vh = linalg.svd(C, full_matrices=False)
     u = U[:, [0]]
     v = Vh.T[:, [0]]
     return u, v
 
 
-def _center_scale_xy(X, Y, scale=True):
-    """ Center X, Y and scale if the scale parameter==True
+def _center_scale_xy(X, Y, scale=True, sample_weight=None):
+    """Center X, Y and scale if the scale parameter==True,
+    accounting for optional sample weights.
 
     Returns
     -------
-        X, Y, x_mean, y_mean, x_std, y_std
+        X, Y, [weighted] x_mean, y_mean, x_std, y_std
     """
+    
     # center
-    x_mean = X.mean(axis=0)
+    x_mean = np.average(X, axis=0, weights=sample_weight)
     X -= x_mean
-    y_mean = Y.mean(axis=0)
+    y_mean = np.average(Y, axis=0, weights=sample_weight)
     Y -= y_mean
+    
     # scale
     if scale:
-        x_std = X.std(axis=0, ddof=1)
+        print x_mean.shape
+        print X.shape
+        if sample_weight is None:
+            x_std = X.std(axis=0, ddof=1)
+            y_std = Y.std(axis=0, ddof=1)
+        else:
+            # effective degrees of freedom ...
+            dof = np.sum(sample_weight)**2 / np.sum(sample_weight**2)
+            # and the correction multiplier for it.
+            dof_c = (dof / (dof - 1))**0.5 if dof > 1 else 1.0
+            x_std = np.average(X**2, axis=0, weights=sample_weight)**0.5 * dof_c
+            y_std = np.average(Y**2, axis=0, weights=sample_weight)**0.5 * dof_c
+
         x_std[x_std == 0.0] = 1.0
         X /= x_std
-        y_std = Y.std(axis=0, ddof=1)
         y_std[y_std == 0.0] = 1.0
         Y /= y_std
+
     else:
         x_std = np.ones(X.shape[1])
         y_std = np.ones(Y.shape[1])
+
     return X, Y, x_mean, y_mean, x_std, y_std
 
 
@@ -220,7 +248,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         self.tol = tol
         self.copy = copy
 
-    def fit(self, X, Y):
+    def fit(self, X, Y, sample_weight=None):
         """Fit model to data.
 
         Parameters
@@ -232,6 +260,9 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         Y : array-like of response, shape = [n_samples, n_targets]
             Target vectors, where n_samples in the number of samples and
             n_targets is the number of response variables.
+
+        sample_weight : array-like, shape = [n_samples], optional
+                        Sample weights.
         """
 
         # copy since this will contains the residuals (deflated) matrices
@@ -240,6 +271,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
+        if sample_weight is not None:
+            sample_weight = check_array(sample_weight, dtype=np.float64, ensure_2d=False)
+            check_consistent_length(Y, sample_weight)
+            if sample_weight.ndim != 1:
+                raise ValueError('sample_weight must be 1D, one weight per row of data.')
 
         n = X.shape[0]
         p = X.shape[1]
@@ -256,9 +292,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
                              'implemented with svd algorithm')
         if self.deflation_mode not in ["canonical", "regression"]:
             raise ValueError('The deflation mode is unknown')
+        
         # Scale (in place)
         X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_\
-            = _center_scale_xy(X, Y, self.scale)
+            = _center_scale_xy(X, Y, self.scale, sample_weight=sample_weight)
+        
         # Residuals (deflated) matrices
         Xk = X
         Yk = Y
@@ -277,16 +315,20 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
                 # Yk constant
                 warnings.warn('Y residual constant at iteration %s' % k)
                 break
+
             # 1) weights estimation (inner loop)
             # -----------------------------------
             if self.algorithm == "nipals":
                 x_weights, y_weights, n_iter_ = \
                     _nipals_twoblocks_inner_loop(
                         X=Xk, Y=Yk, mode=self.mode, max_iter=self.max_iter,
-                        tol=self.tol, norm_y_weights=self.norm_y_weights)
+                        tol=self.tol, norm_y_weights=self.norm_y_weights,
+                        sample_weight=sample_weight)
                 self.n_iter_.append(n_iter_)
             elif self.algorithm == "svd":
-                x_weights, y_weights = _svd_cross_product(X=Xk, Y=Yk)
+                x_weights, y_weights = _svd_cross_product(X=Xk, Y=Yk,
+                                                          sample_weight=sample_weight)
+
             # compute scores
             x_scores = np.dot(Xk, x_weights)
             if self.norm_y_weights:
@@ -294,21 +336,24 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             else:
                 y_ss = np.dot(y_weights.T, y_weights)
             y_scores = np.dot(Yk, y_weights) / y_ss
+
             # test for null variance
             if np.dot(x_scores.T, x_scores) < np.finfo(np.double).eps:
                 warnings.warn('X scores are null at iteration %s' % k)
                 break
+
             # 2) Deflation (in place)
             # ----------------------
             # Possible memory footprint reduction may done here: in order to
             # avoid the allocation of a data chunk for the rank-one
             # approximations matrix which is then subtracted to Xk, we suggest
             # to perform a column-wise deflation.
-            #
+            
             # - regress Xk's on x_score
             x_loadings = np.dot(Xk.T, x_scores) / np.dot(x_scores.T, x_scores)
             # - subtract rank-one approximations to obtain remainder matrix
             Xk -= np.dot(x_scores, x_loadings.T)
+
             if self.deflation_mode == "canonical":
                 # - regress Yk's on y_score, then subtract rank-one approx.
                 y_loadings = (np.dot(Yk.T, y_scores)
@@ -319,6 +364,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
                 y_loadings = (np.dot(Yk.T, x_scores)
                               / np.dot(x_scores.T, x_scores))
                 Yk -= np.dot(x_scores, y_loadings.T)
+                
             # 3) Store weights, scores and loadings # Notation:
             self.x_scores_[:, k] = x_scores.ravel()  # T
             self.y_scores_[:, k] = y_scores.ravel()  # U
@@ -326,7 +372,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             self.y_weights_[:, k] = y_weights.ravel()  # C
             self.x_loadings_[:, k] = x_loadings.ravel()  # P
             self.y_loadings_[:, k] = y_loadings.ravel()  # Q
-        # Such that: X = TP' + Err and Y = UQ' + Err
+            # Such that: X = TP' + Err and Y = UQ' + Err
 
         # 4) rotations from input space to transformed space (scores)
         # T = X W(P'W)^-1 = XW* (W* : p x k matrix)
@@ -446,8 +492,10 @@ class PLSRegression(_PLS):
 
     PLSRegression implements the PLS 2 blocks regression known as PLS2 or PLS1
     in case of one dimensional response.
+    
     This class inherits from _PLS with mode="A", deflation_mode="regression",
-    norm_y_weights=False and algorithm="nipals".
+    norm_y_weights=False and algorithm defaults to "nipals", but "svd" should
+    provide similar results up to numerical errors.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
@@ -458,6 +506,10 @@ class PLSRegression(_PLS):
 
     scale : boolean, (default True)
         whether to scale the data
+
+    algorithm : string, "nipals" or "svd"
+        The algorithm used to estimate the weights. It will be called
+        n_components times, i.e. once for each iteration of the outer loop.
 
     max_iter : an integer, (default 500)
         the maximum number of iterations of the NIPALS inner loop (used
@@ -549,10 +601,10 @@ class PLSRegression(_PLS):
     Editions Technic.
     """
 
-    def __init__(self, n_components=2, scale=True,
+    def __init__(self, n_components=2, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
         _PLS.__init__(self, n_components=n_components, scale=scale,
-                      deflation_mode="regression", mode="A",
+                      algorithm=algorithm, deflation_mode="regression", mode="A",
                       norm_y_weights=False, max_iter=max_iter, tol=tol,
                       copy=copy)
 
@@ -562,8 +614,8 @@ class PLSCanonical(_PLS):
     algorithm [Tenenhaus 1998] p.204, referred as PLS-C2A in [Wegelin 2000].
 
     This class inherits from PLS with mode="A" and deflation_mode="canonical",
-    norm_y_weights=True and algorithm="nipals", but svd should provide similar
-    results up to numerical errors.
+    norm_y_weights=True and algorithm defaults to "nipals", but svd should
+    provide similar results up to numerical errors.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
