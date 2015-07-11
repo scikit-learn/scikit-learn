@@ -6,21 +6,20 @@
      in_warning_message = 'divide by zero'
 +    import platform
 +    if platform.uname()[4].startswith('armv'):
-+        raise nose.SkipTest("no warning gets issued on armel")
++        raise SkipTest("no warning gets issued on armel")
 +
      tfidf = assert_warns_message(RuntimeWarning, in_warning_message,
                                   tr.fit_transform, X).toarray()
      if not numpy_provides_div0_warning:
-diff --git a/sklearn/metrics/tests/test_ranking.py b/sklearn/metrics/tests/test_ranking.py
-index 40ce6f6..8328716 100644
 --- a/sklearn/metrics/tests/test_ranking.py
 +++ b/sklearn/metrics/tests/test_ranking.py
-@@ -543,6 +543,9 @@ def test_precision_recall_curve_toydata():
+@@ -540,6 +540,10 @@ def test_precision_recall_curve_toydata(
  
          y_true = [0, 0]
          y_score = [0.25, 0.75]
 +        import platform
 +        if platform.uname()[4].startswith('armv'):
++            import nose
 +            raise nose.SkipTest("no precision-related exceptions get issued on armel")
          assert_raises(Exception, precision_recall_curve, y_true, y_score)
          assert_raises(Exception, average_precision_score, y_true, y_score)

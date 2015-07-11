@@ -6,12 +6,15 @@ scikit-learn (0.16.1-2) unstable; urgency=medium
     - properly dropped python-support, debian/rules was already
       using dh_ helpers (Closes: #786185)
   * debian/patches
-    Picked up from usptream 2 fixes:
-    - changeset_190fe7347cfd6fab67f37c7535c4fa9b8f0870de.diff
-      FIX Include PyFuncDistance attributes while pickling.
-    - changeset_5e502596460014ed3adebe61e8189a60e72d3623.diff
-      Fix signature not compatible with previous declaration
-      (Closes: #791615)
+    - Picked up from usptream 2 fixes:
+      - changeset_190fe7347cfd6fab67f37c7535c4fa9b8f0870de.diff
+        FIX Include PyFuncDistance attributes while pickling.
+      - changeset_5e502596460014ed3adebe61e8189a60e72d3623.diff
+        Fix signature not compatible with previous declaration
+        (Closes: #791615)
+    - deb_skip_some_tests_on_arm
+      fixed it up (missing nose imports). Thanks Logan Rosen!
+      (Closes: #773862)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 10 Jul 2015 23:26:48 -0400
 
