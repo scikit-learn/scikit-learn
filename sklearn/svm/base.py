@@ -757,8 +757,8 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         else:
             solver_num = _solver_dual.get(dual, None)
             if solver_num is None:
-                error_string = ("loss='%s' and penalty='%s'"
-                                "are not supported when dual=%s"
+                error_string = ("The combination of penalty='%s' and "
+                                "loss='%s' are not supported when dual=%s"
                                 % (penalty, loss, dual))
             else:
                 return solver_num
