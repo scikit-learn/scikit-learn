@@ -859,6 +859,37 @@ def test_pickling_vectorizer():
             orig.fit_transform(JUNK_FOOD_DOCS).toarray())
 
 
+def test_countvectorizer_vocab_sets_when_pickling():
+    # ensure that vocabulary of type set is coerced to a list to
+    # preserve iteration ordering after deserialization
+    rng = np.random.RandomState(0)
+    vocab_words = ['beer', 'burger', 'celeri', 'coke', 'pizza',
+                   'salad', 'sparkling', 'tomato', 'water']
+    for x in range(0, 100):
+        vocab_set = set(rng.choice(vocab_words, size=5, replace=False))
+        cv = CountVectorizer(vocabulary=vocab_set)
+        unpickled_cv = pickle.loads(pickle.dumps(cv))
+        cv.fit(ALL_FOOD_DOCS)
+        unpickled_cv.fit(ALL_FOOD_DOCS)
+        assert_equal(cv.get_feature_names(), unpickled_cv.get_feature_names())
+
+
+def test_countvectorizer_vocab_dicts_when_pickling():
+    rng = np.random.RandomState(0)
+    vocab_words = ['beer', 'burger', 'celeri', 'coke', 'pizza',
+                   'salad', 'sparkling', 'tomato', 'water']
+    for x in range(0, 100):
+        vocab_dict = dict()
+        words = rng.choice(vocab_words, size=5, replace=False)
+        for y in range(0, 5):
+            vocab_dict[words[y]] = y
+        cv = CountVectorizer(vocabulary=vocab_dict)
+        unpickled_cv = pickle.loads(pickle.dumps(cv))
+        cv.fit(ALL_FOOD_DOCS)
+        unpickled_cv.fit(ALL_FOOD_DOCS)
+        assert_equal(cv.get_feature_names(), unpickled_cv.get_feature_names())
+
+
 def test_stop_words_removal():
     # Ensure that deleting the stop_words_ attribute doesn't affect transform
 
