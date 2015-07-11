@@ -1,6 +1,10 @@
 scikit-learn (0.16.1-2) unstable; urgency=medium
 
   * Upload to unstable (Closes: #792074)
+  * debian/control
+    - boosted policy to 3.9.6
+    - properly dropped python-support, debian/rules was already
+      using dh_ helpers (Closes: #786185)
   * debian/patches
     Picked up from usptream 2 fixes:
     - changeset_190fe7347cfd6fab67f37c7535c4fa9b8f0870de.diff
