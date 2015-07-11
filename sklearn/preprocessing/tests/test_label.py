@@ -219,6 +219,11 @@ def test_label_encoder_errors():
     assert_raises(ValueError, le.transform, [])
     assert_raises(ValueError, le.inverse_transform, [])
 
+    # Fail on unseen labels
+    le = LabelEncoder()
+    le.fit([1, 2, 3, 1, -1])
+    assert_raises(ValueError, le.inverse_transform, [-1])
+
 
 def test_sparse_output_multilabel_binarizer():
     # test input as iterable of iterables
