@@ -377,7 +377,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             mask[estimator.indices_] = False
             mask_indices = sample_indices[mask]
             p_estimator = estimator.predict_proba(X[mask_indices, :],
-                                                  check_input=False)
+                                                  check_input=True)
 
             if self.n_outputs_ == 1:
                 p_estimator = [p_estimator]
