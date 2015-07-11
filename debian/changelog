@@ -1,3 +1,9 @@
+scikit-learn (0.16.1-2) unstable; urgency=medium
+
+  * Upload to unstable (Closes: #792074)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 10 Jul 2015 23:26:48 -0400
+
 scikit-learn (0.16.1-1) experimental; urgency=medium
 
   * Fresh upstream bugfix release
