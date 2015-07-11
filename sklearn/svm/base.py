@@ -751,7 +751,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         # FIME penalty.lower() --> penalty in 0.18
         _solver_dual = _solver_pen.get(penalty.lower(), None)
         if _solver_dual is None:
-            error_string = ("The combination of penalty='%s'"
+            error_string = ("The combination of penalty='%s' "
                             "and loss='%s' is not supported"
                             % (penalty, loss))
         else:
