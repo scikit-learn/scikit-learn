@@ -779,6 +779,7 @@ details.
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
+   metrics.precision_at_k_score
    metrics.recall_score
    metrics.roc_auc_score
    metrics.roc_curve

@@ -10,6 +10,7 @@ from .ranking import coverage_error
 from .ranking import label_ranking_average_precision_score
 from .ranking import label_ranking_loss
 from .ranking import precision_recall_curve
+from .ranking import precision_at_k_score
 from .ranking import roc_auc_score
 from .ranking import roc_curve
 
@@ -98,6 +99,7 @@ __all__ = [
     'precision_recall_curve',
     'precision_recall_fscore_support',
     'precision_score',
+    'precision_at_k_score',
     'r2_score',
     'recall_score',
     'roc_auc_score',

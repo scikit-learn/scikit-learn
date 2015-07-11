@@ -351,3 +351,13 @@ if np_version < (1, 6, 2):
 
 else:
     from numpy import bincount
+
+
+if np_version < (1, 8):
+    def partition(a, kth, axis=-1):
+        # The k argument is ingored.
+        # the implementation is a lot slower than partition unfortunately
+        return np.sort(a, axis=axis)
+
+else:
+    from numpy import partition

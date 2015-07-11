@@ -30,9 +30,9 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
+from sklearn.metrics import precision_at_k_score
 
 from sklearn.metrics.base import UndefinedMetricWarning
-
 
 ###############################################################################
 # Utilities for testing
@@ -975,3 +975,143 @@ def test_ranking_loss_ties_handling():
     assert_almost_equal(label_ranking_loss([[1, 0, 0]], [[0.25, 0.5, 0.5]]), 1)
     assert_almost_equal(label_ranking_loss([[1, 0, 1]], [[0.25, 0.5, 0.5]]), 1)
     assert_almost_equal(label_ranking_loss([[1, 1, 0]], [[0.25, 0.5, 0.5]]), 1)
+
+
+def test_precision_at_k_score():
+    # Toy case
+    assert_almost_equal(precision_at_k_score([[0, 1]], [[0.25, 0.75]]), 1.)
+    assert_almost_equal(precision_at_k_score([[0, 1]], [[0.75, 0.25]]), 0.)
+    assert_almost_equal(precision_at_k_score([[1, 1]], [[0.75, 0.25]]), 1.)
+    assert_almost_equal(precision_at_k_score([[0, 0]], [[0.75, 0.25]]), 0.)
+
+    assert_almost_equal(precision_at_k_score([[0, 0, 0]], [[0.25, 0.5, 0.75]]),
+                        0.)
+    assert_almost_equal(precision_at_k_score([[0, 0, 1]], [[0.25, 0.5, 0.75]]),
+                        1.)
+    assert_almost_equal(precision_at_k_score([[0, 1, 0]], [[0.25, 0.5, 0.75]]),
+                        0.)
+    assert_almost_equal(precision_at_k_score([[0, 1, 1]], [[0.25, 0.5, 0.75]]),
+                        1.)
+    assert_almost_equal(precision_at_k_score([[1, 0, 0]], [[0.25, 0.5, 0.75]]),
+                        0.)
+    assert_almost_equal(precision_at_k_score([[1, 0, 1]], [[0.25, 0.5, 0.75]]),
+                        1.)
+    assert_almost_equal(precision_at_k_score([[1, 1, 0]], [[0.25, 0.5, 0.75]]),
+                        0.)
+    assert_almost_equal(precision_at_k_score([[1, 1, 1]], [[0.25, 0.5, 0.75]]),
+                        1.)
+
+    assert_almost_equal(precision_at_k_score([[0, 0, 0]], [[0.75, 0.5, 0.25]]),
+                        0.)
+    assert_almost_equal(precision_at_k_score([[0, 0, 1]], [[0.75, 0.5, 0.25]]),
+                        0.)
+    assert_almost_equal(precision_at_k_score([[0, 1, 0]], [[0.75, 0.5, 0.25]]),
+                        0.)
+    assert_almost_equal(precision_at_k_score([[0, 1, 1]], [[0.75, 0.5, 0.25]]),
+                        0.)
+    assert_almost_equal(precision_at_k_score([[1, 0, 0]], [[0.75, 0.5, 0.25]]),
+                        1.)
+    assert_almost_equal(precision_at_k_score([[1, 0, 1]], [[0.75, 0.5, 0.25]]),
+                        1.)
+    assert_almost_equal(precision_at_k_score([[1, 1, 0]], [[0.75, 0.5, 0.25]]),
+                        1.)
+    assert_almost_equal(precision_at_k_score([[1, 1, 1]], [[0.75, 0.5, 0.25]]),
+                        1.)
+
+    assert_almost_equal(precision_at_k_score([[0, 0, 0]], [[0.5, 0.75, 0.25]]),
+                        0.)
+    assert_almost_equal(precision_at_k_score([[0, 0, 1]], [[0.5, 0.75, 0.25]]),
+                        0.)
+    assert_almost_equal(precision_at_k_score([[0, 1, 0]], [[0.5, 0.75, 0.25]]),
+                        1.)
+    assert_almost_equal(precision_at_k_score([[0, 1, 1]], [[0.5, 0.75, 0.25]]),
+                        1.)
+    assert_almost_equal(precision_at_k_score([[1, 0, 0]], [[0.5, 0.75, 0.25]]),
+                        0.)
+    assert_almost_equal(precision_at_k_score([[1, 0, 1]], [[0.5, 0.75, 0.25]]),
+                        0.)
+    assert_almost_equal(precision_at_k_score([[1, 1, 0]], [[0.5, 0.75, 0.25]]),
+                        1.)
+    assert_almost_equal(precision_at_k_score([[1, 1, 1]], [[0.5, 0.75, 0.25]]),
+                        1.)
+
+    # Non trival case
+    assert_almost_equal(precision_at_k_score([[0, 1, 0], [1, 1, 0]],
+                                             [[0.1, 10., -3], [0, 1, 3]]),
+                        (1 + 0) / 2.)
+
+    assert_almost_equal(precision_at_k_score([[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+                                  [[0.1, 10, -3], [0, 1, 3], [0, 2, 0]]),
+                        (1 + 0 + 1) / 3.)
+
+    assert_almost_equal(
+        precision_at_k_score([[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+                             [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]]),
+        (1 + 0.5 + 1) / 3.)
+
+    assert_almost_equal(
+        precision_at_k_score(csr_matrix([[0, 1, 0], [1, 1, 0], [0, 1, 1]]),
+                             [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]]),
+        (1 + 0.5 + 1) / 3.)
+
+
+def test_precision_at_k_score_n_tops():
+    assert_almost_equal(precision_at_k_score([[0, 0, 0]], [[0.75, 0.5, 0.25]],
+                        n_tops=2), 0.)
+    assert_almost_equal(precision_at_k_score([[0, 0, 1]], [[0.75, 0.5, 0.25]],
+                        n_tops=2), 0.)
+    assert_almost_equal(precision_at_k_score([[0, 1, 0]], [[0.75, 0.5, 0.25]],
+                        n_tops=2), 0.5)
+    assert_almost_equal(precision_at_k_score([[0, 1, 1]], [[0.75, 0.5, 0.25]],
+                        n_tops=2), 0.5)
+    assert_almost_equal(precision_at_k_score([[1, 0, 0]], [[0.75, 0.5, 0.25]],
+                        n_tops=2), 0.5)
+    assert_almost_equal(precision_at_k_score([[1, 0, 1]], [[0.75, 0.5, 0.25]],
+                        n_tops=2), 0.5)
+    assert_almost_equal(precision_at_k_score([[1, 1, 0]], [[0.75, 0.5, 0.25]],
+                        n_tops=2), 1.)
+    assert_almost_equal(precision_at_k_score([[1, 1, 1]], [[0.75, 0.5, 0.25]],
+                        n_tops=2), 1.)
+
+
+def test_precision_at_k_score_tie_handling():
+    assert_almost_equal(precision_at_k_score([[0, 0]], [[0.5, 0.5]]), 0.)
+    assert_almost_equal(precision_at_k_score([[1, 0]], [[0.5, 0.5]]), 0.5)
+    assert_almost_equal(precision_at_k_score([[0, 1]], [[0.5, 0.5]]), 0.5)
+    assert_almost_equal(precision_at_k_score([[1, 1]], [[0.5, 0.5]]), 1.)
+
+    assert_almost_equal(precision_at_k_score([[0, 0, 0]], [[0.25, 0.5, 0.5]]),
+                        0.)
+    assert_almost_equal(precision_at_k_score([[0, 0, 1]], [[0.25, 0.5, 0.5]]),
+                        0.5)
+    assert_almost_equal(precision_at_k_score([[0, 1, 0]], [[0.25, 0.5, 0.5]]),
+                        0.5)
+    assert_almost_equal(precision_at_k_score([[0, 1, 1]], [[0.25, 0.5, 0.5]]),
+                        1.)
+    assert_almost_equal(precision_at_k_score([[1, 0, 0]], [[0.25, 0.5, 0.5]]),
+                        0.)
+    assert_almost_equal(precision_at_k_score([[1, 0, 1]], [[0.25, 0.5, 0.5]]),
+                        0.5)
+    assert_almost_equal(precision_at_k_score([[1, 1, 0]], [[0.25, 0.5, 0.5]]),
+                        0.5)
+    assert_almost_equal(precision_at_k_score([[1, 1, 1]], [[0.25, 0.5, 0.5]]),
+                        1.)
+
+
+def test_precision_at_k_score_n_tops_ties():
+    assert_almost_equal(precision_at_k_score([[0, 0, 0]], [[0.25, 0.5, 0.5]],
+                                             n_tops=2), 0.)
+    assert_almost_equal(precision_at_k_score([[0, 0, 1]], [[0.25, 0.5, 0.5]],
+                                             n_tops=2), 0.5)
+    assert_almost_equal(precision_at_k_score([[0, 1, 0]], [[0.25, 0.5, 0.5]],
+                                             n_tops=2), 0.5)
+    assert_almost_equal(precision_at_k_score([[0, 1, 1]], [[0.25, 0.5, 0.5]],
+                                             n_tops=2), 1.)
+    assert_almost_equal(precision_at_k_score([[1, 0, 0]], [[0.25, 0.5, 0.5]],
+                                             n_tops=2), 0.)
+    assert_almost_equal(precision_at_k_score([[1, 0, 1]], [[0.25, 0.5, 0.5]],
+                                             n_tops=2), 0.5)
+    assert_almost_equal(precision_at_k_score([[1, 1, 0]], [[0.25, 0.5, 0.5]],
+                                             n_tops=2), 0.5)
+    assert_almost_equal(precision_at_k_score([[1, 1, 1]], [[0.25, 0.5, 0.5]],
+                                             n_tops=2), 1.)

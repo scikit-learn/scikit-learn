@@ -1028,6 +1028,41 @@ the ground truth labels.
 
 .. _coverage_error:
 
+Precision at K
+--------------
+The :func:`precision_at_k_score` function computes the precision for the top k
+ranked labels, the k labels that have been given the hightest score. This is
+useful if you have to give a score in a large label space and are only
+interested in the top k labels as in web search. One minus the precision at 1
+is also called the one error.
+
+Formally, given a binary indicator matrix of the ground truth labels
+:math:`y \in \left\{0, 1\right\}^{n_\text{samples} \times n_\text{labels}}` and the
+score associated with each label
+:math:`\hat{f} \in \mathbb{R}^{n_\text{samples} \times n_\text{labels}}`,
+the precision at k is defined as
+
+    PrecisionAtK(y, \hat{f}) =
+        \frac{1}{n_{\text{samples}}}\frac{1}{k}
+        \sum_{i=0}^{n_{\text{samples}} - 1}
+        \sum_{j=0}^{k - 1} y_{ij} 1(\text{rank}_{ij} \geq k)
+
+with :math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`
+and :math:`1(x)` is the indicator function.
+Given the rank definition, ties in ``y_scores`` are broken by giving the
+maximal rank that would have been assigned to all tied values.
+Note that the best performance achievable could be below 1.
+
+
+Here is a small example of usage of this function::
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import precision_at_k_score
+    >>> y_true = np.array([[1, 0, 0], [1, 0, 1]])
+    >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
+    >>> precision_at_k_score(y_true, y_score, n_tops=2) # doctest: +ELLIPSIS
+    0.5
+
 Coverage error
 --------------
 
