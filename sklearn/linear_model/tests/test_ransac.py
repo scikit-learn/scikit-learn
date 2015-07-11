@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.testing import assert_equal, assert_raises
 from numpy.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_raises_regexp
 from scipy import sparse
 
 from sklearn.utils.testing import assert_less
@@ -137,6 +138,18 @@ def test_ransac_predict():
 
     assert_equal(ransac_estimator.predict(X), np.zeros(100))
 
+
+def test_ransac_resid_thresh_no_inliers():
+    """when residual_threshold=0.0 there are no inliers and a
+    ValueError with a message should be raised"""
+    base_estimator = LinearRegression()
+    ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
+                                       residual_threshold=0.0, random_state=0)
+    
+    assert_raises_regexp(ValueError, 
+                    "no inliers.*residual_threshold.*0\.0",
+                    ransac_estimator.fit, X, y)
+    
 
 def test_ransac_sparse_coo():
     X_sparse = sparse.coo_matrix(X)

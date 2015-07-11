@@ -165,8 +165,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                  stop_probability=0.99, residual_metric=None,
                  random_state=None):
 
-	if residual_threshold == 0.0:
-	    raise ValueError('residual threshold must be > 0.0')
         self.base_estimator = base_estimator
         self.min_samples = min_samples
         self.residual_threshold = residual_threshold
@@ -292,6 +290,11 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             # less inliers -> skip current random sample
             if n_inliers_subset < n_inliers_best:
                 continue
+            if n_inliers_subset == 0:
+                raise ValueError("no inliers found, possible cause is "
+                    "setting residual_threshold ({}) too low.".format(
+		    self.residual_threshold))
+                    
 
             # extract inlier data set
             inlier_idxs_subset = sample_idxs[inlier_mask_subset]
@@ -301,6 +304,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             # score of inlier data set
             score_subset = base_estimator.score(X_inlier_subset,
                                                 y_inlier_subset)
+
+
 
             # same number of inliers but worse score -> skip current random
             # sample
