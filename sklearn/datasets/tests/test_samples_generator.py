@@ -210,7 +210,7 @@ def test_make_regression_multitarget():
 def test_make_blobs():
     X, y = make_blobs(n_samples=50, n_features=2,
                       centers=[[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
-                      random_state=0)
+                      cluster_std=[0.5, 0.25, 1.0], random_state=0)
 
     assert_equal(X.shape, (50, 2), "X shape mismatch")
     assert_equal(y.shape, (50,), "y shape mismatch")
