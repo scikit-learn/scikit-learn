@@ -1318,7 +1318,10 @@ R² score, the coefficient of determination
 The :func:`r2_score` function computes R², the `coefficient of
 determination <http://en.wikipedia.org/wiki/Coefficient_of_determination>`_.
 It provides a measure of how well future samples are likely to
-be predicted by the model.
+be predicted by the model. Best possible score is 1.0 and it can be negative
+(because the model can be arbitrarily worse). A constant model that always
+predicts the expected value of y, disregarding the input features, would get a
+R^2 score of 0.0.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value, then the score R² estimated
