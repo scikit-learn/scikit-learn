@@ -95,6 +95,41 @@ def test_mean_variance_axis1():
     assert_raises(TypeError, mean_variance_axis, X_lil, axis=1)
 
 
+def test_mean_variance_axisnone():
+    axis = None
+    X, _ = make_classification(5, 4, random_state=0)
+    # Sparsify the array a little bit
+    X[0, 0] = 0
+    X[2, 1] = 0
+    X[4, 3] = 0
+    X_lil = sp.lil_matrix(X)
+    X_lil[1, 0] = 0
+    X[1, 0] = 0
+    X_csr = sp.csr_matrix(X_lil)
+
+    X_means, X_vars = mean_variance_axis(X_csr, axis=axis)
+    assert_array_almost_equal(X_means, np.mean(X, axis=axis))
+    assert_array_almost_equal(X_vars, np.var(X, axis=axis))
+
+    X_csc = sp.csc_matrix(X_lil)
+    X_means, X_vars = mean_variance_axis(X_csc, axis=axis)
+
+    assert_array_almost_equal(X_means, np.mean(X, axis=axis))
+    assert_array_almost_equal(X_vars, np.var(X, axis=axis))
+    assert_raises(TypeError, mean_variance_axis, X_lil, axis=axis)
+
+    X = X.astype(np.float32)
+    X_csr = X_csr.astype(np.float32)
+    X_csc = X_csr.astype(np.float32)
+    X_means, X_vars = mean_variance_axis(X_csr, axis=axis)
+    assert_array_almost_equal(X_means, np.mean(X, axis=axis))
+    assert_array_almost_equal(X_vars, np.var(X, axis=axis))
+    X_means, X_vars = mean_variance_axis(X_csc, axis=axis)
+    assert_array_almost_equal(X_means, np.mean(X, axis=axis))
+    assert_array_almost_equal(X_vars, np.var(X, axis=axis))
+    assert_raises(TypeError, mean_variance_axis, X_lil, axis=axis)
+
+
 def test_densify_rows():
     X = sp.csr_matrix([[0, 3, 0],
                        [2, 4, 0],

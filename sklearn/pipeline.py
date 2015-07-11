@@ -375,7 +375,7 @@ def make_pipeline(*steps):
     >>> from sklearn.preprocessing import StandardScaler
     >>> make_pipeline(StandardScaler(), GaussianNB())    # doctest: +NORMALIZE_WHITESPACE
     Pipeline(steps=[('standardscaler',
-                     StandardScaler(copy=True, with_mean=True, with_std=True)),
+                     StandardScaler(copy=True, per_feature=True, with_mean=True, with_std=True)),
                     ('gaussiannb', GaussianNB())])
 
     Returns

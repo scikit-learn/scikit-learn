@@ -9,12 +9,14 @@ from libc.math cimport fabs, sqrt
 cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
+import warnings
 cimport cython
 
 np.import_array()
 
 
 ctypedef np.float64_t DOUBLE
+ctypedef np.float32_t FLOAT
 
 
 @cython.boundscheck(False)
@@ -43,6 +45,62 @@ def csr_row_norms(X):
         norms[i] = sum_
 
     return norms
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def sparse_mean_variance(X):
+    """Compute the variance of a sparse matrix.
+    Will copy data to an array of doubles if input data
+    are not np.float32 or np.float64 types.
+
+    Parameters
+    ----------
+    X: Scipy sparse matrix, shape (n_samples, n_features)
+        Input data.
+
+    Returns
+    -------
+
+    mean: float scalar
+        Mean of array
+
+    variance: float scalar
+        Variance of array
+    """
+    cdef:
+        double sum = 0
+        double sum_squares = 0
+        double variance = 0
+        double n_elements = X.shape[0] * X.shape[1]
+        np.ndarray[DOUBLE, ndim=1, mode="c"] X_data_d
+        np.ndarray[FLOAT, ndim=1, mode="c"] X_data_f
+        int len_data
+        double datum
+    len_data = len(X.data)
+
+    if X.data.dtype not in (np.float64, np.float32):
+        warnings.warn("Copying sparse array data to array of "
+                      "doubles for computation.")
+        X_data = np.asarray(X.data, dtype=np.float64)  # Copy!
+    if X.data.dtype == np.float64:
+        X_data_d = X.data
+        for i_datum in xrange(len_data):
+            datum = X_data_d[i_datum]
+            sum += datum
+            sum_squares += datum * datum
+    elif X.data.dtype == np.float32:
+        X_data_f = X.data
+        for i_datum in xrange(len_data):
+            datum = X_data_f[i_datum]
+            sum += datum
+            sum_squares += datum * datum
+
+    mean = sum / n_elements
+    variance = sum_squares / n_elements - mean * mean
+
+    return mean, variance
 
 
 @cython.boundscheck(False)

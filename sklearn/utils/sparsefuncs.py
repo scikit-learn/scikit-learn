@@ -8,6 +8,7 @@ import numpy as np
 from .fixes import sparse_min_max, bincount
 from .sparsefuncs_fast import csr_mean_variance_axis0 as _csr_mean_var_axis0
 from .sparsefuncs_fast import csc_mean_variance_axis0 as _csc_mean_var_axis0
+from .sparsefuncs_fast import sparse_mean_variance
 
 
 def _raise_typeerror(X):
@@ -54,31 +55,34 @@ def inplace_csr_row_scale(X, scale):
 
 
 def mean_variance_axis(X, axis):
-    """Compute mean and variance along axis 0 on a CSR or CSC matrix
+    """Compute mean and variance on a CSR or CSC matrix
 
     Parameters
     ----------
     X: CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
 
-    axis: int (either 0 or 1)
+    axis: int (either 0, 1, or None)
         Axis along which the axis should be computed.
+        If None, use all values in the array.
 
     Returns
     -------
 
-    means: float array with shape (n_features,)
-        Feature-wise means
+    means: float array with shape (n_features,) or scalar
+        Axis means (or array mean if `axis` is None)
 
-    variances: float array with shape (n_features,)
-        Feature-wise variances
+    variances: float array with shape (n_features,) or scalar
+        Axis variances (or array mean if `axis` is None)
 
     """
-    if axis not in (0, 1):
+    if axis not in (0, 1, None):
         raise ValueError(
             "Unknown axis value: %d. Use 0 for rows, or 1 for columns" % axis)
 
-    if isinstance(X, sp.csr_matrix):
+    if axis is None and isinstance(X, (sp.csr_matrix, sp.csc_matrix)):
+        return sparse_mean_variance(X)
+    elif isinstance(X, sp.csr_matrix):
         if axis == 0:
             return _csr_mean_var_axis0(X)
         else:
@@ -106,7 +110,9 @@ def inplace_column_scale(X, scale):
     scale: float array with shape (n_features,)
         Array of precomputed feature-wise values to use for scaling.
     """
-    if isinstance(X, sp.csc_matrix):
+    if np.isscalar(scale) and isinstance(X, (sp.csr_matrix, sp.csc_matrix)):
+        X *= scale
+    elif isinstance(X, sp.csc_matrix):
         inplace_csr_row_scale(X.T, scale)
     elif isinstance(X, sp.csr_matrix):
         inplace_csr_column_scale(X, scale)
@@ -128,7 +134,9 @@ def inplace_row_scale(X, scale):
     scale : float array with shape (n_features,)
         Array of precomputed sample-wise values to use for scaling.
     """
-    if isinstance(X, sp.csc_matrix):
+    if np.isscalar(scale) and isinstance(X, (sp.csr_matrix, sp.csc_matrix)):
+        X *= scale
+    elif isinstance(X, sp.csc_matrix):
         inplace_csr_column_scale(X.T, scale)
     elif isinstance(X, sp.csr_matrix):
         inplace_csr_row_scale(X, scale)
@@ -384,7 +392,7 @@ def csc_median_axis_0(X):
     Returns
     -------
     median : ndarray, shape (n_features,)
-        Median. 
+        Median.
 
     """
     if not isinstance(X, sp.csc_matrix):
