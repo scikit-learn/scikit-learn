@@ -147,7 +147,7 @@ def test_ransac_resid_thresh_no_inliers():
                                        residual_threshold=0.0, random_state=0)
 
     assert_raises_regexp(ValueError,
-                    "no inliers.*residual_threshold.*0\.0",
+                    "No inliers.*residual_threshold.*0\.0",
                     ransac_estimator.fit, X, y)
 
 
