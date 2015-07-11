@@ -267,7 +267,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     init :  'nndsvd' |  'nndsvda' | 'nndsvdar' | 'random'
         Method used to initialize the procedure.
-        Default: 'nndsvdar' if n_components < n_features, otherwise random.
+        Default: 'nndsvd' if n_components < n_features, otherwise random.
         Valid options::
 
             'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
