@@ -165,6 +165,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                  stop_probability=0.99, residual_metric=None,
                  random_state=None):
 
+	if residual_threshold == 0.0:
+	    raise ValueError('residual threshold must be > 0.0')
         self.base_estimator = base_estimator
         self.min_samples = min_samples
         self.residual_threshold = residual_threshold
