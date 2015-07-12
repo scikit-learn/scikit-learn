@@ -103,6 +103,9 @@ Bug fixes
     - Fixed bug where :class:`grid_search.RandomizedSearchCV` could consume a
       lot of memory for large discrete grids. By `Joel Nothman`_.
 
+    - Fixed bug in :class:`linear_model.LogisticRegressionCV` where `penalty` was ignored
+      in the final fit. By `Manoj Kumar`_.
+
 API changes summary
 -------------------
 
