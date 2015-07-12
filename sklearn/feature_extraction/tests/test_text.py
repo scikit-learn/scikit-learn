@@ -30,6 +30,7 @@ from nose.tools import assert_almost_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
+from sklearn.utils.random import choice
 from sklearn.utils.testing import (assert_in, assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry)
@@ -863,10 +864,11 @@ def test_countvectorizer_vocab_sets_when_pickling():
     # ensure that vocabulary of type set is coerced to a list to
     # preserve iteration ordering after deserialization
     rng = np.random.RandomState(0)
-    vocab_words = ['beer', 'burger', 'celeri', 'coke', 'pizza',
-                   'salad', 'sparkling', 'tomato', 'water']
+    vocab_words = np.array(['beer', 'burger', 'celeri', 'coke', 'pizza',
+                            'salad', 'sparkling', 'tomato', 'water'])
     for x in range(0, 100):
-        vocab_set = set(rng.choice(vocab_words, size=5, replace=False))
+        vocab_set = set(choice(vocab_words, size=5, replace=False,
+                        random_state=rng))
         cv = CountVectorizer(vocabulary=vocab_set)
         unpickled_cv = pickle.loads(pickle.dumps(cv))
         cv.fit(ALL_FOOD_DOCS)
@@ -876,11 +878,11 @@ def test_countvectorizer_vocab_sets_when_pickling():
 
 def test_countvectorizer_vocab_dicts_when_pickling():
     rng = np.random.RandomState(0)
-    vocab_words = ['beer', 'burger', 'celeri', 'coke', 'pizza',
-                   'salad', 'sparkling', 'tomato', 'water']
+    vocab_words = np.array(['beer', 'burger', 'celeri', 'coke', 'pizza',
+                            'salad', 'sparkling', 'tomato', 'water'])
     for x in range(0, 100):
         vocab_dict = dict()
-        words = rng.choice(vocab_words, size=5, replace=False)
+        words = choice(vocab_words, size=5, replace=False, random_state=rng)
         for y in range(0, 5):
             vocab_dict[words[y]] = y
         cv = CountVectorizer(vocabulary=vocab_dict)
