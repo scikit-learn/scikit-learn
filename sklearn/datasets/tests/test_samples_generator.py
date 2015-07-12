@@ -219,6 +219,7 @@ def test_make_blobs():
     for i, (ctr, std) in enumerate(zip(cluster_centers, cluster_stds)):
         assert_almost_equal((X[y == i] - ctr).std(), std, 1, "Unexpected std")
 
+
 def test_make_friedman1():
     X, y = make_friedman1(n_samples=5, n_features=10, noise=0.0,
                           random_state=0)
