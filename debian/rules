@@ -1,11 +1,15 @@
 #!/usr/bin/make -f
 # -*- mode: makefile; coding: utf-8 -*-
 
-PACKAGE_NAME = python-sklearn
-PACKAGE_ROOT_DIR = debian/${PACKAGE_NAME}
+PACKAGE2_NAME = python-sklearn
+PACKAGE3_NAME = python3-sklearn
+PACKAGE2_ROOT_DIR = debian/${PACKAGE2_NAME}
+PACKAGE3_ROOT_DIR = debian/${PACKAGE3_NAME}
 
 PYVERS = $(shell pyversions -vr)
 PYVER = $(shell pyversions  -vd)
+PY3VERS = $(shell py3versions -vr)
+PY3VER = $(shell py3versions -vd)
 
 SPHINX_VER := $(shell python -c 'from sphinx import __version__; print __version__')
 NODOC = $(shell dpkg --compare-versions $(SPHINX_VER) lt 1.1.3 && echo "nodoc" || echo "")
@@ -35,15 +39,16 @@ override_dh_clean:
 	rm -rf build doc/_build doc/auto_examples *-stamp *.egg-info sklearn/datasets/__config__.py
 	dh_clean
 
-override_dh_auto_install: ${PYVERS:%=python-install%} ${PYVERS:%=python-test%}
+override_dh_auto_install: ${PYVERS:%=python-install%} ${PY3VERS:%=python-install%} ${PYVERS:%=python-test%} ${PY3VERS:%=python-test%}
 # Per Python version logic -- install, test, move .so into -lib
 python-install%:
-	python$* setup.py install --install-layout=deb --root=$(PACKAGE_ROOT_DIR)
+	python$* setup.py install --install-layout=deb --root=$(PACKAGE$*_ROOT_DIR)
 
 python-test%: python-install%
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	: # Run unittests here against installed scikits.learn
-	export PYTHONPATH=`/bin/ls -d $$PWD/$(PACKAGE_ROOT_DIR)/usr/lib/python$*/*/`; \
+	echo "$*" | grep -q '^3' && PY=3 || PY=$*; \
+	export PYTHONPATH=`/bin/ls -d $$PWD/$(PACKAGE$*_ROOT_DIR)/usr/lib/python$$PY/*/`; \
 	export MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build; \
 	export JOBLIB_MULTIPROCESSING=0; \
 	cd build/; python$* /usr/bin/nosetests -s -v $(NOSEARGS) sklearn && \
@@ -59,7 +64,7 @@ ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS)))
 ifneq (,$(findstring -a,$(DH_INTERNAL_OPTIONS)))
 	: # not building documentation in -a
 else
-	export PYTHONPATH=`/bin/ls -d $$PWD/$(PACKAGE_ROOT_DIR)/usr/lib/python$(PYVER)/*`; \
+	export PYTHONPATH=`/bin/ls -d $$PWD/$(PACKAGE2_ROOT_DIR)/usr/lib/python$(PYVER)/*`; \
 	export MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build; \
 	 cd doc; $(MAKE) html
 endif
@@ -75,28 +80,30 @@ override_dh_installchangelogs:
 	dh_installchangelogs doc/whats_new.rst
 
 ## move binary libraries into -lib
-override_dh_python2:
+override_dh_python*:
 	: # Move platform-specific libraries into -lib
 	set -e; \
-	for lib in $$(find $(PACKAGE_ROOT_DIR)/usr -name '*.so'); do \
+	for lib in $$(find $(PACKAGE$*_ROOT_DIR)/usr -name '*.so'); do \
 	   sdir=$$(dirname $$lib) ; \
-	   tdir=$(PACKAGE_ROOT_DIR)-lib/$${sdir#*$(PACKAGE_NAME)/} ; \
+	   tdir=$(PACKAGE$*_ROOT_DIR)-lib/$${sdir#*$(PACKAGE$*_NAME)/} ; \
 	   mkdir -p $$tdir ; \
 	   echo "Moving '$$lib' into '$$tdir'." ; \
 	   mv $$lib $$tdir ; \
 	done
-	if [ -x /usr/bin/dh_numpy ]; then dh_numpy -ppython-sklearn-lib; fi
+	[ -e /usr/bin/dh_numpy$(*:2=) ] && dh_numpy$(*:2=) -p$(PACKAGE$*_NAME)-lib || :
 	: # Prune scikits/__init__.py to avoid conflicts
 	find debian -wholename \*scikits/__init__.py -delete
 	: # Move scikits. space into a compatibility package
+	if [ $* -eq 2 ]; then \
 	set -e; \
 	find debian -wholename \*scikits -type d | while read skd; do \
 		skbd=$$(dirname $$skd); \
 		skbd_=$$(echo $$skbd | sed -e 's/sklearn/scikits-learn/g'); \
 		mkdir -p $$skbd_; \
 		mv $$skd $$skbd_; \
-	done
-	dh_python2
+	done; \
+	fi
+	dh_python$*
 
 ## immediately useable documentation and exemplar scripts/data
 override_dh_compress:

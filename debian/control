@@ -8,10 +8,17 @@ Build-Depends: debhelper (>= 7.0.50), dh-autoreconf,
                cython (>= 0.12~),
                python-setuptools,
                python-numpy, python-scipy,
-               libsvm-dev (>= 2.84.0),
                python-nose,
                python-matplotlib,
                python-joblib (>= 0.4.5),
+               python3-all-dev,
+               cython3,
+               python3-setuptools,
+               python3-numpy, python3-scipy,
+               python3-nose,
+               python3-matplotlib,
+               python3-joblib (>= 0.4.5),
+               libsvm-dev (>= 2.84.0),
                libatlas3-base,
 Build-Depends-Indep:
                python-sphinx (>= 1.0), python-imaging, graphviz,
@@ -40,18 +47,6 @@ Description: Python modules for machine learning and data mining
   - kNN
   - SVM (via LIBSVM)
 
-
-Package: python-sklearn-doc
-Conflicts: python-scikits-learn-doc
-Replaces: python-scikits-learn-doc
-Architecture: all
-Section: doc
-Depends: ${misc:Depends}, libjs-jquery
-Suggests: python-sklearn
-Description: documentation and examples for scikit-learn
- This package contains documentation and example scripts for
- python-sklearn.
-
 Package: python-sklearn-lib
 Conflicts: python-scikits-learn-lib
 Replaces: python-scikits-learn-lib
@@ -63,6 +58,47 @@ Description: low-level implementations and bindings for scikit-learn
  low-level implementations and custom Python bindings for the LIBSVM
  library.
 
+Package: python3-sklearn
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}, python3-numpy, python3-scipy, python3-sklearn-lib(>= ${source:Version}),
+         python3-joblib (>= 0.4.5),
+Provides: ${python:Provides}
+Recommends: python-nose, python-matplotlib
+Suggests: python3-dap, python-sklearn-doc, ipython3
+Enhances: python3-mvpa2, python3-mdp
+Description: Python modules for machine learning and data mining
+ scikit-learn is a collection of Python modules relevant to
+ machine/statistical learning and data mining.  Non-exhaustive list of
+ included functionality:
+  - Gaussian Mixture Models
+  - Manifold learning
+  - kNN
+  - SVM (via LIBSVM)
+ .
+ This package contains the Python 3 version.
+
+Package: python3-sklearn-lib
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}, ${python3:Depends}, python3-numpy
+Provides: ${python:Provides}
+Description: low-level implementations and bindings for scikit-learn - Python 3
+ This is an add-on package for python-sklearn. It provides
+ low-level implementations and custom Python bindings for the LIBSVM
+ library.
+ .
+ This package contains the Python 3 version.
+
+
+Package: python-sklearn-doc
+Conflicts: python-scikits-learn-doc
+Replaces: python-scikits-learn-doc
+Architecture: all
+Section: doc
+Depends: ${misc:Depends}, libjs-jquery
+Suggests: python-sklearn
+Description: documentation and examples for scikit-learn
+ This package contains documentation and example scripts for
+ python-sklearn.
 
 Package: python-scikits-learn
 Depends: python-sklearn, ${misc:Depends}, ${python:Depends}
