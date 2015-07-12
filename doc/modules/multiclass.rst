@@ -60,11 +60,14 @@ grouped by strategy; you don't need the meta-estimators in this class
 if you're using one of these unless you want custom multiclass behavior:
 
   - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
-    :class:`sklearn.lda.LDA`,
+    :ref:`LDA and QDA <lda_qda>`,
     :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
     :ref:`Nearest Neighbors <neighbors>`,
-    setting "multi_class=multinomial" in
+    setting ``multi_class='multinomial'`` in
     :class:`sklearn.linear_model.LogisticRegression`.
+  - Support multilabel: :ref:`Decision Trees <tree>`, 
+    :ref:`Random Forests <forest>`, :ref:`Nearest Neighbors <neighbors>`,
+    :ref:`Ridge Regression <ridge_regression>`.
   - One-Vs-One: :class:`sklearn.svm.SVC`.
   - One-Vs-All: all linear models except :class:`sklearn.svm.SVC`.
 
