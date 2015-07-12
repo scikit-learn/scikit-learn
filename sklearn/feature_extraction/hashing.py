@@ -25,6 +25,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
     Feature names of type byte string are used as-is. Unicode strings are
     converted to UTF-8 first, but no Unicode normalization is done.
+    Feature values must be (finite) numbers.
 
     This class is a low-memory alternative to DictVectorizer and
     CountVectorizer, intended for large-scale (online) learning and situations
