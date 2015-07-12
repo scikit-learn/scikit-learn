@@ -192,7 +192,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         fit(X, y, sample_weight, solver_type, kernel, random_seed=seed)
         # see comment on the other call to np.iinfo in this file
 
-        self.shape_fit_ = X.shape
+        self._shape_fit_ = X.shape
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function. Use self._intercept_ and self._dual_coef_ internally.
@@ -210,13 +210,13 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         Default implementation for SVR and one-class; overridden in BaseSVC.
         """
         # XXX this is ugly.
-        # Regression models should not have a class_weight_ attribute.
-        self.class_weight_ = np.empty(0)
+        # Regression models should not have a _class_weight_ attribute.
+        self._class_weight_ = np.empty(0)
         return np.asarray(y, dtype=np.float64, order='C')
 
     def _warn_from_fit_status(self):
-        assert self.fit_status_ in (0, 1)
-        if self.fit_status_ == 1:
+        assert self._fit_status_ in (0, 1)
+        if self._fit_status_ == 1:
             warnings.warn('Solver terminated early (max_iter=%i).'
                           '  Consider pre-processing your data with'
                           ' StandardScaler or MinMaxScaler.'
@@ -238,11 +238,11 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
         self.support_, self.support_vectors_, self.n_support_, \
-            self.dual_coef_, self.intercept_, self.probA_, \
-            self.probB_, self.fit_status_ = libsvm.fit(
+            self.dual_coef_, self.intercept_, self._probA_, \
+            self._probB_, self._fit_status_ = libsvm.fit(
                 X, y,
                 svm_type=solver_type, sample_weight=sample_weight,
-                class_weight=self.class_weight_, kernel=kernel, C=self.C,
+                class_weight=self._class_weight_, kernel=kernel, C=self.C,
                 nu=self.nu, probability=self.probability, degree=self.degree,
                 shrinking=self.shrinking, tol=self.tol,
                 cache_size=self.cache_size, coef0=self.coef0,
@@ -262,11 +262,11 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         self.support_, self.support_vectors_, dual_coef_data, \
             self.intercept_, self.n_support_, \
-            self.probA_, self.probB_, self.fit_status_ = \
+            self._probA_, self._probB_, self._fit_status_ = \
             libsvm_sparse.libsvm_sparse_train(
                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
                 kernel_type, self.degree, self._gamma, self.coef0, self.tol,
-                self.C, self.class_weight_,
+                self.C, self._class_weight_,
                 sample_weight, self.nu, self.cache_size, self.epsilon,
                 int(self.shrinking), int(self.probability), self.max_iter,
                 random_seed)
@@ -314,17 +314,17 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         kernel = self.kernel
         if callable(self.kernel):
             kernel = 'precomputed'
-            if X.shape[1] != self.shape_fit_[0]:
+            if X.shape[1] != self._shape_fit_[0]:
                 raise ValueError("X.shape[1] = %d should be equal to %d, "
                                  "the number of samples at training time" %
-                                 (X.shape[1], self.shape_fit_[0]))
+                                 (X.shape[1], self._shape_fit_[0]))
 
         svm_type = LIBSVM_IMPL.index(self._impl)
 
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
             self._dual_coef_, self._intercept_,
-            self.probA_, self.probB_, svm_type=svm_type, kernel=kernel,
+            self._probA_, self._probB_, svm_type=svm_type, kernel=kernel,
             degree=self.degree, coef0=self.coef0, gamma=self._gamma,
             cache_size=self.cache_size)
 
@@ -346,10 +346,10 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._dual_coef_.data, self._intercept_,
             LIBSVM_IMPL.index(self._impl), kernel_type,
             self.degree, self._gamma, self.coef0, self.tol,
-            C, self.class_weight_,
+            C, self._class_weight_,
             self.nu, self.epsilon, self.shrinking,
             self.probability, self.n_support_,
-            self.probA_, self.probB_)
+            self._probA_, self._probB_)
 
     def _compute_kernel(self, X):
         """Return the data transformed by a callable kernel"""
@@ -420,7 +420,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
             self._dual_coef_, self._intercept_,
-            self.probA_, self.probB_,
+            self._probA_, self._probB_,
             svm_type=LIBSVM_IMPL.index(self._impl),
             kernel=kernel, degree=self.degree, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self._gamma)
@@ -442,10 +442,10 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._dual_coef_.data, self._intercept_,
             LIBSVM_IMPL.index(self._impl), kernel_type,
             self.degree, self._gamma, self.coef0, self.tol,
-            self.C, self.class_weight_,
+            self.C, self._class_weight_,
             self.nu, self.epsilon, self.shrinking,
             self.probability, self.n_support_,
-            self.probA_, self.probB_)
+            self._probA_, self._probB_)
 
     def _validate_for_predict(self, X):
         check_is_fitted(self, 'support_')
@@ -463,14 +463,14 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         n_samples, n_features = X.shape
 
         if self.kernel == "precomputed":
-            if X.shape[1] != self.shape_fit_[0]:
+            if X.shape[1] != self._shape_fit_[0]:
                 raise ValueError("X.shape[1] = %d should be equal to %d, "
                                  "the number of samples at training time" %
-                                 (X.shape[1], self.shape_fit_[0]))
-        elif n_features != self.shape_fit_[1]:
+                                 (X.shape[1], self._shape_fit_[0]))
+        elif n_features != self._shape_fit_[1]:
             raise ValueError("X.shape[1] = %d should be equal to %d, "
                              "the number of features at training time" %
-                             (n_features, self.shape_fit_[1]))
+                             (n_features, self._shape_fit_[1]))
         return X
 
     @property
@@ -512,7 +512,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
     def _validate_targets(self, y):
         y_ = column_or_1d(y, warn=True)
         cls, y = np.unique(y_, return_inverse=True)
-        self.class_weight_ = compute_class_weight(self.class_weight, cls, y_)
+        self._class_weight_ = compute_class_weight(self.class_weight, cls, y_)
         if len(cls) < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d"
@@ -661,7 +661,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self.n_support_,
             self._dual_coef_, self._intercept_,
-            self.probA_, self.probB_,
+            self._probA_, self._probB_,
             svm_type=svm_type, kernel=kernel, degree=self.degree,
             cache_size=self.cache_size, coef0=self.coef0, gamma=self._gamma)
 
@@ -684,10 +684,10 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
             self._dual_coef_.data, self._intercept_,
             LIBSVM_IMPL.index(self._impl), kernel_type,
             self.degree, self._gamma, self.coef0, self.tol,
-            self.C, self.class_weight_,
+            self.C, self._class_weight_,
             self.nu, self.epsilon, self.shrinking,
             self.probability, self.n_support_,
-            self.probA_, self.probB_)
+            self._probA_, self._probB_)
 
     def _get_coef(self):
         if self.dual_coef_.shape[0] == 1:
@@ -882,9 +882,9 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                              " in the data, but the data contains only one"
                              " class: %r" % classes_[0])
 
-        class_weight_ = compute_class_weight(class_weight, classes_, y)
+        _class_weight_ = compute_class_weight(class_weight, classes_, y)
     else:
-        class_weight_ = np.empty(0, dtype=np.float)
+        _class_weight_ = np.empty(0, dtype=np.float)
         y_ind = y
     liblinear.set_verbosity_wrap(verbose)
     rnd = check_random_state(random_state)
@@ -910,7 +910,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)
     raw_coef_, n_iter_ = liblinear.train_wrap(
         X, y_ind, sp.isspmatrix(X), solver_type, tol, bias, C,
-        class_weight_, max_iter, rnd.randint(np.iinfo('i').max),
+        _class_weight_, max_iter, rnd.randint(np.iinfo('i').max),
         epsilon)
     # Regarding rnd.randint(..) in the above signature:
     # seed for srand in range [0..INT_MAX); due to limitations in Numpy

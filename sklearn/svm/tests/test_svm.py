@@ -844,6 +844,20 @@ def test_lsvc_intercept_scaling_zero():
     lsvc.fit(X, Y)
     assert_equal(lsvc.intercept_, 0.)
 
+def test_svc_has_no_undocumented_public_attributes():
+    svc = svm.SVC()
+    svc.fit(X, Y)
+    public_attr = [attr for attr in dir(svc)
+                   if not attr.startswith('_') and not attr.startswith('__')]
+    documented_attr = ['C', 'cache_size', 'class_weight', 'classes_', 'coef0',
+                       'coef_', 'decision_function', 'degree', 'dual_coef_',
+                       'epsilon', 'fit', 'gamma', 'get_params', 'intercept_',
+                       'kernel', 'max_iter', 'n_support_', 'nu', 'predict',
+                       'predict_log_proba', 'predict_proba', 'probability',
+                       'random_state', 'score', 'set_params', 'shrinking',
+                       'support_', 'support_vectors_', 'tol', 'verbose']
+    assert_equal(public_attr, documented_attr)
+
 
 def test_hasattr_predict_proba():
     # Method must be (un)available before or after fit, switched by
