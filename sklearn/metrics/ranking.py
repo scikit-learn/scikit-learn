@@ -370,7 +370,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
         Sample weights.
 
     interpolate : boolean, optional (default=False)
-        Interpolates precision score, to de-noise PR curve.
+        Interpolates precision score, to de-noise PR curve. Based on [1]
 
     Returns
     -------
@@ -385,6 +385,12 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     thresholds : array, shape = [n_thresholds := len(np.unique(probas_pred))]
         Increasing thresholds on the decision function used to compute
         precision and recall.
+
+    References
+    ----------
+    .. [1] Manning, C. D., Raghavan, P., & Schütze, H. (2008). 
+           Introduction to information retrieval (Vol. 1, p. 159).
+           Cambridge: Cambridge university press.
 
     Examples
     --------
