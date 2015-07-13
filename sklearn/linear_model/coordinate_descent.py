@@ -6,6 +6,7 @@
 # License: BSD 3 clause
 
 import sys
+import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
 
@@ -2060,10 +2061,10 @@ class AdaptiveLasso(Lasso):
 
     Parameters
     ----------
-    n_lasso_iterations : integer, optional (default=2)
-        Number of lasso iterations to fit. n_lasso_iterations = 1 is equivalent
-        to a Lasso, solved by the :class:`Lasso`, and n_lasso_iterations = 2 is
-        equivalent to an adaptive Lasso.
+    max_lasso_iterations : integer, optional (default=20)
+        Maximum number of lasso iterations to fit. max_lasso_iterations = 1 is
+        equivalent to a Lasso, solved by the :class:`Lasso`, and
+        max_lasso_iterations = 2 is equivalent to an adaptive Lasso.
 
     gamma : float, optional (default=1.0)
         The exponent to raise the previous iteration's estimate by.
@@ -2079,6 +2080,11 @@ class AdaptiveLasso(Lasso):
     eps : float, optional (default=1e-3)
         Stability parameter to ensure that a zero valued coefficient does not
         prohibit a nonzero estimate in the next iteration.
+
+    ada_tol : float, optional
+        The tolerance for each Adaptive Lasso step: the optimization code
+        checks the optimization objective progress and continues until it is
+        smaller than ``tol``.
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -2100,10 +2106,10 @@ class AdaptiveLasso(Lasso):
         be removed in 0.18.
 
     max_iter : int, optional
-        The maximum number of iterations
+        The maximum number of iterations for each Lasso fit.
 
     tol : float, optional
-        The tolerance for the optimization: if the updates are
+        The tolerance for each Lasso optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
@@ -2164,8 +2170,8 @@ class AdaptiveLasso(Lasso):
     The Adaptive Lasso and Its Oracle Properties
     Journal of the American Statistical Association
     """
-    def __init__(self, n_lasso_iterations=2, gamma=1, alpha=1.0,
-                 eps=1e-3, fit_intercept=True, normalize=False,
+    def __init__(self, max_lasso_iterations=20, gamma=1, alpha=1.0,
+                 eps=1e-3, ada_tol=1e-4, fit_intercept=True, normalize=False,
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, positive=False,
                  random_state=None, selection='cyclic'):
@@ -2175,9 +2181,10 @@ class AdaptiveLasso(Lasso):
             max_iter=max_iter, tol=tol, warm_start=False,
             positive=positive, random_state=random_state,
             selection=selection)
-        self.n_lasso_iterations = n_lasso_iterations
+        self.max_lasso_iterations = max_lasso_iterations
         self.gamma = gamma
         self.eps = eps
+        self.ada_tol = ada_tol
 
     def fit(self, X, y):
         """
@@ -2191,8 +2198,15 @@ class AdaptiveLasso(Lasso):
         y : ndarray, shape (n_samples,) or (n_samples, n_targets)
             Target
         """
-        if self.gamma <= 0:
-            raise ValueError('gamma must be positive.')
+        if not isinstance(self.gamma, numbers.Number) or self.gamma <= 0:
+            raise ValueError("gamma must be positive;"
+                             " got (gamma=%r)" % self.gamma)
+        if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
+            raise ValueError("Maximum number of iteration must be positive;"
+                             " got (max_iter=%r)" % self.max_iter)
+        if not isinstance(self.tol, numbers.Number) or self.tol < 0:
+            raise ValueError("Tolerance for stopping criteria must be "
+                             "positive; got (tol=%r)" % self.tol)
 
         X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
                          order='F', copy=self.copy_X and self.fit_intercept,
@@ -2206,7 +2220,17 @@ class AdaptiveLasso(Lasso):
         weights = np.ones(n_features)
         X_sparse = sparse.isspmatrix(X)
 
-        for k in range(self.n_lasso_iterations):
+        if self.gamma != 1:
+            obj = lambda beta: 1. / (2 * n_samples) * np.sum((y - X.dot(beta)) ** 2) \
+                + self.alpha * 1 / (-self.gamma + 1) \
+                * np.sum(np.power(np.abs(beta) + self.eps, -self.gamma + 1))
+        else:
+            obj = lambda beta: 1. / (2 * n_samples) * np.sum((y - X.dot(beta)) ** 2) \
+                + self.alpha * np.sum(np.log(np.abs(beta) + self.eps))
+
+        this_obj = None
+        for k in range(self.max_lasso_iterations):
+            # Perform Lasso fit
             if X_sparse:
                 X_w = X.copy()
                 inplace_csr_column_scale(X_w, weights)
@@ -2216,4 +2240,16 @@ class AdaptiveLasso(Lasso):
             self.coef_ /= weights
             weights = np.power(np.abs(self.coef_) + self.eps, -self.gamma)
 
+            # Check optimization objective progress
+            previous_obj, this_obj = this_obj, obj(self.coef_)
+            if (all((previous_obj, this_obj)) and
+                    previous_obj - this_obj < self.ada_tol):
+                break
+            k += 1
+
+        if k >= self.max_lasso_iterations:
+            warnings.warn("Objective did not converge."
+                          " You might want to increase"
+                          " the number of Lasso iterations",
+                          ConvergenceWarning)
         return self
