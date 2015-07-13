@@ -1,3 +1,5 @@
+import unittest
+from nose.tools import assert_true
 import numpy as np
 import scipy.sparse as sp
 
@@ -86,6 +88,10 @@ def test_classifier_accuracy_with_average():
             clf.fit(data, y)
             score = clf.score(data, y)
             assert_greater(score, 0.79)
+            assert_true(hasattr(clf, 'average_coef_'))
+            assert_true(hasattr(clf, 'average_intercept_'))
+            assert_true(hasattr(clf, 'standard_intercept_'))
+            assert_true(hasattr(clf, 'standard_coef_'))
 
 
 def test_classifier_partial_fit():
@@ -111,6 +117,10 @@ def test_classifier_partial_fit_with_average():
             clf.partial_fit(data, y, classes)
         score = clf.score(data, y)
         assert_greater(score, 0.79)
+        assert_true(hasattr(clf, 'average_coef_'))
+        assert_true(hasattr(clf, 'average_intercept_'))
+        assert_true(hasattr(clf, 'standard_intercept_'))
+        assert_true(hasattr(clf, 'standard_coef_'))
 
 
 def test_classifier_refit():
@@ -177,6 +187,10 @@ def test_regressor_mse_with_average():
             reg.fit(data, y_bin)
             pred = reg.predict(data)
             assert_less(np.mean((pred - y_bin) ** 2), 1.7)
+            assert_true(hasattr(reg, 'average_coef_'))
+            assert_true(hasattr(reg, 'average_intercept_'))
+            assert_true(hasattr(reg, 'standard_intercept_'))
+            assert_true(hasattr(reg, 'standard_coef_'))
 
 
 def test_regressor_partial_fit():
@@ -206,6 +220,10 @@ def test_regressor_partial_fit_with_average():
             reg.partial_fit(data, y_bin)
         pred = reg.predict(data)
         assert_less(np.mean((pred - y_bin) ** 2), 1.7)
+        assert_true(hasattr(reg, 'average_coef_'))
+        assert_true(hasattr(reg, 'average_intercept_'))
+        assert_true(hasattr(reg, 'standard_intercept_'))
+        assert_true(hasattr(reg, 'standard_coef_'))
 
 
 def test_regressor_correctness():
