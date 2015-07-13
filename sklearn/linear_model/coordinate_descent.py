@@ -2229,7 +2229,8 @@ class AdaptiveLasso(Lasso):
                 + self.alpha * np.sum(np.log(np.abs(beta) + self.eps))
 
         this_obj = None
-        for k in range(self.max_lasso_iterations):
+        k = 1
+        while k <= self.max_lasso_iterations:
             # Perform Lasso fit
             if X_sparse:
                 X_w = X.copy()
@@ -2247,7 +2248,7 @@ class AdaptiveLasso(Lasso):
                 break
             k += 1
 
-        if k >= self.max_lasso_iterations:
+        if k > self.max_lasso_iterations:
             warnings.warn("Objective did not converge."
                           " You might want to increase"
                           " the number of Lasso iterations",
