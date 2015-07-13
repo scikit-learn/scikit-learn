@@ -88,6 +88,9 @@ Enhancements
    - Add :func:`minmax_scale` to provide a function interface for
      :class:`MinMaxScaler`. By `Thomas Unterthiner`_.
 
+   - ``dump_svmlight_file`` now handles multi-label datasets.
+     By Chih-Wei Chang.
+
 Bug fixes
 .........
 

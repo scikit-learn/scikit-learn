@@ -325,7 +325,8 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
         f.write((line_pattern % feat).encode('ascii'))
 
 
-def dump_svmlight_file(X, y, f, multilabel=False, zero_based=True, comment=None, query_id=None):
+def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
+                       multilabel=False):
     """Dump the dataset in svmlight / libsvm file format.
 
     This format is a text-based format, with one sample per line. It does
@@ -348,10 +349,6 @@ def dump_svmlight_file(X, y, f, multilabel=False, zero_based=True, comment=None,
         If file-like, data will be written to f. f should be opened in binary
         mode.
 
-    multilabel: boolean, optional
-        Samples may have several labels each (see
-        http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
-
     zero_based : boolean, optional
         Whether column indices should be written zero-based (True) or one-based
         (False).
@@ -367,6 +364,10 @@ def dump_svmlight_file(X, y, f, multilabel=False, zero_based=True, comment=None,
     query_id : array-like, shape = [n_samples]
         Array containing pairwise preference constraints (qid in svmlight
         format).
+
+    multilabel: boolean, optional
+        Samples may have several labels each (see
+        http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
     """
     if comment is not None:
         # Convert comment string to list of lines in UTF-8.
