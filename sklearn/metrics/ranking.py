@@ -745,9 +745,9 @@ def precision_at_k_score(y_true, y_score, sample_weight=None, n_tops=1):
     n_tops : int, optional
         The number of labels on which the precision is computed.
 
-    Return
-    ------
-    error : float
+    Returns
+    -------
+    score : float
 
     """
     y_true = check_array(y_true, ensure_2d=False, accept_sparse='csr')

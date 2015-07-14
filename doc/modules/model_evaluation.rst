@@ -1042,6 +1042,7 @@ score associated with each label
 :math:`\hat{f} \in \mathbb{R}^{n_\text{samples} \times n_\text{labels}}`,
 the precision at k is defined as
 
+.. math::
     PrecisionAtK(y, \hat{f}) =
         \frac{1}{n_{\text{samples}}}\frac{1}{k}
         \sum_{i=0}^{n_{\text{samples}} - 1}
