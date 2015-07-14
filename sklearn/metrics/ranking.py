@@ -763,6 +763,10 @@ def precision_at_k_score(y_true, y_score, sample_weight=None, n_tops=1):
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
 
+    if n_tops < 1:
+        raise ValueError("Number of top labels must >= 1, got %s"
+                         % n_tops)
+
     n_samples, n_labels = y_true.shape
 
     y_true = csr_matrix(y_true)

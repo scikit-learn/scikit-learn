@@ -1115,3 +1115,8 @@ def test_precision_at_k_score_n_tops_ties():
                                              n_tops=2), 0.5)
     assert_almost_equal(precision_at_k_score([[1, 1, 1]], [[0.25, 0.5, 0.5]],
                                              n_tops=2), 1.)
+
+def test__precision_at_k_score_bad_input():
+    for n_tops in [-1, 0, 0.5]:
+        assert_raises(ValueError, precision_at_k_score, [[0, 0, 0]],
+                      [[0.25, 0.5, 0.5]], n_tops=n_tops)
