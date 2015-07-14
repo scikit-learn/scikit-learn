@@ -26,9 +26,9 @@ y = f(X).ravel()
 kernels = [RBF(l=1.0), RBF(l=1.0, l_bounds=(1e-3, 1e3)),
            C(1.0, (1e-2, 1e2)) * RBF(l=1.0, l_bounds=(1e-3, 1e3)),
            C(1.0, (1e-2, 1e2)) * RBF(l=1.0, l_bounds=(1e-3, 1e3))
-               + C(1e-5, (1e-5, 1e2)),
+           + C(1e-5, (1e-5, 1e2)),
            C(0.1, (1e-2, 1e2)) * RBF(l=1.0, l_bounds=(1e-3, 1e3))
-               + C(1e-5, (1e-5, 1e2))]
+           + C(1e-5, (1e-5, 1e2))]
 
 
 def test_gpr_interpolation():
@@ -101,7 +101,7 @@ def test_prior():
         assert_almost_equal(y_mean, 0, 5)
         if len(gpr.kernel.theta) > 1:
             # XXX: quite hacky, works only for current kernels
-            assert_almost_equal(np.diag(y_cov), np.exp(kernel.theta[0]) , 5)
+            assert_almost_equal(np.diag(y_cov), np.exp(kernel.theta[0]), 5)
         else:
             assert_almost_equal(np.diag(y_cov), 1, 5)
 
@@ -144,7 +144,7 @@ def test_anisotropic_kernel():
     # least a factor 5
     rng = np.random.RandomState(0)
     X = rng.uniform(-1, 1, (50, 2))
-    y = X[:, 0] +  0.1 * X[:, 1]
+    y = X[:, 0] + 0.1 * X[:, 1]
 
     kernel = RBF([1.0, 1.0])
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
@@ -270,3 +270,29 @@ def test_custom_optimizer():
         # Checks that optimizer improved marginal likelihood
         assert_greater(gpr.log_marginal_likelihood(gpr.kernel_.theta),
                        gpr.log_marginal_likelihood(gpr.kernel.theta))
+
+
+def test_duplicate_input():
+    """ Test GPR can handle two different output-values for the same input. """
+    for kernel in kernels:
+        gpr_equal_inputs = \
+            GaussianProcessRegressor(kernel=kernel, sigma_squared_n=1e-2)
+        gpr_similar_inputs = \
+            GaussianProcessRegressor(kernel=kernel, sigma_squared_n=1e-2)
+
+        X_ = np.vstack((X, X[0]))
+        y_ = np.hstack((y, y[0] + 1))
+        gpr_equal_inputs.fit(X_, y_)
+
+        X_ = np.vstack((X, X[0] + 1e-15))
+        y_ = np.hstack((y, y[0] + 1))
+        gpr_similar_inputs.fit(X_, y_)
+
+        X_test = np.linspace(0, 10, 100)[:, None]
+        y_pred_equal, y_std_equal = \
+            gpr_equal_inputs.predict(X_test, return_std=True)
+        y_pred_similar, y_std_similar = \
+            gpr_similar_inputs.predict(X_test, return_std=True)
+
+        assert_almost_equal(y_pred_equal, y_pred_similar)
+        assert_almost_equal(y_std_equal, y_std_similar)
