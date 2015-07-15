@@ -222,7 +222,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # self.metric = metric
         self.processed = False
         
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Perform OPTICS clustering from features or distance matrix.
         
         Initial clustering is set to match 'eps' distance"""
