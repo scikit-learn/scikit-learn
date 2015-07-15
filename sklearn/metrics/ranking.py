@@ -240,9 +240,9 @@ def detection_error_tradeoff(y_true, probas_pred, pos_label=None,
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> fps, fns, thresholds = detection_error_tradeoff(y_true, y_scores)
     >>> fps
-    array([ 1.,  1.,  0.])
+    array([ 0.5,  0.5,  0. ])
     >>> fns
-    array([ 0.,  1.,  1.])
+    array([ 0. ,  0.5,  0.5])
     >>> thresholds
     array([ 0.35,  0.4 ,  0.8 ])
 
