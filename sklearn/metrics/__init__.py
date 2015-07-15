@@ -7,6 +7,7 @@ and pairwise metrics and distance computations.
 from .ranking import auc
 from .ranking import average_precision_score
 from .ranking import coverage_error
+from .ranking import detection_error_tradeoff
 from .ranking import label_ranking_average_precision_score
 from .ranking import label_ranking_loss
 from .ranking import precision_recall_curve
