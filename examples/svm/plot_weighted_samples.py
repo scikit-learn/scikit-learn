@@ -9,7 +9,7 @@ is proportional to its weight.
 The sample weighting rescales the C parameter, which means that the classifier
 puts more emphasis on getting these points right. The effect might often be
 subtle.
-To emphasis the effect here, we particularly weight outliers, making the
+To emphasize the effect here, we particularly weight outliers, making the
 deformation of the decision boundary very visible.
 """
 print(__doc__)
