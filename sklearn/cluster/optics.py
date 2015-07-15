@@ -26,9 +26,9 @@ class setOfObjects(BallTree):
     ----------
     data_points: array [n_samples, n_features]"""
 
-    def __init__(self, data_points):
+    def __init__(self, data_points, **kwargs):
 
-        super(setOfObjects, self).__init__(data_points)
+        super(setOfObjects, self).__init__(data_points, **kwargs)
 
         self._n = len(self.data)
         # Start all points as 'unprocessed' ##
@@ -217,8 +217,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, eps=0.5, min_samples=5): #, metric='euclidean'):
-        self.eps_prime = copy.deepcopy(eps)
-        self.eps = eps * 10.0
+        self.eps = eps
         self.min_samples = min_samples
         # self.metric = metric
         self.processed = False
@@ -229,15 +228,15 @@ class OPTICS(BaseEstimator, ClusterMixin):
         Initial clustering is set to match 'eps' distance"""
         X = np.asarray(X)
         tree = setOfObjects(X) #,self.metric)
-        _prep_optics(tree,self.eps,self.min_samples)
-        _build_optics(tree,self.eps,self.min_samples)
+        _prep_optics(tree,self.eps * 10.0, self.min_samples)
+        _build_optics(tree,self.eps * 10.0, self.min_samples)
         self._index = tree._index[:]
         self._reachability = tree._reachability[:]
         self._core_dist = tree._core_dist[:]
         self._cluster_id = tree._cluster_id[:]
         self._is_core = tree._is_core[:]
         self._ordered_list = tree._ordered_list[:]
-        _ExtractDBSCAN(self,self.eps_prime) # need to be scaled; extraction needs to be < eps
+        _ExtractDBSCAN(self, self.eps) # need to be scaled; extraction needs to be < eps
         self.labels_ = self._cluster_id[:]
         self.core_samples = self._index[self._is_core[:] == True]
         self.n_clusters = max(self._cluster_id)
@@ -247,8 +246,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     def extract(self, epsPrime):
         if self.processed == True:
-            if epsPrime > self.eps:
-                print('Specify an epsilon smaller than ' + self.eps)
+            if epsPrime > self.eps * 10.0:
+                print('Specify an epsilon smaller than ' + self.eps * 10.0)
             else:
                 self.eps_prime = epsPrime
                 _ExtractDBSCAN(self,epsPrime)
@@ -256,7 +255,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 self.core_samples = self._index[self._is_core[:] == True]
                 self.labels_ = self._cluster_id[:]
                 self.n_clusters = max(self._cluster_id)
-                if epsPrime > (self.eps * 0.11):
+                if epsPrime > (self.eps * 1.1):
                     print("Warning, eps is close to epsPrime: output may be unstable")
                 return self.core_samples, self.labels_
         else:
