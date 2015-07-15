@@ -1437,6 +1437,33 @@ to the given limit.
        In Data Mining, 2001.
        Proceedings IEEE International Conference, pp. 131-138.
 
+.. _det_curve:
+
+Detection error tradeoff (DET)
+---------------------------------------
+
+The function :func:`detection_error_tradeoff` computes the
+`detection error tradeoff curve, or DET curve <https://en.wikipedia.org/wiki/Detection_error_tradeoff>`_.
+Quoting Wikipedia :
+
+  "A detection error tradeoff (DET) graph is a graphical plot of error rates for binary classification systems, plotting false reject rate vs. false accept rate. The x- and y-axes are scaled non-linearly by their standard normal deviates (or just by logarithmic transformation), yielding tradeoff curves that are more linear than ROC curves, and use most of the image area to highlight the differences of importance in the critical operating region."
+
+This function requires the true binary
+value and the target scores, which can either be probability estimates of the
+positive class, confidence values, or binary decisions.
+Here is a small example of how to use the :func:`detection_error_tradeoff` function::
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import det_error_tradeoff
+    >>> y = np.array([1, 1, 2, 2])
+    >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, thresholds = error_detection_tradeoff(y, scores, pos_label=2)
+    >>> fpr
+    array([ 0.5,  0.5,  0. ])
+    >>> fnr
+    array([ 0. ,  0.5,  0.5])
+    >>> thresholds
+    array([ 0.35,  0.4 ,  0.8 ])
 
 .. _zero_one_loss:
 
