@@ -43,29 +43,25 @@ def test_fetch_rcv1():
         j = cat_list.index(cat)
         assert_equal(num, Y1[:, j].data.size)
 
-    # test shuffling
-    data2 = fetch_rcv1(shuffle=True, random_state=77,
+    # test shuffling and subset
+    data2 = fetch_rcv1(shuffle=True, subset='train', random_state=77,
                        download_if_missing=False)
     X2, Y2 = data2.data, data2.target
     s2 = data2.sample_id
 
-    assert_true((s1 != s2).any())
-    assert_array_equal(np.sort(s1), np.sort(s2))
+    # The first 23149 samples are the training samples
+    assert_array_equal(np.sort(s1[:23149]), np.sort(s2))
 
     # test some precise values
-    some_sample_id = (2286, 333274, 810593)
-    # indice of first nonzero feature
-    indices = (863, 863, 814)
-    # value of first nonzero feature
-    feature = (0.04973993, 0.12272136, 0.14245221)
-    for i, j, v in zip(some_sample_id, indices, feature):
-        i1 = np.nonzero(s1 == i)[0][0]
-        i2 = np.nonzero(s2 == i)[0][0]
+    some_sample_ids = (2286, 3274, 14042)
+    for sample_id in some_sample_ids:
+        idx1 = s1.tolist().index(sample_id)
+        idx2 = s2.tolist().index(sample_id)
 
-        sp_1 = X1[i1].sorted_indices()
-        sp_2 = X2[i2].sorted_indices()
+        feature_values_1 = X1[idx1, :].toarray()
+        feature_values_2 = X2[idx2, :].toarray()
+        assert_almost_equal(feature_values_1, feature_values_2)
 
-        assert_almost_equal(sp_1[0, j], v)
-        assert_almost_equal(sp_2[0, j], v)
-
-        assert_array_equal(np.sort(Y1[i1].indices), np.sort(Y2[i2].indices))
+        target_values_1 = Y1[idx1, :].toarray()
+        target_values_2 = Y2[idx2, :].toarray()
+        assert_almost_equal(target_values_1, target_values_2)

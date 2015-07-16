@@ -16,7 +16,7 @@ It returns a dictionary-like object, with the following attributes:
 ``data``:
 The feature matrix is a scipy CSR sparse matrix, with 804414 samples and
 47236 features. Non-zero values contains cosine-normalized, log TF-IDF vectors.
-A nearly chronological split is proposed in [1]_: The first 23149 samples are the training set. The last 781265 samples are the testing set. 
+A nearly chronological split is proposed in [1]_: The first 23149 samples are the training set. The last 781265 samples are the testing set. This follows the official LYRL2004 chronological split.
 The array has 0.16% of non zero values::
 
     >>> rcv1.data.shape
@@ -34,11 +34,11 @@ Each sample can be identified by its ID, ranging (with gaps) from 2286 to 810596
     >>> rcv1.sample_id[:3]
     array([2286, 2287, 2288], dtype=int32)
 
-``categories``:
-The target values are the categories of each sample. Each sample belongs to at least one category, and to up to 17 categories. 
-There are 103 categories, each represented by a string. Their corpus frequencies span five orders of magnitude, from 5 occurrences for 'GMIL', to 381327 for 'CCAT'::
+``target_names``:
+The target values are the topics of each sample. Each sample belongs to at least one topic, and to up to 17 topics. 
+There are 103 topics, each represented by a string. Their corpus frequencies span five orders of magnitude, from 5 occurrences for 'GMIL', to 381327 for 'CCAT'::
 
-    >>> rcv1.categories[:3]
+    >>> rcv1.target_names[:3].tolist()  # doctest: +SKIP
     ['E11', 'ECAT', 'M11']
 
 The dataset will be downloaded from the `dataset's homepage`_ if necessary.
