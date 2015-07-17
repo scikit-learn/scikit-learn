@@ -775,11 +775,14 @@ struct __pyx_obj_7sklearn_5utils_11seq_dataset_SequentialDataset {
  * 
  * 
  * cdef class ArrayDataset(SequentialDataset):             # <<<<<<<<<<<<<<
- *     cdef Py_ssize_t n_features
- *     cdef int stride
+ *     cdef np.ndarray X
+ *     cdef np.ndarray Y
  */
 struct __pyx_obj_7sklearn_5utils_11seq_dataset_ArrayDataset {
   struct __pyx_obj_7sklearn_5utils_11seq_dataset_SequentialDataset __pyx_base;
+  PyArrayObject *X;
+  PyArrayObject *Y;
+  PyArrayObject *sample_weights;
   Py_ssize_t n_features;
   int stride;
   double *X_data_ptr;
@@ -790,15 +793,20 @@ struct __pyx_obj_7sklearn_5utils_11seq_dataset_ArrayDataset {
 };
 
 
-/* "sklearn/utils/seq_dataset.pxd":37
+/* "sklearn/utils/seq_dataset.pxd":40
  *     cdef double *sample_weight_data
  * 
  * cdef class CSRDataset(SequentialDataset):             # <<<<<<<<<<<<<<
- *     cdef int stride
- *     cdef double *X_data_ptr
+ *     cdef np.ndarray X_data
+ *     cdef np.ndarray X_indptr
  */
 struct __pyx_obj_7sklearn_5utils_11seq_dataset_CSRDataset {
   struct __pyx_obj_7sklearn_5utils_11seq_dataset_SequentialDataset __pyx_base;
+  PyArrayObject *X_data;
+  PyArrayObject *X_indptr;
+  PyArrayObject *X_indices;
+  PyArrayObject *Y;
+  PyArrayObject *sample_weights;
   int stride;
   double *X_data_ptr;
   int *X_indptr_ptr;
@@ -895,8 +903,8 @@ static struct __pyx_vtabstruct_7sklearn_5utils_11seq_dataset_SequentialDataset *
  * 
  * 
  * cdef class ArrayDataset(SequentialDataset):             # <<<<<<<<<<<<<<
- *     cdef Py_ssize_t n_features
- *     cdef int stride
+ *     cdef np.ndarray X
+ *     cdef np.ndarray Y
  */
 
 struct __pyx_vtabstruct_7sklearn_5utils_11seq_dataset_ArrayDataset {
@@ -905,12 +913,12 @@ struct __pyx_vtabstruct_7sklearn_5utils_11seq_dataset_ArrayDataset {
 static struct __pyx_vtabstruct_7sklearn_5utils_11seq_dataset_ArrayDataset *__pyx_vtabptr_7sklearn_5utils_11seq_dataset_ArrayDataset;
 
 
-/* "sklearn/utils/seq_dataset.pxd":37
+/* "sklearn/utils/seq_dataset.pxd":40
  *     cdef double *sample_weight_data
  * 
  * cdef class CSRDataset(SequentialDataset):             # <<<<<<<<<<<<<<
- *     cdef int stride
- *     cdef double *X_data_ptr
+ *     cdef np.ndarray X_data
+ *     cdef np.ndarray X_indptr
  */
 
 struct __pyx_vtabstruct_7sklearn_5utils_11seq_dataset_CSRDataset {
@@ -6229,8 +6237,8 @@ PyMODINIT_FUNC PyInit_sag_fast(void)
   __pyx_vtabptr_7sklearn_5utils_11seq_dataset_SequentialDataset = (struct __pyx_vtabstruct_7sklearn_5utils_11seq_dataset_SequentialDataset*)__Pyx_GetVtable(__pyx_ptype_7sklearn_5utils_11seq_dataset_SequentialDataset->tp_dict); if (unlikely(!__pyx_vtabptr_7sklearn_5utils_11seq_dataset_SequentialDataset)) {__pyx_filename = __pyx_f[3]; __pyx_lineno = 8; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_7sklearn_5utils_11seq_dataset_ArrayDataset = __Pyx_ImportType("sklearn.utils.seq_dataset", "ArrayDataset", sizeof(struct __pyx_obj_7sklearn_5utils_11seq_dataset_ArrayDataset), 1); if (unlikely(!__pyx_ptype_7sklearn_5utils_11seq_dataset_ArrayDataset)) {__pyx_filename = __pyx_f[3]; __pyx_lineno = 28; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_vtabptr_7sklearn_5utils_11seq_dataset_ArrayDataset = (struct __pyx_vtabstruct_7sklearn_5utils_11seq_dataset_ArrayDataset*)__Pyx_GetVtable(__pyx_ptype_7sklearn_5utils_11seq_dataset_ArrayDataset->tp_dict); if (unlikely(!__pyx_vtabptr_7sklearn_5utils_11seq_dataset_ArrayDataset)) {__pyx_filename = __pyx_f[3]; __pyx_lineno = 28; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_ptype_7sklearn_5utils_11seq_dataset_CSRDataset = __Pyx_ImportType("sklearn.utils.seq_dataset", "CSRDataset", sizeof(struct __pyx_obj_7sklearn_5utils_11seq_dataset_CSRDataset), 1); if (unlikely(!__pyx_ptype_7sklearn_5utils_11seq_dataset_CSRDataset)) {__pyx_filename = __pyx_f[3]; __pyx_lineno = 37; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_vtabptr_7sklearn_5utils_11seq_dataset_CSRDataset = (struct __pyx_vtabstruct_7sklearn_5utils_11seq_dataset_CSRDataset*)__Pyx_GetVtable(__pyx_ptype_7sklearn_5utils_11seq_dataset_CSRDataset->tp_dict); if (unlikely(!__pyx_vtabptr_7sklearn_5utils_11seq_dataset_CSRDataset)) {__pyx_filename = __pyx_f[3]; __pyx_lineno = 37; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_ptype_7sklearn_5utils_11seq_dataset_CSRDataset = __Pyx_ImportType("sklearn.utils.seq_dataset", "CSRDataset", sizeof(struct __pyx_obj_7sklearn_5utils_11seq_dataset_CSRDataset), 1); if (unlikely(!__pyx_ptype_7sklearn_5utils_11seq_dataset_CSRDataset)) {__pyx_filename = __pyx_f[3]; __pyx_lineno = 40; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_vtabptr_7sklearn_5utils_11seq_dataset_CSRDataset = (struct __pyx_vtabstruct_7sklearn_5utils_11seq_dataset_CSRDataset*)__Pyx_GetVtable(__pyx_ptype_7sklearn_5utils_11seq_dataset_CSRDataset->tp_dict); if (unlikely(!__pyx_vtabptr_7sklearn_5utils_11seq_dataset_CSRDataset)) {__pyx_filename = __pyx_f[3]; __pyx_lineno = 40; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_7sklearn_12linear_model_8sgd_fast_LossFunction = __Pyx_ImportType("sklearn.linear_model.sgd_fast", "LossFunction", sizeof(struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_LossFunction), 1); if (unlikely(!__pyx_ptype_7sklearn_12linear_model_8sgd_fast_LossFunction)) {__pyx_filename = __pyx_f[4]; __pyx_lineno = 4; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_LossFunction = (struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_LossFunction*)__Pyx_GetVtable(__pyx_ptype_7sklearn_12linear_model_8sgd_fast_LossFunction->tp_dict); if (unlikely(!__pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_LossFunction)) {__pyx_filename = __pyx_f[4]; __pyx_lineno = 4; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_7sklearn_12linear_model_8sgd_fast_Regression = __Pyx_ImportType("sklearn.linear_model.sgd_fast", "Regression", sizeof(struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_Regression), 1); if (unlikely(!__pyx_ptype_7sklearn_12linear_model_8sgd_fast_Regression)) {__pyx_filename = __pyx_f[4]; __pyx_lineno = 9; __pyx_clineno = __LINE__; goto __pyx_L1_error;}

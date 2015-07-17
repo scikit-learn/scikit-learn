@@ -5,21 +5,28 @@ import time
 
 from sklearn.externals.joblib import Memory
 from sklearn.linear_model import (LogisticRegression, SGDClassifier)
-from sklearn.base import clone
 from sklearn.datasets import fetch_rcv1
+from sklearn.utils import check_random_state
+from sklearn.linear_model.sag import make_dataset
+from sklearn.linear_model.sag_fast import get_auto_eta
+from sklearn.linear_model.sgd_fast import Log
+
 
 try:
     import lightning.classification as lightning_clf
 except ImportError:
     lightning_clf = None
 
-m = Memory(cachedir='.')
+m = Memory(cachedir='.', verbose=0)
 
 
+# compute logistic loss
 def get_loss(w, intercept, myX, myy, C):
+    n_samples = myX.shape[0]
     w = w.ravel()
-    p = np.sum(np.log(1. + np.exp(-myy * (myX.dot(w) + intercept))))
-    p += w.dot(w) / 2. / C
+    p = np.mean(np.log(1. + np.exp(-myy * (myX.dot(w) + intercept))))
+    print("%f + %f" % (p, w.dot(w) / 2. / C / n_samples))
+    p += w.dot(w) / 2. / C / n_samples
     return p
 
 
@@ -86,8 +93,7 @@ def bench(clfs):
 
 def plot_train_losses(clfs):
     plt.figure()
-    for (name, clf, iter_range, train_losses, train_scores,
-         test_scores, durations) in clfs:
+    for (name, _, _, train_losses, _, _, durations) in clfs:
         plt.plot(durations, train_losses, '-o', label=name)
         plt.legend(loc=0)
         plt.xlabel("seconds")
@@ -96,44 +102,41 @@ def plot_train_losses(clfs):
 
 def plot_train_scores(clfs):
     plt.figure()
-    for (name, clf, iter_range, train_losses, train_scores,
-         test_scores, durations) in clfs:
+    for (name, _, _, _, train_scores, _, durations) in clfs:
         plt.plot(durations, train_scores, '-o', label=name)
         plt.legend(loc=0)
         plt.xlabel("seconds")
         plt.ylabel("train score")
-        plt.ylim((0.92, 0.96))
+        #plt.ylim((0.92, 0.96))
 
 
 def plot_test_scores(clfs):
     plt.figure()
-    for (name, clf, iter_range, train_losses, train_scores,
-         test_scores, durations) in clfs:
+    for (name, _, _, _, _, test_scores, durations) in clfs:
         plt.plot(durations, test_scores, '-o', label=name)
         plt.legend(loc=0)
         plt.xlabel("seconds")
         plt.ylabel("test score")
-        plt.ylim((0.92, 0.96))
+        #plt.ylim((0.92, 0.96))
 
 
 def plot_dloss(clfs):
     plt.figure()
     pobj_final = []
-    for (name, clf, iter_range, train_losses, train_scores,
-         test_scores, durations) in clfs:
+    for (name, _, _, train_losses, _, _, durations) in clfs:
         pobj_final.append(train_losses[-1])
 
     indices = np.argsort(pobj_final)
     pobj_best = pobj_final[indices[0]]
 
-    for (name, clf, iter_range, train_losses, train_scores,
-         test_scores, durations) in clfs:
+    for (name, _, _, train_losses, _, _, durations) in clfs:
         log_pobj = np.log(abs(np.array(train_losses) - pobj_best)) / np.log(10)
 
         plt.plot(durations, log_pobj, '-o', label=name)
         plt.legend(loc=0)
         plt.xlabel("seconds")
         plt.ylabel("log(best - train_loss)")
+
 
 rcv1 = fetch_rcv1()
 X = rcv1.data
@@ -144,40 +147,20 @@ ccat_idx = rcv1.target_names.tolist().index('CCAT')
 y = rcv1.target.tocsc()[:, ccat_idx].toarray().ravel()
 y[y == 0] = -1
 
-# Split training and testing. Switch train and test subset compared to
-# LYRL2004 split, to have a large training dataset.
-n = 23149
-X_test = X[:n, :]
-y_test = y[:n]
-X = X[n:, :]
-y = y[n:]
-
 # parameters
-C = 1.0
+C = 1.
 fit_intercept = True
 tol = 1.0e-14
 
-sgd_iter_range = list(range(1, 121, 10))
-newton_iter_range = list(range(1, 19, 2))
-lbfgs_iter_range = list(range(1, 51, 6))
+# max_iter range
+sgd_iter_range = list(range(1, 71, 10))
+newton_iter_range = list(range(1, 25, 3))
+lbfgs_iter_range = list(range(1, 242, 12))
 liblinear_iter_range = list(range(1, 25, 3))
 liblinear_dual_iter_range = list(range(1, 51, 6))
-sag_iter_range = list(range(1, 51, 3))
-
+sag_iter_range = list(range(1, 25, 3))
 
 clfs = [
-    ("SGD",
-     SGDClassifier(alpha=1.0 / C / n_samples, penalty='l2', loss='log',
-                   fit_intercept=fit_intercept, verbose=0),
-     sgd_iter_range, [], [], [], []),
-    ("LR-newton-cg",
-     LogisticRegression(C=C, tol=tol,
-                        solver="newton-cg", fit_intercept=fit_intercept),
-     newton_iter_range, [], [], [], []),
-    ("LR-lbfgs",
-     LogisticRegression(C=C, tol=tol,
-                        solver="lbfgs", fit_intercept=fit_intercept),
-     lbfgs_iter_range, [], [], [], []),
     ("LR-liblinear",
      LogisticRegression(C=C, tol=tol,
                         solver="liblinear", fit_intercept=fit_intercept,
@@ -188,26 +171,61 @@ clfs = [
                         solver="liblinear", fit_intercept=fit_intercept,
                         intercept_scaling=1),
      liblinear_dual_iter_range, [], [], [], []),
-    ("LR-sag",
+    ("LR-SAG",
      LogisticRegression(C=C, tol=tol,
                         solver="sag", fit_intercept=fit_intercept),
-     sag_iter_range, [], [], [], [])]
+     sag_iter_range, [], [], [], []),
+    ("LR-newton-cg",
+     LogisticRegression(C=C, tol=tol, solver="newton-cg",
+                        fit_intercept=fit_intercept),
+     newton_iter_range, [], [], [], []),
+    ("LR-lbfgs",
+     LogisticRegression(C=C, tol=tol,
+                        solver="lbfgs", fit_intercept=fit_intercept),
+     lbfgs_iter_range, [], [], [], []),
+    ("SGD",
+     SGDClassifier(alpha=1.0 / C / n_samples, penalty='l2', loss='log',
+                   fit_intercept=fit_intercept, verbose=0),
+     sgd_iter_range, [], [], [], [])]
+
 
 if lightning_clf is not None and not fit_intercept:
+    # compute the same eta than in LR-sag
+    random_state = check_random_state(1)
+    sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
+    X_dataset, intercept_decay = make_dataset(X, y.astype(np.float64),
+                                              sample_weight, random_state)
+    eta = get_auto_eta(X_dataset, 1. / C / n_samples, n_samples, Log(), 0)
+
     clfs.append(
         ("Lightning-SVRG",
-         lightning_clf.SVRGClassifier(alpha=1. / C / n_samples,
+         lightning_clf.SVRGClassifier(alpha=1. / C / n_samples, eta=eta,
                                       tol=tol, loss="log"),
          sag_iter_range, [], [], [], []))
     clfs.append(
         ("Lightning-SAG",
-         lightning_clf.SAGClassifier(alpha=1. / C / n_samples,
+         lightning_clf.SAGClassifier(alpha=1. / C / n_samples, eta=eta,
                                      tol=tol, loss="log"),
          sag_iter_range, [], [], [], []))
 
+    # We keep only 200 features, to have a dense dataset,
+    # and compare to lightning SAG, which seems incorrect in the sparse case.
+    X_csc = X.tocsc()
+    nnz_in_each_features = X_csc.indptr[1:] - X_csc.indptr[:-1]
+    X = X_csc[:, np.argsort(nnz_in_each_features)[-200:]]
+    X = X.toarray()
+    print("dataset: %.3f MB" % (X.nbytes / 1e6))
+
+
+# Split training and testing. Switch train and test subset compared to
+# LYRL2004 split, to have a larger training dataset.
+n = 23149
+X_test = X[:n, :]
+y_test = y[:n]
+X = X[n:, :]
+y = y[n:]
 
 clfs = bench(clfs)
-
 
 plot_train_scores(clfs)
 plot_test_scores(clfs)

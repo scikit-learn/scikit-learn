@@ -579,11 +579,11 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         w0 = np.zeros(n_features + int(fit_intercept))
         mask_classes = [-1, 1]
         mask = (y == pos_class)
-        y[mask] = 1
-        y[~mask] = -1
+        y[mask] = 1.
+        y[~mask] = -1.
         # To take care of object dtypes, i.e 1 and -1 are in the form of
         # strings.
-        y = as_float_array(y, copy=False)
+        y = check_array(y, dtype=np.float64, ensure_2d=False)
 
     else:
         lbin = LabelBinarizer()
@@ -673,7 +673,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 w0 = coef_.ravel()
 
         elif solver == 'sag':
-            warm_start_sag = sag_logistic(X, y, sample_weight, 1. / C,
+            warm_start_sag = sag_logistic(X, target, sample_weight, 1. / C,
                                           max_iter, tol, verbose,
                                           random_state, warm_start_sag)
             w0 = warm_start_sag['coef']
@@ -960,6 +960,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    n_jobs : int, optional
+        Number of CPU cores used during the cross-validation loop. If given
+        a value of -1, all cores are used.
+
     Attributes
     ----------
     coef_ : array, shape (n_classes, n_features)
@@ -1010,7 +1014,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='liblinear', max_iter=100,
-                 multi_class='ovr', verbose=0, warm_start=False):
+                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=1):
 
         self.penalty = penalty
         self.dual = dual
@@ -1025,6 +1029,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.multi_class = multi_class
         self.verbose = verbose
         self.warm_start = warm_start
+        self.n_jobs = n_jobs
 
     def fit(self, X, y):
         """Fit the model according to the given training data.
@@ -1055,6 +1060,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
         self.classes_ = np.unique(y)
+        n_features = X.shape[1]
 
         _check_solver_option(self.solver, self.multi_class, self.penalty,
                              self.dual)
@@ -1092,25 +1098,35 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         # Hack so that we iterate only once for the multinomial case.
         if self.multi_class == 'multinomial':
             classes_ = [None]
+            warm_start_coef = [warm_start_coef]
 
-        warm_start_coef_ = warm_start_coef
-        for ind, class_ in enumerate(classes_):
-            if class_ is not None and warm_start_coef is not None:
-                warm_start_coef_ = warm_start_coef[ind]
+        if warm_start_coef is None:
+            warm_start_coef = [None] * n_classes
 
-            coef_, _ = logistic_regression_path(
-                X, y, pos_class=class_, Cs=[self.C],
-                fit_intercept=self.fit_intercept, tol=self.tol,
-                verbose=self.verbose, solver=self.solver,
-                multi_class=self.multi_class, max_iter=self.max_iter,
-                class_weight=self.class_weight, random_state=self.random_state,
-                coef=warm_start_coef_)
-            self.coef_.append(coef_[0])
+        path_func = delayed(logistic_regression_path)
+
+        # The SAG solver releases the GIL so it's more efficient to use
+        # threads for this solver.
+        backend = 'threading' if self.solver == 'sag' else 'multiprocessing'
+        fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                               backend=backend)(
+            path_func(X, y, pos_class=class_, Cs=[self.C],
+                      fit_intercept=self.fit_intercept, tol=self.tol,
+                      verbose=self.verbose, solver=self.solver,
+                      multi_class=self.multi_class, max_iter=self.max_iter,
+                      class_weight=self.class_weight,
+                      random_state=self.random_state, coef=warm_start_coef_
+                      )
+            for (class_, warm_start_coef_) in zip(classes_, warm_start_coef))
+
+        fold_coefs_, _ = zip(*fold_coefs_)
 
         if self.multi_class == 'multinomial':
-            self.coef_ = self.coef_[0]
+            self.coef_ = fold_coefs_[0][0]
         else:
-            self.coef_ = np.asarray(self.coef_)
+            self.coef_ = np.asarray(fold_coefs_)
+            self.coef_ = self.coef_.reshape(n_classes, n_features +
+                                            int(self.fit_intercept))
 
         if self.fit_intercept:
             self.intercept_ = self.coef_[:, -1]
@@ -1440,7 +1456,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         path_func = delayed(_log_reg_scoring_path)
 
-        fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+        # The SAG solver releases the GIL so it's more efficient to use
+        # threads for this solver.
+        backend = 'threading' if self.solver == 'sag' else 'multiprocessing'
+        fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                               backend=backend)(
             path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
                       fit_intercept=self.fit_intercept, penalty=self.penalty,
                       dual=self.dual, solver=self.solver, tol=self.tol,

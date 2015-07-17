@@ -10,7 +10,7 @@ import scipy.sparse as sp
 import warnings
 
 from ..utils import ConvergenceWarning
-from ..utils.fixes import astype
+from ..utils import check_array
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from .sgd_fast import Log, SquaredLoss
 from .sag_fast import sag, get_auto_eta
@@ -20,8 +20,7 @@ from .stochastic_gradient import SPARSE_INTERCEPT_DECAY
 
 def make_dataset(X, y, sample_weight, random_state):
     # check which type of Sequential Dataset is needed
-    y = astype(y, dtype=np.float64, copy=False)
-    seed = random_state.randint(0, np.iinfo(np.int32).max)
+    seed = random_state.randint(1, np.iinfo(np.int32).max)
 
     if sp.issparse(X):
         dataset = CSRDataset(X.data, X.indptr, X.indices,
@@ -114,6 +113,8 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
     """
     if max_iter is None:
         max_iter = 1000
+
+    y = check_array(y, dtype=np.float64, ensure_2d=False)
 
     n_samples, n_features = X.shape[0], X.shape[1]
     alpha = float(alpha) / n_samples
@@ -244,10 +245,11 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
     >>> clf = linear_model.LogisticRegression(solver='sag')
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
-    LogisticRegression(C=1.0, class_weight=None, dual=False,
-        fit_intercept=True, intercept_scaling=1, max_iter=100,
-        multi_class='ovr', penalty='l2', random_state=None, solver='sag',
-        tol=0.0001, verbose=0, warm_start=False)
+    LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+              intercept_scaling=1, max_iter=100, multi_class='ovr', n_jobs=1,
+              penalty='l2', random_state=None, solver='sag', tol=0.0001,
+              verbose=0, warm_start=False)
+
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -264,6 +266,8 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
     """
     n_samples, n_features = X.shape[0], X.shape[1]
     alpha = float(alpha) / n_samples
+
+    y = check_array(y, dtype=np.float64, ensure_2d=False)
 
     if sample_weight is None:
         sample_weight = np.ones(n_samples, dtype=np.float64, order='C')

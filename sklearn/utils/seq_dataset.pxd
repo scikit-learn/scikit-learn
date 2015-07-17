@@ -26,6 +26,9 @@ cdef class SequentialDataset:
 
 
 cdef class ArrayDataset(SequentialDataset):
+    cdef np.ndarray X
+    cdef np.ndarray Y
+    cdef np.ndarray sample_weights
     cdef Py_ssize_t n_features
     cdef int stride
     cdef double *X_data_ptr
@@ -35,6 +38,11 @@ cdef class ArrayDataset(SequentialDataset):
     cdef double *sample_weight_data
 
 cdef class CSRDataset(SequentialDataset):
+    cdef np.ndarray X_data
+    cdef np.ndarray X_indptr
+    cdef np.ndarray X_indices
+    cdef np.ndarray Y
+    cdef np.ndarray sample_weights
     cdef int stride
     cdef double *X_data_ptr
     cdef int *X_indptr_ptr
