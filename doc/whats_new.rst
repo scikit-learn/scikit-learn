@@ -112,6 +112,9 @@ Bug fixes
     - Fixed bug in :class:`linear_model.LogisticRegressionCV` where `penalty` was ignored
       in the final fit. By `Manoj Kumar`_.
 
+    - Fixed bug in :class:`ensemble.forest.ForestClassifier` while computing 
+      oob_score and X is a sparse.csc_matrix. By `Ankur Ankan`_.
+
 API changes summary
 -------------------
 
