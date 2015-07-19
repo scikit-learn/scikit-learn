@@ -94,12 +94,12 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     Attributes
     ----------
-    coef_ : array, shape = [n_features] if n_classes == 2 \
+    coef_ : array, shape = [n_features] if n_classes == 2
             else [n_classes, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
-        `coef_` is a readonly property derived from `raw_coef_` that \
+        `coef_` is a readonly property derived from `raw_coef_` that
         follows the internal memory layout of liblinear.
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
@@ -236,7 +236,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         Penalty parameter C of the error term. The penalty is a squared
         l2 penalty. The bigger this parameter, the less regularization is used.
 
-    loss : string, 'epsilon_insensitive' or 'squared_epsilon_insensitive' \
+    loss : string, 'epsilon_insensitive' or 'squared_epsilon_insensitive'
            (default='epsilon_insensitive')
         Specifies the loss function. 'l1' is the epsilon-insensitive loss
         (standard SVR) while 'l2' is the squared epsilon-insensitive loss.
@@ -283,12 +283,12 @@ class LinearSVR(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    coef_ : array, shape = [n_features] if n_classes == 2 \
+    coef_ : array, shape = [n_features] if n_classes == 2
             else [n_classes, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
-        `coef_` is a readonly property derived from `raw_coef_` that \
+        `coef_` is a readonly property derived from `raw_coef_` that
         follows the internal memory layout of liblinear.
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
@@ -473,10 +473,10 @@ class SVC(BaseSVC):
         Number of support vectors for each class.
 
     dual_coef_ : array, shape = [n_class-1, n_SV]
-        Coefficients of the support vector in the decision function. \
-        For multiclass, coefficient for all 1-vs-1 classifiers. \
-        The layout of the coefficients in the multiclass case is somewhat \
-        non-trivial. See the section about multi-class classification in the \
+        Coefficients of the support vector in the decision function.
+        For multiclass, coefficient for all 1-vs-1 classifiers.
+        The layout of the coefficients in the multiclass case is somewhat
+        non-trivial. See the section about multi-class classification in the
         SVM section of the User Guide for details.
 
     coef_ : array, shape = [n_class-1, n_features]
@@ -620,10 +620,10 @@ class NuSVC(BaseSVC):
         Number of support vectors for each class.
 
     dual_coef_ : array, shape = [n_class-1, n_SV]
-        Coefficients of the support vector in the decision function. \
-        For multiclass, coefficient for all 1-vs-1 classifiers. \
-        The layout of the coefficients in the multiclass case is somewhat \
-        non-trivial. See the section about multi-class classification in \
+        Coefficients of the support vector in the decision function.
+        For multiclass, coefficient for all 1-vs-1 classifiers.
+        The layout of the coefficients in the multiclass case is somewhat
+        non-trivial. See the section about multi-class classification in
         the SVM section of the User Guide for details.
 
     coef_ : array, shape = [n_class-1, n_features]
