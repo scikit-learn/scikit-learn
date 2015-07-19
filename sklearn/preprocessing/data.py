@@ -222,6 +222,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array).
 
+    continuous_features : list, optional, default None
+        Set to choose which columns should be normalized. If None,
+        defaults to each column.
+
     Attributes
     ----------
     min_ : ndarray, shape (n_features,)
@@ -231,9 +235,11 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         Per feature relative scaling of the data.
     """
 
-    def __init__(self, feature_range=(0, 1), copy=True):
+    def __init__(self, feature_range=(0, 1), copy=True,
+                 continuous_features=None):
         self.feature_range = feature_range
         self.copy = copy
+        self.continuous_features_ = continuous_features
 
     def fit(self, X, y=None):
         """Compute the minimum and maximum to be used for later scaling.
@@ -250,9 +256,21 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         if feature_range[0] >= feature_range[1]:
             raise ValueError("Minimum of desired feature range must be smaller"
                              " than maximum. Got %s." % str(feature_range))
-        data_min = np.min(X, axis=0)
-        data_range = np.max(X, axis=0) - data_min
+
+        if len(X.shape) == 2:
+            if self.continuous_features_ is None:
+                # TODO: pandas dataframes as inputs
+                self.continuous_features_ = range(X.shape[1])
+
+            selected = X[:, self.continuous_features_]
+
+        else:
+            selected = X
+
+        data_min = np.min(selected, axis=0)
+        data_range = np.max(selected, axis=0) - data_min
         data_range = _handle_zeros_in_scale(data_range)
+
         self.scale_ = (feature_range[1] - feature_range[0]) / data_range
         self.min_ = feature_range[0] - data_min * self.scale_
         self.data_range = data_range
@@ -270,8 +288,13 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'scale_')
 
         X = check_array(X, copy=self.copy, ensure_2d=False)
-        X *= self.scale_
-        X += self.min_
+
+        if len(X.shape) == 2:
+            X[:, self.continuous_features_] *= self.scale_
+            X[:, self.continuous_features_] += self.min_
+        else:
+            X *= self.scale_
+            X += self.min_
         return X
 
     def inverse_transform(self, X):
@@ -285,8 +308,13 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'scale_')
 
         X = check_array(X, copy=self.copy, ensure_2d=False)
-        X -= self.min_
-        X /= self.scale_
+
+        if len(X.shape) == 2:
+            X[:, self.continuous_features_] -= self.min_
+            X[:, self.continuous_features_] /= self.scale_
+        else:
+            X -= self.min_
+            X /= self.scale_
         return X
 
 
