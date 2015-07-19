@@ -226,6 +226,19 @@ def test_min_max_scaler_iris():
     scaler = MinMaxScaler(feature_range=(2, 1))
     assert_raises(ValueError, scaler.fit, X)
 
+def test_min_max_scaler_scale_selected_features():
+    # Check whether only specific features can be scaled
+    X = [[1., 3., 6.],
+         [2., 4., 7.],
+         [3., 5., 8.]]
+
+    X_expected = [[-1., 3., -1.],
+             [0., 4., 0.],
+             [1., 5., 1.]]
+
+    scaler = MinMaxScaler((-1, 1), selected=[0, 2])
+    X_trans = scaler.fit_transform(X)
+    assert_array_equal(X_trans, X_expected)
 
 def test_min_max_scaler_zero_variance_features():
     # Check min max scaler on toy data with zero variance features
