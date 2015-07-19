@@ -473,10 +473,10 @@ class SVC(BaseSVC):
         Number of support vectors for each class.
 
     dual_coef_ : array, shape = [n_class-1, n_SV]
-        Coefficients of the support vector in the decision function. \
-        For multiclass, coefficient for all 1-vs-1 classifiers. \
-        The layout of the coefficients in the multiclass case is somewhat \
-        non-trivial. See the section about multi-class classification in the \
+        Coefficients of the support vector in the decision function.
+        For multiclass, coefficient for all 1-vs-1 classifiers.
+        The layout of the coefficients in the multiclass case is somewhat
+        non-trivial. See the section about multi-class classification in the
         SVM section of the User Guide for details.
 
     coef_ : array, shape = [n_class-1, n_features]
