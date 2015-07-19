@@ -222,9 +222,9 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array).
 
-    continuous_features : list, optional, default None
-        Set to choose which columns should be normalized. If None,
-        defaults to each column.
+    selected : list, optional, default "all"
+        Set to choose which feature should be normalized. If "all"
+        defaults to each feature.
 
     Attributes
     ----------
@@ -233,13 +233,16 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     scale_ : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
+
+
+
     """
 
-    def __init__(self, feature_range=(0, 1), copy=True,
-                 continuous_features=None):
+    def __init__(self, feature_range=(0, 1), copy=True, selected="all"):
         self.feature_range = feature_range
         self.copy = copy
-        self.continuous_features_ = continuous_features
+        self.selected = selected
+        self.scaled_features_ = None if selected == "all" else selected
         self.n_features_ = None
 
     def fit(self, X, y=None):
@@ -259,12 +262,12 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
                              " than maximum. Got %s." % str(feature_range))
 
         if len(X.shape) == 2:
-            if self.continuous_features_ is None:
+            if self.scaled_features_ is None:
                 # TODO: pandas dataframes as inputs
-                self.continuous_features_ = range(X.shape[1])
+                self.scaled_features_ = range(X.shape[1])
             self.n_features_ = X.shape[1]
 
-            selected = X[:, self.continuous_features_]
+            selected = X[:, self.scaled_features_]
 
         else:
             selected = X
@@ -295,8 +298,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             if X.shape[1] != self.n_features_:
                 raise ValueError("X has {0} features per sample; expecting {1}"\
                                  .format(X.shape[1], self.n_features_))
-            X[:, self.continuous_features_] *= self.scale_
-            X[:, self.continuous_features_] += self.min_
+            X[:, self.scaled_features_] *= self.scale_
+            X[:, self.scaled_features_] += self.min_
         else:
             X *= self.scale_
             X += self.min_
@@ -318,8 +321,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             if X.shape[1] != self.n_features_:
                 raise ValueError("X has {0} features per sample; expecting {1}"\
                                  .format(X.shape[1], self.n_features_))
-            X[:, self.continuous_features_] -= self.min_
-            X[:, self.continuous_features_] /= self.scale_
+            X[:, self.scaled_features_] -= self.min_
+            X[:, self.scaled_features_] /= self.scale_
         else:
             X -= self.min_
             X /= self.scale_
