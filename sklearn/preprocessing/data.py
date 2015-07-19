@@ -240,6 +240,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         self.feature_range = feature_range
         self.copy = copy
         self.continuous_features_ = continuous_features
+        self.num_features_ = None
 
     def fit(self, X, y=None):
         """Compute the minimum and maximum to be used for later scaling.
@@ -261,6 +262,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             if self.continuous_features_ is None:
                 # TODO: pandas dataframes as inputs
                 self.continuous_features_ = range(X.shape[1])
+            self.num_features_ = X.shape[1]
 
             selected = X[:, self.continuous_features_]
 
@@ -290,6 +292,9 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X = check_array(X, copy=self.copy, ensure_2d=False)
 
         if len(X.shape) == 2:
+            if X.shape[1] != self.num_features_:
+                raise ValueError("X has {0} features per sample; expecting {1}"\
+                                 .format(X.shape[1], self.num_features_))
             X[:, self.continuous_features_] *= self.scale_
             X[:, self.continuous_features_] += self.min_
         else:
@@ -310,6 +315,9 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X = check_array(X, copy=self.copy, ensure_2d=False)
 
         if len(X.shape) == 2:
+            if X.shape[1] != self.num_features_:
+                raise ValueError("X has {0} features per sample; expecting {1}"\
+                                 .format(X.shape[1], self.num_features_))
             X[:, self.continuous_features_] -= self.min_
             X[:, self.continuous_features_] /= self.scale_
         else:
