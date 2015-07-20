@@ -198,7 +198,7 @@ def test_spectral_embedding_deterministic():
 
 
 def test_spectral_embedding_unnormalized():
-    # Test that Spectral Embedding is deterministic
+    # Test that spectral_embedding is also processing unnormalized laplacian correctly
     random_state = np.random.RandomState(36)
     data = random_state.randn(10, 30)
     sims = rbf_kernel(data)
@@ -208,14 +208,10 @@ def test_spectral_embedding_unnormalized():
                                      n_components=n_components,
                                      drop_first=False)
 
-    # Verify using manual dense computation
+    # Verify using manual computation with dense eigh
     laplacian, dd = graph_laplacian(sims, normed=False, return_diag=True)
     _, diffusion_map = eigh(laplacian)
     embedding_2 = diffusion_map.T[:n_components] * dd
     embedding_2 = _deterministic_vector_sign_flip(embedding_2).T
 
     assert_array_almost_equal(embedding_1, embedding_2)
-
-
-if __name__ == '__main__':
-    test_spectral_embedding_unnormalized()
