@@ -1,5 +1,6 @@
 # AppVeyor.com is a Continuous Integration service to build and run tests under
 # Windows
+# https://ci.appveyor.com/project/sklearn-ci/scikit-learn
 
 environment:
   global:
@@ -10,6 +11,10 @@ environment:
     WHEELHOUSE_UPLOADER_USERNAME: sklearn-appveyor
     WHEELHOUSE_UPLOADER_SECRET:
       secure: BQm8KfEj6v2Y+dQxb2syQvTFxDnHXvaNktkLcYSq7jfbTOO6eH9n09tfQzFUVcWZ
+
+    # Make sure we don't download large datasets when running the test on
+    # continuous integration platform
+    SKLEARN_SKIP_NETWORK_TESTS: 1
 
   matrix:
     - PYTHON: "C:\\Python27"
@@ -30,9 +35,6 @@ environment:
 
 
 install:
-  # Collect info to debug rare and random download errors from Rackspace cloud store
-  - "nslookup 28daf2247a33ed269873-7b1aad3fab3cc330e1fd9d109892382a.r6.cf2.rackcdn.com"
-
   # Install Python (from the official .msi of http://python.org) and pip when
   # not already installed.
   - "powershell ./continuous_integration/appveyor/install.ps1"
@@ -43,7 +45,7 @@ install:
   - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
 
   # Install the build and runtime dependencies of the project.
-  - "%CMD_IN_ENV% pip install --timeout=60 -r continuous_integration/appveyor/requirements.txt"
+  - "%CMD_IN_ENV% pip install --timeout=60 --trusted-host 28daf2247a33ed269873-7b1aad3fab3cc330e1fd9d109892382a.r6.cf2.rackcdn.com -r continuous_integration/appveyor/requirements.txt"
   - "%CMD_IN_ENV% python setup.py bdist_wheel bdist_wininst -b doc/logos/scikit-learn-logo.bmp"
   - ps: "ls dist"
 
