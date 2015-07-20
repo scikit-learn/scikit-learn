@@ -222,8 +222,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array).
 
-    selected : list, optional, default "all"
-        Set to choose which feature should be normalized. If "all"
+    selected : int list, optional, default "all"
+        Indices of features which should be normalized. If "all",
         defaults to each feature.
 
     Attributes
@@ -234,7 +234,13 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     scale_ : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
 
+    n_features_ : int
+        Specifies the number of features in the input array.
+        If the input array is 1-d, n_features_ == 1.
 
+    scaled_features_ : int list
+        Indices of features which should be normalized. If
+        self.selected == "all", this attribute will be set in `fit`.
 
     """
 
@@ -242,8 +248,13 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         self.feature_range = feature_range
         self.copy = copy
         self.selected = selected
-        self.scaled_features_ = None if selected == "all" else selected
+
+        if selected != "all":
+            if any(isinstance(index, str) for index in selected):
+                raise ValueError("Selected features must be ints, not strings")
+
         self.n_features_ = None
+        self.scaled_features_ = None
 
     def fit(self, X, y=None):
         """Compute the minimum and maximum to be used for later scaling.
@@ -261,6 +272,9 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             raise ValueError("Minimum of desired feature range must be smaller"
                              " than maximum. Got %s." % str(feature_range))
 
+        self.scaled_features_ = None if self.selected == "all" \
+                else self.selected
+
         if len(X.shape) == 2:
             if self.scaled_features_ is None:
                 # TODO: pandas dataframes as inputs
@@ -271,6 +285,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
         else:
             selected = X
+            self.n_features_ = 1
 
         data_min = np.min(selected, axis=0)
         data_range = np.max(selected, axis=0) - data_min
