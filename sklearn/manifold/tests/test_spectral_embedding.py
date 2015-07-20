@@ -3,6 +3,7 @@ from nose.tools import assert_equal
 
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
+from scipy.linalg import eigh
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
@@ -16,6 +17,8 @@ from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics import normalized_mutual_info_score
 from sklearn.cluster import KMeans
 from sklearn.datasets.samples_generator import make_blobs
+from sklearn.utils.graph import graph_laplacian
+from sklearn.utils.extmath import _deterministic_vector_sign_flip
 
 
 # non centered, sparse centers to check the
@@ -192,3 +195,27 @@ def test_spectral_embedding_deterministic():
     embedding_1 = spectral_embedding(sims)
     embedding_2 = spectral_embedding(sims)
     assert_array_almost_equal(embedding_1, embedding_2)
+
+
+def test_spectral_embedding_unnormalized():
+    # Test that Spectral Embedding is deterministic
+    random_state = np.random.RandomState(36)
+    data = random_state.randn(10, 30)
+    sims = rbf_kernel(data)
+    n_components = 8
+    embedding_1 = spectral_embedding(sims,
+                                     norm_laplacian=False,
+                                     n_components=n_components,
+                                     drop_first=False)
+
+    # Verify using manual dense computation
+    laplacian, dd = graph_laplacian(sims, normed=False, return_diag=True)
+    _, diffusion_map = eigh(laplacian)
+    embedding_2 = diffusion_map.T[:n_components] * dd
+    embedding_2 = _deterministic_vector_sign_flip(embedding_2).T
+
+    assert_array_almost_equal(embedding_1, embedding_2)
+
+
+if __name__ == '__main__':
+    test_spectral_embedding_unnormalized()
