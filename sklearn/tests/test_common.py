@@ -113,12 +113,6 @@ def test_class_weight_balanced_linear_classifiers():
                and issubclass(clazz, LinearClassifierMixin)]
 
     for name, Classifier in linear_classifiers:
-        if name == "LogisticRegressionCV":
-            # Contrary to RidgeClassifierCV, LogisticRegressionCV use actual
-            # CV folds and fit a model for each CV iteration before averaging
-            # the coef. Therefore it is expected to not behave exactly as the
-            # other linear model.
-            continue
         yield check_class_weight_balanced_linear_classifier, name, Classifier
 
 
