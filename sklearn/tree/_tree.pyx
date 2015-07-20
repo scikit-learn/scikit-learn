@@ -2150,43 +2150,25 @@ cdef class PresortBestSplitter(BaseDenseSplitter):
         split[0] = best
         n_constant_features[0] = n_total_constants
 
-cdef class SpeedSplitter( BaseDenseSplitter ):
+cdef class FriedmanMSESplitter(PresortBestSplitter):
     """
     This object is a splitter which performs more caching in order to try to
     find splits faster.
     """
 
-    cdef DTYPE_t* X_old
-    cdef np.ndarray X_idx_sorted
-    cdef SIZE_t X_idx_sorted_stride
-    cdef INT32_t* X_idx_sorted_ptr
-
-    cdef unsigned char* sample_mask
-    cdef SIZE_t X_feature_stride
     cdef double impurity
+    cdef DOUBLE_t [:] cumulative_weights
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t mn_samples_leaf,
                   double min_weight_leaf,
                   object random_state):
 
-        # Initialize the points to point at appropriate objects
-        self.X_old = NULL
-        self.X_idx_sorted_stride = 0
-        self.X_idx_sorted_ptr = NULL
-        self.sample_mask = NULL
-        self.X_feature_stride = 0
         self.impurity = 0.
-
-    def __dealloc__(self):
-        """
-        Free the memory associated with this object.
-        """
-
-        free(self.sample_mask)
+        self.cumulative_weights = NULL
 
     def __reduce(self):
-        return (SpeedSplitter, (self.criterion,
+        return (FriedmanMSESplitter, (self.criterion,
                                 self.max_features,
                                 self.min_samples_leaf,
                                 self.min_weight_leaf,
@@ -2199,73 +2181,8 @@ cdef class SpeedSplitter( BaseDenseSplitter ):
         Initialize the values in this object.
         """
 
-        # Unpack X and expose its memory buffer
-        self.n_samples = X.shape[0]
-        self.n_features = X.shape[1]
-        cdef np.ndarray X_ndarray = X
-        self.X = <DTYPE_t*> X_ndarray.data
-        self.X_sample_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
-        self.X_feature_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
-        self.impurity = 1.e2
-
-        cdef void* sample_mask = NULL
-        
-        # Get the random state
-        self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
-
-        cdef SIZE_t i, j = 0
-        self.weighted_n_samples = 0.0
-
-        cdef SIZE_t* samples = safe_realloc(&self.samples, self.n_samples)
-
-        # In order to only use positively weighted samples, we must go through
-        # each sample and check its associated weight, if given. If no weights
-        # are given, we assume the weight on each point is equal to 1.
-        for i in range(self.n_samples):
-            # If no sample weights are passed in, or the associated sample
-            # weight is greater than 0, add that sample to the growing array,
-            # and increment the count
-            if sample_weight == NULL or sample_weight[i] != 0.0:
-                samples[j] = i
-                j += 1
-
-            # Add the sample weight, or 1.0 if no sample weights are given.
-            # If the sample weight is 0.0, then it does not matter if added
-            # to the weight sum 
-            if sample_weight != NULL:
-                self.weighted_n_samples += sample_weight[i]
-            else:
-                self.weighted_n_samples += 1
-
-        self.n_samples = j
-
-        cdef SIZE_t* features = safe_realloc(&self.features, self.n_features)
-        for i in range(self.n_features):
-            features[i] = i
-
-        safe_realloc(&self.feature_values, self.n_samples)
-        safe_realloc(&self.constant_features, self.n_features)
-
-        # Save y as a reference to a buffer for memory efficient access
-        self.y = <DOUBLE_t*> y.data
-        self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
-
-        # Store the weight of each sample
-        self.sample_weight = sample_weight 
-
-        # Pre-sort X so that we can access sorted columns easier; in essence
-        # caching the sort.
-        if self.X_old != self.X:
-            self.X_old = self.X
-
-            self.X_idx_sorted = np.asfortranarray(np.argsort(X_ndarray, axis=0),
-                                                  dtype=np.int32)
-            self.X_idx_sorted_ptr = <INT32_t*> self.X_idx_sorted.data
-            self.X_idx_sorted_stride = (<SIZE_t> self.X_idx_sorted.strides[1] /
-                                        <SIZE_t> self.X_idx_sorted.itemsize)
-
-            sample_mask = safe_realloc(&self.sample_mask, self.n_samples)
-            memset(sample_mask, 0, self.n_samples)
+        PresortBestSplitter.init(self, X, y, sample_weight)
+        self.impurity = 100
 
     cdef void node_split(self, double impurity, SplitRecord* split,
                          SIZE_t* n_constant_features) nogil:
@@ -2292,9 +2209,9 @@ cdef class SpeedSplitter( BaseDenseSplitter ):
         cdef DTYPE_t* X = self.X
         cdef DTYPE_t* X_i = self.feature_values
         cdef SIZE_t X_sample_stride = self.X_sample_stride
-        cdef SIZE_t X_feature_stride = self.X_feature_stride
-        cdef INT32_t* X_idx_sorted = self.X_idx_sorted_ptr
-        cdef SIZE_t X_idx_sorted_stride = self.X_idx_sorted_stride
+        cdef SIZE_t X_feature_stride = self.X_fx_stride
+        cdef INT32_t* X_idx_sorted = self.X_argsorted_ptr
+        cdef SIZE_t X_idx_sorted_stride = self.X_argsorted_stride
 
         # Unpack y
         cdef DOUBLE_t* y = self.y
@@ -2456,6 +2373,7 @@ cdef class SpeedSplitter( BaseDenseSplitter ):
                                 current.threshold = X_i[p-1]
 
                             best = current
+                            self.cumulative_weights = w 
 
                             # Constants pulling out the sum, to make the next equations simpler to
                             # understand
@@ -2517,6 +2435,14 @@ cdef class SpeedSplitter( BaseDenseSplitter ):
         """
 
         return self.impurity
+
+    cdef double node_reset(start, end, weighted_node_samples):
+        """
+        Return the weight of the used samples.
+        """
+
+        weighted_node_samples[0] = (self.cumulative_weights[end] - 
+            self.cumulative_weights[start])
 
 cdef class BaseSparseSplitter(Splitter):
     # The sparse splitter works only with csc sparse matrix format
@@ -3327,7 +3253,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
-
         # check input
         X, y, sample_weight = self._check_input(X, y, sample_weight)
 
@@ -3403,16 +3328,18 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                            (n_node_samples < 2 * min_samples_leaf) or
                            (weighted_n_node_samples < min_weight_leaf))
 
+                if first:
+                    impurity = splitter.node_impurity()
+                    first = 0
+                
+                is_leaf = is_leaf or (impurity <= MIN_IMPURITY_SPLIT)
+
                 if not is_leaf:
                     splitter.node_split(impurity, &split, &n_constant_features)
                     is_leaf = is_leaf or (split.pos >= end)
 
-                if first:
+                if impurity == 100:
                     impurity = splitter.node_impurity()
-                    first = 0
-
-                is_leaf = is_leaf or (impurity <= MIN_IMPURITY_SPLIT)
-
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
                                          split.threshold, impurity, n_node_samples,
@@ -3447,9 +3374,9 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
             if rc >= 0:
                 tree.max_depth = max_depth_seen
+
         if rc == -1:
             raise MemoryError()
-
 
 # Best first builder ----------------------------------------------------------
 
