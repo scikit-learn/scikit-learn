@@ -111,6 +111,7 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
 
 
 class GMM(BaseEstimator):
+
     """Gaussian Mixture Model
 
     Representation of a Gaussian mixture model probability distribution.
@@ -473,7 +474,7 @@ class GMM(BaseEstimator):
 
         for init in range(self.n_init):
             if self.verbose > 0:
-                print('Initialization '+str(init+1))
+                print('Initialization ' + str(init + 1))
                 start_init_time = time()
 
             if 'm' in self.init_params or not hasattr(self, 'means_'):
@@ -510,7 +511,7 @@ class GMM(BaseEstimator):
 
             for i in range(self.n_iter):
                 if self.verbose > 0:
-                    print('\tEM iteration '+str(i+1))
+                    print('\tEM iteration ' + str(i + 1))
                     start_iter_time = time()
                 prev_log_likelihood = current_log_likelihood
                 # Expectation step
@@ -523,7 +524,7 @@ class GMM(BaseEstimator):
                 if prev_log_likelihood is not None:
                     change = abs(current_log_likelihood - prev_log_likelihood)
                     if self.verbose > 1:
-                        print('\t\tChange: '+str(change))
+                        print('\t\tChange: ' + str(change))
                     if change < tol:
                         self.converged_ = True
                         if self.verbose > 0:
@@ -534,8 +535,8 @@ class GMM(BaseEstimator):
                 self._do_mstep(X, responsibilities, self.params,
                                self.min_covar)
                 if self.verbose > 1:
-                    print('\t\tEM iteration '+str(i+1)+' took {0:.5f}s'.format(
-                        time()-start_iter_time))
+                    print('\t\tEM iteration ' + str(i + 1) + ' took {0:.5f}s'.format(
+                        time() - start_iter_time))
 
             # if the results are better, keep it
             if self.n_iter:
@@ -548,8 +549,8 @@ class GMM(BaseEstimator):
                         print('\tBetter parameters were found.')
 
             if self.verbose > 1:
-                print('\tInitialization '+str(init+1)+' took {0:.5f}s'.format(
-                    time()-start_init_time))
+                print('\tInitialization ' + str(init + 1) + ' took {0:.5f}s'.format(
+                    time() - start_init_time))
 
         # check the existence of an init param that was not subject to
         # likelihood computation issue.
@@ -652,22 +653,21 @@ class GMM(BaseEstimator):
         aic: float (the lower the better)
         """
         return - 2 * self.score(X).sum() + 2 * self._n_parameters()
-        
+
     def grad(self, X):
-        
         """
         The gradient of the total GMM density wrt to the coordinates grad(p(x))
-        
+
         As per http://faculty.ucmerced.edu/mcarreira-perpinan/papers/cs-99-03.pdf
-        
+
         Parameters
         -----------
          X : array-like, shape = [n_samples, n_features]
-         
+
         Returns
         --------
         grad(p(x)) : array, shape = [n_samples_, n_features]
-        
+
         """
         check_is_fitted(self, 'means_')
         X = check_array(X)
@@ -677,145 +677,143 @@ class GMM(BaseEstimator):
             return np.array([]), np.empty((0, self.n_components))
         if X.shape[1] != self.means_.shape[1]:
             raise ValueError('The shape of X  is not compatible with self')
-            
+
         accumulator = np.zeros(X.shape)
 
-        # p_{ij} = p(x_i | z_i = j)        
-        p  = np.exp(log_multivariate_normal_density(X, self.means_, self.covars_, self.covariance_type) )
+        # p_{ij} = p(x_i | z_i = j)
+        p = np.exp(log_multivariate_normal_density(
+            X, self.means_, self.covars_, self.covariance_type))
 
-        for i in range(self.n_components):            
-            accumulator += np.transpose(self.weights_[i] * p[:,i] * np.tensordot(np.linalg.inv(self.covars_[i]), self.means_[i,np.newaxis,:] - X, axes=[1,1]))
-        
+        for i in range(self.n_components):
+            accumulator += np.transpose(self.weights_[i] * p[:, i] * np.tensordot(
+                np.linalg.inv(self.covars_[i]), self.means_[i, np.newaxis, :] - X, axes=[1, 1]))
+
         if(X.shape[0] == 1):
             return(accumulator.reshape(self.n_features))
         else:
             return(accumulator)
-        
+
     def log_grad(self, X):
-        
         """
         The gradient of the log of the total GMM density wrt to the coordinates, grad(ln(p(x)))
-        
+
         As per http://faculty.ucmerced.edu/mcarreira-perpinan/papers/cs-99-03.pdf
-        
+
         Calculated using  grad(ln(p(x))) = grad(p(x)) / p(x)
         Parameters
         -----------
          X : array-like, shape = [n_samples, n_features]
-         
+
         Returns
         --------
         ln(grad(p(x))) : array, shape = [n_samples_, n_features]
-        
+
         """
         check_is_fitted(self, 'means_')
         X = check_array(X)
-        
-        P  = np.exp(self.score(X))
+
+        P = np.exp(self.score(X))
         if(X.shape[0] == 1):
-            return (self.grad(X)/P[0])   
+            return (self.grad(X) / P[0])
         else:
-            return (self.grad(X)/P[:, np.newaxis])   
-      
-    
-    
+            return (self.grad(X) / P[:, np.newaxis])
+
     def hessian(self, X):
-        
-        
         """
         The Hessian matrix of the total GMM density wrt to the coordinates, del(del(p(x)))
-        
+
         As per http://faculty.ucmerced.edu/mcarreira-perpinan/papers/cs-99-03.pdf
-        
+
 
         Parameters
         -----------
          X : array-like, shape = [n_samples, n_features]
-         
+
         Returns
         --------
         H(X) : array, shape = [n_samples_, n_features,n_features]
-        
+
         """
-        
+
         check_is_fitted(self, 'means_')
         X = check_array(X)
-       
+
         n_features = X.shape[1]
-        p = np.exp(log_multivariate_normal_density(X, self.means_, self.covars_, self.covariance_type) )
+        p = np.exp(log_multivariate_normal_density(
+            X, self.means_, self.covars_, self.covariance_type))
         H = np.zeros((X.shape[0], n_features, n_features))
-        
-        for i in range(self.n_components):  
+
+        for i in range(self.n_components):
             covar_i = np.matrix(self.covars_[i])
             inv_covar_i = np.matrix(np.linalg.inv(self.covars_[i]))
-            
-            for j in range(X.shape[0]):    
-                centered = np.matrix(np.outer(self.means_[i] - X[j], self.means_[i] - X[j]))  
-                H[j] += self.weights_[i]*p[j,i]*inv_covar_i*(centered - covar_i)*inv_covar_i
+
+            for j in range(X.shape[0]):
+                centered = np.matrix(
+                    np.outer(self.means_[i] - X[j], self.means_[i] - X[j]))
+                H[j] += self.weights_[i] * p[j, i] * \
+                    inv_covar_i * (centered - covar_i) * inv_covar_i
         return(H)
-    
+
     def log_hessian(self, X):
-        
-        
         """
         The Hessian matrix of the log of the total GMM density wrt to the coordinates, del(del(ln(p(x))))
-        
+
         As per http://faculty.ucmerced.edu/mcarreira-perpinan/papers/cs-99-03.pdf
-        
+
 
         Parameters
         -----------
          X : array-like, shape = [n_samples, n_features]
-         
+
         Returns
         --------
         H_L(X) : array, shape = [n_samples_, n_features,n_features]
-        
+
         """
-        
+
         check_is_fitted(self, 'means_')
         X = check_array(X)
-       
-        P  = np.exp(self.score(X))
+
+        P = np.exp(self.score(X))
         g = self.grad(X)
         H = self.hessian(X)
-        return(H/P[:,np.newaxis, np.newaxis] - np.outer(g,g)/P[:,np.newaxis, np.newaxis]**2)
-    
-    def get_modes(self, epsilon = 1e-4, theta = 1e-2, max_it = 1000):
-        
+        return(H / P[:, np.newaxis, np.newaxis] - np.outer(g, g) / P[:, np.newaxis, np.newaxis]**2)
+
+    def get_modes(self, epsilon=1e-4, theta=1e-2, max_it=1000):
         '''
         Locates the modes of the posterior distribution. When the components are sufficiently separated 
         the modes -> the means, but when the components are highly interacting the modes are non-trivial.
-        
+
         Uses the gradient-quadratic mode-finding algorithm presented in 
         http://faculty.ucmerced.edu/mcarreira-perpinan/papers/cs-99-03.pdf
-        
+
         Parameters
         -----------
          epsilon, theta: Numerical tolerences
          max_it : Number of iterations
-         
+
         Returns
         --------
         M: [np.array(n_features), .....] A list of arrays of length n_features. NB len(M) <= n_components
-        
+
         '''
-        
-        
+
         check_is_fitted(self, 'means_')
-        
-        sigma = np.sqrt(np.min([np.min(np.linalg.eigvals(cv)) for cv in self.covars_]))
-        
-        min_step = sigma**2 * (2*np.pi*sigma**2)**(self.n_features/2.)
-        min_grad = sigma**-1 * (2*np.pi*sigma**2)**(-self.n_features/2.) * epsilon * np.exp(-0.5*epsilon**2)
-        min_diff = 100*epsilon*sigma
+
+        sigma = np.sqrt(
+            np.min([np.min(np.linalg.eigvals(cv)) for cv in self.covars_]))
+
+        min_step = sigma**2 * (2 * np.pi * sigma**2)**(self.n_features / 2.)
+        min_grad = sigma**-1 * \
+            (2 * np.pi * sigma**2)**(-self.n_features / 2.) * \
+            epsilon * np.exp(-0.5 * epsilon**2)
+        min_diff = 100 * epsilon * sigma
         max_eig = 0
-        
-        
-        s =64*min_step
-        
+
+        s = 64 * min_step
+
         M = []
-        
+
         for m in range(self.n_components):
             x = self.means_[m]
             p = np.exp(self.score(x))
@@ -824,46 +822,46 @@ class GMM(BaseEstimator):
             i = 0
 
             while (i < max_it and np.linalg.norm(g) > min_grad):
-                
+
                 g = self.log_grad(x)
                 H = self.log_hessian(x)
-                
+
                 x_old = x
                 p_old = p
-                
+
                 if(is_neg_def(H)):
-                    x = x_old - np.dot(g,np.linalg.inv(H))
+                    x = x_old - np.dot(g, np.linalg.inv(H))
                     p = np.exp(self.score(x))
-                
+
                 if(not is_neg_def(H) or p < p_old):
-                   
-                    x = x_old + s*g
+
+                    x = x_old + s * g
                     p = np.exp(self.score(x))
                     while p < p_old:
-                        s = s/2.
-                        x = x_old + s*g
+                        s = s / 2.
+                        x = x_old + s * g
                         p = np.exp(self.score(x))
-                    
-                i+=1
-                
+
+                i += 1
+
             if np.max(np.linalg.eigvals(H)) < max_eig:
                 N = [v for v in M if np.linalg.norm(v - x) <= min_diff]
                 N.append(x)
-                
-                M = [k for k in M  if not any( (k == x).all() for x in N)]
-                M.append( max([(v, np.exp(self.score(v))) for v in N], key = lambda x:x[1])[0]) 
-        
+
+                M = [k for k in M if not any((k == x).all() for x in N)]
+                M.append(max([(v, np.exp(self.score(v)))
+                              for v in N], key=lambda x: x[1])[0])
+
         return(M)
-            
-            
 
 
 #########################################################################
-## some helper routines
+# some helper routines
 #########################################################################
 
 def is_neg_def(x):
     return np.all(np.linalg.eigvals(x) < 0)
+
 
 def _log_multivariate_normal_density_diag(X, means, covars):
     """Compute Gaussian log-density at X for a diagonal model"""
@@ -1025,22 +1023,3 @@ _covar_mstep_funcs = {'spherical': _covar_mstep_spherical,
                       'tied': _covar_mstep_tied,
                       'full': _covar_mstep_full,
                       }
-
-   
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
