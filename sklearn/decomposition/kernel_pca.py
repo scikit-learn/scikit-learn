@@ -6,6 +6,7 @@
 import numpy as np
 from scipy import linalg
 
+from ..utils import check_random_state
 from ..utils.arpack import eigsh
 from ..utils.validation import check_is_fitted
 from ..exceptions import NotFittedError
@@ -103,7 +104,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     def __init__(self, n_components=None, kernel="linear",
                  gamma=None, degree=3, coef0=1, kernel_params=None,
                  alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
-                 tol=0, max_iter=None, remove_zero_eig=False):
+                 tol=0, max_iter=None, remove_zero_eig=False,
+                 random_state=None):
         if fit_inverse_transform and kernel == 'precomputed':
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
@@ -120,6 +122,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.tol = tol
         self.max_iter = max_iter
         self._centerer = KernelCenterer()
+        self.random_state = random_state
 
     @property
     def _pairwise(self):
@@ -158,10 +161,14 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             self.lambdas_, self.alphas_ = linalg.eigh(
                 K, eigvals=(K.shape[0] - n_components, K.shape[0] - 1))
         elif eigen_solver == 'arpack':
+            random_state = check_random_state(self.random_state)
+            # initialize with [-1,1] as in ARPACK
+            v0 = random_state.uniform(-1, 1, K.shape[0])
             self.lambdas_, self.alphas_ = eigsh(K, n_components,
                                                 which="LA",
                                                 tol=self.tol,
-                                                maxiter=self.max_iter)
+                                                maxiter=self.max_iter,
+                                                v0=v0)
 
         # sort eigenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]

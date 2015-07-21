@@ -148,7 +148,8 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
 
     if eigen_solver == 'arpack':
         random_state = check_random_state(random_state)
-        v0 = random_state.rand(M.shape[0])
+        # initialize with [-1,1] as in ARPACK
+        v0 = random_state.uniform(-1, 1, M.shape[0])
         try:
             eigen_values, eigen_vectors = eigsh(M, k + k_skip, sigma=0.0,
                                                 tol=tol, maxiter=max_iter,
