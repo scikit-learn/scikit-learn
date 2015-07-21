@@ -379,7 +379,7 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float,
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
                          multi_output=True, y_numeric=True)
 
         if ((sample_weight is not None) and

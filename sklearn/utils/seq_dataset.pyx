@@ -203,7 +203,8 @@ cdef class ArrayDataset(SequentialDataset):
             np.arange(0, self.n_samples, dtype=np.intc)
         self.index = index
         self.index_data_ptr = <int *>index.data
-        self.seed = seed
+        # seed should not be 0 for our_rand_r
+        self.seed = max(seed, 1)
 
     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
                       int *nnz, double *y, double *sample_weight,
@@ -274,7 +275,8 @@ cdef class CSRDataset(SequentialDataset):
                                                                dtype=np.intc)
         self.index = idx
         self.index_data_ptr = <int *>idx.data
-        self.seed = seed
+        # seed should not be 0 for our_rand_r
+        self.seed = max(seed, 1)
 
     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
                       int *nnz, double *y, double *sample_weight,

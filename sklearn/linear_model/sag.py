@@ -19,7 +19,9 @@ from .stochastic_gradient import SPARSE_INTERCEPT_DECAY
 
 
 def make_dataset(X, y, sample_weight, random_state):
-    # check which type of Sequential Dataset is needed
+    """check which type of Sequential Dataset is needed"""
+
+    # seed should never be 0 in SequentialDataset
     seed = random_state.randint(1, np.iinfo(np.int32).max)
 
     if sp.issparse(X):
@@ -87,6 +89,9 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
     coef_ : array, shape (n_features)
         Weight vector.
 
+    n_iter : int
+        The number of full pass on all samples.
+
     Examples
     --------
     >>> import numpy as np
@@ -148,7 +153,7 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
         raise ZeroDivisionError("Current sag implementation does not handle "
                                 "the case step_size * alpha == 1")
 
-    intercept_, num_seen, max_iter_reached, intercept_sum_gradient = \
+    intercept_, num_seen, n_iter, intercept_sum_gradient = \
         sag(dataset, coef_.ravel(),
             intercept_init, n_samples,
             n_features, tol,
@@ -165,7 +170,7 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
             intercept_decay,
             verbose)
 
-    if max_iter_reached:
+    if n_iter == max_iter:
         warnings.warn("The max_iter was reached which means "
                       "the coef_ did not converge", ConvergenceWarning)
 
@@ -235,6 +240,9 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
         Contains a 'coef' key with the fitted result, and eventually the
         fitted intercept at the end of the array. Contains also other keys
         used for warm starting.
+
+    n_iter : int
+        The number of full pass on all samples.
 
     Examples
     --------
@@ -323,7 +331,7 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
         raise ZeroDivisionError("Current sag implementation does not handle "
                                 "the case step_size * alpha == 1")
 
-    intercept_, num_seen, max_iter_reached, intercept_sum_gradient = \
+    intercept_, num_seen, n_iter, intercept_sum_gradient = \
         sag(dataset, coef_init.ravel(),
             intercept_init, n_samples,
             n_features, tol,
@@ -340,7 +348,7 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
             intercept_decay,
             verbose)
 
-    if max_iter_reached:
+    if n_iter == max_iter:
         warnings.warn("The max_iter was reached which means "
                       "the coef_ did not converge", ConvergenceWarning)
     if fit_intercept:
@@ -351,4 +359,4 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
                       'gradient_memory': gradient_memory_init,
                       'seen': seen_init, 'num_seen': num_seen}
 
-    return warm_start_mem
+    return warm_start_mem, n_iter

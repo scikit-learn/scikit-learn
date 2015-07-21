@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
+import scipy
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -31,6 +32,8 @@ X_sp = sp.csr_matrix(X)
 Y1 = [0, 1, 1]
 Y2 = [2, 1, 0]
 iris = load_iris()
+
+sp_version = tuple([int(s) for s in scipy.__version__.split('.')])
 
 
 def check_predictions(clf, X, y):
@@ -249,7 +252,7 @@ def test_consistency_path():
     # can't test with fit_intercept=True since LIBLINEAR
     # penalizes the intercept
     for solver in ('lbfgs', 'newton-cg', 'liblinear', 'sag'):
-        coefs, Cs = f(logistic_regression_path)(
+        coefs, Cs, _ = f(logistic_regression_path)(
             X, y, Cs=Cs, fit_intercept=False, tol=1e-5, solver=solver,
             random_state=0)
         for i, C in enumerate(Cs):
@@ -263,7 +266,7 @@ def test_consistency_path():
     # test for fit_intercept=True
     for solver in ('lbfgs', 'newton-cg', 'liblinear', 'sag'):
         Cs = [1e3]
-        coefs, Cs = f(logistic_regression_path)(
+        coefs, Cs, _ = f(logistic_regression_path)(
             X, y, Cs=Cs, fit_intercept=True, tol=1e-6, solver=solver,
             intercept_scaling=10000., random_state=0)
         lr = LogisticRegression(C=Cs[0], fit_intercept=True, tol=1e-4,
@@ -725,16 +728,88 @@ def test_logreg_predict_proba_multinomial():
     assert_greater(clf_wrong_loss, clf_multi_loss)
 
 
+@ignore_warnings
+def test_max_iter():
+    # Test that the maximum number of iteration is reached
+    X, y_bin = iris.data, iris.target.copy()
+    y_bin[y_bin == 2] = 0
+
+    solvers = ['newton-cg', 'liblinear', 'sag']
+    # old scipy doesn't have maxiter
+    if sp_version >= (0, 12):
+        solvers.append('lbfgs')
+
+    for max_iter in range(1, 5):
+        for solver in solvers:
+            lr = LogisticRegression(max_iter=max_iter, tol=1e-15,
+                                    random_state=0, solver=solver)
+            lr.fit(X, y_bin)
+            assert_equal(lr.n_iter_[0], max_iter)
+
+
+def test_n_iter():
+    # Test that self.n_iter_ has the correct format.
+    X, y = iris.data, iris.target
+    y_bin = y.copy()
+    y_bin[y_bin == 2] = 0
+
+    n_Cs = 4
+    n_cv_fold = 2
+
+    for solver in ['newton-cg', 'liblinear', 'sag', 'lbfgs']:
+        # OvR case
+        n_classes = 1 if solver == 'liblinear' else np.unique(y).shape[0]
+        clf = LogisticRegression(tol=1e-2, multi_class='ovr',
+                                 solver=solver, C=1.,
+                                 random_state=42, max_iter=100)
+        clf.fit(X, y)
+        assert_equal(clf.n_iter_.shape, (n_classes,))
+
+        n_classes = np.unique(y).shape[0]
+        clf = LogisticRegressionCV(tol=1e-2, multi_class='ovr',
+                                   solver=solver, Cs=n_Cs, cv=n_cv_fold,
+                                   random_state=42, max_iter=100)
+        clf.fit(X, y)
+        assert_equal(clf.n_iter_.shape, (n_classes, n_cv_fold, n_Cs))
+        clf.fit(X, y_bin)
+        assert_equal(clf.n_iter_.shape, (1, n_cv_fold, n_Cs))
+
+        # multinomial case
+        n_classes = 1
+        if solver in ('liblinear', 'sag'):
+            break
+
+        clf = LogisticRegression(tol=1e-2, multi_class='multinomial',
+                                 solver=solver, C=1.,
+                                 random_state=42, max_iter=100)
+        clf.fit(X, y)
+        assert_equal(clf.n_iter_.shape, (n_classes,))
+
+        clf = LogisticRegressionCV(tol=1e-2, multi_class='multinomial',
+                                   solver=solver, Cs=n_Cs, cv=n_cv_fold,
+                                   random_state=42, max_iter=100)
+        clf.fit(X, y)
+        assert_equal(clf.n_iter_.shape, (n_classes, n_cv_fold, n_Cs))
+        clf.fit(X, y_bin)
+        assert_equal(clf.n_iter_.shape, (1, n_cv_fold, n_Cs))
+
+
+@ignore_warnings
 def test_warm_start():
     # A 1-iteration second fit on same data should give almost same result
     # with warm starting, and quite different result without warm starting.
-    # This test does not work with lbfgs : old scipy doesn't have max_iter.
+    # Warm starting does not work with liblinear solver.
     X, y = iris.data, iris.target
+
+    solvers = ['newton-cg', 'sag']
+    # old scipy doesn't have maxiter
+    if sp_version >= (0, 12):
+        solvers.append('lbfgs')
 
     for warm_start in [True, False]:
         for fit_intercept in [True, False]:
-            for solver in ['sag', 'newton-cg']:
-                for multi_class in ['multinomial', 'ovr']:
+            for solver in solvers:
+                for multi_class in ['ovr', 'multinomial']:
                     if solver == 'sag' and multi_class == 'multinomial':
                         break
                     clf = LogisticRegression(tol=1e-4, multi_class=multi_class,

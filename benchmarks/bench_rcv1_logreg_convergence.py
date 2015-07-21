@@ -107,7 +107,7 @@ def plot_train_scores(clfs):
         plt.legend(loc=0)
         plt.xlabel("seconds")
         plt.ylabel("train score")
-        #plt.ylim((0.92, 0.96))
+        plt.ylim((0.92, 0.96))
 
 
 def plot_test_scores(clfs):
@@ -117,7 +117,7 @@ def plot_test_scores(clfs):
         plt.legend(loc=0)
         plt.xlabel("seconds")
         plt.ylabel("test score")
-        #plt.ylim((0.92, 0.96))
+        plt.ylim((0.92, 0.96))
 
 
 def plot_dloss(clfs):
@@ -144,7 +144,7 @@ n_samples, n_features = X.shape
 
 # consider the binary classification problem 'CCAT' vs the rest
 ccat_idx = rcv1.target_names.tolist().index('CCAT')
-y = rcv1.target.tocsc()[:, ccat_idx].toarray().ravel()
+y = rcv1.target.tocsc()[:, ccat_idx].toarray().ravel().astype(np.float64)
 y[y == 0] = -1
 
 # parameters
@@ -153,12 +153,12 @@ fit_intercept = True
 tol = 1.0e-14
 
 # max_iter range
-sgd_iter_range = list(range(1, 71, 10))
+sgd_iter_range = list(range(1, 121, 10))
 newton_iter_range = list(range(1, 25, 3))
 lbfgs_iter_range = list(range(1, 242, 12))
-liblinear_iter_range = list(range(1, 25, 3))
-liblinear_dual_iter_range = list(range(1, 51, 6))
-sag_iter_range = list(range(1, 25, 3))
+liblinear_iter_range = list(range(1, 37, 3))
+liblinear_dual_iter_range = list(range(1, 85, 6))
+sag_iter_range = list(range(1, 37, 3))
 
 clfs = [
     ("LR-liblinear",
@@ -189,32 +189,32 @@ clfs = [
      sgd_iter_range, [], [], [], [])]
 
 
-if lightning_clf is not None and not fit_intercept:
-    # compute the same eta than in LR-sag
-    random_state = check_random_state(1)
-    sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
-    X_dataset, intercept_decay = make_dataset(X, y.astype(np.float64),
-                                              sample_weight, random_state)
-    eta = get_auto_eta(X_dataset, 1. / C / n_samples, n_samples, Log(), 0)
+# if lightning_clf is not None and not fit_intercept:
+#     # compute the same eta than in LR-sag
+#     random_state = check_random_state(1)
+#     sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
+#     X_dataset, intercept_decay = make_dataset(X, y.astype(np.float64),
+#                                               sample_weight, random_state)
+#     eta = get_auto_eta(X_dataset, 1. / C / n_samples, n_samples, Log(), 0)
 
-    clfs.append(
-        ("Lightning-SVRG",
-         lightning_clf.SVRGClassifier(alpha=1. / C / n_samples, eta=eta,
-                                      tol=tol, loss="log"),
-         sag_iter_range, [], [], [], []))
-    clfs.append(
-        ("Lightning-SAG",
-         lightning_clf.SAGClassifier(alpha=1. / C / n_samples, eta=eta,
-                                     tol=tol, loss="log"),
-         sag_iter_range, [], [], [], []))
+#     clfs.append(
+#         ("Lightning-SVRG",
+#          lightning_clf.SVRGClassifier(alpha=1. / C / n_samples, eta=eta,
+#                                       tol=tol, loss="log"),
+#          sag_iter_range, [], [], [], []))
+#     clfs.append(
+#         ("Lightning-SAG",
+#          lightning_clf.SAGClassifier(alpha=1. / C / n_samples, eta=eta,
+#                                      tol=tol, loss="log"),
+#          sag_iter_range, [], [], [], []))
 
-    # We keep only 200 features, to have a dense dataset,
-    # and compare to lightning SAG, which seems incorrect in the sparse case.
-    X_csc = X.tocsc()
-    nnz_in_each_features = X_csc.indptr[1:] - X_csc.indptr[:-1]
-    X = X_csc[:, np.argsort(nnz_in_each_features)[-200:]]
-    X = X.toarray()
-    print("dataset: %.3f MB" % (X.nbytes / 1e6))
+#     # We keep only 200 features, to have a dense dataset,
+#     # and compare to lightning SAG, which seems incorrect in the sparse case.
+#     X_csc = X.tocsc()
+#     nnz_in_each_features = X_csc.indptr[1:] - X_csc.indptr[:-1]
+#     X = X_csc[:, np.argsort(nnz_in_each_features)[-200:]]
+#     X = X.toarray()
+#     print("dataset: %.3f MB" % (X.nbytes / 1e6))
 
 
 # Split training and testing. Switch train and test subset compared to

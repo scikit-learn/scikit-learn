@@ -58,6 +58,11 @@ def test_seq_dataset_shuffle():
         assert_equal(idx1, i)
         assert_equal(idx2, i)
 
+    for i in range(5):
+        _, _, _, idx1 = dataset1._random_py()
+        _, _, _, idx2 = dataset2._random_py()
+        assert_equal(idx1, idx2)
+
     seed = 77
     dataset1._shuffle_py(seed)
     dataset2._shuffle_py(seed)

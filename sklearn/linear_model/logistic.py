@@ -469,6 +469,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     coef : array-like, shape (n_features,), default None
         Initialization value for coefficients of logistic regression.
+        Useless for liblinear solver.
 
     copy : bool, default True
         Whether or not to produce a copy of the data. Setting this to
@@ -525,6 +526,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     Cs : ndarray
         Grid of Cs used for cross-validation.
+
+    n_iter : array, shape (n_cs,)
+        Actual number of iteration for each Cs.
 
     Notes
     -----
@@ -643,7 +647,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     coefs = list()
     warm_start_sag = {'coef': w0}
-    for C in Cs:
+    n_iter = np.zeros(len(Cs), dtype=np.int32)
+    for i, C in enumerate(Cs):
         if solver == 'lbfgs':
             try:
                 w0, loss, info = optimize.fmin_l_bfgs_b(
@@ -659,12 +664,16 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             if info["warnflag"] == 1 and verbose > 0:
                 warnings.warn("lbfgs failed to converge. Increase the number "
                               "of iterations.")
+            try:
+                n_iter_i = info['nit'] - 1
+            except:
+                n_iter_i = info['funcalls'] - 1
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)
-            w0 = newton_cg(hess, func, grad, w0, args=args, maxiter=max_iter,
-                           tol=tol)
+            w0, n_iter_i = newton_cg(hess, func, grad, w0, args=args,
+                                     maxiter=max_iter, tol=tol)
         elif solver == 'liblinear':
-            coef_, intercept_, _, = _fit_liblinear(
+            coef_, intercept_, n_iter_i, = _fit_liblinear(
                 X, y, C, fit_intercept, intercept_scaling, class_weight,
                 penalty, dual, verbose, max_iter, tol, random_state)
             if fit_intercept:
@@ -673,9 +682,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 w0 = coef_.ravel()
 
         elif solver == 'sag':
-            warm_start_sag = sag_logistic(X, target, sample_weight, 1. / C,
-                                          max_iter, tol, verbose,
-                                          random_state, warm_start_sag)
+            warm_start_sag, n_iter_i = sag_logistic(
+                X, target, sample_weight, 1. / C, max_iter, tol, verbose,
+                random_state, warm_start_sag)
             w0 = warm_start_sag['coef']
         else:
             raise ValueError("solver must be one of {'liblinear', 'lbfgs', "
@@ -688,7 +697,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             coefs.append(multi_w0)
         else:
             coefs.append(w0.copy())
-    return coefs, np.array(Cs)
+
+        n_iter[i] = n_iter_i
+
+    return coefs, np.array(Cs), n_iter
 
 
 # helper function for LogisticCV
@@ -803,6 +815,9 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     scores : ndarray, shape (n_cs,)
         Scores obtained for each Cs.
+
+    n_iter : array, shape(n_cs,)
+        Actual number of iteration for each Cs.
     """
     _check_solver_option(solver, multi_class, penalty, dual)
 
@@ -830,17 +845,12 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     # To deal with object dtypes, we need to convert into an array of floats.
     y_test = as_float_array(y_test, copy=False)
 
-    coefs, Cs = logistic_regression_path(X_train, y_train, Cs=Cs,
-                                         fit_intercept=fit_intercept,
-                                         solver=solver,
-                                         max_iter=max_iter,
-                                         class_weight=class_weight,
-                                         copy=copy, pos_class=pos_class,
-                                         multi_class=multi_class,
-                                         tol=tol, verbose=verbose,
-                                         dual=dual, penalty=penalty,
-                                         intercept_scaling=intercept_scaling,
-                                         random_state=random_state)
+    coefs, Cs, n_iter = logistic_regression_path(
+        X_train, y_train, Cs=Cs, fit_intercept=fit_intercept,
+        solver=solver, max_iter=max_iter, class_weight=class_weight,
+        copy=copy, pos_class=pos_class, multi_class=multi_class,
+        tol=tol, verbose=verbose, dual=dual, penalty=penalty,
+        intercept_scaling=intercept_scaling, random_state=random_state)
 
     scores = list()
 
@@ -860,7 +870,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
             scores.append(log_reg.score(X_test, y_test))
         else:
             scores.append(scoring(log_reg, X_test, y_test))
-    return coefs, Cs, np.array(scores)
+    return coefs, Cs, np.array(scores), n_iter
 
 
 class LogisticRegression(BaseEstimator, LinearClassifierMixin,
@@ -926,8 +936,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         as ``n_samples / (n_classes * np.bincount(y))``
 
     max_iter : int
-        Useful only for the newton-cg and lbfgs solvers. Maximum number of
-        iterations taken for the solvers to converge.
+        Useful only for the newton-cg, sag and lbfgs solvers.
+        Maximum number of iterations taken for the solvers to converge.
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
@@ -959,6 +969,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        Useless for liblinear solver.
 
     n_jobs : int, optional
         Number of CPU cores used during the cross-validation loop. If given
@@ -973,9 +984,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Intercept (a.k.a. bias) added to the decision function.
         If `fit_intercept` is set to False, the intercept is set to zero.
 
-    n_iter_ : int
-        Maximum of the actual number of iterations across all classes.
-        Valid only for the liblinear solver.
+    n_iter_ : array, shape (n_classes,) or (1, )
+        Actual number of iterations for all classes. If binary or multinomial,
+        it returns only 1 element. For liblinear solver, only the maximum
+        number of iteration across all classes is given.
 
     See also
     --------
@@ -1066,10 +1078,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                              self.dual)
 
         if self.solver == 'liblinear':
-            self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
+            self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
                 X, y, self.C, self.fit_intercept, self.intercept_scaling,
                 self.class_weight, self.penalty, self.dual, self.verbose,
                 self.max_iter, self.tol, self.random_state)
+            self.n_iter_ = np.array([n_iter_])
             return self
 
         n_classes = len(self.classes_)
@@ -1119,7 +1132,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                       )
             for (class_, warm_start_coef_) in zip(classes_, warm_start_coef))
 
-        fold_coefs_, _ = zip(*fold_coefs_)
+        fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
+        self.n_iter_ = np.asarray(n_iter_, dtype=np.int32)[:, 0]
 
         if self.multi_class == 'multinomial':
             self.coef_ = fold_coefs_[0][0]
@@ -1355,6 +1369,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         set to False, then for each class, the best C is the average of the
         C's that correspond to the best scores for each fold.
 
+    n_iter_ : array, shape (n_classes, n_folds, n_cs) or (1, n_folds, n_cs)
+        Actual number of iterations for all classes, folds and Cs.
+        In the binary or multinomial cases, the first dimension is equal to 1.
+
     See also
     --------
     LogisticRegression
@@ -1473,7 +1491,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             for train, test in folds)
 
         if self.multi_class == 'multinomial':
-            multi_coefs_paths, Cs, multi_scores = zip(*fold_coefs_)
+            multi_coefs_paths, Cs, multi_scores, n_iter_ = zip(*fold_coefs_)
             multi_coefs_paths = np.asarray(multi_coefs_paths)
             multi_scores = np.asarray(multi_scores)
 
@@ -1489,12 +1507,16 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             # across all labels for API similarity.
             scores = np.tile(multi_scores, (n_classes, 1, 1))
             self.Cs_ = Cs[0]
+            self.n_iter_ = np.reshape(n_iter_, (1, len(folds),
+                                      len(self.Cs_)))
 
         else:
-            coefs_paths, Cs, scores = zip(*fold_coefs_)
+            coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
             self.Cs_ = Cs[0]
             coefs_paths = np.reshape(coefs_paths, (n_classes, len(folds),
                                      len(self.Cs_), -1))
+            self.n_iter_ = np.reshape(n_iter_, (n_classes, len(folds),
+                                      len(self.Cs_)))
 
         self.coefs_paths_ = dict(zip(labels, coefs_paths))
         scores = np.reshape(scores, (n_classes, len(folds), -1))
@@ -1524,7 +1546,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                                         axis=0)
                 else:
                     coef_init = np.mean(coefs_paths[:, best_index, :], axis=0)
-                w, _ = logistic_regression_path(
+
+                w, _, _ = logistic_regression_path(
                     X, y, pos_class=label, Cs=[C_], solver=self.solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol,

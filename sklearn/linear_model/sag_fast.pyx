@@ -66,8 +66,8 @@ def sag(SequentialDataset dataset,
     cdef int xnnz
     # helper variable for indexes
     cdef int idx
-    # the total number of interations through the data
-    cdef int total_iter = 0
+    # the number of pass through all samples
+    cdef int n_iter = 0
     # helper to track iterations through samples
     cdef int itr
     # the index (row number) of the current sample
@@ -78,8 +78,6 @@ def sag(SequentialDataset dataset,
     cdef double max_change
     # a holder variable for the max weight, used to compute stopping criterea
     cdef double max_weight
-    # whether or not the max iter has been reached
-    cdef bint max_iter_reached = False
     # the start time of the fit
     cdef time_t start_time
     # the end time of the fit
@@ -214,8 +212,6 @@ def sag(SequentialDataset dataset,
                                   sum_gradient)
                     wscale = 1.0
 
-                total_iter += 1
-
             # check if the stopping criteria is reached
             scale_weights(weights, wscale, n_features, n_samples, n_samples - 1,
                           cumulative_sums, feature_hist, sum_gradient)
@@ -230,49 +226,48 @@ def sag(SequentialDataset dataset,
                                   fabs(weights[j] - previous_weights[j]))
                 previous_weights[j] = weights[j]
 
+            n_iter += 1
             if max_change / max_weight <= tol:
                 if verbose:
                     end_time = time(NULL)
                     with gil:
                         print("convergence after %d epochs took %d seconds" %
-                              ((total_iter / n_samples),
-                              (end_time - start_time)))
+                              (n_iter, end_time - start_time))
                 break
 
-            if total_iter / n_samples >= max_iter:
+            if n_iter >= max_iter:
                 if verbose:
                     end_time = time(NULL)
                     with gil:
                         print(("max_iter reached after %d seconds") %
                               (end_time - start_time))
-                max_iter_reached = True
                 break
 
 
     if infinity:
         raise ValueError(("Floating-point under-/overflow occurred at epoch"
-                          " #%d. Lowering the eta0 or scaling the input data"
+                          " #%d. Lowering the eta or scaling the input data"
                           " with StandardScaler or"
-                          " MinMaxScaler might help.") % (total_iter + 1))
+                          " MinMaxScaler might help.") % (n_iter + 1))
 
-    return intercept, num_seen, max_iter_reached, intercept_sum_gradient
+
+    return intercept, num_seen, n_iter, intercept_sum_gradient
 
 
 cdef void scale_weights(double* weights, double wscale, int n_features,
-                        int n_samples, int total_iter, double* cumulative_sums,
+                        int n_samples, int itr, double* cumulative_sums,
                         int* feature_hist, double* sum_gradient) nogil:
     for j in range(n_features):
         if feature_hist[j] == 0:
-            weights[j] -= (cumulative_sums[total_iter] *
-                           sum_gradient[j])
+            weights[j] -= (cumulative_sums[itr] * sum_gradient[j])
         else:
-            weights[j] -= ((cumulative_sums[total_iter] -
+            weights[j] -= ((cumulative_sums[itr] -
                             cumulative_sums[feature_hist[j] - 1]) *
                             sum_gradient[j])
         weights[j] *= wscale
-        feature_hist[j] = (total_iter + 1) % n_samples
+        feature_hist[j] = (itr + 1) % n_samples
 
-    cumulative_sums[total_iter % n_samples] = 0.0
+    cumulative_sums[itr % n_samples] = 0.0
 
 
 def get_auto_eta(SequentialDataset dataset, double alpha,

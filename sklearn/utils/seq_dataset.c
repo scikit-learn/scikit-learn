@@ -743,7 +743,7 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
  */
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
 
-/* "sklearn/utils/seq_dataset.pyx":291
+/* "sklearn/utils/seq_dataset.pyx":293
  * 
  * 
  * cdef enum:             # <<<<<<<<<<<<<<
@@ -853,7 +853,7 @@ struct __pyx_vtabstruct_7sklearn_5utils_11seq_dataset_ArrayDataset {
 static struct __pyx_vtabstruct_7sklearn_5utils_11seq_dataset_ArrayDataset *__pyx_vtabptr_7sklearn_5utils_11seq_dataset_ArrayDataset;
 
 
-/* "sklearn/utils/seq_dataset.pyx":221
+/* "sklearn/utils/seq_dataset.pyx":222
  * 
  * 
  * cdef class CSRDataset(SequentialDataset):             # <<<<<<<<<<<<<<
@@ -2472,6 +2472,9 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_12ArrayDataset___cinit__(struc
   PyArrayObject *__pyx_t_8 = NULL;
   int __pyx_t_9;
   PyArrayObject *__pyx_t_10 = NULL;
+  long __pyx_t_11;
+  __pyx_t_5numpy_uint32_t __pyx_t_12;
+  long __pyx_t_13;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -2849,7 +2852,7 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_12ArrayDataset___cinit__(struc
  *             np.arange(0, self.n_samples, dtype=np.intc)
  *         self.index = index             # <<<<<<<<<<<<<<
  *         self.index_data_ptr = <int *>index.data
- *         self.seed = seed
+ *         # seed should not be 0 for our_rand_r
  */
   __Pyx_INCREF(((PyObject *)__pyx_v_index));
   __Pyx_GIVEREF(((PyObject *)__pyx_v_index));
@@ -2861,19 +2864,26 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_12ArrayDataset___cinit__(struc
  *             np.arange(0, self.n_samples, dtype=np.intc)
  *         self.index = index
  *         self.index_data_ptr = <int *>index.data             # <<<<<<<<<<<<<<
- *         self.seed = seed
- * 
+ *         # seed should not be 0 for our_rand_r
+ *         self.seed = max(seed, 1)
  */
   __pyx_v_self->__pyx_base.index_data_ptr = ((int *)__pyx_v_index->data);
 
-  /* "sklearn/utils/seq_dataset.pyx":206
- *         self.index = index
+  /* "sklearn/utils/seq_dataset.pyx":207
  *         self.index_data_ptr = <int *>index.data
- *         self.seed = seed             # <<<<<<<<<<<<<<
+ *         # seed should not be 0 for our_rand_r
+ *         self.seed = max(seed, 1)             # <<<<<<<<<<<<<<
  * 
  *     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
  */
-  __pyx_v_self->__pyx_base.seed = __pyx_v_seed;
+  __pyx_t_11 = 1;
+  __pyx_t_12 = __pyx_v_seed;
+  if (((__pyx_t_11 > __pyx_t_12) != 0)) {
+    __pyx_t_13 = __pyx_t_11;
+  } else {
+    __pyx_t_13 = __pyx_t_12;
+  }
+  __pyx_v_self->__pyx_base.seed = __pyx_t_13;
 
   /* "sklearn/utils/seq_dataset.pyx":158
  *     """
@@ -2916,8 +2926,8 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_12ArrayDataset___cinit__(struc
   return __pyx_r;
 }
 
-/* "sklearn/utils/seq_dataset.pyx":208
- *         self.seed = seed
+/* "sklearn/utils/seq_dataset.pyx":209
+ *         self.seed = max(seed, 1)
  * 
  *     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,             # <<<<<<<<<<<<<<
  *                       int *nnz, double *y, double *sample_weight,
@@ -2930,7 +2940,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_12ArrayDataset__sample(struct 
   int *__pyx_t_1;
   Py_ssize_t __pyx_t_2;
 
-  /* "sklearn/utils/seq_dataset.pyx":211
+  /* "sklearn/utils/seq_dataset.pyx":212
  *                       int *nnz, double *y, double *sample_weight,
  *                       int current_index) nogil:
  *         cdef int sample_idx = self.index_data_ptr[current_index]             # <<<<<<<<<<<<<<
@@ -2939,7 +2949,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_12ArrayDataset__sample(struct 
  */
   __pyx_v_sample_idx = (__pyx_v_self->__pyx_base.index_data_ptr[__pyx_v_current_index]);
 
-  /* "sklearn/utils/seq_dataset.pyx":212
+  /* "sklearn/utils/seq_dataset.pyx":213
  *                       int current_index) nogil:
  *         cdef int sample_idx = self.index_data_ptr[current_index]
  *         cdef int offset = sample_idx * self.stride             # <<<<<<<<<<<<<<
@@ -2948,7 +2958,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_12ArrayDataset__sample(struct 
  */
   __pyx_v_offset = (__pyx_v_sample_idx * __pyx_v_self->stride);
 
-  /* "sklearn/utils/seq_dataset.pyx":214
+  /* "sklearn/utils/seq_dataset.pyx":215
  *         cdef int offset = sample_idx * self.stride
  * 
  *         y[0] = self.Y_data_ptr[sample_idx]             # <<<<<<<<<<<<<<
@@ -2957,7 +2967,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_12ArrayDataset__sample(struct 
  */
   (__pyx_v_y[0]) = (__pyx_v_self->Y_data_ptr[__pyx_v_sample_idx]);
 
-  /* "sklearn/utils/seq_dataset.pyx":215
+  /* "sklearn/utils/seq_dataset.pyx":216
  * 
  *         y[0] = self.Y_data_ptr[sample_idx]
  *         x_data_ptr[0] = self.X_data_ptr + offset             # <<<<<<<<<<<<<<
@@ -2966,7 +2976,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_12ArrayDataset__sample(struct 
  */
   (__pyx_v_x_data_ptr[0]) = (__pyx_v_self->X_data_ptr + __pyx_v_offset);
 
-  /* "sklearn/utils/seq_dataset.pyx":216
+  /* "sklearn/utils/seq_dataset.pyx":217
  *         y[0] = self.Y_data_ptr[sample_idx]
  *         x_data_ptr[0] = self.X_data_ptr + offset
  *         x_ind_ptr[0] = self.feature_indices_ptr             # <<<<<<<<<<<<<<
@@ -2976,7 +2986,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_12ArrayDataset__sample(struct 
   __pyx_t_1 = __pyx_v_self->feature_indices_ptr;
   (__pyx_v_x_ind_ptr[0]) = __pyx_t_1;
 
-  /* "sklearn/utils/seq_dataset.pyx":217
+  /* "sklearn/utils/seq_dataset.pyx":218
  *         x_data_ptr[0] = self.X_data_ptr + offset
  *         x_ind_ptr[0] = self.feature_indices_ptr
  *         nnz[0] = self.n_features             # <<<<<<<<<<<<<<
@@ -2986,7 +2996,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_12ArrayDataset__sample(struct 
   __pyx_t_2 = __pyx_v_self->n_features;
   (__pyx_v_nnz[0]) = __pyx_t_2;
 
-  /* "sklearn/utils/seq_dataset.pyx":218
+  /* "sklearn/utils/seq_dataset.pyx":219
  *         x_ind_ptr[0] = self.feature_indices_ptr
  *         nnz[0] = self.n_features
  *         sample_weight[0] = self.sample_weight_data[sample_idx]             # <<<<<<<<<<<<<<
@@ -2995,8 +3005,8 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_12ArrayDataset__sample(struct 
  */
   (__pyx_v_sample_weight[0]) = (__pyx_v_self->sample_weight_data[__pyx_v_sample_idx]);
 
-  /* "sklearn/utils/seq_dataset.pyx":208
- *         self.seed = seed
+  /* "sklearn/utils/seq_dataset.pyx":209
+ *         self.seed = max(seed, 1)
  * 
  *     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,             # <<<<<<<<<<<<<<
  *                       int *nnz, double *y, double *sample_weight,
@@ -3006,7 +3016,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_12ArrayDataset__sample(struct 
   /* function exit code */
 }
 
-/* "sklearn/utils/seq_dataset.pyx":224
+/* "sklearn/utils/seq_dataset.pyx":225
  *     """A ``SequentialDataset`` backed by a scipy sparse CSR matrix. """
  * 
  *     def __cinit__(self, np.ndarray[double, ndim=1, mode='c'] X_data,             # <<<<<<<<<<<<<<
@@ -3053,22 +3063,22 @@ static int __pyx_pw_7sklearn_5utils_11seq_dataset_10CSRDataset_1__cinit__(PyObje
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_X_indptr)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 5, 6, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 5, 6, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 225; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_X_indices)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 5, 6, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 5, 6, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 225; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_Y)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 5, 6, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 5, 6, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 225; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_sample_weights)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 5, 6, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 5, 6, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 225; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  5:
         if (kw_args > 0) {
@@ -3077,7 +3087,7 @@ static int __pyx_pw_7sklearn_5utils_11seq_dataset_10CSRDataset_1__cinit__(PyObje
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 225; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -3097,24 +3107,24 @@ static int __pyx_pw_7sklearn_5utils_11seq_dataset_10CSRDataset_1__cinit__(PyObje
     __pyx_v_Y = ((PyArrayObject *)values[3]);
     __pyx_v_sample_weights = ((PyArrayObject *)values[4]);
     if (values[5]) {
-      __pyx_v_seed = __Pyx_PyInt_As_npy_uint32(values[5]); if (unlikely((__pyx_v_seed == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 229; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_seed = __Pyx_PyInt_As_npy_uint32(values[5]); if (unlikely((__pyx_v_seed == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 230; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_seed = ((__pyx_t_5numpy_uint32_t)0);
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 5, 6, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 5, 6, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 225; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("sklearn.utils.seq_dataset.CSRDataset.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_X_data), __pyx_ptype_5numpy_ndarray, 1, "X_data", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_X_indptr), __pyx_ptype_5numpy_ndarray, 1, "X_indptr", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 225; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_X_indices), __pyx_ptype_5numpy_ndarray, 1, "X_indices", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 226; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_Y), __pyx_ptype_5numpy_ndarray, 1, "Y", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 227; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_sample_weights), __pyx_ptype_5numpy_ndarray, 1, "sample_weights", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 228; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_X_data), __pyx_ptype_5numpy_ndarray, 1, "X_data", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 225; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_X_indptr), __pyx_ptype_5numpy_ndarray, 1, "X_indptr", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 226; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_X_indices), __pyx_ptype_5numpy_ndarray, 1, "X_indices", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 227; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_Y), __pyx_ptype_5numpy_ndarray, 1, "Y", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 228; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_sample_weights), __pyx_ptype_5numpy_ndarray, 1, "sample_weights", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 229; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_r = __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(((struct __pyx_obj_7sklearn_5utils_11seq_dataset_CSRDataset *)__pyx_v_self), __pyx_v_X_data, __pyx_v_X_indptr, __pyx_v_X_indices, __pyx_v_Y, __pyx_v_sample_weights, __pyx_v_seed);
 
   /* function exit code */
@@ -3148,6 +3158,9 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
   PyObject *__pyx_t_4 = NULL;
   PyObject *__pyx_t_5 = NULL;
   PyArrayObject *__pyx_t_6 = NULL;
+  long __pyx_t_7;
+  __pyx_t_5numpy_uint32_t __pyx_t_8;
+  long __pyx_t_9;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -3178,31 +3191,31 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
   __pyx_pybuffernd_sample_weights.rcbuffer = &__pyx_pybuffer_sample_weights;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_X_data.rcbuffer->pybuffer, (PyObject*)__pyx_v_X_data, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_X_data.rcbuffer->pybuffer, (PyObject*)__pyx_v_X_data, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 225; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_pybuffernd_X_data.diminfo[0].strides = __pyx_pybuffernd_X_data.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_X_data.diminfo[0].shape = __pyx_pybuffernd_X_data.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_X_indptr.rcbuffer->pybuffer, (PyObject*)__pyx_v_X_indptr, &__Pyx_TypeInfo_int, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_X_indptr.rcbuffer->pybuffer, (PyObject*)__pyx_v_X_indptr, &__Pyx_TypeInfo_int, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 225; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_pybuffernd_X_indptr.diminfo[0].strides = __pyx_pybuffernd_X_indptr.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_X_indptr.diminfo[0].shape = __pyx_pybuffernd_X_indptr.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_X_indices.rcbuffer->pybuffer, (PyObject*)__pyx_v_X_indices, &__Pyx_TypeInfo_int, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_X_indices.rcbuffer->pybuffer, (PyObject*)__pyx_v_X_indices, &__Pyx_TypeInfo_int, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 225; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_pybuffernd_X_indices.diminfo[0].strides = __pyx_pybuffernd_X_indices.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_X_indices.diminfo[0].shape = __pyx_pybuffernd_X_indices.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_Y.rcbuffer->pybuffer, (PyObject*)__pyx_v_Y, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_Y.rcbuffer->pybuffer, (PyObject*)__pyx_v_Y, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 225; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_pybuffernd_Y.diminfo[0].strides = __pyx_pybuffernd_Y.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_Y.diminfo[0].shape = __pyx_pybuffernd_Y.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_sample_weights.rcbuffer->pybuffer, (PyObject*)__pyx_v_sample_weights, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 224; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_sample_weights.rcbuffer->pybuffer, (PyObject*)__pyx_v_sample_weights, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 225; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_pybuffernd_sample_weights.diminfo[0].strides = __pyx_pybuffernd_sample_weights.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_sample_weights.diminfo[0].shape = __pyx_pybuffernd_sample_weights.rcbuffer->pybuffer.shape[0];
 
-  /* "sklearn/utils/seq_dataset.pyx":259
+  /* "sklearn/utils/seq_dataset.pyx":260
  *         """
  *         # keep a reference to the data to prevent garbage collection
  *         self.X_data = X_data             # <<<<<<<<<<<<<<
@@ -3215,7 +3228,7 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
   __Pyx_DECREF(((PyObject *)__pyx_v_self->X_data));
   __pyx_v_self->X_data = ((PyArrayObject *)__pyx_v_X_data);
 
-  /* "sklearn/utils/seq_dataset.pyx":260
+  /* "sklearn/utils/seq_dataset.pyx":261
  *         # keep a reference to the data to prevent garbage collection
  *         self.X_data = X_data
  *         self.X_indptr = X_indptr             # <<<<<<<<<<<<<<
@@ -3228,7 +3241,7 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
   __Pyx_DECREF(((PyObject *)__pyx_v_self->X_indptr));
   __pyx_v_self->X_indptr = ((PyArrayObject *)__pyx_v_X_indptr);
 
-  /* "sklearn/utils/seq_dataset.pyx":261
+  /* "sklearn/utils/seq_dataset.pyx":262
  *         self.X_data = X_data
  *         self.X_indptr = X_indptr
  *         self.X_indices = X_indices             # <<<<<<<<<<<<<<
@@ -3241,7 +3254,7 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
   __Pyx_DECREF(((PyObject *)__pyx_v_self->X_indices));
   __pyx_v_self->X_indices = ((PyArrayObject *)__pyx_v_X_indices);
 
-  /* "sklearn/utils/seq_dataset.pyx":262
+  /* "sklearn/utils/seq_dataset.pyx":263
  *         self.X_indptr = X_indptr
  *         self.X_indices = X_indices
  *         self.Y = Y             # <<<<<<<<<<<<<<
@@ -3254,7 +3267,7 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
   __Pyx_DECREF(((PyObject *)__pyx_v_self->Y));
   __pyx_v_self->Y = ((PyArrayObject *)__pyx_v_Y);
 
-  /* "sklearn/utils/seq_dataset.pyx":263
+  /* "sklearn/utils/seq_dataset.pyx":264
  *         self.X_indices = X_indices
  *         self.Y = Y
  *         self.sample_weights = sample_weights             # <<<<<<<<<<<<<<
@@ -3267,7 +3280,7 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
   __Pyx_DECREF(((PyObject *)__pyx_v_self->sample_weights));
   __pyx_v_self->sample_weights = ((PyArrayObject *)__pyx_v_sample_weights);
 
-  /* "sklearn/utils/seq_dataset.pyx":265
+  /* "sklearn/utils/seq_dataset.pyx":266
  *         self.sample_weights = sample_weights
  * 
  *         self.n_samples = Y.shape[0]             # <<<<<<<<<<<<<<
@@ -3276,7 +3289,7 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
  */
   __pyx_v_self->__pyx_base.n_samples = (__pyx_v_Y->dimensions[0]);
 
-  /* "sklearn/utils/seq_dataset.pyx":266
+  /* "sklearn/utils/seq_dataset.pyx":267
  * 
  *         self.n_samples = Y.shape[0]
  *         self.current_index = -1             # <<<<<<<<<<<<<<
@@ -3285,7 +3298,7 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
  */
   __pyx_v_self->__pyx_base.current_index = -1;
 
-  /* "sklearn/utils/seq_dataset.pyx":267
+  /* "sklearn/utils/seq_dataset.pyx":268
  *         self.n_samples = Y.shape[0]
  *         self.current_index = -1
  *         self.X_data_ptr = <double *>X_data.data             # <<<<<<<<<<<<<<
@@ -3294,7 +3307,7 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
  */
   __pyx_v_self->X_data_ptr = ((double *)__pyx_v_X_data->data);
 
-  /* "sklearn/utils/seq_dataset.pyx":268
+  /* "sklearn/utils/seq_dataset.pyx":269
  *         self.current_index = -1
  *         self.X_data_ptr = <double *>X_data.data
  *         self.X_indptr_ptr = <int *>X_indptr.data             # <<<<<<<<<<<<<<
@@ -3303,7 +3316,7 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
  */
   __pyx_v_self->X_indptr_ptr = ((int *)__pyx_v_X_indptr->data);
 
-  /* "sklearn/utils/seq_dataset.pyx":269
+  /* "sklearn/utils/seq_dataset.pyx":270
  *         self.X_data_ptr = <double *>X_data.data
  *         self.X_indptr_ptr = <int *>X_indptr.data
  *         self.X_indices_ptr = <int *>X_indices.data             # <<<<<<<<<<<<<<
@@ -3312,7 +3325,7 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
  */
   __pyx_v_self->X_indices_ptr = ((int *)__pyx_v_X_indices->data);
 
-  /* "sklearn/utils/seq_dataset.pyx":270
+  /* "sklearn/utils/seq_dataset.pyx":271
  *         self.X_indptr_ptr = <int *>X_indptr.data
  *         self.X_indices_ptr = <int *>X_indices.data
  *         self.Y_data_ptr = <double *>Y.data             # <<<<<<<<<<<<<<
@@ -3321,7 +3334,7 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
  */
   __pyx_v_self->Y_data_ptr = ((double *)__pyx_v_Y->data);
 
-  /* "sklearn/utils/seq_dataset.pyx":271
+  /* "sklearn/utils/seq_dataset.pyx":272
  *         self.X_indices_ptr = <int *>X_indices.data
  *         self.Y_data_ptr = <double *>Y.data
  *         self.sample_weight_data = <double *>sample_weights.data             # <<<<<<<<<<<<<<
@@ -3330,62 +3343,62 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
  */
   __pyx_v_self->sample_weight_data = ((double *)__pyx_v_sample_weights->data);
 
-  /* "sklearn/utils/seq_dataset.pyx":273
+  /* "sklearn/utils/seq_dataset.pyx":274
  *         self.sample_weight_data = <double *>sample_weights.data
  *         # Use index array for fast shuffling
  *         cdef np.ndarray[int, ndim=1, mode='c'] idx = np.arange(self.n_samples,             # <<<<<<<<<<<<<<
  *                                                                dtype=np.intc)
  *         self.index = idx
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 274; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_arange); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_arange); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 274; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyInt_FromSsize_t(__pyx_v_self->__pyx_base.n_samples); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyInt_FromSsize_t(__pyx_v_self->__pyx_base.n_samples); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 274; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 274; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 274; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
 
-  /* "sklearn/utils/seq_dataset.pyx":274
+  /* "sklearn/utils/seq_dataset.pyx":275
  *         # Use index array for fast shuffling
  *         cdef np.ndarray[int, ndim=1, mode='c'] idx = np.arange(self.n_samples,
  *                                                                dtype=np.intc)             # <<<<<<<<<<<<<<
  *         self.index = idx
  *         self.index_data_ptr = <int *>idx.data
  */
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 274; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 275; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_intc); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 274; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_intc); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 275; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_5) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_5) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 274; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "sklearn/utils/seq_dataset.pyx":273
+  /* "sklearn/utils/seq_dataset.pyx":274
  *         self.sample_weight_data = <double *>sample_weights.data
  *         # Use index array for fast shuffling
  *         cdef np.ndarray[int, ndim=1, mode='c'] idx = np.arange(self.n_samples,             # <<<<<<<<<<<<<<
  *                                                                dtype=np.intc)
  *         self.index = idx
  */
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 274; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 274; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_t_6 = ((PyArrayObject *)__pyx_t_5);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_idx.rcbuffer->pybuffer, (PyObject*)__pyx_t_6, &__Pyx_TypeInfo_int, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_idx = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_idx.rcbuffer->pybuffer.buf = NULL;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 274; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     } else {__pyx_pybuffernd_idx.diminfo[0].strides = __pyx_pybuffernd_idx.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_idx.diminfo[0].shape = __pyx_pybuffernd_idx.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -3393,12 +3406,12 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
   __pyx_v_idx = ((PyArrayObject *)__pyx_t_5);
   __pyx_t_5 = 0;
 
-  /* "sklearn/utils/seq_dataset.pyx":275
+  /* "sklearn/utils/seq_dataset.pyx":276
  *         cdef np.ndarray[int, ndim=1, mode='c'] idx = np.arange(self.n_samples,
  *                                                                dtype=np.intc)
  *         self.index = idx             # <<<<<<<<<<<<<<
  *         self.index_data_ptr = <int *>idx.data
- *         self.seed = seed
+ *         # seed should not be 0 for our_rand_r
  */
   __Pyx_INCREF(((PyObject *)__pyx_v_idx));
   __Pyx_GIVEREF(((PyObject *)__pyx_v_idx));
@@ -3406,25 +3419,32 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
   __Pyx_DECREF(((PyObject *)__pyx_v_self->__pyx_base.index));
   __pyx_v_self->__pyx_base.index = ((PyArrayObject *)__pyx_v_idx);
 
-  /* "sklearn/utils/seq_dataset.pyx":276
+  /* "sklearn/utils/seq_dataset.pyx":277
  *                                                                dtype=np.intc)
  *         self.index = idx
  *         self.index_data_ptr = <int *>idx.data             # <<<<<<<<<<<<<<
- *         self.seed = seed
- * 
+ *         # seed should not be 0 for our_rand_r
+ *         self.seed = max(seed, 1)
  */
   __pyx_v_self->__pyx_base.index_data_ptr = ((int *)__pyx_v_idx->data);
 
-  /* "sklearn/utils/seq_dataset.pyx":277
- *         self.index = idx
+  /* "sklearn/utils/seq_dataset.pyx":279
  *         self.index_data_ptr = <int *>idx.data
- *         self.seed = seed             # <<<<<<<<<<<<<<
+ *         # seed should not be 0 for our_rand_r
+ *         self.seed = max(seed, 1)             # <<<<<<<<<<<<<<
  * 
  *     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
  */
-  __pyx_v_self->__pyx_base.seed = __pyx_v_seed;
+  __pyx_t_7 = 1;
+  __pyx_t_8 = __pyx_v_seed;
+  if (((__pyx_t_7 > __pyx_t_8) != 0)) {
+    __pyx_t_9 = __pyx_t_7;
+  } else {
+    __pyx_t_9 = __pyx_t_8;
+  }
+  __pyx_v_self->__pyx_base.seed = __pyx_t_9;
 
-  /* "sklearn/utils/seq_dataset.pyx":224
+  /* "sklearn/utils/seq_dataset.pyx":225
  *     """A ``SequentialDataset`` backed by a scipy sparse CSR matrix. """
  * 
  *     def __cinit__(self, np.ndarray[double, ndim=1, mode='c'] X_data,             # <<<<<<<<<<<<<<
@@ -3466,8 +3486,8 @@ static int __pyx_pf_7sklearn_5utils_11seq_dataset_10CSRDataset___cinit__(struct 
   return __pyx_r;
 }
 
-/* "sklearn/utils/seq_dataset.pyx":279
- *         self.seed = seed
+/* "sklearn/utils/seq_dataset.pyx":281
+ *         self.seed = max(seed, 1)
  * 
  *     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,             # <<<<<<<<<<<<<<
  *                       int *nnz, double *y, double *sample_weight,
@@ -3478,7 +3498,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_10CSRDataset__sample(struct __
   int __pyx_v_sample_idx;
   int __pyx_v_offset;
 
-  /* "sklearn/utils/seq_dataset.pyx":282
+  /* "sklearn/utils/seq_dataset.pyx":284
  *                       int *nnz, double *y, double *sample_weight,
  *                       int current_index) nogil:
  *         cdef int sample_idx = self.index_data_ptr[current_index]             # <<<<<<<<<<<<<<
@@ -3487,7 +3507,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_10CSRDataset__sample(struct __
  */
   __pyx_v_sample_idx = (__pyx_v_self->__pyx_base.index_data_ptr[__pyx_v_current_index]);
 
-  /* "sklearn/utils/seq_dataset.pyx":283
+  /* "sklearn/utils/seq_dataset.pyx":285
  *                       int current_index) nogil:
  *         cdef int sample_idx = self.index_data_ptr[current_index]
  *         cdef int offset = self.X_indptr_ptr[sample_idx]             # <<<<<<<<<<<<<<
@@ -3496,7 +3516,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_10CSRDataset__sample(struct __
  */
   __pyx_v_offset = (__pyx_v_self->X_indptr_ptr[__pyx_v_sample_idx]);
 
-  /* "sklearn/utils/seq_dataset.pyx":284
+  /* "sklearn/utils/seq_dataset.pyx":286
  *         cdef int sample_idx = self.index_data_ptr[current_index]
  *         cdef int offset = self.X_indptr_ptr[sample_idx]
  *         y[0] = self.Y_data_ptr[sample_idx]             # <<<<<<<<<<<<<<
@@ -3505,7 +3525,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_10CSRDataset__sample(struct __
  */
   (__pyx_v_y[0]) = (__pyx_v_self->Y_data_ptr[__pyx_v_sample_idx]);
 
-  /* "sklearn/utils/seq_dataset.pyx":285
+  /* "sklearn/utils/seq_dataset.pyx":287
  *         cdef int offset = self.X_indptr_ptr[sample_idx]
  *         y[0] = self.Y_data_ptr[sample_idx]
  *         x_data_ptr[0] = self.X_data_ptr + offset             # <<<<<<<<<<<<<<
@@ -3514,7 +3534,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_10CSRDataset__sample(struct __
  */
   (__pyx_v_x_data_ptr[0]) = (__pyx_v_self->X_data_ptr + __pyx_v_offset);
 
-  /* "sklearn/utils/seq_dataset.pyx":286
+  /* "sklearn/utils/seq_dataset.pyx":288
  *         y[0] = self.Y_data_ptr[sample_idx]
  *         x_data_ptr[0] = self.X_data_ptr + offset
  *         x_ind_ptr[0] = self.X_indices_ptr + offset             # <<<<<<<<<<<<<<
@@ -3523,7 +3543,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_10CSRDataset__sample(struct __
  */
   (__pyx_v_x_ind_ptr[0]) = (__pyx_v_self->X_indices_ptr + __pyx_v_offset);
 
-  /* "sklearn/utils/seq_dataset.pyx":287
+  /* "sklearn/utils/seq_dataset.pyx":289
  *         x_data_ptr[0] = self.X_data_ptr + offset
  *         x_ind_ptr[0] = self.X_indices_ptr + offset
  *         nnz[0] = self.X_indptr_ptr[sample_idx + 1] - offset             # <<<<<<<<<<<<<<
@@ -3532,7 +3552,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_10CSRDataset__sample(struct __
  */
   (__pyx_v_nnz[0]) = ((__pyx_v_self->X_indptr_ptr[(__pyx_v_sample_idx + 1)]) - __pyx_v_offset);
 
-  /* "sklearn/utils/seq_dataset.pyx":288
+  /* "sklearn/utils/seq_dataset.pyx":290
  *         x_ind_ptr[0] = self.X_indices_ptr + offset
  *         nnz[0] = self.X_indptr_ptr[sample_idx + 1] - offset
  *         sample_weight[0] = self.sample_weight_data[sample_idx]             # <<<<<<<<<<<<<<
@@ -3541,8 +3561,8 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_10CSRDataset__sample(struct __
  */
   (__pyx_v_sample_weight[0]) = (__pyx_v_self->sample_weight_data[__pyx_v_sample_idx]);
 
-  /* "sklearn/utils/seq_dataset.pyx":279
- *         self.seed = seed
+  /* "sklearn/utils/seq_dataset.pyx":281
+ *         self.seed = max(seed, 1)
  * 
  *     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,             # <<<<<<<<<<<<<<
  *                       int *nnz, double *y, double *sample_weight,
@@ -3552,7 +3572,7 @@ static void __pyx_f_7sklearn_5utils_11seq_dataset_10CSRDataset__sample(struct __
   /* function exit code */
 }
 
-/* "sklearn/utils/seq_dataset.pyx":298
+/* "sklearn/utils/seq_dataset.pyx":300
  * # See http://www.jstatsoft.org/v08/i14/paper for details
  * # XXX copied over from sklearn/tree/_tree.pyx, should refactor
  * cdef inline np.uint32_t our_rand_r(np.uint32_t* seed) nogil:             # <<<<<<<<<<<<<<
@@ -3564,7 +3584,7 @@ static CYTHON_INLINE __pyx_t_5numpy_uint32_t __pyx_f_7sklearn_5utils_11seq_datas
   __pyx_t_5numpy_uint32_t __pyx_r;
   long __pyx_t_1;
 
-  /* "sklearn/utils/seq_dataset.pyx":299
+  /* "sklearn/utils/seq_dataset.pyx":301
  * # XXX copied over from sklearn/tree/_tree.pyx, should refactor
  * cdef inline np.uint32_t our_rand_r(np.uint32_t* seed) nogil:
  *     seed[0] ^= <np.uint32_t>(seed[0] << 13)             # <<<<<<<<<<<<<<
@@ -3574,7 +3594,7 @@ static CYTHON_INLINE __pyx_t_5numpy_uint32_t __pyx_f_7sklearn_5utils_11seq_datas
   __pyx_t_1 = 0;
   (__pyx_v_seed[__pyx_t_1]) = ((__pyx_v_seed[__pyx_t_1]) ^ ((__pyx_t_5numpy_uint32_t)((__pyx_v_seed[0]) << 13)));
 
-  /* "sklearn/utils/seq_dataset.pyx":300
+  /* "sklearn/utils/seq_dataset.pyx":302
  * cdef inline np.uint32_t our_rand_r(np.uint32_t* seed) nogil:
  *     seed[0] ^= <np.uint32_t>(seed[0] << 13)
  *     seed[0] ^= <np.uint32_t>(seed[0] >> 17)             # <<<<<<<<<<<<<<
@@ -3584,7 +3604,7 @@ static CYTHON_INLINE __pyx_t_5numpy_uint32_t __pyx_f_7sklearn_5utils_11seq_datas
   __pyx_t_1 = 0;
   (__pyx_v_seed[__pyx_t_1]) = ((__pyx_v_seed[__pyx_t_1]) ^ ((__pyx_t_5numpy_uint32_t)((__pyx_v_seed[0]) >> 17)));
 
-  /* "sklearn/utils/seq_dataset.pyx":301
+  /* "sklearn/utils/seq_dataset.pyx":303
  *     seed[0] ^= <np.uint32_t>(seed[0] << 13)
  *     seed[0] ^= <np.uint32_t>(seed[0] >> 17)
  *     seed[0] ^= <np.uint32_t>(seed[0] << 5)             # <<<<<<<<<<<<<<
@@ -3594,7 +3614,7 @@ static CYTHON_INLINE __pyx_t_5numpy_uint32_t __pyx_f_7sklearn_5utils_11seq_datas
   __pyx_t_1 = 0;
   (__pyx_v_seed[__pyx_t_1]) = ((__pyx_v_seed[__pyx_t_1]) ^ ((__pyx_t_5numpy_uint32_t)((__pyx_v_seed[0]) << 5)));
 
-  /* "sklearn/utils/seq_dataset.pyx":303
+  /* "sklearn/utils/seq_dataset.pyx":305
  *     seed[0] ^= <np.uint32_t>(seed[0] << 5)
  * 
  *     return seed[0] % (<np.uint32_t>RAND_R_MAX + 1)             # <<<<<<<<<<<<<<
@@ -3602,7 +3622,7 @@ static CYTHON_INLINE __pyx_t_5numpy_uint32_t __pyx_f_7sklearn_5utils_11seq_datas
   __pyx_r = ((__pyx_v_seed[0]) % (((__pyx_t_5numpy_uint32_t)__pyx_e_7sklearn_5utils_11seq_dataset_RAND_R_MAX) + 1));
   goto __pyx_L0;
 
-  /* "sklearn/utils/seq_dataset.pyx":298
+  /* "sklearn/utils/seq_dataset.pyx":300
  * # See http://www.jstatsoft.org/v08/i14/paper for details
  * # XXX copied over from sklearn/tree/_tree.pyx, should refactor
  * cdef inline np.uint32_t our_rand_r(np.uint32_t* seed) nogil:             # <<<<<<<<<<<<<<
@@ -6262,10 +6282,10 @@ PyMODINIT_FUNC PyInit_seq_dataset(void)
   __pyx_vtable_7sklearn_5utils_11seq_dataset_CSRDataset.__pyx_base = *__pyx_vtabptr_7sklearn_5utils_11seq_dataset_SequentialDataset;
   __pyx_vtable_7sklearn_5utils_11seq_dataset_CSRDataset.__pyx_base._sample = (void (*)(struct __pyx_obj_7sklearn_5utils_11seq_dataset_SequentialDataset *, double **, int **, int *, double *, double *, int))__pyx_f_7sklearn_5utils_11seq_dataset_10CSRDataset__sample;
   __pyx_type_7sklearn_5utils_11seq_dataset_CSRDataset.tp_base = __pyx_ptype_7sklearn_5utils_11seq_dataset_SequentialDataset;
-  if (PyType_Ready(&__pyx_type_7sklearn_5utils_11seq_dataset_CSRDataset) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 221; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyType_Ready(&__pyx_type_7sklearn_5utils_11seq_dataset_CSRDataset) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 222; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_type_7sklearn_5utils_11seq_dataset_CSRDataset.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_7sklearn_5utils_11seq_dataset_CSRDataset.tp_dict, __pyx_vtabptr_7sklearn_5utils_11seq_dataset_CSRDataset) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 221; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (PyObject_SetAttrString(__pyx_m, "CSRDataset", (PyObject *)&__pyx_type_7sklearn_5utils_11seq_dataset_CSRDataset) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 221; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_SetVtable(__pyx_type_7sklearn_5utils_11seq_dataset_CSRDataset.tp_dict, __pyx_vtabptr_7sklearn_5utils_11seq_dataset_CSRDataset) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 222; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttrString(__pyx_m, "CSRDataset", (PyObject *)&__pyx_type_7sklearn_5utils_11seq_dataset_CSRDataset) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 222; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_7sklearn_5utils_11seq_dataset_CSRDataset = &__pyx_type_7sklearn_5utils_11seq_dataset_CSRDataset;
   /*--- Type import code ---*/
   __pyx_ptype_7cpython_4type_type = __Pyx_ImportType(__Pyx_BUILTIN_MODULE_NAME, "type", 
