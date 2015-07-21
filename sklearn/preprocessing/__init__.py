@@ -16,6 +16,7 @@ from .data import normalize
 from .data import scale
 from .data import robust_scale
 from .data import maxabs_scale
+from .data import minmax_scale
 from .data import OneHotEncoder
 
 from .data import PolynomialFeatures
@@ -47,5 +48,6 @@ __all__ = [
     'scale',
     'robust_scale',
     'maxabs_scale',
+    'minmax_scale',
     'label_binarize',
 ]

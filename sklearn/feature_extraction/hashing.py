@@ -25,6 +25,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
     Feature names of type byte string are used as-is. Unicode strings are
     converted to UTF-8 first, but no Unicode normalization is done.
+    Feature values must be (finite) numbers.
 
     This class is a low-memory alternative to DictVectorizer and
     CountVectorizer, intended for large-scale (online) learning and situations
@@ -58,6 +59,16 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         When True, output values can be interpreted as frequencies.
         When False, output values will have expected value zero.
 
+    Examples
+    --------
+    >>> from sklearn.feature_extraction import FeatureHasher
+    >>> h = FeatureHasher(n_features=10)
+    >>> D = [{'dog': 1, 'cat':2, 'elephant':4},{'dog': 2, 'run': 5}]
+    >>> f = h.transform(D)
+    >>> f.toarray()
+    array([[ 0.,  0., -4., -1.,  0.,  0.,  0.,  0.,  0.,  2.],
+           [ 0.,  0.,  0., -2., -5.,  0.,  0.,  0.,  0.,  0.]])
+           
     See also
     --------
     DictVectorizer : vectorizes string-valued features using a hash table.

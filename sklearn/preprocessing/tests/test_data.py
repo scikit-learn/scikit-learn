@@ -27,6 +27,7 @@ from sklearn.preprocessing.data import OneHotEncoder
 from sklearn.preprocessing.data import StandardScaler
 from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
+from sklearn.preprocessing.data import minmax_scale
 from sklearn.preprocessing.data import MaxAbsScaler
 from sklearn.preprocessing.data import maxabs_scale
 from sklearn.preprocessing.data import RobustScaler
@@ -259,6 +260,19 @@ def test_min_max_scaler_zero_variance_features():
                       [1., 1., 1.0],
                       [1., 1., 2.0]]
     assert_array_almost_equal(X_trans, X_expected_1_2)
+
+    # function interface
+    X_trans = minmax_scale(X)
+    assert_array_almost_equal(X_trans, X_expected_0_1)
+    X_trans = minmax_scale(X, feature_range=(1, 2))
+    assert_array_almost_equal(X_trans, X_expected_1_2)
+
+
+def test_minmax_scale_axis1():
+    X = iris.data
+    X_trans = minmax_scale(X, axis=1)
+    assert_array_almost_equal(np.min(X_trans, axis=1), 0)
+    assert_array_almost_equal(np.max(X_trans, axis=1), 1)
 
 
 def test_min_max_scaler_1d():

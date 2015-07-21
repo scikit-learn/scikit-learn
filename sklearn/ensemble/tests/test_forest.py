@@ -262,11 +262,17 @@ def test_oob_score():
     for name in FOREST_CLASSIFIERS:
         yield check_oob_score, name, iris.data, iris.target
 
+        # csc matrix
+        yield check_oob_score, name, csc_matrix(iris.data), iris.target
+
         # non-contiguous targets in classification
         yield check_oob_score, name, iris.data, iris.target * 2 + 1
 
     for name in FOREST_REGRESSORS:
         yield check_oob_score, name, boston.data, boston.target, 50
+
+        # csc matrix
+        yield check_oob_score, name, csc_matrix(boston.data), boston.target, 50
 
 
 def check_oob_score_raise_error(name):
