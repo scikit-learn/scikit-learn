@@ -178,12 +178,17 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         # Samples in X are ordered with sample_id,
         # whereas in y, they are ordered with sample_id_bis.
         permutation = _find_permutation(sample_id_bis, sample_id)
-        y = sp.csr_matrix(y[permutation, :])
+        y = y[permutation, :]
 
         # save category names in a list, with same order than y
         categories = np.empty(N_CATEGORIES, dtype=object)
         for k in category_names.keys():
             categories[category_names[k]] = k
+
+        # reorder categories in lexicographic order
+        order = np.argsort(categories)
+        categories = categories[order]
+        y = sp.csr_matrix(y[:, order])
 
         joblib.dump(y, sample_topics_path, compress=9)
         joblib.dump(categories, topics_path, compress=9)
