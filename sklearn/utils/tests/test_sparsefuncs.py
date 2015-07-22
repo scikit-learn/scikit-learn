@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -40,21 +42,34 @@ def test_mean_variance_all_axes():
     # on the dense array. Also make sure it works for multiple
     # data types (this function calls out to Cython, so it requires
     # more hands-on treatment of data types).
-    for dtype in [np.float32, np.float64]:
+    # Suppress the UserWarning which warns of array copy for the
+    # (np.float16 and axis=None) case.
+    for dtype, prec in [(np.float32, 6), (np.float64, 6), (np.float16, 3)]:
         for axis in [0, 1, None]:
+            X_dense = X.astype(dtype).copy()
+            X_dense[3, 2] = 0
+            dense_mean = np.mean(X_dense, axis=axis)
+            dense_var = np.var(X_dense, axis=axis)
+
             X_csr = sp.csr_matrix(X).astype(dtype)
-            X_means, X_vars = mean_variance_axis(X_csr, axis=axis)
-            assert_array_almost_equal(X_means, np.mean(X, axis=axis))
-            assert_array_almost_equal(X_vars, np.var(X, axis=axis))
+            X_csr[3, 2] = 0  # Check correctness with stored zeros
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                X_means, X_vars = mean_variance_axis(X_csr, axis=axis)
+            assert_array_almost_equal(X_means, dense_mean, decimal=prec)
+            assert_array_almost_equal(X_vars, dense_var, decimal=prec)
 
             X_csc = sp.csc_matrix(X).astype(dtype)
-            X_means, X_vars = mean_variance_axis(X_csc, axis=axis)
-            assert_array_almost_equal(X_means, np.mean(X, axis=axis))
-            assert_array_almost_equal(X_vars, np.var(X, axis=axis))
+            X_csc[3, 2] = 0
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                X_means, X_vars = mean_variance_axis(X_csc, axis=axis)
+            assert_array_almost_equal(X_means, dense_mean, decimal=prec)
+            assert_array_almost_equal(X_vars, dense_var, decimal=prec)
 
             # Only works for CSR and CSC sparse types
-            X_lil = sp.lil_matrix(X).astype(dtype)
-            assert_raises(TypeError, mean_variance_axis, X_lil, axis=axis)
+            X_coo = sp.coo_matrix(X).astype(dtype)
+            assert_raises(TypeError, mean_variance_axis, X_coo, axis=axis)
 
 
 def test_densify_rows():

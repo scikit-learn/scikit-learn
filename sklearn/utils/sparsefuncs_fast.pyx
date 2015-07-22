@@ -52,6 +52,7 @@ def csr_row_norms(X):
 @cython.cdivision(True)
 def sparse_mean_variance(X):
     """Compute the variance of a sparse matrix.
+
     Will copy data to an array of doubles if input data
     are not np.float32 or np.float64 types.
 
@@ -80,18 +81,19 @@ def sparse_mean_variance(X):
         double datum
     len_data = len(X.data)
 
-    if X.data.dtype not in (np.float64, np.float32):
+    X_data = X.data
+    if X_data.dtype not in (np.float64, np.float32):
         warnings.warn("Copying sparse array data to array of "
                       "doubles for computation.")
-        X_data = np.asarray(X.data, dtype=np.float64)  # Copy!
-    if X.data.dtype == np.float64:
-        X_data_d = X.data
+        X_data = np.asarray(X_data, dtype=np.float64)  # Copy!
+    if X_data.dtype == np.float64:
+        X_data_d = X_data
         for i_datum in xrange(len_data):
             datum = X_data_d[i_datum]
             sum += datum
             sum_squares += datum * datum
-    elif X.data.dtype == np.float32:
-        X_data_f = X.data
+    elif X_data.dtype == np.float32:
+        X_data_f = X_data
         for i_datum in xrange(len_data):
             datum = X_data_f[i_datum]
             sum += datum
