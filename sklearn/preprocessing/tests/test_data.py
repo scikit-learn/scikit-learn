@@ -250,34 +250,39 @@ def test_min_max_scaler_iris():
 def test_min_max_scaler_grouped_iris():
     # Verify that the `per_feature=False` setting works in the MinMaxScaler.
     X = iris.data
-    scaler = MinMaxScaler(per_feature=False)
+
     # default params
+    scaler = MinMaxScaler(per_feature=False)
     X_trans = scaler.fit_transform(X)
     assert_array_almost_equal(X_trans.min(), 0)
     assert_array_almost_equal(X_trans.max(), 1)
-    assert_false((X_trans.min(axis=0) == 0).all())
-    assert_false((X_trans.max(axis=0) == 1).all())
+    assert_false(np.allclose(X_trans.min(axis=0), 0))
+    assert_false(np.allclose(X_trans.max(axis=0), 1))
     X_trans_inv = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
 
     # not default params: min=1, max=2
-    scaler = MinMaxScaler(feature_range=(1, 2))
+    scaler = MinMaxScaler(feature_range=(1, 2), per_feature=False)
     X_trans = scaler.fit_transform(X)
-    assert_array_almost_equal(X_trans.min(axis=0), 1)
-    assert_array_almost_equal(X_trans.max(axis=0), 2)
+    assert_array_almost_equal(X_trans.min(), 1)
+    assert_array_almost_equal(X_trans.max(), 2)
+    assert_false(np.allclose(X_trans.min(axis=0), 1))
+    assert_false(np.allclose(X_trans.max(axis=0), 2))
     X_trans_inv = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
 
     # min=-.5, max=.6
-    scaler = MinMaxScaler(feature_range=(-.5, .6))
+    scaler = MinMaxScaler(feature_range=(-.5, .6), per_feature=False)
     X_trans = scaler.fit_transform(X)
-    assert_array_almost_equal(X_trans.min(axis=0), -.5)
-    assert_array_almost_equal(X_trans.max(axis=0), .6)
+    assert_array_almost_equal(X_trans.min(), -.5)
+    assert_array_almost_equal(X_trans.max(), .6)
+    assert_false(np.allclose(X_trans.min(axis=0), -0.5))
+    assert_false(np.allclose(X_trans.max(axis=0), 0.6))
     X_trans_inv = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
 
     # raises on invalid range
-    scaler = MinMaxScaler(feature_range=(2, 1))
+    scaler = MinMaxScaler(feature_range=(2, 1), per_feature=False)
     assert_raises(ValueError, scaler.fit, X)
 
 

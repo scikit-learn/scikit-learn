@@ -73,7 +73,7 @@ def mean_variance_axis(X, axis):
         Axis means (or array mean if `axis` is None)
 
     variances: float array with shape (n_features,) or scalar
-        Axis variances (or array mean if `axis` is None)
+        Axis variances (or array variance if `axis` is None)
 
     """
     if axis not in (0, 1, None):
