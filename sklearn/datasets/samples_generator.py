@@ -745,6 +745,9 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
         centers = check_array(centers)
         n_features = centers.shape[1]
 
+    if isinstance(cluster_std, numbers.Real):
+        cluster_std = np.ones(len(centers)) * cluster_std
+
     X = []
     y = []
 
@@ -754,8 +757,8 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     for i in range(n_samples % n_centers):
         n_samples_per_center[i] += 1
 
-    for i, n in enumerate(n_samples_per_center):
-        X.append(centers[i] + generator.normal(scale=cluster_std,
+    for i, (n, std) in enumerate(zip(n_samples_per_center, cluster_std)):
+        X.append(centers[i] + generator.normal(scale=std,
                                                size=(n, n_features)))
         y += [i] * n
 
