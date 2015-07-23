@@ -36,7 +36,7 @@ def make_dataset(X, y, sample_weight, random_state):
 
 
 def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
-              verbose=0, random_state=None):
+              verbose=0, random_state=None, check_input=True):
     """SAG solver for Ridge regression
 
     SAG stands for Stochastic Average Gradient: the gradient of the loss is
@@ -84,6 +84,9 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
         The seed of the pseudo random number generator to use when
         shuffling the data. Used in 'sag' solver.
 
+    check_input : bool, default True
+        If False, the input arrays X and y will not be checked.
+
     Returns
     -------
     coef_ : array, shape (n_features)
@@ -119,7 +122,9 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
     if max_iter is None:
         max_iter = 1000
 
-    y = check_array(y, dtype=np.float64, ensure_2d=False)
+    if check_input:
+        X = check_array(X, dtype=np.float64, accept_sparse='csr')
+        y = check_array(y, dtype=np.float64, ensure_2d=False)
 
     n_samples, n_features = X.shape[0], X.shape[1]
     alpha = float(alpha) / n_samples
@@ -178,7 +183,7 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
 
 
 def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
-                 tol=0.001, verbose=0, random_state=None,
+                 tol=0.001, verbose=0, random_state=None, check_input=True,
                  warm_start_mem=dict()):
     """SAG solver for LogisticRegression
 
@@ -228,6 +233,9 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
         The random_state of the pseudo random number generator to use when
         sampling the data.
 
+    check_input : bool, default True
+        If False, the input arrays X and y will not be checked.
+
     warm_start_mem: dict, optional
         The initialization parameters used for warm starting. It is used for
         example in LogisticRegresionCV. If an intercept needs to be fitted,
@@ -272,10 +280,12 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
     LogisticRegression, SGDClassifier, LinearSVC, Perceptron
 
     """
+    if check_input:
+        X = check_array(X, dtype=np.float64, accept_sparse='csr')
+        y = check_array(y, dtype=np.float64, ensure_2d=False)
+
     n_samples, n_features = X.shape[0], X.shape[1]
     alpha = float(alpha) / n_samples
-
-    y = check_array(y, dtype=np.float64, ensure_2d=False)
 
     if sample_weight is None:
         sample_weight = np.ones(n_samples, dtype=np.float64, order='C')

@@ -420,7 +420,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              solver='lbfgs', coef=None, copy=True,
                              class_weight=None, dual=False, penalty='l2',
                              intercept_scaling=1., multi_class='ovr',
-                             random_state=None):
+                             random_state=None, check_input=True):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -517,6 +517,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
+    check_input : bool, default True
+        If False, the input arrays X and y will not be checked.
+
     Returns
     -------
     coefs : ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
@@ -541,10 +544,11 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     _check_solver_option(solver, multi_class, penalty, dual)
 
     # Preprocessing.
-    X = check_array(X, accept_sparse='csr', dtype=np.float64)
-    y = check_array(y, ensure_2d=False, copy=copy, dtype=None)
+    if check_input or copy:
+        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        y = check_array(y, ensure_2d=False, copy=copy, dtype=None)
+        check_consistent_length(X, y)
     _, n_features = X.shape
-    check_consistent_length(X, y)
     classes = np.unique(y)
     random_state = check_random_state(random_state)
 
@@ -581,13 +585,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # multinomial case this is not necessary.
     if multi_class == 'ovr':
         w0 = np.zeros(n_features + int(fit_intercept))
-        mask_classes = [-1, 1]
+        mask_classes = np.array([-1, 1])
         mask = (y == pos_class)
-        y[mask] = 1.
-        y[~mask] = -1.
-        # To take care of object dtypes, i.e 1 and -1 are in the form of
-        # strings.
-        y = check_array(y, dtype=np.float64, ensure_2d=False)
+        y_bin = np.ones(y.shape, dtype=np.float64)
+        y_bin[~mask] = -1.
 
     else:
         lbin = LabelBinarizer()
@@ -599,8 +600,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         mask_classes = classes
 
     if class_weight == "auto":
-        class_weight_ = compute_class_weight(class_weight, mask_classes, y)
-        sample_weight = class_weight_[le.fit_transform(y)]
+        class_weight_ = compute_class_weight(class_weight, mask_classes,
+                                             y_bin)
+        sample_weight = class_weight_[le.fit_transform(y_bin)]
 
     if coef is not None:
         # it must work both giving the bias term and not
@@ -637,7 +639,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             grad = lambda x, *args: _multinomial_loss_grad(x, *args)[1]
             hess = _multinomial_grad_hess
     else:
-        target = y
+        target = y_bin
         if solver == 'lbfgs':
             func = _logistic_loss_and_grad
         elif solver == 'newton-cg':
@@ -674,7 +676,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                                      maxiter=max_iter, tol=tol)
         elif solver == 'liblinear':
             coef_, intercept_, n_iter_i, = _fit_liblinear(
-                X, y, C, fit_intercept, intercept_scaling, class_weight,
+                X, target, C, fit_intercept, intercept_scaling, class_weight,
                 penalty, dual, verbose, max_iter, tol, random_state)
             if fit_intercept:
                 w0 = np.concatenate([coef_.ravel(), intercept_])
@@ -684,7 +686,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         elif solver == 'sag':
             warm_start_sag, n_iter_i = sag_logistic(
                 X, target, sample_weight, 1. / C, max_iter, tol, verbose,
-                random_state, warm_start_sag)
+                random_state, False, warm_start_sag)
             w0 = warm_start_sag['coef']
         else:
             raise ValueError("solver must be one of {'liblinear', 'lbfgs', "
@@ -821,12 +823,20 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     """
     _check_solver_option(solver, multi_class, penalty, dual)
 
-    log_reg = LogisticRegression(fit_intercept=fit_intercept)
-
     X_train = X[train]
     X_test = X[test]
     y_train = y[train]
     y_test = y[test]
+
+    coefs, Cs, n_iter = logistic_regression_path(
+        X_train, y_train, Cs=Cs, fit_intercept=fit_intercept,
+        solver=solver, max_iter=max_iter, class_weight=class_weight,
+        copy=copy, pos_class=pos_class, multi_class=multi_class,
+        tol=tol, verbose=verbose, dual=dual, penalty=penalty,
+        intercept_scaling=intercept_scaling, random_state=random_state,
+        check_input=False)
+
+    log_reg = LogisticRegression(fit_intercept=fit_intercept)
 
     # The score method of Logistic Regression has a classes_ attribute.
     if multi_class == 'ovr':
@@ -839,18 +849,11 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     if pos_class is not None:
         mask = (y_test == pos_class)
-        y_test[mask] = 1
-        y_test[~mask] = -1
+        y_test = np.ones(y_test.shape, dtype=np.float64)
+        y_test[~mask] = -1.
 
     # To deal with object dtypes, we need to convert into an array of floats.
-    y_test = as_float_array(y_test, copy=False)
-
-    coefs, Cs, n_iter = logistic_regression_path(
-        X_train, y_train, Cs=Cs, fit_intercept=fit_intercept,
-        solver=solver, max_iter=max_iter, class_weight=class_weight,
-        copy=copy, pos_class=pos_class, multi_class=multi_class,
-        tol=tol, verbose=verbose, dual=dual, penalty=penalty,
-        intercept_scaling=intercept_scaling, random_state=random_state)
+    y_test = check_array(y_test, dtype=np.float64, ensure_2d=False)
 
     scores = list()
 
@@ -1125,9 +1128,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                                backend=backend)(
             path_func(X, y, pos_class=class_, Cs=[self.C],
                       fit_intercept=self.fit_intercept, tol=self.tol,
-                      verbose=self.verbose, solver=self.solver,
+                      verbose=self.verbose, solver=self.solver, copy=False,
                       multi_class=self.multi_class, max_iter=self.max_iter,
-                      class_weight=self.class_weight,
+                      class_weight=self.class_weight, check_input=False,
                       random_state=self.random_state, coef=warm_start_coef_
                       )
             for (class_, warm_start_coef_) in zip(classes_, warm_start_coef))
@@ -1484,7 +1487,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                       dual=self.dual, solver=self.solver, tol=self.tol,
                       max_iter=self.max_iter, verbose=self.verbose,
                       class_weight=self.class_weight, scoring=self.scoring,
-                      multi_class=self.multi_class,
+                      multi_class=self.multi_class, copy=False,
                       intercept_scaling=self.intercept_scaling,
                       random_state=self.random_state)
             for label in iter_labels
@@ -1551,11 +1554,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     X, y, pos_class=label, Cs=[C_], solver=self.solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol,
-                    penalty=self.penalty,
+                    penalty=self.penalty, copy=False,
                     class_weight=self.class_weight,
                     multi_class=self.multi_class,
                     verbose=max(0, self.verbose - 1),
-                    random_state=self.random_state)
+                    random_state=self.random_state,
+                    check_input=False)
                 w = w[0]
 
             else:
