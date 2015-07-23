@@ -247,7 +247,7 @@ cdef class ClassificationCriterion(Criterion):
         n_outputs: SIZE_t
             The number of targets, the dimensionality of the prediction
         n_classes: numpy.ndarray, dtype=SIZE_t
-            The number of unique classes in each response
+            The number of unique classes in each target
         """
 
         self.y = NULL
@@ -276,8 +276,8 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t k = 0
         cdef SIZE_t label_count_stride = 0
 
-        # For each response, set the number of unique classes in that response,
-        # and also set the stride for that response
+        # For each target, set the number of unique classes in that target,
+        # and also set the stride for that target
         for k in range(n_outputs):
             self.n_classes[k] = n_classes[k]
 
@@ -325,7 +325,7 @@ cdef class ClassificationCriterion(Criterion):
         Parameters
         ----------
         y: array-like, dtype=DOUBLE_t
-            The response stored as a buffer for memory efficiency
+            The target stored as a buffer for memory efficiency
         y_stride: SIZE_t
             The stride between elements in the buffer, important if there
             are multiple targets (multi-output)
@@ -369,7 +369,7 @@ cdef class ClassificationCriterion(Criterion):
             offset += label_count_stride
 
         # Now go through and record the number of samples for each class for
-        # each response
+        # each target
         for p in range(start, end):
             i = samples[p]
 
@@ -378,13 +378,12 @@ cdef class ClassificationCriterion(Criterion):
             if sample_weight != NULL:
                 w = sample_weight[i]
 
-            # Go through each response and add this sample's class in to the
+            # Go through each target and add this sample's class in to the
             # appropriate bin
             for k in range(n_outputs):
                 c = <SIZE_t> y[i * y_stride + k]
                 label_count_total[k * label_count_stride + c] += w
 
-            # Add the weight to the sum of weights so far
             weighted_n_node_samples += w
 
         self.weighted_n_node_samples = weighted_n_node_samples
@@ -487,8 +486,7 @@ cdef class ClassificationCriterion(Criterion):
         pass
 
     cdef void node_value(self, double* dest) nogil:
-        """
-        Compute the node value of samples[start:end] and save it into dest.
+        """Compute the node value of samples[start:end] and save it into dest.
 
         Parameters
         ----------
@@ -509,10 +507,11 @@ cdef class ClassificationCriterion(Criterion):
 
 
 cdef class Entropy(ClassificationCriterion):
-    """
-    A class representing the Cross Entropy impurity criteria. This handles
-    cases where the response is a classification taking values 0, 1, ...
-    K-2, K-1. If node m represents a region Rm with Nm observations, then let
+    """A class representing the Cross Entropy impurity criteria. 
+
+    This handles cases where the target is a classification taking values 
+    0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations, 
+    then let
 
         count_k = 1 / Nm \sum_{x_i in Rm} I(yi = k)
 
@@ -535,28 +534,24 @@ cdef class Entropy(ClassificationCriterion):
         cdef double* label_count_total = self.label_count_total
 
         cdef double entropy = 0.0
-        cdef double total = 0.0
+        cdef double total_entropy = 0.0
         cdef double count_k
         cdef SIZE_t k
         cdef SIZE_t c
 
-        # Go through each response and calculate the entropy
         for k in range(n_outputs):
             entropy = 0.0
 
-            # For each class in this response calculate the entropy
             for c in range(n_classes[k]):
                 count_k = label_count_total[c]
                 if count_k > 0.0:
                     count_k /= weighted_n_node_samples
                     entropy -= count_k * log(count_k)
 
-            total += entropy
+            total_entropy += entropy
             label_count_total += label_count_stride
 
-        # Return the total entropy over all targets divided by the number of
-        # targets.
-        return total / n_outputs
+        return total_entropy / n_outputs
 
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil:
@@ -620,7 +615,7 @@ cdef class Entropy(ClassificationCriterion):
 cdef class Gini(ClassificationCriterion):
     """The Gini Index impurity criteria. 
 
-    This handles cases where the response is a classification taking values 
+    This handles cases where the target is a classification taking values 
     0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations, 
     then let
 
@@ -735,7 +730,7 @@ cdef class Gini(ClassificationCriterion):
 cdef class RegressionCriterion(Criterion):
     """A regression criteria. 
 
-    This handles cases where the response is a continuous value, and is 
+    This handles cases where the target is a continuous value, and is 
     evaluated by computing the variance of the target values left and right 
     of the split point. The computation takes linear time with `n_samples` 
     by using ::
@@ -1268,10 +1263,10 @@ cdef class Splitter:
 
     cdef void node_split(self, double impurity, SplitRecord* split,
                          SIZE_t* n_constant_features) nogil:
-        """Placeholder for a method to find the best split on
-        samples[start:end]. 
+        """Find the best split on node samples[start:end]
 
-        The majority of the computation will be done in this method.
+        This is a placeholder method. The majority of computation will be done
+        here.
         """
 
         pass
@@ -2064,7 +2059,6 @@ cdef class PresortBestSplitter(BaseDenseSplitter):
         # Return values
         split[0] = best
         n_constant_features[0] = n_total_constants
-        
 
 cdef class BaseSparseSplitter(Splitter):
     # The sparse splitter works only with csc sparse matrix format
