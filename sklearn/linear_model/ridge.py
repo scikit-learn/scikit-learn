@@ -19,9 +19,12 @@ from scipy.sparse import linalg as sp_linalg
 
 from .base import LinearClassifierMixin, LinearModel, _rescale_data
 from .sag import sag_ridge
+from .sag_fast import get_max_squared_sum
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import check_X_y
+from ..utils import check_array
+from ..utils import check_consistent_length
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
@@ -264,6 +267,16 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     -----
     This function won't compute the intercept.
     """
+    # SAG needs X and y columns to be C-contiguous and np.float64
+    if solver == 'sag':
+        X = check_array(X, accept_sparse=['csr'],
+                        dtype=np.float64, order='C')
+        y = check_array(y, dtype=np.float64, ensure_2d=False, order='F')
+    else:
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        dtype=np.float64)
+        y = check_array(y, dtype='numeric', ensure_2d=False)
+    check_consistent_length(X, y)
 
     n_samples, n_features = X.shape
 
@@ -284,8 +297,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     has_sw = sample_weight is not None
 
     if solver == 'auto':
-        # cholesky if it's a dense array and cg in
-        # any other case
+        # cholesky if it's a dense array and cg in any other case
         if not sparse.issparse(X) or has_sw:
             solver = 'cholesky'
         else:
@@ -345,8 +357,12 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     elif solver == 'sag':
         random_state = check_random_state(random_state)
 
+        # precompute max_squared_sum for all targets
+        max_squared_sum = get_max_squared_sum(X)
+
         coef = [sag_ridge(X, target.ravel(), sample_weight, alpha_i,
-                          max_iter, tol, verbose, random_state)
+                          max_iter, tol, verbose, random_state, False,
+                          max_squared_sum)
                 for alpha_i, target in zip(alpha, y.T)]
         coef = np.asarray(coef)
 

@@ -13,7 +13,7 @@ from ..utils import ConvergenceWarning
 from ..utils import check_array
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from .sgd_fast import Log, SquaredLoss
-from .sag_fast import sag, get_auto_eta
+from .sag_fast import sag, get_max_squared_sum
 
 from .stochastic_gradient import SPARSE_INTERCEPT_DECAY
 
@@ -35,8 +35,47 @@ def make_dataset(X, y, sample_weight, random_state):
     return dataset, intercept_decay
 
 
+def get_auto_step_size(max_squared_sum, alpha, loss, fit_intercept):
+    """Compute automatic step size for SAG solver
+
+    The step size is set to 1 / (alpha + L + fit_intercept) where L is
+    the max sum of squares for over all samples.
+
+    Parameters
+    ----------
+    max_squared_sum : float
+        Maximum squared sum of X over samples.
+
+    alpha : float
+        Constant that multiplies the regularization term. Defaults to 0.0001
+
+    loss : string, in {"log", "squared"}
+        The loss function used in SAG solver.
+
+    fit_intercept : bool
+        Specifies if a constant (a.k.a. bias or intercept) will be
+        added to the decision function.
+
+    Returns
+    -------
+    step_size : float
+        Step size used in SAG solver.
+
+    """
+    if loss == 'log':
+        # inverse Lipschitz constant for log loss
+        return 4.0 / (max_squared_sum + int(fit_intercept) + 4.0 * alpha)
+    elif loss == 'squared':
+        # inverse Lipschitz constant for squared loss
+        return 1.0 / (max_squared_sum + int(fit_intercept) + alpha)
+    else:
+        raise ValueError("Unknown loss function for SAG solver, got %s "
+                         "instead of 'log' or 'squared'" % loss)
+
+
 def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
-              verbose=0, random_state=None, check_input=True):
+              verbose=0, random_state=None, check_input=True,
+              max_squared_sum=None):
     """SAG solver for Ridge regression
 
     SAG stands for Stochastic Average Gradient: the gradient of the loss is
@@ -87,6 +126,11 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
     check_input : bool, default True
         If False, the input arrays X and y will not be checked.
 
+    max_squared_sum : float, default None
+        Maximum squared sum of X over samples. If None, it will be computed,
+        going through all the samples. The value should be precomputed
+        to speed up cross validation.
+
     Returns
     -------
     coef_ : array, shape (n_features)
@@ -123,8 +167,8 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
         max_iter = 1000
 
     if check_input:
-        X = check_array(X, dtype=np.float64, accept_sparse='csr')
-        y = check_array(y, dtype=np.float64, ensure_2d=False)
+        X = check_array(X, dtype=np.float64, accept_sparse='csr', order='C')
+        y = check_array(y, dtype=np.float64, ensure_2d=False, order='C')
 
     n_samples, n_features = X.shape[0], X.shape[1]
     alpha = float(alpha) / n_samples
@@ -150,10 +194,11 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
 
     dataset, intercept_decay = make_dataset(X, y, sample_weight, random_state)
 
-    # set the step_size at 1 / (alpha + L) where L is the max sum of
-    # squares for over all samples
-    step_size = get_auto_eta(dataset, alpha, n_samples, SquaredLoss(),
-                             fit_intercept)
+    if max_squared_sum is None:
+        max_squared_sum = get_max_squared_sum(X)
+    step_size = get_auto_step_size(max_squared_sum, alpha, "squared",
+                                   fit_intercept)
+
     if step_size * alpha == 1:
         raise ZeroDivisionError("Current sag implementation does not handle "
                                 "the case step_size * alpha == 1")
@@ -184,7 +229,7 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
 
 def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
                  tol=0.001, verbose=0, random_state=None, check_input=True,
-                 warm_start_mem=dict()):
+                 max_squared_sum=None, warm_start_mem=dict()):
     """SAG solver for LogisticRegression
 
     SAG stands for Stochastic Average Gradient: the gradient of the loss is
@@ -235,6 +280,11 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
     check_input : bool, default True
         If False, the input arrays X and y will not be checked.
 
+    max_squared_sum : float, default None
+        Maximum squared sum of X over samples. If None, it will be computed,
+        going through all the samples. The value should be precomputed
+        to speed up cross validation.
+
     warm_start_mem: dict, optional
         The initialization parameters used for warm starting. It is used for
         example in LogisticRegresionCV. If an intercept needs to be fitted,
@@ -260,10 +310,10 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
     >>> clf = linear_model.LogisticRegression(solver='sag')
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
-    LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-              intercept_scaling=1, max_iter=100, multi_class='ovr', n_jobs=1,
-              penalty='l2', random_state=None, solver='sag', tol=0.0001,
-              verbose=0, warm_start=False)
+    LogisticRegression(C=1.0, class_weight=None, dual=False,
+        fit_intercept=True, intercept_scaling=1, max_iter=100,
+        multi_class='ovr', n_jobs=1, penalty='l2', random_state=None,
+        solver='sag', tol=0.0001, verbose=0, warm_start=False)
 
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -280,8 +330,8 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
 
     """
     if check_input:
-        X = check_array(X, dtype=np.float64, accept_sparse='csr')
-        y = check_array(y, dtype=np.float64, ensure_2d=False)
+        X = check_array(X, dtype=np.float64, accept_sparse='csr', order='C')
+        y = check_array(y, dtype=np.float64, ensure_2d=False, order='C')
 
     n_samples, n_features = X.shape[0], X.shape[1]
     alpha = float(alpha) / n_samples
@@ -332,10 +382,11 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
 
     dataset, intercept_decay = make_dataset(X, y, sample_weight, random_state)
 
-    # set the step_size at 4 / (4 * alpha + L + fit_intercept) where L is the
-    # max sum of squares for over all samples
-    step_size = get_auto_eta(dataset, alpha, n_samples, Log(),
-                             fit_intercept)
+    if max_squared_sum is None:
+        max_squared_sum = get_max_squared_sum(X)
+    step_size = get_auto_step_size(max_squared_sum, alpha, "log",
+                                   fit_intercept)
+
     if step_size * alpha == 1.:
         raise ZeroDivisionError("Current sag implementation does not handle "
                                 "the case step_size * alpha == 1")

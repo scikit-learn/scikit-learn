@@ -563,7 +563,7 @@ def test_logistic_regressioncv_class_weights():
                                    class_weight='balanced')
     clf_lib.fit(X, y)
     clf_sag = LogisticRegressionCV(solver='sag', fit_intercept=False,
-                                   class_weight='auto', max_iter=2000)
+                                   class_weight='balanced', max_iter=2000)
     clf_sag.fit(X, y)
     assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=4)
     assert_array_almost_equal(clf_sag.coef_, clf_lbf.coef_, decimal=4)

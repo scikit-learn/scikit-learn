@@ -6,12 +6,12 @@
 
 import numpy as np
 cimport numpy as np
-import warnings
-from libc.math cimport fabs, exp, log
+import scipy.sparse as sp
+from libc.math cimport fabs
 from libc.time cimport time, time_t
 
 from ..utils.seq_dataset cimport SequentialDataset
-from .sgd_fast cimport Log, SquaredLoss, LossFunction
+from .sgd_fast cimport LossFunction
 
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
@@ -37,7 +37,7 @@ def sag(SequentialDataset dataset,
         double tol,
         int max_iter,
         LossFunction loss,
-        double eta,
+        double step_size,
         double alpha,
         np.ndarray[double, ndim=1, mode='c'] sum_gradient_init,
         np.ndarray[double, ndim=1, mode='c'] gradient_memory_init,
@@ -82,8 +82,9 @@ def sag(SequentialDataset dataset,
     cdef time_t start_time
     # the end time of the fit
     cdef time_t end_time
-    # precomputation since eta does not change in this implementation
-    cdef double one_minus_eta_alpha = 1.0 - eta * alpha
+    # precomputation since the step size does not change in this implementation
+    cdef double wscale_update = 1.0 - step_size * alpha
+    cdef int j
 
     # vector of booleans indicating whether this sample has been seen
     cdef bint* seen = <bint*> seen_init.data
@@ -157,9 +158,8 @@ def sag(SequentialDataset dataset,
                             infinity = True
                             break
 
-                # check to see if we have already encountered a bad weight or
-                # that the intercept is not inf or NaN
-                if infinity or not skl_isfinite(intercept):
+                # check to see that the intercept is not inf or NaN
+                if not skl_isfinite(intercept):
                     infinity = True
                     break
 
@@ -187,20 +187,21 @@ def sag(SequentialDataset dataset,
                 if fit_intercept:
                     intercept_sum_gradient += \
                         gradient - gradient_memory[current_index]
-                    intercept -= (eta *
+                    intercept -= (step_size *
                                   (intercept_sum_gradient / num_seen) *
                                   intercept_decay)
 
                 # update the gradient memory for this sample
                 gradient_memory[current_index] = gradient
 
-                wscale *= one_minus_eta_alpha
+                # L2 regularization by simply rescaling the weights
+                wscale *= wscale_update
 
                 if itr == 0:
-                    cumulative_sums[0] = eta / (wscale * num_seen)
+                    cumulative_sums[0] = step_size / (wscale * num_seen)
                 else:
                     cumulative_sums[itr] = (cumulative_sums[itr - 1]
-                                            + eta / (wscale * num_seen))
+                                            + step_size / (wscale * num_seen))
 
                 # if wscale gets too small, we need to reset the scale
                 if wscale < 1e-9:
@@ -246,8 +247,8 @@ def sag(SequentialDataset dataset,
 
     if infinity:
         raise ValueError(("Floating-point under-/overflow occurred at epoch"
-                          " #%d. Lowering the eta or scaling the input data"
-                          " with StandardScaler or"
+                          " #%d. Lowering the step_size or scaling the input"
+                          " data with StandardScaler or"
                           " MinMaxScaler might help.") % (n_iter + 1))
 
 
@@ -257,6 +258,7 @@ def sag(SequentialDataset dataset,
 cdef void scale_weights(double* weights, double wscale, int n_features,
                         int n_samples, int itr, double* cumulative_sums,
                         int* feature_hist, double* sum_gradient) nogil:
+    cdef int j
     for j in range(n_features):
         if feature_hist[j] == 0:
             weights[j] -= (cumulative_sums[itr] * sum_gradient[j])
@@ -270,24 +272,65 @@ cdef void scale_weights(double* weights, double wscale, int n_features,
     cumulative_sums[itr % n_samples] = 0.0
 
 
-def get_auto_eta(SequentialDataset dataset, double alpha,
-                 int n_samples, LossFunction loss, bint fit_intercept):
+def get_max_squared_sum(X):
+    """Maximum squared sum of X over samples. 
+
+    Used in ``get_auto_step_size()``, for SAG solver.
+
+    Parameter
+    ---------
+    X : {numpy array, scipy CSR sparse matrix}, shape (n_samples, n_features)
+        Training vector. X must be in C order.
+
+    Returns
+    -------
+    max_squared_sum : double
+        Maximum squared sum of X over samples.
+    """
+
+    # CSR sparse matrix X
+    cdef np.ndarray[double] X_data
+    cdef np.ndarray[int] X_indptr
+    cdef double *X_data_ptr
+    cdef int *X_indptr_ptr
+    cdef int offset
+
+    # Dense numpy array X
+    cdef np.ndarray[double, ndim=2] X_ndarray
+    cdef int stride
+
+    # Both cases
+    cdef bint sparse = sp.issparse(X)
     cdef double *x_data_ptr
-    cdef int *x_ind_ptr
-    cdef double y
-    cdef double sample_weight
-    cdef int xnnz
     cdef double max_squared_sum = 0.0
     cdef double current_squared_sum = 0.0
+    cdef int n_samples = X.shape[0]
+    cdef int nnz = X.shape[1]
+    cdef int i, j
+    cdef double val
+
+    if sparse:
+        X_data = X.data
+        X_indptr = X.indptr
+        X_data_ptr = <double *>X_data.data
+        X_indptr_ptr = <int *>X_indptr.data
+    else:
+        X_ndarray = X
+        stride = X_ndarray.strides[0] / X_ndarray.itemsize
+        x_data_ptr = <double *>X_ndarray.data - stride
 
     with nogil:
         for i in range(n_samples):
-            dataset.next(&x_data_ptr,
-                         &x_ind_ptr,
-                         &xnnz,
-                         &y,
-                         &sample_weight)
-            for j in range(xnnz):
+            # find next sample data
+            if sparse:
+                offset = X_indptr_ptr[i]
+                nnz = X_indptr_ptr[i + 1] - offset
+                x_data_ptr = X_data_ptr + offset
+            else:
+                x_data_ptr += stride
+
+            # sum of squared non-zero features
+            for j in range(nnz):
                 val = x_data_ptr[j]
                 current_squared_sum += val * val
 
@@ -295,16 +338,11 @@ def get_auto_eta(SequentialDataset dataset, double alpha,
                 max_squared_sum = current_squared_sum
             current_squared_sum = 0.0
 
-    if isinstance(loss, Log):
-        # Lipschitz for log loss
-        return 4.0 / (max_squared_sum + fit_intercept + 4.0 * alpha)
-    elif isinstance(loss, SquaredLoss):
-        # Lipschitz for squared loss
-        return 1.0 / (max_squared_sum + fit_intercept + alpha)
-    else:
-        raise ValueError("Unknown loss function for SAG solver, got %s "
-                         "instead of Log or SquaredLoss"
-                         % loss.__class__.__name__)
+
+    if not skl_isfinite(max_squared_sum):
+        raise ValueError("Floating-point under-/overflow occurred")
+
+    return max_squared_sum
 
 
 cdef double dot(double* x_data_ptr, int* x_ind_ptr, double* w_data_ptr,

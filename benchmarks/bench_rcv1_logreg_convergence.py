@@ -6,10 +6,8 @@ import time
 from sklearn.externals.joblib import Memory
 from sklearn.linear_model import (LogisticRegression, SGDClassifier)
 from sklearn.datasets import fetch_rcv1
-from sklearn.utils import check_random_state
-from sklearn.linear_model.sag import make_dataset
-from sklearn.linear_model.sag_fast import get_auto_eta
-from sklearn.linear_model.sgd_fast import Log
+from sklearn.linear_model.sag import get_auto_step_size
+from sklearn.linear_model.sag_fast import get_max_squared_sum
 
 
 try:
@@ -189,32 +187,31 @@ clfs = [
      sgd_iter_range, [], [], [], [])]
 
 
-# if lightning_clf is not None and not fit_intercept:
-#     # compute the same eta than in LR-sag
-#     random_state = check_random_state(1)
-#     sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
-#     X_dataset, intercept_decay = make_dataset(X, y.astype(np.float64),
-#                                               sample_weight, random_state)
-#     eta = get_auto_eta(X_dataset, 1. / C / n_samples, n_samples, Log(), 0)
+if lightning_clf is not None and not fit_intercept:
+    alpha = 1. / C / n_samples
+    # compute the same step_size than in LR-sag
+    max_squared_sum = get_max_squared_sum(X)
+    step_size = get_auto_step_size(max_squared_sum, alpha, "log",
+                                   fit_intercept)
 
-#     clfs.append(
-#         ("Lightning-SVRG",
-#          lightning_clf.SVRGClassifier(alpha=1. / C / n_samples, eta=eta,
-#                                       tol=tol, loss="log"),
-#          sag_iter_range, [], [], [], []))
-#     clfs.append(
-#         ("Lightning-SAG",
-#          lightning_clf.SAGClassifier(alpha=1. / C / n_samples, eta=eta,
-#                                      tol=tol, loss="log"),
-#          sag_iter_range, [], [], [], []))
+    clfs.append(
+        ("Lightning-SVRG",
+         lightning_clf.SVRGClassifier(alpha=alpha, eta=step_size,
+                                      tol=tol, loss="log"),
+         sag_iter_range, [], [], [], []))
+    clfs.append(
+        ("Lightning-SAG",
+         lightning_clf.SAGClassifier(alpha=alpha, eta=step_size,
+                                     tol=tol, loss="log"),
+         sag_iter_range, [], [], [], []))
 
-#     # We keep only 200 features, to have a dense dataset,
-#     # and compare to lightning SAG, which seems incorrect in the sparse case.
-#     X_csc = X.tocsc()
-#     nnz_in_each_features = X_csc.indptr[1:] - X_csc.indptr[:-1]
-#     X = X_csc[:, np.argsort(nnz_in_each_features)[-200:]]
-#     X = X.toarray()
-#     print("dataset: %.3f MB" % (X.nbytes / 1e6))
+    # We keep only 200 features, to have a dense dataset,
+    # and compare to lightning SAG, which seems incorrect in the sparse case.
+    X_csc = X.tocsc()
+    nnz_in_each_features = X_csc.indptr[1:] - X_csc.indptr[:-1]
+    X = X_csc[:, np.argsort(nnz_in_each_features)[-200:]]
+    X = X.toarray()
+    print("dataset: %.3f MB" % (X.nbytes / 1e6))
 
 
 # Split training and testing. Switch train and test subset compared to

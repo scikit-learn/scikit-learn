@@ -17,6 +17,7 @@ from scipy import optimize, sparse
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from .sag import sag_logistic
+from .sag_fast import get_max_squared_sum
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm.base import _fit_liblinear
@@ -420,7 +421,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              solver='lbfgs', coef=None, copy=False,
                              class_weight=None, dual=False, penalty='l2',
                              intercept_scaling=1., multi_class='ovr',
-                             random_state=None, check_input=True):
+                             random_state=None, check_input=True,
+                             max_squared_sum=None):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -517,6 +519,11 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     check_input : bool, default True
         If False, the input arrays X and y will not be checked.
+
+    max_squared_sum : float, default None
+        Maximum squared sum of X over samples. Used only in SAG solver.
+        If None, it will be computed, going through all the samples.
+        The value should be precomputed to speed up cross validation.
 
     Returns
     -------
@@ -689,7 +696,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         elif solver == 'sag':
             warm_start_sag, n_iter_i = sag_logistic(
                 X, target, sample_weight, 1. / C, max_iter, tol, verbose,
-                random_state, False, warm_start_sag)
+                random_state, False, max_squared_sum, warm_start_sag)
             w0 = warm_start_sag['coef']
         else:
             raise ValueError("solver must be one of {'liblinear', 'lbfgs', "
@@ -714,7 +721,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           max_iter=100, tol=1e-4, class_weight=None,
                           verbose=0, solver='lbfgs', penalty='l2',
                           dual=False, intercept_scaling=1.,
-                          multi_class='ovr', random_state=None):
+                          multi_class='ovr', random_state=None,
+                          max_squared_sum=None):
     """Computes scores across logistic_regression_path
 
     Parameters
@@ -803,6 +811,11 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
+    max_squared_sum : float, default None
+        Maximum squared sum of X over samples. Used only in SAG solver.
+        If None, it will be computed, going through all the samples.
+        The value should be precomputed to speed up cross validation.
+
     Returns
     -------
     coefs : ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
@@ -832,7 +845,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         pos_class=pos_class, multi_class=multi_class,
         tol=tol, verbose=verbose, dual=dual, penalty=penalty,
         intercept_scaling=intercept_scaling, random_state=random_state,
-        check_input=False)
+        check_input=False, max_squared_sum=max_squared_sum)
 
     log_reg = LogisticRegression(fit_intercept=fit_intercept)
 
@@ -914,7 +927,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     fit_intercept : bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added the decision function.
+        added to the decision function.
 
     intercept_scaling : float, default: 1
         Useful only if solver is liblinear.
@@ -1073,7 +1086,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
         self.classes_ = np.unique(y)
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
 
         _check_solver_option(self.solver, self.multi_class, self.penalty,
                              self.dual)
@@ -1085,6 +1098,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                 self.max_iter, self.tol, self.random_state)
             self.n_iter_ = np.array([n_iter_])
             return self
+
+        max_squared_sum = get_max_squared_sum(X) if self.solver == 'sag' \
+            else None
 
         n_classes = len(self.classes_)
         classes_ = self.classes_
@@ -1129,8 +1145,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                       verbose=self.verbose, solver=self.solver, copy=False,
                       multi_class=self.multi_class, max_iter=self.max_iter,
                       class_weight=self.class_weight, check_input=False,
-                      random_state=self.random_state, coef=warm_start_coef_
-                      )
+                      random_state=self.random_state, coef=warm_start_coef_,
+                      max_squared_sum=max_squared_sum)
             for (class_, warm_start_coef_) in zip(classes_, warm_start_coef))
 
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
@@ -1233,7 +1249,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     fit_intercept : bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added the decision function.
+        added to the decision function.
 
     class_weight : dict or 'balanced', optional
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1429,8 +1445,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        X = check_array(X, accept_sparse='csr', dtype=np.float64, order='C')
-        y = check_array(y, ensure_2d=False, dtype=None)
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
+                         order="C")
+
+        max_squared_sum = get_max_squared_sum(X) if self.solver == 'sag' \
+            else None
 
         if y.ndim == 2 and y.shape[1] == 1:
             warnings.warn(
@@ -1487,7 +1506,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                       class_weight=self.class_weight, scoring=self.scoring,
                       multi_class=self.multi_class,
                       intercept_scaling=self.intercept_scaling,
-                      random_state=self.random_state)
+                      random_state=self.random_state,
+                      max_squared_sum=max_squared_sum)
             for label in iter_labels
             for train, test in folds)
 
@@ -1557,7 +1577,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     multi_class=self.multi_class,
                     verbose=max(0, self.verbose - 1),
                     random_state=self.random_state,
-                    check_input=False)
+                    check_input=False, max_squared_sum=max_squared_sum)
                 w = w[0]
 
             else:
