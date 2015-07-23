@@ -212,7 +212,8 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         if not deep:
             return super(VotingClassifier, self).get_params(deep=False)
         else:
-            out = self.named_estimators.copy()
+            out = super(VotingClassifier, self).get_params(deep=False)
+            out.update(self.named_estimators.copy())
             for name, step in six.iteritems(self.named_estimators):
                 for key, value in six.iteritems(step.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value
