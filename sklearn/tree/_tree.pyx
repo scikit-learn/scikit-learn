@@ -109,7 +109,7 @@ cdef class Criterion:
         Parameters
         ----------
         y: array-like, dtype=DOUBLE_t
-            This is a vector of responses in a memory-efficient buffer format, 
+            This is a vector of targets in a memory-efficient buffer format, 
             used to evaluate the split
         y_stride: SIZE_t
             This indicates the stride of the buffer to allow access to elements
@@ -553,8 +553,8 @@ cdef class Entropy(ClassificationCriterion):
             total += entropy
             label_count_total += label_count_stride
 
-        # Return the total entropy over all responses divided by the number of
-        # responses.
+        # Return the total entropy over all targets divided by the number of
+        # targets.
         return total / n_outputs
 
     cdef void children_impurity(self, double* impurity_left,
@@ -761,7 +761,7 @@ cdef class RegressionCriterion(Criterion):
         Parameters
         ----------
         n_outputs: SIZE_t
-            The number of responses to be predicted
+            The number of targets to be predicted
         """
 
         # Default values
@@ -1188,7 +1188,7 @@ cdef class Splitter:
             This contains the inputs. Usually it is a 2d numpy array.
 
         y: numpy.ndarray, dtype=DOUBLE_t
-            This is the vector of responses, or true labels, for the points
+            This is the vector of targets, or true labels, for the points
 
         sample_weight: numpy.ndarray, dtype=DOUBLE_t (optional)
             The weights of the points, where higher weighted points are fit
