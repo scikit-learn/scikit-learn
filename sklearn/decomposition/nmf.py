@@ -103,8 +103,9 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     check_non_negative(X, "NMF initialization")
     if variant not in (None, 'a', 'ar'):
         raise ValueError("Invalid variant name")
+    random_state = check_random_state(random_state)
 
-    U, S, V = randomized_svd(X, n_components)
+    U, S, V = randomized_svd(X, n_components, random_state=random_state)
     W, H = np.zeros(U.shape), np.zeros(V.shape)
 
     # The leading singular triplet is non-negative
@@ -147,7 +148,6 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
         W[W == 0] = avg
         H[H == 0] = avg
     elif variant == "ar":
-        random_state = check_random_state(random_state)
         avg = X.mean()
         W[W == 0] = abs(avg * random_state.randn(len(W[W == 0])) / 100)
         H[H == 0] = abs(avg * random_state.randn(len(H[H == 0])) / 100)
@@ -391,16 +391,17 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             else:
                 init = 'random'
 
-        random_state = self.random_state
+        rng = check_random_state(self.random_state)
 
         if init == 'nndsvd':
-            W, H = _initialize_nmf(X, self.n_components_)
+            W, H = _initialize_nmf(X, self.n_components_, random_state=rng)
         elif init == 'nndsvda':
-            W, H = _initialize_nmf(X, self.n_components_, variant='a')
+            W, H = _initialize_nmf(X, self.n_components_, variant='a',
+                                   random_state=rng)
         elif init == 'nndsvdar':
-            W, H = _initialize_nmf(X, self.n_components_, variant='ar')
+            W, H = _initialize_nmf(X, self.n_components_, variant='ar',
+                                   random_state=rng)
         elif init == "random":
-            rng = check_random_state(random_state)
             W = rng.randn(n_samples, self.n_components_)
             # we do not write np.abs(W, out=W) to stay compatible with
             # numpy 1.5 and earlier where the 'out' keyword is not
