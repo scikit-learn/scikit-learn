@@ -96,9 +96,10 @@ NODE_DTYPE = np.dtype({
 # =============================================================================
 
 cdef class Criterion:
-    """
-    Interface for impurity criteria. This object stores methods on how to
-    calculate how good a split is using different metrics.
+    """Interface for impurity criteria. 
+
+    This object stores methods on how to calculate how good a split is using 
+    different metrics.
     """
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
