@@ -710,7 +710,7 @@ def check_classifiers_one_label(name, Classifier):
 
 
 def check_classifiers_train(name, Classifier):
-    X_m, y_m = make_blobs(random_state=0)
+    X_m, y_m = make_blobs(n_samples=300, random_state=0)
     X_m, y_m = shuffle(X_m, y_m, random_state=7)
     X_m = StandardScaler().fit_transform(X_m)
     # generate binary problem from multi-class one
