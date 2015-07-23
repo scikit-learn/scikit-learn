@@ -160,7 +160,7 @@ and ``value`` is an estimator object::
         transformer_weights=None)
 
 Like pipelines, feature unions have a shorthand constructor called
-:func:`make_union` that does require manual naming of the components.
+:func:`make_union` that does not require explicit naming of the components.
 
                                                                        
 .. topic:: Examples:
