@@ -25,7 +25,7 @@ from ..utils import check_random_state
 from ..utils.extmath import (logsumexp, log_logistic, safe_sparse_dot,
                              softmax, squared_norm)
 from ..utils.optimize import newton_cg
-from ..utils.validation import (as_float_array, DataConversionWarning,
+from ..utils.validation import (DataConversionWarning,
                                 check_X_y, NotFittedError)
 from ..utils.fixes import expit
 from ..externals.joblib import Parallel, delayed
@@ -417,7 +417,7 @@ def _check_solver_option(solver, multi_class, penalty, dual):
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
-                             solver='lbfgs', coef=None, copy=True,
+                             solver='lbfgs', coef=None, copy=False,
                              class_weight=None, dual=False, penalty='l2',
                              intercept_scaling=1., multi_class='ovr',
                              random_state=None, check_input=True):
@@ -472,10 +472,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         Useless for liblinear solver.
 
     copy : bool, default True
-        Whether or not to produce a copy of the data. Setting this to
-        True will be useful in cases, when logistic_regression_path
-        is called repeatedly with the same data, as y is modified
-        along the path.
+        Whether or not to produce a copy of the data. A copy is not required
+        anymore. This parameter is deprecated and will be removed in 0.19.
 
     class_weight : dict or 'balanced', optional
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -538,6 +536,11 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     You might get slighly different results with the solver liblinear than
     with the others since this uses LIBLINEAR which penalizes the intercept.
     """
+    if copy:
+        warnings.warn("A copy is not required anymore. The 'copy' parameter "
+                      "is deprecated and will be removed in 0.19.",
+                      DeprecationWarning)
+
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
 
@@ -710,7 +713,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           scoring=None, fit_intercept=False,
                           max_iter=100, tol=1e-4, class_weight=None,
                           verbose=0, solver='lbfgs', penalty='l2',
-                          dual=False, copy=True, intercept_scaling=1.,
+                          dual=False, intercept_scaling=1.,
                           multi_class='ovr', random_state=None):
     """Computes scores across logistic_regression_path
 
@@ -796,11 +799,6 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         the entire probability distribution. Works only for the 'lbfgs' and
         'newton-cg' solver.
 
-    copy : bool, default True
-        Whether or not to produce a copy of the data. Setting this to
-        True will be useful in cases, when ``_log_reg_scoring_path`` is called
-        repeatedly with the same data, as y is modified along the path.
-
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
@@ -831,7 +829,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     coefs, Cs, n_iter = logistic_regression_path(
         X_train, y_train, Cs=Cs, fit_intercept=fit_intercept,
         solver=solver, max_iter=max_iter, class_weight=class_weight,
-        copy=copy, pos_class=pos_class, multi_class=multi_class,
+        pos_class=pos_class, multi_class=multi_class,
         tol=tol, verbose=verbose, dual=dual, penalty=penalty,
         intercept_scaling=intercept_scaling, random_state=random_state,
         check_input=False)
@@ -1487,7 +1485,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                       dual=self.dual, solver=self.solver, tol=self.tol,
                       max_iter=self.max_iter, verbose=self.verbose,
                       class_weight=self.class_weight, scoring=self.scoring,
-                      multi_class=self.multi_class, copy=False,
+                      multi_class=self.multi_class,
                       intercept_scaling=self.intercept_scaling,
                       random_state=self.random_state)
             for label in iter_labels

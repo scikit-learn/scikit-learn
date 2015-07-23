@@ -48,12 +48,12 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
     sklearn.preprocessing.StandardScaler on your data before passing it to the
     fit method.
 
-    The regularizer is a penalty added to the loss function that shrinks model
-    parameters towards the zero vector using the squared euclidean norm
-    L2.
-
     This implementation works with data represented as dense numpy arrays or
-    sparse scipy arrays of floating point values for the features.
+    sparse scipy arrays of floating point values for the features. It will
+    fit the data according to squared loss.
+
+    The regularizer is a penalty added to the loss function that shrinks model
+    parameters towards the zero vector using the squared euclidean norm L2.
 
     Parameters
     ----------
@@ -201,8 +201,7 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
     fit the data according to log loss.
 
     The regularizer is a penalty added to the loss function that shrinks model
-    parameters towards the zero vector using either the squared euclidean norm
-    L2.
+    parameters towards the zero vector using the squared euclidean norm L2.
 
     Parameters
     ----------
