@@ -64,6 +64,17 @@ to binarize the output. One curve can be drawn per label, but one can also draw
 a precision-recall curve by considering each element of the label indicator
 matrix as a binary prediction (micro-averaging).
 
+Precision recall curves tend to have large jitters because increasing the value
+of threshold over a small range while reduces the recall too by a small amount,
+but also makes the precision decrease, because over a small range, while the
+number of True Positives :math:`T_p` decrease, the sum of True Positives and
+False Positives :math:`T_p+F_n` may not decrease in the same proportion, thus
+reducing precision. Interpolation is used, to remove this discrepancy and make
+the plot smoother, by ensuring, that increasing threshold, does not let
+precision drop with respect to previously observed values of precision, for
+lower thresholds.
+
+
 .. note::
 
     See also :func:`sklearn.metrics.average_precision_score`,
@@ -146,5 +157,51 @@ plt.ylim([0.0, 1.05])
 plt.xlabel('Recall')
 plt.ylabel('Precision')
 plt.title('Extension of Precision-Recall curve to multi-class')
+plt.legend(loc="lower right")
+plt.show()
+#  Interpolated Precision Recall Curve
+precision = dict()
+recall = dict()
+average_precision = dict()
+for i in range(n_classes):
+    precision[i], recall[i], _ = precision_recall_curve(y_test[:, i],
+                                                        y_score[:, i],
+                                                        interpolate=True)
+    average_precision[i] = average_precision_score(y_test[:, i], y_score[:, i])
+
+# Compute micro-average ROC curve and ROC area
+precision["micro"], recall["micro"], _ = precision_recall_curve(y_test.ravel(),
+                                                            y_score.ravel(),
+                                                            interpolate=True)
+
+average_precision["micro"] = average_precision_score(y_test, y_score,
+                                                     average="micro")
+
+# Plot Precision-Recall curve
+plt.clf()
+plt.plot(recall[0], precision[0], label='Precision-Recall curve')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.ylim([0.0, 1.05])
+plt.xlim([0.0, 1.0])
+plt.title('Precision-Recall example: AUC={0:0.2f}'.format(average_precision[0]))
+plt.legend(loc="lower left")
+plt.show()
+
+# Plot Precision-Recall curve for each class
+plt.clf()
+plt.plot(recall["micro"], precision["micro"],
+         label='micro-average Precision-recall curve (area = {0:0.2f})'
+               ''.format(average_precision["micro"]))
+for i in range(n_classes):
+    plt.plot(recall[i], precision[i],
+             label='Precision-recall curve of class {0} (area = {1:0.2f})'
+                   ''.format(i, average_precision[i]))
+
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title('Interpolated multi-class Precision-Recall curve')
 plt.legend(loc="lower right")
 plt.show()
