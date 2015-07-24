@@ -8,7 +8,7 @@ Linear and quadratic discriminant analysis
 
 Linear discriminant analysis (:class:`lda.LDA`) and
 quadratic discriminant analysis (:class:`qda.QDA`)
-are two basic classifiers, with, as their names suggest, a linear and a
+are two standard classifiers, with, as their names suggest, a linear and a
 quadratic decision surface, respectively.
 
 These classifiers are attractive because they have closed-form solutions that
@@ -57,7 +57,7 @@ which model the class conditional distribution of the data :math:`P(X|y=k)`
 for each class :math:`k`. Predictions can then be obtained by using Bayes' rule:
 
 .. math::
-    P(y=k | X) = \frac{P(X | y=k) P(y=k)}{P(X)} = \frac{P(X | y=k) P(Y)}{ \sum_{l} P(X | y=l) \cdot P(y=l)}
+    P(y=k | X) = \frac{P(X | y=k) P(y=k)}{P(X)} = \frac{P(X | y=k) P(y = k)}{ \sum_{l} P(X | y=l) \cdot P(y=l)}
 
 and we select the class :math:`k` which maximizes this conditional probability.
 
