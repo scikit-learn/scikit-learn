@@ -101,6 +101,8 @@ Enhancements
      with ``n_jobs > 1`` used with a large grid of parameters on a small
      dataset. By `Vlad Niculae`_, `Olivier Grisel`_ and `Loic Esteve`_.
 
+   - Add multi-output support to :class:`bagging.BaggingClassifier`
+     and :class:`bagging.BaggingRegressor`. By `Arnaud Joly`_.
 
 Bug fixes
 .........
@@ -120,7 +122,7 @@ Bug fixes
     - Fixed bug in :class:`linear_model.LogisticRegressionCV` where `penalty` was ignored
       in the final fit. By `Manoj Kumar`_.
 
-    - Fixed bug in :class:`ensemble.forest.ForestClassifier` while computing 
+    - Fixed bug in :class:`ensemble.forest.ForestClassifier` while computing
       oob_score and X is a sparse.csc_matrix. By `Ankur Ankan`_.
 
 API changes summary
