@@ -139,11 +139,11 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_outputs,
     proba = [np.zeros((n_samples, n_classes_k)) for n_classes_k in n_classes]
 
     for estimator, features in zip(estimators, estimators_features):
-        try:
+        if hasattr(estimator, "predict_proba"):
             proba_est = estimator.predict_proba(X[:, features])
             if n_outputs == 1:
                 proba_est = [proba_est]
-        except AttributeError:
+        else:
             # We resort to voting
             y_pred = estimator.predict(X[:, features])
             if n_outputs == 1:
