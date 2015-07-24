@@ -226,7 +226,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         """Perform OPTICS clustering from features or distance matrix.
         
         Initial clustering is set to match 'eps' distance"""
-        X = np.asarray(X)
+        # X = np.asarray(X)
         tree = setOfObjects(X) #,self.metric)
         _prep_optics(tree,self.eps * 10.0, self.min_samples)
         _build_optics(tree,self.eps * 10.0, self.min_samples)
@@ -241,7 +241,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.core_samples = self._index[self._is_core[:] == True]
         self.n_clusters = max(self._cluster_id)
         self.processed = True
-        return self.core_samples, self.labels_
+        return self #.core_samples, self.labels_
 
 
     def extract(self, epsPrime):
