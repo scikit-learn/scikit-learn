@@ -218,6 +218,8 @@ transform method of a trained model of :class:`KMeans`.
 
 .. topic:: Examples:
 
+ * :ref:`example_cluster_plot_kmeans_assumptions.py`: Demonstrating when
+   k-means performs intuitively and when it does not
  * :ref:`example_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
 
 .. topic:: References:
