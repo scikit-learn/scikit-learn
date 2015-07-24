@@ -228,8 +228,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
         
         Initial clustering is set to match 'eps' distance"""
         #Fixes issue with sparse matrices
-        M = sp.csr_matrix(X)
-        X = M.toarray()
+        try:
+            X = X.toarray()
+        except AttributeError:
+            pass #This is expected if it is not a sparse matrix
 
         tree = setOfObjects(X) #,self.metric)
         _prep_optics(tree,self.eps * 10.0, self.min_samples)
