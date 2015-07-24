@@ -13,6 +13,7 @@ import sys
 import copy
 import scipy
 import numpy as np
+import scipy.sparse as sp
 from sklearn.neighbors import BallTree
 from sklearn.base import BaseEstimator, ClusterMixin
 
@@ -226,7 +227,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
         """Perform OPTICS clustering from features or distance matrix.
         
         Initial clustering is set to match 'eps' distance"""
-        X = np.asarray(X)
+        #Fixes issue with sparse matrices
+        M = sp.csr_matrix(X)
+        X = M.toarray()
+
         tree = setOfObjects(X) #,self.metric)
         _prep_optics(tree,self.eps * 10.0, self.min_samples)
         _build_optics(tree,self.eps * 10.0, self.min_samples)
