@@ -280,7 +280,7 @@ def test_countvectorizer_stop_words():
     assert_raises(ValueError, cv.get_stop_words)
     stoplist = ['some', 'other', 'words']
     cv.set_params(stop_words=stoplist)
-    assert_equal(cv.get_stop_words(), stoplist)
+    assert_equal(cv.get_stop_words(), set(stoplist))
 
 
 def test_countvectorizer_empty_vocabulary():
