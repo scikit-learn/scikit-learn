@@ -156,6 +156,11 @@ It suffers from various drawbacks:
   prior to k-means clustering can alleviate this problem
   and speed up the computations.
 
+.. image:: ../auto_examples/cluster/images/plot_kmeans_assumptions_001.png
+   :target: ../auto_examples/cluster/plot_kmeans_assumptions.html
+   :align: center
+   :scale: 50
+
 K-means is often referred to as Lloyd's algorithm. In basic terms, the
 algorithm has three steps. The first step chooses the initial centroids, with
 the most basic method being to choose :math:`k` samples from the dataset
