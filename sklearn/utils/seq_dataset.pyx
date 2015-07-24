@@ -158,7 +158,7 @@ cdef class ArrayDataset(SequentialDataset):
     def __cinit__(self, np.ndarray[double, ndim=2, mode='c'] X,
                   np.ndarray[double, ndim=1, mode='c'] Y,
                   np.ndarray[double, ndim=1, mode='c'] sample_weights,
-                  np.uint32_t seed=0):
+                  np.uint32_t seed=1):
         """A ``SequentialDataset`` backed by a two-dimensional numpy array.
 
         Parameters
@@ -227,7 +227,7 @@ cdef class CSRDataset(SequentialDataset):
                   np.ndarray[int, ndim=1, mode='c'] X_indices,
                   np.ndarray[double, ndim=1, mode='c'] Y,
                   np.ndarray[double, ndim=1, mode='c'] sample_weights,
-                  np.uint32_t seed=0):
+                  np.uint32_t seed=1):
         """Dataset backed by a scipy sparse CSR matrix.
 
         The feature indices of ``x`` are given by x_ind_ptr[0:nnz].

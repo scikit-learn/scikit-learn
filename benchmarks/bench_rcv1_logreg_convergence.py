@@ -1,3 +1,8 @@
+# Authors: Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
+#          Olivier Grisel <olivier.grisel@ensta.org>
+#
+# License: BSD 3 clause
+
 import matplotlib.pyplot as plt
 import numpy as np
 import gc

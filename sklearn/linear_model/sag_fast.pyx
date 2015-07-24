@@ -1,6 +1,9 @@
 # cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
 #
 # Authors: Danny Sullivan <dbsullivan23@gmail.com>
+#          Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
 #
 # Licence: BSD 3 clause
 
@@ -43,8 +46,6 @@ def sag(SequentialDataset dataset,
         np.ndarray[double, ndim=1, mode='c'] gradient_memory_init,
         np.ndarray[bint, ndim=1, mode='c'] seen_init,
         int num_seen,
-        double weight_pos,
-        double weight_neg,
         bint fit_intercept,
         double intercept_sum_gradient,
         double intercept_decay,
@@ -60,6 +61,8 @@ def sag(SequentialDataset dataset,
     cdef int *x_ind_ptr
     # the label for the sample
     cdef double y
+    # the prediction for y
+    cdef double p
     # the sample weight
     cdef double sample_weight
     # the number of non-zero features for this sample
@@ -72,8 +75,6 @@ def sag(SequentialDataset dataset,
     cdef int itr
     # the index (row number) of the current sample
     cdef int current_index
-    # helper variable for the weight of a pos/neg class
-    cdef double class_weight
     # the maximum change in weights, used to compute stopping criterea
     cdef double max_change
     # a holder variable for the max weight, used to compute stopping criterea
@@ -84,40 +85,33 @@ def sag(SequentialDataset dataset,
     cdef time_t end_time
     # precomputation since the step size does not change in this implementation
     cdef double wscale_update = 1.0 - step_size * alpha
-    cdef int j
 
     # vector of booleans indicating whether this sample has been seen
     cdef bint* seen = <bint*> seen_init.data
-
     # the sum of gradients for each feature
     cdef double* sum_gradient = <double*> sum_gradient_init.data
-
     # the previously seen gradient for each sample
     cdef double* gradient_memory = <double*> gradient_memory_init.data
 
     # the cumulative sums needed for JIT params
     cdef np.ndarray[double, ndim=1] cumulative_sums_array = \
-        np.empty(n_samples,
-                 dtype=np.double,
-                 order="c")
+        np.empty(n_samples, dtype=np.double, order="c")
     cdef double* cumulative_sums = <double*> cumulative_sums_array.data
-
     # the index for the last time this feature was updated
     cdef np.ndarray[int, ndim=1] feature_hist_array = \
-        np.zeros(n_features,
-                 dtype=np.int32,
-                 order="c")
+        np.zeros(n_features, dtype=np.int32, order="c")
     cdef int* feature_hist = <int*> feature_hist_array.data
-
     # the previous weights to use to compute stopping criteria
     cdef np.ndarray[double, ndim=1] previous_weights_array = \
-        np.zeros(n_features,
-                 dtype=np.double,
-                 order="c")
+        np.zeros(n_features, dtype=np.double, order="c")
     cdef double* previous_weights = <double*> previous_weights_array.data
 
     # the scalar used for multiplying z
     cdef double wscale = 1.0
+
+    # helpers
+    cdef double val, cum_sum, gradient_change
+    cdef int j
 
     # the cumulative sums for each iteration for the sparse implementation
     cumulative_sums[0] = 0.0
@@ -143,14 +137,13 @@ def sag(SequentialDataset dataset,
                 if itr > 0:
                     for j in range(xnnz):
                         idx = x_ind_ptr[j]
-                        if feature_hist[idx] == 0:
-                            weights[idx] -= (cumulative_sums[itr - 1] *
-                                             sum_gradient[idx])
-                        else:
-                            weights[idx] -= \
-                                ((cumulative_sums[itr - 1] -
-                                  cumulative_sums[feature_hist[idx] - 1]) *
-                                 sum_gradient[idx])
+
+                        cum_sum = cumulative_sums[itr - 1]
+                        if feature_hist[idx] != 0:
+                            cum_sum -= cumulative_sums[feature_hist[idx] - 1]
+
+                        weights[idx] -= cum_sum * sum_gradient[idx]
+
                         feature_hist[idx] = itr
 
                         # check to see that the weight is not inf or NaN
@@ -159,37 +152,26 @@ def sag(SequentialDataset dataset,
                             break
 
                 # check to see that the intercept is not inf or NaN
-                if not skl_isfinite(intercept):
+                if infinity or not skl_isfinite(intercept):
                     infinity = True
                     break
 
                 # find the current prediction, gradient
                 p = (wscale * dot(x_data_ptr, x_ind_ptr,
-                     weights, xnnz)) + intercept
-                gradient = loss._dloss(p, y)
-
-                # find the class_weight
-                if y > 0.0:
-                    class_weight = weight_pos
-                else:
-                    class_weight = weight_neg
-
-                gradient *= sample_weight * class_weight
+                                  weights, xnnz)) + intercept
+                gradient = loss._dloss(p, y) * sample_weight
 
                 # make the updates to the sum of gradients
+                gradient_change = gradient - gradient_memory[current_index]
                 for j in range(xnnz):
                     idx = x_ind_ptr[j]
                     val = x_data_ptr[j]
-                    update = val * gradient
-                    sum_gradient[idx] += (update -
-                                          gradient_memory[current_index] * val)
+                    sum_gradient[idx] += gradient_change * val
 
                 if fit_intercept:
-                    intercept_sum_gradient += \
-                        gradient - gradient_memory[current_index]
-                    intercept -= (step_size *
-                                  (intercept_sum_gradient / num_seen) *
-                                  intercept_decay)
+                    intercept_sum_gradient += gradient_change
+                    intercept -= (step_size * intercept_sum_gradient
+                                  / num_seen * intercept_decay)
 
                 # update the gradient memory for this sample
                 gradient_memory[current_index] = gradient
@@ -212,6 +194,9 @@ def sag(SequentialDataset dataset,
                                   itr, cumulative_sums, feature_hist,
                                   sum_gradient)
                     wscale = 1.0
+
+            if infinity:
+                break
 
             # check if the stopping criteria is reached
             scale_weights(weights, wscale, n_features, n_samples, n_samples - 1,
@@ -244,7 +229,6 @@ def sag(SequentialDataset dataset,
                               (end_time - start_time))
                 break
 
-
     if infinity:
         raise ValueError(("Floating-point under-/overflow occurred at epoch"
                           " #%d. Lowering the step_size or scaling the input"
@@ -259,17 +243,29 @@ cdef void scale_weights(double* weights, double wscale, int n_features,
                         int n_samples, int itr, double* cumulative_sums,
                         int* feature_hist, double* sum_gradient) nogil:
     cdef int j
+    cdef double cum_sum
     for j in range(n_features):
-        if feature_hist[j] == 0:
-            weights[j] -= (cumulative_sums[itr] * sum_gradient[j])
-        else:
-            weights[j] -= ((cumulative_sums[itr] -
-                            cumulative_sums[feature_hist[j] - 1]) *
-                            sum_gradient[j])
+        cum_sum = cumulative_sums[itr]
+        if feature_hist[j] != 0:
+            cum_sum -= cumulative_sums[feature_hist[j] - 1]
+
+        weights[j] -= cum_sum * sum_gradient[j]
+
         weights[j] *= wscale
         feature_hist[j] = (itr + 1) % n_samples
 
     cumulative_sums[itr % n_samples] = 0.0
+
+
+cdef double dot(double* x_data_ptr, int* x_ind_ptr, double* w_data_ptr,
+                int xnnz) nogil:
+        cdef int j, idx
+        cdef double innerprod = 0.0
+
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            innerprod += w_data_ptr[idx] * x_data_ptr[j]
+        return innerprod
 
 
 def get_max_squared_sum(X):
@@ -343,16 +339,3 @@ def get_max_squared_sum(X):
         raise ValueError("Floating-point under-/overflow occurred")
 
     return max_squared_sum
-
-
-cdef double dot(double* x_data_ptr, int* x_ind_ptr, double* w_data_ptr,
-                int xnnz) nogil:
-        cdef int j
-        cdef int idx
-        cdef double innerprod = 0.0
-
-        for j in range(xnnz):
-            idx = x_ind_ptr[j]
-            innerprod += w_data_ptr[idx] * x_data_ptr[j]
-        return innerprod
-

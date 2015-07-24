@@ -473,7 +473,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         Initialization value for coefficients of logistic regression.
         Useless for liblinear solver.
 
-    copy : bool, default True
+    copy : bool, default False
         Whether or not to produce a copy of the data. A copy is not required
         anymore. This parameter is deprecated and will be removed in 0.19.
 

@@ -1,38 +1,17 @@
 """Solvers for Ridge and LogisticRegression using SAG algorithm"""
 
-# Authors: Danny Sullivan <dbsullivan23@gmail.com>
-#          Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
+# Authors: Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
 #
 # Licence: BSD 3 clause
 
 import numpy as np
-import scipy.sparse as sp
 import warnings
 
 from ..utils import ConvergenceWarning
 from ..utils import check_array
-from ..utils.seq_dataset import ArrayDataset, CSRDataset
+from .base import make_dataset
 from .sgd_fast import Log, SquaredLoss
 from .sag_fast import sag, get_max_squared_sum
-
-from .stochastic_gradient import SPARSE_INTERCEPT_DECAY
-
-
-def make_dataset(X, y, sample_weight, random_state):
-    """check which type of Sequential Dataset is needed"""
-
-    # seed should never be 0 in SequentialDataset
-    seed = random_state.randint(1, np.iinfo(np.int32).max)
-
-    if sp.issparse(X):
-        dataset = CSRDataset(X.data, X.indptr, X.indices,
-                             y, sample_weight, seed=seed)
-        intercept_decay = SPARSE_INTERCEPT_DECAY
-    else:
-        dataset = ArrayDataset(X, y, sample_weight, seed=seed)
-        intercept_decay = 1.0
-
-    return dataset, intercept_decay
 
 
 def get_auto_step_size(max_squared_sum, alpha, loss, fit_intercept):
@@ -121,7 +100,7 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
-        shuffling the data. Used in 'sag' solver.
+        shuffling the data.
 
     check_input : bool, default True
         If False, the input arrays X and y will not be checked.
@@ -177,8 +156,6 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
     # initialization
     if sample_weight is None:
         sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
-    weight_pos = 1.0
-    weight_neg = 1.0
 
     # These parameters could be saved between two similar fits, to speed up
     # convergence (see warm starting behavior of sag_logistic()).
@@ -214,7 +191,6 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
             gradient_memory_init.ravel(),
             seen_init.ravel(),
             num_seen_init,
-            weight_pos, weight_neg,
             fit_intercept,
             intercept_sum_gradient_init,
             intercept_decay,
@@ -224,7 +200,7 @@ def sag_ridge(X, y, sample_weight=None, alpha=1e-4, max_iter=1000, tol=0.001,
         warnings.warn("The max_iter was reached which means "
                       "the coef_ did not converge", ConvergenceWarning)
 
-    return coef_
+    return coef_, n_iter
 
 
 def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
@@ -273,9 +249,9 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
     verbose: integer, optional
         The verbosity level
 
-    random_state: int or numpy.random.RandomState, optional
-        The random_state of the pseudo random number generator to use when
-        sampling the data.
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
 
     check_input : bool, default True
         If False, the input arrays X and y will not be checked.
@@ -377,9 +353,6 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
     else:
         num_seen_init = 0
 
-    weight_pos = 1.0
-    weight_neg = 1.0
-
     dataset, intercept_decay = make_dataset(X, y, sample_weight, random_state)
 
     if max_squared_sum is None:
@@ -402,7 +375,6 @@ def sag_logistic(X, y, sample_weight=None, alpha=1e-4, max_iter=1000,
             gradient_memory_init.ravel(),
             seen_init.ravel(),
             num_seen_init,
-            weight_pos, weight_neg,
             fit_intercept,
             intercept_sum_gradient_init,
             intercept_decay,

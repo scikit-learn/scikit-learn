@@ -25,7 +25,6 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils import check_X_y
 from ..utils import check_array
 from ..utils import check_consistent_length
-from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
@@ -82,16 +81,19 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
 def _solve_lsqr(X, y, alpha, max_iter=None, tol=1e-3):
     n_samples, n_features = X.shape
     coefs = np.empty((y.shape[1], n_features))
+    n_iter = np.empty(y.shape[1], dtype=np.int32)
 
     # According to the lsqr documentation, alpha = damp^2.
     sqrt_alpha = np.sqrt(alpha)
 
     for i in range(y.shape[1]):
         y_column = y[:, i]
-        coefs[i] = sp_linalg.lsqr(X, y_column, damp=sqrt_alpha[i],
-                                  atol=tol, btol=tol, iter_lim=max_iter)[0]
+        info = sp_linalg.lsqr(X, y_column, damp=sqrt_alpha[i],
+                              atol=tol, btol=tol, iter_lim=max_iter)
+        coefs[i] = info[0]
+        n_iter[i] = info[2]
 
-    return coefs
+    return coefs, n_iter
 
 
 def _solve_cholesky(X, y, alpha):
@@ -330,11 +332,12 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'sag'):
         raise ValueError('Solver %s not understood' % solver)
 
+    n_iter = None
     if solver == 'sparse_cg':
         coef = _solve_sparse_cg(X, y, alpha, max_iter, tol, verbose)
 
     elif solver == 'lsqr':
-        coef = _solve_lsqr(X, y, alpha, max_iter, tol)
+        coef, n_iter = _solve_lsqr(X, y, alpha, max_iter, tol)
 
     elif solver == 'cholesky':
         if n_features > n_samples:
@@ -355,15 +358,18 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                 solver = 'svd'
 
     elif solver == 'sag':
-        random_state = check_random_state(random_state)
-
         # precompute max_squared_sum for all targets
         max_squared_sum = get_max_squared_sum(X)
 
-        coef = [sag_ridge(X, target.ravel(), sample_weight, alpha_i,
-                          max_iter, tol, verbose, random_state, False,
-                          max_squared_sum)
-                for alpha_i, target in zip(alpha, y.T)]
+        coef = np.empty((y.shape[1], n_features))
+        n_iter = np.empty(y.shape[1], dtype=np.int32)
+        for i, (alpha_i, target) in enumerate(zip(alpha, y.T)):
+            coef_, n_iter_ = sag_ridge(
+                X, target.ravel(), sample_weight, alpha_i, max_iter, tol,
+                verbose, random_state, False, max_squared_sum)
+            coef[i] = coef_
+            n_iter[i] = n_iter_
+
         coef = np.asarray(coef)
 
     if solver == 'svd':
@@ -376,7 +382,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         # When y was passed as a 1d-array, we flatten the coefficients.
         coef = coef.ravel()
 
-    return coef
+    return coef, n_iter
 
 
 class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
@@ -406,13 +412,11 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
-        self.coef_ = ridge_regression(X, y,
-                                      alpha=self.alpha,
-                                      sample_weight=sample_weight,
-                                      max_iter=self.max_iter,
-                                      tol=self.tol,
-                                      solver=self.solver,
-                                      random_state=self.random_state)
+        self.coef_, self.n_iter_ = ridge_regression(
+            X, y, alpha=self.alpha, sample_weight=sample_weight,
+            max_iter=self.max_iter, tol=self.tol, solver=self.solver,
+            random_state=self.random_state)
+
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
@@ -430,8 +434,7 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     Parameters
     ----------
-    alpha : {float, array-like}
-        shape = [n_targets]
+    alpha : {float, array-like}, shape (n_targets)
         Small positive values of alpha improve the conditioning of the problem
         and reduce the variance of the estimates.  Alpha corresponds to
         ``C^-1`` in other linear models such as LogisticRegression or
@@ -490,12 +493,16 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     Attributes
     ----------
-    coef_ : array, shape = [n_features] or [n_targets, n_features]
+    coef_ : array, shape (n_features,) or (n_targets, n_features)
         Weight vector(s).
 
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
+
+    n_iter_ : array or None, shape (n_targets,)
+        Actual number of iterations for each target. Available only for
+        sag and lsqr solvers. Other solvers will return None.
 
     See also
     --------
@@ -614,12 +621,18 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     Attributes
     ----------
-    coef_ : array, shape = [n_features] or [n_classes, n_features]
+    coef_ : array, shape (n_features,) or (n_classes, n_features)
         Weight vector(s).
 
+<<<<<<< HEAD
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
+=======
+    n_iter_ : array or None, shape (n_targets,)
+        Actual number of iterations for each target. Available only for
+        sag and lsqr solvers. Other solvers will return None.
+>>>>>>> ENH add n_iter in ridge
 
     See also
     --------
