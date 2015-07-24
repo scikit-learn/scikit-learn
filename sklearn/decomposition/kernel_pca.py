@@ -77,6 +77,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         When n_components is None, this parameter is ignored and components
         with zero eigenvalues are removed regardless.
 
+    random_state : int seed, RandomState instance, or None, default : None
+        A pseudo random number generator used for the initialization of the
+        residuals when eigen_solver == 'arpack'.
+
     Attributes
     ----------
 

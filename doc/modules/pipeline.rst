@@ -156,7 +156,7 @@ and ``value`` is an estimator object::
         n_components=None, whiten=False)), ('kernel_pca', KernelPCA(alpha=1.0,
         coef0=1, degree=3, eigen_solver='auto', fit_inverse_transform=False,
         gamma=None, kernel='linear', kernel_params=None, max_iter=None,
-        n_components=None, remove_zero_eig=False, tol=0))],
+        n_components=None, random_state=None, remove_zero_eig=False, tol=0))],
         transformer_weights=None)
 
 Like pipelines, feature unions have a shorthand constructor called
