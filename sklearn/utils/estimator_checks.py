@@ -79,6 +79,10 @@ def _yield_non_meta_checks(name, Estimator):
 
     yield check_estimator_sparse_data
 
+    # Test that estimators can be pickled, and once pickled
+    # give the same answer as before.
+    yield check_estimators_pickle
+
 
 def _yield_classifier_checks(name, Classifier):
     # test classfiers can handle non-array data
@@ -86,7 +90,6 @@ def _yield_classifier_checks(name, Classifier):
     # test classifiers trained on a single label always return this label
     yield check_classifiers_one_label
     yield check_classifiers_classes
-    yield check_classifiers_pickle
     yield check_estimators_partial_fit_n_features
     # basic consistency testing
     yield check_classifiers_train
@@ -113,9 +116,6 @@ def _yield_regressor_checks(name, Regressor):
     yield check_regressor_data_not_an_array
     yield check_estimators_partial_fit_n_features
     yield check_regressors_no_decision_function
-    # Test that estimators can be pickled, and once pickled
-    # give the same answer as before.
-    yield check_regressors_pickle
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
@@ -126,7 +126,6 @@ def _yield_regressor_checks(name, Regressor):
 def _yield_transformer_checks(name, Transformer):
     # All transformers should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
-    yield check_transformer_pickle
     if name not in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer',
                     'PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']:
         yield check_transformer_data_not_an_array
@@ -576,35 +575,40 @@ def check_estimators_nan_inf(name, Estimator):
                     raise AssertionError(error_string_transform, Estimator)
 
 
-def check_transformer_pickle(name, Transformer):
+def check_estimators_pickle(name, Estimator):
+    """Test that we can pickle all estimators"""
+    check_methods = ["predict", "transform", "decision_function",
+                     "predict_proba"]
+
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
-    n_samples, n_features = X.shape
-    X = StandardScaler().fit_transform(X)
+
+    # some estimators can't do features less than 0
     X -= X.min()
+
+    # some estimators only take multioutputs
+    y = multioutput_estimator_convert_y_2d(name, y)
+
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
-        transformer = Transformer()
-    if not hasattr(transformer, 'transform'):
-        return
-    set_random_state(transformer)
-    set_fast_parameters(transformer)
+        estimator = Estimator()
 
-    # fit
-    if name in CROSS_DECOMPOSITION:
-        random_state = np.random.RandomState(seed=12345)
-        y_ = np.vstack([y, 2 * y + random_state.randint(2, size=len(y))])
-        y_ = y_.T
-    else:
-        y_ = y
+    set_random_state(estimator)
+    set_fast_parameters(estimator)
+    estimator.fit(X, y)
 
-    transformer.fit(X, y_)
-    X_pred = transformer.fit(X, y_).transform(X)
-    pickled_transformer = pickle.dumps(transformer)
-    unpickled_transformer = pickle.loads(pickled_transformer)
-    pickled_X_pred = unpickled_transformer.transform(X)
+    result = dict()
+    for method in check_methods:
+        if hasattr(estimator, method):
+            result[method] = getattr(estimator, method)(X)
 
-    assert_array_almost_equal(pickled_X_pred, X_pred)
+    # pickle and unpickle!
+    pickled_estimator = pickle.dumps(estimator)
+    unpickled_estimator = pickle.loads(pickled_estimator)
+
+    for method in result:
+        unpickled_result = getattr(unpickled_estimator, method)(X)
+        assert_array_almost_equal(result[method], unpickled_result)
 
 
 def check_estimators_partial_fit_n_features(name, Alg):
@@ -890,28 +894,6 @@ def check_classifiers_classes(name, Classifier):
                   (classifier, classes, classifier.classes_))
 
 
-def check_classifiers_pickle(name, Classifier):
-    X, y = make_blobs(random_state=0)
-    X, y = shuffle(X, y, random_state=7)
-    X -= X.min()
-
-    # catch deprecation warnings
-    with warnings.catch_warnings(record=True):
-        classifier = Classifier()
-    set_fast_parameters(classifier)
-    # raises error on malformed input for fit
-    assert_raises(ValueError, classifier.fit, X, y[:-1])
-
-    # fit
-    classifier.fit(X, y)
-    y_pred = classifier.predict(X)
-    pickled_classifier = pickle.dumps(classifier)
-    unpickled_classifier = pickle.loads(pickled_classifier)
-    pickled_y_pred = unpickled_classifier.predict(X)
-
-    assert_array_almost_equal(pickled_y_pred, y_pred)
-
-
 def check_regressors_int(name, Regressor):
     X, _ = _boston_subset()
     X = X[:50]
@@ -978,33 +960,6 @@ def check_regressors_train(name, Regressor):
     if name not in ('PLSCanonical', 'CCA', 'RANSACRegressor'):
         print(regressor)
         assert_greater(regressor.score(X, y_), 0.5)
-
-
-def check_regressors_pickle(name, Regressor):
-    X, y = _boston_subset()
-    y = StandardScaler().fit_transform(y)   # X is already scaled
-    y = multioutput_estimator_convert_y_2d(name, y)
-    rnd = np.random.RandomState(0)
-    # catch deprecation warnings
-    with warnings.catch_warnings(record=True):
-        regressor = Regressor()
-    set_fast_parameters(regressor)
-    if not hasattr(regressor, 'alphas') and hasattr(regressor, 'alpha'):
-        # linear regressors need to set alpha, but not generalized CV ones
-        regressor.alpha = 0.01
-
-    if name in CROSS_DECOMPOSITION:
-        y_ = np.vstack([y, 2 * y + rnd.randint(2, size=len(y))])
-        y_ = y_.T
-    else:
-        y_ = y
-    regressor.fit(X, y_)
-    y_pred = regressor.predict(X)
-    # store old predictions
-    pickled_regressor = pickle.dumps(regressor)
-    unpickled_regressor = pickle.loads(pickled_regressor)
-    pickled_y_pred = unpickled_regressor.predict(X)
-    assert_array_almost_equal(pickled_y_pred, y_pred)
 
 
 @ignore_warnings
