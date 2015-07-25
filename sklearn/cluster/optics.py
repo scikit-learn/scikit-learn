@@ -14,7 +14,6 @@ import copy
 import scipy
 import numpy as np
 from ..utils import check_array, check_consistent_length
-import scipy.sparse as sp
 from sklearn.neighbors import BallTree
 from sklearn.base import BaseEstimator, ClusterMixin
 
@@ -90,12 +89,9 @@ def _prep_optics(SetofObjects, epsilon, MinPts):
 
 # Paralizeable! #
 
-
-
 # Main OPTICS loop #
 
 
-#def __build_optics(SetOfObjects, epsilon, MinPts, Output_file_name):
 def _build_optics(SetOfObjects, epsilon, MinPts):
     """Builds OPTICS ordered list of clustering structure
 
@@ -116,7 +112,7 @@ def _build_optics(SetOfObjects, epsilon, MinPts):
     for point in SetOfObjects._index:
         if not SetOfObjects._processed[point]:
             _expandClusterOrder(SetOfObjects, point, epsilon,
-                               MinPts) # , Output_file_name)
+                               MinPts)
 
 # OPTICS helper functions; these should not be public #
 
@@ -124,26 +120,19 @@ def _build_optics(SetOfObjects, epsilon, MinPts):
 # the '_ordered_list' is important!
 
 
-#def __expandClusterOrder(SetOfObjects, point, epsilon, MinPts, Output_file_name):
 def _expandClusterOrder(SetOfObjects, point, epsilon, MinPts):
     if SetOfObjects._core_dist[point] <= epsilon:
         while not SetOfObjects._processed[point]:
             SetOfObjects._processed[point] = True
             SetOfObjects._ordered_list.append(point)
-            # Comment following two lines to not write to a text file ##
-#            with open(Output_file_name, 'a') as file:
-#                file.write((str(point) + ', ' + str(
-#                    SetOfObjects._reachability[point]) + '\n'))
-                # Keep following line! ## 
+            # Keep following line! ## 
             point = _set_reach_dist(SetOfObjects, point, epsilon)
-        # above line should be in io loop for file output
-        # print('Object Found!') # Verbose mode for debugging
     else:
         SetOfObjects._processed[point] = True    # Probably not needed... #
 
 
 # As above, NOT paralizable! Paralizing would allow items in
-# 'unprocessed' list to switch to 'processed' ###
+# 'unprocessed' list to switch to 'processed' #
 def _set_reach_dist(SetOfObjects, point_index, epsilon):
 
     # Assumes that the query returns ordered (smallest distance first)
@@ -225,15 +214,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.processed = False
         
     def fit(self, X, y=None):
-        """Perform OPTICS clustering from features or distance matrix.
+        """Perform OPTICS clustering
         
         Initial clustering is set to match 'eps' distance"""
-        #Fixes issue with sparse matrices
+        #Checks for sparse matrices
         X = check_array(X)
-        #try:
-        #    X = X.toarray()
-        #except AttributeError:
-        #    pass #This is expected if it is not a sparse matrix
 
         tree = setOfObjects(X) #,self.metric)
         _prep_optics(tree,self.eps * 10.0, self.min_samples)
