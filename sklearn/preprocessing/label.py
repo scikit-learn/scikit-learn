@@ -93,10 +93,6 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     """
 
-    def _check_fitted(self):
-        if not hasattr(self, "classes_"):
-            raise ValueError("LabelEncoder was not fitted yet.")
-
     def fit(self, y):
         """Fit label encoder
 
@@ -143,7 +139,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : array-like of shape [n_samples]
         """
-        self._check_fitted()
+        check_is_fitted(self, 'classes_')
 
         classes = np.unique(y)
         _check_numpy_unicode_bug(classes)
@@ -164,7 +160,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : numpy array of shape [n_samples]
         """
-        self._check_fitted()
+        check_is_fitted(self, 'classes_')
 
         diff = np.setdiff1d(y, np.arange(len(self.classes_)))
         if diff:
@@ -208,6 +204,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
+
     classes_ : array of shape [n_class]
         Holds the label for each class.
 
@@ -286,10 +283,6 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self.neg_label = neg_label
         self.pos_label = pos_label
         self.sparse_output = sparse_output
-
-    def _check_fitted(self):
-        if not hasattr(self, "classes_"):
-            raise ValueError("LabelBinarizer was not fitted yet.")
 
     def fit(self, y):
         """Fit label binarizer
@@ -377,7 +370,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         linear model's decision_function method directly as the input
         of inverse_transform.
         """
-        self._check_fitted()
+        check_is_fitted(self, 'classes_')
 
         if threshold is None:
             threshold = (self.pos_label + self.neg_label) / 2.
