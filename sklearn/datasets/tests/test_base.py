@@ -4,10 +4,11 @@ import tempfile
 import warnings
 import nose
 import numpy
+from pickle import loads
+from pickle import dumps
 
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
-from sklearn.datasets import load_filenames
 from sklearn.datasets import load_files
 from sklearn.datasets import load_sample_images
 from sklearn.datasets import load_sample_image
@@ -16,6 +17,9 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_linnerud
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_boston
+from sklearn.datasets.base import Bunch
+
+from sklearn.externals.six import b, u
 
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
@@ -47,7 +51,7 @@ def setup_load_files():
     TEST_CATEGORY_DIR2 = tempfile.mkdtemp(dir=LOAD_FILES_ROOT)
     sample_file = tempfile.NamedTemporaryFile(dir=TEST_CATEGORY_DIR1,
                                               delete=False)
-    sample_file.write("Hello World!\n")
+    sample_file.write(b("Hello World!\n"))
     sample_file.close()
 
 
@@ -78,31 +82,24 @@ def test_default_empty_load_files():
     assert_equal(res.DESCR, None)
 
 
-def test_deprecated_load_filenames():
-    with warnings.catch_warnings(record=True):
-        # catch deprecation warning
-        res = load_filenames(LOAD_FILES_ROOT)
-    assert_true(res)
-
-
 @nose.tools.with_setup(setup_load_files, teardown_load_files)
 def test_default_load_files():
     res = load_files(LOAD_FILES_ROOT)
     assert_equal(len(res.filenames), 1)
     assert_equal(len(res.target_names), 2)
     assert_equal(res.DESCR, None)
-    assert_equal(res.data, ["Hello World!\n"])
+    assert_equal(res.data, [b("Hello World!\n")])
 
 
 @nose.tools.with_setup(setup_load_files, teardown_load_files)
-def test_load_files_w_categories_desc_and_charset():
+def test_load_files_w_categories_desc_and_encoding():
     category = os.path.abspath(TEST_CATEGORY_DIR1).split('/').pop()
     res = load_files(LOAD_FILES_ROOT, description="test",
-                     categories=category, charset="utf-8")
+                     categories=category, encoding="utf-8")
     assert_equal(len(res.filenames), 1)
     assert_equal(len(res.target_names), 1)
     assert_equal(res.DESCR, "test")
-    assert_equal(res.data, ["Hello World!\n"])
+    assert_equal(res.data, [u("Hello World!\n")])
 
 
 @nose.tools.with_setup(setup_load_files, teardown_load_files)
@@ -187,5 +184,12 @@ def test_load_boston():
     res = load_boston()
     assert_equal(res.data.shape, (506, 13))
     assert_equal(res.target.size, 506)
-    assert_equal(res.feature_names.size, 14)
+    assert_equal(res.feature_names.size, 13)
     assert_true(res.DESCR)
+
+
+def test_loads_dumps_bunch():
+    bunch = Bunch(x="x")
+    bunch_from_pkl = loads(dumps(bunch))
+    bunch_from_pkl.x = "y"
+    assert_equal(bunch_from_pkl['x'], bunch_from_pkl.x)

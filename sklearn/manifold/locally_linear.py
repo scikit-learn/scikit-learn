@@ -2,14 +2,16 @@
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
 #         Jake Vanderplas  -- <vanderplas@astro.washington.edu>
-# License: BSD, (C) INRIA 2011
+# License: BSD 3 clause (C) INRIA 2011
 
 import numpy as np
 from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import array2d, check_random_state, check_arrays
+from ..utils import check_random_state, check_array
 from ..utils.arpack import eigsh
+from ..utils.validation import check_is_fitted
+from ..utils.validation import FLOAT_DTYPES
 from ..neighbors import NearestNeighbors
 
 
@@ -37,14 +39,10 @@ def barycenter_weights(X, Z, reg=1e-3):
     -----
     See developers note for more information.
     """
-    X = np.asarray(X)
-    Z = np.asarray(Z)
+    X = check_array(X, dtype=FLOAT_DTYPES)
+    Z = check_array(Z, dtype=FLOAT_DTYPES, allow_nd=True)
 
     n_samples, n_neighbors = X.shape[0], Z.shape[1]
-    if X.dtype.kind == 'i':
-        X = X.astype(np.float)
-    if Z.dtype.kind == 'i':
-        Z = Z.astype(np.float)
     B = np.empty((n_samples, n_neighbors), dtype=X.dtype)
     v = np.ones(n_neighbors, dtype=X.dtype)
 
@@ -69,7 +67,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix, BallTree, cKDTree, NearestNeighbors}
+    X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
         Sample data, shape = (n_samples, n_features), in the form of a
         numpy array, sparse array, precomputed tree, or NearestNeighbors
         object.
@@ -182,9 +180,11 @@ def locally_linear_embedding(
         random_state=None):
     """Perform a Locally Linear Embedding analysis on the data.
 
+    Read more in the :ref:`User Guide <locally_linear_embedding>`.
+
     Parameters
     ----------
-    X : {array-like, sparse matrix, BallTree, cKDTree, NearestNeighbors}
+    X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
         Sample data, shape = (n_samples, n_features), in the form of a
         numpy array, sparse array, precomputed tree, or NearestNeighbors
         object.
@@ -304,7 +304,7 @@ def locally_linear_embedding(
             M.flat[::M.shape[0] + 1] += 1  # W = W - I = W - I
 
     elif method == 'hessian':
-        dp = n_components * (n_components + 1) / 2
+        dp = n_components * (n_components + 1) // 2
 
         if n_neighbors <= n_components + dp:
             raise ValueError("for method='hessian', n_neighbors must be "
@@ -499,6 +499,8 @@ def locally_linear_embedding(
 class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
     """Locally Linear Embedding
 
+    Read more in the :ref:`User Guide <locally_linear_embedding>`.
+
     Parameters
     ----------
     n_neighbors : integer
@@ -562,13 +564,13 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `embedding_vectors_` : array-like, shape [n_components, n_samples]
+    embedding_vectors_ : array-like, shape [n_components, n_samples]
         Stores the embedding vectors
 
-    `reconstruction_error_` : float
+    reconstruction_error_ : float
         Reconstruction error associated with `embedding_vectors_`
 
-    `nbrs_` : NearestNeighbors object
+    nbrs_ : NearestNeighbors object
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
 
@@ -610,7 +612,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
                                       algorithm=self.neighbors_algorithm)
 
         random_state = check_random_state(self.random_state)
-        X, = check_arrays(X, sparse_format='dense')
+        X = check_array(X)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
@@ -618,7 +620,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
                 eigen_solver=self.eigen_solver, tol=self.tol,
                 max_iter=self.max_iter, method=self.method,
                 hessian_tol=self.hessian_tol, modified_tol=self.modified_tol,
-                random_state=random_state)
+                random_state=random_state, reg=self.reg)
 
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X
@@ -667,7 +669,9 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         Because of scaling performed by this method, it is discouraged to use
         it together with methods that are not scale-invariant (like SVMs)
         """
-        X = array2d(X)
+        check_is_fitted(self, "nbrs_")
+
+        X = check_array(X)
         ind = self.nbrs_.kneighbors(X, n_neighbors=self.n_neighbors,
                                     return_distance=False)
         weights = barycenter_weights(X, self.nbrs_._fit_X[ind],

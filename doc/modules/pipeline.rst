@@ -1,8 +1,13 @@
+.. _combining_estimators:
+
+===============================================
+Pipeline and FeatureUnion: combining estimators
+===============================================
+
 .. _pipeline:
 
-==============================
 Pipeline: chaining estimators
-==============================
+=============================
 
 .. currentmodule:: sklearn.pipeline
 
@@ -11,19 +16,19 @@ into one. This is useful as there is often a fixed sequence
 of steps in processing the data, for example feature selection, normalization
 and classification. :class:`Pipeline` serves two purposes here:
 
-    **Convenience**: You only have to call ``fit`` and ``predict`` once on your 
+    **Convenience**: You only have to call ``fit`` and ``predict`` once on your
     data to fit a whole sequence of estimators.
-    
+
     **Joint parameter selection**: You can :ref:`grid search <grid_search>`
     over parameters of all estimators in the pipeline at once.
 
-For estimators to be usable within a pipeline, all except the last one need to have
-a ``transform`` function. Otherwise, the dataset can not be passed through this
-estimator.
+All estimators in a pipeline, except the last one, must be transformers
+(i.e. must have a ``transform`` method).
+The last estimator may be any type (transformer, classifier, etc.).
 
 
 Usage
-=====
+-----
 
 The :class:`Pipeline` is build using a list of ``(key, value)`` pairs, where
 the ``key`` a string containing the name you want to give this step and ``value``
@@ -37,10 +42,25 @@ is an estimator object::
     >>> clf # doctest: +NORMALIZE_WHITESPACE
     Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
         whiten=False)), ('svm', SVC(C=1.0, cache_size=200, class_weight=None,
-        coef0=0.0, degree=3, gamma=0.0, kernel='rbf', max_iter=-1,
-        probability=False, shrinking=True, tol=0.001, verbose=False))])
+        coef0=0.0, decision_function_shape=None, degree=3, gamma='auto',
+        kernel='rbf', max_iter=-1, probability=False, random_state=None,
+        shrinking=True, tol=0.001, verbose=False))])
 
-The estimators of the pipeline are stored as a list in the ``steps`` attribute::
+The utility function :func:`make_pipeline` is a shorthand
+for constructing pipelines;
+it takes a variable number of estimators and returns a pipeline,
+filling in the names automatically::
+
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.naive_bayes import MultinomialNB
+    >>> from sklearn.preprocessing import Binarizer
+    >>> make_pipeline(Binarizer(), MultinomialNB()) # doctest: +NORMALIZE_WHITESPACE
+    Pipeline(steps=[('binarizer', Binarizer(copy=True, threshold=0.0)),
+                    ('multinomialnb', MultinomialNB(alpha=1.0,
+                                                    class_prior=None,
+                                                    fit_prior=True))])
+
+The estimators of a pipeline are stored as a list in the ``steps`` attribute::
 
     >>> clf.steps[0]
     ('reduce_dim', PCA(copy=True, n_components=None, whiten=False))
@@ -56,8 +76,9 @@ Parameters of the estimators in the pipeline can be accessed using the
     >>> clf.set_params(svm__C=10) # doctest: +NORMALIZE_WHITESPACE
     Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
         whiten=False)), ('svm', SVC(C=10, cache_size=200, class_weight=None,
-        coef0=0.0, degree=3, gamma=0.0, kernel='rbf', max_iter=-1,
-        probability=False, shrinking=True, tol=0.001, verbose=False))])
+        coef0=0.0, decision_function_shape=None, degree=3, gamma='auto',
+        kernel='rbf', max_iter=-1, probability=False, random_state=None,
+        shrinking=True, tol=0.001, verbose=False))])
 
 This is particularly important for doing grid searches::
 
@@ -65,23 +86,27 @@ This is particularly important for doing grid searches::
     >>> params = dict(reduce_dim__n_components=[2, 5, 10],
     ...               svm__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(clf, param_grid=params)
-    
+
 
 .. topic:: Examples:
 
- * :ref:`example_feature_selection_pipeline.py`
- * :ref:`example_grid_search_text_feature_extraction.py`
+ * :ref:`example_feature_selection_feature_selection_pipeline.py`
+ * :ref:`example_model_selection_grid_search_text_feature_extraction.py`
  * :ref:`example_plot_digits_pipe.py`
  * :ref:`example_plot_kernel_approximation.py`
  * :ref:`example_svm_plot_svm_anova.py`
 
+.. topic:: See also:
+
+ * :ref:`grid_search`
+
 
 Notes
-=====
+-----
 
 Calling ``fit`` on the pipeline is the same as calling ``fit`` on
 each estimator in turn, ``transform`` the input and pass it on to the next step.
-The pipeline has all the methods that the last estimator in the pipline has,
+The pipeline has all the methods that the last estimator in the pipeline has,
 i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
 as a classifier. If the last estimator is a transformer, again, so is the
 pipeline.
@@ -89,9 +114,8 @@ pipeline.
 
 .. _feature_union:
 
-==========================================
-FeatureUnion: Combining feature extractors
-==========================================
+FeatureUnion: composite feature spaces
+======================================
 
 .. currentmodule:: sklearn.pipeline
 
@@ -115,7 +139,7 @@ responsibility.)
 
 
 Usage
-=====
+-----
 
 A :class:`FeatureUnion` is built using a list of ``(key, value)`` pairs,
 where the ``key`` is the name you want to give to a given transformation
@@ -131,12 +155,15 @@ and ``value`` is an estimator object::
     FeatureUnion(n_jobs=1, transformer_list=[('linear_pca', PCA(copy=True,
         n_components=None, whiten=False)), ('kernel_pca', KernelPCA(alpha=1.0,
         coef0=1, degree=3, eigen_solver='auto', fit_inverse_transform=False,
-        gamma=None, kernel='linear', max_iter=None, n_components=None,
-        remove_zero_eig=False, tol=0))],
+        gamma=None, kernel='linear', kernel_params=None, max_iter=None,
+        n_components=None, remove_zero_eig=False, tol=0))],
         transformer_weights=None)
 
+Like pipelines, feature unions have a shorthand constructor called
+:func:`make_union` that does not require explicit naming of the components.
 
                                                                        
 .. topic:: Examples:
 
  * :ref:`example_feature_stacker.py`
+ * :ref:`example_hetero_feature_union.py`

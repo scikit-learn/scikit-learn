@@ -5,7 +5,8 @@ Ridge regression
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Reuben Fletcher-Costin <reuben.fletchercostin@gmail.com>
 #         Fabian Pedregosa <fabian@fseoane.net>
-# License: Simplified BSD
+#         Michael Eickenberg <michael.eickenberg@nsup.org>
+# License: BSD 3 clause
 
 
 from abc import ABCMeta, abstractmethod
@@ -19,14 +20,188 @@ from scipy.sparse import linalg as sp_linalg
 from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
-from ..utils import safe_asarray
+from ..utils import check_X_y
+from ..utils import compute_sample_weight
+from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
+from ..externals import six
+from ..metrics.scorer import check_scoring
 
 
-def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
-                     max_iter=None, tol=1e-3):
+def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
+    n_samples, n_features = X.shape
+    X1 = sp_linalg.aslinearoperator(X)
+    coefs = np.empty((y.shape[1], n_features))
+
+    if n_features > n_samples:
+        def create_mv(curr_alpha):
+            def _mv(x):
+                return X1.matvec(X1.rmatvec(x)) + curr_alpha * x
+            return _mv
+    else:
+        def create_mv(curr_alpha):
+            def _mv(x):
+                return X1.rmatvec(X1.matvec(x)) + curr_alpha * x
+            return _mv
+
+    for i in range(y.shape[1]):
+        y_column = y[:, i]
+
+        mv = create_mv(alpha[i])
+        if n_features > n_samples:
+            # kernel ridge
+            # w = X.T * inv(X X^t + alpha*Id) y
+            C = sp_linalg.LinearOperator(
+                (n_samples, n_samples), matvec=mv, dtype=X.dtype)
+            coef, info = sp_linalg.cg(C, y_column, tol=tol)
+            coefs[i] = X1.rmatvec(coef)
+        else:
+            # linear ridge
+            # w = inv(X^t X + alpha*Id) * X.T y
+            y_column = X1.rmatvec(y_column)
+            C = sp_linalg.LinearOperator(
+                (n_features, n_features), matvec=mv, dtype=X.dtype)
+            coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
+                                          tol=tol)
+        if info < 0:
+            raise ValueError("Failed with error code %d" % info)
+
+        if max_iter is None and info > 0 and verbose:
+            warnings.warn("sparse_cg did not converge after %d iterations." %
+                          info)
+
+    return coefs
+
+
+def _solve_lsqr(X, y, alpha, max_iter=None, tol=1e-3):
+    n_samples, n_features = X.shape
+    coefs = np.empty((y.shape[1], n_features))
+
+    # According to the lsqr documentation, alpha = damp^2.
+    sqrt_alpha = np.sqrt(alpha)
+
+    for i in range(y.shape[1]):
+        y_column = y[:, i]
+        coefs[i] = sp_linalg.lsqr(X, y_column, damp=sqrt_alpha[i],
+                                  atol=tol, btol=tol, iter_lim=max_iter)[0]
+
+    return coefs
+
+
+def _solve_cholesky(X, y, alpha):
+    # w = inv(X^t X + alpha*Id) * X.T y
+    n_samples, n_features = X.shape
+    n_targets = y.shape[1]
+
+    A = safe_sparse_dot(X.T, X, dense_output=True)
+    Xy = safe_sparse_dot(X.T, y, dense_output=True)
+
+    one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
+
+    if one_alpha:
+        A.flat[::n_features + 1] += alpha[0]
+        return linalg.solve(A, Xy, sym_pos=True,
+                            overwrite_a=True).T
+    else:
+        coefs = np.empty([n_targets, n_features])
+        for coef, target, current_alpha in zip(coefs, Xy.T, alpha):
+            A.flat[::n_features + 1] += current_alpha
+            coef[:] = linalg.solve(A, target, sym_pos=True,
+                                   overwrite_a=False).ravel()
+            A.flat[::n_features + 1] -= current_alpha
+        return coefs
+
+
+def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
+    # dual_coef = inv(X X^t + alpha*Id) y
+    n_samples = K.shape[0]
+    n_targets = y.shape[1]
+
+    if copy:
+        K = K.copy()
+
+    alpha = np.atleast_1d(alpha)
+    one_alpha = (alpha == alpha[0]).all()
+    has_sw = isinstance(sample_weight, np.ndarray) \
+        or sample_weight not in [1.0, None]
+
+    if has_sw:
+        # Unlike other solvers, we need to support sample_weight directly
+        # because K might be a pre-computed kernel.
+        sw = np.sqrt(np.atleast_1d(sample_weight))
+        y = y * sw[:, np.newaxis]
+        K *= np.outer(sw, sw)
+
+    if one_alpha:
+        # Only one penalty, we can solve multi-target problems in one time.
+        K.flat[::n_samples + 1] += alpha[0]
+
+        try:
+            # Note: we must use overwrite_a=False in order to be able to
+            #       use the fall-back solution below in case a LinAlgError
+            #       is raised
+            dual_coef = linalg.solve(K, y, sym_pos=True,
+                                     overwrite_a=False)
+        except np.linalg.LinAlgError:
+            warnings.warn("Singular matrix in solving dual problem. Using "
+                          "least-squares solution instead.")
+            dual_coef = linalg.lstsq(K, y)[0]
+
+        # K is expensive to compute and store in memory so change it back in
+        # case it was user-given.
+        K.flat[::n_samples + 1] -= alpha[0]
+
+        if has_sw:
+            dual_coef *= sw[:, np.newaxis]
+
+        return dual_coef
+    else:
+        # One penalty per target. We need to solve each target separately.
+        dual_coefs = np.empty([n_targets, n_samples])
+
+        for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
+            K.flat[::n_samples + 1] += current_alpha
+
+            dual_coef[:] = linalg.solve(K, target, sym_pos=True,
+                                        overwrite_a=False).ravel()
+
+            K.flat[::n_samples + 1] -= current_alpha
+
+        if has_sw:
+            dual_coefs *= sw[np.newaxis, :]
+
+        return dual_coefs.T
+
+
+def _solve_svd(X, y, alpha):
+    U, s, Vt = linalg.svd(X, full_matrices=False)
+    idx = s > 1e-15  # same default value as scipy.linalg.pinv
+    s_nnz = s[idx][:, np.newaxis]
+    UTy = np.dot(U.T, y)
+    d = np.zeros((s.size, alpha.size))
+    d[idx] = s_nnz / (s_nnz ** 2 + alpha)
+    d_UT_y = d * UTy
+    return np.dot(Vt.T, d_UT_y).T
+
+
+def _rescale_data(X, y, sample_weight):
+    """Rescale data so as to support sample_weight"""
+    n_samples = X.shape[0]
+    sample_weight = sample_weight * np.ones(n_samples)
+    sample_weight = np.sqrt(sample_weight)
+    sw_matrix = sparse.dia_matrix((sample_weight, 0),
+                                  shape=(n_samples, n_samples))
+    X = safe_sparse_dot(sw_matrix, X)
+    y = safe_sparse_dot(sw_matrix, y)
+    return X, y
+
+
+def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
+                     max_iter=None, tol=1e-3, verbose=0):
     """Solve the ridge equation by the method of normal equations.
+
+    Read more in the :ref:`User Guide <ridge_regression>`.
 
     Parameters
     ----------
@@ -37,24 +212,35 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     y : array-like, shape = [n_samples] or [n_samples, n_targets]
         Target values
 
+    alpha : {float, array-like},
+        shape = [n_targets] if array-like
+        The l_2 penalty to be used. If an array is passed, penalties are
+        assumed to be specific to targets
+
     max_iter : int, optional
         Maximum number of iterations for conjugate gradient solver.
         The default value is determined by scipy.sparse.linalg.
 
     sample_weight : float or numpy array of shape [n_samples]
-        Individual weights for each sample
+        Individual weights for each sample. If sample_weight is set, then
+        the solver will automatically be set to 'cholesky'
 
-    solver : {'auto', 'dense_cholesky', 'lsqr', 'sparse_cg'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
 
-        - 'dense_cholesky' uses the standard scipy.linalg.solve function to
-          obtain a closed-form solution.
+        - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
+          coefficients. More stable for singular matrices than
+          'cholesky'.
+
+        - 'cholesky' uses the standard scipy.linalg.solve function to
+          obtain a closed-form solution via a Cholesky decomposition of
+          dot(X.T, X)
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
-          more appropriate than 'dense_cholesky' for large-scale data
+          more appropriate than 'cholesky' for large-scale data
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
@@ -63,12 +249,16 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
 
         All three solvers support both dense and sparse data.
 
-    tol: float
+    tol : float
         Precision of the solution.
+
+    verbose : int
+        Verbosity level. Setting verbose > 0 will display additional information
+        depending on the solver used.
 
     Returns
     -------
-    coef: array, shape = [n_features] or [n_targets, n_features]
+    coef : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
     Notes
@@ -77,13 +267,28 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     """
 
     n_samples, n_features = X.shape
-    has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
+
+    if y.ndim > 2:
+        raise ValueError("Target y has the wrong shape %s" % str(y.shape))
+
+    ravel = False
+    if y.ndim == 1:
+        y = y.reshape(-1, 1)
+        ravel = True
+
+    n_samples_, n_targets = y.shape
+
+    if n_samples != n_samples_:
+        raise ValueError("Number of samples in X and y does not correspond:"
+                         " %d != %d" % (n_samples, n_samples_))
+
+    has_sw = sample_weight is not None
 
     if solver == 'auto':
         # cholesky if it's a dense array and cg in
         # any other case
-        if hasattr(X, '__array__'):
-            solver = 'dense_cholesky'
+        if not sparse.issparse(X) or has_sw:
+            solver = 'cholesky'
         else:
             solver = 'sparse_cg'
 
@@ -93,106 +298,63 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         solver = 'sparse_cg'
 
     if has_sw:
-        solver = 'dense_cholesky'
+        if np.atleast_1d(sample_weight).ndim > 1:
+            raise ValueError("Sample weights must be 1D array or scalar")
+
+        # Sample weight can be implemented via a simple rescaling.
+        X, y = _rescale_data(X, y, sample_weight)
+
+    # There should be either 1 or n_targets penalties
+    alpha = np.asarray(alpha).ravel()
+    if alpha.size not in [1, n_targets]:
+        raise ValueError("Number of targets and number of penalties "
+                         "do not correspond: %d != %d"
+                         % (alpha.size, n_targets))
+
+    if alpha.size == 1 and n_targets > 1:
+        alpha = np.repeat(alpha, n_targets)
+
+    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr'):
+        raise ValueError('Solver %s not understood' % solver)
 
     if solver == 'sparse_cg':
-        # gradient descent
-        X1 = sp_linalg.aslinearoperator(X)
-        if y.ndim == 1:
-            y1 = np.reshape(y, (-1, 1))
-        else:
-            y1 = y
-        coefs = np.empty((y1.shape[1], n_features))
+        coef = _solve_sparse_cg(X, y, alpha, max_iter, tol, verbose)
 
-        if n_features > n_samples:
-            def mv(x):
-                return X1.matvec(X1.rmatvec(x)) + alpha * x
-        else:
-            def mv(x):
-                return X1.rmatvec(X1.matvec(x)) + alpha * x
-
-        for i in range(y1.shape[1]):
-            y_column = y1[:, i]
-            if n_features > n_samples:
-                # kernel ridge
-                # w = X.T * inv(X X^t + alpha*Id) y
-                C = sp_linalg.LinearOperator(
-                    (n_samples, n_samples), matvec=mv, dtype=X.dtype)
-                coef, info = sp_linalg.cg(C, y_column, tol=tol)
-                coefs[i] = X1.rmatvec(coef)
-            else:
-                # ridge
-                # w = inv(X^t X + alpha*Id) * X.T y
-                y_column = X1.rmatvec(y_column)
-                C = sp_linalg.LinearOperator(
-                    (n_features, n_features), matvec=mv, dtype=X.dtype)
-                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
-                                              tol=tol)
-            if info != 0:
-                raise ValueError("Failed with error code %d" % info)
-
-        if y.ndim == 1:
-            coefs = np.ravel(coefs)
-
-        return coefs
     elif solver == "lsqr":
-        if y.ndim == 1:
-            y1 = np.reshape(y, (-1, 1))
-        else:
-            y1 = y
-        coefs = np.empty((y1.shape[1], n_features))
+        coef = _solve_lsqr(X, y, alpha, max_iter, tol)
 
-        # According to the lsqr documentation, alpha = damp^2.
-        sqrt_alpha = np.sqrt(alpha)
-
-        for i in range(y1.shape[1]):
-            y_column = y1[:, i]
-            coefs[i] = sp_linalg.lsqr(X, y_column, damp=sqrt_alpha,
-                                      atol=tol, btol=tol, iter_lim=max_iter)[0]
-
-        if y.ndim == 1:
-            coefs = np.ravel(coefs)
-
-        return coefs
-    else:
-        # normal equations (cholesky) method
-        if n_features > n_samples or has_sw:
-            # kernel ridge
-            # w = X.T * inv(X X^t + alpha*Id) y
+    elif solver == 'cholesky':
+        if n_features > n_samples:
             K = safe_sparse_dot(X, X.T, dense_output=True)
-            if has_sw:
-                # We are doing a little danse with the sample weights to
-                # avoid copying the original X, which could be big
-                sw = np.sqrt(sample_weight)
-                if y.ndim == 1:
-                    y = y * sw
-                else:
-                    # Deal with multiple-output problems
-                    y = y * sw[:, np.newaxis]
-                K *= np.outer(sw, sw)
-            K.flat[::n_samples + 1] += alpha
-            dual_coef = linalg.solve(K, y,
-                                     sym_pos=True, overwrite_a=True)
-            if has_sw:
-                if dual_coef.ndim == 1:
-                    dual_coef *= sw
-                else:
-                    # Deal with multiple-output problems
-                    dual_coef *= sw[:, np.newaxis]
-            coef = safe_sparse_dot(X.T, dual_coef, dense_output=True)
+            try:
+                dual_coef = _solve_cholesky_kernel(K, y, alpha)
+
+                coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
+            except linalg.LinAlgError:
+                # use SVD solver if matrix is singular
+                solver = 'svd'
+
         else:
-            # ridge
-            # w = inv(X^t X + alpha*Id) * X.T y
-            A = safe_sparse_dot(X.T, X, dense_output=True)
-            A.flat[::n_features + 1] += alpha
-            Xy = safe_sparse_dot(X.T, y, dense_output=True)
-            coef = linalg.solve(A, Xy, sym_pos=True, overwrite_a=True)
+            try:
+                coef = _solve_cholesky(X, y, alpha)
+            except linalg.LinAlgError:
+                # use SVD solver if matrix is singular
+                solver = 'svd'
 
-        return coef.T
+    if solver == 'svd':
+        if sparse.issparse(X):
+            raise TypeError('SVD solver does not support sparse'
+                            ' inputs currently')
+        coef = _solve_svd(X, y, alpha)
+
+    if ravel:
+        # When y was passed as a 1d-array, we flatten the coefficients.
+        coef = coef.ravel()
+
+    return coef
 
 
-class _BaseRidge(LinearModel):
-    __metaclass__ = ABCMeta
+class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
 
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
@@ -205,9 +367,13 @@ class _BaseRidge(LinearModel):
         self.tol = tol
         self.solver = solver
 
-    def fit(self, X, y, sample_weight=1.0):
-        X = safe_asarray(X, dtype=np.float)
-        y = np.asarray(y, dtype=np.float)
+    def fit(self, X, y, sample_weight=None):
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float,
+                         multi_output=True, y_numeric=True)
+
+        if ((sample_weight is not None) and
+                np.atleast_1d(sample_weight).ndim > 1):
+            raise ValueError("Sample weights must be 1D array or scalar")
 
         X, y, X_mean, y_mean, X_std = self._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
@@ -217,7 +383,8 @@ class _BaseRidge(LinearModel):
                                       alpha=self.alpha,
                                       sample_weight=sample_weight,
                                       max_iter=self.max_iter,
-                                      tol=self.tol)
+                                      tol=self.tol,
+                                      solver=self.solver)
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
@@ -231,13 +398,17 @@ class Ridge(_BaseRidge, RegressorMixin):
     This estimator has built-in support for multi-variate regression
     (i.e., when y is a 2d-array of shape [n_samples, n_targets]).
 
+    Read more in the :ref:`User Guide <ridge_regression>`.
+
     Parameters
     ----------
-    alpha : float
+    alpha : {float, array-like}
+        shape = [n_targets]
         Small positive values of alpha improve the conditioning of the problem
         and reduce the variance of the estimates.  Alpha corresponds to
         ``(2*C)^-1`` in other linear models such as LogisticRegression or
-        LinearSVC.
+        LinearSVC. If an array is passed, penalties are assumed to be specific
+        to the targets. Hence they must correspond in number.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -254,17 +425,21 @@ class Ridge(_BaseRidge, RegressorMixin):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    solver : {'auto', 'dense_cholesky', 'lsqr', 'sparse_cg'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
 
-        - 'dense_cholesky' uses the standard scipy.linalg.solve function to
+        - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
+          coefficients. More stable for singular matrices than
+          'cholesky'.
+
+        - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
-          more appropriate than 'dense_cholesky' for large-scale data
+          more appropriate than 'cholesky' for large-scale data
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
@@ -278,12 +453,12 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features] or [n_targets, n_features]
+    coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
     See also
     --------
-    RidgeClassifier, RidgeCV
+    RidgeClassifier, RidgeCV, KernelRidge
 
     Examples
     --------
@@ -304,7 +479,7 @@ class Ridge(_BaseRidge, RegressorMixin):
                                     normalize=normalize, copy_X=copy_X,
                                     max_iter=max_iter, tol=tol, solver=solver)
 
-    def fit(self, X, y, sample_weight=1.0):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
 
         Parameters
@@ -328,6 +503,8 @@ class Ridge(_BaseRidge, RegressorMixin):
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     """Classifier using Ridge regression.
 
+    Read more in the :ref:`User Guide <ridge_regression>`.
+
     Parameters
     ----------
     alpha : float
@@ -336,10 +513,13 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         ``(2*C)^-1`` in other linear models such as LogisticRegression or
         LinearSVC.
 
-    class_weight : dict, optional
-        Weights associated with classes in the form
-        {class_label : weight}. If not given, all classes are
-        supposed to have weight one.
+    class_weight : dict or 'balanced', optional
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
+
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -356,9 +536,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    solver : {'auto', 'dense_cholesky', 'lsqr', 'sparse_cg'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational
-        routines. 'dense_cholesky' will use the standard
+        routines. 'svd' will use a Singular value decomposition to obtain
+        the solution, 'cholesky' will use the standard
         scipy.linalg.solve function, 'sparse_cg' will use the
         conjugate gradient solver as found in
         scipy.sparse.linalg.cg while 'auto' will chose the most
@@ -370,7 +551,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features] or [n_classes, n_features]
+    coef_ : array, shape = [n_features] or [n_classes, n_features]
         Weight vector(s).
 
     See also
@@ -391,7 +572,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver)
         self.class_weight = class_weight
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model.
 
         Parameters
@@ -402,20 +583,26 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         y : array-like, shape = [n_samples]
             Target values
 
+        sample_weight : float or numpy array of shape (n_samples,)
+            Sample weight.
+
         Returns
         -------
         self : returns an instance of self.
         """
-        if self.class_weight is None:
-            class_weight = {}
-        else:
-            class_weight = self.class_weight
-
-        sample_weight_classes = np.array([class_weight.get(k, 1.0) for k in y])
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
-        super(RidgeClassifier, self).fit(X, Y,
-                                         sample_weight=sample_weight_classes)
+        if not self._label_binarizer.y_type_.startswith('multilabel'):
+            y = column_or_1d(y, warn=True)
+
+        if self.class_weight:
+            if sample_weight is None:
+                sample_weight = 1.
+            # modify the sample weights with the corresponding class weight
+            sample_weight = (sample_weight *
+                             compute_sample_weight(self.class_weight, y))
+
+        super(RidgeClassifier, self).fit(X, Y, sample_weight=sample_weight)
         return self
 
     @property
@@ -462,14 +649,14 @@ class _RidgeGCV(LinearModel):
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
-    def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True,
-                 normalize=False, score_func=None, loss_func=None,
-                 copy_X=True, gcv_mode=None, store_cv_values=False):
+    def __init__(self, alphas=(0.1, 1.0, 10.0),
+                 fit_intercept=True, normalize=False,
+                 scoring=None, copy_X=True,
+                 gcv_mode=None, store_cv_values=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
-        self.score_func = score_func
-        self.loss_func = loss_func
+        self.scoring = scoring
         self.copy_X = copy_X
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
@@ -513,9 +700,9 @@ class _RidgeGCV(LinearModel):
         return y - (c / G_diag), c
 
     def _pre_compute_svd(self, X, y):
-        if sparse.issparse(X) and hasattr(X, 'toarray'):
-            X = X.toarray()
-        U, s, _ = np.linalg.svd(X, full_matrices=0)
+        if sparse.issparse(X):
+            raise TypeError("SVD not supported for sparse matrices")
+        U, s, _ = linalg.svd(X, full_matrices=0)
         v = s ** 2
         UT_y = np.dot(U.T, y)
         return v, U, UT_y
@@ -538,7 +725,7 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return y - (c / G_diag), c
 
-    def fit(self, X, y, sample_weight=1.0):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
 
         Parameters
@@ -556,8 +743,8 @@ class _RidgeGCV(LinearModel):
         -------
         self : Returns self.
         """
-        X = safe_asarray(X, dtype=np.float)
-        y = np.asarray(y, dtype=np.float)
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float,
+                         multi_output=True, y_numeric=True)
 
         n_samples, n_features = X.shape
 
@@ -569,7 +756,7 @@ class _RidgeGCV(LinearModel):
         with_sw = len(np.shape(sample_weight))
 
         if gcv_mode is None or gcv_mode == 'auto':
-            if n_features > n_samples or with_sw:
+            if sparse.issparse(X) or n_features > n_samples or with_sw:
                 gcv_mode = 'eigen'
             else:
                 gcv_mode = 'svd'
@@ -596,23 +783,34 @@ class _RidgeGCV(LinearModel):
         cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
 
-        error = self.score_func is None and self.loss_func is None
+        scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
+        error = scorer is None
 
         for i, alpha in enumerate(self.alphas):
+            weighted_alpha = (sample_weight * alpha
+                              if sample_weight is not None
+                              else alpha)
             if error:
-                out, c = _errors(sample_weight * alpha, y, v, Q, QT_y)
+                out, c = _errors(weighted_alpha, y, v, Q, QT_y)
             else:
-                out, c = _values(sample_weight * alpha, y, v, Q, QT_y)
+                out, c = _values(weighted_alpha, y, v, Q, QT_y)
             cv_values[:, i] = out.ravel()
             C.append(c)
 
         if error:
             best = cv_values.mean(axis=0).argmin()
         else:
-            func = self.score_func if self.score_func else self.loss_func
-            out = [func(y.ravel(), cv_values[:, i])
+            # The scorer want an object that will make the predictions but
+            # they are already computed efficiently by _RidgeGCV. This
+            # identity_estimator will just return them
+            def identity_estimator():
+                pass
+            identity_estimator.decision_function = lambda y_predict: y_predict
+            identity_estimator.predict = lambda y_predict: y_predict
+
+            out = [scorer(identity_estimator, y.ravel(), cv_values[:, i])
                    for i in range(len(self.alphas))]
-            best = np.argmax(out) if self.score_func else np.argmin(out)
+            best = np.argmax(out)
 
         self.alpha_ = self.alphas[best]
         self.dual_coef_ = C[best]
@@ -631,20 +829,19 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
-    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
-                 fit_intercept=True, normalize=False, score_func=None,
-                 loss_func=None, cv=None, gcv_mode=None,
+    def __init__(self, alphas=(0.1, 1.0, 10.0),
+                 fit_intercept=True, normalize=False, scoring=None,
+                 cv=None, gcv_mode=None,
                  store_cv_values=False):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
-        self.score_func = score_func
-        self.loss_func = loss_func
+        self.scoring = scoring
         self.cv = cv
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
 
-    def fit(self, X, y, sample_weight=1.0):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
 
         Parameters
@@ -666,8 +863,7 @@ class _BaseRidgeCV(LinearModel):
             estimator = _RidgeGCV(self.alphas,
                                   fit_intercept=self.fit_intercept,
                                   normalize=self.normalize,
-                                  score_func=self.score_func,
-                                  loss_func=self.loss_func,
+                                  scoring=self.scoring,
                                   gcv_mode=self.gcv_mode,
                                   store_cv_values=self.store_cv_values)
             estimator.fit(X, y, sample_weight=sample_weight)
@@ -679,10 +875,7 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
-            # FIXME: sample_weight must be split into training/validation data
-            #        too!
-            #fit_params = {'sample_weight' : sample_weight}
-            fit_params = {}
+            fit_params = {'sample_weight' : sample_weight}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
                               parameters, fit_params=fit_params, cv=self.cv)
             gs.fit(X, y)
@@ -701,9 +894,11 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation.
 
+    Read more in the :ref:`User Guide <ridge_regression>`.
+
     Parameters
     ----------
-    alphas: numpy array of shape [n_alphas]
+    alphas : numpy array of shape [n_alphas]
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
@@ -718,30 +913,31 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    score_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediction (big is good)
-        if None is passed, the score of the estimator is maximized
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
-    loss_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediction (small is good)
-        if None is passed, the score of the estimator is maximized
-
-    cv : cross-validation generator, optional
+    cv : integer or cross-validation generator, optional
         If None, Generalized Cross-Validation (efficient Leave-One-Out)
         will be used.
+        If an integer is passed, it is the number of folds for KFold cross
+        validation.  Specific cross-validation objects can be passed, see
+        sklearn.cross_validation module for the list of possible objects
 
     gcv_mode : {None, 'auto', 'svd', eigen'}, optional
         Flag indicating which strategy to use when performing
         Generalized Cross-Validation. Options are::
 
-            'auto' : use svd if n_samples > n_features, otherwise use eigen
+            'auto' : use svd if n_samples > n_features or when X is a sparse
+                     matrix, otherwise use eigen
             'svd' : force computation via singular value decomposition of X
+                    (does not work for sparse matrices)
             'eigen' : force computation via eigendecomposition of X^T X
 
-        The 'auto' mode is the default and is intended to pick the cheaper \
-        option of the two depending upon the shape of the training data.
+        The 'auto' mode is the default and is intended to pick the cheaper
+        option of the two depending upon the shape and format of the training
+        data.
 
     store_cv_values : boolean, default=False
         Flag indicating if the cross-validation values corresponding to
@@ -751,18 +947,22 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     Attributes
     ----------
-    `cv_values_` : array, shape = [n_samples, n_alphas] or \
+    cv_values_ : array, shape = [n_samples, n_alphas] or \
         shape = [n_samples, n_targets, n_alphas], optional
         Cross-validation values for each alpha (if `store_cv_values=True` and \
         `cv=None`). After `fit()` has been called, this attribute will \
         contain the mean squared errors (by default) or the values of the \
         `{loss,score}_func` function (if provided in the constructor).
 
-    `coef_` : array, shape = [n_features] or [n_targets, n_features]
+    coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
-    `alpha_` : float
+    alpha_ : float
         Estimated regularization parameter.
+
+    intercept_ : float | array, shape = (n_targets,)
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
 
     See also
     --------
@@ -780,13 +980,15 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     efficient Leave-One-Out cross-validation. Currently, only the n_features >
     n_samples case is handled efficiently.
 
+    Read more in the :ref:`User Guide <ridge_regression>`.
+
     Parameters
     ----------
-    alphas: numpy array of shape [n_alphas]
+    alphas : numpy array of shape [n_alphas]
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
-        Alpha corresponds to (2*C)^-1 in other linear models such as
+        Alpha corresponds to ``(2*C)^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
@@ -797,38 +999,36 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    score_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediction (big is good)
-        if None is passed, the score of the estimator is maximized
-
-    loss_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediction (small is good)
-        if None is passed, the score of the estimator is maximized
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
     cv : cross-validation generator, optional
         If None, Generalized Cross-Validation (efficient Leave-One-Out)
         will be used.
 
-    class_weight : dict, optional
-        Weights associated with classes in the form
-        {class_label : weight}. If not given, all classes are
-        supposed to have weight one.
+    class_weight : dict or 'balanced', optional
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
+
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
     Attributes
     ----------
-    `cv_values_` : array, shape = [n_samples, n_alphas] or \
+    cv_values_ : array, shape = [n_samples, n_alphas] or \
     shape = [n_samples, n_responses, n_alphas], optional
         Cross-validation values for each alpha (if `store_cv_values=True` and
     `cv=None`). After `fit()` has been called, this attribute will contain \
     the mean squared errors (by default) or the values of the \
     `{loss,score}_func` function (if provided in the constructor).
 
-    `coef_` : array, shape = [n_features] or [n_targets, n_features]
+    coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
-    `alpha_` : float
+    alpha_ : float
         Estimated regularization parameter
 
     See also
@@ -843,40 +1043,45 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
-    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
-                 normalize=False, score_func=None, loss_func=None, cv=None,
-                 class_weight=None):
+    def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
+                 normalize=False, scoring=None, cv=None, class_weight=None):
         super(RidgeClassifierCV, self).__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
-            score_func=score_func, loss_func=loss_func, cv=cv)
+            scoring=scoring, cv=cv)
         self.class_weight = class_weight
 
-    def fit(self, X, y, sample_weight=1.0, class_weight=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit the ridge classifier.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : float or numpy array of shape [n_samples]
-            Sample weight
+        sample_weight : float or numpy array of shape (n_samples,)
+            Sample weight.
 
         Returns
         -------
         self : object
             Returns self.
         """
-        if self.class_weight is not None:
-            get_cw = self.class_weight.get
-            sample_weight = (sample_weight
-                             * np.array([get_cw(k, 1.0) for k in y]))
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
+        if not self._label_binarizer.y_type_.startswith('multilabel'):
+            y = column_or_1d(y, warn=True)
+
+        if self.class_weight:
+            if sample_weight is None:
+                sample_weight = 1.
+            # modify the sample weights with the corresponding class weight
+            sample_weight = (sample_weight *
+                             compute_sample_weight(self.class_weight, y))
+
         _BaseRidgeCV.fit(self, X, Y, sample_weight=sample_weight)
         return self
 

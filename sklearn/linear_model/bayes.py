@@ -13,7 +13,7 @@ from scipy import linalg
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet, pinvh
-from ..utils import check_arrays
+from ..utils import check_X_y
 
 
 ###############################################################################
@@ -25,14 +25,10 @@ class BayesianRidge(LinearModel, RegressorMixin):
     Fit a Bayesian ridge model and optimize the regularization parameters
     lambda (precision of the weights) and alpha (precision of the noise).
 
+    Read more in the :ref:`User Guide <bayesian_regression>`.
+
     Parameters
     ----------
-    X : array, shape = (n_samples, n_features)
-        Training vectors.
-
-    y : array, shape = (length)
-        Target values for training vectors
-
     n_iter : int, optional
         Maximum number of iterations.  Default is 300.
 
@@ -62,7 +58,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         Default is False
 
     fit_intercept : boolean, optional
-        wether to calculate the intercept for this model. If set
+        whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
         Default is True.
@@ -79,16 +75,16 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = (n_features)
+    coef_ : array, shape = (n_features)
         Coefficients of the regression model (mean of distribution)
 
-    `alpha_` : float
+    alpha_ : float
        estimated precision of the noise.
 
-    `lambda_` : array, shape = (n_features)
+    lambda_ : array, shape = (n_features)
        estimated precisions of the weights.
 
-    `scores_` : float
+    scores_ : float
         if computed, value of the objective function (to be maximized)
 
     Examples
@@ -138,8 +134,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_arrays(X, y, sparse_format='dense',
-                            dtype=np.float)
+        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
         X, y, X_mean, y_mean, X_std = self._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
         n_samples, n_features = X.shape
@@ -232,14 +227,10 @@ class ARDRegression(LinearModel, RegressorMixin):
     weights) and alpha (precision of the distribution of the noise).
     The estimation is done by an iterative procedures (Evidence Maximization)
 
+    Read more in the :ref:`User Guide <bayesian_regression>`.
+
     Parameters
     ----------
-    X : array, shape = (n_samples, n_features)
-        Training vectors.
-
-    y : array, shape = (n_samples)
-        Target values for training vectors
-
     n_iter : int, optional
         Maximum number of iterations. Default is 300
 
@@ -271,7 +262,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         the computation. Default is 1.e+4.
 
     fit_intercept : boolean, optional
-        wether to calculate the intercept for this model. If set
+        whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
         Default is True.
@@ -287,19 +278,19 @@ class ARDRegression(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = (n_features)
+    coef_ : array, shape = (n_features)
         Coefficients of the regression model (mean of distribution)
 
-    `alpha_` : float
+    alpha_ : float
        estimated precision of the noise.
 
-    `lambda_` : array, shape = (n_features)
+    lambda_ : array, shape = (n_features)
        estimated precisions of the weights.
 
-    `sigma_` : array, shape = (n_features, n_features)
+    sigma_ : array, shape = (n_features, n_features)
         estimated variance-covariance matrix of the weights
 
-    `scores_` : float
+    scores_ : float
         if computed, value of the objective function (to be maximized)
 
     Examples
@@ -355,8 +346,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_arrays(X, y, sparse_format='dense',
-                            dtype=np.float)
+        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
@@ -427,6 +417,6 @@ class ARDRegression(LinearModel, RegressorMixin):
         self.coef_ = coef_
         self.alpha_ = alpha_
         self.sigma_ = sigma_
-
+        self.lambda_ = lambda_
         self._set_intercept(X_mean, y_mean, X_std)
         return self

@@ -18,11 +18,20 @@ def test_kernel_pca():
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
 
+    def histogram(x, y, **kwargs):
+        # Histogram kernel implemented as a callable.
+        assert_equal(kwargs, {})    # no kernel_params that we didn't ask for
+        return np.minimum(x, y).sum()
+
     for eigen_solver in ("auto", "dense", "arpack"):
-        for kernel in ("linear", "rbf", "poly"):
+        for kernel in ("linear", "rbf", "poly", histogram):
+            # histogram kernel produces singular matrix inside linalg.solve
+            # XXX use a least-squares approximation?
+            inv = not callable(kernel)
+
             # transform fit data
             kpca = KernelPCA(4, kernel=kernel, eigen_solver=eigen_solver,
-                             fit_inverse_transform=True)
+                             fit_inverse_transform=inv)
             X_fit_transformed = kpca.fit_transform(X_fit)
             X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
             assert_array_almost_equal(np.abs(X_fit_transformed),
@@ -38,8 +47,9 @@ def test_kernel_pca():
                          X_fit_transformed.shape[1])
 
             # inverse transform
-            X_pred2 = kpca.inverse_transform(X_pred_transformed)
-            assert_equal(X_pred2.shape, X_pred.shape)
+            if inv:
+                X_pred2 = kpca.inverse_transform(X_pred_transformed)
+                assert_equal(X_pred2.shape, X_pred.shape)
 
 
 def test_invalid_parameters():
@@ -68,8 +78,8 @@ def test_kernel_pca_sparse():
                          X_fit_transformed.shape[1])
 
             # inverse transform
-            #X_pred2 = kpca.inverse_transform(X_pred_transformed)
-            #assert_equal(X_pred2.shape, X_pred.shape)
+            # X_pred2 = kpca.inverse_transform(X_pred_transformed)
+            # assert_equal(X_pred2.shape, X_pred.shape)
 
 
 def test_kernel_pca_linear_kernel():
@@ -114,7 +124,6 @@ def test_remove_zero_eig():
     kpca = KernelPCA(n_components=2, remove_zero_eig=True)
     Xt = kpca.fit_transform(X)
     assert_equal(Xt.shape, (3, 0))
-
 
 
 def test_kernel_pca_precomputed():
@@ -178,7 +187,7 @@ def test_gridsearch_pipeline_precomputed():
 
 
 def test_nested_circles():
-    """Test the linear separability of the first 2D KPCA transform"""
+    # Test the linear separability of the first 2D KPCA transform
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
                         random_state=0)
 
@@ -198,8 +207,3 @@ def test_nested_circles():
     # The data is perfectly linearly separable in that space
     train_score = Perceptron().fit(X_kpca, y).score(X_kpca, y)
     assert_equal(train_score, 1.0)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.run(argv=['', __file__])

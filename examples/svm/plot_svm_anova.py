@@ -9,7 +9,7 @@ This example shows how to perform univariate feature before running a SVC
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn import svm, datasets, feature_selection, cross_validation
 from sklearn.pipeline import Pipeline
 
@@ -46,12 +46,12 @@ for percentile in percentiles:
     score_means.append(this_scores.mean())
     score_stds.append(this_scores.std())
 
-pl.errorbar(percentiles, score_means, np.array(score_stds))
+plt.errorbar(percentiles, score_means, np.array(score_stds))
 
-pl.title(
+plt.title(
     'Performance of the SVM-Anova varying the percentile of features selected')
-pl.xlabel('Percentile')
-pl.ylabel('Prediction rate')
+plt.xlabel('Percentile')
+plt.ylabel('Prediction rate')
 
-pl.axis('tight')
-pl.show()
+plt.axis('tight')
+plt.show()

@@ -8,11 +8,12 @@ sparse matrices.
 # Authors: Aric Hagberg <hagberg@lanl.gov>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 from scipy import sparse
 
+from .validation import check_array
 from .graph_shortest_path import graph_shortest_path
 
 
@@ -68,10 +69,10 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
     return seen  # return all path lengths as dictionary
 
 
-if hasattr(sparse, 'cs_graph_components'):
-    cs_graph_components = sparse.cs_graph_components
+if hasattr(sparse, 'connected_components'):
+    connected_components = sparse.connected_components
 else:
-    from ._csgraph import cs_graph_components
+    from .sparsetools import connected_components
 
 
 ###############################################################################
@@ -113,7 +114,7 @@ def graph_laplacian(csgraph, normed=False, return_diag=False):
 
     if normed and (np.issubdtype(csgraph.dtype, np.int)
                    or np.issubdtype(csgraph.dtype, np.uint)):
-        csgraph = csgraph.astype(np.float)
+        csgraph = check_array(csgraph, dtype=np.float64, accept_sparse=True)
 
     if sparse.isspmatrix(csgraph):
         return _laplacian_sparse(csgraph, normed=normed,
@@ -134,12 +135,12 @@ def _laplacian_sparse(graph, normed=False, return_diag=False):
         # The sparsity pattern of the matrix has holes on the diagonal,
         # we need to fix that
         diag_idx = lap.row[diag_mask]
-        diagonal_holes = list(set(range(n_nodes)).difference(
-                                diag_idx))
+        diagonal_holes = list(set(range(n_nodes)).difference(diag_idx))
         new_data = np.concatenate([lap.data, np.ones(len(diagonal_holes))])
         new_row = np.concatenate([lap.row, diagonal_holes])
         new_col = np.concatenate([lap.col, diagonal_holes])
-        lap = sparse.coo_matrix((new_data, (new_row, new_col)), shape=lap.shape)
+        lap = sparse.coo_matrix((new_data, (new_row, new_col)),
+                                shape=lap.shape)
         diag_mask = (lap.row == lap.col)
 
     lap.data[diag_mask] = 0
@@ -150,7 +151,8 @@ def _laplacian_sparse(graph, normed=False, return_diag=False):
         w[w_zeros] = 1
         lap.data /= w[lap.row]
         lap.data /= w[lap.col]
-        lap.data[diag_mask] = (1 - w_zeros[lap.row[diag_mask]]).astype(lap.data.dtype)
+        lap.data[diag_mask] = (1 - w_zeros[lap.row[diag_mask]]).astype(
+            lap.data.dtype)
     else:
         lap.data[diag_mask] = w[lap.row[diag_mask]]
 
@@ -172,9 +174,9 @@ def _laplacian_dense(graph, normed=False, return_diag=False):
         w[w_zeros] = 1
         lap /= w
         lap /= w[:, np.newaxis]
-        lap.flat[::n_nodes + 1] = 1 - w_zeros
+        lap.flat[::n_nodes + 1] = (1 - w_zeros).astype(lap.dtype)
     else:
-        lap.flat[::n_nodes + 1] = w
+        lap.flat[::n_nodes + 1] = w.astype(lap.dtype)
 
     if return_diag:
         return lap, w

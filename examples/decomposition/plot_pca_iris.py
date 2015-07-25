@@ -6,15 +6,20 @@
 PCA example with Iris Data-set
 =========================================================
 
+Principal Component Analysis applied to the Iris dataset.
+
+See `here <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ for more
+information on this dataset.
+
 """
 print(__doc__)
 
 
-# Code source: Gael Varoqueux
-# License: BSD
+# Code source: Gaël Varoquaux
+# License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 
@@ -28,11 +33,11 @@ iris = datasets.load_iris()
 X = iris.data
 y = iris.target
 
-fig = pl.figure(1, figsize=(4, 3))
-pl.clf()
+fig = plt.figure(1, figsize=(4, 3))
+plt.clf()
 ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=48, azim=134)
 
-pl.cla()
+plt.cla()
 pca = decomposition.PCA(n_components=3)
 pca.fit(X)
 X = pca.transform(X)
@@ -45,7 +50,7 @@ for name, label in [('Setosa', 0), ('Versicolour', 1), ('Virginica', 2)]:
               bbox=dict(alpha=.5, edgecolor='w', facecolor='w'))
 # Reorder the labels to have colors matching the cluster results
 y = np.choose(y, [1, 2, 0]).astype(np.float)
-ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=y, cmap=pl.cm.spectral)
+ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=y, cmap=plt.cm.spectral)
 
 x_surf = [X[:, 0].min(), X[:, 0].max(),
           X[:, 0].min(), X[:, 0].max()]
@@ -62,4 +67,4 @@ ax.w_xaxis.set_ticklabels([])
 ax.w_yaxis.set_ticklabels([])
 ax.w_zaxis.set_ticklabels([])
 
-pl.show()
+plt.show()

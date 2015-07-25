@@ -3,10 +3,10 @@ import numpy as np
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.decomposition import DictionaryLearning
 from sklearn.decomposition import MiniBatchDictionaryLearning
@@ -45,6 +45,19 @@ def test_dict_learning_reconstruction():
 
     # used to test lars here too, but there's no guarantee the number of
     # nonzero atoms is right.
+
+
+def test_dict_learning_reconstruction_parallel():
+    # regression test that parallel reconstruction works with n_jobs=-1
+    n_components = 12
+    dico = DictionaryLearning(n_components, transform_algorithm='omp',
+                              transform_alpha=0.001, random_state=0, n_jobs=-1)
+    code = dico.fit(X).transform(X)
+    assert_array_almost_equal(np.dot(code, dico.components_), X)
+
+    dico.set_params(transform_algorithm='lasso_lars')
+    code = dico.transform(X)
+    assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
 
 
 def test_dict_learning_nonzero_coefs():
@@ -90,21 +103,25 @@ def test_dict_learning_online_shapes():
 def test_dict_learning_online_verbosity():
     n_components = 5
     # test verbosity
-    from cStringIO import StringIO
+    from sklearn.externals.six.moves import cStringIO as StringIO
     import sys
+
     old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=1,
-                                       random_state=0)
-    dico.fit(X)
-    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=2,
-                                       random_state=0)
-    dico.fit(X)
-    dict_learning_online(X, n_components=n_components, alpha=1, verbose=1,
-                         random_state=0)
-    dict_learning_online(X, n_components=n_components, alpha=1, verbose=2,
-                         random_state=0)
-    sys.stdout = old_stdout
+    try:
+        sys.stdout = StringIO()
+        dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=1,
+                                           random_state=0)
+        dico.fit(X)
+        dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=2,
+                                           random_state=0)
+        dico.fit(X)
+        dict_learning_online(X, n_components=n_components, alpha=1, verbose=1,
+                             random_state=0)
+        dict_learning_online(X, n_components=n_components, alpha=1, verbose=2,
+                             random_state=0)
+    finally:
+        sys.stdout = old_stdout
+
     assert_true(dico.components_.shape == (n_components, n_features))
 
 
@@ -132,23 +149,25 @@ def test_dict_learning_online_initialization():
 
 
 def test_dict_learning_online_partial_fit():
-    # this test was not actually passing before!
-    raise SkipTest
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
-    dico1 = MiniBatchDictionaryLearning(n_components, n_iter=10, batch_size=1,
-                                        shuffle=False, dict_init=V,
+    dict1 = MiniBatchDictionaryLearning(n_components, n_iter=10 * len(X),
+                                        batch_size=1,
+                                        alpha=1, shuffle=False, dict_init=V,
                                         random_state=0).fit(X)
-    dico2 = MiniBatchDictionaryLearning(n_components, n_iter=1, dict_init=V,
+    dict2 = MiniBatchDictionaryLearning(n_components, alpha=1,
+                                        n_iter=1, dict_init=V,
                                         random_state=0)
-    for ii, sample in enumerate(X):
-        dico2.partial_fit(sample, iter_offset=ii * dico2.n_iter)
-        # if ii == 1: break
-    assert_true(not np.all(sparse_encode(X, dico1.components_, alpha=100) ==
+    for i in range(10):
+        for sample in X:
+            dict2.partial_fit(sample)
+
+    assert_true(not np.all(sparse_encode(X, dict1.components_, alpha=1) ==
                            0))
-    assert_array_equal(dico1.components_, dico2.components_)
+    assert_array_almost_equal(dict1.components_, dict2.components_,
+                              decimal=2)
 
 
 def test_sparse_encode_shapes():
@@ -169,6 +188,15 @@ def test_sparse_encode_error():
     code = sparse_encode(X, V, alpha=0.001)
     assert_true(not np.all(code == 0))
     assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
+
+
+def test_sparse_encode_error_default_sparsity():
+    rng = np.random.RandomState(0)
+    X = rng.randn(100, 64)
+    D = rng.randn(2, 64)
+    code = ignore_warnings(sparse_encode)(X, D, algorithm='omp',
+                                          n_nonzero_coefs=None)
+    assert_equal(code.shape, (100, 2))
 
 
 def test_unknown_method():

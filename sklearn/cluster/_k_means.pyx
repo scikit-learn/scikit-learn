@@ -4,8 +4,9 @@
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Lars Buitinck <larsmans@gmail.com>
 #
-# License: BSD Style.
+# Licence: BSD 3 clause
 
 from libc.math cimport sqrt
 import numpy as np
@@ -14,7 +15,8 @@ cimport numpy as np
 cimport cython
 
 from ..utils.extmath import norm
-from ..utils.fixes import bincount
+from sklearn.utils.sparsefuncs_fast cimport add_row_csr
+from sklearn.utils.fixes import bincount
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
@@ -33,7 +35,7 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
                                   np.ndarray[DOUBLE, ndim=2] centers,
                                   np.ndarray[INT, ndim=1] labels,
                                   np.ndarray[DOUBLE, ndim=1] distances):
-    """Compute label assignement and inertia for a dense array
+    """Compute label assignment and inertia for a dense array
 
     Return the inertia (sum of squared distances to the centers).
     """
@@ -41,6 +43,8 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
         unsigned int n_clusters = centers.shape[0]
         unsigned int n_features = centers.shape[1]
         unsigned int n_samples = X.shape[0]
+        unsigned int x_stride = X.strides[1] / sizeof(DOUBLE)
+        unsigned int center_stride = centers.strides[1] / sizeof(DOUBLE)
         unsigned int sample_idx, center_idx, feature_idx
         unsigned int store_distances = 0
         unsigned int k
@@ -55,7 +59,8 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
 
     for center_idx in range(n_clusters):
         center_squared_norms[center_idx] = ddot(
-            n_features, &centers[center_idx, 0], 1, &centers[center_idx, 0], 1)
+            n_features, &centers[center_idx, 0], center_stride,
+            &centers[center_idx, 0], center_stride)
 
     for sample_idx in range(n_samples):
         min_dist = -1
@@ -63,8 +68,8 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
             dist = 0.0
             # hardcoded: minimize euclidean distance to cluster center:
             # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
-            dist += ddot(n_features, &X[sample_idx, 0], 1,
-                         &centers[center_idx, 0], 1)
+            dist += ddot(n_features, &X[sample_idx, 0], x_stride,
+                         &centers[center_idx, 0], center_stride)
             dist *= -2
             dist += center_squared_norms[center_idx]
             dist += x_squared_norms[sample_idx]
@@ -86,7 +91,7 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                                 np.ndarray[DOUBLE, ndim=2] centers,
                                 np.ndarray[INT, ndim=1] labels,
                                 np.ndarray[DOUBLE, ndim=1] distances):
-    """Compute label assignement and inertia for a CSR input
+    """Compute label assignment and inertia for a CSR input
 
     Return the inertia (sum of squared distances to the centers).
     """
@@ -201,8 +206,8 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
             # no new sample: leave this center as it stands
             continue
 
-        # rescale the old center to reflect it previous accumulated
-        # weight w.r.t. the new data that will be incrementally contributed
+        # rescale the old center to reflect it previous accumulated weight
+        # with regards to the new data that will be incrementally contributed
         if compute_squared_diff:
             old_center[:] = centers[center_idx]
         centers[center_idx] *= old_count
@@ -235,42 +240,6 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                                      - centers[center_idx, feature_idx]) ** 2
 
     return squared_diff
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def csr_row_norm_l2(X, squared=True):
-    """Get L2 norm of each row in CSR matrix X.
-
-    TODO: refactor me in the sklearn.utils.sparsefuncs module once the CSR
-    sklearn.preprocessing.StandardScaler has been refactored as well.
-    """
-    cdef:
-        unsigned int n_samples = X.shape[0]
-        unsigned int n_features = X.shape[1]
-        np.ndarray[DOUBLE, ndim=1] norms = np.zeros((n_samples,),
-                                                    dtype=np.float64)
-        np.ndarray[DOUBLE, ndim=1] X_data = X.data
-        np.ndarray[int, ndim=1] X_indices = X.indices
-        np.ndarray[int, ndim=1] X_indptr = X.indptr
-
-        unsigned int i
-        unsigned int j
-        double sum_
-        int with_sqrt = not squared
-
-    for i in range(n_samples):
-        sum_ = 0.0
-
-        for j in range(X_indptr[i], X_indptr[i + 1]):
-            sum_ += X_data[j] * X_data[j]
-
-        if with_sqrt:
-            sum_ = sqrt(sum_)
-
-        norms[i] = sum_
-    return norms
 
 
 @cython.boundscheck(False)
@@ -315,11 +284,11 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
         # find points to reassign empty clusters to
         far_from_centers = distances.argsort()[::-1]
 
-    for i, cluster_id in enumerate(empty_clusters):
-        # XXX two relocated clusters could be close to each other
-        new_center = X[far_from_centers[i]]
-        centers[cluster_id] = new_center
-        n_samples_in_cluster[cluster_id] = 1
+        for i, cluster_id in enumerate(empty_clusters):
+            # XXX two relocated clusters could be close to each other
+            new_center = X[far_from_centers[i]]
+            centers[cluster_id] = new_center
+            n_samples_in_cluster[cluster_id] = 1
 
     for i in range(n_samples):
         for j in range(n_features):
@@ -338,7 +307,7 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
 
     Parameters
     ----------
-    X: sparse matrix, shape (n_samples, n_features)
+    X: scipy.sparse.csr_matrix, shape (n_samples, n_features)
 
     labels: array of integers, shape (n_samples)
         Current label assignment
@@ -354,27 +323,39 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
     centers: array, shape (n_clusters, n_features)
         The resulting centers
     """
-    ## TODO: add support for CSR input
     n_features = X.shape[1]
 
-    centers = np.zeros((n_clusters, n_features), dtype=X.dtype)
-    n_samples_in_cluster = bincount(labels, minlength=n_clusters)
-    empty_clusters = np.where(n_samples_in_cluster == 0)[0]
+    cdef np.npy_intp cluster_id
+
+    cdef np.ndarray[DOUBLE, ndim=1] data = X.data
+    cdef np.ndarray[int, ndim=1] indices = X.indices
+    cdef np.ndarray[int, ndim=1] indptr = X.indptr
+
+    cdef np.ndarray[DOUBLE, ndim=2, mode="c"] centers = \
+        np.zeros((n_clusters, n_features))
+    cdef np.ndarray[np.npy_intp, ndim=1] far_from_centers
+    cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] n_samples_in_cluster = \
+        bincount(labels, minlength=n_clusters)
+    cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] empty_clusters = \
+        np.where(n_samples_in_cluster == 0)[0]
+
     # maybe also relocate small clusters?
 
-    if len(empty_clusters):
+    if empty_clusters.shape[0] > 0:
         # find points to reassign empty clusters to
         far_from_centers = distances.argsort()[::-1]
 
-    for i, cluster_id in enumerate(empty_clusters):
-        # XXX two relocated clusters could be close to each other
-        new_center = X[far_from_centers[i]]
-        new_center = new_center.todense().ravel()
-        centers[cluster_id] = new_center
-        n_samples_in_cluster[cluster_id] = 1
+        for i in range(empty_clusters.shape[0]):
+            cluster_id = empty_clusters[i]
 
-    for label, sample in zip(labels, X):
-        centers[label, :] += sample.toarray().ravel()
+            # XXX two relocated clusters could be close to each other
+            centers[cluster_id] = 0.
+            add_row_csr(data, indices, indptr, far_from_centers[i],
+                        centers[cluster_id])
+            n_samples_in_cluster[cluster_id] = 1
+
+    for i in range(labels.shape[0]):
+        add_row_csr(data, indices, indptr, i, centers[labels[i]])
 
     centers /= n_samples_in_cluster[:, np.newaxis]
 

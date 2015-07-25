@@ -8,9 +8,9 @@ to create prediction intervals.
 """
 
 import numpy as np
-import pylab as pl
-from sklearn.ensemble import GradientBoostingRegressor
+import matplotlib.pyplot as plt
 
+from sklearn.ensemble import GradientBoostingRegressor
 
 np.random.seed(1)
 
@@ -61,19 +61,19 @@ clf.fit(X, y)
 # Make the prediction on the meshed x-axis
 y_pred = clf.predict(xx)
 
-# Plot the function, the prediction and the 95% confidence interval based on
+# Plot the function, the prediction and the 90% confidence interval based on
 # the MSE
-fig = pl.figure()
-pl.plot(xx, f(xx), 'g:', label=u'$f(x) = x\,\sin(x)$')
-pl.plot(X, y, 'b.', markersize=10, label=u'Observations')
-pl.plot(xx, y_pred, 'r-', label=u'Prediction')
-pl.plot(xx, y_upper, 'k-')
-pl.plot(xx, y_lower, 'k-')
-pl.fill(np.concatenate([xx, xx[::-1]]),
-        np.concatenate([y_upper, y_lower[::-1]]),
-        alpha=.5, fc='b', ec='None', label='95% prediction interval')
-pl.xlabel('$x$')
-pl.ylabel('$f(x)$')
-pl.ylim(-10, 20)
-pl.legend(loc='upper left')
-pl.show()
+fig = plt.figure()
+plt.plot(xx, f(xx), 'g:', label=u'$f(x) = x\,\sin(x)$')
+plt.plot(X, y, 'b.', markersize=10, label=u'Observations')
+plt.plot(xx, y_pred, 'r-', label=u'Prediction')
+plt.plot(xx, y_upper, 'k-')
+plt.plot(xx, y_lower, 'k-')
+plt.fill(np.concatenate([xx, xx[::-1]]),
+         np.concatenate([y_upper, y_lower[::-1]]),
+         alpha=.5, fc='b', ec='None', label='90% prediction interval')
+plt.xlabel('$x$')
+plt.ylabel('$f(x)$')
+plt.ylim(-10, 20)
+plt.legend(loc='upper left')
+plt.show()

@@ -42,7 +42,7 @@ if __name__ == "__main__":
     op = optparse.OptionParser()
     op.add_option("--n-times",
                   dest="n_times", default=5, type=int,
-                  help="Bench results are average over n_times experiments")
+                  help="Benchmark results are average over n_times experiments")
 
     op.add_option("--n-population",
                   dest="n_population", default=100000, type=int,
@@ -187,7 +187,7 @@ if __name__ == "__main__":
     print("Results are averaged over %s repetition(s)." % opts.n_times)
     print("")
 
-    fig = plt.figure()
+    fig = plt.figure('scikit-learn sample w/o replacement benchmark results')
     plt.title("n_population = %s, n_times = %s" %
               (opts.n_population, opts.n_times))
     ax = fig.add_subplot(111)
@@ -195,7 +195,7 @@ if __name__ == "__main__":
         ax.plot(ratio, time[name], label=name)
 
     ax.set_xlabel('ratio of n_sample / n_population')
-    ax.set_ylabel('time [s]')
+    ax.set_ylabel('Time (s)')
     ax.legend()
 
     # Sort legend labels

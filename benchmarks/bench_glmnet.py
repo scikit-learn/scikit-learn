@@ -71,9 +71,9 @@ if __name__ == '__main__':
         X = X[:(i * step)]
         Y = Y[:(i * step)]
 
-        print("benching scikit-learn: ")
+        print("benchmarking scikit-learn: ")
         scikit_results.append(bench(ScikitLasso, X, Y, X_test, Y_test, coef_))
-        print("benching glmnet: ")
+        print("benchmarking glmnet: ")
         glmnet_results.append(bench(GlmnetLasso, X, Y, X_test, Y_test, coef_))
 
     pl.clf()
@@ -83,10 +83,10 @@ if __name__ == '__main__':
     pl.plot(xx, glmnet_results, 'r-', label='glmnet')
     pl.legend()
     pl.xlabel('number of samples to classify')
-    pl.ylabel('time (in seconds)')
+    pl.ylabel('Time (s)')
     pl.show()
 
-    # now do a bench where the number of points is fixed
+    # now do a benchmark where the number of points is fixed
     # and the variable is the number of features
 
     scikit_results = []
@@ -111,18 +111,18 @@ if __name__ == '__main__':
         X = X[:n_samples]
         Y = Y[:n_samples]
 
-        print("benching scikit-learn: ")
+        print("benchmarking scikit-learn: ")
         scikit_results.append(bench(ScikitLasso, X, Y, X_test, Y_test, coef_))
-        print("benching glmnet: ")
+        print("benchmarking glmnet: ")
         glmnet_results.append(bench(GlmnetLasso, X, Y, X_test, Y_test, coef_))
 
     xx = np.arange(100, 100 + n * step, step)
-    pl.figure()
+    pl.figure('scikit-learn vs. glmnet benchmark results')
     pl.title('Regression in high dimensional spaces (%d samples)' % n_samples)
     pl.plot(xx, scikit_results, 'b-', label='scikit-learn')
     pl.plot(xx, glmnet_results, 'r-', label='glmnet')
     pl.legend()
     pl.xlabel('number of features')
-    pl.ylabel('time (in seconds)')
+    pl.ylabel('Time (s)')
     pl.axis('tight')
     pl.show()

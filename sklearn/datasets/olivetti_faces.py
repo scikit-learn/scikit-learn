@@ -20,11 +20,11 @@ The original dataset consisted of 92 x 112, while the Roweis version
 consists of 64x64 images.
 """
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
-# License: Simplified BSD
+# License: BSD 3 clause
 
+from io import BytesIO
 from os.path import join, exists
 from os import makedirs
-from io import StringIO
 try:
     # Python 2
     import urllib2
@@ -54,6 +54,8 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
                          download_if_missing=True):
     """Loader for the Olivetti faces data-set from AT&T.
 
+    Read more in the :ref:`User Guide <olivetti_faces>`.
+
     Parameters
     ----------
     data_home : optional, default: None
@@ -71,6 +73,23 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     random_state : optional, integer or RandomState object
         The seed or the random number generator used to shuffle the
         data.
+
+    Returns
+    -------
+    An object with the following attributes:
+
+    data : numpy array of shape (400, 4096)
+        Each row corresponds to a ravelled face image of original size 64 x 64 pixels.
+
+    images : numpy array of shape (400, 64, 64)
+        Each row is a face image corresponding to one of the 40 subjects of the dataset.
+
+    target : numpy array of shape (400, )
+        Labels associated to each face image. Those labels are ranging from
+        0-39 and correspond to the Subject IDs.
+
+    DESCR : string
+        Description of the modified Olivetti Faces Dataset.
 
     Notes
     ------
@@ -92,8 +111,8 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     if not exists(join(data_home, TARGET_FILENAME)):
         print('downloading Olivetti faces from %s to %s'
               % (DATA_URL, data_home))
-        fhandle = urllib2.urlopen(DATA_URL)
-        buf = StringIO(fhandle.read())
+        fhandle = urlopen(DATA_URL)
+        buf = BytesIO(fhandle.read())
         mfile = loadmat(buf)
         faces = mfile['faces'].T.copy()
         joblib.dump(faces, join(data_home, TARGET_FILENAME), compress=6)

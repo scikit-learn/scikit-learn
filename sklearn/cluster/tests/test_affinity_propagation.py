@@ -5,8 +5,10 @@ Testing for Clustering methods
 
 import numpy as np
 
-from sklearn.utils.testing import (assert_equal, assert_array_equal,
-                                   assert_raises)
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_raises
+
 from sklearn.cluster.affinity_propagation_ import AffinityPropagation
 from sklearn.cluster.affinity_propagation_ import affinity_propagation
 from sklearn.datasets.samples_generator import make_blobs
@@ -19,8 +21,7 @@ X, _ = make_blobs(n_samples=60, n_features=2, centers=centers,
 
 
 def test_affinity_propagation():
-    """Affinity Propagation algorithm
-    """
+    # Affinity Propagation algorithm
     # Compute similarities
     S = -euclidean_distances(X, squared=True)
     preference = np.median(S) * 10
@@ -56,3 +57,24 @@ def test_affinity_propagation():
     assert_raises(ValueError, affinity_propagation, S, damping=0)
     af = AffinityPropagation(affinity="unknown")
     assert_raises(ValueError, af.fit, X)
+
+
+def test_affinity_propagation_predict():
+    # Test AffinityPropagation.predict
+    af = AffinityPropagation(affinity="euclidean")
+    labels = af.fit_predict(X)
+    labels2 = af.predict(X)
+    assert_array_equal(labels, labels2)
+
+
+def test_affinity_propagation_predict_error():
+    # Test exception in AffinityPropagation.predict
+    # Not fitted.
+    af = AffinityPropagation(affinity="euclidean")
+    assert_raises(ValueError, af.predict, X)
+
+    # Predict not supported when affinity="precomputed".
+    S = np.dot(X, X.T)
+    af = AffinityPropagation(affinity="precomputed")
+    af.fit(S)
+    assert_raises(ValueError, af.predict, X)

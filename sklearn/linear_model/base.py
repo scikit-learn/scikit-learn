@@ -10,23 +10,25 @@ Generalized Linear models.
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Lars Buitinck <L.J.Buitinck@uva.nl>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
+from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
 
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
+from scipy import sparse
 
+from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..utils import as_float_array, atleast2d_or_csr, safe_asarray
+from ..utils import as_float_array, check_array, check_X_y, deprecated
 from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import lsqr
-from ..utils.sparsefuncs import (csc_mean_variance_axis0,
-                                 inplace_csc_column_scale)
-from .cd_fast import sparse_std
+from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
+from ..utils.fixes import sparse_lsqr
+from ..utils.validation import NotFittedError, check_is_fitted
 
 
 ###
@@ -44,17 +46,25 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
     axis 0. Be aware that X will not be centered since it would break
     the sparsity, but will be normalized if asked so.
     """
-    X_data = np.array(X.data, np.float64)
     if fit_intercept:
-        # copy if 'normalize' is True or X is not a csc matrix
-        X = sp.csc_matrix(X, copy=normalize)
-        X_mean, X_std = csc_mean_variance_axis0(X)
+        # we might require not to change the csr matrix sometimes
+        # store a copy if normalize is True.
+        # Change dtype to float64 since mean_variance_axis accepts
+        # it that way.
+        if sp.isspmatrix(X) and X.getformat() == 'csr':
+            X = sp.csr_matrix(X, copy=normalize, dtype=np.float64)
+        else:
+            X = sp.csc_matrix(X, copy=normalize, dtype=np.float64)
+
+        X_mean, X_var = mean_variance_axis(X, axis=0)
         if normalize:
-            X_std = sparse_std(
-                X.shape[0], X.shape[1],
-                X_data, X.indices, X.indptr, X_mean)
+            # transform variance to std in-place
+            # XXX: currently scaled to variance=n_samples to match center_data
+            X_var *= X.shape[0]
+            X_std = np.sqrt(X_var, X_var)
+            del X_var
             X_std[X_std == 0] = 1
-            inplace_csc_column_scale(X, X_std)
+            inplace_column_scale(X, 1. / X_std)
         else:
             X_std = np.ones(X.shape[1])
         y_mean = y.mean(axis=0)
@@ -64,8 +74,7 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
         X_std = np.ones(X.shape[1])
         y_mean = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
 
-    X_data = np.array(X.data, np.float64)
-    return X_data, y, X_mean, y_mean, X_std
+    return X, y, X_mean, y_mean, X_std
 
 
 def center_data(X, y, fit_intercept, normalize=False, copy=True,
@@ -78,36 +87,23 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True,
     is zero, and not the mean itself
     """
     X = as_float_array(X, copy)
-    no_sample_weight = (sample_weight is None
-                        or isinstance(sample_weight, numbers.Number))
-
     if fit_intercept:
+        if isinstance(sample_weight, numbers.Number):
+            sample_weight = None
         if sp.issparse(X):
             X_mean = np.zeros(X.shape[1])
             X_std = np.ones(X.shape[1])
         else:
-            if no_sample_weight:
-                X_mean = X.mean(axis=0)
-            else:
-                X_mean = (np.sum(X * sample_weight[:, np.newaxis], axis=0)
-                          / np.sum(sample_weight))
+            X_mean = np.average(X, axis=0, weights=sample_weight)
             X -= X_mean
             if normalize:
+                # XXX: currently scaled to variance=n_samples
                 X_std = np.sqrt(np.sum(X ** 2, axis=0))
                 X_std[X_std == 0] = 1
                 X /= X_std
             else:
                 X_std = np.ones(X.shape[1])
-        if no_sample_weight:
-            y_mean = y.mean(axis=0)
-        else:
-            if y.ndim <= 1:
-                y_mean = (np.sum(y * sample_weight, axis=0)
-                          / np.sum(sample_weight))
-            else:
-                # cater for multi-output problems
-                y_mean = (np.sum(y * sample_weight[:, np.newaxis], axis=0)
-                          / np.sum(sample_weight))
+        y_mean = np.average(y, axis=0, weights=sample_weight)
         y = y - y_mean
     else:
         X_mean = np.zeros(X.shape[1])
@@ -116,27 +112,33 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True,
     return X, y, X_mean, y_mean, X_std
 
 
-class LinearModel(BaseEstimator):
+class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for Linear Models"""
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def fit(self, X, y):
         """Fit model."""
 
+    @deprecated(" and will be removed in 0.19.")
     def decision_function(self, X):
-        """Decision function of the linear model
+        """Decision function of the linear model.
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+            Samples.
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : array, shape = (n_samples,)
             Returns predicted values.
         """
-        X = safe_asarray(X)
+        return self._decision_function(X)
+
+    def _decision_function(self, X):
+        check_is_fitted(self, "coef_")
+
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         return safe_sparse_dot(X, self.coef_.T,
                                dense_output=True) + self.intercept_
 
@@ -145,14 +147,15 @@ class LinearModel(BaseEstimator):
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+            Samples.
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : array, shape = (n_samples,)
             Returns predicted values.
         """
-        return self.decision_function(X)
+        return self._decision_function(X)
 
     _center_data = staticmethod(center_data)
 
@@ -182,16 +185,21 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        array, shape = [n_samples] if n_classes == 2 else [n_samples,n_classes]
+        array, shape=(n_samples,) if n_classes == 2 else (n_samples, n_classes)
             Confidence scores per (sample, class) combination. In the binary
-            case, confidence score for the "positive" class.
+            case, confidence score for self.classes_[1] where >0 means this
+            class would be predicted.
         """
-        X = atleast2d_or_csr(X)
+        if not hasattr(self, 'coef_') or self.coef_ is None:
+            raise NotFittedError("This %(name)s instance is not fitted "
+                                 "yet" % {'name': type(self).__name__})
+
+        X = check_array(X, accept_sparse='csr')
 
         n_features = self.coef_.shape[1]
         if X.shape[1] != n_features:
@@ -222,6 +230,25 @@ class LinearClassifierMixin(ClassifierMixin):
             indices = scores.argmax(axis=1)
         return self.classes_[indices]
 
+    def _predict_proba_lr(self, X):
+        """Probability estimation for OvR logistic regression.
+
+        Positive class probabilities are computed as
+        1. / (1. + np.exp(-self.decision_function(X)));
+        multiclass is handled by normalizing that over all classes.
+        """
+        prob = self.decision_function(X)
+        prob *= -1
+        np.exp(prob, prob)
+        prob += 1
+        np.reciprocal(prob, prob)
+        if len(prob.shape) == 1:
+            return np.vstack([1 - prob, prob]).T
+        else:
+            # OvR normalization, like LibLinear's predict_probability
+            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
+            return prob
+
 
 class SparseCoefMixin(object):
     """Mixin for converting coef_ to and from CSR format.
@@ -241,8 +268,8 @@ class SparseCoefMixin(object):
         -------
         self: estimator
         """
-        if not hasattr(self, "coef_"):
-            raise ValueError("Estimator must be fitted before densifying.")
+        msg = "Estimator, %(name)s, must be fitted before densifying."
+        check_is_fitted(self, "coef_", msg=msg)
         if sp.issparse(self.coef_):
             self.coef_ = self.coef_.toarray()
         return self
@@ -271,8 +298,8 @@ class SparseCoefMixin(object):
         -------
         self: estimator
         """
-        if not hasattr(self, "coef_"):
-            raise ValueError("Estimator must be fitted before sparsifying.")
+        msg = "Estimator, %(name)s, must be fitted before sparsifying."
+        check_is_fitted(self, "coef_", msg=msg)
         self.coef_ = sp.csr_matrix(self.coef_)
         return self
 
@@ -284,37 +311,47 @@ class LinearRegression(LinearModel, RegressorMixin):
     Parameters
     ----------
     fit_intercept : boolean, optional
-        wether to calculate the intercept for this model. If set
+        whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
+
+    n_jobs : int, optional, default 1
+        The number of jobs to use for the computation.
+        If -1 all CPUs are used. This will only provide speedup for
+        n_targets > 1 and sufficient large problems.
+
     Attributes
     ----------
-    `coef_` : array, shape (n_features, ) or (n_targets, n_features)
+    coef_ : array, shape (n_features, ) or (n_targets, n_features)
         Estimated coefficients for the linear regression problem.
         If multiple targets are passed during the fit (y 2D), this
         is a 2D array of shape (n_targets, n_features), while if only
-        one target is passed, this is a 1D array of lenght n_features.
+        one target is passed, this is a 1D array of length n_features.
 
-    `intercept_` : array
+    intercept_ : array
         Independent term in the linear model.
 
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
-    Least Squares (numpy.linalg.lstsq) wrapped as a predictor object.
+    Least Squares (scipy.linalg.lstsq) wrapped as a predictor object.
 
     """
 
-    def __init__(self, fit_intercept=True, normalize=False, copy_X=True):
+    def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
+                 n_jobs=1):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
+        self.n_jobs = n_jobs
 
-    def fit(self, X, y, n_jobs=1):
+    def fit(self, X, y):
         """
         Fit linear model.
 
@@ -322,31 +359,30 @@ class LinearRegression(LinearModel, RegressorMixin):
         ----------
         X : numpy array or sparse matrix of shape [n_samples,n_features]
             Training data
+
         y : numpy array of shape [n_samples, n_targets]
             Target values
-        n_jobs : The number of jobs to use for the computation.
-            If -1 all CPUs are used. This will only provide speedup for
-            n_targets > 1 and sufficient large problems
 
         Returns
         -------
         self : returns an instance of self.
         """
-        X = safe_asarray(X)
-        y = np.asarray(y)
+        n_jobs_ = self.n_jobs
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                         y_numeric=True, multi_output=True)
 
         X, y, X_mean, y_mean, X_std = self._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
 
         if sp.issparse(X):
             if y.ndim < 2:
-                out = lsqr(X, y)
+                out = sparse_lsqr(X, y)
                 self.coef_ = out[0]
                 self.residues_ = out[3]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
-                outs = Parallel(n_jobs=n_jobs)(
-                    delayed(lsqr)(X, y[:, j].ravel())
+                outs = Parallel(n_jobs=n_jobs_)(
+                    delayed(sparse_lsqr)(X, y[:, j].ravel())
                     for j in range(y.shape[1]))
                 self.coef_ = np.vstack(out[0] for out in outs)
                 self.residues_ = np.vstack(out[3] for out in outs)
@@ -359,3 +395,38 @@ class LinearRegression(LinearModel, RegressorMixin):
             self.coef_ = np.ravel(self.coef_)
         self._set_intercept(X_mean, y_mean, X_std)
         return self
+
+
+def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
+    """Aux function used at beginning of fit in linear models"""
+    n_samples, n_features = X.shape
+    if sparse.isspmatrix(X):
+        precompute = False
+        X, y, X_mean, y_mean, X_std = sparse_center_data(
+            X, y, fit_intercept, normalize)
+    else:
+        # copy was done in fit if necessary
+        X, y, X_mean, y_mean, X_std = center_data(
+            X, y, fit_intercept, normalize, copy=copy)
+
+    if hasattr(precompute, '__array__') \
+            and not np.allclose(X_mean, np.zeros(n_features)) \
+            and not np.allclose(X_std, np.ones(n_features)):
+        # recompute Gram
+        precompute = 'auto'
+        Xy = None
+
+    # precompute if n_samples > n_features
+    if precompute == 'auto':
+        precompute = (n_samples > n_features)
+
+    if precompute is True:
+        precompute = np.dot(X.T, X)
+
+    if not hasattr(precompute, '__array__'):
+        Xy = None  # cannot use Xy if precompute is not Gram
+
+    if hasattr(precompute, '__array__') and Xy is None:
+        Xy = np.dot(X.T, y)
+
+    return X, y, X_mean, y_mean, X_std, precompute, Xy

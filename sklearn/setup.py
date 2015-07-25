@@ -24,6 +24,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('cluster/tests')
     config.add_subpackage('covariance')
     config.add_subpackage('covariance/tests')
+    config.add_subpackage('cross_decomposition')
     config.add_subpackage('decomposition')
     config.add_subpackage('decomposition/tests')
     config.add_subpackage("ensemble")
@@ -38,6 +39,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('gaussian_process')
     config.add_subpackage('gaussian_process/tests')
     config.add_subpackage('neighbors')
+    config.add_subpackage('neural_network')
+    config.add_subpackage('preprocessing')
     config.add_subpackage('manifold')
     config.add_subpackage('metrics')
     config.add_subpackage('semi_supervised')
@@ -47,20 +50,13 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('metrics/cluster')
     config.add_subpackage('metrics/cluster/tests')
 
-    # add cython extension module for hmm
-    config.add_extension(
-        '_hmmc',
-        sources=['_hmmc.c'],
-        include_dirs=[numpy.get_include()],
-        libraries=libraries,
-    )
+    # add cython extension module for isotonic regression
     config.add_extension(
         '_isotonic',
         sources=['_isotonic.c'],
         include_dirs=[numpy.get_include()],
         libraries=libraries,
     )
-
 
     # some libs needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)

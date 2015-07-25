@@ -93,7 +93,7 @@ if __name__ == "__main__":
     op = optparse.OptionParser()
     op.add_option("--n-times",
                   dest="n_times", default=5, type=int,
-                  help="Bench results are average over n_times experiments")
+                  help="Benchmark results are average over n_times experiments")
 
     op.add_option("--n-features",
                   dest="n_features", default=10 ** 4, type=int,
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     op.add_option("--n-components",
                   dest="n_components", default="auto",
                   help="Size of the random subspace."
-                       "('auto' or int > 0)")
+                       " ('auto' or int > 0)")
 
     op.add_option("--ratio-nonzeros",
                   dest="ratio_nonzeros", default=10 ** -3, type=float,
@@ -119,7 +119,7 @@ if __name__ == "__main__":
     op.add_option("--density",
                   dest="density", default=1 / 3,
                   help="Density used by the sparse random projection."
-                       "('auto' or float (0.0, 1.0]")
+                       " ('auto' or float (0.0, 1.0]")
 
     op.add_option("--eps",
                   dest="eps", default=0.5, type=float,

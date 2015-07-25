@@ -59,7 +59,7 @@ sparse_lasso.fit(Xs, y)
 print("Sparse Lasso done in %fs" % (time() - t0))
 
 t0 = time()
-dense_lasso.fit(Xs.todense(), y)
+dense_lasso.fit(Xs.toarray(), y)
 print("Dense Lasso done in %fs" % (time() - t0))
 
 print("Distance between coefficients : %s"

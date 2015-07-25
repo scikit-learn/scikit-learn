@@ -10,6 +10,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
                        RadiusNeighborsMixin, UnsupervisedMixin):
     """Unsupervised learner for implementing neighbor searches.
 
+    Read more in the :ref:`User Guide <unsupervised_neighbors>`.
+
     Parameters
     ----------
     n_neighbors : int, optional (default = 5)
@@ -23,7 +25,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`scipy.spatial.cKDtree`
+        - 'kd_tree' will use :class:`KDtree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method.
@@ -32,7 +34,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         this parameter, using brute force.
 
     leaf_size : int, optional (default = 30)
-        Leaf size passed to BallTree or cKDTree.  This can affect the
+        Leaf size passed to BallTree or KDTree.  This can affect the
         speed of the construction and query, as well as the memory
         required to store the tree.  The optimal value depends on the
         nature of the problem.
@@ -43,8 +45,38 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
+    metric : string or callable, default 'minkowski'
+        metric to use for distance computation. Any metric from scikit-learn
+        or scipy.spatial.distance can be used.
+
+        If metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays as input and return one value indicating the
+        distance between them. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
+
+        Distance matrices are not supported.
+
+        Valid values for metric are:
+
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+          'manhattan']
+
+        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
+          'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+          'sqeuclidean', 'yule']
+
+        See the documentation for scipy.spatial.distance for details on these
+        metrics.
+
+    metric_params: dict, optional (default = None)
+        additional keyword arguments for the metric function.
+
     Examples
     --------
+      >>> import numpy as np
       >>> from sklearn.neighbors import NearestNeighbors
       >>> samples = [[0, 0, 2], [1, 0, 0], [0, 0, 1]]
 
@@ -56,8 +88,9 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
       ... #doctest: +ELLIPSIS
       array([[2, 0]]...)
 
-      >>> neigh.radius_neighbors([0, 0, 1.3], 0.4, return_distance=False)
-      array([[2]])
+      >>> rng = neigh.radius_neighbors([0, 0, 1.3], 0.4, return_distance=False)
+      >>> np.asarray(rng[0][0])
+      array(2)
 
     See also
     --------
@@ -76,8 +109,10 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     """
 
     def __init__(self, n_neighbors=5, radius=1.0,
-                 algorithm='auto', leaf_size=30, p=2):
+                 algorithm='auto', leaf_size=30, metric='minkowski',
+                 p=2, metric_params=None, **kwargs):
         self._init_params(n_neighbors=n_neighbors,
                           radius=radius,
                           algorithm=algorithm,
-                          leaf_size=leaf_size, p=p)
+                          leaf_size=leaf_size, metric=metric, p=p,
+                          metric_params=metric_params, **kwargs)

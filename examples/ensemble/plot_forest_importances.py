@@ -4,7 +4,7 @@ Feature importances with forests of trees
 =========================================
 
 This examples shows the use of forests of trees to evaluate the importance of
-features on an artifical classification task. The red bars are the feature
+features on an artificial classification task. The red bars are the feature
 importances of the forest, along with their inter-trees variability.
 
 As expected, the plot suggests that 3 features are informative, while the
@@ -13,6 +13,7 @@ remaining are not.
 print(__doc__)
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_classification
 from sklearn.ensemble import ExtraTreesClassifier
@@ -44,11 +45,10 @@ for f in range(10):
     print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
 
 # Plot the feature importances of the forest
-import pylab as pl
-pl.figure()
-pl.title("Feature importances")
-pl.bar(range(10), importances[indices],
+plt.figure()
+plt.title("Feature importances")
+plt.bar(range(10), importances[indices],
        color="r", yerr=std[indices], align="center")
-pl.xticks(range(10), indices)
-pl.xlim([-1, 10])
-pl.show()
+plt.xticks(range(10), indices)
+plt.xlim([-1, 10])
+plt.show()

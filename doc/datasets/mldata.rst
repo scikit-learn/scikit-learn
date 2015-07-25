@@ -13,7 +13,8 @@ Downloading datasets from the mldata.org repository
 data, supported by the `PASCAL network <http://www.pascal-network.org>`_ .
 
 The ``sklearn.datasets`` package is able to directly download data
-sets from the repository using the function ``fetch_mldata(dataname)``.
+sets from the repository using the function
+:func:`sklearn.datasets.fetch_mldata`.
 
 For example, to download the MNIST digit recognition database::
 
@@ -38,14 +39,15 @@ specified by the ``data_home`` keyword argument, which defaults to
   ['mnist-original.mat']
 
 Data sets in `mldata.org <http://mldata.org>`_ do not adhere to a strict
-naming or formatting convention. ``fetch_mldata`` is able to make sense
-of the most common cases, but allows to tailor the defaults to individual
-datasets:
+naming or formatting convention. :func:`sklearn.datasets.fetch_mldata` is
+able to make sense of the most common cases, but allows to tailor the
+defaults to individual datasets:
 
 * The data arrays in `mldata.org <http://mldata.org>`_ are most often
   shaped as ``(n_features, n_samples)``. This is the opposite of the
-  ``scikit-learn`` convention, so ``fetch_mldata`` transposes the matrix
-  by default. The ``transpose_data`` keyword controls this behavior::
+  ``scikit-learn`` convention, so :func:`sklearn.datasets.fetch_mldata`
+  transposes the matrix by default. The ``transpose_data`` keyword controls
+  this behavior::
 
     >>> iris = fetch_mldata('iris', data_home=custom_data_home)
     >>> iris.data.shape
@@ -55,12 +57,12 @@ datasets:
     >>> iris.data.shape
     (4, 150)
 
-* For datasets with multiple columns, ``fetch_mldata`` tries to identify
-  the target and data columns and rename them to ``target`` and ``data``.
-  This is done by looking for arrays named ``label`` and ``data`` in the
-  dataset, and failing that by choosing the first array to be ``target``
-  and the second to be ``data``. This behavior can be changed with the
-  ``target_name`` and ``data_name`` keywords, setting them to a specific
+* For datasets with multiple columns, :func:`sklearn.datasets.fetch_mldata`
+  tries to identify the target and data columns and rename them to ``target``
+  and ``data``. This is done by looking for arrays named ``label`` and
+  ``data`` in the dataset, and failing that by choosing the first array to be
+  ``target`` and the second to be ``data``. This behavior can be changed with
+  the ``target_name`` and ``data_name`` keywords, setting them to a specific
   name or index number (the name and order of the columns in the datasets
   can be found at its `mldata.org <http://mldata.org>`_ under the tab "Data"::
 

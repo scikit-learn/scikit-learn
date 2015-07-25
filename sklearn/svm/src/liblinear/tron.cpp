@@ -12,18 +12,9 @@ template <class T> static inline T min(T x,T y) { return (x<y)?x:y; }
 template <class T> static inline T max(T x,T y) { return (x>y)?x:y; }
 #endif
 
-#ifdef __cplusplus
 extern "C" {
-#endif
-
-extern double dnrm2_(int *, double *, int *);
-extern double ddot_(int *, double *, int *, double *, int *);
-extern int daxpy_(int *, double *, double *, int *, double *, int *);
-extern int dscal_(int *, double *, double *, int *);
-
-#ifdef __cplusplus
+#include <cblas.h>
 }
-#endif
 
 static void default_print(const char *buf)
 {
@@ -53,7 +44,7 @@ TRON::~TRON()
 {
 }
 
-void TRON::tron(double *w)
+int TRON::tron(double *w)
 {
 	// Parameters for updating the iterates.
 	double eta0 = 1e-4, eta1 = 0.25, eta2 = 0.75;
@@ -63,7 +54,7 @@ void TRON::tron(double *w)
 
 	int n = fun_obj->get_nr_variable();
 	int i, cg_iter;
-	double delta, snorm, one=1.0;
+	double delta, snorm;
 	double alpha, f, fnew, prered, actred, gs;
 	int search = 1, iter = 1, inc = 1;
 	double *s = new double[n];
@@ -74,9 +65,9 @@ void TRON::tron(double *w)
 	for (i=0; i<n; i++)
 		w[i] = 0;
 
-        f = fun_obj->fun(w);
+	f = fun_obj->fun(w);
 	fun_obj->grad(w, g);
-	delta = dnrm2_(&n, g, &inc);
+	delta = cblas_dnrm2(n, g, inc);
 	double gnorm1 = delta;
 	double gnorm = gnorm1;
 
@@ -90,17 +81,17 @@ void TRON::tron(double *w)
 		cg_iter = trcg(delta, g, s, r);
 
 		memcpy(w_new, w, sizeof(double)*n);
-		daxpy_(&n, &one, s, &inc, w_new, &inc);
+		cblas_daxpy(n, 1.0, s, inc, w_new, inc);
 
-		gs = ddot_(&n, g, &inc, s, &inc);
-		prered = -0.5*(gs-ddot_(&n, s, &inc, r, &inc));
-                fnew = fun_obj->fun(w_new);
+		gs = cblas_ddot(n, g, inc, s, inc);
+		prered = -0.5*(gs - cblas_ddot(n, s, inc, r, inc));
+		fnew = fun_obj->fun(w_new);
 
 		// Compute the actual reduction.
-	        actred = f - fnew;
+		actred = f - fnew;
 
 		// On the first iteration, adjust the initial step bound.
-		snorm = dnrm2_(&n, s, &inc);
+		snorm = cblas_dnrm2(n, s, inc);
 		if (iter == 1)
 			delta = min(delta, snorm);
 
@@ -127,9 +118,9 @@ void TRON::tron(double *w)
 			iter++;
 			memcpy(w, w_new, sizeof(double)*n);
 			f = fnew;
-		        fun_obj->grad(w, g);
+			fun_obj->grad(w, g);
 
-			gnorm = dnrm2_(&n, g, &inc);
+			gnorm = cblas_dnrm2(n, g, inc);
 			if (gnorm <= eps*gnorm1)
 				break;
 		}
@@ -155,13 +146,13 @@ void TRON::tron(double *w)
 	delete[] r;
 	delete[] w_new;
 	delete[] s;
+	return --iter;
 }
 
 int TRON::trcg(double delta, double *g, double *s, double *r)
 {
 	int i, inc = 1;
 	int n = fun_obj->get_nr_variable();
-	double one = 1;
 	double *d = new double[n];
 	double *Hd = new double[n];
 	double rTr, rnewTrnew, alpha, beta, cgtol;
@@ -172,45 +163,45 @@ int TRON::trcg(double delta, double *g, double *s, double *r)
 		r[i] = -g[i];
 		d[i] = r[i];
 	}
-	cgtol = 0.1*dnrm2_(&n, g, &inc);
+	cgtol = 0.1 * cblas_dnrm2(n, g, inc);
 
 	int cg_iter = 0;
-	rTr = ddot_(&n, r, &inc, r, &inc);
+	rTr = cblas_ddot(n, r, inc, r, inc);
 	while (1)
 	{
-		if (dnrm2_(&n, r, &inc) <= cgtol)
+		if (cblas_dnrm2(n, r, inc) <= cgtol)
 			break;
 		cg_iter++;
 		fun_obj->Hv(d, Hd);
 
-		alpha = rTr/ddot_(&n, d, &inc, Hd, &inc);
-		daxpy_(&n, &alpha, d, &inc, s, &inc);
-		if (dnrm2_(&n, s, &inc) > delta)
+		alpha = rTr / cblas_ddot(n, d, inc, Hd, inc);
+		cblas_daxpy(n, alpha, d, inc, s, inc);
+		if (cblas_dnrm2(n, s, inc) > delta)
 		{
 			info("cg reaches trust region boundary\n");
 			alpha = -alpha;
-			daxpy_(&n, &alpha, d, &inc, s, &inc);
+			cblas_daxpy(n, alpha, d, inc, s, inc);
 
-			double std = ddot_(&n, s, &inc, d, &inc);
-			double sts = ddot_(&n, s, &inc, s, &inc);
-			double dtd = ddot_(&n, d, &inc, d, &inc);
+			double std = cblas_ddot(n, s, inc, d, inc);
+			double sts = cblas_ddot(n, s, inc, s, inc);
+			double dtd = cblas_ddot(n, d, inc, d, inc);
 			double dsq = delta*delta;
 			double rad = sqrt(std*std + dtd*(dsq-sts));
 			if (std >= 0)
 				alpha = (dsq - sts)/(std + rad);
 			else
 				alpha = (rad - std)/dtd;
-			daxpy_(&n, &alpha, d, &inc, s, &inc);
+			cblas_daxpy(n, alpha, d, inc, s, inc);
 			alpha = -alpha;
-			daxpy_(&n, &alpha, Hd, &inc, r, &inc);
+			cblas_daxpy(n, alpha, Hd, inc, r, inc);
 			break;
 		}
 		alpha = -alpha;
-		daxpy_(&n, &alpha, Hd, &inc, r, &inc);
-		rnewTrnew = ddot_(&n, r, &inc, r, &inc);
+		cblas_daxpy(n, alpha, Hd, inc, r, inc);
+		rnewTrnew = cblas_ddot(n, r, inc, r, inc);
 		beta = rnewTrnew/rTr;
-		dscal_(&n, &beta, d, &inc);
-		daxpy_(&n, &one, r, &inc, d, &inc);
+		cblas_dscal(n, beta, d, inc);
+		cblas_daxpy(n, 1.0, r, inc, d, inc);
 		rTr = rnewTrnew;
 	}
 

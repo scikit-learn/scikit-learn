@@ -6,26 +6,33 @@ validation and performance evaluation.
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>,
 #         Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD Style.
+# License: BSD 3 clause
 
 from __future__ import print_function
+from __future__ import division
 
 import warnings
-from itertools import combinations
+from itertools import chain, combinations
 from math import ceil, floor, factorial
 import numbers
+import time
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 import scipy.sparse as sp
 
 from .base import is_classifier, clone
-from .utils import check_arrays, check_random_state, safe_mask
-from .utils.fixes import unique
-from .externals.joblib import Parallel, delayed
-from .metrics import SCORERS, Scorer
+from .utils import indexable, check_random_state, safe_indexing
+from .utils.validation import (_is_arraylike, _num_samples,
+                               check_array, column_or_1d)
+from .utils.multiclass import type_of_target
+from .externals.joblib import Parallel, delayed, logger
+from .externals.six import with_metaclass
+from .externals.six.moves import zip
+from .metrics.scorer import check_scoring
+from .utils.fixes import bincount
 
-__all__ = ['Bootstrap',
-           'KFold',
+__all__ = ['KFold',
            'LeaveOneLabelOut',
            'LeaveOneOut',
            'LeavePLabelOut',
@@ -33,33 +40,79 @@ __all__ = ['Bootstrap',
            'ShuffleSplit',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
+           'PredefinedSplit',
            'check_cv',
            'cross_val_score',
+           'cross_val_predict',
            'permutation_test_score',
            'train_test_split']
 
 
-class LeaveOneOut(object):
+class _PartitionIterator(with_metaclass(ABCMeta)):
+    """Base class for CV iterators where train_mask = ~test_mask
+
+    Implementations must define `_iter_test_masks` or `_iter_test_indices`.
+
+    Parameters
+    ----------
+    n : int
+        Total number of elements in dataset.
+    """
+
+    def __init__(self, n):
+        if abs(n - int(n)) >= np.finfo('f').eps:
+            raise ValueError("n must be an integer")
+        self.n = int(n)
+
+    def __iter__(self):
+        ind = np.arange(self.n)
+        for test_index in self._iter_test_masks():
+            train_index = np.logical_not(test_index)
+            train_index = ind[train_index]
+            test_index = ind[test_index]
+            yield train_index, test_index
+
+    # Since subclasses must implement either _iter_test_masks or
+    # _iter_test_indices, neither can be abstract.
+    def _iter_test_masks(self):
+        """Generates boolean masks corresponding to test sets.
+
+        By default, delegates to _iter_test_indices()
+        """
+        for test_index in self._iter_test_indices():
+            test_mask = self._empty_mask()
+            test_mask[test_index] = True
+            yield test_mask
+
+    def _iter_test_indices(self):
+        """Generates integer indices corresponding to test sets."""
+        raise NotImplementedError
+
+    def _empty_mask(self):
+        return np.zeros(self.n, dtype=np.bool)
+
+
+class LeaveOneOut(_PartitionIterator):
     """Leave-One-Out cross validation iterator.
 
     Provides train/test indices to split data in train test sets. Each
     sample is used once as a test set (singleton) while the remaining
     samples form the training set.
 
+    Note: ``LeaveOneOut(n)`` is equivalent to ``KFold(n, n_folds=n)`` and
+    ``LeavePOut(n, p=1)``.
+
     Due to the high number of test sets (which is the same as the
     number of samples) this cross validation method can be very costly.
     For large datasets one should favor KFold, StratifiedKFold or
     ShuffleSplit.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     n : int
         Total number of elements in dataset.
-
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     --------
@@ -87,22 +140,8 @@ class LeaveOneOut(object):
     domain-specific stratification of the dataset.
     """
 
-    def __init__(self, n, indices=True):
-        self.n = n
-        self.indices = indices
-
-    def __iter__(self):
-        n = self.n
-        if self.indices:
-            ind = np.arange(n)
-        for i in range(n):
-            test_index = np.zeros(n, dtype=np.bool)
-            test_index[i] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
+    def _iter_test_indices(self):
+        return range(self.n)
 
     def __repr__(self):
         return '%s.%s(n=%i)' % (
@@ -115,16 +154,21 @@ class LeaveOneOut(object):
         return self.n
 
 
-class LeavePOut(object):
+class LeavePOut(_PartitionIterator):
     """Leave-P-Out cross validation iterator
 
-    Provides train/test indices to split data in train test sets. The
-    test set is built using p samples while the remaining samples form
-    the training set.
+    Provides train/test indices to split data in train test sets. This results
+    in testing on all distinct samples of size p, while the remaining n - p
+    samples form the training set in each iteration.
 
-    Due to the high number of iterations which grows with the number of
-    samples this cross validation method can be very costly. For large
-    datasets one should favor KFold, StratifiedKFold or ShuffleSplit.
+    Note: ``LeavePOut(n, p)`` is NOT equivalent to ``KFold(n, n_folds=n // p)``
+    which creates non-overlapping test sets.
+
+    Due to the high number of iterations which grows combinatorically with the
+    number of samples this cross validation method can be very costly. For
+    large datasets one should favor KFold, StratifiedKFold or ShuffleSplit.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -133,11 +177,6 @@ class LeavePOut(object):
 
     p : int
         Size of the test sets.
-
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     --------
@@ -161,25 +200,13 @@ class LeavePOut(object):
     TRAIN: [0 1] TEST: [2 3]
     """
 
-    def __init__(self, n, p, indices=True):
-        self.n = n
+    def __init__(self, n, p):
+        super(LeavePOut, self).__init__(n)
         self.p = p
-        self.indices = indices
 
-    def __iter__(self):
-        n = self.n
-        p = self.p
-        comb = combinations(range(n), p)
-        if self.indices:
-            ind = np.arange(n)
-        for idx in comb:
-            test_index = np.zeros(n, dtype=np.bool)
-            test_index[np.array(idx)] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
+    def _iter_test_indices(self):
+        for comb in combinations(range(self.n), self.p):
+            yield np.array(comb)
 
     def __repr__(self):
         return '%s.%s(n=%i, p=%i)' % (
@@ -194,15 +221,35 @@ class LeavePOut(object):
                    / factorial(self.p))
 
 
-def _validate_kfold(k, n_samples):
-    if k <= 0:
-        raise ValueError("Cannot have number of folds k below 1.")
-    if k > n_samples:
-        raise ValueError("Cannot have number of folds k=%d greater than"
-                         " the number of samples: %d." % (k, n_samples))
+class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
+    """Base class to validate KFold approaches"""
+
+    @abstractmethod
+    def __init__(self, n, n_folds, shuffle, random_state):
+        super(_BaseKFold, self).__init__(n)
+
+        if abs(n_folds - int(n_folds)) >= np.finfo('f').eps:
+            raise ValueError("n_folds must be an integer")
+        self.n_folds = n_folds = int(n_folds)
+
+        if n_folds <= 1:
+            raise ValueError(
+                "k-fold cross validation requires at least one"
+                " train / test split by setting n_folds=2 or more,"
+                " got n_folds={0}.".format(n_folds))
+        if n_folds > self.n:
+            raise ValueError(
+                ("Cannot have number of folds n_folds={0} greater"
+                 " than the number of samples: {1}.").format(n_folds, n))
+
+        if not isinstance(shuffle, bool):
+            raise TypeError("shuffle must be True or False;"
+                            " got {0}".format(shuffle))
+        self.shuffle = shuffle
+        self.random_state = random_state
 
 
-class KFold(object):
+class KFold(_BaseKFold):
     """K-Folds cross validation iterator.
 
     Provides train/test indices to split data in train test sets. Split
@@ -211,24 +258,22 @@ class KFold(object):
     Each fold is then used a validation set once while the k - 1 remaining
     fold form the training set.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     n : int
         Total number of elements.
 
     n_folds : int, default=3
-        Number of folds.
-
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
+        Number of folds. Must be at least 2.
 
     shuffle : boolean, optional
         Whether to shuffle the data before splitting into batches.
 
-    random_state : int or RandomState
-            Pseudo number generator state used for random sampling.
+    random_state : None, int or RandomState
+        Pseudo-random number generator state used for random
+        sampling. If None, use default numpy RNG for shuffling
 
     Examples
     --------
@@ -238,8 +283,9 @@ class KFold(object):
     >>> kf = cross_validation.KFold(4, n_folds=2)
     >>> len(kf)
     2
-    >>> print(kf)
-    sklearn.cross_validation.KFold(n=4, n_folds=2)
+    >>> print(kf)  # doctest: +NORMALIZE_WHITESPACE
+    sklearn.cross_validation.KFold(n=4, n_folds=2, shuffle=False,
+                                   random_state=None)
     >>> for train_index, test_index in kf:
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -259,65 +305,49 @@ class KFold(object):
     classification tasks).
     """
 
-    def __init__(self, n, n_folds=3, indices=True, shuffle=False,
-                 random_state=None, k=None):
-        if k is not None:  # pragma: no cover
-            warnings.warn("The parameter k was renamed to n_folds and will be"
-                          " removed in 0.15.", DeprecationWarning)
-            n_folds = k
-        _validate_kfold(n_folds, n)
-        random_state = check_random_state(random_state)
-
-        if abs(n - int(n)) >= np.finfo('f').eps:
-            raise ValueError("n must be an integer")
-        self.n = int(n)
-        if abs(n_folds - int(n_folds)) >= np.finfo('f').eps:
-            raise ValueError("n_folds must be an integer")
-        self.n_folds = int(n_folds)
-        self.indices = indices
+    def __init__(self, n, n_folds=3, shuffle=False,
+                 random_state=None):
+        super(KFold, self).__init__(n, n_folds, shuffle, random_state)
         self.idxs = np.arange(n)
         if shuffle:
-            random_state.shuffle(self.idxs)
+            rng = check_random_state(self.random_state)
+            rng.shuffle(self.idxs)
 
-    def __iter__(self):
+    def _iter_test_indices(self):
         n = self.n
         n_folds = self.n_folds
         fold_sizes = (n // n_folds) * np.ones(n_folds, dtype=np.int)
         fold_sizes[:n % n_folds] += 1
         current = 0
-        if self.indices:
-            ind = np.arange(n)
-        for i, fold_size in enumerate(fold_sizes):
-            test_index = np.zeros(n, dtype=np.bool)
+        for fold_size in fold_sizes:
             start, stop = current, current + fold_size
-            test_index[self.idxs[start:stop]] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
+            yield self.idxs[start:stop]
             current = stop
-            yield train_index, test_index
 
     def __repr__(self):
-        return '%s.%s(n=%i, n_folds=%i)' % (
+        return '%s.%s(n=%i, n_folds=%i, shuffle=%s, random_state=%s)' % (
             self.__class__.__module__,
             self.__class__.__name__,
             self.n,
             self.n_folds,
+            self.shuffle,
+            self.random_state,
         )
 
     def __len__(self):
         return self.n_folds
 
 
-class StratifiedKFold(object):
+class StratifiedKFold(_BaseKFold):
     """Stratified K-Folds cross validation iterator
 
     Provides train/test indices to split data in train test sets.
 
-    This cross-validation object is a variation of KFold, which
+    This cross-validation object is a variation of KFold that
     returns stratified folds. The folds are made by preserving
     the percentage of samples for each class.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -325,12 +355,15 @@ class StratifiedKFold(object):
         Samples to split in K folds.
 
     n_folds : int, default=3
-        Number of folds.
+        Number of folds. Must be at least 2.
 
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
+    shuffle : boolean, optional
+        Whether to shuffle each stratification of the data before splitting
+        into batches.
+
+    random_state : None, int or RandomState
+        Pseudo-random number generator state used for random
+        sampling. If None, use default numpy RNG for shuffling
 
     Examples
     --------
@@ -340,8 +373,9 @@ class StratifiedKFold(object):
     >>> skf = cross_validation.StratifiedKFold(y, n_folds=2)
     >>> len(skf)
     2
-    >>> print(skf)
-    sklearn.cross_validation.StratifiedKFold(labels=[0 0 1 1], n_folds=2)
+    >>> print(skf)  # doctest: +NORMALIZE_WHITESPACE
+    sklearn.cross_validation.StratifiedKFold(labels=[0 0 1 1], n_folds=2,
+                                             shuffle=False, random_state=None)
     >>> for train_index, test_index in skf:
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -353,56 +387,73 @@ class StratifiedKFold(object):
     -----
     All the folds have size trunc(n_samples / n_folds), the last one has the
     complementary.
+
     """
 
-    def __init__(self, y, n_folds=3, indices=True, k=None):
-        if k is not None:  # pragma: no cover
-            warnings.warn("The parameter k was renamed to n_folds and will be"
-                          " removed in 0.15.", DeprecationWarning)
-            n_folds = k
+    def __init__(self, y, n_folds=3, shuffle=False,
+                 random_state=None):
+        super(StratifiedKFold, self).__init__(
+            len(y), n_folds, shuffle, random_state)
         y = np.asarray(y)
-        n = y.shape[0]
-        _validate_kfold(n_folds, n)
-        _, y_sorted = unique(y, return_inverse=True)
-        min_labels = np.min(np.bincount(y_sorted))
-        if n_folds > min_labels:
+        n_samples = y.shape[0]
+        unique_labels, y_inversed = np.unique(y, return_inverse=True)
+        label_counts = bincount(y_inversed)
+        min_labels = np.min(label_counts)
+        if self.n_folds > min_labels:
             warnings.warn(("The least populated class in y has only %d"
-                          " members, which is too few. The minimum"
-                          " number of labels for any class cannot"
-                          " be less than n_folds=%d."
-                          % (min_labels, n_folds)), Warning)
-        self.y = y
-        self.n_folds = n_folds
-        self.indices = indices
+                           " members, which is too few. The minimum"
+                           " number of labels for any class cannot"
+                           " be less than n_folds=%d."
+                           % (min_labels, self.n_folds)), Warning)
 
-    def __iter__(self):
-        n_folds = self.n_folds
-        n = len(self.y)
-        idx = np.argsort(self.y)
-        if self.indices:
-            ind = np.arange(n)
-        for i in range(n_folds):
-            test_index = np.zeros(n, dtype=np.bool)
-            test_index[idx[i::n_folds]] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
+        # don't want to use the same seed in each label's shuffle
+        if self.shuffle:
+            rng = check_random_state(self.random_state)
+        else:
+            rng = self.random_state
+
+        # pre-assign each sample to a test fold index using individual KFold
+        # splitting strategies for each label so as to respect the
+        # balance of labels
+        per_label_cvs = [
+            KFold(max(c, self.n_folds), self.n_folds, shuffle=self.shuffle,
+                  random_state=rng) for c in label_counts]
+        test_folds = np.zeros(n_samples, dtype=np.int)
+        for test_fold_idx, per_label_splits in enumerate(zip(*per_label_cvs)):
+            for label, (_, test_split) in zip(unique_labels, per_label_splits):
+                label_test_folds = test_folds[y == label]
+                # the test split can be too big because we used
+                # KFold(max(c, self.n_folds), self.n_folds) instead of
+                # KFold(c, self.n_folds) to make it possible to not crash even
+                # if the data is not 100% stratifiable for all the labels
+                # (we use a warning instead of raising an exception)
+                # If this is the case, let's trim it:
+                test_split = test_split[test_split < len(label_test_folds)]
+                label_test_folds[test_split] = test_fold_idx
+                test_folds[y == label] = label_test_folds
+
+        self.test_folds = test_folds
+        self.y = y
+
+    def _iter_test_masks(self):
+        for i in range(self.n_folds):
+            yield self.test_folds == i
 
     def __repr__(self):
-        return '%s.%s(labels=%s, n_folds=%i)' % (
+        return '%s.%s(labels=%s, n_folds=%i, shuffle=%s, random_state=%s)' % (
             self.__class__.__module__,
             self.__class__.__name__,
             self.y,
             self.n_folds,
+            self.shuffle,
+            self.random_state,
         )
 
     def __len__(self):
         return self.n_folds
 
 
-class LeaveOneLabelOut(object):
+class LeaveOneLabelOut(_PartitionIterator):
     """Leave-One-Label_Out cross-validation iterator
 
     Provides train/test indices to split data according to a third-party
@@ -412,16 +463,13 @@ class LeaveOneLabelOut(object):
     For instance the labels could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     labels : array-like of int with shape (n_samples,)
         Arbitrary domain-specific stratification of the data to be used
         to draw the splits.
-
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     --------
@@ -450,25 +498,16 @@ class LeaveOneLabelOut(object):
 
     """
 
-    def __init__(self, labels, indices=True):
-        self.labels = labels
-        self.n_unique_labels = len(unique(labels))
-        self.indices = indices
+    def __init__(self, labels):
+        super(LeaveOneLabelOut, self).__init__(len(labels))
+        # We make a copy of labels to avoid side-effects during iteration
+        self.labels = np.array(labels, copy=True)
+        self.unique_labels = np.unique(labels)
+        self.n_unique_labels = len(self.unique_labels)
 
-    def __iter__(self):
-        # We make a copy here to avoid side-effects during iteration
-        labels = np.array(self.labels, copy=True)
-        if self.indices:
-            ind = np.arange(len(labels))
-
-        for i in unique(labels):    # also a copy; XXX do we need this?
-            test_index = np.zeros(len(labels), dtype=np.bool)
-            test_index[labels == i] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
+    def _iter_test_masks(self):
+        for i in self.unique_labels:
+            yield self.labels == i
 
     def __repr__(self):
         return '%s.%s(labels=%s)' % (
@@ -481,7 +520,7 @@ class LeaveOneLabelOut(object):
         return self.n_unique_labels
 
 
-class LeavePLabelOut(object):
+class LeavePLabelOut(_PartitionIterator):
     """Leave-P-Label_Out cross-validation iterator
 
     Provides train/test indices to split data according to a third-party
@@ -496,6 +535,8 @@ class LeavePLabelOut(object):
     ``p`` different values of the labels while the latter uses samples
     all assigned the same labels.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     labels : array-like of int with shape (n_samples,)
@@ -504,11 +545,6 @@ class LeavePLabelOut(object):
 
     p : int
         Number of samples to leave out in the test split.
-
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     --------
@@ -537,30 +573,22 @@ class LeavePLabelOut(object):
      [5 6]] [1] [2 1]
     """
 
-    def __init__(self, labels, p, indices=True):
-        self.labels = labels
-        self.unique_labels = unique(self.labels)
+    def __init__(self, labels, p):
+        # We make a copy of labels to avoid side-effects during iteration
+        super(LeavePLabelOut, self).__init__(len(labels))
+        self.labels = np.array(labels, copy=True)
+        self.unique_labels = np.unique(labels)
         self.n_unique_labels = len(self.unique_labels)
         self.p = p
-        self.indices = indices
 
-    def __iter__(self):
-        # We make a copy here to avoid side-effects during iteration
-        labels = np.array(self.labels, copy=True)
-        unique_labels = unique(labels)
+    def _iter_test_masks(self):
         comb = combinations(range(self.n_unique_labels), self.p)
-        if self.indices:
-            ind = np.arange(len(labels))
         for idx in comb:
-            test_index = np.zeros(len(labels), dtype=np.bool)
+            test_index = self._empty_mask()
             idx = np.array(idx)
-            for l in unique_labels[idx]:
-                test_index[labels == l] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
+            for l in self.unique_labels[idx]:
+                test_index[self.labels == l] = True
+            yield test_index
 
     def __repr__(self):
         return '%s.%s(labels=%s, p=%s)' % (
@@ -576,141 +604,30 @@ class LeavePLabelOut(object):
                    factorial(self.p))
 
 
-class Bootstrap(object):
-    """Random sampling with replacement cross-validation iterator
+class BaseShuffleSplit(with_metaclass(ABCMeta)):
+    """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
-    Provides train/test indices to split data in train test sets
-    while resampling the input n_iter times: each time a new
-    random split of the data is performed and then samples are drawn
-    (with replacement) on each side of the split to build the training
-    and test sets.
-
-    Note: contrary to other cross-validation strategies, bootstrapping
-    will allow some samples to occur several times in each splits. However
-    a sample that occurs in the train split will never occur in the test
-    split and vice-versa.
-
-    If you want each sample to occur at most once you should probably
-    use ShuffleSplit cross validation instead.
-
-    Parameters
-    ----------
-    n : int
-        Total number of elements in the dataset.
-
-    n_iter : int (default is 3)
-        Number of bootstrapping iterations
-
-    train_size : int or float (default is 0.5)
-        If int, number of samples to include in the training split
-        (should be smaller than the total number of samples passed
-        in the dataset).
-
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the train split.
-
-    test_size : int or float or None (default is None)
-        If int, number of samples to include in the training set
-        (should be smaller than the total number of samples passed
-        in the dataset).
-
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the test split.
-
-        If None, n_test is set as the complement of n_train.
-
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
-
-    Examples
-    --------
-    >>> from sklearn import cross_validation
-    >>> bs = cross_validation.Bootstrap(9, random_state=0)
-    >>> len(bs)
-    3
-    >>> print(bs)
-    Bootstrap(9, n_iter=3, train_size=5, test_size=4, random_state=0)
-    >>> for train_index, test_index in bs:
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...
-    TRAIN: [1 8 7 7 8] TEST: [0 3 0 5]
-    TRAIN: [5 4 2 4 2] TEST: [6 7 1 0]
-    TRAIN: [4 7 0 1 1] TEST: [5 3 6 5]
-
-    See also
-    --------
-    ShuffleSplit: cross validation using random permutations.
-    """
-
-    # Static marker to be able to introspect the CV type
-    indices = True
-
-    def __init__(self, n, n_iter=3, train_size=.5, test_size=None,
-                 random_state=None, n_bootstraps=None):
+    def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
+                 random_state=None):
         self.n = n
-        if n_bootstraps is not None:  # pragma: no cover
-            warnings.warn("n_bootstraps was renamed to n_iter and will "
-                          "be removed in 0.16.", DeprecationWarning)
-            n_iter = n_bootstraps
         self.n_iter = n_iter
-        if (isinstance(train_size, numbers.Real) and train_size >= 0.0
-                and train_size <= 1.0):
-            self.train_size = int(ceil(train_size * n))
-        elif isinstance(train_size, numbers.Integral):
-            self.train_size = train_size
-        else:
-            raise ValueError("Invalid value for train_size: %r" %
-                             train_size)
-        if self.train_size > n:
-            raise ValueError("train_size=%d should not be larger than n=%d" %
-                             (self.train_size, n))
-
-        if isinstance(test_size, numbers.Real) and 0.0 <= test_size <= 1.0:
-            self.test_size = int(ceil(test_size * n))
-        elif isinstance(test_size, numbers.Integral):
-            self.test_size = test_size
-        elif test_size is None:
-            self.test_size = self.n - self.train_size
-        else:
-            raise ValueError("Invalid value for test_size: %r" % test_size)
-        if self.test_size > n:
-            raise ValueError("test_size=%d should not be larger than n=%d" %
-                             (self.test_size, n))
-
+        self.test_size = test_size
+        self.train_size = train_size
         self.random_state = random_state
+        self.n_train, self.n_test = _validate_shuffle_split(n, test_size,
+                                                            train_size)
 
     def __iter__(self):
-        rng = check_random_state(self.random_state)
-        for i in range(self.n_iter):
-            # random partition
-            permutation = rng.permutation(self.n)
-            ind_train = permutation[:self.train_size]
-            ind_test = permutation[self.train_size:self.train_size
-                                   + self.test_size]
+        for train, test in self._iter_indices():
+            yield train, test
+        return
 
-            # bootstrap in each split individually
-            train = rng.randint(0, self.train_size,
-                                size=(self.train_size,))
-            test = rng.randint(0, self.test_size,
-                               size=(self.test_size,))
-            yield ind_train[train], ind_test[test]
-
-    def __repr__(self):
-        return ('%s(%d, n_iter=%d, train_size=%d, test_size=%d, '
-                'random_state=%s)' % (
-                    self.__class__.__name__,
-                    self.n,
-                    self.n_iter,
-                    self.train_size,
-                    self.test_size,
-                    self.random_state,
-                ))
-
-    def __len__(self):
-        return self.n_iter
+    @abstractmethod
+    def _iter_indices(self):
+        """Generate (train, test) indices"""
 
 
-class ShuffleSplit(object):
+class ShuffleSplit(BaseShuffleSplit):
     """Random permutation cross-validation iterator.
 
     Yields indices to split data into training and test sets.
@@ -718,6 +635,8 @@ class ShuffleSplit(object):
     Note: contrary to other cross-validation strategies, random splits
     do not guarantee that all folds will be different, although this is
     still very likely for sizeable datasets.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -739,11 +658,6 @@ class ShuffleSplit(object):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
-
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
 
@@ -756,7 +670,7 @@ class ShuffleSplit(object):
     3
     >>> print(rs)
     ... # doctest: +ELLIPSIS
-    ShuffleSplit(4, n_iter=3, test_size=0.25, indices=True, ...)
+    ShuffleSplit(4, n_iter=3, test_size=0.25, ...)
     >>> for train_index, test_index in rs:
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...
@@ -773,53 +687,24 @@ class ShuffleSplit(object):
     TRAIN: [2 1] TEST: [0]
     TRAIN: [0 2] TEST: [3]
 
-    See also
-    --------
-    Bootstrap: cross-validation using re-sampling with replacement.
     """
 
-    def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
-                 indices=True, random_state=None, n_iterations=None):
-        self.n = n
-        self.n_iter = n_iter
-        if n_iterations is not None:  # pragma: no cover
-            warnings.warn("n_iterations was renamed to n_iter for consistency "
-                          " and will be removed in 0.16.")
-            self.n_iter = n_iterations
-        self.test_size = test_size
-        self.train_size = train_size
-        self.random_state = random_state
-        self.indices = indices
-
-        self.n_train, self.n_test = _validate_shuffle_split(n,
-                                                            test_size,
-                                                            train_size)
-
-    def __iter__(self):
+    def _iter_indices(self):
         rng = check_random_state(self.random_state)
         for i in range(self.n_iter):
             # random partition
             permutation = rng.permutation(self.n)
             ind_test = permutation[:self.n_test]
             ind_train = permutation[self.n_test:self.n_test + self.n_train]
-
-            if self.indices:
-                yield ind_train, ind_test
-            else:
-                train_mask = np.zeros(self.n, dtype=np.bool)
-                train_mask[ind_train] = True
-                test_mask = np.zeros(self.n, dtype=np.bool)
-                test_mask[ind_test] = True
-                yield train_mask, test_mask
+            yield ind_train, ind_test
 
     def __repr__(self):
-        return ('%s(%d, n_iter=%d, test_size=%s, indices=%s, '
+        return ('%s(%d, n_iter=%d, test_size=%s, '
                 'random_state=%s)' % (
                     self.__class__.__name__,
                     self.n,
                     self.n_iter,
                     str(self.test_size),
-                    self.indices,
                     self.random_state,
                 ))
 
@@ -890,31 +775,7 @@ def _validate_shuffle_split(n, test_size, train_size):
     return int(n_train), int(n_test)
 
 
-def _validate_stratified_shuffle_split(y, test_size, train_size):
-    classes, y = unique(y, return_inverse=True)
-    n_cls = classes.shape[0]
-
-    if np.min(np.bincount(y)) < 2:
-        raise ValueError("The least populated class in y has only 1"
-                         " member, which is too few. The minimum"
-                         " number of labels for any class cannot"
-                         " be less than 2.")
-
-    n_train, n_test = _validate_shuffle_split(len(y), test_size, train_size)
-
-    if n_train < n_cls:
-        raise ValueError('The train_size = %d should be greater or '
-                         'equal to the number of classes = %d' %
-                         (n_train, n_cls))
-    if n_test < n_cls:
-        raise ValueError('The test_size = %d should be greater or '
-                         'equal to the number of classes = %d' %
-                         (n_test, n_cls))
-
-    return n_train, n_test, classes, y
-
-
-class StratifiedShuffleSplit(object):
+class StratifiedShuffleSplit(BaseShuffleSplit):
     """Stratified ShuffleSplit cross validation iterator
 
     Provides train/test indices to split data in train test sets.
@@ -926,6 +787,8 @@ class StratifiedShuffleSplit(object):
     Note: like the ShuffleSplit strategy, stratified random splits
     do not guarantee that all folds will be different, although this is
     still very likely for sizeable datasets.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -947,10 +810,8 @@ class StratifiedShuffleSplit(object):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
+    random_state : int or RandomState
+        Pseudo-random number generator state used for random sampling.
 
     Examples
     --------
@@ -972,25 +833,33 @@ class StratifiedShuffleSplit(object):
     """
 
     def __init__(self, y, n_iter=10, test_size=0.1, train_size=None,
-                 indices=True, random_state=None, n_iterations=None):
+                 random_state=None):
+
+        super(StratifiedShuffleSplit, self).__init__(
+            len(y), n_iter, test_size, train_size, random_state)
 
         self.y = np.array(y)
-        self.n = len(self.y)
-        self.n_iter = n_iter
-        if n_iterations is not None:  # pragma: no cover
-            warnings.warn("n_iterations was renamed to n_iter for consistency"
-                          " and will be removed in 0.16.")
-            self.n_iter = n_iterations
-        self.test_size = test_size
-        self.train_size = train_size
-        self.random_state = random_state
-        self.indices = indices
-        self.n_train, self.n_test, self.classes, self.y_indices = \
-            _validate_stratified_shuffle_split(y, test_size, train_size)
+        self.classes, self.y_indices = np.unique(y, return_inverse=True)
+        n_cls = self.classes.shape[0]
 
-    def __iter__(self):
+        if np.min(bincount(self.y_indices)) < 2:
+            raise ValueError("The least populated class in y has only 1"
+                             " member, which is too few. The minimum"
+                             " number of labels for any class cannot"
+                             " be less than 2.")
+
+        if self.n_train < n_cls:
+            raise ValueError('The train_size = %d should be greater or '
+                             'equal to the number of classes = %d' %
+                             (self.n_train, n_cls))
+        if self.n_test < n_cls:
+            raise ValueError('The test_size = %d should be greater or '
+                             'equal to the number of classes = %d' %
+                             (self.n_test, n_cls))
+
+    def _iter_indices(self):
         rng = check_random_state(self.random_state)
-        cls_count = np.bincount(self.y_indices)
+        cls_count = bincount(self.y_indices)
         p_i = cls_count / float(self.n)
         n_i = np.round(self.n_train * p_i).astype(int)
         t_i = np.minimum(cls_count - n_i,
@@ -1001,33 +870,36 @@ class StratifiedShuffleSplit(object):
             test = []
 
             for i, cls in enumerate(self.classes):
-                permutation = rng.permutation(n_i[i] + t_i[i])
+                permutation = rng.permutation(cls_count[i])
                 cls_i = np.where((self.y == cls))[0][permutation]
 
                 train.extend(cls_i[:n_i[i]])
                 test.extend(cls_i[n_i[i]:n_i[i] + t_i[i]])
 
+            # Because of rounding issues (as n_train and n_test are not
+            # dividers of the number of elements per class), we may end
+            # up here with less samples in train and test than asked for.
+            if len(train) < self.n_train or len(test) < self.n_test:
+                # We complete by affecting randomly the missing indexes
+                missing_idx = np.where(bincount(train + test,
+                                                minlength=len(self.y)) == 0,
+                                       )[0]
+                missing_idx = rng.permutation(missing_idx)
+                train.extend(missing_idx[:(self.n_train - len(train))])
+                test.extend(missing_idx[-(self.n_test - len(test)):])
+
             train = rng.permutation(train)
             test = rng.permutation(test)
 
-            if self.indices:
-                yield train, test
-            else:
-                train_m = np.zeros(self.n, dtype=bool)
-                test_m = np.zeros(self.n, dtype=bool)
-                train_m[train] = True
-                test_m[test] = True
-
-                yield train_m, test_m
+            yield train, test
 
     def __repr__(self):
-        return ('%s(labels=%s, n_iter=%d, test_size=%s, indices=%s, '
+        return ('%s(labels=%s, n_iter=%d, test_size=%s, '
                 'random_state=%s)' % (
                     self.__class__.__name__,
                     self.y,
                     self.n_iter,
                     str(self.test_size),
-                    self.indices,
                     self.random_state,
                 ))
 
@@ -1035,77 +907,97 @@ class StratifiedShuffleSplit(object):
         return self.n_iter
 
 
-##############################################################################
+class PredefinedSplit(_PartitionIterator):
+    """Predefined split cross validation iterator
 
-def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
-                     fit_params):
-    """Inner loop for cross validation"""
-    n_samples = X.shape[0] if sp.issparse(X) else len(X)
-    fit_params = dict([(k, np.asarray(v)[train]
-                       if hasattr(v, '__len__') and len(v) == n_samples else v)
-                       for k, v in fit_params.items()])
-    if not hasattr(X, "shape"):
-        if getattr(estimator, "_pairwise", False):
-            raise ValueError("Precomputed kernels or affinity matrices have "
-                             "to be passed as arrays or sparse matrices.")
-        X_train = [X[idx] for idx in train]
-        X_test = [X[idx] for idx in test]
-    else:
-        if getattr(estimator, "_pairwise", False):
-            # X is a precomputed square kernel matrix
-            if X.shape[0] != X.shape[1]:
-                raise ValueError("X should be a square kernel matrix")
-            X_train = X[np.ix_(train, train)]
-            X_test = X[np.ix_(test, train)]
-        else:
-            X_train = X[safe_mask(X, train)]
-            X_test = X[safe_mask(X, test)]
+    Splits the data into training/test set folds according to a predefined
+    scheme. Each sample can be assigned to at most one test set fold, as
+    specified by the user through the ``test_fold`` parameter.
 
-    if y is None:
-        y_train = None
-        y_test = None
-    else:
-        y_train = y[train]
-        y_test = y[test]
-    estimator.fit(X_train, y_train, **fit_params)
-    if scorer is None:
-        score = estimator.score(X_test, y_test)
-    else:
-        score = scorer(estimator, X_test, y_test)
-        if not isinstance(score, numbers.Number):
-            raise ValueError("scoring must return a number, got %s (%s)"
-                             " instead." % (str(score), type(score)))
-    if verbose > 1:
-        print("score: %f" % score)
-    return score
-
-
-def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
-                    verbose=0, fit_params=None, score_func=None):
-    """Evaluate a score by cross-validation
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
-    estimator : estimator object implementing 'fit'
+    test_fold : "array-like, shape (n_samples,)
+        test_fold[i] gives the test set fold of sample i. A value of -1
+        indicates that the corresponding sample is not part of any test set
+        folds, but will instead always be put into the training fold.
+
+    Examples
+    --------
+    >>> from sklearn.cross_validation import PredefinedSplit
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([0, 0, 1, 1])
+    >>> ps = PredefinedSplit(test_fold=[0, 1, -1, 1])
+    >>> len(ps)
+    2
+    >>> print(ps)       # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    sklearn.cross_validation.PredefinedSplit(test_fold=[ 0  1 -1  1])
+    >>> for train_index, test_index in ps:
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [1 2 3] TEST: [0]
+    TRAIN: [0 2] TEST: [1 3]
+    """
+
+    def __init__(self, test_fold):
+        super(PredefinedSplit, self).__init__(len(test_fold))
+        self.test_fold = np.array(test_fold, dtype=np.int)
+        self.test_fold = column_or_1d(self.test_fold)
+        self.unique_folds = np.unique(self.test_fold)
+        self.unique_folds = self.unique_folds[self.unique_folds != -1]
+
+    def _iter_test_indices(self):
+        for f in self.unique_folds:
+            yield np.where(self.test_fold == f)[0]
+
+    def __repr__(self):
+        return '%s.%s(test_fold=%s)' % (
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.test_fold)
+
+    def __len__(self):
+        return len(self.unique_folds)
+
+
+##############################################################################
+def _index_param_value(X, v, indices):
+    """Private helper function for parameter value indexing."""
+    if not _is_arraylike(v) or _num_samples(v) != _num_samples(X):
+        # pass through: skip indexing
+        return v
+    if sp.issparse(v):
+        v = v.tocsr()
+    return safe_indexing(v, indices)
+
+
+def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
+                      verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+    """Generate cross-validated estimates for each input data point
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit' and 'predict'
         The object to use to fit the data.
 
-    X : array-like of shape at least 2D
-        The data to fit.
+    X : array-like
+        The data to fit. Can be, for example a list, or an array at least 2d.
 
-    y : array-like, optional
+    y : array-like, optional, default: None
         The target variable to try to predict in the case of
         supervised learning.
 
-    scoring : string or callable, optional
-        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
-        classification, "mse", "r2", ... for regression) or a callable.
-        See 'Scoring objects' in the model evaluation section of the user guide
-        for details.
-
-    cv : cross-validation generator, optional
-        A cross-validation generator. If None, a 3-fold cross
-        validation is used or 3-fold stratified cross-validation
-        when y is supplied and estimator is a classifier.
+    cv : cross-validation generator or int, optional, default: None
+        A cross-validation generator to use. If int, determines
+        the number of folds in StratifiedKFold if y is binary
+        or multiclass and estimator is a classifier, or the number
+        of folds in KFold otherwise. If None, it is equivalent to cv=3.
+        This generator must include all elements in the test set exactly once.
+        Otherwise, a ValueError is raised.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -1117,39 +1009,379 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     fit_params : dict, optional
         Parameters to pass to the fit method of the estimator.
 
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    Returns
+    -------
+    preds : ndarray
+        This is the result of calling 'predict'
+    """
+    X, y = indexable(X, y)
+
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
+    # We clone the estimator to make sure that all the folds are
+    # independent, and that it is pickle-able.
+    parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
+                        pre_dispatch=pre_dispatch)
+    preds_blocks = parallel(delayed(_fit_and_predict)(clone(estimator), X, y,
+                                                      train, test, verbose,
+                                                      fit_params)
+                            for train, test in cv)
+    p = np.concatenate([p for p, _ in preds_blocks])
+    locs = np.concatenate([loc for _, loc in preds_blocks])
+    if not _check_is_partition(locs, _num_samples(X)):
+        raise ValueError('cross_val_predict only works for partitions')
+    preds = p.copy()
+    preds[locs] = p
+    return preds
+
+
+def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
+    """Fit estimator and predict values for a given dataset split.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit' and 'predict'
+        The object to use to fit the data.
+
+    X : array-like of shape at least 2D
+        The data to fit.
+
+    y : array-like, optional, default: None
+        The target variable to try to predict in the case of
+        supervised learning.
+
+    train : array-like, shape (n_train_samples,)
+        Indices of training samples.
+
+    test : array-like, shape (n_test_samples,)
+        Indices of test samples.
+
+    verbose : integer
+        The verbosity level.
+
+    fit_params : dict or None
+        Parameters that will be passed to ``estimator.fit``.
+
+    Returns
+    -------
+    preds : sequence
+        Result of calling 'estimator.predict'
+
+    test : array-like
+        This is the value of the test parameter
+    """
+    # Adjust length of sample weights
+    fit_params = fit_params if fit_params is not None else {}
+    fit_params = dict([(k, _index_param_value(X, v, train))
+                      for k, v in fit_params.items()])
+
+    X_train, y_train = _safe_split(estimator, X, y, train)
+    X_test, _ = _safe_split(estimator, X, y, test, train)
+
+    if y_train is None:
+        estimator.fit(X_train, **fit_params)
+    else:
+        estimator.fit(X_train, y_train, **fit_params)
+    preds = estimator.predict(X_test)
+    return preds, test
+
+
+def _check_is_partition(locs, n):
+    """Check whether locs is a reordering of the array np.arange(n)
+
+    Parameters
+    ----------
+    locs : ndarray
+        integer array to test
+    n : int
+        number of expected elements
+
+    Returns
+    -------
+    is_partition : bool
+        True iff sorted(locs) is range(n)
+    """
+    if len(locs) != n:
+        return False
+    hit = np.zeros(n, bool)
+    hit[locs] = True
+    if not np.all(hit):
+        return False
+    return True
+
+
+def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
+                    verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+    """Evaluate a score by cross-validation
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    X : array-like
+        The data to fit. Can be, for example a list, or an array at least 2d.
+
+    y : array-like, optional, default: None
+        The target variable to try to predict in the case of
+        supervised learning.
+
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    cv : cross-validation generator or int, optional, default: None
+        A cross-validation generator to use. If int, determines
+        the number of folds in StratifiedKFold if y is binary
+        or multiclass and estimator is a classifier, or the number
+        of folds in KFold otherwise. If None, it is equivalent to cv=3.
+
+    n_jobs : integer, optional
+        The number of CPUs to use to do the computation. -1 means
+        'all CPUs'.
+
+    verbose : integer, optional
+        The verbosity level.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method of the estimator.
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
     Returns
     -------
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
     """
-    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
+    X, y = indexable(X, y)
+
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
-    if score_func is not None:
-        warnings.warn("Passing function as ``score_func`` is "
-                      "deprecated and will be removed in 0.15. "
-                      "Either use strings or score objects.", stacklevel=2)
-        scorer = Scorer(score_func)
-    elif isinstance(scoring, basestring):
-        scorer = SCORERS[scoring]
-    else:
-        scorer = scoring
-    if scorer is None and not hasattr(estimator, 'score'):
-        raise TypeError(
-            "If no scoring is specified, the estimator passed "
-            "should have a 'score' method. The estimator %s "
-            "does not." % estimator)
+    scorer = check_scoring(estimator, scoring=scoring)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
+    parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
+                        pre_dispatch=pre_dispatch)
+    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
+                                              train, test, verbose, None,
+                                              fit_params)
+                      for train, test in cv)
+    return np.array(scores)[:, 0]
+
+
+class FitFailedWarning(RuntimeWarning):
+    pass
+
+
+def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
+                   parameters, fit_params, return_train_score=False,
+                   return_parameters=False, error_score='raise'):
+    """Fit estimator and compute scores for a given dataset split.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    X : array-like of shape at least 2D
+        The data to fit.
+
+    y : array-like, optional, default: None
+        The target variable to try to predict in the case of
+        supervised learning.
+
+    scorer : callable
+        A scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    train : array-like, shape (n_train_samples,)
+        Indices of training samples.
+
+    test : array-like, shape (n_test_samples,)
+        Indices of test samples.
+
+    verbose : integer
+        The verbosity level.
+
+    error_score : 'raise' (default) or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error.
+
+    parameters : dict or None
+        Parameters to be set on the estimator.
+
+    fit_params : dict or None
+        Parameters that will be passed to ``estimator.fit``.
+
+    return_train_score : boolean, optional, default: False
+        Compute and return score on training set.
+
+    return_parameters : boolean, optional, default: False
+        Return parameters that has been used for the estimator.
+
+    Returns
+    -------
+    train_score : float, optional
+        Score on training set, returned only if `return_train_score` is `True`.
+
+    test_score : float
+        Score on test set.
+
+    n_test_samples : int
+        Number of test samples.
+
+    scoring_time : float
+        Time spent for fitting and scoring in seconds.
+
+    parameters : dict or None, optional
+        The parameters that have been evaluated.
+    """
+    if verbose > 1:
+        if parameters is None:
+            msg = "no parameters to be set"
+        else:
+            msg = '%s' % (', '.join('%s=%s' % (k, v)
+                          for k, v in parameters.items()))
+        print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
+
+    # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(_cross_val_score)(
-            clone(estimator), X, y, scorer, train, test, verbose, fit_params)
-        for train, test in cv)
-    return np.array(scores)
+    fit_params = dict([(k, _index_param_value(X, v, train))
+                      for k, v in fit_params.items()])
+
+    if parameters is not None:
+        estimator.set_params(**parameters)
+
+    start_time = time.time()
+
+    X_train, y_train = _safe_split(estimator, X, y, train)
+    X_test, y_test = _safe_split(estimator, X, y, test, train)
+
+    try:
+        if y_train is None:
+            estimator.fit(X_train, **fit_params)
+        else:
+            estimator.fit(X_train, y_train, **fit_params)
+
+    except Exception as e:
+        if error_score == 'raise':
+            raise
+        elif isinstance(error_score, numbers.Number):
+            test_score = error_score
+            if return_train_score:
+                train_score = error_score
+            warnings.warn("Classifier fit failed. The score on this train-test"
+                          " partition for these parameters will be set to %f. "
+                          "Details: \n%r" % (error_score, e), FitFailedWarning)
+        else:
+            raise ValueError("error_score must be the string 'raise' or a"
+                             " numeric value. (Hint: if using 'raise', please"
+                             " make sure that it has been spelled correctly.)"
+                             )
+
+    else:
+        test_score = _score(estimator, X_test, y_test, scorer)
+        if return_train_score:
+            train_score = _score(estimator, X_train, y_train, scorer)
+
+    scoring_time = time.time() - start_time
+
+    if verbose > 2:
+        msg += ", score=%f" % test_score
+    if verbose > 1:
+        end_msg = "%s -%s" % (msg, logger.short_format_time(scoring_time))
+        print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
+
+    ret = [train_score] if return_train_score else []
+    ret.extend([test_score, _num_samples(X_test), scoring_time])
+    if return_parameters:
+        ret.append(parameters)
+    return ret
+
+
+def _safe_split(estimator, X, y, indices, train_indices=None):
+    """Create subset of dataset and properly handle kernels."""
+    if hasattr(estimator, 'kernel') and callable(estimator.kernel):
+        # cannot compute the kernel values with custom function
+        raise ValueError("Cannot use a custom kernel function. "
+                         "Precompute the kernel matrix instead.")
+
+    if not hasattr(X, "shape"):
+        if getattr(estimator, "_pairwise", False):
+            raise ValueError("Precomputed kernels or affinity matrices have "
+                             "to be passed as arrays or sparse matrices.")
+        X_subset = [X[idx] for idx in indices]
+    else:
+        if getattr(estimator, "_pairwise", False):
+            # X is a precomputed square kernel matrix
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("X should be a square kernel matrix")
+            if train_indices is None:
+                X_subset = X[np.ix_(indices, indices)]
+            else:
+                X_subset = X[np.ix_(indices, train_indices)]
+        else:
+            X_subset = safe_indexing(X, indices)
+
+    if y is not None:
+        y_subset = safe_indexing(y, indices)
+    else:
+        y_subset = None
+
+    return X_subset, y_subset
+
+
+def _score(estimator, X_test, y_test, scorer):
+    """Compute the score of an estimator on a given test set."""
+    if y_test is None:
+        score = scorer(estimator, X_test)
+    else:
+        score = scorer(estimator, X_test, y_test)
+    if not isinstance(score, numbers.Number):
+        raise ValueError("scoring must return a number, got %s (%s) instead."
+                         % (str(score), type(score)))
+    return score
 
 
 def _permutation_test_score(estimator, X, y, cv, scorer):
-    """Auxilary function for permutation_test_score"""
+    """Auxiliary function for permutation_test_score"""
     avg_score = []
     for train, test in cv:
         estimator.fit(X[train], y[train])
@@ -1163,7 +1395,7 @@ def _shuffle(y, labels, random_state):
         ind = random_state.permutation(len(y))
     else:
         ind = np.arange(len(labels))
-        for label in unique(labels):
+        for label in np.unique(labels):
             this_mask = (labels == label)
             ind[this_mask] = random_state.permutation(ind[this_mask])
     return y[ind]
@@ -1189,30 +1421,37 @@ def check_cv(cv, X=None, y=None, classifier=False):
     classifier : boolean optional
         Whether the task is a classification task, in which case
         stratified KFold will be used.
+
+    Returns
+    -------
+    checked_cv: a cross-validation generator instance.
+        The return value is guaranteed to be a cv generator instance, whatever
+        the input type.
     """
     is_sparse = sp.issparse(X)
-    needs_indices = is_sparse or not hasattr(X, "shape")
     if cv is None:
         cv = 3
     if isinstance(cv, numbers.Integral):
         if classifier:
-            cv = StratifiedKFold(y, cv, indices=needs_indices)
+            if type_of_target(y) in ['binary', 'multiclass']:
+                cv = StratifiedKFold(y, cv)
+            else:
+                cv = KFold(_num_samples(y), cv)
         else:
             if not is_sparse:
                 n_samples = len(X)
             else:
                 n_samples = X.shape[0]
-            cv = KFold(n_samples, cv, indices=needs_indices)
-    if needs_indices and not getattr(cv, "indices", True):
-        raise ValueError("Sparse data and lists require indices-based cross"
-                         " validation generator, got: %r", cv)
+            cv = KFold(n_samples, cv)
     return cv
 
 
-def permutation_test_score(estimator, X, y, scoring=None, cv=None,
+def permutation_test_score(estimator, X, y, cv=None,
                            n_permutations=100, n_jobs=1, labels=None,
-                           random_state=0, verbose=0, score_func=None):
+                           random_state=0, verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -1226,16 +1465,18 @@ def permutation_test_score(estimator, X, y, scoring=None, cv=None,
         The target variable to try to predict in the case of
         supervised learning.
 
-    scoring : string or object, optional
-        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
-        classification, "mse", "r2", ... for regression) or a callable.
-        See 'Scoring objects' in the model evaluation section of the user guide
-        for details.
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
-    cv : integer or crossvalidation generator, optional
+    cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see
+        Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects.
+
+    n_permutations : integer, optional
+        Number of times to permute ``y``.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -1257,12 +1498,12 @@ def permutation_test_score(estimator, X, y, scoring=None, cv=None,
     score : float
         The true score without permuting targets.
 
-    permutation_scores : array, shape = [n_permutations]
+    permutation_scores : array, shape (n_permutations,)
         The scores obtained for each permutations.
 
     pvalue : float
-        The returned value equals p-value if `score_func` returns bigger
-        numbers for better scores (e.g., accuracy_score). If `score_func` is
+        The returned value equals p-value if `scoring` returns bigger
+        numbers for better scores (e.g., accuracy_score). If `scoring` is
         rather a loss function (i.e. when lower is better such as with
         `mean_squared_error`) then this is actually the complement of the
         p-value:  1 - p-value.
@@ -1276,22 +1517,9 @@ def permutation_test_score(estimator, X, y, scoring=None, cv=None,
         vol. 11
 
     """
-    X, y = check_arrays(X, y, sparse_format='csr')
+    X, y = indexable(X, y)
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
-
-    if score_func is not None:
-        warnings.warn("Passing function as ``score_func`` is "
-                      "deprecated and will be removed in 0.15. "
-                      "Either use strings or score objects.")
-        scorer = Scorer(score_func)
-    elif isinstance(scoring, basestring):
-        scorer = SCORERS[scoring]
-    else:
-        scorer = scoring
-
-    if scorer is None:
-        raise ValueError("No valid scoring provided.")
-
+    scorer = check_scoring(estimator, scoring=scoring)
     random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are
@@ -1313,10 +1541,12 @@ permutation_test_score.__test__ = False  # to avoid a pb with nosetests
 def train_test_split(*arrays, **options):
     """Split arrays or matrices into random train and test subsets
 
-    Quick utility that wraps calls to ``check_arrays`` and
+    Quick utility that wraps input validation and
     ``next(iter(ShuffleSplit(n_samples)))`` and application to input
     data into a single call for splitting (and optionally subsampling)
     data in a oneliner.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -1340,8 +1570,9 @@ def train_test_split(*arrays, **options):
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
 
-    dtype : a numpy dtype instance, None by default
-        Enforce a specific dtype.
+    stratify : array-like or None (default is None)
+        If not None, data is split in a stratified fashion, using this as
+        the labels array.
 
     Returns
     -------
@@ -1352,30 +1583,30 @@ def train_test_split(*arrays, **options):
     --------
     >>> import numpy as np
     >>> from sklearn.cross_validation import train_test_split
-    >>> a, b = np.arange(10).reshape((5, 2)), range(5)
-    >>> a
+    >>> X, y = np.arange(10).reshape((5, 2)), range(5)
+    >>> X
     array([[0, 1],
            [2, 3],
            [4, 5],
            [6, 7],
            [8, 9]])
-    >>> list(b)
+    >>> list(y)
     [0, 1, 2, 3, 4]
 
-    >>> a_train, a_test, b_train, b_test = train_test_split(
-    ...     a, b, test_size=0.33, random_state=42)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, test_size=0.33, random_state=42)
     ...
-    >>> a_train
+    >>> X_train
     array([[4, 5],
            [0, 1],
            [6, 7]])
-    >>> b_train
-    array([2, 0, 3])
-    >>> a_test
+    >>> y_train
+    [2, 0, 3]
+    >>> X_test
     array([[2, 3],
            [8, 9]])
-    >>> b_test
-    array([1, 4])
+    >>> y_test
+    [1, 4]
 
     """
     n_arrays = len(arrays)
@@ -1385,22 +1616,46 @@ def train_test_split(*arrays, **options):
     test_size = options.pop('test_size', None)
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
-    options['sparse_format'] = 'csr'
+    dtype = options.pop('dtype', None)
+    if dtype is not None:
+        warnings.warn("dtype option is ignored and will be removed in 0.18.",
+                      DeprecationWarning)
+
+    allow_nd = options.pop('allow_nd', None)
+    allow_lists = options.pop('allow_lists', None)
+    stratify = options.pop('stratify', None)
+
+    if allow_lists is not None:
+        warnings.warn("The allow_lists option is deprecated and will be "
+                      "assumed True in 0.18 and removed.", DeprecationWarning)
+
+    if options:
+        raise TypeError("Invalid parameters passed: %s" % str(options))
+    if allow_nd is not None:
+        warnings.warn("The allow_nd option is deprecated and will be "
+                      "assumed True in 0.18 and removed.", DeprecationWarning)
+    if allow_lists is False or allow_nd is False:
+        arrays = [check_array(x, 'csr', allow_nd=allow_nd,
+                              force_all_finite=False, ensure_2d=False)
+                  if x is not None else x
+                  for x in arrays]
 
     if test_size is None and train_size is None:
         test_size = 0.25
+    arrays = indexable(*arrays)
+    if stratify is not None:
+        cv = StratifiedShuffleSplit(stratify, test_size=test_size,
+                                    train_size=train_size,
+                                    random_state=random_state)
+    else:
+        n_samples = _num_samples(arrays[0])
+        cv = ShuffleSplit(n_samples, test_size=test_size,
+                          train_size=train_size,
+                          random_state=random_state)
 
-    arrays = check_arrays(*arrays, **options)
-    n_samples = arrays[0].shape[0]
-    cv = ShuffleSplit(n_samples, test_size=test_size,
-                      train_size=train_size,
-                      random_state=random_state,
-                      indices=True)
     train, test = next(iter(cv))
-    splitted = []
-    for a in arrays:
-        splitted.append(a[train])
-        splitted.append(a[test])
-    return splitted
+    return list(chain.from_iterable((safe_indexing(a, train),
+                                     safe_indexing(a, test)) for a in arrays))
+
 
 train_test_split.__test__ = False  # to avoid a pb with nosetests

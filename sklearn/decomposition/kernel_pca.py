@@ -1,12 +1,13 @@
 """Kernel Principal Components Analysis"""
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 from scipy import linalg
 
 from ..utils.arpack import eigsh
+from ..utils.validation import check_is_fitted, NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
@@ -15,7 +16,10 @@ from ..metrics.pairwise import pairwise_kernels
 class KernelPCA(BaseEstimator, TransformerMixin):
     """Kernel Principal component analysis (KPCA)
 
-    Non-linear dimensionality reduction through the use of kernels.
+    Non-linear dimensionality reduction through the use of kernels (see
+    :ref:`metrics`).
+
+    Read more in the :ref:`User Guide <kernel_PCA>`.
 
     Parameters
     ----------
@@ -26,16 +30,20 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Kernel.
         Default: "linear"
 
-    degree : int, optional
-        Degree for poly, rbf and sigmoid kernels.
-        Default: 3.
+    degree : int, default=3
+        Degree for poly kernels. Ignored by other kernels.
 
     gamma : float, optional
-        Kernel coefficient for rbf and poly kernels.
-        Default: 1/n_features.
+        Kernel coefficient for rbf and poly kernels. Default: 1/n_features.
+        Ignored by other kernels.
 
     coef0 : float, optional
         Independent term in poly and sigmoid kernels.
+        Ignored by other kernels.
+
+    kernel_params : mapping of string to any, optional
+        Parameters (keyword arguments) and values for kernel passed as
+        callable object. Ignored by other kernels.
 
     alpha: int
         Hyperparameter of the ridge regression that learns the
@@ -70,33 +78,37 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     Attributes
     ----------
 
-    `lambdas_`, `alphas_`:
-        Eigenvalues and eigenvectors of the centered kernel matrix
+    lambdas_ :
+        Eigenvalues of the centered kernel matrix
 
-    `dual_coef_`:
+    alphas_ :
+        Eigenvectors of the centered kernel matrix
+
+    dual_coef_ :
         Inverse transform matrix
 
-    `X_transformed_fit_`:
+    X_transformed_fit_ :
         Projection of the fitted data on the kernel principal components
 
     References
     ----------
-    Kernel PCA was intoduced in:
+    Kernel PCA was introduced in:
         Bernhard Schoelkopf, Alexander J. Smola,
         and Klaus-Robert Mueller. 1999. Kernel principal
         component analysis. In Advances in kernel methods,
         MIT Press, Cambridge, MA, USA 327-352.
     """
 
-    def __init__(self, n_components=None, kernel="linear", gamma=None, degree=3,
-                 coef0=1, alpha=1.0, fit_inverse_transform=False,
-                 eigen_solver='auto', tol=0, max_iter=None,
-                 remove_zero_eig=False):
+    def __init__(self, n_components=None, kernel="linear",
+                 gamma=None, degree=3, coef0=1, kernel_params=None,
+                 alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
+                 tol=0, max_iter=None, remove_zero_eig=False):
         if fit_inverse_transform and kernel == 'precomputed':
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
         self.n_components = n_components
-        self.kernel = kernel.lower()
+        self.kernel = kernel
+        self.kernel_params = kernel_params
         self.gamma = gamma
         self.degree = degree
         self.coef0 = coef0
@@ -113,16 +125,14 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         return self.kernel == "precomputed"
 
     def _get_kernel(self, X, Y=None):
-        params = {"gamma": self.gamma,
-                  "degree": self.degree,
-                  "coef0": self.coef0}
-        try:
-            return pairwise_kernels(X, Y, metric=self.kernel,
-                                    filter_params=True, **params)
-        except AttributeError:
-            raise ValueError("%s is not a valid kernel. Valid kernels are: "
-                             "rbf, poly, sigmoid, linear and precomputed."
-                             % self.kernel)
+        if callable(self.kernel):
+            params = self.kernel_params or {}
+        else:
+            params = {"gamma": self.gamma,
+                      "degree": self.degree,
+                      "coef0": self.coef0}
+        return pairwise_kernels(X, Y, metric=self.kernel,
+                                filter_params=True, **params)
 
     def _fit_transform(self, K):
         """ Fit's using kernel K"""
@@ -233,6 +243,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
+        check_is_fitted(self, 'X_fit_')
+
         K = self._centerer.transform(self._get_kernel(X, self.X_fit_))
         return np.dot(K, self.alphas_ / np.sqrt(self.lambdas_))
 
@@ -252,7 +264,9 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         "Learning to Find Pre-Images", G BakIr et al, 2004.
         """
         if not self.fit_inverse_transform:
-            raise ValueError("Inverse transform was not fitted!")
+            raise NotFittedError("The fit_inverse_transform parameter was not"
+                                 " set to True when instantiating and hence "
+                                 "the inverse transform is not available.")
 
         K = self._get_kernel(X, self.X_transformed_fit_)
 

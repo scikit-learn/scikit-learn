@@ -1,10 +1,10 @@
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 from scipy import sparse
 
-from ..graph import graph_laplacian
+from sklearn.utils.graph import graph_laplacian
 
 
 def test_graph_laplacian():
@@ -21,4 +21,4 @@ def test_graph_laplacian():
                                                      np.zeros(n_nodes))
             np.testing.assert_array_almost_equal(laplacian.T, laplacian)
             np.testing.assert_array_almost_equal(
-                laplacian, graph_laplacian(sp_mat, normed=normed).todense())
+                laplacian, graph_laplacian(sp_mat, normed=normed).toarray())

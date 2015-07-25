@@ -5,7 +5,7 @@ Base IO code for all datasets
 # Copyright (c) 2007 David Cournapeau <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 import os
 import csv
@@ -25,12 +25,38 @@ from ..utils import check_random_state
 
 
 class Bunch(dict):
-    """Container object for datasets: dictionary-like object that
-       exposes its keys as attributes."""
+    """Container object for datasets
+
+    Dictionary-like object that exposes its keys as attributes.
+
+    >>> b = Bunch(a=1, b=2)
+    >>> b['b']
+    2
+    >>> b.b
+    2
+    >>> b.a = 3
+    >>> b['a']
+    3
+    >>> b.c = 6
+    >>> b['c']
+    6
+
+    """
 
     def __init__(self, **kwargs):
         dict.__init__(self, kwargs)
-        self.__dict__ = self
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+    def __getstate__(self):
+        return self.__dict__
 
 
 def get_data_home(data_home=None):
@@ -43,7 +69,7 @@ def get_data_home(data_home=None):
     in the user home folder.
 
     Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
-    variable or programatically by giving an explit folder path. The
+    variable or programmatically by giving an explicit folder path. The
     '~' symbol is expanded to the user home folder.
 
     If the folder does not already exist, it is automatically created.
@@ -64,8 +90,8 @@ def clear_data_home(data_home=None):
 
 
 def load_files(container_path, description=None, categories=None,
-               load_content=True, shuffle=True, charset=None,
-               charse_error='strict', random_state=0):
+               load_content=True, shuffle=True, encoding=None,
+               decode_error='strict', random_state=0):
     """Load text files with categories as subfolder names.
 
     Individual samples are assumed to be files stored a two levels folder
@@ -82,20 +108,28 @@ def load_files(container_path, description=None, categories=None,
                 file_44.txt
                 ...
 
-    The folder names are used has supervised signal label names. The indivial
-    file names are not important.
+    The folder names are used as supervised signal label names. The
+    individual file names are not important.
 
     This function does not try to extract features into a numpy array or
     scipy sparse matrix. In addition, if load_content is false it
     does not try to load the files in memory.
 
-    To use utf-8 text files in a scikit-learn classification or clustering
-    algorithm you will first need to use the `sklearn.features.text`
+    To use text files in a scikit-learn classification or clustering
+    algorithm, you will need to use the `sklearn.feature_extraction.text`
     module to build a feature extraction transformer that suits your
     problem.
 
-    Similar feature extractors should be build for other kind of unstructured
+    If you set load_content=True, you should also specify the encoding of
+    the text using the 'encoding' parameter. For many modern text files,
+    'utf-8' will be the correct encoding. If you leave encoding equal to None,
+    then the content will be made of bytes instead of Unicode, and you will
+    not be able to use most functions in `sklearn.feature_extraction.text`.
+
+    Similar feature extractors should be built for other kind of unstructured
     data input such as images, audio, video, ...
+
+    Read more in the :ref:`User Guide <datasets>`.
 
     Parameters
     ----------
@@ -116,17 +150,16 @@ def load_files(container_path, description=None, categories=None,
         in the data structure returned. If not, a filenames attribute
         gives the path to the files.
 
-    charset : string or None (default is None)
+    encoding : string or None (default is None)
         If None, do not try to decode the content of the files (e.g. for
         images or other non-text content).
-        If not None, charset to use to decode text files if load_content is
-        True.
+        If not None, encoding to use to decode text files to Unicode if
+        load_content is True.
 
-    charset_error: {'strict', 'ignore', 'replace'}
+    decode_error: {'strict', 'ignore', 'replace'}, optional
         Instruction on what to do if a byte sequence is given to analyze that
-        contains characters not of the given `charset`. By default, it is
-        'strict', meaning that a UnicodeDecodeError will be raised. Other
-        values are 'ignore' and 'replace'.
+        contains characters not of the given `encoding`. Passed as keyword
+        argument 'errors' to bytes.decode.
 
     shuffle : bool, optional (default=True)
         Whether or not to shuffle the data: might be important for models that
@@ -178,9 +211,12 @@ def load_files(container_path, description=None, categories=None,
         target = target[indices]
 
     if load_content:
-        data = [open(filename).read() for filename in filenames]
-        if charset is not None:
-            data = [d.decode(charset, charse_error) for d in data]
+        data = []
+        for filename in filenames:
+            with open(filename, 'rb') as f:
+                data.append(f.read())
+        if encoding is not None:
+            data = [d.decode(encoding, decode_error) for d in data]
         return Bunch(data=data,
                      filenames=filenames,
                      target_names=target_names,
@@ -207,6 +243,8 @@ def load_iris():
     Features            real, positive
     =================   ==============
 
+    Read more in the :ref:`User Guide <datasets>`.
+
     Returns
     -------
     data : Bunch
@@ -229,22 +267,25 @@ def load_iris():
     ['setosa', 'versicolor', 'virginica']
     """
     module_path = dirname(__file__)
-    data_file = csv.reader(open(join(module_path, 'data', 'iris.csv')))
-    fdescr = open(join(module_path, 'descr', 'iris.rst'))
-    temp = next(data_file)
-    n_samples = int(temp[0])
-    n_features = int(temp[1])
-    target_names = np.array(temp[2:])
-    data = np.empty((n_samples, n_features))
-    target = np.empty((n_samples,), dtype=np.int)
+    with open(join(module_path, 'data', 'iris.csv')) as csv_file:
+        data_file = csv.reader(csv_file)
+        temp = next(data_file)
+        n_samples = int(temp[0])
+        n_features = int(temp[1])
+        target_names = np.array(temp[2:])
+        data = np.empty((n_samples, n_features))
+        target = np.empty((n_samples,), dtype=np.int)
 
-    for i, ir in enumerate(data_file):
-        data[i] = np.asarray(ir[:-1], dtype=np.float)
-        target[i] = np.asarray(ir[-1], dtype=np.int)
+        for i, ir in enumerate(data_file):
+            data[i] = np.asarray(ir[:-1], dtype=np.float)
+            target[i] = np.asarray(ir[-1], dtype=np.int)
+
+    with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
+        fdescr = rst_file.read()
 
     return Bunch(data=data, target=target,
                  target_names=target_names,
-                 DESCR=fdescr.read(),
+                 DESCR=fdescr,
                  feature_names=['sepal length (cm)', 'sepal width (cm)',
                                 'petal length (cm)', 'petal width (cm)'])
 
@@ -262,6 +303,7 @@ def load_digits(n_class=10):
     Features             integers 0-16
     =================   ==============
 
+    Read more in the :ref:`User Guide <datasets>`.
 
     Parameters
     ----------
@@ -293,7 +335,8 @@ def load_digits(n_class=10):
     module_path = dirname(__file__)
     data = np.loadtxt(join(module_path, 'data', 'digits.csv.gz'),
                       delimiter=',')
-    descr = open(join(module_path, 'descr', 'digits.rst')).read()
+    with open(join(module_path, 'descr', 'digits.rst')) as f:
+        descr = f.read()
     target = data[:, -1]
     flat_data = data[:, :-1]
     images = flat_data.view()
@@ -320,6 +363,8 @@ def load_diabetes():
     Features            real, -.2 < x < .2
     Targets             integer 25 - 346
     ==============      ==================
+
+    Read more in the :ref:`User Guide <datasets>`.
 
     Returns
     -------
@@ -384,8 +429,7 @@ def load_boston():
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the regression targets,
-        'target_names', the meaning of the labels, and 'DESCR', the
-        full description of the dataset.
+        and 'DESCR', the full description of the dataset.
 
     Examples
     --------
@@ -395,25 +439,31 @@ def load_boston():
     (506, 13)
     """
     module_path = dirname(__file__)
-    data_file = csv.reader(open(join(module_path, 'data',
-                                     'boston_house_prices.csv')))
-    fdescr = open(join(module_path, 'descr', 'boston_house_prices.rst'))
-    temp = next(data_file)
-    n_samples = int(temp[0])
-    n_features = int(temp[1])
-    data = np.empty((n_samples, n_features))
-    target = np.empty((n_samples,))
-    temp = next(data_file)  # names of features
-    feature_names = np.array(temp)
 
-    for i, d in enumerate(data_file):
-        data[i] = np.asarray(d[:-1], dtype=np.float)
-        target[i] = np.asarray(d[-1], dtype=np.float)
+    fdescr_name = join(module_path, 'descr', 'boston_house_prices.rst')
+    with open(fdescr_name) as f:
+        descr_text = f.read()
+
+    data_file_name = join(module_path, 'data', 'boston_house_prices.csv')
+    with open(data_file_name) as f:
+        data_file = csv.reader(f)
+        temp = next(data_file)
+        n_samples = int(temp[0])
+        n_features = int(temp[1])
+        data = np.empty((n_samples, n_features))
+        target = np.empty((n_samples,))
+        temp = next(data_file)  # names of features
+        feature_names = np.array(temp)
+
+        for i, d in enumerate(data_file):
+            data[i] = np.asarray(d[:-1], dtype=np.float)
+            target[i] = np.asarray(d[-1], dtype=np.float)
 
     return Bunch(data=data,
                  target=target,
-                 feature_names=feature_names,
-                 DESCR=fdescr.read())
+                 # last column is target value
+                 feature_names=feature_names[:-1],
+                 DESCR=descr_text)
 
 
 def load_sample_images():

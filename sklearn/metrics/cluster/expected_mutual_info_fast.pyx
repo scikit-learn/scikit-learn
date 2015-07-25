@@ -1,10 +1,9 @@
-# encoding: utf-8
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
 # Authors: Robert Layton <robertlayton@gmail.com>
 #           Corey Lynch <coreylynch9@gmail.com>
-# License: BSD Style.
+# Licence: BSD 3 clause
 
 from libc.math cimport exp
 from scipy.special import gammaln

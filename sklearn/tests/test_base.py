@@ -1,6 +1,5 @@
-
 # Author: Gael Varoquaux
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 import scipy.sparse as sp
@@ -9,12 +8,14 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
+from sklearn.utils import deprecated
 
 
 #############################################################################
@@ -36,6 +37,19 @@ class T(BaseEstimator):
     def __init__(self, a=None, b=None):
         self.a = a
         self.b = b
+
+
+class DeprecatedAttributeEstimator(BaseEstimator):
+    def __init__(self, a=None, b=None):
+        self.a = a
+        if b is not None:
+            DeprecationWarning("b is deprecated and renamed 'a'")
+            self.a = b
+
+    @property
+    @deprecated("Parameter 'b' is deprecated and renamed to 'a'")
+    def b(self):
+        return self._b
 
 
 class Buggy(BaseEstimator):
@@ -66,13 +80,11 @@ class VargEstimator(BaseEstimator):
 # The tests
 
 def test_clone():
-    """Tests that clone creates a correct deep copy.
+    # Tests that clone creates a correct deep copy.
+    # We create an estimator, make a copy of its original state
+    # (which, in this case, is the current state of the estimator),
+    # and check that the obtained copy is a correct deep copy.
 
-    We create an estimator, make a copy of its original state
-    (which, in this case, is the current state of the estimator),
-    and check that the obtained copy is a correct deep copy.
-
-    """
     from sklearn.feature_selection import SelectFpr, f_classif
 
     selector = SelectFpr(f_classif, alpha=0.1)
@@ -86,12 +98,11 @@ def test_clone():
 
 
 def test_clone_2():
-    """Tests that clone doesn't copy everything.
+    # Tests that clone doesn't copy everything.
+    # We first create an estimator, give it an own attribute, and
+    # make a copy of its original state. Then we check that the copy doesn't
+    # have the specific attribute we manually added to the initial estimator.
 
-    We first create an estimator, give it an own attribute, and
-    make a copy of its original state. Then we check that the copy doesn't
-    have the specific attribute we manually added to the initial estimator.
-    """
     from sklearn.feature_selection import SelectFpr, f_classif
 
     selector = SelectFpr(f_classif, alpha=0.1)
@@ -101,7 +112,7 @@ def test_clone_2():
 
 
 def test_clone_buggy():
-    """Check that clone raises an error on buggy estimators."""
+    # Check that clone raises an error on buggy estimators.
     buggy = Buggy()
     buggy.a = 2
     assert_raises(RuntimeError, clone, buggy)
@@ -114,7 +125,7 @@ def test_clone_buggy():
 
 
 def test_clone_empty_array():
-    """Regression test for cloning estimators with empty arrays"""
+    # Regression test for cloning estimators with empty arrays
     clf = MyEstimator(empty=np.array([]))
     clf2 = clone(clf)
     assert_array_equal(clf.empty, clf2.empty)
@@ -124,8 +135,16 @@ def test_clone_empty_array():
     assert_array_equal(clf.empty.data, clf2.empty.data)
 
 
+def test_clone_nan():
+    # Regression test for cloning estimators with default parameter as np.nan
+    clf = MyEstimator(empty=np.nan)
+    clf2 = clone(clf)
+
+    assert_true(clf.empty is clf2.empty)
+
+
 def test_repr():
-    """Smoke test the repr of the base estimator."""
+    # Smoke test the repr of the base estimator.
     my_estimator = MyEstimator()
     repr(my_estimator)
     test = T(K(), K())
@@ -139,7 +158,7 @@ def test_repr():
 
 
 def test_str():
-    """Smoke test the str of the base estimator"""
+    # Smoke test the str of the base estimator
     my_estimator = MyEstimator()
     str(my_estimator)
 
@@ -153,6 +172,19 @@ def test_get_params():
     test.set_params(a__d=2)
     assert_true(test.a.d == 2)
     assert_raises(ValueError, test.set_params, a__a=2)
+
+
+def test_get_params_deprecated():
+    # deprecated attribute should not show up as params
+    est = DeprecatedAttributeEstimator(a=1)
+
+    assert_true('a' in est.get_params())
+    assert_true('a' in est.get_params(deep=True))
+    assert_true('a' in est.get_params(deep=False))
+
+    assert_true('b' not in est.get_params())
+    assert_true('b' not in est.get_params(deep=True))
+    assert_true('b' not in est.get_params(deep=False))
 
 
 def test_is_classifier():
@@ -172,6 +204,31 @@ def test_set_params():
     # non-existing parameter of pipeline
     assert_raises(ValueError, clf.set_params, svm__stupid_param=True)
     # we don't currently catch if the things in pipeline are estimators
-    #bad_pipeline = Pipeline([("bad", NoEstimator())])
-    #assert_raises(AttributeError, bad_pipeline.set_params,
-            #bad__stupid_param=True)
+    # bad_pipeline = Pipeline([("bad", NoEstimator())])
+    # assert_raises(AttributeError, bad_pipeline.set_params,
+    #               bad__stupid_param=True)
+
+
+def test_score_sample_weight():
+    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.tree import DecisionTreeRegressor
+    from sklearn import datasets
+
+    rng = np.random.RandomState(0)
+
+    # test both ClassifierMixin and RegressorMixin
+    estimators = [DecisionTreeClassifier(max_depth=2),
+                  DecisionTreeRegressor(max_depth=2)]
+    sets = [datasets.load_iris(),
+            datasets.load_boston()]
+
+    for est, ds in zip(estimators, sets):
+        est.fit(ds.data, ds.target)
+        # generate random sample weights
+        sample_weight = rng.randint(1, 10, size=len(ds.target))
+        # check that the score with and without sample weights are different
+        assert_not_equal(est.score(ds.data, ds.target),
+                         est.score(ds.data, ds.target,
+                                   sample_weight=sample_weight),
+                         msg="Unweighted and weighted scores "
+                             "are unexpectedly equal")

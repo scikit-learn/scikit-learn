@@ -16,9 +16,9 @@ code for the scikit-learn project.
   implementation optimization.
 
   Times and times, hours of efforts invested in optimizing complicated
-  implementation details have been rended irrelevant by the late discovery
-  of simple **algorithmic tricks**, or by using another algorithm altogether
-  that is better suited to the problem.
+  implementation details have been rendered irrelevant by the subsequent
+  discovery of simple **algorithmic tricks**, or by using another algorithm
+  altogether that is better suited to the problem.
 
   The section :ref:`warm-restarts` gives an example of such a trick.
 
@@ -31,7 +31,7 @@ Python, Cython or C/C++?
 In general, the scikit-learn project emphasizes the **readability** of
 the source code to make it easy for the project users to dive into the
 source code so as to understand how the algorithm behaves on their data
-but also for ease of maintanability (by the developers).
+but also for ease of maintainability (by the developers).
 
 When implementing a new algorithm is thus recommended to **start
 implementing it in Python using Numpy and Scipy** by taking care of avoiding
@@ -39,7 +39,8 @@ looping code using the vectorized idioms of those libraries. In practice
 this means trying to **replace any nested for loops by calls to equivalent
 Numpy array methods**. The goal is to avoid the CPU wasting time in the
 Python interpreter rather than crunching numbers to fit your statistical
-model.
+model. It's generally a good idea to consider NumPy and SciPy performance tips:
+http://wiki.scipy.org/PerformanceTips
 
 Sometimes however an algorithm cannot be expressed efficiently in simple
 vectorized Numpy code. In this case, the recommended strategy is the
@@ -75,6 +76,37 @@ When using Cython, include the generated C source code alongside with
 the Cython source code. The goal is to make it possible to install the
 scikit on any machine with Python, Numpy, Scipy and C/C++ compiler.
 
+Fast matrix multiplications
+===========================
+
+Matrix multiplications (matrix-matrix and matrix-vector) are usually handled
+using the NumPy function ``np.dot``, but in versions of NumPy before 1.7.2
+this function is suboptimal when the inputs are not both in the C (row-major)
+layout; in that case, the inputs may be implicitly copied to obtain the right
+layout. This obviously consumes memory and takes time.
+
+The function ``fast_dot`` in ``sklearn.utils.extmath`` offers a fast
+replacement for ``np.dot`` that prevents copies from being made in some cases.
+In all other cases, it dispatches to ``np.dot`` and when the NumPy version is
+new enough, it is in fact an alias for that function, making it a drop-in
+replacement. Example usage of ``fast_dot``::
+
+  >>> import numpy as np
+  >>> from sklearn.utils.extmath import fast_dot
+  >>> X = np.random.random_sample([2, 10])
+  >>> np.allclose(np.dot(X, X.T), fast_dot(X, X.T))
+  True
+
+This function operates optimally on 2-dimensional arrays, both of the same
+dtype, which should be either single or double precision float. If these
+requirements aren't met or the BLAS package is not available, the call is
+silently dispatched to ``numpy.dot``. If you want to be sure when the original
+``numpy.dot`` has been invoked in a situation where it is suboptimal, you can
+activate the related warning::
+
+  >>> import warnings
+  >>> from sklearn.utils.validation import NonBLASDotWarning
+  >>> warnings.simplefilter('always', NonBLASDotWarning) # doctest: +SKIP
 
 .. _profiling-python-code:
 
@@ -87,7 +119,7 @@ for interactively exploring the relevant part for the code.
 
 Suppose we want to profile the Non Negative Matrix Factorization module
 of the scikit. Let us setup a new IPython session and load the digits
-dataset and as in the :ref:`example_plot_digits_classification.py` example::
+dataset and as in the :ref:`example_classification_plot_digits_classification.py` example::
 
   In [1]: from sklearn.decomposition import NMF
 
@@ -123,7 +155,7 @@ magic command::
           1    0.000    0.000    0.000    0.000 nmf.py:337(__init__)
           1    0.000    0.000    1.681    1.681 nmf.py:461(fit)
 
-The ``totime`` columns is the most interesting: it gives to total time spent
+The ``tottime`` column is the most interesting: it gives to total time spent
 executing the code of a given function ignoring the time spent in executing the
 sub-functions. The real total time (local code + sub-function calls) is given by
 the ``cumtime`` column.
@@ -132,7 +164,7 @@ Note the use of the ``-l nmf.py`` that restricts the output to lines that
 contains the "nmf.py" string. This is useful to have a quick look at the hotspot
 of the nmf Python module it-self ignoring anything else.
 
-Here is the begining of the output of the same command without the ``-l nmf.py``
+Here is the beginning of the output of the same command without the ``-l nmf.py``
 filter::
 
   In [5] %prun NMF(n_components=16, tol=1e-2).fit(X)
@@ -328,8 +360,8 @@ directory::
          7     13.61 MB -152.59 MB       del b
          8     13.61 MB    0.00 MB       return a
 
-Another useful magic that ``memory_profiler`` defines is `%memit`, which is
-analogous to `%timeit`. It can be used as follows::
+Another useful magic that ``memory_profiler`` defines is ``%memit``, which is
+analogous to ``%timeit``. It can be used as follows::
 
     In [1]: import numpy as np
 
@@ -346,7 +378,7 @@ Performance tips for the Cython developer
 If profiling of the Python code reveals that the Python interpreter
 overhead is larger by one order of magnitude or more than the cost of the
 actual numerical computation (e.g. ``for`` loops over vector components,
-nested evaluation of conditional expression, scalar arithmetics...), it
+nested evaluation of conditional expression, scalar arithmetic...), it
 is probably adequate to extract the hotspot portion of the code as a
 standalone function in a ``.pyx`` file, add static type declarations and
 then use Cython to generate a C program suitable to be compiled as a
@@ -359,7 +391,7 @@ important in practice on the existing cython codebase in the scikit-learn
 project.
 
 TODO: html report, type declarations, bound checks, division by zero checks,
-memory alignement, direct blas calls...
+memory alignment, direct blas calls...
 
 - http://www.euroscipy.org/file/3696?vid=download
 - http://conference.scipy.org/proceedings/SciPy2009/paper_1/
@@ -373,7 +405,7 @@ Profiling compiled extensions
 
 When working with compiled extensions (written in C/C++ with a wrapper or
 directly as Cython extension), the default Python profiler is useless:
-we need a dedicated tool to instrospect what's happening inside the
+we need a dedicated tool to introspect what's happening inside the
 compiled extension it-self.
 
 Using yep and google-perftools

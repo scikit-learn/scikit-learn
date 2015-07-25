@@ -1,7 +1,5 @@
 """Testing for K-means"""
-from cStringIO import StringIO
 import sys
-import warnings
 
 import numpy as np
 from scipy import sparse as sp
@@ -12,18 +10,22 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
-
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
-from sklearn.utils.fixes import unique
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import if_not_mac_os
+
+from sklearn.utils.validation import DataConversionWarning
+from sklearn.utils.extmath import row_norms
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
-from sklearn.cluster._k_means import csr_row_norm_l2
 from sklearn.datasets.samples_generator import make_blobs
+from sklearn.externals.six.moves import cStringIO as StringIO
 
 
 # non centered, sparse centers to check the
@@ -39,24 +41,16 @@ X, true_labels = make_blobs(n_samples=n_samples, centers=centers,
 X_csr = sp.csr_matrix(X)
 
 
-def test_square_norms():
-    x_squared_norms = (X ** 2).sum(axis=1)
-    x_squared_norms_from_csr = csr_row_norm_l2(X_csr)
-    assert_array_almost_equal(x_squared_norms,
-                              x_squared_norms_from_csr, 5)
-
-
 def test_kmeans_dtype():
     rnd = np.random.RandomState(0)
     X = rnd.normal(size=(40, 2))
     X = (X * 10).astype(np.uint8)
     km = KMeans(n_init=1).fit(X)
-    with warnings.catch_warnings(record=True) as w:
-        assert_array_equal(km.labels_, km.predict(X))
-        assert_equal(len(w), 1)
+    pred_x = assert_warns(DataConversionWarning, km.predict, X)
+    assert_array_equal(km.labels_, pred_x)
 
 
-def test_labels_assignement_and_inertia():
+def test_labels_assignment_and_inertia():
     # pure numpy implementation as easily auditable reference gold
     # implementation
     rng = np.random.RandomState(42)
@@ -72,15 +66,15 @@ def test_labels_assignement_and_inertia():
     assert_true((mindist >= 0.0).all())
     assert_true((labels_gold != -1).all())
 
-    # perform label assignement using the dense array input
+    # perform label assignment using the dense array input
     x_squared_norms = (X ** 2).sum(axis=1)
     labels_array, inertia_array = _labels_inertia(
         X, x_squared_norms, noisy_centers)
     assert_array_almost_equal(inertia_array, inertia_gold)
     assert_array_equal(labels_array, labels_gold)
 
-    # perform label assignement using the sparse CSR input
-    x_squared_norms_from_csr = csr_row_norm_l2(X_csr)
+    # perform label assignment using the sparse CSR input
+    x_squared_norms_from_csr = row_norms(X_csr, squared=True)
     labels_csr, inertia_csr = _labels_inertia(
         X_csr, x_squared_norms_from_csr, noisy_centers)
     assert_array_almost_equal(inertia_csr, inertia_gold)
@@ -88,7 +82,7 @@ def test_labels_assignement_and_inertia():
 
 
 def test_minibatch_update_consistency():
-    """Check that dense and sparse minibatch update give the same results"""
+    # Check that dense and sparse minibatch update give the same results
     rng = np.random.RandomState(42)
     old_centers = centers + rng.normal(size=centers.shape)
 
@@ -99,7 +93,7 @@ def test_minibatch_update_consistency():
     counts_csr = np.zeros(new_centers.shape[0], dtype=np.int32)
 
     x_squared_norms = (X ** 2).sum(axis=1)
-    x_squared_norms_csr = csr_row_norm_l2(X_csr, squared=True)
+    x_squared_norms_csr = row_norms(X_csr, squared=True)
 
     buffer = np.zeros(centers.shape[1], dtype=np.double)
     buffer_csr = np.zeros(centers.shape[1], dtype=np.double)
@@ -161,7 +155,7 @@ def _check_fitted_model(km):
     labels = km.labels_
     assert_equal(np.unique(labels).shape[0], n_clusters)
 
-    # check that the labels assignements are perfect (up to a permutation)
+    # check that the labels assignment are perfect (up to a permutation)
     assert_equal(v_measure_score(true_labels, labels), 1.0)
     assert_greater(km.inertia_, 0.0)
 
@@ -171,13 +165,8 @@ def _check_fitted_model(km):
 
 def test_k_means_plus_plus_init():
     km = KMeans(init="k-means++", n_clusters=n_clusters,
-                     random_state=42).fit(X)
+                random_state=42).fit(X)
     _check_fitted_model(km)
-
-
-def test_k_means_check_fitted():
-    km = KMeans(n_clusters=n_clusters, random_state=42)
-    assert_raises(AttributeError, km._check_fitted)
 
 
 def test_k_means_new_centers():
@@ -189,9 +178,9 @@ def test_k_means_new_centers():
                   [0, 0, 0, 0],
                   [0, 1, 0, 0]])
     labels = [0, 1, 2, 1, 1, 2]
-    bad_centers = np.array([[+0,  1,  0,  0],
-                            [.2,  0, .2, .2],
-                            [+0,  0,  0,  0]])
+    bad_centers = np.array([[+0, 1, 0, 0],
+                            [.2, 0, .2, .2],
+                            [+0, 0, 0, 0]])
 
     km = KMeans(n_clusters=3, init=bad_centers, n_init=1, max_iter=10,
                 random_state=1)
@@ -200,24 +189,30 @@ def test_k_means_new_centers():
         this_labels = km.labels_
         # Reorder the labels so that the first instance is in cluster 0,
         # the second in cluster 1, ...
-        this_labels = unique(this_labels, return_index=True)[1][this_labels]
+        this_labels = np.unique(this_labels, return_index=True)[1][this_labels]
         np.testing.assert_array_equal(this_labels, labels)
 
 
-def _get_mac_os_version():
-    import platform
-    mac_version, _, _ = platform.mac_ver()
-    if mac_version:
-        # turn something like '10.7.3' into '10.7'
-        return '.'.join(mac_version.split('.')[:2])
+def _has_blas_lib(libname):
+    from numpy.distutils.system_info import get_info
+    return libname in get_info('blas_opt').get('libraries', [])
 
 
+@if_not_mac_os()
 def test_k_means_plus_plus_init_2_jobs():
-    if _get_mac_os_version() >= '10.7':
-        raise SkipTest('Multi-process bug in Mac OS X Lion (see issue #636)')
+    if _has_blas_lib('openblas'):
+        raise SkipTest('Multi-process bug with OpenBLAS (see issue #636)')
+
     km = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
-                     random_state=42).fit(X)
+                random_state=42).fit(X)
     _check_fitted_model(km)
+
+
+def test_k_means_precompute_distances_flag():
+    # check that a warning is raised if the precompute_distances flag is not
+    # supported
+    km = KMeans(precompute_distances="wrong")
+    assert_raises(ValueError, km.fit, X)
 
 
 def test_k_means_plus_plus_init_sparse():
@@ -240,13 +235,13 @@ def test_k_means_random_init_sparse():
 
 def test_k_means_plus_plus_init_not_precomputed():
     km = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42,
-                     precompute_distances=False).fit(X)
+                precompute_distances=False).fit(X)
     _check_fitted_model(km)
 
 
 def test_k_means_random_init_not_precomputed():
     km = KMeans(init="random", n_clusters=n_clusters, random_state=42,
-                     precompute_distances=False).fit(X)
+                precompute_distances=False).fit(X)
     _check_fitted_model(km)
 
 
@@ -255,6 +250,28 @@ def test_k_means_perfect_init():
                 n_init=1)
     km.fit(X)
     _check_fitted_model(km)
+
+
+def test_k_means_n_init():
+    rnd = np.random.RandomState(0)
+    X = rnd.normal(size=(40, 2))
+
+    # two regression tests on bad n_init argument
+    # previous bug: n_init <= 0 threw non-informative TypeError (#3858)
+    assert_raises_regexp(ValueError, "n_init", KMeans(n_init=0).fit, X)
+    assert_raises_regexp(ValueError, "n_init", KMeans(n_init=-1).fit, X)
+
+
+def test_k_means_fortran_aligned_data():
+    # Check the KMeans will work well, even if X is a fortran-aligned data. 
+    X = np.asfortranarray([[0, 0], [0, 1], [0, 1]])
+    centers = np.array([[0, 0], [0, 1]])
+    labels = np.array([0, 1, 1])
+    km = KMeans(n_init=1, init=centers, precompute_distances=False,
+                random_state=42)
+    km.fit(X)
+    assert_array_equal(km.cluster_centers_, centers)
+    assert_array_equal(km.labels_, labels)
 
 
 def test_mb_k_means_plus_plus_init_dense_array():
@@ -286,10 +303,7 @@ def test_minibatch_init_with_large_k():
     mb_k_means = MiniBatchKMeans(init='k-means++', init_size=10, n_clusters=20)
     # Check that a warning is raised, as the number clusters is larger
     # than the init_size
-    with warnings.catch_warnings(record=True) as warn_queue:
-        mb_k_means.fit(X)
-
-    assert_equal(len(warn_queue), 1)
+    assert_warns(RuntimeWarning, mb_k_means.fit, X)
 
 
 def test_minibatch_k_means_random_init_dense_array():
@@ -308,14 +322,52 @@ def test_minibatch_k_means_random_init_sparse_csr():
 
 def test_minibatch_k_means_perfect_init_dense_array():
     mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 random_state=42).fit(X)
+                                 random_state=42, n_init=1).fit(X)
     _check_fitted_model(mb_k_means)
+
+
+def test_minibatch_k_means_init_multiple_runs_with_explicit_centers():
+    mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
+                                 random_state=42, n_init=10)
+    assert_warns(RuntimeWarning, mb_k_means.fit, X)
 
 
 def test_minibatch_k_means_perfect_init_sparse_csr():
     mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 random_state=42).fit(X_csr)
+                                 random_state=42, n_init=1).fit(X_csr)
     _check_fitted_model(mb_k_means)
+
+
+def test_minibatch_sensible_reassign_fit():
+    # check if identical initial clusters are reassigned
+    # also a regression test for when there are more desired reassignments than
+    # samples.
+    zeroed_X, true_labels = make_blobs(n_samples=100, centers=5,
+                                       cluster_std=1., random_state=42)
+    zeroed_X[::2, :] = 0
+    mb_k_means = MiniBatchKMeans(n_clusters=20, batch_size=10, random_state=42,
+                                 init="random")
+    mb_k_means.fit(zeroed_X)
+    # there should not be too many exact zero cluster centers
+    assert_greater(mb_k_means.cluster_centers_.any(axis=1).sum(), 10)
+
+    # do the same with batch-size > X.shape[0] (regression test)
+    mb_k_means = MiniBatchKMeans(n_clusters=20, batch_size=201,
+                                 random_state=42, init="random")
+    mb_k_means.fit(zeroed_X)
+    # there should not be too many exact zero cluster centers
+    assert_greater(mb_k_means.cluster_centers_.any(axis=1).sum(), 10)
+
+
+def test_minibatch_sensible_reassign_partial_fit():
+    zeroed_X, true_labels = make_blobs(n_samples=n_samples, centers=5,
+                                       cluster_std=1., random_state=42)
+    zeroed_X[::2, :] = 0
+    mb_k_means = MiniBatchKMeans(n_clusters=20, random_state=42, init="random")
+    for i in range(100):
+        mb_k_means.partial_fit(zeroed_X)
+    # there should not be too many exact zero cluster centers
+    assert_greater(mb_k_means.cluster_centers_.any(axis=1).sum(), 10)
 
 
 def test_minibatch_reassign():
@@ -323,10 +375,11 @@ def test_minibatch_reassign():
     # as a result all the centers should be reassigned and the model
     # should not longer be good
     for this_X in (X, X_csr):
-        mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=1,
+        mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=100,
                                      random_state=42)
         mb_k_means.fit(this_X)
-        centers_before = mb_k_means.cluster_centers_.copy()
+
+        score_before = mb_k_means.score(this_X)
         try:
             old_stdout = sys.stdout
             sys.stdout = StringIO()
@@ -335,32 +388,47 @@ def test_minibatch_reassign():
                              mb_k_means.cluster_centers_,
                              mb_k_means.counts_,
                              np.zeros(X.shape[1], np.double),
-                             False, distances=np.zeros(n_clusters),
+                             False, distances=np.zeros(X.shape[0]),
                              random_reassign=True, random_state=42,
                              reassignment_ratio=1, verbose=True)
         finally:
             sys.stdout = old_stdout
-        centers_after = mb_k_means.cluster_centers_.copy()
-        # Check that all the centers have moved
-        assert_greater(((centers_before - centers_after)**2).sum(axis=1).min(),
-                       .2)
+        assert_greater(score_before, mb_k_means.score(this_X))
 
     # Give a perfect initialization, with a small reassignment_ratio,
     # no center should be reassigned
     for this_X in (X, X_csr):
-        mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=1,
+        mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=100,
                                      init=centers.copy(),
-                                     random_state=42)
+                                     random_state=42, n_init=1)
         mb_k_means.fit(this_X)
-        centers_before = mb_k_means.cluster_centers_.copy()
+        clusters_before = mb_k_means.cluster_centers_
         # Turn on verbosity to smoke test the display code
         _mini_batch_step(this_X, (X ** 2).sum(axis=1),
                          mb_k_means.cluster_centers_,
                          mb_k_means.counts_,
                          np.zeros(X.shape[1], np.double),
-                         False, distances=np.zeros(n_clusters),
+                         False, distances=np.zeros(X.shape[0]),
                          random_reassign=True, random_state=42,
                          reassignment_ratio=1e-15)
+        assert_array_almost_equal(clusters_before, mb_k_means.cluster_centers_)
+
+
+def test_minibatch_with_many_reassignments():
+    # Test for the case that the number of clusters to reassign is bigger
+    # than the batch_size
+    n_samples = 550
+    rnd = np.random.RandomState(42)
+    X = rnd.uniform(size=(n_samples, 10))
+    # Check that the fit works if n_clusters is bigger than the batch_size.
+    # Run the test with 550 clusters and 550 samples, because it turned out
+    # that this values ensure that the number of clusters to reassign
+    # is always bigger than the batch_size
+    n_clusters = 550
+    MiniBatchKMeans(n_clusters=n_clusters,
+                    batch_size=100,
+                    init_size=n_samples,
+                    random_state=42).fit(X)
 
 
 def test_sparse_mb_k_means_callable_init():
@@ -393,7 +461,8 @@ def test_mini_batch_k_means_random_init_partial_fit():
 
 def test_minibatch_default_init_size():
     mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 batch_size=10, random_state=42).fit(X)
+                                 batch_size=10, random_state=42,
+                                 n_init=1).fit(X)
     assert_equal(mb_k_means.init_size_, 3 * mb_k_means.batch_size)
     _check_fitted_model(mb_k_means)
 
@@ -406,7 +475,8 @@ def test_minibatch_tol():
 
 def test_minibatch_set_init_size():
     mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 init_size=666, random_state=42).fit(X)
+                                 init_size=666, random_state=42,
+                                 n_init=1).fit(X)
     assert_equal(mb_k_means.init_size, 666)
     assert_equal(mb_k_means.init_size_, n_samples)
     _check_fitted_model(mb_k_means)
@@ -423,7 +493,7 @@ def test_mini_match_k_means_invalid_init():
 
 
 def test_k_means_copyx():
-    """Check if copy_x=False returns nearly equal X after de-centering."""
+    # Check if copy_x=False returns nearly equal X after de-centering.
     my_X = X.copy()
     km = KMeans(copy_x=False, n_clusters=n_clusters, random_state=42)
     km.fit(my_X)
@@ -434,13 +504,11 @@ def test_k_means_copyx():
 
 
 def test_k_means_non_collapsed():
-    """Check k_means with a bad initialization does not yield a singleton
-
-    Starting with bad centers that are quickly ignored should not
-    result in a repositioning of the centers to the center of mass that
-    would lead to collapsed centers which in turns make the clustering
-    dependent of the numerical unstabilities.
-    """
+    # Check k_means with a bad initialization does not yield a singleton
+    # Starting with bad centers that are quickly ignored should not
+    # result in a repositioning of the centers to the center of mass that
+    # would lead to collapsed centers which in turns make the clustering
+    # dependent of the numerical unstabilities.
     my_X = np.array([[1.1, 1.1], [0.9, 1.1], [1.1, 0.9], [0.9, 1.1]])
     array_init = np.array([[1.0, 1.0], [5.0, 5.0], [-5.0, -5.0]])
     km = KMeans(init=array_init, n_clusters=3, random_state=42, n_init=1)
@@ -541,10 +609,12 @@ def test_input_dtypes():
         MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_list),
         MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int),
         MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int_csr),
-        MiniBatchKMeans(n_clusters=2, batch_size=2, init=init_int).fit(X_list),
-        MiniBatchKMeans(n_clusters=2, batch_size=2, init=init_int).fit(X_int),
         MiniBatchKMeans(n_clusters=2, batch_size=2,
-                        init=init_int).fit(X_int_csr),
+                        init=init_int, n_init=1).fit(X_list),
+        MiniBatchKMeans(n_clusters=2, batch_size=2,
+                        init=init_int, n_init=1).fit(X_int),
+        MiniBatchKMeans(n_clusters=2, batch_size=2,
+                        init=init_int, n_init=1).fit(X_int_csr),
     ]
     expected_labels = [0, 1, 1, 0, 0, 1]
     scores = np.array([v_measure_score(expected_labels, km.labels_)
@@ -571,7 +641,7 @@ def test_fit_transform():
 
 
 def test_n_init():
-    """Check that increasing the number of init increases the quality"""
+    # Check that increasing the number of init increases the quality
     n_runs = 5
     n_init_range = [1, 5, 10]
     inertia = np.zeros((len(n_init_range), n_runs))
@@ -604,14 +674,13 @@ def test_k_means_function():
     labels = labels
     assert_equal(np.unique(labels).shape[0], n_clusters)
 
-    # check that the labels assignements are perfect (up to a permutation)
+    # check that the labels assignment are perfect (up to a permutation)
     assert_equal(v_measure_score(true_labels, labels), 1.0)
     assert_greater(inertia, 0.0)
 
     # check warning when centers are passed
-    with warnings.catch_warnings(record=True) as w:
-        k_means(X, n_clusters=n_clusters, init=centers)
-        assert_equal(len(w), 1)
+    assert_warns(RuntimeWarning, k_means, X, n_clusters=n_clusters,
+                 init=centers)
 
     # to many clusters desired
     assert_raises(ValueError, k_means, X, n_clusters=X.shape[0] + 1)

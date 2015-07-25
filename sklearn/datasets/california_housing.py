@@ -6,6 +6,10 @@ The original database is available from StatLib
 
 The data contains 20,640 observations on 9 variables.
 
+This dataset contains the average house value as target variable
+and the following input variables (features): average income,
+housing average age, average rooms, average bedrooms, population,
+average occupation, latitude, and longitude in that order.
 
 References
 ----------
@@ -15,13 +19,18 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 
 """
 # Authors: Peter Prettenhofer
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from io import BytesIO
 from os.path import join, exists
 from os import makedirs
 from zipfile import ZipFile
-import urllib2
+try:
+    # Python 2
+    from urllib2 import urlopen
+except ImportError:
+    # Python 3+
+    from urllib.request import urlopen
 
 import numpy as np
 
@@ -41,6 +50,8 @@ MODULE_DOCS = __doc__
 def fetch_california_housing(data_home=None, download_if_missing=True):
     """Loader for the California housing dataset from StatLib.
 
+    Read more in the :ref:`User Guide <datasets>`.
+
     Parameters
     ----------
     data_home : optional, default: None
@@ -50,6 +61,22 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     download_if_missing: optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
+
+    Returns
+    -------
+    dataset : dict-like object with the following attributes:
+
+    dataset.data : ndarray, shape [20640, 8]
+        Each row corresponding to the 8 feature values in order.
+
+    dataset.target : numpy array of shape (20640,)
+        Each value corresponds to the average house value in units of 100,000.
+
+    dataset.feature_names : array of length 8
+        Array of ordered feature names used in the dataset.
+
+    dataset.DESCR : string
+        Description of the California housing dataset.
 
     Notes
     ------
@@ -61,7 +88,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         makedirs(data_home)
     if not exists(join(data_home, TARGET_FILENAME)):
         print('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
-        fhandle = urllib2.urlopen(DATA_URL)
+        fhandle = urlopen(DATA_URL)
         buf = BytesIO(fhandle.read())
         zip_file = ZipFile(buf)
         try:

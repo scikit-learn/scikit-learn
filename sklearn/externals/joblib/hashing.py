@@ -31,7 +31,7 @@ class _ConsistentSet(object):
 
 
 class _MyHash(object):
-    """ Class used to hash objects that won't normaly pickle """
+    """ Class used to hash objects that won't normally pickle """
 
     def __init__(self, *args):
         self.args = args
@@ -83,10 +83,13 @@ class Hasher(Pickler):
         # We have to override this method in order to deal with objects
         # defined interactively in IPython that are not injected in
         # __main__
+        kwargs = dict(name=name, pack=pack)
+        if sys.version_info >= (3, 4):
+            del kwargs['pack']
         try:
-            Pickler.save_global(self, obj, name=name, pack=pack)
+            Pickler.save_global(self, obj, **kwargs)
         except pickle.PicklingError:
-            Pickler.save_global(self, obj, name=name, pack=pack)
+            Pickler.save_global(self, obj, **kwargs)
             module = getattr(obj, "__module__", None)
             if module == '__main__':
                 my_name = name
@@ -151,12 +154,22 @@ class NumpyHasher(Hasher):
         if isinstance(obj, self.np.ndarray) and not obj.dtype.hasobject:
             # Compute a hash of the object:
             try:
-                self._hash.update(self._getbuffer(obj))
-            except (TypeError, BufferError):
+                # memoryview is not supported for some dtypes,
+                # e.g. datetime64, see
+                # https://github.com/numpy/numpy/issues/4983.  The
+                # workaround is to view the array as bytes before
+                # taking the memoryview
+                obj_bytes_view = obj.view(self.np.uint8)
+                self._hash.update(self._getbuffer(obj_bytes_view))
+            # ValueError is raised by .view when the array is not contiguous
+            # BufferError is raised by Python 3 in the hash update if
+            # the array is Fortran rather than C contiguous
+            except (ValueError, BufferError):
                 # Cater for non-single-segment arrays: this creates a
                 # copy, and thus aleviates this issue.
                 # XXX: There might be a more efficient way of doing this
-                self._hash.update(self._getbuffer(obj.flatten()))
+                obj_bytes_view = obj.flatten().view(self.np.uint8)
+                self._hash.update(self._getbuffer(obj_bytes_view))
 
             # We store the class, to be able to distinguish between
             # Objects with the same binary content, but different

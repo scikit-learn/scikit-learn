@@ -5,7 +5,7 @@ Segmenting the picture of Lena in regions
 
 This example uses :ref:`spectral_clustering` on a graph created from
 voxel-to-voxel difference on an image to break this image into multiple
-partly-homogenous regions.
+partly-homogeneous regions.
 
 This procedure (spectral clustering on an image) is an efficient
 approximate solution for finding normalized graph cuts.
@@ -20,13 +20,13 @@ There are two options to assign labels:
 print(__doc__)
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>, Brian Cheung
-# License: BSD
+# License: BSD 3 clause
 
 import time
 
 import numpy as np
 import scipy as sp
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
@@ -62,13 +62,13 @@ for assign_labels in ('kmeans', 'discretize'):
     t1 = time.time()
     labels = labels.reshape(lena.shape)
 
-    pl.figure(figsize=(5, 5))
-    pl.imshow(lena,   cmap=pl.cm.gray)
+    plt.figure(figsize=(5, 5))
+    plt.imshow(lena,   cmap=plt.cm.gray)
     for l in range(N_REGIONS):
-        pl.contour(labels == l, contours=1,
-                   colors=[pl.cm.spectral(l / float(N_REGIONS)), ])
-    pl.xticks(())
-    pl.yticks(())
-    pl.title('Spectral clustering: %s, %.2fs' % (assign_labels, (t1 - t0)))
+        plt.contour(labels == l, contours=1,
+                    colors=[plt.cm.spectral(l / float(N_REGIONS)), ])
+    plt.xticks(())
+    plt.yticks(())
+    plt.title('Spectral clustering: %s, %.2fs' % (assign_labels, (t1 - t0)))
 
-pl.show()
+plt.show()

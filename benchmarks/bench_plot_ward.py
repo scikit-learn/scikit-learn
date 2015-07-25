@@ -1,5 +1,5 @@
 """
-Bench the scikit's ward implement compared to scipy's
+Benchmark scikit-learn's Ward implement compared to SciPy's
 """
 
 import time
@@ -8,9 +8,9 @@ import numpy as np
 from scipy.cluster import hierarchy
 import pylab as pl
 
-from sklearn.cluster import Ward
+from sklearn.cluster import AgglomerativeClustering
 
-ward = Ward(n_clusters=3)
+ward = AgglomerativeClustering(n_clusters=3, linkage='ward')
 
 n_samples = np.logspace(.5, 3, 9)
 n_features = np.logspace(1, 3.5, 7)
@@ -31,7 +31,7 @@ for i, n in enumerate(n_samples):
 
 ratio = scikits_time / scipy_time
 
-pl.clf()
+pl.figure("scikit-learn Ward's method benchmark results")
 pl.imshow(np.log(ratio), aspect='auto', origin="lower")
 pl.colorbar()
 pl.contour(ratio, levels=[1, ], colors='k')

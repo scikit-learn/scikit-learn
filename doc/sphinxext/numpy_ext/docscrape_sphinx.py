@@ -2,10 +2,9 @@ import re
 import inspect
 import textwrap
 import pydoc
-import sphinx
-from docscrape import NumpyDocString
-from docscrape import FunctionDoc
-from docscrape import ClassDoc
+from .docscrape import NumpyDocString
+from .docscrape import FunctionDoc
+from .docscrape import ClassDoc
 
 
 class SphinxDocString(NumpyDocString):
@@ -156,6 +155,7 @@ class SphinxDocString(NumpyDocString):
             out += ['']
             # Latex collects all references to a separate bibliography,
             # so we need to insert links to it
+            import sphinx  # local import to avoid test dependency
             if sphinx.__version__ >= "0.6":
                 out += ['.. only:: latex', '']
             else:
@@ -188,14 +188,14 @@ class SphinxDocString(NumpyDocString):
         out += self._str_index() + ['']
         out += self._str_summary()
         out += self._str_extended_summary()
-        for param_list in ('Parameters', 'Returns', 'Raises'):
+        for param_list in ('Parameters', 'Returns', 'Raises', 'Attributes'):
             out += self._str_param_list(param_list)
         out += self._str_warnings()
         out += self._str_see_also(func_role)
         out += self._str_section('Notes')
         out += self._str_references()
         out += self._str_examples()
-        for param_list in ('Attributes', 'Methods'):
+        for param_list in ('Methods',):
             out += self._str_member_list(param_list)
         out = self._str_indent(out, indent)
         return '\n'.join(out)

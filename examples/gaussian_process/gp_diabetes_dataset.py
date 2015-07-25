@@ -6,22 +6,22 @@
 Gaussian Processes regression: goodness-of-fit on the 'diabetes' dataset
 ========================================================================
 
-This example consists in fitting a Gaussian Process model onto the diabetes
+In this example, we fit a Gaussian Process model onto the diabetes
 dataset.
 
-The correlation parameters are determined by means of maximum likelihood
-estimation (MLE). An anisotropic squared exponential correlation model with a
-constant regression model are assumed. We also used a nugget = 1e-2 in order to
-account for the (strong) noise in the targets.
+We determine the correlation parameters with maximum likelihood
+estimation (MLE). We use an anisotropic squared exponential
+correlation model with a constant regression model. We also use a
+nugget of 1e-2 to account for the (strong) noise in the targets.
 
-We compute then compute a cross-validation estimate of the coefficient of
+We compute a cross-validation estimate of the coefficient of
 determination (R2) without reperforming MLE, using the set of correlation
 parameters found on the whole dataset.
 """
 print(__doc__)
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
-# License: BSD style
+# Licence: BSD 3 clause
 
 from sklearn import datasets
 from sklearn.gaussian_process import GaussianProcess
@@ -40,7 +40,7 @@ gp = GaussianProcess(regr='constant', corr='absolute_exponential',
 gp.fit(X, y)
 
 # Deactivate maximum likelihood estimation for the cross-validation loop
-gp.theta0 = gp.theta  # Given correlation parameter = MLE
+gp.theta0 = gp.theta_  # Given correlation parameter = MLE
 gp.thetaL, gp.thetaU = None, None  # None bounds deactivate MLE
 
 # Perform a cross-validation estimate of the coefficient of determination using

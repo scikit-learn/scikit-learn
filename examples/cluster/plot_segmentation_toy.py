@@ -4,9 +4,9 @@ Spectral clustering for image segmentation
 ===========================================
 
 In this example, an image with connected circles is generated and
-:ref:`spectral_clustering` is used to separate the circles.
+spectral clustering is used to separate the circles.
 
-In these settings, the spectral clustering approach solves the problem
+In these settings, the :ref:`spectral_clustering` approach solves the problem
 know as 'normalized graph cuts': the image is seen as a graph of
 connected voxels, and the spectral clustering algorithm amounts to
 choosing graph cuts defining regions while minimizing the ratio of the
@@ -28,10 +28,10 @@ print(__doc__)
 
 # Authors:  Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #           Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
@@ -65,7 +65,7 @@ img += 1 + 0.2 * np.random.randn(*img.shape)
 graph = image.img_to_graph(img, mask=mask)
 
 # Take a decreasing function of the gradient: we take it weakly
-# dependant from the gradient the segmentation is close to a voronoi
+# dependent from the gradient the segmentation is close to a voronoi
 graph.data = np.exp(-graph.data / graph.data.std())
 
 # Force the solver to be arpack, since amg is numerically
@@ -74,8 +74,8 @@ labels = spectral_clustering(graph, n_clusters=4, eigen_solver='arpack')
 label_im = -np.ones(mask.shape)
 label_im[mask] = labels
 
-pl.matshow(img)
-pl.matshow(label_im)
+plt.matshow(img)
+plt.matshow(label_im)
 
 ###############################################################################
 # 2 circles
@@ -92,7 +92,7 @@ labels = spectral_clustering(graph, n_clusters=2, eigen_solver='arpack')
 label_im = -np.ones(mask.shape)
 label_im[mask] = labels
 
-pl.matshow(img)
-pl.matshow(label_im)
+plt.matshow(img)
+plt.matshow(label_im)
 
-pl.show()
+plt.show()

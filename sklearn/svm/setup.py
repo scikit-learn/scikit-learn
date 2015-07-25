@@ -1,12 +1,12 @@
+import os
 from os.path import join
 import numpy
 
-import warnings
+from sklearn._build_utils import get_blas_info
 
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info, BlasNotFoundError
 
     config = Configuration('svm', parent_package, top_path)
 
@@ -19,6 +19,9 @@ def configuration(parent_package='', top_path=None):
                        sources=[join('src', 'libsvm', 'libsvm_template.cpp')],
                        depends=[join('src', 'libsvm', 'svm.cpp'),
                                 join('src', 'libsvm', 'svm.h')],
+                       # Force C++ linking in case gcc is picked up instead
+                       # of g++ under windows with some versions of MinGW
+                       extra_link_args=['-lstdc++'],
                        )
 
     libsvm_sources = ['libsvm.c']
@@ -36,10 +39,9 @@ def configuration(parent_package='', top_path=None):
                          )
 
     ### liblinear module
-    blas_sources = [join('src', 'blas', 'daxpy.c'),
-                    join('src', 'blas', 'ddot.c'),
-                    join('src', 'blas', 'dnrm2.c'),
-                    join('src', 'blas', 'dscal.c')]
+    cblas_libs, blas_info = get_blas_info()
+    if os.name == 'posix':
+        cblas_libs.append('m')
 
     liblinear_sources = ['liblinear.c',
                          join('src', 'liblinear', '*.cpp')]
@@ -47,19 +49,14 @@ def configuration(parent_package='', top_path=None):
     liblinear_depends = [join('src', 'liblinear', '*.h'),
                          join('src', 'liblinear', 'liblinear_helper.c')]
 
-    # we try to link agains system-wide blas
-    blas_info = get_info('blas_opt', 0)
-
-    if not blas_info:
-        config.add_library('blas', blas_sources)
-        warnings.warn(BlasNotFoundError.__doc__)
-
     config.add_extension('liblinear',
                          sources=liblinear_sources,
-                         libraries=blas_info.pop('libraries', ['blas']),
-                         include_dirs=['src',
+                         libraries=cblas_libs,
+                         include_dirs=[join('..', 'src', 'cblas'),
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],
+                         extra_compile_args=blas_info.pop('extra_compile_args',
+                                                          []),
                          depends=liblinear_depends,
                          # extra_compile_args=['-O0 -fno-inline'],
                          ** blas_info)

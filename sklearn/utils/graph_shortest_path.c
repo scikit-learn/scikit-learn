@@ -4557,7 +4557,7 @@ static CYTHON_UNUSED int __pyx_pw_5numpy_7ndarray_1__getbuffer__(PyObject *__pyx
  *         # -- the details of this may change.
  *         def __getbuffer__(ndarray self, Py_buffer* info, int flags):             # <<<<<<<<<<<<<<
  *             # This implementation of getbuffer is geared towards Cython
- *             # requirements, and does not yet fullfill the PEP.
+ *             # requirements, and does not yet fulfill the PEP.
  */
 
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags) {
@@ -6819,7 +6819,7 @@ PyMODINIT_FUNC PyInit_graph_shortest_path(void)
   /*--- Execution code ---*/
 
   /* "sklearn/utils/graph_shortest_path.pyx":12
- * # License: BSD, (C) 2011
+ * # License: BSD 3 clause, (C) 2011
  * 
  * import numpy as np             # <<<<<<<<<<<<<<
  * cimport numpy as np

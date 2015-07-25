@@ -53,7 +53,6 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 
 # Authors: Clay Woolam <clay@woolam.org>
 # Licence: BSD
-
 from abc import ABCMeta, abstractmethod
 from scipy import sparse
 import numpy as np
@@ -62,6 +61,8 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import rbf_kernel
 from ..utils.graph import graph_laplacian
 from ..utils.extmath import safe_sparse_dot
+from ..utils.validation import check_X_y, check_is_fitted
+from ..externals import six
 from ..neighbors.unsupervised import NearestNeighbors
 
 
@@ -72,7 +73,8 @@ def _not_converged(y_truth, y_prediction, tol=1e-3):
     return np.abs(y_truth - y_prediction).sum() > tol
 
 
-class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
+class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
+                                              ClassifierMixin)):
     """Base class for label propagation module.
 
     Parameters
@@ -93,8 +95,11 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
     tol : float
         Convergence tolerance: threshold to consider the system at steady
         state
+
+    n_neighbors : integer > 0
+        Parameter for knn kernel
+
     """
-    __metaclass__ = ABCMeta
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
                  alpha=1, max_iter=30, tol=1e-3):
@@ -166,6 +171,8 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
             Normalized probability distributions across
             class labels
         """
+        check_is_fitted(self, 'X_')
+
         if sparse.isspmatrix(X):
             X_2d = X
         else:
@@ -204,10 +211,8 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         -------
         self : returns an instance of self.
         """
-        if sparse.isspmatrix(X):
-            self.X_ = X
-        else:
-            self.X_ = np.asarray(X)
+        X, y = check_X_y(X, y)
+        self.X_ = X
 
         # actual graph construction (implementations should override this)
         graph_matrix = self._build_graph()
@@ -256,28 +261,53 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         transduction = self.classes_[np.argmax(self.label_distributions_,
                                                axis=1)]
         self.transduction_ = transduction.ravel()
+        self.n_iter_ = self.max_iter - remaining_iter
         return self
 
 
 class LabelPropagation(BaseLabelPropagation):
     """Label Propagation classifier
 
+    Read more in the :ref:`User Guide <label_propagation>`.
+
     Parameters
     ----------
     kernel : {'knn', 'rbf'}
         String identifier for kernel function to use.
         Only 'rbf' and 'knn' kernels are currently supported..
+
     gamma : float
-      parameter for rbf kernel
+        Parameter for rbf kernel
+
     n_neighbors : integer > 0
-      parameter for knn kernel
+        Parameter for knn kernel
+
     alpha : float
-      clamping factor
+        Clamping factor
+
     max_iter : float
-      change maximum number of iterations allowed
+        Change maximum number of iterations allowed
+
     tol : float
-      Convergence tolerance: threshold to consider the system at steady
-      state
+        Convergence tolerance: threshold to consider the system at steady
+        state
+
+    Attributes
+    ----------
+    X_ : array, shape = [n_samples, n_features]
+        Input array.
+
+    classes_ : array, shape = [n_classes]
+        The distinct labels used in classifying instances.
+
+    label_distributions_ : array, shape = [n_samples, n_classes]
+        Categorical distribution for each item.
+
+    transduction_ : array, shape = [n_samples]
+        Label assigned to each item via the transduction.
+
+    n_iter_ : int
+        Number of iterations run.
 
     Examples
     --------
@@ -301,7 +331,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     See Also
     --------
-    LabelSpreading : Alternate label proagation strategy more robust to noise
+    LabelSpreading : Alternate label propagation strategy more robust to noise
     """
     def _build_graph(self):
         """Matrix representing a fully connected graph between each sample
@@ -327,22 +357,46 @@ class LabelSpreading(BaseLabelPropagation):
     but uses affinity matrix based on the normalized graph Laplacian
     and soft clamping across the labels.
 
+    Read more in the :ref:`User Guide <label_propagation>`.
+
     Parameters
     ----------
     kernel : {'knn', 'rbf'}
         String identifier for kernel function to use.
         Only 'rbf' and 'knn' kernels are currently supported.
+
     gamma : float
       parameter for rbf kernel
+
     n_neighbors : integer > 0
       parameter for knn kernel
+
     alpha : float
       clamping factor
+
     max_iter : float
       maximum number of iterations allowed
+
     tol : float
       Convergence tolerance: threshold to consider the system at steady
       state
+
+    Attributes
+    ----------
+    X_ : array, shape = [n_samples, n_features]
+        Input array.
+
+    classes_ : array, shape = [n_classes]
+        The distinct labels used in classifying instances.
+
+    label_distributions_ : array, shape = [n_samples, n_classes]
+        Categorical distribution for each item.
+
+    transduction_ : array, shape = [n_samples]
+        Label assigned to each item via the transduction.
+
+    n_iter_ : int
+        Number of iterations run.
 
     Examples
     --------
@@ -361,7 +415,7 @@ class LabelSpreading(BaseLabelPropagation):
     References
     ----------
     Dengyong Zhou, Olivier Bousquet, Thomas Navin Lal, Jason Weston,
-    Bernhard Schölkopf. Learning with local and global consistency (2004)
+    Bernhard Schoelkopf. Learning with local and global consistency (2004)
     http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.115.3219
 
     See Also

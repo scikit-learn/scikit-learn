@@ -14,7 +14,7 @@ data and has specific optimizations for `numpy` arrays. It is
 
 
     ============================== ============================================
-    **User documentation**:        http://packages.python.org/joblib
+    **User documentation**:        http://pythonhosted.org/joblib
 
     **Download packages**:         http://pypi.python.org/pypi/joblib#downloads
 
@@ -28,19 +28,17 @@ Vision
 --------
 
 The vision is to provide tools to easily achieve better performance and
-reproducibility when working with long running jobs. In addition, Joblib
-can also be used to provide a light-weight make replacement or caching
-solution.
+reproducibility when working with long running jobs.
 
  *  **Avoid computing twice the same thing**: code is rerun over an
     over, for instance when prototyping computational-heavy jobs (as in
-    scientific development), but hand-crafted solution to aleviate this
+    scientific development), but hand-crafted solution to alleviate this
     issue is error-prone and often leads to unreproducible results
 
  *  **Persist to disk transparently**: persisting in an efficient way
     arbitrary objects containing large data is hard. Using
     joblib's caching mechanism avoids hand-written persistence and
-    implicitely links the file on disk to the execution context of
+    implicitly links the file on disk to the execution context of
     the original Python object. As a result, joblib's persistence is
     good for resuming an application status or computational job, eg
     after a crash.
@@ -102,10 +100,26 @@ Main features
 
 """
 
-__version__ = '0.7.0d'
+# PEP0440 compatible formatted version, see:
+# https://www.python.org/dev/peps/pep-0440/
+#
+# Generic release markers:
+# X.Y
+# X.Y.Z # For bugfix releases
+#
+# Admissible pre-release markers:
+# X.YaN # Alpha release
+# X.YbN # Beta release
+# X.YrcN # Release Candidate
+# X.Y # Final release
+#
+# Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
+# 'X.Y.dev0' is the canonical version of 'X.Y.dev'
+#
+__version__ = '0.9.0b2'
 
 
-from .memory import Memory
+from .memory import Memory, MemorizedResult
 from .logger import PrintTime
 from .logger import Logger
 from .hashing import hash

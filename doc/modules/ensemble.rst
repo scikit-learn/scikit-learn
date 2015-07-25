@@ -7,24 +7,94 @@ Ensemble methods
 .. currentmodule:: sklearn.ensemble
 
 The goal of **ensemble methods** is to combine the predictions of several
-models built with a given learning algorithm in order to improve
-generalizability / robustness over a single model.
+base estimators built with a given learning algorithm in order to improve
+generalizability / robustness over a single estimator.
 
 Two families of ensemble methods are usually distinguished:
 
 - In **averaging methods**, the driving principle is to build several
-  models independently and then to average their predictions. On average,
-  the combined model is usually better than any of the single model
-  because its variance is reduced.
+  estimators independently and then to average their predictions. On average,
+  the combined estimator is usually better than any of the single base
+  estimator because its variance is reduced.
 
-  **Examples:** Bagging methods, :ref:`Forests of randomized trees <forest>`...
+  **Examples:** :ref:`Bagging methods <bagging>`, :ref:`Forests of randomized trees <forest>`, ...
 
-- By contrast, in **boosting methods**, models are built sequentially and one
-  tries to reduce the bias of the combined model. The motivation is to combine
-  several weak models to produce a powerful ensemble.
+- By contrast, in **boosting methods**, base estimators are built sequentially
+  and one tries to reduce the bias of the combined estimator. The motivation is
+  to combine several weak models to produce a powerful ensemble.
 
   **Examples:** :ref:`AdaBoost <adaboost>`, :ref:`Gradient Tree Boosting <gradient_boosting>`, ...
 
+
+.. _bagging:
+
+Bagging meta-estimator
+======================
+
+In ensemble algorithms, bagging methods form a class of algorithms which build
+several instances of a black-box estimator on random subsets of the original
+training set and then aggregate their individual predictions to form a final
+prediction. These methods are used as a way to reduce the variance of a base
+estimator (e.g., a decision tree), by introducing randomization into its
+construction procedure and then making an ensemble out of it. In many cases,
+bagging methods constitute a very simple way to improve with respect to a
+single model, without making it necessary to adapt the underlying base
+algorithm. As they provide a way to reduce overfitting, bagging methods work
+best with strong and complex models (e.g., fully developed decision trees), in
+contrast with boosting methods which usually work best with weak models (e.g.,
+shallow decision trees).
+
+Bagging methods come in many flavours but mostly differ from each other by the
+way they draw random subsets of the training set:
+
+  * When random subsets of the dataset are drawn as random subsets of the
+    samples, then this algorithm is known as Pasting [B1999]_.
+
+  * When samples are drawn with replacement, then the method is known as
+    Bagging [B1996]_.
+
+  * When random subsets of the dataset are drawn as random subsets of
+    the features, then the method is known as Random Subspaces [H1998]_.
+
+  * Finally, when base estimators are built on subsets of both samples and
+    features, then the method is known as Random Patches [LG2012]_.
+
+In scikit-learn, bagging methods are offered as a unified
+:class:`BaggingClassifier` meta-estimator  (resp. :class:`BaggingRegressor`),
+taking as input a user-specified base estimator along with parameters
+specifying the strategy to draw random subsets. In particular, ``max_samples``
+and ``max_features`` control the size of the subsets (in terms of samples and
+features), while ``bootstrap`` and ``bootstrap_features`` control whether
+samples and features are drawn with or without replacement. When using a subset
+of the available samples the generalization error can be estimated with the
+out-of-bag samples by setting ``oob_score=True``. As an example, the
+snippet below illustrates how to instantiate a bagging ensemble of
+:class:`KNeighborsClassifier` base estimators, each built on random subsets of
+50% of the samples and 50% of the features.
+
+    >>> from sklearn.ensemble import BaggingClassifier
+    >>> from sklearn.neighbors import KNeighborsClassifier
+    >>> bagging = BaggingClassifier(KNeighborsClassifier(),
+    ...                             max_samples=0.5, max_features=0.5)
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_bias_variance.py`
+
+.. topic:: References
+
+  .. [B1999] L. Breiman, "Pasting small votes for classification in large
+         databases and on-line", Machine Learning, 36(1), 85-103, 1999.
+
+  .. [B1996] L. Breiman, "Bagging predictors", Machine Learning, 24(2),
+         123-140, 1996.
+
+  .. [H1998] T. Ho, "The random subspace method for constructing decision
+         forests", Pattern Analysis and Machine Intelligence, 20(8), 832-844,
+         1998.
+
+  .. [LG2012] G. Louppe and P. Geurts, "Ensembles on Random Patches",
+         Machine Learning and Knowledge Discovery in Databases, 346-361, 2012.
 
 .. _forest:
 
@@ -40,7 +110,7 @@ construction.  The prediction of the ensemble is given as the averaged
 prediction of the individual classifiers.
 
 As other classifiers, forest classifiers have to be fitted with two
-arrays: an array X of size ``[n_samples, n_features]`` holding the
+arrays: a sparse or dense array X of size ``[n_samples, n_features]`` holding the
 training samples, and an array Y of size ``[n_samples]`` holding the
 target values (class labels) for the training samples::
 
@@ -113,7 +183,7 @@ in bias::
     >>> scores.mean() > 0.999
     True
 
-.. figure:: ../auto_examples/ensemble/images/plot_forest_iris_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_forest_iris_001.png
     :target: ../auto_examples/ensemble/plot_forest_iris.html
     :align: center
     :scale: 75%
@@ -131,18 +201,17 @@ greater the reduction of variance, but also the greater the increase in
 bias. Empirical good default values are ``max_features=n_features``
 for regression problems, and ``max_features=sqrt(n_features)`` for
 classification tasks (where ``n_features`` is the number of features
-in the data). The best results are also usually reached when setting
-``max_depth=None`` in combination with ``min_samples_split=1`` (i.e.,
-when fully developing the trees). Bear in mind though that these values
-are usually not optimal. The best parameter values should always be cross-
-validated. In addition, note that bootstrap samples are used by default
-in random forests (``bootstrap=True``) while the default strategy is to
-use the original dataset for building extra-trees (``bootstrap=False``).
-
-When training on large datasets, where runtime and memory requirements
-are important, it might also be beneficial to adjust the ``min_density``
-parameter, that controls a heuristic for speeding up computations in
-each tree.  See :ref:`Complexity of trees<tree_complexity>` for details.
+in the data). Good results are often achieved when setting ``max_depth=None``
+in combination with ``min_samples_split=1`` (i.e., when fully developing the
+trees). Bear in mind though that these values are usually not optimal, and
+might result in models that consume a lot of ram. The best parameter values
+should always be cross-validated. In addition, note that in random forests,
+bootstrap samples are used by default (``bootstrap=True``)
+while the default strategy for extra-trees is to use the whole dataset
+(``bootstrap=False``).
+When using bootstrap sampling the generalization error can be estimated
+on the left out or out-of-bag samples. This can be enabled by
+setting ``oob_score=True``.
 
 Parallelization
 ---------------
@@ -162,7 +231,7 @@ amount of time (e.g., on large datasets).
 
  * :ref:`example_ensemble_plot_forest_iris.py`
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
- * :ref:`example_ensemble_plot_forest_multioutput.py`
+ * :ref:`example_plot_multioutput_face_completion.py`
 
 .. topic:: References
 
@@ -194,15 +263,15 @@ The following example shows a color-coded representation of the relative
 importances of each individual pixel for a face recognition task using
 a :class:`ExtraTreesClassifier` model.
 
-.. figure:: ../auto_examples/ensemble/images/plot_forest_importances_faces_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_forest_importances_faces_001.png
    :target: ../auto_examples/ensemble/plot_forest_importances_faces.html
    :align: center
    :scale: 75
 
-In practice those estimates are stored as an attribute named 
-``feature_importances_`` on the fitted model. This is an array with shape 
-``(n_features,)`` whose values are positive and sum to 1.0. The higher 
-the value, the more important is the contribution of the matching feature 
+In practice those estimates are stored as an attribute named
+``feature_importances_`` on the fitted model. This is an array with shape
+``(n_features,)`` whose values are positive and sum to 1.0. The higher
+the value, the more important is the contribution of the matching feature
 to the prediction function.
 
 .. topic:: Examples:
@@ -235,7 +304,7 @@ the transformation performs an implicit, non-parametric density estimation.
  * :ref:`example_ensemble_plot_random_forest_embedding.py`
 
  * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
-   dimensionality reduction technics on handwritten digits.
+   dimensionality reduction techniques on handwritten digits.
 
 .. seealso::
 
@@ -249,9 +318,8 @@ the transformation performs an implicit, non-parametric density estimation.
 AdaBoost
 ========
 
-The module :mod:`sklearn.ensemble.weight_boosting` implements the popular
-boosting algorithm known as AdaBoost introduced in 1995 by Freud and
-Schapire [FS1995]_.
+The module :mod:`sklearn.ensemble` includes the popular boosting algorithm
+AdaBoost, introduced in 1995 by Freund and Schapire [FS1995]_.
 
 The core principle of AdaBoost is to fit a sequence of weak learners (i.e.,
 models that are only slightly better than random guessing, such as small
@@ -269,9 +337,9 @@ whereas the weights are decreased for those that were predicted correctly. As
 iterations proceed, examples that are difficult to predict receive
 ever-increasing influence. Each subsequent weak learner is thereby forced to
 concentrate on the examples that are missed by the previous ones in the sequence
-[HTF2009]_.
+[HTF]_.
 
-.. figure:: ../auto_examples/ensemble/images/plot_adaboost_hastie_10_2_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_adaboost_hastie_10_2_001.png
    :target: ../auto_examples/ensemble/plot_adaboost_hastie_10_2.html
    :align: center
    :scale: 75
@@ -326,15 +394,15 @@ decision trees).
 
 .. topic:: References
 
- .. [FS1995] Y. Freud, and R. Schapire, "A decision theoretic generalization of
-             online learning and an application to boosting", 1997.
+ .. [FS1995] Y. Freund, and R. Schapire, "A Decision-Theoretic Generalization of
+             On-Line Learning and an Application to Boosting", 1997.
 
  .. [ZZRH2009] J. Zhu, H. Zou, S. Rosset, T. Hastie. "Multi-class AdaBoost",
                2009.
 
  .. [D1997] H. Drucker. "Improving Regressors using Boosting Techniques", 1997.
 
- .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
+ .. [HTF] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
               Statistical Learning Ed. 2", Springer, 2009.
 
 
@@ -357,7 +425,7 @@ The advantages of GBRT are:
 
   + Predictive power
 
-  + Robustness to outliers in input space (via robust loss functions)
+  + Robustness to outliers in output space (via robust loss functions)
 
 The disadvantages of GBRT are:
 
@@ -372,7 +440,7 @@ Classification
 ---------------
 
 :class:`GradientBoostingClassifier` supports both binary and multi-class
-classification via the deviance loss function (``loss='deviance'``).
+classification.
 The following example shows how to fit a gradient boosting classifier
 with 100 decision stumps as weak learners::
 
@@ -388,10 +456,7 @@ with 100 decision stumps as weak learners::
     >>> clf.score(X_test, y_test)                 # doctest: +ELLIPSIS
     0.913...
 
-The number of weak learners (i.e. regression trees) is controlled by the
-parameter ``n_estimators``; The maximum depth of each tree is controlled via
-``max_depth``. The ``learning_rate`` is a hyper-parameter in the range (0.0, 1.0]
-that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
+The number of weak learners (i.e. regression trees) is controlled by the parameter ``n_estimators``; :ref:`The size of each tree <gradient_boosting_tree_size>` can be controlled either by setting the tree depth via ``max_depth`` or by setting the number of leaf nodes via ``max_leaf_nodes``. The ``learning_rate`` is a hyper-parameter in the range (0.0, 1.0] that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>` .
 
 .. note::
 
@@ -400,7 +465,7 @@ that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
    thus, the total number of induced trees equals
    ``n_classes * n_estimators``. For datasets with a large number
    of classes we strongly recommend to use
-   :class:`RandomForestClassifier` as an alternative to GBRT.
+   :class:`RandomForestClassifier` as an alternative to :class:`GradientBoostingClassifier` .
 
 Regression
 ----------
@@ -420,10 +485,10 @@ for regression which can be specified via the argument
     >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
     >>> X_train, X_test = X[:200], X[200:]
     >>> y_train, y_test = y[:200], y[200:]
-    >>> clf = GradientBoostingRegressor(n_estimators=100, learning_rate=1.0,
+    >>> est = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1,
     ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
-    >>> mean_squared_error(y_test, clf.predict(X_test))    # doctest: +ELLIPSIS
-    6.90...
+    >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
+    5.00...
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
 with least squares loss and 500 base learners to the Boston house price dataset
@@ -431,14 +496,14 @@ with least squares loss and 500 base learners to the Boston house price dataset
 The plot on the left shows the train and test error at each iteration.
 The train error at each iteration is stored in the
 :attr:`~GradientBoostingRegressor.train_score_` attribute
-of the gradient boosting model. The test error at each iterations can be optained
+of the gradient boosting model. The test error at each iterations can be obtained
 via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
 generator that yields the predictions at each stage. Plots like these can be used
 to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
 The plot on the right shows the feature importances which can be obtained via
 the ``feature_importances_`` property.
 
-.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
    :align: center
    :scale: 75
@@ -446,7 +511,52 @@ the ``feature_importances_`` property.
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
+ * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
 
+.. _gradient_boosting_warm_start:
+
+Fitting additional weak-learners
+--------------------------------
+
+Both :class:`GradientBoostingRegressor` and :class:`GradientBoostingClassifier`
+support ``warm_start=True`` which allows you to add more estimators to an already
+fitted model.
+
+::
+
+  >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and new nr of trees
+  >>> _ = est.fit(X_train, y_train) # fit additional 100 trees to est
+  >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
+  3.84...
+
+.. _gradient_boosting_tree_size:
+
+Controlling the tree size
+-------------------------
+
+The size of the regression tree base learners defines the level of variable
+interactions that can be captured by the gradient boosting model. In general,
+a tree of depth ``h`` can capture interactions of order ``h`` .
+There are two ways in which the size of the individual regression trees can
+be controlled.
+
+If you specify ``max_depth=h`` then complete binary trees
+of depth ``h`` will be grown. Such trees will have (at most) ``2**h`` leaf nodes
+and ``2**h - 1`` split nodes.
+
+Alternatively, you can control the tree size by specifying the number of
+leaf nodes via the parameter ``max_leaf_nodes``. In this case,
+trees will be grown using best-first search where nodes with the highest improvement
+in impurity will be expanded first.
+A tree with ``max_leaf_nodes=k`` has ``k - 1`` split nodes and thus can
+model interactions of up to order ``max_leaf_nodes - 1`` .
+
+We found that ``max_leaf_nodes=k`` gives comparable results to ``max_depth=k-1``
+but is significantly faster to train at the expense of a slightly higher
+training error.
+The parameter ``max_leaf_nodes`` corresponds to the variable ``J`` in the
+chapter on gradient boosting in [F2001]_ and is related to the parameter
+``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
 
 Mathematical formulation
 -------------------------
@@ -525,8 +635,8 @@ the parameter ``loss``:
       target values.
     * Huber (``'huber'``): Another robust loss function that combines
       least squares and least absolute deviation; use ``alpha`` to
-      control the sensitivity w.r.t. outliers (see [F2001]_ for more
-      details).
+      control the sensitivity with regards to outliers (see [F2001]_ for
+      more details).
     * Quantile (``'quantile'``): A loss function for quantile regression.
       Use ``0 < alpha < 1`` to specify the quantile. This loss function
       can be used to create prediction intervals
@@ -545,6 +655,10 @@ the parameter ``loss``:
       prior probability of each class. At each iteration ``n_classes``
       regression trees have to be constructed which makes GBRT rather
       inefficient for data sets with a large number of classes.
+    * Exponential loss (``'exponential'``): The same loss function
+      as :class:`AdaBoostClassifier`. Less robust to mislabeled
+      examples than ``'deviance'``; can only be used for binary
+      classification.
 
 Regularization
 ----------------
@@ -590,22 +704,35 @@ outperforms no-shrinkage. Subsampling with shrinkage can further increase
 the accuracy of the model. Subsampling without shrinkage, on the other hand,
 does poorly.
 
-.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regularization_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regularization_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regularization.html
    :align: center
    :scale: 75
 
-For ``subsample < 1``, the deviance on the out-of-bag samples in the i-the iteration
-is stored in the attribute ``oob_score_[i]``. Out-of-bag estimates can be
-used for model selection (e.g. to determine the optimal number of iterations).
-
 Another strategy to reduce the variance is by subsampling the features
-analogous to the random splits in Random Forests. The size of the subsample
-can be controled via the ``max_features`` parameter.
+analogous to the random splits in :class:`RandomForestClassifier` .
+The number of subsampled features can be controlled via the ``max_features``
+parameter.
+
+.. note:: Using a small ``max_features`` value can significantly decrease the runtime.
+
+Stochastic gradient boosting allows to compute out-of-bag estimates of the
+test deviance by computing the improvement in deviance on the examples that are
+not included in the bootstrap sample (i.e. the out-of-bag examples).
+The improvements are stored in the attribute
+:attr:`~GradientBoostingRegressor.oob_improvement_`. ``oob_improvement_[i]`` holds
+the improvement in terms of the loss on the OOB samples if you add the i-th stage
+to the current predictions.
+Out-of-bag estimates can be used for model selection, for example to determine
+the optimal number of iterations. OOB estimates are usually very pessimistic thus
+we recommend to use cross-validation instead and only use OOB if cross-validation
+is too time consuming.
 
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
+ * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
+ * :ref:`example_ensemble_plot_ensemble_oob.py`
 
 Interpretation
 --------------
@@ -653,6 +780,8 @@ accessed via the ``feature_importances_`` property::
 
 .. currentmodule:: sklearn.ensemble.partial_dependence
 
+.. _partial_dependence:
+
 Partial dependence
 ..................
 
@@ -669,7 +798,7 @@ usually chosen among the most important features.
 The Figure below shows four one-way and one two-way partial dependence plots
 for the California housing dataset:
 
-.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_001.png
    :target: ../auto_examples/ensemble/plot_partial_dependence.html
    :align: center
    :scale: 70
@@ -685,7 +814,7 @@ interactions among the two features. For example, the two-variable PDP in the
 above Figure shows the dependence of median house price on joint
 values of house age and avg. occupants per household. We can clearly
 see an interaction between the two features:
-For an avg. occupancy greather than two, the house price is nearly independent
+For an avg. occupancy greater than two, the house price is nearly independent
 of the house age, whereas for values less than two there is a strong dependence
 on age.
 
@@ -773,3 +902,162 @@ averaged.
 
  .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm package", 2007
 
+
+ .. _voting_classifier:
+
+VotingClassifier
+========================
+
+The idea behind the voting classifier implementation is to combine
+conceptually different machine learning classifiers and use a majority vote
+or the average predicted probabilities (soft vote) to predict the class labels.
+Such a classifier can be useful for a set of equally well performing model
+in order to balance out their individual weaknesses.
+
+
+Majority Class Labels (Majority/Hard Voting)
+--------------------------------------------
+
+In majority voting, the predicted class label for a particular sample is
+the class label that represents the majority (mode) of the class labels
+predicted by each individual classifier.
+
+E.g., if the prediction for a given sample is
+
+- classifier 1 -> class 1
+- classifier 2 -> class 1
+- classifier 3 -> class 2
+
+the VotingClassifier (with ``voting='hard'``) would classify the sample
+as "class 1" based on the majority class label.
+
+In the cases of a tie, the `VotingClassifier` will select the class based
+on the ascending sort order. E.g., in the following scenario
+
+- classifier 1 -> class 2
+- classifier 2 -> class 1
+
+the class label 1 will be assigned to the sample.
+
+Usage
+.....
+
+The following example shows how to fit the majority rule classifier::
+
+   >>> from sklearn import datasets
+   >>> from sklearn import cross_validation
+   >>> from sklearn.linear_model import LogisticRegression
+   >>> from sklearn.naive_bayes import GaussianNB
+   >>> from sklearn.ensemble import RandomForestClassifier
+   >>> from sklearn.ensemble import VotingClassifier
+
+   >>> iris = datasets.load_iris()
+   >>> X, y = iris.data[:, 1:3], iris.target
+
+   >>> clf1 = LogisticRegression(random_state=1)
+   >>> clf2 = RandomForestClassifier(random_state=1)
+   >>> clf3 = GaussianNB()
+
+   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='hard')
+
+   >>> for clf, label in zip([clf1, clf2, clf3, eclf], ['Logistic Regression', 'Random Forest', 'naive Bayes', 'Ensemble']):
+   ...     scores = cross_validation.cross_val_score(clf, X, y, cv=5, scoring='accuracy')
+   ...     print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
+   Accuracy: 0.90 (+/- 0.05) [Logistic Regression]
+   Accuracy: 0.93 (+/- 0.05) [Random Forest]
+   Accuracy: 0.91 (+/- 0.04) [naive Bayes]
+   Accuracy: 0.95 (+/- 0.05) [Ensemble]
+
+
+Weighted Average Probabilities (Soft Voting)
+--------------------------------------------
+
+In contrast to majority voting (hard voting), soft voting
+returns the class label as argmax of the sum of predicted probabilities.
+
+Specific weights can be assigned to each classifier via the ``weights``
+parameter. When weights are provided, the predicted class probabilities
+for each classifier are collected, multiplied by the classifier weight,
+and averaged. The final class label is then derived from the class label
+with the highest average probability.
+
+To illustrate this with a simple example, let's assume we have 3
+classifiers and a 3-class classification problems where we assign
+equal weights to all classifiers: w1=1, w2=1, w3=1.
+
+The weighted average probabilities for a sample would then be
+calculated as follows:
+
+================  ==========    ==========      ==========
+classifier        class 1       class 2         class 3
+================  ==========    ==========      ==========
+classifier 1	  w1 * 0.2      w1 * 0.5        w1 * 0.3
+classifier 2	  w2 * 0.6      w2 * 0.3        w2 * 0.1
+classifier 3      w3 * 0.3      w3 * 0.4        w3 * 0.3
+weighted average  0.37	        0.4             0.3
+================  ==========    ==========      ==========
+
+Here, the predicted class label is 2, since it has the
+highest average probability.
+
+The following example illustrates how the decision regions may change
+when a soft `VotingClassifier` is used based on an linear Support
+Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
+
+   >>> from sklearn import datasets
+   >>> from sklearn.tree import DecisionTreeClassifier
+   >>> from sklearn.neighbors import KNeighborsClassifier
+   >>> from sklearn.svm import SVC
+   >>> from itertools import product
+   >>> from sklearn.ensemble import VotingClassifier
+
+   >>> # Loading some example data
+   >>> iris = datasets.load_iris()
+   >>> X = iris.data[:, [0,2]]
+   >>> y = iris.target
+
+   >>> # Training classifiers
+   >>> clf1 = DecisionTreeClassifier(max_depth=4)
+   >>> clf2 = KNeighborsClassifier(n_neighbors=7)
+   >>> clf3 = SVC(kernel='rbf', probability=True)
+   >>> eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)], voting='soft', weights=[2,1,2])
+
+   >>> clf1 = clf1.fit(X,y)
+   >>> clf2 = clf2.fit(X,y)
+   >>> clf3 = clf3.fit(X,y)
+   >>> eclf = eclf.fit(X,y)
+
+.. figure:: ../auto_examples/ensemble/images/plot_voting_decision_regions_001.png
+    :target: ../auto_examples/ensemble/plot_voting_decision_regions.html
+    :align: center
+    :scale: 75%
+
+Using the `VotingClassifier` with `GridSearch`
+----------------------------------------------
+
+The `VotingClassifier` can also be used together with `GridSearch` in order
+to tune the hyperparameters of the individual estimators::
+
+   >>> from sklearn.grid_search import GridSearchCV
+   >>> clf1 = LogisticRegression(random_state=1)
+   >>> clf2 = RandomForestClassifier(random_state=1)
+   >>> clf3 = GaussianNB()
+   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
+
+   >>> params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200],}
+
+   >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
+   >>> grid = grid.fit(iris.data, iris.target)
+
+Usage
+.....
+
+In order to predict the class labels based on the predicted
+class-probabilities (scikit-learn estimators in the VotingClassifier
+must support ``predict_proba`` method)::
+
+   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
+
+Optionally, weights can be provided for the individual classifiers::
+
+   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft', weights=[2,5,1])
