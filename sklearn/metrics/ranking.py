@@ -251,15 +251,15 @@ def detection_error_tradeoff(y_true, probas_pred, pos_label=None,
                                              pos_label=pos_label,
                                              sample_weight=sample_weight)
     fns = tps[-1] - tps
-    tpN = tps[-1]
-    tnN = (fps[-1]-fps)[0]
+    tp_count = tps[-1]
+    tn_count = (fps[-1] - fps)[0]
 
     # start with false positives is zero and stop with false negatives zero
     # and reverse the outputs so list of false positives is decreasing
-    last_ind = tps.searchsorted(tps[-1])+1
+    last_ind = tps.searchsorted(tps[-1]) + 1
     first_ind = fps[::-1].searchsorted(fps[0])
-    sl = range(first_ind,last_ind)[::-1]
-    return fps[sl]/tpN, fns[sl]/tnN, thresholds[sl]
+    sl = range(first_ind, last_ind)[::-1]
+    return fps[sl] / tp_count, fns[sl] / tn_count, thresholds[sl]
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
