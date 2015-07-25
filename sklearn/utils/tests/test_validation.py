@@ -141,10 +141,10 @@ def test_check_array():
     # dtype and order enforcement.
     X_C = np.arange(4).reshape(2, 2).copy("C")
     X_F = X_C.copy("F")
-    X_int = X_C.astype(np.int)
-    X_float = X_C.astype(np.float)
+    X_int = X_C.astype(int)
+    X_float = X_C.astype(float)
     Xs = [X_C, X_F, X_int, X_float]
-    dtypes = [np.int32, np.int, np.float, np.float32, None, np.bool, object]
+    dtypes = [np.int32, int, float, np.float32, None, bool, object]
     orders = ['C', 'F', None]
     copys = [True, False]
 
@@ -173,8 +173,8 @@ def test_check_array():
     X_csc = sp.csc_matrix(X_C)
     X_coo = X_csc.tocoo()
     X_dok = X_csc.todok()
-    X_int = X_csc.astype(np.int)
-    X_float = X_csc.astype(np.float)
+    X_int = X_csc.astype(int)
+    X_float = X_csc.astype(float)
 
     Xs = [X_csc, X_coo, X_dok, X_int, X_float]
     accept_sparses = [['csr', 'coo'], ['coo', 'dok']]

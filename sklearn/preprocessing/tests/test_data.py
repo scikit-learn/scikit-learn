@@ -957,7 +957,7 @@ def test_one_hot_encoder_sparse():
     # with prespecified n_values
     assert_raises(ValueError, enc.fit, X[:, :-1])
     # test exception on wrong init param
-    assert_raises(TypeError, OneHotEncoder(n_values=np.int).fit, X)
+    assert_raises(TypeError, OneHotEncoder(n_values=int).fit, X)
 
     enc = OneHotEncoder()
     # test negative input to fit

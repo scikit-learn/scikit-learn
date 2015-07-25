@@ -426,7 +426,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         self.classes_ = []
         self.n_classes_ = []
 
-        y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
+        y_store_unique_indices = np.zeros(y.shape, dtype=int)
         for k in range(self.n_outputs_):
             classes_k, y_store_unique_indices[:, k] = np.unique(y[:, k], return_inverse=True)
             self.classes_.append(classes_k)

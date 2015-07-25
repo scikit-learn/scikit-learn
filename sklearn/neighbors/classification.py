@@ -363,12 +363,12 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                    dtype=object)
             if weights is None:
                 mode = np.array([stats.mode(pl)[0]
-                                 for pl in pred_labels[inliers]], dtype=np.int)
+                                 for pl in pred_labels[inliers]], dtype=int)
             else:
                 mode = np.array([weighted_mode(pl, w)[0]
                                  for (pl, w)
                                  in zip(pred_labels[inliers], weights)],
-                                dtype=np.int)
+                                dtype=int)
 
             mode = mode.ravel()
 

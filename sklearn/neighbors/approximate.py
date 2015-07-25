@@ -226,7 +226,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         """
         if candidates.shape == (0,):
             # needed since _fit_X[np.array([])] doesn't work if _fit_X sparse
-            return np.empty(0, dtype=np.int), np.empty(0, dtype=float)
+            return np.empty(0, dtype=int), np.empty(0, dtype=float)
 
         if sparse.issparse(self._fit_X):
             candidate_X = self._fit_X[candidates]

@@ -103,10 +103,10 @@ def test_f_regression_input_dtype():
     # for any numeric data_type
     rng = np.random.RandomState(0)
     X = rng.rand(10, 20)
-    y = np.arange(10).astype(np.int)
+    y = np.arange(10)
 
     F1, pv1 = f_regression(X, y)
-    F2, pv2 = f_regression(X, y.astype(np.float))
+    F2, pv2 = f_regression(X, y.astype(float))
     assert_array_almost_equal(F1, F2, 5)
     assert_array_almost_equal(pv1, pv2, 5)
 

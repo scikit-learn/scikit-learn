@@ -161,7 +161,7 @@ def choice(a, size=None, replace=True, p=None, random_state=None):
                 raise ValueError("Fewer non-zero entries in p than size")
             n_uniq = 0
             p = p.copy()
-            found = np.zeros(shape, dtype=np.int)
+            found = np.zeros(shape, dtype=intp)
             flat_found = found.ravel()
             while n_uniq < size:
                 x = random_state.rand(size - n_uniq)

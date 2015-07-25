@@ -420,7 +420,7 @@ def _fit_ovo_binary(estimator, X, y, i, j):
     """Fit a single binary estimator (one-vs-one)."""
     cond = np.logical_or(y == i, y == j)
     y = y[cond]
-    y_binary = np.empty(y.shape, np.int)
+    y_binary = np.empty(y.shape, int)
     y_binary[y == i] = 0
     y_binary[y == j] = 1
     ind = np.arange(X.shape[0])
@@ -768,7 +768,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         classes_index = dict((c, i) for i, c in enumerate(self.classes_))
 
         Y = np.array([self.code_book_[classes_index[y[i]]]
-                      for i in range(X.shape[0])], dtype=np.int)
+                      for i in range(X.shape[0])], dtype=int)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_binary)(self.estimator, X, Y[:, i])

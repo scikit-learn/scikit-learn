@@ -261,7 +261,7 @@ def check_estimator_sparse_data(name, Estimator):
     X = rng.rand(40, 10)
     X[X < .8] = 0
     X = sparse.csr_matrix(X)
-    y = (4 * rng.rand(40)).astype(np.int)
+    y = (4 * rng.rand(40)).astype(int)
     # catch deprecation warnings
     with warnings.catch_warnings():
         if name in ['Scaler', 'StandardScaler']:
@@ -294,7 +294,7 @@ def check_dtype_object(name, Estimator):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10).astype(object)
-    y = (X[:, 0] * 4).astype(np.int)
+    y = (X[:, 0] * 4).astype(int)
     y = multioutput_estimator_convert_y_2d(name, y)
     with warnings.catch_warnings():
         estimator = Estimator()
@@ -753,7 +753,7 @@ def check_classifiers_train(name, Classifier):
                 decision = classifier.decision_function(X)
                 if n_classes is 2:
                     assert_equal(decision.shape, (n_samples,))
-                    dec_pred = (decision.ravel() > 0).astype(np.int)
+                    dec_pred = (decision.ravel() > 0).astype(int)
                     assert_array_equal(dec_pred, y_pred)
                 if (n_classes is 3
                         and not isinstance(classifier, BaseLibSVM)):

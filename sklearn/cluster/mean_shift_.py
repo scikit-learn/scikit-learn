@@ -193,7 +193,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
 
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
     nbrs = NearestNeighbors(n_neighbors=1).fit(cluster_centers)
-    labels = np.zeros(n_samples, dtype=np.int)
+    labels = np.zeros(n_samples, dtype=int)
     distances, idxs = nbrs.kneighbors(X)
     if cluster_all:
         labels = idxs.flatten()

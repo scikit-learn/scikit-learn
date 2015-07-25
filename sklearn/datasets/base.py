@@ -274,11 +274,11 @@ def load_iris():
         n_features = int(temp[1])
         target_names = np.array(temp[2:])
         data = np.empty((n_samples, n_features))
-        target = np.empty((n_samples,), dtype=np.int)
+        target = np.empty((n_samples,), dtype=int)
 
         for i, ir in enumerate(data_file):
-            data[i] = np.asarray(ir[:-1], dtype=np.float)
-            target[i] = np.asarray(ir[-1], dtype=np.int)
+            data[i] = np.asarray(ir[:-1], dtype=float)
+            target[i] = np.asarray(ir[-1], dtype=int)
 
     with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
         fdescr = rst_file.read()
@@ -348,7 +348,7 @@ def load_digits(n_class=10):
         images = images[idx]
 
     return Bunch(data=flat_data,
-                 target=target.astype(np.int),
+                 target=target.astype(int),
                  target_names=np.arange(10),
                  images=images,
                  DESCR=descr)

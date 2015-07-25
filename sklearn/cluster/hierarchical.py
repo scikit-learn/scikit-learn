@@ -428,7 +428,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
         out = hierarchy.linkage(X, method=linkage, metric=affinity)
-        children_ = out[:, :2].astype(np.int)
+        children_ = out[:, :2].astype(int)
 
         if return_distance:
             distances = out[:, 2]

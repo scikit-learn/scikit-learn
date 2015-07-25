@@ -102,7 +102,7 @@ def _partition_estimators(n_estimators, n_jobs):
 
     # Partition estimators between jobs
     n_estimators_per_job = (n_estimators // n_jobs) * np.ones(n_jobs,
-                                                              dtype=np.int)
+                                                              dtype=int)
     n_estimators_per_job[:n_estimators % n_jobs] += 1
     starts = np.cumsum(n_estimators_per_job)
 

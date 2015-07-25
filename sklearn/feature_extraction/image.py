@@ -93,7 +93,7 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
 
     if dtype is None:
         if img is None:
-            dtype = np.int
+            dtype = int
         else:
             dtype = img.dtype
 
@@ -165,7 +165,7 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
 
 
 def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
-                  dtype=np.int):
+                  dtype=int):
     """Graph of the pixel-to-pixel connections
 
     Edges exist if 2 voxels are connected.

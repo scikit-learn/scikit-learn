@@ -56,7 +56,7 @@ n_iter = 5
 # Initialize the range of `n_samples`
 n_samples_values = np.logspace(np.log10(n_samples_min),
                                np.log10(n_samples_max),
-                               n_steps).astype(np.int)
+                               n_steps).astype(int)
 
 # Generate some structured data
 rng = np.random.RandomState(42)

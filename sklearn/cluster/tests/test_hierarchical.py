@@ -251,7 +251,7 @@ def test_scikit_vs_scipy():
 
             out = hierarchy.linkage(X, method=linkage)
 
-            children_ = out[:, :2].astype(np.int)
+            children_ = out[:, :2].astype(int)
             children, _, n_leaves, _ = _TREE_BUILDERS[linkage](X, connectivity)
 
             cut = _hc_cut(k, children, n_leaves)

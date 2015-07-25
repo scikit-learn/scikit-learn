@@ -469,7 +469,7 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):
 
     Returns
     -------
-    labels : numpy array, dtype=np.int, shape (n_samples,)
+    labels : numpy array, dtype=np.int32, shape (n_samples,)
         Indices of clusters that samples are assigned to.
 
     inertia : float
@@ -523,7 +523,7 @@ def _labels_inertia(X, x_squared_norms, centers,
 
     Returns
     -------
-    labels: int array of shape(n)
+    labels: int32 array of shape(n)
         The resulting assignment
 
     inertia : float

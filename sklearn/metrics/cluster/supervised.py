@@ -78,7 +78,7 @@ def contingency_matrix(labels_true, labels_pred, eps=None):
     contingency = coo_matrix((np.ones(class_idx.shape[0]),
                               (class_idx, cluster_idx)),
                              shape=(n_classes, n_clusters),
-                             dtype=np.int).toarray()
+                             dtype=int).toarray()
     if eps is not None:
         # don't use += as contingency is integer
         contingency = contingency + eps

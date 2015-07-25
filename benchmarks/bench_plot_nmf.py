@@ -146,8 +146,8 @@ if __name__ == '__main__':
     axes3d
     import matplotlib.pyplot as plt
 
-    samples_range = np.linspace(50, 500, 3).astype(np.int)
-    features_range = np.linspace(50, 500, 3).astype(np.int)
+    samples_range = np.linspace(50, 500, 3).astype(int)
+    features_range = np.linspace(50, 500, 3).astype(int)
     timeset, err = benchmark(samples_range, features_range)
 
     for i, results in enumerate((timeset, err)):

@@ -124,7 +124,7 @@ def safe_mask(X, mask):
         mask
     """
     mask = np.asarray(mask)
-    if np.issubdtype(mask.dtype, np.int):
+    if np.issubdtype(mask.dtype, int):
         return mask
 
     if hasattr(X, "toarray"):

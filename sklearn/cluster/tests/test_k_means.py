@@ -55,7 +55,7 @@ def test_labels_assignment_and_inertia():
     # implementation
     rng = np.random.RandomState(42)
     noisy_centers = centers + rng.normal(size=centers.shape)
-    labels_gold = - np.ones(n_samples, dtype=np.int)
+    labels_gold = - np.ones(n_samples, dtype=int)
     mindist = np.empty(n_samples)
     mindist.fill(np.infty)
     for center_id in range(n_clusters):

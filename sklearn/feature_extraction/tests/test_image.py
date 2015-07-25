@@ -47,12 +47,12 @@ def test_grid_to_graph():
 
     # Checking dtype of the graph
     mask = np.ones((size, size))
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.bool)
-    assert_true(A.dtype == np.bool)
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.int)
-    assert_true(A.dtype == np.int)
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.float)
-    assert_true(A.dtype == np.float)
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=bool)
+    assert_true(A.dtype == bool)
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=int)
+    assert_true(A.dtype == int)
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=float)
+    assert_true(A.dtype == float)
 
 
 def test_connect_regions():

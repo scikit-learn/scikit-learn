@@ -316,7 +316,7 @@ class KFold(_BaseKFold):
     def _iter_test_indices(self):
         n = self.n
         n_folds = self.n_folds
-        fold_sizes = (n // n_folds) * np.ones(n_folds, dtype=np.int)
+        fold_sizes = (n // n_folds) * np.ones(n_folds, dtype=int)
         fold_sizes[:n % n_folds] += 1
         current = 0
         for fold_size in fold_sizes:
@@ -418,7 +418,7 @@ class StratifiedKFold(_BaseKFold):
         per_label_cvs = [
             KFold(max(c, self.n_folds), self.n_folds, shuffle=self.shuffle,
                   random_state=rng) for c in label_counts]
-        test_folds = np.zeros(n_samples, dtype=np.int)
+        test_folds = np.zeros(n_samples, dtype=int)
         for test_fold_idx, per_label_splits in enumerate(zip(*per_label_cvs)):
             for label, (_, test_split) in zip(unique_labels, per_label_splits):
                 label_test_folds = test_folds[y == label]
@@ -943,7 +943,7 @@ class PredefinedSplit(_PartitionIterator):
 
     def __init__(self, test_fold):
         super(PredefinedSplit, self).__init__(len(test_fold))
-        self.test_fold = np.array(test_fold, dtype=np.int)
+        self.test_fold = np.array(test_fold, dtype=int)
         self.test_fold = column_or_1d(self.test_fold)
         self.unique_folds = np.unique(self.test_fold)
         self.unique_folds = self.unique_folds[self.unique_folds != -1]

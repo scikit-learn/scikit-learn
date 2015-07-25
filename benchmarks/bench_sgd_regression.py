@@ -22,7 +22,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.datasets.samples_generator import make_regression
 
 if __name__ == "__main__":
-    list_n_samples = np.linspace(100, 10000, 5).astype(np.int)
+    list_n_samples = np.linspace(100, 10000, 5).astype(int)
     list_n_features = [10, 100, 1000]
     n_test = 1000
     noise = 0.1

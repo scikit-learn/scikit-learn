@@ -448,7 +448,7 @@ def test_staged_functions_defensive():
     # test that staged_functions make defensive copies
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(10, 3))
-    y = (4 * X[:, 0]).astype(np.int) + 1  # don't predict zeros
+    y = (4 * X[:, 0]).astype(int) + 1   # don't predict zeros
     for estimator in [GradientBoostingRegressor(),
                       GradientBoostingClassifier()]:
         estimator.fit(X, y)

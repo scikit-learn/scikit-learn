@@ -43,7 +43,7 @@ def l1_cross_distances(X):
     X = check_array(X)
     n_samples, n_features = X.shape
     n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
-    ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
+    ij = np.zeros((n_nonzero_cross_dist, 2), dtype=int)
     D = np.zeros((n_nonzero_cross_dist, n_features))
     ll_1 = 0
     for k in range(n_samples - 1):

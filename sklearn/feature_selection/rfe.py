@@ -153,8 +153,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
                           "is set via the estimator initialisation or "
                           "set_params method.", DeprecationWarning)
 
-        support_ = np.ones(n_features, dtype=np.bool)
-        ranking_ = np.ones(n_features, dtype=np.int)
+        support_ = np.ones(n_features, dtype=bool)
+        ranking_ = np.ones(n_features, dtype=int)
 
         if step_score:
             self.scores_ = []

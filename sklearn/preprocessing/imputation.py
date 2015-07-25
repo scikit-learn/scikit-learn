@@ -355,7 +355,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         # Do actual imputation
         if sparse.issparse(X) and self.missing_values != 0:
             mask = _get_mask(X.data, self.missing_values)
-            indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
+            indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=int),
                                 np.diff(X.indptr))[mask]
 
             X.data[mask] = astype(valid_statistics[indexes], X.dtype,

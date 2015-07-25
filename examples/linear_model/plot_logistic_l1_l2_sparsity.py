@@ -33,7 +33,7 @@ X, y = digits.data, digits.target
 X = StandardScaler().fit_transform(X)
 
 # classify small against large digits
-y = (y > 4).astype(np.int)
+y = (y > 4).astype(int)
 
 
 # Set regularization parameter

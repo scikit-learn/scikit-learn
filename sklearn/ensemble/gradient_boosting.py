@@ -633,7 +633,7 @@ class ExponentialLoss(ClassificationLossFunction):
         return proba
 
     def _score_to_decision(self, score):
-        return (score.ravel() >= 0.0).astype(np.int)
+        return (score.ravel() >= 0.0).astype(int)
 
 
 LOSS_FUNCTIONS = {'ls': LeastSquaresError,

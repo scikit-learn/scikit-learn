@@ -149,7 +149,7 @@ def test_kneighbors_classifier(n_samples=40,
     # Test k-neighbors classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .5).astype(int)
     y_str = y.astype(str)
 
     weight_func = _weight_func
@@ -175,7 +175,7 @@ def test_kneighbors_classifier_float_labels(n_samples=40, n_features=5,
     # Test k-neighbors classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .5).astype(int)
 
     knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors)
     knn.fit(X, y.astype(np.float))
@@ -224,7 +224,7 @@ def test_radius_neighbors_classifier(n_samples=40,
     # Test radius-based classification
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .5).astype(int)
     y_str = y.astype(str)
 
     weight_func = _weight_func
@@ -416,7 +416,7 @@ def test_kneighbors_classifier_sparse(n_samples=40,
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
     X *= X > .2
-    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .5).astype(int)
 
     for sparsemat in SPARSE_TYPES:
         knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors,
@@ -647,7 +647,7 @@ def test_kneighbors_regressor_sparse(n_samples=40,
     # Like the above, but with various types of sparse matrices
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
+    y = ((X ** 2).sum(axis=1) < .25).astype(int)
 
     for sparsemat in SPARSE_TYPES:
         knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,

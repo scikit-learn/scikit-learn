@@ -25,8 +25,8 @@ np.import_array()
 from sklearn.utils import check_random_state
 
 
-cpdef _sample_without_replacement_check_input(np.int_t n_population,
-                                              np.int_t n_samples):
+cpdef _sample_without_replacement_check_input(np.npy_intp n_population,
+                                              np.npy_intp n_samples):
     """ Check that input are consistent for sample_without_replacement"""
     if n_population < 0:
         raise ValueError('n_population should be greater than 0, got %s.'
@@ -39,8 +39,8 @@ cpdef _sample_without_replacement_check_input(np.int_t n_population,
 
 
 cpdef _sample_without_replacement_with_tracking_selection(
-        np.int_t n_population,
-        np.int_t n_samples,
+        np.npy_intp n_population,
+        np.npy_intp n_samples,
         random_state=None):
     """Sample integers without replacement.
 
@@ -82,10 +82,10 @@ cpdef _sample_without_replacement_with_tracking_selection(
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
-    cdef np.int_t i
-    cdef np.int_t j
-    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
-                                                     dtype=np.int)
+    cdef np.npy_intp i
+    cdef np.npy_intp j
+    cdef np.ndarray[np.npy_intp, ndim=1] out = np.empty((n_samples, ),
+                                                     dtype=np.intp)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -104,8 +104,8 @@ cpdef _sample_without_replacement_with_tracking_selection(
     return out
 
 
-cpdef _sample_without_replacement_with_pool(np.int_t n_population,
-                                            np.int_t n_samples,
+cpdef _sample_without_replacement_with_pool(np.npy_intp n_population,
+                                            np.npy_intp n_samples,
                                             random_state=None):
     """Sample integers without replacement.
 
@@ -138,13 +138,13 @@ cpdef _sample_without_replacement_with_pool(np.int_t n_population,
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
-    cdef np.int_t i
-    cdef np.int_t j
-    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
-                                                     dtype=np.int)
+    cdef np.npy_intp i
+    cdef np.npy_intp j
+    cdef np.ndarray[np.npy_intp, ndim=1] out = np.empty((n_samples, ),
+                                                     dtype=np.intp)
 
-    cdef np.ndarray[np.int_t, ndim=1] pool = np.empty((n_population, ),
-                                                      dtype=np.int)
+    cdef np.ndarray[np.npy_intp, ndim=1] pool = np.empty((n_population, ),
+                                                      dtype=np.intp)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -165,8 +165,8 @@ cpdef _sample_without_replacement_with_pool(np.int_t n_population,
 
 
 cpdef _sample_without_replacement_with_reservoir_sampling(
-    np.int_t n_population,
-    np.int_t n_samples,
+    np.npy_intp n_population,
+    np.npy_intp n_samples,
     random_state=None):
     """Sample integers without replacement.
 
@@ -201,10 +201,10 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
-    cdef np.int_t i
-    cdef np.int_t j
-    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
-                                                     dtype=np.int)
+    cdef np.npy_intp i
+    cdef np.npy_intp j
+    cdef np.ndarray[np.npy_intp, ndim=1] out = np.empty((n_samples, ),
+                                                     dtype=np.intp)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -224,8 +224,8 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
     return out
 
 
-cpdef sample_without_replacement(np.int_t n_population,
-                                 np.int_t n_samples,
+cpdef sample_without_replacement(np.npy_intp n_population,
+                                 np.npy_intp n_samples,
                                  method="auto",
                                  random_state=None):
     """Sample integers without replacement.

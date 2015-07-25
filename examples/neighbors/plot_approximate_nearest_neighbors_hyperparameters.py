@@ -54,7 +54,7 @@ nbrs = NearestNeighbors(n_neighbors=1, algorithm='brute',
 neighbors_exact = nbrs.kneighbors(X_query, return_distance=False)
 
 # Set `n_candidate` values
-n_candidates_values = np.linspace(10, 500, 5).astype(np.int)
+n_candidates_values = np.linspace(10, 500, 5).astype(int)
 n_estimators_for_candidate_value = [1, 5, 10]
 n_iter = 10
 stds_accuracies = np.zeros((len(n_estimators_for_candidate_value),

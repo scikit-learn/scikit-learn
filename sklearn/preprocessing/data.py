@@ -1469,7 +1469,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     def _fit_transform(self, X):
         """Assumes X contains only categorical features."""
-        X = check_array(X, dtype=np.int)
+        X = check_array(X, dtype=int)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
@@ -1479,7 +1479,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             if (np.max(X, axis=0) >= self.n_values).any():
                 raise ValueError("Feature out of bounds for n_values=%d"
                                  % self.n_values)
-            n_values = np.empty(n_features, dtype=np.int)
+            n_values = np.empty(n_features, dtype=int)
             n_values.fill(self.n_values)
         else:
             try:
@@ -1524,7 +1524,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     def _transform(self, X):
         """Assumes X contains only categorical features."""
-        X = check_array(X, dtype=np.int)
+        X = check_array(X, dtype=int)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape

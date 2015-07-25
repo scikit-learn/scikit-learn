@@ -185,7 +185,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
                              % (n_min_required_samples,
                                 n_max_required_samples))
         train_sizes_abs = astype(train_sizes_abs * n_max_training_samples,
-                                 dtype=np.int, copy=False)
+                                 dtype=int, copy=False)
         train_sizes_abs = np.clip(train_sizes_abs, 1,
                                   n_max_training_samples)
     else:
