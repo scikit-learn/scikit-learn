@@ -184,6 +184,7 @@ def average_precision_score(y_true, y_score, average="macro",
     return _average_binary_score(_binary_average_precision, y_true, y_score,
                                  average, sample_weight=sample_weight)
 
+
 def detection_error_tradeoff(y_true, probas_pred, pos_label=None,
                              sample_weight=None):
     """Compute error rates for different probability thresholds
