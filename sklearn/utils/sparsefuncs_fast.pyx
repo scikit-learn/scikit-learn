@@ -1,3 +1,7 @@
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
+#
 # Authors: Mathieu Blondel
 #          Olivier Grisel
 #          Peter Prettenhofer
@@ -19,9 +23,6 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.float32_t FLOAT
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def csr_row_norms(X):
     """L2 norm of each row in CSR matrix X."""
     cdef:
@@ -47,9 +48,6 @@ def csr_row_norms(X):
     return norms
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def sparse_mean_variance(X):
     """Compute the variance of a sparse matrix.
 
@@ -105,9 +103,6 @@ def sparse_mean_variance(X):
     return mean, variance
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def csr_mean_variance_axis0(X):
     """Compute mean and variance along axis 0 on a CSR matrix
 
@@ -168,9 +163,6 @@ def csr_mean_variance_axis0(X):
     return means, variances
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def csc_mean_variance_axis0(X):
     """Compute mean and variance along axis 0 on a CSC matrix
 
@@ -231,9 +223,6 @@ def csc_mean_variance_axis0(X):
     return means, variances
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def inplace_csr_row_normalize_l1(X):
     """Inplace row normalize using the l1 norm"""
     cdef unsigned int n_samples = X.shape[0]
@@ -266,9 +255,6 @@ def inplace_csr_row_normalize_l1(X):
             X_data[j] /= sum_
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def inplace_csr_row_normalize_l2(X):
     """Inplace row normalize using the l2 norm"""
     cdef unsigned int n_samples = X.shape[0]
@@ -299,8 +285,6 @@ def inplace_csr_row_normalize_l2(X):
             X_data[j] /= sum_
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef void add_row_csr(np.ndarray[np.float64_t, ndim=1] data,
                       np.ndarray[int, ndim=1] indices,
                       np.ndarray[int, ndim=1] indptr,
@@ -316,8 +300,6 @@ cdef void add_row_csr(np.ndarray[np.float64_t, ndim=1] data,
         out[j] += data[ind]
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def assign_rows_csr(X,
                     np.ndarray[np.npy_intp, ndim=1] X_rows,
                     np.ndarray[np.npy_intp, ndim=1] out_rows,
