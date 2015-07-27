@@ -71,6 +71,22 @@ __all__ = ["RandomForestClassifier",
 
 MAX_INT = np.iinfo(np.int32).max
 
+def _generate_sample_indices(random_state, n_samples):
+    """Private function used to _parallel_build_trees function."""
+    random_instance = check_random_state(random_state)
+    sample_indices = random_instance.randint(0, n_samples, n_samples)
+
+    return sample_indices
+
+def _generate_unsampled_indices(random_state, n_samples):
+    """Private function used to forest._set_oob_score fuction."""
+    sample_indices = _generate_sample_indices(random_state, n_samples)
+    sample_counts = bincount(sample_indices, minlength=n_samples)
+    unsampled_mask = sample_counts == 0
+    indices_range = np.arange(n_samples)
+    unsampled_indices = indices_range[unsampled_mask]
+
+    return unsampled_indices
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                           verbose=0, class_weight=None):
@@ -85,8 +101,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         else:
             curr_sample_weight = sample_weight.copy()
 
-        random_state = check_random_state(tree.random_state)
-        indices = random_state.randint(0, n_samples, n_samples)
+        indices = _generate_sample_indices(tree.random_state, n_samples)
         sample_counts = bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
 
@@ -98,9 +113,6 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
             curr_sample_weight *= compute_sample_weight('balanced', y, indices)
 
         tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
-
-        tree.indices_ = sample_counts > 0.
-
     else:
         tree.fit(X, y, sample_weight=sample_weight, check_input=False)
 
@@ -361,6 +373,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
+        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+
         n_classes_ = self.n_classes_
         n_samples = y.shape[0]
 
@@ -371,19 +385,17 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         for k in range(self.n_outputs_):
             predictions.append(np.zeros((n_samples, n_classes_[k])))
 
-        sample_indices = np.arange(n_samples)
         for estimator in self.estimators_:
-            mask = np.ones(n_samples, dtype=np.bool)
-            mask[estimator.indices_] = False
-            mask_indices = sample_indices[mask]
-            p_estimator = estimator.predict_proba(X[mask_indices, :],
+            unsampled_indices = _generate_unsampled_indices(
+                estimator.random_state, n_samples)
+            p_estimator = estimator.predict_proba(X[unsampled_indices, :],
                                                   check_input=False)
 
             if self.n_outputs_ == 1:
                 p_estimator = [p_estimator]
 
             for k in range(self.n_outputs_):
-                predictions[k][mask_indices, :] += p_estimator[k]
+                predictions[k][unsampled_indices, :] += p_estimator[k]
 
         for k in range(self.n_outputs_):
             if (predictions[k].sum(axis=1) == 0).any():
@@ -414,10 +426,12 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         self.classes_ = []
         self.n_classes_ = []
 
+        y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
         for k in range(self.n_outputs_):
-            classes_k, y[:, k] = np.unique(y[:, k], return_inverse=True)
+            classes_k, y_store_unique_indices[:, k] = np.unique(y[:, k], return_inverse=True)
             self.classes_.append(classes_k)
             self.n_classes_.append(classes_k.shape[0])
+        y = y_store_unique_indices
 
         if self.class_weight is not None:
             valid_presets = ('auto', 'balanced', 'balanced_subsample', 'subsample', 'auto')
@@ -646,23 +660,24 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag scores"""
+        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+
         n_samples = y.shape[0]
 
         predictions = np.zeros((n_samples, self.n_outputs_))
         n_predictions = np.zeros((n_samples, self.n_outputs_))
 
-        sample_indices = np.arange(n_samples)
         for estimator in self.estimators_:
-            mask = np.ones(n_samples, dtype=np.bool)
-            mask[estimator.indices_] = False
-            mask_indices = sample_indices[mask]
-            p_estimator = estimator.predict(X[mask_indices, :], check_input=False)
+            unsampled_indices = _generate_unsampled_indices(
+                estimator.random_state, n_samples)
+            p_estimator = estimator.predict(
+                X[unsampled_indices, :], check_input=False)
 
             if self.n_outputs_ == 1:
                 p_estimator = p_estimator[:, np.newaxis]
 
-            predictions[mask_indices, :] += p_estimator
-            n_predictions[mask_indices, :] += 1
+            predictions[unsampled_indices, :] += p_estimator
+            n_predictions[unsampled_indices, :] += 1
 
         if (n_predictions == 0).any():
             warn("Some inputs do not have OOB scores. "
@@ -692,6 +707,9 @@ class RandomForestClassifier(ForestClassifier):
     A random forest is a meta estimator that fits a number of decision tree
     classifiers on various sub-samples of the dataset and use averaging to
     improve the predictive accuracy and control over-fitting.
+    The sub-sample size is always the same as the original
+    input sample size but the samples are drawn with replacement if
+    `bootstrap=True` (default).
 
     Read more in the :ref:`User Guide <forest>`.
 
@@ -713,7 +731,7 @@ class RandomForestClassifier(ForestClassifier):
           `int(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=sqrt(n_features)`.
-        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "sqrt", then `max_features=sqrt(n_features)` (same as "auto").
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
 
@@ -881,6 +899,9 @@ class RandomForestRegressor(ForestRegressor):
     A random forest is a meta estimator that fits a number of classifying
     decision trees on various sub-samples of the dataset and use averaging
     to improve the predictive accuracy and control over-fitting.
+    The sub-sample size is always the same as the original
+    input sample size but the samples are drawn with replacement if
+    `bootstrap=True` (default).
 
     Read more in the :ref:`User Guide <forest>`.
 

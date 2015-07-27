@@ -15,11 +15,9 @@ Courtesy of Jock A. Blackard and Colorado State University.
 # License: BSD 3 clause
 
 import sys
-import errno
 from gzip import GzipFile
 from io import BytesIO
 import logging
-import os
 from os.path import exists, join
 try:
     from urllib2 import urlopen
@@ -30,6 +28,7 @@ import numpy as np
 
 from .base import get_data_home
 from .base import Bunch
+from ..utils.fixes import makedirs
 from ..externals import joblib
 from ..utils import check_random_state
 
@@ -98,7 +97,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     available = exists(samples_path)
 
     if download_if_missing and not available:
-        _mkdirp(covtype_dir)
+        makedirs(covtype_dir, exist_ok=True)
         logger.warning("Downloading %s" % URL)
         f = BytesIO(urlopen(URL).read())
         Xy = np.genfromtxt(GzipFile(fileobj=f), delimiter=',')
@@ -123,14 +122,3 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         y = y[ind]
 
     return Bunch(data=X, target=y, DESCR=__doc__)
-
-
-def _mkdirp(d):
-    """Ensure directory d exists (like mkdir -p on Unix)
-    No guarantee that the directory is writable.
-    """
-    try:
-        os.makedirs(d)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise

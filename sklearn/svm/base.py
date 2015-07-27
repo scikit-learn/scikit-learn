@@ -13,7 +13,7 @@ from ..multiclass import _ovr_decision_function
 from ..utils import check_array, check_random_state, column_or_1d
 from ..utils import ConvergenceWarning, compute_class_weight, deprecated
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, NotFittedError
 from ..externals import six
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -571,8 +571,8 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
     # probabilities are not available depending on a setting, introduce two
     # estimators.
     def _check_proba(self):
-        if not self.probability or self.probA_.size == 0 or self.probB_.size == 0:
-            raise AttributeError("predict_proba is not available when fitted with"
+        if not self.probability:
+            raise AttributeError("predict_proba is not available when "
                                  " probability=False")
         if self._impl not in ('c_svc', 'nu_svc'):
             raise AttributeError("predict_proba only implemented for SVC"
@@ -610,6 +610,9 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
 
     def _predict_proba(self, X):
         X = self._validate_for_predict(X)
+        if self.probA_.size == 0 or self.probB_.size == 0:
+            raise NotFittedError("predict_proba is not available when fitted "
+                                 "with probability=False")
         pred_proba = (self._sparse_predict_proba
                       if self._sparse else self._dense_predict_proba)
         return pred_proba(X)
@@ -748,14 +751,14 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         # FIME penalty.lower() --> penalty in 0.18
         _solver_dual = _solver_pen.get(penalty.lower(), None)
         if _solver_dual is None:
-            error_string = ("The combination of penalty='%s'"
+            error_string = ("The combination of penalty='%s' "
                             "and loss='%s' is not supported"
                             % (penalty, loss))
         else:
             solver_num = _solver_dual.get(dual, None)
             if solver_num is None:
-                error_string = ("loss='%s' and penalty='%s'"
-                                "are not supported when dual=%s"
+                error_string = ("The combination of penalty='%s' and "
+                                "loss='%s' are not supported when dual=%s"
                                 % (penalty, loss, dual))
             else:
                 return solver_num

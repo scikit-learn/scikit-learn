@@ -173,12 +173,8 @@ def test_gridsearch():
                 voting='soft')
 
     params = {'lr__C': [1.0, 100.0],
-              'rf__n_estimators': [20, 200]}
+              'voting': ['soft', 'hard'],
+              'weights': [[0.5, 0.5, 0.5], [1.0, 0.5, 0.5]]}
 
     grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
     grid.fit(iris.data, iris.target)
-
-    expect = [0.953, 0.960, 0.960, 0.953]
-    scores = [mean_score for params, mean_score, scores in grid.grid_scores_]
-    for e, s in zip(expect, scores):
-        assert_almost_equal(e, s, decimal=3)
