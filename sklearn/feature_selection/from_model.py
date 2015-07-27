@@ -3,7 +3,8 @@
 
 import numpy as np
 
-from ..base import (TransformerMixin, BaseEstimator, clone, SelectorMixin,
+from .base import SelectorMixin
+from ..base import (TransformerMixin, BaseEstimator, clone,
     MetaEstimatorMixin)
 from ..externals import six
 
