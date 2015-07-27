@@ -38,6 +38,7 @@ DEF INVSCALING = 3
 DEF PA1 = 4
 DEF PA2 = 5
 
+
 # ----------------------------------------
 # Extension Types for Loss Functions
 # ----------------------------------------
@@ -335,7 +336,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               double alpha, double C,
               double l1_ratio,
               SequentialDataset dataset,
-              int n_iter, int fit_intercept,
+              int max_iter, double tol, int fit_intercept,
               int verbose, bint shuffle, np.uint32_t seed,
               double weight_pos, double weight_neg,
               int learning_rate, double eta0,
@@ -363,8 +364,10 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
     dataset : SequentialDataset
         A concrete ``SequentialDataset`` object.
-    n_iter : int
-        The number of iterations (epochs).
+    max_iter : int
+        The maximum number of iterations (epochs).
+    tol: double
+        The tolerance for the stopping criterion
     fit_intercept : int
         Whether or not to fit the intercept (1 or 0).
     verbose : int
@@ -399,26 +402,28 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The fitted weight vector.
     intercept : float
         The fitted intercept term.
+    n_iter_ : int
+        The actual number of iter (epochs).
     """
     standard_weights, standard_intercept,\
-        _, _ = _plain_sgd(weights,
-                          intercept,
-                          None,
-                          0,
-                          loss,
-                          penalty_type,
-                          alpha, C,
-                          l1_ratio,
-                          dataset,
-                          n_iter, fit_intercept,
-                          verbose, shuffle, seed,
-                          weight_pos, weight_neg,
-                          learning_rate, eta0,
-                          power_t,
-                          t,
-                          intercept_decay,
-                          0)
-    return standard_weights, standard_intercept
+        _, _, n_iter_ = _plain_sgd(weights,
+                                   intercept,
+                                   None,
+                                   0,
+                                   loss,
+                                   penalty_type,
+                                   alpha, C,
+                                   l1_ratio,
+                                   dataset,
+                                   max_iter, tol, fit_intercept,
+                                   verbose, shuffle, seed,
+                                   weight_pos, weight_neg,
+                                   learning_rate, eta0,
+                                   power_t,
+                                   t,
+                                   intercept_decay,
+                                   0)
+    return standard_weights, standard_intercept, n_iter_
 
 
 def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
@@ -430,7 +435,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 double alpha, double C,
                 double l1_ratio,
                 SequentialDataset dataset,
-                int n_iter, int fit_intercept,
+                int max_iter, double tol, int fit_intercept,
                 int verbose, bint shuffle, np.uint32_t seed,
                 double weight_pos, double weight_neg,
                 int learning_rate, double eta0,
@@ -463,8 +468,10 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
     dataset : SequentialDataset
         A concrete ``SequentialDataset`` object.
-    n_iter : int
-        The number of iterations (epochs).
+    max_iter : int
+        The maximum number of iterations (epochs).
+    tol: double
+        The tolerance for the stopping criterion
     fit_intercept : int
         Whether or not to fit the intercept (1 or 0).
     verbose : int
@@ -506,6 +513,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The averaged weights across iterations
     average_intercept : float
         The averaged intercept across iterations
+    n_iter_ : int
+        The actual number of iter (epochs).
     """
     return _plain_sgd(weights,
                       intercept,
@@ -516,7 +525,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                       alpha, C,
                       l1_ratio,
                       dataset,
-                      n_iter, fit_intercept,
+                      max_iter, tol, fit_intercept,
                       verbose, shuffle, seed,
                       weight_pos, weight_neg,
                       learning_rate, eta0,
@@ -535,7 +544,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double alpha, double C,
                double l1_ratio,
                SequentialDataset dataset,
-               int n_iter, int fit_intercept,
+               int max_iter, double tol, int fit_intercept,
                int verbose, bint shuffle, np.uint32_t seed,
                double weight_pos, double weight_neg,
                int learning_rate, double eta0,
@@ -571,6 +580,13 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double optimal_init = 0.0
     cdef double dloss = 0.0
     cdef double MAX_DLOSS = 1e12
+    cdef double max_change = 0.0
+    cdef double max_weight = 0.0
+
+    # the previous weights to use to compute stopping criteria
+    cdef np.ndarray[double, ndim=1] previous_weights_array = \
+        np.zeros(n_features, dtype=np.double, order="c")
+    cdef double* previous_weights = <double*> previous_weights_array.data
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
@@ -596,7 +612,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
     t_start = time()
     with nogil:
-        for epoch in range(n_iter):
+        for epoch in range(max_iter):
             if verbose > 0:
                 with gil:
                     print("-- Epoch %d" % (epoch + 1))
@@ -690,6 +706,18 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 infinity = True
                 break
 
+            # check if the stopping criterion is reached
+            w.reset_wscale()
+            max_weight = w.get_max_weight()
+            max_change = w.get_max_change(&previous_weights)
+
+            if max_change / max_weight <= tol:
+                if verbose:
+                    with gil:
+                        print("convergence after %d epochs took %.2f seconds"
+                              % (epoch + 1, time() - t_start))
+                break
+
     if infinity:
         raise ValueError(("Floating-point under-/overflow occurred at epoch"
                           " #%d. Scaling input data with StandardScaler or"
@@ -697,7 +725,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
     w.reset_wscale()
 
-    return weights, intercept, average_weights, average_intercept
+    return weights, intercept, average_weights, average_intercept, epoch + 1
 
 
 cdef bint any_nonfinite(double *w, int n) nogil:

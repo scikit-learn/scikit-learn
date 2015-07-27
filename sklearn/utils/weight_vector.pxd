@@ -27,3 +27,5 @@ cdef class WeightVector(object):
     cdef void scale(self, double c) nogil
     cdef void reset_wscale(self) nogil
     cdef double norm(self) nogil
+    cdef double get_max_weight(self) nogil
+    cdef double get_max_change(self, double **previous_weights) nogil

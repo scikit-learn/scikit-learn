@@ -10,7 +10,7 @@
 
 cimport cython
 from libc.limits cimport INT_MAX
-from libc.math cimport sqrt
+from libc.math cimport sqrt, fabs
 import numpy as np
 cimport numpy as np
 
@@ -19,6 +19,12 @@ cdef extern from "cblas.h":
     void dscal "cblas_dscal"(int, double, double *, int) nogil
     void daxpy "cblas_daxpy" (int, double, const double*,
                               int, double*, int) nogil
+
+
+cdef inline double fmax(double x, double y) nogil:
+    if x > y:
+        return x
+    return y
 
 
 np.import_array()
@@ -197,3 +203,28 @@ cdef class WeightVector(object):
     cdef double norm(self) nogil:
         """The L2 norm of the weight vector. """
         return sqrt(self.sq_norm)
+
+    cdef double get_max_weight(self) nogil:
+        """Computes the maximum absolute value over all features"""
+        cdef double max_weight = 0.0
+        cdef int n_features = self.n_features
+        cdef double* w_data_ptr = self.w_data_ptr
+
+        for j in range(n_features):
+            max_weight = fmax(max_weight, fabs(w_data_ptr[j]))
+        return max_weight
+
+    cdef double get_max_change(self, double **previous_weights) nogil:
+        """Computes the maximum change over all features"""
+        cdef double max_change = 0.0
+        cdef int n_features = self.n_features
+        cdef double* w_data_ptr = self.w_data_ptr
+        cdef double* previous_weights_ptr = previous_weights[0]
+
+        for j in range(n_features):
+            max_change = fmax(max_change,
+                              fabs(w_data_ptr[j] - previous_weights_ptr[j]))
+            previous_weights_ptr[j] = w_data_ptr[j]
+
+        previous_weights[0] = previous_weights_ptr
+        return max_change

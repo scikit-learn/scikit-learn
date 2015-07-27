@@ -434,6 +434,14 @@ API changes summary
       (`#7260 <https://github.com/scikit-learn/scikit-learn/pull/7260>`_) by
       `Sebastián Vanrell`_.
 
+   - :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
+     :class:`linear_model.PassiveAgressiveClassifier`,
+     :class:`linear_model.PassiveAggressiveRegressor` and
+     :class:`linear_model.Perceptron` now exposes a ``max_iter`` and
+     ``tol`` parameters, to handle convergence more precisely.
+     ``n_iter`` parameter is deprecated, and the fitted estimator exposes
+     a ``n_iter_`` attribute, with actual number of iterations before
+     convergence. By `Tom Dupre la Tour`_.
 
 .. currentmodule:: sklearn
 
@@ -476,6 +484,7 @@ Bug fixes
       :class:`decomposition.LatentDirichletAllocation` model. See `#6258
       <https://github.com/scikit-learn/scikit-learn/issues/6258>`_
       By Chyi-Kwei Yau.
+
 
 .. _changes_0_17:
 

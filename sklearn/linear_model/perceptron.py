@@ -24,9 +24,13 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
+    max_iter : int, optional
+        The maximum number of passes over the training data (aka epochs).
+        The maximum number of iterations is set to 1 if using partial_fit.
         Defaults to 5.
+
+    tol : float, optional
+        The tolerance for the stopping criterion. Default to 1e-4.
 
     shuffle : bool, optional, default True
         Whether or not the training data should be shuffled after each epoch.
@@ -69,6 +73,10 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    n_iter_ : int
+        The actual number of iterations to reach the stopping criterion.
+        For multiclass fits, it is the maximum over every binary fit.
+
     Notes
     -----
 
@@ -87,13 +95,15 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
     https://en.wikipedia.org/wiki/Perceptron and references therein.
     """
     def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
-                 n_iter=5, shuffle=True, verbose=0, eta0=1.0, n_jobs=1,
-                 random_state=0, class_weight=None, warm_start=False):
+                 max_iter=5, tol=1e-4, shuffle=True, verbose=0, eta0=1.0,
+                 n_jobs=1, random_state=0, class_weight=None,
+                 warm_start=False, n_iter=None):
         super(Perceptron, self).__init__(loss="perceptron",
                                          penalty=penalty,
                                          alpha=alpha, l1_ratio=0,
                                          fit_intercept=fit_intercept,
-                                         n_iter=n_iter,
+                                         max_iter=max_iter,
+                                         tol=tol,
                                          shuffle=shuffle,
                                          verbose=verbose,
                                          random_state=random_state,
@@ -102,4 +112,5 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
                                          power_t=0.5,
                                          warm_start=warm_start,
                                          class_weight=class_weight,
-                                         n_jobs=n_jobs)
+                                         n_jobs=n_jobs,
+                                         n_iter=n_iter)

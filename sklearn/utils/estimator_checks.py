@@ -1252,6 +1252,8 @@ def check_class_weight_classifiers(name, Classifier):
             classifier = Classifier(class_weight=class_weight)
         if hasattr(classifier, "n_iter"):
             classifier.set_params(n_iter=100)
+        if hasattr(classifier, "max_iter"):
+            classifier.set_params(max_iter=1000)
         if hasattr(classifier, "min_weight_fraction_leaf"):
             classifier.set_params(min_weight_fraction_leaf=0.01)
 
@@ -1267,6 +1269,8 @@ def check_class_weight_balanced_classifiers(name, Classifier, X_train, y_train,
         classifier = Classifier()
     if hasattr(classifier, "n_iter"):
         classifier.set_params(n_iter=100)
+    if hasattr(classifier, "max_iter"):
+        classifier.set_params(max_iter=1000)
 
     set_random_state(classifier)
     classifier.fit(X_train, y_train)
@@ -1291,6 +1295,8 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
         # This is a very small dataset, default n_iter are likely to prevent
         # convergence
         classifier.set_params(n_iter=1000)
+    if hasattr(classifier, "max_iter"):
+        classifier.set_params(max_iter=1000)
     set_random_state(classifier)
 
     # Let the model compute the class frequencies

@@ -69,7 +69,7 @@ class MyPassiveAggressive(ClassifierMixin):
 def test_classifier_accuracy():
     for data in (X, X_csr):
         for fit_intercept in (True, False):
-            clf = PassiveAggressiveClassifier(C=1.0, n_iter=30,
+            clf = PassiveAggressiveClassifier(C=1.0, max_iter=30,
                                               fit_intercept=fit_intercept,
                                               random_state=0)
             clf.fit(data, y)
@@ -114,7 +114,7 @@ def test_classifier_correctness():
             clf2 = PassiveAggressiveClassifier(C=1.0,
                                                loss=loss,
                                                fit_intercept=True,
-                                               n_iter=2, shuffle=False)
+                                               max_iter=2, shuffle=False)
             clf2.fit(data, y_bin)
 
             assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
@@ -203,7 +203,7 @@ def test_regressor_mse():
 
     for data in (X, X_csr):
         for fit_intercept in (True, False):
-            reg = PassiveAggressiveRegressor(C=1.0, n_iter=50,
+            reg = PassiveAggressiveRegressor(C=1.0, max_iter=50,
                                              fit_intercept=fit_intercept,
                                              random_state=0)
             reg.fit(data, y_bin)
@@ -240,7 +240,7 @@ def test_regressor_correctness():
             reg2 = PassiveAggressiveRegressor(C=1.0,
                                               loss=loss,
                                               fit_intercept=True,
-                                              n_iter=2, shuffle=False)
+                                              max_iter=2, shuffle=False)
             reg2.fit(data, y_bin)
 
             assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)

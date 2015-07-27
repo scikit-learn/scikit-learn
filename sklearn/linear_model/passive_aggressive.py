@@ -21,9 +21,13 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
 
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
+    max_iter : int, optional
+        The maximum number of passes over the training data (aka epochs).
+        The maximum number of iterations is set to 1 if using partial_fit.
         Defaults to 5.
+
+    tol : float, optional
+        The tolerance for the stopping criterion. Default to 1e-4.
 
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
@@ -71,6 +75,10 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    n_iter_ : int
+        The actual number of iterations to reach the stopping criterion.
+        For multiclass fits, it is the maximum over every binary fit.
+
     See also
     --------
 
@@ -84,20 +92,24 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    def __init__(self, C=1.0, fit_intercept=True, n_iter=5, shuffle=True,
-                 verbose=0, loss="hinge", n_jobs=1, random_state=None,
-                 warm_start=False, class_weight=None):
+    def __init__(self, C=1.0, fit_intercept=True, max_iter=5, tol=1e-4,
+                 shuffle=True, verbose=0, loss="hinge", n_jobs=1,
+                 random_state=None, warm_start=False, class_weight=None,
+                 n_iter=None):
         super(PassiveAggressiveClassifier, self).__init__(
             penalty=None,
             fit_intercept=fit_intercept,
-            n_iter=n_iter,
+            max_iter=max_iter,
+            tol=tol,
             shuffle=shuffle,
             verbose=verbose,
             random_state=random_state,
             eta0=1.0,
             warm_start=warm_start,
             class_weight=class_weight,
-            n_jobs=n_jobs)
+            n_jobs=n_jobs,
+            n_iter=n_iter)
+
         self.C = C
         self.loss = loss
 
@@ -136,7 +148,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                              "parameter.")
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._partial_fit(X, y, alpha=1.0, C=self.C,
-                                 loss="hinge", learning_rate=lr, n_iter=1,
+                                 loss="hinge", learning_rate=lr, max_iter=1,
                                  classes=classes, sample_weight=None,
                                  coef_init=None, intercept_init=None)
 
@@ -186,9 +198,13 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
+    max_iter : int, optional
+        The maximum number of passes over the training data (aka epochs).
+        The maximum number of iterations is set to 1 if using partial_fit.
         Defaults to 5.
+
+    tol : float, optional
+        The tolerance for the stopping criterion. Default to 1e-4.
 
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
@@ -219,6 +235,9 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    n_iter_ : int
+        The actual number of iterations to reach the stopping criterion.
+
     See also
     --------
 
@@ -231,20 +250,24 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    def __init__(self, C=1.0, fit_intercept=True, n_iter=5, shuffle=True,
-                 verbose=0, loss="epsilon_insensitive",
-                 epsilon=DEFAULT_EPSILON, random_state=None, warm_start=False):
+
+    def __init__(self, C=1.0, fit_intercept=True, max_iter=5, tol=1e-4,
+                 shuffle=True, verbose=0, loss="epsilon_insensitive",
+                 epsilon=DEFAULT_EPSILON, random_state=None, warm_start=False,
+                 n_iter=None):
         super(PassiveAggressiveRegressor, self).__init__(
             penalty=None,
             l1_ratio=0,
             epsilon=epsilon,
             eta0=1.0,
             fit_intercept=fit_intercept,
-            n_iter=n_iter,
+            max_iter=max_iter,
+            tol=tol,
             shuffle=shuffle,
             verbose=verbose,
             random_state=random_state,
-            warm_start=warm_start)
+            warm_start=warm_start,
+            n_iter=n_iter)
         self.C = C
         self.loss = loss
 
@@ -266,7 +289,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
         return self._partial_fit(X, y, alpha=1.0, C=self.C,
                                  loss="epsilon_insensitive",
-                                 learning_rate=lr, n_iter=1,
+                                 learning_rate=lr, max_iter=1,
                                  sample_weight=None,
                                  coef_init=None, intercept_init=None)
 

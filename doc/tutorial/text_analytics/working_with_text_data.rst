@@ -351,7 +351,7 @@ classifier object into our pipeline::
   >>> text_clf = Pipeline([('vect', CountVectorizer()),
   ...                      ('tfidf', TfidfTransformer()),
   ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
-  ...                                            alpha=1e-3, n_iter=5, random_state=42)),
+  ...                                            alpha=1e-3, random_state=42)),
   ... ])
   >>> _ = text_clf.fit(twenty_train.data, twenty_train.target)
   >>> predicted = text_clf.predict(docs_test)

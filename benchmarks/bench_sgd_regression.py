@@ -70,30 +70,30 @@ if __name__ == "__main__":
             tstart = time()
             clf.fit(X_train, y_train)
             elnet_results[i, j, 0] = mean_squared_error(clf.predict(X_test),
-                                                       y_test)
+                                                        y_test)
             elnet_results[i, j, 1] = time() - tstart
 
             gc.collect()
             print("- benchmarking SGD")
-            n_iter = np.ceil(10 ** 4.0 / n_train)
+            max_iter = np.ceil(10 ** 4.0 / n_train)
             clf = SGDRegressor(alpha=alpha / n_train, fit_intercept=False,
-                               n_iter=n_iter, learning_rate="invscaling",
-                               eta0=.01, power_t=0.25)
+                               max_iter=max_iter, learning_rate="invscaling",
+                               eta0=.01, power_t=0.25, tol=1e-12)
 
             tstart = time()
             clf.fit(X_train, y_train)
             sgd_results[i, j, 0] = mean_squared_error(clf.predict(X_test),
-                                                     y_test)
+                                                      y_test)
             sgd_results[i, j, 1] = time() - tstart
 
             gc.collect()
-            print("n_iter", n_iter)
+            print("max_iter", max_iter)
             print("- benchmarking A-SGD")
-            n_iter = np.ceil(10 ** 4.0 / n_train)
+            max_iter = np.ceil(10 ** 4.0 / n_train)
             clf = SGDRegressor(alpha=alpha / n_train, fit_intercept=False,
-                               n_iter=n_iter, learning_rate="invscaling",
-                               eta0=.002, power_t=0.05,
-                               average=(n_iter * n_train // 2))
+                               max_iter=max_iter, learning_rate="invscaling",
+                               eta0=.002, power_t=0.05, tol=1e-12,
+                               average=(max_iter * n_train // 2))
 
             tstart = time()
             clf.fit(X_train, y_train)
@@ -107,7 +107,7 @@ if __name__ == "__main__":
             tstart = time()
             clf.fit(X_train, y_train)
             ridge_results[i, j, 0] = mean_squared_error(clf.predict(X_test),
-                                                       y_test)
+                                                        y_test)
             ridge_results[i, j, 1] = time() - tstart
 
     # Plot results
