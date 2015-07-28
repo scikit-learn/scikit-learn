@@ -116,7 +116,7 @@ def _build_optics(SetOfObjects, epsilon, MinPts):
 
 # OPTICS helper functions; these should not be public #
 
-# NOT Paralizeable! The order that entries are written to
+# NOT Paralyzable! The order that entries are written to
 # the '_ordered_list' is important!
 
 
@@ -162,8 +162,6 @@ def _set_reach_dist(SetOfObjects, point_index, epsilon):
             return sorted(zip(SetOfObjects._reachability[unprocessed], unprocessed), key=lambda reachability: reachability[0])[0][1]
         else:
             return point_index
-    else:  # Not sure if this else statement is actually needed... ##
-        return point_index
 
 # End Algorithm #
 
