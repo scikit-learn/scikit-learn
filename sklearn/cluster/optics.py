@@ -240,7 +240,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     def extract(self, epsPrime):
         if self.processed == True:
             if epsPrime > self.eps * 10.0:
-                print('Specify an epsilon smaller than ' + self.eps * 10.0)
+                print('Specify an epsilon smaller than ' + str(self.eps * 10.0))
             else:
                 self.eps_prime = epsPrime
                 _ExtractDBSCAN(self,epsPrime)
