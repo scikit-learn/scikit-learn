@@ -1,5 +1,3 @@
-from sklearn.datasets.samples_generator import make_blobs
-from sklearn.preprocessing import StandardScaler
 from sklearn.cluster.optics import OPTICS
 
 
@@ -23,7 +21,7 @@ def test_optics():
 
     clust2 = clust.fit(X)
 
-    samples, labels = clust2.extract(0.03)
+    samples, labels = clust2.extract(0.3)
 
     assert samples[0] == 0
     assert labels[0] == -1
