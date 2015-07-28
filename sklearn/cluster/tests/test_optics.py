@@ -1,3 +1,4 @@
+from sklearn.datasets.samples_generator import make_blobs
 from sklearn.cluster.optics import OPTICS
 
 
