@@ -102,10 +102,11 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-                 alpha=1, max_iter=30, tol=1e-3):
+                 alpha=1, max_iter=30, tol=1e-3, unlabled_target=-1):
 
         self.max_iter = max_iter
         self.tol = tol
+        self.unlabled_target = unlabeled_target
 
         # kernel parameters
         self.kernel = kernel
@@ -220,13 +221,13 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         # label construction
         # construct a categorical distribution for classification only
         classes = np.unique(y)
-        classes = (classes[classes != -1])
+        classes = (classes[classes != self.unlabled_target])
         self.classes_ = classes
 
         n_samples, n_classes = len(y), len(classes)
 
         y = np.asarray(y)
-        unlabeled = y == -1
+        unlabeled = y == self.unlabled_target
         clamp_weights = np.ones((n_samples, 1))
         clamp_weights[unlabeled, 0] = self.alpha
 
