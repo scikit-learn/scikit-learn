@@ -723,7 +723,6 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
     # Avoid integer division problems
     alpha = float(alpha)
 
-    # Scaling l1_gamma
     l1_gamma = float(l1_gamma)
 
     random_state = check_random_state(random_state)
@@ -749,10 +748,27 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
     if verbose == 1:
         print('[dict_learning]', end=' ')
 
-    # Putting dictionary into circonscipt circle of l-ball
+    # # Putting dictionary into inscribed circle of enet-ball
+    # if l1_gamma != 0.:
+    #     S = np.sqrt(np.sum(dictionary ** 2, axis=0))
+    #     S[S == 0] = 1
+    #     if l1_gamma == 1.:
+    #         r = 1 / sqrt(n_features)
+    #     else:
+    #         r = sqrt(l1_gamma ** 2 + 4. / n_features * (1 - l1_gamma)) - l1_gamma
+    #         r /= 2 * (1 - l1_gamma)
+    #         r **= 2
+    #         r *= n_features
+    #         r = sqrt(r)
+    #     dictionary /= S[np.newaxis, :] / r
+
     S = np.sqrt(np.sum(dictionary ** 2, axis=0))
     S[S == 0] = 1
-    dictionary /= S[np.newaxis, :] * sqrt(n_features)
+    dictionary /= S[np.newaxis, :]
+    for k in range(n_components):
+        dictionary[:, k] = enet_projection(dictionary[:, k],
+                                           radius=1,
+                                           l1_gamma=l1_gamma)
 
     if shuffle:
         X_train = X.copy()
@@ -863,6 +879,10 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
         # modification in the dictionary
         if callback is not None:
             callback(locals())
+
+    S = np.sqrt(np.sum(dictionary ** 2, axis=0))
+    S[S == 0] = 1
+    dictionary /= S[np.newaxis, :]
 
     if return_debug_info:
         debug_info = (residuals, density, values)
