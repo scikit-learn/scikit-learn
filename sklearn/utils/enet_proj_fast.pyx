@@ -137,7 +137,8 @@ cpdef enet_projection(DOUBLE[:] v, double radius, double l1_gamma):
                 res[i] = v[i] / norm
         return res
 
-    gamma = 2 / l1_gamma
+    gamma = 2 / l1_gamma - 2
+    radius /= l1_gamma
 
     # res = np.sign(v)
     # v = np.abs(v)
@@ -229,5 +230,5 @@ cpdef double enet_norm(DOUBLE[:] v, double l1_gamma=0.1) nogil:
     cdef int i
     for i in range(n):
         b_ = v[i] if v[i] > 0. else - v[i]
-        res += b_ * (l1_gamma + b_)
+        res += b_ * (l1_gamma + (1 - l1_gamma) * b_)
     return res

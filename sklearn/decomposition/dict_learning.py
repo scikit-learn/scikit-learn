@@ -341,48 +341,54 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         component_range = random_state.permutation(n_components)
     else:
         component_range = np.arange(n_components)
-    for k in component_range:
-        # R <- 1.0 * U_k * V_k^T + R
-        R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
-        # XXX: this behavior is not backward compatible
-        if online:
-            dictionary[:, k] = R[:, k]
-            # L2-ball scaling if we use an elastic net ball
-            if l1_gamma != 0.:
-                if code[k, k] > 1e-20:
-                    dictionary[:, k] /= code[k, k]
-                else:
-                    dictionary[:, k] = 0
-        else:
-            dictionary[:, k] = np.dot(R, code[k, :].T)
-            # L2-ball scaling if we use an elastic net ball
-            if l1_gamma != 0.:
-                s = np.sum(code[k, :] ** 2)
-                if s > 1e-20:
-                    dictionary[:, k] /= s
-                else:
-                    dictionary[:, k] = 0
-        # Scale k'th atom
-        atom_norm_square = np.sum(dictionary[:, k] ** 2)
-        # Cleaning small atoms
-        if atom_norm_square < threshold:
-            if verbose == 1:
-                sys.stdout.write("+")
-                sys.stdout.flush()
-            elif verbose:
-                print("Adding new random atom")
-            dictionary[:, k] = random_state.randn(n_features)
-            atom_norm_square = np.sum(dictionary[:, k] ** 2)
-            # Setting corresponding coefs to 0
-            code[k, :] = 0.0
 
-        if l1_gamma == 0.0:
-            dictionary[:, k] /= sqrt(atom_norm_square)
-        else:
-            dictionary[:, k] = enet_projection(dictionary[:, k], radius=radius,
-                                               l1_gamma=l1_gamma)
-        # R <- -1.0 * U_k * V_k^T + R
-        R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
+    for _ in range(1):
+        for k in component_range:
+            # R <- 1.0 * U_k * V_k^T + R
+            R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
+            # XXX: this behavior is not backward compatible
+            if online:
+                dictionary[:, k] = R[:, k]
+                # L2-ball scaling if we use an elastic net ball
+                if l1_gamma != 0.:
+                    if code[k, k] > 1e-20:
+                        dictionary[:, k] /= code[k, k]
+                    else:
+                        dictionary[:, k] = 0
+            else:
+                dictionary[:, k] = np.dot(R, code[k, :].T)
+                # L2-ball scaling if we use an elastic net ball
+                if l1_gamma != 0.:
+                    s = np.sum(code[k, :] ** 2)
+                    if s > 1e-20:
+                        dictionary[:, k] /= s
+                    else:
+                        dictionary[:, k] = 0
+            # Scale k'th atom
+            atom_norm_square = np.sum(dictionary[:, k] ** 2)
+            # Cleaning small atoms
+            if atom_norm_square < threshold:
+                if verbose == 1:
+                    sys.stdout.write("+")
+                    sys.stdout.flush()
+                elif verbose:
+                    print("Adding new random atom")
+                dictionary[:, k] = random_state.randn(n_features)
+                atom_norm_square = np.sum(dictionary[:, k] ** 2)
+                # Setting corresponding coefs to 0
+                code[k, :] = 0.0
+
+            if l1_gamma != 0.:
+                dictionary[:, k] = enet_projection(dictionary[:, k],
+                                                   radius=radius,
+                                                   l1_gamma=l1_gamma)
+            else:
+                dictionary[:, k] /= sqrt(atom_norm_square)
+            # R <- -1.0 * U_k * V_k^T + R
+            R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
+
+        # S = np.sqrt(np.sum(dictionary ** 2, axis=0))
+        # dictionary /= S[np.newaxis, :]
 
     if return_r2:
         if online:
@@ -740,15 +746,13 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
                            np.zeros((n_components - r, dictionary.shape[1]))]
     dictionary = np.ascontiguousarray(dictionary.T)
 
-    # for dict_element in dictionary:
-    #     if l1_gamma != 0:
-    #         dict_element = enet_projection(dict_element, l1_gamma=l1_gamma,
-    #                                        radius=1.)
-    #     else:
-    #         dict_element /= np.sqrt(dict_element ** 2)
-
     if verbose == 1:
         print('[dict_learning]', end=' ')
+
+    # Putting dictionary into circonscipt circle of l-ball
+    S = np.sqrt(np.sum(dictionary ** 2, axis=0))
+    S[S == 0] = 1
+    dictionary /= S[np.newaxis, :] * sqrt(n_features)
 
     if shuffle:
         X_train = X.copy()
@@ -806,9 +810,13 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
                        % (ii, dt, dt / 60))
 
         # Setting n_jobs > 1 does not improve performance
+        S = np.sqrt(np.sum(dictionary ** 2, axis=0))
+        S[S == 0] = 1
+        dictionary /= S[np.newaxis, :]
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                   alpha=alpha, n_jobs=1,
                                   random_state=random_state).T
+        dictionary *= S[np.newaxis, :]
         # Update the auxiliary variables
         # This trick raise the learning rate of a factor batch_size
         #  during the first batch_size iterations

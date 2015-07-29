@@ -33,13 +33,14 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
 n_row, n_col = 5, 6
 n_components = n_row * n_col
-image_shape = (64, 64)
+image_shape = (128, 64)
 rng = RandomState(0)
 
 ###############################################################################
 # Load faces data
 dataset = fetch_olivetti_faces(shuffle=True, random_state=rng)
 faces = dataset.data
+faces = np.tile(faces, (1, 2))
 
 n_samples, n_features = faces.shape
 
@@ -69,14 +70,14 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row):
 # It is necessary to add regularisation to sparse encoder (either l1 or l2).
 # XXX: This should be mentionned in the documentation
 dict_learning = MiniBatchDictionaryLearning(n_components=n_components,
-                                            alpha=0.1,
-                                            n_iter=400, batch_size=10,
-                                            fit_algorithm='lars',
-                                            transform_algorithm='lasso_lars',
-                                            transform_alpha=0.1,
+                                            alpha=0.,
+                                            n_iter=40, batch_size=10,
+                                            fit_algorithm='ridge',
+                                            transform_algorithm='ridge',
+                                            transform_alpha=0.0,
                                             tol=1e-4,
                                             verbose=10,
-                                            l1_gamma=0,
+                                            l1_gamma=0.2,
                                             random_state=rng,
                                             n_jobs=3,
                                             debug_info=True)
