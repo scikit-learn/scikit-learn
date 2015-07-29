@@ -17,7 +17,7 @@ def enet_norm_slow(v, l1_gamma=0.1):
     if l1_gamma == 0:
         return sqrt(np.sum(v ** 2))
     b_abs = np.abs(v)
-    return np.sum(b_abs * (l1_gamma + b_abs))
+    return np.sum(b_abs * (l1_gamma + (1 - l1_gamma) * b_abs))
 
 
 def enet_projection_slow(v, radius=1, l1_gamma=0.1):
@@ -30,7 +30,7 @@ def enet_projection_slow(v, radius=1, l1_gamma=0.1):
     random_state = check_random_state(None)
     if l1_gamma == 0:
         return v / sqrt(np.sum(v ** 2))
-    gamma = 2 / l1_gamma
+    gamma = 2. / l1_gamma - 2
     radius /= l1_gamma
     m = v.shape[0]
     b_abs = np.abs(v)
@@ -81,7 +81,7 @@ def test_slow_enet_norm():
     for i in range(10):
         a = np.random.randn(10000)
         norms[i] = enet_norm_slow(a, l1_gamma=0.1)
-        norms2[i] = (a ** 2).sum() + 0.1 * np.abs(a).sum()
+        norms2[i] = 0.9 * (a ** 2).sum() + 0.1 * np.abs(a).sum()
     assert_array_almost_equal(norms, norms2)
 
 def test_slow_enet_projection_norm():

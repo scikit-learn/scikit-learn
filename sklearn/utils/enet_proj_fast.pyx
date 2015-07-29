@@ -150,10 +150,9 @@ cpdef enet_projection(DOUBLE[:] v, double radius, double l1_gamma):
             v[i] *= -1
         mask[i] = UNMASKED
     norm = _masked_enet_norm(v, mask, n, UNMASKED, gamma)
-    radius /= l1_gamma
 
     # Return res if it is already in the elastic-net ball
-    if norm <= radius:
+    if norm <= 1:
         res[:] = v[:]
         return res
 

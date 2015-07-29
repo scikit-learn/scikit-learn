@@ -762,14 +762,6 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
     #         r = sqrt(r)
     #     dictionary /= S[np.newaxis, :] / r
 
-    S = np.sqrt(np.sum(dictionary ** 2, axis=0))
-    S[S == 0] = 1
-    dictionary /= S[np.newaxis, :]
-    for k in range(n_components):
-        dictionary[:, k] = enet_projection(dictionary[:, k],
-                                           radius=1,
-                                           l1_gamma=l1_gamma)
-
     if shuffle:
         X_train = X.copy()
         random_state.shuffle(X_train)
@@ -825,14 +817,25 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
                 print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
                        % (ii, dt, dt / 60))
 
-        # Setting n_jobs > 1 does not improve performance
+        # Normalizing dictionary before sparse encoding
         S = np.sqrt(np.sum(dictionary ** 2, axis=0))
         S[S == 0] = 1
         dictionary /= S[np.newaxis, :]
+        # Setting n_jobs > 1 does not improve performance
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                   alpha=alpha, n_jobs=1,
                                   random_state=random_state).T
-        dictionary *= S[np.newaxis, :]
+        # Putting dictionary back on elastic net
+        if ii > iter_offset:
+            # Using known S
+            dictionary *= S[np.newaxis, :]
+        else:
+            # Explicitly doing it at first iteration
+            if l1_gamma != 0.:
+                    for k in range(n_components):
+                        dictionary[:, k] = enet_projection(dictionary[:, k],
+                                                           radius=1,
+                                                           l1_gamma=l1_gamma)
         # Update the auxiliary variables
         # This trick raise the learning rate of a factor batch_size
         #  during the first batch_size iterations
@@ -880,9 +883,10 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
         if callback is not None:
             callback(locals())
 
-    S = np.sqrt(np.sum(dictionary ** 2, axis=0))
-    S[S == 0] = 1
-    dictionary /= S[np.newaxis, :]
+    if ii > iter_offset:
+        S = np.sqrt(np.sum(dictionary ** 2, axis=0))
+        S[S == 0] = 1
+        dictionary /= S[np.newaxis, :]
 
     if return_debug_info:
         debug_info = (residuals, density, values)
