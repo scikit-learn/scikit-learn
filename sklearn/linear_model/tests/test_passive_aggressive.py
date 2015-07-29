@@ -70,57 +70,38 @@ class MyPassiveAggressive(ClassifierMixin):
 def test_classifier_accuracy():
     for data in (X, X_csr):
         for fit_intercept in (True, False):
-            clf = PassiveAggressiveClassifier(C=1.0, n_iter=30,
-                                              fit_intercept=fit_intercept,
-                                              random_state=0)
-            clf.fit(data, y)
-            score = clf.score(data, y)
-            assert_greater(score, 0.79)
-
-
-def test_classifier_accuracy_with_average():
-    for data in (X, X_csr):
-        for fit_intercept in (True, False):
-            clf = PassiveAggressiveClassifier(C=1.0, n_iter=30,
-                                              fit_intercept=fit_intercept,
-                                              random_state=0,
-                                              average=True)
-            clf.fit(data, y)
-            score = clf.score(data, y)
-            assert_greater(score, 0.79)
-            assert_true(hasattr(clf, 'average_coef_'))
-            assert_true(hasattr(clf, 'average_intercept_'))
-            assert_true(hasattr(clf, 'standard_intercept_'))
-            assert_true(hasattr(clf, 'standard_coef_'))
+            for average in (False,True):
+                clf = PassiveAggressiveClassifier(C=1.0, n_iter=30,
+                                                  fit_intercept=fit_intercept,
+                                                  random_state=0,
+                                                  average=average)
+                clf.fit(data, y)
+                score = clf.score(data, y)
+                assert_greater(score, 0.79)
+                if average:
+                    assert_true(hasattr(clf, 'average_coef_'))
+                    assert_true(hasattr(clf, 'average_intercept_'))
+                    assert_true(hasattr(clf, 'standard_intercept_'))
+                    assert_true(hasattr(clf, 'standard_coef_'))
 
 
 def test_classifier_partial_fit():
     classes = np.unique(y)
     for data in (X, X_csr):
-        clf = PassiveAggressiveClassifier(C=1.0,
-                                          fit_intercept=True,
-                                          random_state=0)
-        for t in range(30):
-            clf.partial_fit(data, y, classes)
-        score = clf.score(data, y)
-        assert_greater(score, 0.79)
-
-
-def test_classifier_partial_fit_with_average():
-    classes = np.unique(y)
-    for data in (X, X_csr):
-        clf = PassiveAggressiveClassifier(C=1.0,
-                                          fit_intercept=True,
-                                          random_state=0,
-                                          average=True)
-        for t in range(30):
-            clf.partial_fit(data, y, classes)
-        score = clf.score(data, y)
-        assert_greater(score, 0.79)
-        assert_true(hasattr(clf, 'average_coef_'))
-        assert_true(hasattr(clf, 'average_intercept_'))
-        assert_true(hasattr(clf, 'standard_intercept_'))
-        assert_true(hasattr(clf, 'standard_coef_'))
+        for average in (False,True):
+            clf = PassiveAggressiveClassifier(C=1.0,
+                                              fit_intercept=True,
+                                              random_state=0,
+                                              average=average)
+            for t in range(30):
+                clf.partial_fit(data, y, classes)
+            score = clf.score(data, y)
+            assert_greater(score, 0.79)
+            if average:
+                assert_true(hasattr(clf, 'average_coef_'))
+                assert_true(hasattr(clf, 'average_intercept_'))
+                assert_true(hasattr(clf, 'standard_intercept_'))
+                assert_true(hasattr(clf, 'standard_coef_'))
 
 
 def test_classifier_refit():
@@ -166,31 +147,19 @@ def test_regressor_mse():
 
     for data in (X, X_csr):
         for fit_intercept in (True, False):
-            reg = PassiveAggressiveRegressor(C=1.0, n_iter=50,
-                                             fit_intercept=fit_intercept,
-                                             random_state=0)
-            reg.fit(data, y_bin)
-            pred = reg.predict(data)
-            assert_less(np.mean((pred - y_bin) ** 2), 1.7)
-
-
-def test_regressor_mse_with_average():
-    y_bin = y.copy()
-    y_bin[y != 1] = -1
-
-    for data in (X, X_csr):
-        for fit_intercept in (True, False):
-            reg = PassiveAggressiveRegressor(C=1.0, n_iter=50,
-                                             fit_intercept=fit_intercept,
-                                             random_state=0,
-                                             average=True)
-            reg.fit(data, y_bin)
-            pred = reg.predict(data)
-            assert_less(np.mean((pred - y_bin) ** 2), 1.7)
-            assert_true(hasattr(reg, 'average_coef_'))
-            assert_true(hasattr(reg, 'average_intercept_'))
-            assert_true(hasattr(reg, 'standard_intercept_'))
-            assert_true(hasattr(reg, 'standard_coef_'))
+            for average in (False,True):
+                reg = PassiveAggressiveRegressor(C=1.0, n_iter=50,
+                                                 fit_intercept=fit_intercept,
+                                                 random_state=0,
+                                                 average=average)
+                reg.fit(data, y_bin)
+                pred = reg.predict(data)
+                assert_less(np.mean((pred - y_bin) ** 2), 1.7)
+                if average:
+                    assert_true(hasattr(reg, 'average_coef_'))
+                    assert_true(hasattr(reg, 'average_intercept_'))
+                    assert_true(hasattr(reg, 'standard_intercept_'))
+                    assert_true(hasattr(reg, 'standard_coef_'))
 
 
 def test_regressor_partial_fit():
@@ -198,32 +167,20 @@ def test_regressor_partial_fit():
     y_bin[y != 1] = -1
 
     for data in (X, X_csr):
-        reg = PassiveAggressiveRegressor(C=1.0,
-                                         fit_intercept=True,
-                                         random_state=0)
-        for t in range(50):
-            reg.partial_fit(data, y_bin)
-        pred = reg.predict(data)
-        assert_less(np.mean((pred - y_bin) ** 2), 1.7)
-
-
-def test_regressor_partial_fit_with_average():
-    y_bin = y.copy()
-    y_bin[y != 1] = -1
-
-    for data in (X, X_csr):
-        reg = PassiveAggressiveRegressor(C=1.0,
-                                         fit_intercept=True,
-                                         random_state=0,
-                                         average=True)
-        for t in range(50):
-            reg.partial_fit(data, y_bin)
-        pred = reg.predict(data)
-        assert_less(np.mean((pred - y_bin) ** 2), 1.7)
-        assert_true(hasattr(reg, 'average_coef_'))
-        assert_true(hasattr(reg, 'average_intercept_'))
-        assert_true(hasattr(reg, 'standard_intercept_'))
-        assert_true(hasattr(reg, 'standard_coef_'))
+        for average in (False,True):
+            reg = PassiveAggressiveRegressor(C=1.0,
+                                             fit_intercept=True,
+                                             random_state=0,
+                                             average=average)
+            for t in range(50):
+                reg.partial_fit(data, y_bin)
+            pred = reg.predict(data)
+            assert_less(np.mean((pred - y_bin) ** 2), 1.7)
+            if average:
+                assert_true(hasattr(reg, 'average_coef_'))
+                assert_true(hasattr(reg, 'average_intercept_'))
+                assert_true(hasattr(reg, 'standard_intercept_'))
+                assert_true(hasattr(reg, 'standard_coef_'))
 
 
 def test_regressor_correctness():
