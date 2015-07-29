@@ -35,6 +35,9 @@ New features
    - Added new supervised learning algorithm: :ref:`Multi-layer Perceptron <multilayer_perceptron>`
      (`#3204 <https://github.com/scikit-learn/scikit-learn/pull/3204>`_) by `Issam H. Laradji`_
 
+   - Gaussian Process-based hyper-parameter optimization through :class:`gp_search.GPSearchCV`, by Sébastien Dubois, Djalel Benbouzid and Fabian Pedregosa.
+
+
 Enhancements
 ............
 

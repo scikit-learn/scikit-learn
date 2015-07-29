@@ -8,6 +8,9 @@ from __future__ import print_function
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Sebastien Dubois <http://bit.ly/SebastienDubois>
+#         Djalel Benbouzid <djalel.benbouzid@gmail.com>
+#         Fabian Pedregosa <f@bianp.net>
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
@@ -18,6 +21,7 @@ import operator
 import warnings
 
 import numpy as np
+from scipy import stats
 
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin, ChangedBehaviorWarning
@@ -31,6 +35,7 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import _num_samples, indexable
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics.scorer import check_scoring
+from ..gaussian_process import GaussianProcessRegressor
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
@@ -997,3 +1002,356 @@ class RandomizedSearchCV(BaseSearchCV):
                                           self.n_iter,
                                           random_state=self.random_state)
         return self._fit(X, y, labels, sampled_params)
+
+
+class SequentialSearchCV(BaseSearchCV):
+    """Search over hyperparameters using Gaussian process.
+
+    The parameters of the estimator used to apply these methods are optimized
+    by cross-validated search over parameter settings.
+
+    In contrast to GridSearchCV, not all parameter values are tried out, but
+    rather a fixed number of parameter settings are sampled from the specified
+    distributions by optimizing an acquisition function. The number of
+    parameter settings that are tried is given by n_iter.
+
+    If all parameters are presented as a list,
+    sampling without replacement is performed. If at least one parameter
+    is given as a distribution, sampling with replacement is used.
+    It is highly recommended to use continuous distributions for continuous
+    parameters.
+
+    Read more in the :ref:`User Guide <gp_search>`.
+
+    Parameters
+    ----------
+    estimator : estimator object.
+        A object of that type is instantiated for each grid point.
+        This is assumed to implement the scikit-learn estimator interface.
+        Either estimator needs to provide a ``score`` function,
+        or ``scoring`` must be passed.
+
+    param_distributions : dict
+        Dictionary with parameters names (string) as keys and distributions
+        or lists of parameters to try. Distributions must provide a ``rvs``
+        method for sampling (such as those from scipy.stats.distributions).
+        If a list is given, it is sampled uniformly.
+
+    n_init : int, optional
+        Number of random iterations to perform before the smart search.
+        Default is 3.
+
+    n_iter : int, default=10
+        Number of parameter settings that are sampled. n_iter trades
+        off runtime vs quality of the solution.
+
+    acquisition_function : string, optional
+        Function to maximize in order to choose the next parameter to test.
+        - 'UCB : maximize the upper confidence bound
+        - 'EI' : maximizes the expected improvement
+        Default is 'UCB'
+
+    scoring : string, callable or None, default=None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+        If ``None``, the ``score`` method of the estimator is used.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method.
+
+    n_jobs : int, default=1
+        Number of jobs to run in parallel.
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    iid : boolean, default=True
+        If True, the data is assumed to be identically distributed across
+        the folds, and the loss minimized is the total loss per sample,
+        and not the mean loss across the folds.
+
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs, if ``y`` is binary or multiclass,
+        :class:`StratifiedKFold` used. If the estimator is a classifier
+        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
+
+    refit : boolean, default=True
+        Refit the best estimator with the entire dataset.
+        If "False", it is impossible to make predictions using
+        this RandomizedSearchCV instance after fitting.
+
+    verbose : integer
+        Controls the verbosity: the higher, the more messages.
+
+    random_state : int or RandomState
+        Pseudo random number generator state used for random uniform sampling
+        from lists of possible values instead of scipy.stats distributions.
+
+    error_score : 'raise' (default) or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error.
+
+    n_candidates : int, default=500
+        Number of random candidates to sample for each GP iterations
+        Default is 500.
+
+    gp_params : dict, default={}
+        Parameters to pass to the GaussianProcessRegressor object.
+
+    xi : float, default=0.01
+        Exploration-exploitation trade-off parameter for the expected
+        improvement acquisition function. Higher values for this parameter
+        yield updates that are more conservative in which the exploitation
+        criterion dominates over the exploration criterion.
+
+    kappa: float, default=1.96
+        Exploration-exploitation trade-off parameter for the upper
+        confidence bound acquisition function. The default value of
+        1.96 corresponds to the 95% confidence bound on the predicted
+        objective function.
+
+
+    Attributes
+    ----------
+    grid_scores_ : list of named tuples
+        Contains scores for all parameter combinations in param_grid.
+        Each entry corresponds to one parameter setting.
+        Each named tuple has the attributes:
+
+            * ``parameters``, a dict of parameter settings
+            * ``mean_validation_score``, the mean score over the
+              cross-validation folds
+            * ``cv_validation_scores``, the list of scores for each fold
+
+    best_estimator_ : estimator
+        Estimator that was chosen by the search, i.e. estimator
+        which gave highest score (or smallest loss if specified)
+        on the left out data. Not available if refit=False.
+
+    best_score_ : float
+        Score of best_estimator on the left out data.
+
+    best_params_ : dict
+        Parameter setting that gave the best results on the hold out data.
+
+    Notes
+    -----
+    The parameters selected are those that maximize the score of the held-out
+    data, according to the scoring parameter.
+
+    See Also
+    --------
+    :class:`GridSearchCV`:
+        Does exhaustive search over a grid of parameters.
+
+    :class:`RandomizedSearchCV`:
+        Randomized search on hyper parameters.
+
+    Examples
+    -------
+    >>> from sklearn import linear_model, gp_search, datasets
+    >>> from scipy import stats
+    >>> X, y = datasets.make_regression()
+    >>> clf = linear_model.Ridge()
+    >>> parameters = {"alpha": stats.expon(scale=100)}
+    >>> search = gp_search.GPSearchCV(clf, parameters)
+    >>> search.fit(X, y)
+    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    GPSearchCV(acquisition_function='UCB', cv=None, error_score='raise',
+          estimator=Ridge(alpha=1.0, copy_X=True, fit_intercept=True, ...
+       normalize=False, random_state=None, solver='auto', tol=0.001),
+          fit_params={}, gp_params={}, iid=True, kappa=1.96, n_candidates=500,
+          n_init=3, n_iter=10, n_jobs=1,
+          param_distributions={'alpha': ...},
+          pre_dispatch='2*n_jobs', random_state=None, refit=True, scoring=None,
+          verbose=0, xi=0.01)
+
+    """
+
+    def __init__(self, estimator, param_distributions, n_init=3, n_iter=10,
+                 scoring=None, fit_params=None, acquisition_function='UCB',
+                 n_jobs=1, iid=True, refit=True,
+                 cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 random_state=None, error_score='raise', n_candidates=500,
+                 gp_params={}, xi=0.01, kappa=1.96):
+
+        if acquisition_function not in ('UCB', 'EI', 'greedy'):
+            raise ValueError(
+                "acquisition_function should be one of " +
+                "'UCB', 'EI' or 'greedy'. Found %s instead" %
+                acquisition_function)
+        self.acquisition_function = acquisition_function
+        self.param_distributions = param_distributions
+        if n_init > n_iter:
+            raise ValueError('n_init cannot be larger than n_iter')
+        self.n_init = n_init
+        self.n_iter = n_iter
+        self.random_state = random_state
+        self.gp_params = gp_params
+        if xi <= 0:
+            raise ValueError('Parameter xi must be positive')
+        self.xi = xi
+        if kappa <= 0:
+            raise ValueError('Parameter kappa must be positive')
+        self.kappa = kappa
+        self.n_candidates = n_candidates
+
+        super(SequentialSearchCV, self).__init__(
+            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch, error_score=error_score)
+
+    def _evaluate_params(self, params, cv, X, y, labels):
+        all_scores = Parallel(
+            n_jobs=self.n_jobs, verbose=self.verbose,
+            pre_dispatch=self.pre_dispatch
+        )(delayed(_fit_and_score)(clone(self.estimator), X, y, self.scorer_,
+                                  train, test, self.verbose, params,
+                                  self.fit_params, return_parameters=False,
+                                  error_score=self.error_score)
+          for train, test in cv.split(X, y, labels))
+
+        n_test_samples = 0
+        score = 0
+        for tmp_score, tmp_n_test_samples, _ in all_scores:
+            tmp_score *= tmp_n_test_samples
+            n_test_samples += tmp_n_test_samples
+            score += tmp_score
+        score /= float(n_test_samples)
+
+        return score, all_scores
+
+    def fit(self, X, y=None, labels=None):
+        """
+        Run the hyper-parameter optimization process
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
+
+        labels : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        """
+        cv_scores, grid_scores, tested_parameters = [], [], []
+        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
+        cv = check_cv(self.cv, X, classifier=is_classifier(self.estimator))
+
+        #  Initialize with random candidates
+        init_candidates = ParameterSampler(
+            self.param_distributions, self.n_init,
+            random_state=self.random_state)
+
+        for i, params in enumerate(init_candidates):
+            score, all_scores = self._evaluate_params(
+                params, cv, X, y, labels)
+
+            if self.verbose > 0:
+                print('Step ' + str(i) + ' - Hyperparameter '
+                      + str(params) + ', score: ' + str(score))
+            tested_parameters.append(list(params.values()))
+            cv_scores.append(score)
+            grid_scores.append(
+                _CVScoreTuple(params, score, np.array(all_scores)))
+
+        for i in range(self.n_iter-self.n_init):
+            # Model with a Gaussian Process
+            gp = GaussianProcessRegressor(**self.gp_params)
+            gp.fit(tested_parameters, cv_scores)
+
+            # Sample candidates and predict their corresponding
+            # acquisition values
+            candidates = ParameterSampler(
+                self.param_distributions, self.n_candidates,
+                random_state=self.random_state)
+            candidate_values = []
+            candidate_dict = []
+            for s in candidates:
+                # get the candidates as an array
+                candidate_values.append(list(s.values()))
+                candidate_dict.append(s)
+
+            if self.acquisition_function == 'UCB':
+                predictions, std = gp.predict(
+                    candidate_values, return_std=True)
+                acquisition_func = predictions + self.kappa * std
+            elif self.acquisition_function == 'EI':
+                predictions, std = gp.predict(
+                    candidate_values, return_std=True)
+                y_best = np.max(cv_scores)
+                Z = (predictions - y_best - self.xi) / std
+                acquisition_func = std * (
+                    Z * stats.norm.cdf(Z) + stats.norm.pdf(Z))
+                # best_candidate = candidates[np.argmax(ei)]
+            else:
+                raise ValueError(
+                    'acquisition_function not implemented yet : '
+                    + self.acquisition_function)
+            best_idx = np.argmax(acquisition_func)
+            best_candidate = candidate_dict[best_idx]
+            score, all_scores = self._evaluate_params(
+                best_candidate, cv, X, y, labels)
+            tested_parameters.append(list(best_candidate.values()))
+            cv_scores.append(score)
+            grid_scores.append(
+                _CVScoreTuple(best_candidate, score, np.array(all_scores)))
+            if self.verbose > 0:
+                print('Step ' + str(i+self.n_init) + ' - Hyperparameter '
+                      + str(best_candidate) + ', score: ' + str(score))
+
+        # Store the computed scores
+        self.grid_scores_ = grid_scores
+
+        # Find the best parameters by comparing on the mean validation score:
+        # note that `sorted` is deterministic in the way it breaks ties
+        best = sorted(grid_scores, key=lambda x: x.mean_validation_score,
+                      reverse=True)[0]
+        self.best_params_ = best.parameters
+        self.best_score_ = best.mean_validation_score
+
+        if self.refit:
+            # fit the best estimator using the entire dataset
+            # clone first to work around broken estimators
+            best_estimator = clone(self.estimator).set_params(
+                **best.parameters)
+            if y is not None:
+                best_estimator.fit(X, y, **self.fit_params)
+            else:
+                best_estimator.fit(X, **self.fit_params)
+            self.best_estimator_ = best_estimator
+        return self
+

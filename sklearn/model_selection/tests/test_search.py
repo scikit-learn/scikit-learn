@@ -12,6 +12,7 @@ import scipy.sparse as sp
 
 from sklearn.utils.fixes import sp_version
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
@@ -24,7 +25,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
-from scipy.stats import bernoulli, expon, uniform
+from scipy.stats import bernoulli, expon, uniform, randint
 
 from sklearn.externals.six.moves import zip
 from sklearn.base import BaseEstimator
@@ -43,6 +44,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
+from sklearn.model_selection import SequentialSearchCV
 
 # TODO Import from sklearn.exceptions once merged.
 from sklearn.base import ChangedBehaviorWarning
@@ -83,6 +85,37 @@ class MockClassifier(object):
             score = 1.
         else:
             score = 0.
+        return score
+
+    def get_params(self, deep=False):
+        return {'foo_param': self.foo_param}
+
+    def set_params(self, **params):
+        self.foo_param = params['foo_param']
+        return self
+
+
+class MockContinuousClassifier(object):
+    """Dummy classifier to test the cross-validation
+    This time with continuous hyperparameters
+    """
+    def __init__(self, foo_param=0):
+        self.foo_param = foo_param
+
+    def fit(self, X, Y):
+        assert_true(len(X) == len(Y))
+        return self
+
+    def predict(self, T):
+        return T.shape[0]
+
+    predict_proba = predict
+    decision_function = predict
+    transform = predict
+
+    def score(self, X=None, Y=None):
+        # a function with maximum at 0
+        score = -self.foo_param ** 2 + 1
         return score
 
     def get_params(self, deep=False):
@@ -829,3 +862,99 @@ def test_parameters_sampler_replacement():
     sampler = ParameterSampler(params_distribution, n_iter=7)
     samples = list(sampler)
     assert_equal(len(samples), 7)
+
+
+def test_gp_search():
+    # Test that the best estimator contains the right value for foo_param
+    clf = MockClassifier()
+    for acquisition_function in ('EI',):
+        gp_search = SequentialSearchCV(
+            clf, {'foo_param': randint(1, 3)},
+            acquisition_function=acquisition_function)
+        # make sure it selects the smallest parameter in case of ties
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        gp_search.fit(X, y)
+        sys.stdout = old_stdout
+        assert_equal(gp_search.best_estimator_.foo_param, 2)
+
+        # test the same thing giving it a list
+        gp_search = SequentialSearchCV(
+            clf, {'foo_param': [1, 2, 3]},
+            acquisition_function=acquisition_function, n_candidates=3)
+        # make sure it selects the smallest parameter in case of ties
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        gp_search.fit(X, y)
+        sys.stdout = old_stdout
+        assert_equal(gp_search.best_estimator_.foo_param, 2)
+
+    clf = MockContinuousClassifier()
+    for acquisition_function in ('UCB', 'EI'):
+        gp_search = SequentialSearchCV(
+            clf, {'foo_param': uniform(-1, 1)}, 
+            acquisition_function=acquisition_function)
+        # make sure it selects the smallest parameter in case of ties
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        gp_search.fit(X, y)
+        sys.stdout = old_stdout
+        # test that it is close to zero
+        assert_less_equal(np.abs(gp_search.best_estimator_.foo_param),  0.1)
+
+    # Smoke test the score etc:
+    gp_search.score(X, y)
+    gp_search.predict_proba(X)
+    gp_search.decision_function(X)
+    gp_search.transform(X)
+
+    # Test exception handling on scoring
+    gp_search.scoring = 'sklearn'
+    assert_raises(ValueError, gp_search.fit, X, y)
+
+
+@ignore_warnings
+def test_gp_search_no_score():
+    # Test grid-search on classifier that has no score function.
+    clf = LinearSVC(random_state=0)
+    X, y = make_blobs(random_state=0, centers=2)
+
+    clf_no_score = LinearSVCNoScore(random_state=0)
+    gp_search = SequentialSearchCV(
+        clf, {'C': expon(scale=10)},
+        scoring='accuracy', random_state=0, iid=False)
+    gp_search.fit(X, y)
+
+    grid_search_no_score = SequentialSearchCV(
+        clf_no_score, {'C': expon(scale=10)},
+        scoring='accuracy', random_state=0, iid=False)
+    # smoketest grid search
+    grid_search_no_score.fit(X, y)
+
+    # giving no scoring function raises an error
+    grid_search_no_score = SequentialSearchCV(
+        clf_no_score, {'C': expon(scale=10)})
+    assert_raise_message(TypeError, "no scoring", grid_search_no_score.fit,
+                         [[1]])
+
+
+def test_gp_no_refit():
+    # Test that grid search can be used for model selection only
+    clf = MockClassifier()
+    grid_search = SequentialSearchCV(
+        clf, {'foo_param': randint(1, 3)}, refit=False)
+    grid_search.fit(X, y)
+    assert_true(hasattr(grid_search, "best_params_"))
+
+
+def test_gp_search_error():
+    # Test that grid search will capture errors on data with different
+    # length
+    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
+    clf = LinearSVC()
+    cv = SequentialSearchCV(clf, {'C': expon(scale=10)})
+    assert_raises(ValueError, cv.fit, X_[:180], y_)
+
+
+# def test_bad_input():
+#     # raise when n_ininit > n_iter and such
