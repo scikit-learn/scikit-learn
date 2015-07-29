@@ -23,6 +23,7 @@ from ..utils.extmath import randomized_svd, row_norms
 from ..utils.validation import check_is_fitted
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars, Ridge
 from ..utils.enet_proj_fast import enet_projection, enet_norm
+# from sandbox.spams_sklearn_mkpatch.dict_learning import enet_projection
 
 import warnings
 
@@ -819,6 +820,7 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
 
         # Normalizing dictionary before sparse encoding
         S = np.sqrt(np.sum(dictionary ** 2, axis=0))
+        print(S)
         S[S == 0] = 1
         dictionary /= S[np.newaxis, :]
         # Setting n_jobs > 1 does not improve performance

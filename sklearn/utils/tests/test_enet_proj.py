@@ -44,6 +44,7 @@ def enet_projection_slow(v, radius=1, l1_gamma=0.1):
         mask = np.ones(m, dtype=np.bool)
         mask_non_zero = mask.nonzero()[0]
         while mask_non_zero.shape[0] != 0:
+            print(mask_non_zero.shape[0])
             k = random_state.randint(mask_non_zero.shape[0])
             idx = mask_non_zero[k]
             k = U[idx]
@@ -128,13 +129,23 @@ def test_fast_enet_l2_ball():
         norms[i] = np.sqrt(np.sum(c ** 2))
     assert_array_almost_equal(norms, np.ones(10))
 
+def test_fast_enet_projection_big():
+    c = np.empty((10, 200000))
+    b = np.empty((10, 200000))
+    random_state = check_random_state(0)
+    for i in range(10):
+        a = random_state.randn(200000)
+        b[i, :] = enet_projection_slow(a, radius=1, l1_gamma=0.00001)
+        c[i] = enet_projection(a, 1, 0.00001)
+    assert_array_almost_equal(c, b, 4)
 
-# def test_fast_enet_l1_ball():
-#     random_state = check_random_state(0)
-#     norms = np.zeros(10)
-#     for i in range(10):
-#         a = random_state.randn(100)
-#         b = np.zeros(100)
-#         b[:] = enet_projection(a, 1, 1.0)
-#         norms[i] = np.sum(np.abs(b))
-#     assert_array_almost_equal(norms, np.ones(10))
+
+def test_fast_enet_l1_ball():
+    random_state = check_random_state(0)
+    norms = np.zeros(10)
+    for i in range(10):
+        a = random_state.randn(100)
+        b = np.zeros(100)
+        b[:] = enet_projection(a, 1, 1.0)
+        norms[i] = np.sum(np.abs(b))
+    assert_array_almost_equal(norms, np.ones(10))
