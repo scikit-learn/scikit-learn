@@ -875,6 +875,11 @@ class RBF(Kernel):
             is True.
         """
         X = np.atleast_2d(X)
+        if np.iterable(self.l) and X.shape[1] != self.l.shape[0]:
+            raise Exception("Anisotropic kernel must have the same number of "
+                            "dimensions as data (%d!=%d)"
+                            % (self.l.shape[0], X.shape[1]))
+
         if Y is None:
             dists = pdist(X / self.l, metric='sqeuclidean')
             K = np.exp(-.5 * dists)
@@ -983,6 +988,11 @@ class Matern(RBF):
             is True.
         """
         X = np.atleast_2d(X)
+        if np.iterable(self.l) and X.shape[1] != self.l.shape[0]:
+            raise Exception("Anisotropic kernel must have the same number of "
+                            "dimensions as data (%d!=%d)"
+                            % (self.l.shape[0], X.shape[1]))
+
         if Y is None:
             dists = pdist(X / self.l, metric='euclidean')
         else:
