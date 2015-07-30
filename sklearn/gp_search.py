@@ -211,6 +211,7 @@ class GPSearchCV(object):
 			gp = GaussianProcess(theta0=1. * np.ones(self.n_parameters) ,
 								 thetaL = 0.001 * np.ones(self.n_parameters) ,
 								 thetaU = 10. * np.ones(self.n_parameters) ,
+								 random_start = 3,
 								 nugget= self.gp_nugget) 
 			gp.fit(tested_parameters[:n_tested_parameters,:],cv_scores[:n_tested_parameters])
 
