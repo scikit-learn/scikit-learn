@@ -418,7 +418,7 @@ def export_javascript(decision_tree, feature_names=None, indent_offset=0):
         raise TypeError('decision_tree is not instance of decision tree')
 
     if decision_tree.tree_ is None:
-        raise TypeError('decision tree is not trained yet.')
+        raise TypeError('decision_tree is not trained yet.')
 
     is_classifier = (isinstance(decision_tree, tree.DecisionTreeClassifier) or
                      isinstance(decision_tree, tree.ExtraTreeClassifier))
