@@ -224,7 +224,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     selected : int list, optional, default "all"
         Indices of features which should be normalized. If "all",
-        defaults to each feature.
+        all features are scaled.
 
     Attributes
     ----------
