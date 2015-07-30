@@ -17,6 +17,7 @@ from ..externals import six
 from . import _tree
 from . import tree
 
+
 def _color_brew(n):
     """Generate n colors with equally spaced hues.
 
@@ -410,6 +411,7 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
         if own_file:
             out_file.close()
 
+
 def export_javascript(decision_tree, feature_names=None, indent_offset=0):
     """Export a decision tree in javascript.
 
@@ -441,9 +443,9 @@ def export_javascript(decision_tree, feature_names=None, indent_offset=0):
     """
 
     if (not isinstance(decision_tree, tree.DecisionTreeClassifier) and
-        not isinstance(decision_tree, tree.DecisionTreeRegressor) and
-        not isinstance(decision_tree, tree.ExtraTreeClassifier) and
-        not isinstance(decision_tree, tree.ExtraTreeRegressor)):
+            not isinstance(decision_tree, tree.DecisionTreeRegressor) and
+            not isinstance(decision_tree, tree.ExtraTreeClassifier) and
+            not isinstance(decision_tree, tree.ExtraTreeRegressor)):
         raise TypeError('decision_tree is not instance of decision tree')
 
     if decision_tree.tree_ is None:
@@ -453,14 +455,15 @@ def export_javascript(decision_tree, feature_names=None, indent_offset=0):
                      isinstance(decision_tree, tree.ExtraTreeClassifier))
 
     if feature_names is None:
-        feature_names = ["feature[%d]" % i for i in xrange(decision_tree.n_features_)]
+        feature_names = ["feature[%d]" %
+                         i for i in xrange(decision_tree.n_features_)]
 
-    def recurse(index, indent_nest = 0):
+    def recurse(index, indent_nest=0):
         base_indent = "  "
         indent = base_indent * indent_nest
 
-        if decision_tree.tree_.children_left[index] != -1  and decision_tree.tree_.children_right[index] != -1:
-            script =  indent + "if(%s <= %.16f) {\n"
+        if decision_tree.tree_.children_left[index] != -1 and decision_tree.tree_.children_right[index] != -1:
+            script = indent + "if(%s <= %.16f) {\n"
             script += "%s"
             script += indent + "} else {\n"
             script += "%s"
@@ -469,8 +472,10 @@ def export_javascript(decision_tree, feature_names=None, indent_offset=0):
             return script % (
                 feature_names[decision_tree.tree_.feature[index]],
                 decision_tree.tree_.threshold[index],
-                recurse(decision_tree.tree_.children_left[index], indent_nest + 1),
-                recurse(decision_tree.tree_.children_right[index], indent_nest + 1),
+                recurse(
+                    decision_tree.tree_.children_left[index], indent_nest + 1),
+                recurse(
+                    decision_tree.tree_.children_right[index], indent_nest + 1),
             )
         else:
             # value[i] is numpy.array of numpy.array
