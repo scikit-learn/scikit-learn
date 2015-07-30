@@ -402,12 +402,13 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             W, H = _initialize_nmf(X, self.n_components_, variant='ar',
                                    random_state=rng)
         elif init == "random":
-            W = rng.randn(n_samples, self.n_components_)
+            scale = np.sqrt(X.std()) / self.n_components_ ** (1. / 4)
+            W = rng.normal(scale=scale, size=(n_samples, self.n_components_))
             # we do not write np.abs(W, out=W) to stay compatible with
             # numpy 1.5 and earlier where the 'out' keyword is not
             # supported as a kwarg on ufuncs
             np.abs(W, W)
-            H = rng.randn(self.n_components_, n_features)
+            H = rng.normal(scale=scale, size=(self.n_components_, n_features))
             np.abs(H, H)
         else:
             raise ValueError(
