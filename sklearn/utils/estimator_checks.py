@@ -139,7 +139,7 @@ def _yield_transformer_checks(name, Transformer):
         yield check_transformer_data_not_an_array
     # these don't actually fit the data, so don't raise errors
     if name not in ['AdditiveChi2Sampler', 'Binarizer',
-                    'Normalizer', 'CallableTransformer']:
+                    'FunctionTransformer', 'Normalizer']:
         # basic tests
         yield check_transformer_general
         yield check_transformers_unfitted
