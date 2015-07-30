@@ -15,7 +15,7 @@ import numpy as np
 from ..externals import six
 
 from . import _tree
-
+from . import tree
 
 def _color_brew(n):
     """Generate n colors with equally spaced hues.
@@ -410,21 +410,21 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
         if own_file:
             out_file.close()
 
-def convert_decision_tree(clf, feature_names, indent_offset=0):
-    if (not isinstance(clf, sklearn.tree.DecisionTreeClassifier) and
-        not isinstance(clf, sklearn.tree.DecisionTreeRegressor)):
-        raise TypeError('clf is not instance of sklearn.tree.DecisionTree(Classifier|Regressor)')
+def export_javascript(decision_tree, feature_names, indent_offset=0):
+    if (not isinstance(decision_tree, tree.DecisionTreeClassifier) and
+        not isinstance(decision_tree, tree.DecisionTreeRegressor)):
+        raise TypeError('decision_tree is not instance of sklearn.tree.DecisionTree(Classifier|Regressor)')
 
-    if clf.tree_ is None:
+    if decision_tree.tree_ is None:
         raise TypeError('decision tree is not trained yet.')
 
-    is_classifier = isinstance(clf, sklearn.tree.DecisionTreeClassifier)
+    is_classifier = isinstance(decision_tree, tree.DecisionTreeClassifier)
 
-    def walk(index, indent_nest = 0):
+    def recurse(index, indent_nest = 0):
         base_indent = "  "
         indent = base_indent * indent_nest
 
-        if clf.tree_.children_left[index] != -1  and clf.tree_.children_right[index] != -1:
+        if decision_tree.tree_.children_left[index] != -1  and decision_tree.tree_.children_right[index] != -1:
             script =  indent + "if(%s <= %.16f) {\n"
             script += "%s"
             script += indent + "} else {\n"
@@ -432,19 +432,19 @@ def convert_decision_tree(clf, feature_names, indent_offset=0):
             script += indent + "}\n"
 
             return script % (
-                feature_names[clf.tree_.feature[index]],
-                clf.tree_.threshold[index],
-                walk(clf.tree_.children_left[index], indent_nest + 1),
-                walk(clf.tree_.children_right[index], indent_nest + 1),
+                feature_names[decision_tree.tree_.feature[index]],
+                decision_tree.tree_.threshold[index],
+                recurse(decision_tree.tree_.children_left[index], indent_nest + 1),
+                recurse(decision_tree.tree_.children_right[index], indent_nest + 1),
             )
         else:
             # value[i] is numpy.array of numpy.array
-            ret = clf.tree_.value[index][0]
+            ret = decision_tree.tree_.value[index][0]
 
             if is_classifier:
                 # classifier
-                class_id = numpy.argmax(ret)
-                ret = clf.classes_[class_id]
+                class_id = np.argmax(ret)
+                ret = decision_tree.classes_[class_id]
                 return indent + "return %s;\n" % ret
 
             else:
@@ -452,4 +452,4 @@ def convert_decision_tree(clf, feature_names, indent_offset=0):
                 ret = ret[0]
                 return indent + "return %.16f;\n" % ret
 
-    return walk(0, indent_offset)
+    return recurse(0, indent_offset)
