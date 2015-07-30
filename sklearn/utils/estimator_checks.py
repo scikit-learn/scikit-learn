@@ -48,6 +48,14 @@ from sklearn.datasets import load_iris, load_boston, make_blobs
 
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
+MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
+                'ExtraTreeRegressor', 'ExtraTreesRegressor', 'GaussianProcess',
+                'KNeighborsRegressor', 'KernelRidge', 'Lars', 'Lasso',
+                'LassoLars', 'LinearRegression', 'MultiTaskElasticNet',
+                'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV',
+                'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
+                'RANSACRegressor', 'RadiusNeighborsRegressor',
+                'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
 
 def _yield_non_meta_checks(name, Estimator):
@@ -100,8 +108,7 @@ def _yield_classifier_checks(name, Classifier):
             # We don't raise a warning in these classifiers, as
             # the column y interface is used by the forests.
 
-        # test if classifiers can cope with y.shape = (n_samples, 1)
-        yield check_classifiers_input_shapes
+        yield check_supervised_y_2d
     # test if NotFittedError is raised
     yield check_estimators_unfitted
     if 'class_weight' in Classifier().get_params().keys():
@@ -116,6 +123,7 @@ def _yield_regressor_checks(name, Regressor):
     yield check_regressor_data_not_an_array
     yield check_estimators_partial_fit_n_features
     yield check_regressors_no_decision_function
+    yield check_supervised_y_2d
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
@@ -831,31 +839,36 @@ def check_estimators_unfitted(name, Estimator):
                              est.predict_log_proba, X)
 
 
-def check_classifiers_input_shapes(name, Classifier):
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    X, y = shuffle(X, y, random_state=1)
-    X = StandardScaler().fit_transform(X)
+def check_supervised_y_2d(name, Estimator):
+    if "MultiTask" in name:
+        # These only work on 2d, this test makes not sense
+        return
+    rnd = np.random.RandomState(0)
+    X = rnd.uniform(size=(10, 3))
+    y = np.arange(10) % 3
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
-        classifier = Classifier()
-    set_fast_parameters(classifier)
-    set_random_state(classifier)
+        estimator = Estimator()
+    set_fast_parameters(estimator)
+    set_random_state(estimator)
     # fit
-    classifier.fit(X, y)
-    y_pred = classifier.predict(X)
+    estimator.fit(X, y)
+    y_pred = estimator.predict(X)
 
-    set_random_state(classifier)
+    set_random_state(estimator)
     # Check that when a 2D y is given, a DataConversionWarning is
     # raised
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always", DataConversionWarning)
         warnings.simplefilter("ignore", RuntimeWarning)
-        classifier.fit(X, y[:, np.newaxis])
+        estimator.fit(X, y[:, np.newaxis])
+    y_pred_2d = estimator.predict(X)
     msg = "expected 1 DataConversionWarning, got: %s" % (
         ", ".join([str(w_x) for w_x in w]))
-    assert_equal(len(w), 1, msg)
-    assert_array_equal(y_pred, classifier.predict(X))
+    if name not in MULTI_OUTPUT:
+        # warned if we don't support multi-output
+        assert_equal(len(w), 1, msg)
+    assert_array_equal(y_pred.ravel(), y_pred_2d.ravel())
 
 
 def check_classifiers_classes(name, Classifier):
