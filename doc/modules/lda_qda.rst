@@ -50,7 +50,7 @@ parameter. This parameter has no influence on :func:`lda.LDA.fit` or :func:`lda.
     :ref:`example_decomposition_plot_pca_vs_lda.py`: Comparison of LDA and PCA for dimensionality reduction of the Iris dataset
 
 Mathematical formulation of the LDA and QDA classifiers
-======================
+=======================================================
 
 Both LDA and QDA can be derived from simple probabilistic models 
 which model the class conditional distribution of the data :math:`P(X|y=k)`
