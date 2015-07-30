@@ -7,6 +7,7 @@ from nose.tools import assert_raises
 
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.tree import export_graphviz
+from sklearn.tree import export_javascript
 from sklearn.externals.six import StringIO
 
 # toy sample
@@ -223,3 +224,30 @@ def test_graphviz_errors():
     # Check class_names error
     out = StringIO()
     assert_raises(IndexError, export_graphviz, clf, out, class_names=[])
+
+
+def test_export_javascript():
+    # check classifier
+    clf = DecisionTreeClassifier()
+    clf.fit(X, y)
+    contents1 = export_javascript(clf)
+    contents2 = 'if(feature[1] <= 0.0000000000000000) {\n' \
+                '  return -1;\n' \
+                '} else {\n' \
+                '  return 1;\n' \
+                '}\n'
+
+    assert_equal(contents1, contents2)
+
+    # check classifier
+    clf = DecisionTreeRegressor()
+    clf.fit(X, y)
+    contents1 = export_javascript(clf)
+    contents2 = 'if(feature[1] <= 0.0000000000000000) {\n' \
+                '  return -1.0000000000000000;\n' \
+                '} else {\n' \
+                '  return 1.0000000000000000;\n' \
+                '}\n'
+
+    assert_equal(contents1, contents2)
+
