@@ -110,43 +110,45 @@ cdef class Criterion:
         Parameters
         ----------
         y: array-like, dtype=DOUBLE_t
-            This is a vector of targets in a memory-efficient buffer format, 
-            used to evaluate the split
+            y is a buffer that can store values for n_outputs target variables
         y_stride: SIZE_t
-            This indicates the stride of the buffer to allow access to elements
-            easily
+            y_stride is used to index the kth output value as follows:
+            y[i, k] = y[i * y_stride + k]
         sample_weight: array-like, dtype=DOUBLE_t
             The weight of each sample
         weighted_n_samples: DOUBLE_t
             The total weight of the samples being considered
         samples: array-like, dtype=DOUBLE_t
-            The input data which is being split
+            Indices of the samples in X and y, where samples[start:end]
+            correspond to the samples in this node
         start: SIZE_t
-            The first sample to be used on this leaf
+            The first sample to be used on this node
         end: SIZE_t
-            The last sample used in this leaf
+            The last sample used on this node
 
         """
         
         pass
 
     cdef void reset(self) nogil:
-        """Placeholder for a method which will reset the criterion at 
-        pos=start.
+        """Reset the criterion at pos=start
+
+        This method must be implemented by the subclass.
         """
         
         pass
 
     cdef void update(self, SIZE_t new_pos) nogil:
-        """
-        This is a placeholder for a method which will update the collected 
-        statistics by moving samples[pos:new_pos] from the right child to the
-        left child.
+        """Updated statistics by moving samples[pos:new_pos] to the left child
+
+        This updates the collected statistics by moving samples[pos:new_pos]
+        from the right child to the left child. It must be implemented by
+        the subclass.
 
         Parameters
         ----------
         new_pos: SIZE_t
-            The index of the final sample to be moved over.
+            New starting index position of the samples in the right child
         """
         
         pass
@@ -175,7 +177,7 @@ cdef class Criterion:
             The memory address where the impurity of the left child should be
             stored.
         impurity_right: double pointer
-            The memory address where te impurity of the right child should be
+            The memory address where the impurity of the right child should be
             stored
         """
         
@@ -189,7 +191,7 @@ cdef class Criterion:
         
         Parameters
         ----------
-        dest: double
+        dest: double pointer
             The memory address where the node value should be stored.
         """
         
@@ -265,7 +267,7 @@ cdef class ClassificationCriterion(Criterion):
         self.weighted_n_left = 0.0
         self.weighted_n_right = 0.0
 
-        # Count labs for each output
+        # Count labels for each output
         self.label_count_left = NULL
         self.label_count_right = NULL
         self.label_count_total = NULL
@@ -277,7 +279,7 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t label_count_stride = 0
 
         # For each target, set the number of unique classes in that target,
-        # and also set the stride for that target
+        # and also compute the maximal stride of all targets
         for k in range(n_outputs):
             self.n_classes[k] = n_classes[k]
 
@@ -368,8 +370,6 @@ cdef class ClassificationCriterion(Criterion):
                    n_classes[k] * sizeof(double))
             offset += label_count_stride
 
-        # Now go through and record the number of samples for each class for
-        # each target
         for p in range(start, end):
             i = samples[p]
 
@@ -378,8 +378,7 @@ cdef class ClassificationCriterion(Criterion):
             if sample_weight != NULL:
                 w = sample_weight[i]
 
-            # Go through each target and add this sample's class in to the
-            # appropriate bin
+            # Count weighted class frequency for each target
             for k in range(n_outputs):
                 c = <SIZE_t> y[i * y_stride + k]
                 label_count_total[k * label_count_stride + c] += w
@@ -418,8 +417,7 @@ cdef class ClassificationCriterion(Criterion):
             label_count_right += label_count_stride
 
     cdef void update(self, SIZE_t new_pos) nogil:
-        """Update the collected statistics by moving samples[pos:new_pos] from
-        the right child to the left child.
+        """Updated statistics by moving samples[pos:new_pos] to the left child
 
         Parameters
         ----------
@@ -452,30 +450,22 @@ cdef class ClassificationCriterion(Criterion):
         # Note: We assume start <= pos < new_pos <= end
         # Go through each sample in the new indexing
         for p in range(pos, new_pos):
-            # Unpack the sample from the mask
             i = samples[p]
 
-            # w is originally set to be 1.0, meaning that if no sample weights
-            # are given, the default weight of each sample is 1.0
             if sample_weight != NULL:
                 w = sample_weight[i]
-
-            # If the child has changed nodes, then we need to change the weight
-            # in the nodes. 
+ 
             for k in range(n_outputs):
                 label_index = (k * label_count_stride +
                                <SIZE_t> y[i * y_stride + k])
                 label_count_left[label_index] += w
                 label_count_right[label_index] -= w
 
-            # Change the difference in weights
             diff_w += w
 
-        # Adjust the left and right node weights by the difference determined before
         self.weighted_n_left += diff_w
         self.weighted_n_right -= diff_w
 
-        # Change the position to the new position
         self.pos = new_pos
 
     cdef double node_impurity(self) nogil:
@@ -490,7 +480,7 @@ cdef class ClassificationCriterion(Criterion):
 
         Parameters
         ----------
-        dest: float64
+        dest: double pointer
             The memory address which we will save the node value into.
         """
 
@@ -507,7 +497,7 @@ cdef class ClassificationCriterion(Criterion):
 
 
 cdef class Entropy(ClassificationCriterion):
-    """A class representing the Cross Entropy impurity criteria. 
+    """Cross Entropy impurity criteria. 
 
     This handles cases where the target is a classification taking values 
     0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations, 
@@ -563,9 +553,9 @@ cdef class Entropy(ClassificationCriterion):
         Parameters
         ----------
         impurity_left: double pointer
-            The memory address of where to save the impurity of the left node
+            The memory address to save the impurity of the left node
         impurity_right: double pointer
-            The memory address of where to save the impurity of the right node
+            The memory address to save the impurity of the right node
         """
         
         cdef double weighted_n_node_samples = self.weighted_n_node_samples
@@ -591,13 +581,11 @@ cdef class Entropy(ClassificationCriterion):
             entropy_right = 0.0
 
             for c in range(n_classes[k]):
-                # Calculate this classes entropy on the left node
                 count_k = label_count_left[c]
                 if count_k > 0.0:
                     count_k /= weighted_n_left
                     entropy_left -= count_k * log(count_k)
 
-                # Calculate this classes entropy on the right node
                 count_k = label_count_right[c]
                 if count_k > 0.0:
                     count_k /= weighted_n_right
@@ -613,7 +601,7 @@ cdef class Entropy(ClassificationCriterion):
 
 
 cdef class Gini(ClassificationCriterion):
-    """The Gini Index impurity criteria. 
+    """The Gini Index impurity criterion. 
 
     This handles cases where the target is a classification taking values 
     0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations, 
@@ -653,8 +641,6 @@ cdef class Gini(ClassificationCriterion):
                 count_k = label_count_total[c]
                 gini += count_k * count_k
 
-            # Calculate the Gini index by normalizing against the squared
-            # total weight of all samples
             gini = 1.0 - gini / (weighted_n_node_samples *
                                  weighted_n_node_samples)
 
@@ -702,19 +688,15 @@ cdef class Gini(ClassificationCriterion):
             gini_right = 0.0
 
             for c in range(n_classes[k]):
-                # Add to the Gini index of the left node
                 count_k = label_count_left[c]
                 gini_left += count_k * count_k
 
-                # Add to the Gini index of the right node
                 count_k = label_count_right[c]
                 gini_right += count_k * count_k
 
-            # Normalize the Gini index of the left node
             gini_left = 1.0 - gini_left / (weighted_n_left *
                                            weighted_n_left)
 
-            # Normalize the Gini index of the right node
             gini_right = 1.0 - gini_right / (weighted_n_right *
                                              weighted_n_right)
 
@@ -728,7 +710,7 @@ cdef class Gini(ClassificationCriterion):
 
 
 cdef class RegressionCriterion(Criterion):
-    """A regression criteria. 
+    """Abstract regression criterion. 
 
     This handles cases where the target is a continuous value, and is 
     evaluated by computing the variance of the target values left and right 
@@ -947,8 +929,8 @@ cdef class RegressionCriterion(Criterion):
             sum_left[k] = 0.0
 
     cdef void update(self, SIZE_t new_pos) nogil:
-        """Update the collected statistics by moving samples[pos:new_pos] from
-           the right child to the left child."""
+        """Updated statistics by moving samples[pos:new_pos] to the left child
+        """
         cdef DOUBLE_t* y = self.y
         cdef SIZE_t y_stride = self.y_stride
         cdef DOUBLE_t* sample_weight = self.sample_weight
@@ -1126,11 +1108,13 @@ cdef class Splitter:
             The criterion to measure the quality of a split. 
 
         max_features: SIZE_t
-            The maximal number of features that a single decision tree can
-            consider.
+            The maximal number of randomly selected features which can be
+            considered for a split.
 
         min_samples_leaf: SIZE_t
-            The minimal number of samples each leaf can have.
+            The minimal number of samples each leaf can have, where splits
+            which would result in having less samples in a leaf are not 
+            considered.
 
         min_weight_leaf: double
             The minimal weight each leaf can have, where the weight is the sum
@@ -1175,8 +1159,9 @@ cdef class Splitter:
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                    DOUBLE_t* sample_weight) except *:
-        """Initialize the splitter by taking in the input data X, the target Y,
-        and optional sample weights. 
+        """Initialize the splitter.
+
+        Take in the input data X, the target Y, and optional sample weights. 
 
         Parameters
         ----------
@@ -1184,11 +1169,11 @@ cdef class Splitter:
             This contains the inputs. Usually it is a 2d numpy array.
 
         y: numpy.ndarray, dtype=DOUBLE_t
-            This is the vector of targets, or true labels, for the points
+            This is the vector of targets, or true labels, for the samples
 
         sample_weight: numpy.ndarray, dtype=DOUBLE_t (optional)
-            The weights of the points, where higher weighted points are fit
-            closer than lower weight points. If not provided, all points
+            The weights of the samples, where higher weighted samples are fit
+            closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight. 
         """
 
@@ -1236,7 +1221,7 @@ cdef class Splitter:
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end,
                          double* weighted_n_node_samples) nogil:
-        """Reset the splitter object to consider samples between start and end.
+        """Reset splitter on node samples[start:end].
 
         Parameters
         ----------
@@ -1245,7 +1230,7 @@ cdef class Splitter:
         end: SIZE_t 
             The index of the last sample to consider
         weighted_n_node_samples: numpy.ndarray, dtype=double pointer
-            The cumulative weight of those samples
+            The total weight of those samples
         """
 
         self.start = start
@@ -1439,7 +1424,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                         # (p + 1 >= end) or (X[samples[p + 1], current.feature] >
                         #                    X[samples[p], current.feature])
                         p += 1
-                        # (p >= end) or (X[samples[p], current.fe + 1 ature] >
+                        # (p >= end) or (X[samples[p], current.feature] >
                         #                X[samples[p - 1], current.feature])
 
                         if p < end:
