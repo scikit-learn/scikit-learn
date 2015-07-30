@@ -33,6 +33,7 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
 n_row, n_col = 5, 6
 n_components = n_row * n_col
+# image_shape = (128, 64)
 image_shape = (64, 64)
 rng = RandomState(0)
 
@@ -77,7 +78,7 @@ dict_learning = MiniBatchDictionaryLearning(n_components=n_components,
                                             transform_alpha=0.0,
                                             tol=1e-4,
                                             verbose=10,
-                                            l1_gamma=0.05,
+                                            l1_gamma=0.3,
                                             random_state=rng,
                                             n_jobs=1,
                                             debug_info=True)

@@ -1,6 +1,6 @@
 """ Dictionary learning
 """
-from __future__ import print_function
+from __future__ import print_function, division
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
@@ -24,7 +24,6 @@ from ..utils.validation import check_is_fitted
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars, Ridge
 from ..utils.enet_proj_fast import enet_projection, enet_norm
 # from sandbox.spams_sklearn_mkpatch.dict_learning import enet_projection
-
 import warnings
 
 def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
@@ -355,6 +354,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
                     if code[k, k] > 1e-20:
                         dictionary[:, k] /= code[k, k]
                     else:
+                        # Clean atom
                         dictionary[:, k] = 0
             else:
                 dictionary[:, k] = np.dot(R, code[k, :].T)
@@ -364,10 +364,10 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
                     if s > 1e-20:
                         dictionary[:, k] /= s
                     else:
+                        # Clean atom
                         dictionary[:, k] = 0
-            # Scale k'th atom
-            atom_norm_square = np.sum(dictionary[:, k] ** 2)
             # Cleaning small atoms
+            atom_norm_square = np.sum(dictionary[:, k] ** 2) / radius ** 2
             if atom_norm_square < threshold:
                 if verbose == 1:
                     sys.stdout.write("+")
@@ -375,7 +375,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
                 elif verbose:
                     print("Adding new random atom")
                 dictionary[:, k] = random_state.randn(n_features)
-                atom_norm_square = np.sum(dictionary[:, k] ** 2)
+                atom_norm_square = np.sum(dictionary[:, k] ** 2) / radius ** 2
                 # Setting corresponding coefs to 0
                 code[k, :] = 0.0
 
@@ -592,7 +592,9 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
                          iter_offset=0, tol=0.,
                          random_state=None,
                          return_inner_stats=False, inner_stats=None,
-                         return_n_iter=False, return_debug_info=False):
+                         return_n_iter=False,
+                         project_dict=True,
+                         return_debug_info=False):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -686,6 +688,10 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
 
     return_n_iter : bool
         Whether or not to return the number of iterations.
+
+    project_dict : bool,
+        Whether to project initial dictionary on the elastic-net before
+        starting the algorithm
 
     Returns
     -------
@@ -799,6 +805,18 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
         recorded_features = random_state.permutation(n_features)[:min(
             n_features, 100)]
 
+    radius = sqrt(n_features)
+
+    # Initial projection if project_dict is set
+    if n_iter > 0 and project_dict:
+        S = np.sqrt(np.sum(dictionary ** 2, axis=0)) / radius
+        S[S == 0] = 1
+        dictionary /= S[np.newaxis, :]
+        for k in range(n_components):
+            dictionary[:, k] = enet_projection(dictionary[:, k],
+                                               l1_gamma=l1_gamma,
+                                               radius=radius)
+
     for ii, batch in zip(range(iter_offset, iter_offset + n_iter), batches):
         if return_debug_info:
             residuals[ii-iter_offset] = this_residual
@@ -819,32 +837,18 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
                        % (ii, dt, dt / 60))
 
         # Normalizing dictionary before sparse encoding
-        S = np.sqrt(np.sum(dictionary ** 2, axis=0))
-        print(S)
+        S = np.sqrt(np.sum(dictionary ** 2, axis=0)) / radius
         S[S == 0] = 1
         dictionary /= S[np.newaxis, :]
         # Setting n_jobs > 1 does not improve performance
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                   alpha=alpha, n_jobs=1,
-                                  random_state=random_state).T
-        # Putting dictionary back on elastic net
-        if ii > iter_offset:
-            # Using known S
-            dictionary *= S[np.newaxis, :]
-        else:
-            # Explicitly doing it at first iteration
-            if l1_gamma != 0.:
-                    for k in range(n_components):
-                        dictionary[:, k] = enet_projection(dictionary[:, k],
-                                                           radius=1,
-                                                           l1_gamma=l1_gamma)
-        # Update the auxiliary variables
-        # This trick raise the learning rate of a factor batch_size
-        #  during the first batch_size iterations
-        # if ii < batch_size - 1:
+                                  random_state=0).T
+        # Restoring dictionary
+        dictionary *= S[np.newaxis, :]
+
+        # Update the inner statistics
         theta = float((ii + 1) * batch_size)
-        # else:
-        #     theta = float(batch_size ** 2 + ii + 1 - batch_size)
         beta = (theta + 1 - batch_size) / (theta + 1)
         A *= beta
         A += np.dot(this_code, this_code.T) / (theta + 1)
@@ -857,7 +861,7 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
                                                  l1_gamma=l1_gamma,
                                                  random_state=random_state,
                                                  return_r2=True,
-                                                 radius=1,
+                                                 radius=radius,
                                                  online=True, shuffle=shuffle)
         #Residual computation
         this_residual /= 2
@@ -884,11 +888,6 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
         # modification in the dictionary
         if callback is not None:
             callback(locals())
-
-    if ii > iter_offset:
-        S = np.sqrt(np.sum(dictionary ** 2, axis=0))
-        S[S == 0] = 1
-        dictionary /= S[np.newaxis, :]
 
     if return_debug_info:
         debug_info = (residuals, density, values)
@@ -1398,6 +1397,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             tol=self.tol,
             return_inner_stats=True,
             return_n_iter=True,
+            project_dict=True,
             return_debug_info=self.debug_info)
         if self.debug_info:
             (U, (A, B, penalty), self.n_iter_), debug_info = res
@@ -1410,6 +1410,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         # some online fitting (partial_fit)
         self.inner_stats_ = (A, B, penalty)
         self.iter_offset_ = self.n_iter
+        # Preventing projection for future call of partial fit
         return self
 
     def _partial_fit_deprecated(self, X, y=None, iter_offset=None):
@@ -1441,8 +1442,12 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         X = check_array(X)
         if hasattr(self, 'components_'):
             dict_init = self.components_
+            # Prevent projection of dictionary (already in elastic-net ball)
+            # Necessary because projection is not identity on elastic-net ball
+            project_dict = False
         else:
             dict_init = self.dict_init
+            project_dict = True
         inner_stats = getattr(self, 'inner_stats_', None)
         if iter_offset is None:
             iter_offset = getattr(self, 'iter_offset_', 0)
@@ -1455,6 +1460,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             verbose=self.verbose, return_code=False,
             iter_offset=iter_offset, random_state=self.random_state_,
             return_inner_stats=True, inner_stats=inner_stats,
+            project_dict=project_dict,
             return_debug_info=self.debug_info)
 
         if self.debug_info:
@@ -1502,19 +1508,22 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         if deprecated:
             return self._partial_fit_deprecated(X, y=y,
                                                 iter_offset=iter_offset)
-
         if not hasattr(self, 'random_state_'):
             self.random_state_ = check_random_state(self.random_state)
         X = check_array(X)
         if hasattr(self, 'components_'):
             dict_init = self.components_
+            # Prevent projection of dictionary (already in elastic-net ball)
+            # Necessary because projection is not identity on elastic-net ball
+            project_dict = False
         else:
             dict_init = self.dict_init
+            project_dict = True
         inner_stats = getattr(self, 'inner_stats_', None)
         if iter_offset is None:
             iter_offset = getattr(self, 'iter_offset_', 0)
         data_size = len(X)
-        n_iter = int(ceil(float(data_size) / self.batch_size))
+        n_iter = (data_size - 1) // self.batch_size + 1
         res = dict_learning_online(
             X, self.n_components, self.alpha,
             n_iter=n_iter,
@@ -1526,6 +1535,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             verbose=self.verbose, return_code=False,
             iter_offset=iter_offset, random_state=self.random_state_,
             return_inner_stats=True, inner_stats=inner_stats,
+            project_dict=project_dict,
             return_debug_info=self.debug_info)
         # XXX: To remove
         if self.debug_info:

@@ -177,7 +177,7 @@ def test_dict_learning_online_partial_fit_new():
         rng = np.random.RandomState(0)
         V = rng.randn(n_components, n_features)  # random init
         V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
-        dict1 = MiniBatchDictionaryLearning(n_components, n_iter=10 * len(X),
+        dict1 = MiniBatchDictionaryLearning(n_components, n_iter=1 * len(X),
                                             batch_size=1,
                                             fit_algorithm=algorithm,
                                             verbose=10,
@@ -193,10 +193,9 @@ def test_dict_learning_online_partial_fit_new():
                                             verbose=10,
                                             l1_gamma=l1_gamma,
                                             random_state=0)
-        for i in range(10):
+        for i in range(1):
             for sample in X:
                 dict2.partial_fit(sample, deprecated=False)
-
         assert_true(not np.all(sparse_encode(X, dict1.components_, alpha=1) ==
                                0))
         assert_array_almost_equal(dict1.components_, dict2.components_,
