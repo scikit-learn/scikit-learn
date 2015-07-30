@@ -214,7 +214,15 @@ class OPTICS(BaseEstimator, ClusterMixin):
     def fit(self, X, y=None):
         """Perform OPTICS clustering
         
-        Initial clustering is set to match 'eps' distance"""
+        Extracts an ordered list of points and reachability distances, and 
+        performs initial clustering using 'eps' distance specified at OPTICS 
+        object instantiation.
+
+        Parameters
+        ----------
+        X : array [n_samples, n_features]"""
+
+
         #Checks for sparse matrices
         X = check_array(X)
 
@@ -236,6 +244,20 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
 
     def extract(self, epsPrime):
+        """Performs DBSCAN equivalent extraction for arbitrary epsilon.
+        Can be run multiple times.
+
+        Parameters
+        ----------
+        epsilon_prime: float or int
+        Must be less than or equal to what was used for prep and build steps
+
+        Returns
+        -------
+        New core_samples and labels_ arrays. Modifies OPTICS object and stores
+        core_samples and lables_ as attributes."""
+
+
         if self.processed == True:
             if epsPrime > self.eps * 10.0:
                 print('Specify an epsilon smaller than ' + str(self.eps * 10.0))
@@ -257,18 +279,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
 # Important: Epsilon prime should be less than epsilon used in OPTICS #
                 
 def _ExtractDBSCAN(SetOfObjects, epsilon_prime):
-    """Performs DBSCAN equivalent extraction for arbitrary epsilon.
-    Can be run multiple times.
-
-    Parameters
-    ----------
-    SetOfObjects: Prepped and build instance of setOfObjects
-    epsilon_prime: float or int
-        Must be less than or equal to what was used for prep and build steps
-
-    Returns
-    -------
-    Modified setOfObjects with cluster_id and is_core attributes."""
 
     # Start Cluster_id at zero, incremented to '1' for first cluster
     cluster_id = 0
