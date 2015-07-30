@@ -331,7 +331,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         if self.deflation_mode not in ["canonical", "regression"]:
             raise ValueError('The deflation mode is unknown')
         
-        # Normalize (in place)
+        # Center and scale the data in place
         X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_\
             = _center_scale_xy(X, Y, self.scale, sample_weight=sample_weight)
         
@@ -408,22 +408,22 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         else:
             self.y_rotations_ = np.ones(1)
 
-        if self.deflation_mode == "regression":
-            # Transform results to coefficients B of the linear model 
-            # Y = X B + Err
-            #
-            # We don't do this for symmetric deflation ( == "canonical") since
-            # in that case X and Y are interchangeable and wanting coefs
-            # in one direction is indicative of misuse.
-             
-            # Y = TQ' + Err,
-            #   = X W(P'W)^-1Q' + Err
-            #   = XB + Err
-            # => B = W*Q' (p x q)
-            self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
+        # Transform results to coefficients B of the linear model 
+        # Y = X B + Err
+        #
+        # Consider DEPRECATING this for symmetric deflation
+        # (self.deflation_mode == "canonical") since
+        # in that case X and Y are interchangeable and wanting coefs
+        # in one direction is indicative of misuse.
 
-            # undo scaling
-            self.coef_ *= self.y_std_ / self.x_std_.reshape((p, 1))
+        # Y = TQ' + Err,
+        #   = X W(P'W)^-1Q' + Err
+        #   = XB + Err
+        # => B = W*Q' (p x q)
+        self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
+
+        # undo scaling
+        self.coef_ *= self.y_std_ / self.x_std_.reshape((p, 1))
                           
         return self
 
@@ -450,7 +450,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         """
         check_is_fitted(self, 'x_mean_')
         X = check_array(X, copy=copy)
-        # Normalize
+        # Center and scale the data
         X -= self.x_mean_
         X /= self.x_std_
         # Apply rotation
@@ -465,6 +465,39 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             return x_scores, y_scores
 
         return x_scores
+
+
+    def predict(self, X, copy=True):
+        """Predict Y using the linear model on the reduced dimensions learned.
+
+        Parameters
+        ----------
+        X : array-like of predictors, shape = [n_samples, p]
+            Training vectors, where n_samples in the number of samples and
+            p is the number of predictors.
+
+        copy : boolean, default True
+            Whether to copy X and Y, or perform in-place normalization.
+
+        Notes
+        -----
+        This call requires the estimation of a p x q matrix, which may
+        be an issue in high dimensional space.
+        """
+        
+        # Consider DEPRECATING this for all child classes except PLSRegression.
+        # Since otherwise X and Y are interchangeable and the fitting procedure
+        # does not deflate Y iteratively against the x_scores, and trying to
+        # predict Y given X is indicative of misuse.
+
+        check_is_fitted(self, 'x_mean_')
+        X = check_array(X, copy=copy)
+        # Center and scale the data
+        X -= self.x_mean_
+        X /= self.x_std_
+        Ypred = np.dot(X, self.coef_)
+        return Ypred + self.y_mean_
+    
 
     def fit_transform(self, X, y=None, **fit_params):
         """Learn and apply the dimension reduction on the train data.
@@ -588,8 +621,8 @@ class PLSRegression(_PLS):
     >>> pls2 = PLSRegression(n_components=2)
     >>> pls2.fit(X, Y)
     ... # doctest: +NORMALIZE_WHITESPACE
-    PLSRegression(copy=True, max_iter=500, n_components=2, scale=True,
-            tol=1e-06)
+    PLSRegression(algorithm='nipals', copy=True, max_iter=500, n_components=2,
+                  scale=True, tol=1e-06)
     >>> Y_pred = pls2.predict(X)
 
     References
@@ -610,33 +643,6 @@ class PLSRegression(_PLS):
                       algorithm=algorithm, deflation_mode="regression", mode="A",
                       norm_y_weights=False, max_iter=max_iter, tol=tol,
                       copy=copy)
-
-
-    def predict(self, X, copy=True):
-        """Predict Y using the linear model on the reduced dimensions learned
-        on the train data.
-
-        Parameters
-        ----------
-        X : array-like of predictors, shape = [n_samples, p]
-            Training vectors, where n_samples in the number of samples and
-            p is the number of predictors.
-
-        copy : boolean, default True
-            Whether to copy X and Y, or perform in-place normalization.
-
-        Notes
-        -----
-        This call requires the estimation of a p x q matrix, which may
-        be an issue in high dimensional space.
-        """
-        check_is_fitted(self, 'x_mean_')
-        X = check_array(X, copy=copy)
-        # Normalize
-        X -= self.x_mean_
-        X /= self.x_std_
-        Ypred = np.dot(X, self.coef_)
-        return Ypred + self.y_mean_
 
 
 class PLSCanonical(_PLS):
@@ -811,7 +817,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
                              " with X of shape %s and Y of shape %s."
                              % (self.n_components, str(X.shape), str(Y.shape)))
 
-        # Normalize (in place)
+        # Center and scale the data in place
         X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ =\
             _center_scale_xy(X, Y, self.scale, sample_weight=sample_weight)
         
