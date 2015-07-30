@@ -147,7 +147,6 @@ def test_dict_learning_online_initialization():
                                        dict_init=V, random_state=0).fit(X)
     assert_array_equal(dico.components_, V)
 
-
 def test_dict_learning_online():
     n_components = 12
     rng = np.random.RandomState(0)

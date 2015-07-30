@@ -23,7 +23,6 @@ from ..utils.extmath import randomized_svd, row_norms
 from ..utils.validation import check_is_fitted
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars, Ridge
 from ..utils.enet_proj_fast import enet_projection, enet_norm
-# from sandbox.spams_sklearn_mkpatch.dict_learning import enet_projection
 import warnings
 
 def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
@@ -346,7 +345,6 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         for k in component_range:
             # R <- 1.0 * U_k * V_k^T + R
             R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
-            # XXX: this behavior is not backward compatible
             if online:
                 dictionary[:, k] = R[:, k]
                 # L2-ball scaling if we use an elastic net ball
@@ -755,20 +753,6 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
     if verbose == 1:
         print('[dict_learning]', end=' ')
 
-    # # Putting dictionary into inscribed circle of enet-ball
-    # if l1_gamma != 0.:
-    #     S = np.sqrt(np.sum(dictionary ** 2, axis=0))
-    #     S[S == 0] = 1
-    #     if l1_gamma == 1.:
-    #         r = 1 / sqrt(n_features)
-    #     else:
-    #         r = sqrt(l1_gamma ** 2 + 4. / n_features * (1 - l1_gamma)) - l1_gamma
-    #         r /= 2 * (1 - l1_gamma)
-    #         r **= 2
-    #         r *= n_features
-    #         r = sqrt(r)
-    #     dictionary /= S[np.newaxis, :] / r
-
     if shuffle:
         X_train = X.copy()
         random_state.shuffle(X_train)
@@ -812,7 +796,10 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
         S = np.sqrt(np.sum(dictionary ** 2, axis=0)) / radius
         S[S == 0] = 1
         dictionary /= S[np.newaxis, :]
+        # XXX: Distrub dictionary before projection to
+        # avoid worst case complexity
         for k in range(n_components):
+            print('projection')
             dictionary[:, k] = enet_projection(dictionary[:, k],
                                                l1_gamma=l1_gamma,
                                                radius=radius)
@@ -890,6 +877,7 @@ def dict_learning_online(X, n_components=2, alpha=1, l1_gamma=0.0, n_iter=100,
             callback(locals())
 
     if return_debug_info:
+        residuals[0] = residuals[1]
         debug_info = (residuals, density, values)
 
     if return_inner_stats:
@@ -1485,6 +1473,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.iter_offset_ = iter_offset + self.n_iter
         return self
 
+    # TODO: Ugly !
     def partial_fit(self, X, y=None, iter_offset=None, deprecated=True):
         """Updates the model using the data in X
 
@@ -1548,9 +1537,9 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             else:
                 for this_array, new_array in zip(('residuals_', 'density_',
                                                   'values_'), debug_info):
-                    temp = np.concatenate((getattr(self, this_array),
+                    cat_array = np.concatenate((getattr(self, this_array),
                                            new_array), axis=0)
-                    setattr(self, this_array, temp)
+                    setattr(self, this_array, cat_array)
         self.components_ = U
 
         # Keep track of the state of the algorithm to be able to do
