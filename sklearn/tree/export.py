@@ -411,6 +411,35 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
             out_file.close()
 
 def export_javascript(decision_tree, feature_names=None, indent_offset=0):
+    """Export a decision tree in javascript.
+
+    Parameters
+    ----------
+    decision_tree : decision tree classifier
+        The decision tree to be exported to javascript
+
+    feature_names : list of strings, optional (default=None)
+        Names of each of the features.
+
+    indent_offset : int, optional (default=0)
+        Indent of output javascript code.
+
+    Returns
+    --------
+    javascript_code : string
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn import tree
+
+    >>> clf = tree.DecisionTreeClassifier()
+    >>> iris = load_iris()
+
+    >>> clf = clf.fit(iris.data, iris.target)
+    >>> tree.export_javascript(clf)                 # doctest: +SKIP
+    """
+
     if (not isinstance(decision_tree, tree.DecisionTreeClassifier) and
         not isinstance(decision_tree, tree.DecisionTreeRegressor) and
         not isinstance(decision_tree, tree.ExtraTreeClassifier) and
