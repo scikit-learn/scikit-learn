@@ -200,7 +200,7 @@ class GPSearchCV(object):
 				cv_scores[n_tested_parameters] = cv_score
 				n_tested_parameters += 1
 			else:
-				if(verbose):
+				if(self.verbose):
 					print('Hyperparameter already tesed')
 				cv_scores[idx] = (cv_scores[idx] + cv_score) / 2.
 
@@ -235,7 +235,7 @@ class GPSearchCV(object):
 				cv_scores[n_tested_parameters] = cv_score
 				n_tested_parameters += 1
 			else:
-				if(verbose):
+				if(self.verbose):
 					print('Hyperparameter already tesed')
 				cv_scores[idx] = (cv_scores[idx] + cv_score) / 2.
 
