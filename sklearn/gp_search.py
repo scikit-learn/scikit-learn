@@ -13,7 +13,6 @@ from .gaussian_process.gaussian_process import GaussianProcess
 from .cross_validation import check_cv
 from .cross_validation import _fit_and_score
 from .metrics.scorer import check_scoring
-from .ensemble import RandomForestClassifier
 from .base import is_classifier, clone
 
 #####################    UTILS    #####################
@@ -83,7 +82,8 @@ class GPSearchCV(object):
 	def __init__(self,
 				parameters,
 				parameters_details,
-				estimator, scoring=None,
+				estimator,
+				scoring=None,
 				X=None,y=None,
 				fit_params=None,
 				refit=True, 
@@ -114,7 +114,16 @@ class GPSearchCV(object):
 		self.X = X
 		self.y = y
 
-		self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
+		if(callable(estimator)):
+			self._callable_estimator = True
+			if(verbose):
+				print('Estimator is a callable and not an sklearn Estimator')
+		else:
+			self._callable_estimator = False
+
+
+		if not self._callable_estimator:
+			self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
 
 		# init param_bounds
 		for i in range(self.n_parameters):
@@ -147,24 +156,28 @@ class GPSearchCV(object):
 		return dict_parameter
 
 	def score(self,test_parameter):
- 		cv = check_cv(self.cv, self.X, self.y, classifier=is_classifier(self.estimator))
- 		cv_score = [ _fit_and_score(clone(self.estimator), self.X, self.y, self.scorer_,
-						train, test, False, test_parameter,
-						self.fit_params, return_parameters=True)
-					for train, test in cv ]
+		if not self._callable_estimator:
+	 		cv = check_cv(self.cv, self.X, self.y, classifier=is_classifier(self.estimator))
+	 		cv_score = [ _fit_and_score(clone(self.estimator), self.X, self.y, self.scorer_,
+							train, test, False, test_parameter,
+							self.fit_params, return_parameters=True)
+						for train, test in cv ]
 
-		n_test_samples = 0
-		score = 0
-		for tmp_score, tmp_n_test_samples, _, _ in cv_score:
-			tmp_score *= tmp_n_test_samples
-			n_test_samples += tmp_n_test_samples
-			score += tmp_score
-		score /= float(n_test_samples)
+			n_test_samples = 0
+			score = 0
+			for tmp_score, tmp_n_test_samples, _, _ in cv_score:
+				tmp_score *= tmp_n_test_samples
+				n_test_samples += tmp_n_test_samples
+				score += tmp_score
+			score /= float(n_test_samples)
+
+		else:
+			score = self.estimator(test_parameter)
 
 		return score
 
 
-	def fit(self):
+	def _fit(self):
 
 		n_tested_parameters = 0
 		tested_parameters = np.zeros((self.n_iter,self.n_parameters))
@@ -172,13 +185,14 @@ class GPSearchCV(object):
 
 		###    Initialize with random candidates    ### 
 		init_candidates = sample_candidates(self.n_init,self.param_bounds,self.param_isInt)
+		self.n_init = init_candidates.shape[0]
 
 		for i in range(self.n_init):
-			cand = self.vector_to_dict(init_candidates[i,:])
-			cv_score = self.score(cand)
+			dict_candidate = self.vector_to_dict(init_candidates[i,:])
+			cv_score = self.score(dict_candidate)
 
 			if(self.verbose):
-				print ('Step ' + str(i) + ' - Hyperparameter ' + str(init_candidates[i,:]) + ' ' + str(cv_score))
+				print ('Step ' + str(i) + ' - Hyperparameter ' + str(dict_candidate) + ' ' + str(cv_score))
 
 			is_in,idx = is_in_ndarray(init_candidates[i,:],tested_parameters[:n_tested_parameters,:])
 			if not is_in:
@@ -210,9 +224,10 @@ class GPSearchCV(object):
 			else:
 				print('WARNING : acquisition_function not implemented yet : ' + self.acquisition_function)
 
-			cv_score = self.score(self.vector_to_dict(best_candidate))
+			dict_candidate = self.vector_to_dict(best_candidate)
+			cv_score = self.score(dict_candidate)
 			if(self.verbose):
-				print ('Step ' + str(i+self.n_init) + ' - Hyperparameter ' + str(best_candidate) + ' ' + str(cv_score))
+				print ('Step ' + str(i+self.n_init) + ' - Hyperparameter ' + str(dict_candidate) + ' ' + str(cv_score))
 
 			is_in,idx = is_in_ndarray(best_candidate,tested_parameters[:n_tested_parameters,:])
 			if not is_in:
@@ -234,29 +249,4 @@ class GPSearchCV(object):
 			print ('Best parameter ' + str(tested_parameters[best_idx]))
 			print(best_parameter)
 
-
-def test():
-	from sklearn.datasets import load_digits
-	iris = load_digits()
-	X, y = iris.data, iris.target
-	clf = RandomForestClassifier(n_estimators=20)
-
-	# specify parameters and distributions to sample from
-	parameters = {"max_depth": [3, 3],
-					"max_features": [1,11],
-					"min_samples_split": [1,11],
-					"min_samples_leaf": [1,11],
-					"bootstrap": [True, False],
-					"criterion": ["gini", "entropy"]}
-
-	parameters_details = {"max_depth": 'int',
-					"max_features": 'int',
-					"min_samples_split": 'int',
-					"min_samples_leaf": 'int',
-					"bootstrap": 'cat',
-					"criterion": 'cat'}
-
-	search = GPSearchCV(parameters,parameters_details,estimator=clf,X=X,y=y,n_iter=20)
-	search.fit()
-
-test()
+		return tested_parameters[:n_tested_parameters,:], cv_scores[:n_tested_parameters]
