@@ -412,13 +412,16 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
 
 def export_javascript(decision_tree, feature_names=None, indent_offset=0):
     if (not isinstance(decision_tree, tree.DecisionTreeClassifier) and
-        not isinstance(decision_tree, tree.DecisionTreeRegressor)):
-        raise TypeError('decision_tree is not instance of sklearn.tree.DecisionTree(Classifier|Regressor)')
+        not isinstance(decision_tree, tree.DecisionTreeRegressor) and
+        not isinstance(decision_tree, tree.ExtraTreeClassifier) and
+        not isinstance(decision_tree, tree.ExtraTreeRegressor)):
+        raise TypeError('decision_tree is not instance of decision tree')
 
     if decision_tree.tree_ is None:
         raise TypeError('decision tree is not trained yet.')
 
-    is_classifier = isinstance(decision_tree, tree.DecisionTreeClassifier)
+    is_classifier = (isinstance(decision_tree, tree.DecisionTreeClassifier) or
+                     isinstance(decision_tree, tree.ExtraTreeClassifier))
 
     if feature_names is None:
         feature_names = ["feature[%d]" % i for i in xrange(decision_tree.n_features_)]
