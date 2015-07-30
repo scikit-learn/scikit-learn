@@ -37,7 +37,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
               copy_Gram=True, verbose=0, return_path=True,
-              return_n_iter=False):
+              return_n_iter=False, nonnegative=False):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
 
     The optimization objective for the case method='lasso' is::
@@ -194,9 +194,19 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     while True:
         if Cov.size:
-            C_idx = np.argmax(np.abs(Cov))
+            # NON-NEGATIVE MODIFICATION 
+            if nonnegative:
+                C_idx = np.argmax(Cov)
+            else:
+                C_idx = np.argmax(np.abs(Cov))
+
             C_ = Cov[C_idx]
-            C = np.fabs(C_)
+
+            # NON-NEGATIVE MODIFICATION 
+            if nonnegative:
+                C = C_
+            else:
+                C = np.fabs(C_)
         else:
             C = 0.
 
@@ -235,7 +245,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             #                                                        #
             ##########################################################
 
-            sign_active[n_active] = np.sign(C_)
+            # NON-NEGATIVE MODIFICATION 
+            if nonnegative:
+                sign_active[n_active] = np.ones(C_.shape)
+            else:
+                sign_active[n_active] = np.sign(C_)
             m, n = n_active, C_idx + n_active
 
             Cov[C_idx], Cov[0] = swap(Cov[C_idx], Cov[0])
@@ -298,7 +312,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 print("%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
                                                       n_active, C))
 
-        if method == 'lasso' and n_iter > 0 and prev_alpha[0] < alpha[0]:
+        # NON-NEGATIVE MODIFICATION // FIXME : can we ultimately remove this?
+        # no warning and now break in the case of nonnegative lasso
+        if method == 'lasso' and n_iter > 0 and prev_alpha[0] < alpha[0] and not nonnegative:
             # alpha is increasing. This is because the updates of Cov are
             # bringing in too much numerical error that is greater than
             # than the remaining correlation with the
@@ -354,7 +370,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         g1 = arrayfuncs.min_pos((C - Cov) / (AA - corr_eq_dir + tiny))
         g2 = arrayfuncs.min_pos((C + Cov) / (AA + corr_eq_dir + tiny))
-        gamma_ = min(g1, g2, C / AA)
+        if nonnegative:
+            # NON-NEGATIVE MODIFICATION 
+            gamma_ = min(g1, C / AA)
+        else:
+            gamma_ = min(g1, g2, C / AA)
 
         # TODO: better names for these variables: z
         drop = False
@@ -549,7 +569,7 @@ class Lars(LinearModel, RegressorMixin):
 
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
-                 precompute='auto', n_nonzero_coefs=500,
+                 precompute='auto', n_nonzero_coefs=500, nonnegative=False,
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
@@ -557,6 +577,7 @@ class Lars(LinearModel, RegressorMixin):
         self.method = 'lar'
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
+        self.nonnegative = nonnegative 
         self.eps = eps
         self.copy_X = copy_X
         self.fit_path = fit_path
@@ -596,10 +617,10 @@ class Lars(LinearModel, RegressorMixin):
         X, y = check_X_y(X, y, y_numeric=True, multi_output=True)
         n_features = X.shape[1]
 
-        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                                                        self.fit_intercept,
-                                                        self.normalize,
-                                                        self.copy_X)
+#       X, y, X_mean, y_mean, X_std = self._center_data(X, y,
+#                                                       self.fit_intercept,
+#                                                       self.normalize,
+#                                                       self.copy_X)
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -636,7 +657,7 @@ class Lars(LinearModel, RegressorMixin):
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
                     eps=self.eps, return_path=True,
-                    return_n_iter=True)
+                    return_n_iter=True, nonnegative=self.nonnegative)
                 self.alphas_.append(alphas)
                 self.active_.append(active)
                 self.n_iter_.append(n_iter_)
@@ -656,13 +677,14 @@ class Lars(LinearModel, RegressorMixin):
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
-                    eps=self.eps, return_path=False, return_n_iter=True)
+                    eps=self.eps, return_path=False, return_n_iter=True,
+                    nonnegative=self.nonnegative)
                 self.alphas_.append(alphas)
                 self.n_iter_.append(n_iter_)
             if n_targets == 1:
                 self.alphas_ = self.alphas_[0]
                 self.n_iter_ = self.n_iter_[0]
-        self._set_intercept(X_mean, y_mean, X_std)
+#       self._set_intercept(X_mean, y_mean, X_std)
         return self
 
 
@@ -696,6 +718,7 @@ class LassoLars(Lars):
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -772,13 +795,15 @@ class LassoLars(Lars):
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
+                 nonnegative=False, eps=np.finfo(np.float).eps, copy_X=True,
+                 fit_path=True):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lasso'
+        self.nonnegative=nonnegative 
         self.precompute = precompute
         self.copy_X = copy_X
         self.eps = eps
