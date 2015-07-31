@@ -867,7 +867,9 @@ def check_supervised_y_2d(name, Estimator):
         ", ".join([str(w_x) for w_x in w]))
     if name not in MULTI_OUTPUT:
         # check that we warned if we don't support multi-output
-        assert_equal(len(w), 1, msg)
+        assert_greater(len(w), 0, msg)
+        assert_true("DataConversionWarning('A column-vector y"
+                    " was passed when a 1d array was expected" in msg)
     assert_array_almost_equal(y_pred.ravel(), y_pred_2d.ravel())
 
 
