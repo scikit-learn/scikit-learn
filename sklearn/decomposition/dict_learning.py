@@ -23,6 +23,7 @@ from ..utils.extmath import randomized_svd, row_norms
 from ..utils.validation import check_is_fitted
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars, Ridge
 from ..utils.enet_proj_fast import enet_projection, enet_norm
+from sandbox.spams_sklearn_mkpatch.dict_learning import enet_projection
 import warnings
 
 def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
