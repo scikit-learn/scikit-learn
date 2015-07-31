@@ -836,7 +836,10 @@ class RBF(Kernel):
     """
     def __init__(self, l=1.0, l_bounds=(1e-5, 1e5)):
         if np.iterable(l):
-            self.l = np.asarray(l, dtype=np.float)
+            if len(l) > 1:
+                self.l = np.asarray(l, dtype=np.float)
+            else:
+                self.l = float(l[0])
         else:
             self.l = float(l)
         self.l_bounds = l_bounds
