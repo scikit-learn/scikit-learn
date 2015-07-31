@@ -1295,7 +1295,7 @@ class LassoLarsIC(LassoLars):
             returns an instance of self.
         """
         self.fit_path = True
-        X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
+        X, y = check_X_y(X, y, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = LinearModel._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)

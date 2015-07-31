@@ -841,7 +841,7 @@ def check_estimators_unfitted(name, Estimator):
 
 def check_supervised_y_2d(name, Estimator):
     if "MultiTask" in name:
-        # These only work on 2d, this test makes not sense
+        # These only work on 2d, so this test makes no sense
         return
     rnd = np.random.RandomState(0)
     X = rnd.uniform(size=(10, 3))
@@ -866,9 +866,9 @@ def check_supervised_y_2d(name, Estimator):
     msg = "expected 1 DataConversionWarning, got: %s" % (
         ", ".join([str(w_x) for w_x in w]))
     if name not in MULTI_OUTPUT:
-        # warned if we don't support multi-output
+        # check that we warned if we don't support multi-output
         assert_equal(len(w), 1, msg)
-    assert_array_equal(y_pred.ravel(), y_pred_2d.ravel())
+    assert_array_almost_equal(y_pred.ravel(), y_pred_2d.ravel())
 
 
 def check_classifiers_classes(name, Classifier):
