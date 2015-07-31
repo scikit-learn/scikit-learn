@@ -359,6 +359,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNetCV
     """
     X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
+    y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False, ensure_2d=False)
     if Xy is not None:
         Xy = check_array(Xy, 'csc', dtype=np.float64, order='F', copy=False,
                          ensure_2d=False)
