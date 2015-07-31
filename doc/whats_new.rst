@@ -123,6 +123,9 @@ Bug fixes
     - Fixed bug in :class:`ensemble.forest.ForestClassifier` while computing 
       oob_score and X is a sparse.csc_matrix. By `Ankur Ankan`_.
 
+    - All regressors now consistently handle and warn when given ``y`` that is of
+      shape ``(n_samples, 1)``. By `Andreas Müller`_.
+
 API changes summary
 -------------------
 
