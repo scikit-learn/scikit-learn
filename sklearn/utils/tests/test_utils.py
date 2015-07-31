@@ -131,15 +131,13 @@ def test_pinvh_simple_complex():
 
 
 def test_arpack_eigsh_initialization():
-    '''
-    Non-regression test that shows null-space computation is better with 
-    initialization of eigsh from [-1,1] instead of [0,1]
-    '''
+    # Non-regression test that shows null-space computation is better with 
+    # initialization of eigsh from [-1,1] instead of [0,1]
     random_state = check_random_state(42)
 
     A = random_state.rand(50, 50)
     A = np.dot(A.T, A)  # create s.p.d. matrix
-    A = graph_laplacian(A)
+    A = graph_laplacian(A) + 1e-7 * np.identity(A.shape[0])
     k = 5
 
     # Test if eigsh is working correctly
