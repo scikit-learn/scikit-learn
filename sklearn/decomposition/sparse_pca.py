@@ -78,7 +78,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     MiniBatchSparsePCA
     DictionaryLearning
     """
-    def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
+    def __init__(self, n_components=None, alpha=0.1, ridge_alpha=0.01,
                  max_iter=1000, tol=1e-8, method='lars', n_jobs=1, U_init=None,
                  V_init=None, verbose=False, random_state=None):
         self.n_components = n_components
@@ -234,7 +234,7 @@ class MiniBatchSparsePCA(SparsePCA):
     SparsePCA
     DictionaryLearning
     """
-    def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
+    def __init__(self, n_components=None, alpha=0.1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
                  shuffle=True, n_jobs=1, method='lars', random_state=None):
 

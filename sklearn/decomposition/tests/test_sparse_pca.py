@@ -68,7 +68,7 @@ def test_fit_transform():
     spca_lasso = SparsePCA(n_components=3, method='cd', random_state=0,
                            alpha=alpha)
     spca_lasso.fit(Y)
-    assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
+    assert_array_almost_equal(spca_lasso.components_, spca_lars.components_,decimal=4)
 
 
 @if_not_mac_os()
@@ -106,7 +106,7 @@ def test_fit_transform_tall():
     U1 = spca_lars.fit_transform(Y)
     spca_lasso = SparsePCA(n_components=3, method='cd', random_state=rng)
     U2 = spca_lasso.fit(Y).transform(Y)
-    assert_array_almost_equal(U1, U2)
+    assert_array_almost_equal(U1, U2, 3)
 
 
 def test_initialization():
