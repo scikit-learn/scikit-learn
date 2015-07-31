@@ -1,6 +1,5 @@
 
 import numpy as np
-import mlpy
 import warnings
 
 from ..metrics.pairwise import euclidean_distances
