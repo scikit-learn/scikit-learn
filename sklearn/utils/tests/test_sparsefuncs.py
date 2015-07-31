@@ -109,7 +109,7 @@ def test_densify_rows():
     expect[out_rows] = X[X_rows, :].toarray()
 
     assign_rows_csr(X, X_rows, out_rows, out)
-    assert_array_equal(out, expect)
+    assert_array_almost_equal(out, expect)
 
 
 def test_inplace_column_scale():
