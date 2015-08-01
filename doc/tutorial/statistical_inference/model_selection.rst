@@ -269,8 +269,8 @@ automatically by cross-validation::
     >>> lasso.fit(X_diabetes, y_diabetes)
     LassoCV(alphas=None, copy_X=True, cv=None, eps=0.001, fit_intercept=True,
         max_iter=1000, n_alphas=100, n_jobs=1, normalize=False, positive=False,
-        precompute='auto', random_state=None, selection='cyclic', tol=0.0001,
-        verbose=False)
+        precompute='auto', random_state=None, screening=10, selection='cyclic',
+        tol=0.0001, verbose=False)
     >>> # The estimator chose automatically its lambda:
     >>> lasso.alpha_ # doctest: +ELLIPSIS
     0.01229...
