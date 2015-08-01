@@ -98,7 +98,7 @@ Domain Specific Packages
 -------------------------
 - `scikit-image <http://scikit-image.org/>`_ Image processing and computer
   vision in python.
-- `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natual language
+- `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natural language
   processing and some machine learning.
 - `NiLearn <https://nilearn.github.io/>`_ Machine learning for neuro-imaging.
 - `AstroML <http://www.astroml.org/>`_  Machine learning for astronomy.
