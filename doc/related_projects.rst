@@ -32,6 +32,21 @@ Other packages useful for data analysis and machine learning.
 
 - `sklearn_theano <http://sklearn-theano.github.io/>`_ scikit-learn compatible estimators, transformers, and datasets which use Theano internally
 
+- `auto-sklearn <https://github.com/automl/auto-sklearn/blob/master/source/index.rst>`_
+  An automated machine learning toolkit and a drop-in replacement for a
+  scikit-learn estimator
+
+- `mlxtend <https://github.com/rasbt/mlxtend>`_ Tools and extensions for the
+  day-to-day data science tasks
+
+- `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
+  research in a consistent and reproducible way
+
+- `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
+  organize, log and reproduce experiments
+
+- `gensim <https://radimrehurek.com/gensim/>`_  A library for topic modelling,
+  document indexing and similarity retrieval
 
 Extensions and Algorithms
 -------------------------
@@ -73,6 +88,8 @@ scikit-learn tools.
 - `gplearn <https://github.com/trevorstephens/gplearn>`_ Genetic Programming
   for symbolic regression tasks.
 
+- `nolearn <https://github.com/dnouri/nolearn>`_ A number of wrappers and
+  abstractions around existing neural network libraries
 
 Domain Specific Packages
 -------------------------
