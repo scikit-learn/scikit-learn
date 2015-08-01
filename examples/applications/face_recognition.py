@@ -12,17 +12,17 @@ The dataset used in this example is a preprocessed excerpt of the
 
 Expected results for the top 5 most represented people in the dataset::
 
-                     precision    recall  f1-score   support
+                   precision    recall  f1-score   support
 
-  Gerhard_Schroeder       0.91      0.75      0.82        28
-    Donald_Rumsfeld       0.84      0.82      0.83        33
-         Tony_Blair       0.65      0.82      0.73        34
-       Colin_Powell       0.78      0.88      0.83        58
-      George_W_Bush       0.93      0.86      0.90       129
+     Ariel Sharon       0.67      0.92      0.77        13
+     Colin Powell       0.75      0.78      0.76        60
+  Donald Rumsfeld       0.78      0.67      0.72        27
+    George W Bush       0.86      0.86      0.86       146
+Gerhard Schroeder       0.76      0.76      0.76        25
+      Hugo Chavez       0.67      0.67      0.67        15
+       Tony Blair       0.81      0.69      0.75        36
 
-        avg / total       0.86      0.84      0.85       282
-
-
+      avg / total       0.80      0.80      0.80       322
 
 """
 from __future__ import print_function
@@ -75,7 +75,7 @@ print("n_classes: %d" % n_classes)
 
 # split into a training and testing set
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.25)
+    X, y, test_size=0.25, random_state=42)
 
 
 ###############################################################################

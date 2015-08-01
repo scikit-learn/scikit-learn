@@ -17,7 +17,7 @@ from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
 from ..utils import check_array, check_X_y, deprecated
 from ..utils.validation import check_random_state
-from ..cross_validation import check_cv
+from ..cross_validation import check_cv, column_or_1d
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
@@ -359,6 +359,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNetCV
     """
     X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
+    y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False, ensure_2d=False)
     if Xy is not None:
         Xy = check_array(Xy, 'csc', dtype=np.float64, order='F', copy=False,
                          ensure_2d=False)
@@ -1020,9 +1021,10 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                 model = ElasticNet()
             else:
                 model = Lasso()
-            if y.ndim > 1:
+            if y.ndim > 1 and y.shape[1] > 1:
                 raise ValueError("For multi-task outputs, use "
                                  "MultiTask%sCV" % (model_str))
+            y = column_or_1d(y, warn=True)
         else:
             if sparse.isspmatrix(X):
                 raise TypeError("X should be dense but a sparse matrix was"

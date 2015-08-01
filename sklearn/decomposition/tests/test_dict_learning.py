@@ -1,5 +1,6 @@
 import numpy as np
 
+
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -7,6 +8,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import TempMemmap
 
 from sklearn.decomposition import DictionaryLearning
 from sklearn.decomposition import MiniBatchDictionaryLearning
@@ -58,6 +60,15 @@ def test_dict_learning_reconstruction_parallel():
     dico.set_params(transform_algorithm='lasso_lars')
     code = dico.transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
+
+
+def test_dict_learning_lassocd_readonly_data():
+    n_components = 12
+    with TempMemmap(X) as X_read_only:
+        dico = DictionaryLearning(n_components, transform_algorithm='lasso_cd',
+                                  transform_alpha=0.001, random_state=0, n_jobs=-1)
+        code = dico.fit(X_read_only).transform(X_read_only)
+        assert_array_almost_equal(np.dot(code, dico.components_), X_read_only, decimal=2)
 
 
 def test_dict_learning_nonzero_coefs():

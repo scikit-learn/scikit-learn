@@ -12,12 +12,16 @@ import sys
 import os
 import zlib
 import warnings
+import struct
+import codecs
 
 from ._compat import _basestring
 
 from io import BytesIO
 
-if sys.version_info[0] >= 3:
+PY3 = sys.version_info[0] >= 3
+
+if PY3:
     Unpickler = pickle._Unpickler
     Pickler = pickle._Pickler
 
@@ -30,11 +34,20 @@ else:
     Pickler = pickle.Pickler
     asbytes = str
 
-_MEGA = 2 ** 20
-_MAX_LEN = len(hex(2 ** 64))
 
-# To detect file types
+def hex_str(an_int):
+    """Converts an int to an hexadecimal string
+    """
+    return '{0:#x}'.format(an_int)
+
+
+_MEGA = 2 ** 20
+
+# Compressed pickle header format: _ZFILE_PREFIX followed by _MAX_LEN
+# bytes which contains the length of the zlib compressed data as an
+# hexadecimal string. For example: 'ZF0x139              '
 _ZFILE_PREFIX = asbytes('ZF')
+_MAX_LEN = len(hex_str(2 ** 64))
 
 
 ###############################################################################
@@ -60,9 +73,22 @@ def read_zfile(file_handle):
     file_handle.seek(0)
     assert _read_magic(file_handle) == _ZFILE_PREFIX, \
         "File does not have the right magic"
-    length = file_handle.read(len(_ZFILE_PREFIX) + _MAX_LEN)
+    header_length = len(_ZFILE_PREFIX) + _MAX_LEN
+    length = file_handle.read(header_length)
     length = length[len(_ZFILE_PREFIX):]
     length = int(length, 16)
+
+    # With python2 and joblib version <= 0.8.4 compressed pickle header is one
+    # character wider so we need to ignore an additional space if present.
+    # Note: the first byte of the zlib data is guaranteed not to be a
+    # space according to
+    # https://tools.ietf.org/html/rfc6713#section-2.1
+    next_byte = file_handle.read(1)
+    if next_byte != b' ':
+        # The zlib compressed data has started and we need to go back
+        # one byte
+        file_handle.seek(header_length)
+
     # We use the known length of the data to tell Zlib the size of the
     # buffer to allocate.
     data = zlib.decompress(file_handle.read(), 15, length)
@@ -80,10 +106,7 @@ def write_zfile(file_handle, data, compress=1):
     use for external purposes.
     """
     file_handle.write(_ZFILE_PREFIX)
-    length = hex(len(data))
-    if sys.version_info[0] < 3 and type(length) is long:
-        # We need to remove the trailing 'L' in the hex representation
-        length = length[:-1]
+    length = hex_str(len(data))
     # Store the length of the data
     file_handle.write(asbytes(length.ljust(_MAX_LEN)))
     file_handle.write(zlib.compress(asbytes(data), compress))
@@ -98,22 +121,24 @@ class NDArrayWrapper(object):
         The only thing this object does, is to carry the filename in which
         the array has been persisted, and the array subclass.
     """
-    def __init__(self, filename, subclass):
+    def __init__(self, filename, subclass, allow_mmap=True):
         "Store the useful information for later"
         self.filename = filename
         self.subclass = subclass
+        self.allow_mmap = allow_mmap
 
     def read(self, unpickler):
         "Reconstruct the array"
         filename = os.path.join(unpickler._dirname, self.filename)
         # Load the array from the disk
         np_ver = [int(x) for x in unpickler.np.__version__.split('.', 2)[:2]]
-        if np_ver >= [1, 3]:
-            array = unpickler.np.load(filename,
-                            mmap_mode=unpickler.mmap_mode)
-        else:
-            # Numpy does not have mmap_mode before 1.3
-            array = unpickler.np.load(filename)
+
+        # use getattr instead of self.allow_mmap to ensure backward compat
+        # with NDArrayWrapper instances pickled with joblib < 0.9.0
+        allow_mmap = getattr(self, 'allow_mmap', True)
+        memmap_kwargs = ({} if not allow_mmap
+                         else {'mmap_mode': unpickler.mmap_mode})
+        array = unpickler.np.load(filename, **memmap_kwargs)
         # Reconstruct subclasses. This does not work with old
         # versions of numpy
         if (hasattr(array, '__array_prepare__')
@@ -178,6 +203,7 @@ class NumpyPickler(Pickler):
          * optional compression using Zlib, with a special care on avoid
            temporaries.
     """
+    dispatch = Pickler.dispatch.copy()
 
     def __init__(self, filename, compress=0, cache_size=10):
         self._filename = filename
@@ -190,8 +216,9 @@ class NumpyPickler(Pickler):
             self.file = BytesIO()
         # Count the number of npy files that we have created:
         self._npy_counter = 0
+        highest_python_2_3_compatible_protocol = 2
         Pickler.__init__(self, self.file,
-                                protocol=pickle.HIGHEST_PROTOCOL)
+                         protocol=highest_python_2_3_compatible_protocol)
         # delayed import of numpy, to avoid tight coupling
         try:
             import numpy as np
@@ -202,8 +229,10 @@ class NumpyPickler(Pickler):
     def _write_array(self, array, filename):
         if not self.compress:
             self.np.save(filename, array)
+            allow_mmap = not array.dtype.hasobject
             container = NDArrayWrapper(os.path.basename(filename),
-                                       type(array))
+                                       type(array),
+                                       allow_mmap=allow_mmap)
         else:
             filename += '.z'
             # Efficient compressed storage:
@@ -248,6 +277,28 @@ class NumpyPickler(Pickler):
                         traceback.format_exc()))
         return Pickler.save(self, obj)
 
+    def save_bytes(self, obj):
+        """Strongly inspired from python 2.7 pickle.Pickler.save_string"""
+        if self.bin:
+            n = len(obj)
+            if n < 256:
+                self.write(pickle.SHORT_BINSTRING + asbytes(chr(n)) + obj)
+            else:
+                self.write(pickle.BINSTRING + struct.pack("<i", n) + obj)
+            self.memoize(obj)
+        else:
+            Pickler.save_bytes(self, obj)
+
+    # We need to override save_bytes for python 3. We are using
+    # protocol=2 for python 2/3 compatibility and save_bytes for
+    # protocol < 3 ends up creating a unicode string which is very
+    # inefficient resulting in pickles up to 1.5 times the size you
+    # would get with protocol=4 or protocol=2 with python 2.7. This
+    # cause severe slowdowns in joblib.dump and joblib.load. See
+    # https://github.com/joblib/joblib/issues/194 for more details.
+    if PY3:
+        dispatch[bytes] = save_bytes
+
     def close(self):
         if self.compress:
             with open(self._filename, 'wb') as zfile:
@@ -271,6 +322,54 @@ class NumpyUnpickler(Unpickler):
             np = None
         self.np = np
 
+        if PY3:
+            self.encoding = 'bytes'
+
+    # Python 3.2 and 3.3 do not support encoding=bytes so I copied
+    # _decode_string, load_string, load_binstring and
+    # load_short_binstring from python 3.4 to emulate this
+    # functionality
+    if PY3 and sys.version_info.minor < 4:
+        def _decode_string(self, value):
+            """Copied from python 3.4 pickle.Unpickler._decode_string"""
+            # Used to allow strings from Python 2 to be decoded either as
+            # bytes or Unicode strings.  This should be used only with the
+            # STRING, BINSTRING and SHORT_BINSTRING opcodes.
+            if self.encoding == "bytes":
+                return value
+            else:
+                return value.decode(self.encoding, self.errors)
+
+        def load_string(self):
+            """Copied from python 3.4 pickle.Unpickler.load_string"""
+            data = self.readline()[:-1]
+            # Strip outermost quotes
+            if len(data) >= 2 and data[0] == data[-1] and data[0] in b'"\'':
+                data = data[1:-1]
+            else:
+                raise pickle.UnpicklingError(
+                    "the STRING opcode argument must be quoted")
+            self.append(self._decode_string(codecs.escape_decode(data)[0]))
+        dispatch[pickle.STRING[0]] = load_string
+
+        def load_binstring(self):
+            """Copied from python 3.4 pickle.Unpickler.load_binstring"""
+            # Deprecated BINSTRING uses signed 32-bit length
+            len, = struct.unpack('<i', self.read(4))
+            if len < 0:
+                raise pickle.UnpicklingError(
+                    "BINSTRING pickle has negative byte count")
+            data = self.read(len)
+            self.append(self._decode_string(data))
+        dispatch[pickle.BINSTRING[0]] = load_binstring
+
+        def load_short_binstring(self):
+            """Copied from python 3.4 pickle.Unpickler.load_short_binstring"""
+            len = self.read(1)[0]
+            data = self.read(len)
+            self.append(self._decode_string(data))
+        dispatch[pickle.SHORT_BINSTRING[0]] = load_short_binstring
+
     def _open_pickle(self, file_handle):
         return file_handle
 
@@ -292,7 +391,7 @@ class NumpyUnpickler(Unpickler):
             self.stack.append(array)
 
     # Be careful to register our new method.
-    if sys.version_info[0] >= 3:
+    if PY3:
         dispatch[pickle.BUILD[0]] = load_build
     else:
         dispatch[pickle.BUILD] = load_build

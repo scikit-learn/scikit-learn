@@ -47,7 +47,7 @@ cython:
 ctags:
 	# make tags for symbol based navigation in emacs and vim
 	# Install with: sudo apt-get install exuberant-ctags
-	$(CTAGS) -R sklearn
+	$(CTAGS) --python-kinds=-i -R sklearn
 
 doc: inplace
 	$(MAKE) -C doc html
