@@ -28,9 +28,11 @@ Other packages useful for data analysis and machine learning.
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 
-- `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and fitting algorithms.
+- `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
+  fitting algorithms.
 
-- `sklearn_theano <http://sklearn-theano.github.io/>`_ scikit-learn compatible estimators, transformers, and datasets which use Theano internally
+- `sklearn_theano <http://sklearn-theano.github.io/>`_ scikit-learn compatible
+  estimators, transformers, and datasets which use Theano internally
 
 - `auto-sklearn <https://github.com/automl/auto-sklearn/blob/master/source/index.rst>`_
   An automated machine learning toolkit and a drop-in replacement for a
@@ -68,7 +70,8 @@ scikit-learn tools.
 - `PyStruct <https://pystruct.github.io>`_ General conditional random fields
   and structured prediction.
 
-- `py-earth <https://github.com/jcrudy/py-earth>`_ Multivariate adaptive regression splines
+- `py-earth <https://github.com/jcrudy/py-earth>`_ Multivariate adaptive
+  regression splines
 
 - `sklearn-compiledtrees <https://github.com/ajtulloch/sklearn-compiledtrees/>`_
   Generate a C++ implementation of the predict function for decision trees (and
@@ -93,11 +96,14 @@ scikit-learn tools.
 
 Domain Specific Packages
 -------------------------
-- `scikit-image <http://scikit-image.org/>`_ Image processing and computer vision in python.
-- `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natual language processing and some machine learning.
+- `scikit-image <http://scikit-image.org/>`_ Image processing and computer
+  vision in python.
+- `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natual language
+  processing and some machine learning.
 - `NiLearn <https://nilearn.github.io/>`_ Machine learning for neuro-imaging.
 - `AstroML <http://www.astroml.org/>`_  Machine learning for astronomy.
-- `MSMBuilder <http://www.msmbuilder.org/>`_  Machine learning for protein conformational dynamics time series.
+- `MSMBuilder <http://www.msmbuilder.org/>`_  Machine learning for protein
+  conformational dynamics time series.
 
 
 
