@@ -2,7 +2,7 @@
 import numpy as np
 import warnings
 
-from ..metrics.pairwise import euclidean_distances
+from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 
 from exceptions import ValueError
 
@@ -28,11 +28,12 @@ class KMedoids(object):
     def __init__(self, k, distance_metric='euclidean', 
                  clustering='pam', random_init=False):
 
-        if distance_metric == 'euclidean':
-            self.distance_metric = euclidean_distances
-        else:
-            raise ValueError("distance_metric must be 'euclidean'")
+        if distance_metric not in PAIRWISE_DISTANCE_FUNCTIONS.keys():
+            raise ValueError("distance_metric needs to be one of the following: " + 
+                             "{}".format(PAIRWISE_DISTANCE_FUNCTIONS.keys()))
 
+        self.dist_func = PAIRWISE_DISTANCE_FUNCTIONS[distance_metric]
+        
         if clustering != 'pam':
             raise ValueError("clustering must be 'pam'")
 
@@ -45,9 +46,7 @@ class KMedoids(object):
 
         k = self.k
 
-        D = self.distance_metric(X)
-
-        random_init = self.random_init
+        D = self.dist_func(X)
 
         if k >= D.shape[0]:
             raise ValueError("The number of medoids ({}) ".format(k) +
