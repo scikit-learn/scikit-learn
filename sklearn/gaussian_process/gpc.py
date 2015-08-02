@@ -13,10 +13,12 @@ from scipy.optimize import fmin_l_bfgs_b
 from scipy.special import erf
 
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
-from sklearn.gaussian_process.kernels import RBF
+from sklearn.gaussian_process.kernels import RBF, CompoundKernel
 from sklearn.utils.validation import check_X_y, check_is_fitted, check_array
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import LabelEncoder
+from sklearn.multiclass import OneVsRestClassifier
+
 
 # Values required for approximating the logistic sigmoid by
 # error functions. coefs are obtained via:
@@ -29,8 +31,8 @@ COEFS = np.array([-1854.8214151, 3516.89893646, 221.29346712,
                   128.12323805, -2010.49422654])[:, np.newaxis]
 
 
-class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
-    """Gaussian process classification (GPC) based on Laplace approximation.
+class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
+    """Binary Gaussian process classification (GPC) based on Laplace approximation.
 
     The implementation is based on Algorithm 3.1, 3.2, and 5.1 of
     ``Gaussian Processes for Machine Learning'' (GPML) by Rasmussen and
@@ -39,9 +41,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
     Internally, the Laplace approximation is used for approximating the
     non-Gaussian posterior by a Gaussian.
 
-    Currently, the implementation is restricted to
-      * using the logistic link function
-      * and binary classification
+    Currently, the implementation is restricted to using the logistic link function
 
     Parameters
     ----------
@@ -126,7 +126,6 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         values for the observed labels. Since W is diagonal, only the diagonal
         of sqrt(W) is stored.
     """
-
     def __init__(self, kernel=None, jitter=0.0, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=1, warm_start=False, random_state=None):
         self.kernel = kernel
@@ -134,7 +133,8 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
         self.warm_start = warm_start
-        self.rng = check_random_state(random_state)
+        self.random_state = random_state
+        self.rng = check_random_state(self.random_state)
 
     def fit(self, X, y):
         """Fit Gaussian process regression model
@@ -407,3 +407,159 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
             raise ValueError("Unknown optimizer %s." % self.optimizer)
 
         return theta_opt, func_min
+
+
+class GaussianProcessClassifier(OneVsRestClassifier):
+    """Gaussian process classification (GPC) based on Laplace approximation.
+
+    The implementation is based on Algorithm 3.1, 3.2, and 5.1 of
+    ``Gaussian Processes for Machine Learning'' (GPML) by Rasmussen and
+    Williams.
+
+    Internally, the Laplace approximation is used for approximating the
+    non-Gaussian posterior by a Gaussian.
+
+    Currently, the implementation is restricted to using the logistic link
+    function. For multi-class classification, several binary one-versus rest
+    classifiers are fitted. Note that this class thus does not implement
+    a true multi-class Laplace approximation.
+
+    Parameters
+    ----------
+    kernel : kernel object
+        The kernel specifying the covariance function of the GP. If None is
+        passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
+        the kernel's hyperparameters are optimized during fitting.
+
+    jitter : float, optional (default: 0.0)
+        Value added to the diagonal of the kernel matrix during fitting.
+        Larger values correspond to increased noise level in the observations
+        and reduce potential numerical issue during fitting.
+
+    optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
+        Can either be one of the internally supported optimizers for optimizing
+        the kernel's parameters, specified by a string, or an externally
+        defined optimizer passed as a callable. If a callable is passed, it
+        must have the  signature::
+
+            def optimizer(obj_func, initial_theta, bounds):
+                # * 'obj_func' is the objective function to be maximized, which
+                #   takes the hyperparameters theta as parameter and an
+                #   optional flag eval_gradient, which determines if the
+                #   gradient is returned additionally to the function value
+                # * 'initial_theta': the initial value for theta, which can be
+                #   used by local optimizers
+                # * 'bounds': the bounds on the values of theta
+                ....
+                # Returned are the best found hyperparameters theta and
+                # the corresponding value of the target function.
+                return theta_opt, func_min
+
+        Per default, the 'fmin_l_bfgs_b' algorithm from scipy.optimize
+        is used. If None is passed, the kernel's parameters are kept fixed.
+        Available internal optimizers are::
+
+            'fmin_l_bfgs_b'
+
+    n_restarts_optimizer: int, optional (default: 1)
+        The number of restarts of the optimizer for finding the kernel's
+        parameters which maximize the log-marginal likelihood. The first run
+        of the optimizer is performed from the kernel's initial parameters,
+        the remaining ones (if any) from thetas sampled log-uniform randomly
+        from the space of allowed theta-values. If greater than 1, all bounds
+        must be finite.
+
+    warm_start : bool, optional (default: False)
+        If warm-starts are enabled, the solution of the last Newton iteration
+        on the Laplace approximation of the posterior mode is used as
+        initialization for the next call of _posterior_mode(). This can speed
+        up convergence when _posterior_mode is called several times on similar
+        problems as in hyperparameter optimization.
+
+    random_state : integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+
+    n_jobs : int, optional, default: 1
+        The number of jobs to use for the computation. If -1 all CPUs are used.
+        If 1 is given, no parallel computing code is used at all, which is
+        useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
+        used. Thus for n_jobs = -2, all CPUs but one are used.
+
+    Attributes
+    ----------
+    kernel_: kernel object
+        The kernel used for prediction. In case of binary classification,
+        the structure of the kernel is the same as the one passed as parameter
+        but with optimized hyperparameters. In case of multi-class
+        classification, a CompoundKernel is returned which consists of the
+        different kernels used in the one-versus-rest classifiers.
+
+    classes_ : array-like, shape = (n_classes,)
+        Unique class labels.
+    """
+    def __init__(self, kernel=None, jitter=0.0, optimizer="fmin_l_bfgs_b",
+                 n_restarts_optimizer=1, warm_start=False, random_state=None,
+                 n_jobs=1):
+        self.base_estimator = BinaryGaussianProcessClassifierLaplace(
+            kernel, jitter, optimizer, n_restarts_optimizer, warm_start,
+            random_state)
+        super(GaussianProcessClassifier, self).__init__(
+            self.base_estimator, n_jobs)
+
+    @property
+    def kernel_(self):
+        if len(self.estimators_) == 1:
+            return self.estimators_[0].kernel_
+        else:
+            return CompoundKernel([estimator.kernel_
+                                   for estimator in self.estimators_])
+
+    def log_marginal_likelihood(self, theta, eval_gradient=False):
+        """Returns log-marginal likelihood of theta for training data.
+
+        In the case of multi-class classification, the mean log-marginal
+        likelihood of the one-versus-rest classifiers are returned.
+
+        Parameters
+        ----------
+        theta : array-like, shape = (n_kernel_params,)
+            Kernel hyperparameters for which the log-marginal likelihood is
+            evaluated. In the case of multi-class classification, theta must
+            be the  hyperparameters of the compound kernel.
+
+        eval_gradient : bool, default: False
+            If True, the gradient of the log-marginal likelihood with respect
+            to the kernel hyperparameters at position theta is returned
+            additionally. Note that gradient computation is not supported
+            for non-binary classification.
+
+        Returns
+        -------
+        log_likelihood : float
+            Log-marginal likelihood of theta for training data.
+
+        log_likelihood_gradient : array, shape = (n_kernel_params,), optional
+            Gradient of the log-marginal likelihood with respect to the kernel
+            hyperparameters at position theta.
+            Only returned when eval_gradient is True.
+        """
+        if len(self.estimators_) == 1:
+            return self.estimators_[0].log_marginal_likelihood(
+                theta, eval_gradient)
+        else:
+            if eval_gradient:
+                raise NotImplementedError("Gradient of log-marginal-likelhood "
+                    "not implemented for multi-class GPC.")
+            n_dims = self.estimators_[0].kernel_.n_dims
+            return np.mean(
+                [estimator.log_marginal_likelihood(theta[n_dims*i:n_dims*(i+1)])
+                 for i, estimator in enumerate(self.estimators_)])
+
+    # Some code checks simply for the existence of the method decision_function
+    # before calling it. However, OneVsRestClassifier implements the method
+    # but raises an Exception because BinaryGaussianProcessClassifierLaplace
+    # does not implement it. We thus raise an AttributeError since calling the
+    # method would always fail.
+    decision_function = property(lambda: AttributeError)
