@@ -19,45 +19,55 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     distance_metric: string, optional, default: 'euclidean'
       What distance metric to use.
 
-    clustering: string, optional, default: 'pam'
+    clustering: {'pam'}, optional, default: 'pam'
       What clustering mode to use.
 
     init: {'random', 'heuristic', or ndarray}, optional, default: 'heuristic'
       Specify medoid initialization.
     """
 
+    # Supported clustering methods
+    CLUSTERING_METHODS = ['pam']
+
+    # Supported initialization methods
     INIT_METHODS = ['random','heuristic']
-
+    
     def __init__(self, n_clusters = 8, distance_metric='euclidean', 
-                 clustering='pam', init='heuristic'):
+                 clustering_method='pam', init='heuristic'):
 
+        # Check n_clusters
         if n_clusters <= 0 or not isinstance(n_clusters, int):
             raise ValueError("n_clusters has to be nonnegative integer")
         
+        # Check distance_metric
         if callable(distance_metric):
-            self.dist_func = distance_metric
+            self.__distance_metric = distance_metric
         elif distance_metric in PAIRWISE_DISTANCE_FUNCTIONS:
-            self.dist_func = PAIRWISE_DISTANCE_FUNCTIONS[distance_metric]
+            self.__distance_metric = PAIRWISE_DISTANCE_FUNCTIONS[distance_metric]
         else:
             raise ValueError("distance_metric needs to be callable or one of the following strings: " + 
                              "{}".format(PAIRWISE_DISTANCE_FUNCTIONS.keys()))
-        
-        if clustering != 'pam':
-            raise ValueError("clustering must be 'pam'")
 
+        # Check clustering_method
+        if clustering_method not in self.CLUSTERING_METHODS:
+            raise ValueError("clustering must be one of the following: {}".format(self.CLUSTERING_METHODS))
+
+        # Check init
         if init not in self.INIT_METHODS:
             raise ValueError("init needs to be one of the following: {}".format(self.INIT_METHODS))
 
         self.n_clusters = n_clusters
         
         self.init = init
+
+        self.clustering_method = clustering_method
         
 
     def fit(self, X):
 
-        D = self.dist_func(X)
+        D = self.__distance_metric(X)
 
-        if self.n_clusters >= D.shape[0]:
+        if self.n_clusters > D.shape[0]:
             raise ValueError("The number of medoids ({}) ".format(self.n_clusters) +
                              "must be larger than the sides " +
                              "of the distance matrix ({})".format(D.shape[0]))
@@ -131,12 +141,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         print self.medoids_.shape
         
-        return self.dist_func(X, Y=self.medoids_)
+        return self.__distance_metric(X, Y=self.medoids_)
 
 
     def predict(self, X):
         
-        D = self.dist_func(X, Y=self.medoids_)
+        D = self.__distance_metric(X, Y=self.medoids_)
 
         # Assign data points to clusters based on
         # which cluster assignment yields
