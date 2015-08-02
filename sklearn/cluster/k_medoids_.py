@@ -22,12 +22,14 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     clustering: string, optional, default: 'pam'
       What clustering mode to use.
 
-    random_init: bool, optional, default: False
-      Use random medoid initialization.
+    init: {'random', 'heuristic', or ndarray}, optional, default: 'heuristic'
+      Specify medoid initialization.
     """
 
+    INIT_METHODS = ['random','heuristic']
+
     def __init__(self, n_clusters = 8, distance_metric='euclidean', 
-                 clustering='pam', random_init=False):
+                 clustering='pam', init='heuristic'):
 
         if n_clusters <= 0 or not isinstance(n_clusters, int):
             raise ValueError("n_clusters has to be nonnegative integer")
@@ -43,24 +45,27 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         if clustering != 'pam':
             raise ValueError("clustering must be 'pam'")
 
-        self.__n_clusters = n_clusters
+        if init not in self.INIT_METHODS:
+            raise ValueError("init needs to be one of the following: {}".format(self.INIT_METHODS))
+
+        self.n_clusters = n_clusters
         
-        self.__random_init = random_init
+        self.init = init
         
 
     def fit(self, X):
 
         D = self.dist_func(X)
 
-        if self.__n_clusters >= D.shape[0]:
-            raise ValueError("The number of medoids ({}) ".format(self.__n_clusters) +
+        if self.n_clusters >= D.shape[0]:
+            raise ValueError("The number of medoids ({}) ".format(self.n_clusters) +
                              "must be larger than the sides " +
                              "of the distance matrix ({})".format(D.shape[0]))
 
-        medoidIcs = self.__get_initial_medoid_indices(D,self.__n_clusters)
+        medoidIcs = self.__get_initial_medoid_indices(D,self.n_clusters)
 
         # Old medoids will be stored here for reference
-        oldMedoidIcs = np.zeros((self.__n_clusters,))
+        oldMedoidIcs = np.zeros((self.n_clusters,))
 
         # Continue the algorithm as long as
         # the medoids keep changing
@@ -75,7 +80,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             clusters = np.argmin(D[medoidIcs, :], axis=0)
             
             # Update the medoids for each cluster
-            for c in xrange(self.__n_clusters):
+            for c in xrange(self.n_clusters):
                 
                 if sum(clusters == c) == 0:
                     warnings.warn("Cluster {} is empty!".format(c))
@@ -143,19 +148,23 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def __get_initial_medoid_indices(self, D, n_clusters):
 
-        if self.__random_init:
+        if self.init == 'random':
 
             # Pick random k medoids as the initial ones.
             medoids = np.random.permutation(D.shape[0])[:n_clusters]
 
-        else:
+        elif self.init == 'heuristic':
 
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
             medoids = map(lambda x: x[0],
                           sorted(enumerate(np.sum(D, axis=1)),
                                  key=lambda x: x[1]))[:n_clusters]
+
+        else:
             
+            raise ValueError("Initialization not implemented for method: '{}'".format(self.init))
+
         return medoids
     
     
