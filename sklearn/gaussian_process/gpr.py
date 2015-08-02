@@ -118,7 +118,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
         self.normalize_y = normalize_y
-        self.rng = check_random_state(random_state)
+        self.random_state = random_state
+        self.rng = check_random_state(self.random_state)
 
     def fit(self, X, y):
         """Fit Gaussian process regression model
