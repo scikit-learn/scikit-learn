@@ -7,6 +7,7 @@ from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 
 from exceptions import ValueError
 
+
 class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     """
     k-medoids class.
@@ -30,49 +31,57 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     CLUSTERING_METHODS = ['pam']
 
     # Supported initialization methods
-    INIT_METHODS = ['random','heuristic']
-    
-    def __init__(self, n_clusters = 8, distance_metric='euclidean', 
+    INIT_METHODS = ['random', 'heuristic']
+
+    def __init__(self, n_clusters=8, distance_metric='euclidean',
                  clustering_method='pam', init='heuristic'):
 
         # Check n_clusters
         if n_clusters <= 0 or not isinstance(n_clusters, int):
             raise ValueError("n_clusters has to be nonnegative integer")
-        
+
         # Check distance_metric
         if callable(distance_metric):
             self.__distance_metric = distance_metric
         elif distance_metric in PAIRWISE_DISTANCE_FUNCTIONS:
-            self.__distance_metric = PAIRWISE_DISTANCE_FUNCTIONS[distance_metric]
+            self.__distance_metric = \
+                PAIRWISE_DISTANCE_FUNCTIONS[distance_metric]
         else:
-            raise ValueError("distance_metric needs to be callable or one of the following strings: " + 
+            raise ValueError("distance_metric needs to be " +
+                             "callable or one of the " +
+                             "following strings: " +
                              "{}".format(PAIRWISE_DISTANCE_FUNCTIONS.keys()))
 
         # Check clustering_method
         if clustering_method not in self.CLUSTERING_METHODS:
-            raise ValueError("clustering must be one of the following: {}".format(self.CLUSTERING_METHODS))
+            raise ValueError("clustering must be one of the following: " +
+                             "{}".format(self.CLUSTERING_METHODS))
 
         # Check init
         if init not in self.INIT_METHODS:
-            raise ValueError("init needs to be one of the following: {}".format(self.INIT_METHODS))
+            raise ValueError("init needs to be one of the following: " +
+                             "{}".format(self.INIT_METHODS))
 
         self.n_clusters = n_clusters
-        
+
         self.init = init
 
         self.clustering_method = clustering_method
-        
 
     def fit(self, X):
 
+        # Apply distance metric to get the distance matrix
         D = self.__distance_metric(X)
 
+        # Check that the number of clusters is less than or equal to
+        # the number of clusters
         if self.n_clusters > D.shape[0]:
-            raise ValueError("The number of medoids ({}) ".format(self.n_clusters) +
+            raise ValueError("The number of medoids " +
+                             "({}) ".format(self.n_clusters) +
                              "must be larger than the sides " +
                              "of the distance matrix ({})".format(D.shape[0]))
 
-        medoidIcs = self.__get_initial_medoid_indices(D,self.n_clusters)
+        medoidIcs = self.__get_initial_medoid_indices(D, self.n_clusters)
 
         # Old medoids will be stored here for reference
         oldMedoidIcs = np.zeros((self.n_clusters,))
@@ -83,15 +92,15 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
             # Keep a copy of the old medoid assignments
             oldMedoidIcs = np.copy(medoidIcs)
-            
+
             # Assign data points to clusters based on
             # which cluster assignment yields
             # the smallest distance
             clusters = np.argmin(D[medoidIcs, :], axis=0)
-            
+
             # Update the medoids for each cluster
             for c in xrange(self.n_clusters):
-                
+
                 if sum(clusters == c) == 0:
                     warnings.warn("Cluster {} is empty!".format(c))
                     continue
@@ -100,19 +109,19 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 # Cost is the sum of the distance from the cluster
                 # members to the medoid.
                 currCost = np.sum(D[medoidIcs[c], clusters == c])
-                
+
                 # Extract the distance matrix between the data points
                 # inside the cluster c
                 Din = D[clusters == c, :]
                 Din = Din[:, clusters == c]
-                
+
                 # Calculate all costs there exists between all
                 # the data points in the cluster c
                 allCosts = np.sum(Din, axis=1)
-                
+
                 # Find the index for the smallest cost in cluster c
                 minCostIdx = np.argmin(allCosts)
-                
+
                 # find the value of the minimum cost in cluster c
                 minCost = allCosts[minCostIdx]
 
@@ -131,22 +140,21 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             self.labels_ = clusters
 
             # Expose cluster centers, i.e. medoids
-            self.medoids_ = X.take(medoidIcs,axis=0)
+            self.cluster_centers_ = X.take(medoidIcs, axis=0)
 
         # Return self to enable method chaining
         return self
 
-    
     def transform(self, X):
 
-        print self.medoids_.shape
-        
-        return self.__distance_metric(X, Y=self.medoids_)
-
+        # Apply distance metric wrt. cluster centers (medoids),
+        # and return these distances
+        return self.__distance_metric(X, Y=self.cluster_centers_)
 
     def predict(self, X):
-        
-        D = self.__distance_metric(X, Y=self.medoids_)
+
+        # Apply distance metric wrt. cluster centers (medoids)
+        D = self.__distance_metric(X, Y=self.cluster_centers_)
 
         # Assign data points to clusters based on
         # which cluster assignment yields
@@ -155,15 +163,14 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         return labels
 
-
     def __get_initial_medoid_indices(self, D, n_clusters):
 
-        if self.init == 'random':
+        if self.init == 'random':  # Random initialization
 
             # Pick random k medoids as the initial ones.
             medoids = np.random.permutation(D.shape[0])[:n_clusters]
 
-        elif self.init == 'heuristic':
+        elif self.init == 'heuristic':  # Initialization by heuristic
 
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
@@ -172,9 +179,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                                  key=lambda x: x[1]))[:n_clusters]
 
         else:
-            
-            raise ValueError("Initialization not implemented for method: '{}'".format(self.init))
+
+            raise ValueError("Initialization not implemented for method: " +
+                             "'{}'".format(self.init))
 
         return medoids
-    
-    
