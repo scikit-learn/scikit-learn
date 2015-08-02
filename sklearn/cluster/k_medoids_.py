@@ -12,20 +12,20 @@ class KMedoids(object):
 
     Parameters
     ----------
-    k: int
+    n_clusters: int, optional, default: 8
       How many medoids. Must be positive.
 
-    distance_metric: string.
-      What distance metric to use. By default uses 'euclicean'.
+    distance_metric: string, optional, default: 'euclidean'
+      What distance metric to use.
 
-    clustering: string.
-      What clustering mode to use. By default uses 'pam' (Partitioning Around Medoids).
+    clustering: string, optional, default: 'pam'
+      What clustering mode to use.
 
-    random_init: bool.
-      Use random medoid initialization. By default uses a heuristic.    
+    random_init: bool, optional, default: False
+      Use random medoid initialization.
     """
 
-    def __init__(self, k, distance_metric='euclidean', 
+    def __init__(self, n_clusters = 8, distance_metric='euclidean', 
                  clustering='pam', random_init=False):
 
         if distance_metric not in PAIRWISE_DISTANCE_FUNCTIONS.keys():
@@ -37,26 +37,27 @@ class KMedoids(object):
         if clustering != 'pam':
             raise ValueError("clustering must be 'pam'")
 
-        self.k = k
+        if n_clusters <= 0:
+            raise ValueError("n_clusters has to be nonnegative integer")
+
+        self.__n_clusters = n_clusters
         
-        self.random_init = random_init
+        self.__random_init = random_init
         
 
     def fit(self, X):
 
-        k = self.k
-
         D = self.dist_func(X)
 
-        if k >= D.shape[0]:
-            raise ValueError("The number of medoids ({}) ".format(k) +
+        if self.__n_clusters >= D.shape[0]:
+            raise ValueError("The number of medoids ({}) ".format(self.__n_clusters) +
                              "must be larger than the sides " +
                              "of the distance matrix ({})".format(D.shape[0]))
 
-        medoids = self.__get_initial_medoids(D,k)
+        medoids = self.__get_initial_medoids(D,self.__n_clusters)
 
         # Old medoids will be stored here for reference
-        oldMedoids = np.zeros((k,))
+        oldMedoids = np.zeros((self.__n_clusters,))
 
         # Continue the algorithm as long as
         # the medoids keep changing
@@ -111,7 +112,7 @@ class KMedoids(object):
 
     def __get_initial_medoids(self,D,n_clusters):
 
-        if self.random_init:
+        if self.__random_init:
 
             # Pick random k medoids as the initial ones.
             medoids = np.random.permutation(D.shape[0])[:n_clusters]
