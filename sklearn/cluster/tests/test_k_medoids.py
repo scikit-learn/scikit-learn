@@ -63,6 +63,8 @@ def test_kmedoids_fit_predict():
     X = np.random.rand(100,5)
 
     labels1 = model.fit_predict(X)
+
+    assert_equal(len(labels1),100)
     
     assert_array_equal(labels1,model.labels_)
     
@@ -75,10 +77,12 @@ def test_kmedoids_fit_transform():
 
     model = KMedoids()
 
-    X = np.random.rand(100,5)
+    X = np.random.rand(100, 5)
 
     Xt1 = model.fit_transform(X)
 
+    assert_array_equal(Xt1.shape, (100, model.n_clusters))
+
     Xt2 = model.transform(X)
 
-    assert_array_equal(Xt1,Xt2)
+    assert_array_equal(Xt1, Xt2)
