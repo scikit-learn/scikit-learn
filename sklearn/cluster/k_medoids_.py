@@ -2,11 +2,12 @@
 import numpy as np
 import warnings
 
+from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 
 from exceptions import ValueError
 
-class KMedoids(object):
+class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     """
     k-medoids class.
 
@@ -72,7 +73,7 @@ class KMedoids(object):
             clusters = np.argmin(D[medoids, :], axis=0)
             
             # Update the medoids for each cluster
-            for c in xrange(k):
+            for c in xrange(self.__n_clusters):
                 
                 if sum(clusters == c) == 0:
                     warnings.warn("Cluster {} is empty!".format(c))
@@ -108,7 +109,10 @@ class KMedoids(object):
                     # for cluster c
                     medoids[c] = np.where(clusters == c)[0][minCostIdx]
 
-        return clusters, medoids
+            self.labels_ = clusters
+            self.medoids_ = medoids
+
+        return self
 
     def __get_initial_medoids(self,D,n_clusters):
 
