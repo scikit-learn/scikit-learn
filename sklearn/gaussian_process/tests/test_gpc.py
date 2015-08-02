@@ -15,7 +15,7 @@ from sklearn.utils.testing import (assert_true, assert_greater,
 
 
 def f(x):
-    return x * np.sin(x)
+    return np.sin(x)
 X = np.atleast_2d(np.linspace(0, 10, 30)).T
 X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = np.array(f(X).ravel() > 0, dtype=int)
@@ -86,7 +86,7 @@ def test_random_starts():
     for n_restarts_optimizer in range(1, 10):
         gp = GaussianProcessClassifier(
             kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
-            random_state=0,).fit(X, y)
+            random_state=0).fit(X, y)
         lml = gp.log_marginal_likelihood(gp.kernel_.theta)
         assert_greater(lml, last_lml - np.finfo(np.float32).eps)
         last_lml = lml
@@ -112,4 +112,23 @@ def test_custom_optimizer():
         gpc.fit(X, y)
         # Checks that optimizer improved marginal likelihood
         assert_greater(gpc.log_marginal_likelihood(gpc.kernel_.theta),
-                       gpc.log_marginal_likelihood(gpc.kernel.theta))
+                       gpc.log_marginal_likelihood(kernel.theta))
+
+
+def test_multi_class():
+    """ Test GPC for multi-class classification problems. """
+    fX = f(X).ravel()
+    y_mc = np.empty(y.shape, dtype=int)  # multi-class
+    y_mc[fX < -0.35] = 0
+    y_mc[(fX >= -0.35) & (fX < 0.35)] = 1
+    y_mc[fX > 0.35] = 2
+
+    for kernel in kernels:
+        gpc = GaussianProcessClassifier(kernel=kernel)
+        gpc.fit(X, y_mc)
+
+        y_prob = gpc.predict_proba(X2)
+        assert_almost_equal(y_prob.sum(1), 1)
+
+        y_pred = gpc.predict(X2)
+        assert_array_equal(np.argmax(y_prob, 1), y_pred)
