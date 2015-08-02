@@ -25,10 +25,16 @@ def test_kmedoids_constructor_fails_n_clusters_is_none():
 
 
 @raises(ValueError)
-def test_kmedoids_cunstructor_fails_bad_clustering():
+def test_kmedoids_constructor_fails_bad_clustering_method():
 
     # Bad clustering
-    model = KMedoids(n_clusters=5, clustering='foo')
+    model = KMedoids(n_clusters=5, clustering_method='foo')
+
+
+@raises(ValueError)
+def test_kmedoids_constructor_fails_init_is_none():
+
+    model = KMedoids(init=None)
 
 
 def test_kmedoids_constructor_succeeds():
@@ -41,20 +47,32 @@ def test_kmedoids_constructor_succeeds():
 
     assert_true(model is not None)
 
-    model = KMedoids(n_clusters=5, clustering='pam')
+    model = KMedoids(n_clusters=5, clustering_method='pam')
 
     assert_true(model is not None)
 
 
-def test_kmedoids_fit():
+@raises(ValueError)
+def test_kmedoids_fit_fails_too_few_samples_vs_clusters():
+
+    model = KMedoids(n_clusters=8)
+
+    X = np.random.rand(5,2)
+
+    # Trying to fit 3 samples to 8 clusters -> Wrong!
+    model.fit(X)
 
 
-    model = KMedoids()
+def test_kmedoids_fit_naive():
 
-    X = np.random.rand(100,5)
+    model = KMedoids(n_clusters=3)
+
+    X = np.asarray([[1,0,0],[0,1,0],[0,0,1]])
 
     model.fit(X)
-        
+
+    assert_array_equal(model.labels_,[0,1,2])
+
 
 def test_kmedoids_fit_predict():
 
@@ -86,3 +104,7 @@ def test_kmedoids_fit_transform():
     Xt2 = model.transform(X)
 
     assert_array_equal(Xt1, Xt2)
+
+
+
+    
