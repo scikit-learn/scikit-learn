@@ -29,17 +29,19 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     def __init__(self, n_clusters = 8, distance_metric='euclidean', 
                  clustering='pam', random_init=False):
 
-        if distance_metric not in PAIRWISE_DISTANCE_FUNCTIONS.keys():
-            raise ValueError("distance_metric needs to be one of the following: " + 
+        if n_clusters <= 0 or not isinstance(n_clusters, int):
+            raise ValueError("n_clusters has to be nonnegative integer")
+        
+        if callable(distance_metric):
+            self.dist_func = distance_metric
+        elif distance_metric in PAIRWISE_DISTANCE_FUNCTIONS:
+            self.dist_func = PAIRWISE_DISTANCE_FUNCTIONS[distance_metric]
+        else:
+            raise ValueError("distance_metric needs to be callable or one of the following strings: " + 
                              "{}".format(PAIRWISE_DISTANCE_FUNCTIONS.keys()))
-
-        self.dist_func = PAIRWISE_DISTANCE_FUNCTIONS[distance_metric]
         
         if clustering != 'pam':
             raise ValueError("clustering must be 'pam'")
-
-        if n_clusters <= 0:
-            raise ValueError("n_clusters has to be nonnegative integer")
 
         self.__n_clusters = n_clusters
         
@@ -55,22 +57,22 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                              "must be larger than the sides " +
                              "of the distance matrix ({})".format(D.shape[0]))
 
-        medoids = self.__get_initial_medoids(D,self.__n_clusters)
+        medoidIcs = self.__get_initial_medoid_indices(D,self.__n_clusters)
 
         # Old medoids will be stored here for reference
-        oldMedoids = np.zeros((self.__n_clusters,))
+        oldMedoidIcs = np.zeros((self.__n_clusters,))
 
         # Continue the algorithm as long as
         # the medoids keep changing
-        while not np.all(oldMedoids == medoids):
+        while not np.all(oldMedoidIcs == medoidIcs):
 
             # Keep a copy of the old medoid assignments
-            oldMedoids = np.copy(medoids)
+            oldMedoidIcs = np.copy(medoidIcs)
             
             # Assign data points to clusters based on
             # which cluster assignment yields
             # the smallest distance
-            clusters = np.argmin(D[medoids, :], axis=0)
+            clusters = np.argmin(D[medoidIcs, :], axis=0)
             
             # Update the medoids for each cluster
             for c in xrange(self.__n_clusters):
@@ -82,7 +84,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 # Find current cost that is associated with cluster c.
                 # Cost is the sum of the distance from the cluster
                 # members to the medoid.
-                currCost = np.sum(D[medoids[c], clusters == c])
+                currCost = np.sum(D[medoidIcs[c], clusters == c])
                 
                 # Extract the distance matrix between the data points
                 # inside the cluster c
@@ -107,14 +109,39 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                     # Find data points that belong to cluster c,
                     # and assign the newly found medoid as the medoid
                     # for cluster c
-                    medoids[c] = np.where(clusters == c)[0][minCostIdx]
+                    medoidIcs[c] = np.where(clusters == c)[0][minCostIdx]
 
+            # Expose labels_ which are the assignments of
+            # the training data to clusters
             self.labels_ = clusters
-            self.medoids_ = medoids
 
+            # Expose cluster centers, i.e. medoids
+            self.medoids_ = X.take(medoidIcs,axis=0)
+
+        # Return self to enable method chaining
         return self
 
-    def __get_initial_medoids(self,D,n_clusters):
+    
+    def transform(self, X):
+
+        print self.medoids_.shape
+        
+        return self.dist_func(X, Y=self.medoids_)
+
+
+    def predict(self, X):
+        
+        D = self.dist_func(X, Y=self.medoids_)
+
+        # Assign data points to clusters based on
+        # which cluster assignment yields
+        # the smallest distance
+        labels = np.argmin(D, axis=1)
+
+        return labels
+
+
+    def __get_initial_medoid_indices(self, D, n_clusters):
 
         if self.__random_init:
 
@@ -130,4 +157,5 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                                  key=lambda x: x[1]))[:n_clusters]
             
         return medoids
-            
+    
+    

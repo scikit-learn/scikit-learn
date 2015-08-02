@@ -54,9 +54,7 @@ def test_kmedoids_fit():
     X = np.random.rand(100,5)
 
     model.fit(X)
-    
-    
-
+        
 
 def test_kmedoids_fit_predict():
 
@@ -64,7 +62,23 @@ def test_kmedoids_fit_predict():
 
     X = np.random.rand(100,5)
 
-    labels = model.fit_predict(X)
+    labels1 = model.fit_predict(X)
     
-    assert_array_equal(labels,model.labels_)
+    assert_array_equal(labels1,model.labels_)
+    
+    labels2 = model.predict(X)
 
+    assert_array_equal(labels1,labels2)
+
+
+def test_kmedoids_fit_transform():
+
+    model = KMedoids()
+
+    X = np.random.rand(100,5)
+
+    Xt1 = model.fit_transform(X)
+
+    Xt2 = model.transform(X)
+
+    assert_array_equal(Xt1,Xt2)
