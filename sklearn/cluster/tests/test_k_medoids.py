@@ -3,6 +3,7 @@ import numpy as np
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import raises
 
 from exceptions import ValueError
@@ -43,3 +44,27 @@ def test_kmedoids_constructor_succeeds():
     model = KMedoids(n_clusters=5, clustering='pam')
 
     assert_true(model is not None)
+
+
+def test_kmedoids_fit():
+
+
+    model = KMedoids()
+
+    X = np.random.rand(100,5)
+
+    model.fit(X)
+    
+    
+
+
+def test_kmedoids_fit_predict():
+
+    model = KMedoids()
+
+    X = np.random.rand(100,5)
+
+    labels = model.fit_predict(X)
+    
+    assert_array_equal(labels,model.labels_)
+
