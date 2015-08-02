@@ -6,6 +6,8 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import raises
 
+from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+
 from exceptions import ValueError
 
 from sklearn.cluster import KMedoids
@@ -72,6 +74,19 @@ def test_kmedoids_fit_naive():
     model.fit(X)
 
     assert_array_equal(model.labels_,[0,1,2])
+
+
+def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
+
+    for distance_metric in PAIRWISE_DISTANCE_FUNCTIONS.keys():
+
+        model = KMedoids(n_clusters=3, distance_metric=distance_metric)
+
+        X = np.asarray([[1,0,0],[0,1,0],[0,0,1]])
+
+        model.fit(X)
+
+        assert_array_equal(model.labels_,[0,1,2])
 
 
 def test_kmedoids_fit_predict():
