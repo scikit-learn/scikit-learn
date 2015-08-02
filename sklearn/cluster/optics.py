@@ -46,27 +46,16 @@ class setOfObjects(BallTree):
         self._ordered_list = []
 
     # Used in prep step #
-    def _set_neighborhood(self, point, epsilon):
-        self._nneighbors[
-            point] = self.query_radius(
-                self.data[
-                    point],
-                epsilon,
-                count_only=1)[
-                    0]
-
-    # Used in prep step #
     def _set_core_dist(self, point, MinPts):
         self._core_dist[point] = self.query(
             self.data[point], MinPts)[0][0][-1]
 
 
-def _prep_optics(SetofObjects, epsilon, MinPts):
+def _prep_optics(self, epsilon, MinPts):
     """Prep data set for main OPTICS loop
 
     Parameters
     ----------
-    SetofObjects: Instantiated instance of 'setOfObjects' class
     epsilon: float or int
         Determines maximum object size that can be extracted.
         Smaller epsilons reduce run time
@@ -78,11 +67,11 @@ def _prep_optics(SetofObjects, epsilon, MinPts):
     -------
     Modified setOfObjects tree structure"""
 
-    for i in SetofObjects._index:
-        SetofObjects._set_neighborhood(i, epsilon)
-    for j in SetofObjects._index:
-        if SetofObjects._nneighbors[j] >= MinPts:
-            SetofObjects._set_core_dist(j, MinPts)
+    self._nneighbors = self.query_radius(self.data,r=epsilon,
+                                         count_only=True)
+    for j in self._index:
+        if self._nneighbors[j] >= MinPts:
+            self._set_core_dist(j, MinPts)
 
 # Paralizeable! #
 
