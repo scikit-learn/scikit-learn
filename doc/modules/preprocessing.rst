@@ -509,22 +509,22 @@ Note that polynomial features are used implicitily in `kernel methods <http://en
 
 See :ref:`example_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
 
-Custom Transformers
+Custom transformers
 ===================
 
-Often, you will want to convert an existing python function into a transformer
-to assist in data cleaning or processing. Users may implement a transformer from
-an arbitrary function with :class:`FunctionTransformer`. For example, one could
-apply a log transformation in a pipeline like::
+Often, you will want to convert an existing Python function into a transformer
+to assist in data cleaning or processing. You can implement a transformer from
+an arbitrary function with :class:`FunctionTransformer`. For example, to build
+a transformer that applies a log transformation in a pipeline, do::
 
     >>> import numpy as np
     >>> from sklearn.preprocessing import FunctionTransformer
-    >>> transformer = FunctionTransformer(np.log)
-    >>> X = np.array([[1, 2], [3, 4]])
+    >>> transformer = FunctionTransformer(np.log1p)
+    >>> X = np.array([[0, 1], [2, 3]])
     >>> transformer.transform(X)
     array([[ 0.        ,  0.69314718],
            [ 1.09861229,  1.38629436]])
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
-to do column selection,
+to do custom feature selection,
 see :ref:`example_preprocessing_plot_function_transformer.py`

@@ -1,7 +1,7 @@
 from nose.tools import assert_equal
 import numpy as np
 
-from ..function_transformer import FunctionTransformer
+from sklearn.preprocessing import FunctionTransformer
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):
@@ -78,6 +78,6 @@ def test_np_log():
 
     # Test that the numpy.log example still works.
     np.testing.assert_array_equal(
-        FunctionTransformer(np.log).transform(X),
-        np.log(X),
+        FunctionTransformer(np.log1p).transform(X),
+        np.log1p(X),
     )

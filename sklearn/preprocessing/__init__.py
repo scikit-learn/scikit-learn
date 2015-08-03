@@ -3,7 +3,7 @@ The :mod:`sklearn.preprocessing` module includes scaling, centering,
 normalization, binarization and imputation methods.
 """
 
-from .function_transformer import FunctionTransformer
+from ._function_transformer import FunctionTransformer
 
 from .data import Binarizer
 from .data import KernelCenterer
