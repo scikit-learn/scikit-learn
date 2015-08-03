@@ -7,6 +7,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import raises
 
 from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from sklearn.datasets import load_iris
 
 from exceptions import ValueError
 
@@ -88,6 +89,22 @@ def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
 
         assert_array_equal(model.labels_,[0,1,2])
 
+def test_kmedoids_iris_with_all_pairwise_distance_functions():
+
+    X = load_iris()['data']
+
+    for distance_metric in PAIRWISE_DISTANCE_FUNCTIONS.keys():
+
+        model = KMedoids(n_clusters=3, distance_metric=distance_metric)
+
+        D = PAIRWISE_DISTANCE_FUNCTIONS[distance_metric](X)
+
+        tmp = np.mean(D.ravel())
+
+        model.fit(X)
+
+        assert_true(model.inertia(X)/X.shape[0] < 0.5*tmp)
+    
 
 def test_kmedoids_fit_predict():
 
