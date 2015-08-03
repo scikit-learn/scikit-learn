@@ -60,5 +60,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         if self.validate:
             X = check_array(X, self.accept_sparse)
+        func = self.func if self.func is not None else _identity
 
-        return (self.func or _identity)(X, *((y,) if self.pass_y else ()))
+
+        return func(X, *((y,) if self.pass_y else ()))
