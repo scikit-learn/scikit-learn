@@ -353,6 +353,23 @@ In the multilabel case with binary label indicators: ::
     for an example of accuracy score usage using permutations of
     the dataset.
 
+.. _cohen_kappa:
+
+Cohen's kappa
+-------------
+
+The function :func:`cohen_kappa_score` computes Cohen's kappa statistic.
+This measure is intended to compare labelings by different human annotators,
+not a classifier versus a ground truth.
+
+The kappa score (see docstring) is a number between -1 and 1.
+Scores above .8 are generally considered good agreement;
+zero or lower means no agreement (practically random labels).
+
+Kappa scores can be computed for binary or multiclass problems,
+but not for multilabel problems (except by manually computing a per-label score)
+and not for more than two annotators.
+
 .. _confusion_matrix:
 
 Confusion matrix

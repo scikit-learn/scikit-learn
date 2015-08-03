@@ -266,6 +266,57 @@ def confusion_matrix(y_true, y_pred, labels=None):
     return CM
 
 
+def cohen_kappa_score(y1, y2, labels=None):
+    """Cohen's kappa: a statistic that measures inter-annotator agreement.
+
+    This function computes Cohen's kappa [1], a score that expresses the level
+    of agreement between two annotators on a classification problem. It is
+    defined as
+
+    .. math::
+        \kappa = (p_o - p_e) / (1 - p_e)
+
+    where :math:`p_o` is the empirical probability of agreement on the label
+    assigned to any sample (the observed agreement ratio), and :math:`p_e` is
+    the expected agreement when both annotators assign labels randomly.
+    :math:`p_e` is estimated using a per-annotator empirical prior over the
+    class labels [2].
+
+    Parameters
+    ----------
+    y1 : array, shape = [n_samples]
+        Labels assigned by the first annotator.
+
+    y2 : array, shape = [n_samples]
+        Labels assigned by the second annotator. The kappa statistic is
+        symmetric, so swapping ``y1`` and ``y2`` doesn't change the value.
+
+    labels : array, shape = [n_classes], optional
+        List of labels to index the matrix. This may be used to select a
+        subset of labels. If None, all labels that appear at least once in
+        ``y1`` or ``y2`` are used.
+
+    Returns
+    -------
+    kappa : float
+        The kappa statistic, which is a number between -1 and 1. The maximum
+        value means complete agreement; zero or lower means chance agreement.
+
+    References
+    ----------
+    .. [1] J. Cohen (1960). "A coefficient of agreement for nominal scales".
+           Educational and Psychological Measurement 20(1):37-46.
+           doi:10.1177/001316446002000104.
+    .. [2] R. Artstein and M. Poesio (2008). "Inter-coder agreement for
+           computational linguistics". Computational Linguistic 34(4):555-596.
+    """
+    confusion = confusion_matrix(y1, y2, labels=labels)
+    P = confusion / float(confusion.sum())
+    p_observed = np.trace(P)
+    p_expected = np.dot(P.sum(axis=0), P.sum(axis=1))
+    return (p_observed - p_expected) / (1 - p_expected)
+
+
 def jaccard_similarity_score(y_true, y_pred, normalize=True,
                              sample_weight=None):
     """Jaccard similarity coefficient score

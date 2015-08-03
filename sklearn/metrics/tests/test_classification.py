@@ -30,6 +30,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import classification_report
+from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import f1_score
 from sklearn.metrics import fbeta_score
@@ -314,6 +315,28 @@ def test_confusion_matrix_binary():
     test(y_true, y_pred)
     test([str(y) for y in y_true],
          [str(y) for y in y_pred])
+
+
+def test_cohen_kappa():
+    # These label vectors reproduce the contingency matrix from Artstein and
+    # Poesio (2008), Table 1: np.array([[20, 20], [10, 50]]).
+    y1 = np.array([0] * 40 + [1] * 60)
+    y2 = np.array([0] * 20 + [1] * 20 + [0] * 10 + [1] * 50)
+    kappa = cohen_kappa_score(y1, y2)
+    assert_almost_equal(kappa, .348, decimal=3)
+    assert_equal(kappa, cohen_kappa_score(y2, y1))
+
+    # Add spurious labels and ignore them.
+    y1 = np.append(y1, [2] * 4)
+    y2 = np.append(y2, [2] * 4)
+    assert_equal(cohen_kappa_score(y1, y2, labels=[0, 1]), kappa)
+
+    assert_almost_equal(cohen_kappa_score(y1, y1), 1.)
+
+    # Multiclass example: Artstein and Poesio, Table 4.
+    y1 = np.array([0] * 46 + [1] * 44 + [2] * 10)
+    y2 = np.array([0] * 52 + [1] * 32 + [2] * 16)
+    assert_almost_equal(cohen_kappa_score(y1, y2), .8013, decimal=4)
 
 
 @ignore_warnings

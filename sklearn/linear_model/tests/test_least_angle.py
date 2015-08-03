@@ -1,7 +1,3 @@
-import tempfile
-import shutil
-import os.path as op
-import warnings
 from nose.tools import assert_equal
 
 import numpy as np
@@ -16,6 +12,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_no_warnings, assert_warns
+from sklearn.utils.testing import TempMemmap
 from sklearn.utils import ConvergenceWarning
 from sklearn import linear_model, datasets
 from sklearn.linear_model.least_angle import _lars_path_residues
@@ -440,19 +437,6 @@ def test_lars_path_readonly_data():
     # This is a non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/4597
     splitted_data = train_test_split(X, y, random_state=42)
-    temp_folder = tempfile.mkdtemp()
-    try:
-        fpath = op.join(temp_folder, 'data.pkl')
-        joblib.dump(splitted_data, fpath)
-        X_train, X_test, y_train, y_test = joblib.load(fpath, mmap_mode='r')
-
+    with TempMemmap(splitted_data) as (X_train, X_test, y_train, y_test):
         # The following should not fail despite copy=False
         _lars_path_residues(X_train, y_train, X_test, y_test, copy=False)
-    finally:
-        # try to release the mmap file handle in time to be able to delete
-        # the temporary folder under windows
-        del X_train, X_test, y_train, y_test
-        try:
-            shutil.rmtree(temp_folder)
-        except shutil.WindowsError:
-            warnings.warn("Could not delete temporary folder %s" % temp_folder)

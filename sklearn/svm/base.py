@@ -80,8 +80,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                    "gamma='%s' as of 0.17. Backward compatibility"
                    " for gamma=%s will be removed in %s")
             invalid_gamma = 0.0
-            warnings.warn(msg % (invalid_gamma, "auto",
-                invalid_gamma, "0.18"), DeprecationWarning)
+            warnings.warn(msg % (invalid_gamma, "auto", invalid_gamma, "0.18"),
+                          DeprecationWarning)
 
         self._impl = impl
         self.kernel = kernel
@@ -171,8 +171,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                              % (sample_weight.shape, X.shape))
 
         # FIXME remove (self.gamma == 0) in 0.18
-        if (self.kernel in ['poly', 'rbf']) and ((self.gamma == 0)
-                or (self.gamma == 'auto')):
+        if (self.kernel in ['poly', 'rbf']) and ((self.gamma == 0) or
+                                                 (self.gamma == 'auto')):
             # if custom gamma is not provided ...
             self._gamma = 1.0 / X.shape[1]
         elif self.gamma == 'auto':
@@ -212,7 +212,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         # XXX this is ugly.
         # Regression models should not have a class_weight_ attribute.
         self.class_weight_ = np.empty(0)
-        return np.asarray(y, dtype=np.float64, order='C')
+        return column_or_1d(y, warn=True).astype(np.float64)
 
     def _warn_from_fit_status(self):
         assert self.fit_status_ in (0, 1)
