@@ -29,7 +29,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     clustering: {'pam'}, optional, default: 'pam'
       What clustering mode to use.
 
-    init: {'random', 'heuristic', or ndarray}, optional, default: 'heuristic'
+    init: {'random', 'heuristic'}, optional, default: 'heuristic'
       Specify medoid initialization.
     """
 
@@ -65,7 +65,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         # Check init
         if init not in self.INIT_METHODS:
-            raise ValueError("init needs to be one of the following: " +
+            raise ValueError("init needs to be one of " +
+                             "the following: " +
                              "{}".format(self.INIT_METHODS))
 
         self.n_clusters = n_clusters
