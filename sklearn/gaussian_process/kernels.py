@@ -96,7 +96,8 @@ class Kernel(six.with_metaclass(ABCMeta)):
         """
         theta = []
         for var_name in self.theta_vars:
-            if not isinstance(var_name, basestring):  # vector-valued parameter
+            if not isinstance(var_name, six.string_types):
+                # vector-valued parameter
                 var_name, _ = var_name
             theta.append(getattr(self, var_name))
         if len(theta) > 0:
@@ -115,7 +116,8 @@ class Kernel(six.with_metaclass(ABCMeta)):
         """
         i = 0
         for var_name in self.theta_vars:
-            if not isinstance(var_name, basestring):  # vector-valued parameter
+            if not isinstance(var_name, six.string_types):
+                # vector-valued parameter
                 var_name, var_length = var_name
                 setattr(self, var_name, np.exp(theta[i:i + var_length]))
                 i += var_length
@@ -139,7 +141,8 @@ class Kernel(six.with_metaclass(ABCMeta)):
         """
         bounds = []
         for var_name in self.theta_vars:
-            if not isinstance(var_name, basestring):  # vector-valued parameter
+            if not isinstance(var_name, six.string_types):
+                # vector-valued parameter
                 var_name, var_length = var_name
                 var_bounds = np.atleast_2d(getattr(self, var_name + "_bounds"))
                 if var_bounds.shape[0] == 1:
@@ -165,7 +168,8 @@ class Kernel(six.with_metaclass(ABCMeta)):
         """
         i = 0
         for var_name in self.theta_vars:
-            if not isinstance(var_name, basestring):  # vector-valued parameter
+            if not isinstance(var_name, six.string_types):
+                # vector-valued parameter
                 var_name, var_length = var_name
                 setattr(self, var_name + "_bounds",
                         np.exp(bounds[i:i + var_length]))
