@@ -74,7 +74,17 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         self.clustering_method = clustering_method
 
-    def fit(self, X):
+    def fit(self, X, y=None):
+        """Fit K-Medoids to the provided data.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+
+        Returns
+        -------
+        self
+        """
 
         # Apply distance metric to get the distance matrix
         D = self.__distance_metric(X)
@@ -87,73 +97,99 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                              "must be larger than the sides " +
                              "of the distance matrix ({})".format(D.shape[0]))
 
-        medoids_ics = self.__get_initial_medoid_indices(D, self.n_clusters)
+        medoid_ics = self.__get_initial_medoid_indices(D, self.n_clusters)
 
         # Old medoids will be stored here for reference
         old_medoid_ics = np.zeros((self.n_clusters,))
 
         # Continue the algorithm as long as
         # the medoids keep changing
-        while not np.all(old_medoid_ics == medoids_ics):
+        while not np.all(old_medoid_ics == medoid_ics):
 
             # Keep a copy of the old medoid assignments
-            old_medoid_ics = np.copy(medoids_ics)
+            old_medoid_ics = np.copy(medoid_ics)
 
-            # Assign data points to clusters based on
-            # which cluster assignment yields
-            # the smallest distance
-            cluster_ics = np.argmin(D[medoids_ics, :], axis=0)
+            # Get cluster indices
+            cluster_ics = self.__get_cluster_ics(D, medoid_ics)
 
-            # Update the medoids for each cluster
-            for cluster_idx in xrange(self.n_clusters):
+            # Update medoids with the new cluster indices
+            self.__update_medoid_ics_in_place(D, cluster_ics, medoid_ics)
 
-                if sum(cluster_ics == cluster_idx) == 0:
-                    warnings.warn("Cluster {} is empty!".format(cluster_idx))
-                    continue
+        # Expose labels_ which are the assignments of
+        # the training data to clusters
+        self.labels_ = cluster_ics
 
-                # Find current cost that is associated with cluster_idx.
-                # Cost is the sum of the distance from the cluster
-                # members to the medoid.
-                curr_cost = np.sum(D[medoids_ics[cluster_idx],
-                                    cluster_ics == cluster_idx])
-
-                # Extract the distance matrix between the data points
-                # inside the cluster_idx
-                D_in = D[cluster_ics == cluster_idx, :]
-                D_in = D_in[:, cluster_ics == cluster_idx]
-
-                # Calculate all costs there exists between all
-                # the data points in the cluster_idx
-                all_costs = np.sum(D_in, axis=1)
-
-                # Find the index for the smallest cost in cluster_idx
-                min_cost_idx = np.argmin(all_costs)
-
-                # find the value of the minimum cost in cluster_idx
-                min_cost = all_costs[min_cost_idx]
-
-                # If the minimum cost is smaller than that
-                # exhibited by the currently used medoid,
-                # we switch to using the new medoid in cluster_idx
-                if min_cost < curr_cost:
-
-                    # Find data points that belong to cluster_idx,
-                    # and assign the newly found medoid as the medoid
-                    # for cluster c
-                    medoids_ics[cluster_idx] = \
-                        np.where(cluster_ics == cluster_idx)[0][min_cost_idx]
-
-            # Expose labels_ which are the assignments of
-            # the training data to clusters
-            self.labels_ = cluster_ics
-
-            # Expose cluster centers, i.e. medoids
-            self.cluster_centers_ = X.take(medoids_ics, axis=0)
+        # Expose cluster centers, i.e. medoids
+        self.cluster_centers_ = X.take(medoid_ics, axis=0)
 
         # Return self to enable method chaining
         return self
 
+    def __get_cluster_ics(self, D, medoid_ics):
+        """Returns cluster indices for D and current medoid indices"""
+
+        # Assign data points to clusters based on
+        # which cluster assignment yields
+        # the smallest distance
+        cluster_ics = np.argmin(D[medoid_ics, :], axis=0)
+
+        return cluster_ics
+
+    def __update_medoid_ics_in_place(self, D, cluster_ics, medoid_ics):
+        """In-place update of the medoid indices"""
+
+        # Update the medoids for each cluster
+        for cluster_idx in xrange(self.n_clusters):
+
+            if sum(cluster_ics == cluster_idx) == 0:
+                warnings.warn("Cluster {} is empty!".format(cluster_idx))
+                continue
+
+            # Find current cost that is associated with cluster_idx.
+            # Cost is the sum of the distance from the cluster
+            # members to the medoid.
+            curr_cost = np.sum(D[medoid_ics[cluster_idx],
+                                 cluster_ics == cluster_idx])
+
+            # Extract the distance matrix between the data points
+            # inside the cluster_idx
+            D_in = D[cluster_ics == cluster_idx, :]
+            D_in = D_in[:, cluster_ics == cluster_idx]
+
+            # Calculate all costs there exists between all
+            # the data points in the cluster_idx
+            all_costs = np.sum(D_in, axis=1)
+
+            # Find the index for the smallest cost in cluster_idx
+            min_cost_idx = np.argmin(all_costs)
+
+            # find the value of the minimum cost in cluster_idx
+            min_cost = all_costs[min_cost_idx]
+
+            # If the minimum cost is smaller than that
+            # exhibited by the currently used medoid,
+            # we switch to using the new medoid in cluster_idx
+            if min_cost < curr_cost:
+
+                # Find data points that belong to cluster_idx,
+                # and assign the newly found medoid as the medoid
+                # for cluster c
+                medoid_ics[cluster_idx] = \
+                    np.where(cluster_ics == cluster_idx)[0][min_cost_idx]
+
     def transform(self, X):
+        """Transforms X to cluster-distance space.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+          Data to transform.
+
+        Returns
+        -------
+        X_new : array, shape=(n_samples, n_clusters)
+          X transformed in the new space.
+        """
 
         # Apply distance metric wrt. cluster centers (medoids),
         # and return these distances
@@ -181,7 +217,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         inertia = np.sum(np.min(Xt, axis=1))
 
         return inertia
-        
+
     def __get_initial_medoid_indices(self, D, n_clusters):
 
         if self.init == 'random':  # Random initialization
