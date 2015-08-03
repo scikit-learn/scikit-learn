@@ -7,11 +7,12 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import raises
 
 from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.datasets import load_iris
 
 from exceptions import ValueError
 
-from sklearn.cluster import KMedoids
+from sklearn.cluster import KMedoids, KMeans
 
 @raises(ValueError)
 def test_kmedoids_constructor_fails_n_clusters_is_zero():
@@ -93,18 +94,38 @@ def test_kmedoids_iris_with_all_pairwise_distance_functions():
 
     X = load_iris()['data']
 
+    refModel = KMeans(n_clusters=3)
+
+    refModel.fit(X)
+    
+    avgDistanceToClosestCentroid = \
+        np.sum(np.min(euclidean_distances(X, Y=refModel.cluster_centers_),
+                      axis=1)) / X.shape[0]
+
     for distance_metric in PAIRWISE_DISTANCE_FUNCTIONS.keys():
 
         model = KMedoids(n_clusters=3, distance_metric=distance_metric)
 
         D = PAIRWISE_DISTANCE_FUNCTIONS[distance_metric](X)
 
-        tmp = np.mean(D.ravel())
+        avgDistanceToRandomMedoid = np.mean(D.ravel())
 
         model.fit(X)
 
-        assert_true(model.inertia(X)/X.shape[0] < 0.5*tmp)
-    
+        avgDistanceToClosestMedoid = model.inertia(X) / X.shape[0]
+
+        # We want distance-to-closest-medoid to be reduced from average 
+        # distance by more than 50%
+        assert_true(avgDistanceToClosestMedoid < 0.5*avgDistanceToRandomMedoid)
+
+        # When K-Medoids is using Euclidean distance, 
+        # we can compare its performance to 
+        # K-Means. We want to average distance to cluster centers
+        # be similar between K-Means and K-Medoids
+        if distance_metric == "euclidean":
+            assert_true(np.abs(avgDistanceToClosestMedoid -
+                               avgDistanceToClosestCentroid) < 0.1)
+        
 
 def test_kmedoids_fit_predict():
 
