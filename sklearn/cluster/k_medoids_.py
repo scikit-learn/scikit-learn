@@ -171,6 +171,17 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         return labels
 
+    def inertia(self, X):
+
+        # Map the original X to the distance-space
+        Xt = self.transform(X)
+
+        # Define inertia as the sum of the sample-distances
+        # to closest cluster centers
+        inertia = np.sum(np.min(Xt, axis=1))
+
+        return inertia
+        
     def __get_initial_medoid_indices(self, D, n_clusters):
 
         if self.init == 'random':  # Random initialization
