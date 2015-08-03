@@ -24,10 +24,11 @@ from sklearn.utils.testing import (assert_equal, assert_almost_equal,
 
 X = np.random.RandomState(0).normal(0, 1, (10, 2))
 
+kernel_white = RBF(l=2.0) + WhiteKernel(c=3.0)
 kernels = [RBF(l=2.0), RBF(l_bounds=(0.5, 2.0)),
            ConstantKernel(c=10.0),
            2.0 * RBF(l=0.33, l_bounds="fixed"),
-           2.0 * RBF(l=0.5), RBF(l=2.0) + WhiteKernel(c=3.0),
+           2.0 * RBF(l=0.5), kernel_white,
            2.0 * RBF(l=[0.5, 2.0]),
            2.0 * Matern(l=0.33, l_bounds="fixed"),
            2.0 * Matern(l=0.5, nu=0.5),
@@ -123,6 +124,8 @@ def test_kernel_theta():
 def test_auto_vs_cross():
     """ Auto-correlation and cross-correlation should be consistent. """
     for kernel in kernels:
+        if kernel == kernel_white:
+            continue  # Identity does is not satisfied on diagonal
         K_auto = kernel(X)
         K_cross = kernel(X, X)
         assert_almost_equal(K_auto, K_cross, 5)
