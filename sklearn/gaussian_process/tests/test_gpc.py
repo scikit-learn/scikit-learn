@@ -19,6 +19,11 @@ def f(x):
 X = np.atleast_2d(np.linspace(0, 10, 30)).T
 X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = np.array(f(X).ravel() > 0, dtype=int)
+fX = f(X).ravel()
+y_mc = np.empty(y.shape, dtype=int)  # multi-class
+y_mc[fX < -0.35] = 0
+y_mc[(fX >= -0.35) & (fX < 0.35)] = 1
+y_mc[fX > 0.35] = 2
 
 
 kernels = [RBF(l=0.1), RBF(l=1.0, l_bounds=(1e-3, 1e3)),
@@ -109,7 +114,7 @@ def test_custom_optimizer():
 
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel, optimizer=optimizer)
-        gpc.fit(X, y)
+        gpc.fit(X, y_mc)
         # Checks that optimizer improved marginal likelihood
         assert_greater(gpc.log_marginal_likelihood(gpc.kernel_.theta),
                        gpc.log_marginal_likelihood(kernel.theta))
@@ -117,12 +122,6 @@ def test_custom_optimizer():
 
 def test_multi_class():
     """ Test GPC for multi-class classification problems. """
-    fX = f(X).ravel()
-    y_mc = np.empty(y.shape, dtype=int)  # multi-class
-    y_mc[fX < -0.35] = 0
-    y_mc[(fX >= -0.35) & (fX < 0.35)] = 1
-    y_mc[fX > 0.35] = 2
-
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel)
         gpc.fit(X, y_mc)
