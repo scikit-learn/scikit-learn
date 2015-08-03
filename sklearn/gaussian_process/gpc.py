@@ -170,7 +170,7 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
                              "classification. y contains classes %s"
                              % self.classes_)
         elif self.classes_.size == 1:
-            warnings.warn("Only one class label (%s) occurrs in training set."
+            warnings.warn("Only one class label (%s) occurs in training set."
                           % self.classes_)
             self.classes_ = np.array([self.classes_[0], self.classes_[0]])
 
@@ -398,8 +398,11 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
 
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
-            theta_opt, func_min, _ = \
+            theta_opt, func_min, convergence_dict = \
                 fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds)
+            if convergence_dict["warnflag"] != 0:
+                warnings.warn("fmin_l_bfgs_b terminated abnormally with the "
+                              " state: %s" % convergence_dict)
         elif callable(self.optimizer):
             theta_opt, func_min = \
                 self.optimizer(obj_func, initial_theta, bounds=bounds)
@@ -526,8 +529,10 @@ class GaussianProcessClassifier(OneVsRestClassifier):
         ----------
         theta : array-like, shape = (n_kernel_params,)
             Kernel hyperparameters for which the log-marginal likelihood is
-            evaluated. In the case of multi-class classification, theta must
-            be the  hyperparameters of the compound kernel.
+            evaluated. In the case of multi-class classification, theta may
+            be the  hyperparameters of the compound kernel or of an individual
+            kernel. In the latter case, all individual kernel get assigned the
+            same theta values.
 
         eval_gradient : bool, default: False
             If True, the gradient of the log-marginal likelihood with respect
@@ -545,6 +550,7 @@ class GaussianProcessClassifier(OneVsRestClassifier):
             hyperparameters at position theta.
             Only returned when eval_gradient is True.
         """
+        theta = np.asarray(theta)
         if len(self.estimators_) == 1:
             return self.estimators_[0].log_marginal_likelihood(
                 theta, eval_gradient)
@@ -553,9 +559,21 @@ class GaussianProcessClassifier(OneVsRestClassifier):
                 raise NotImplementedError("Gradient of log-marginal-likelhood "
                     "not implemented for multi-class GPC.")
             n_dims = self.estimators_[0].kernel_.n_dims
-            return np.mean(
-                [estimator.log_marginal_likelihood(theta[n_dims*i:n_dims*(i+1)])
-                 for i, estimator in enumerate(self.estimators_)])
+            if theta.shape[0] == n_dims:  # use same theta for all sub-kernels
+                return np.mean(
+                    [estimator.log_marginal_likelihood(theta)
+                    for i, estimator in enumerate(self.estimators_)])
+            elif theta.shape[0] == n_dims * self.classes_.shape[0]:
+                # theta for compound kernel
+                return np.mean(
+                    [estimator.log_marginal_likelihood(
+                        theta[n_dims*i:n_dims*(i+1)])
+                    for i, estimator in enumerate(self.estimators_)])
+            else:
+                raise ValueError("Shape of theta must be either %d or %d. "
+                                 "Obtained theta with shape %d."
+                                 % (n_dims, n_dims * self.classes_.shape[0],
+                                    theta.shape[0]))
 
     # Some code checks simply for the existence of the method decision_function
     # before calling it. However, OneVsRestClassifier implements the method
