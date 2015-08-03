@@ -387,6 +387,7 @@ def _check_transformer(name, Transformer, X, y):
         for x_pred in X_pred:
             assert_equal(x_pred.shape[0], n_samples)
     else:
+        # check for consistent n_samples
         assert_equal(X_pred.shape[0], n_samples)
 
     if hasattr(transformer, 'transform'):
@@ -415,6 +416,8 @@ def _check_transformer(name, Transformer, X, y):
                 X_pred, X_pred3, 2,
                 "consecutive fit_transform outcomes not consistent in %s"
                 % Transformer)
+            assert_equal(len(X_pred2), n_samples)
+            assert_equal(len(X_pred3), n_samples)
 
         # raises error on malformed input for transform
         if hasattr(X, 'T'):
