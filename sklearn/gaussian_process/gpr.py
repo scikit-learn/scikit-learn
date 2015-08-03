@@ -395,8 +395,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
-            theta_opt, func_min, _ = \
+            theta_opt, func_min, convergence_dict = \
                 fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds)
+            if convergence_dict["warnflag"] != 0:
+                warnings.warn("fmin_l_bfgs_b terminated abnormally with the "
+                              " state: %s" % convergence_dict)
         elif callable(self.optimizer):
             theta_opt, func_min = \
                 self.optimizer(obj_func, initial_theta, bounds=bounds)

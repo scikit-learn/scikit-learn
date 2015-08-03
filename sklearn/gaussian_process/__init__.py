@@ -10,7 +10,8 @@ based predictions.
 """
 
 from .gpr import GaussianProcessRegressor
-from .gpc import GaussianProcessClassifier
+from .gpc import (GaussianProcessClassifier,
+    BinaryGaussianProcessClassifierLaplace)
 from . import kernels
 
 from .gaussian_process import GaussianProcess
