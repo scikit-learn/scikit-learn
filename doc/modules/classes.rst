@@ -497,6 +497,7 @@ From text
 
   gaussian_process.GaussianProcessRegressor
   gaussian_process.GaussianProcessClassifier
+  gaussian_process.BinaryGaussianProcessClassifierLaplace
 
 Kernels:
 
@@ -515,6 +516,7 @@ Kernels:
   gaussian_process.kernels.ExpSineSquared
   gaussian_process.kernels.DotProduct
   gaussian_process.kernels.PairwiseKernel
+  gaussian_process.kernels.CompoundKernel
 
 
 .. _grid_search_ref:
