@@ -12,7 +12,7 @@ from scipy.linalg import cholesky, cho_solve, solve, solve_triangular
 from scipy.optimize import fmin_l_bfgs_b
 
 from sklearn.base import BaseEstimator, RegressorMixin, clone
-from sklearn.gaussian_process.kernels import RBF
+from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_X_y, check_array
 
@@ -137,7 +137,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self : returns an instance of self.
         """
         if self.kernel is None:  # Use an RBF kernel as default
-            self.kernel_ = 1.0 * RBF(1.0)
+            self.kernel_ = \
+                C(1.0, c_bounds="fixed") * RBF(1.0, l_bounds="fixed")
         else:
             self.kernel_ = clone(self.kernel)
 

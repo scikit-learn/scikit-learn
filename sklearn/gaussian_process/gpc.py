@@ -137,7 +137,7 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
         self.rng = check_random_state(self.random_state)
 
     def fit(self, X, y):
-        """Fit Gaussian process regression model
+        """Fit Gaussian process classification model
 
         Parameters
         ----------
@@ -156,7 +156,7 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
         else:
             self.kernel_ = clone(self.kernel)
 
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, multi_output=False)
 
         self.X_fit_ = X
 
@@ -166,13 +166,12 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
         self.y_fit_ = label_encoder.fit_transform(y)
         self.classes_ = label_encoder.classes_
         if self.classes_.size > 2:
-            raise ValueError("GaussianProcessClassifier supports only binary "
-                             "classification. y contains classes %s"
+            raise ValueError("BinaryGaussianProcessClassifierLaplace supports "
+                             "only binary classification.y contains classes %s"
                              % self.classes_)
         elif self.classes_.size == 1:
-            warnings.warn("Only one class label (%s) occurs in training set."
-                          % self.classes_)
-            self.classes_ = np.array([self.classes_[0], self.classes_[0]])
+            raise ValueError("{0:s} requires 2 classes.".format(
+                self.__class__.__name__))
 
         if self.kernel_.n_dims == 0:  # no tunable hyperparameters
             pass
@@ -510,6 +509,37 @@ class GaussianProcessClassifier(OneVsRestClassifier):
             random_state)
         super(GaussianProcessClassifier, self).__init__(
             self.base_estimator, n_jobs)
+
+        self.jitter = jitter
+        self.optimizer = optimizer
+        self.n_restarts_optimizer = n_restarts_optimizer
+        self.warm_start = warm_start
+        self.random_state = random_state
+        self.n_jobs = n_jobs
+
+    def fit(self, X, y):
+        """Fit Gaussian process classification model
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Training data
+
+        y : array-like, shape = (n_samples,)
+            Target values, must be binary
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        X, y = check_X_y(X, y, multi_output=False)
+
+        if np.unique(y).size == 1:
+            raise ValueError("GaussianProcessClassifier requires 2 or more "
+                "distinct classes. Only class %s present." % np.unique(y)[0])
+
+        return super(GaussianProcessClassifier, self).fit(X, y)
+
 
     @property
     def kernel_(self):
