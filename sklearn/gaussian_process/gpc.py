@@ -610,4 +610,4 @@ class GaussianProcessClassifier(OneVsRestClassifier):
     # but raises an Exception because BinaryGaussianProcessClassifierLaplace
     # does not implement it. We thus raise an AttributeError since calling the
     # method would always fail.
-    decision_function = property(lambda: AttributeError)
+    decision_function = property(lambda *args, **kwargs: AttributeError)
