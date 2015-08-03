@@ -6,7 +6,7 @@
 Iso-probability lines for Gaussian Processes classification (GPC)
 =================================================================
 
-A two-dimensional classification exampe showing iso-probability lines for
+A two-dimensional classification example showing iso-probability lines for
 the predicted probabilities.
 """
 print(__doc__)
