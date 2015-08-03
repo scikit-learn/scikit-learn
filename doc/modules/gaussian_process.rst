@@ -254,6 +254,13 @@ that have been chosen randomly from the range of allowed values.
 If the initial hyperparameters should be kept fixed, `None` can be passed as
 optimizer.
 
+:class:`GaussianProcessClassifier` supports multi-class classification
+by performing one-versus-rest based training and prediction based on :class:`BinaryGaussianProcessClassifierLaplace`, which implements the Laplace
+approximation of the posterior discussed above. Note that
+:class:`GaussianProcessClassifier` thus does not implement
+a true multi-class Laplace approximation, but is based on several binary
+classification tasks.
+
 GPC examples
 ============
 
@@ -296,6 +303,19 @@ Iso-probability lines for GPC
 
 Illustration of GPC on the XOR dataset
 --------------------------------------
+
+.. figure:: ../auto_examples/gaussian_process/images/plot_gpc_xor_001.png
+   :target: ../auto_examples/gaussian_process/plot_gpc_xor.html
+   :align: center
+
+
+Gaussian process classification (GPC) on iris dataset
+-----------------------------------------------------
+
+This example illustrates the predicted probability of GPC for an isotropic
+and anisotropic RBF kernel on a two-dimensional version for the iris-dataset.
+The anisotropic RBF kernel obtains slightly higher log-marginal-likelihood by
+assigning different length-scales to the two feature dimensions.
 
 .. figure:: ../auto_examples/gaussian_process/images/plot_gpc_xor_001.png
    :target: ../auto_examples/gaussian_process/plot_gpc_xor.html
