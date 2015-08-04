@@ -170,6 +170,10 @@ def test_non_transformer_estimators_n_iter():
                              'LogisticRegressionCV']):
                     continue
 
+                # These models perform iterations for predict
+                if name in (['GaussianProcessClassifier']):
+                    continue
+
                 # Tested in test_transformer_n_iter below
                 elif (name in CROSS_DECOMPOSITION or
                       name in ['LinearSVC', 'LogisticRegression']):
