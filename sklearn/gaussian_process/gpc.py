@@ -13,7 +13,8 @@ from scipy.optimize import fmin_l_bfgs_b
 from scipy.special import erf
 
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
-from sklearn.gaussian_process.kernels import RBF, CompoundKernel
+from sklearn.gaussian_process.kernels \
+    import RBF, CompoundKernel, ConstantKernel as C
 from sklearn.utils.validation import check_X_y, check_is_fitted, check_array
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import LabelEncoder
