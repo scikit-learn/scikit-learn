@@ -912,10 +912,7 @@ class WhiteKernel(Kernel):
             else:
                 return K
         else:
-            K = np.zeros((X.shape[0], Y.shape[0]))
-            # entries which are sufficiently similar to be considered identical
-            #K[cdist(X, Y) < 1e-10] = self.c
-            return K
+            return np.zeros((X.shape[0], Y.shape[0]))
 
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
@@ -1162,11 +1159,10 @@ class Matern(RBF):
                 return K, K_gradient
 
             # We need to recompute the pairwise dimension-wise distances
-            D = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 \
-                    / (self.l ** 2)
+            D = (X[:, np.newaxis, :] - X[np.newaxis, :, :])**2 / (self.l ** 2)
             if self.nu == 0.5:
                 K_gradient = K[..., np.newaxis] * D \
-                    /  np.sqrt(D.sum(2))[:, :, np.newaxis]
+                    / np.sqrt(D.sum(2))[:, :, np.newaxis]
                 K_gradient[~np.isfinite(K_gradient)] = 0
             elif self.nu == 1.5:
                 K_gradient = \
@@ -1404,8 +1400,8 @@ class DotProduct(Kernel):
 
     The DotProduct kernel is non-stationary and can be obtained from linear
     regression by putting N(0, 1) priors on the coefficients of x_d (d = 1, . .
-    . , D) and a prior of N(0, \sigma_0^2) on the bias. The DotProduct kernel is
-    invariant to a rotation of the coordinates about the origin, but not
+    . , D) and a prior of N(0, \sigma_0^2) on the bias. The DotProduct kernel
+    is invariant to a rotation of the coordinates about the origin, but not
     translations. It is parameterized by a parameter sigma_0^2. For
     sigma_0^2 =0, the kernel is called the homogeneous linear kernel, otherwise
     it is inhomogeneous. The kernel is given by

@@ -19,7 +19,8 @@ from sklearn.gaussian_process.kernels \
 from sklearn.base import clone
 
 from sklearn.utils.testing import (assert_equal, assert_almost_equal,
-    assert_not_equal, assert_array_equal, assert_array_almost_equal)
+                                   assert_not_equal, assert_array_equal,
+                                   assert_array_almost_equal)
 
 
 X = np.random.RandomState(0).normal(0, 1, (10, 2))
@@ -73,7 +74,7 @@ def test_kernel_theta():
     """ Check that parameter vector theta of kernel is set correctly. """
     for kernel in kernels:
         if isinstance(kernel, KernelOperator) \
-            or isinstance(kernel, Exponentiation):  # skip non-basic kernels
+           or isinstance(kernel, Exponentiation):  # skip non-basic kernels
             continue
         theta = kernel.theta
         _, K_gradient = kernel(X, eval_gradient=True)

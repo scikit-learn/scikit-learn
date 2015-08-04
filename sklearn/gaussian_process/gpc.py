@@ -41,7 +41,8 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
     Internally, the Laplace approximation is used for approximating the
     non-Gaussian posterior by a Gaussian.
 
-    Currently, the implementation is restricted to using the logistic link function
+    Currently, the implementation is restricted to using the logistic link
+    function.
 
     Parameters
     ----------
@@ -207,7 +208,8 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
                                                        bounds))
             # Select result from run with minimal (negative) log-marginal
             # likelihood
-            self.kernel_.theta = optima[np.argmin(map(itemgetter(1), optima))][0]
+            self.kernel_.theta = \
+                optima[np.argmin(map(itemgetter(1), optima))][0]
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
@@ -536,10 +538,10 @@ class GaussianProcessClassifier(OneVsRestClassifier):
 
         if np.unique(y).size == 1:
             raise ValueError("GaussianProcessClassifier requires 2 or more "
-                "distinct classes. Only class %s present." % np.unique(y)[0])
+                             "distinct classes. Only class %s present."
+                             % np.unique(y)[0])
 
         return super(GaussianProcessClassifier, self).fit(X, y)
-
 
     @property
     def kernel_(self):
@@ -586,19 +588,20 @@ class GaussianProcessClassifier(OneVsRestClassifier):
                 theta, eval_gradient)
         else:
             if eval_gradient:
-                raise NotImplementedError("Gradient of log-marginal-likelhood "
-                    "not implemented for multi-class GPC.")
+                raise NotImplementedError(
+                    "Gradient of log-marginal-likelhood not implemented for "
+                    "multi-class GPC.")
             n_dims = self.estimators_[0].kernel_.n_dims
             if theta.shape[0] == n_dims:  # use same theta for all sub-kernels
                 return np.mean(
                     [estimator.log_marginal_likelihood(theta)
-                    for i, estimator in enumerate(self.estimators_)])
+                     for i, estimator in enumerate(self.estimators_)])
             elif theta.shape[0] == n_dims * self.classes_.shape[0]:
                 # theta for compound kernel
                 return np.mean(
                     [estimator.log_marginal_likelihood(
                         theta[n_dims*i:n_dims*(i+1)])
-                    for i, estimator in enumerate(self.estimators_)])
+                     for i, estimator in enumerate(self.estimators_)])
             else:
                 raise ValueError("Shape of theta must be either %d or %d. "
                                  "Obtained theta with shape %d."
@@ -613,6 +616,5 @@ class GaussianProcessClassifier(OneVsRestClassifier):
     def __getattribute__(self, name):
         if name in ['decision_function']:
             raise AttributeError("decision_function not available for "
-                "GaussianProcessClassifier")
+                                 "GaussianProcessClassifier")
         return super(GaussianProcessClassifier, self).__getattribute__(name)
-
