@@ -29,6 +29,10 @@ New features
      range normalization when the data is already centered or sparse.
      By `Thomas Unterthiner`_.
 
+   - The new class :class:`preprocessing.FunctionTransformer` turns a Python
+     function into a ``Pipeline``-compatible transformer object.
+     By Joe Jevnik.
+
 Enhancements
 ............
 
