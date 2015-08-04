@@ -408,6 +408,10 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     array([ 0.35,  0.4 ,  0.8 ])
 
     """
+    warnings.warn("The default behaviour of no interpolation is deprecated."
+                  "Interpolation would be default behaviour in 0.18",
+                  DeprecationWarning)
+
     fps, tps, thresholds = _binary_clf_curve(y_true, probas_pred,
                                              pos_label=pos_label,
                                              sample_weight=sample_weight)
