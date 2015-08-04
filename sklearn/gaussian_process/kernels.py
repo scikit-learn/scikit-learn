@@ -1532,7 +1532,7 @@ class PairwiseKernel(Kernel):
     gamma_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on gamma
 
-    metric : string, or callable
+    metric : string, or callable, default: "linear"
         The metric to use when calculating kernel between instances in a
         feature array. If metric is a string, it must be one of the metrics
         in pairwise.PAIRWISE_KERNEL_FUNCTIONS.
@@ -1542,19 +1542,23 @@ class PairwiseKernel(Kernel):
         should take two arrays from X as input and return a value indicating
         the distance between them.
 
-    `**kwds` : optional keyword parameters
-        Any further parameters are passed directly to the kernel function.
+    pairwise_kernels_kwargs : dict, default: None
+        All entries of this dict (if any) are passed as keyword arguments to
+        the pairwise kernel function.
     """
 
-    def __init__(self, gamma=1.0, gamma_bounds=(1e-5, 1e5),
-                 metric="linear", **kwargs):
+    def __init__(self, gamma=1.0, gamma_bounds=(1e-5, 1e5), metric="linear",
+                 pairwise_kernels_kwargs=None):
         self.gamma = gamma
         self.gamma_bounds = gamma_bounds
 
         self.theta_vars = ["gamma"] if gamma_bounds is not "fixed" else []
 
         self.metric = metric
-        self.kwargs = kwargs
+        if pairwise_kernels_kwargs is not None:
+            self.pairwise_kernels_kwargs = pairwise_kernels_kwargs
+        else:
+            self.pairwise_kernels_kwargs = {}
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -1584,7 +1588,8 @@ class PairwiseKernel(Kernel):
         """
         X = np.atleast_2d(X)
         K = pairwise_kernels(X, Y, metric=self.metric, gamma=self.gamma,
-                             filter_params=True, **self.kwargs)
+                             filter_params=True,
+                             **self.pairwise_kernels_kwargs)
         if eval_gradient:
             if self.gamma_bounds is "fixed":
                 return K, np.empty((X.shape[0], X.shape[0], 0))
@@ -1593,7 +1598,7 @@ class PairwiseKernel(Kernel):
                 def f(gamma):  # helper function
                     return pairwise_kernels(
                         X, Y, metric=self.metric, gamma=np.exp(gamma),
-                        filter_params=True, **self.kwargs)
+                        filter_params=True, **self.pairwise_kernels_kwargs)
                 return K, _approx_fprime(self.theta, f, 1e-10)
         else:
             return K
