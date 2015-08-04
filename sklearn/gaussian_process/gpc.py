@@ -89,6 +89,11 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
         from the space of allowed theta-values. If greater than 1, all bounds
         must be finite.
 
+    max_iter: int, optional (default: 100)
+        The maximum number of iterations in Newton's method for approximating
+        the posterior during predict. Smaller values will reduce computation
+        time at the cost of worse results.
+
     warm_start : bool, optional (default: False)
         If warm-starts are enabled, the solution of the last Newton iteration
         on the Laplace approximation of the posterior mode is used as
@@ -135,12 +140,13 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
         of sqrt(W) is stored.
     """
     def __init__(self, kernel=None, jitter=0.0, optimizer="fmin_l_bfgs_b",
-                 n_restarts_optimizer=1, warm_start=False,
+                 n_restarts_optimizer=1, max_iter=100, warm_start=False,
                  copy_X_train=False, random_state=None):
         self.kernel = kernel
         self.jitter = jitter
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
+        self.max_iter = max_iter
         self.warm_start = warm_start
         self.copy_X_train = copy_X_train
         self.random_state = random_state
@@ -162,7 +168,8 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
         self : returns an instance of self.
         """
         if self.kernel is None:  # Use an RBF kernel as default
-            self.kernel_ = 1.0 * RBF(1.0)
+            self.kernel_ = \
+                C(1.0, c_bounds="fixed") * RBF(1.0, l_bounds="fixed")
         else:
             self.kernel_ = clone(self.kernel)
 
@@ -372,7 +379,7 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
 
         # Use Newton's iteration method to find mode of Laplace approximation
         log_marginal_likelihood = -np.inf
-        while True:
+        for _ in range(self.max_iter):
             # Line 4
             pi = 1 / (1 + np.exp(-f))
             W = pi * (1 - pi)
@@ -482,12 +489,23 @@ class GaussianProcessClassifier(OneVsRestClassifier):
         from the space of allowed theta-values. If greater than 1, all bounds
         must be finite.
 
+    max_iter: int, optional (default: 100)
+        The maximum number of iterations in Newton's method for approximating
+        the posterior during predict. Smaller values will reduce computation
+        time at the cost of worse results.
+
     warm_start : bool, optional (default: False)
         If warm-starts are enabled, the solution of the last Newton iteration
         on the Laplace approximation of the posterior mode is used as
         initialization for the next call of _posterior_mode(). This can speed
         up convergence when _posterior_mode is called several times on similar
         problems as in hyperparameter optimization.
+
+    copy_X_train : bool, optional (default: False)
+        If True, a persistent copy of the training data is stored in the
+        object. Otherwise, just a reference to the training data is stored,
+        which might cause predictions to change if the data is modified
+        externally.
 
     random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
@@ -513,18 +531,20 @@ class GaussianProcessClassifier(OneVsRestClassifier):
         Unique class labels.
     """
     def __init__(self, kernel=None, jitter=0.0, optimizer="fmin_l_bfgs_b",
-                 n_restarts_optimizer=1, warm_start=False, random_state=None,
-                 n_jobs=1):
+                 n_restarts_optimizer=1, max_iter=100, warm_start=False,
+                 copy_X_train=False, random_state=None, n_jobs=1):
         self.base_estimator = BinaryGaussianProcessClassifierLaplace(
-            kernel, jitter, optimizer, n_restarts_optimizer, warm_start,
-            random_state)
+            kernel, jitter, optimizer, n_restarts_optimizer, max_iter,
+            warm_start, copy_X_train, random_state)
         super(GaussianProcessClassifier, self).__init__(
             self.base_estimator, n_jobs)
 
         self.jitter = jitter
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
+        self.max_iter = max_iter
         self.warm_start = warm_start
+        self.copy_X_train = copy_X_train
         self.random_state = random_state
         self.n_jobs = n_jobs
 
