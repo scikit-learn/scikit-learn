@@ -606,8 +606,13 @@ class GaussianProcessClassifier(OneVsRestClassifier):
                                     theta.shape[0]))
 
     # Some code checks simply for the existence of the method decision_function
-    # before calling it. However, OneVsRestClassifier implements the method
-    # but raises an Exception because BinaryGaussianProcessClassifierLaplace
+    # before calling it. However, OneVsRestClassifier has the method but raises
+    # always an Exception because BinaryGaussianProcessClassifierLaplace
     # does not implement it. We thus raise an AttributeError since calling the
     # method would always fail.
-    decision_function = property(lambda *args, **kwargs: AttributeError)
+    def __getattribute__(self, name):
+        if name in ['decision_function']:
+            raise AttributeError("decision_function not available for "
+                "GaussianProcessClassifier")
+        return super(GaussianProcessClassifier, self).__getattribute__(name)
+
