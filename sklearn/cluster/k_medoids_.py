@@ -10,6 +10,7 @@ import warnings
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from ..utils import check_array
 
 from exceptions import ValueError
 
@@ -48,15 +49,17 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         # Check distance_metric
         if callable(distance_metric):
-            self.__distance_metric = distance_metric
+            self.distance_func = distance_metric
         elif distance_metric in PAIRWISE_DISTANCE_FUNCTIONS:
-            self.__distance_metric = \
+            self.distance_func = \
                 PAIRWISE_DISTANCE_FUNCTIONS[distance_metric]
         else:
             raise ValueError("distance_metric needs to be " +
                              "callable or one of the " +
                              "following strings: " +
-                             "{}".format(PAIRWISE_DISTANCE_FUNCTIONS.keys()))
+                             "{}".format(PAIRWISE_DISTANCE_FUNCTIONS.keys()) +
+                             ". Instead, '{}' ".format(distance_metric) +
+                             "was given.")
 
         # Check clustering_method
         if clustering_method not in self.CLUSTERING_METHODS:
@@ -70,6 +73,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                              "{}".format(self.INIT_METHODS))
 
         self.n_clusters = n_clusters
+
+        self.distance_metric = distance_metric
 
         self.init = init
 
@@ -87,8 +92,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self
         """
 
+        # Check that the array is good and attempt to convert it to
+        # Numpy array if possible
+        X = check_array(X)
+
         # Apply distance metric to get the distance matrix
-        D = self.__distance_metric(X)
+        D = self.distance_func(X)
 
         # Check that the number of clusters is less than or equal to
         # the number of clusters
@@ -194,12 +203,16 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         # Apply distance metric wrt. cluster centers (medoids),
         # and return these distances
-        return self.__distance_metric(X, Y=self.cluster_centers_)
+        return self.distance_func(X, Y=self.cluster_centers_)
 
     def predict(self, X):
 
+        # Check that the array is good and attempt to convert it to
+        # Numpy array if possible
+        X = check_array(X)
+
         # Apply distance metric wrt. cluster centers (medoids)
-        D = self.__distance_metric(X, Y=self.cluster_centers_)
+        D = self.distance_func(X, Y=self.cluster_centers_)
 
         # Assign data points to clusters based on
         # which cluster assignment yields
