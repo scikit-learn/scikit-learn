@@ -9,7 +9,7 @@
 
 # Imports #
 
-import scipy
+import scipy as sp
 from ..utils import check_array, check_consistent_length
 from sklearn.neighbors import BallTree
 from sklearn.base import BaseEstimator, ClusterMixin
@@ -30,14 +30,14 @@ class setOfObjects(BallTree):
 
         self._n = len(self.data)
         # Start all points as 'unprocessed' ##
-        self._processed = scipy.zeros((self._n, 1), dtype=bool)
-        self._reachability = scipy.ones(self._n) * scipy.inf
-        self._core_dist = scipy.ones(self._n) * scipy.nan
-        self._index = scipy.array(range(self._n))
-        self._nneighbors = scipy.ones(self._n, dtype=int)
+        self._processed = sp.zeros((self._n, 1), dtype=bool)
+        self._reachability = sp.ones(self._n) * sp.inf
+        self._core_dist = sp.ones(self._n) * sp.nan
+        self._index = sp.array(range(self._n))
+        self._nneighbors = sp.ones(self._n, dtype=int)
         # Start all points as noise ##
-        self._cluster_id = -scipy.ones(self._n, dtype=int)
-        self._is_core = scipy.ones(self._n, dtype=bool)
+        self._cluster_id = -sp.ones(self._n, dtype=int)
+        self._is_core = sp.ones(self._n, dtype=bool)
         # Ordering is important below... ###
         self._ordered_list = []
 
@@ -62,18 +62,18 @@ def _prep_optics(self, epsilon, MinPts):
                                          count_only=True)
 
     # Only core distance lookups for points capable of being core
-    mask_idx = self._nneighbors >= MinPts 
+    mask_idx = self._nneighbors >= MinPts
     core_query = self.get_arrays()[0][mask_idx]
     # Check to see if that there is at least one cluster
-    if len(core_query) >= 1 :
-        core_dist = self.query(core_query,k=MinPts)[0][:,-1]
+    if len(core_query) >= 1:
+        core_dist = self.query(core_query, k=MinPts)[0][:, -1]
         self._core_dist[mask_idx] = core_dist
 
 
 # Main OPTICS loop #
 
 
-def _build_optics(SetOfObjects, epsilon, MinPts):
+def _build_optics(SetOfObjects, epsilon):
     """Builds OPTICS ordered list of clustering structure
 
     Parameters
@@ -82,18 +82,11 @@ def _build_optics(SetOfObjects, epsilon, MinPts):
     epsilon: float or int
         Determines maximum object size that can be extracted. Smaller
         epsilons reduce run time. This should be equal to epsilon
-        in 'prep_optics'
-    MinPts: int
-        The minimum number of samples in a neighborhood to be considered a
-        core point. Must be equal to MinPts used in 'prep_optics'
-    Output_file_name: string
-        Valid path where write access is available.
-        Stores cluster structure"""
+        in 'prep_optics' """
 
     for point in SetOfObjects._index:
         if not SetOfObjects._processed[point]:
-            _expandClusterOrder(SetOfObjects, point, epsilon,
-                                MinPts)
+            _expandClusterOrder(SetOfObjects, point, epsilon)
 
 # OPTICS helper functions; these should not be public #
 
@@ -101,7 +94,7 @@ def _build_optics(SetOfObjects, epsilon, MinPts):
 # the '_ordered_list' is important!
 
 
-def _expandClusterOrder(SetOfObjects, point, epsilon, MinPts):
+def _expandClusterOrder(SetOfObjects, point, epsilon):
     if SetOfObjects._core_dist[point] <= epsilon:
         while not SetOfObjects._processed[point]:
             SetOfObjects._processed[point] = True
@@ -118,29 +111,26 @@ def _set_reach_dist(SetOfObjects, point_index, epsilon):
     # Assumes that the query returns ordered (smallest distance first)
     # entries. This is the case for the balltree query...
 
-    distances, indices = SetOfObjects.query(SetOfObjects.data[point_index],
-                                            SetOfObjects._nneighbors[point_index])
-    # Above line is not pep8, but is more readable than shortening it...
+    dists, indices = SetOfObjects.query(SetOfObjects.data[point_index],
+                                        SetOfObjects._nneighbors[point_index])
 
     # Checks to see if there more than one member in the neighborhood ##
-    if scipy.iterable(distances):
+    if sp.iterable(dists):
 
         # Masking processed values ##
-        unprocessed = indices[(SetOfObjects._processed[indices] < 1)[0].T]
-        rdistances = scipy.maximum(
-            distances[(SetOfObjects._processed[indices] < 1)[0].T],
-            SetOfObjects._core_dist[point_index])
-        SetOfObjects._reachability[
-            unprocessed] = scipy.minimum(
-                SetOfObjects._reachability[
-                    unprocessed],
-                rdistances)
+        # n_pr is 'not processed'
+        n_pr = indices[(SetOfObjects._processed[indices] < 1)[0].T]
+        rdists = sp.maximum(dists[(SetOfObjects._processed[indices] < 1)[0].T],
+                            SetOfObjects._core_dist[point_index])
+
+        new_reach = sp.minimum(SetOfObjects._reachability[n_pr], rdists)
+        SetOfObjects._reachability[n_pr] = new_reach
 
         # Checks to see if everything is already processed;
         # if so, return control to main loop ##
-        if unprocessed.size > 0:
+        if n_pr.size > 0:
             # Define return order based on reachability distance ###
-            return unprocessed[scipy.argmin(SetOfObjects._reachability[unprocessed])]
+            return n_pr[sp.argmin(SetOfObjects._reachability[n_pr])]
         else:
             return point_index
 
@@ -206,7 +196,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         tree = setOfObjects(X)  # ,self.metric)
         _prep_optics(tree, self.eps * 10.0, self.min_samples)
-        _build_optics(tree, self.eps * 10.0, self.min_samples)
+        _build_optics(tree, self.eps * 10.0)
         self._index = tree._index[:]
         self._reachability = tree._reachability[:]
         self._core_dist = tree._core_dist[:]
