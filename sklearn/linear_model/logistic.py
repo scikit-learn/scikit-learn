@@ -29,6 +29,7 @@ from ..utils.optimize import newton_cg
 from ..utils.validation import (DataConversionWarning,
                                 check_X_y, NotFittedError)
 from ..utils.fixes import expit
+from ..utils.multiclass import check_classification_targets
 from ..externals.joblib import Parallel, delayed
 from ..cross_validation import check_cv
 from ..externals import six
@@ -1124,8 +1125,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, 
                          order="C")
+        check_classification_targets(y)
         self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
 
@@ -1489,9 +1491,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
                          order="C")
-
         max_squared_sum = get_max_squared_sum(X) if self.solver == 'sag' \
             else None
+        check_classification_targets(y)
 
         if y.ndim == 2 and y.shape[1] == 1:
             warnings.warn(

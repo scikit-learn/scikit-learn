@@ -116,6 +116,7 @@ def _yield_classifier_checks(name, Classifier):
     yield check_estimators_partial_fit_n_features
     # basic consistency testing
     yield check_classifiers_train
+    yield check_classifiers_regression_target
     if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]
         # TODO some complication with -1 label
             and name not in ["DecisionTreeClassifier",
@@ -1499,3 +1500,12 @@ def check_get_params_invariance(name, estimator):
 
     assert_true(all(item in deep_params.items() for item in
                     shallow_params.items()))
+
+def check_classifiers_regression_target(name, Estimator):
+    # Check if classifier throws an exception when fed regression targets
+
+    boston = load_boston()
+    X, y = boston.data, boston.target
+    e = Estimator()
+    msg = 'Unknown label type: '
+    assert_raises_regex(ValueError, msg, e.fit, X, y)

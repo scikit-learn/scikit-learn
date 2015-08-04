@@ -24,6 +24,7 @@ from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
 from .utils.fixes import bincount
+from .utils.multiclass import check_classification_targets
 from .preprocessing import StandardScaler
 
 
@@ -622,6 +623,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
                           DeprecationWarning)
             self.tol = tol
         X, y = check_X_y(X, y)
+        check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)

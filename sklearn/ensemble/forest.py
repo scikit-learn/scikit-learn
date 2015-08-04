@@ -62,6 +62,7 @@ from ..utils import check_random_state, check_array, compute_sample_weight
 from ..utils.validation import DataConversionWarning, NotFittedError
 from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import bincount
+from ..utils.multiclass import check_classification_targets
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
@@ -417,6 +418,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         self.oob_score_ = oob_score / self.n_outputs_
 
     def _validate_y_class_weight(self, y):
+        check_classification_targets(y)
+
         y = np.copy(y)
         expanded_class_weight = None
 

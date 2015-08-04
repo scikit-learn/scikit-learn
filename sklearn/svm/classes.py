@@ -8,6 +8,7 @@ from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_X_y
 from ..utils.validation import _num_samples
+from ..utils.multiclass import check_classification_targets
 
 
 class LinearSVC(BaseEstimator, LinearClassifierMixin,
@@ -202,6 +203,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
         X, y = check_X_y(X, y, accept_sparse='csr',
                          dtype=np.float64, order="C")
+        check_classification_targets(y)
         self.classes_ = np.unique(y)
 
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
