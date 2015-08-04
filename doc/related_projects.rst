@@ -53,6 +53,9 @@ Other packages useful for data analysis and machine learning.
 - `Seaborn <http://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on 
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
 
+- `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning
+  software libraries.
+
 Extensions and Algorithms
 -------------------------
 Libraries that provide a scikit-learn like interface and can be used with
