@@ -87,6 +87,12 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         prior based on the data, which contradicts the likelihood principle;
         normalization is thus disabled per default.
 
+    copy_X_train : bool, optional (default: False)
+        If True, a persistent copy of the training data is stored in the
+        object. Otherwise, just a reference to the training data is stored,
+        which might cause predictions to change if the data is modified
+        externally.
+
     random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
@@ -94,10 +100,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
     Attributes
     ----------
-    X_fit_ : array-like, shape = (n_samples, n_features)
+    X_train_ : array-like, shape = (n_samples, n_features)
         Feature values in training data (also required for prediction)
 
-    y_fit_: array-like, shape = (n_samples, [n_output_dims])
+    y_train_: array-like, shape = (n_samples, [n_output_dims])
         Target values in training data (also required for prediction)
 
     kernel_: kernel object
@@ -105,19 +111,20 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         same as the one passed as parameter but with optimized hyperparameters
 
     L_: array-like, shape = (n_samples, n_samples)
-        Lower-triangular Cholesky decomposition of the kernel in X_fit_
+        Lower-triangular Cholesky decomposition of the kernel in X_train_
 
     alpha_: array-like, shape = (n_samples,)
         Dual coefficients of training data points in kernel space
     """
     def __init__(self, kernel=None, sigma_squared_n=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=1,
-                 normalize_y=False, random_state=None):
+                 normalize_y=False, copy_X_train=False, random_state=None):
         self.kernel = kernel
         self.sigma_squared_n = sigma_squared_n
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
         self.normalize_y = normalize_y
+        self.copy_X_train = copy_X_train
         self.random_state = random_state
         self.rng = check_random_state(self.random_state)
 
@@ -146,11 +153,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
         # Normalize target value
         if self.normalize_y:
-            self.y_fit_mean = np.mean(y, axis=0)
+            self.y_train_mean = np.mean(y, axis=0)
             # demean y
-            y = y - self.y_fit_mean
+            y = y - self.y_train_mean
         else:
-            self.y_fit_mean = np.zeros(1)
+            self.y_train_mean = np.zeros(1)
 
         if np.iterable(self.sigma_squared_n) \
            and self.sigma_squared_n.shape[0] != y.shape[0]:
@@ -161,8 +168,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                                  " with same number of entries as y.(%d != %d)"
                                  % (self.sigma_squared_n.shape[0], y.shape[0]))
 
-        self.X_fit_ = X
-        self.y_fit_ = y
+        self.X_train_ = np.copy(X) if self.copy_X_train else X
+        self.y_train_ = np.copy(y) if self.copy_X_train else y
 
         if self.kernel_.n_dims == 0:  # no tunable hyperparameters
             pass
@@ -203,10 +210,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
-        K = self.kernel_(self.X_fit_)
+        K = self.kernel_(self.X_train_)
         K[np.diag_indices_from(K)] += self.sigma_squared_n
         self.L_ = cholesky(K, lower=True)  # Line 2
-        self.alpha_ = cho_solve((self.L_, True), self.y_fit_)  # Line 3
+        self.alpha_ = cho_solve((self.L_, True), self.y_train_)  # Line 3
 
         return self
 
@@ -251,7 +258,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
         X = check_array(X)
 
-        if not hasattr(self, "X_fit_"):  # Unfitted; predict based on GP prior
+        if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
             y_mean = np.zeros(X.shape[0])
             if return_cov:
                 y_cov = self.kernel(X)
@@ -262,9 +269,9 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             else:
                 return y_mean
         else:  # Predict based on GP posterior
-            K_trans = self.kernel_(X, self.X_fit_)
+            K_trans = self.kernel_(X, self.X_train_)
             y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
-            y_mean = self.y_fit_mean + y_mean  # undo normal.
+            y_mean = self.y_train_mean + y_mean  # undo normal.
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
@@ -350,9 +357,9 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         kernel = self.kernel_.clone_with_theta(theta)
 
         if eval_gradient:
-            K, K_gradient = kernel(self.X_fit_, eval_gradient=True)
+            K, K_gradient = kernel(self.X_train_, eval_gradient=True)
         else:
-            K = kernel(self.X_fit_)
+            K = kernel(self.X_train_)
 
         K[np.diag_indices_from(K)] += self.sigma_squared_n
         try:
@@ -365,8 +372,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         if eval_gradient:
             log_likelihood_gradient = 0
 
-        # Iterate over output dimensions of self.y_fit_
-        y_fit = self.y_fit_
+        # Iterate over output dimensions of self.y_train_
+        y_fit = self.y_train_
         if y_fit.ndim == 1:
             y_fit = y_fit[:, np.newaxis]
         for i in range(y_fit.shape[1]):
