@@ -235,10 +235,7 @@ def assert_non_regression_targets(y):
     y_type = type_of_target(y)
     if y_type not in ['binary', 'multiclass', 'multiclass-multioutput', 
             'multilabel-indicator', 'multilabel-sequences']:
-        if not y_type is 'continuous':
-            raise ValueError("Unknown label type: %r" % y)
-        elif len(np.unique(y)) > 2:
-            raise ValueError("Unknown label type: %r" % y)
+        raise ValueError("Unknown label type: %r" % y)
 
 
 

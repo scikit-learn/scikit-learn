@@ -1505,6 +1505,6 @@ def check_classifiers_regression_target(name, Estimator):
     # Check if classifier throws an exception when fed regression targets
 
     boston = load_boston()
-    X, y_ = boston.data, boston.target
+    X, y = boston.data, boston.target
     e = Estimator()
-    assert_raises(ValueError, e.fit, X, y_)
+    assert_raise_message(ValueError, "Unknown label type", e.fit, X, y)
