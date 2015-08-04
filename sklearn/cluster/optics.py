@@ -9,10 +9,7 @@
 
 # Imports #
 
-import sys
-import copy
 import scipy
-import numpy as np
 from ..utils import check_array, check_consistent_length
 from sklearn.neighbors import BallTree
 from sklearn.base import BaseEstimator, ClusterMixin
@@ -36,7 +33,6 @@ class setOfObjects(BallTree):
         self._processed = scipy.zeros((self._n, 1), dtype=bool)
         self._reachability = scipy.ones(self._n) * scipy.inf
         self._core_dist = scipy.ones(self._n) * scipy.nan
-        # Might be faster to use a list below? ##
         self._index = scipy.array(range(self._n))
         self._nneighbors = scipy.ones(self._n, dtype=int)
         # Start all points as noise ##
@@ -44,11 +40,6 @@ class setOfObjects(BallTree):
         self._is_core = scipy.ones(self._n, dtype=bool)
         # Ordering is important below... ###
         self._ordered_list = []
-
-    # Used in prep step #
-    def _set_core_dist(self, point, MinPts):
-        self._core_dist[point] = self.query(
-            self.data[point], MinPts)[0][0][-1]
 
 
 def _prep_optics(self, epsilon, MinPts):
@@ -67,13 +58,17 @@ def _prep_optics(self, epsilon, MinPts):
     -------
     Modified setOfObjects tree structure"""
 
-    self._nneighbors = self.query_radius(self.data,r=epsilon,
+    self._nneighbors = self.query_radius(self.data, r=epsilon,
                                          count_only=True)
-    for j in self._index:
-        if self._nneighbors[j] >= MinPts:
-            self._set_core_dist(j, MinPts)
 
-# Paralizeable! #
+    # Only core distance lookups for points capable of being core
+    mask_idx = self._nneighbors >= MinPts 
+    core_query = self.get_arrays()[0][mask_idx]
+    # Check to see if that there is at least one cluster
+    if len(core_query) >= 1 :
+        core_dist = self.query(core_query,k=MinPts)[0][:,-1]
+        self._core_dist[mask_idx] = core_dist
+
 
 # Main OPTICS loop #
 
@@ -102,7 +97,7 @@ def _build_optics(SetOfObjects, epsilon, MinPts):
 
 # OPTICS helper functions; these should not be public #
 
-# NOT Paralyzable! The order that entries are written to
+# Not parallelizable. The order that entries are written to
 # the '_ordered_list' is important!
 
 
@@ -116,8 +111,8 @@ def _expandClusterOrder(SetOfObjects, point, epsilon, MinPts):
         SetOfObjects._processed[point] = True    # Probably not needed... #
 
 
-# As above, NOT paralizable! Paralizing would allow items in
-# 'unprocessed' list to switch to 'processed' #
+# As above, not parallelizable. Parallelizing would allow items in
+# the 'unprocessed' list to switch to 'processed'
 def _set_reach_dist(SetOfObjects, point_index, epsilon):
 
     # Assumes that the query returns ordered (smallest distance first)
@@ -145,9 +140,7 @@ def _set_reach_dist(SetOfObjects, point_index, epsilon):
         # if so, return control to main loop ##
         if unprocessed.size > 0:
             # Define return order based on reachability distance ###
-            return sorted(zip(SetOfObjects._reachability[unprocessed],
-                              unprocessed),
-                          key=lambda reachability: reachability[0])[0][1]
+            return unprocessed[scipy.argmin(SetOfObjects._reachability[unprocessed])]
         else:
             return point_index
 
