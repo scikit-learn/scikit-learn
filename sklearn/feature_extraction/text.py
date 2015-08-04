@@ -755,7 +755,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                     # Ignore out-of-vocabulary items for fixed_vocab=True
                     continue
 
-            for (vocabIdx, wordCount) in j_idx_to_count_dict.iteritems():
+            for (vocabIdx, wordCount) in six.iteritems(j_idx_to_count_dict):
                 values.append(wordCount)
                 j_indices.append(vocabIdx)
 
