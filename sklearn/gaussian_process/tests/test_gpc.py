@@ -27,7 +27,7 @@ y_mc[fX > 0.35] = 2
 
 
 kernels = [RBF(l=0.1), RBF(l=1.0, l_bounds=(1e-3, 1e3)),
-           C(1.0, (1e-2, 1e2)) *  RBF(l=1.0, l_bounds=(1e-3, 1e3))]
+           C(1.0, (1e-2, 1e2)) * RBF(l=1.0, l_bounds=(1e-3, 1e3))]
 
 
 def test_predict_consistent():
@@ -36,7 +36,7 @@ def test_predict_consistent():
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
         assert_array_equal(gpc.predict(X),
-                           gpc.predict_proba(X)[:, 1] >=0.5)
+                           gpc.predict_proba(X)[:, 1] >= 0.5)
 
 
 def test_lml_improving():
@@ -48,7 +48,7 @@ def test_lml_improving():
 
 
 def test_converged_to_local_maximum():
-    """ Test that we are in local maximum after hyperparameter-optimization. """
+    """ Test that we are in local maximum after hyperparameter-optimization."""
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
 
@@ -73,6 +73,7 @@ def test_lml_gradient():
                           1e-10)
 
         assert_almost_equal(lml_gradient, lml_gradient_approx, 3)
+
 
 def test_random_starts():
     """
