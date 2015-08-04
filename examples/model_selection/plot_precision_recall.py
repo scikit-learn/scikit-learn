@@ -64,15 +64,13 @@ to binarize the output. One curve can be drawn per label, but one can also draw
 a precision-recall curve by considering each element of the label indicator
 matrix as a binary prediction (micro-averaging).
 
-Precision recall curves tend to have large jitters because increasing the value
-of threshold over a small range while reduces the recall too by a small amount,
-but also makes the precision decrease, because over a small range, while the
+Increasing the value of threshold over a small range reduces both the recall
+and the precision, causing large jitters. Over small ranges, while the
 number of True Positives :math:`T_p` decrease, the sum of True Positives and
-False Positives :math:`T_p+F_n` may not decrease in the same proportion, thus
+False Positives :math:`T_p+F_n` may not decrease in the same proportion,
 reducing precision. Interpolation is used, to remove this discrepancy and make
-the plot smoother, by ensuring, that increasing threshold, does not let
-precision drop with respect to previously observed values of precision, for
-lower thresholds.
+the plot smoother. This is done by ensuring, that increasing threshold value,
+does not let precision drop with respect to lower thresholds.
 
 
 .. note::

@@ -388,7 +388,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
 
     References
     ----------
-    .. [1] Manning, C. D., Raghavan, P., & Schütze, H. (2008). 
+    .. [1] Manning, C. D., Raghavan, P., & Schutze, H. (2008).
            Introduction to information retrieval (Vol. 1, p. 159).
            Cambridge: Cambridge university press.
 
