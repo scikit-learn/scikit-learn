@@ -73,7 +73,7 @@ y = data[:, 0]
 # Kernel with parameters given in GPML book
 k1 = 66.0**2 * RBF(l=67.0)  # long term smooth rising trend
 k2 = 2.4**2 * RBF(l=90.0) * ExpSineSquared(l=1.3, p=1.0)  # seasonal component
-k3 = 0.66**2 * RationalQuadratic(l=1.2, alpha=0.78)  # medium term irregularit.
+k3 = 0.66**2 * RationalQuadratic(l=1.2, alpha=0.78)  # medium term irregularity
 k4 = 0.18**2 * RBF(l=0.134) + WhiteKernel(c=0.19**2) # noise terms
 kernel_gpml = k1 + k2 + k3 + k4
 
