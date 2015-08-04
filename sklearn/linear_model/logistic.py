@@ -1489,17 +1489,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-<<<<<<< HEAD
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
                          order="C")
-
         max_squared_sum = get_max_squared_sum(X) if self.solver == 'sag' \
             else None
-=======
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
-        y = check_array(y, ensure_2d=False, dtype=None)
         assert_non_regression_targets(y)
->>>>>>> Add non regression target check in classifiers' `fit` method
 
         if y.ndim == 2 and y.shape[1] == 1:
             warnings.warn(
