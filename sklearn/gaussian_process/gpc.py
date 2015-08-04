@@ -96,6 +96,12 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
         up convergence when _posterior_mode is called several times on similar
         problems as in hyperparameter optimization.
 
+    copy_X_train : bool, optional (default: False)
+        If True, a persistent copy of the training data is stored in the
+        object. Otherwise, just a reference to the training data is stored,
+        which might cause predictions to change if the data is modified
+        externally.
+
     random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
@@ -103,10 +109,10 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    X_fit_ : array-like, shape = (n_samples, n_features)
+    X_train_ : array-like, shape = (n_samples, n_features)
         Feature values in training data (also required for prediction)
 
-    y_fit_: array-like, shape = (n_samples,)
+    y_train_: array-like, shape = (n_samples,)
         Target values in training data (also required for prediction)
 
     classes_ : array-like, shape = (n_classes,)
@@ -117,10 +123,11 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
         same as the one passed as parameter but with optimized hyperparameters
 
     L_: array-like, shape = (n_samples, n_samples)
-        Lower-triangular Cholesky decomposition of the kernel in X_fit_
+        Lower-triangular Cholesky decomposition of the kernel in X_train_
 
     pi_: array-like, shape = (n_samples,)
-        The probabilities of the positive class for the training points X_fit_
+        The probabilities of the positive class for the training points
+        X_train_
 
     W_sr_: array-like, shape = (n_samples,)
         Square root of W, the Hessian of log-likelihood of the latent function
@@ -128,12 +135,14 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
         of sqrt(W) is stored.
     """
     def __init__(self, kernel=None, jitter=0.0, optimizer="fmin_l_bfgs_b",
-                 n_restarts_optimizer=1, warm_start=False, random_state=None):
+                 n_restarts_optimizer=1, warm_start=False,
+                 copy_X_train=False, random_state=None):
         self.kernel = kernel
         self.jitter = jitter
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
         self.warm_start = warm_start
+        self.copy_X_train = copy_X_train
         self.random_state = random_state
         self.rng = check_random_state(self.random_state)
 
@@ -159,12 +168,12 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
 
         X, y = check_X_y(X, y, multi_output=False)
 
-        self.X_fit_ = X
+        self.X_train_ = np.copy(X) if self.copy_X_train else X
 
         # Encode class labels and check that it is a binary classification
         # problem
         label_encoder = LabelEncoder()
-        self.y_fit_ = label_encoder.fit_transform(y)
+        self.y_train_ = label_encoder.fit_transform(y)
         self.classes_ = label_encoder.classes_
         if self.classes_.size > 2:
             raise ValueError("BinaryGaussianProcessClassifierLaplace supports "
@@ -213,7 +222,7 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
-        K = self.kernel_(self.X_fit_)
+        K = self.kernel_(self.X_train_)
         K[np.diag_indices_from(K)] += self.jitter
 
         _, (self.pi_, self.W_sr_, self.L_, _, _) = \
@@ -233,14 +242,14 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
         C : array, shape = (n_samples,)
             Predicted target values for X, values are from classes_
         """
-        check_is_fitted(self, ["X_fit_", "y_fit_", "pi_", "W_sr_", "L_"])
+        check_is_fitted(self, ["X_train_", "y_train_", "pi_", "W_sr_", "L_"])
         X = check_array(X)
 
         # As discussed on Section 3.4.2 of GPML, for making hard binary
         # decisions, it is enough to compute the MAP of the posterior and
         # pass it through the link function
-        K_star = self.kernel_(self.X_fit_, X)  # K_star =k(x_star)
-        f_star = K_star.T.dot(self.y_fit_ - self.pi_)  # Line 4 (Algorithm 3.2)
+        K_star = self.kernel_(self.X_train_, X)  # K_star =k(x_star)
+        f_star = K_star.T.dot(self.y_train_ - self.pi_)  # Algorithm 3.2,Line 4
 
         return np.where(f_star > 0, self.classes_[1], self.classes_[0])
 
@@ -258,12 +267,12 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
         """
-        check_is_fitted(self, ["X_fit_", "y_fit_", "pi_", "W_sr_", "L_"])
+        check_is_fitted(self, ["X_train_", "y_train_", "pi_", "W_sr_", "L_"])
         X = check_array(X)
 
         # Based on Algorithm 3.2 of GPML
-        K_star = self.kernel_(self.X_fit_, X)  # K_star =k(x_star)
-        f_star = K_star.T.dot(self.y_fit_ - self.pi_)  # Line 4
+        K_star = self.kernel_(self.X_train_, X)  # K_star =k(x_star)
+        f_star = K_star.T.dot(self.y_train_ - self.pi_)  # Line 4
         v = solve(self.L_, self.W_sr_[:, np.newaxis] * K_star)  # Line 5
         # Line 6 (compute np.diag(v.T.dot(v)) via einsum)
         var_f_star = self.kernel_.diag(X) - np.einsum("ij,ij->j", v, v)
@@ -311,9 +320,9 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
         kernel = self.kernel_.clone_with_theta(theta)
 
         if eval_gradient:
-            K, K_gradient = kernel(self.X_fit_, eval_gradient=True)
+            K, K_gradient = kernel(self.X_train_, eval_gradient=True)
         else:
-            K = kernel(self.X_fit_)
+            K = kernel(self.X_train_)
 
         K[np.diag_indices_from(K)] += self.jitter
 
@@ -337,7 +346,7 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
             C = K_gradient[:, :, j]   # Line 11
             s_1 = .5 * a.T.dot(C).dot(a) - .5 * np.trace(R.dot(C))  # Line 12
 
-            b = C.dot(self.y_fit_ - pi)  # Line 13
+            b = C.dot(self.y_train_ - pi)  # Line 13
             s_3 = b - K.dot(R).dot(b)  # Line 14
 
             d_Z[j] = s_1 + s_2.T.dot(s_3)  # Line 15
@@ -356,10 +365,10 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
         # If warm_start are enabled, we reuse the last solution for the
         # posterior mode as initialization; otherwise, we initialize with 0
         if self.warm_start and hasattr(self, "f_cached") \
-           and self.f_cached.shape == self.y_fit_.shape:
+           and self.f_cached.shape == self.y_train_.shape:
             f = self.f_cached
         else:
-            f = np.zeros_like(self.y_fit_, dtype=np.float64)
+            f = np.zeros_like(self.y_train_, dtype=np.float64)
 
         # Use Newton's iteration method to find mode of Laplace approximation
         log_marginal_likelihood = -np.inf
@@ -373,7 +382,7 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
             B = np.eye(W.shape[0]) + W_sr_K * W_sr
             L = cholesky(B, lower=True)
             # Line 6
-            b = W * f + (self.y_fit_ - pi)
+            b = W * f + (self.y_train_ - pi)
             # Line 7
             a = b - W_sr * cho_solve((L, True), W_sr_K.dot(b))
             # Line 8
@@ -382,7 +391,7 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
             # Line 10: Compute log marginal likelihood in loop and use as
             #          convergence criterion
             lml = -0.5*a.T.dot(f) \
-                - np.log(1 + np.exp(-(self.y_fit_*2 - 1)*f)).sum() \
+                - np.log(1 + np.exp(-(self.y_train_*2 - 1)*f)).sum() \
                 - np.log(np.diag(L)).sum()
             # Check if we have converged (log marginal likelihood does
             # not decrease)
