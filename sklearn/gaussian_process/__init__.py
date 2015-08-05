@@ -11,8 +11,7 @@ based regression and classification.
 """
 
 from .gpr import GaussianProcessRegressor
-from .gpc import (GaussianProcessClassifier,
-                  BinaryGaussianProcessClassifierLaplace)
+from .gpc import GaussianProcessClassifier
 from . import kernels
 
 from .gaussian_process import GaussianProcess
