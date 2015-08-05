@@ -15,10 +15,12 @@ from ..utils import check_random_state, check_array, check_X_y
 from ..utils.validation import check_is_fitted
 from . import regression_models as regression
 from . import correlation_models as correlation
+from ..utils import deprecated
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
 
+@deprecated("l1_cross_distances is deprecated and will be removed in 0.18.")
 def l1_cross_distances(X):
     """
     Computes the nonzero componentwise L1 cross-distances between the vectors
@@ -56,8 +58,13 @@ def l1_cross_distances(X):
     return D, ij
 
 
+@deprecated("GaussianProcess is deprecated and will be removed in 0.18."
+            "Use the GaussianProcessRegressor instead.")
 class GaussianProcess(BaseEstimator, RegressorMixin):
     """The Gaussian Process model class.
+
+    Note that this class is deprecated and will be removed in 0.18.
+    Use the GaussianProcessRegressor instead.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
