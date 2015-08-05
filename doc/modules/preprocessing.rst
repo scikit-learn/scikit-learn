@@ -78,7 +78,7 @@ This class is hence suitable for use in the early steps of a
   >>> scaler.mean_                                      # doctest: +ELLIPSIS
   array([ 1. ...,  0. ...,  0.33...])
 
-  >>> scaler.std_                                       # doctest: +ELLIPSIS
+  >>> scaler.scale_                                       # doctest: +ELLIPSIS
   array([ 0.81...,  0.81...,  1.24...])
 
   >>> scaler.transform(X)                               # doctest: +ELLIPSIS

@@ -7,6 +7,7 @@
 #          Olivier Grisel
 #          Arnaud Joly
 #          Denis Engemann
+#          Giorgio Patrini
 # License: BSD 3 clause
 import os
 import inspect
@@ -57,6 +58,7 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
+from numpy.testing import assert_approx_equal
 import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
@@ -68,7 +70,8 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_false", "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
-           "assert_greater", "assert_greater_equal"]
+           "assert_greater", "assert_greater_equal",
+           "assert_approx_equal"]
 
 
 try:
