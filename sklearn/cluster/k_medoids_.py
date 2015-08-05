@@ -12,7 +12,12 @@ from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_array
 
-from exceptions import ValueError
+# With Python 2.x ValueError needs to be imported,
+# otherwise that's not needed
+try:
+    from exceptions import ValueError
+except ImportError:
+    pass
 
 
 class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
