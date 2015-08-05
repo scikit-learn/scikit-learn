@@ -12,7 +12,7 @@ from scipy.linalg import cholesky, cho_solve, solve
 from scipy.optimize import fmin_l_bfgs_b
 from scipy.special import erf
 
-from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.base import BaseEstimator, clone
 from sklearn.gaussian_process.kernels \
     import RBF, CompoundKernel, ConstantKernel as C
 from sklearn.utils.validation import check_X_y, check_is_fitted, check_array
@@ -32,7 +32,7 @@ COEFS = np.array([-1854.8214151, 3516.89893646, 221.29346712,
                   128.12323805, -2010.49422654])[:, np.newaxis]
 
 
-class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
+class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     """Binary Gaussian process classification (GPC) based on Laplace approximation.
 
     The implementation is based on Algorithm 3.1, 3.2, and 5.1 of
@@ -184,9 +184,9 @@ class BinaryGaussianProcessClassifierLaplace(BaseEstimator, ClassifierMixin):
         self.y_train_ = label_encoder.fit_transform(y)
         self.classes_ = label_encoder.classes_
         if self.classes_.size > 2:
-            raise ValueError("BinaryGaussianProcessClassifierLaplace supports "
-                             "only binary classification.y contains classes %s"
-                             % self.classes_)
+            raise ValueError("%s supports only binary classification. "
+                             "y contains classes %s"
+                             % (self.__class__.__name__, self.classes_))
         elif self.classes_.size == 1:
             raise ValueError("{0:s} requires 2 classes.".format(
                 self.__class__.__name__))
@@ -534,7 +534,7 @@ class GaussianProcessClassifier(OneVsRestClassifier):
     def __init__(self, kernel=None, jitter=0.0, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=1, max_iter=100, warm_start=False,
                  copy_X_train=False, random_state=None, n_jobs=1):
-        self.base_estimator = BinaryGaussianProcessClassifierLaplace(
+        self.base_estimator = _BinaryGaussianProcessClassifierLaplace(
             kernel, jitter, optimizer, n_restarts_optimizer, max_iter,
             warm_start, copy_X_train, random_state)
         super(GaussianProcessClassifier, self).__init__(
@@ -640,7 +640,7 @@ class GaussianProcessClassifier(OneVsRestClassifier):
 
     # Some code checks simply for the existence of the method decision_function
     # before calling it. However, OneVsRestClassifier has the method but raises
-    # always an Exception because BinaryGaussianProcessClassifierLaplace
+    # always an Exception because _BinaryGaussianProcessClassifierLaplace
     # does not implement it. We thus raise an AttributeError since calling the
     # method would always fail.
     def __getattribute__(self, name):
