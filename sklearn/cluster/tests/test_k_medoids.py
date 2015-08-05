@@ -10,7 +10,11 @@ from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.datasets import load_iris
 
-from exceptions import ValueError
+# With Python 2.x ValueError needs to be imported
+try:
+    from exceptions import ValueError
+except ImportError:
+    pass
 
 from sklearn.cluster import KMedoids, KMeans
 
