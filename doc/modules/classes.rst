@@ -497,7 +497,7 @@ From text
 
   gaussian_process.GaussianProcessRegressor
   gaussian_process.GaussianProcessClassifier
-  gaussian_process.BinaryGaussianProcessClassifierLaplace
+  gaussian_process.GaussianProcess
 
 Kernels:
 

@@ -255,8 +255,9 @@ If the initial hyperparameters should be kept fixed, `None` can be passed as
 optimizer.
 
 :class:`GaussianProcessClassifier` supports multi-class classification
-by performing one-versus-rest based training and prediction based on :class:`BinaryGaussianProcessClassifierLaplace`, which implements the Laplace
-approximation of the posterior discussed above. Note that
+by performing one-versus-rest based training and prediction based on
+a binary Gaussian process classifier using the Laplace approximation of the
+posterior for binary classification discussed above. Note that
 :class:`GaussianProcessClassifier` thus does not implement
 a true multi-class Laplace approximation, but is based on several binary
 classification tasks.
@@ -293,20 +294,22 @@ hyperparameters used in the first figure by black dots.
    :align: center
 
 
-Iso-probability lines for GPC
------------------------------
-
-.. figure:: ../auto_examples/gaussian_process/images/plot_gpc_isoprobability_001.png
-   :target: ../auto_examples/gaussian_process/plot_gpc_isoprobability.html
-   :align: center
-
-
 Illustration of GPC on the XOR dataset
 --------------------------------------
+
+.. currentmodule:: sklearn.gaussian_process.kernels
+
+This example illustrates GPC on XOR data. Compared are a stationary, isotropic
+kernel (`RBF`) and a non-stationary kernel (`DotProduct`). On this particular
+dataset, the `DotProduct` kernel obtains considerably better results because the
+class-boundaries are linear and coincide with the coordinate axes. In general,
+stationary kernels often obtain better results.
 
 .. figure:: ../auto_examples/gaussian_process/images/plot_gpc_xor_001.png
    :target: ../auto_examples/gaussian_process/plot_gpc_xor.html
    :align: center
+
+.. currentmodule:: sklearn.gaussian_process
 
 
 Gaussian process classification (GPC) on iris dataset
@@ -314,11 +317,12 @@ Gaussian process classification (GPC) on iris dataset
 
 This example illustrates the predicted probability of GPC for an isotropic
 and anisotropic RBF kernel on a two-dimensional version for the iris-dataset.
+It thus illustrated the applicability of GPC to non-binary classification.
 The anisotropic RBF kernel obtains slightly higher log-marginal-likelihood by
 assigning different length-scales to the two feature dimensions.
 
-.. figure:: ../auto_examples/gaussian_process/images/plot_gpc_xor_001.png
-   :target: ../auto_examples/gaussian_process/plot_gpc_xor.html
+.. figure:: ../auto_examples/gaussian_process/images/plot_gpc_iris_001.png
+   :target: ../auto_examples/gaussian_process/plot_gpc_iris.html
    :align: center
 
 
@@ -493,8 +497,14 @@ shown in the following figure:
    :align: center
 
 
-Legacy
-======
+.. currentmodule:: sklearn.gaussian_process
+
+Legacy Gaussian Processes
+=========================
+
+In this section, the implementation of Gaussian processes used in sklearn until
+release 0.16.1 is described. Note that this implementation is deprecated and
+will be removed in version 0.18.
 
 An introductory regression example
 ----------------------------------
@@ -507,9 +517,6 @@ data. Depending on the number of parameters provided at instantiation, the
 fitting procedure may recourse to maximum likelihood estimation for the
 parameters or alternatively it uses the given parameters.
 
-.. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression_001.png
-   :target: ../auto_examples/gaussian_process/plot_gp_regression.html
-   :align: center
 
 ::
 
@@ -546,24 +553,16 @@ equivalent to specifying a fractional variance in the input.  That is
    \mathrm{nugget}_i = \left[\frac{\sigma_i}{y_i}\right]^2
 
 With ``nugget`` and ``corr`` properly set, Gaussian Processes can be
-used to robustly recover an underlying function from noisy data:
-
-.. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression_002.png
-   :target: ../auto_examples/gaussian_process/plot_gp_regression.html
-   :align: center
-
-.. topic:: Other examples
-
-  * :ref:`example_gaussian_process_plot_gp_probabilistic_classification_after_regression.py`
+used to robustly recover an underlying function from noisy data.
 
 
 
 Mathematical formulation
-========================
+------------------------
 
 
 The initial assumption
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 Suppose one wants to model the output of a computer experiment, say a
 mathematical function:
@@ -607,7 +606,7 @@ and zero otherwise : a *dirac* correlation model -- sometimes referred to as a
 
 
 The best linear unbiased prediction (BLUP)
-------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We now derive the *best linear unbiased prediction* of the sample path
 :math:`g` conditioned on the observations:
@@ -712,7 +711,7 @@ decomposition algorithm.
 
 
 The empirical best linear unbiased predictor (EBLUP)
-----------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Until now, both the autocorrelation and regression models were assumed given.
 In practice however they are never known in advance so that one has to make
@@ -730,36 +729,10 @@ fmin_cobyla optimization function from scipy.optimize. In the case of
 anisotropy however, we provide an implementation of Welch's componentwise
 optimization algorithm -- see references.
 
-For a more comprehensive description of the theoretical aspects of Gaussian
-Processes for Machine Learning, please refer to the references below:
-
-.. topic:: References:
-
-    .. `DACE, A Matlab Kriging Toolbox
-       <http://www2.imm.dtu.dk/~hbn/dace/>`_ S Lophaven, HB Nielsen, J
-       Sondergaard 2002
-
-
-    .. `Screening, predicting, and computer experiments
-      <http://www.jstor.org/pss/1269548>`_ WJ Welch, RJ Buck, J Sacks,
-      HP Wynn, TJ Mitchell, and MD Morris Technometrics 34(1) 15--25,
-      1992
-
-
-    .. [RW2006] `Gaussian Processes for Machine Learning
-      <http://www.gaussianprocess.org/gpml/chapters/>`_ CE
-      Rasmussen, CKI Williams, MIT Press, 2006 (Ed. T Diettrich)
-
-    .. `The design and analysis of computer experiments
-      <http://www.stat.osu.edu/~comp_exp/book.html>`_ TJ Santner, BJ
-      Williams, W Notz Springer, 2003
-
-
-
 .. _correlation_models:
 
 Correlation Models
-==================
+------------------
 
 Common correlation models matches some famous SVM's kernels because they are
 mostly built on equivalent assumptions. They must fulfill Mercer's conditions
@@ -781,7 +754,7 @@ models, see the book by Rasmussen & Williams in references.
 
 
 Regression Models
-=================
+-----------------
 
 Common linear regression models involve zero- (constant), first- and
 second-order polynomials. But one may specify its own in the form of a Python
@@ -792,9 +765,9 @@ that the underlying regression problem is not *underdetermined*.
 
 
 Implementation details
-======================
+----------------------
 
-The present implementation is based on a translation of the DACE Matlab
+The implementation is based on a translation of the DACE Matlab
 toolbox.
 
 .. topic:: References:
