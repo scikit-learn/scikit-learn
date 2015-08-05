@@ -20,4 +20,4 @@ from . import regression_models
 
 __all__ = ['GaussianProcess', 'correlation_models', 'regression_models',
            'GaussianProcessRegressor', 'GaussianProcessClassifier',
-           'BinaryGaussianProcessClassifierLaplace', 'kernels']
+           'kernels']
