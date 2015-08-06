@@ -111,6 +111,9 @@ Bug fixes
 
     - Fixed bug in :class:`linear_model.LogisticRegressionCV` where `penalty` was ignored
       in the final fit. By `Manoj Kumar`_.
+      
+    - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized 
+      Laplacian matrix was incorrectly set to 1. By `Peter Fischer`_.
 
 API changes summary
 -------------------
@@ -3548,3 +3551,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Sebastian Raschka: http://sebastianraschka.com
 
 .. _Thomas Unterthiner: https://github.com/untom
+
+.. _Peter Fischer: https://github.com/yanlend
