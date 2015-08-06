@@ -49,7 +49,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                  clustering_method='pam', init='heuristic'):
 
         # Check n_clusters
-        if n_clusters <= 0 or not isinstance(n_clusters, int):
+        if (n_clusters is None or 
+            n_clusters <= 0 or 
+            not isinstance(n_clusters, int)):
             raise ValueError("n_clusters has to be nonnegative integer")
 
         # Check distance_metric
@@ -154,7 +156,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         """In-place update of the medoid indices"""
 
         # Update the medoids for each cluster
-        for cluster_idx in xrange(self.n_clusters):
+        for cluster_idx in range(self.n_clusters):
 
             if sum(cluster_ics == cluster_idx) == 0:
                 warnings.warn("Cluster {} is empty!".format(cluster_idx))
@@ -248,9 +250,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
-            medoids = map(lambda x: x[0],
-                          sorted(enumerate(np.sum(D, axis=1)),
-                                 key=lambda x: x[1]))[:n_clusters]
+            medoids = list(map(lambda x: x[0],
+                               sorted(enumerate(np.sum(D, axis=1)),
+                                      key=lambda x: x[1])))[:n_clusters]
 
         else:
 
