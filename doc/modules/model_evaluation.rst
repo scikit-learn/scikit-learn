@@ -1038,15 +1038,15 @@ where : :math:`N` is the total number of predictions, :math:`f_t` is the predict
   >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam", "ham", "spam"])
   >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3, 0.5, 0.7])
   >>> brier_score_loss(y_true, y_prob)
-  0.14833333333333332
+  0.1483...
   >>> brier_score_loss(y_true, 1-y_prob, pos_label=0)
-  0.14833333333333332
+  0.1483...
   >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
-  0.14833333333333332
+  0.1483...
   >>> brier_score_loss(y_true_categorical, y_prob, pos_label="spam")
-  0.51500000000000001
+  0.5150...
   >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
-  0.33333333333333331
+  0.3333...
 
 .. topic:: Example:
 
