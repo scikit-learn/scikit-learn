@@ -132,3 +132,17 @@ def test_multi_class():
 
         y_pred = gpc.predict(X2)
         assert_array_equal(np.argmax(y_prob, 1), y_pred)
+
+
+def test_multi_class_n_jobs():
+    """ Test that multi-class GPC produces identical results with n_jobs>1. """
+    for kernel in kernels:
+        gpc = GaussianProcessClassifier(kernel=kernel)
+        gpc.fit(X, y_mc)
+
+        gpc_2 = GaussianProcessClassifier(kernel=kernel, n_jobs=2)
+        gpc_2.fit(X, y_mc)
+
+        y_prob = gpc.predict_proba(X2)
+        y_prob_2 = gpc_2.predict_proba(X2)
+        assert_almost_equal(y_prob, y_prob_2)
