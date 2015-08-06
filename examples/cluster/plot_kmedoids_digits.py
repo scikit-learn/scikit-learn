@@ -1,24 +1,22 @@
 """
-===========================================================
+=============================================================
 A demo of K-Medoids clustering on the handwritten digits data
-===========================================================
+=============================================================
 
-In this example we compare different pairwise distance metrics
-for K-Medoids.
+In this example we compare different pairwise distance
+metrics for K-Medoids.
 """
-print(__doc__)
 
-import sys
-from time import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn import metrics
 from sklearn.cluster import KMedoids
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
 from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+
+print(__doc__)
 
 np.random.seed(42)
 
@@ -41,7 +39,7 @@ plt.clf()
 
 plt.suptitle("Plugging different distance functions to K-Medoids", fontsize=14)
 
-for i,distance_metric in enumerate(PAIRWISE_DISTANCE_FUNCTIONS.keys()):
+for i, distance_metric in enumerate(PAIRWISE_DISTANCE_FUNCTIONS.keys()):
 
     if i == 6:
         break
@@ -50,16 +48,15 @@ for i,distance_metric in enumerate(PAIRWISE_DISTANCE_FUNCTIONS.keys()):
     model = KMedoids(n_clusters=n_digits, distance_metric=distance_metric)
     model.fit(reduced_data)
     Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
-    
+
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
-    plt.subplot(2,3,i+1)
+    plt.subplot(2, 3, i + 1)
     plt.imshow(Z, interpolation='nearest',
                extent=(xx.min(), xx.max(), yy.min(), yy.max()),
                cmap=plt.cm.Paired,
                aspect='auto', origin='lower')
-    
-    
+
     plt.plot(reduced_data[:, 0], reduced_data[:, 1], 'k.', markersize=2)
     # Plot the centroids as a white X
     centroids = model.cluster_centers_
@@ -73,4 +70,3 @@ for i,distance_metric in enumerate(PAIRWISE_DISTANCE_FUNCTIONS.keys()):
     plt.yticks(())
 
 plt.show()
-
