@@ -12,13 +12,13 @@ from scipy.linalg import cholesky, cho_solve, solve
 from scipy.optimize import fmin_l_bfgs_b
 from scipy.special import erf
 
-from sklearn.base import BaseEstimator, clone
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.gaussian_process.kernels \
     import RBF, CompoundKernel, ConstantKernel as C
 from sklearn.utils.validation import check_X_y, check_is_fitted, check_array
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import LabelEncoder
-from sklearn.multiclass import OneVsRestClassifier
+from sklearn.multiclass import OneVsRestClassifier, OneVsOneClassifier
 
 
 # Values required for approximating the logistic sigmoid by
@@ -33,7 +33,7 @@ COEFS = np.array([-1854.8214151, 3516.89893646, 221.29346712,
 
 
 class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
-    """Binary Gaussian process classification (GPC) based on Laplace approximation.
+    """Binary Gaussian process classification based on Laplace approximation.
 
     The implementation is based on Algorithm 3.1, 3.2, and 5.1 of
     ``Gaussian Processes for Machine Learning'' (GPML) by Rasmussen and
@@ -174,8 +174,6 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         else:
             self.kernel_ = clone(self.kernel)
 
-        X, y = check_X_y(X, y, multi_output=False)
-
         self.X_train_ = np.copy(X) if self.copy_X_train else X
 
         # Encode class labels and check that it is a binary classification
@@ -251,7 +249,6 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             Predicted target values for X, values are from classes_
         """
         check_is_fitted(self, ["X_train_", "y_train_", "pi_", "W_sr_", "L_"])
-        X = check_array(X)
 
         # As discussed on Section 3.4.2 of GPML, for making hard binary
         # decisions, it is enough to compute the MAP of the posterior and
@@ -276,7 +273,6 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             order, as they appear in the attribute `classes_`.
         """
         check_is_fitted(self, ["X_train_", "y_train_", "pi_", "W_sr_", "L_"])
-        X = check_array(X)
 
         # Based on Algorithm 3.2 of GPML
         K_star = self.kernel_(self.X_train_, X)  # K_star =k(x_star)
@@ -430,7 +426,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         return theta_opt, func_min
 
 
-class GaussianProcessClassifier(OneVsRestClassifier):
+class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
     """Gaussian process classification (GPC) based on Laplace approximation.
 
     The implementation is based on Algorithm 3.1, 3.2, and 5.1 of
@@ -513,6 +509,17 @@ class GaussianProcessClassifier(OneVsRestClassifier):
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
+    multi_class: string, default: "one_vs_rest"
+        Specifies how multi-class classification problems are handled.
+        Supported are "one_vs_rest" and "one_vs_one". In "one_vs_rest",
+        one binary Gaussian process classifier is fitted for each class, which
+        is trained to separate this class from the rest. In "one_vs_one", one
+        binary Gaussian process classifier is fitted for each pair of classes,
+        which is trained to separate these two classes. The predictions of
+        these binary predictors are combined into multi-class predictions.
+        Note that "one_vs_one" does not support predicting probability
+        estimates.
+
     n_jobs : int, optional, default: 1
         The number of jobs to use for the computation. If -1 all CPUs are used.
         If 1 is given, no parallel computing code is used at all, which is
@@ -521,7 +528,7 @@ class GaussianProcessClassifier(OneVsRestClassifier):
 
     Attributes
     ----------
-    kernel_: kernel object
+    kernel_ : kernel object
         The kernel used for prediction. In case of binary classification,
         the structure of the kernel is the same as the one passed as parameter
         but with optimized hyperparameters. In case of multi-class
@@ -530,16 +537,15 @@ class GaussianProcessClassifier(OneVsRestClassifier):
 
     classes_ : array-like, shape = (n_classes,)
         Unique class labels.
+
+    n_classes_ : int
+        The number of classes in the training data
     """
     def __init__(self, kernel=None, jitter=0.0, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=1, max_iter=100, warm_start=False,
-                 copy_X_train=False, random_state=None, n_jobs=1):
-        self.base_estimator = _BinaryGaussianProcessClassifierLaplace(
-            kernel, jitter, optimizer, n_restarts_optimizer, max_iter,
-            warm_start, copy_X_train, random_state)
-        super(GaussianProcessClassifier, self).__init__(
-            self.base_estimator, n_jobs)
-
+                 copy_X_train=False, random_state=None,
+                 multi_class="one_vs_rest", n_jobs=1):
+        self.kernel = kernel
         self.jitter = jitter
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
@@ -547,7 +553,12 @@ class GaussianProcessClassifier(OneVsRestClassifier):
         self.warm_start = warm_start
         self.copy_X_train = copy_X_train
         self.random_state = random_state
+        self.multi_class = multi_class
         self.n_jobs = n_jobs
+
+        self.base_estimator_ = _BinaryGaussianProcessClassifierLaplace(
+            kernel, jitter, optimizer, n_restarts_optimizer, max_iter,
+            warm_start, copy_X_train, random_state)
 
     def fit(self, X, y):
         """Fit Gaussian process classification model
@@ -566,20 +577,74 @@ class GaussianProcessClassifier(OneVsRestClassifier):
         """
         X, y = check_X_y(X, y, multi_output=False)
 
-        if np.unique(y).size == 1:
+        self.classes_ = np.unique(y)
+        self.n_classes_ = self.classes_.size
+        if self.n_classes_ == 1:
             raise ValueError("GaussianProcessClassifier requires 2 or more "
                              "distinct classes. Only class %s present."
-                             % np.unique(y)[0])
+                             % self.classes_[0])
+        if self.n_classes_ > 2:
+            if self.multi_class == "one_vs_rest":
+                self.base_estimator_ = \
+                    OneVsRestClassifier(self.base_estimator_,
+                                        n_jobs=self.n_jobs)
+            elif self.multi_class == "one_vs_one":
+                self.base_estimator_ = \
+                    OneVsOneClassifier(self.base_estimator_,
+                                       n_jobs=self.n_jobs)
+            else:
+                raise ValueError("Unknown multi-class mode %s"
+                                 % self.multi_class)
 
-        return super(GaussianProcessClassifier, self).fit(X, y)
+        self.base_estimator_.fit(X, y)
+        return self
+
+    def predict(self, X):
+        """Perform classification on an array of test vectors X.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+
+        Returns
+        -------
+        C : array, shape = (n_samples,)
+            Predicted target values for X, values are from classes_
+        """
+        check_is_fitted(self, ["classes_", "n_classes_"])
+        X = check_array(X)
+        return self.base_estimator_.predict(X)
+
+    def predict_proba(self, X):
+        """Return probability estimates for the test vector X.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+
+        Returns
+        -------
+        C : array-like, shape = (n_samples, n_classes)
+            Returns the probability of the samples for each class in
+            the model. The columns correspond to the classes in sorted
+            order, as they appear in the attribute `classes_`.
+        """
+        check_is_fitted(self, ["classes_", "n_classes_"])
+        if self.n_classes_ > 2 and self.multi_class == "one_vs_one":
+            raise ValueError("one_vs_one multi-class mode does not support "
+                             "predicting probability estimates. Use "
+                             "one_vs_rest mode instead.")
+        X = check_array(X)
+        return self.base_estimator_.predict_proba(X)
 
     @property
     def kernel_(self):
-        if len(self.estimators_) == 1:
-            return self.estimators_[0].kernel_
+        if self.n_classes_ == 2:
+            return self.base_estimator_.kernel_
         else:
-            return CompoundKernel([estimator.kernel_
-                                   for estimator in self.estimators_])
+            return CompoundKernel(
+                [estimator.kernel_
+                 for estimator in self.base_estimator_.estimators_])
 
     def log_marginal_likelihood(self, theta, eval_gradient=False):
         """Returns log-marginal likelihood of theta for training data.
@@ -612,39 +677,31 @@ class GaussianProcessClassifier(OneVsRestClassifier):
             hyperparameters at position theta.
             Only returned when eval_gradient is True.
         """
+        check_is_fitted(self, ["classes_", "n_classes_"])
+
         theta = np.asarray(theta)
-        if len(self.estimators_) == 1:
-            return self.estimators_[0].log_marginal_likelihood(
+        if self.n_classes_ == 2:
+            return self.base_estimator_.log_marginal_likelihood(
                 theta, eval_gradient)
         else:
             if eval_gradient:
                 raise NotImplementedError(
                     "Gradient of log-marginal-likelhood not implemented for "
                     "multi-class GPC.")
-            n_dims = self.estimators_[0].kernel_.n_dims
+            estimators = self.base_estimator_.estimators_
+            n_dims = estimators[0].kernel_.n_dims
             if theta.shape[0] == n_dims:  # use same theta for all sub-kernels
                 return np.mean(
                     [estimator.log_marginal_likelihood(theta)
-                     for i, estimator in enumerate(self.estimators_)])
+                     for i, estimator in enumerate(estimators)])
             elif theta.shape[0] == n_dims * self.classes_.shape[0]:
                 # theta for compound kernel
                 return np.mean(
                     [estimator.log_marginal_likelihood(
                         theta[n_dims*i:n_dims*(i+1)])
-                     for i, estimator in enumerate(self.estimators_)])
+                     for i, estimator in enumerate(estimators)])
             else:
                 raise ValueError("Shape of theta must be either %d or %d. "
                                  "Obtained theta with shape %d."
                                  % (n_dims, n_dims * self.classes_.shape[0],
                                     theta.shape[0]))
-
-    # Some code checks simply for the existence of the method decision_function
-    # before calling it. However, OneVsRestClassifier has the method but raises
-    # always an Exception because _BinaryGaussianProcessClassifierLaplace
-    # does not implement it. We thus raise an AttributeError since calling the
-    # method would always fail.
-    def __getattribute__(self, name):
-        if name in ['decision_function']:
-            raise AttributeError("decision_function not available for "
-                                 "GaussianProcessClassifier")
-        return super(GaussianProcessClassifier, self).__getattribute__(name)
