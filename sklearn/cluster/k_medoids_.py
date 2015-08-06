@@ -10,7 +10,7 @@ import warnings
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import check_array
+from ..utils import check_array, check_random_state
 
 # With Python 2.x ValueError needs to be imported,
 # otherwise that's not needed
@@ -26,17 +26,20 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     Parameters
     ----------
-    n_clusters: int, optional, default: 8
+    n_clusters : int, optional, default: 8
       How many medoids. Must be positive.
 
-    distance_metric: string, optional, default: 'euclidean'
+    distance_metric : string, optional, default: 'euclidean'
       What distance metric to use.
 
-    clustering: {'pam'}, optional, default: 'pam'
+    clustering : {'pam'}, optional, default: 'pam'
       What clustering mode to use.
 
-    init: {'random', 'heuristic'}, optional, default: 'heuristic'
+    init : {'random', 'heuristic'}, optional, default: 'heuristic'
       Specify medoid initialization.
+
+    random_state : int, optional, default: None
+      Specify random state for the random number generator
     """
 
     # Supported clustering methods
@@ -46,38 +49,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     INIT_METHODS = ['random', 'heuristic']
 
     def __init__(self, n_clusters=8, distance_metric='euclidean',
-                 clustering_method='pam', init='heuristic'):
-
-        # Check n_clusters
-        if (n_clusters is None or 
-            n_clusters <= 0 or 
-            not isinstance(n_clusters, int)):
-            raise ValueError("n_clusters has to be nonnegative integer")
-
-        # Check distance_metric
-        if callable(distance_metric):
-            self.distance_func = distance_metric
-        elif distance_metric in PAIRWISE_DISTANCE_FUNCTIONS:
-            self.distance_func = \
-                PAIRWISE_DISTANCE_FUNCTIONS[distance_metric]
-        else:
-            raise ValueError("distance_metric needs to be " +
-                             "callable or one of the " +
-                             "following strings: " +
-                             "{}".format(PAIRWISE_DISTANCE_FUNCTIONS.keys()) +
-                             ". Instead, '{}' ".format(distance_metric) +
-                             "was given.")
-
-        # Check clustering_method
-        if clustering_method not in self.CLUSTERING_METHODS:
-            raise ValueError("clustering must be one of the following: " +
-                             "{}".format(self.CLUSTERING_METHODS))
-
-        # Check init
-        if init not in self.INIT_METHODS:
-            raise ValueError("init needs to be one of " +
-                             "the following: " +
-                             "{}".format(self.INIT_METHODS))
+                 clustering_method='pam', init='heuristic',
+                 random_state=None):
 
         self.n_clusters = n_clusters
 
@@ -86,6 +59,43 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self.init = init
 
         self.clustering_method = clustering_method
+
+        self.random_state = random_state
+
+    def __check_init_args(self):
+
+        # Check n_clusters
+        if self.n_clusters is None or self.n_clusters <= 0 or \
+                not isinstance(self.n_clusters, int):
+            raise ValueError("n_clusters has to be nonnegative integer")
+
+        # Check distance_metric
+        if callable(self.distance_metric):
+            self.distance_func = self.distance_metric
+        elif self.distance_metric in PAIRWISE_DISTANCE_FUNCTIONS:
+            self.distance_func = \
+                PAIRWISE_DISTANCE_FUNCTIONS[self.distance_metric]
+        else:
+            raise ValueError("distance_metric needs to be " +
+                             "callable or one of the " +
+                             "following strings: " +
+                             "{}".format(PAIRWISE_DISTANCE_FUNCTIONS.keys()) +
+                             ". Instead, '{}' ".format(self.distance_metric) +
+                             "was given.")
+
+        # Check clustering_method
+        if self.clustering_method not in self.CLUSTERING_METHODS:
+            raise ValueError("clustering must be one of the following: " +
+                             "{}".format(self.CLUSTERING_METHODS))
+
+        # Check init
+        if self.init not in self.INIT_METHODS:
+            raise ValueError("init needs to be one of " +
+                             "the following: " +
+                             "{}".format(self.INIT_METHODS))
+
+        # Check random state
+        self.random_state_ = check_random_state(self.random_state)
 
     def fit(self, X, y=None):
         """Fit K-Medoids to the provided data.
@@ -98,6 +108,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         -------
         self
         """
+
+        self.__check_init_args()
 
         # Check that the array is good and attempt to convert it to
         # Numpy array if possible
@@ -244,7 +256,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         if self.init == 'random':  # Random initialization
 
             # Pick random k medoids as the initial ones.
-            medoids = np.random.permutation(D.shape[0])[:n_clusters]
+            medoids = self.random_state_.permutation(D.shape[0])[:n_clusters]
 
         elif self.init == 'heuristic':  # Initialization by heuristic
 
