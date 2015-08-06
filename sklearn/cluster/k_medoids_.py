@@ -39,8 +39,11 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     init : {'random', 'heuristic'}, optional, default: 'heuristic'
         Specify medoid initialization.
 
+    max_iter : int, optional, default : 300
+        Specify the maximum number of iterations when fitting.
+
     random_state : int, optional, default: None
-        Specify random state for the random number generator
+        Specify random state for the random number generator.
     """
 
     # Supported clustering methods
@@ -51,13 +54,15 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def __init__(self, n_clusters=8, distance_metric='euclidean',
                  clustering_method='pam', init='heuristic',
-                 random_state=None):
+                 max_iter=300, random_state=None):
 
         self.n_clusters = n_clusters
 
         self.distance_metric = distance_metric
 
         self.init = init
+
+        self.max_iter = max_iter
 
         self.clustering_method = clustering_method
 
@@ -133,8 +138,13 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         old_medoid_ics = np.zeros((self.n_clusters,))
 
         # Continue the algorithm as long as
-        # the medoids keep changing
-        while not np.all(old_medoid_ics == medoid_ics):
+        # the medoids keep changing and the maximum number
+        # of iterations is not exceeded
+        iter_idx = 0
+        while not np.all(old_medoid_ics == medoid_ics) and \
+                iter_idx < self.max_iter:
+
+            iter_idx += 1
 
             # Keep a copy of the old medoid assignments
             old_medoid_ics = np.copy(medoid_ics)
