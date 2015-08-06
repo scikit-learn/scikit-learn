@@ -13,13 +13,6 @@ from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_array, check_random_state
 from ..utils.validation import check_is_fitted
 
-# With Python 2.x ValueError needs to be imported,
-# otherwise that's not needed
-try:
-    from exceptions import ValueError
-except ImportError:
-    pass
-
 
 class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     """
