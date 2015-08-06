@@ -133,6 +133,9 @@ Bug fixes
     - Fix in :class:`cluster.KMeans` cluster reassignment for sparse input by
       `Lars Buitinck`_.
 
+    - Fixed a bug in :class:`lda.LDA` that could cause asymmetric covariance 
+      matrices when using shrinkage. By `Martin Billinger`_.
+
 API changes summary
 -------------------
 
