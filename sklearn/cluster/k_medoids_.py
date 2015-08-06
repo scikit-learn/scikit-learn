@@ -11,6 +11,7 @@ import warnings
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_array, check_random_state
+from ..utils.validation import check_is_fitted
 
 # With Python 2.x ValueError needs to be imported,
 # otherwise that's not needed
@@ -27,19 +28,19 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     Parameters
     ----------
     n_clusters : int, optional, default: 8
-      How many medoids. Must be positive.
+        How many medoids. Must be positive.
 
     distance_metric : string, optional, default: 'euclidean'
-      What distance metric to use.
+        What distance metric to use.
 
     clustering : {'pam'}, optional, default: 'pam'
-      What clustering mode to use.
+        What clustering mode to use.
 
     init : {'random', 'heuristic'}, optional, default: 'heuristic'
-      Specify medoid initialization.
+        Specify medoid initialization.
 
     random_state : int, optional, default: None
-      Specify random state for the random number generator
+        Specify random state for the random number generator
     """
 
     # Supported clustering methods
@@ -62,7 +63,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         self.random_state = random_state
 
-    def __check_init_args(self):
+    def _check_init_args(self):
 
         # Check n_clusters
         if self.n_clusters is None or self.n_clusters <= 0 or \
@@ -109,7 +110,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self
         """
 
-        self.__check_init_args()
+        self._check_init_args()
 
         # Check that the array is good and attempt to convert it to
         # Numpy array if possible
@@ -126,7 +127,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                              "must be larger than the sides " +
                              "of the distance matrix ({})".format(D.shape[0]))
 
-        medoid_ics = self.__get_initial_medoid_indices(D, self.n_clusters)
+        medoid_ics = self._get_initial_medoid_indices(D, self.n_clusters)
 
         # Old medoids will be stored here for reference
         old_medoid_ics = np.zeros((self.n_clusters,))
@@ -139,10 +140,10 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             old_medoid_ics = np.copy(medoid_ics)
 
             # Get cluster indices
-            cluster_ics = self.__get_cluster_ics(D, medoid_ics)
+            cluster_ics = self._get_cluster_ics(D, medoid_ics)
 
             # Update medoids with the new cluster indices
-            self.__update_medoid_ics_in_place(D, cluster_ics, medoid_ics)
+            self._update_medoid_ics_in_place(D, cluster_ics, medoid_ics)
 
         # Expose labels_ which are the assignments of
         # the training data to clusters
@@ -154,7 +155,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         # Return self to enable method chaining
         return self
 
-    def __get_cluster_ics(self, D, medoid_ics):
+    def _get_cluster_ics(self, D, medoid_ics):
         """Returns cluster indices for D and current medoid indices"""
 
         # Assign data points to clusters based on
@@ -164,7 +165,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         return cluster_ics
 
-    def __update_medoid_ics_in_place(self, D, cluster_ics, medoid_ics):
+    def _update_medoid_ics_in_place(self, D, cluster_ics, medoid_ics):
         """In-place update of the medoid indices"""
 
         # Update the medoids for each cluster
@@ -212,19 +213,23 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
-          Data to transform.
+            Data to transform.
 
         Returns
         -------
         X_new : array, shape=(n_samples, n_clusters)
-          X transformed in the new space.
+            X transformed in the new space.
         """
+
+        self._check_is_fitted()
 
         # Apply distance metric wrt. cluster centers (medoids),
         # and return these distances
         return self.distance_func(X, Y=self.cluster_centers_)
 
     def predict(self, X):
+
+        self._check_is_fitted()
 
         # Check that the array is good and attempt to convert it to
         # Numpy array if possible
@@ -251,7 +256,11 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         return inertia
 
-    def __get_initial_medoid_indices(self, D, n_clusters):
+    def _check_is_fitted(self):
+
+        check_is_fitted(self, "cluster_centers_")
+
+    def _get_initial_medoid_indices(self, D, n_clusters):
 
         if self.init == 'random':  # Random initialization
 
@@ -262,9 +271,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
-            medoids = list(map(lambda x: x[0],
-                               sorted(enumerate(np.sum(D, axis=1)),
-                                      key=lambda x: x[1])))[:n_clusters]
+            medoids = list(np.argsort(np.sum(D, axis=1))[:n_clusters])
 
         else:
 
