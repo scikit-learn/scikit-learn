@@ -26,6 +26,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import brier_score_loss
+from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import coverage_error
 from sklearn.metrics import explained_variance_score
@@ -140,6 +141,8 @@ CLASSIFICATION_METRICS = {
     "samples_f2_score": partial(fbeta_score, average="samples", beta=2),
     "samples_precision_score": partial(precision_score, average="samples"),
     "samples_recall_score": partial(recall_score, average="samples"),
+
+    "cohen_kappa_score": cohen_kappa_score,
 }
 
 THRESHOLDED_METRICS = {
@@ -250,6 +253,8 @@ METRICS_WITH_LABELS = [
 
     "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
     "macro_precision_score", "macro_recall_score",
+
+    "cohen_kappa_score",
 ]
 
 # Metrics with a "normalize" option
@@ -314,8 +319,9 @@ SYMMETRIC_METRICS = [
     "f1_score", "weighted_f1_score", "micro_f1_score", "macro_f1_score",
 
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
-    "median_absolute_error"
+    "median_absolute_error",
 
+    "cohen_kappa_score",
 ]
 
 # Asymmetric with respect to their input arguments y_true and y_pred
@@ -340,6 +346,7 @@ NOT_SYMMETRIC_METRICS = [
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = [
+    "cohen_kappa_score",
     "confusion_matrix",
     "hamming_loss",
     "matthews_corrcoef_score",

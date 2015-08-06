@@ -36,6 +36,10 @@ def test_fetch_rcv1():
     assert_equal((804414,), s1.shape)
     assert_equal(103, len(cat_list))
 
+    # test ordering of categories
+    first_categories = [u'C11', u'C12', u'C13', u'C14', u'C15', u'C151']
+    assert_array_equal(first_categories, cat_list[:6])
+
     # test number of sample for some categories
     some_categories = ('GMIL', 'E143', 'CCAT')
     number_non_zero_in_cat = (5, 1206, 381327)

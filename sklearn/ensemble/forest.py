@@ -373,6 +373,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
+        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+
         n_classes_ = self.n_classes_
         n_samples = y.shape[0]
 
@@ -658,6 +660,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag scores"""
+        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+
         n_samples = y.shape[0]
 
         predictions = np.zeros((n_samples, self.n_outputs_))
