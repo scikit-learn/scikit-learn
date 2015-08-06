@@ -123,9 +123,12 @@ Bug fixes
 
     - Fixed bug in :class:`linear_model.LogisticRegressionCV` where `penalty` was ignored
       in the final fit. By `Manoj Kumar`_.
-
+      
     - Fixed bug in :class:`ensemble.forest.ForestClassifier` while computing 
       oob_score and X is a sparse.csc_matrix. By `Ankur Ankan`_.
+     
+    - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized 
+      Laplacian matrix was incorrectly set to 1. By `Peter Fischer`_.
 
     - All regressors now consistently handle and warn when given ``y`` that is of
       shape ``(n_samples, 1)``. By `Andreas Müller`_.
@@ -3571,3 +3574,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Thomas Unterthiner: https://github.com/untom
 
 .. _Loic Esteve: https://github.com/lesteve
+
+.. _Peter Fischer: https://github.com/yanlend
