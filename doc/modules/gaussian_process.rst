@@ -255,12 +255,23 @@ If the initial hyperparameters should be kept fixed, `None` can be passed as
 optimizer.
 
 :class:`GaussianProcessClassifier` supports multi-class classification
-by performing one-versus-rest based training and prediction based on
-a binary Gaussian process classifier using the Laplace approximation of the
-posterior for binary classification discussed above. Note that
-:class:`GaussianProcessClassifier` thus does not implement
-a true multi-class Laplace approximation, but is based on several binary
-classification tasks.
+by performing either one-versus-rest or one-versus-one based training and
+prediction.  In one-versus-rest, one binary Gaussian process classifier is
+fitted for each class, which is trained to separate this class from the rest.
+In "one_vs_one", one binary Gaussian process classifier is fitted for each pair
+of classes, which is trained to separate these two classes. The predictions of
+these binary predictors are combined into multi-class predictions. See the
+section on :ref:`multi-class classification <multiclass>` for more details.
+
+In the case of Gaussian process classification, "one_vs_one" might be
+computationally  cheaper since it has to solve many problems involving only a
+subset of the whole training set rather than fewer problems on the whole
+dataset. Since Gaussian process classification scales cubically with the size
+of the dataset, this might be considerably faster. However, note that
+"one_vs_one" does not support predicting probability estimates but only plain
+predictions. Moreover, note that :class:`GaussianProcessClassifier` does not
+(yet) implement a true multi-class Laplace approximation, but is based on
+several binary classification tasks.
 
 GPC examples
 ============
