@@ -313,7 +313,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         various loss functions and regularization regimes.
     """
 
-    def __init__(self, epsilon=0.0, tol=1e-4, C=1.0,
+    def __init__(self, epsilon=0.1, tol=1e-4, C=1.0,
                  loss='epsilon_insensitive', fit_intercept=True,
                  intercept_scaling=1., dual=True, verbose=0,
                  random_state=None, max_iter=1000):
