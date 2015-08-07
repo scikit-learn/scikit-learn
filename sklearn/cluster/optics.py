@@ -42,7 +42,7 @@ class setOfObjects(BallTree):
         self._ordered_list = []
 
 
-def _prep_optics(self, epsilon, MinPts):
+def _prep_optics(self, epsilon, min_samples):
     """Prep data set for main OPTICS loop
 
     Parameters
@@ -50,7 +50,7 @@ def _prep_optics(self, epsilon, MinPts):
     epsilon: float or int
         Determines maximum object size that can be extracted.
         Smaller epsilons reduce run time
-    MinPts: int
+    min_samples: int
         The minimum number of samples in a neighborhood to be
         considered a core point
 
@@ -62,11 +62,11 @@ def _prep_optics(self, epsilon, MinPts):
                                          count_only=True)
 
     # Only core distance lookups for points capable of being core
-    mask_idx = self._nneighbors >= MinPts
+    mask_idx = self._nneighbors >= min_samples
     core_query = self.get_arrays()[0][mask_idx]
     # Check to see if that there is at least one cluster
     if len(core_query) >= 1:
-        core_dist = self.query(core_query, k=MinPts)[0][:, -1]
+        core_dist = self.query(core_query, k=min_samples)[0][:, -1]
         self._core_dist[mask_idx] = core_dist
 
 
