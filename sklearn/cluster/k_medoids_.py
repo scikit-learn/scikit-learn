@@ -112,18 +112,10 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         # Check that the array is good and attempt to convert it to
         # Numpy array if possible
-        X = check_array(X)
+        X = self._check_array(X)
 
         # Apply distance metric to get the distance matrix
         D = self.distance_func(X)
-
-        # Check that the number of clusters is less than or equal to
-        # the number of clusters
-        if self.n_clusters > D.shape[0]:
-            raise ValueError("The number of medoids " +
-                             "({}) ".format(self.n_clusters) +
-                             "must be larger than the sides " +
-                             "of the distance matrix ({})".format(D.shape[0]))
 
         medoid_ics = self._get_initial_medoid_indices(D, self.n_clusters)
 
@@ -133,11 +125,11 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         # Continue the algorithm as long as
         # the medoids keep changing and the maximum number
         # of iterations is not exceeded
-        iter_idx = 0
+        self.n_iter_ = 0
         while not np.all(old_medoid_ics == medoid_ics) and \
-                iter_idx < self.max_iter:
+                self.n_iter_ < self.max_iter:
 
-            iter_idx += 1
+            self.n_iter_ += 1
 
             # Keep a copy of the old medoid assignments
             old_medoid_ics = np.copy(medoid_ics)
@@ -157,6 +149,20 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         # Return self to enable method chaining
         return self
+
+    def _check_array(self, X):
+
+        X = check_array(X)
+
+        # Check that the number of clusters is less than or equal to
+        # the number of samples
+        if self.n_clusters > X.shape[0]:
+            raise ValueError("The number of medoids " +
+                             "({}) ".format(self.n_clusters) +
+                             "must be larger than the number " +
+                             "of samples ({})".format(X.shape[0]))
+
+        return X
 
     def _get_cluster_ics(self, D, medoid_ics):
         """Returns cluster indices for D and current medoid indices"""
