@@ -8,6 +8,7 @@ from __future__ import print_function
 # License: BSD 3 clause
 
 import numpy as np
+from scipy.stats import norm
 
 from .gaussian_process.gaussian_process import GaussianProcess
 from .cross_validation import check_cv
@@ -33,6 +34,13 @@ def sample_candidates(n_candidates,param_bounds,param_isInt):
 	candidates = candidates.T
 
 	return compute_unique(candidates)
+
+def compute_ei(predictions,sigma,y_best):
+	ei_array = np.zeros(predictions.shape[0])
+	for i in range(ei_array.shape[0]):
+		z = (y_best - predictions[i]) / sigma[i]
+		ei_array[i] = sigma[i] * (z * norm.cdf(z) + norm.pdf(z))
+	return ei_array
 
 def compute_unique(a):
 	# keep only unique values in the ndarray a
@@ -70,18 +78,14 @@ class GPSearchCV(object):
 	"""
     Examples
     --------
-    >>> parameters = {'kernel' : ['rbf','poly'],
-    ...   			   'd' : [1,3],
-    ...  			   'C' : [1,10] }
-    >>> parameters_details = {'kernel' : 'cat',
-    ...   			   'd' : 'int',
-    ...  			   'C' : 'float'}
+    >>> parameters = {'kernel' :  ['cat', ['rbf','poly']],
+    ...   			   'd' : ['int', [1,3]],
+    ...  			   'C' : ['float',[1,10])}
 
     """
 
 	def __init__(self,
 				parameters,
-				parameters_details,
 				estimator,
 				scoring=None,
 				X=None,y=None,
@@ -97,13 +101,12 @@ class GPSearchCV(object):
 
 		self.parameters = parameters
 		self.n_parameters = len(parameters)
-		self.parameters_details = parameters_details
 		self.acquisition_function = acquisition_function
 		self.n_iter = n_iter
 		self.n_init = n_init
 		self.n_candidates = n_candidates
 		self.param_names = parameters.keys()
-		self.param_isInt = np.array([ 0 if (parameters_details[k]=='float') else 1 for k in self.param_names ]) 
+		self.param_isInt = np.array([ 0 if (parameters[k][0]=='float') else 1 for k in self.param_names ]) 
 		self.param_bounds = np.zeros((self.n_parameters,2))
 		self.gp_nugget = gp_nugget
 		self.verbose = verbose
@@ -127,17 +130,16 @@ class GPSearchCV(object):
 
 		# init param_bounds
 		for i in range(self.n_parameters):
-			if(parameters_details[self.param_names[i]]=='cat'):
+			if(parameters[self.param_names[i]][0]=='cat'):
 				self.param_bounds[i,0] = 0
-				self.param_bounds[i,1] = len(parameters[self.param_names[i]])
+				self.param_bounds[i,1] = len(parameters[self.param_names[i]][1])
 			else:
-				self.param_bounds[i] = np.array(parameters[self.param_names[i]])
-				if(parameters_details[self.param_names[i]]=='int'):
+				self.param_bounds[i] = np.array(parameters[self.param_names[i]][1])
+				if(parameters[self.param_names[i]][0]=='int'):
 					self.param_bounds[i,1] += 1
 
 		if(self.verbose):
 			print(self.parameters)
-			print(self.parameters_details)
 			print(self.param_names)
 			print(self.param_isInt)
 			print(self.param_bounds)
@@ -146,9 +148,9 @@ class GPSearchCV(object):
 	def vector_to_dict(self,vector_parameter):
 		dict_parameter = dict.fromkeys(self.param_names)
 		for i in range(self.n_parameters):
-			if(self.parameters_details[self.param_names[i]]=='cat'):
-				dict_parameter[self.param_names[i]] = self.parameters[self.param_names[i]][int(vector_parameter[i])]
-			elif(self.parameters_details[self.param_names[i]]=='int'):
+			if(self.parameters[self.param_names[i]][0]=='cat'):
+				dict_parameter[self.param_names[i]] = (self.parameters[self.param_names[i]][1])[int(vector_parameter[i])]
+			elif(self.parameters[self.param_names[i]][0]=='int'):
 				dict_parameter[self.param_names[i]] = int(vector_parameter[i])
 			else:
 				dict_parameter[self.param_names[i]] = vector_parameter[i]
@@ -221,6 +223,12 @@ class GPSearchCV(object):
 				predictions,MSE = gp.predict(candidates,eval_MSE=True)
 				upperBound = predictions + 1.96*np.sqrt(MSE)
 				best_candidate = candidates[np.argmax(upperBound)]
+
+			elif(self.acquisition_function == 'EI'):
+				predictions,MSE = gp.predict(candidates,eval_MSE=True)
+				y_best = np.max(cv_scores)
+				ei = compute_ei(predictions,np.sqrt(MSE),y_best)
+				best_candidate = candidates[np.argmax(ei)]
 
 			else:
 				print('WARNING : acquisition_function not implemented yet : ' + self.acquisition_function)
