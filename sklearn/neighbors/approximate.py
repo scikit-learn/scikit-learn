@@ -318,15 +318,23 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         total_neighbors = np.array([], dtype=int)
         total_distances = np.array([], dtype=float)
 
+        index_offsets = bin_queries // (2**self._residual)
+
         while (max_depth > self.min_hash_match and
                ratio_within_radius > threshold):
             left_mask = self._left_mask[max_depth]
             right_mask = self._right_mask[max_depth]
             candidates = []
             for i in range(self.n_estimators):
-                start, stop = _find_matching_indices(self.trees_[i],
+                start, stop = _find_matching_indices(self.trees_[i]
+                                                     [self._left_locations
+                                                      [i, index_offsets[i]]:
+                                                      self._right_locations
+                                                      [i, index_offsets[i]]],
                                                      bin_queries[i],
                                                      left_mask, right_mask)
+                start += self._left_locations[i, index_offsets[i]]
+                stop += self._left_locations[i, index_offsets[i]]
                 candidates.extend(
                     self.original_indices_[i][start:stop].tolist())
             candidates = np.setdiff1d(candidates, total_candidates)
