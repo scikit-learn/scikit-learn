@@ -39,12 +39,22 @@ iris.data = sparse.csr_matrix(iris.data)
 
 
 def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
-    dense_svm.fit(X_train.toarray(), y_train)
+    assert_equal
+    if isinstance(dense_svm, svm.OneClassSVM):
+        dense_svm.fit(X_train.toarray())
+    else:
+        dense_svm.fit(X_train.toarray(), y_train)
+    
     if sparse.isspmatrix(X_test):
         X_test_dense = X_test.toarray()
     else:
         X_test_dense = X_test
-    sparse_svm.fit(X_train, y_train)
+    
+    if isinstance(sparse_svm, svm.OneClassSVM):
+        sparse_svm.fit(X_train)
+    else:
+        sparse_svm.fit(X_train, y_train)
+    
     assert_true(sparse.issparse(sparse_svm.support_vectors_))
     assert_true(sparse.issparse(sparse_svm.dual_coef_))
     assert_array_almost_equal(dense_svm.support_vectors_,
@@ -59,9 +69,12 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
                               sparse_svm.decision_function(X_test))
     assert_array_almost_equal(dense_svm.decision_function(X_test_dense),
                               sparse_svm.decision_function(X_test_dense))
-    assert_array_almost_equal(dense_svm.predict_proba(X_test_dense),
-                              sparse_svm.predict_proba(X_test), 4)
-    msg = "cannot use sparse input in 'SVC' trained on dense data"
+    if isinstance(dense_svm, svm.OneClassSVM):
+        msg = "cannot use sparse input in 'OneClassSVM' trained on dense data"
+    else:
+        assert_array_almost_equal(dense_svm.predict_proba(X_test_dense),
+            sparse_svm.predict_proba(X_test), 4)
+        msg = "cannot use sparse input in 'SVC' trained on dense data"
     if sparse.isspmatrix(X_test):
         assert_raise_message(ValueError, msg, dense_svm.predict, X_test)
 
@@ -253,6 +266,22 @@ def test_sample_weights():
 def test_sparse_liblinear_intercept_handling():
     # Test that sparse liblinear honours intercept_scaling param
     test_svm.test_dense_liblinear_intercept_handling(svm.LinearSVC)
+
+def test_sparse_oneclasssvm():
+    """Check that sparse OneClassSVM gives the same result as dense OneClassSVM"""
+    # many class dataset:
+    X_blobs, _ = make_blobs(n_samples=100, centers=10, random_state=0)
+    X_blobs = sparse.csr_matrix(X_blobs)
+
+    datasets = [[X_sp, None, T], [X2_sp, None, T2],
+                [X_blobs[:80], None, X_blobs[80:]],
+                [iris.data, None, iris.data]]
+    kernels = ["linear", "poly", "rbf", "sigmoid"]
+    for dataset in datasets:
+        for kernel in kernels:
+            clf = svm.OneClassSVM(kernel=kernel, random_state=0)
+            sp_clf = svm.OneClassSVM(kernel=kernel, random_state=0)
+            check_svm_model_equal(clf, sp_clf, *dataset)
 
 
 def test_sparse_realdata():
