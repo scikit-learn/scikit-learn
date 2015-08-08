@@ -261,6 +261,9 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         n_candidates = 0
         candidate_set = set()
         min_candidates = self.n_candidates * self.n_estimators
+
+        index_offsets = bin_queries // (2**self._residual)
+
         while (max_depth > self.min_hash_match and
                (n_candidates < min_candidates or
                 len(candidate_set) < n_neighbors)):
@@ -268,9 +271,15 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             left_mask = self._left_mask[max_depth]
             right_mask = self._right_mask[max_depth]
             for i in range(self.n_estimators):
-                start, stop = _find_matching_indices(self.trees_[i],
+                start, stop = _find_matching_indices(self.trees_[i]
+                                                     [self._left_locations
+                                                      [i, index_offsets[i]]:
+                                                      self._right_locations
+                                                      [i, index_offsets[i]]],
                                                      bin_queries[i],
                                                      left_mask, right_mask)
+                start += self._left_locations[i, index_offsets[i]]
+                stop += self._left_locations[i, index_offsets[i]]
                 n_candidates += stop - start
                 candidate_set.update(
                     self.original_indices_[i][start:stop].tolist())
@@ -354,13 +363,19 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         self : object
             Returns self.
         """
-
         self._fit_X = check_array(X, accept_sparse='csr')
 
         # Creates a g(p,x) for each tree
         self.hash_functions_ = []
         self.trees_ = []
         self.original_indices_ = []
+
+        offset = self.min_hash_match
+        self._residual = MAX_HASH_SIZE - offset
+        numbers_left = np.arange(2**offset) * (2**self._residual)
+        numbers_right = (np.arange(2**offset) *
+                         2**self._residual) + (2**self._residual-1)
+        self._left_locations, self._right_locations = [], []
 
         rng = check_random_state(self.random_state)
         int_max = np.iinfo(np.int32).max
@@ -378,6 +393,15 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             self.original_indices_.append(original_index)
             self.trees_.append(bin_hashes)
             self.hash_functions_.append(hasher)
+
+            self._left_locations.append(np.searchsorted(bin_hashes,
+                                                        numbers_left))
+            self._right_locations.append(np.searchsorted(bin_hashes,
+                                                         numbers_right,
+                                                         side='right'))
+
+        self._left_locations = np.array(self._left_locations)
+        self._right_locations = np.array(self._right_locations)
 
         self._generate_masks()
 
