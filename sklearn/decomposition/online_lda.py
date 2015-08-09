@@ -52,7 +52,8 @@ def _log_dirichlet_expectation(X):
     return dirichlet_expection
 
 
-def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior, max_iters,
+def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
+                             max_iters,
                              mean_change_tol, cal_sstats, random_state):
     """E-step: update document-topic distribution.
 
@@ -69,7 +70,8 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior, max_iters
         Prior of document topic distribution `theta`.
 
     max_iters : int
-        Max number of iterations for updating document topic distribution in E-step.
+        Max number of iterations for updating document topic distribution in
+        the E-step.
 
     mean_change_tol : float
         Stopping tolerance for updating document topic distribution in E-setp.
@@ -80,8 +82,8 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior, max_iters
 
     random_state : RandomState instance or None
         Parameter that indicate how to initialize document topic distribution.
-        Set `random_state` to None will initialize document topic distribution to a
-        constant number.
+        Set `random_state` to None will initialize document topic distribution
+        to a constant number.
 
     Returns
     -------
@@ -160,8 +162,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Number of topics.
 
     doc_topic_prior : float, optional (default=None)
-        Prior of document topic distribution `theta`. If the value is None, defaults
-        to `1 / n_topics`.
+        Prior of document topic distribution `theta`. If the value is None,
+        defaults to `1 / n_topics`.
         In the literature, this is called `alpha`.
 
     topic_word_prior : float, optional (default=None)
@@ -171,72 +173,78 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
     learning_method : 'batch' | 'online', default='online'
         Method used to update `_component`. Only used in `fit` method.
-        In general, if the data size is large, the online update will be much faster than
-        the batch update.
+        In general, if the data size is large, the online update will be much
+        faster than the batch update.
         Valid options::
 
-            'batch': Batch variational Bayes method. Use all training data in each EM update.
+            'batch': Batch variational Bayes method. Use all training data in
+                each EM update.
                 Old `components_` will be overwritten in each iteration.
-            'online': Online variational Bayes method. In each EM update, use mini-batch of
-                training data to update the `components_` variable incrementally. The learning
-                rate is controlled by the `learning_decay` and the `learning_offset` parameter.
+            'online': Online variational Bayes method. In each EM update, use
+                mini-batch of training data to update the ``components_``
+                variable incrementally. The learning rate is controlled by the
+                ``learning_decay`` and the ``learning_offset`` parameters.
 
     learning_decay : float, optional (default=0.7)
-        It is a parameter that control learning rate in the online learning method.
-        The value should be set between (0.5, 1.0] to guarantee asymptotic convergence.
-        When the value is 0.0 and batch_size is `n_samples`, the update method is same as
-        batch learning. In the literature, this is called `kappa`.
+        It is a parameter that control learning rate in the online learning
+        method. The value should be set between (0.5, 1.0] to guarantee
+        asymptotic convergence. When the value is 0.0 and batch_size is
+        ``n_samples``, the update method is same as batch learning. In the
+        literature, this is called kappa.
 
     learning_offset : float, optional (default=10.)
-        A (positive) parameter that downweights early iterations in online learning.
-        It should be greater than 1.0. In the literature, this is called `tau0`.
+        A (positive) parameter that downweights early iterations in online
+        learning.  It should be greater than 1.0. In the literature, this is
+        called tau_0.
 
     max_iter : integer, optional (default=10)
         The maximum number of iterations.
 
     total_samples : int, optional (default=1e6)
-        Total number of documents. It is only used in the `partial_fit` method.
+        Total number of documents. Only used in the `partial_fit` method.
 
     batch_size : int, optional (default=128)
-        Number of documents to use in each EM iteration. Only used in online learning.
+        Number of documents to use in each EM iteration. Only used in online
+        learning.
 
     evaluate_every : int optional (default=0)
         How often to evaluate perplexity. Only used in `fit` method.
-        set it to 0 or and negative number to not evalute perplexity in training at all.
-        Evaluating perplexity can help you check convergence in training process, but it
-        will also increase total training time.
-        Evaluating perplexity in every iteration might increase training time up to 2X.
+        set it to 0 or and negative number to not evalute perplexity in
+        training at all. Evaluating perplexity can help you check convergence
+        in training process, but it will also increase total training time.
+        Evaluating perplexity in every iteration might increase training time
+        up to two-fold.
 
     perp_tol : float, optional (default=1e-1)
-        Perplexity tolerance in batch learning. Only used when `evaluate_every` is
-        greater than 0.
+        Perplexity tolerance in batch learning. Only used when
+        ``evaluate_every`` is greater than 0.
 
     mean_change_tol : float, optional (default=1e-3)
-        Stopping tolerance for updating document topic distribution in E-setp.
+        Stopping tolerance for updating document topic distribution in E-step.
 
     max_doc_update_iter : int (default=100)
-        Max number of iterations for updating document topic distribution in E-step.
+        Max number of iterations for updating document topic distribution in
+        the E-step.
 
     n_jobs : int, optional (default=1)
-        The number of jobs to use in E-step. If -1 all CPUs are used. For n_jobs
-        below -1, (n_cpus + 1 + n_jobs) are used.
+        The number of jobs to use in the E-step. If -1, all CPUs are used. For
+        ``n_jobs`` below -1, (n_cpus + 1 + n_jobs) are used.
 
     verbose : int, optional (default=0)
         Verbosity level.
 
     random_state : int or RandomState instance or None, optional (default=None)
-        Pseudo Random Number generator seed control.
+        Pseudo random number generator seed control.
 
 
     Attributes
     ----------
     components_ : array, [n_topics, n_features]
-        Topic word distribution. components_[i, j] represents word `j` in topic `i`.
-        In the literature, this is called `lambda`.
+        Topic word distribution. ``components_[i, j]`` represents word j in
+        topic `i`. In the literature, this is called lambda.
 
     n_iter_ : int
-        Number of iteration.
-
+        Number of iterations.
 
     References
     ----------
@@ -251,9 +259,10 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_topics=10, doc_topic_prior=None, topic_word_prior=None,
-                 learning_method='online', learning_decay=.7, learning_offset=10.,
-                 max_iter=10, batch_size=128, evaluate_every=-1, total_samples=1e6,
+    def __init__(self, n_topics=10, doc_topic_prior=None,
+                 topic_word_prior=None, learning_method='online',
+                 learning_decay=.7, learning_offset=10., max_iter=10,
+                 batch_size=128, evaluate_every=-1, total_samples=1e6,
                  perp_tol=1e-1, mean_change_tol=1e-3, max_doc_update_iter=100,
                  n_jobs=1, verbose=0, random_state=None):
         self.n_topics = n_topics
@@ -277,20 +286,20 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         """Check model parameters."""
 
         if self.n_topics <= 0:
-            err_msg = "Invalid 'n_topics' parameter: %r" % self.n_topics
-            raise ValueError(err_msg)
+            raise ValueError("Invalid 'n_topics' parameter: %r"
+                             % self.n_topics)
 
         if self.total_samples <= 0:
-            err_msg = "Invalid 'total_samples' parameter: %r" % self.total_samples
-            raise ValueError(err_msg)
+            raise ValueError("Invalid 'total_samples' parameter: %r"
+                             % self.total_samples)
 
         if self.learning_offset < 0:
-            err_msg = "Invalid 'learning_offset' parameter: %r" % self.learning_offset
-            raise ValueError(err_msg)
+            raise ValueError("Invalid 'learning_offset' parameter: %r"
+                             % self.learning_offset)
 
         if self.learning_method not in ("batch", "online"):
-            err_msg = "Invalid 'learning_method' parameter: %r" % self.learning_method
-            raise ValueError(err_msg)
+            raise ValueError("Invalid 'learning_method' parameter: %r"
+                             % self.learning_method)
 
     def _init_latent_vars(self, n_features):
         """Initialize latent variables."""
@@ -327,18 +336,19 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             Document word matrix.
 
         cal_sstats : boolean
-            Parameter that indicate whether to calculate sufficient statistics or not.
-            Set `cal_sstats` to `True` when we need to run M-step.
+            Parameter that indicate whether to calculate sufficient statistics
+            or not. Set ``cal_sstats`` to True when we need to run M-step.
 
         random_init : boolean
-            Parameter that indicate whether to initialize document topic distribution
-            randomly in the E-step. Set it to `True` in training steps.
+            Parameter that indicate whether to initialize document topic
+            distribution randomly in the E-step. Set it to True in training
+            steps.
 
         Returns
         -------
         (doc_topic_distr, suff_stats) :
-            `doc_topic_distr` is unnormailzed topic distribution for each document.
-            In the literature, this is called `gamma`.
+            `doc_topic_distr` is unnormailzed topic distribution for each
+            document. In the literature, this is called `gamma`.
             `suff_stats` is expected sufficient statistics for the M-step.
             When `cal_sstats == False`, it will be None.
 
@@ -349,9 +359,12 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         random_state = self.random_state_ if random_init else None
 
         results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(_update_doc_distribution)
-            (X[idx_slice, :], self.exp_dirichlet_component_, self.doc_topic_prior_,
-             self.max_doc_update_iter, self.mean_change_tol, cal_sstats, random_state)
+            delayed(_update_doc_distribution)(X[idx_slice, :],
+                                              self.exp_dirichlet_component_,
+                                              self.doc_topic_prior_,
+                                              self.max_doc_update_iter,
+                                              self.mean_change_tol, cal_sstats,
+                                              random_state)
             for idx_slice in gen_even_slices(X.shape[0], n_jobs))
 
         # merge result
@@ -359,7 +372,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         doc_topic_distr = np.vstack(doc_topics)
 
         if cal_sstats:
-            # This step finishes computing the sufficient statistics for the M step
+            # This step finishes computing the sufficient statistics for the
+            # M-step.
             suff_stats = np.zeros(self.components_.shape)
             for sstats in sstats_list:
                 suff_stats += sstats
@@ -402,11 +416,12 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         else:
             # online update
             # In the literature, the weight is `rho`
-            weight = np.power(self.learning_offset + self.n_iter_, -self.learning_decay)
+            weight = np.power(self.learning_offset + self.n_iter_,
+                              -self.learning_decay)
             doc_ratio = float(total_samples) / X.shape[0]
             self.components_ *= (1 - weight)
-            self.components_ += (weight *
-                                 (self.topic_word_prior_ + doc_ratio * suff_stats))
+            self.components_ += (weight * (self.topic_word_prior_
+                                           + doc_ratio * suff_stats))
 
         # update `component_` related variables
         self.dirichlet_component_ = _log_dirichlet_expectation(self.components_)
@@ -441,7 +456,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self
         """
         self._check_params()
-        X = self._check_non_neg_array(X, "LatentDirichletAllocation.partial_fit")
+        X = self._check_non_neg_array(X,
+                                      "LatentDirichletAllocation.partial_fit")
         n_samples, n_features = X.shape
         batch_size = self.batch_size
 
@@ -456,7 +472,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 (n_features, self.components_.shape[1]))
 
         for idx_slice in gen_batches(n_samples, batch_size):
-            self._em_step(X[idx_slice, :], total_samples=self.total_samples, batch_update=False)
+            self._em_step(X[idx_slice, :], total_samples=self.total_samples,
+                          batch_update=False)
 
         return self
 
@@ -490,15 +507,18 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         for i in xrange(max_iter):
             if learning_method == 'online':
                 for idx_slice in gen_batches(n_samples, batch_size):
-                    self._em_step(X[idx_slice, :], total_samples=n_samples, batch_update=False)
+                    self._em_step(X[idx_slice, :], total_samples=n_samples,
+                                  batch_update=False)
             else:
                 # batch update
                 self._em_step(X, total_samples=n_samples, batch_update=True)
 
             # check perplexity
             if evaluate_every > 0 and (i + 1) % evaluate_every == 0:
-                doc_topics_distr, _ = self._e_step(X, cal_sstats=False, random_init=False)
-                bound = self.perplexity(X, doc_topics_distr, sub_sampling=False)
+                doc_topics_distr, _ = self._e_step(X, cal_sstats=False,
+                                                   random_init=False)
+                bound = self.perplexity(X, doc_topics_distr,
+                                        sub_sampling=False)
                 if self.verbose:
                     print('iteration: %d, perplexity: %.4f' % (i + 1, bound))
 
@@ -523,7 +543,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         """
 
         if not hasattr(self, 'components_'):
-            raise NotFittedError("no 'components_' attribute in model. Please fit model first.")
+            raise NotFittedError("no 'components_' attribute in model."
+                                 " Please fit model first.")
 
         # make sure feature size is the same in fitted model and in X
         X = self._check_non_neg_array(X, "LatentDirichletAllocation.transform")
@@ -534,7 +555,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 "the model was trained with feature size %d." %
                 (n_features, self.components_.shape[1]))
 
-        doc_topic_distr, _ = self._e_step(X, cal_sstats=False, random_init=False)
+        doc_topic_distr, _ = self._e_step(X, cal_sstats=False,
+                                          random_init=False)
         return doc_topic_distr
 
     def _approx_bound(self, X, doc_topic_distr, sub_sampling):
@@ -550,7 +572,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             Document word matrix.
 
         doc_topic_distr : array, shape=(n_samples, n_topics)
-            Document topic distribution. In the literature, this is called `gamma`.
+            Document topic distribution. In the literature, this is called
+            gamma.
 
         sub_sampling : boolean, optional, (default=False)
             Compensate for subsampling of documents.
@@ -563,7 +586,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         """
 
         def _loglikelihood(prior, distr, dirichlet_distr, size):
-            # calcualte log-likelihood
+            # calculate log-likelihood
             score = np.sum((prior - distr) * dirichlet_distr)
             score += np.sum(gammaln(distr) - gammaln(prior))
             score += np.sum(gammaln(prior * size) - gammaln(np.sum(distr, 1)))
@@ -590,7 +613,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             else:
                 ids = np.nonzero(X[idx_d, :])[0]
                 cnts = X[idx_d, ids]
-            temp = dirichlet_doc_topic[idx_d, :, np.newaxis] + self.dirichlet_component_[:, ids]
+            temp = (dirichlet_doc_topic[idx_d, :, np.newaxis]
+                    + self.dirichlet_component_[:, ids])
             norm_phi = logsumexp(temp)
             score += np.dot(cnts, norm_phi)
 
@@ -630,7 +654,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         return score
 
     def perplexity(self, X, doc_topic_distr=None, sub_sampling=False):
-        """Calculate approximate perplexity for data X and topic distribution `gamma`.
+        """Calculate approximate perplexity for data X.
 
         Perplexity is defined as exp(-1. * log-likelihood per word)
 
@@ -649,16 +673,19 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             Perplexity score.
         """
         if not hasattr(self, 'components_'):
-            raise NotFittedError("no 'components_' attribute in model. Please fit model first.")
+            raise NotFittedError("no 'components_' attribute in model."
+                                 " Please fit model first.")
 
-        X = self._check_non_neg_array(X, "LatentDirichletAllocation.perplexity")
+        X = self._check_non_neg_array(X,
+                                      "LatentDirichletAllocation.perplexity")
 
         if doc_topic_distr is None:
             doc_topic_distr = self.transform(X)
         else:
             n_samples, n_topics = doc_topic_distr.shape
             if n_samples != X.shape[0]:
-                raise ValueError("Number of samples in X and doc_topic_distr does not match.")
+                raise ValueError("Number of samples in X and doc_topic_distr"
+                                 " do not match.")
 
             if n_topics != self.n_topics:
                 raise ValueError("Number of topics does not match.")
