@@ -734,7 +734,7 @@ Latent Dirichlet Allocation (LDA)
 =================================
 
 Latent Dirichlet Allocation is a generative probabilistic model for collections of
-discrete dataset such as text corpora. It is also a topic model that used for
+discrete dataset such as text corpora. It is also a topic model that is used for
 discovering abstract topics from a collection of documents.
 
 The graphical model of LDA is a three-level Bayesian model:
@@ -762,7 +762,7 @@ For parameter estimation, the posterior distribution is:
 Since the posterior is intractable, variational Bayesian method
 uses a simpler distribution :math:`q(z,\theta,\beta | \lambda, \phi, \gamma)`
 to approximate it, and those variational parameters :math:`\lambda`, :math:`\phi`,
-:math:`\gamma` are optimized to maximize the Evidence Lower Bound(ELBO):
+:math:`\gamma` are optimized to maximize the Evidence Lower Bound (ELBO):
 
 .. math::
   log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
