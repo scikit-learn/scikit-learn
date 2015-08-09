@@ -576,7 +576,7 @@ Finally it is possible to discover the main topics of a corpus by
 relaxing the hard assignment constraint of clustering, for instance by
 using :ref:`NMF`:
 
-  * :ref:`example_applications_topics_extraction_with_nmf.py`
+  * :ref:`example_applications_topics_extraction_with_nmf_lda.py`
 
 
 Limitations of the Bag of Words representation
