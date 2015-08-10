@@ -1488,7 +1488,7 @@ class DotProduct(Kernel):
         K_diag : array, shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return (X ** 2).sum(1) + self.sigma_0 ** 2
+        return np.einsum('ij,ij->i', X, X) + self.sigma_0 ** 2
 
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
