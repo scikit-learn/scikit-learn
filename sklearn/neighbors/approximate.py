@@ -272,14 +272,14 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             right_mask = self._right_mask[max_depth]
             for i in range(self.n_estimators):
                 start, stop = _find_matching_indices(self.trees_[i]
-                                                     [self._left_locations
+                                                     [self._locations
                                                       [i, index_offsets[i]]:
-                                                      self._right_locations
-                                                      [i, index_offsets[i]]],
+                                                      self._locations
+                                                      [i, index_offsets[i]+1]],
                                                      bin_queries[i],
                                                      left_mask, right_mask)
-                start += self._left_locations[i, index_offsets[i]]
-                stop += self._left_locations[i, index_offsets[i]]
+                start += self._locations[i, index_offsets[i]]
+                stop += self._locations[i, index_offsets[i]]
                 n_candidates += stop - start
                 candidate_set.update(
                     self.original_indices_[i][start:stop].tolist())
@@ -327,14 +327,14 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             candidates = []
             for i in range(self.n_estimators):
                 start, stop = _find_matching_indices(self.trees_[i]
-                                                     [self._left_locations
+                                                     [self._locations
                                                       [i, index_offsets[i]]:
-                                                      self._right_locations
-                                                      [i, index_offsets[i]]],
+                                                      self._locations
+                                                      [i, index_offsets[i]+1]],
                                                      bin_queries[i],
                                                      left_mask, right_mask)
-                start += self._left_locations[i, index_offsets[i]]
-                stop += self._left_locations[i, index_offsets[i]]
+                start += self._locations[i, index_offsets[i]]
+                stop += self._locations[i, index_offsets[i]]
                 candidates.extend(
                     self.original_indices_[i][start:stop].tolist())
             candidates = np.setdiff1d(candidates, total_candidates)
@@ -381,9 +381,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         offset = 5
         self._residual = MAX_HASH_SIZE - offset
         numbers_left = np.arange(2**offset) * (2**self._residual)
-        numbers_right = (np.arange(2**offset) *
-                         2**self._residual) + (2**self._residual-1)
-        self._left_locations, self._right_locations = [], []
+        self._locations = []
+        ends = np.ones(self.n_estimators) * self._fit_X.shape[0]
 
         rng = check_random_state(self.random_state)
         int_max = np.iinfo(np.int32).max
@@ -402,14 +401,9 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             self.trees_.append(bin_hashes)
             self.hash_functions_.append(hasher)
 
-            self._left_locations.append(np.searchsorted(bin_hashes,
-                                                        numbers_left))
-            self._right_locations.append(np.searchsorted(bin_hashes,
-                                                         numbers_right,
-                                                         side='right'))
+            self._locations.append(np.searchsorted(bin_hashes, numbers_left))
 
-        self._left_locations = np.array(self._left_locations)
-        self._right_locations = np.array(self._right_locations)
+        self._locations = np.column_stack((np.array(self._locations), ends))
 
         self._generate_masks()
 
