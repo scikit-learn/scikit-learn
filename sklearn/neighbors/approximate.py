@@ -378,9 +378,9 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         self.trees_ = []
         self.original_indices_ = []
 
-        offset = 5
-        self._residual = MAX_HASH_SIZE - offset
-        numbers_left = np.arange(2**offset) * (2**self._residual)
+        self._offset = 5
+        self._residual = MAX_HASH_SIZE - self._offset
+        numbers_left = np.arange(2**self._offset) * (2**self._residual)
         self._locations = []
         ends = np.ones(self.n_estimators) * self._fit_X.shape[0]
 
@@ -551,6 +551,9 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         n_samples = X.shape[0]
         n_indexed = self._fit_X.shape[0]
 
+        self._locations = []
+        numbers_left = np.arange(2**self._offset) * (2**self._residual)
+
         for i in range(self.n_estimators):
             bin_X = self.hash_functions_[i].transform(X)[:, 0]
             # gets the position to be added in the tree.
@@ -564,6 +567,11 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
                                                   np.arange(n_indexed,
                                                             n_indexed +
                                                             n_samples))
+            self._locations.append(np.searchsorted(self.trees_[i],
+                                                   numbers_left))
+
+        ends = np.ones(self.n_estimators) * self._fit_X.shape[0]
+        self._locations = np.column_stack((self._locations, ends))
 
         # adds the entry into the input_array.
         if sparse.issparse(X) or sparse.issparse(self._fit_X):
