@@ -138,10 +138,8 @@ cdef class DistanceMetric:
     ==============  ====================  ========  ===============================
 
     **Metrics intended for two-dimensional vector spaces:**  Note that the haversine
-    distance metric requires data in the form of [x (i.e.: latitude, in radians), 
-    y (i.e.: longitude, in radians)], and you must `convert from degrees
-    https://en.wikipedia.org/wiki/Radian#Conversions`_ first. The distances returned 
-    are also in radians.
+    distance metric requires data in the form of [latitude, longitude] and both
+    inputs and outputs are in units of radians.
 
     ============  ==================  ========================================
     identifier    class name          distance function
