@@ -378,7 +378,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         self.trees_ = []
         self.original_indices_ = []
 
-        offset = self.min_hash_match
+        offset = 5
         self._residual = MAX_HASH_SIZE - offset
         numbers_left = np.arange(2**offset) * (2**self._residual)
         numbers_right = (np.arange(2**offset) *
