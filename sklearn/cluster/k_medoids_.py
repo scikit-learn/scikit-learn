@@ -230,7 +230,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             X transformed in the new space.
         """
 
-        self._check_is_fitted()
+        check_is_fitted(self, "cluster_centers_")
 
         # Apply distance metric wrt. cluster centers (medoids),
         # and return these distances
@@ -238,7 +238,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def predict(self, X):
 
-        self._check_is_fitted()
+        check_is_fitted(self, "cluster_centers_")
 
         # Check that the array is good and attempt to convert it to
         # Numpy array if possible
@@ -264,10 +264,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         inertia = np.sum(np.min(Xt, axis=1))
 
         return inertia
-
-    def _check_is_fitted(self):
-
-        check_is_fitted(self, "cluster_centers_")
 
     def _get_initial_medoid_indices(self, D, n_clusters):
 
