@@ -52,11 +52,6 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
 
-    jitter : float, optional (default: 0.0)
-        Value added to the diagonal of the kernel matrix during fitting.
-        Larger values correspond to increased noise level in the observations
-        and reduce potential numerical issue during fitting.
-
     optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
@@ -82,13 +77,14 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
             'fmin_l_bfgs_b'
 
-    n_restarts_optimizer: int, optional (default: 1)
+    n_restarts_optimizer: int, optional (default: 0)
         The number of restarts of the optimizer for finding the kernel's
         parameters which maximize the log-marginal likelihood. The first run
         of the optimizer is performed from the kernel's initial parameters,
         the remaining ones (if any) from thetas sampled log-uniform randomly
-        from the space of allowed theta-values. If greater than 1, all bounds
-        must be finite.
+        from the space of allowed theta-values. If greater than 0, all bounds
+        must be finite. Note that n_restarts_optimizer=0 implies that one
+        run is performed.
 
     max_iter: int, optional (default: 100)
         The maximum number of iterations in Newton's method for approximating
@@ -140,18 +136,16 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         values for the observed labels. Since W is diagonal, only the diagonal
         of sqrt(W) is stored.
     """
-    def __init__(self, kernel=None, jitter=0.0, optimizer="fmin_l_bfgs_b",
-                 n_restarts_optimizer=1, max_iter=100, warm_start=False,
+    def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
+                 n_restarts_optimizer=0, max_iter=100, warm_start=False,
                  copy_X_train=False, random_state=None):
         self.kernel = kernel
-        self.jitter = jitter
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
         self.max_iter = max_iter
         self.warm_start = warm_start
         self.copy_X_train = copy_X_train
         self.random_state = random_state
-        self.rng = check_random_state(self.random_state)
 
     def fit(self, X, y):
         """Fit Gaussian process classification model
@@ -173,6 +167,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                 C(1.0, c_bounds="fixed") * RBF(1.0, l_bounds="fixed")
         else:
             self.kernel_ = clone(self.kernel)
+
+        self.rng = check_random_state(self.random_state)
 
         self.X_train_ = np.copy(X) if self.copy_X_train else X
 
@@ -203,19 +199,19 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                     return -self.log_marginal_likelihood(theta)
 
             # First optimize starting from theta specified in kernel
-            optima = [(self._constrained_optimization(obj_func,
-                                                      self.kernel_.theta,
-                                                      self.kernel_.bounds))]
+            optima = [self._constrained_optimization(obj_func,
+                                                     self.kernel_.theta,
+                                                     self.kernel_.bounds)]
 
             # Additional runs are performed from log-uniform chosen initial
             # theta
-            if self.n_restarts_optimizer > 1:
+            if self.n_restarts_optimizer > 0:
                 if not np.isfinite(self.kernel_.bounds).all():
                     raise ValueError(
-                        "Multiple optimizer restarts (n_restarts_optimizer>1) "
+                        "Multiple optimizer restarts (n_restarts_optimizer>0) "
                         "requires that all bounds are finite.")
                 bounds = self.kernel_.bounds
-                for iteration in range(1, self.n_restarts_optimizer):
+                for iteration in range(self.n_restarts_optimizer):
                     theta_initial = np.exp(self.rng.uniform(bounds[:, 0],
                                                             bounds[:, 1]))
                     optima.append(
@@ -223,13 +219,12 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                                                        bounds))
             # Select result from run with minimal (negative) log-marginal
             # likelihood
-            self.kernel_.theta = \
-                optima[np.argmin(map(itemgetter(1), optima))][0]
+            lml_values = map(itemgetter(1), optima)
+            self.kernel_.theta = optima[np.argmin(lml_values)][0]
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
         K = self.kernel_(self.X_train_)
-        K[np.diag_indices_from(K)] += self.jitter
 
         _, (self.pi_, self.W_sr_, self.L_, _, _) = \
             self._posterior_mode(K, return_temporaries=True)
@@ -328,8 +323,6 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         else:
             K = kernel(self.X_train_)
 
-        K[np.diag_indices_from(K)] += self.jitter
-
         # Compute log-marginal-likelihood Z and also store some temporaries
         # which can be reused for computing Z's gradient
         Z, (pi, W_sr, L, b, a) = \
@@ -343,15 +336,17 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         # XXX: Get rid of the np.diag() in the next line
         R = W_sr[:, np.newaxis] * cho_solve((L, True), np.diag(W_sr))  # Line 7
         C = solve(L, W_sr[:, np.newaxis] * K)  # Line 8
-        # Line 9:
-        s_2 = -0.5*(np.diag(K) - np.diag(C.T.dot(C))) \
+        # Line 9: (use einsum to compute np.diag(C.T.dot(C))))
+        s_2 = -0.5*(np.diag(K) - np.einsum('ij, ij -> j', C, C)) \
             * (pi * (1 - pi) * (1 - 2*pi))  # third derivative
+
         for j in range(d_Z.shape[0]):
             C = K_gradient[:, :, j]   # Line 11
-            s_1 = .5 * a.T.dot(C).dot(a) - .5 * np.trace(R.dot(C))  # Line 12
+            # Line 12: (R.T.ravel().dot(C.ravel()) = np.trace(R.dot(C)))
+            s_1 = .5 * a.T.dot(C).dot(a) - .5 * R.T.ravel().dot(C.ravel())
 
             b = C.dot(self.y_train_ - pi)  # Line 13
-            s_3 = b - K.dot(R).dot(b)  # Line 14
+            s_3 = b - K.dot(R.dot(b))  # Line 14
 
             d_Z[j] = s_1 + s_2.T.dot(s_3)  # Line 15
 
@@ -448,11 +443,6 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
 
-    jitter : float, optional (default: 0.0)
-        Value added to the diagonal of the kernel matrix during fitting.
-        Larger values correspond to increased noise level in the observations
-        and reduce potential numerical issue during fitting.
-
     optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
@@ -478,13 +468,14 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
 
             'fmin_l_bfgs_b'
 
-    n_restarts_optimizer: int, optional (default: 1)
+    n_restarts_optimizer: int, optional (default: 0)
         The number of restarts of the optimizer for finding the kernel's
         parameters which maximize the log-marginal likelihood. The first run
         of the optimizer is performed from the kernel's initial parameters,
         the remaining ones (if any) from thetas sampled log-uniform randomly
-        from the space of allowed theta-values. If greater than 1, all bounds
-        must be finite.
+        from the space of allowed theta-values. If greater than 0, all bounds
+        must be finite. Note that n_restarts_optimizer=0 implies that one
+        run is performed.
 
     max_iter: int, optional (default: 100)
         The maximum number of iterations in Newton's method for approximating
@@ -541,12 +532,11 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
     n_classes_ : int
         The number of classes in the training data
     """
-    def __init__(self, kernel=None, jitter=0.0, optimizer="fmin_l_bfgs_b",
-                 n_restarts_optimizer=1, max_iter=100, warm_start=False,
+    def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
+                 n_restarts_optimizer=0, max_iter=100, warm_start=False,
                  copy_X_train=False, random_state=None,
                  multi_class="one_vs_rest", n_jobs=1):
         self.kernel = kernel
-        self.jitter = jitter
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
         self.max_iter = max_iter
@@ -555,10 +545,6 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         self.random_state = random_state
         self.multi_class = multi_class
         self.n_jobs = n_jobs
-
-        self.base_estimator_ = _BinaryGaussianProcessClassifierLaplace(
-            kernel, jitter, optimizer, n_restarts_optimizer, max_iter,
-            warm_start, copy_X_train, random_state)
 
     def fit(self, X, y):
         """Fit Gaussian process classification model
@@ -576,6 +562,11 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         self : returns an instance of self.
         """
         X, y = check_X_y(X, y, multi_output=False)
+
+        self.base_estimator_ = _BinaryGaussianProcessClassifierLaplace(
+            self.kernel, self.optimizer, self.n_restarts_optimizer,
+            self.max_iter, self.warm_start, self.copy_X_train,
+            self.random_state)
 
         self.classes_ = np.unique(y)
         self.n_classes_ = self.classes_.size
@@ -597,6 +588,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
                                  % self.multi_class)
 
         self.base_estimator_.fit(X, y)
+
         return self
 
     def predict(self, X):

@@ -89,7 +89,7 @@ def test_random_starts():
     kernel = C(1.0, (1e-2, 1e2)) \
         * RBF(l=[1e-3] * n_features, l_bounds=[(1e-4, 1e+2)] * n_features)
     last_lml = -np.inf
-    for n_restarts_optimizer in range(1, 10):
+    for n_restarts_optimizer in range(9):
         gp = GaussianProcessClassifier(
             kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
             random_state=0).fit(X, y)

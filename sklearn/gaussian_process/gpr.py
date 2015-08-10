@@ -50,7 +50,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
         defined optimizer passed as a callable. If a callable is passed, it
-        must have the  signature::
+        must have the signature::
 
             def optimizer(obj_func, initial_theta, bounds):
                 # * 'obj_func' is the objective function to be maximized, which
@@ -71,13 +71,14 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
             'fmin_l_bfgs_b'
 
-    n_restarts_optimizer: int, optional (default: 1)
+    n_restarts_optimizer: int, optional (default: 0)
         The number of restarts of the optimizer for finding the kernel's
         parameters which maximize the log-marginal likelihood. The first run
         of the optimizer is performed from the kernel's initial parameters,
         the remaining ones (if any) from thetas sampled log-uniform randomly
-        from the space of allowed theta-values. If greater than 1, all bounds
-        must be finite.
+        from the space of allowed theta-values. If greater than 0, all bounds
+        must be finite. Note that n_restarts_optimizer == 0 implies that one
+        run is performed.
 
     normalize_y: boolean, optional (default: False)
         Whether the target values y are normalized, i.e., the mean of the
@@ -117,7 +118,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         Dual coefficients of training data points in kernel space
     """
     def __init__(self, kernel=None, sigma_squared_n=1e-10,
-                 optimizer="fmin_l_bfgs_b", n_restarts_optimizer=1,
+                 optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
                  normalize_y=False, copy_X_train=False, random_state=None):
         self.kernel = kernel
         self.sigma_squared_n = sigma_squared_n
@@ -126,7 +127,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.normalize_y = normalize_y
         self.copy_X_train = copy_X_train
         self.random_state = random_state
-        self.rng = check_random_state(self.random_state)
 
     def fit(self, X, y):
         """Fit Gaussian process regression model
@@ -148,6 +148,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 C(1.0, c_bounds="fixed") * RBF(1.0, l_bounds="fixed")
         else:
             self.kernel_ = clone(self.kernel)
+
+        self.rng = check_random_state(self.random_state)
 
         X, y = check_X_y(X, y, multi_output=True)
 
@@ -191,13 +193,13 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
             # Additional runs are performed from log-uniform chosen initial
             # theta
-            if self.n_restarts_optimizer > 1:
+            if self.n_restarts_optimizer > 0:
                 if not np.isfinite(self.kernel_.bounds).all():
                     raise ValueError(
-                        "Multiple optimizer restarts (n_restarts_optimizer>1) "
+                        "Multiple optimizer restarts (n_restarts_optimizer>0) "
                         "requires that all bounds are finite.")
                 bounds = self.kernel_.bounds
-                for iteration in range(1, self.n_restarts_optimizer):
+                for iteration in range(self.n_restarts_optimizer):
                     theta_initial = \
                         self.rng.uniform(bounds[:, 0], bounds[:, 1])
                     optima.append(
@@ -205,8 +207,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                                                        bounds))
             # Select result from run with minimal (negative) log-marginal
             # likelihood
-            self.kernel_.theta = \
-                optima[np.argmin(map(itemgetter(1), optima))][0]
+            lml_values = map(itemgetter(1), optima)
+            self.kernel_.theta = optima[np.argmin(lml_values)][0]
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
@@ -283,11 +285,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 K_inv = L_inv.dot(L_inv.T)
                 # Compute variance of predictive distribution
                 y_var = self.kernel_.diag(X)
-                y_var -= np.sum(K_trans.T[:, np.newaxis] * K_trans.T
-                                * K_inv[:, :, np.newaxis],
-                                axis=0).sum(axis=0)  # axis=(0, 1) in np >= 1.7
+                y_var -= np.einsum("ki,kj,ij->k", K_trans, K_trans, K_inv)
+
                 # Check if any of the variances is negative because of
-                # numerical issues. If yes: set the the variance to 0.
+                # numerical issues. If yes: set the variance to 0.
                 y_var_negative = y_var < 0
                 if np.any(y_var_negative):
                     warnings.warn("Predicted variances smaller than 0. "
@@ -368,33 +369,28 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             return (-np.inf, np.zeros_like(theta)) \
                 if eval_gradient else -np.inf
 
-        log_likelihood = 0
-        if eval_gradient:
-            log_likelihood_gradient = 0
-
-        # Iterate over output dimensions of self.y_train_
+        # Support multi-dimensional output of self.y_train_
         y_fit = self.y_train_
         if y_fit.ndim == 1:
             y_fit = y_fit[:, np.newaxis]
-        for i in range(y_fit.shape[1]):
-            alpha = cho_solve((L, True), y_fit[:, i])  # Line 3
 
-            # Compute log-likelihood of output dimension (compare line 7)
-            log_likelihood_dim = -0.5 * y_fit[:, i].dot(alpha)
-            log_likelihood_dim -= np.log(np.diag(L)).sum()
-            log_likelihood_dim -= K.shape[0] / 2 * np.log(2 * np.pi)
+        alpha = cho_solve((L, True), y_fit)  # Line 3
 
-            log_likelihood += log_likelihood_dim
+        # Compute log-likelihood (compare line 7)
+        log_likelihood_dims = -0.5 * np.einsum("ik,ik->k", y_fit, alpha)
+        log_likelihood_dims -= np.log(np.diag(L)).sum()
+        log_likelihood_dims -= K.shape[0] / 2 * np.log(2 * np.pi)
+        log_likelihood = log_likelihood_dims.sum(-1)  # sum over dimensions
 
-            if eval_gradient:  # compare Equation 5.9 from GPML
-                tmp = np.outer(alpha, alpha)
-                tmp -= cho_solve((L, True), np.eye(K.shape[0]))
-                # Compute "0.5 * trace(tmp.dot(K_gradient))" without
-                # constructing the full matrix tmp.dot(K_gradient) since only
-                # its diagonal is required
-                log_likelihood_gradient_dim = \
-                    0.5 * np.einsum("ij,ijk->k", tmp, K_gradient)
-                log_likelihood_gradient += log_likelihood_gradient_dim
+        if eval_gradient:  # compare Equation 5.9 from GPML
+            tmp = np.einsum("ik,jk->ijk", alpha, alpha)  # k: output-dimension
+            tmp -= cho_solve((L, True), np.eye(K.shape[0]))[:, :, np.newaxis]
+            # Compute "0.5 * trace(tmp.dot(K_gradient))" without
+            # constructing the full matrix tmp.dot(K_gradient) since only
+            # its diagonal is required
+            log_likelihood_gradient_dims = \
+                0.5 * np.einsum("ijl,ijk->kl", tmp, K_gradient)
+            log_likelihood_gradient = log_likelihood_gradient_dims.sum(-1)
 
         if eval_gradient:
             return log_likelihood, log_likelihood_gradient

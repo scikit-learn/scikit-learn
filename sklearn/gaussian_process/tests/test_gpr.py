@@ -168,7 +168,7 @@ def test_random_starts():
         * RBF(l=[1.0] * n_features, l_bounds=[(1e-4, 1e+2)] * n_features) \
         + WhiteKernel(c=1e-5, c_bounds=(1e-5, 1e1))
     last_lml = -np.inf
-    for n_restarts_optimizer in range(1, 10):
+    for n_restarts_optimizer in range(9):
         gp = GaussianProcessRegressor(
             kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
             random_state=0,).fit(X, y)
