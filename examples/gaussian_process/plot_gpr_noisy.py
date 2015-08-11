@@ -39,7 +39,7 @@ plt.figure(0)
 kernel = 1.0 * RBF(l=100.0, l_bounds=(1e-2, 1e3)) \
   + WhiteKernel(c=1, c_bounds=(1e-10, 1e+1))
 gp = GaussianProcessRegressor(kernel=kernel,
-                              sigma_squared_n=0.0).fit(X, y)
+                              alpha=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)
 y_mean, y_cov = gp.predict(X_[:, np.newaxis], return_cov=True)
 plt.plot(X_, y_mean, 'k', lw=3, zorder=9)
@@ -58,7 +58,7 @@ plt.figure(1)
 kernel = 1.0 * RBF(l=1.0, l_bounds=(1e-2, 1e3)) \
   + WhiteKernel(c=1e-5, c_bounds=(1e-10, 1e+1))
 gp = GaussianProcessRegressor(kernel=kernel,
-                              sigma_squared_n=0.0).fit(X, y)
+                              alpha=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)
 y_mean, y_cov = gp.predict(X_[:, np.newaxis], return_cov=True)
 plt.plot(X_, y_mean, 'k', lw=3, zorder=9)
