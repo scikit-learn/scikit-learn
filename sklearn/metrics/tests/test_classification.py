@@ -323,7 +323,6 @@ def test_cohen_kappa():
     assert_almost_equal(cohen_kappa_score(y1, y2), .8013, decimal=4)
 
 
-@ignore_warnings
 def test_matthews_corrcoef_nan():
     assert_equal(matthews_corrcoef([0], [1]), 0.0)
     assert_equal(matthews_corrcoef([0, 0], [0, 1]), 0.0)
