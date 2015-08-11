@@ -77,7 +77,7 @@ k3 = 0.66**2 * RationalQuadratic(l=1.2, alpha=0.78)  # medium term irregularity
 k4 = 0.18**2 * RBF(l=0.134) + WhiteKernel(c=0.19**2) # noise terms
 kernel_gpml = k1 + k2 + k3 + k4
 
-gp = GaussianProcessRegressor(kernel=kernel_gpml, sigma_squared_n=0,
+gp = GaussianProcessRegressor(kernel=kernel_gpml, alpha=0,
 							         optimizer=None, normalize_y=True)
 gp.fit(X, y)
 
@@ -94,7 +94,7 @@ k4 = 0.1**2 * RBF(l=0.1) + WhiteKernel(c=0.1**2,
 									   c_bounds=(1e-3, np.inf))  # noise terms
 kernel = k1 + k2 + k3 + k4
 
-gp = GaussianProcessRegressor(kernel=kernel, sigma_squared_n=0,
+gp = GaussianProcessRegressor(kernel=kernel, alpha=0,
                               normalize_y=True)
 gp.fit(X, y)
 

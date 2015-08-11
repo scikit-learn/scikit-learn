@@ -39,12 +39,15 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
 
-    sigma_squared_n : float or array-like, optional (default: 1e-10)
+    alpha : float or array-like, optional (default: 1e-10)
         Value added to the diagonal of the kernel matrix during fitting.
         Larger values correspond to increased noise level in the observations
         and reduce potential numerical issue during fitting. If an array is
         passed, it must have the same number of entries as the data used for
-        fitting and is used as datapoint-dependent noise level.
+        fitting and is used as datapoint-dependent noise level. Note that this
+        is equivalent to adding a WhiteKernel with c=alpha. Allowing to specify
+        the noise level directly as a parameter is mainly for convenience and
+        for consistency with Ridge.
 
     optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
         Can either be one of the internally supported optimizers for optimizing
@@ -117,11 +120,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     alpha_: array-like, shape = (n_samples,)
         Dual coefficients of training data points in kernel space
     """
-    def __init__(self, kernel=None, sigma_squared_n=1e-10,
+    def __init__(self, kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
                  normalize_y=False, copy_X_train=False, random_state=None):
         self.kernel = kernel
-        self.sigma_squared_n = sigma_squared_n
+        self.alpha = alpha
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
         self.normalize_y = normalize_y
@@ -161,14 +164,14 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:
             self.y_train_mean = np.zeros(1)
 
-        if np.iterable(self.sigma_squared_n) \
-           and self.sigma_squared_n.shape[0] != y.shape[0]:
-            if self.sigma_squared_n.shape[0] == 1:
-                self.sigma_squared_n = self.sigma_squared_n[0]
+        if np.iterable(self.alpha) \
+           and self.alpha.shape[0] != y.shape[0]:
+            if self.alpha.shape[0] == 1:
+                self.alpha = self.alpha[0]
             else:
                 raise ValueError("sigma_n_squared must be a scalar or an array"
                                  " with same number of entries as y.(%d != %d)"
-                                 % (self.sigma_squared_n.shape[0], y.shape[0]))
+                                 % (self.alpha.shape[0], y.shape[0]))
 
         self.X_train_ = np.copy(X) if self.copy_X_train else X
         self.y_train_ = np.copy(y) if self.copy_X_train else y
@@ -213,7 +216,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         # Precompute quantities required for predictions which are independent
         # of actual query points
         K = self.kernel_(self.X_train_)
-        K[np.diag_indices_from(K)] += self.sigma_squared_n
+        K[np.diag_indices_from(K)] += self.alpha
         self.L_ = cholesky(K, lower=True)  # Line 2
         self.alpha_ = cho_solve((self.L_, True), self.y_train_)  # Line 3
 
@@ -362,7 +365,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:
             K = kernel(self.X_train_)
 
-        K[np.diag_indices_from(K)] += self.sigma_squared_n
+        K[np.diag_indices_from(K)] += self.alpha
         try:
             L = cholesky(K, lower=True)  # Line 2
         except np.linalg.LinAlgError:

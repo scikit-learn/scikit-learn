@@ -15,7 +15,7 @@ The figures illustrate the interpolating property of the Gaussian Process
 model as well as its probabilistic nature in the form of a pointwise 95%
 confidence interval.
 
-Note that the parameter ``sigma_squared_n`` is applied as a Tikhonov
+Note that the parameter ``alpha`` is applied as a Tikhonov
 regularization of the assumed covariance between the training points.
 """
 print(__doc__)
@@ -86,7 +86,7 @@ noise = np.random.normal(0, dy)
 y += noise
 
 # Instanciate a Gaussian Process model
-gp = GaussianProcessRegressor(kernel=kernel, sigma_squared_n=(dy / y) ** 2,
+gp = GaussianProcessRegressor(kernel=kernel, alpha=(dy / y) ** 2,
                               n_restarts_optimizer=10)
 
 # Fit to data using Maximum Likelihood Estimation of the parameters

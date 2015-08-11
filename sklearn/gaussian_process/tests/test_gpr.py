@@ -276,9 +276,9 @@ def test_duplicate_input():
     """ Test GPR can handle two different output-values for the same input. """
     for kernel in kernels:
         gpr_equal_inputs = \
-            GaussianProcessRegressor(kernel=kernel, sigma_squared_n=1e-2)
+            GaussianProcessRegressor(kernel=kernel, alpha=1e-2)
         gpr_similar_inputs = \
-            GaussianProcessRegressor(kernel=kernel, sigma_squared_n=1e-2)
+            GaussianProcessRegressor(kernel=kernel, alpha=1e-2)
 
         X_ = np.vstack((X, X[0]))
         y_ = np.hstack((y, y[0] + 1))
