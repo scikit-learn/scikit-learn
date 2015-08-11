@@ -965,16 +965,19 @@ class RBF(Kernel):
     def __init__(self, l=1.0, l_bounds=(1e-5, 1e5)):
         if np.iterable(l):
             if len(l) > 1:
+                self.anisotropic = True
                 self.l = np.asarray(l, dtype=np.float)
             else:
+                self.anisotropic = False
                 self.l = float(l[0])
         else:
+            self.anisotropic = False
             self.l = float(l)
         self.l_bounds = l_bounds
 
         self.theta_vars = []
         if l_bounds is not "fixed":
-            if np.iterable(l):  # anisotropic l needs special care
+            if self.anisotropic:  # anisotropic l needs special care
                 self.theta_vars.append(("l", len(l)))
             else:
                 self.theta_vars.append("l")
@@ -1006,7 +1009,7 @@ class RBF(Kernel):
             is True.
         """
         X = np.atleast_2d(X)
-        if np.iterable(self.l) and X.shape[1] != self.l.shape[0]:
+        if self.anisotropic and X.shape[1] != self.l.shape[0]:
             raise Exception("Anisotropic kernel must have the same number of "
                             "dimensions as data (%d!=%d)"
                             % (self.l.shape[0], X.shape[1]))
@@ -1027,15 +1030,15 @@ class RBF(Kernel):
         if eval_gradient:
             if self.l_bounds is "fixed":  # Hyperparameter l kept fixed
                 return K, np.empty((X.shape[0], X.shape[0], 0))
-            elif not np.iterable(self.l) or self.l.shape[0] == 1:
+            elif not self.anisotropic or self.l.shape[0] == 1:
                 K_gradient = \
                     (K * squareform(dists))[:, :, np.newaxis]
                 return K, K_gradient
-            elif self.l.shape[0] == X.shape[1]:
+            elif self.anisotropic:
                 # We need to recompute the pairwise dimension-wise distances
-                D = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 \
+                K_gradient = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 \
                     / (self.l ** 2)
-                K_gradient = K[..., np.newaxis] * D
+                K_gradient *= K[..., np.newaxis]
                 return K, K_gradient
             else:
                 raise Exception("Anisotropic kernels require that the number "
@@ -1044,7 +1047,7 @@ class RBF(Kernel):
             return K
 
     def __repr__(self):
-        if np.iterable(self.l):  # anisotropic
+        if self.anisotropic:
             return "{0}(l=[{1}])".format(self.__class__.__name__,
                                          ", ".join(map("{0:.3g}".format,
                                                    self.l)))
@@ -1119,7 +1122,7 @@ class Matern(RBF):
             is True.
         """
         X = np.atleast_2d(X)
-        if np.iterable(self.l) and X.shape[1] != self.l.shape[0]:
+        if self.anisotropic and X.shape[1] != self.l.shape[0]:
             raise Exception("Anisotropic kernel must have the same number of "
                             "dimensions as data (%d!=%d)"
                             % (self.l.shape[0], X.shape[1]))
@@ -1159,7 +1162,12 @@ class Matern(RBF):
                 return K, K_gradient
 
             # We need to recompute the pairwise dimension-wise distances
-            D = (X[:, np.newaxis, :] - X[np.newaxis, :, :])**2 / (self.l ** 2)
+            if self.anisotropic:
+                D = (X[:, np.newaxis, :] - X[np.newaxis, :, :])**2 \
+                    / (self.l ** 2)
+            else:
+                D = squareform(dists**2)[:, :, np.newaxis]
+
             if self.nu == 0.5:
                 K_gradient = K[..., np.newaxis] * D \
                     / np.sqrt(D.sum(2))[:, :, np.newaxis]
@@ -1176,7 +1184,7 @@ class Matern(RBF):
                     return self.clone_with_theta(theta)(X, Y)
                 return K, _approx_fprime(self.theta, f, 1e-10)
 
-            if not np.iterable(self.l) or self.l.shape[0] == 1:
+            if not self.anisotropic:
                 return K, K_gradient[:, :].sum(-1)[:, :, np.newaxis]
             else:
                 return K, K_gradient
@@ -1184,7 +1192,7 @@ class Matern(RBF):
             return K
 
     def __repr__(self):
-        if np.iterable(self.l):  # anisotropic
+        if self.anisotropic:
             return "{0}(l=[{1}], nu={2:.3g})".format(
                 self.__class__.__name__,
                 ", ".join(map("{0:.3g}".format, self.l)),
