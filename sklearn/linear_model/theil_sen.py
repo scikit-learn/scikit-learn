@@ -20,7 +20,8 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state, ConvergenceWarning
-from ..utils import check_X_y, _get_n_jobs
+from ..utils import check_X_y
+from ..utils.base import _get_n_jobs
 from ..utils.random import choice
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange as range
