@@ -652,6 +652,7 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
                                         "invariant" % name)
 
 
+@ignore_warnings
 def test_multilabel_representation_invariance():
     # Generate some data
     n_classes = 4

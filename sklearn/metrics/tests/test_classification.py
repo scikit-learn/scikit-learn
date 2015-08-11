@@ -262,6 +262,7 @@ def test_average_precision_score_tied_values():
     assert_not_equal(average_precision_score(y_true, y_score), 1.)
 
 
+@ignore_warnings
 def test_precision_recall_fscore_support_errors():
     y_true, y_pred, _ = make_prediction(binary=True)
 
@@ -670,6 +671,7 @@ def test_multilabel_jaccard_similarity_score():
     assert_equal(jaccard_similarity_score(y2, np.zeros(y1.shape)), 0)
 
 
+@ignore_warnings
 def test_precision_recall_f1_score_multilabel_1():
     # Test precision_recall_f1_score on a crafted multilabel example
     # First crafted example
@@ -738,6 +740,7 @@ def test_precision_recall_f1_score_multilabel_1():
                         0.5)
 
 
+@ignore_warnings
 def test_precision_recall_f1_score_multilabel_2():
     # Test precision_recall_f1_score on a crafted multilabel example 2
     # Second crafted example
