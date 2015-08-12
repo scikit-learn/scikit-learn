@@ -58,7 +58,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
         init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
         args, varargs, kw, default = inspect.getargspec(init)
         if varargs is not None:
-            raise RuntimeError("scikit-learn estimators should always "
+            raise RuntimeError("scikit-learn kernels should always "
                                "specify their parameters in the signature"
                                " of their __init__ (no varargs)."
                                " %s doesn't follow this convention."
@@ -68,6 +68,43 @@ class Kernel(six.with_metaclass(ABCMeta)):
         for arg in args:
             params[arg] = getattr(self, arg, None)
         return params
+
+    def set_params(self, **params):
+        """Set the parameters of this kernel.
+
+        The method works on simple kernels as well as on nested kernels.
+        The latter have parameters of the form ``<component>__<parameter>``
+        so that it's possible to update each component of a nested object.
+
+        Returns
+        -------
+        self
+        """
+        if not params:
+            # Simple optimisation to gain speed (inspect is slow)
+            return self
+        valid_params = self.get_params(deep=True)
+        for key, value in six.iteritems(params):
+            split = key.split('__', 1)
+            if len(split) > 1:
+                # nested objects case
+                name, sub_name = split
+                if name not in valid_params:
+                    raise ValueError('Invalid parameter %s for kernel %s. '
+                                     'Check the list of available parameters '
+                                     'with `kernel.get_params().keys()`.' %
+                                     (name, self))
+                sub_object = valid_params[name]
+                sub_object.set_params(**{sub_name: value})
+            else:
+                # simple objects case
+                if key not in valid_params:
+                    raise ValueError('Invalid parameter %s for kernel %s. '
+                                     'Check the list of available parameters '
+                                     'with `kernel.get_params().keys()`.' %
+                                     (key, self.__class__.__name__))
+                setattr(self, key, value)
+        return self
 
     def clone_with_theta(self, theta):
         """Returns a clone of self with given hyperparameters theta. """
@@ -155,7 +192,10 @@ class Kernel(six.with_metaclass(ABCMeta)):
                 bounds.append(var_bounds)
             else:
                 bounds.append(getattr(self, var_name + "_bounds"))
-        return np.log(np.vstack(bounds))
+        if len(bounds) > 0:
+            return np.log(np.vstack(bounds))
+        else:
+            return np.array([])
 
     @bounds.setter
     def bounds(self, bounds):
@@ -397,6 +437,12 @@ class KernelOperator(Kernel):
             Parameter names mapped to their values.
         """
         params = dict(k1=self.k1, k2=self.k2)
+        if deep:
+            deep_items = self.k1.get_params().items()
+            params.update(('k1__' + k, val) for k, val in deep_items)
+            deep_items = self.k2.get_params().items()
+            params.update(('k2__' + k, val) for k, val in deep_items)
+
         return params
 
     @property
