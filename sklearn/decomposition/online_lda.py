@@ -302,10 +302,10 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         # In the literature, this is called `lambda`
         self.components_ = self.random_state_.gamma(
             init_gamma, init_var, (self.n_topics, n_features))
-        # In the literature, this is `E[log(beta)]`
-        self.dirichlet_component_ = _dirichlet_expectation_2d(self.components_)
+
         # In the literature, this is `exp(E[log(beta)])`
-        self.exp_dirichlet_component_ = np.exp(self.dirichlet_component_)
+        self.exp_dirichlet_component_ = np.exp(
+            _dirichlet_expectation_2d(self.components_))
 
     def _e_step(self, X, cal_sstats, random_init):
         """E-step in EM update.
@@ -404,8 +404,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                                            + doc_ratio * suff_stats))
 
         # update `component_` related variables
-        self.dirichlet_component_ = _dirichlet_expectation_2d(self.components_)
-        self.exp_dirichlet_component_ = np.exp(self.dirichlet_component_)
+        self.exp_dirichlet_component_ = np.exp(
+            _dirichlet_expectation_2d(self.components_))
         self.n_batch_iter_ += 1
         return
 
@@ -576,7 +576,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         n_samples, n_topics = doc_topic_distr.shape
         n_features = self.components_.shape[1]
         score = 0
+
         dirichlet_doc_topic = _dirichlet_expectation_2d(doc_topic_distr)
+        dirichlet_component_ = _dirichlet_expectation_2d(self.components_)
         doc_topic_prior = self.doc_topic_prior_
         topic_word_prior = self.topic_word_prior_
 
@@ -594,7 +596,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 ids = np.nonzero(X[idx_d, :])[0]
                 cnts = X[idx_d, ids]
             temp = (dirichlet_doc_topic[idx_d, :, np.newaxis]
-                    + self.dirichlet_component_[:, ids])
+                    + dirichlet_component_[:, ids])
             norm_phi = logsumexp(temp)
             score += np.dot(cnts, norm_phi)
 
@@ -609,7 +611,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         # E[log p(beta | eta) - log q (beta | lambda)]
         score += _loglikelihood(topic_word_prior, self.components_,
-                                self.dirichlet_component_, n_features)
+                                dirichlet_component_, n_features)
 
         return score
 
