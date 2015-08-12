@@ -306,6 +306,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         self.random_state_ = check_random_state(self.random_state)
         self.weight_update_counter_ = 1
+        self.n_iter_ = 0
 
         if self.doc_topic_prior is None:
             self.doc_topic_prior_ = 1. / self.n_topics
@@ -525,7 +526,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 if last_bound and abs(last_bound - bound) < self.perp_tol:
                     break
                 last_bound = bound
-
+            self.n_iter_ += 1
         return self
 
     def transform(self, X):
