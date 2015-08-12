@@ -29,29 +29,6 @@ from ._online_lda import (mean_change, _dirichlet_expectation_1d,
 EPS = np.finfo(np.float).eps
 
 
-def _log_dirichlet_expectation(X):
-    """Calculate log Dirichlet expectation.
-
-    For an array theta ~ Dir(X), computes `E[log(theta)]` given X.
-
-    Parameters
-    ----------
-    X : array-like
-        1 or 2 dimensional vector
-
-    Returns
-    -------
-    dirichlet_expection : array-like
-        Dirichlet expectation of input array X
-    """
-
-    if len(X.shape) == 1:
-        dirichlet_expection = _dirichlet_expectation_1d(X)
-    else:
-        dirichlet_expection = _dirichlet_expectation_2d(X)
-    return dirichlet_expection
-
-
 def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
                              max_iters,
                              mean_change_tol, cal_sstats, random_state):
@@ -105,7 +82,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
         doc_topic_distr = np.ones((n_samples, n_topics))
 
     # In the literature, this is `exp(E[log(theta)])`
-    exp_doc_topic = np.exp(_log_dirichlet_expectation(doc_topic_distr))
+    exp_doc_topic = np.exp(_dirichlet_expectation_2d(doc_topic_distr))
 
     # diff on `component_` (only calculate it when `cal_diff` is True)
     suff_stats = np.zeros(exp_topic_word_distr.shape) if cal_sstats else None
@@ -127,27 +104,26 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
         exp_doc_topic_d = exp_doc_topic[idx_d, :]
         exp_topic_word_d = exp_topic_word_distr[:, ids]
 
-        # The optimal phi_{dwk} is proportional to
-        # exp(E[log(theta_{dk})]) * exp(E[log(beta_{dw})]).
-        norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + EPS
-
         # Iterate between `doc_topic_d` and `norm_phi` until convergence
         for _ in xrange(0, max_iters):
             last_d = doc_topic_d
 
-            doc_topic_d = (doc_topic_prior + exp_doc_topic_d *
-                           np.dot(cnts / norm_phi, exp_topic_word_d.T))
-            exp_doc_topic_d = np.exp(_log_dirichlet_expectation(doc_topic_d))
+            # The optimal phi_{dwk} is proportional to
+            # exp(E[log(theta_{dk})]) * exp(E[log(beta_{dw})]).
             norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + EPS
 
-            meanchange = mean_change(last_d, doc_topic_d)
-            if meanchange < mean_change_tol:
+            doc_topic_d = (doc_topic_prior + exp_doc_topic_d *
+                           np.dot(cnts / norm_phi, exp_topic_word_d.T))
+            exp_doc_topic_d = _dirichlet_expectation_1d(doc_topic_d)
+
+            if mean_change(last_d, doc_topic_d) < mean_change_tol:
                 break
         doc_topic_distr[idx_d, :] = doc_topic_d
 
         # Contribution of document d to the expected sufficient
         # statistics for the M step.
         if cal_sstats:
+            norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + EPS
             suff_stats[:, ids] += np.outer(exp_doc_topic_d, cnts / norm_phi)
 
     return (doc_topic_distr, suff_stats)
@@ -234,8 +210,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Verbosity level.
 
     random_state : int or RandomState instance or None, optional (default=None)
-        Pseudo random number generator seed control.
-
+        Pseudo-random number generator seed control.
 
     Attributes
     ----------
@@ -323,7 +298,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self.components_ = self.random_state_.gamma(
             init_gamma, init_var, (self.n_topics, n_features))
         # In the literature, this is `E[log(beta)]`
-        self.dirichlet_component_ = _log_dirichlet_expectation(self.components_)
+        self.dirichlet_component_ = _dirichlet_expectation_2d(self.components_)
         # In the literature, this is `exp(E[log(beta)])`
         self.exp_dirichlet_component_ = np.exp(self.dirichlet_component_)
 
@@ -424,7 +399,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                                            + doc_ratio * suff_stats))
 
         # update `component_` related variables
-        self.dirichlet_component_ = _log_dirichlet_expectation(self.components_)
+        self.dirichlet_component_ = _dirichlet_expectation_2d(self.components_)
         self.exp_dirichlet_component_ = np.exp(self.dirichlet_component_)
         self.n_iter_ += 1
         return
@@ -596,7 +571,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         n_samples, n_topics = doc_topic_distr.shape
         n_features = self.components_.shape[1]
         score = 0
-        dirichlet_doc_topic = _log_dirichlet_expectation(doc_topic_distr)
+        dirichlet_doc_topic = _dirichlet_expectation_2d(doc_topic_distr)
         doc_topic_prior = self.doc_topic_prior_
         topic_word_prior = self.topic_word_prior_
 
