@@ -12,6 +12,7 @@ Link: http://www.cs.princeton.edu/~mdhoffma/code/onlineldavb.tar
 # Author: Matthew D. Hoffman (original onlineldavb implementation)
 
 import numpy as np
+from scipy.linalg.blas import get_blas_funcs
 import scipy.sparse as sp
 from scipy.special import gammaln
 
@@ -87,6 +88,8 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
     # diff on `component_` (only calculate it when `cal_diff` is True)
     suff_stats = np.zeros(exp_topic_word_distr.shape) if cal_sstats else None
 
+    dot = get_blas_funcs('dot', [exp_topic_word_distr, exp_doc_topic])
+
     if is_sparse_x:
         X_data = X.data
         X_indices = X.indices
@@ -100,6 +103,9 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
             ids = np.nonzero(X[idx_d, :])[0]
             cnts = X[idx_d, ids]
 
+        if len(ids) == 0:   # BLAS dot borks on length-0 input.
+            continue
+
         doc_topic_d = doc_topic_distr[idx_d, :]
         exp_doc_topic_d = exp_doc_topic[idx_d, :]
         exp_topic_word_d = exp_topic_word_distr[:, ids]
@@ -110,19 +116,22 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
 
             # The optimal phi_{dwk} is proportional to
             # exp(E[log(theta_{dk})]) * exp(E[log(beta_{dw})]).
-            norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + EPS
+            norm_phi = dot(exp_doc_topic_d, exp_topic_word_d) + EPS
 
             doc_topic_d = (doc_topic_prior + exp_doc_topic_d *
                            np.dot(cnts / norm_phi, exp_topic_word_d.T))
-            exp_doc_topic_d = _dirichlet_expectation_1d(doc_topic_d)
 
             if mean_change(last_d, doc_topic_d) < mean_change_tol:
                 break
+
+            exp_doc_topic_d = _dirichlet_expectation_1d(doc_topic_d)
+
         doc_topic_distr[idx_d, :] = doc_topic_d
 
         # Contribution of document d to the expected sufficient
         # statistics for the M step.
         if cal_sstats:
+            exp_doc_topic_d = _dirichlet_expectation_1d(doc_topic_d)
             norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + EPS
             suff_stats[:, ids] += np.outer(exp_doc_topic_d, cnts / norm_phi)
 
