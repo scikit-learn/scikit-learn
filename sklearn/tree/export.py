@@ -210,7 +210,7 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
         if impurity:
             if criterion.__class__.__name__ == "FriedmanMSE":
                 criterion = "friedman_mse"
-            if not isinstance(criterion, six.string_types):
+            elif not isinstance(criterion, six.string_types):
                 criterion = "impurity"
             if labels:
                 node_string += '%s = ' % criterion
