@@ -14,8 +14,8 @@ New features
 ............
 
    - :class:`cross_validation.ShuffleLabelsOut` generates random train-test splits,
-     similer to `ShuffleSplit`, except that the splits are conditioned on a label array.
-     By `Brian McFee`_.
+     similar to :class:`cross_validation.ShuffleSplit`, except that the splits are 
+     conditioned on a label array. By `Brian McFee`_.
 
 Enhancements
 ............
