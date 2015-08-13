@@ -793,7 +793,6 @@ def check_alternative_lrap_implementation(lrap_score, n_classes=5,
                                           n_samples=20, random_state=0):
     _, y_true = make_multilabel_classification(n_features=1,
                                                allow_unlabeled=False,
-                                               return_indicator=True,
                                                random_state=random_state,
                                                n_classes=n_classes,
                                                n_samples=n_samples)

@@ -474,8 +474,7 @@ def test_random_hasher():
 
 
 def test_random_hasher_sparse_data():
-    X, y = datasets.make_multilabel_classification(return_indicator=True,
-                                                   random_state=0)
+    X, y = datasets.make_multilabel_classification(random_state=0)
     hasher = RandomTreesEmbedding(n_estimators=30, random_state=1)
     X_transformed = hasher.fit_transform(X)
     X_transformed_sparse = hasher.fit_transform(csc_matrix(X))
@@ -662,8 +661,7 @@ def check_sparse_input(name, X, X_sparse, y):
 
 
 def test_sparse_input():
-    X, y = datasets.make_multilabel_classification(return_indicator=True,
-                                                   random_state=0,
+    X, y = datasets.make_multilabel_classification(random_state=0,
                                                    n_samples=40)
 
     for name, sparse_matrix in product(FOREST_ESTIMATORS,
