@@ -50,6 +50,12 @@ Other packages useful for data analysis and machine learning.
 - `gensim <https://radimrehurek.com/gensim/>`_  A library for topic modelling,
   document indexing and similarity retrieval
 
+- `Seaborn <http://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on 
+  matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
+
+- `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning
+  software libraries.
+
 Extensions and Algorithms
 -------------------------
 Libraries that provide a scikit-learn like interface and can be used with
@@ -94,6 +100,10 @@ scikit-learn tools.
 - `nolearn <https://github.com/dnouri/nolearn>`_ A number of wrappers and
   abstractions around existing neural network libraries
 
+- `sparkit-learn <https://github.com/lensacom/sparkit-learn>`_ Scikit-learn functionality and API on PySpark.
+
+- `keras <https://github.com/fchollet/keras>`_ Theano-based Deep Learning library.
+
 Domain Specific Packages
 -------------------------
 - `scikit-image <http://scikit-image.org/>`_ Image processing and computer
@@ -104,8 +114,6 @@ Domain Specific Packages
 - `AstroML <http://www.astroml.org/>`_  Machine learning for astronomy.
 - `MSMBuilder <http://www.msmbuilder.org/>`_  Machine learning for protein
   conformational dynamics time series.
-
-
 
 Snippets and tidbits
 ---------------------
