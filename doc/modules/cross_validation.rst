@@ -430,8 +430,8 @@ validation that allows a finer control on the number of iterations and
 the proportion of samples in on each side of the train / test split.
 
 
-Shuffle-Labels-Out
-------------------
+Label-Shuffle-Split
+-------------------
 
 :class:`LabelShuffleSplit`
 
