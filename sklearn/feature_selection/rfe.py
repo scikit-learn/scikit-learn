@@ -14,7 +14,7 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
-from ..cross_validation import _check_cv as check_cv
+from ..cross_validation import check_cv
 from ..cross_validation import _safe_split, _score
 from ..metrics.scorer import check_scoring
 from .base import SelectorMixin
@@ -31,6 +31,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     absolute weights are the smallest are pruned from the current set features.
     That procedure is recursively repeated on the pruned set until the desired
     number of features to select is eventually reached.
+
+    Read more in the :ref:`User Guide <rfe>`.
 
     Parameters
     ----------
@@ -110,6 +112,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         self.estimator_params = estimator_params
         self.verbose = verbose
 
+    @property
+    def _estimator_type(self):
+        return self.estimator._estimator_type
+
     def fit(self, X, y):
         """Fit the RFE model and then the underlying estimator on the selected
            features.
@@ -122,6 +128,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         y : array-like, shape = [n_samples]
             The target values.
         """
+        return self._fit(X, y)
+
+    def _fit(self, X, y, step_score=None):
         X, y = check_X_y(X, y, "csc")
         # Initialization
         n_features = X.shape[1]
@@ -146,6 +155,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
+
+        if step_score:
+            self.scores_ = []
+
         # Elimination
         while np.sum(support_) > n_features_to_select:
             # Remaining features
@@ -181,14 +194,25 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
             # Eliminate the worse features
             threshold = min(step, np.sum(support_) - n_features_to_select)
+
+            # Compute step score on the previous selection iteration
+            # because 'estimator' must use features
+            # that have not been eliminated yet
+            if step_score:
+                self.scores_.append(step_score(estimator, features))
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1
 
         # Set final attributes
+        features = np.arange(n_features)[support_]
         self.estimator_ = clone(self.estimator)
         if self.estimator_params:
             self.estimator_.set_params(**self.estimator_params)
-        self.estimator_.fit(X[:, support_], y)
+        self.estimator_.fit(X[:, features], y)
+
+        # Compute step score when only n_features_to_select features left
+        if step_score:
+            self.scores_.append(step_score(self.estimator_, features))
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
@@ -246,6 +270,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 class RFECV(RFE, MetaEstimatorMixin):
     """Feature ranking with recursive feature elimination and cross-validated
     selection of the best number of features.
+
+    Read more in the :ref:`User Guide <rfe>`.
 
     Parameters
     ----------
@@ -308,7 +334,7 @@ class RFECV(RFE, MetaEstimatorMixin):
 
     Notes
     -----
-    The size of ``grid_scores_`` is equal to (n_features + step - 2) // step + 1,
+    The size of ``grid_scores_`` is equal to ceil((n_features - 1) / step) + 1,
     where step is the number of features removed at each iteration.
 
     Examples
@@ -367,47 +393,38 @@ class RFECV(RFE, MetaEstimatorMixin):
                           "value is set via the estimator initialisation or "
                           "set_params method.", DeprecationWarning)
         # Initialization
-        rfe = RFE(estimator=self.estimator, n_features_to_select=1,
-                  step=self.step, estimator_params=self.estimator_params,
-                  verbose=self.verbose - 1)
-
         cv = check_cv(self.cv, X, y, is_classifier(self.estimator))
         scorer = check_scoring(self.estimator, scoring=self.scoring)
-        scores = np.zeros(X.shape[1])
-        n_features_to_select_by_rank = np.zeros(X.shape[1])
+        n_features = X.shape[1]
+        n_features_to_select = 1
+
+        # Determine the number of subsets of features
+        scores = []
 
         # Cross-validation
         for n, (train, test) in enumerate(cv):
             X_train, y_train = _safe_split(self.estimator, X, y, train)
             X_test, y_test = _safe_split(self.estimator, X, y, test, train)
 
-            # Compute a full ranking of the features
-            # ranking_ contains the same set of values for all CV folds,
-            # but perhaps reordered
-            ranking_ = rfe.fit(X_train, y_train).ranking_
-            # Score each subset of features
-            for k in range(0, np.max(ranking_)):
-                indices = np.where(ranking_ <= k + 1)[0]
-                estimator = clone(self.estimator)
-                estimator.fit(X_train[:, indices], y_train)
-                score = _score(estimator, X_test[:, indices], y_test, scorer)
+            rfe = RFE(estimator=self.estimator,
+                      n_features_to_select=n_features_to_select,
+                      step=self.step, estimator_params=self.estimator_params,
+                      verbose=self.verbose - 1)
 
-                if self.verbose > 0:
-                    print("Finished fold with %d / %d feature ranks, score=%f"
-                          % (k + 1, np.max(ranking_), score))
-                scores[k] += score
-                # n_features_to_select_by_rank[k] is being overwritten
-                # multiple times, but by the same value
-                n_features_to_select_by_rank[k] = indices.size
-
-        # Select the best upper bound for feature rank. It's OK to use the
-        # last ranking_, as np.max(ranking_) is the same over all CV folds.
-        scores = scores[:np.max(ranking_)]
-        k = np.argmax(scores)
-
+            rfe._fit(X_train, y_train, lambda estimator, features:
+                     _score(estimator, X_test[:, features], y_test, scorer))
+            scores.append(np.array(rfe.scores_[::-1]).reshape(1, -1))
+        scores = np.sum(np.concatenate(scores, 0), 0)
+        # The index in 'scores' when 'n_features' features are selected
+        n_feature_index = np.ceil((n_features - n_features_to_select) /
+                                  float(self.step))
+        n_features_to_select = max(n_features_to_select,
+                                   n_features - ((n_feature_index -
+                                                 np.argmax(scores)) *
+                                                 self.step))
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=n_features_to_select_by_rank[k],
+                  n_features_to_select=n_features_to_select,
                   step=self.step, estimator_params=self.estimator_params)
 
         rfe.fit(X, y)

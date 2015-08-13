@@ -9,6 +9,8 @@ from .stochastic_gradient import DEFAULT_EPSILON
 class PassiveAggressiveClassifier(BaseSGDClassifier):
     """Passive Aggressive Classifier
 
+    Read more in the :ref:`User Guide <passive_aggressive>`.
+
     Parameters
     ----------
 
@@ -143,6 +145,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
 class PassiveAggressiveRegressor(BaseSGDRegressor):
     """Passive Aggressive Regressor
+
+    Read more in the :ref:`User Guide <passive_aggressive>`.
 
     Parameters
     ----------

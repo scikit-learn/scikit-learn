@@ -81,11 +81,9 @@ def benchmark(metrics=tuple(v for k, v in sorted(METRICS.items())),
     for i, (s, c, d) in enumerate(it):
         _, y_true = make_multilabel_classification(n_samples=s, n_features=1,
                                                    n_classes=c, n_labels=d * c,
-                                                   return_indicator=True,
                                                    random_state=42)
         _, y_pred = make_multilabel_classification(n_samples=s, n_features=1,
                                                    n_classes=c, n_labels=d * c,
-                                                   return_indicator=True,
                                                    random_state=84)
         for j, f in enumerate(formats):
             f_true = f(y_true)

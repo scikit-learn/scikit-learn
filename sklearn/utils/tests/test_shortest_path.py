@@ -93,8 +93,3 @@ def test_dijkstra_bug_fix():
     dist_FW = graph_shortest_path(X, directed=False, method='FW')
     dist_D = graph_shortest_path(X, directed=False, method='D')
     assert_array_almost_equal(dist_D, dist_FW)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

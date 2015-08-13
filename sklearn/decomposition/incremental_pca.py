@@ -31,6 +31,8 @@ class IncrementalPCA(_BasePCA):
     computations to get the principal components, versus 1 large SVD of
     complexity ``O(n_samples * n_features ** 2)`` for PCA.
 
+    Read more in the :ref:`User Guide <IncrementalPCA>`.
+
     Parameters
     ----------
     n_components : int or None, (default=None)

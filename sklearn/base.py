@@ -11,7 +11,11 @@ from scipy import sparse
 from .externals import six
 
 
-###############################################################################
+class ChangedBehaviorWarning(UserWarning):
+    pass
+
+
+##############################################################################
 def clone(estimator, safe=True):
     """Constructs a new estimator with the same parameters.
 
@@ -39,7 +43,7 @@ def clone(estimator, safe=True):
         else:
             raise TypeError("Cannot clone object '%s' (type %s): "
                             "it does not seem to be a scikit-learn estimator "
-                            "it does not implement a 'get_params' methods."
+                            "as it does not implement a 'get_params' methods."
                             % (repr(estimator), type(estimator)))
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
@@ -89,7 +93,12 @@ def clone(estimator, safe=True):
                     and param1.shape == param2.shape
                 )
         else:
-            equality_test = new_object_params[name] == params_set[name]
+            new_obj_val = new_object_params[name]
+            params_set_val = params_set[name]
+            # The following construct is required to check equality on special
+            # singletons such as np.nan that are not equal to them-selves:
+            equality_test = (new_obj_val == params_set_val or
+                             new_obj_val is params_set_val)
         if not equality_test:
             raise RuntimeError('Cannot clone object %s, as the constructor '
                                'does not seem to set parameter %s' %
@@ -245,15 +254,19 @@ class BaseEstimator(object):
                 # nested objects case
                 name, sub_name = split
                 if name not in valid_params:
-                    raise ValueError('Invalid parameter %s for estimator %s' %
+                    raise ValueError('Invalid parameter %s for estimator %s. ' 
+                                     'Check the list of available parameters '
+                                     'with `estimator.get_params().keys()`.' %
                                      (name, self))
                 sub_object = valid_params[name]
                 sub_object.set_params(**{sub_name: value})
             else:
                 # simple objects case
                 if key not in valid_params:
-                    raise ValueError('Invalid parameter %s ' 'for estimator %s'
-                                     % (key, self.__class__.__name__))
+                    raise ValueError('Invalid parameter %s for estimator %s. '
+                                     'Check the list of available parameters '
+                                     'with `estimator.get_params().keys()`.' %
+                                     (key, self.__class__.__name__))
                 setattr(self, key, value)
         return self
 
@@ -307,7 +320,10 @@ class RegressorMixin(object):
         The coefficient R^2 is defined as (1 - u/v), where u is the regression
         sum of squares ((y_true - y_pred) ** 2).sum() and v is the residual
         sum of squares ((y_true - y_true.mean()) ** 2).sum().
-        Best possible score is 1.0, lower values are worse.
+        Best possible score is 1.0 and it can be negative (because the
+        model can be arbitrarily worse). A constant model that always
+        predicts the expected value of y, disregarding the input features,
+        would get a R^2 score of 0.0.
 
         Parameters
         ----------

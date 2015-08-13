@@ -304,6 +304,8 @@ class TSNE(BaseEstimator):
     noise and speed up the computation of pairwise distances between
     samples. For more tips see Laurens van der Maaten's FAQ [2].
 
+    Read more in the :ref:`User Guide <t_sne>`.
+
     Parameters
     ----------
     n_components : int, optional (default: 2)
@@ -462,6 +464,8 @@ class TSNE(BaseEstimator):
 
         self.embedding_ = self._tsne(P, alpha, n_samples, random_state,
                                      X_embedded=X_embedded)
+
+        return self
 
     def _tsne(self, P, alpha, n_samples, random_state, X_embedded=None):
         """Runs t-SNE."""

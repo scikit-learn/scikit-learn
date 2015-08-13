@@ -109,6 +109,8 @@ def adjusted_rand_score(labels_true, labels_pred):
 
         adjusted_rand_score(a, b) == adjusted_rand_score(b, a)
 
+    Read more in the :ref:`User Guide <adjusted_rand_score>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -119,7 +121,7 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     Returns
     -------
-    ari: float
+    ari : float
        Similarity score between -1.0 and 1.0. Random labelings have an ARI
        close to 0.0. 1.0 stands for perfect match.
 
@@ -214,6 +216,8 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     ``label_pred`` will give the same score. This does not hold for
     homogeneity and completeness.
 
+    Read more in the :ref:`User Guide <homogeneity_completeness>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -274,6 +278,8 @@ def homogeneity_score(labels_true, labels_pred):
     This metric is not symmetric: switching ``label_true`` with ``label_pred``
     will return the :func:`completeness_score` which will be different in
     general.
+
+    Read more in the :ref:`User Guide <homogeneity_completeness>`.
 
     Parameters
     ----------
@@ -347,6 +353,8 @@ def completeness_score(labels_true, labels_pred):
     will return the :func:`homogeneity_score` which will be different in
     general.
 
+    Read more in the :ref:`User Guide <homogeneity_completeness>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -418,6 +426,8 @@ def v_measure_score(labels_true, labels_pred):
     ``label_pred`` will return the same score value. This can be useful to
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
+
+    Read more in the :ref:`User Guide <homogeneity_completeness>`.
 
     Parameters
     ----------
@@ -519,6 +529,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
+    Read more in the :ref:`User Guide <mutual_info_score>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -585,6 +597,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
 
     Be mindful that this function is an order of magnitude slower than other
     metrics, such as the Adjusted Rand Index.
+
+    Read more in the :ref:`User Guide <mutual_info_score>`.
 
     Parameters
     ----------
@@ -676,6 +690,8 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     ``label_pred`` will return the same score value. This can be useful to
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
+
+    Read more in the :ref:`User Guide <mutual_info_score>`.
 
     Parameters
     ----------

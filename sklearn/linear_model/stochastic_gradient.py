@@ -22,6 +22,7 @@ from ..utils.validation import check_is_fitted
 from ..externals import six
 
 from .sgd_fast import plain_sgd, average_sgd
+from ..utils.fixes import astype
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from ..utils import compute_class_weight
 from .sgd_fast import Hinge
@@ -511,15 +512,15 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
-        if self.class_weight == 'auto':
-            raise ValueError("class_weight 'auto' is not supported for "
-                             "partial_fit. In order to use 'auto' weights, "
-                             "use compute_class_weight('auto', classes, y). "
+        if self.class_weight in ['balanced', 'auto']:
+            raise ValueError("class_weight '{0}' is not supported for "
+                             "partial_fit. In order to use 'balanced' weights, "
+                             "use compute_class_weight('{0}', classes, y). "
                              "In place of y you can us a large enough sample "
                              "of the full training set target to properly "
                              "estimate the class frequency distributions. "
                              "Pass the resulting weights as the class_weight "
-                             "parameter.")
+                             "parameter.".format(self.class_weight))
         return self._partial_fit(X, y, alpha=self.alpha, C=1.0, loss=self.loss,
                                  learning_rate=self.learning_rate, n_iter=1,
                                  classes=classes, sample_weight=sample_weight,
@@ -580,6 +581,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     parameter update crosses the 0.0 value because of the regularizer, the
     update is truncated to 0.0 to allow for learning sparse models and achieve
     online feature selection.
+
+    Read more in the :ref:`User Guide <sgd>`.
 
     Parameters
     ----------
@@ -658,14 +661,15 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     power_t : double
         The exponent for inverse scaling learning rate [default 0.5].
 
-    class_weight : dict, {class_label: weight} or "auto" or None, optional
+    class_weight : dict, {class_label: weight} or "balanced" or None, optional
         Preset for the class_weight fit parameter.
 
         Weights associated with classes. If not given, all classes
         are supposed to have weight one.
 
-        The "auto" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies.
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
@@ -867,7 +871,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                      n_iter, sample_weight,
                      coef_init, intercept_init):
         X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
-        y = y.astype(np.float64)
+        y = astype(y, np.float64, copy=False)
 
         n_samples, n_features = X.shape
 
@@ -988,6 +992,20 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape (n_samples,)
            Predicted target values per element in X.
         """
+        return self._decision_function(X)
+
+    def _decision_function(self, X):
+        """Predict using the linear model
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+
+        Returns
+        -------
+        array, shape (n_samples,)
+           Predicted target values per element in X.
+        """
         check_is_fitted(self, ["t_", "coef_", "intercept_"], all_or_any=all)
 
         X = check_array(X, accept_sparse='csr')
@@ -1008,7 +1026,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape (n_samples,)
            Predicted target values per element in X.
         """
-        return self.decision_function(X)
+        return self._decision_function(X)
 
     def _fit_regressor(self, X, y, alpha, C, loss, learning_rate,
                        sample_weight, n_iter):
@@ -1099,6 +1117,8 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     This implementation works with data represented as dense numpy arrays of
     floating point values for the features.
 
+    Read more in the :ref:`User Guide <sgd>`.
+
     Parameters
     ----------
     loss : str, 'squared_loss', 'huber', 'epsilon_insensitive', \
@@ -1183,10 +1203,10 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     intercept_ : array, shape (1,)
         The intercept term.
 
-    `average_coef_` : array, shape (n_features,)
+    average_coef_ : array, shape (n_features,)
         Averaged weights assigned to the features.
 
-    `average_intercept_` : array, shape (1,)
+    average_intercept_ : array, shape (1,)
         The averaged intercept term.
 
     Examples

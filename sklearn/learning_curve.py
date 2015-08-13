@@ -9,7 +9,7 @@ import warnings
 import numpy as np
 
 from .base import is_classifier, clone
-from .cross_validation import _check_cv
+from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed
 from .cross_validation import _safe_split, _score, _fit_and_score
 from .metrics.scorer import check_scoring
@@ -33,6 +33,8 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
     to train the estimator and a score for each training subset size and the
     test set will be computed. Afterwards, the scores will be averaged over
     all k runs for each training subset size.
+
+    Read more in the :ref:`User Guide <learning_curves>`.
 
     Parameters
     ----------
@@ -106,7 +108,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
 
     X, y = indexable(X, y)
     # Make a list since we will be iterating multiple times over the folds
-    cv = list(_check_cv(cv, X, y, classifier=is_classifier(estimator)))
+    cv = list(check_cv(cv, X, y, classifier=is_classifier(estimator)))
     scorer = check_scoring(estimator, scoring=scoring)
 
     # HACK as long as boolean indices are allowed in cv generators
@@ -238,6 +240,8 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     will also compute training scores and is merely a utility for plotting the
     results.
 
+    Read more in the :ref:`User Guide <validation_curve>`.
+
     Parameters
     ----------
     estimator : object type that implements the "fit" and "predict" methods
@@ -293,7 +297,7 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     <example_model_selection_plot_validation_curve.py>`
     """
     X, y = indexable(X, y)
-    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,

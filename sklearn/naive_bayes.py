@@ -113,6 +113,8 @@ class GaussianNB(BaseNB):
 
         http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf
 
+    Read more in the :ref:`User Guide <gaussian_naive_bayes>`.
+
     Attributes
     ----------
     class_prior_ : array, shape (n_classes,)
@@ -472,7 +474,8 @@ class BaseDiscreteNB(BaseNB):
             msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
             raise ValueError(msg % (X.shape[0], y.shape[0]))
 
-        # convert to float to support sample weight consistently
+        # label_binarize() returns arrays with dtype=np.int64.
+        # We convert it to np.float64 to support sample_weight consistently
         Y = Y.astype(np.float64)
         if sample_weight is not None:
             Y *= check_array(sample_weight).T
@@ -520,7 +523,8 @@ class BaseDiscreteNB(BaseNB):
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
-        # convert to float to support sample weight consistently;
+        # LabelBinarizer().fit_transform() returns arrays with dtype=np.int64.
+        # We convert it to np.float64 to support sample_weight consistently;
         # this means we also don't have to cast X to floating point
         Y = Y.astype(np.float64)
         if sample_weight is not None:
@@ -561,6 +565,8 @@ class MultinomialNB(BaseDiscreteNB):
     discrete features (e.g., word counts for text classification). The
     multinomial distribution normally requires integer feature counts. However,
     in practice, fractional counts such as tf-idf may also work.
+
+    Read more in the :ref:`User Guide <multinomial_naive_bayes>`.
 
     Parameters
     ----------
@@ -662,6 +668,8 @@ class BernoulliNB(BaseDiscreteNB):
     Like MultinomialNB, this classifier is suitable for discrete data. The
     difference is that while MultinomialNB works with occurrence counts,
     BernoulliNB is designed for binary/boolean features.
+
+    Read more in the :ref:`User Guide <bernoulli_naive_bayes>`.
 
     Parameters
     ----------

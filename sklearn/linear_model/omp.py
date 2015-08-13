@@ -15,7 +15,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from ..utils import as_float_array, check_array, check_X_y
-from ..cross_validation import _check_cv as check_cv
+from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 
 import scipy
@@ -211,7 +211,12 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     n_active = 0
 
     max_features = len(Gram) if tol is not None else n_nonzero_coefs
-    L = np.empty((max_features, max_features), dtype=Gram.dtype)
+    if solve_triangular_args:
+        # new scipy, don't need to initialize because check_finite=False
+        L = np.empty((max_features, max_features), dtype=Gram.dtype)
+    else:
+        # old scipy, we need the garbage upper triangle to be non-Inf
+        L = np.zeros((max_features, max_features), dtype=Gram.dtype)
     L[0, 0] = 1.
     if return_path:
         coefs = np.empty_like(L)
@@ -275,6 +280,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
 
     When parametrized by error using the parameter `tol`:
     argmin ||\gamma||_0 subject to ||y - X\gamma||^2 <= tol
+
+    Read more in the :ref:`User Guide <omp>`.
 
     Parameters
     ----------
@@ -369,7 +376,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
         else:
             norms_squared = None
         return orthogonal_mp_gram(G, Xy, n_nonzero_coefs, tol, norms_squared,
-                                  copy_Gram=copy_X, copy_Xy=False, return_path=return_path)
+                                  copy_Gram=copy_X, copy_Xy=False,
+                                  return_path=return_path)
 
     if return_path:
         coef = np.zeros((X.shape[1], y.shape[1], X.shape[1]))
@@ -408,6 +416,8 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
 
     Solves n_targets Orthogonal Matching Pursuit problems using only
     the Gram matrix X.T * X and the product X.T * y.
+
+    Read more in the :ref:`User Guide <omp>`.
 
     Parameters
     ----------
@@ -555,6 +565,8 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         calculations. Improves performance when `n_targets` or `n_samples` is
         very large. Note that if you already have such matrices, you can pass
         them directly to the fit method.
+
+    Read more in the :ref:`User Guide <omp>`.
 
     Attributes
     ----------
@@ -753,6 +765,8 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
+
+    Read more in the :ref:`User Guide <omp>`.
 
     Attributes
     ----------

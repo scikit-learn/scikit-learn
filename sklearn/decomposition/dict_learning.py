@@ -8,7 +8,7 @@ import time
 import sys
 import itertools
 
-from math import sqrt, floor, ceil
+from math import sqrt, ceil
 
 import numpy as np
 from scipy import linalg
@@ -17,7 +17,8 @@ from numpy.lib.stride_tricks import as_strided
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import zip
-from ..utils import check_array, check_random_state, gen_even_slices
+from ..utils import (check_array, check_random_state, gen_even_slices,
+                     gen_batches, _get_n_jobs)
 from ..utils.extmath import randomized_svd, row_norms
 from ..utils.validation import check_is_fitted
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
@@ -149,6 +150,8 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
         X ~= code * dictionary
 
+    Read more in the :ref:`User Guide <SparseCoder>`.
+
     Parameters
     ----------
     X: array of shape (n_samples, n_features)
@@ -243,7 +246,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
     # Enter parallel code block
     code = np.empty((n_samples, n_components))
-    slices = list(gen_even_slices(n_samples, n_jobs))
+    slices = list(gen_even_slices(n_samples, _get_n_jobs(n_jobs)))
 
     code_views = Parallel(n_jobs=n_jobs)(
         delayed(_sparse_encode)(
@@ -343,6 +346,8 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
 
     where V is the dictionary and U is the sparse code.
+
+    Read more in the :ref:`User Guide <DictionaryLearning>`.
 
     Parameters
     ----------
@@ -517,6 +522,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     accomplished by repeatedly iterating over mini-batches by slicing
     the input data.
 
+    Read more in the :ref:`User Guide <DictionaryLearning>`.
+
     Parameters
     ----------
     X: array of shape (n_samples, n_features)
@@ -623,7 +630,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     if dict_init is not None:
         dictionary = dict_init
     else:
-        _, S, dictionary = randomized_svd(X, n_components)
+        _, S, dictionary = randomized_svd(X, n_components,
+                                          random_state=random_state)
         dictionary = S[:, np.newaxis] * dictionary
     r = len(dictionary)
     if n_components <= r:
@@ -636,13 +644,13 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     if verbose == 1:
         print('[dict_learning]', end=' ')
 
-    n_batches = floor(float(len(X)) / batch_size)
     if shuffle:
         X_train = X.copy()
         random_state.shuffle(X_train)
     else:
         X_train = X
-    batches = np.array_split(X_train, n_batches)
+
+    batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)
 
     # The covariance of the dictionary
@@ -657,7 +665,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     # If n_iter is zero, we need to return zero.
     ii = iter_offset - 1
 
-    for ii, this_X in zip(range(iter_offset, iter_offset + n_iter), batches):
+    for ii, batch in zip(range(iter_offset, iter_offset + n_iter), batches):
+        this_X = X_train[batch]
         dt = (time.time() - t0)
         if verbose == 1:
             sys.stdout.write(".")
@@ -784,6 +793,8 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
         X ~= code * dictionary
 
+    Read more in the :ref:`User Guide <SparseCoder>`.
+
     Parameters
     ----------
     dictionary : array, [n_components, n_features]
@@ -867,6 +878,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
+
+    Read more in the :ref:`User Guide <DictionaryLearning>`.
 
     Parameters
     ----------
@@ -1008,8 +1021,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             dict_init=self.dict_init,
             verbose=self.verbose,
             random_state=random_state,
-            return_n_iter=True
-            )
+            return_n_iter=True)
         self.components_ = U
         self.error_ = E
         return self
@@ -1026,6 +1038,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
+
+    Read more in the :ref:`User Guide <DictionaryLearning>`.
 
     Parameters
     ----------
@@ -1169,8 +1183,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             batch_size=self.batch_size, shuffle=self.shuffle,
             verbose=self.verbose, random_state=random_state,
             return_inner_stats=True,
-            return_n_iter=True
-            )
+            return_n_iter=True)
         self.components_ = U
         # Keep track of the state of the algorithm to be able to do
         # some online fitting (partial_fit)
@@ -1215,8 +1228,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             batch_size=len(X), shuffle=False,
             verbose=self.verbose, return_code=False,
             iter_offset=iter_offset, random_state=self.random_state_,
-            return_inner_stats=True, inner_stats=inner_stats,
-            )
+            return_inner_stats=True, inner_stats=inner_stats)
         self.components_ = U
 
         # Keep track of the state of the algorithm to be able to do

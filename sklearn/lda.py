@@ -53,7 +53,8 @@ def _cov(X, shrinkage=None):
         if shrinkage == 'auto':
             sc = StandardScaler()  # standardize features
             X = sc.fit_transform(X)
-            s = sc.std_ * ledoit_wolf(X)[0] * sc.std_  # scale back
+            s = ledoit_wolf(X)[0]
+            s = sc.std_[:, np.newaxis] * s * sc.std_[np.newaxis, :]  # rescale
         elif shrinkage == 'empirical':
             s = empirical_covariance(X)
         else:
@@ -135,6 +136,8 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
 
     The fitted model can also be used to reduce the dimensionality of the input
     by projecting it to the most discriminative directions.
+
+    Read more in the :ref:`User Guide <lda_qda>`.
 
     Parameters
     ----------

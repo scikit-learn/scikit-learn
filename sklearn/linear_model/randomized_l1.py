@@ -190,6 +190,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     a Lasso on each resampling. In short, the features selected more
     often are good features. It is also known as stability selection.
 
+    Read more in the :ref:`User Guide <randomized_l1>`.
+
     Parameters
     ----------
     alpha : float, 'aic', or 'bic', optional
@@ -372,6 +374,8 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     a LogisticRegression on each resampling. In short, the features selected
     more often are good features. It is also known as stability selection.
 
+    Read more in the :ref:`User Guide <randomized_l1>`.
+
     Parameters
     ----------
     C : float, optional, default=1
@@ -536,6 +540,8 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
                          eps=4 * np.finfo(np.float).eps, n_jobs=1,
                          verbose=False):
     """Stabiliy path based on randomized Lasso estimates
+
+    Read more in the :ref:`User Guide <randomized_l1>`.
 
     Parameters
     ----------

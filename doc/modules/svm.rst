@@ -76,9 +76,10 @@ n_features]`` holding the training samples, and an array y of class labels
     >>> y = [0, 1]
     >>> clf = svm.SVC()
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.0, kernel='rbf', max_iter=-1, probability=False, random_state=None,
-    shrinking=True, tol=0.001, verbose=False)
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+        decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+        max_iter=-1, probability=False, random_state=None, shrinking=True,
+        tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -109,18 +110,27 @@ Multi-class classification
 :class:`SVC` and :class:`NuSVC` implement the "one-against-one"
 approach (Knerr et al., 1990) for multi- class classification. If
 ``n_class`` is the number of classes, then ``n_class * (n_class - 1) / 2``
-classifiers are constructed and each one trains data from two classes::
+classifiers are constructed and each one trains data from two classes.
+To provide a consistent interface with other classifiers, the
+``decision_function_shape`` option allows to aggregate the results of the
+"one-against-one" classifiers to a decision function of shape ``(n_samples,
+n_classes)``::
 
     >>> X = [[0], [1], [2], [3]]
     >>> Y = [0, 1, 2, 3]
-    >>> clf = svm.SVC()
+    >>> clf = svm.SVC(decision_function_shape='ovo')
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.0, kernel='rbf', max_iter=-1, probability=False, random_state=None,
-    shrinking=True, tol=0.001, verbose=False)
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+        decision_function_shape='ovo', degree=3, gamma='auto', kernel='rbf',
+        max_iter=-1, probability=False, random_state=None, shrinking=True,
+        tol=0.001, verbose=False)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
     6
+    >>> clf.decision_function_shape = "ovr"
+    >>> dec = clf.decision_function([[1]])
+    >>> dec.shape[1] # 4 classes
+    4
 
 On the other hand, :class:`LinearSVC` implements "one-vs-the-rest"
 multi-class strategy, thus training n_class models. If there are only
@@ -304,7 +314,7 @@ floating point values instead of integer values::
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.0,
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma='auto',
         kernel='rbf', max_iter=-1, shrinking=True, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
@@ -405,7 +415,7 @@ Tips on Practical Use
     approximates the fraction of training errors and support vectors.
 
   * In :class:`SVC`, if data for classification are unbalanced (e.g. many
-    positive and few negative), set ``class_weight='auto'`` and/or try
+    positive and few negative), set ``class_weight='balanced'`` and/or try
     different penalty parameters ``C``.
 
   * The underlying :class:`LinearSVC` implementation uses a random
@@ -503,9 +513,10 @@ test vectors must be provided.
     >>> # linear kernel computation
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.0, kernel='precomputed', max_iter=-1, probability=False,
-    random_state=None, shrinking=True, tol=0.001, verbose=False)
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+        decision_function_shape=None, degree=3, gamma='auto',
+        kernel='precomputed', max_iter=-1, probability=False,
+        random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> # predict on training examples
     >>> clf.predict(gram)
     array([0, 1])

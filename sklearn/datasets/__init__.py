@@ -49,6 +49,8 @@ from .svmlight_format import dump_svmlight_file
 from .olivetti_faces import fetch_olivetti_faces
 from .species_distributions import fetch_species_distributions
 from .california_housing import fetch_california_housing
+from .rcv1 import fetch_rcv1
+
 
 __all__ = ['clear_data_home',
            'dump_svmlight_file',
@@ -61,6 +63,7 @@ __all__ = ['clear_data_home',
            'fetch_species_distributions',
            'fetch_california_housing',
            'fetch_covtype',
+           'fetch_rcv1',
            'get_data_home',
            'load_boston',
            'load_diabetes',

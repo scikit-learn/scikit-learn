@@ -17,12 +17,13 @@ from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
 from ..utils import check_array, check_X_y, deprecated
 from ..utils.validation import check_random_state
-from ..cross_validation import _check_cv as check_cv
+from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
+from ..utils.validation import column_or_1d
 from ..utils import ConvergenceWarning
 
 from . import cd_fast
@@ -131,6 +132,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
+
+    Read more in the :ref:`User Guide <lasso>`.
 
     Parameters
     ----------
@@ -274,6 +277,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     i.e. the sum of norm of each row.
 
+    Read more in the :ref:`User Guide <elastic_net>`.
+
     Parameters
     ----------
     X : {array-like}, shape (n_samples, n_features)
@@ -355,6 +360,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNetCV
     """
     X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
+    y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False, ensure_2d=False)
     if Xy is not None:
         Xy = check_array(Xy, 'csc', dtype=np.float64, order='F', copy=False,
                          ensure_2d=False)
@@ -482,6 +488,8 @@ class ElasticNet(LinearModel, RegressorMixin):
     alpha corresponds to the lambda parameter in glmnet. Specifically, l1_ratio
     = 1 is the lasso penalty. Currently, l1_ratio <= 0.01 is not reliable,
     unless you supply your own sequence of alpha.
+
+    Read more in the :ref:`User Guide <elastic_net>`.
 
     Parameters
     ----------
@@ -736,6 +744,8 @@ class Lasso(ElasticNet):
 
     Technically the Lasso model is optimizing the same objective function as
     the Elastic Net with ``l1_ratio=1.0`` (no L2 penalty).
+
+    Read more in the :ref:`User Guide <lasso>`.
 
     Parameters
     ----------
@@ -1012,9 +1022,10 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                 model = ElasticNet()
             else:
                 model = Lasso()
-            if y.ndim > 1:
+            if y.ndim > 1 and y.shape[1] > 1:
                 raise ValueError("For multi-task outputs, use "
                                  "MultiTask%sCV" % (model_str))
+            y = column_or_1d(y, warn=True)
         else:
             if sparse.isspmatrix(X):
                 raise TypeError("X should be dense but a sparse matrix was"
@@ -1161,6 +1172,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
         (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
+    Read more in the :ref:`User Guide <lasso>`.
+
     Parameters
     ----------
     eps : float, optional
@@ -1285,6 +1298,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     """Elastic Net model with iterative fitting along a regularization path
 
     The best model is selected by cross-validation.
+
+    Read more in the :ref:`User Guide <elastic_net>`.
 
     Parameters
     ----------
@@ -1463,6 +1478,8 @@ class MultiTaskElasticNet(Lasso):
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
+
+    Read more in the :ref:`User Guide <multi_task_lasso>`.
 
     Parameters
     ----------
@@ -1647,6 +1664,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     i.e. the sum of norm of earch row.
 
+    Read more in the :ref:`User Guide <multi_task_lasso>`.
+
     Parameters
     ----------
     alpha : float, optional
@@ -1754,6 +1773,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
+
+    Read more in the :ref:`User Guide <multi_task_lasso>`.
 
     Parameters
     ----------
@@ -1908,6 +1929,8 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
+
+    Read more in the :ref:`User Guide <multi_task_lasso>`.
 
     Parameters
     ----------

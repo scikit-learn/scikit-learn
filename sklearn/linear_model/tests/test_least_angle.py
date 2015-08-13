@@ -3,15 +3,19 @@ from nose.tools import assert_equal
 import numpy as np
 from scipy import linalg
 
+from sklearn.cross_validation import train_test_split
+from sklearn.externals import joblib
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import ignore_warnings, assert_warns_message
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_no_warnings, assert_warns
+from sklearn.utils.testing import TempMemmap
 from sklearn.utils import ConvergenceWarning
 from sklearn import linear_model, datasets
+from sklearn.linear_model.least_angle import _lars_path_residues
 
 diabetes = datasets.load_diabetes()
 X, y = diabetes.data, diabetes.target
@@ -299,7 +303,6 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     y = y.squeeze()
     lars_alphas, _, lars_coef = linear_model.lars_path(X, y, method='lasso')
 
-
     _, lasso_coef2, _ = linear_model.lasso_path(X, y,
                                                 alphas=lars_alphas,
                                                 tol=1e-6,
@@ -428,6 +431,12 @@ def test_no_warning_for_zero_mse():
     assert_true(np.any(np.isinf(lars.criterion_)))
 
 
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()
+def test_lars_path_readonly_data():
+    # When using automated memory mapping on large input, the
+    # fold data is in read-only mode
+    # This is a non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/4597
+    splitted_data = train_test_split(X, y, random_state=42)
+    with TempMemmap(splitted_data) as (X_train, X_test, y_train, y_test):
+        # The following should not fail despite copy=False
+        _lars_path_residues(X_train, y_train, X_test, y_test, copy=False)

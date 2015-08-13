@@ -2,6 +2,9 @@
 
 .. _changes_0_17:
 
+===============
+Release history
+===============
 
 0.17
 ====
@@ -13,6 +16,23 @@ Changelog
 New features
 ............
 
+   - The new class :class:`ensemble.VotingClassifier` implements a
+     "majority rule" / "soft voting" ensemble classifier to combine
+     estimators for classification. By `Sebastian Raschka`_.
+
+   - The new class :class:`preprocessing.RobustScaler` provides an
+     alternative to :class:`preprocessing.StandardScaler` for feature-wise
+     centering and range normalization that is robust to outliers. By `Thomas Unterthiner`_.
+
+   - The new class :class:`preprocessing.MaxAbsScaler` provides an
+     alternative to :class:`preprocessing.MinMaxScaler` for feature-wise
+     range normalization when the data is already centered or sparse.
+     By `Thomas Unterthiner`_.
+
+   - The new class :class:`preprocessing.FunctionTransformer` turns a Python
+     function into a ``Pipeline``-compatible transformer object.
+     By Joe Jevnik.
+
 Enhancements
 ............
 
@@ -22,8 +42,99 @@ Enhancements
    - :class:`dummy.DummyClassifier` now supports a prior fitting strategy.
      By `Arnaud Joly`_.
 
+   - Added a ``fit_predict`` method for :class:`mixture.GMM` and subclasses.
+     By `Cory Lorenz`_.
+
+   - Added the :func:`metrics.label_ranking_loss` metrics.
+     By `Arnaud Joly`_.
+
+   - Added a ``warm_start`` constructor parameter to the bagging ensemble
+     models to increase the size of the ensemble. By
+     `Tim Head`_.
+
+   - Added option to use multi-output regression metrics without averaging.
+     By Konstantin Shmelkov and `Michael Eickenberg`_.
+
+   - Added ``stratify`` option to :func:`cross_validation.train_test_split`
+     for stratified splitting. By Miroslav Batchkarov.
+
+   - The :func:`tree.export_graphviz` function now supports aesthetic
+     improvements for :class:`tree.DecisionTreeClassifier` and
+     :class:`tree.DecisionTreeRegressor`, including options for coloring nodes
+     by their majority class or impurity, showing variable names, and using
+     node proportions instead of raw sample counts. By `Trevor Stephens`_.
+
+   - Improved speed of ``newton-cg`` solver in
+     :class:`linear_model.LogisticRegression`, by avoiding loss computation.
+     By `Mathieu Blondel`_ and `Tom Dupre la Tour`_.
+
+   - The ``class_weight="auto"`` heuristic in classifiers supporting
+     ``class_weight`` was deprecated and replaced by the ``class_weight="balanced"``
+     option, which has a simpler forumlar and interpretation.
+     By Hanna Wallach and `Andreas Müller`_.
+
+   - Added backlinks from the API reference pages to the user guide. By
+     `Andreas Müller`_.
+
+   - The ``labels`` parameter to :func:`sklearn.metrics.f1_score`,
+     :func:`sklearn.metrics.fbeta_score`,
+     :func:`sklearn.metrics.recall_score` and
+     :func:`sklearn.metrics.precision_score` has been extended.
+     It is now possible to ignore one or more labels, such as where
+     a multiclass problem has a majority class to ignore. By `Joel Nothman`_.
+
+   - Add ``sample_weight`` support to :class:`linear_model.RidgeClassifier`.
+     By `Trevor Stephens`_.
+
+   - Provide an option for sparse output from
+     :func:`sklearn.metrics.pairwise.cosine_similarity`. By `Jaidev Deshpande`_.
+
+   - Add :func:`minmax_scale` to provide a function interface for
+     :class:`MinMaxScaler`. By `Thomas Unterthiner`_.
+
+   - ``dump_svmlight_file`` now handles multi-label datasets.
+     By Chih-Wei Chang.
+
+   - RCV1 dataset loader (:func:`sklearn.datasets.fetch_rcv1`).
+     By `Tom Dupre la Tour`_.
+
+   - Upgraded to joblib 0.9.0b2 to benefit from the new automatic batching of
+     short tasks. This makes it possible for scikit-learn to benefit from
+     parallelism when many very short tasks are executed in parallel, for
+     instance by the :class:`grid_search.GridSearchCV` meta-estimator
+     with ``n_jobs > 1`` used with a large grid of parameters on a small
+     dataset. By `Vlad Niculae`_, `Olivier Grisel`_ and `Loic Esteve`_.
+
+
 Bug fixes
 .........
+
+    - Fixed non-determinism in :class:`dummy.DummyClassifier` with sparse
+      multi-label output. By `Andreas Müller`_.
+
+    - Fixed the output shape of :class:`linear_model.RANSACRegressor` to
+      ``(n_samples, )``. By `Andreas Müller`_.
+
+    - Fixed bug in :class:`decomposition.DictLearning` when ``n_jobs < 0``. By
+      `Andreas Müller`_.
+
+    - Fixed bug where :class:`grid_search.RandomizedSearchCV` could consume a
+      lot of memory for large discrete grids. By `Joel Nothman`_.
+
+    - Fixed bug in :class:`linear_model.LogisticRegressionCV` where `penalty` was ignored
+      in the final fit. By `Manoj Kumar`_.
+
+    - Fixed bug in :class:`ensemble.forest.ForestClassifier` while computing 
+      oob_score and X is a sparse.csc_matrix. By `Ankur Ankan`_.
+
+    - All regressors now consistently handle and warn when given ``y`` that is of
+      shape ``(n_samples, 1)``. By `Andreas Müller`_.
+
+    - Fix in :class:`cluster.KMeans` cluster reassignment for sparse input by
+      `Lars Buitinck`_.
+
+    - Fixed a bug in :class:`lda.LDA` that could cause asymmetric covariance 
+      matrices when using shrinkage. By `Martin Billinger`_.
 
 API changes summary
 -------------------
@@ -31,6 +142,11 @@ API changes summary
     - :class:`tree.DecisionTreeClassifier` now exposes an ``apply`` method
       for retrieving the leaf indices samples are predicted as. By
       `Daniel Galvez`_ and `Gilles Louppe`_.
+
+    - :class:`svm.SVC`` and :class:`svm.NuSVC` now have an ``decision_function_shape``
+      parameter to make their decision function of shape ``(n_samples, n_classes)``
+      by setting ``decision_function_shape='ovr'``. This will be the default behavior
+      starting in 0.19. By `Andreas Müller`_.
 
 .. _changes_0_1_16:
 
@@ -159,7 +275,7 @@ New features
 
    - Added :class:`cross_validation.PredefinedSplit` cross-validation
      for fixed user-provided cross-validation folds.
-     By `untom <https://github.com/untom>`_.
+     By `Thomas Unterthiner`_.
 
    - Added :class:`calibration.CalibratedClassifierCV`, an approach for
      calibrating the predicted probabilities of a classifier.
@@ -296,6 +412,7 @@ Enhancements
    - :class:`svm.SVC` fitted on sparse input now implements ``decision_function``.
      By `Rob Zinkov`_ and `Andreas Müller`_.
 
+
 Documentation improvements
 ..........................
 
@@ -345,7 +462,7 @@ Bug fixes
 
     - The :class:`decomposition.PCA` now undoes whitening in its
       ``inverse_transform``. Also, its ``components_`` now always have unit
-      length. By Michael Eickenberg.
+      length. By `Michael Eickenberg`_.
 
     - Fix incomplete download of the dataset when
       :func:`datasets.download_20newsgroups` is called. By `Manoj Kumar`_.
@@ -419,7 +536,7 @@ Bug fixes
       in GMM. By `Alexis Mignon`_.
 
     - Fixed a error in the computation of conditional probabilities in
-      :class:`naive_bayes.BernoulliNB`. By `Hanna Wallach`_.
+      :class:`naive_bayes.BernoulliNB`. By Hanna Wallach.
 
     - Make the method ``radius_neighbors`` of
       :class:`neighbors.NearestNeighbors` return the samples lying on the
@@ -3445,3 +3562,15 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Eric Martin: http://ericmart.in
 
 .. _Nicolas Goix: https://webperso.telecom-paristech.fr/front/frontoffice.php?SP_ID=241
+
+.. _Cory Lorenz: https://github.com/clorenz7
+
+.. _Tim Head: https://github.com/betatim
+
+.. _Tom Dupre la Tour: https://github.com/TomDLT
+
+.. _Sebastian Raschka: http://sebastianraschka.com
+
+.. _Thomas Unterthiner: https://github.com/untom
+
+.. _Loic Esteve: https://github.com/lesteve

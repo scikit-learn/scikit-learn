@@ -266,6 +266,7 @@ They also tend to break when the problem is badly conditioned
 
   * :ref:`example_linear_model_plot_lasso_model_selection.py`
 
+.. _elastic_net:
 
 Elastic Net
 ===========
@@ -485,6 +486,9 @@ previously chosen dictionary elements.
  * `Matching pursuits with time-frequency dictionaries
    <http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf>`_,
    S. G. Mallat, Z. Zhang,
+
+
+.. _bayesian_regression:
 
 Bayesian Regression
 ===================
@@ -751,6 +755,8 @@ while with ``loss="hinge"`` it fits a linear support vector machine (SVM).
 .. topic:: References
 
  * :ref:`sgd`
+
+.. _perceptron:
 
 Perceptron
 ==========

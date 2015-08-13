@@ -12,15 +12,19 @@ from numpy.testing import assert_almost_equal
 from scipy import sparse
 from nose.tools import assert_raises, assert_true, assert_equal, assert_false
 
+from sklearn.base import ChangedBehaviorWarning
 from sklearn import svm, linear_model, datasets, metrics, base
-from sklearn.datasets.samples_generator import make_classification
+from sklearn.cross_validation import train_test_split
+from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
+from sklearn.utils.validation import NotFittedError
 from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
 from sklearn.utils.testing import assert_warns_message, assert_raise_message
+from sklearn.utils.testing import ignore_warnings
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -288,7 +292,8 @@ def test_decision_function():
     # Sanity check, test that decision_function implemented in python
     # returns the same as the one in libsvm
     # multi class:
-    clf = svm.SVC(kernel='linear', C=0.1).fit(iris.data, iris.target)
+    clf = svm.SVC(kernel='linear', C=0.1,
+                  decision_function_shape='ovo').fit(iris.data, iris.target)
 
     dec = np.dot(iris.data, clf.coef_.T) + clf.intercept_
 
@@ -306,12 +311,46 @@ def test_decision_function():
     assert_array_almost_equal(clf.decision_function(X), expected, 2)
 
     # kernel binary:
-    clf = svm.SVC(kernel='rbf', gamma=1)
+    clf = svm.SVC(kernel='rbf', gamma=1, decision_function_shape='ovo')
     clf.fit(X, Y)
-    
+
     rbfs = rbf_kernel(X, clf.support_vectors_, gamma=clf.gamma)
     dec = np.dot(rbfs, clf.dual_coef_.T) + clf.intercept_
     assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
+
+
+def test_decision_function_shape():
+    # check that decision_function_shape='ovr' gives
+    # correct shape and is consistent with predict
+
+    clf = svm.SVC(kernel='linear', C=0.1,
+                  decision_function_shape='ovr').fit(iris.data, iris.target)
+    dec = clf.decision_function(iris.data)
+    assert_equal(dec.shape, (len(iris.data), 3))
+    assert_array_equal(clf.predict(iris.data), np.argmax(dec, axis=1))
+
+    # with five classes:
+    X, y = make_blobs(n_samples=80, centers=5, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    clf = svm.SVC(kernel='linear', C=0.1,
+                  decision_function_shape='ovr').fit(X_train, y_train)
+    dec = clf.decision_function(X_test)
+    assert_equal(dec.shape, (len(X_test), 5))
+    assert_array_equal(clf.predict(X_test), np.argmax(dec, axis=1))
+
+    # check shape of ovo_decition_function=True
+    clf = svm.SVC(kernel='linear', C=0.1,
+                  decision_function_shape='ovo').fit(X_train, y_train)
+    dec = clf.decision_function(X_train)
+    assert_equal(dec.shape, (len(X_train), 10))
+
+    # check deprecation warning
+    clf.decision_function_shape = None
+    msg = "change the shape of the decision function"
+    dec = assert_warns_message(ChangedBehaviorWarning, msg,
+                               clf.decision_function, X_train)
+    assert_equal(dec.shape, (len(X_train), 10))
 
 
 def test_svr_decision_function():
@@ -330,7 +369,7 @@ def test_svr_decision_function():
 
     # rbf kernel
     reg = svm.SVR(kernel='rbf', gamma=1).fit(X, y)
-    
+
     rbfs = rbf_kernel(X, reg.support_vectors_, gamma=reg.gamma)
     dec = np.dot(rbfs, reg.dual_coef_.T) + reg.intercept_
     assert_array_almost_equal(dec.ravel(), reg.decision_function(X).ravel())
@@ -381,21 +420,21 @@ def test_auto_weight():
     # We take as dataset the two-dimensional projection of iris so
     # that it is not separable and remove half of predictors from
     # class 1.
-    # We add one to the targets as a non-regression test: class_weight="auto"
+    # We add one to the targets as a non-regression test: class_weight="balanced"
     # used to work only when the labels where a range [0..K).
     from sklearn.utils import compute_class_weight
     X, y = iris.data[:, :2], iris.target + 1
     unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][::2])
 
     classes = np.unique(y[unbalanced])
-    class_weights = compute_class_weight('auto', classes, y[unbalanced])
+    class_weights = compute_class_weight('balanced', classes, y[unbalanced])
     assert_true(np.argmax(class_weights) == 2)
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
                 LogisticRegression()):
-        # check that score is better when class='auto' is set.
+        # check that score is better when class='balanced' is set.
         y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
-        clf.set_params(class_weight='auto')
+        clf.set_params(class_weight='balanced')
         y_pred_balanced = clf.fit(X[unbalanced], y[unbalanced],).predict(X)
         assert_true(metrics.f1_score(y, y_pred, average='weighted')
                     <= metrics.f1_score(y, y_pred_balanced,
@@ -691,19 +730,6 @@ def test_immutable_coef_property():
                       clf.coef_.__setitem__, (0, 0), 0)
 
 
-def test_inheritance():
-    # check that SVC classes can do inheritance
-    class ChildSVC(svm.SVC):
-        def __init__(self, foo=0):
-            self.foo = foo
-            svm.SVC.__init__(self)
-
-    clf = ChildSVC()
-    clf.fit(iris.data, iris.target)
-    clf.predict(iris.data[-1])
-    clf.decision_function(iris.data[-1])
-
-
 def test_linearsvc_verbose():
     # stdout: redirect
     import os
@@ -722,12 +748,14 @@ def test_svc_clone_with_callable_kernel():
     # create SVM with callable linear kernel, check that results are the same
     # as with built-in linear kernel
     svm_callable = svm.SVC(kernel=lambda x, y: np.dot(x, y.T),
-                           probability=True, random_state=0)
+                           probability=True, random_state=0,
+                           decision_function_shape='ovr')
     # clone for checking clonability with lambda functions..
     svm_cloned = base.clone(svm_callable)
     svm_cloned.fit(iris.data, iris.target)
 
-    svm_builtin = svm.SVC(kernel='linear', probability=True, random_state=0)
+    svm_builtin = svm.SVC(kernel='linear', probability=True, random_state=0,
+                          decision_function_shape='ovr')
     svm_builtin.fit(iris.data, iris.target)
 
     assert_array_almost_equal(svm_cloned.dual_coef_,
@@ -767,6 +795,8 @@ def test_unfitted():
                          clf.predict, X)
 
 
+# ignore convergence warnings from max_iter=1
+@ignore_warnings
 def test_consistent_proba():
     a = svm.SVC(probability=True, max_iter=1, random_state=0)
     proba_1 = a.fit(X, Y).predict_proba(X)
@@ -815,6 +845,23 @@ def test_lsvc_intercept_scaling_zero():
     assert_equal(lsvc.intercept_, 0.)
 
 
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()
+def test_hasattr_predict_proba():
+    # Method must be (un)available before or after fit, switched by
+    # `probability` param
+
+    G = svm.SVC(probability=True)
+    assert_true(hasattr(G, 'predict_proba'))
+    G.fit(iris.data, iris.target)
+    assert_true(hasattr(G, 'predict_proba'))
+
+    G = svm.SVC(probability=False)
+    assert_false(hasattr(G, 'predict_proba'))
+    G.fit(iris.data, iris.target)
+    assert_false(hasattr(G, 'predict_proba'))
+
+    # Switching to `probability=True` after fitting should make
+    # predict_proba available, but calling it must not work:
+    G.probability = True
+    assert_true(hasattr(G, 'predict_proba'))
+    msg = "predict_proba is not available when fitted with probability=False"
+    assert_raise_message(NotFittedError, msg, G.predict_proba, iris.data)

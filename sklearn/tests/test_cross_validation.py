@@ -37,7 +37,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
 
-from sklearn.preprocessing import Imputer, LabelBinarizer
+from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
 
@@ -95,7 +95,7 @@ class MockClassifier(object):
     def predict(self, T):
         if self.allow_nd:
             T = T.reshape(len(T), -1)
-        return T.shape[0]
+        return T[:, 0]
 
     def score(self, X=None, Y=None):
         return 1. / (1 + np.abs(self.a))
@@ -696,6 +696,19 @@ def test_train_test_split():
     assert_equal(split[2].shape, (7, 7, 11))
     assert_equal(split[3].shape, (3, 7, 11))
 
+    # test stratification option
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2])
+    for test_size, exp_test_size in zip([2, 4, 0.25, 0.5, 0.75],
+                                        [2, 4, 2, 4, 6]):
+        train, test = cval.train_test_split(y,
+                                            test_size=test_size,
+                                            stratify=y,
+                                            random_state=0)
+        assert_equal(len(test), exp_test_size)
+        assert_equal(len(test) + len(train), len(y))
+        # check the 1:1 ratio of ones and twos in the data is preserved
+        assert_equal(np.sum(train == 1), np.sum(train == 2))
+
 
 def train_test_split_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
@@ -937,31 +950,24 @@ def test_permutation_test_score_allow_nans():
 
 def test_check_cv_return_types():
     X = np.ones((9, 2))
-    cv = cval._check_cv(3, X, classifier=False)
+    cv = cval.check_cv(3, X, classifier=False)
     assert_true(isinstance(cv, cval.KFold))
 
     y_binary = np.array([0, 1, 0, 1, 0, 0, 1, 1, 1])
-    cv = cval._check_cv(3, X, y_binary, classifier=True)
+    cv = cval.check_cv(3, X, y_binary, classifier=True)
     assert_true(isinstance(cv, cval.StratifiedKFold))
 
     y_multiclass = np.array([0, 1, 0, 1, 2, 1, 2, 0, 2])
-    cv = cval._check_cv(3, X, y_multiclass, classifier=True)
+    cv = cval.check_cv(3, X, y_multiclass, classifier=True)
     assert_true(isinstance(cv, cval.StratifiedKFold))
 
     X = np.ones((5, 2))
-    y_seq_of_seqs = [[], [1, 2], [3], [0, 1, 3], [2]]
-
-    with warnings.catch_warnings(record=True):
-        # deprecated sequence of sequence format
-        cv = cval._check_cv(3, X, y_seq_of_seqs, classifier=True)
-    assert_true(isinstance(cv, cval.KFold))
-
-    y_indicator_matrix = LabelBinarizer().fit_transform(y_seq_of_seqs)
-    cv = cval._check_cv(3, X, y_indicator_matrix, classifier=True)
+    y_multilabel = [[1, 0, 1], [1, 1, 0], [0, 0, 0], [0, 1, 1], [1, 0, 0]]
+    cv = cval.check_cv(3, X, y_multilabel, classifier=True)
     assert_true(isinstance(cv, cval.KFold))
 
     y_multioutput = np.array([[1, 2], [0, 3], [0, 0], [3, 1], [2, 0]])
-    cv = cval._check_cv(3, X, y_multioutput, classifier=True)
+    cv = cval.check_cv(3, X, y_multioutput, classifier=True)
     assert_true(isinstance(cv, cval.KFold))
 
 
@@ -1020,6 +1026,56 @@ def test_cross_val_predict():
             yield np.array([0, 1, 2, 3]), np.array([4, 5, 6, 7, 8])
 
     assert_raises(ValueError, cval.cross_val_predict, est, X, y, cv=bad_cv())
+
+
+def test_cross_val_predict_input_types():
+    clf = Ridge()
+    # Smoke test
+    predictions = cval.cross_val_predict(clf, X, y)
+    assert_equal(predictions.shape, (10,))
+
+    # test with multioutput y
+    predictions = cval.cross_val_predict(clf, X_sparse, X)
+    assert_equal(predictions.shape, (10, 2))
+
+    predictions = cval.cross_val_predict(clf, X_sparse, y)
+    assert_array_equal(predictions.shape, (10,))
+
+    # test with multioutput y
+    predictions = cval.cross_val_predict(clf, X_sparse, X)
+    assert_array_equal(predictions.shape, (10, 2))
+
+    # test with X and y as list
+    list_check = lambda x: isinstance(x, list)
+    clf = CheckingClassifier(check_X=list_check)
+    predictions = cval.cross_val_predict(clf, X.tolist(), y.tolist())
+
+    clf = CheckingClassifier(check_y=list_check)
+    predictions = cval.cross_val_predict(clf, X, y.tolist())
+
+    # test with 3d X and
+    X_3d = X[:, :, np.newaxis]
+    check_3d = lambda x: x.ndim == 3
+    clf = CheckingClassifier(check_X=check_3d)
+    predictions = cval.cross_val_predict(clf, X_3d, y)
+    assert_array_equal(predictions.shape, (10,))
+
+
+def test_cross_val_predict_pandas():
+    # check cross_val_score doesn't destroy pandas dataframe
+    types = [(MockDataFrame, MockDataFrame)]
+    try:
+        from pandas import Series, DataFrame
+        types.append((Series, DataFrame))
+    except ImportError:
+        pass
+    for TargetType, InputFeatureType in types:
+        # X dataframe, y series
+        X_df, y_ser = InputFeatureType(X), TargetType(y)
+        check_df = lambda x: isinstance(x, InputFeatureType)
+        check_series = lambda x: isinstance(x, TargetType)
+        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
+        cval.cross_val_predict(clf, X_df, y_ser)
 
 
 def test_sparse_fit_params():

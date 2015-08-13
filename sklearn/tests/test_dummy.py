@@ -534,9 +534,9 @@ def test_uniform_strategy_sparse_target_warning():
 
     for k in range(y.shape[1]):
         p = np.bincount(y_pred[:, k]) / float(len(X))
-        assert_almost_equal(p[1], 1/3, decimal=1)
-        assert_almost_equal(p[2], 1/3, decimal=1)
-        assert_almost_equal(p[4], 1/3, decimal=1)
+        assert_almost_equal(p[1], 1 / 3, decimal=1)
+        assert_almost_equal(p[2], 1 / 3, decimal=1)
+        assert_almost_equal(p[4], 1 / 3, decimal=1)
 
 
 def test_stratified_strategy_sparse_target():
@@ -597,8 +597,3 @@ def test_dummy_regressor_sample_weight(n_samples=10):
     est = DummyRegressor(strategy="quantile", quantile=.95).fit(X, y,
                                                                 sample_weight)
     assert_equal(est.constant_, _weighted_percentile(y, sample_weight, 95.))
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

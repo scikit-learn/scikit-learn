@@ -962,8 +962,8 @@ def test_probability_exponential():
     assert np.all(y_proba >= 0.0)
     assert np.all(y_proba <= 1.0)
     score = clf.decision_function(T).ravel()
-    assert_array_equal(y_proba[:, 1],
-                       1.0 / (1.0 + np.exp(-2 * score)))
+    assert_array_almost_equal(y_proba[:, 1],
+                              1.0 / (1.0 + np.exp(-2 * score)))
 
     # derive predictions from probabilities
     y_pred = clf.classes_.take(y_proba.argmax(axis=1), axis=0)
@@ -990,14 +990,14 @@ def test_non_uniform_weights_toy_min_weight_leaf():
          [1, 0],
          [1, 0],
          [0, 1],
-        ]
+         ]
     y = [0, 0, 1, 0]
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
     gb = GradientBoostingRegressor(n_estimators=5, min_weight_fraction_leaf=0.1)
     gb.fit(X, y, sample_weight=sample_weight)
     assert_true(gb.predict([[1, 0]])[0] > 0.5)
-    assert_almost_equal(gb.estimators_[0,0].splitter.min_weight_leaf, 0.2)
+    assert_almost_equal(gb.estimators_[0, 0].splitter.min_weight_leaf, 0.2)
 
 
 def test_non_uniform_weights_toy_edge_case_clf():
@@ -1012,8 +1012,3 @@ def test_non_uniform_weights_toy_edge_case_clf():
         gb = GradientBoostingClassifier(n_estimators=5)
         gb.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(gb.predict([[1, 0]]), [1])
-
-
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()

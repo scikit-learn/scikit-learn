@@ -22,7 +22,7 @@ from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
-from .cross_validation import _check_cv
+from .cross_validation import check_cv
 from .metrics.classification import _check_binary_probabilistic_predictions
 
 
@@ -36,6 +36,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     it is it is assumed that base_estimator has been
     fitted already and all data is used for calibration. Note that
     data for fitting the classifier and for calibrating it must be disjpint.
+
+    Read more in the :ref:`User Guide <calibration>`.
 
     Parameters
     ----------
@@ -139,7 +141,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                 calibrated_classifier.fit(X, y)
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
-            cv = _check_cv(self.cv, X, y, classifier=True)
+            cv = check_cv(self.cv, X, y, classifier=True)
             arg_names = inspect.getargspec(base_estimator.fit)[0]
             estimator_name = type(base_estimator).__name__
             if (sample_weight is not None
@@ -426,10 +428,10 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
 
     Attributes
     ----------
-    `a_` : float
+    a_ : float
         The slope.
 
-    `b_` : float
+    b_ : float
         The intercept.
     """
     def fit(self, X, y, sample_weight=None):
@@ -468,7 +470,7 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        `T_` : array, shape (n_samples,)
+        T_ : array, shape (n_samples,)
             The predicted data.
         """
         T = column_or_1d(T)
@@ -477,6 +479,8 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
 
 def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
     """Compute true and predicted probabilities for a calibration curve.
+
+    Read more in the :ref:`User Guide <calibration>`.
 
     Parameters
     ----------

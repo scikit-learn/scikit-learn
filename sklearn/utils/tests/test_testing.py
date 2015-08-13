@@ -72,6 +72,9 @@ def test_assert_raise_message():
     def _raise_ValueError(message):
         raise ValueError(message)
 
+    def _no_raise():
+        pass
+
     assert_raise_message(ValueError, "test",
                          _raise_ValueError, "test")
 
@@ -82,6 +85,15 @@ def test_assert_raise_message():
     assert_raises(ValueError,
                   assert_raise_message, TypeError, "something else",
                   _raise_ValueError, "test")
+
+    assert_raises(AssertionError,
+                  assert_raise_message, ValueError, "test",
+                  _no_raise)
+
+    # multiple exceptions in a tuple
+    assert_raises(AssertionError,
+                  assert_raise_message, (ValueError, AttributeError),
+                  "test", _no_raise)
 
 
 # This class is inspired from numpy 1.7 with an alteration to check

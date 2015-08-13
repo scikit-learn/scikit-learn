@@ -1,5 +1,6 @@
 import numpy as np
 
+
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -7,6 +8,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import TempMemmap
 
 from sklearn.decomposition import DictionaryLearning
 from sklearn.decomposition import MiniBatchDictionaryLearning
@@ -45,6 +47,28 @@ def test_dict_learning_reconstruction():
 
     # used to test lars here too, but there's no guarantee the number of
     # nonzero atoms is right.
+
+
+def test_dict_learning_reconstruction_parallel():
+    # regression test that parallel reconstruction works with n_jobs=-1
+    n_components = 12
+    dico = DictionaryLearning(n_components, transform_algorithm='omp',
+                              transform_alpha=0.001, random_state=0, n_jobs=-1)
+    code = dico.fit(X).transform(X)
+    assert_array_almost_equal(np.dot(code, dico.components_), X)
+
+    dico.set_params(transform_algorithm='lasso_lars')
+    code = dico.transform(X)
+    assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
+
+
+def test_dict_learning_lassocd_readonly_data():
+    n_components = 12
+    with TempMemmap(X) as X_read_only:
+        dico = DictionaryLearning(n_components, transform_algorithm='lasso_cd',
+                                  transform_alpha=0.001, random_state=0, n_jobs=-1)
+        code = dico.fit(X_read_only).transform(X_read_only)
+        assert_array_almost_equal(np.dot(code, dico.components_), X_read_only, decimal=2)
 
 
 def test_dict_learning_nonzero_coefs():
@@ -140,7 +164,7 @@ def test_dict_learning_online_partial_fit():
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
-    dict1 = MiniBatchDictionaryLearning(n_components, n_iter=10*len(X),
+    dict1 = MiniBatchDictionaryLearning(n_components, n_iter=10 * len(X),
                                         batch_size=1,
                                         alpha=1, shuffle=False, dict_init=V,
                                         random_state=0).fit(X)

@@ -56,7 +56,6 @@ def _weights(x, dx=1, orig=0):
 
 
 def _generate_center_coordinates(l_x):
-    l_x = float(l_x)
     X, Y = np.mgrid[:l_x, :l_x]
     center = l_x / 2.
     X += 0.5 - center

@@ -35,6 +35,8 @@ the kernel:
 
 .. currentmodule:: sklearn.metrics.pairwise
 
+.. _cosine_similarity:
+
 Cosine similarity
 -----------------
 :func:`cosine_similarity` computes the L2-normalized dot product of vectors.
@@ -63,6 +65,8 @@ is equivalent to :func:`linear_kernel`, only slower.)
       Information Retrieval. Cambridge University Press.
       http://nlp.stanford.edu/IR-book/html/htmledition/the-vector-space-model-for-scoring-1.html
 
+.. _linear_kernel:
+
 Linear kernel
 -------------
 The function :func:`linear_kernel` computes the linear kernel, that is, a
@@ -72,6 +76,8 @@ If ``x`` and ``y`` are column vectors, their linear kernel is:
 .. math::
 
     k(x, y) = x^\top y
+
+.. _polynomial_kernel:
 
 Polynomial kernel
 -----------------
@@ -94,6 +100,8 @@ where:
 
 If :math:`c_0 = 0` the kernel is said to be homogeneous.
 
+.. _sigmoid_kernel:
+
 Sigmoid kernel
 --------------
 The function :func:`sigmoid_kernel` computes the sigmoid kernel between two
@@ -111,6 +119,8 @@ where:
     * :math:`\gamma` is known as slope
     * :math:`c_0` is known as intercept
 
+.. _rbf_kernel:
+
 RBF kernel
 ----------
 The function :func:`rbf_kernel` computes the radial basis function (RBF) kernel
@@ -122,6 +132,8 @@ between two vectors. This kernel is defined as:
 
 where ``x`` and ``y`` are the input vectors. If :math:`\gamma = \sigma^{-2}`
 the kernel is known as the Gaussian kernel of variance :math:`\sigma^2`.
+
+.. _chi2_kernel:
 
 Chi-squared kernel
 ------------------

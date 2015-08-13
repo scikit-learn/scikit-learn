@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import TempMemmap
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
@@ -388,6 +389,29 @@ def test_multi_task_lasso_and_enet():
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
 
+def test_lasso_readonly_data():
+    X = np.array([[-1], [0], [1]])
+    Y = np.array([-1, 0, 1])   # just a straight line
+    T = np.array([[2], [3], [4]])  # test sample
+    with TempMemmap((X, Y)) as (X, Y):
+        clf = Lasso(alpha=0.5)
+        clf.fit(X, Y)
+        pred = clf.predict(T)
+        assert_array_almost_equal(clf.coef_, [.25])
+        assert_array_almost_equal(pred, [0.5, 0.75, 1.])
+        assert_almost_equal(clf.dual_gap_, 0)
+
+
+def test_multi_task_lasso_readonly_data():
+    X, y, X_test, y_test = build_dataset()
+    Y = np.c_[y, y]
+    with TempMemmap((X, Y)) as (X, Y):
+        Y = np.c_[y, y]
+        clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
+        assert_true(0 < clf.dual_gap_ < 1e-5)
+        assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
+
+
 def test_enet_multitarget():
     n_targets = 3
     X, y, _, _ = build_dataset(n_samples=10, n_features=8,
@@ -604,8 +628,3 @@ def test_sparse_dense_descent_paths():
         _, coefs, _ = path(X, y, fit_intercept=False)
         _, sparse_coefs, _ = path(csr, y, fit_intercept=False)
         assert_array_almost_equal(coefs, sparse_coefs)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

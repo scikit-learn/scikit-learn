@@ -235,8 +235,3 @@ def test_simultaneous_sort(n_rows=10, n_pts=201):
 
     assert_array_almost_equal(dist, dist2)
     assert_array_almost_equal(ind, ind2)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

@@ -43,6 +43,7 @@ kernel function or a precomputed kernel matrix.
 The number of samples used - which is also the dimensionality of the features computed -
 is given by the parameter ``n_components``.
 
+.. _rbf_kernel_approx:
 
 Radial Basis Function Kernel
 ----------------------------
@@ -98,6 +99,7 @@ use of larger feature spaces more efficient.
 
     * :ref:`example_plot_kernel_approximation.py`
 
+.. _additive_chi_kernel_approx:
 
 Additive Chi Squared Kernel
 ---------------------------
@@ -130,6 +132,7 @@ with the approximate feature map provided by :class:`RBFSampler` to yield an app
 feature map for the exponentiated chi squared kernel.
 See the [VZ2010]_ for details and [VVZ2010]_ for combination with the :class:`RBFSampler`.
 
+.. _skewed_chi_kernel_approx:
 
 Skewed Chi Squared Kernel
 -------------------------

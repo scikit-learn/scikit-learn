@@ -46,7 +46,6 @@ from sklearn.feature_extraction.image import reconstruct_from_patches_2d
 
 ###############################################################################
 # Load Lena image and extract patches
-
 lena = lena() / 256.0
 
 # downsample for higher speed

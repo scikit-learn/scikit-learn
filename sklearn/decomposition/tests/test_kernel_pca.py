@@ -207,8 +207,3 @@ def test_nested_circles():
     # The data is perfectly linearly separable in that space
     train_score = Perceptron().fit(X_kpca, y).score(X_kpca, y)
     assert_equal(train_score, 1.0)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.run(argv=['', __file__])

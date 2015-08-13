@@ -262,11 +262,17 @@ def test_oob_score():
     for name in FOREST_CLASSIFIERS:
         yield check_oob_score, name, iris.data, iris.target
 
+        # csc matrix
+        yield check_oob_score, name, csc_matrix(iris.data), iris.target
+
         # non-contiguous targets in classification
         yield check_oob_score, name, iris.data, iris.target * 2 + 1
 
     for name in FOREST_REGRESSORS:
         yield check_oob_score, name, boston.data, boston.target, 50
+
+        # csc matrix
+        yield check_oob_score, name, csc_matrix(boston.data), boston.target, 50
 
 
 def check_oob_score_raise_error(name):
@@ -329,7 +335,7 @@ def test_parallel():
         yield check_parallel, name, iris.data, iris.target
 
     for name in FOREST_REGRESSORS:
-        yield check_parallel, name,  boston.data, boston.target
+        yield check_parallel, name, boston.data, boston.target
 
 
 def check_pickle(name, X, y):
@@ -352,7 +358,7 @@ def test_pickle():
         yield check_pickle, name, iris.data[::2], iris.target[::2]
 
     for name in FOREST_REGRESSORS:
-        yield check_pickle, name,  boston.data[::2], boston.target[::2]
+        yield check_pickle, name, boston.data[::2], boston.target[::2]
 
 
 def check_multioutput(name):
@@ -414,10 +420,8 @@ def test_classes_shape():
 
 
 def test_random_trees_dense_type():
-    '''
-    Test that the `sparse_output` parameter of RandomTreesEmbedding
-    works by returning a dense array.
-    '''
+    # Test that the `sparse_output` parameter of RandomTreesEmbedding
+    # works by returning a dense array.
 
     # Create the RTE with sparse=False
     hasher = RandomTreesEmbedding(n_estimators=10, sparse_output=False)
@@ -429,11 +433,8 @@ def test_random_trees_dense_type():
 
 
 def test_random_trees_dense_equal():
-    '''
-    Test that the `sparse_output` parameter of RandomTreesEmbedding
-    works by returning the same array for both argument
-    values.
-    '''
+    # Test that the `sparse_output` parameter of RandomTreesEmbedding
+    # works by returning the same array for both argument values.
 
     # Create the RTEs
     hasher_dense = RandomTreesEmbedding(n_estimators=10, sparse_output=False,
@@ -473,8 +474,7 @@ def test_random_hasher():
 
 
 def test_random_hasher_sparse_data():
-    X, y = datasets.make_multilabel_classification(return_indicator=True,
-                                                   random_state=0)
+    X, y = datasets.make_multilabel_classification(random_state=0)
     hasher = RandomTreesEmbedding(n_estimators=30, random_state=1)
     X_transformed = hasher.fit_transform(X)
     X_transformed_sparse = hasher.fit_transform(csc_matrix(X))
@@ -661,8 +661,7 @@ def check_sparse_input(name, X, X_sparse, y):
 
 
 def test_sparse_input():
-    X, y = datasets.make_multilabel_classification(return_indicator=True,
-                                                   random_state=0,
+    X, y = datasets.make_multilabel_classification(random_state=0,
                                                    n_samples=40)
 
     for name, sparse_matrix in product(FOREST_ESTIMATORS,
@@ -749,10 +748,10 @@ def check_class_weights(name):
     # Check class_weights resemble sample_weights behavior.
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
-    # Iris is balanced, so no effect expected for using 'auto' weights
+    # Iris is balanced, so no effect expected for using 'balanced' weights
     clf1 = ForestClassifier(random_state=0)
     clf1.fit(iris.data, iris.target)
-    clf2 = ForestClassifier(class_weight='auto', random_state=0)
+    clf2 = ForestClassifier(class_weight='balanced', random_state=0)
     clf2.fit(iris.data, iris.target)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
@@ -765,8 +764,8 @@ def check_class_weights(name):
                             random_state=0)
     clf3.fit(iris.data, iris_multi)
     assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
-    # Check against multi-output "auto" which should also have no effect
-    clf4 = ForestClassifier(class_weight='auto', random_state=0)
+    # Check against multi-output "balanced" which should also have no effect
+    clf4 = ForestClassifier(class_weight='balanced', random_state=0)
     clf4.fit(iris.data, iris_multi)
     assert_almost_equal(clf3.feature_importances_, clf4.feature_importances_)
 
@@ -782,7 +781,7 @@ def check_class_weights(name):
 
     # Check that sample_weight and class_weight are multiplicative
     clf1 = ForestClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target, sample_weight**2)
+    clf1.fit(iris.data, iris.target, sample_weight ** 2)
     clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
@@ -793,22 +792,25 @@ def test_class_weights():
         yield check_class_weights, name
 
 
-def check_class_weight_auto_and_bootstrap_multi_output(name):
-    # Test class_weight works for multi-output
+def check_class_weight_balanced_and_bootstrap_multi_output(name):
+    # Test class_weight works for multi-output"""
     ForestClassifier = FOREST_CLASSIFIERS[name]
     _y = np.vstack((y, np.array(y) * 2)).T
-    clf = ForestClassifier(class_weight='auto', random_state=0)
+    clf = ForestClassifier(class_weight='balanced', random_state=0)
     clf.fit(X, _y)
     clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}, {-2: 1., 2: 1.}],
                            random_state=0)
     clf.fit(X, _y)
-    clf = ForestClassifier(class_weight='subsample', random_state=0)
+    # smoke test for subsample and balanced subsample
+    clf = ForestClassifier(class_weight='balanced_subsample', random_state=0)
     clf.fit(X, _y)
+    clf = ForestClassifier(class_weight='subsample', random_state=0)
+    ignore_warnings(clf.fit)(X, _y)
 
 
-def test_class_weight_auto_and_bootstrap_multi_output():
+def test_class_weight_balanced_and_bootstrap_multi_output():
     for name in FOREST_CLASSIFIERS:
-        yield check_class_weight_auto_and_bootstrap_multi_output, name
+        yield check_class_weight_balanced_and_bootstrap_multi_output, name
 
 
 def check_class_weight_errors(name):
@@ -975,6 +977,11 @@ def test_warm_start_oob():
         yield check_warm_start_oob, name
 
 
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()
+def test_dtype_convert():
+    classifier = RandomForestClassifier()
+    CLASSES = 15
+    X = np.eye(CLASSES)
+    y = [ch for ch in 'ABCDEFGHIJKLMNOPQRSTU'[:CLASSES]]
+
+    result = classifier.fit(X, y).predict(X)
+    assert_array_equal(result, y)

@@ -505,7 +505,7 @@ class BinomialDeviance(ClassificationLossFunction):
 
     def _score_to_proba(self, score):
         proba = np.ones((score.shape[0], 2), dtype=np.float64)
-        proba[:, 1] = 1.0 / (1.0 + np.exp(-score.ravel()))
+        proba[:, 1] = expit(score.ravel())
         proba[:, 0] -= proba[:, 1]
         return proba
 
@@ -628,7 +628,7 @@ class ExponentialLoss(ClassificationLossFunction):
 
     def _score_to_proba(self, score):
         proba = np.ones((score.shape[0], 2), dtype=np.float64)
-        proba[:, 1] = 1.0 / (1.0 + np.exp(-2.0 * score.ravel()))
+        proba[:, 1] = expit(2.0 * score.ravel())
         proba[:, 0] -= proba[:, 1]
         return proba
 
@@ -1195,6 +1195,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     binomial or multinomial deviance loss function. Binary classification
     is a special case where only a single regression tree is induced.
 
+    Read more in the :ref:`User Guide <gradient_boosting>`.
+
     Parameters
     ----------
     loss : {'deviance', 'exponential'}, optional (default='deviance')
@@ -1274,6 +1276,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -1509,6 +1517,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     In each stage a regression tree is fit on the negative gradient of the
     given loss function.
 
+    Read more in the :ref:`User Guide <gradient_boosting>`.
+
     Parameters
     ----------
     loss : {'ls', 'lad', 'huber', 'quantile'}, optional (default='ls')
@@ -1592,6 +1602,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
 
     Attributes

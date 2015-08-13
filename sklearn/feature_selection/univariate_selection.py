@@ -46,6 +46,8 @@ def f_oneway(*args):
     the same population mean. The test is applied to samples from two or
     more groups, possibly with differing sizes.
 
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+
     Parameters
     ----------
     sample1, sample2, ... : array_like, sparse matrices
@@ -119,6 +121,8 @@ def f_oneway(*args):
 def f_classif(X, y):
     """Compute the ANOVA F-value for the provided sample.
 
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+
     Parameters
     ----------
     X : {array-like, sparse matrix} shape = [n_samples, n_features]
@@ -176,6 +180,8 @@ def chi2(X, y):
     most likely to be independent of class and therefore irrelevant for
     classification.
 
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape = (n_samples, n_features_in)
@@ -232,6 +238,8 @@ def f_regression(X, y, center=True):
        wrt constant regressors.
     2. The cross correlation between data and regressors is computed.
     3. It is converted to an F score then to a p-value.
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -335,6 +343,8 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
 class SelectPercentile(_BaseFilter):
     """Select features according to a percentile of the highest scores.
 
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+
     Parameters
     ----------
     score_func : callable
@@ -401,6 +411,8 @@ class SelectPercentile(_BaseFilter):
 
 class SelectKBest(_BaseFilter):
     """Select features according to the k highest scores.
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -470,6 +482,8 @@ class SelectFpr(_BaseFilter):
     FPR test stands for False Positive Rate test. It controls the total
     amount of false detections.
 
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+
     Parameters
     ----------
     score_func : callable
@@ -514,6 +528,8 @@ class SelectFdr(_BaseFilter):
 
     This uses the Benjamini-Hochberg procedure. ``alpha`` is an upper bound
     on the expected false discovery rate.
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -568,6 +584,8 @@ class SelectFdr(_BaseFilter):
 class SelectFwe(_BaseFilter):
     """Filter: Select the p-values corresponding to Family-wise error rate
 
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+
     Parameters
     ----------
     score_func : callable
@@ -616,6 +634,8 @@ class SelectFwe(_BaseFilter):
 class GenericUnivariateSelect(_BaseFilter):
     """Univariate feature selector with configurable strategy.
 
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+
     Parameters
     ----------
     score_func : callable
@@ -648,11 +668,11 @@ class GenericUnivariateSelect(_BaseFilter):
     SelectFwe: Select features based on family-wise error rate.
     """
 
-    _selection_modes = {'percentile':   SelectPercentile,
-                        'k_best':       SelectKBest,
-                        'fpr':          SelectFpr,
-                        'fdr':          SelectFdr,
-                        'fwe':          SelectFwe}
+    _selection_modes = {'percentile': SelectPercentile,
+                        'k_best': SelectKBest,
+                        'fpr': SelectFpr,
+                        'fdr': SelectFdr,
+                        'fwe': SelectFwe}
 
     def __init__(self, score_func=f_classif, mode='percentile', param=1e-5):
         super(GenericUnivariateSelect, self).__init__(score_func)

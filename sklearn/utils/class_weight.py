@@ -2,6 +2,7 @@
 #          Manoj Kumar
 # License: BSD 3 clause
 
+import warnings
 import numpy as np
 from ..externals import six
 from ..utils.fixes import in1d
@@ -14,9 +15,9 @@ def compute_class_weight(class_weight, classes, y):
 
     Parameters
     ----------
-    class_weight : dict, 'auto' or None
-        If 'auto', class weights will be given inverse proportional
-        to the frequency of the class in the data.
+    class_weight : dict, 'balanced' or None
+        If 'balanced', class weights will be given by
+        ``n_samples / (n_classes * np.bincount(y))``.
         If a dictionary is given, keys are classes and values
         are corresponding class weights.
         If None is given, the class weights will be uniform.
@@ -32,6 +33,11 @@ def compute_class_weight(class_weight, classes, y):
     -------
     class_weight_vect : ndarray, shape (n_classes,)
         Array with class_weight_vect[i] the weight for i-th class
+
+    References
+    ----------
+    The "balanced" heuristic is inspired by
+    Logistic Regression in Rare Events Data, King, Zen, 2001.
     """
     # Import error caused by circular imports.
     from ..preprocessing import LabelEncoder
@@ -39,7 +45,7 @@ def compute_class_weight(class_weight, classes, y):
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
-    elif class_weight == 'auto':
+    elif class_weight in ['auto', 'balanced']:
         # Find the weight of each class as present in y.
         le = LabelEncoder()
         y_ind = le.fit_transform(y)
@@ -47,8 +53,16 @@ def compute_class_weight(class_weight, classes, y):
             raise ValueError("classes should have valid labels that are in y")
 
         # inversely proportional to the number of samples in the class
-        recip_freq = 1. / bincount(y_ind)
-        weight = recip_freq[le.transform(classes)] / np.mean(recip_freq)
+        if class_weight == 'auto':
+            recip_freq = 1. / bincount(y_ind)
+            weight = recip_freq[le.transform(classes)] / np.mean(recip_freq)
+            warnings.warn("The class_weight='auto' heuristic is deprecated in"
+                          " favor of a new heuristic class_weight='balanced'."
+                          " 'auto' will be removed in 0.18", DeprecationWarning)
+        else:
+            recip_freq = len(y) / (len(le.classes_) *
+                                   bincount(y_ind).astype(np.float64))
+            weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
@@ -70,14 +84,15 @@ def compute_sample_weight(class_weight, y, indices=None):
 
     Parameters
     ----------
-    class_weight : dict, list of dicts, "auto", or None, optional
+    class_weight : dict, list of dicts, "balanced", or None, optional
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
 
-        The "auto" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies in the input data.
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data:
+        ``n_samples / (n_classes * np.bincount(y))``.
 
         For multi-output, the weights of each column of y will be multiplied.
 
@@ -103,13 +118,13 @@ def compute_sample_weight(class_weight, y, indices=None):
     n_outputs = y.shape[1]
 
     if isinstance(class_weight, six.string_types):
-        if class_weight != 'auto':
+        if class_weight not in ['balanced', 'auto']:
             raise ValueError('The only valid preset for class_weight is '
-                             '"auto". Given "%s".' % class_weight)
+                             '"balanced". Given "%s".' % class_weight)
     elif (indices is not None and
           not isinstance(class_weight, six.string_types)):
         raise ValueError('The only valid class_weight for subsampling is '
-                         '"auto". Given "%s".' % class_weight)
+                         '"balanced". Given "%s".' % class_weight)
     elif n_outputs > 1:
         if (not hasattr(class_weight, "__iter__") or
                 isinstance(class_weight, dict)):
@@ -126,7 +141,7 @@ def compute_sample_weight(class_weight, y, indices=None):
         classes_full = np.unique(y_full)
         classes_missing = None
 
-        if class_weight == 'auto' or n_outputs == 1:
+        if class_weight in ['balanced', 'auto'] or n_outputs == 1:
             class_weight_k = class_weight
         else:
             class_weight_k = class_weight[k]

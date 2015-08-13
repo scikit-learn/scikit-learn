@@ -22,7 +22,9 @@ Apart from scikit-learn, another popular one is `scikit-image <http://scikit-ima
 
 How can I contribute to scikit-learn?
 -----------------------------------------
-See :ref:`contributing`.
+See :ref:`contributing`. Before wanting to add a new algorithm, which is
+usually a major and lengthy undertaking, it is recommended to start with :ref:`known
+issues <easy_issues>`.
 
 Can I add this new algorithm that I (or someone else) just published?
 -------------------------------------------------------------------------

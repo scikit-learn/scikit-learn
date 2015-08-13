@@ -27,8 +27,14 @@ from sklearn.preprocessing.data import OneHotEncoder
 from sklearn.preprocessing.data import StandardScaler
 from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
+from sklearn.preprocessing.data import minmax_scale
+from sklearn.preprocessing.data import MaxAbsScaler
+from sklearn.preprocessing.data import maxabs_scale
+from sklearn.preprocessing.data import RobustScaler
+from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
+from sklearn.utils.validation import DataConversionWarning
 
 from sklearn import datasets
 
@@ -254,6 +260,19 @@ def test_min_max_scaler_zero_variance_features():
                       [1., 1., 1.0],
                       [1., 1., 2.0]]
     assert_array_almost_equal(X_trans, X_expected_1_2)
+
+    # function interface
+    X_trans = minmax_scale(X)
+    assert_array_almost_equal(X_trans, X_expected_0_1)
+    X_trans = minmax_scale(X, feature_range=(1, 2))
+    assert_array_almost_equal(X_trans, X_expected_1_2)
+
+
+def test_minmax_scale_axis1():
+    X = iris.data
+    X_trans = minmax_scale(X, axis=1)
+    assert_array_almost_equal(np.min(X_trans, axis=1), 0)
+    assert_array_almost_equal(np.max(X_trans, axis=1), 1)
 
 
 def test_min_max_scaler_1d():
@@ -494,17 +513,140 @@ def test_scale_function_without_centering():
     assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
 
 
+def test_robust_scaler_2d_arrays():
+    """Test robust scaling of 2d array along first axis"""
+    rng = np.random.RandomState(0)
+    X = rng.randn(4, 5)
+    X[:, 0] = 0.0  # first feature is always of zero
+
+    scaler = RobustScaler()
+    X_scaled = scaler.fit(X).transform(X)
+
+    assert_array_almost_equal(np.median(X_scaled, axis=0), 5 * [0.0])
+    assert_array_almost_equal(X_scaled.std(axis=0)[0], 0)
+
+
+def test_robust_scaler_iris():
+    X = iris.data
+    scaler = RobustScaler()
+    X_trans = scaler.fit_transform(X)
+    assert_array_almost_equal(np.median(X_trans, axis=0), 0)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+    q = np.percentile(X_trans, q=(25, 75), axis=0)
+    iqr = q[1] - q[0]
+    assert_array_almost_equal(iqr, 1)
+
+
+def test_robust_scale_axis1():
+    X = iris.data
+    X_trans = robust_scale(X, axis=1)
+    assert_array_almost_equal(np.median(X_trans, axis=1), 0)
+    q = np.percentile(X_trans, q=(25, 75), axis=1)
+    iqr = q[1] - q[0]
+    assert_array_almost_equal(iqr, 1)
+
+
+def test_robust_scaler_zero_variance_features():
+    """Check RobustScaler on toy data with zero variance features"""
+    X = [[0., 1., +0.5],
+         [0., 1., -0.1],
+         [0., 1., +1.1]]
+
+    scaler = RobustScaler()
+    X_trans = scaler.fit_transform(X)
+
+    # NOTE: for such a small sample size, what we expect in the third column
+    # depends HEAVILY on the method used to calculate quantiles. The values
+    # here were calculated to fit the quantiles produces by np.percentile
+    # using numpy 1.9 Calculating quantiles with
+    # scipy.stats.mstats.scoreatquantile or scipy.stats.mstats.mquantiles
+    # would yield very different results!
+    X_expected = [[0., 0., +0.0],
+                  [0., 0., -1.0],
+                  [0., 0., +1.0]]
+    assert_array_almost_equal(X_trans, X_expected)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+
+    # make sure new data gets transformed correctly
+    X_new = [[+0., 2., 0.5],
+             [-1., 1., 0.0],
+             [+0., 1., 1.5]]
+    X_trans_new = scaler.transform(X_new)
+    X_expected_new = [[+0., 1., +0.],
+                      [-1., 0., -0.83333],
+                      [+0., 0., +1.66667]]
+    assert_array_almost_equal(X_trans_new, X_expected_new, decimal=3)
+
+
+def test_maxabs_scaler_zero_variance_features():
+    """Check MaxAbsScaler on toy data with zero variance features"""
+    X = [[0., 1., +0.5],
+         [0., 1., -0.3],
+         [0., 1., +1.5],
+         [0., 0., +0.0]]
+
+    scaler = MaxAbsScaler()
+    X_trans = scaler.fit_transform(X)
+    X_expected = [[0., 1., 1.0 / 3.0],
+                  [0., 1., -0.2],
+                  [0., 1., 1.0],
+                  [0., 0., 0.0]]
+    assert_array_almost_equal(X_trans, X_expected)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+
+    # make sure new data gets transformed correctly
+    X_new = [[+0., 2., 0.5],
+             [-1., 1., 0.0],
+             [+0., 1., 1.5]]
+    X_trans_new = scaler.transform(X_new)
+    X_expected_new = [[+0., 2.0, 1.0 / 3.0],
+                      [-1., 1.0, 0.0],
+                      [+0., 1.0, 1.0]]
+
+    assert_array_almost_equal(X_trans_new, X_expected_new, decimal=2)
+
+    # sparse data
+    X_csr = sparse.csr_matrix(X)
+    X_trans = scaler.fit_transform(X_csr)
+    X_expected = [[0., 1., 1.0 / 3.0],
+                  [0., 1., -0.2],
+                  [0., 1., 1.0],
+                  [0., 0., 0.0]]
+    assert_array_almost_equal(X_trans.A, X_expected)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv.A)
+
+
+def test_maxabs_scaler_large_negative_value():
+    """Check MaxAbsScaler on toy data with a large negative value"""
+    X = [[0., 1.,   +0.5, -1.0],
+         [0., 1.,   -0.3, -0.5],
+         [0., 1., -100.0,  0.0],
+         [0., 0.,   +0.0, -2.0]]
+
+    scaler = MaxAbsScaler()
+    X_trans = scaler.fit_transform(X)
+    X_expected = [[0., 1.,  0.005,    -0.5],
+                  [0., 1., -0.003,    -0.25],
+                  [0., 1., -1.0,       0.0],
+                  [0., 0.,  0.0,      -1.0]]
+    assert_array_almost_equal(X_trans, X_expected)
+
+
 def test_warning_scaling_integers():
     # Check warning when scaling integer data
     X = np.array([[1, 2, 0],
                   [0, 0, 0]], dtype=np.uint8)
 
-    w = "assumes floating point values as input, got uint8"
+    w = "Data with input dtype uint8 was converted to float64"
 
     clean_warning_registry()
-    assert_warns_message(UserWarning, w, scale, X)
-    assert_warns_message(UserWarning, w, StandardScaler().fit, X)
-    assert_warns_message(UserWarning, w, MinMaxScaler().fit, X)
+    assert_warns_message(DataConversionWarning, w, scale, X)
+    assert_warns_message(DataConversionWarning, w, StandardScaler().fit, X)
+    assert_warns_message(DataConversionWarning, w, MinMaxScaler().fit, X)
 
 
 def test_normalizer_l1():
@@ -601,6 +743,55 @@ def test_normalizer_l2():
         X_norm = toarray(X_norm)
         for i in range(3):
             assert_almost_equal(la.norm(X_norm[i]), 1.0)
+        assert_almost_equal(la.norm(X_norm[3]), 0.0)
+
+
+def test_normalizer_max():
+    rng = np.random.RandomState(0)
+    X_dense = rng.randn(4, 5)
+    X_sparse_unpruned = sparse.csr_matrix(X_dense)
+
+    # set the row number 3 to zero
+    X_dense[3, :] = 0.0
+
+    # set the row number 3 to zero without pruning (can happen in real life)
+    indptr_3 = X_sparse_unpruned.indptr[3]
+    indptr_4 = X_sparse_unpruned.indptr[4]
+    X_sparse_unpruned.data[indptr_3:indptr_4] = 0.0
+
+    # build the pruned variant using the regular constructor
+    X_sparse_pruned = sparse.csr_matrix(X_dense)
+
+    # check inputs that support the no-copy optim
+    for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
+
+        normalizer = Normalizer(norm='max', copy=True)
+        X_norm1 = normalizer.transform(X)
+        assert_true(X_norm1 is not X)
+        X_norm1 = toarray(X_norm1)
+
+        normalizer = Normalizer(norm='max', copy=False)
+        X_norm2 = normalizer.transform(X)
+        assert_true(X_norm2 is X)
+        X_norm2 = toarray(X_norm2)
+
+        for X_norm in (X_norm1, X_norm2):
+            row_maxs = X_norm.max(axis=1)
+            for i in range(3):
+                assert_almost_equal(row_maxs[i], 1.0)
+            assert_almost_equal(row_maxs[3], 0.0)
+
+    # check input for which copy=False won't prevent a copy
+    for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
+        X = init(X_dense)
+        X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
+
+        assert_true(X_norm is not X)
+        assert_true(isinstance(X_norm, sparse.csr_matrix))
+
+        X_norm = toarray(X_norm)
+        for i in range(3):
+            assert_almost_equal(row_maxs[i], 1.0)
         assert_almost_equal(la.norm(X_norm[3]), 0.0)
 
 

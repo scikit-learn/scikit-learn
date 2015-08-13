@@ -25,12 +25,38 @@ from ..utils import check_random_state
 
 
 class Bunch(dict):
-    """Container object for datasets: dictionary-like object that
-       exposes its keys as attributes."""
+    """Container object for datasets
+
+    Dictionary-like object that exposes its keys as attributes.
+
+    >>> b = Bunch(a=1, b=2)
+    >>> b['b']
+    2
+    >>> b.b
+    2
+    >>> b.a = 3
+    >>> b['a']
+    3
+    >>> b.c = 6
+    >>> b['c']
+    6
+
+    """
 
     def __init__(self, **kwargs):
         dict.__init__(self, kwargs)
-        self.__dict__ = self
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+    def __getstate__(self):
+        return self.__dict__
 
 
 def get_data_home(data_home=None):
@@ -102,6 +128,8 @@ def load_files(container_path, description=None, categories=None,
 
     Similar feature extractors should be built for other kind of unstructured
     data input such as images, audio, video, ...
+
+    Read more in the :ref:`User Guide <datasets>`.
 
     Parameters
     ----------
@@ -215,6 +243,8 @@ def load_iris():
     Features            real, positive
     =================   ==============
 
+    Read more in the :ref:`User Guide <datasets>`.
+
     Returns
     -------
     data : Bunch
@@ -273,6 +303,7 @@ def load_digits(n_class=10):
     Features             integers 0-16
     =================   ==============
 
+    Read more in the :ref:`User Guide <datasets>`.
 
     Parameters
     ----------
@@ -332,6 +363,8 @@ def load_diabetes():
     Features            real, -.2 < x < .2
     Targets             integer 25 - 346
     ==============      ==================
+
+    Read more in the :ref:`User Guide <datasets>`.
 
     Returns
     -------

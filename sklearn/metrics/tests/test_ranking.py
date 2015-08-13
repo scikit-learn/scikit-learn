@@ -3,6 +3,7 @@ from __future__ import division, print_function
 import numpy as np
 from itertools import product
 import warnings
+from scipy.sparse import csr_matrix
 
 from sklearn import datasets
 from sklearn import svm
@@ -20,13 +21,13 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import coverage_error
 from sklearn.metrics import label_ranking_average_precision_score
 from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 
@@ -306,7 +307,7 @@ def test_roc_curve_toydata():
     tpr, fpr, _ = roc_curve(y_true, y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
     assert_array_almost_equal(tpr, [0., 0.5, 1.])
-    assert_array_almost_equal(fpr, [np.nan,  np.nan,  np.nan])
+    assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
 
     y_true = [1, 1]
     y_score = [0.25, 0.75]
@@ -741,7 +742,7 @@ def check_lrap_without_tie_and_increasing_score(lrap_score):
 
         # Check for growing number of consecutive relevant label
         for n_relevant in range(1, n_labels):
-           # Check for a bunch of position
+            # Check for a bunch of position
             for pos in range(n_labels - n_relevant):
                 y_true = np.zeros((1, n_labels))
                 y_true[0, pos:pos + n_relevant] = 1
@@ -792,7 +793,6 @@ def check_alternative_lrap_implementation(lrap_score, n_classes=5,
                                           n_samples=20, random_state=0):
     _, y_true = make_multilabel_classification(n_features=1,
                                                allow_unlabeled=False,
-                                               return_indicator=True,
                                                random_state=random_state,
                                                n_classes=n_classes,
                                                n_samples=n_samples)
@@ -894,3 +894,83 @@ def test_coverage_tie_handling():
     assert_almost_equal(coverage_error([[1, 0, 1]], [[0.25, 0.5, 0.5]]), 3)
     assert_almost_equal(coverage_error([[1, 1, 0]], [[0.25, 0.5, 0.5]]), 3)
     assert_almost_equal(coverage_error([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 3)
+
+
+def test_label_ranking_loss():
+    assert_almost_equal(label_ranking_loss([[0, 1]], [[0.25, 0.75]]), 0)
+    assert_almost_equal(label_ranking_loss([[0, 1]], [[0.75, 0.25]]), 1)
+
+    assert_almost_equal(label_ranking_loss([[0, 0, 1]], [[0.25, 0.5, 0.75]]),
+                        0)
+    assert_almost_equal(label_ranking_loss([[0, 1, 0]], [[0.25, 0.5, 0.75]]),
+                        1 / 2)
+    assert_almost_equal(label_ranking_loss([[0, 1, 1]], [[0.25, 0.5, 0.75]]),
+                        0)
+    assert_almost_equal(label_ranking_loss([[1, 0, 0]], [[0.25, 0.5, 0.75]]),
+                        2 / 2)
+    assert_almost_equal(label_ranking_loss([[1, 0, 1]], [[0.25, 0.5, 0.75]]),
+                        1 / 2)
+    assert_almost_equal(label_ranking_loss([[1, 1, 0]], [[0.25, 0.5, 0.75]]),
+                        2 / 2)
+
+    # Undefined metrics -  the ranking doesn't matter
+    assert_almost_equal(label_ranking_loss([[0, 0]], [[0.75, 0.25]]), 0)
+    assert_almost_equal(label_ranking_loss([[1, 1]], [[0.75, 0.25]]), 0)
+    assert_almost_equal(label_ranking_loss([[0, 0]], [[0.5, 0.5]]), 0)
+    assert_almost_equal(label_ranking_loss([[1, 1]], [[0.5, 0.5]]), 0)
+
+    assert_almost_equal(label_ranking_loss([[0, 0, 0]], [[0.5, 0.75, 0.25]]),
+                        0)
+    assert_almost_equal(label_ranking_loss([[1, 1, 1]], [[0.5, 0.75, 0.25]]),
+                        0)
+    assert_almost_equal(label_ranking_loss([[0, 0, 0]], [[0.25, 0.5, 0.5]]),
+                        0)
+    assert_almost_equal(label_ranking_loss([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 0)
+
+    # Non trival case
+    assert_almost_equal(label_ranking_loss([[0, 1, 0], [1, 1, 0]],
+                                           [[0.1, 10., -3], [0, 1, 3]]),
+                        (0 + 2 / 2) / 2.)
+
+    assert_almost_equal(label_ranking_loss(
+        [[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+        [[0.1, 10, -3], [0, 1, 3], [0, 2, 0]]),
+        (0 + 2 / 2 + 1 / 2) / 3.)
+
+    assert_almost_equal(label_ranking_loss(
+        [[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+        [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]]),
+        (0 + 2 / 2 + 1 / 2) / 3.)
+
+    # Sparse csr matrices
+    assert_almost_equal(label_ranking_loss(
+        csr_matrix(np.array([[0, 1, 0], [1, 1, 0]])),
+        [[0.1, 10, -3], [3, 1, 3]]),
+        (0 + 2 / 2) / 2.)
+
+
+def test_ranking_appropriate_input_shape():
+    # Check that that y_true.shape != y_score.shape raise the proper exception
+    assert_raises(ValueError, label_ranking_loss, [[0, 1], [0, 1]], [0, 1])
+    assert_raises(ValueError, label_ranking_loss, [[0, 1], [0, 1]], [[0, 1]])
+    assert_raises(ValueError, label_ranking_loss,
+                  [[0, 1], [0, 1]], [[0], [1]])
+
+    assert_raises(ValueError, label_ranking_loss, [[0, 1]], [[0, 1], [0, 1]])
+    assert_raises(ValueError, label_ranking_loss,
+                  [[0], [1]], [[0, 1], [0, 1]])
+    assert_raises(ValueError, label_ranking_loss, [[0, 1], [0, 1]], [[0], [1]])
+
+
+def test_ranking_loss_ties_handling():
+    # Tie handling
+    assert_almost_equal(label_ranking_loss([[1, 0]], [[0.5, 0.5]]), 1)
+    assert_almost_equal(label_ranking_loss([[0, 1]], [[0.5, 0.5]]), 1)
+    assert_almost_equal(label_ranking_loss([[0, 0, 1]], [[0.25, 0.5, 0.5]]),
+                        1 / 2)
+    assert_almost_equal(label_ranking_loss([[0, 1, 0]], [[0.25, 0.5, 0.5]]),
+                        1 / 2)
+    assert_almost_equal(label_ranking_loss([[0, 1, 1]], [[0.25, 0.5, 0.5]]), 0)
+    assert_almost_equal(label_ranking_loss([[1, 0, 0]], [[0.25, 0.5, 0.5]]), 1)
+    assert_almost_equal(label_ranking_loss([[1, 0, 1]], [[0.25, 0.5, 0.5]]), 1)
+    assert_almost_equal(label_ranking_loss([[1, 1, 0]], [[0.25, 0.5, 0.5]]), 1)
