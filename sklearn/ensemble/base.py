@@ -10,7 +10,7 @@ import numpy as np
 from ..base import clone
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
-from ..utils import _get_n_jobs
+from ..utils.base import _get_n_jobs
 
 
 class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
