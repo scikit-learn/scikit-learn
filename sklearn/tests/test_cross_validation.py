@@ -483,7 +483,7 @@ def test_predefinedsplit_with_kfold_split():
     assert_array_equal(ps_test, kf_test)
 
 
-def test_shuffle_labels_out():
+def test_label_shuffle_split():
     ys = [np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
           np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
           np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
@@ -492,8 +492,8 @@ def test_shuffle_labels_out():
 
     for y in ys:
         n_iter = 6
-        slo = cval.ShuffleLabelsOut(y, n_iter, test_size=0.33,
-                                    random_state=0)
+        slo = cval.LabelShuffleSplit(y, n_iter, test_size=0.33,
+                                     random_state=0)
 
         # Make sure the repr works
         repr(slo)

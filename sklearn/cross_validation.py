@@ -41,7 +41,7 @@ __all__ = ['KFold',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
            'PredefinedSplit',
-           'ShuffleLabelsOut',
+           'LabelShuffleSplit',
            'check_cv',
            'cross_val_score',
            'cross_val_predict',
@@ -963,7 +963,7 @@ class PredefinedSplit(_PartitionIterator):
         return len(self.unique_folds)
 
 
-class ShuffleLabelsOut(ShuffleSplit):
+class LabelShuffleSplit(ShuffleSplit):
     '''Shuffle-Labels-Out cross-validation iterator
 
     Provides randomized train/test indices to split data according to a
@@ -973,14 +973,14 @@ class ShuffleLabelsOut(ShuffleSplit):
     For instance the labels could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
 
-    The difference between LeavePLabelOut and ShuffleLabelsOut is that
+    The difference between LeavePLabelOut and LabelShuffleSplit is that
     the former generates splits using all subsets of size ``p`` unique labels,
-    whereas ShuffleLabelsOut generates a user-determined number of random
+    whereas LabelShuffleSplit generates a user-determined number of random
     test splits, each with a user-determined fraction of unique labels.
 
     For example, a less computationally intensive alternative to
     ``LeavePLabelOut(labels, p=10)`` would be
-    ``ShuffleLabelsOut(labels, test_size=10, n_iter=100)``.
+    ``LabelShuffleSplit(labels, test_size=10, n_iter=100)``.
 
     Note: The parameters ``test_size`` and ``train_size`` refer to labels, and 
     not to samples, as in ShuffleSplit.
@@ -1015,7 +1015,7 @@ class ShuffleLabelsOut(ShuffleSplit):
 
         classes, label_indices = np.unique(labels, return_inverse=True)
 
-        super(ShuffleLabelsOut, self).__init__(
+        super(LabelShuffleSplit, self).__init__(
             len(classes),
             n_iter=n_iter,
             test_size=test_size,
@@ -1041,7 +1041,7 @@ class ShuffleLabelsOut(ShuffleSplit):
 
     def _iter_indices(self):
 
-        for label_train, label_test in super(ShuffleLabelsOut, self)._iter_indices():
+        for label_train, label_test in super(LabelShuffleSplit, self)._iter_indices():
             # these are the indices of classes in the partition
             # invert them into data indices
 
