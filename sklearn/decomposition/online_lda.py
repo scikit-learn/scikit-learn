@@ -243,8 +243,12 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Topic word distribution. ``components_[i, j]`` represents word j in
         topic `i`. In the literature, this is called lambda.
 
-    weight_update_counter_ : int
+    n_batch_iter_ : int
         Number of iterations of the EM step.
+
+    n_iter_ : int
+        Number of passes over the dataset.
+    
 
     References
     ----------
@@ -305,7 +309,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         """Initialize latent variables."""
 
         self.random_state_ = check_random_state(self.random_state)
-        self.weight_update_counter_ = 1
+        self.n_batch_iter_ = 1
         self.n_iter_ = 0
 
         if self.doc_topic_prior is None:
@@ -417,7 +421,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         else:
             # online update
             # In the literature, the weight is `rho`
-            weight = np.power(self.learning_offset + self.weight_update_counter_,
+            weight = np.power(self.learning_offset + self.n_batch_iter_,
                               -self.learning_decay)
             doc_ratio = float(total_samples) / X.shape[0]
             self.components_ *= (1 - weight)
@@ -427,7 +431,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         # update `component_` related variables
         self.dirichlet_component_ = _log_dirichlet_expectation(self.components_)
         self.exp_dirichlet_component_ = np.exp(self.dirichlet_component_)
-        self.weight_update_counter_ += 1
+        self.n_batch_iter_ += 1
         return
 
     def _check_non_neg_array(self, X, whom):
