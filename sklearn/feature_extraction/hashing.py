@@ -151,7 +151,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         """
         X = sp.csr_matrix((0, 0))
-        for raw_X_chunk in chunks(iter(raw_X), self.chunksize):
+        for raw_X_chunk in self.in_chunks(iter(raw_X), self.chunksize):
             if self.input_type == "dict":
                 raw_X_chunk = (_iteritems(d) for d in raw_X_chunk)
             elif self.input_type == "string":
