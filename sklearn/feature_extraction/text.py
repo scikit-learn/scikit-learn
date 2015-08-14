@@ -694,9 +694,15 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         sorted_features = sorted(six.iteritems(vocabulary))
         map_index = np.empty(len(sorted_features), dtype=np.int32)
         for new_val, (term, old_val) in enumerate(sorted_features):
-            map_index[new_val] = old_val
             vocabulary[term] = new_val
-        return X[:, map_index]
+            map_index[old_val] = new_val
+
+        # swap columns in place
+        indices = X.indices
+        for idx, val in enumerate(X.indices):
+            indices[idx] = map_index[val]
+        X.indices = indices
+        return X
 
     def _limit_features(self, X, vocabulary, high=None, low=None,
                         limit=None):
