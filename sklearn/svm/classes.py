@@ -406,7 +406,8 @@ class SVC(BaseSVC):
          It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
          a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
-         used to precompute the kernel matrix.
+         used to pre-compute the kernel matrix from data matrices; that matrix
+         should be an array of shape ``(n_samples, n_samples)``.
 
     degree : int, optional (default=3)
         Degree of the polynomial kernel function ('poly').
