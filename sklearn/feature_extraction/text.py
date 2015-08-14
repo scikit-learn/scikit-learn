@@ -743,11 +743,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         if len(kept_indices) == 0:
             raise ValueError("After pruning, no terms remain. Try a lower"
                              " min_df or a higher max_df.")
-
-        if limit is not None:
-            return X[:, kept_indices], removed_terms
-        else:
-            return X, removed_terms
+        return X[:, kept_indices], removed_terms
 
     def _get_empty_arrays(self):
         """Get empty numpy arrays to construct the feature matrix from
