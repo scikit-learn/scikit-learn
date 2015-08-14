@@ -286,10 +286,20 @@ def test_perplexity_input_format():
 def test_lda_score_perplexity():
     # Test the relationship between LDA score and perplexity
     n_topics, X = _build_sparse_mtx()
-    lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=10, random_state=0)
+    lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=10,
+                                    random_state=0)
     distr = lda.fit_transform(X)
     perplexity_1 = lda.perplexity(X, distr, sub_sampling=False)
 
     score = lda.score(X)
     perplexity_2 = np.exp(-1. * (score / np.sum(X.data)))
     assert_almost_equal(perplexity_1, perplexity_2)
+
+
+def test_lda_empty_docs():
+    """Test LDA on empty document (all-zero rows)."""
+    Z = np.zeros((5, 4))
+    for X in [Z, csr_matrix(Z)]:
+        lda = LatentDirichletAllocation(max_iter=750).fit(X)
+        assert_almost_equal(lda.components_.sum(axis=0),
+                            np.ones(lda.components_.shape[1]))
