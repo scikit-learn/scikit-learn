@@ -20,9 +20,5 @@ def test_friedman_mse_in_graphviz():
     for estimator in clf.estimators_:
         export_graphviz(estimator[0], out_file=dot_data)
 
-    for finding in re.finditer("\[.+?\] ;", dot_data.getvalue()):
-        finding_str = finding.group()
-        if "samples" in finding_str:
-            assert_in("friedman_mse", finding_str)
-
-        
+    for finding in re.finditer("\[.*?samples.*?\]", dot_data.getvalue()):
+        assert_in("friedman_mse", finding.group())
