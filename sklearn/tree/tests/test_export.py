@@ -6,6 +6,7 @@ from numpy.testing import assert_equal
 from nose.tools import assert_raises
 
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz
 from sklearn.externals.six import StringIO
 
@@ -223,3 +224,56 @@ def test_graphviz_errors():
     # Check class_names error
     out = StringIO()
     assert_raises(IndexError, export_graphviz, clf, out, class_names=[])
+
+def test_friedman_mse_in_graphviz():
+
+    clf = DecisionTreeRegressor(criterion="friedman_mse", random_state=0)
+    clf.fit(X, y)
+    dot_data = StringIO()
+    export_graphviz(clf, out_file=dot_data)
+
+    clf = GradientBoostingClassifier(n_estimators=2, random_state=0)
+    clf.fit(X, y)
+    for estimator in clf.estimators_:
+        export_graphviz(estimator[0], out_file=dot_data)
+
+    contents1 = dot_data.getvalue()
+    contents2 = 'digraph Tree {\n' \
+                'node [shape=box] ;\n' \
+                '0 [label="X[1] <= 0.0\\nfriedman_mse = 1.0\\nsamples = 6\\n' \
+                'value = 0.0"] ;\n' \
+                '1 [label="friedman_mse = 0.0\\nsamples = 3\\n' \
+                'value = -1.0"] ;\n' \
+                '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
+                'headlabel="True"] ;\n' \
+                '2 [label="friedman_mse = 0.0\\nsamples = 3\\n' \
+                'value = 1.0"] ;\n' \
+                '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
+                'headlabel="False"] ;\n' \
+                '}digraph Tree {\n' \
+                'node [shape=box] ;\n' \
+                '0 [label="X[1] <= 0.0\\nfriedman_mse = 0.25\\nsamples = 6' \
+                '\\nvalue = 0.0"] ;\n' \
+                '1 [label="friedman_mse = 0.0\\nsamples = 3\\n' \
+                'value = -2.0"] ;\n' \
+                '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
+                'headlabel="True"] ;\n' \
+                '2 [label="friedman_mse = 0.0\\nsamples = 3\\n' \
+                'value = 2.0"] ;\n' \
+                '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
+                'headlabel="False"] ;\n' \
+                '}digraph Tree {\n' \
+                'node [shape=box] ;\n' \
+                '0 [label="X[1] <= 0.0\\nfriedman_mse = 0.2026\\n' \
+                'samples = 6\\nvalue = -0.0"] ;\n' \
+                '1 [label="friedman_mse = 0.0\\nsamples = 3\\n' \
+                'value = -1.8187"] ;\n' \
+                '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
+                'headlabel="True"] ;\n' \
+                '2 [label="friedman_mse = -0.0\\nsamples = 3\\n' \
+                'value = 1.8187"] ;\n' \
+                '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
+                'headlabel="False"] ;\n' \
+                '}'
+
+    assert_equal(contents1, contents2)
