@@ -6,7 +6,10 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
+from itertools import islice
+
 from . import _hashing
+from ..utils.sparsefuncs import csr_vappend
 from ..base import BaseEstimator, TransformerMixin
 
 
@@ -58,6 +61,9 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         effectively calls abs on the matrix prior to returning it.
         When True, output values can be interpreted as frequencies.
         When False, output values will have expected value zero.
+    chunksize : integer, optional, default=10000
+        After how many documents a new temporary feature matrix should
+        be build.
 
     Examples
     --------
@@ -77,13 +83,14 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",
-                 dtype=np.float64, non_negative=False):
+                 dtype=np.float64, non_negative=False, chunksize=10000):
         self._validate_params(n_features, input_type)
 
         self.dtype = dtype
         self.input_type = input_type
         self.n_features = n_features
         self.non_negative = non_negative
+        self.chunksize = chunksize
 
     @staticmethod
     def _validate_params(n_features, input_type):
@@ -114,6 +121,16 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self._validate_params(self.n_features, self.input_type)
         return self
 
+    def in_chunks(self, iterable, size):
+        """Generates chunks of given size from an arbitrary iterable
+        """
+        it = iter(iterable)
+        while True:
+           chunk = tuple(islice(it, size))
+           if not chunk:
+               return
+           yield chunk
+
     def transform(self, raw_X, y=None):
         """Transform a sequence of instances to a scipy.sparse matrix.
 
@@ -133,21 +150,25 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             Feature matrix, for use with estimators or further transformers.
 
         """
-        raw_X = iter(raw_X)
-        if self.input_type == "dict":
-            raw_X = (_iteritems(d) for d in raw_X)
-        elif self.input_type == "string":
-            raw_X = (((f, 1) for f in x) for x in raw_X)
-        indices, indptr, values = \
-            _hashing.transform(raw_X, self.n_features, self.dtype)
-        n_samples = indptr.shape[0] - 1
+        X = sp.csr_matrix((0, 0))
+        for raw_X_chunk in chunks(iter(raw_X), self.chunksize):
+            if self.input_type == "dict":
+                raw_X_chunk = (_iteritems(d) for d in raw_X_chunk)
+            elif self.input_type == "string":
+                raw_X_chunk = (((f, 1) for f in x) for x in raw_X_chunk)
+            indices, indptr, values = \
+                _hashing.transform(raw_X_chunk, self.n_features, self.dtype)
+            n_samples = indptr.shape[0] - 1
 
-        if n_samples == 0:
-            raise ValueError("Cannot vectorize empty sequence.")
+            if n_samples == 0:
+                raise ValueError("Cannot vectorize empty sequence.")
 
-        X = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
-                          shape=(n_samples, self.n_features))
-        X.sum_duplicates()  # also sorts the indices
-        if self.non_negative:
-            np.abs(X.data, X.data)
+            Y = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
+                              shape=(n_samples, self.n_features))
+            Y.sum_duplicates()  # also sorts the indices
+            X = csr_vappend(X, Y)
+
+            if self.non_negative:
+                np.abs(X.data, X.data)
+
         return X
