@@ -402,3 +402,32 @@ def csc_median_axis_0(X):
         median[f_ind] = _get_median(data, nz)
 
     return median
+
+
+def csr_vappend(X, Y):
+    """Takes in 2 csr_matrices and appends the second one to the
+    bottom of the first one. Much faster than scipy.sparse.vstack
+    but assumes the type to be csr and overwrites the first matrix
+    instead of copying it. The data, indices, and indptr still
+    get copied.
+
+    See: http://stackoverflow.com/questions/4695337/
+
+    Parameters
+    ----------
+    X : CSR sparse matrix, shape (n_samples, n_features)
+        Input data.
+
+    Y : CSR sparse matrix, shape = (n_samples, n_features)
+        Input data.
+
+    Returns
+    -------
+    X : CSR sparse matrix, shape (n_samples, n_features)
+        Y appended to X inplace.
+    """
+    X.data = np.hstack((X.data, Y.data))
+    X.indices = np.hstack((X.indices, Y.indices))
+    X.indptr = np.hstack((X.indptr, (Y.indptr + X.nnz)[1:]))
+    X._shape = (X.shape[0] + Y.shape[0], Y.shape[1])
+    return X

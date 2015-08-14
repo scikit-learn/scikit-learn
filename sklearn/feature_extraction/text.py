@@ -32,6 +32,7 @@ from .stop_words import ENGLISH_STOP_WORDS
 from ..utils import deprecated
 from ..utils.fixes import frombuffer_empty, bincount
 from ..utils.validation import check_is_fitted
+from ..utils.sparsefuncs import csr_vappend
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -621,6 +622,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
+    chunksize : int, optional, default=10000
+        After how many documents a new temporary feature matrix should
+        be build.
+
     Attributes
     ----------
     vocabulary_ : dict
@@ -652,7 +657,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word',
                  max_df=1.0, min_df=1, max_features=None,
-                 vocabulary=None, binary=False, dtype=np.int64):
+                 vocabulary=None, binary=False, dtype=np.int64,
+                 chunksize=10000):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
@@ -678,6 +684,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.vocabulary = vocabulary
         self.binary = binary
         self.dtype = dtype
+        self.chunksize = chunksize
 
     def _sort_features(self, X, vocabulary):
         """Sort features by name
@@ -732,6 +739,27 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                              " min_df or a higher max_df.")
         return X[:, kept_indices], removed_terms
 
+    def _get_empty_arrays(self):
+        """Get empty numpy arrays to construct the feature matrix from
+        """
+        indices = _make_int_array()
+        indptr = _make_int_array()
+        indptr.append(0)
+        return indices, indptr
+
+    def _get_sparse_matrix_from_indices(self, indices, indptr, vocabulary):
+        """Build csr matrix from indices and intptr arrays
+        """
+        indices = frombuffer_empty(indices, dtype=np.intc)
+        indptr = np.frombuffer(indptr, dtype=np.intc)
+        values = np.ones(len(indices))
+
+        X = sp.csr_matrix((values, indices, indptr),
+                          shape=(len(indptr) - 1, len(vocabulary)),
+                          dtype=self.dtype)
+        X.sum_duplicates()
+        return X
+
     def _count_vocab(self, raw_documents, fixed_vocab):
         """Create sparse feature matrix, and vocabulary where fixed_vocab=False
         """
@@ -743,17 +771,28 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             vocabulary.default_factory = vocabulary.__len__
 
         analyze = self.build_analyzer()
-        j_indices = _make_int_array()
-        indptr = _make_int_array()
-        indptr.append(0)
-        for doc in raw_documents:
+        X = sp.csr_matrix((0, 0))
+        indices, indptr = self._get_empty_arrays()
+        for num, doc in enumerate(raw_documents):
             for feature in analyze(doc):
                 try:
-                    j_indices.append(vocabulary[feature])
+                    indices.append(vocabulary[feature])
                 except KeyError:
                     # Ignore out-of-vocabulary items for fixed_vocab=True
                     continue
-            indptr.append(len(j_indices))
+            indptr.append(len(indices))
+            if num > 0 and num % self.chunksize == 0:
+                Y = self._get_sparse_matrix_from_indices(indices, indptr,
+                                                         vocabulary)
+                X = csr_vappend(X, Y)
+                del(Y)
+                indices, indptr = self._get_empty_arrays()
+
+        Y = self._get_sparse_matrix_from_indices(j_indices, indptr, vocabulary)
+        X = csr_vappend(X, Y)
+
+        del(Y)
+        del(indices, indptr)
 
         if not fixed_vocab:
             # disable defaultdict behaviour
@@ -762,13 +801,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        j_indices = frombuffer_empty(j_indices, dtype=np.intc)
+        indices = frombuffer_empty(indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
-        values = np.ones(len(j_indices))
+        values = np.ones(len(indices))
 
-        X = sp.csr_matrix((values, j_indices, indptr),
-                          shape=(len(indptr) - 1, len(vocabulary)),
-                          dtype=self.dtype)
         X.sum_duplicates()
         return vocabulary, X
 
