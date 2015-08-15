@@ -174,7 +174,11 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             if self.non_negative:
                 np.abs(X.data, X.data)
 
-        n_samples = X.indptr.shape[0] - 1
+        if X is not None:
+            n_samples = X.indptr.shape[0] - 1
+        else:
+            n_samples = 0
+
         if n_samples == 0:
             raise ValueError("Cannot vectorize empty sequence.")
 
