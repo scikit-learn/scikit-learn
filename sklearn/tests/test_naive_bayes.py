@@ -146,6 +146,49 @@ def test_mnnb():
         assert_array_almost_equal(y_pred_proba3, y_pred_proba)
         assert_array_almost_equal(y_pred_log_proba3, y_pred_log_proba)
 
+def test_mnnb_sparse():
+    X = scipy.sparse.csr_matrix(X2)
+    clf = MultinomialNB()
+    clf_sp = MultinomialNB(sparse=True)
+    assert_raises(ValueError, clf.fit, -X, y2)
+    assert_raises(ValueError, clf_sp.fit, -X, y2)
+    y_pred = clf.fit(X, y2).predict(X)
+    y_pred_sp = clf_sp.fit(X, y2).predict(X)
+    # Verify that sparse fit/predict has same result as non-sparse
+    assert_array_equal(y_pred, y_pred_sp, "sparse mnNB does not have same output as non-sparse")
+
+    # Verify that np.log(clf.predict_proba(X)) gives the same results as
+    # clf.predict_log_proba(X)
+    y_pred_proba = clf_sp.predict_proba(X)
+    y_pred_log_proba = clf_sp.predict_log_proba(X)
+    assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
+
+    # Check that incremental fitting yields the same results
+    clf2 = MultinomialNB(sparse=True)
+    clf2.partial_fit(X[:2], y2[:2], classes=np.unique(y2))
+    clf2.partial_fit(X[2:5], y2[2:5])
+    clf2.partial_fit(X[5:], y2[5:])
+
+    y_pred2 = clf2.predict(X)
+    assert_array_equal(y_pred2, y2)
+
+    y_pred_proba2 = clf2.predict_proba(X)
+    y_pred_log_proba2 = clf2.predict_log_proba(X)
+    assert_array_almost_equal(np.log(y_pred_proba2), y_pred_log_proba2, 8)
+    assert_array_almost_equal(y_pred_proba2, y_pred_proba)
+    assert_array_almost_equal(y_pred_log_proba2, y_pred_log_proba)
+
+    # Partial fit on the whole data at once should be the same as fit too
+    clf3 = MultinomialNB(sparse=True)
+    clf3.partial_fit(X, y2, classes=np.unique(y2))
+
+    y_pred3 = clf3.predict(X)
+    assert_array_equal(y_pred3, y2)
+    y_pred_proba3 = clf3.predict_proba(X)
+    y_pred_log_proba3 = clf3.predict_log_proba(X)
+    assert_array_almost_equal(np.log(y_pred_proba3), y_pred_log_proba3, 8)
+    assert_array_almost_equal(y_pred_proba3, y_pred_proba)
+    assert_array_almost_equal(y_pred_log_proba3, y_pred_log_proba)
 
 def check_partial_fit(cls):
     clf1 = cls()

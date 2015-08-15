@@ -19,7 +19,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csr_matrix
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
@@ -62,7 +62,7 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
         C : array, shape = [n_samples]
             Predicted target values for X
         """
-        jll = self._joint_log_likelihood(X)
+        jll = np.array(self._joint_log_likelihood(X))
         return self.classes_[np.argmax(jll, axis=1)]
 
     def predict_log_proba(self, X):
@@ -413,7 +413,7 @@ class BaseDiscreteNB(BaseNB):
         else:
             self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
 
-    def partial_fit(self, X, y, classes=None, sample_weight=None):
+    def partial_fit(self, X, y, classes=None, sample_weight=None, sparse=False):
         """Incremental fit on a batch of samples.
 
         This method is expected to be called several times consecutively
@@ -457,8 +457,13 @@ class BaseDiscreteNB(BaseNB):
             # This is the first call to partial_fit:
             # initialize various cumulative counters
             n_effective_classes = len(classes) if len(classes) > 1 else 2
-            self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-            self.feature_count_ = np.zeros((n_effective_classes, n_features),
+            if sparse:
+                self.class_count_ = csr_matrix(n_effective_classes, dtype=np.float64)
+                self.feature_count_ = csr_matrix((n_effective_classes, n_features),
+                                                    dtype=np.float64)
+            else:
+                self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
+                self.feature_count_ = np.zeros((n_effective_classes, n_features),
                                            dtype=np.float64)
         elif n_features != self.coef_.shape[1]:
             msg = "Number of features %d does not match previous data %d."
@@ -468,6 +473,7 @@ class BaseDiscreteNB(BaseNB):
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
+        # TODO: remove unused variables?
         n_samples, n_classes = Y.shape
 
         if X.shape[0] != Y.shape[0]:
@@ -494,7 +500,7 @@ class BaseDiscreteNB(BaseNB):
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, sparse=False):
         """Fit Naive Bayes classifier according to X, y
 
         Parameters
@@ -535,9 +541,15 @@ class BaseDiscreteNB(BaseNB):
         # Count raw events from data before updating the class log prior
         # and feature log probas
         n_effective_classes = Y.shape[1]
-        self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-        self.feature_count_ = np.zeros((n_effective_classes, n_features),
-                                       dtype=np.float64)
+        if sparse:
+            self.class_count_ = csr_matrix(n_effective_classes, dtype=np.float64)
+            self.feature_count_ = csr_matrix((n_effective_classes, n_features),
+                                             dtype=np.float64)
+        else:
+            self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
+            self.feature_count_ = np.zeros((n_effective_classes, n_features),
+                                           dtype=np.float64)
+
         self._count(X, Y)
         self._update_feature_log_prob()
         self._update_class_log_prior(class_prior=class_prior)
@@ -582,6 +594,10 @@ class MultinomialNB(BaseDiscreteNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
+    sparse : boolean
+        Whether to use a sparse datastructure for storing feature_count_.
+        Saves memory for tasks with big n_features & n_classes.
+
     Attributes
     ----------
     class_log_prior_ : array, shape (n_classes, )
@@ -616,7 +632,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, y)
-    MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
+    MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True, sparse=False)
     >>> print(clf.predict(X[2]))
     [3]
 
@@ -632,26 +648,50 @@ class MultinomialNB(BaseDiscreteNB):
     Information Retrieval. Cambridge University Press, pp. 234-265.
     http://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
     """
-
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None, sparse=False):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
+        self.sparse = sparse
+
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
+        return super(MultinomialNB, self).partial_fit(X, y, classes, sample_weight, sparse=self.sparse)
+
+    def fit(self, X, y, sample_weight=None):
+        return super(MultinomialNB, self).fit(X, y, sample_weight, sparse=self.sparse)
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
         if np.any((X.data if issparse(X) else X) < 0):
             raise ValueError("Input X must be non-negative")
-        self.feature_count_ += safe_sparse_dot(Y.T, X)
+        if self.sparse:
+            if not issparse(X):
+                raise ValueError("Input X must be sparse when sparse=True")
+            self.feature_count_ += safe_sparse_dot(csr_matrix(Y.T), X,
+                                                   dense_output=False)  # TODO: check best matrix form for Y here
+        else:
+            self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
 
     def _update_feature_log_prob(self):
         """Apply smoothing to raw counts and recompute log probabilities"""
-        smoothed_fc = self.feature_count_ + self.alpha
-        smoothed_cc = smoothed_fc.sum(axis=1)
+        if self.sparse:
+            # TODO: find named variables for shapes here
+            smoothed_fc = self.feature_count_.copy()
+            n_features = self.feature_count_.shape[1]
+            smoothed_cc = smoothed_fc.sum(axis=1) + self.alpha * n_features
+            smoothed_cc = np.log(smoothed_cc)
+            smoothed_fc[smoothed_fc != 0] += self.alpha
+            smoothed_fc[smoothed_fc != 0] = np.log(smoothed_fc[smoothed_fc != 0])
+            self.feature_log_prob_ = smoothed_fc.copy()
+            for c in xrange(len(self.classes_)):  # TODO: find way to do this without for loop?
+                self.feature_log_prob_[c][self.feature_log_prob_[c] != 0] -= smoothed_cc[c]
+        else:
+            smoothed_fc = self.feature_count_ + self.alpha
+            smoothed_cc = smoothed_fc.sum(axis=1)
 
-        self.feature_log_prob_ = (np.log(smoothed_fc)
-                                  - np.log(smoothed_cc.reshape(-1, 1)))
+            self.feature_log_prob_ = (np.log(smoothed_fc)
+                                      - np.log(smoothed_cc.reshape(-1, 1)))
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
