@@ -714,7 +714,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         This does not prune samples with zero features.
         """
-        if high is None and low is None and limit is None:
+        high_not_set = high is None or int(high) == X.shape[0]
+        low_not_set = low is None or int(low) == 1
+        limit_not_set = limit is None or int(limit) == X.shape[1]
+        if high_not_set and low_not_set and limit_not_set:
             return X, set()
 
         # Calculate a mask based on document frequencies
