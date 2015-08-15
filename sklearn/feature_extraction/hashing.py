@@ -74,7 +74,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     >>> f.toarray()
     array([[ 0.,  0., -4., -1.,  0.,  0.,  0.,  0.,  0.,  2.],
            [ 0.,  0.,  0., -2., -5.,  0.,  0.,  0.,  0.,  0.]])
-           
+
     See also
     --------
     DictVectorizer : vectorizes string-valued features using a hash table.
@@ -126,10 +126,10 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         """
         it = iter(iterable)
         while True:
-           chunk = tuple(islice(it, size))
-           if not chunk:
-               return
-           yield chunk
+            chunk = tuple(islice(it, size))
+            if not chunk:
+                return
+            yield chunk
 
     def transform(self, raw_X, y=None):
         """Transform a sequence of instances to a scipy.sparse matrix.

@@ -384,7 +384,7 @@ def csc_median_axis_0(X):
     Returns
     -------
     median : ndarray, shape (n_features,)
-        Median. 
+        Median.
 
     """
     if not isinstance(X, sp.csc_matrix):
