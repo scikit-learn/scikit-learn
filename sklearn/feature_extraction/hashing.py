@@ -151,17 +151,16 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         """
         X = sp.csr_matrix((0, 0))
-        for raw_X_chunk in self.in_chunks(iter(raw_X), self.chunksize):
+        for raw_X_chunk in self.in_chunks(raw_X, self.chunksize):
+            raw_X_chunk = iter(raw_X_chunk)
             if self.input_type == "dict":
                 raw_X_chunk = (_iteritems(d) for d in raw_X_chunk)
             elif self.input_type == "string":
                 raw_X_chunk = (((f, 1) for f in x) for x in raw_X_chunk)
+
             indices, indptr, values = \
                 _hashing.transform(raw_X_chunk, self.n_features, self.dtype)
             n_samples = indptr.shape[0] - 1
-
-            if n_samples == 0:
-                raise ValueError("Cannot vectorize empty sequence.")
 
             Y = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
                               shape=(n_samples, self.n_features))
@@ -170,5 +169,9 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
             if self.non_negative:
                 np.abs(X.data, X.data)
+
+        n_samples = X.indptr.shape[0] - 1
+        if n_samples == 0:
+            raise ValueError("Cannot vectorize empty sequence.")
 
         return X
