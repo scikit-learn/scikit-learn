@@ -622,10 +622,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
-    chunksize : int, optional, default=10000
-        After how many documents a new temporary feature matrix should
-        be build.
-
     Attributes
     ----------
     vocabulary_ : dict
@@ -657,8 +653,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word',
                  max_df=1.0, min_df=1, max_features=None,
-                 vocabulary=None, binary=False, dtype=np.int64,
-                 chunksize=10000):
+                 vocabulary=None, binary=False, dtype=np.int64):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
@@ -684,7 +679,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.vocabulary = vocabulary
         self.binary = binary
         self.dtype = dtype
-        self.chunksize = chunksize
+        self.chunksize = 10000
 
     def _sort_features(self, X, vocabulary):
         """Sort features by name

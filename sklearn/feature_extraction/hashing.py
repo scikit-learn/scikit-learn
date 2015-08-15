@@ -61,9 +61,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         effectively calls abs on the matrix prior to returning it.
         When True, output values can be interpreted as frequencies.
         When False, output values will have expected value zero.
-    chunksize : integer, optional, default=10000
-        After how many documents a new temporary feature matrix should
-        be build.
 
     Examples
     --------
@@ -83,14 +80,14 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",
-                 dtype=np.float64, non_negative=False, chunksize=10000):
+                 dtype=np.float64, non_negative=False):
         self._validate_params(n_features, input_type)
 
         self.dtype = dtype
         self.input_type = input_type
         self.n_features = n_features
         self.non_negative = non_negative
-        self.chunksize = chunksize
+        self.chunksize = 10000
 
     @staticmethod
     def _validate_params(n_features, input_type):
