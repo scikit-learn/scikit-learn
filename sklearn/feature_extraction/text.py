@@ -777,7 +777,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             vocabulary.default_factory = vocabulary.__len__
 
         analyze = self.build_analyzer()
-        X = sp.csr_matrix((0, 0))
+        X = sp.csr_matrix((0, 0), dtype=self.dtype)
         indices, indptr = self._get_empty_arrays()
         for num, doc in enumerate(raw_documents):
             for feature in analyze(doc):
@@ -794,7 +794,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 del(Y)
                 indices, indptr = self._get_empty_arrays()
 
-        Y = self._get_sparse_matrix_from_indices(j_indices, indptr, vocabulary)
+        Y = self._get_sparse_matrix_from_indices(indices, indptr, vocabulary)
         X = csr_vappend(X, Y)
 
         del(Y)
@@ -807,11 +807,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        indices = frombuffer_empty(indices, dtype=np.intc)
-        indptr = np.frombuffer(indptr, dtype=np.intc)
-        values = np.ones(len(indices))
-
-        X.sum_duplicates()
         return vocabulary, X
 
     def fit(self, raw_documents, y=None):

@@ -150,7 +150,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             Feature matrix, for use with estimators or further transformers.
 
         """
-        X = sp.csr_matrix((0, 0))
+        X = sp.csr_matrix((0, 0), dtype=self.dtype)
         for raw_X_chunk in self.in_chunks(raw_X, self.chunksize):
             raw_X_chunk = iter(raw_X_chunk)
             if self.input_type == "dict":
