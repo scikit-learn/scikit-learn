@@ -780,7 +780,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             vocabulary.default_factory = vocabulary.__len__
 
         analyze = self.build_analyzer()
-        X = sp.csr_matrix((0, 0), dtype=self.dtype)
+        X = None  # empty csr_matrix -> invalid shape for scipy <= 0.11.0
         indices, indptr = self._get_empty_arrays()
         for num, doc in enumerate(raw_documents):
             for feature in analyze(doc):
@@ -793,15 +793,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             if num > 0 and num % self.chunksize == 0:
                 Y = self._get_sparse_matrix_from_indices(indices, indptr,
                                                          vocabulary)
-                X = csr_vappend(X, Y)
-                del(Y)
+                if X is not None:
+                    X = csr_vappend(X, Y)
+                    del(Y)
+                else:
+                    X = Y
+
                 indices, indptr = self._get_empty_arrays()
-
-        Y = self._get_sparse_matrix_from_indices(indices, indptr, vocabulary)
-        X = csr_vappend(X, Y)
-
-        del(Y)
-        del(indices, indptr)
 
         if not fixed_vocab:
             # disable defaultdict behaviour
@@ -809,6 +807,17 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             if not vocabulary:
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
+
+        # if the vocabulary is empty we should not get here
+        Y = self._get_sparse_matrix_from_indices(indices, indptr, vocabulary)
+
+        if X is not None:
+            X = csr_vappend(X, Y)
+            del(Y)
+        else:
+            X = Y
+
+        del(indices, indptr)
 
         return vocabulary, X
 
