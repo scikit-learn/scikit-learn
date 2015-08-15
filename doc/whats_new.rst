@@ -3239,8 +3239,7 @@ New classes
       :class:`hmm.GaussianHMM`, :class:`hmm.MultinomialHMM`,
       :class:`hmm.GMMHMM`)
 
-    - New module feature_extraction (see :ref:`class reference
-      <feature_extraction_ref>`)
+    - New module feature_extraction (see :ref:`feature_extraction` documentation)
 
     - New FastICA algorithm in module sklearn.fastica
 

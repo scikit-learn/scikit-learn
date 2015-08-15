@@ -286,8 +286,8 @@ counting in a single class::
   >>> from sklearn.feature_extraction.text import CountVectorizer
 
 This model has many parameters, however the default values are quite
-reasonable (please see  the :ref:`reference documentation
-<text_feature_extraction_ref>` for the details)::
+reasonable (please see  the :ref:`feature_extraction` documentation
+for the details)::
 
   >>> vectorizer = CountVectorizer(min_df=1)
   >>> vectorizer                     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
@@ -412,8 +412,8 @@ class::
   TfidfTransformer(norm=...'l2', smooth_idf=True, sublinear_tf=False,
                    use_idf=True)
 
-Again please see the :ref:`reference documentation
-<text_feature_extraction_ref>` for the details on all the parameters.
+Again please see the :ref:`feature_extraction` documentation for the details
+on all the parameters.
 
 Let's take an example with the following counts. The first term is present
 100% of the time hence not very interesting. The two other features only
