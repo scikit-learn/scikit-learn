@@ -17,8 +17,8 @@ The advantages of Gaussian processes are:
       kernels).
 
     - The prediction is probabilistic (Gaussian) so that one can compute
-      empirical confidence intervals and exceedance probabilities that might be
-      used to refit (online fitting, adaptive fitting) the prediction in some
+      empirical confidence intervals and decide based on those if one should
+      refit (online fitting, adaptive fitting) the prediction in some
       region of interest.
 
     - Versatile: different :ref:`kernels
@@ -57,7 +57,7 @@ If the initial hyperparameters should be kept fixed, `None` can be passed as
 optimizer.
 
 The noise level in the targets can be specified by passing it via the
-parameter `sigma_squared_n`, either globally as a scalar or per datapoint.
+parameter `alpha`, either globally as a scalar or per datapoint.
 Note that a moderate noise level can also be helpful for dealing with numeric
 issues during fitting as it is effectively implemented as Tikhonov
 regularization, i.e., by adding it to the diagonal of the kernel matrix. An
@@ -144,7 +144,8 @@ in the kernel and by the regularization parameter alpha of KRR.
 
 The figure shows that both methods learn reasonable models of the target
 function. GPR correctly identifies the periodicity of the function to be
-roughly 2*pi (6.28), while KRR chooses the doubled periodicity 4*pi. Besides
+roughly :math:`2*\pi` (6.28), while KRR chooses the doubled periodicity
+:math:`4*\pi` . Besides
 that, GPR provides reasonable confidence bounds on the prediction which are not
 available for KRR. A major difference between the two methods is the time
 required for fitting and predicting: while fitting KRR is fast in principle,
@@ -270,8 +271,9 @@ dataset. Since Gaussian process classification scales cubically with the size
 of the dataset, this might be considerably faster. However, note that
 "one_vs_one" does not support predicting probability estimates but only plain
 predictions. Moreover, note that :class:`GaussianProcessClassifier` does not
-(yet) implement a true multi-class Laplace approximation, but is based on
-several binary classification tasks.
+(yet) implement a true multi-class Laplace approximation internally, but
+as discussed aboved is based on solving several binary classification tasks
+internally, which are combined using one-versus-rest or one-versus-one.
 
 GPC examples
 ============
@@ -313,8 +315,8 @@ Illustration of GPC on the XOR dataset
 This example illustrates GPC on XOR data. Compared are a stationary, isotropic
 kernel (`RBF`) and a non-stationary kernel (`DotProduct`). On this particular
 dataset, the `DotProduct` kernel obtains considerably better results because the
-class-boundaries are linear and coincide with the coordinate axes. In general,
-stationary kernels often obtain better results.
+class-boundaries are linear and coincide with the coordinate axes. In practice,
+however, stationary kernels such as `RBF` often obtain better results
 
 .. figure:: ../auto_examples/gaussian_process/images/plot_gpc_xor_001.png
    :target: ../auto_examples/gaussian_process/plot_gpc_xor.html
@@ -328,7 +330,7 @@ Gaussian process classification (GPC) on iris dataset
 
 This example illustrates the predicted probability of GPC for an isotropic
 and anisotropic RBF kernel on a two-dimensional version for the iris-dataset.
-It thus illustrated the applicability of GPC to non-binary classification.
+This illustrates the applicability of GPC to non-binary classification.
 The anisotropic RBF kernel obtains slightly higher log-marginal-likelihood by
 assigning different length-scales to the two feature dimensions.
 
