@@ -150,7 +150,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             Feature matrix, for use with estimators or further transformers.
 
         """
-        X = sp.csr_matrix((0, 0), dtype=self.dtype)
+        X = None  # empty csr_matrix -> invalid shape for scipy <= 0.11.0
         for raw_X_chunk in self.in_chunks(raw_X, self.chunksize):
             raw_X_chunk = iter(raw_X_chunk)
             if self.input_type == "dict":
@@ -165,7 +165,11 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             Y = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
                               shape=(n_samples, self.n_features))
             Y.sum_duplicates()  # also sorts the indices
-            X = csr_vappend(X, Y)
+
+            if X is not None:
+                X = csr_vappend(X, Y)
+            else:
+                X = Y
 
             if self.non_negative:
                 np.abs(X.data, X.data)
