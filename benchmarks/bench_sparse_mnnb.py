@@ -41,7 +41,8 @@ def dataset():
     X = csr_matrix((n_samples, n_features))
     for i in xrange(n_samples):
         indexes = np.random.randint(0, n_features, n_informative)
-        X[i, indexes] = 1
+        for j in indexes:
+            X[i, j] = 1
     y = np.random.randint(0, n_classes, n_samples)
     return X, y
 

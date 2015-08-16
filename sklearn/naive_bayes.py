@@ -460,7 +460,7 @@ class BaseDiscreteNB(BaseNB):
             if sparse:
                 self.class_count_ = csr_matrix(n_effective_classes, dtype=np.float64)
                 self.feature_count_ = csr_matrix((n_effective_classes, n_features),
-                                                    dtype=np.float64)
+                                                 dtype=np.float64)
             else:
                 self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
                 self.feature_count_ = np.zeros((n_effective_classes, n_features),
@@ -667,25 +667,27 @@ class MultinomialNB(BaseDiscreteNB):
         if self.sparse:
             if not issparse(X):
                 raise ValueError("Input X must be sparse when sparse=True")
-            self.feature_count_ += safe_sparse_dot(csr_matrix(Y.T), X,
-                                                   dense_output=False)  # TODO: check best matrix form for Y here
+            val = safe_sparse_dot(csr_matrix(Y.T), X, dense_output=False)  # TODO: check best matrix form for Y here
+
+            self.feature_count_ = self.feature_count_ + val
         else:
             self.feature_count_ += safe_sparse_dot(Y.T, X)
-        self.class_count_ += Y.sum(axis=0)
+        self.class_count_ = self.class_count_ + Y.sum(axis=0)
 
     def _update_feature_log_prob(self):
         """Apply smoothing to raw counts and recompute log probabilities"""
         if self.sparse:
             # TODO: find named variables for shapes here
             smoothed_fc = self.feature_count_.copy()
-            n_features = self.feature_count_.shape[1]
+            n_features = smoothed_fc.shape[1]
+            n_classes = smoothed_fc.shape[0]
             smoothed_cc = smoothed_fc.sum(axis=1) + self.alpha * n_features
-            smoothed_cc = np.log(smoothed_cc)
-            smoothed_fc[smoothed_fc != 0] += self.alpha
-            smoothed_fc[smoothed_fc != 0] = np.log(smoothed_fc[smoothed_fc != 0])
-            self.feature_log_prob_ = smoothed_fc.copy()
-            for c in xrange(len(self.classes_)):  # TODO: find way to do this without for loop?
-                self.feature_log_prob_[c][self.feature_log_prob_[c] != 0] -= smoothed_cc[c]
+            smoothed_cc = np.log(np.array(smoothed_cc)).reshape((n_classes,))
+            smoothed_fc.data += self.alpha
+            smoothed_fc.data = np.log(smoothed_fc.data)
+            self.feature_log_prob_ = smoothed_fc
+            for c in range(len(self.classes_)):  # TODO: find way to do this without for loop?
+                self.feature_log_prob_[c].data -= smoothed_cc[c]
         else:
             smoothed_fc = self.feature_count_ + self.alpha
             smoothed_cc = smoothed_fc.sum(axis=1)
