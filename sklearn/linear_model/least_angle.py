@@ -37,7 +37,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
               copy_Gram=True, verbose=0, return_path=True,
-              return_n_iter=False, nonnegative=False):
+              return_n_iter=False, positive=False):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
 
     The optimization objective for the case method='lasso' is::
@@ -194,16 +194,14 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     while True:
         if Cov.size:
-            # NON-NEGATIVE MODIFICATION 
-            if nonnegative:
+            if positive:
                 C_idx = np.argmax(Cov)
             else:
                 C_idx = np.argmax(np.abs(Cov))
 
             C_ = Cov[C_idx]
 
-            # NON-NEGATIVE MODIFICATION 
-            if nonnegative:
+            if positive:
                 C = C_
             else:
                 C = np.fabs(C_)
@@ -246,7 +244,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             ##########################################################
 
             # NON-NEGATIVE MODIFICATION 
-            if nonnegative:
+            if positive:
                 sign_active[n_active] = np.ones(C_.shape)
             else:
                 sign_active[n_active] = np.sign(C_)
@@ -312,9 +310,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 print("%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
                                                       n_active, C))
 
-        # NON-NEGATIVE MODIFICATION // FIXME : can we ultimately remove this?
-        # no warning and now break in the case of nonnegative lasso
-        if method == 'lasso' and n_iter > 0 and prev_alpha[0] < alpha[0] and not nonnegative:
+        if method == 'lasso' and n_iter > 0 and prev_alpha[0] < alpha[0]:
             # alpha is increasing. This is because the updates of Cov are
             # bringing in too much numerical error that is greater than
             # than the remaining correlation with the
@@ -370,8 +366,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         g1 = arrayfuncs.min_pos((C - Cov) / (AA - corr_eq_dir + tiny))
         g2 = arrayfuncs.min_pos((C + Cov) / (AA + corr_eq_dir + tiny))
-        if nonnegative:
-            # NON-NEGATIVE MODIFICATION 
+        if positive:
             gamma_ = min(g1, C / AA)
         else:
             gamma_ = min(g1, g2, C / AA)
@@ -569,7 +564,7 @@ class Lars(LinearModel, RegressorMixin):
 
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
-                 precompute='auto', n_nonzero_coefs=500, nonnegative=False,
+                 precompute='auto', n_nonzero_coefs=500, positive=False,
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
@@ -577,7 +572,7 @@ class Lars(LinearModel, RegressorMixin):
         self.method = 'lar'
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
-        self.nonnegative = nonnegative 
+        self.positive = positive 
         self.eps = eps
         self.copy_X = copy_X
         self.fit_path = fit_path
@@ -657,7 +652,7 @@ class Lars(LinearModel, RegressorMixin):
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
                     eps=self.eps, return_path=True,
-                    return_n_iter=True, nonnegative=self.nonnegative)
+                    return_n_iter=True, positive=self.positive)
                 self.alphas_.append(alphas)
                 self.active_.append(active)
                 self.n_iter_.append(n_iter_)
@@ -678,7 +673,7 @@ class Lars(LinearModel, RegressorMixin):
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
                     eps=self.eps, return_path=False, return_n_iter=True,
-                    nonnegative=self.nonnegative)
+                    positive=self.positive)
                 self.alphas_.append(alphas)
                 self.n_iter_.append(n_iter_)
             if n_targets == 1:
@@ -795,7 +790,7 @@ class LassoLars(Lars):
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 nonnegative=False, eps=np.finfo(np.float).eps, copy_X=True,
+                 positive=False, eps=np.finfo(np.float).eps, copy_X=True,
                  fit_path=True):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
@@ -803,7 +798,7 @@ class LassoLars(Lars):
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lasso'
-        self.nonnegative=nonnegative 
+        self.positive=positive 
         self.precompute = precompute
         self.copy_X = copy_X
         self.eps = eps
