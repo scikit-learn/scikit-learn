@@ -34,8 +34,8 @@ from sklearn.metrics import precision_score
 from sklearn.externals import six
 from sklearn.externals.six.moves import zip
 
-from sklearn.linear_model import Ridge
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
