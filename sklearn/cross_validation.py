@@ -1227,9 +1227,9 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1, proba=False,
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
 
-    proba : True or False
-        True invokes the predict_proba on the estimator, false 
-        invokes predict.
+    proba : boolean, optional, default: False
+        Invokes the predict_proba on the estimator 
+        otherwise uses predict.
     
     verbose : integer, optional
         The verbosity level.
@@ -1317,8 +1317,8 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params, proba):
     fit_params : dict or None
         Parameters that will be passed to ``estimator.fit``.
     
-    proba: True or False
-        Use predict_proba or predict method on estimator.
+    proba: boolean
+        If True, use predict_proba otherwise use predict method on estimator.
     
     Returns
     -------
