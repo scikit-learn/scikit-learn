@@ -21,6 +21,7 @@ optimization.
 
 from abc import ABCMeta, abstractmethod
 from functools import partial
+from collections import namedtuple
 import inspect
 import math
 
@@ -31,6 +32,36 @@ from scipy.spatial.distance import pdist, cdist, squareform
 from ..metrics.pairwise import pairwise_kernels
 from ..externals import six
 from ..base import clone
+
+
+class Hyperparameter(namedtuple(
+     'Hyperparameter',
+     ('name', 'value_type', 'bounds', 'n_elements', 'fixed'))):
+    # A raw namedtuple is very memory efficient as it packs the attributes
+    # in a struct to get rid of the __dict__ of attributes in particular it
+    # does not copy the string for the keys on each instance.
+    # By deriving a namedtuple class just to introduce the __init__ method we
+    # would also reintroduce the __dict__ on the instance. By telling the
+    # Python interpreter that this subclass uses static __slots__ instead of
+    # dynamic attributes. Furthermore we don't need any additional slot in the
+    # subclass so we set __slots__ to the empty tuple.
+    __slots__ = ()
+
+    def __new__(cls, name, value_type, bounds, n_elements=1, fixed=None):
+        if bounds is not "fixed":
+            bounds = np.atleast_2d(bounds)
+            if n_elements > 1:  # vector-valued parameter
+                if bounds.shape[0] == 1:
+                    bounds = np.repeat(bounds, n_elements, 0)
+                elif bounds.shape[0] != n_elements:
+                    raise ValueError("Bounds on %s should have either 1 or "
+                                     "%d dimensions. Given are %d"
+                                     % (name, n_elements, bounds.shape[0]))
+
+        if fixed is None:
+             fixed = bounds is "fixed"
+        return super(Hyperparameter, cls).__new__(
+            cls, name, value_type, bounds, n_elements, fixed)
 
 
 class Kernel(six.with_metaclass(ABCMeta)):
@@ -118,6 +149,15 @@ class Kernel(six.with_metaclass(ABCMeta)):
         return self.theta.shape[0]
 
     @property
+    def hyperparameters(self):
+        """Returns a list of all hyperparameter."""
+        r = []
+        for attr, value in self.__dict__.items():
+            if attr.startswith("hyperparameter_"):
+                r.append(value)
+        return r
+
+    @property
     def theta(self):
         """Returns the (flattened, log-transformed) non-fixed hyperparameters.
 
@@ -132,11 +172,9 @@ class Kernel(six.with_metaclass(ABCMeta)):
             The non-fixed, log-transformed hyperparameters of the kernel
         """
         theta = []
-        for var_name in self.theta_vars:
-            if not isinstance(var_name, six.string_types):
-                # vector-valued parameter
-                var_name, _ = var_name
-            theta.append(getattr(self, var_name))
+        for hyperparameter in self.hyperparameters:
+            if not hyperparameter.fixed:
+                theta.append(getattr(self, hyperparameter.name))
         if len(theta) > 0:
             return np.log(np.hstack(theta))
         else:
@@ -152,14 +190,16 @@ class Kernel(six.with_metaclass(ABCMeta)):
             The non-fixed, log-transformed hyperparameters of the kernel
         """
         i = 0
-        for var_name in self.theta_vars:
-            if not isinstance(var_name, six.string_types):
+        for hyperparameter in self.hyperparameters:
+            if hyperparameter.fixed:
+                continue
+            if hyperparameter.n_elements > 1:
                 # vector-valued parameter
-                var_name, var_length = var_name
-                setattr(self, var_name, np.exp(theta[i:i + var_length]))
-                i += var_length
+                setattr(self, hyperparameter.name,
+                        np.exp(theta[i:i + hyperparameter.n_elements]))
+                i += hyperparameter.n_elements
             else:
-                setattr(self, var_name, np.exp(theta[i]))
+                setattr(self, hyperparameter.name, np.exp(theta[i]))
                 i += 1
 
         if i != len(theta):
@@ -177,21 +217,9 @@ class Kernel(six.with_metaclass(ABCMeta)):
             The bounds on the kernel's hyperparameters theta
         """
         bounds = []
-        for var_name in self.theta_vars:
-            if not isinstance(var_name, six.string_types):
-                # vector-valued parameter
-                var_name, var_length = var_name
-                var_bounds = np.atleast_2d(getattr(self, var_name + "_bounds"))
-                if var_bounds.shape[0] == 1:
-                    var_bounds = np.repeat(var_bounds, var_length, 0)
-                elif var_bounds.shape[0] != var_length:
-                    raise ValueError("Bounds on %s should have either 1 or "
-                                     "%d dimensions. Given are %d"
-                                     % (var_name, var_length,
-                                        var_bounds.shape[0]))
-                bounds.append(var_bounds)
-            else:
-                bounds.append(getattr(self, var_name + "_bounds"))
+        for hyperparameter in self.hyperparameters:
+            if not hyperparameter.fixed:
+                bounds.append(hyperparameter.bounds)
         if len(bounds) > 0:
             return np.log(np.vstack(bounds))
         else:
@@ -206,16 +234,24 @@ class Kernel(six.with_metaclass(ABCMeta)):
         bounds : array, shape (n_dims, 2)
             The bounds on the kernel's hyperparameters theta
         """
+        bounds_exp = np.exp(bounds)
         i = 0
-        for var_name in self.theta_vars:
-            if not isinstance(var_name, six.string_types):
-                # vector-valued parameter
-                var_name, var_length = var_name
-                setattr(self, var_name + "_bounds",
-                        np.exp(bounds[i:i + var_length]))
+        for hyperparameter in self.hyperparameters:
+            if hyperparameter.n_elements > 1:  # vector-valued parameter
+                setattr(self, "hyperparameter_" + hyperparameter.name,
+                        Hyperparameter(
+                            hyperparameter.name, hyperparameter.value_type,
+                            bounds_exp[i:i + hyperparameter.n_elements],
+                            hyperparameter.n_elements))
+                setattr(self, hyperparameter.name + "_bounds",
+                        bounds_exp[i:i + hyperparameter.n_elements])
                 i += var_length
             else:
-                setattr(self, var_name + "_bounds", np.exp(bounds[i]))
+                setattr(self, "hyperparameter_" + hyperparameter.name,
+                        Hyperparameter(hyperparameter.name,
+                                       hyperparameter.value_type,
+                                       bounds_exp[i]))
+                setattr(self, hyperparameter.name + "_bounds", bounds_exp[i])
                 i += 1
 
         if i != len(bounds):
@@ -422,18 +458,6 @@ class KernelOperator(Kernel):
         self.k1 = k1
         self.k2 = k2
 
-        self.theta_vars = []
-        for theta_var in self.k1.theta_vars:
-            if isinstance(theta_var, tuple):
-                self.theta_vars.append(("k1__" + theta_var[0], theta_var[1]))
-            else:
-                self.theta_vars.append("k1__" + theta_var)
-        for theta_var in self.k2.theta_vars:
-            if isinstance(theta_var, tuple):
-                self.theta_vars.append(("k2__" + theta_var[0], theta_var[1]))
-            else:
-                self.theta_vars.append("k2__" + theta_var)
-
     def get_params(self, deep=True):
         """Get parameters of this kernel.
 
@@ -456,6 +480,22 @@ class KernelOperator(Kernel):
             params.update(('k2__' + k, val) for k, val in deep_items)
 
         return params
+
+    @property
+    def hyperparameters(self):
+        """Returns a list of all hyperparameter."""
+        r = []
+        for hyperparameter in self.k1.hyperparameters:
+            r.append(Hyperparameter("k1__" + hyperparameter.name,
+                                    hyperparameter.value_type,
+                                    hyperparameter.bounds,
+                                    hyperparameter.n_elements))
+        for hyperparameter in self.k2.hyperparameters:
+            r.append(Hyperparameter("k2__" + hyperparameter.name,
+                                    hyperparameter.value_type,
+                                    hyperparameter.bounds,
+                                    hyperparameter.n_elements))
+        return r
 
     @property
     def theta(self):
@@ -687,13 +727,6 @@ class Exponentiation(Kernel):
         self.kernel = kernel
         self.exponent = exponent
 
-        self.theta_vars = []
-        for theta_var in self.kernel.theta_vars:
-            if isinstance(theta_var, tuple):
-                self.theta_vars.append(("kernel__" + theta_var[0], theta_var[1]))
-            else:
-                self.theta_vars.append("kernel__" + theta_var)
-
     def get_params(self, deep=True):
         """Get parameters of this kernel.
 
@@ -713,6 +746,17 @@ class Exponentiation(Kernel):
             deep_items = self.kernel.get_params().items()
             params.update(('kernel__' + k, val) for k, val in deep_items)
         return params
+
+    @property
+    def hyperparameters(self):
+        """Returns a list of all hyperparameter."""
+        r = []
+        for hyperparameter in self.kernel.hyperparameters:
+            r.append(Hyperparameter("kernel__" + hyperparameter.name,
+                                    hyperparameter.value_type,
+                                    hyperparameter.bounds,
+                                    hyperparameter.n_elements))
+        return r
 
     @property
     def theta(self):
@@ -851,7 +895,7 @@ class ConstantKernel(Kernel):
         self.c = c
         self.c_bounds = c_bounds
 
-        self.theta_vars = ["c"] if c_bounds is not "fixed" else []
+        self.hyperparameter_c = Hyperparameter("c", "numeric", c_bounds)
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -887,7 +931,7 @@ class ConstantKernel(Kernel):
 
         K = self.c * np.ones((X.shape[0], Y.shape[0]))
         if eval_gradient:
-            if self.c_bounds is not "fixed":
+            if not self.hyperparameter_c.fixed:
                 return K, self.c * np.ones((X.shape[0], X.shape[0], 1))
             else:
                 return K, np.empty((X.shape[0], X.shape[0], 0))
@@ -938,7 +982,7 @@ class WhiteKernel(Kernel):
         self.c = c
         self.c_bounds = c_bounds
 
-        self.theta_vars = ["c"] if c_bounds is not "fixed" else []
+        self.hyperparameter_c = Hyperparameter("c", "numeric", c_bounds)
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -973,7 +1017,7 @@ class WhiteKernel(Kernel):
         if Y is None:
             K = self.c * np.eye(X.shape[0])
             if eval_gradient:
-                if self.c_bounds is not "fixed":
+                if not self.hyperparameter_c.fixed:
                     return K, self.c * np.eye(X.shape[0])[:, :, np.newaxis]
                 else:
                     return K, np.empty((X.shape[0], X.shape[0], 0))
@@ -1043,12 +1087,12 @@ class RBF(Kernel):
             self.l = float(l)
         self.l_bounds = l_bounds
 
-        self.theta_vars = []
-        if l_bounds is not "fixed":
-            if self.anisotropic:  # anisotropic l needs special care
-                self.theta_vars.append(("l", len(l)))
-            else:
-                self.theta_vars.append("l")
+        if self.anisotropic:  # anisotropic l
+            self.hyperparameter_l = \
+                Hyperparameter("l", "numeric", l_bounds, len(l))
+        else:
+            self.hyperparameter_l = \
+                Hyperparameter("l", "numeric", l_bounds)
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -1096,7 +1140,8 @@ class RBF(Kernel):
             K = np.exp(-.5 * dists)
 
         if eval_gradient:
-            if self.l_bounds is "fixed":  # Hyperparameter l kept fixed
+            if self.hyperparameter_l.fixed:
+                # Hyperparameter l kept fixed
                 return K, np.empty((X.shape[0], X.shape[0], 0))
             elif not self.anisotropic or self.l.shape[0] == 1:
                 K_gradient = \
@@ -1225,7 +1270,8 @@ class Matern(RBF):
             np.fill_diagonal(K, 1)
 
         if eval_gradient:
-            if self.l_bounds is "fixed":  # Hyperparameter l kept fixed
+            if self.hyperparameter_l.fixed:
+                # Hyperparameter l kept fixed
                 K_gradient = np.empty((X.shape[0], X.shape[0], 0))
                 return K, K_gradient
 
@@ -1302,9 +1348,9 @@ class RationalQuadratic(Kernel):
         self.l_bounds = l_bounds
         self.alpha_bounds = alpha_bounds
 
-        self.theta_vars = ["l"] if self.l_bounds is not "fixed" else []
-        if self.alpha_bounds is not "fixed":
-            self.theta_vars += ["alpha"]
+        self.hyperparameter_l = Hyperparameter("l", "numeric", l_bounds)
+        self.hyperparameter_alpha = \
+             Hyperparameter("alpha", "numeric", alpha_bounds)
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -1348,14 +1394,14 @@ class RationalQuadratic(Kernel):
 
         if eval_gradient:
             # gradient with respect to l
-            if "l" in self.theta_vars:
+            if not self.hyperparameter_l.fixed:
                 l_gradient = dists * K / (self.l ** 2 * base)
                 l_gradient = l_gradient[:, :, np.newaxis]
             else:  # l is kept fixed
                 l_gradient = np.empty((K.shape[0], K.shape[1], 0))
 
             # gradient with respect to alpha
-            if "alpha" in self.theta_vars:
+            if not self.hyperparameter_alpha.fixed:
                 alpha_gradient = \
                     K * (-self.alpha * np.log(base)
                          + dists / (2 * self.l ** 2 * base))
@@ -1403,9 +1449,8 @@ class ExpSineSquared(Kernel):
         self.l_bounds = l_bounds
         self.p_bounds = p_bounds
 
-        self.theta_vars = ["l"] if l_bounds is not "fixed" else []
-        if self.p_bounds is not "fixed":
-            self.theta_vars += ["p"]
+        self.hyperparameter_l = Hyperparameter("l", "numeric", l_bounds)
+        self.hyperparameter_p = Hyperparameter("p", "numeric", p_bounds)
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -1449,13 +1494,13 @@ class ExpSineSquared(Kernel):
         if eval_gradient:
             cos_of_arg = np.cos(arg)
             # gradient with respect to l
-            if "l" in self.theta_vars:
+            if not self.hyperparameter_l.fixed:
                 l_gradient = 4 / self.l**2 * sin_of_arg**2 * K
                 l_gradient = l_gradient[:, :, np.newaxis]
             else:  # l is kept fixed
                 l_gradient = np.empty((K.shape[0], K.shape[1], 0))
             # gradient with respect to p
-            if "p" in self.theta_vars:
+            if not self.hyperparameter_p.fixed:
                 p_gradient = 4 * arg / self.l**2 * cos_of_arg \
                     * sin_of_arg * K
                 p_gradient = p_gradient[:, :, np.newaxis]
@@ -1500,7 +1545,8 @@ class DotProduct(Kernel):
         self.sigma_0 = sigma_0
         self.sigma_0_bounds = sigma_0_bounds
 
-        self.theta_vars = ["sigma_0"] if sigma_0_bounds is not "fixed" else []
+        self.hyperparameter_sigma_0 = \
+            Hyperparameter("sigma_0", "numeric", sigma_0_bounds)
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -1538,7 +1584,7 @@ class DotProduct(Kernel):
             K = np.inner(X, Y) + self.sigma_0 ** 2
 
         if eval_gradient:
-            if self.sigma_0_bounds is not "fixed":
+            if not self.hyperparameter_sigma_0.fixed:
                 K_gradient = np.empty((K.shape[0], K.shape[1], 1))
                 K_gradient[..., 0] = 2 * self.sigma_0 ** 2
                 return K, K_gradient
@@ -1628,7 +1674,8 @@ class PairwiseKernel(Kernel):
         self.gamma = gamma
         self.gamma_bounds = gamma_bounds
 
-        self.theta_vars = ["gamma"] if gamma_bounds is not "fixed" else []
+        self.hyperparameter_gamma = \
+            Hyperparameter("gamma", "numeric", gamma_bounds)
 
         self.metric = metric
         if pairwise_kernels_kwargs is not None:
@@ -1667,7 +1714,7 @@ class PairwiseKernel(Kernel):
                              filter_params=True,
                              **self.pairwise_kernels_kwargs)
         if eval_gradient:
-            if self.gamma_bounds is "fixed":
+            if self.hyperparameter_gamma.fixed:
                 return K, np.empty((X.shape[0], X.shape[0], 0))
             else:
                 # approximate gradient numerically

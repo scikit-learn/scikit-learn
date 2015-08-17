@@ -85,7 +85,9 @@ def test_kernel_theta():
             inspect.getargspec(kernel.__class__.__init__)
         theta_vars = map(lambda s: s.rstrip("_bounds"),
                          filter(lambda s: s.endswith("_bounds"), args))
-        assert_equal(kernel.theta_vars, list(theta_vars))
+        assert_equal(
+            [hyperparameter.name for hyperparameter in kernel.hyperparameters],
+            list(theta_vars))
 
         # Check that values returned in theta are consistent with
         # hyperparameter values (being their logarithms)
@@ -192,9 +194,21 @@ def test_kernel_clone():
         for attr in kernel.__dict__.keys():
             attr_value = getattr(kernel, attr)
             attr_value_cloned = getattr(kernel_cloned, attr)
-            if np.iterable(attr_value):
+            if attr.startswith("hyperparameter_"):
+                assert_equal(attr_value.name, attr_value_cloned.name)
+                assert_equal(attr_value.value_type,
+                             attr_value_cloned.value_type)
+                assert_array_equal(attr_value.bounds,
+                                   attr_value_cloned.bounds)
+                assert_equal(attr_value.n_elements,
+                             attr_value_cloned.n_elements)
+            elif np.iterable(attr_value):
                 for i in range(len(attr_value)):
-                    assert_array_equal(attr_value[i], attr_value_cloned[i])
+                    if np.iterable(attr_value[i]):
+                        assert_array_equal(attr_value[i],
+                                           attr_value_cloned[i])
+                    else:
+                        assert_equal(attr_value[i], attr_value_cloned[i])
             else:
                 assert_equal(attr_value, attr_value_cloned)
             if not isinstance(attr_value, Hashable):
@@ -244,27 +258,31 @@ def test_set_get_params():
         # Test get_params()
         index = 0
         params = kernel.get_params()
-        for theta_var in kernel.theta_vars:
-            if isinstance(theta_var, tuple):  # anisotropic kernels
-                theta_var, size = theta_var
+        for hyperparameter in kernel.hyperparameters:
+            if hyperparameter.bounds is "fixed":
+                continue
+            size = hyperparameter.n_elements
+            if size > 1:  # anisotropic kernels
                 assert_almost_equal(np.exp(kernel.theta[index:index+size]),
-                                    params[theta_var])
+                                    params[hyperparameter.name])
                 index += size
             else:
                 assert_almost_equal(np.exp(kernel.theta[index]),
-                                    params[theta_var])
+                                    params[hyperparameter.name])
                 index += 1
         # Test set_params()
         index = 0
         value = 10  # arbitrary value
-        for theta_var in kernel.theta_vars:
-            if isinstance(theta_var, tuple):  # anisotropic kernels
-                theta_var, size = theta_var
-                kernel.set_params(**{theta_var: [value]*size})
+        for hyperparameter in kernel.hyperparameters:
+            if hyperparameter.bounds is "fixed":
+                continue
+            size = hyperparameter.n_elements
+            if size > 1:  # anisotropic kernels
+                kernel.set_params(**{hyperparameter.name: [value]*size})
                 assert_almost_equal(np.exp(kernel.theta[index:index+size]),
                                     [value]*size)
                 index += size
             else:
-                kernel.set_params(**{theta_var: value})
+                kernel.set_params(**{hyperparameter.name: value})
                 assert_almost_equal(np.exp(kernel.theta[index]), value)
                 index += 1
