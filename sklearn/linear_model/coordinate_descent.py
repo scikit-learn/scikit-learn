@@ -373,7 +373,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False,
                         ensure_2d=False)
         if Xy is not None:
-            Xy = check_array(Xy, 'csc', dtype=np.float64, order='F', copy=False,
+            Xy = check_array(Xy, 'csc', dtype=np.float64, order='F',
+                             copy=False,
                              ensure_2d=False)
     n_samples, n_features = X.shape
 

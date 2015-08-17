@@ -410,7 +410,7 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
         X, y, X_mean, y_mean, X_std = center_data(
             X, y, fit_intercept, normalize, copy=copy)
 
-    if bypass_precompute_checks:
+    if not bypass_precompute_checks:
         # This check is costly, we provide a way to bypass it
         if hasattr(precompute, '__array__') \
                 and not np.allclose(X_mean, np.zeros(n_features)) \
