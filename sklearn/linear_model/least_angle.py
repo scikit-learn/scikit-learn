@@ -33,6 +33,18 @@ if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
     solve_triangular_args = {'check_finite': False}
 
 
+'''
+NON-NEGATIVE / POSITIVE FIX TODOs
+
+even though i confirmed/tested the fix in the lars_path implementation and
+propagated the possibility to positive in the downstream fit objects i still
+need to deal with the consequences for fit_intercept. also (according)
+docstring updates remain open.
+
+'''
+
+
+
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
@@ -611,10 +623,10 @@ class Lars(LinearModel, RegressorMixin):
         X, y = check_X_y(X, y, y_numeric=True, multi_output=True)
         n_features = X.shape[1]
 
-#       X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-#                                                       self.fit_intercept,
-#                                                       self.normalize,
-#                                                       self.copy_X)
+        #X, y, X_mean, y_mean, X_std = self._center_data(X, y,
+                                                        #self.fit_intercept,
+                                                        #self.normalize,
+                                                        #self.copy_X)
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
