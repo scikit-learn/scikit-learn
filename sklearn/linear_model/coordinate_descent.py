@@ -333,6 +333,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     positive : bool, default False
         If set to True, forces coefficients to be positive.
 
+    bypass_checks : bool, default False
+        If set to True, X, y and precompute are expected to be
+        double fortran-ordered arrays, with X and y centered and normalized,
+        and input checking will be byapssed for efficiency
+
     Returns
     -------
     alphas : array, shape (n_alphas,)
@@ -566,6 +571,11 @@ class ElasticNet(LinearModel, RegressorMixin):
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
+
+    bypass_checks : bool, default False
+        If set to True, X, y and precompute are expected to be
+        double fortran-ordered arrays, with X and y centered and normalized,
+        and input checking will be byapssed for efficiency
 
     Attributes
     ----------
@@ -828,6 +838,11 @@ class Lasso(ElasticNet):
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
+
+    bypass_checks : bool, default False
+        If set to True, X, y and precompute are expected to be
+        double fortran-ordered arrays, with X and y centered and normalized,
+        and input checking will be byapssed for efficiency
 
     Attributes
     ----------
