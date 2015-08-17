@@ -11,7 +11,7 @@ import numpy as np
 from scipy.optimize import approx_fprime
 
 from sklearn.metrics.pairwise \
-    import PAIRWISE_KERNEL_FUNCTIONS, euclidean_distances
+    import PAIRWISE_KERNEL_FUNCTIONS, euclidean_distances, pairwise_kernels
 from sklearn.gaussian_process.kernels \
     import (RBF, Matern, RationalQuadratic, ExpSineSquared, DotProduct,
             ConstantKernel, WhiteKernel, PairwiseKernel, KernelOperator,
@@ -24,6 +24,7 @@ from sklearn.utils.testing import (assert_equal, assert_almost_equal,
 
 
 X = np.random.RandomState(0).normal(0, 1, (10, 2))
+Y = np.random.RandomState(0).normal(0, 1, (11, 2))
 
 kernel_white = RBF(l=2.0) + WhiteKernel(c=3.0)
 kernels = [RBF(l=2.0), RBF(l_bounds=(0.5, 2.0)),
@@ -126,7 +127,7 @@ def test_auto_vs_cross():
     """ Auto-correlation and cross-correlation should be consistent. """
     for kernel in kernels:
         if kernel == kernel_white:
-            continue  # Identity does is not satisfied on diagonal
+            continue  # Identity is not satisfied on diagonal
         K_auto = kernel(X)
         K_cross = kernel(X, X)
         assert_almost_equal(K_auto, K_cross, 5)
@@ -192,7 +193,8 @@ def test_kernel_clone():
             attr_value = getattr(kernel, attr)
             attr_value_cloned = getattr(kernel_cloned, attr)
             if np.iterable(attr_value):
-                assert_array_equal(attr_value, attr_value_cloned)
+                for i in range(len(attr_value)):
+                    assert_array_equal(attr_value[i], attr_value_cloned[i])
             else:
                 assert_equal(attr_value, attr_value_cloned)
             if not isinstance(attr_value, Hashable):
@@ -217,3 +219,52 @@ def test_matern_kernel():
         K1 = Matern(nu=nu, l=1.0)(X)
         K2 = Matern(nu=nu + tiny, l=1.0)(X)
         assert_array_almost_equal(K1, K2)
+
+
+def test_kernel_versus_pairwise():
+    """Check that GP kernels can also be used as pairwise kernels."""
+    for kernel in kernels:
+        # Test auto-kernel
+        if kernel != kernel_white:
+            # For WhiteKernel: k(X) != k(X,X). This is assumed by
+            # pairwise_kernels
+            K1 = kernel(X)
+            K2 = pairwise_kernels(X, metric=kernel)
+            assert_array_almost_equal(K1, K2)
+
+        # Test cross-kernel
+        K1 = kernel(X, Y)
+        K2 = pairwise_kernels(X, Y, metric=kernel)
+        assert_array_almost_equal(K1, K2)
+
+
+def test_set_get_params():
+    """Check that set_params()/get_params() is consistent with kernel.theta."""
+    for kernel in kernels:
+        # Test get_params()
+        index = 0
+        params = kernel.get_params()
+        for theta_var in kernel.theta_vars:
+            if isinstance(theta_var, tuple):  # anisotropic kernels
+                theta_var, size = theta_var
+                assert_almost_equal(np.exp(kernel.theta[index:index+size]),
+                                    params[theta_var])
+                index += size
+            else:
+                assert_almost_equal(np.exp(kernel.theta[index]),
+                                    params[theta_var])
+                index += 1
+        # Test set_params()
+        index = 0
+        value = 10  # arbitrary value
+        for theta_var in kernel.theta_vars:
+            if isinstance(theta_var, tuple):  # anisotropic kernels
+                theta_var, size = theta_var
+                kernel.set_params(**{theta_var: [value]*size})
+                assert_almost_equal(np.exp(kernel.theta[index:index+size]),
+                                    [value]*size)
+                index += size
+            else:
+                kernel.set_params(**{theta_var: value})
+                assert_almost_equal(np.exp(kernel.theta[index]), value)
+                index += 1
