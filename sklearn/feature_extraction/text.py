@@ -32,7 +32,6 @@ from .stop_words import ENGLISH_STOP_WORDS
 from ..utils import deprecated
 from ..utils.fixes import frombuffer_empty, bincount
 from ..utils.validation import check_is_fitted
-from ..utils.sparsefuncs import csr_vappend
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -743,27 +742,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                              " min_df or a higher max_df.")
         return X[:, kept_indices], removed_terms
 
-    def _get_empty_arrays(self):
-        """Get empty numpy arrays to construct the feature matrix from
-        """
-        indices = _make_int_array()
-        indptr = _make_int_array()
-        indptr.append(0)
-        return indices, indptr
-
-    def _get_sparse_matrix_from_indices(self, indices, indptr, vocabulary):
-        """Build csr matrix from indices and intptr arrays
-        """
-        indices = frombuffer_empty(indices, dtype=np.intc)
-        indptr = np.frombuffer(indptr, dtype=np.intc)
-        values = np.ones(len(indices))
-
-        X = sp.csr_matrix((values, indices, indptr),
-                          shape=(len(indptr) - 1, len(vocabulary)),
-                          dtype=self.dtype)
-        X.sum_duplicates()
-        return X
-
     def _count_vocab(self, raw_documents, fixed_vocab):
         """Create sparse feature matrix, and vocabulary where fixed_vocab=False
         """
@@ -775,26 +753,27 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             vocabulary.default_factory = vocabulary.__len__
 
         analyze = self.build_analyzer()
-        X = None  # empty csr_matrix -> invalid shape for scipy <= 0.11.0
-        indices, indptr = self._get_empty_arrays()
-        for num, doc in enumerate(raw_documents):
+        j_indices = _make_int_array()
+        indptr = _make_int_array()
+        values = _make_int_array()
+        indptr.append(0)
+        for doc in raw_documents:
+            feature_counter = {}
             for feature in analyze(doc):
                 try:
-                    indices.append(vocabulary[feature])
+                    feature_idx = vocabulary[feature]
+                    if feature_idx not in feature_counter:
+                        feature_counter[feature_idx] = 1
+                    else:
+                        feature_counter[feature_idx] += 1
                 except KeyError:
                     # Ignore out-of-vocabulary items for fixed_vocab=True
                     continue
-            indptr.append(len(indices))
-            if num > 0 and num % self.chunksize == 0:
-                Y = self._get_sparse_matrix_from_indices(indices, indptr,
-                                                         vocabulary)
-                if X is not None:
-                    X = csr_vappend(X, Y)
-                    del(Y)
-                else:
-                    X = Y
 
-                indices, indptr = self._get_empty_arrays()
+            j_indices.extend(feature_counter.keys())
+            values.extend(feature_counter.values())
+            del(feature_counter)
+            indptr.append(len(j_indices))
 
         if not fixed_vocab:
             # disable defaultdict behaviour
@@ -803,17 +782,14 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        # if the vocabulary is empty we should not get here
-        Y = self._get_sparse_matrix_from_indices(indices, indptr, vocabulary)
+        j_indices = frombuffer_empty(j_indices, dtype=np.intc)
+        indptr = np.frombuffer(indptr, dtype=np.intc)
+        values = frombuffer_empty(values, dtype=np.intc)
 
-        if X is not None:
-            X = csr_vappend(X, Y)
-            del(Y)
-        else:
-            X = Y
-
-        del(indices, indptr)
-
+        X = sp.csr_matrix((values, j_indices, indptr),
+                          shape=(len(indptr) - 1, len(vocabulary)),
+                          dtype=self.dtype)
+        X.sort_indices()
         return vocabulary, X
 
     def fit(self, raw_documents, y=None):
