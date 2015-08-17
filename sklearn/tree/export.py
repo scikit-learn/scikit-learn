@@ -15,6 +15,7 @@ import numpy as np
 from ..externals import six
 
 from . import _tree
+from . import tree
 
 
 def _color_brew(n):
@@ -409,3 +410,86 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
     finally:
         if own_file:
             out_file.close()
+
+
+def export_javascript(decision_tree, feature_names=None, indent_offset=0):
+    """Export a decision tree in javascript.
+
+    Parameters
+    ----------
+    decision_tree : decision tree classifier
+        The decision tree to be exported to javascript
+
+    feature_names : list of strings, optional (default=None)
+        Names of each of the features.
+
+    indent_offset : int, optional (default=0)
+        Indent of output javascript code.
+
+    Returns
+    --------
+    javascript_code : string
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn import tree
+
+    >>> clf = tree.DecisionTreeClassifier()
+    >>> iris = load_iris()
+
+    >>> clf = clf.fit(iris.data, iris.target)
+    >>> tree.export_javascript(clf)                 # doctest: +SKIP
+    """
+
+    if (not isinstance(decision_tree, tree.DecisionTreeClassifier) and
+            not isinstance(decision_tree, tree.DecisionTreeRegressor) and
+            not isinstance(decision_tree, tree.ExtraTreeClassifier) and
+            not isinstance(decision_tree, tree.ExtraTreeRegressor)):
+        raise TypeError('decision_tree is not instance of decision tree')
+
+    if decision_tree.tree_ is None:
+        raise TypeError('decision_tree is not trained yet.')
+
+    is_classifier = (isinstance(decision_tree, tree.DecisionTreeClassifier) or
+                     isinstance(decision_tree, tree.ExtraTreeClassifier))
+
+    if feature_names is None:
+        feature_names = ["feature[%d]" %
+                         i for i in xrange(decision_tree.n_features_)]
+
+    def recurse(index, indent_nest=0):
+        base_indent = "  "
+        indent = base_indent * indent_nest
+
+        if decision_tree.tree_.children_left[index] != -1 and decision_tree.tree_.children_right[index] != -1:
+            script = indent + "if(%s <= %.16f) {\n"
+            script += "%s"
+            script += indent + "} else {\n"
+            script += "%s"
+            script += indent + "}\n"
+
+            return script % (
+                feature_names[decision_tree.tree_.feature[index]],
+                decision_tree.tree_.threshold[index],
+                recurse(
+                    decision_tree.tree_.children_left[index], indent_nest + 1),
+                recurse(
+                    decision_tree.tree_.children_right[index], indent_nest + 1),
+            )
+        else:
+            # value[i] is numpy.array of numpy.array
+            ret = decision_tree.tree_.value[index][0]
+
+            if is_classifier:
+                # classifier
+                class_id = np.argmax(ret)
+                ret = decision_tree.classes_[class_id]
+                return indent + "return %s;\n" % ret
+
+            else:
+                # regressor
+                ret = ret[0]
+                return indent + "return %.16f;\n" % ret
+
+    return recurse(0, indent_offset)
