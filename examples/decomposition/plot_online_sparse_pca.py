@@ -18,9 +18,9 @@ import logging
 from time import time
 
 from numpy.random import RandomState
-import matplotlib
-matplotlib.use('QT4Agg')
-import matplotlib.pyplot as plt
+# import matplotlib
+# matplotlib.use('QT4Agg')
+# import matplotlib.pyplot as plt
 
 from sklearn.datasets import fetch_olivetti_faces
 from sklearn.decomposition.dict_learning import sparse_encode,\
@@ -91,13 +91,13 @@ print("Extracting the top %d %s..." % (n_components, name))
 t0 = time()
 data = faces
 dict_learning.fit(faces_centered)
-train_time = (time() - t0)
-print("done in %0.3fs" % train_time)
-plot_gallery('%s - Train time %.1fs' % (name, train_time),
-             dict_learning.components_[:n_components])
-
-code = dict_learning.transform(faces_centered)
-plot_gallery('%s - Reconstruction' % name,
-             code[:n_components].dot(dict_learning.components_))
-plt.show()
-plt.close()
+# train_time = (time() - t0)
+# print("done in %0.3fs" % train_time)
+# plot_gallery('%s - Train time %.1fs' % (name, train_time),
+#              dict_learning.components_[:n_components])
+#
+# code = dict_learning.transform(faces_centered)
+# plot_gallery('%s - Reconstruction' % name,
+#              code[:n_components].dot(dict_learning.components_))
+# plt.show()
+# plt.close()
