@@ -255,7 +255,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
-              bypass_checks=False,
+              bypass_checks=False, pre_fit=True,
               **params):
     """Compute elastic net path with coordinate descent
 
@@ -391,13 +391,14 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         else:
             X_sparse_scaling = np.zeros(n_features)
 
-    # We expect X and y to be already centered and normalized when
-    # bypassing checks
-    if not bypass_checks:
-        # X should be normalized and fit already.
+    # X should be normalized and fit already if function is called
+    # from ElasticNet.fit
+    if pre_fit:
         X, y, X_mean, y_mean, X_std, precompute, Xy = \
-            _pre_fit(X, y, Xy, precompute, normalize=False, fit_intercept=False,
-                     copy=False)
+            _pre_fit(X, y, Xy, precompute, normalize=False,
+                     fit_intercept=False,
+                     copy=False,
+                     bypass_precompute_checks=bypass_checks)
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
@@ -664,18 +665,16 @@ class ElasticNet(LinearModel, RegressorMixin):
                              order='F',
                              copy=self.copy_X and self.fit_intercept,
                              multi_output=True, y_numeric=True)
-        # We expect X and y to be already centered and normalized
-        # when bypassing checks
-        if not self.bypass_checks:
-            X, y, X_mean, y_mean, X_std, precompute, Xy = \
-                _pre_fit(X, y, None, self.precompute, self.normalize,
-                         self.fit_intercept, copy=True)
-        else:
-            Xy = np.dot(y.T, X).T
-            precompute = self.precompute
-            X_mean = 0.
-            X_std = 1.
-            y_mean = 0.
+        X, y, X_mean, y_mean, X_std, precompute, Xy = \
+            _pre_fit(X, y, None, self.precompute, self.normalize,
+                     self.fit_intercept, copy=True,
+                     bypass_precompute_checks=self.bypass_checks)
+        # else:
+        #     Xy = np.dot(y.T, X).T
+        #     precompute = self.precompute
+        #     X_mean = 0.
+        #     X_std = 1.
+        #     y_mean = 0.
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -715,6 +714,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                           coef_init=coef_[k], max_iter=self.max_iter,
                           random_state=self.random_state,
                           selection=self.selection,
+                          pre_fit=False,
                           bypass_checks=self.bypass_checks)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
@@ -841,8 +841,8 @@ class Lasso(ElasticNet):
 
     bypass_checks : bool, default False
         If set to True, X, y and precompute are expected to be
-        double fortran-ordered arrays, with X and y centered and normalized,
-        and input checking will be byapssed for efficiency
+        double fortran-ordered arrays, with X and y centered,
+        and input checking will be bypassed for efficiency
 
     Attributes
     ----------

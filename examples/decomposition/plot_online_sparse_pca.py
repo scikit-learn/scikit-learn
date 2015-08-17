@@ -33,15 +33,13 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
 n_row, n_col = 5, 6
 n_components = n_row * n_col
-image_shape = (256, 512)
+image_shape = (64, 64)
 rng = RandomState(0)
 
 ###############################################################################
 # Load faces data
 dataset = fetch_olivetti_faces(shuffle=True, random_state=rng)
 faces = dataset.data
-
-faces = np.tile(faces, (1, 32))
 
 n_samples, n_features = faces.shape
 
@@ -72,7 +70,7 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row):
 # XXX: This should be mentionned in the documentation
 dict_learning = MiniBatchDictionaryLearning(n_components=n_components,
                                             alpha=0.1,
-                                            n_iter=20, batch_size=100,
+                                            n_iter=400, batch_size=10,
                                             fit_algorithm='cd',
                                             transform_algorithm='lasso_cd',
                                             transform_alpha=0.1,
