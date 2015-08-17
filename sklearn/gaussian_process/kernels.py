@@ -422,6 +422,18 @@ class KernelOperator(Kernel):
         self.k1 = k1
         self.k2 = k2
 
+        self.theta_vars = []
+        for theta_var in self.k1.theta_vars:
+            if isinstance(theta_var, tuple):
+                self.theta_vars.append(("k1__" + theta_var[0], theta_var[1]))
+            else:
+                self.theta_vars.append("k1__" + theta_var)
+        for theta_var in self.k2.theta_vars:
+            if isinstance(theta_var, tuple):
+                self.theta_vars.append(("k2__" + theta_var[0], theta_var[1]))
+            else:
+                self.theta_vars.append("k2__" + theta_var)
+
     def get_params(self, deep=True):
         """Get parameters of this kernel.
 
@@ -675,6 +687,13 @@ class Exponentiation(Kernel):
         self.kernel = kernel
         self.exponent = exponent
 
+        self.theta_vars = []
+        for theta_var in self.kernel.theta_vars:
+            if isinstance(theta_var, tuple):
+                self.theta_vars.append(("kernel__" + theta_var[0], theta_var[1]))
+            else:
+                self.theta_vars.append("kernel__" + theta_var)
+
     def get_params(self, deep=True):
         """Get parameters of this kernel.
 
@@ -690,6 +709,9 @@ class Exponentiation(Kernel):
             Parameter names mapped to their values.
         """
         params = dict(kernel=self.kernel, exponent=self.exponent)
+        if deep:
+            deep_items = self.kernel.get_params().items()
+            params.update(('kernel__' + k, val) for k, val in deep_items)
         return params
 
     @property
