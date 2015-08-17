@@ -254,7 +254,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
-              verbose=False, return_n_iter=False, positive=False, **params):
+              verbose=False, return_n_iter=False, positive=False,
+              bypass_checks=False,
+              **params):
     """Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
@@ -359,11 +361,12 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNet
     ElasticNetCV
     """
-    X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
-    y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False, ensure_2d=False)
-    if Xy is not None:
-        Xy = check_array(Xy, 'csc', dtype=np.float64, order='F', copy=False,
-                         ensure_2d=False)
+    if not bypass_checks:
+        X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
+        y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False, ensure_2d=False)
+        if Xy is not None:
+            Xy = check_array(Xy, 'csc', dtype=np.float64, order='F', copy=False,
+                             ensure_2d=False)
     n_samples, n_features = X.shape
 
     multi_output = False
@@ -381,9 +384,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             X_sparse_scaling = np.zeros(n_features)
 
     # X should be normalized and fit already.
-    X, y, X_mean, y_mean, X_std, precompute, Xy = \
-        _pre_fit(X, y, Xy, precompute, normalize=False, fit_intercept=False,
-                 copy=False)
+    if not bypass_checks:
+        X, y, X_mean, y_mean, X_std, precompute, Xy = \
+            _pre_fit(X, y, Xy, precompute, normalize=False, fit_intercept=False,
+                     copy=False)
+
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
@@ -391,8 +396,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                              fit_intercept=False, eps=eps, n_alphas=n_alphas,
                              normalize=False, copy_X=False)
     else:
-        alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
-
+        if len(alphas) > 1:
+            alphas = np.sort(alphas.copy())[::-1]  # make sure alphas are properly ordered
     n_alphas = len(alphas)
     tol = params.get('tol', 1e-4)
     max_iter = params.get('max_iter', 1000)
@@ -428,7 +433,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model = cd_fast.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
         elif isinstance(precompute, np.ndarray):
-            precompute = check_array(precompute, 'csc', dtype=np.float64, order='F')
+            if not bypass_checks:
+                precompute = check_array(precompute, 'csc', dtype=np.float64, order='F')
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
                 tol, rng, random, positive)
@@ -585,7 +591,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
-                 random_state=None, selection='cyclic'):
+                 random_state=None, selection='cyclic', bypass_checks=False):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.coef_ = None
@@ -600,6 +606,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.intercept_ = 0.0
         self.random_state = random_state
         self.selection = selection
+        self.bypass_checks = bypass_checks
 
     def fit(self, X, y):
         """Fit model with coordinate descent.
@@ -632,14 +639,21 @@ class ElasticNet(LinearModel, RegressorMixin):
                           "slower even when n_samples > n_features. Hence "
                           "it will be removed in 0.18.",
                           DeprecationWarning, stacklevel=2)
+        if not self.bypass_checks:
+            X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
+                             order='F', copy=self.copy_X and self.fit_intercept,
+                             multi_output=True, y_numeric=True)
 
-        X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
-                         order='F', copy=self.copy_X and self.fit_intercept,
-                         multi_output=True, y_numeric=True)
-
-        X, y, X_mean, y_mean, X_std, precompute, Xy = \
-            _pre_fit(X, y, None, self.precompute, self.normalize,
-                     self.fit_intercept, copy=True)
+        if not self.bypass_checks:
+            X, y, X_mean, y_mean, X_std, precompute, Xy = \
+                _pre_fit(X, y, None, self.precompute, self.normalize,
+                         self.fit_intercept, copy=True)
+        else:
+            Xy = np.dot(y.T, X).T
+            precompute = self.precompute
+            X_mean = 0.
+            X_std = 1.
+            y_mean = 0.
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -678,7 +692,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                           X_mean=X_mean, X_std=X_std, return_n_iter=True,
                           coef_init=coef_[k], max_iter=self.max_iter,
                           random_state=self.random_state,
-                          selection=self.selection)
+                          selection=self.selection,
+                          bypass_checks=self.bypass_checks)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
             self.n_iter_.append(this_iter[0])
@@ -852,13 +867,13 @@ class Lasso(ElasticNet):
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
-                 random_state=None, selection='cyclic'):
+                 random_state=None, selection='cyclic', bypass_checks=False):
         super(Lasso, self).__init__(
             alpha=alpha, l1_ratio=1.0, fit_intercept=fit_intercept,
             normalize=normalize, precompute=precompute, copy_X=copy_X,
             max_iter=max_iter, tol=tol, warm_start=warm_start,
             positive=positive, random_state=random_state,
-            selection=selection)
+            selection=selection, bypass_checks=bypass_checks)
 
 
 ###############################################################################

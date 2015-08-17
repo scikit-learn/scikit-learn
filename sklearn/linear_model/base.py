@@ -421,12 +421,14 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
         precompute = (n_samples > n_features)
 
     if precompute is True:
-        precompute = np.dot(X.T, X)
+        # precompute is a Fortran array
+        precompute = np.dot(X.T, X).T
 
     if not hasattr(precompute, '__array__'):
         Xy = None  # cannot use Xy if precompute is not Gram
 
     if hasattr(precompute, '__array__') and Xy is None:
-        Xy = np.dot(X.T, y)
+        # Xy is a Fortran array
+        Xy = np.dot(y.T, X).T
 
     return X, y, X_mean, y_mean, X_std, precompute, Xy
