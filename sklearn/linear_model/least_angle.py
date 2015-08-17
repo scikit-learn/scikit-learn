@@ -243,7 +243,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             #                                                        #
             ##########################################################
 
-            # NON-NEGATIVE MODIFICATION 
             if positive:
                 sign_active[n_active] = np.ones(C_.shape)
             else:
