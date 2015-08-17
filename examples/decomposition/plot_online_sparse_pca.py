@@ -70,13 +70,13 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row):
 # XXX: This should be mentionned in the documentation
 dict_learning = MiniBatchDictionaryLearning(n_components=n_components,
                                             alpha=0.1,
-                                            n_iter=400, batch_size=10,
+                                            n_iter=400, batch_size=100,
                                             fit_algorithm='cd',
                                             transform_algorithm='lasso_cd',
                                             transform_alpha=0.1,
                                             verbose=10,
                                             random_state=rng,
-                                            n_jobs=1)
+                                            n_jobs=3)
 ###############################################################################
 # Plot a sample of the input data
 
