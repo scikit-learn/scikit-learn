@@ -32,7 +32,7 @@ from sklearn.metrics import precision_score
 from sklearn.externals import six
 from sklearn.externals.six.moves import zip
 
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
@@ -1026,6 +1026,50 @@ def test_cross_val_predict():
             yield np.array([0, 1, 2, 3]), np.array([4, 5, 6, 7, 8])
 
     assert_raises(ValueError, cval.cross_val_predict, est, X, y, cv=bad_cv())
+
+
+def test_cross_val_predict_proba():
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    cv = cval.KFold(len(iris.target))
+
+    for proba in [True, False]:
+        est = LogisticRegression()
+    
+        if proba:
+            preds2 = np.zeros([len(y),2])
+        else:
+            preds2 = np.zeros_like(y)
+    
+        # Naive loop (should be same as cross_val_predict):
+        for train, test in cv:
+            est.fit(X[train], y[train])
+            if proba:
+                preds2[test] = est.predict_proba(X[test])
+            else:
+                preds2[test] = est.predict(X[test])
+        
+        preds = cval.cross_val_predict(est, X, y, proba=proba, cv=cv)
+        assert_array_almost_equal(preds, preds2)
+
+        preds = cval.cross_val_predict(est, X, y, proba=proba)
+        assert_equal(len(preds), len(y))
+
+        cv = cval.LeaveOneOut(len(y))
+        preds = cval.cross_val_predict(est, X, y, proba=proba, cv=cv)
+        assert_equal(len(preds), len(y))
+
+        Xsp = X.copy()
+        Xsp *= (Xsp > np.median(Xsp))
+        Xsp = coo_matrix(Xsp)
+        preds = cval.cross_val_predict(est, Xsp, y, proba=proba)
+        assert_array_almost_equal(len(preds), len(y))
+        
+        def bad_cv():
+            for i in range(4):
+                yield np.array([0, 1, 2, 3]), np.array([4, 5, 6, 7, 8])
+
+        assert_raises(ValueError, cval.cross_val_predict, est, X, y, proba=proba, cv=bad_cv())
 
 
 def test_cross_val_predict_input_types():
