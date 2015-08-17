@@ -397,7 +397,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                              normalize=False, copy_X=False)
     else:
         if len(alphas) > 1:
-            alphas = np.sort(alphas.copy())[::-1]  # make sure alphas are properly ordered
+            alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
     n_alphas = len(alphas)
     tol = params.get('tol', 1e-4)
     max_iter = params.get('max_iter', 1000)
