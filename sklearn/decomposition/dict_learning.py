@@ -26,7 +26,8 @@ from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
                    regularization=None, copy_cov=True,
-                   init=None, max_iter=1000, bypass_checks=False):
+                   init=None, max_iter=1000, check_input=False,
+                   pool=None, n_jobs=1):
     """Generic sparse coding
 
     Each column of the result is the solution to a Lasso problem.
@@ -109,7 +110,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         alpha = float(regularization) / n_features  # account for scaling
         clf = Lasso(alpha=alpha, fit_intercept=False, precompute=gram,
                     max_iter=max_iter, warm_start=True,
-                    bypass_checks=bypass_checks)
+                    check_input=check_input, pool=pool)
         clf.coef_ = init
         clf.fit(dictionary.T, X.T)
         new_code = clf.coef_
@@ -143,7 +144,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 # XXX : could be moved to the linear_model module
 def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                   n_nonzero_coefs=None, alpha=None, copy_cov=True, init=None,
-                  max_iter=1000, n_jobs=1, bypass_checks=False, pool=None):
+                  max_iter=1000, n_jobs=1, check_input=False, pool=None):
     """Sparse coding
 
     Each row of the result is the solution to a sparse coding problem.
@@ -219,8 +220,16 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     sklearn.linear_model.Lasso
     SparseCoder
     """
-    # Probably never useful
-    if not bypass_checks:
+    if algorithm == 'lasso_cd':
+        return _sparse_encode(X, dictionary, True,
+                              None,
+                              algorithm,
+                              regularization=alpha, copy_cov=False,
+                              init=init,
+                              max_iter=max_iter,
+                              check_input=check_input,
+                              pool=pool)
+    if check_input:
         dictionary = check_array(dictionary, dtype=np.float64)
         X = check_array(X, dtype=np.float64)
     n_samples, n_features = X.shape
@@ -249,7 +258,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                               regularization=regularization, copy_cov=copy_cov,
                               init=init,
                               max_iter=max_iter,
-                              bypass_checks=bypass_checks)
+                              check_input=check_input)
         if code.ndim == 1:
             code = code[np.newaxis, :]
         return code
@@ -260,6 +269,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         n_jobs = pool.n_jobs
 
     # Enter parallel code block
+
     code = np.empty((n_samples, n_components))
     slices = list(gen_even_slices(n_samples, _get_n_jobs(n_jobs)))
 
@@ -271,7 +281,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
             regularization=regularization, copy_cov=copy_cov,
             init=init[this_slice] if init is not None else None,
             max_iter=max_iter,
-            bypass_checks=bypass_checks)
+            check_input=check_input)
         for this_slice in slices)
     for this_slice, this_view in zip(slices, code_views):
         code[this_slice] = this_view
@@ -688,7 +698,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     ii = iter_offset - 1
 
     backend = 'threading' if method == 'lasso_cd' else 'multiprocessing'
-    with Parallel(n_jobs=n_jobs, backend=backend) as parallel:
+    with Parallel(n_jobs=n_jobs, backend=backend) as pool:
         for ii, batch in zip(range(iter_offset, iter_offset + n_iter), batches):
             this_X = X_train[batch]
             dt = (time.time() - t0)
@@ -702,8 +712,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
             this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                       alpha=alpha,
-                                      pool=parallel,
-                                      bypass_checks=True).T
+                                      pool=pool,
+                                      check_input=False).T
 
             # Update the auxiliary variables
             if ii < batch_size - 1:

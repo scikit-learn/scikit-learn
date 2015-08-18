@@ -398,7 +398,7 @@ class LinearRegression(LinearModel, RegressorMixin):
 
 
 def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
-             bypass_precompute_checks=False):
+             check_input=True):
     """Aux function used at beginning of fit in linear models"""
     n_samples, n_features = X.shape
     if sparse.isspmatrix(X):
@@ -410,14 +410,13 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
         X, y, X_mean, y_mean, X_std = center_data(
             X, y, fit_intercept, normalize, copy=copy)
 
-    if not bypass_precompute_checks:
-        # This check is costly, we provide a way to bypass it
-        if hasattr(precompute, '__array__') \
-                and not np.allclose(X_mean, np.zeros(n_features)) \
-                and not np.allclose(X_std, np.ones(n_features)):
-            # recompute Gram
-            precompute = 'auto'
-            Xy = None
+    # This check is costly, we provide a way to bypass it
+    if check_input and hasattr(precompute, '__array__') \
+            and not np.allclose(X_mean, np.zeros(n_features)) \
+            and not np.allclose(X_std, np.ones(n_features)):
+        # recompute Gram
+        precompute = 'auto'
+        Xy = None
 
     # precompute if n_samples > n_features
     if precompute == 'auto':
