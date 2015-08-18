@@ -670,12 +670,6 @@ class ElasticNet(LinearModel, RegressorMixin):
             _pre_fit(X, y, None, self.precompute, self.normalize,
                      self.fit_intercept, copy=True,
                      bypass_precompute_checks=self.bypass_checks)
-        # else:
-        #     Xy = np.dot(y.T, X).T
-        #     precompute = self.precompute
-        #     X_mean = 0.
-        #     X_std = 1.
-        #     y_mean = 0.
 
         if y.ndim == 1:
             y = y[:, np.newaxis]

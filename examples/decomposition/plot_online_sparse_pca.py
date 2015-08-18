@@ -70,13 +70,13 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row):
 # XXX: This should be mentionned in the documentation
 dict_learning = MiniBatchDictionaryLearning(n_components=n_components,
                                             alpha=0.1,
-                                            n_iter=400, batch_size=100,
+                                            n_iter=400, batch_size=10,
                                             fit_algorithm='cd',
                                             transform_algorithm='lasso_cd',
                                             transform_alpha=0.1,
                                             verbose=10,
                                             random_state=rng,
-                                            n_jobs=3)
+                                            n_jobs=1)
 ###############################################################################
 # Plot a sample of the input data
 
@@ -91,8 +91,8 @@ print("Extracting the top %d %s..." % (n_components, name))
 t0 = time()
 data = faces
 dict_learning.fit(faces_centered)
-# train_time = (time() - t0)
-# print("done in %0.3fs" % train_time)
+train_time = (time() - t0)
+print("done in %0.3fs" % train_time)
 # plot_gallery('%s - Train time %.1fs' % (name, train_time),
 #              dict_learning.components_[:n_components])
 #
