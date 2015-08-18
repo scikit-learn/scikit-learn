@@ -33,7 +33,6 @@ if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
     solve_triangular_args = {'check_finite': False}
 
 
-
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
@@ -726,7 +725,6 @@ class LassoLars(Lars):
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
-
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
