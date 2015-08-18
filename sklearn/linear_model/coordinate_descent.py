@@ -15,7 +15,8 @@ from scipy import sparse
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
-from ..utils import check_array, check_X_y, deprecated
+from ..utils import check_array, check_X_y, deprecated, gen_even_slices, \
+    _get_n_jobs
 from ..utils.validation import check_random_state
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
@@ -254,7 +255,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
-              verbose=False, return_n_iter=False, positive=False, **params):
+              verbose=False, return_n_iter=False, positive=False,
+              **params):
     """Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
@@ -331,6 +333,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     positive : bool, default False
         If set to True, forces coefficients to be positive.
 
+    bypass_checks : bool, default False
+        If set to True, X, y and precompute are expected to be
+        double fortran-ordered arrays, with X and y centered and normalized,
+        and input checking will be byapssed for efficiency
+
     Returns
     -------
     alphas : array, shape (n_alphas,)
@@ -359,11 +366,17 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNet
     ElasticNetCV
     """
-    X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
-    y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False, ensure_2d=False)
-    if Xy is not None:
-        Xy = check_array(Xy, 'csc', dtype=np.float64, order='F', copy=False,
-                         ensure_2d=False)
+    # We expect X and y to be already float64 Fortran ordered when bypassing
+    # checks
+    check_input = params.pop('check_input', True)
+    if check_input:
+        X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
+        y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False,
+                        ensure_2d=False)
+        if Xy is not None:
+            Xy = check_array(Xy, 'csc', dtype=np.float64, order='F',
+                             copy=False,
+                             ensure_2d=False)
     n_samples, n_features = X.shape
 
     multi_output = False
@@ -380,10 +393,13 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         else:
             X_sparse_scaling = np.zeros(n_features)
 
-    # X should be normalized and fit already.
-    X, y, X_mean, y_mean, X_std, precompute, Xy = \
-        _pre_fit(X, y, Xy, precompute, normalize=False, fit_intercept=False,
-                 copy=False)
+    # X should be normalized and fit already if function is called
+    # from ElasticNet.fit
+    if check_input:
+        X, y, X_mean, y_mean, X_std, precompute, Xy = \
+            _pre_fit(X, y, Xy, precompute, normalize=False,
+                     fit_intercept=False,
+                     copy=False)
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
@@ -391,8 +407,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                              fit_intercept=False, eps=eps, n_alphas=n_alphas,
                              normalize=False, copy_X=False)
     else:
-        alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
-
+        if len(alphas) > 1:
+            # make sure alphas are properly ordered
+            alphas = np.sort(alphas)[::-1]
     n_alphas = len(alphas)
     tol = params.get('tol', 1e-4)
     max_iter = params.get('max_iter', 1000)
@@ -428,7 +445,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model = cd_fast.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
         elif isinstance(precompute, np.ndarray):
-            precompute = check_array(precompute, 'csc', dtype=np.float64, order='F')
+            # We expect precompute to be already Fortran ordered when bypassing
+            # checks
+            if check_input:
+                precompute = check_array(precompute, 'csc', dtype=np.float64,
+                                         order='F')
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
                 tol, rng, random, positive)
@@ -553,6 +574,11 @@ class ElasticNet(LinearModel, RegressorMixin):
         a random feature to update. Useful only when selection is set to
         'random'.
 
+    check_input : bool, default True
+        If set to False, X, y, and precompute if provided are expected to be
+        double fortran-ordered arrays
+        and input checking will be bypassed for efficiency
+
     Attributes
     ----------
     coef_ : array, shape (n_features,) | (n_targets, n_features)
@@ -585,7 +611,8 @@ class ElasticNet(LinearModel, RegressorMixin):
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
-                 random_state=None, selection='cyclic'):
+                 random_state=None, selection='cyclic', n_jobs=1, pool=None,
+                 check_input=True):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.coef_ = None
@@ -600,6 +627,9 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.intercept_ = 0.0
         self.random_state = random_state
         self.selection = selection
+        self.check_input = check_input
+        self.n_jobs = n_jobs
+        self.pool = pool
 
     def fit(self, X, y):
         """Fit model with coordinate descent.
@@ -622,6 +652,9 @@ class ElasticNet(LinearModel, RegressorMixin):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+        if self.pool is None or not isinstance(self.pool, Parallel):
+            self.pool = Parallel(n_jobs=self.n_jobs)
+
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well. You are advised to use the LinearRegression "
@@ -632,14 +665,16 @@ class ElasticNet(LinearModel, RegressorMixin):
                           "slower even when n_samples > n_features. Hence "
                           "it will be removed in 0.18.",
                           DeprecationWarning, stacklevel=2)
-
-        X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
-                         order='F', copy=self.copy_X and self.fit_intercept,
-                         multi_output=True, y_numeric=True)
-
+        # We expect X and y to be already float64 Fortran ordered arrays
+        # when bypassing checks
+        if self.check_input:
+            X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
+                             order='F',
+                             copy=self.copy_X and self.fit_intercept,
+                             multi_output=True, y_numeric=True)
         X, y, X_mean, y_mean, X_std, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
-                     self.fit_intercept, copy=True)
+                     self.fit_intercept, copy=True, check_input=False)
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -662,26 +697,25 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         dual_gaps_ = np.zeros(n_targets, dtype=np.float64)
         self.n_iter_ = []
-
+        # (_, coef_, dual_gap, n_iter) list
+        results = self.pool(delayed(self.path)(
+                X, y[:, k],
+                l1_ratio=self.l1_ratio, eps=None,
+                n_alphas=None, alphas=[self.alpha],
+                precompute=precompute,
+                Xy=Xy[:, k] if Xy is not None else None,
+                fit_intercept=False, normalize=False, copy_X=True,
+                verbose=False, tol=self.tol, positive=self.positive,
+                X_mean=X_mean, X_std=X_std,
+                return_n_iter=True,
+                coef_init=coef_[k], max_iter=self.max_iter,
+                random_state=self.random_state,
+                selection=self.selection,
+                check_input=False) for k in xrange(n_targets))
         for k in xrange(n_targets):
-            if Xy is not None:
-                this_Xy = Xy[:, k]
-            else:
-                this_Xy = None
-            _, this_coef, this_dual_gap, this_iter = \
-                self.path(X, y[:, k],
-                          l1_ratio=self.l1_ratio, eps=None,
-                          n_alphas=None, alphas=[self.alpha],
-                          precompute=precompute, Xy=this_Xy,
-                          fit_intercept=False, normalize=False, copy_X=True,
-                          verbose=False, tol=self.tol, positive=self.positive,
-                          X_mean=X_mean, X_std=X_std, return_n_iter=True,
-                          coef_init=coef_[k], max_iter=self.max_iter,
-                          random_state=self.random_state,
-                          selection=self.selection)
-            coef_[k] = this_coef[:, 0]
-            dual_gaps_[k] = this_dual_gap[0]
-            self.n_iter_.append(this_iter[0])
+            coef_[k] = results[k][1][:, 0]
+            dual_gaps_[k] = results[k][2][0]
+            self.n_iter_.append(results[k][3][0])
 
         if n_targets == 1:
             self.n_iter_ = self.n_iter_[0]
@@ -802,6 +836,11 @@ class Lasso(ElasticNet):
         a random feature to update. Useful only when selection is set to
         'random'.
 
+    bypass_checks : bool, default False
+        If set to True, X, y and precompute are expected to be
+        double fortran-ordered arrays, with X and y centered,
+        and input checking will be bypassed for efficiency
+
     Attributes
     ----------
     coef_ : array, shape (n_features,) | (n_targets, n_features)
@@ -823,9 +862,9 @@ class Lasso(ElasticNet):
     >>> from sklearn import linear_model
     >>> clf = linear_model.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, positive=False, precompute=False, random_state=None,
-       selection='cyclic', tol=0.0001, warm_start=False)
+    Lasso(alpha=0.1, bypass_checks=False, copy_X=True, fit_intercept=True,
+       max_iter=1000, normalize=False, positive=False, precompute=False,
+       random_state=None, selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
     [ 0.85  0.  ]
     >>> print(clf.intercept_)
@@ -852,13 +891,15 @@ class Lasso(ElasticNet):
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
-                 random_state=None, selection='cyclic'):
+                 random_state=None, selection='cyclic', check_input=True,
+                 n_jobs=1, pool=None):
         super(Lasso, self).__init__(
             alpha=alpha, l1_ratio=1.0, fit_intercept=fit_intercept,
             normalize=normalize, precompute=precompute, copy_X=copy_X,
             max_iter=max_iter, tol=tol, warm_start=warm_start,
             positive=positive, random_state=random_state,
-            selection=selection)
+            selection=selection, check_input=check_input, n_jobs=n_jobs,
+            pool=pool)
 
 
 ###############################################################################

@@ -428,6 +428,22 @@ def test_enet_multitarget():
         assert_array_almost_equal(dual_gap[k], estimator.dual_gap_)
 
 
+def test_enet_multitarget_multiprocessing():
+    n_targets = 3
+    X, y, _, _ = build_dataset(n_samples=10, n_features=8,
+                               n_informative_features=10, n_targets=n_targets)
+    estimator = ElasticNet(alpha=0.01, fit_intercept=True, n_jobs=2)
+    estimator.fit(X, y)
+    coef, intercept, dual_gap = (estimator.coef_, estimator.intercept_,
+                                 estimator.dual_gap_)
+
+    for k in range(n_targets):
+        estimator.fit(X, y[:, k])
+        assert_array_almost_equal(coef[k, :], estimator.coef_)
+        assert_array_almost_equal(intercept[k], estimator.intercept_)
+        assert_array_almost_equal(dual_gap[k], estimator.dual_gap_)
+
+
 def test_multioutput_enetcv_error():
     X = np.random.randn(10, 2)
     y = np.random.randn(10, 2)
