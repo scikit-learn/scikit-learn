@@ -33,17 +33,6 @@ if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
     solve_triangular_args = {'check_finite': False}
 
 
-'''
-NON-NEGATIVE / POSITIVE FIX TODOs
-
-even though i confirmed/tested the fix in the lars_path implementation and
-propagated the possibility to positive in the downstream fit objects i still
-need to deal with the consequences for fit_intercept. also (according)
-docstring updates remain open.
-
-'''
-
-
 
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
@@ -68,6 +57,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     y : array, shape: (n_samples)
         Input targets.
+
+    positive : boolean (default=False)
+        Restrict coefficients to be >= 0. Be aware that you might want to
+        remove fit_intercept which is by default True.
 
     max_iter : integer, optional (default=500)
         Maximum number of iterations to perform, set to infinity for no limit.
@@ -505,6 +498,10 @@ class Lars(LinearModel, RegressorMixin):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
+    positive : boolean (default=False)
+        Restrict coefficients to be >= 0. Be aware that you might want to
+        remove fit_intercept which is by default True.
+
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
@@ -563,8 +560,9 @@ class Lars(LinearModel, RegressorMixin):
     >>> clf = linear_model.Lars(n_nonzero_coefs=1)
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    Lars(copy_X=True, eps=..., fit_intercept=True, fit_path=True,
-       n_nonzero_coefs=1, normalize=True, precompute='auto', verbose=False)
+    Lars(copy_X=True, eps=..., positive=False, fit_intercept=True,
+       fit_path=True, n_nonzero_coefs=1, normalize=True, precompute='auto',
+       verbose=False)
     >>> print(clf.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0. -1.11...]
 
@@ -623,10 +621,10 @@ class Lars(LinearModel, RegressorMixin):
         X, y = check_X_y(X, y, y_numeric=True, multi_output=True)
         n_features = X.shape[1]
 
-        #X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                                                        #self.fit_intercept,
-                                                        #self.normalize,
-                                                        #self.copy_X)
+        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
+                                                        self.fit_intercept,
+                                                        self.normalize,
+                                                        self.copy_X)
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -690,7 +688,7 @@ class Lars(LinearModel, RegressorMixin):
             if n_targets == 1:
                 self.alphas_ = self.alphas_[0]
                 self.n_iter_ = self.n_iter_[0]
-#       self._set_intercept(X_mean, y_mean, X_std)
+        self._set_intercept(X_mean, y_mean, X_std)
         return self
 
 
@@ -718,6 +716,10 @@ class LassoLars(Lars):
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
+
+    positive : boolean (default=False)
+        Restrict coefficients to be >= 0. Be aware that you might want to
+        remove fit_intercept which is by default True.
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
@@ -782,9 +784,9 @@ class LassoLars(Lars):
     >>> clf = linear_model.LassoLars(alpha=0.01)
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    LassoLars(alpha=0.01, copy_X=True, eps=..., fit_intercept=True,
-         fit_path=True, max_iter=500, normalize=True, precompute='auto',
-         verbose=False)
+    LassoLars(alpha=0.01, copy_X=True, eps=..., positive=False,
+         fit_intercept=True, fit_path=True, max_iter=500, normalize=True,
+         precompute='auto', verbose=False)
     >>> print(clf.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0.         -0.963257...]
 
