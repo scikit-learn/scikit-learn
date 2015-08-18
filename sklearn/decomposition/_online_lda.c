@@ -257,6 +257,7 @@ class __Pyx_FakeReference {
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "math.h"
+#include "numpy/npy_math.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif /* _OPENMP */
@@ -905,8 +906,6 @@ static CYTHON_INLINE void __Pyx_RaiseNeedMoreValuesError(Py_ssize_t index);
 
 static CYTHON_INLINE void __Pyx_RaiseNoneNotIterableError(void);
 
-static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name);
-
 typedef struct {
     int code_line;
     PyCodeObject* code_object;
@@ -1109,7 +1108,10 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *, cha
 
 /* Module declarations from 'libc.math' */
 
+/* Module declarations from 'numpy.math' */
+
 /* Module declarations from 'sklearn.decomposition._online_lda' */
+static double __pyx_f_7sklearn_13decomposition_11_online_lda_psi(double); /*proto*/
 static __Pyx_TypeInfo __Pyx_TypeInfo_nn___pyx_t_5numpy_float64_t = { "float64_t", NULL, sizeof(__pyx_t_5numpy_float64_t), { 0 }, 0, 'R', 0, 0 };
 #define __Pyx_MODULE_NAME "sklearn.decomposition._online_lda"
 int __pyx_module_is_main_sklearn__decomposition___online_lda = 0;
@@ -1143,8 +1145,6 @@ static char __pyx_k_Zf[] = "Zf";
 static char __pyx_k_Zg[] = "Zg";
 static char __pyx_k_np[] = "np";
 static char __pyx_k_arr[] = "arr";
-static char __pyx_k_out[] = "out";
-static char __pyx_k_psi[] = "psi";
 static char __pyx_k_diff[] = "diff";
 static char __pyx_k_main[] = "__main__";
 static char __pyx_k_size[] = "size";
@@ -1152,21 +1152,19 @@ static char __pyx_k_test[] = "__test__";
 static char __pyx_k_arr_1[] = "arr_1";
 static char __pyx_k_arr_2[] = "arr_2";
 static char __pyx_k_d_exp[] = "d_exp";
-static char __pyx_k_dtype[] = "dtype";
 static char __pyx_k_numpy[] = "numpy";
 static char __pyx_k_range[] = "range";
 static char __pyx_k_total[] = "total";
-static char __pyx_k_zeros[] = "zeros";
 static char __pyx_k_import[] = "__import__";
 static char __pyx_k_n_cols[] = "n_cols";
 static char __pyx_k_n_rows[] = "n_rows";
-static char __pyx_k_float64[] = "float64";
-static char __pyx_k_psi_row[] = "psi_row";
 static char __pyx_k_psi_total[] = "psi_total";
+static char __pyx_k_row_total[] = "row_total";
 static char __pyx_k_ValueError[] = "ValueError";
+static char __pyx_k_empty_like[] = "empty_like";
 static char __pyx_k_mean_change[] = "mean_change";
 static char __pyx_k_RuntimeError[] = "RuntimeError";
-static char __pyx_k_scipy_special[] = "scipy.special";
+static char __pyx_k_psi_row_total[] = "psi_row_total";
 static char __pyx_k_dirichlet_expectation_1d[] = "_dirichlet_expectation_1d";
 static char __pyx_k_dirichlet_expectation_2d[] = "_dirichlet_expectation_2d";
 static char __pyx_k_ndarray_is_not_C_contiguous[] = "ndarray is not C contiguous";
@@ -1189,8 +1187,7 @@ static PyObject *__pyx_n_s_d_exp;
 static PyObject *__pyx_n_s_diff;
 static PyObject *__pyx_n_s_dirichlet_expectation_1d;
 static PyObject *__pyx_n_s_dirichlet_expectation_2d;
-static PyObject *__pyx_n_s_dtype;
-static PyObject *__pyx_n_s_float64;
+static PyObject *__pyx_n_s_empty_like;
 static PyObject *__pyx_kp_s_home_larsb_src_scikit_learn_skl;
 static PyObject *__pyx_n_s_i;
 static PyObject *__pyx_n_s_import;
@@ -1203,18 +1200,15 @@ static PyObject *__pyx_kp_u_ndarray_is_not_C_contiguous;
 static PyObject *__pyx_kp_u_ndarray_is_not_Fortran_contiguou;
 static PyObject *__pyx_n_s_np;
 static PyObject *__pyx_n_s_numpy;
-static PyObject *__pyx_n_s_out;
-static PyObject *__pyx_n_s_psi;
-static PyObject *__pyx_n_s_psi_row;
+static PyObject *__pyx_n_s_psi_row_total;
 static PyObject *__pyx_n_s_psi_total;
 static PyObject *__pyx_n_s_range;
-static PyObject *__pyx_n_s_scipy_special;
+static PyObject *__pyx_n_s_row_total;
 static PyObject *__pyx_n_s_size;
 static PyObject *__pyx_n_s_sklearn_decomposition__online_ld;
 static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_n_s_total;
 static PyObject *__pyx_kp_u_unknown_dtype_code_in_numpy_pxd;
-static PyObject *__pyx_n_s_zeros;
 static PyObject *__pyx_tuple_;
 static PyObject *__pyx_tuple__2;
 static PyObject *__pyx_tuple__3;
@@ -1501,10 +1495,8 @@ static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_2_dirichlet_exp
   npy_intp __pyx_t_10;
   npy_intp __pyx_t_11;
   npy_intp __pyx_t_12;
-  PyObject *__pyx_t_13 = NULL;
-  __pyx_t_5numpy_float64_t __pyx_t_14;
-  npy_intp __pyx_t_15;
-  npy_intp __pyx_t_16;
+  npy_intp __pyx_t_13;
+  npy_intp __pyx_t_14;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -1527,7 +1519,7 @@ static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_2_dirichlet_exp
  *     cdef np.npy_intp i, size
  * 
  *     size = arr.shape[0]             # <<<<<<<<<<<<<<
- *     d_exp = psi(arr)
+ *     d_exp = np.empty_like(arr)
  * 
  */
   __pyx_v_size = (__pyx_v_arr->dimensions[0]);
@@ -1535,37 +1527,40 @@ static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_2_dirichlet_exp
   /* "sklearn/decomposition/_online_lda.pyx":46
  * 
  *     size = arr.shape[0]
- *     d_exp = psi(arr)             # <<<<<<<<<<<<<<
+ *     d_exp = np.empty_like(arr)             # <<<<<<<<<<<<<<
  * 
  *     total = 0.0
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_psi); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 46; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 46; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = NULL;
-  if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
-    if (likely(__pyx_t_3)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-      __Pyx_INCREF(__pyx_t_3);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty_like); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 46; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = NULL;
+  if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
+    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_2)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_2);
       __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_2, function);
+      __Pyx_DECREF_SET(__pyx_t_3, function);
     }
   }
-  if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, ((PyObject *)__pyx_v_arr)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 46; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!__pyx_t_2) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, ((PyObject *)__pyx_v_arr)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 46; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
   } else {
     __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 46; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
+    __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2); __pyx_t_2 = NULL;
     __Pyx_INCREF(((PyObject *)__pyx_v_arr));
     __Pyx_GIVEREF(((PyObject *)__pyx_v_arr));
     PyTuple_SET_ITEM(__pyx_t_4, 0+1, ((PyObject *)__pyx_v_arr));
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 46; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 46; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   }
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 46; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_t_5 = ((PyArrayObject *)__pyx_t_1);
   {
@@ -1589,7 +1584,7 @@ static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_2_dirichlet_exp
   __pyx_t_1 = 0;
 
   /* "sklearn/decomposition/_online_lda.pyx":48
- *     d_exp = psi(arr)
+ *     d_exp = np.empty_like(arr)
  * 
  *     total = 0.0             # <<<<<<<<<<<<<<
  *     for i in range(size):
@@ -1602,7 +1597,7 @@ static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_2_dirichlet_exp
  *     total = 0.0
  *     for i in range(size):             # <<<<<<<<<<<<<<
  *         total += arr[i]
- * 
+ *     psi_total = psi(total)
  */
   __pyx_t_10 = __pyx_v_size;
   for (__pyx_t_11 = 0; __pyx_t_11 < __pyx_t_10; __pyx_t_11+=1) {
@@ -1612,59 +1607,27 @@ static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_2_dirichlet_exp
  *     total = 0.0
  *     for i in range(size):
  *         total += arr[i]             # <<<<<<<<<<<<<<
- * 
  *     psi_total = psi(total)
+ * 
  */
     __pyx_t_12 = __pyx_v_i;
     __pyx_v_total = (__pyx_v_total + (*__Pyx_BufPtrStrided1d(__pyx_t_5numpy_float64_t *, __pyx_pybuffernd_arr.rcbuffer->pybuffer.buf, __pyx_t_12, __pyx_pybuffernd_arr.diminfo[0].strides)));
   }
 
-  /* "sklearn/decomposition/_online_lda.pyx":52
- *         total += arr[i]
- * 
- *     psi_total = psi(total)             # <<<<<<<<<<<<<<
+  /* "sklearn/decomposition/_online_lda.pyx":51
  *     for i in range(size):
- *         d_exp[i] = exp(d_exp[i] - psi_total)
+ *         total += arr[i]
+ *     psi_total = psi(total)             # <<<<<<<<<<<<<<
+ * 
+ *     for i in range(size):
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_psi); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 52; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = PyFloat_FromDouble(__pyx_v_total); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 52; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = NULL;
-  if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
-    if (likely(__pyx_t_3)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_2, function);
-    }
-  }
-  if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 52; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __Pyx_GOTREF(__pyx_t_1);
-  } else {
-    __pyx_t_13 = PyTuple_New(1+1); if (unlikely(!__pyx_t_13)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 52; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_13);
-    __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_13, 0, __pyx_t_3); __pyx_t_3 = NULL;
-    __Pyx_GIVEREF(__pyx_t_4);
-    PyTuple_SET_ITEM(__pyx_t_13, 0+1, __pyx_t_4);
-    __pyx_t_4 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_13, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 52; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
-  }
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_14 = __pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_14 == (npy_float64)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 52; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_v_psi_total = __pyx_t_14;
+  __pyx_v_psi_total = __pyx_f_7sklearn_13decomposition_11_online_lda_psi(__pyx_v_total);
 
   /* "sklearn/decomposition/_online_lda.pyx":53
- * 
  *     psi_total = psi(total)
+ * 
  *     for i in range(size):             # <<<<<<<<<<<<<<
- *         d_exp[i] = exp(d_exp[i] - psi_total)
+ *         d_exp[i] = exp(psi(arr[i]) - psi_total)
  * 
  */
   __pyx_t_10 = __pyx_v_size;
@@ -1672,19 +1635,19 @@ static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_2_dirichlet_exp
     __pyx_v_i = __pyx_t_11;
 
     /* "sklearn/decomposition/_online_lda.pyx":54
- *     psi_total = psi(total)
+ * 
  *     for i in range(size):
- *         d_exp[i] = exp(d_exp[i] - psi_total)             # <<<<<<<<<<<<<<
+ *         d_exp[i] = exp(psi(arr[i]) - psi_total)             # <<<<<<<<<<<<<<
  * 
  *     return d_exp
  */
-    __pyx_t_15 = __pyx_v_i;
-    __pyx_t_16 = __pyx_v_i;
-    *__Pyx_BufPtrStrided1d(__pyx_t_5numpy_float64_t *, __pyx_pybuffernd_d_exp.rcbuffer->pybuffer.buf, __pyx_t_16, __pyx_pybuffernd_d_exp.diminfo[0].strides) = exp(((*__Pyx_BufPtrStrided1d(__pyx_t_5numpy_float64_t *, __pyx_pybuffernd_d_exp.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_d_exp.diminfo[0].strides)) - __pyx_v_psi_total));
+    __pyx_t_13 = __pyx_v_i;
+    __pyx_t_14 = __pyx_v_i;
+    *__Pyx_BufPtrStrided1d(__pyx_t_5numpy_float64_t *, __pyx_pybuffernd_d_exp.rcbuffer->pybuffer.buf, __pyx_t_14, __pyx_pybuffernd_d_exp.diminfo[0].strides) = exp((__pyx_f_7sklearn_13decomposition_11_online_lda_psi((*__Pyx_BufPtrStrided1d(__pyx_t_5numpy_float64_t *, __pyx_pybuffernd_arr.rcbuffer->pybuffer.buf, __pyx_t_13, __pyx_pybuffernd_arr.diminfo[0].strides))) - __pyx_v_psi_total));
   }
 
   /* "sklearn/decomposition/_online_lda.pyx":56
- *         d_exp[i] = exp(d_exp[i] - psi_total)
+ *         d_exp[i] = exp(psi(arr[i]) - psi_total)
  * 
  *     return d_exp             # <<<<<<<<<<<<<<
  * 
@@ -1709,7 +1672,6 @@ static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_2_dirichlet_exp
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_13);
   { PyObject *__pyx_type, *__pyx_value, *__pyx_tb;
     __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_arr.rcbuffer->pybuffer);
@@ -1760,8 +1722,9 @@ static PyObject *__pyx_pw_7sklearn_13decomposition_11_online_lda_5_dirichlet_exp
 }
 
 static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_4_dirichlet_expectation_2d(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_arr) {
+  __pyx_t_5numpy_float64_t __pyx_v_row_total;
+  __pyx_t_5numpy_float64_t __pyx_v_psi_row_total;
   PyArrayObject *__pyx_v_d_exp = 0;
-  PyArrayObject *__pyx_v_psi_row = 0;
   npy_intp __pyx_v_i;
   npy_intp __pyx_v_j;
   npy_intp __pyx_v_n_rows;
@@ -1770,20 +1733,18 @@ static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_4_dirichlet_exp
   __Pyx_Buffer __pyx_pybuffer_arr;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_d_exp;
   __Pyx_Buffer __pyx_pybuffer_d_exp;
-  __Pyx_LocalBuf_ND __pyx_pybuffernd_psi_row;
-  __Pyx_Buffer __pyx_pybuffer_psi_row;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
   PyObject *__pyx_t_3 = NULL;
   PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
-  PyArrayObject *__pyx_t_6 = NULL;
-  int __pyx_t_7;
+  PyArrayObject *__pyx_t_5 = NULL;
+  int __pyx_t_6;
+  PyObject *__pyx_t_7 = NULL;
   PyObject *__pyx_t_8 = NULL;
   PyObject *__pyx_t_9 = NULL;
-  PyObject *__pyx_t_10 = NULL;
+  npy_intp __pyx_t_10;
   npy_intp __pyx_t_11;
   npy_intp __pyx_t_12;
   npy_intp __pyx_t_13;
@@ -1791,10 +1752,8 @@ static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_4_dirichlet_exp
   npy_intp __pyx_t_15;
   npy_intp __pyx_t_16;
   npy_intp __pyx_t_17;
-  PyArrayObject *__pyx_t_18 = NULL;
+  npy_intp __pyx_t_18;
   npy_intp __pyx_t_19;
-  npy_intp __pyx_t_20;
-  npy_intp __pyx_t_21;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -1803,10 +1762,6 @@ static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_4_dirichlet_exp
   __pyx_pybuffer_d_exp.refcount = 0;
   __pyx_pybuffernd_d_exp.data = NULL;
   __pyx_pybuffernd_d_exp.rcbuffer = &__pyx_pybuffer_d_exp;
-  __pyx_pybuffer_psi_row.pybuffer.buf = NULL;
-  __pyx_pybuffer_psi_row.refcount = 0;
-  __pyx_pybuffernd_psi_row.data = NULL;
-  __pyx_pybuffernd_psi_row.rcbuffer = &__pyx_pybuffer_psi_row;
   __pyx_pybuffer_arr.pybuffer.buf = NULL;
   __pyx_pybuffer_arr.refcount = 0;
   __pyx_pybuffernd_arr.data = NULL;
@@ -1817,7 +1772,7 @@ static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_4_dirichlet_exp
   }
   __pyx_pybuffernd_arr.diminfo[0].strides = __pyx_pybuffernd_arr.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_arr.diminfo[0].shape = __pyx_pybuffernd_arr.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_arr.diminfo[1].strides = __pyx_pybuffernd_arr.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_arr.diminfo[1].shape = __pyx_pybuffernd_arr.rcbuffer->pybuffer.shape[1];
 
-  /* "sklearn/decomposition/_online_lda.pyx":75
+  /* "sklearn/decomposition/_online_lda.pyx":74
  *     cdef np.npy_intp i, j, n_rows, n_cols
  * 
  *     n_rows = arr.shape[0]             # <<<<<<<<<<<<<<
@@ -1826,246 +1781,158 @@ static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_4_dirichlet_exp
  */
   __pyx_v_n_rows = (__pyx_v_arr->dimensions[0]);
 
-  /* "sklearn/decomposition/_online_lda.pyx":76
+  /* "sklearn/decomposition/_online_lda.pyx":75
  * 
  *     n_rows = arr.shape[0]
  *     n_cols = arr.shape[1]             # <<<<<<<<<<<<<<
  * 
- *     psi_row = np.zeros(n_rows, dtype=np.float64)
+ *     d_exp = np.empty_like(arr)
  */
   __pyx_v_n_cols = (__pyx_v_arr->dimensions[1]);
 
-  /* "sklearn/decomposition/_online_lda.pyx":78
+  /* "sklearn/decomposition/_online_lda.pyx":77
  *     n_cols = arr.shape[1]
  * 
- *     psi_row = np.zeros(n_rows, dtype=np.float64)             # <<<<<<<<<<<<<<
+ *     d_exp = np.empty_like(arr)             # <<<<<<<<<<<<<<
  *     for i in range(n_rows):
- *         for j in range(n_cols):
+ *         row_total = 0
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 77; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_Py_intptr_t(__pyx_v_n_rows); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty_like); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 77; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_GIVEREF(__pyx_t_1);
-  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
-  __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_5) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_5) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_5, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_6 = ((PyArrayObject *)__pyx_t_5);
-  {
-    __Pyx_BufFmt_StackElem __pyx_stack[1];
-    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_psi_row.rcbuffer->pybuffer);
-    __pyx_t_7 = __Pyx_GetBufferAndValidate(&__pyx_pybuffernd_psi_row.rcbuffer->pybuffer, (PyObject*)__pyx_t_6, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float64_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack);
-    if (unlikely(__pyx_t_7 < 0)) {
-      PyErr_Fetch(&__pyx_t_8, &__pyx_t_9, &__pyx_t_10);
-      if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_psi_row.rcbuffer->pybuffer, (PyObject*)__pyx_v_psi_row, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float64_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
-        Py_XDECREF(__pyx_t_8); Py_XDECREF(__pyx_t_9); Py_XDECREF(__pyx_t_10);
-        __Pyx_RaiseBufferFallbackError();
-      } else {
-        PyErr_Restore(__pyx_t_8, __pyx_t_9, __pyx_t_10);
-      }
-    }
-    __pyx_pybuffernd_psi_row.diminfo[0].strides = __pyx_pybuffernd_psi_row.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_psi_row.diminfo[0].shape = __pyx_pybuffernd_psi_row.rcbuffer->pybuffer.shape[0];
-    if (unlikely(__pyx_t_7 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 78; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  }
-  __pyx_t_6 = 0;
-  __pyx_v_psi_row = ((PyArrayObject *)__pyx_t_5);
-  __pyx_t_5 = 0;
-
-  /* "sklearn/decomposition/_online_lda.pyx":79
- * 
- *     psi_row = np.zeros(n_rows, dtype=np.float64)
- *     for i in range(n_rows):             # <<<<<<<<<<<<<<
- *         for j in range(n_cols):
- *             psi_row[i] += arr[i, j]
- */
-  __pyx_t_11 = __pyx_v_n_rows;
-  for (__pyx_t_12 = 0; __pyx_t_12 < __pyx_t_11; __pyx_t_12+=1) {
-    __pyx_v_i = __pyx_t_12;
-
-    /* "sklearn/decomposition/_online_lda.pyx":80
- *     psi_row = np.zeros(n_rows, dtype=np.float64)
- *     for i in range(n_rows):
- *         for j in range(n_cols):             # <<<<<<<<<<<<<<
- *             psi_row[i] += arr[i, j]
- *     psi_row = psi(psi_row, out=psi_row)
- */
-    __pyx_t_13 = __pyx_v_n_cols;
-    for (__pyx_t_14 = 0; __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
-      __pyx_v_j = __pyx_t_14;
-
-      /* "sklearn/decomposition/_online_lda.pyx":81
- *     for i in range(n_rows):
- *         for j in range(n_cols):
- *             psi_row[i] += arr[i, j]             # <<<<<<<<<<<<<<
- *     psi_row = psi(psi_row, out=psi_row)
- * 
- */
-      __pyx_t_15 = __pyx_v_i;
-      __pyx_t_16 = __pyx_v_j;
-      __pyx_t_17 = __pyx_v_i;
-      *__Pyx_BufPtrStrided1d(__pyx_t_5numpy_float64_t *, __pyx_pybuffernd_psi_row.rcbuffer->pybuffer.buf, __pyx_t_17, __pyx_pybuffernd_psi_row.diminfo[0].strides) += (*__Pyx_BufPtrStrided2d(__pyx_t_5numpy_float64_t *, __pyx_pybuffernd_arr.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_arr.diminfo[0].strides, __pyx_t_16, __pyx_pybuffernd_arr.diminfo[1].strides));
-    }
-  }
-
-  /* "sklearn/decomposition/_online_lda.pyx":82
- *         for j in range(n_cols):
- *             psi_row[i] += arr[i, j]
- *     psi_row = psi(psi_row, out=psi_row)             # <<<<<<<<<<<<<<
- * 
- *     d_exp = psi(arr)
- */
-  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_psi); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 82; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 82; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_INCREF(((PyObject *)__pyx_v_psi_row));
-  __Pyx_GIVEREF(((PyObject *)__pyx_v_psi_row));
-  PyTuple_SET_ITEM(__pyx_t_1, 0, ((PyObject *)__pyx_v_psi_row));
-  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 82; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_out, ((PyObject *)__pyx_v_psi_row)) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 82; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 82; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 82; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_6 = ((PyArrayObject *)__pyx_t_2);
-  {
-    __Pyx_BufFmt_StackElem __pyx_stack[1];
-    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_psi_row.rcbuffer->pybuffer);
-    __pyx_t_7 = __Pyx_GetBufferAndValidate(&__pyx_pybuffernd_psi_row.rcbuffer->pybuffer, (PyObject*)__pyx_t_6, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float64_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack);
-    if (unlikely(__pyx_t_7 < 0)) {
-      PyErr_Fetch(&__pyx_t_10, &__pyx_t_9, &__pyx_t_8);
-      if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_psi_row.rcbuffer->pybuffer, (PyObject*)__pyx_v_psi_row, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float64_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
-        Py_XDECREF(__pyx_t_10); Py_XDECREF(__pyx_t_9); Py_XDECREF(__pyx_t_8);
-        __Pyx_RaiseBufferFallbackError();
-      } else {
-        PyErr_Restore(__pyx_t_10, __pyx_t_9, __pyx_t_8);
-      }
-    }
-    __pyx_pybuffernd_psi_row.diminfo[0].strides = __pyx_pybuffernd_psi_row.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_psi_row.diminfo[0].shape = __pyx_pybuffernd_psi_row.rcbuffer->pybuffer.shape[0];
-    if (unlikely(__pyx_t_7 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 82; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  }
-  __pyx_t_6 = 0;
-  __Pyx_DECREF_SET(__pyx_v_psi_row, ((PyArrayObject *)__pyx_t_2));
-  __pyx_t_2 = 0;
-
-  /* "sklearn/decomposition/_online_lda.pyx":84
- *     psi_row = psi(psi_row, out=psi_row)
- * 
- *     d_exp = psi(arr)             # <<<<<<<<<<<<<<
- *     for i in range(n_rows):
- *         for j in range(n_cols):
- */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_psi); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 84; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = NULL;
+  __pyx_t_2 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_1 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_1)) {
+    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_2)) {
       PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_1);
+      __Pyx_INCREF(__pyx_t_2);
       __Pyx_INCREF(function);
       __Pyx_DECREF_SET(__pyx_t_3, function);
     }
   }
-  if (!__pyx_t_1) {
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, ((PyObject *)__pyx_v_arr)); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 84; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_2);
+  if (!__pyx_t_2) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, ((PyObject *)__pyx_v_arr)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 77; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 84; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_1); __pyx_t_1 = NULL;
+    __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 77; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2); __pyx_t_2 = NULL;
     __Pyx_INCREF(((PyObject *)__pyx_v_arr));
     __Pyx_GIVEREF(((PyObject *)__pyx_v_arr));
-    PyTuple_SET_ITEM(__pyx_t_5, 0+1, ((PyObject *)__pyx_v_arr));
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 84; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    PyTuple_SET_ITEM(__pyx_t_4, 0+1, ((PyObject *)__pyx_v_arr));
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 77; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 84; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_18 = ((PyArrayObject *)__pyx_t_2);
+  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 77; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = ((PyArrayObject *)__pyx_t_1);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_d_exp.rcbuffer->pybuffer);
-    __pyx_t_7 = __Pyx_GetBufferAndValidate(&__pyx_pybuffernd_d_exp.rcbuffer->pybuffer, (PyObject*)__pyx_t_18, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float64_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 2, 0, __pyx_stack);
-    if (unlikely(__pyx_t_7 < 0)) {
-      PyErr_Fetch(&__pyx_t_8, &__pyx_t_9, &__pyx_t_10);
+    __pyx_t_6 = __Pyx_GetBufferAndValidate(&__pyx_pybuffernd_d_exp.rcbuffer->pybuffer, (PyObject*)__pyx_t_5, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float64_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 2, 0, __pyx_stack);
+    if (unlikely(__pyx_t_6 < 0)) {
+      PyErr_Fetch(&__pyx_t_7, &__pyx_t_8, &__pyx_t_9);
       if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_d_exp.rcbuffer->pybuffer, (PyObject*)__pyx_v_d_exp, &__Pyx_TypeInfo_nn___pyx_t_5numpy_float64_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 2, 0, __pyx_stack) == -1)) {
-        Py_XDECREF(__pyx_t_8); Py_XDECREF(__pyx_t_9); Py_XDECREF(__pyx_t_10);
+        Py_XDECREF(__pyx_t_7); Py_XDECREF(__pyx_t_8); Py_XDECREF(__pyx_t_9);
         __Pyx_RaiseBufferFallbackError();
       } else {
-        PyErr_Restore(__pyx_t_8, __pyx_t_9, __pyx_t_10);
+        PyErr_Restore(__pyx_t_7, __pyx_t_8, __pyx_t_9);
       }
     }
     __pyx_pybuffernd_d_exp.diminfo[0].strides = __pyx_pybuffernd_d_exp.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_d_exp.diminfo[0].shape = __pyx_pybuffernd_d_exp.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_d_exp.diminfo[1].strides = __pyx_pybuffernd_d_exp.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_d_exp.diminfo[1].shape = __pyx_pybuffernd_d_exp.rcbuffer->pybuffer.shape[1];
-    if (unlikely(__pyx_t_7 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 84; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (unlikely(__pyx_t_6 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 77; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
-  __pyx_t_18 = 0;
-  __pyx_v_d_exp = ((PyArrayObject *)__pyx_t_2);
-  __pyx_t_2 = 0;
+  __pyx_t_5 = 0;
+  __pyx_v_d_exp = ((PyArrayObject *)__pyx_t_1);
+  __pyx_t_1 = 0;
 
-  /* "sklearn/decomposition/_online_lda.pyx":85
+  /* "sklearn/decomposition/_online_lda.pyx":78
  * 
- *     d_exp = psi(arr)
+ *     d_exp = np.empty_like(arr)
  *     for i in range(n_rows):             # <<<<<<<<<<<<<<
+ *         row_total = 0
  *         for j in range(n_cols):
- *             d_exp[i, j] -= psi_row[i]
  */
-  __pyx_t_11 = __pyx_v_n_rows;
-  for (__pyx_t_12 = 0; __pyx_t_12 < __pyx_t_11; __pyx_t_12+=1) {
-    __pyx_v_i = __pyx_t_12;
+  __pyx_t_10 = __pyx_v_n_rows;
+  for (__pyx_t_11 = 0; __pyx_t_11 < __pyx_t_10; __pyx_t_11+=1) {
+    __pyx_v_i = __pyx_t_11;
 
-    /* "sklearn/decomposition/_online_lda.pyx":86
- *     d_exp = psi(arr)
+    /* "sklearn/decomposition/_online_lda.pyx":79
+ *     d_exp = np.empty_like(arr)
  *     for i in range(n_rows):
+ *         row_total = 0             # <<<<<<<<<<<<<<
+ *         for j in range(n_cols):
+ *             row_total += arr[i, j]
+ */
+    __pyx_v_row_total = 0.0;
+
+    /* "sklearn/decomposition/_online_lda.pyx":80
+ *     for i in range(n_rows):
+ *         row_total = 0
  *         for j in range(n_cols):             # <<<<<<<<<<<<<<
- *             d_exp[i, j] -= psi_row[i]
+ *             row_total += arr[i, j]
+ *         psi_row_total = psi(row_total)
+ */
+    __pyx_t_12 = __pyx_v_n_cols;
+    for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_12; __pyx_t_13+=1) {
+      __pyx_v_j = __pyx_t_13;
+
+      /* "sklearn/decomposition/_online_lda.pyx":81
+ *         row_total = 0
+ *         for j in range(n_cols):
+ *             row_total += arr[i, j]             # <<<<<<<<<<<<<<
+ *         psi_row_total = psi(row_total)
  * 
  */
-    __pyx_t_13 = __pyx_v_n_cols;
-    for (__pyx_t_14 = 0; __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
-      __pyx_v_j = __pyx_t_14;
+      __pyx_t_14 = __pyx_v_i;
+      __pyx_t_15 = __pyx_v_j;
+      __pyx_v_row_total = (__pyx_v_row_total + (*__Pyx_BufPtrStrided2d(__pyx_t_5numpy_float64_t *, __pyx_pybuffernd_arr.rcbuffer->pybuffer.buf, __pyx_t_14, __pyx_pybuffernd_arr.diminfo[0].strides, __pyx_t_15, __pyx_pybuffernd_arr.diminfo[1].strides)));
+    }
 
-      /* "sklearn/decomposition/_online_lda.pyx":87
- *     for i in range(n_rows):
+    /* "sklearn/decomposition/_online_lda.pyx":82
  *         for j in range(n_cols):
- *             d_exp[i, j] -= psi_row[i]             # <<<<<<<<<<<<<<
+ *             row_total += arr[i, j]
+ *         psi_row_total = psi(row_total)             # <<<<<<<<<<<<<<
+ * 
+ *         for j in range(n_cols):
+ */
+    __pyx_v_psi_row_total = __pyx_f_7sklearn_13decomposition_11_online_lda_psi(__pyx_v_row_total);
+
+    /* "sklearn/decomposition/_online_lda.pyx":84
+ *         psi_row_total = psi(row_total)
+ * 
+ *         for j in range(n_cols):             # <<<<<<<<<<<<<<
+ *             d_exp[i, j] = psi(arr[i, j]) - psi_row_total
+ * 
+ */
+    __pyx_t_12 = __pyx_v_n_cols;
+    for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_12; __pyx_t_13+=1) {
+      __pyx_v_j = __pyx_t_13;
+
+      /* "sklearn/decomposition/_online_lda.pyx":85
+ * 
+ *         for j in range(n_cols):
+ *             d_exp[i, j] = psi(arr[i, j]) - psi_row_total             # <<<<<<<<<<<<<<
  * 
  *     return d_exp
  */
-      __pyx_t_19 = __pyx_v_i;
-      __pyx_t_20 = __pyx_v_i;
-      __pyx_t_21 = __pyx_v_j;
-      *__Pyx_BufPtrStrided2d(__pyx_t_5numpy_float64_t *, __pyx_pybuffernd_d_exp.rcbuffer->pybuffer.buf, __pyx_t_20, __pyx_pybuffernd_d_exp.diminfo[0].strides, __pyx_t_21, __pyx_pybuffernd_d_exp.diminfo[1].strides) -= (*__Pyx_BufPtrStrided1d(__pyx_t_5numpy_float64_t *, __pyx_pybuffernd_psi_row.rcbuffer->pybuffer.buf, __pyx_t_19, __pyx_pybuffernd_psi_row.diminfo[0].strides));
+      __pyx_t_16 = __pyx_v_i;
+      __pyx_t_17 = __pyx_v_j;
+      __pyx_t_18 = __pyx_v_i;
+      __pyx_t_19 = __pyx_v_j;
+      *__Pyx_BufPtrStrided2d(__pyx_t_5numpy_float64_t *, __pyx_pybuffernd_d_exp.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_d_exp.diminfo[0].strides, __pyx_t_19, __pyx_pybuffernd_d_exp.diminfo[1].strides) = (__pyx_f_7sklearn_13decomposition_11_online_lda_psi((*__Pyx_BufPtrStrided2d(__pyx_t_5numpy_float64_t *, __pyx_pybuffernd_arr.rcbuffer->pybuffer.buf, __pyx_t_16, __pyx_pybuffernd_arr.diminfo[0].strides, __pyx_t_17, __pyx_pybuffernd_arr.diminfo[1].strides))) - __pyx_v_psi_row_total);
     }
   }
 
-  /* "sklearn/decomposition/_online_lda.pyx":89
- *             d_exp[i, j] -= psi_row[i]
+  /* "sklearn/decomposition/_online_lda.pyx":87
+ *             d_exp[i, j] = psi(arr[i, j]) - psi_row_total
  * 
  *     return d_exp             # <<<<<<<<<<<<<<
+ * 
+ * 
  */
   __Pyx_XDECREF(__pyx_r);
   __Pyx_INCREF(((PyObject *)__pyx_v_d_exp));
@@ -2086,12 +1953,10 @@ static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_4_dirichlet_exp
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
   { PyObject *__pyx_type, *__pyx_value, *__pyx_tb;
     __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_arr.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_d_exp.rcbuffer->pybuffer);
-    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_psi_row.rcbuffer->pybuffer);
   __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
   __Pyx_AddTraceback("sklearn.decomposition._online_lda._dirichlet_expectation_2d", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
@@ -2099,12 +1964,140 @@ static PyObject *__pyx_pf_7sklearn_13decomposition_11_online_lda_4_dirichlet_exp
   __pyx_L0:;
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_arr.rcbuffer->pybuffer);
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_d_exp.rcbuffer->pybuffer);
-  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_psi_row.rcbuffer->pybuffer);
   __pyx_L2:;
   __Pyx_XDECREF((PyObject *)__pyx_v_d_exp);
-  __Pyx_XDECREF((PyObject *)__pyx_v_psi_row);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "sklearn/decomposition/_online_lda.pyx":95
+ * # http://www.uv.es/~bernardo/1976AppStatist.pdf
+ * @cython.cdivision(True)
+ * cdef double psi(double x) nogil:             # <<<<<<<<<<<<<<
+ *     if x <= 1e-6:
+ *         # psi(x) = -EULER - 1/x + O(x)
+ */
+
+static double __pyx_f_7sklearn_13decomposition_11_online_lda_psi(double __pyx_v_x) {
+  double __pyx_v_r;
+  double __pyx_v_result;
+  double __pyx_r;
+  int __pyx_t_1;
+
+  /* "sklearn/decomposition/_online_lda.pyx":96
+ * @cython.cdivision(True)
+ * cdef double psi(double x) nogil:
+ *     if x <= 1e-6:             # <<<<<<<<<<<<<<
+ *         # psi(x) = -EULER - 1/x + O(x)
+ *         return -EULER - 1. / x
+ */
+  __pyx_t_1 = ((__pyx_v_x <= 1e-6) != 0);
+  if (__pyx_t_1) {
+
+    /* "sklearn/decomposition/_online_lda.pyx":98
+ *     if x <= 1e-6:
+ *         # psi(x) = -EULER - 1/x + O(x)
+ *         return -EULER - 1. / x             # <<<<<<<<<<<<<<
+ * 
+ *     cdef double r, result = 0
+ */
+    __pyx_r = ((-NPY_EULER) - (1. / __pyx_v_x));
+    goto __pyx_L0;
+  }
+
+  /* "sklearn/decomposition/_online_lda.pyx":100
+ *         return -EULER - 1. / x
+ * 
+ *     cdef double r, result = 0             # <<<<<<<<<<<<<<
+ * 
+ *     # psi(x + 1) = psi(x) + 1/x
+ */
+  __pyx_v_result = 0.0;
+
+  /* "sklearn/decomposition/_online_lda.pyx":103
+ * 
+ *     # psi(x + 1) = psi(x) + 1/x
+ *     while x < 6:             # <<<<<<<<<<<<<<
+ *         result -= 1. / x
+ *         x += 1
+ */
+  while (1) {
+    __pyx_t_1 = ((__pyx_v_x < 6.0) != 0);
+    if (!__pyx_t_1) break;
+
+    /* "sklearn/decomposition/_online_lda.pyx":104
+ *     # psi(x + 1) = psi(x) + 1/x
+ *     while x < 6:
+ *         result -= 1. / x             # <<<<<<<<<<<<<<
+ *         x += 1
+ * 
+ */
+    __pyx_v_result = (__pyx_v_result - (1. / __pyx_v_x));
+
+    /* "sklearn/decomposition/_online_lda.pyx":105
+ *     while x < 6:
+ *         result -= 1. / x
+ *         x += 1             # <<<<<<<<<<<<<<
+ * 
+ *     # psi(x) = log(x) - 1/(2x) - 1/(12x**2) + 1/(120x**4) - 1/(252x**6)
+ */
+    __pyx_v_x = (__pyx_v_x + 1.0);
+  }
+
+  /* "sklearn/decomposition/_online_lda.pyx":109
+ *     # psi(x) = log(x) - 1/(2x) - 1/(12x**2) + 1/(120x**4) - 1/(252x**6)
+ *     #          + O(1/x**8)
+ *     r = 1. / x             # <<<<<<<<<<<<<<
+ *     result += log(x) - .5 * r
+ *     r = r * r
+ */
+  __pyx_v_r = (1. / __pyx_v_x);
+
+  /* "sklearn/decomposition/_online_lda.pyx":110
+ *     #          + O(1/x**8)
+ *     r = 1. / x
+ *     result += log(x) - .5 * r             # <<<<<<<<<<<<<<
+ *     r = r * r
+ *     result -= r * ((1./12.) - r * ((1./120.) - r * (1./252.)))
+ */
+  __pyx_v_result = (__pyx_v_result + (log(__pyx_v_x) - (.5 * __pyx_v_r)));
+
+  /* "sklearn/decomposition/_online_lda.pyx":111
+ *     r = 1. / x
+ *     result += log(x) - .5 * r
+ *     r = r * r             # <<<<<<<<<<<<<<
+ *     result -= r * ((1./12.) - r * ((1./120.) - r * (1./252.)))
+ *     return result;
+ */
+  __pyx_v_r = (__pyx_v_r * __pyx_v_r);
+
+  /* "sklearn/decomposition/_online_lda.pyx":112
+ *     result += log(x) - .5 * r
+ *     r = r * r
+ *     result -= r * ((1./12.) - r * ((1./120.) - r * (1./252.)))             # <<<<<<<<<<<<<<
+ *     return result;
+ */
+  __pyx_v_result = (__pyx_v_result - (__pyx_v_r * ((1. / 12.) - (__pyx_v_r * ((1. / 120.) - (__pyx_v_r * (1. / 252.)))))));
+
+  /* "sklearn/decomposition/_online_lda.pyx":113
+ *     r = r * r
+ *     result -= r * ((1./12.) - r * ((1./120.) - r * (1./252.)))
+ *     return result;             # <<<<<<<<<<<<<<
+ */
+  __pyx_r = __pyx_v_result;
+  goto __pyx_L0;
+
+  /* "sklearn/decomposition/_online_lda.pyx":95
+ * # http://www.uv.es/~bernardo/1976AppStatist.pdf
+ * @cython.cdivision(True)
+ * cdef double psi(double x) nogil:             # <<<<<<<<<<<<<<
+ *     if x <= 1e-6:
+ *         # psi(x) = -EULER - 1/x + O(x)
+ */
+
+  /* function exit code */
+  __pyx_L0:;
   return __pyx_r;
 }
 
@@ -4146,8 +4139,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_diff, __pyx_k_diff, sizeof(__pyx_k_diff), 0, 0, 1, 1},
   {&__pyx_n_s_dirichlet_expectation_1d, __pyx_k_dirichlet_expectation_1d, sizeof(__pyx_k_dirichlet_expectation_1d), 0, 0, 1, 1},
   {&__pyx_n_s_dirichlet_expectation_2d, __pyx_k_dirichlet_expectation_2d, sizeof(__pyx_k_dirichlet_expectation_2d), 0, 0, 1, 1},
-  {&__pyx_n_s_dtype, __pyx_k_dtype, sizeof(__pyx_k_dtype), 0, 0, 1, 1},
-  {&__pyx_n_s_float64, __pyx_k_float64, sizeof(__pyx_k_float64), 0, 0, 1, 1},
+  {&__pyx_n_s_empty_like, __pyx_k_empty_like, sizeof(__pyx_k_empty_like), 0, 0, 1, 1},
   {&__pyx_kp_s_home_larsb_src_scikit_learn_skl, __pyx_k_home_larsb_src_scikit_learn_skl, sizeof(__pyx_k_home_larsb_src_scikit_learn_skl), 0, 0, 1, 0},
   {&__pyx_n_s_i, __pyx_k_i, sizeof(__pyx_k_i), 0, 0, 1, 1},
   {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
@@ -4160,18 +4152,15 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_u_ndarray_is_not_Fortran_contiguou, __pyx_k_ndarray_is_not_Fortran_contiguou, sizeof(__pyx_k_ndarray_is_not_Fortran_contiguou), 0, 1, 0, 0},
   {&__pyx_n_s_np, __pyx_k_np, sizeof(__pyx_k_np), 0, 0, 1, 1},
   {&__pyx_n_s_numpy, __pyx_k_numpy, sizeof(__pyx_k_numpy), 0, 0, 1, 1},
-  {&__pyx_n_s_out, __pyx_k_out, sizeof(__pyx_k_out), 0, 0, 1, 1},
-  {&__pyx_n_s_psi, __pyx_k_psi, sizeof(__pyx_k_psi), 0, 0, 1, 1},
-  {&__pyx_n_s_psi_row, __pyx_k_psi_row, sizeof(__pyx_k_psi_row), 0, 0, 1, 1},
+  {&__pyx_n_s_psi_row_total, __pyx_k_psi_row_total, sizeof(__pyx_k_psi_row_total), 0, 0, 1, 1},
   {&__pyx_n_s_psi_total, __pyx_k_psi_total, sizeof(__pyx_k_psi_total), 0, 0, 1, 1},
   {&__pyx_n_s_range, __pyx_k_range, sizeof(__pyx_k_range), 0, 0, 1, 1},
-  {&__pyx_n_s_scipy_special, __pyx_k_scipy_special, sizeof(__pyx_k_scipy_special), 0, 0, 1, 1},
+  {&__pyx_n_s_row_total, __pyx_k_row_total, sizeof(__pyx_k_row_total), 0, 0, 1, 1},
   {&__pyx_n_s_size, __pyx_k_size, sizeof(__pyx_k_size), 0, 0, 1, 1},
   {&__pyx_n_s_sklearn_decomposition__online_ld, __pyx_k_sklearn_decomposition__online_ld, sizeof(__pyx_k_sklearn_decomposition__online_ld), 0, 0, 1, 1},
   {&__pyx_n_s_test, __pyx_k_test, sizeof(__pyx_k_test), 0, 0, 1, 1},
   {&__pyx_n_s_total, __pyx_k_total, sizeof(__pyx_k_total), 0, 0, 1, 1},
   {&__pyx_kp_u_unknown_dtype_code_in_numpy_pxd, __pyx_k_unknown_dtype_code_in_numpy_pxd, sizeof(__pyx_k_unknown_dtype_code_in_numpy_pxd), 0, 1, 0, 0},
-  {&__pyx_n_s_zeros, __pyx_k_zeros, sizeof(__pyx_k_zeros), 0, 0, 1, 1},
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
@@ -4284,10 +4273,10 @@ static int __Pyx_InitCachedConstants(void) {
  *     """Dirichlet expectation for multiple samples:
  *     E[log(theta)] for theta ~ Dir(arr).
  */
-  __pyx_tuple__11 = PyTuple_Pack(7, __pyx_n_s_arr, __pyx_n_s_d_exp, __pyx_n_s_psi_row, __pyx_n_s_i, __pyx_n_s_j, __pyx_n_s_n_rows, __pyx_n_s_n_cols); if (unlikely(!__pyx_tuple__11)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 61; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__11 = PyTuple_Pack(8, __pyx_n_s_arr, __pyx_n_s_row_total, __pyx_n_s_psi_row_total, __pyx_n_s_d_exp, __pyx_n_s_i, __pyx_n_s_j, __pyx_n_s_n_rows, __pyx_n_s_n_cols); if (unlikely(!__pyx_tuple__11)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 61; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__11);
   __Pyx_GIVEREF(__pyx_tuple__11);
-  __pyx_codeobj__12 = (PyObject*)__Pyx_PyCode_New(1, 0, 7, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__11, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_larsb_src_scikit_learn_skl, __pyx_n_s_dirichlet_expectation_2d, 61, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__12)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 61; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__12 = (PyObject*)__Pyx_PyCode_New(1, 0, 8, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__11, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_larsb_src_scikit_learn_skl, __pyx_n_s_dirichlet_expectation_2d, 61, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__12)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 61; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -4311,7 +4300,6 @@ PyMODINIT_FUNC PyInit__online_lda(void)
 #endif
 {
   PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -4417,30 +4405,9 @@ PyMODINIT_FUNC PyInit__online_lda(void)
  * 
  * np.import_array()             # <<<<<<<<<<<<<<
  * 
- * from libc.math cimport exp, fabs
+ * from libc.math cimport exp, fabs, log
  */
   import_array();
-
-  /* "sklearn/decomposition/_online_lda.pyx":8
- * 
- * from libc.math cimport exp, fabs
- * from scipy.special import psi             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 8; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_INCREF(__pyx_n_s_psi);
-  __Pyx_GIVEREF(__pyx_n_s_psi);
-  PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_psi);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_scipy_special, __pyx_t_1, -1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 8; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_psi); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 8; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_psi, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 8; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "sklearn/decomposition/_online_lda.pyx":13
  * @cython.boundscheck(False)
@@ -4449,10 +4416,10 @@ PyMODINIT_FUNC PyInit__online_lda(void)
  *                 np.ndarray[ndim=1, dtype=np.float64_t] arr_2):
  *     """Calculate the mean difference between two arrays.
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_13decomposition_11_online_lda_1mean_change, NULL, __pyx_n_s_sklearn_decomposition__online_ld); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 13; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_mean_change, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 13; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_13decomposition_11_online_lda_1mean_change, NULL, __pyx_n_s_sklearn_decomposition__online_ld); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 13; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_mean_change, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 13; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "sklearn/decomposition/_online_lda.pyx":34
  * @cython.boundscheck(False)
@@ -4461,10 +4428,10 @@ PyMODINIT_FUNC PyInit__online_lda(void)
  *     """Dirichlet expectation for a single sample:
  *     exp(E[log(theta)]) for theta ~ Dir(arr).
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_13decomposition_11_online_lda_3_dirichlet_expectation_1d, NULL, __pyx_n_s_sklearn_decomposition__online_ld); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 34; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_dirichlet_expectation_1d, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 34; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_13decomposition_11_online_lda_3_dirichlet_expectation_1d, NULL, __pyx_n_s_sklearn_decomposition__online_ld); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 34; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_dirichlet_expectation_1d, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 34; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "sklearn/decomposition/_online_lda.pyx":61
  * @cython.boundscheck(False)
@@ -4473,20 +4440,20 @@ PyMODINIT_FUNC PyInit__online_lda(void)
  *     """Dirichlet expectation for multiple samples:
  *     E[log(theta)] for theta ~ Dir(arr).
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_13decomposition_11_online_lda_5_dirichlet_expectation_2d, NULL, __pyx_n_s_sklearn_decomposition__online_ld); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 61; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_dirichlet_expectation_2d, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 61; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_13decomposition_11_online_lda_5_dirichlet_expectation_2d, NULL, __pyx_n_s_sklearn_decomposition__online_ld); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 61; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_dirichlet_expectation_2d, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 61; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "sklearn/decomposition/_online_lda.pyx":1
  * cimport cython             # <<<<<<<<<<<<<<
  * cimport numpy as np
  * import numpy as np
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "../../../../../../usr/local/lib/python2.7/dist-packages/Cython/Includes/numpy/__init__.pxd":979
  *      arr.base = baseptr
@@ -4501,7 +4468,6 @@ PyMODINIT_FUNC PyInit__online_lda(void)
   goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
   if (__pyx_m) {
     if (__pyx_d) {
       __Pyx_AddTraceback("init sklearn.decomposition._online_lda", __pyx_clineno, __pyx_lineno, __pyx_filename);
@@ -5569,19 +5535,6 @@ static CYTHON_INLINE void __Pyx_RaiseNeedMoreValuesError(Py_ssize_t index) {
 
 static CYTHON_INLINE void __Pyx_RaiseNoneNotIterableError(void) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-}
-
-static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name) {
-    PyObject* value = __Pyx_PyObject_GetAttrStr(module, name);
-    if (unlikely(!value) && PyErr_ExceptionMatches(PyExc_AttributeError)) {
-        PyErr_Format(PyExc_ImportError,
-        #if PY_MAJOR_VERSION < 3
-            "cannot import name %.230s", PyString_AS_STRING(name));
-        #else
-            "cannot import name %S", name);
-        #endif
-    }
-    return value;
 }
 
 static int __pyx_bisect_code_objects(__Pyx_CodeObjectCacheEntry* entries, int count, int code_line) {
