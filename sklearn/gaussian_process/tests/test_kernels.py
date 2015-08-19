@@ -91,14 +91,14 @@ def test_kernel_theta():
 
         # Check that values returned in theta are consistent with
         # hyperparameter values (being their logarithms)
-        for i, theta_var in enumerate(theta_vars):
-            assert_equal(theta[i], np.log(getattr(kernel, theta_var)))
+        for i, hyperparameter in enumerate(kernel.hyperparameters):
+            assert_equal(theta[i], np.log(getattr(kernel, hyperparameter.name)))
 
         # Fixed kernel parameters must be excluded from theta and gradient.
-        for i, theta_var in enumerate(theta_vars):
+        for i, hyperparameter in enumerate(kernel.hyperparameters):
             # create copy with certain hyperparameter fixed
             params = kernel.get_params()
-            params[theta_var + "_bounds"] = "fixed"
+            params[hyperparameter.name + "_bounds"] = "fixed"
             kernel_class = kernel.__class__
             new_kernel = kernel_class(**params)
             # Check that theta and K_gradient are identical with the fixed
@@ -116,12 +116,12 @@ def test_kernel_theta():
                                    K_gradient_new[..., i:])
 
         # Check that values of theta are modified correctly
-        for i, theta_var in enumerate(theta_vars):
+        for i, hyperparameter in enumerate(kernel.hyperparameters):
             theta[i] = np.log(42)
             kernel.theta = theta
-            assert_almost_equal(getattr(kernel, theta_var), 42)
+            assert_almost_equal(getattr(kernel, hyperparameter.name), 42)
 
-            setattr(kernel, theta_var, 43)
+            setattr(kernel, hyperparameter.name, 43)
             assert_almost_equal(kernel.theta[i], np.log(43))
 
 
