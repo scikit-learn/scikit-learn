@@ -225,40 +225,6 @@ class Kernel(six.with_metaclass(ABCMeta)):
         else:
             return np.array([])
 
-    @bounds.setter
-    def bounds(self, bounds):
-        """Sets the bounds on the kernel's hyperparameters theta.
-
-        Parameters
-        ----------
-        bounds : array, shape (n_dims, 2)
-            The bounds on the kernel's hyperparameters theta
-        """
-        bounds_exp = np.exp(bounds)
-        i = 0
-        for hyperparameter in self.hyperparameters:
-            if hyperparameter.n_elements > 1:  # vector-valued parameter
-                setattr(self, "hyperparameter_" + hyperparameter.name,
-                        Hyperparameter(
-                            hyperparameter.name, hyperparameter.value_type,
-                            bounds_exp[i:i + hyperparameter.n_elements],
-                            hyperparameter.n_elements))
-                setattr(self, hyperparameter.name + "_bounds",
-                        bounds_exp[i:i + hyperparameter.n_elements])
-                i += var_length
-            else:
-                setattr(self, "hyperparameter_" + hyperparameter.name,
-                        Hyperparameter(hyperparameter.name,
-                                       hyperparameter.value_type,
-                                       bounds_exp[i]))
-                setattr(self, hyperparameter.name + "_bounds", bounds_exp[i])
-                i += 1
-
-        if i != len(bounds):
-            raise ValueError("bounds has not the correct number of entries."
-                             " Should be %d; given are %d"
-                             % (i, len(bounds)))
-
     def __add__(self, b):
         if not isinstance(b, Kernel):
             return Sum(self, ConstantKernel(b))
@@ -385,19 +351,6 @@ class CompoundKernel(Kernel):
             The bounds on the kernel's hyperparameters theta
         """
         return np.vstack([kernel.bounds for kernel in self.kernels])
-
-    @bounds.setter
-    def bounds(self, bounds):
-        """Sets the bounds on the kernel's hyperparameters theta.
-
-        Parameters
-        ----------
-        bounds : array, shape (n_dims, 2)
-            The bounds on the kernel's hyperparameters theta
-        """
-        k1_dims = self.k1.n_dims
-        for i, kernel in enumerate(self.kernels):
-            kernel.bounds = bounds[i*k_dims:(i+1)*k_dims]
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -540,19 +493,6 @@ class KernelOperator(Kernel):
         if self.k2.bounds.size == 0:
             return self.k1.bounds
         return np.vstack((self.k1.bounds, self.k2.bounds))
-
-    @bounds.setter
-    def bounds(self, bounds):
-        """Sets the bounds on the kernel's hyperparameters theta.
-
-        Parameters
-        ----------
-        bounds : array, shape (n_dims, 2)
-            The bounds on the kernel's hyperparameters theta
-        """
-        k1_dims = self.k1.n_dims
-        self.k1.bounds = bounds[:k1_dims]
-        self.k2.bounds = bounds[k1_dims:]
 
     def __eq__(self, b):
         if type(self) != type(b):
@@ -795,17 +735,6 @@ class Exponentiation(Kernel):
             The bounds on the kernel's hyperparameters theta
         """
         return self.kernel.bounds
-
-    @bounds.setter
-    def bounds(self, bounds):
-        """Sets the bounds on the kernel's hyperparameters theta.
-
-        Parameters
-        ----------
-        bounds : array, shape (n_dims, 2)
-            The bounds on the kernel's hyperparameters theta
-        """
-        self.kernel.bounds = bounds
 
     def __eq__(self, b):
         if type(self) != type(b):
