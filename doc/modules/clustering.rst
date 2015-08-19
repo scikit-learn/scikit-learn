@@ -1395,3 +1395,7 @@ Drawbacks
   concepts of clusters, such as density based clusters like those obtained
   through DBSCAN.
 
+.. topic:: Examples:
+
+ * :ref:`plot_kmeans_silhouette_analysis.py`
+
