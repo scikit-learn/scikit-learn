@@ -182,7 +182,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
     def hyperparameters(self):
         """Returns a list of all hyperparameter specifications."""
         r = []
-        for attr, value in self.__dict__.items():
+        for attr, value in sorted(self.__dict__.items()):
             if attr.startswith("hyperparameter_"):
                 r.append(value)
         return r
@@ -1368,7 +1368,7 @@ class RationalQuadratic(Kernel):
             else:  # alpha is kept fixed
                 alpha_gradient = np.empty((K.shape[0], K.shape[1], 0))
 
-            return K, np.dstack((l_gradient, alpha_gradient))
+            return K, np.dstack((alpha_gradient, l_gradient))
         else:
             return K
 
