@@ -43,13 +43,13 @@ Gaussian Process Regression (GPR)
 
 The :class:`GaussianProcessRegressor` implements Gaussian processes (GP) for
 regression purposes. For this, the prior of the GP needs to be specified. The
-prior mean is assumed to be zero (other constants can be achieved by
-subtracting the specific value externally from all target values). The prior's
+prior mean is assumed to be constant and zero (for ``normalize_y=False``) or the
+training data's mean (for ``normalize_y=True``). The prior's
 covariance is specified by a passing a :ref:`kernel <gp_kernels>` object. The
 hyperparameters of the kernel are optimized during fitting of
 GaussianProcessRegressor by maximizing the log-marginal-likelihood (LML) based
-on the passed `optimizer`. As the LML may have multiple local optima, the
-optimizer can be started repeatedly by specifying `n_restarts_optimizer`. The
+on the passed ``optimizer``. As the LML may have multiple local optima, the
+optimizer can be started repeatedly by specifying ``n_restarts_optimizer``. The
 first run is always conducted starting from the initial hyperparameter values
 of the kernel; subsequent runs are conducted from hyperparameter values
 that have been chosen randomly from the range of allowed values.
@@ -57,7 +57,7 @@ If the initial hyperparameters should be kept fixed, `None` can be passed as
 optimizer.
 
 The noise level in the targets can be specified by passing it via the
-parameter `alpha`, either globally as a scalar or per datapoint.
+parameter ``alpha``, either globally as a scalar or per datapoint.
 Note that a moderate noise level can also be helpful for dealing with numeric
 issues during fitting as it is effectively implemented as Tikhonov
 regularization, i.e., by adding it to the diagonal of the kernel matrix. An
@@ -68,9 +68,9 @@ level from the data (see example below).
 The implementation is based on Algorithm 2.1 of [RW2006]_. In addition to
 the API of standard sklearn estimators, GaussianProcessRegressor:
      * allows prediction without prior fitting (based on the GP prior)
-     * provides an additional method `sample_y(X)`, which evaluates samples
+     * provides an additional method ``sample_y(X)``, which evaluates samples
        drawn from the GPR (prior or posterior) at given inputs
-     * exposes a method `log_marginal_likelihood(theta)`, which can be used
+     * exposes a method ``log_marginal_likelihood(theta)``, which can be used
        externally for other ways of selecting hyperparameters, e.g., via
        Markov chain Monte Carlo.
 
@@ -247,8 +247,8 @@ The GP prior mean is assumed to be zero. The prior's
 covariance is specified by a passing a :ref:`kernel <gp_kernels>` object. The
 hyperparameters of the kernel are optimized during fitting of
 GaussianProcessRegressor by maximizing the log-marginal-likelihood (LML) based
-on the passed `optimizer`. As the LML may have multiple local optima, the
-optimizer can be started repeatedly by specifying `n_restarts_optimizer`. The
+on the passed ``optimizer``. As the LML may have multiple local optima, the
+optimizer can be started repeatedly by specifying ``n_restarts_optimizer``. The
 first run is always conducted starting from the initial hyperparameter values
 of the kernel; subsequent runs are conducted from hyperparameter values
 that have been chosen randomly from the range of allowed values.
@@ -291,7 +291,7 @@ LML, they perform slightly worse according to the log-loss on test data. The
 figure shows that this is because they exhibit a steep change of the class
 probabilities at the class boundaries (which is good) but have predicted
 probabilities close to 0.5 far away from the class boundaries (which is bad)
-This undiesirable effect is caused by the Laplace approximation used
+This undesirable effect is caused by the Laplace approximation used
 internally by GPC.
 
 The second figure shows the log-marginal-likelihood for different choices of
@@ -313,10 +313,10 @@ Illustration of GPC on the XOR dataset
 .. currentmodule:: sklearn.gaussian_process.kernels
 
 This example illustrates GPC on XOR data. Compared are a stationary, isotropic
-kernel (`RBF`) and a non-stationary kernel (`DotProduct`). On this particular
+kernel (:class:`RBF`) and a non-stationary kernel (:class:`DotProduct`). On this particular
 dataset, the `DotProduct` kernel obtains considerably better results because the
 class-boundaries are linear and coincide with the coordinate axes. In practice,
-however, stationary kernels such as `RBF` often obtain better results
+however, stationary kernels such as :class:`RBF` often obtain better results.
 
 .. figure:: ../auto_examples/gaussian_process/images/plot_gpc_xor_001.png
    :target: ../auto_examples/gaussian_process/plot_gpc_xor.html
