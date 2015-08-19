@@ -505,6 +505,7 @@ Kernels:
   :toctree: generated/
   :template: class.rst
 
+  gaussian_process.kernels.Kernel
   gaussian_process.kernels.Sum
   gaussian_process.kernels.Product
   gaussian_process.kernels.Exponentiation
@@ -517,7 +518,7 @@ Kernels:
   gaussian_process.kernels.DotProduct
   gaussian_process.kernels.PairwiseKernel
   gaussian_process.kernels.CompoundKernel
-
+  gaussian_process.kernels.Hyperparameter
 
 .. _grid_search_ref:
 

@@ -37,6 +37,36 @@ from ..base import clone
 class Hyperparameter(namedtuple(
      'Hyperparameter',
      ('name', 'value_type', 'bounds', 'n_elements', 'fixed'))):
+    """A kernel hyperparameter's specification in form of a namedtuple.
+
+    Entries
+    -------
+    name : string
+        The name of the hyperparameter. Note that a kernel using a
+        hyperparameter with name "x" must have the attributes self.x and
+        self.x_bounds
+
+    value_type : string
+        The type of the hyperparameter. Currently, only "numeric"
+        hyperparameters are supported.
+
+    bounds : pair of floats >= 0 or "fixed"
+        The lower and upper bound on the parameter. If n_elements>1, a pair
+        of 1d array with n_elements each may be given alternatively. If
+        the string "fixed" is passed as bounds, the hyperparameter's value
+        cannot be changed.
+
+    n_elements : int, default=1
+        The number of elements of the hyperparameter value. Defaults to 1,
+        which corresponds to a scalar hyperparameter. n_elements > 1
+        corresponds to a hyperparameter which is vector-valued,
+        such as, e.g., anisotropic length-scales.
+
+    fixed : bool, default: None
+        Whether the value of this hyperparameter is fixed, i.e., cannot be
+        changed during hyperparameter tuning. If None is passed, the "fixed" is
+        derived based on the given bounds.
+    """
     # A raw namedtuple is very memory efficient as it packs the attributes
     # in a struct to get rid of the __dict__ of attributes in particular it
     # does not copy the string for the keys on each instance.
@@ -150,7 +180,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
     @property
     def hyperparameters(self):
-        """Returns a list of all hyperparameter."""
+        """Returns a list of all hyperparameter specifications."""
         r = []
         for attr, value in self.__dict__.items():
             if attr.startswith("hyperparameter_"):
@@ -209,12 +239,12 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
     @property
     def bounds(self):
-        """Returns the bounds on the kernel's hyperparameters theta.
+        """Returns the log-transformed bounds on the theta.
 
         Returns
         -------
         bounds : array, shape (n_dims, 2)
-            The bounds on the kernel's hyperparameters theta
+            The log-transformed bounds on the kernel's hyperparameters theta
         """
         bounds = []
         for hyperparameter in self.hyperparameters:
@@ -343,12 +373,12 @@ class CompoundKernel(Kernel):
 
     @property
     def bounds(self):
-        """Returns the bounds on the kernel's hyperparameters theta.
+        """Returns the log-transformed bounds on the theta.
 
         Returns
         -------
         bounds : array, shape (n_dims, 2)
-            The bounds on the kernel's hyperparameters theta
+            The log-transformed bounds on the kernel's hyperparameters theta
         """
         return np.vstack([kernel.bounds for kernel in self.kernels])
 
@@ -481,12 +511,12 @@ class KernelOperator(Kernel):
 
     @property
     def bounds(self):
-        """Returns the bounds on the kernel's hyperparameters theta.
+        """Returns the log-transformed bounds on the theta.
 
         Returns
         -------
         bounds : array, shape (n_dims, 2)
-            The bounds on the kernel's hyperparameters theta
+            The log-transformed bounds on the kernel's hyperparameters theta
         """
         if self.k1.bounds.size == 0:
             return self.k2.bounds
@@ -727,12 +757,12 @@ class Exponentiation(Kernel):
 
     @property
     def bounds(self):
-        """Returns the bounds on the kernel's hyperparameters theta.
+        """Returns the log-transformed bounds on the theta.
 
         Returns
         -------
         bounds : array, shape (n_dims, 2)
-            The bounds on the kernel's hyperparameters theta
+            The log-transformed bounds on the kernel's hyperparameters theta
         """
         return self.kernel.bounds
 
@@ -1571,8 +1601,8 @@ class PairwiseKernel(Kernel):
 
     Note: Evaluation of eval_gradient is not analytic but numeric and all
           kernels support only isotropic distances. The parameter gamma is
-          specified via the param_space and may be optimized. The other
-          kernel parameters are set directly  at initialization and are kept
+          considered to be a hyperparameter and may be optimized. The other
+          kernel parameters are set directly at initialization and are kept
           fixed.
 
     Parameters
