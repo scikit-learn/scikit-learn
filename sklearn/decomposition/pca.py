@@ -524,7 +524,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = RandomizedPCA(n_components=2)
     >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    RandomizedPCA(copy=True, iterated_power=3, n_components=2,
+    RandomizedPCA(copy=True, iterated_power=2, n_components=2,
            random_state=None, whiten=False)
     >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
@@ -546,7 +546,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_components=None, copy=True, iterated_power=3,
+    def __init__(self, n_components=None, copy=True, iterated_power=2,
                  whiten=False, random_state=None):
         self.n_components = n_components
         self.copy = copy

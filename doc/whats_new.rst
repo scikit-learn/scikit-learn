@@ -15,26 +15,40 @@ Changelog
 New features
 ............
 
-   - The Gaussian Process module has been reimplemented and now offers classification 
-     and regression estimators through :class:`gaussian_process.GaussianProcessClassifier` 
-     and  :class:`gaussian_process.GaussianProcessRegressor`. Among other things, the new 
-     implementation supports kernel engineering, gradient-based hyperparameter optimization or 
-     sampling of functions from GP prior and GP posterior. Extensive documentation and 
+   - The Gaussian Process module has been reimplemented and now offers classification
+     and regression estimators through :class:`gaussian_process.GaussianProcessClassifier`
+     and  :class:`gaussian_process.GaussianProcessRegressor`. Among other things, the new
+     implementation supports kernel engineering, gradient-based hyperparameter optimization or
+     sampling of functions from GP prior and GP posterior. Extensive documentation and
      examples are provided. By `Jan Hendrik Metzen`_.
- 
+
 Enhancements
 ............
- 
+
 Bug fixes
 .........
-    - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized 
+
+    - :class:`RandomizedPCA` default number of `iterated_power` is 2 instead of 3.
+      This is a speed up with a minor precision decrease. By `Giorgio Patrini`_.
+
+    - :func:`randomized_svd` performs 2 power iterations by default, instead or 0.
+      In practice this is often enough for obtaining a good approximation of the
+      true eigenvalues/vectors in the presence of noise. By `Giorgio Patrini`_.
+
+    - :func:`randomized_range_finder` is more numerically stable when many
+      power iterations are requested, since it applies LU normalization by default.
+      If `n_iter<2` numerical issues are unlikely, thus no normalization is applied.
+      Other normalization options are available: 'none', 'LU' and 'QR'. By
+      `Giorgio Patrini`_.
+
+    - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized
       Laplacian matrix was incorrectly set to 1. By `Peter Fischer`_.
 
 
 API changes summary
 -------------------
- 
- 
+
+
 .. _changes_0_17:
 
 Version 0.17
@@ -271,7 +285,7 @@ Bug fixes
       in the final fit. By `Manoj Kumar`_.
 
     - Fixed bug in :class:`ensemble.forest.ForestClassifier` while computing
-      oob_score and X is a sparse.csc_matrix. By `Ankur Ankan`_.     
+      oob_score and X is a sparse.csc_matrix. By `Ankur Ankan`_.
 
     - All regressors now consistently handle and warn when given ``y`` that is of
       shape ``(n_samples, 1)``. By `Andreas Müller`_.
@@ -3799,3 +3813,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Jean Kossaifi: https://github.com/JeanKossaifi
 .. _Andrew Lamb: https://github.com/andylamb
 .. _Graham Clenaghan: https://github.com/gclenaghan
+.. _Giorgio Patrini: https://github.com/giorgiop
