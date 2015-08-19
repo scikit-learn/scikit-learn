@@ -408,8 +408,18 @@ kernel but with the hyperparameters set to ``theta``. An illustrative example:
     Hyperparameter(name='k1__k1__c', value_type='numeric', bounds=array([[  1.00000000e-05,   1.00000000e+05]]), n_elements=1, fixed=False)
     Hyperparameter(name='k1__k2__l', value_type='numeric', bounds=array([[  1.00000000e-05,   1.00000000e+05]]), n_elements=1, fixed=False)
     Hyperparameter(name='k2__l', value_type='numeric', bounds=array([[  1.00000000e-05,   1.00000000e+05]]), n_elements=1, fixed=False)
-    >>> print(kernel.get_params())
-    {'k1__k1': 1**2, 'k1__k1__c': 1.0, 'k1__k2': RBF(l=0.5), 'k1__k2__l_bounds': (1e-05, 100000.0), 'k1__k2__l': 0.5, 'k1__k1__c_bounds': (1e-05, 100000.0), 'k2__l': 2.0, 'k2': RBF(l=2), 'k1': 1**2 * RBF(l=0.5), 'k2__l_bounds': (1e-05, 100000.0)}
+        >>> params = kernel.get_params()
+    >>> for key in sorted(params): print("%s : %s" % (key, params[key]))
+    k1 : 1**2 * RBF(l=0.5)
+    k1__k1 : 1**2
+    k1__k1__c : 1.0
+    k1__k1__c_bounds : (1e-05, 100000.0)
+    k1__k2 : RBF(l=0.5)
+    k1__k2__l : 0.5
+    k1__k2__l_bounds : (1e-05, 100000.0)
+    k2 : RBF(l=2)
+    k2__l : 2.0
+    k2__l_bounds : (1e-05, 100000.0)
     >>> print(kernel.theta)  # Note: log-transformed
     [ 0.         -0.69314718  0.69314718]
     >>> print(kernel.bounds)  # Note: log-transformed

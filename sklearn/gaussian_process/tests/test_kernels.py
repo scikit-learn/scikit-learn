@@ -110,7 +110,7 @@ def test_kernel_theta():
                 assert_equal(theta[:i], new_kernel.theta[:i])
                 assert_array_equal(K_gradient[..., :i],
                                    K_gradient_new[..., :i])
-            if i + 1 < len(theta_vars):
+            if i + 1 < len(kernel.hyperparameters):
                 assert_equal(theta[i+1:], new_kernel.theta[i:])
                 assert_array_equal(K_gradient[..., i+1:],
                                    K_gradient_new[..., i:])
