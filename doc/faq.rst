@@ -20,6 +20,10 @@ There are multiple scikits, which are scientific toolboxes build around SciPy.
 You can find a list at `<https://scikits.appspot.com/scikits>`_.
 Apart from scikit-learn, another popular one is `scikit-image <http://scikit-image.org/>`_.
 
+How can I make a bunch object?
+----------------------------------
+Don't make a bunch. They are not part of the scikit-learn API. They are just a way package some numpy arrays. You only ever need numpy arrays to put data into scikit-learn.
+
 How can I contribute to scikit-learn?
 -----------------------------------------
 See :ref:`contributing`. Before wanting to add a new algorithm, which is
