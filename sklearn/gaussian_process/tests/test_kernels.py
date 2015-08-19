@@ -86,8 +86,8 @@ def test_kernel_theta():
         theta_vars = map(lambda s: s.rstrip("_bounds"),
                          filter(lambda s: s.endswith("_bounds"), args))
         assert_equal(
-            [hyperparameter.name for hyperparameter in kernel.hyperparameters],
-            list(theta_vars))
+            set(hyperparameter.name for hyperparameter in kernel.hyperparameters),
+            set(theta_vars))
 
         # Check that values returned in theta are consistent with
         # hyperparameter values (being their logarithms)

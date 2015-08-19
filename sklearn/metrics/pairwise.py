@@ -1332,13 +1332,13 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(X, Y, precomputed=True)
         return X
+    elif isinstance(metric, GPKernel):
+        func = metric.__call__
     elif metric in PAIRWISE_KERNEL_FUNCTIONS:
         if filter_params:
             kwds = dict((k, kwds[k]) for k in kwds
                         if k in KERNEL_PARAMS[metric])
         func = PAIRWISE_KERNEL_FUNCTIONS[metric]
-    elif isinstance(metric, GPKernel):
-        func = metric.__call__
     elif callable(metric):
         func = partial(_pairwise_callable, metric=metric, **kwds)
     else:
