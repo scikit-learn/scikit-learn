@@ -86,7 +86,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         must be finite. Note that n_restarts_optimizer=0 implies that one
         run is performed.
 
-    max_iter: int, optional (default: 100)
+    max_iter_predict: int, optional (default: 100)
         The maximum number of iterations in Newton's method for approximating
         the posterior during predict. Smaller values will reduce computation
         time at the cost of worse results.
@@ -137,12 +137,12 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         of sqrt(W) is stored.
     """
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
-                 n_restarts_optimizer=0, max_iter=100, warm_start=False,
+                 n_restarts_optimizer=0, max_iter_predict=100, warm_start=False,
                  copy_X_train=False, random_state=None):
         self.kernel = kernel
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
-        self.max_iter = max_iter
+        self.max_iter_predict = max_iter_predict
         self.warm_start = warm_start
         self.copy_X_train = copy_X_train
         self.random_state = random_state
@@ -371,7 +371,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         # Use Newton's iteration method to find mode of Laplace approximation
         log_marginal_likelihood = -np.inf
-        for _ in range(self.max_iter):
+        for _ in range(self.max_iter_predict):
             # Line 4
             pi = 1 / (1 + np.exp(-f))
             W = pi * (1 - pi)
@@ -477,7 +477,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         must be finite. Note that n_restarts_optimizer=0 implies that one
         run is performed.
 
-    max_iter: int, optional (default: 100)
+    max_iter_predict: int, optional (default: 100)
         The maximum number of iterations in Newton's method for approximating
         the posterior during predict. Smaller values will reduce computation
         time at the cost of worse results.
@@ -533,13 +533,13 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         The number of classes in the training data
     """
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
-                 n_restarts_optimizer=0, max_iter=100, warm_start=False,
-                 copy_X_train=False, random_state=None,
+                 n_restarts_optimizer=0, max_iter_predict=100,
+                 warm_start=False, copy_X_train=False, random_state=None,
                  multi_class="one_vs_rest", n_jobs=1):
         self.kernel = kernel
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
-        self.max_iter = max_iter
+        self.max_iter_predict = max_iter_predict
         self.warm_start = warm_start
         self.copy_X_train = copy_X_train
         self.random_state = random_state
@@ -565,7 +565,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
 
         self.base_estimator_ = _BinaryGaussianProcessClassifierLaplace(
             self.kernel, self.optimizer, self.n_restarts_optimizer,
-            self.max_iter, self.warm_start, self.copy_X_train,
+            self.max_iter_predict, self.warm_start, self.copy_X_train,
             self.random_state)
 
         self.classes_ = np.unique(y)
