@@ -58,10 +58,10 @@ def l1_cross_distances(X):
     return D, ij
 
 
-@deprecated("GaussianProcess is deprecated and will be removed in 0.18."
+@deprecated("GaussianProcess is deprecated and will be removed in 0.18. "
             "Use the GaussianProcessRegressor instead.")
 class GaussianProcess(BaseEstimator, RegressorMixin):
-    """The Gaussian Process model class.
+    """The legacy Gaussian Process model class.
 
     Note that this class is deprecated and will be removed in 0.18.
     Use the GaussianProcessRegressor instead.

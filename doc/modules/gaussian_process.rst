@@ -358,12 +358,86 @@ be subdivided into isotropic and anisotropic kernels, where isotropic kernels ar
 also invariant to rotations in the input space. For more details, we refer to
 Chapter 4 of [RW2006]_.
 
+Gaussian Process Kernel API
+---------------------------
+The main usage of a :class:`Kernel` is to compute the GP's covariance between
+datapoints. For this, the method ``__call__`` of the kernel can be called. This
+method can either be used to compute the "auto-covariance" of all pairs of
+datapoints in a 2d array X, or the "cross-covariance" of all combinations
+of datapoints of a 2d array X with datapoints in a 2d array Y. The following
+identity holds true for all kernels k (except for the :class:`WhiteKernel`):
+``k(X) == K(X, Y=X)``
+
+If only the diagonal of the auto-covariance is being used, the method ``diag()``
+of a kernel can be called, which is more computationally efficient than the
+equivalent call to ``__call__``: ``np.diag(k(X, X)) == k.diag(X)``
+
+Kernels are parameterized by a vector :math:`\theta` of hyperparameters. These
+hyperparameters can for instance control length-scales or periodicity of a
+kernel (see below). All kernels support computing analytic gradients of
+of the kernel's auto-covariance with respect to :math:`\theta` via setting
+``eval_gradient=True`` in the ``__call__`` method. This gradient is used by the
+Gaussian process (both regressor and classifier) in computing the gradient
+of the log-marginal-likelihood, which in turn is used to determine the
+value of :math:`\theta`, which maximizes the log-marginal-likelihood,  via
+gradient ascent. For each hyperparameter, the initial value and the
+bounds need to be specified when creating an instance of the kernel. The
+current value of :math:`\theta` can be get and set via the property
+``theta`` of the kernel object. Moreover, the bounds of the hyperparameters can be
+accessed by the property ``bounds`` of the kernel. Note that both properties
+(theta and bounds) return log-transformed values of the internally used values
+since those are typically more amenable to gradient-based optimization.
+The specification of each hyperparameter is stored in the form of an instance of
+:class:`Hyperparameter` in the respective kernel. Note that a kernel using a
+hyperparameter with name "x" must have the attributes self.x and self.x_bounds.
+
+The abstract base class for all kernels is :class:`Kernel`. Kernel implements a
+similar interface as :class:`Estimator`, providing the methods ``get_params()``,
+``set_params()``, and ``clone()``. This allows setting kernel values also via
+meta-estimators such as :class:`Pipeline` or :class:`GridSearch`. Note that due to the nested
+structure of kernels (by applying kernel operators, see below), the names of
+kernel parameters might become relatively complicated. In general, for a
+binary kernel operator, parameters of the left operand are prefixed with ``k1__``
+and parameters of the right operand with ``k2__``. An additional convenience
+method is ``clone_with_theta(theta)``, which returns a cloned version of the
+kernel but with the hyperparameters set to ``theta``. An illustrative example:
+
+    >>> from sklearn.gaussian_process.kernels import ConstantKernel, RBF
+    >>> kernel = ConstantKernel(c=1.0) * RBF(l=0.5) + RBF(l=2.0)
+    >>> for hyperparameter in kernel.hyperparameters: print hyperparameter
+    Hyperparameter(name='k1__k1__c', value_type='numeric', bounds=array([[  1.00000000e-05,   1.00000000e+05]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k1__k2__l', value_type='numeric', bounds=array([[  1.00000000e-05,   1.00000000e+05]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k2__l', value_type='numeric', bounds=array([[  1.00000000e-05,   1.00000000e+05]]), n_elements=1, fixed=False
+    >>> print kernel.get_params()
+    {'k1__k1': 1**2, 'k1__k1__c': 1.0, 'k1__k2': RBF(l=0.5),
+     'k1__k2__l_bounds': (1e-05, 100000.0), 'k1__k2__l': 0.5,
+     'k1__k1__c_bounds': (1e-05, 100000.0), 'k2__l': 2.0, 'k2': RBF(l=2),
+     'k1': 1**2 * RBF(l=0.5), 'k2__l_bounds': (1e-05, 100000.0)}
+    >>> print kernel.theta  # Note: log-transformed
+     [ 0.         -0.69314718  0.69314718]
+    >>> print kernel.bounds  # Note: log-transformed
+     [[-11.51292546  11.51292546]
+      [-11.51292546  11.51292546]
+      [-11.51292546  11.51292546]]
+
+
+All Gaussian process kernels are interoperable with :mod:`sklearn.metrics.pairwise`
+and vice versa: instances of subclasses of :class:`Kernel` can be passed as
+``metric`` to pairwise_kernels`` from :mod:`sklearn.metrics.pairwise`. Moreover,
+kernel functions from pairwise can be used as GP kernels by using the wrapper
+class :class:`PairwiseKernel`. The only caveat is that the gradient of
+the hyperparameters is not analytic but numeric and all those kernels support
+only isotropic distances. The parameter ``gamma`` is considered to be a
+hyperparameter and may be optimized. The other kernel parameters are set
+directly at initialization and are kept fixed.
+
+
 Basic kernels
 -------------
-The :class:`ConstantKernel` kernel can be used as part of a product-kernel
-where it scales the magnitude of the other factor (kernel) or as part of a
-sum-kernel, where it modifies the mean of the Gaussian process. It depends
-on a parameter :math:`c`. It is defined as:
+The :class:`ConstantKernel` kernel can be used as part of a :class:`Product`
+kernel where it scales the magnitude of the other factor (kernel) or as part
+of a :class:`Sum` kernel, where it modifies the mean of the Gaussian process.
+It depends on a parameter :math:`c`. It is defined as:
 
 .. math::
    k(x_i, x_j) = c \;\forall\; x_1, x_2
