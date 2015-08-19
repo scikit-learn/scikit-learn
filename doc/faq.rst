@@ -26,6 +26,11 @@ See :ref:`contributing`. Before wanting to add a new algorithm, which is
 usually a major and lengthy undertaking, it is recommended to start with :ref:`known
 issues <easy_issues>`.
 
+
+How can I make a bunch object?
+--------------------------------
+Don't make a bunch. They are not part of the scikit-learn API. They are just a way package some numpy arrays. You only ever need numpy arrays to put data into scikit-learn.
+
 Can I add this new algorithm that I (or someone else) just published?
 -------------------------------------------------------------------------
 No. As a rule we only add well-established algorithms. A rule of thumb is at least
