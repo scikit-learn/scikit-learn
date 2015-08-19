@@ -405,14 +405,19 @@ class Imputer(BaseEstimator, TransformerMixin):
                     mask = mask.transpose()
                     statistics = statistics.transpose()
 
-                batch_size = 10  # set batch size for block query
-                if False:
+                batch_size = 20  # set batch size for block query
+                if True:
                     missing_index = np.where(mask.any(axis=1))[0]
                     #@jnothman 's method
+                    D2 = np.empty_like(np.zeros([batch_size, statistics.shape[0], statistics.shape[1]]))
                     for sl in list(gen_batches(len(missing_index), batch_size)):
                         X_sl = X[missing_index[sl]]
                         test1 = X_sl[:][:, np.newaxis, :] - statistics
-                        D2 = test1 ** 2
+                        #D2 = np.empty_like(test1)
+                        if test1.shape != D2.shape:
+                            D2 = np.empty_like(test1)
+                        np.multiply(test1, test1, out=D2)
+                        #D2 = test1 ** 2
                         #D2 = (X_sl[missing_index_sl][:, np.newaxis, :] - statistics) ** 2
                         D2[np.isnan(D2)] = 0
                         missing_row, missing_col = np.where(np.isnan(X_sl))
@@ -434,7 +439,10 @@ class Imputer(BaseEstimator, TransformerMixin):
                             for sl in batch_slice:
                                 index_sl = missing_index[sl]
                                 X_sl = X[index_sl]
-                                D2 = (X_sl[:][:, np.newaxis, :] - statistics) ** 2
+                                test1 = X_sl[:][:, np.newaxis, :] - statistics
+                                D2 = np.empty_like(test1)
+                                np.multiply(test1, test1, out=D2)
+                                #D2 = test1 ** 2
                                 D2[np.isnan(D2)] = 0
                                 missing_row, missing_col = np.where(np.isnan(X_sl))
                                 sqdist = D2.sum(axis=2)
