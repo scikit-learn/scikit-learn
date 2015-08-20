@@ -169,7 +169,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             if self.alpha.shape[0] == 1:
                 self.alpha = self.alpha[0]
             else:
-                raise ValueError("sigma_n_squared must be a scalar or an array"
+                raise ValueError("alpha must be a scalar or an array"
                                  " with same number of entries as y.(%d != %d)"
                                  % (self.alpha.shape[0], y.shape[0]))
 
