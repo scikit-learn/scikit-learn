@@ -91,7 +91,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         prior based on the data, which contradicts the likelihood principle;
         normalization is thus disabled per default.
 
-    copy_X_train : bool, optional (default: False)
+    copy_X_train : bool, optional (default: True)
         If True, a persistent copy of the training data is stored in the
         object. Otherwise, just a reference to the training data is stored,
         which might cause predictions to change if the data is modified
@@ -122,7 +122,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     """
     def __init__(self, kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
-                 normalize_y=False, copy_X_train=False, random_state=None):
+                 normalize_y=False, copy_X_train=True, random_state=None):
         self.kernel = kernel
         self.alpha = alpha
         self.optimizer = optimizer
