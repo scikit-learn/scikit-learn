@@ -107,10 +107,10 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
     elif algorithm == 'lasso_cd':
         alpha = float(regularization) / n_features  # account for scaling
-        clf = Lasso(alpha=alpha, fit_intercept=False, precompute=gram,
-                    max_iter=max_iter, warm_start=True)
+        clf = Lasso(alpha=alpha, fit_intercept=False, normalize=False,
+                    precompute=gram, max_iter=max_iter, warm_start=True)
         clf.coef_ = init
-        clf.fit(dictionary.T, X.T)
+        clf.fit(dictionary.T, X.T, check_input=False)
         new_code = clf.coef_
 
     elif algorithm == 'lars':
@@ -224,8 +224,10 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     n_components = dictionary.shape[0]
 
     if gram is None and algorithm != 'threshold':
-        gram = np.dot(dictionary, dictionary.T)
-    if cov is None:
+        # Transposing product to ensure Fortran ordering
+        gram = np.dot(dictionary, dictionary.T).T
+
+    if cov is None and algorithm != 'lasso_cd':
         copy_cov = False
         cov = np.dot(dictionary, X.T)
 
@@ -239,10 +241,17 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
             regularization = 1.
 
     if n_jobs == 1 or algorithm == 'threshold':
-        return _sparse_encode(X, dictionary, gram, cov=cov,
+        code = _sparse_encode(X,
+                              dictionary, gram, cov=cov,
                               algorithm=algorithm,
                               regularization=regularization, copy_cov=copy_cov,
-                              init=init, max_iter=max_iter)
+                              init=init,
+                              max_iter=max_iter)
+        # This ensure that dimensionality of code is always 2,
+        # consistant with the case n_jobs > 1
+        if code.ndim == 1:
+            code = code[np.newaxis, :]
+        return code
 
     # Enter parallel code block
     code = np.empty((n_samples, n_components))
@@ -250,7 +259,9 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
     code_views = Parallel(n_jobs=n_jobs)(
         delayed(_sparse_encode)(
-            X[this_slice], dictionary, gram, cov[:, this_slice], algorithm,
+            X[this_slice], dictionary, gram,
+            cov[:, this_slice] if cov is not None else None,
+            algorithm,
             regularization=regularization, copy_cov=copy_cov,
             init=init[this_slice] if init is not None else None,
             max_iter=max_iter)
@@ -639,7 +650,6 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     else:
         dictionary = np.r_[dictionary,
                            np.zeros((n_components - r, dictionary.shape[1]))]
-    dictionary = np.ascontiguousarray(dictionary.T)
 
     if verbose == 1:
         print('[dict_learning]', end=' ')
@@ -649,6 +659,10 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         random_state.shuffle(X_train)
     else:
         X_train = X
+
+    dictionary = check_array(dictionary.T, order='F', dtype=np.float64,
+                             copy=False)
+    X_train = check_array(X_train, order='C', dtype=np.float64, copy=False)
 
     batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)

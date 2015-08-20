@@ -359,11 +359,18 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNet
     ElasticNetCV
     """
-    X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
-    y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False, ensure_2d=False)
-    if Xy is not None:
-        Xy = check_array(Xy, 'csc', dtype=np.float64, order='F', copy=False,
-                         ensure_2d=False)
+    # We expect X and y to be already float64 Fortran ordered when bypassing
+    # checks
+    check_input = 'check_input' not in params or params['check_input']
+    pre_fit = 'check_input' not in params or params['pre_fit']
+    if check_input:
+        X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
+        y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False,
+                        ensure_2d=False)
+        if Xy is not None:
+            Xy = check_array(Xy, 'csc', dtype=np.float64, order='F',
+                             copy=False,
+                             ensure_2d=False)
     n_samples, n_features = X.shape
 
     multi_output = False
@@ -380,10 +387,13 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         else:
             X_sparse_scaling = np.zeros(n_features)
 
-    # X should be normalized and fit already.
-    X, y, X_mean, y_mean, X_std, precompute, Xy = \
-        _pre_fit(X, y, Xy, precompute, normalize=False, fit_intercept=False,
-                 copy=False)
+    # X should be normalized and fit already if function is called
+    # from ElasticNet.fit
+    if pre_fit:
+        X, y, X_mean, y_mean, X_std, precompute, Xy = \
+            _pre_fit(X, y, Xy, precompute, normalize=False,
+                     fit_intercept=False,
+                     copy=False, Xy_precompute_order='F')
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
@@ -428,7 +438,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model = cd_fast.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
         elif isinstance(precompute, np.ndarray):
-            precompute = check_array(precompute, 'csc', dtype=np.float64, order='F')
+            # We expect precompute to be already Fortran ordered when bypassing
+            # checks
+            if check_input:
+                precompute = check_array(precompute, 'csc', dtype=np.float64,
+                                         order='F')
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
                 tol, rng, random, positive)
@@ -601,7 +615,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.random_state = random_state
         self.selection = selection
 
-    def fit(self, X, y):
+    def fit(self, X, y, check_input=True):
         """Fit model with coordinate descent.
 
         Parameters
@@ -622,6 +636,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well. You are advised to use the LinearRegression "
@@ -632,14 +647,16 @@ class ElasticNet(LinearModel, RegressorMixin):
                           "slower even when n_samples > n_features. Hence "
                           "it will be removed in 0.18.",
                           DeprecationWarning, stacklevel=2)
-
-        X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
-                         order='F', copy=self.copy_X and self.fit_intercept,
-                         multi_output=True, y_numeric=True)
-
+        # We expect X and y to be already float64 Fortran ordered arrays
+        # when bypassing checks
+        if check_input:
+            X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
+                             order='F',
+                             copy=self.copy_X and self.fit_intercept,
+                             multi_output=True, y_numeric=True)
         X, y, X_mean, y_mean, X_std, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
-                     self.fit_intercept, copy=True)
+                     self.fit_intercept, copy=False, Xy_precompute_order='F')
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -678,7 +695,9 @@ class ElasticNet(LinearModel, RegressorMixin):
                           X_mean=X_mean, X_std=X_std, return_n_iter=True,
                           coef_init=coef_[k], max_iter=self.max_iter,
                           random_state=self.random_state,
-                          selection=self.selection)
+                          selection=self.selection,
+                          check_input=False,
+                          pre_fit=False)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
             self.n_iter_.append(this_iter[0])

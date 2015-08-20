@@ -105,6 +105,10 @@ Enhancements
      with ``n_jobs > 1`` used with a large grid of parameters on a small
      dataset. By `Vlad Niculae`_, `Olivier Grisel`_ and `Loic Esteve`_.
 
+   - Improved speed (3 times per iteration) of
+     :class:`decomposition.DictLearning` with coordinate descent method
+     from :class:`linear_model.Lasso`. By `Arthur Mensch`_.
+
 
 Bug fixes
 .........
