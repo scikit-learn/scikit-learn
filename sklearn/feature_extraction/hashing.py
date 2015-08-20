@@ -9,7 +9,6 @@ import scipy.sparse as sp
 from itertools import islice
 
 from . import _hashing
-from ..utils.sparsefuncs import csr_vappend
 from ..base import BaseEstimator, TransformerMixin
 
 
@@ -87,7 +86,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self.input_type = input_type
         self.n_features = n_features
         self.non_negative = non_negative
-        self.chunksize = 10000
 
     @staticmethod
     def _validate_params(n_features, input_type):
@@ -118,16 +116,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self._validate_params(self.n_features, self.input_type)
         return self
 
-    def in_chunks(self, iterable, size):
-        """Generates chunks of given size from an arbitrary iterable
-        """
-        it = iter(iterable)
-        while True:
-            chunk = tuple(islice(it, size))
-            if not chunk:
-                return
-            yield chunk
-
     def transform(self, raw_X, y=None):
         """Transform a sequence of instances to a scipy.sparse matrix.
 
@@ -147,36 +135,21 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             Feature matrix, for use with estimators or further transformers.
 
         """
-        X = None  # empty csr_matrix -> invalid shape for scipy <= 0.11.0
-        for raw_X_chunk in self.in_chunks(raw_X, self.chunksize):
-            raw_X_chunk = iter(raw_X_chunk)
-            if self.input_type == "dict":
-                raw_X_chunk = (_iteritems(d) for d in raw_X_chunk)
-            elif self.input_type == "string":
-                raw_X_chunk = (((f, 1) for f in x) for x in raw_X_chunk)
-
-            indices, indptr, values = \
-                _hashing.transform(raw_X_chunk, self.n_features, self.dtype)
-            n_samples = indptr.shape[0] - 1
-
-            Y = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
-                              shape=(n_samples, self.n_features))
-            Y.sum_duplicates()  # also sorts the indices
-
-            if X is not None:
-                X = csr_vappend(X, Y)
-            else:
-                X = Y
-
-            if self.non_negative:
-                np.abs(X.data, X.data)
-
-        if X is not None:
-            n_samples = X.indptr.shape[0] - 1
-        else:
-            n_samples = 0
+        raw_X = iter(raw_X)
+        if self.input_type == "dict":
+            raw_X = (_iteritems(d) for d in raw_X)
+        elif self.input_type == "string":
+            raw_X = (((f, 1) for f in x) for x in raw_X)
+        indices, indptr, values = \
+            _hashing.transform(raw_X, self.n_features, self.dtype)
+        n_samples = indptr.shape[0] - 1
 
         if n_samples == 0:
             raise ValueError("Cannot vectorize empty sequence.")
 
+        X = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
+                          shape=(n_samples, self.n_features))
+        X.sum_duplicates()  # also sorts the indices
+        if self.non_negative:
+            np.abs(X.data, X.data)
         return X

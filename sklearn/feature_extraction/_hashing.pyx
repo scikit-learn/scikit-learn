@@ -30,18 +30,18 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
     cdef np.int32_t h
     cdef double value
 
+    cdef np.int32_t feature_idx
+    cdef dict feature_counter
+
     cdef array.array indices
     cdef array.array indptr
+    cdef array.array values
     indices = array.array("i")
     indptr = array.array("i", [0])
-
-    # Since Python array does not understand Numpy dtypes, we grow the indices
-    # and values arrays ourselves. Use a Py_ssize_t capacity for safety.
-    cdef Py_ssize_t capacity = 8192     # arbitrary
-    cdef np.int32_t size = 0
-    cdef np.ndarray values = np.empty(capacity, dtype=dtype)
+    values = array.array("d")
 
     for x in raw_X:
+        feature_counter = {}
         for f, v in x:
             value = v
             if value == 0:
@@ -54,24 +54,24 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
             elif not isinstance(f, bytes):
                 raise TypeError("feature names must be strings")
             h = murmurhash3_bytes_s32(f, 0)
-
-            array.resize_smart(indices, len(indices) + 1)
-            indices[len(indices) - 1] = abs(h) % n_features
+            feature_idx = abs(h) % n_features 
             value *= (h >= 0) * 2 - 1
-            values[size] = value
-            size += 1
+            if feature_idx not in feature_counter:
+                feature_counter[feature_idx] = value
+            else:
+                feature_counter[feature_idx] += value
 
-            if size == capacity:
-                capacity *= 2
-                # can't use resize member because there might be multiple
-                # references to the arrays due to Cython's error checking
-                values = np.resize(values, capacity)
+        indices.extend(feature_counter.keys())
+        values.extend(feature_counter.values())
+        del(feature_counter)
 
-        array.resize_smart(indptr, len(indptr) + 1)
-        indptr[len(indptr) - 1] = size
+        indptr.append(len(indices))
 
     if len(indices):
         indices_a = np.frombuffer(indices, dtype=np.int32)
+        values_a = np.frombuffer(values, dtype=np.float64)
+        values_a = np.array(values, dtype=dtype)
     else:       # workaround for NumPy < 1.7.0
         indices_a = np.empty(0, dtype=np.int32)
-    return (indices_a, np.frombuffer(indptr, dtype=np.int32), values[:size])
+        values_a = np.empty(0, dtype=dtype)
+    return (indices_a, np.frombuffer(indptr, dtype=np.int32), values_a)
