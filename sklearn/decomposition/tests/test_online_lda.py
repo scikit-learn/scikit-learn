@@ -1,8 +1,13 @@
 import numpy as np
-from scipy.sparse import csr_matrix
 from scipy.linalg import block_diag
-from sklearn.decomposition import LatentDirichletAllocation
+from scipy.sparse import csr_matrix
+from scipy.special import psi
 
+from sklearn.decomposition import LatentDirichletAllocation
+from sklearn.decomposition._online_lda import (_dirichlet_expectation_1d,
+                                               _dirichlet_expectation_2d)
+
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -303,3 +308,16 @@ def test_lda_empty_docs():
         lda = LatentDirichletAllocation(max_iter=750).fit(X)
         assert_almost_equal(lda.components_.sum(axis=0),
                             np.ones(lda.components_.shape[1]))
+
+
+def test_dirichlet_expectation():
+    """Test Cython version of Dirichlet expectation calculation."""
+    x = np.logspace(-100, 10, 10000)
+    assert_allclose(_dirichlet_expectation_1d(x),
+                    np.exp(psi(x) - psi(np.sum(x))),
+                    atol=1e-19)
+
+    x = x.reshape(100, 100)
+    assert_allclose(_dirichlet_expectation_2d(x),
+                    psi(x) - psi(np.sum(x, axis=1)[:, np.newaxis]),
+                    rtol=1e-11, atol=3e-9)
