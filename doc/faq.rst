@@ -29,7 +29,24 @@ issues <easy_issues>`.
 
 How can I make a bunch object?
 --------------------------------
-Don't make a bunch. They are not part of the scikit-learn API. They are just a way package some numpy arrays. You only ever need numpy arrays to put data into scikit-learn.
+Don't make a bunch! They are not part of the scikit-learn API. Bunch objects are just a way to package some numpy arrays. You only ever need numpy arrays to put data into scikit-learn.
+
+For instance to train a classifier, all you need is a 2D array X for the input variables. With the features as columns, samples as rows and a 1D array Y for the target variables.The array Y will contain an integer value to encode the class membership of each sample in X.
+
+To load data as numpy arrays you can use different libraries depending on the original data format:
+
+* `numpy.loadtxt <http://docs.scipy.org/doc/numpy/reference/generated/numpy.loadtxt.html>`_ to load text files (such as CSV) assuming that all the columns have an homogeneous data type (e.g. all numeric values).
+
+* `scipy.io <http://docs.scipy.org/doc/scipy/reference/io.html>`_ for common binary formats often used in scientific computing context.
+
+* `scipy.misc.imread <http://docs.scipy.org/doc/scipy/reference/generated/scipy.misc.imread.html#scipy.misc.imread>`_ (requires the Pillow package) to load pixel intensities data from various image file formats.
+
+* `pandas.io <http://pandas.pydata.org/pandas-docs/stable/io.html>`_ to load heterogeneously typed data from various file formats and database protocols that can slice and dice before conversion to numerical features in a numpy array.
+
+Note: if you manage your own numerical data it is recommended to use an optimized file format such as HDF5 to reduce data load times. Various H5Py, PyTables and pandas provide Python interface for reading and writing data with format.
+
+
+
 
 Can I add this new algorithm that I (or someone else) just published?
 -------------------------------------------------------------------------
