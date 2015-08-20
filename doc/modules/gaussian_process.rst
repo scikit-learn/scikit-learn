@@ -403,29 +403,29 @@ method is ``clone_with_theta(theta)``, which returns a cloned version of the
 kernel but with the hyperparameters set to ``theta``. An illustrative example:
 
     >>> from sklearn.gaussian_process.kernels import ConstantKernel, RBF
-    >>> kernel = ConstantKernel(c=1.0, c_bounds=(0.1, 10.0)) * RBF(l=0.5, l_bounds=(0.1, 10.0)) + RBF(l=2.0, l_bounds=(0.1, 10.0))
+    >>> kernel = ConstantKernel(c=1.0, c_bounds=(0.0, 10.0)) * RBF(l=0.5, l_bounds=(0.0, 10.0)) + RBF(l=2.0, l_bounds=(0.0, 10.0))
     >>> for hyperparameter in kernel.hyperparameters: print(hyperparameter)
-    Hyperparameter(name='k1__k1__c', value_type='numeric', bounds=array([[  0.1,  10. ]]), n_elements=1, fixed=False)
-    Hyperparameter(name='k1__k2__l', value_type='numeric', bounds=array([[  0.1,  10. ]]), n_elements=1, fixed=False)
-    Hyperparameter(name='k2__l', value_type='numeric', bounds=array([[  0.1,  10. ]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k1__k1__c', value_type='numeric', bounds=array([[  0.,  10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k1__k2__l', value_type='numeric', bounds=array([[  0.,  10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k2__l', value_type='numeric', bounds=array([[  0.,  10.]]), n_elements=1, fixed=False)
     >>> params = kernel.get_params()
     >>> for key in sorted(params): print("%s : %s" % (key, params[key]))
     k1 : 1**2 * RBF(l=0.5)
     k1__k1 : 1**2
     k1__k1__c : 1.0
-    k1__k1__c_bounds : (0.1, 10.0)
+    k1__k1__c_bounds : (0.0, 10.0)
     k1__k2 : RBF(l=0.5)
     k1__k2__l : 0.5
-    k1__k2__l_bounds : (0.1, 10.0)
+    k1__k2__l_bounds : (0.0, 10.0)
     k2 : RBF(l=2)
     k2__l : 2.0
-    k2__l_bounds : (0.1, 10.0)
+    k2__l_bounds : (0.0, 10.0)
     >>> print(kernel.theta)  # Note: log-transformed
     [ 0.         -0.69314718  0.69314718]
     >>> print(kernel.bounds)  # Note: log-transformed
-    [[-2.30258509  2.30258509]
-     [-2.30258509  2.30258509]
-     [-2.30258509  2.30258509]]
+    [[       -inf  2.30258509]
+     [       -inf  2.30258509]
+     [       -inf  2.30258509]]
 
 
 All Gaussian process kernels are interoperable with :mod:`sklearn.metrics.pairwise`
