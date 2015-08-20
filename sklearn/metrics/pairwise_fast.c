@@ -1816,7 +1816,7 @@ static char __pyx_k_Expected_at_least_d_arguments[] = "Expected at least %d argu
 static char __pyx_k_sklearn_metrics_pairwise_fast[] = "sklearn.metrics.pairwise_fast";
 static char __pyx_k_unable_to_allocate_array_data[] = "unable to allocate array data.";
 static char __pyx_k_strided_and_direct_or_indirect[] = "<strided and direct or indirect>";
-static char __pyx_k_Users_jochen_src_scikit_learn_f[] = "/Users/jochen/src/scikit-learn.fork/sklearn/metrics/pairwise_fast.pyx";
+static char __pyx_k_Users_jochen_src_scikit_learn_s[] = "/Users/jochen/src/scikit-learn/sklearn/metrics/pairwise_fast.pyx";
 static char __pyx_k_unknown_dtype_code_in_numpy_pxd[] = "unknown dtype code in numpy.pxd (%d)";
 static char __pyx_k_All_dimensions_preceding_dimensi[] = "All dimensions preceding dimension %d must be indexed and not sliced";
 static char __pyx_k_Buffer_view_does_not_expose_stri[] = "Buffer view does not expose strides";
@@ -1863,7 +1863,7 @@ static PyObject *__pyx_kp_u_Pairwise_L1_distances_for_CSR_ma;
 static PyObject *__pyx_n_s_RuntimeError;
 static PyObject *__pyx_n_s_TypeError;
 static PyObject *__pyx_kp_s_Unable_to_convert_item_to_object;
-static PyObject *__pyx_kp_s_Users_jochen_src_scikit_learn_f;
+static PyObject *__pyx_kp_s_Users_jochen_src_scikit_learn_s;
 static PyObject *__pyx_n_s_ValueError;
 static PyObject *__pyx_n_s_X;
 static PyObject *__pyx_n_s_X_data;
@@ -17940,7 +17940,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_RuntimeError, __pyx_k_RuntimeError, sizeof(__pyx_k_RuntimeError), 0, 0, 1, 1},
   {&__pyx_n_s_TypeError, __pyx_k_TypeError, sizeof(__pyx_k_TypeError), 0, 0, 1, 1},
   {&__pyx_kp_s_Unable_to_convert_item_to_object, __pyx_k_Unable_to_convert_item_to_object, sizeof(__pyx_k_Unable_to_convert_item_to_object), 0, 0, 1, 0},
-  {&__pyx_kp_s_Users_jochen_src_scikit_learn_f, __pyx_k_Users_jochen_src_scikit_learn_f, sizeof(__pyx_k_Users_jochen_src_scikit_learn_f), 0, 0, 1, 0},
+  {&__pyx_kp_s_Users_jochen_src_scikit_learn_s, __pyx_k_Users_jochen_src_scikit_learn_s, sizeof(__pyx_k_Users_jochen_src_scikit_learn_s), 0, 0, 1, 0},
   {&__pyx_n_s_ValueError, __pyx_k_ValueError, sizeof(__pyx_k_ValueError), 0, 0, 1, 1},
   {&__pyx_n_s_X, __pyx_k_X, sizeof(__pyx_k_X), 0, 0, 1, 1},
   {&__pyx_n_s_X_data, __pyx_k_X_data, sizeof(__pyx_k_X_data), 0, 0, 1, 1},
@@ -18308,7 +18308,7 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__29 = PyTuple_Pack(12, __pyx_n_s_X, __pyx_n_s_Y, __pyx_n_s_result, __pyx_n_s_i, __pyx_n_s_j, __pyx_n_s_k, __pyx_n_s_n_samples_X, __pyx_n_s_n_samples_Y, __pyx_n_s_n_features, __pyx_n_s_res, __pyx_n_s_nom, __pyx_n_s_denom); if (unlikely(!__pyx_tuple__29)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__29);
   __Pyx_GIVEREF(__pyx_tuple__29);
-  __pyx_codeobj__30 = (PyObject*)__Pyx_PyCode_New(3, 0, 12, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__29, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_f, __pyx_n_s_chi2_kernel_fast, 32, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__30)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__30 = (PyObject*)__Pyx_PyCode_New(3, 0, 12, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__29, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_s, __pyx_n_s_chi2_kernel_fast, 32, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__30)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 32; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "sklearn/metrics/pairwise_fast.pyx":53
  * 
@@ -18320,7 +18320,7 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__31 = PyTuple_Pack(12, __pyx_n_s_X_data, __pyx_n_s_X_indices, __pyx_n_s_X_indptr, __pyx_n_s_Y_data, __pyx_n_s_Y_indices, __pyx_n_s_Y_indptr, __pyx_n_s_n_features, __pyx_n_s_D, __pyx_n_s_row, __pyx_n_s_ix, __pyx_n_s_iy, __pyx_n_s_j); if (unlikely(!__pyx_tuple__31)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 53; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__31);
   __Pyx_GIVEREF(__pyx_tuple__31);
-  __pyx_codeobj__32 = (PyObject*)__Pyx_PyCode_New(8, 0, 12, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__31, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_f, __pyx_n_s_sparse_manhattan, 53, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__32)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 53; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__32 = (PyObject*)__Pyx_PyCode_New(8, 0, 12, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__31, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_s, __pyx_n_s_sparse_manhattan, 53, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__32)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 53; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "View.MemoryView":276
  *         return self.name

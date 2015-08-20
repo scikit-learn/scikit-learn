@@ -1323,7 +1323,7 @@ static char __pyx_k_graph_shortest_path[] = "graph_shortest_path";
 static char __pyx_k_unrecognized_method_s[] = "unrecognized method '%s'";
 static char __pyx_k_ndarray_is_not_C_contiguous[] = "ndarray is not C contiguous";
 static char __pyx_k_Routines_for_performing_shortes[] = "\nRoutines for performing shortest-path graph searches\n\nThe main interface is in the function `graph_shortest_path`.  This\ncalls cython routines that compute the shortest path using either\nthe Floyd-Warshall algorithm, or Dykstra's algorithm with Fibonacci Heaps.\n";
-static char __pyx_k_Users_jochen_src_scikit_learn_f[] = "/Users/jochen/src/scikit-learn.fork/sklearn/utils/graph_shortest_path.pyx";
+static char __pyx_k_Users_jochen_src_scikit_learn_s[] = "/Users/jochen/src/scikit-learn/sklearn/utils/graph_shortest_path.pyx";
 static char __pyx_k_unknown_dtype_code_in_numpy_pxd[] = "unknown dtype code in numpy.pxd (%d)";
 static char __pyx_k_Format_string_allocated_too_shor[] = "Format string allocated too short, see comment in numpy.pxd";
 static char __pyx_k_Non_native_byte_order_not_suppor[] = "Non-native byte order not supported";
@@ -1342,7 +1342,7 @@ static PyObject *__pyx_n_s_Nk;
 static PyObject *__pyx_kp_u_Non_native_byte_order_not_suppor;
 static PyObject *__pyx_n_s_RuntimeError;
 static PyObject *__pyx_n_s_T;
-static PyObject *__pyx_kp_s_Users_jochen_src_scikit_learn_f;
+static PyObject *__pyx_kp_s_Users_jochen_src_scikit_learn_s;
 static PyObject *__pyx_n_s_ValueError;
 static PyObject *__pyx_n_s_asarray;
 static PyObject *__pyx_n_s_auto;
@@ -6953,7 +6953,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_u_Non_native_byte_order_not_suppor, __pyx_k_Non_native_byte_order_not_suppor, sizeof(__pyx_k_Non_native_byte_order_not_suppor), 0, 1, 0, 0},
   {&__pyx_n_s_RuntimeError, __pyx_k_RuntimeError, sizeof(__pyx_k_RuntimeError), 0, 0, 1, 1},
   {&__pyx_n_s_T, __pyx_k_T, sizeof(__pyx_k_T), 0, 0, 1, 1},
-  {&__pyx_kp_s_Users_jochen_src_scikit_learn_f, __pyx_k_Users_jochen_src_scikit_learn_f, sizeof(__pyx_k_Users_jochen_src_scikit_learn_f), 0, 0, 1, 0},
+  {&__pyx_kp_s_Users_jochen_src_scikit_learn_s, __pyx_k_Users_jochen_src_scikit_learn_s, sizeof(__pyx_k_Users_jochen_src_scikit_learn_s), 0, 0, 1, 0},
   {&__pyx_n_s_ValueError, __pyx_k_ValueError, sizeof(__pyx_k_ValueError), 0, 0, 1, 1},
   {&__pyx_n_s_asarray, __pyx_k_asarray, sizeof(__pyx_k_asarray), 0, 0, 1, 1},
   {&__pyx_n_s_auto, __pyx_k_auto, sizeof(__pyx_k_auto), 0, 0, 1, 1},
@@ -7083,7 +7083,7 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__7 = PyTuple_Pack(6, __pyx_n_s_dist_matrix, __pyx_n_s_directed, __pyx_n_s_method, __pyx_n_s_N, __pyx_n_s_Nk, __pyx_n_s_graph); if (unlikely(!__pyx_tuple__7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 30; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__7);
   __Pyx_GIVEREF(__pyx_tuple__7);
-  __pyx_codeobj__8 = (PyObject*)__Pyx_PyCode_New(3, 0, 6, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__7, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_f, __pyx_n_s_graph_shortest_path, 30, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 30; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__8 = (PyObject*)__Pyx_PyCode_New(3, 0, 6, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__7, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_s, __pyx_n_s_graph_shortest_path, 30, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 30; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;

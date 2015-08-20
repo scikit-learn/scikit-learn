@@ -1232,7 +1232,7 @@ static char __pyx_k_We_ve_run_out_of_memory[] = "We've run out of memory";
 static char __pyx_k_ndarray_is_not_C_contiguous[] = "ndarray is not C contiguous";
 static char __pyx_k_Seems_we_ve_run_out_of_memory[] = "Seems we've run out of memory";
 static char __pyx_k_Binding_for_libsvm_skl_These_ar[] = "\nBinding for libsvm_skl\n----------------------\n\nThese are the bindings for libsvm_skl, which is a fork of libsvm[1]\nthat adds to libsvm some capabilities, like index of support vectors\nand efficient representation of dense matrices.\n\nThese are low-level routines, but can be used for flexibility or\nperformance reasons. See sklearn.svm for a higher-level API.\n\nLow-level memory management is done in libsvm_helper.c. If we happen\nto run out of memory a MemoryError will be raised. In practice this is\nnot very helpful since hight changes are malloc fails inside svm.cpp,\nwhere no sort of memory checks are done.\n\n[1] http://www.csie.ntu.edu.tw/~cjlin/libsvm/\n\nNotes\n-----\nMaybe we could speed it a bit further by decorating functions with\n@cython.boundscheck(False), but probably it is not worth since all\nwork is done in lisvm_helper.c\nAlso, the signature mode='c' is somewhat superficial, since we already\ncheck that arrays are C-contiguous in svm.py\n\nAuthors\n-------\n2010: Fabian Pedregosa <fabian.pedregosa@inria.fr>\n      Gael Varoquaux <gael.varoquaux@normalesup.org>\n";
-static char __pyx_k_Users_jochen_src_scikit_learn_f[] = "/Users/jochen/src/scikit-learn.fork/sklearn/svm/libsvm.pyx";
+static char __pyx_k_Users_jochen_src_scikit_learn_s[] = "/Users/jochen/src/scikit-learn/sklearn/svm/libsvm.pyx";
 static char __pyx_k_unknown_dtype_code_in_numpy_pxd[] = "unknown dtype code in numpy.pxd (%d)";
 static char __pyx_k_Format_string_allocated_too_shor[] = "Format string allocated too short, see comment in numpy.pxd";
 static char __pyx_k_Non_native_byte_order_not_suppor[] = "Non-native byte order not supported";
@@ -1252,7 +1252,7 @@ static PyObject *__pyx_n_s_RuntimeError;
 static PyObject *__pyx_n_s_SV;
 static PyObject *__pyx_n_s_SV_len;
 static PyObject *__pyx_kp_s_Seems_we_ve_run_out_of_memory;
-static PyObject *__pyx_kp_s_Users_jochen_src_scikit_learn_f;
+static PyObject *__pyx_kp_s_Users_jochen_src_scikit_learn_s;
 static PyObject *__pyx_n_s_ValueError;
 static PyObject *__pyx_kp_s_We_ve_run_out_of_memory;
 static PyObject *__pyx_n_s_X;
@@ -8516,7 +8516,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_SV, __pyx_k_SV, sizeof(__pyx_k_SV), 0, 0, 1, 1},
   {&__pyx_n_s_SV_len, __pyx_k_SV_len, sizeof(__pyx_k_SV_len), 0, 0, 1, 1},
   {&__pyx_kp_s_Seems_we_ve_run_out_of_memory, __pyx_k_Seems_we_ve_run_out_of_memory, sizeof(__pyx_k_Seems_we_ve_run_out_of_memory), 0, 0, 1, 0},
-  {&__pyx_kp_s_Users_jochen_src_scikit_learn_f, __pyx_k_Users_jochen_src_scikit_learn_f, sizeof(__pyx_k_Users_jochen_src_scikit_learn_f), 0, 0, 1, 0},
+  {&__pyx_kp_s_Users_jochen_src_scikit_learn_s, __pyx_k_Users_jochen_src_scikit_learn_s, sizeof(__pyx_k_Users_jochen_src_scikit_learn_s), 0, 0, 1, 0},
   {&__pyx_n_s_ValueError, __pyx_k_ValueError, sizeof(__pyx_k_ValueError), 0, 0, 1, 1},
   {&__pyx_kp_s_We_ve_run_out_of_memory, __pyx_k_We_ve_run_out_of_memory, sizeof(__pyx_k_We_ve_run_out_of_memory), 0, 0, 1, 0},
   {&__pyx_n_s_X, __pyx_k_X, sizeof(__pyx_k_X), 0, 0, 1, 1},
@@ -8830,7 +8830,7 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__37 = PyTuple_Pack(36, __pyx_n_s_X, __pyx_n_s_Y, __pyx_n_s_svm_type, __pyx_n_s_kernel, __pyx_n_s_degree, __pyx_n_s_gamma, __pyx_n_s_coef0, __pyx_n_s_tol, __pyx_n_s_C, __pyx_n_s_nu, __pyx_n_s_epsilon, __pyx_n_s_class_weight, __pyx_n_s_sample_weight, __pyx_n_s_shrinking, __pyx_n_s_probability, __pyx_n_s_cache_size, __pyx_n_s_max_iter, __pyx_n_s_random_seed, __pyx_n_s_param, __pyx_n_s_problem, __pyx_n_s_model, __pyx_n_s_error_msg, __pyx_n_s_SV_len, __pyx_n_s_nr, __pyx_n_s_kernel_index, __pyx_n_s_class_weight_label, __pyx_n_s_error_repl, __pyx_n_s_fit_status, __pyx_n_s_n_class, __pyx_n_s_sv_coef, __pyx_n_s_intercept, __pyx_n_s_support, __pyx_n_s_support_vectors, __pyx_n_s_n_class_SV, __pyx_n_s_probA, __pyx_n_s_probB); if (unlikely(!__pyx_tuple__37)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 54; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__37);
   __Pyx_GIVEREF(__pyx_tuple__37);
-  __pyx_codeobj__38 = (PyObject*)__Pyx_PyCode_New(18, 0, 36, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__37, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_f, __pyx_n_s_fit, 54, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__38)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 54; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__38 = (PyObject*)__Pyx_PyCode_New(18, 0, 36, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__37, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_s, __pyx_n_s_fit, 54, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__38)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 54; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "sklearn/svm/libsvm.pyx":276
  *             np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
@@ -8886,7 +8886,7 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__43 = PyTuple_Pack(21, __pyx_n_s_X, __pyx_n_s_support, __pyx_n_s_SV, __pyx_n_s_nSV, __pyx_n_s_sv_coef, __pyx_n_s_intercept, __pyx_n_s_probA, __pyx_n_s_probB, __pyx_n_s_svm_type, __pyx_n_s_kernel, __pyx_n_s_degree, __pyx_n_s_gamma, __pyx_n_s_coef0, __pyx_n_s_class_weight, __pyx_n_s_sample_weight, __pyx_n_s_cache_size, __pyx_n_s_dec_values, __pyx_n_s_param, __pyx_n_s_model, __pyx_n_s_rv, __pyx_n_s_class_weight_label); if (unlikely(!__pyx_tuple__43)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__43);
   __Pyx_GIVEREF(__pyx_tuple__43);
-  __pyx_codeobj__44 = (PyObject*)__Pyx_PyCode_New(16, 0, 21, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__43, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_f, __pyx_n_s_predict, 270, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__44)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__44 = (PyObject*)__Pyx_PyCode_New(16, 0, 21, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__43, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_s, __pyx_n_s_predict, 270, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__44)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "sklearn/svm/libsvm.pyx":342
  *     np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
@@ -8942,7 +8942,7 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__49 = PyTuple_Pack(22, __pyx_n_s_X, __pyx_n_s_support, __pyx_n_s_SV, __pyx_n_s_nSV, __pyx_n_s_sv_coef, __pyx_n_s_intercept, __pyx_n_s_probA, __pyx_n_s_probB, __pyx_n_s_svm_type, __pyx_n_s_kernel, __pyx_n_s_degree, __pyx_n_s_gamma, __pyx_n_s_coef0, __pyx_n_s_class_weight, __pyx_n_s_sample_weight, __pyx_n_s_cache_size, __pyx_n_s_dec_values, __pyx_n_s_param, __pyx_n_s_model, __pyx_n_s_class_weight_label, __pyx_n_s_rv, __pyx_n_s_n_class); if (unlikely(!__pyx_tuple__49)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 335; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__49);
   __Pyx_GIVEREF(__pyx_tuple__49);
-  __pyx_codeobj__50 = (PyObject*)__Pyx_PyCode_New(16, 0, 22, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__49, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_f, __pyx_n_s_predict_proba, 335, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__50)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 335; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__50 = (PyObject*)__Pyx_PyCode_New(16, 0, 22, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__49, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_s, __pyx_n_s_predict_proba, 335, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__50)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 335; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "sklearn/svm/libsvm.pyx":409
  *     np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
@@ -8998,7 +8998,7 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__55 = PyTuple_Pack(22, __pyx_n_s_X, __pyx_n_s_support, __pyx_n_s_SV, __pyx_n_s_nSV, __pyx_n_s_sv_coef, __pyx_n_s_intercept, __pyx_n_s_probA, __pyx_n_s_probB, __pyx_n_s_svm_type, __pyx_n_s_kernel, __pyx_n_s_degree, __pyx_n_s_gamma, __pyx_n_s_coef0, __pyx_n_s_class_weight, __pyx_n_s_sample_weight, __pyx_n_s_cache_size, __pyx_n_s_dec_values, __pyx_n_s_param, __pyx_n_s_model, __pyx_n_s_n_class, __pyx_n_s_class_weight_label, __pyx_n_s_rv); if (unlikely(!__pyx_tuple__55)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 402; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__55);
   __Pyx_GIVEREF(__pyx_tuple__55);
-  __pyx_codeobj__56 = (PyObject*)__Pyx_PyCode_New(16, 0, 22, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__55, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_f, __pyx_n_s_decision_function, 402, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__56)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 402; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__56 = (PyObject*)__Pyx_PyCode_New(16, 0, 22, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__55, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_s, __pyx_n_s_decision_function, 402, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__56)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 402; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "sklearn/svm/libsvm.pyx":468
  *     double C=1., double nu=0.5, double epsilon=0.1,
@@ -9032,7 +9032,7 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__59 = PyTuple_Pack(28, __pyx_n_s_X, __pyx_n_s_Y, __pyx_n_s_n_fold, __pyx_n_s_svm_type, __pyx_n_s_kernel, __pyx_n_s_degree, __pyx_n_s_gamma, __pyx_n_s_coef0, __pyx_n_s_tol, __pyx_n_s_C, __pyx_n_s_nu, __pyx_n_s_epsilon, __pyx_n_s_class_weight, __pyx_n_s_sample_weight, __pyx_n_s_shrinking, __pyx_n_s_probability, __pyx_n_s_cache_size, __pyx_n_s_max_iter, __pyx_n_s_random_seed, __pyx_n_s_param, __pyx_n_s_problem, __pyx_n_s_model, __pyx_n_s_error_msg, __pyx_n_s_SV_len, __pyx_n_s_nr, __pyx_n_s_kernel_index, __pyx_n_s_class_weight_label, __pyx_n_s_target); if (unlikely(!__pyx_tuple__59)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 461; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__59);
   __Pyx_GIVEREF(__pyx_tuple__59);
-  __pyx_codeobj__60 = (PyObject*)__Pyx_PyCode_New(19, 0, 28, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__59, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_f, __pyx_n_s_cross_validation, 461, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__60)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 461; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__60 = (PyObject*)__Pyx_PyCode_New(19, 0, 28, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__59, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_s, __pyx_n_s_cross_validation, 461, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__60)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 461; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "sklearn/svm/libsvm.pyx":572
  * 
@@ -9044,7 +9044,7 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__61 = PyTuple_Pack(2, __pyx_n_s_verbosity, __pyx_n_s_verbosity); if (unlikely(!__pyx_tuple__61)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 572; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__61);
   __Pyx_GIVEREF(__pyx_tuple__61);
-  __pyx_codeobj__62 = (PyObject*)__Pyx_PyCode_New(1, 0, 2, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__61, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_f, __pyx_n_s_set_verbosity_wrap, 572, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__62)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 572; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__62 = (PyObject*)__Pyx_PyCode_New(1, 0, 2, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__61, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_jochen_src_scikit_learn_s, __pyx_n_s_set_verbosity_wrap, 572, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__62)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 572; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
