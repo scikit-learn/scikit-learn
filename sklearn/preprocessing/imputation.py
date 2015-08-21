@@ -82,8 +82,8 @@ class Imputer(BaseEstimator, TransformerMixin):
           the axis.
         - If "most_frequent", then replace missing using the most frequent
           value along the axis.
-        - If "knn", then replace missing using the mean of the k-nearest neighbors
-          along the axis.
+        - If "knn", then replace missing using the mean of the k-nearest
+          neighbors along the axis.
 
     axis : integer, optional (default=0)
         The axis along which to impute.
@@ -105,8 +105,8 @@ class Imputer(BaseEstimator, TransformerMixin):
         - If `axis=1` and X is encoded as a CSC matrix.
 
     n_neighbors : int, optional (default=1)
-        It only has effect if the `strategy=knn`. It controls the number of nearest
-        neighbors used to compute the mean along the axis.
+        It only has effect if the `strategy=knn`. It controls the number of
+        nearest neighbors used to compute the mean along the axis.
 
     Attributes
     ----------
@@ -257,8 +257,10 @@ class Imputer(BaseEstimator, TransformerMixin):
 
                 return most_frequent
 
+            # KNN
             elif strategy == "knn":
-                raise ValueError("strategy='knn' does not support sparse matrix input")
+                raise ValueError("strategy='knn' does not support sparse "
+                                 "matrix input")
 
 
     def _dense_fit(self, X, strategy, missing_values, axis):
@@ -316,14 +318,18 @@ class Imputer(BaseEstimator, TransformerMixin):
         elif strategy == "knn":
 
             if axis == 1:
-                X = X.copy().transpose()
+                X = X.transpose()
+                mask = mask.transpose()
 
+            # Get samples with complete features
             full_data = X[np.logical_not(mask.any(axis=1))]
             if full_data.size == 0:
                 raise ValueError("There is no sample with complete data.")
             if full_data.shape[0] < self.n_neighbors:
-                raise ValueError("There are only %d complete samples, but n_neighbors=%d."
+                raise ValueError("There are only %d complete samples, "
+                                 "but n_neighbors=%d."
                                  % (full_data.shape[0], self.n_neighbors))
+            # Transpose back
             if axis == 1:
                 full_data = full_data.transpose()
 
@@ -405,20 +411,26 @@ class Imputer(BaseEstimator, TransformerMixin):
                     mask = mask.transpose()
                     statistics = statistics.transpose()
 
-                batch_size = 20  # set batch size for block query
+                batch_size = 200  # set batch size for block query
                 if True:
                     missing_index = np.where(mask.any(axis=1))[0]
-                    #@jnothman 's method
-                    D2 = np.empty_like(np.zeros([batch_size, statistics.shape[0], statistics.shape[1]]))
+                    # @jnothman 's method
+                    D2 = np.empty_like(np.zeros([batch_size, statistics.shape[0],
+                                                 statistics.shape[1]]))
+                    # Preallocate output array for np.multiply(test1, test1, out=D2)
                     for sl in list(gen_batches(len(missing_index), batch_size)):
                         X_sl = X[missing_index[sl]]
                         test1 = X_sl[:][:, np.newaxis, :] - statistics
                         #D2 = np.empty_like(test1)
+
+                        # For the last slice, the length may not be the same
+                        # as batch_size
                         if test1.shape != D2.shape:
                             D2 = np.empty_like(test1)
                         np.multiply(test1, test1, out=D2)
                         #D2 = test1 ** 2
-                        #D2 = (X_sl[missing_index_sl][:, np.newaxis, :] - statistics) ** 2
+                        #D2 = (X_sl[missing_index_sl][:, np.newaxis, :] - statistics)
+                        #  ** 2
                         D2[np.isnan(D2)] = 0
                         missing_row, missing_col = np.where(np.isnan(X_sl))
                         sqdist = D2.sum(axis=2)
@@ -429,7 +441,8 @@ class Imputer(BaseEstimator, TransformerMixin):
                         X[missing_index[sl]] = X_sl
                 else:
                     # group by missing features and batch within group
-                    group_index = np.unique(mask.astype('u1').view((np.void, X.shape[1])), return_inverse=True)[1]
+                    group_index = np.unique(mask.astype('u1').view((np.void, X.shape[1])),
+                                            return_inverse=True)[1]
                     for group_number in range(max(group_index)+1):
                         if group_number == 0:
                             continue

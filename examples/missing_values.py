@@ -16,7 +16,7 @@ which could dominate results (otherwise known as a 'long tail').
 Script output::
 
   Score with the entire dataset = 0.43
-  Score without the samples containing missing values = 0.36
+  Score without the samples containing missing values = 0.35
   Score after mean imputation of the missing values = 0.42
   Score after knn imputation with 7 neighbors of the missing values = 0.43
 
@@ -39,20 +39,24 @@ n_samples = X_full.shape[0]
 n_features = X_full.shape[1]
 
 #Create a random matrix to randomly make missing values
-missing_matrix = np.random.rand(n_samples, n_features)
-th = 0.15  # each sample has (1-th)^n_features of probability to have full features
+missing_matrix = rng.rand(n_samples, n_features)
+
+# each sample has (1-th)^n_features of probability to have full features
+th = 0.14
 mask = missing_matrix < th
-missing_samples = mask.any(1)
+missing_samples = mask.any(axis=1)
 full_percentage = (n_samples - missing_samples.sum())/float(n_samples)
 print("Percentage of samples with full features: %f" %full_percentage )
 
 # Estimate the score on the entire dataset, with no missing values
+
 estimator = RandomForestRegressor(random_state=0, n_estimators=100)
 score = cross_val_score(estimator, X_full, y_full).mean()
 print("Score with the entire dataset = %.2f" % score)
 
 
 # Estimate the score without the lines containing missing values
+
 X_filtered = X_full[~missing_samples, :]
 y_filtered = y_full[~missing_samples]
 estimator = RandomForestRegressor(random_state=0, n_estimators=100)
@@ -73,10 +77,12 @@ score = cross_val_score(estimator, X_missing, y_missing).mean()
 print("Score after mean imputation of the missing values = %.2f" % score)
 
 # Estimate the score after knn imputation of the missing values
-neigh = 7
+
+neigh = 7  # Number of neighbors to be used
 estimator2 = Pipeline([("imputer", Imputer(strategy="knn",
                                            axis=0, n_neighbors=neigh)),
                       ("forest", RandomForestRegressor(random_state=0,
                                                        n_estimators=100))])
 score = cross_val_score(estimator2, X_missing, y_missing).mean()
-print("Score after knn imputation with %d neighbors of the missing values = %.2f" % (neigh, score))
+print("Score after knn imputation with %d neighbors of the missing values ="
+      " %.2f" % (neigh, score))

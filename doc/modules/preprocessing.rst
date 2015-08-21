@@ -388,9 +388,10 @@ values. However, this comes at the price of losing data which may be valuable
 i.e., to infer them from the known part of the data.
 
 The :class:`Imputer` class provides basic strategies for imputing missing
-values, either using the mean, the median or the most frequent value of
-the row or column in which the missing values are located. This class
-also allows for different missing values encodings.
+values, either using the mean, the median, the most frequent value of
+the row or column in which the missing values are located or the mean of the
+k-nearest neighbors computed using samples without missing values. This class also
+allows for different missing values encodings.
 
 The following snippet demonstrates how to replace missing values,
 encoded as ``np.nan``, using the mean value of the columns (axis 0)
