@@ -39,21 +39,12 @@ iris.data = sparse.csr_matrix(iris.data)
 
 
 def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
-    if isinstance(dense_svm, svm.OneClassSVM):
-        dense_svm.fit(X_train.toarray())
-    else:
-        dense_svm.fit(X_train.toarray(), y_train)
-    
+    dense_svm.fit(X_train.toarray(), y_train)
     if sparse.isspmatrix(X_test):
         X_test_dense = X_test.toarray()
     else:
         X_test_dense = X_test
-    
-    if isinstance(sparse_svm, svm.OneClassSVM):
-        sparse_svm.fit(X_train)
-    else:
-        sparse_svm.fit(X_train, y_train)
-    
+    sparse_svm.fit(X_train, y_train) 
     assert_true(sparse.issparse(sparse_svm.support_vectors_))
     assert_true(sparse.issparse(sparse_svm.dual_coef_))
     assert_array_almost_equal(dense_svm.support_vectors_,
