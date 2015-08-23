@@ -1,5 +1,5 @@
 import numpy as np
-
+from sklearn.utils import check_array
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -189,6 +189,18 @@ def test_sparse_encode_shapes():
     for algo in ('lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'):
         code = sparse_encode(X, V, algorithm=algo)
         assert_equal(code.shape, (n_samples, n_components))
+
+
+def test_sparse_encode_input():
+    n_components = 100
+    rng = np.random.RandomState(0)
+    V = rng.randn(n_components, n_features)  # random init
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    Xf = check_array(X, order='F')
+    for algo in ('lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'):
+        a = sparse_encode(X, V, algorithm=algo)
+        b = sparse_encode(Xf, V, algorithm=algo)
+        assert_array_almost_equal(a, b)
 
 
 def test_sparse_encode_error():
