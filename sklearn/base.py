@@ -343,7 +343,8 @@ class RegressorMixin(object):
         """
 
         from .metrics import r2_score
-        return r2_score(y, self.predict(X), sample_weight=sample_weight)
+        return r2_score(y, self.predict(X), sample_weight=sample_weight,
+                        multioutput='variance_weighted')
 
 
 ###############################################################################
