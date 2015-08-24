@@ -377,6 +377,13 @@ def test_imputation_knn():
         [0,  2,  -1,  6],
     ])
 
+    X5 = np.array([
+        [999, -1,  0,  5],
+        [0,  2, -1,  3],
+        [-1,  -1,  0, 5],
+        [-1,  2,  3,  7],
+    ])
+
     X_true_1 = np.array([
         [-1, -1,  0,  5],
         [0,  2, -1,  3],
@@ -398,25 +405,36 @@ def test_imputation_knn():
         [0,  2, -1,  6],
     ])
 
-    imputer = Imputer(missing_values='NaN', strategy="knn", axis=0, n_neighbors=1)
+    imputer = Imputer(missing_values='NaN', strategy="knn",
+                      axis=0, n_neighbors=1)
     X_impute = imputer.fit(X).transform(X)
     assert_array_equal(X_true_1, X_impute)
 
-    imputer = Imputer(missing_values='NaN', strategy="knn", axis=1, n_neighbors=1)
+    imputer = Imputer(missing_values='NaN', strategy="knn",
+                      axis=1, n_neighbors=1)
     X_impute = imputer.fit(X.transpose()).transform(X.transpose())
     assert_array_equal(X_true_1.transpose(), X_impute)
 
-    imputer = Imputer(missing_values='NaN', strategy="knn", axis=0, n_neighbors=2)
+    imputer = Imputer(missing_values='NaN', strategy="knn",
+                      axis=0, n_neighbors=2)
     X_impute = imputer.fit(X).transform(X)
     assert_array_equal(X_true_2, X_impute)
 
-    imputer = Imputer(missing_values='NaN', strategy="knn", axis=0, n_neighbors=1)
+    imputer = Imputer(missing_values='NaN', strategy="knn",
+                      axis=0, n_neighbors=1)
     X_impute = imputer.fit(X2).transform(X2)
     assert_array_equal(X_true_1, X_impute)
 
-    imputer = Imputer(missing_values='NaN', strategy="knn", axis=0, n_neighbors=1)
+    imputer = Imputer(missing_values='NaN', strategy="knn",
+                      axis=0, n_neighbors=1)
     X_impute = imputer.fit(X4).transform(X4)
     assert_array_equal(X_true_4, X_impute)
+
+    imputer = Imputer(missing_values=999, strategy="knn",
+                      axis=0, n_neighbors=1, copy=False)
+    X5 = X5.astype(float)
+    X_impute = imputer.fit(X5).transform(X5)
+    assert_array_equal(X_true_1, X5)
 
     imputer = Imputer(missing_values='NaN', strategy="knn", axis=0)
     msg = "There is no sample with complete data."

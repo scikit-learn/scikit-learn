@@ -420,6 +420,8 @@ class Imputer(BaseEstimator, TransformerMixin):
                     # Preallocate output array for np.multiply(test1, test1, out=D2)
                     for sl in list(gen_batches(len(missing_index), batch_size)):
                         X_sl = X[missing_index[sl]]
+                        mask_sl = mask[missing_index[sl]]
+                        X_sl[mask_sl] = np.nan
                         test1 = X_sl[:][:, np.newaxis, :] - statistics
                         #D2 = np.empty_like(test1)
 
@@ -452,6 +454,8 @@ class Imputer(BaseEstimator, TransformerMixin):
                             for sl in batch_slice:
                                 index_sl = missing_index[sl]
                                 X_sl = X[index_sl]
+                                mask_sl = mask[missing_index[sl]]
+                                X_sl[mask_sl] = np.nan
                                 test1 = X_sl[:][:, np.newaxis, :] - statistics
                                 D2 = np.empty_like(test1)
                                 np.multiply(test1, test1, out=D2)
