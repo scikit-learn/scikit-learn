@@ -366,8 +366,8 @@ def test_euclidean_distances():
     rng = np.random.RandomState(0)
     X = rng.random_sample((10, 4))
     Y = rng.random_sample((20, 4))
-    X_norm_sq = (X ** 2).sum(axis=1)
-    Y_norm_sq = (Y ** 2).sum(axis=1)
+    X_norm_sq = (X ** 2).sum(axis=1).reshape(1, -1)
+    Y_norm_sq = (Y ** 2).sum(axis=1).reshape(1, -1)
 
     # check that we still get the right answers with {X,Y}_norm_squared
     D1 = euclidean_distances(X, Y)
@@ -573,11 +573,13 @@ def test_check_different_dimensions():
 
 def test_check_invalid_dimensions():
     # Ensure an error is raised on 1D input arrays.
-    XA = np.arange(45)
-    XB = np.resize(np.arange(32), (4, 8))
+    # The modified tests are not 1D. In the old test, the array was internally
+    # converted to 2D anyways
+    XA = np.arange(45).reshape(9, 5)
+    XB = np.arange(32).reshape(4, 8)
     assert_raises(ValueError, check_pairwise_arrays, XA, XB)
-    XA = np.resize(np.arange(45), (5, 9))
-    XB = np.arange(32)
+    XA = np.arange(45).reshape(9, 5)
+    XB = np.arange(32).reshape(4, 8)
     assert_raises(ValueError, check_pairwise_arrays, XA, XB)
 
 

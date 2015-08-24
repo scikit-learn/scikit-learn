@@ -414,7 +414,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
                           " 0.16 and will be removed from fit() in 0.18",
                           DeprecationWarning)
             self.tol = tol
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, ensure_min_samples=2)
         self.classes_ = unique_labels(y)
 
         if self.priors is None:  # estimate priors from sample

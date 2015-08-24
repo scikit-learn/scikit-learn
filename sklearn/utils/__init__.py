@@ -351,7 +351,7 @@ def safe_sqr(X, copy=True):
     -------
     X ** 2 : element wise square
     """
-    X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+    X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], ensure_2d=False)
     if issparse(X):
         if copy:
             X = X.copy()

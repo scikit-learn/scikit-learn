@@ -93,7 +93,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
       ... #doctest: +ELLIPSIS
       array([[2, 0]]...)
 
-      >>> rng = neigh.radius_neighbors([0, 0, 1.3], 0.4, return_distance=False)
+      >>> rng = neigh.radius_neighbors([[0, 0, 1.3]], 0.4, return_distance=False)
       >>> np.asarray(rng[0][0])
       array(2)
 

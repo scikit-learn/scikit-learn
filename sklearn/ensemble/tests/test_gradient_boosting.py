@@ -311,7 +311,7 @@ def test_check_inputs_predict():
     x = np.array([1.0, 2.0])[:, np.newaxis]
     assert_raises(ValueError, clf.predict, x)
 
-    x = np.array([])
+    x = np.array([[]])
     assert_raises(ValueError, clf.predict, x)
 
     x = np.array([1.0, 2.0, 3.0])[:, np.newaxis]
@@ -323,7 +323,7 @@ def test_check_inputs_predict():
     x = np.array([1.0, 2.0])[:, np.newaxis]
     assert_raises(ValueError, clf.predict, x)
 
-    x = np.array([])
+    x = np.array([[]])
     assert_raises(ValueError, clf.predict, x)
 
     x = np.array([1.0, 2.0, 3.0])[:, np.newaxis]
@@ -492,9 +492,9 @@ def test_degenerate_targets():
 
     clf = GradientBoostingRegressor(n_estimators=100, random_state=1)
     clf.fit(X, np.ones(len(X)))
-    clf.predict(rng.rand(2))
+    clf.predict([rng.rand(2)])
     assert_array_equal(np.ones((1,), dtype=np.float64),
-                       clf.predict(rng.rand(2)))
+                       clf.predict([rng.rand(2)]))
 
 
 def test_quantile_loss():

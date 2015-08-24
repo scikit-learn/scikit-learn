@@ -39,6 +39,7 @@ from sklearn.utils.validation import check_random_state
 
 from sklearn.tree.tree import SPARSE_SPLITTERS
 
+
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
@@ -724,6 +725,7 @@ def test_memory_layout():
         yield check_memory_layout, name, dtype
 
 
+@ignore_warnings
 def check_1d_input(name, X, X_2d, y):
     ForestEstimator = FOREST_ESTIMATORS[name]
     assert_raises(ValueError, ForestEstimator(random_state=0).fit, X, y)
@@ -735,8 +737,9 @@ def check_1d_input(name, X, X_2d, y):
         assert_raises(ValueError, est.predict, X)
 
 
+@ignore_warnings
 def test_1d_input():
-    X = iris.data[:, 0].ravel()
+    X = iris.data[:, 0]
     X_2d = iris.data[:, 0].reshape((-1, 1))
     y = iris.target
 

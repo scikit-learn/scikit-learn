@@ -86,6 +86,7 @@ def test_libsvm_iris():
     assert_array_equal(pred, pred2)
 
 
+@ignore_warnings
 def test_single_sample_1d():
     # Test whether SVCs work on a single sample given as a 1-d array
 
@@ -399,11 +400,11 @@ def test_sample_weights():
     # TODO: check on NuSVR, OneClass, etc.
     clf = svm.SVC()
     clf.fit(X, Y)
-    assert_array_equal(clf.predict(X[2]), [1.])
+    assert_array_equal(clf.predict([X[2]]), [1.])
 
     sample_weight = [.1] * 3 + [10] * 3
     clf.fit(X, Y, sample_weight=sample_weight)
-    assert_array_equal(clf.predict(X[2]), [2.])
+    assert_array_equal(clf.predict([X[2]]), [2.])
 
     # test that rescaling all samples is the same as changing C
     clf = svm.SVC()

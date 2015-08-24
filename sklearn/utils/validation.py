@@ -361,11 +361,20 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
                                       force_all_finite)
     else:
-        if ensure_2d:
-            array = np.atleast_2d(array)
-
         array = np.array(array, dtype=dtype, order=order, copy=copy)
-        # make sure we actually converted to numeric:
+
+        if ensure_2d:
+            if array.ndim == 1:
+                warnings.warn("Passing 1d arrays as data is deprecated and "
+                "will be removed in 0.18. Reshape your data either using"
+                "X.reshape(-1, 1) if your data has a single feature or"
+                "X.reshape(1, -1) if it contains a single sample.",
+                              DeprecationWarning)
+            array = np.atleast_2d(array)
+            # To ensure that array flags are maintained
+            array = np.array(array, dtype=dtype, order=order, copy=copy)
+
+        # make sure we acually converted to numeric:
         if dtype_numeric and array.dtype.kind == "O":
             array = array.astype(np.float64)
         if not allow_nd and array.ndim >= 3:

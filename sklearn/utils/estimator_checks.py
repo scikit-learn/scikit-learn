@@ -28,6 +28,8 @@ from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_warns
+
 
 from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
                           TransformerMixin, ClusterMixin, BaseEstimator)
@@ -169,6 +171,11 @@ def _yield_all_checks(name, Estimator):
     if issubclass(Estimator, ClusterMixin):
         for check in _yield_clustering_checks(name, Estimator):
             yield check
+    yield check_fit2d_predict1d
+    yield check_fit2d_1sample
+    yield check_fit2d_1feature
+    yield check_fit1d_1feature
+    yield check_fit1d_1sample
 
 
 def check_estimator(Estimator):
@@ -329,6 +336,124 @@ def check_dtype_object(name, Estimator):
     X[0, 0] = {'foo': 'bar'}
     msg = "argument must be a string or a number"
     assert_raises_regex(TypeError, msg, estimator.fit, X, y)
+
+
+@ignore_warnings
+def check_fit2d_predict1d(name, Estimator):
+    # check by fitting a 2d array and prediting with a 1d array
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(20, 3))
+    y = X[:, 0].astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    set_random_state(estimator, 1)
+    estimator.fit(X, y)
+
+    for method in ["predict", "transform", "decision_function",
+                   "predict_proba"]:
+        if hasattr(estimator, method):
+            try:
+                assert_warns(DeprecationWarning,
+                             getattr(estimator, method), X[0])
+            except ValueError:
+                pass
+
+
+@ignore_warnings
+def check_fit2d_1sample(name, Estimator):
+    # check by fitting a 2d array and prediting with a 1d array
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(1, 10))
+    y = X[:, 0].astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    set_random_state(estimator, 1)
+    try:
+        estimator.fit(X, y)
+    except ValueError:
+        pass
+
+
+@ignore_warnings
+def check_fit2d_1feature(name, Estimator):
+    # check by fitting a 2d array and prediting with a 1d array
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(10, 1))
+    y = X[:, 0].astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    set_random_state(estimator, 1)
+    try:
+        estimator.fit(X, y)
+    except ValueError:
+        pass
+
+
+@ignore_warnings
+def check_fit1d_1feature(name, Estimator):
+    # check fitting 1d array with 1 feature
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(20))
+    y = X.astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    set_random_state(estimator, 1)
+
+    try:
+        estimator.fit(X, y)
+    except ValueError:
+        pass
+
+
+@ignore_warnings
+def check_fit1d_1sample(name, Estimator):
+    # check fitting 1d array with 1 feature
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(20))
+    y = np.array([1])
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    set_random_state(estimator, 1)
+
+    try:
+        estimator.fit(X, y)
+    except ValueError :
+        pass
 
 
 def check_transformer_general(name, Transformer):
@@ -518,8 +643,8 @@ def check_estimators_empty_data_messages(name, Estimator):
     # the following y should be accepted by both classifiers and regressors
     # and ignored by unsupervised models
     y = multioutput_estimator_convert_y_2d(name, np.array([1, 0, 1]))
-    msg = "0 feature(s) (shape=(3, 0)) while a minimum of 1 is required."
-    assert_raise_message(ValueError, msg, e.fit, X_zero_features, y)
+    msg = "0 feature\(s\) \(shape=\(3, 0\)\) while a minimum of \d* is required."
+    assert_raises_regex(ValueError, msg, e.fit, X_zero_features, y)
 
 
 def check_estimators_nan_inf(name, Estimator):
@@ -950,7 +1075,8 @@ def check_regressors_int(name, Regressor):
 
 def check_regressors_train(name, Regressor):
     X, y = _boston_subset()
-    y = StandardScaler().fit_transform(y)   # X is already scaled
+    y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
+    y = y.ravel()
     y = multioutput_estimator_convert_y_2d(name, y)
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
