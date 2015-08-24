@@ -44,7 +44,7 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
         X_test_dense = X_test.toarray()
     else:
         X_test_dense = X_test
-    sparse_svm.fit(X_train, y_train) 
+    sparse_svm.fit(X_train, y_train)
     assert_true(sparse.issparse(sparse_svm.support_vectors_))
     assert_true(sparse.issparse(sparse_svm.dual_coef_))
     assert_array_almost_equal(dense_svm.support_vectors_,
@@ -256,6 +256,7 @@ def test_sample_weights():
 def test_sparse_liblinear_intercept_handling():
     # Test that sparse liblinear honours intercept_scaling param
     test_svm.test_dense_liblinear_intercept_handling(svm.LinearSVC)
+
 
 def test_sparse_oneclasssvm():
     """Check that sparse OneClassSVM gives the same result as dense OneClassSVM"""
