@@ -436,7 +436,7 @@ def test_radius_neighbors_boundary_handling():
     for algorithm in ALGORITHMS:
         nbrs = neighbors.NearestNeighbors(radius=radius,
                                           algorithm=algorithm).fit(X)
-        results = nbrs.radius_neighbors([0.0], return_distance=False)
+        results = nbrs.radius_neighbors([[0.0]], return_distance=False)
         assert_equal(results.shape, (1,))
         assert_equal(results.dtype, object)
         assert_array_equal(results[0], [0, 1])
@@ -901,7 +901,7 @@ def test_neighbors_badargs():
         nbrs.fit(X, y)
         assert_raises(ValueError,
                       nbrs.predict,
-                      [])
+                      [[]])
         if (isinstance(cls, neighbors.KNeighborsClassifier) or
                 isinstance(cls, neighbors.KNeighborsRegressor)):
             nbrs = cls(n_neighbors=-1)
@@ -909,12 +909,8 @@ def test_neighbors_badargs():
 
     nbrs = neighbors.NearestNeighbors().fit(X)
 
-    assert_raises(ValueError,
-                  nbrs.kneighbors_graph,
-                  X, mode='blah')
-    assert_raises(ValueError,
-                  nbrs.radius_neighbors_graph,
-                  X, mode='blah')
+    assert_raises(ValueError, nbrs.kneighbors_graph, X, mode='blah')
+    assert_raises(ValueError, nbrs.radius_neighbors_graph, X, mode='blah')
 
 
 def test_neighbors_metrics(n_samples=20, n_features=3,

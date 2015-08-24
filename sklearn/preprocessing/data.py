@@ -46,6 +46,10 @@ __all__ = [
     'minmax_scale',
 ]
 
+DEPRECATION_MSG_1D = ("Passing 1d arrays as data is deprecated and "
+"will be removed in 0.18. Reshape your data either using"
+"X.reshape(-1, 1) if your data has a single feature or"
+"X.reshape(1, -1) if it contains a single sample.")
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
     """Compute mean and std deviation for centering, scaling.
@@ -270,6 +274,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'scale_')
 
         X = check_array(X, copy=self.copy, ensure_2d=False)
+
+        if X.ndim == 1:
+            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+
         X *= self.scale_
         X += self.min_
         return X
@@ -439,6 +447,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse='csr', copy=copy,
                         ensure_2d=False, warn_on_dtype=True,
                         estimator=self, dtype=FLOAT_DTYPES)
+
+        if X.ndim == 1:
+            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -544,6 +556,10 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'scale_')
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
+
+        if X.ndim == 1:
+            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+
         if sparse.issparse(X):
             if X.shape[0] == 1:
                 inplace_row_scale(X, 1.0 / self.scale_)
@@ -672,6 +688,10 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         """Makes sure centering is not enabled for sparse matrices."""
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
+
+        if X.ndim == 1:
+            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+
         if sparse.issparse(X):
             if self.with_centering:
                 raise ValueError(

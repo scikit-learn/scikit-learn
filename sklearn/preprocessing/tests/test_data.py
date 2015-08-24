@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.preprocessing.data import _transform_selected
@@ -77,6 +78,7 @@ def test_polynomial_features():
     assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
 
 
+@ignore_warnings
 def test_scaler_1d():
     # Test scaling of dataset along single axis
     rng = np.random.RandomState(0)
@@ -275,6 +277,7 @@ def test_minmax_scale_axis1():
     assert_array_almost_equal(np.max(X_trans, axis=1), 1)
 
 
+@ignore_warnings
 def test_min_max_scaler_1d():
     # Test scaling of dataset along single axis
     rng = np.random.RandomState(0)

@@ -41,7 +41,8 @@ def test_neighbors_accuracy_with_n_candidates():
         lshf = LSHForest(n_candidates=n_candidates)
         lshf.fit(X)
         for j in range(n_iter):
-            query = X[rng.randint(0, n_samples)]
+            query = X[rng.randint(0, n_samples)].reshape(1, -1)
+
             neighbors = lshf.kneighbors(query, n_neighbors=n_points,
                                         return_distance=False)
             distances = pairwise_distances(query, X, metric='cosine')
@@ -75,7 +76,7 @@ def test_neighbors_accuracy_with_n_estimators():
         lshf = LSHForest(n_candidates=500, n_estimators=t)
         lshf.fit(X)
         for j in range(n_iter):
-            query = X[rng.randint(0, n_samples)]
+            query = X[rng.randint(0, n_samples)].reshape(1, -1)
             neighbors = lshf.kneighbors(query, n_neighbors=n_points,
                                         return_distance=False)
             distances = pairwise_distances(query, X, metric='cosine')
@@ -114,7 +115,7 @@ def test_kneighbors():
 
     for i in range(n_iter):
         n_neighbors = rng.randint(0, n_samples)
-        query = X[rng.randint(0, n_samples)]
+        query = X[rng.randint(0, n_samples)].reshape(1, -1)
         neighbors = lshf.kneighbors(query, n_neighbors=n_neighbors,
                                     return_distance=False)
         # Desired number of neighbors should be returned.
@@ -133,7 +134,7 @@ def test_kneighbors():
                                 return_distance=False)
     assert_equal(neighbors.shape[0], n_queries)
     # Test random point(not in the data set)
-    query = rng.randn(n_features)
+    query = rng.randn(n_features).reshape(1, -1)
     lshf.kneighbors(query, n_neighbors=1,
                     return_distance=False)
     # Test n_neighbors at initialization
@@ -165,7 +166,7 @@ def test_radius_neighbors():
 
     for i in range(n_iter):
         # Select a random point in the dataset as the query
-        query = X[rng.randint(0, n_samples)]
+        query = X[rng.randint(0, n_samples)].reshape(1, -1)
 
         # At least one neighbor should be returned when the radius is the
         # mean distance from the query to the points of the dataset.
@@ -197,7 +198,7 @@ def test_radius_neighbors():
     assert_equal(neighbors.dtype, object)
 
     # Compare with exact neighbor search
-    query = X[rng.randint(0, n_samples)]
+    query = X[rng.randint(0, n_samples)].reshape(1, -1)
     mean_dist = np.mean(pairwise_distances(query, X, metric='cosine'))
     nbrs = NearestNeighbors(algorithm='brute', metric='cosine').fit(X)
 
@@ -230,7 +231,7 @@ def test_radius_neighbors_boundary_handling():
     lsfh = LSHForest(min_hash_match=0, n_candidates=n_points).fit(X)
 
     # define a query aligned with the first axis
-    query = [1., 0.]
+    query = [[1., 0.]]
 
     # Compute the exact cosine distances of the query to the four points of
     # the dataset
@@ -289,7 +290,7 @@ def test_distances():
 
     for i in range(n_iter):
         n_neighbors = rng.randint(0, n_samples)
-        query = X[rng.randint(0, n_samples)]
+        query = X[rng.randint(0, n_samples)].reshape(1, -1)
         distances, neighbors = lshf.kneighbors(query,
                                                n_neighbors=n_neighbors,
                                                return_distance=True)
@@ -400,7 +401,7 @@ def test_candidates():
     # requested number of neighbors.
     X_train = np.array([[5, 5, 2], [21, 5, 5], [1, 1, 1], [8, 9, 1],
                         [6, 10, 2]], dtype=np.float32)
-    X_test = np.array([7, 10, 3], dtype=np.float32)
+    X_test = np.array([7, 10, 3], dtype=np.float32).reshape(1, -1)
 
     # For zero candidates
     lshf = LSHForest(min_hash_match=32)

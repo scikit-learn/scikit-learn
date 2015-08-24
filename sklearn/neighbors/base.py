@@ -323,7 +323,7 @@ class KNeighborsMixin(object):
         >>> neigh = NearestNeighbors(n_neighbors=1)
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
-        >>> print(neigh.kneighbors([1., 1., 1.])) # doctest: +ELLIPSIS
+        >>> print(neigh.kneighbors([[1., 1., 1.]])) # doctest: +ELLIPSIS
         (array([[ 0.5]]), array([[2]]...))
 
         As you can see, it returns [[0.5]], and [[2]], which means that the
@@ -564,7 +564,7 @@ class RadiusNeighborsMixin(object):
         >>> neigh = NearestNeighbors(radius=1.6)
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
-        >>> rng = neigh.radius_neighbors([1., 1., 1.])
+        >>> rng = neigh.radius_neighbors([[1., 1., 1.]])
         >>> print(np.asarray(rng[0][0])) # doctest: +ELLIPSIS
         [ 1.5  0.5]
         >>> print(np.asarray(rng[1][0])) # doctest: +ELLIPSIS

@@ -61,7 +61,7 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import rbf_kernel
 from ..utils.graph import graph_laplacian
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_X_y, check_is_fitted
+from ..utils.validation import check_X_y, check_is_fitted, check_array
 from ..externals import six
 from ..neighbors.unsupervised import NearestNeighbors
 
@@ -173,10 +173,8 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         check_is_fitted(self, 'X_')
 
-        if sparse.isspmatrix(X):
-            X_2d = X
-        else:
-            X_2d = np.atleast_2d(X)
+        X_2d = check_array(X, accept_sparse = ['csc', 'csr', 'coo', 'dok',
+                        'bsr', 'lil', 'dia'])
         weight_matrices = self._get_kernel(self.X_, X_2d)
         if self.kernel == 'knn':
             probabilities = []

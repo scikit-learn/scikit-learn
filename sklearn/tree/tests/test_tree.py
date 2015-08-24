@@ -29,6 +29,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import raises
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.validation import NotFittedError
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -497,7 +498,7 @@ def test_error():
         assert_raises(NotFittedError, est.predict_proba, X)
 
         est.fit(X, y)
-        X2 = [-2, -1, 1]  # wrong feature shape for sample
+        X2 = [[-2, -1, 1]]  # wrong feature shape for sample
         assert_raises(ValueError, est.predict_proba, X2)
 
     for name, TreeEstimator in ALL_TREES.items():
@@ -1228,6 +1229,7 @@ def test_explicit_sparse_zeros():
         yield (check_explicit_sparse_zeros, tree)
 
 
+@ignore_warnings
 def check_raise_error_on_1d_input(name):
     TreeEstimator = ALL_TREES[name]
 
@@ -1239,9 +1241,10 @@ def check_raise_error_on_1d_input(name):
 
     est = TreeEstimator(random_state=0)
     est.fit(X_2d, y)
-    assert_raises(ValueError, est.predict, X)
+    assert_raises(ValueError, est.predict, [X])
 
 
+@ignore_warnings
 def test_1d_input():
     for name in ALL_TREES:
         yield check_raise_error_on_1d_input, name

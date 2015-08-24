@@ -220,7 +220,8 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     if X is Y:  # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
     elif Y_norm_squared is not None:
-        YY = check_array(Y_norm_squared)
+        YY = np.atleast_2d(Y_norm_squared)
+
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")
@@ -486,11 +487,11 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     Examples
     --------
     >>> from sklearn.metrics.pairwise import manhattan_distances
-    >>> manhattan_distances(3, 3)#doctest:+ELLIPSIS
+    >>> manhattan_distances([[3]], [[3]])#doctest:+ELLIPSIS
     array([[ 0.]])
-    >>> manhattan_distances(3, 2)#doctest:+ELLIPSIS
+    >>> manhattan_distances([[3]], [[2]])#doctest:+ELLIPSIS
     array([[ 1.]])
-    >>> manhattan_distances(2, 3)#doctest:+ELLIPSIS
+    >>> manhattan_distances([[2]], [[3]])#doctest:+ELLIPSIS
     array([[ 1.]])
     >>> manhattan_distances([[1, 2], [3, 4]],\
          [[1, 2], [0, 3]])#doctest:+ELLIPSIS

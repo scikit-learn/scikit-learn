@@ -246,11 +246,11 @@ def test_sample_weights():
     # Test weights on individual samples
     clf = svm.SVC()
     clf.fit(X_sp, Y)
-    assert_array_equal(clf.predict(X[2]), [1.])
+    assert_array_equal(clf.predict([X[2]]), [1.])
 
     sample_weight = [.1] * 3 + [10] * 3
     clf.fit(X_sp, Y, sample_weight=sample_weight)
-    assert_array_equal(clf.predict(X[2]), [2.])
+    assert_array_equal(clf.predict([X[2]]), [2.])
 
 
 def test_sparse_liblinear_intercept_handling():

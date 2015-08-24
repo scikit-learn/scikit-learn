@@ -582,15 +582,15 @@ def log_logistic(X, out=None):
 
     Parameters
     ----------
-    X: array-like, shape (M, N)
+    X: array-like, shape (M, N) or (M, )
         Argument to the logistic function
 
-    out: array-like, shape: (M, N), optional:
+    out: array-like, shape: (M, N) or (M, ), optional:
         Preallocated output array.
 
     Returns
     -------
-    out: array, shape (M, N)
+    out: array, shape (M, N) or (M, )
         Log of the logistic function evaluated at every point in x
 
     Notes
@@ -599,7 +599,9 @@ def log_logistic(X, out=None):
     http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
     """
     is_1d = X.ndim == 1
-    X = check_array(X, dtype=np.float)
+    X = np.atleast_2d(X)
+    X = check_array(X, dtype=np.float64)
+
 
     n_samples, n_features = X.shape
 

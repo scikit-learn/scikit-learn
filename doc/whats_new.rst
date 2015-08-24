@@ -197,6 +197,12 @@ API changes summary
       by setting ``decision_function_shape='ovr'``. This will be the default behavior
       starting in 0.19. By `Andreas Müller`_.
 
+    - Passing 1D data arrays as input to estimators is now deprecated as it
+      caused confusion in how the array elements should be interpreted
+      as features or as samples. All data arrays are now expected
+      to be explicitly shaped ``(n_samples, n_features)``.
+      By `Vighnesh Birodkar`_.
+
 .. _changes_0_1_16:
 
 Version 0.16.1
@@ -3628,3 +3634,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Loic Esteve: https://github.com/lesteve
 
 .. _Brian McFee: https://bmcfee.github.io
+
+.. _Vighnesh Birodkar: https://github.com/vighneshbirodkar

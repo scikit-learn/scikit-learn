@@ -334,7 +334,10 @@ class GraphLasso(EmpiricalCovariance):
         self.store_precision = True
 
     def fit(self, X, y=None):
-        X = check_array(X)
+
+        # Covariance does not make sense for a single feature
+        X = check_array(X, ensure_min_features=2, ensure_min_samples=2)
+
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -557,7 +560,8 @@ class GraphLassoCV(GraphLasso):
         X : ndarray, shape (n_samples, n_features)
             Data from which to compute the covariance estimate
         """
-        X = check_array(X)
+        # Covariance does not make sense for a single feature
+        X = check_array(X, ensure_min_features=2)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
