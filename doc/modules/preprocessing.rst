@@ -425,5 +425,8 @@ Note that, here, missing values are encoded by 0 and are thus implicitly stored
 in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
+Also, knn imputation strategy will use samples with full features, and if all samples
+have missing features, this strategy will fail.
+
 :class:`Imputer` can be used in a Pipeline as a way to build a composite
 estimator that supports imputation. See :ref:`example_missing_values.py`

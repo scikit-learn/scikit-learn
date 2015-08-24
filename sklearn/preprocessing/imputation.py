@@ -422,22 +422,21 @@ class Imputer(BaseEstimator, TransformerMixin):
                         X_sl = X[missing_index[sl]]
                         mask_sl = mask[missing_index[sl]]
                         X_sl[mask_sl] = np.nan
-                        test1 = X_sl[:][:, np.newaxis, :] - statistics
-                        #D2 = np.empty_like(test1)
+                        impute_dist = X_sl[:][:, np.newaxis, :] - statistics
 
                         # For the last slice, the length may not be the same
                         # as batch_size
-                        if test1.shape != D2.shape:
-                            D2 = np.empty_like(test1)
-                        np.multiply(test1, test1, out=D2)
+                        if impute_dist.shape != D2.shape:
+                            D2 = np.empty_like(impute_dist)
+                        np.multiply(impute_dist, impute_dist, out=D2)
                         #D2 = test1 ** 2
                         #D2 = (X_sl[missing_index_sl][:, np.newaxis, :] - statistics)
                         #  ** 2
                         D2[np.isnan(D2)] = 0
                         missing_row, missing_col = np.where(np.isnan(X_sl))
                         sqdist = D2.sum(axis=2)
-                        ind = np.argsort(sqdist, axis=1)[:, :self.n_neighbors]
-                        means = np.mean(statistics[ind], axis=1)
+                        target_index = np.argsort(sqdist, axis=1)[:, :self.n_neighbors]
+                        means = np.mean(statistics[target_index], axis=1)
                         X_sl[missing_row, missing_col] = means[np.where(np.isnan(X_sl))[0],
                                                                missing_col]
                         X[missing_index[sl]] = X_sl
@@ -456,15 +455,15 @@ class Imputer(BaseEstimator, TransformerMixin):
                                 X_sl = X[index_sl]
                                 mask_sl = mask[missing_index[sl]]
                                 X_sl[mask_sl] = np.nan
-                                test1 = X_sl[:][:, np.newaxis, :] - statistics
-                                D2 = np.empty_like(test1)
-                                np.multiply(test1, test1, out=D2)
+                                impute_dist = X_sl[:][:, np.newaxis, :] - statistics
+                                D2 = np.empty_like(impute_dist)
+                                np.multiply(impute_dist, impute_dist, out=D2)
                                 #D2 = test1 ** 2
                                 D2[np.isnan(D2)] = 0
                                 missing_row, missing_col = np.where(np.isnan(X_sl))
                                 sqdist = D2.sum(axis=2)
-                                ind = np.argsort(sqdist, axis=1)[:, :self.n_neighbors]
-                                means = np.mean(statistics[ind], axis=1)
+                                target_index = np.argsort(sqdist, axis=1)[:, :self.n_neighbors]
+                                means = np.mean(statistics[target_index], axis=1)
                                 X_sl[missing_row, missing_col] = means[np.where(np.isnan(X_sl))[0],
                                                                        missing_col]
                                 X[index_sl] = X_sl
