@@ -56,6 +56,9 @@ Other packages useful for data analysis and machine learning.
 - `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning
   software libraries.
 
+- `sklearn-pmml <https://github.com/alex-pirozhenko/sklearn-pmml>`_
+  Serialization of (some) scikit-learn estimators into PMML.
+
 Extensions and Algorithms
 -------------------------
 Libraries that provide a scikit-learn like interface and can be used with
