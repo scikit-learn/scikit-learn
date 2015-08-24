@@ -261,6 +261,33 @@ two slightly unbalanced classes::
   [0 1 2 4 5 6 7] [3 8 9]
 
 
+Disjoint label KFold
+--------------------
+
+:class:`DisjointLabelKFold` is a variation of *k-fold* which ensures that the same
+label is not in both testing and training sets.
+This is necessary for example if you obtained data from different subjects and you
+want to avoid over-fitting (ie learning person specific features) by testing and 
+training on different subjects.
+
+Imagine you have three subjects, each with an associated number from 1 to 3::
+
+  >>> from sklearn.cross_validation import DisjointLabelKFold
+
+  >>> labels = [1, 1, 1, 2, 2, 2, 3, 3, 3, 3]
+
+  >>> dlkf = DisjointLabelKFold(labels, 3)
+  >>> for train, test in dlkf:
+  ...     print("%s %s" % (train, test))
+  [0 1 2 3 4 5] [6 7 8 9]
+  [0 1 2 6 7 8 9] [3 4 5]
+  [3 4 5 6 7 8 9] [0 1 2]
+
+Each subject is in a different testing fold, and the same subject is never in both
+testing and training.
+Notice that the folds do not have exactly the same size due to the imbalance in the data.
+
+
 Leave-One-Out - LOO
 -------------------
 
