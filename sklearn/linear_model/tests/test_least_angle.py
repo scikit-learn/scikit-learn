@@ -483,60 +483,26 @@ def test_lars_path_positive_constraint():
 
 # now we gonna test the positive option for all estimator classes
 
-def test_lars_positive_constraint():
+default_parameter = { 'fit_intercept' : False, }
 
-    estimator = linear_model.Lars(n_nonzero_coefs=5, fit_intercept=False,
-            positive=False)
-    estimator.fit(diabetes['data'], diabetes['target'])
-    assert_true(estimator.coef_.min() < 0)
+estimator_parameter_map = {
+        'Lars' : { 'n_nonzero_coefs' : 5, },
+        'LassoLars' : { 'alpha' : 0.1, },
+        'LarsCV' : {  },
+        'LassoLarsCV' : { },
+        'LassoLarsIC' : { },
+        }
 
-    estimator = linear_model.Lars(n_nonzero_coefs=5, fit_intercept=False,
-            positive=True)
-    estimator.fit(diabetes['data'], diabetes['target'])
-    assert_true(min(estimator.coef_) >= 0)
+def test_estimatorclasses_positive_constraint():
+    # testing the transmissibility for the positive option of all estimator
+    # classes in this same function here 
 
-
-def test_lassolars_positive_constraint():
-
-    estimator = linear_model.LassoLars(alpha=0.1, fit_intercept=False,
-            positive=False)
-    estimator.fit(diabetes['data'], diabetes['target'])
-    assert_true(estimator.coef_.min() < 0)
-
-    estimator = linear_model.LassoLars(alpha=0.1, fit_intercept=False,
-            positive=True)
-    estimator.fit(diabetes['data'], diabetes['target'])
-    assert_true(min(estimator.coef_) >= 0)
-
-
-def test_larscv_positive_constraint():
-
-    estimator = linear_model.LarsCV(fit_intercept=False, positive=False)
-    estimator.fit(diabetes['data'], diabetes['target'])
-    assert_true(estimator.coef_.min() < 0)
-
-    estimator = linear_model.LarsCV(fit_intercept=False, positive=True)
-    estimator.fit(diabetes['data'], diabetes['target'])
-    assert_true(min(estimator.coef_) >= 0)
-
-
-def test_lassolarscv_positive_constraint():
-
-    estimator = linear_model.LassoLarsCV(fit_intercept=False, positive=False)
-    estimator.fit(diabetes['data'], diabetes['target'])
-    assert_true(estimator.coef_.min() < 0)
-
-    estimator = linear_model.LassoLarsCV(fit_intercept=False, positive=True)
-    estimator.fit(diabetes['data'], diabetes['target'])
-    assert_true(min(estimator.coef_) >= 0)
-
-
-def test_lassolarsic_positive_constraint():
-
-    estimator = linear_model.LassoLarsIC(fit_intercept=False, positive=False)
-    estimator.fit(diabetes['data'], diabetes['target'])
-    assert_true(estimator.coef_.min() < 0)
-
-    estimator = linear_model.LassoLarsIC(fit_intercept=False, positive=True)
-    estimator.fit(diabetes['data'], diabetes['target'])
-    assert_true(min(estimator.coef_) >= 0)
+    for estname in estimator_parameter_map:
+        params = default_parameter.copy()
+        params.update(estimator_parameter_map[estname])
+        estimator = getattr(linear_model, estname)(positive=False, **params)
+        estimator.fit(diabetes['data'], diabetes['target'])
+        assert_true(estimator.coef_.min() < 0)
+        estimator = getattr(linear_model, estname)(positive=True, **params)
+        estimator.fit(diabetes['data'], diabetes['target'])
+        assert_true(min(estimator.coef_) >= 0)
