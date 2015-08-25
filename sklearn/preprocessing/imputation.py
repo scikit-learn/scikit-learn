@@ -411,64 +411,32 @@ class Imputer(BaseEstimator, TransformerMixin):
                     mask = mask.transpose()
                     statistics = statistics.transpose()
 
-                batch_size = 200  # set batch size for block query
-                if True:
-                    missing_index = np.where(mask.any(axis=1))[0]
-                    # @jnothman 's method
-                    D2 = np.empty_like(np.zeros([batch_size, statistics.shape[0],
-                                                 statistics.shape[1]]))
-                    # Preallocate output array for np.multiply(test1, test1, out=D2)
-                    for sl in list(gen_batches(len(missing_index), batch_size)):
-                        X_sl = X[missing_index[sl]]
-                        mask_sl = mask[missing_index[sl]]
-                        X_sl[mask_sl] = np.nan
-                        impute_dist = X_sl[:][:, np.newaxis, :] - statistics
+                batch_size = 1  # set batch size for block query
+                missing_index = np.where(mask.any(axis=1))[0]
+                D2 = np.empty_like(np.zeros([batch_size, statistics.shape[0],
+                                             statistics.shape[1]]))
 
-                        # For the last slice, the length may not be the same
-                        # as batch_size
-                        if impute_dist.shape != D2.shape:
-                            D2 = np.empty_like(impute_dist)
-                        np.multiply(impute_dist, impute_dist, out=D2)
-                        #D2 = test1 ** 2
-                        #D2 = (X_sl[missing_index_sl][:, np.newaxis, :] - statistics)
-                        #  ** 2
-                        D2[np.isnan(D2)] = 0
-                        missing_row, missing_col = np.where(np.isnan(X_sl))
-                        sqdist = D2.sum(axis=2)
-                        target_index = np.argsort(sqdist, axis=1)[:, :self.n_neighbors]
-                        means = np.mean(statistics[target_index], axis=1)
-                        X_sl[missing_row, missing_col] = means[np.where(np.isnan(X_sl))[0],
-                                                               missing_col]
-                        X[missing_index[sl]] = X_sl
-                else:
-                    # group by missing features and batch within group
-                    group_index = np.unique(mask.astype('u1').view((np.void, X.shape[1])),
-                                            return_inverse=True)[1]
-                    for group_number in range(max(group_index)+1):
-                        if group_number == 0:
-                            continue
-                        else:
-                            missing_index = np.where(group_index == group_number)[0]
-                            batch_slice = list(gen_batches(len(missing_index), batch_size))
-                            for sl in batch_slice:
-                                index_sl = missing_index[sl]
-                                X_sl = X[index_sl]
-                                mask_sl = mask[missing_index[sl]]
-                                X_sl[mask_sl] = np.nan
-                                impute_dist = X_sl[:][:, np.newaxis, :] - statistics
-                                D2 = np.empty_like(impute_dist)
-                                np.multiply(impute_dist, impute_dist, out=D2)
-                                #D2 = test1 ** 2
-                                D2[np.isnan(D2)] = 0
-                                missing_row, missing_col = np.where(np.isnan(X_sl))
-                                sqdist = D2.sum(axis=2)
-                                target_index = np.argsort(sqdist, axis=1)[:, :self.n_neighbors]
-                                means = np.mean(statistics[target_index], axis=1)
-                                X_sl[missing_row, missing_col] = means[np.where(np.isnan(X_sl))[0],
-                                                                       missing_col]
-                                X[index_sl] = X_sl
+                # Preallocate output array for np.multiply(test1, test1, out=D2)
+                for sl in gen_batches(len(missing_index), batch_size):
+                    X_sl = X[missing_index[sl]]
+                    mask_sl = mask[missing_index[sl]]
+                    X_sl[mask_sl] = np.nan
+                    impute_dist = X_sl[:][:, np.newaxis, :] - statistics
 
+                    # For the last slice, the length may not be the same
+                    # as batch_size
+                    if impute_dist.shape != D2.shape:
+                        D2 = np.empty_like(impute_dist)
 
+                    np.multiply(impute_dist, impute_dist, out=D2)
+                    D2[np.isnan(D2)] = 0
+                    missing_row, missing_col = np.where(np.isnan(X_sl))
+                    sqdist = D2.sum(axis=2)
+                    target_index = np.argsort(sqdist, axis=1)[:, :self.n_neighbors]
+                    means = np.mean(statistics[target_index], axis=1)
+                    X_sl[missing_row, missing_col] = means[np.where(np.isnan(X_sl))[0],
+                                                           missing_col]
+                    X[missing_index[sl]] = X_sl
 
                 if self.axis == 1:
                     X = X.transpose()
