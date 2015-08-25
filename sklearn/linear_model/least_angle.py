@@ -809,7 +809,7 @@ class LassoLars(Lars):
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lasso'
-        self.positive=positive 
+        self.positive = positive 
         self.precompute = precompute
         self.copy_X = copy_X
         self.eps = eps
