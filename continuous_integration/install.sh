@@ -41,6 +41,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
         conda remove --yes --features mkl || echo "MKL not installed"
     fi
 
+
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
     # virtualenv but we want to used numpy installed through apt-get
