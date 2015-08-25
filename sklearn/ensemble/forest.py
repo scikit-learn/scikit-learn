@@ -81,6 +81,31 @@ def _generate_sample_indices(random_state, n_samples):
 
     return sample_indices
 
+def _generate_balanced_sample_indices(random_state, y):
+    """Private function used to _parallel_build_trees function.
+    
+    Generates samples according to the balanced random forest method [1] (adapted for multi-class)
+    i.e. a bootstrap sample from the minority class and a random sample with replacement of the same size from all other classes.
+    
+    References
+    ----------
+    .. [1] Chen, C., Liaw, A., Breiman, L. (2004) “Using Random Forest to Learn Imbalanced Data”, Tech. Rep. 666, 2004
+    
+    """
+    classes, class_counts = np.unique(y, False, False, True)
+    class_indices = [ np.nonzero(y==cls)[0] for cls in classes ]
+    n_classes = len(classes)
+    min_count = np.min(class_counts)
+    
+    random_instance = check_random_state(random_state)
+    sample_indices = np.empty(n_classes*min_count, dtype=int)
+    
+    for i,cls, count, indices in zip(xrange(n_classes), classes, class_counts, class_indices):
+        random_instances = random_instance.randint(0, count, min_count)
+        random_indices =  indices[random_instances]
+        sample_indices[i*min_count:(i+1)*min_count]=random_indices
+    
+    return sample_indices
 
 def _generate_unsampled_indices(random_state, n_samples):
     """Private function used to forest._set_oob_score function."""
@@ -94,7 +119,7 @@ def _generate_unsampled_indices(random_state, n_samples):
 
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
-                          verbose=0, class_weight=None):
+                          verbose=0, class_weight=None, balanced=False):
     """Private function used to fit a single tree in parallel."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
@@ -106,7 +131,11 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         else:
             curr_sample_weight = sample_weight.copy()
 
-        indices = _generate_sample_indices(tree.random_state, n_samples)
+        if balanced:
+            indices = _generate_balanced_sample_indices(tree.random_state, y)
+        else:
+            indices = _generate_sample_indices(tree.random_state, n_samples)
+
         sample_counts = bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
 
@@ -142,7 +171,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 class_weight=None):
+                 class_weight=None,
+                 balanced=False):
         super(BaseForest, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -155,6 +185,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.verbose = verbose
         self.warm_start = warm_start
         self.class_weight = class_weight
+        self.balanced = balanced
 
     def apply(self, X):
         """Apply trees in the forest to X, return leaf indices.
@@ -323,7 +354,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
                              backend="threading")(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
-                    verbose=self.verbose, class_weight=self.class_weight)
+                    verbose=self.verbose, class_weight=self.class_weight, balanced=self.balanced)
                 for i, t in enumerate(trees))
 
             # Collect newly grown trees
@@ -406,7 +437,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 class_weight=None):
+                 class_weight=None,
+                 balanced=False):
 
         super(ForestClassifier, self).__init__(
             base_estimator,
@@ -418,7 +450,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start,
-            class_weight=class_weight)
+            class_weight=class_weight,
+            balanced=False)
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
@@ -948,7 +981,8 @@ class RandomForestClassifier(ForestClassifier):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 class_weight=None):
+                 class_weight=None,
+                 balanced=False):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
@@ -963,7 +997,8 @@ class RandomForestClassifier(ForestClassifier):
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start,
-            class_weight=class_weight)
+            class_weight=class_weight,
+            balanced=balanced)
 
         self.criterion = criterion
         self.max_depth = max_depth
