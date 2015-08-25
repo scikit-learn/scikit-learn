@@ -32,7 +32,6 @@ from ..preprocessing import LabelBinarizer, label_binarize
 from ..preprocessing import LabelEncoder
 from ..utils import check_array
 from ..utils import check_consistent_length
-from ..preprocessing import MultiLabelBinarizer
 from ..utils import column_or_1d
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
@@ -62,8 +61,7 @@ def _check_targets(y_true, y_pred):
 
     Returns
     -------
-    type_true : one of {'multilabel-indicator', 'multilabel-sequences', \
-                        'multiclass', 'binary'}
+    type_true : one of {'multilabel-indicator', 'multiclass', 'binary'}
         The type of the true target data, as output by
         ``utils.multiclass.type_of_target``
 
@@ -87,8 +85,7 @@ def _check_targets(y_true, y_pred):
     y_type = y_type.pop()
 
     # No metrics support "multiclass-multioutput" format
-    if (y_type not in ["binary", "multiclass", "multilabel-indicator",
-                       "multilabel-sequences"]):
+    if (y_type not in ["binary", "multiclass", "multilabel-indicator"]):
         raise ValueError("{0} is not supported".format(y_type))
 
     if y_type in ["binary", "multiclass"]:
@@ -96,12 +93,6 @@ def _check_targets(y_true, y_pred):
         y_pred = column_or_1d(y_pred)
 
     if y_type.startswith('multilabel'):
-        if y_type == 'multilabel-sequences':
-            labels = unique_labels(y_true, y_pred)
-            binarizer = MultiLabelBinarizer(classes=labels, sparse_output=True)
-            y_true = binarizer.fit_transform(y_true)
-            y_pred = binarizer.fit_transform(y_pred)
-
         y_true = csr_matrix(y_true)
         y_pred = csr_matrix(y_pred)
         y_type = 'multilabel-indicator'
@@ -264,6 +255,57 @@ def confusion_matrix(y_true, y_pred, labels=None):
                     ).toarray()
 
     return CM
+
+
+def cohen_kappa_score(y1, y2, labels=None):
+    """Cohen's kappa: a statistic that measures inter-annotator agreement.
+
+    This function computes Cohen's kappa [1], a score that expresses the level
+    of agreement between two annotators on a classification problem. It is
+    defined as
+
+    .. math::
+        \kappa = (p_o - p_e) / (1 - p_e)
+
+    where :math:`p_o` is the empirical probability of agreement on the label
+    assigned to any sample (the observed agreement ratio), and :math:`p_e` is
+    the expected agreement when both annotators assign labels randomly.
+    :math:`p_e` is estimated using a per-annotator empirical prior over the
+    class labels [2].
+
+    Parameters
+    ----------
+    y1 : array, shape = [n_samples]
+        Labels assigned by the first annotator.
+
+    y2 : array, shape = [n_samples]
+        Labels assigned by the second annotator. The kappa statistic is
+        symmetric, so swapping ``y1`` and ``y2`` doesn't change the value.
+
+    labels : array, shape = [n_classes], optional
+        List of labels to index the matrix. This may be used to select a
+        subset of labels. If None, all labels that appear at least once in
+        ``y1`` or ``y2`` are used.
+
+    Returns
+    -------
+    kappa : float
+        The kappa statistic, which is a number between -1 and 1. The maximum
+        value means complete agreement; zero or lower means chance agreement.
+
+    References
+    ----------
+    .. [1] J. Cohen (1960). "A coefficient of agreement for nominal scales".
+           Educational and Psychological Measurement 20(1):37-46.
+           doi:10.1177/001316446002000104.
+    .. [2] R. Artstein and M. Poesio (2008). "Inter-coder agreement for
+           computational linguistics". Computational Linguistic 34(4):555-596.
+    """
+    confusion = confusion_matrix(y1, y2, labels=labels)
+    P = confusion / float(confusion.sum())
+    p_observed = np.trace(P)
+    p_expected = np.dot(P.sum(axis=0), P.sum(axis=1))
+    return (p_observed - p_expected) / (1 - p_expected)
 
 
 def jaccard_similarity_score(y_true, y_pred, normalize=True,

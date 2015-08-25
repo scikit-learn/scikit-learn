@@ -29,6 +29,10 @@ New features
      range normalization when the data is already centered or sparse.
      By `Thomas Unterthiner`_.
 
+   - The new class :class:`preprocessing.FunctionTransformer` turns a Python
+     function into a ``Pipeline``-compatible transformer object.
+     By Joe Jevnik.
+
 Enhancements
 ............
 
@@ -101,6 +105,10 @@ Enhancements
      with ``n_jobs > 1`` used with a large grid of parameters on a small
      dataset. By `Vlad Niculae`_, `Olivier Grisel`_ and `Loic Esteve`_.
 
+   - Improved speed (3 times per iteration) of
+     :class:`decomposition.DictLearning` with coordinate descent method
+     from :class:`linear_model.Lasso`. By `Arthur Mensch`_.
+
 
 Bug fixes
 .........
@@ -122,6 +130,15 @@ Bug fixes
 
     - Fixed bug in :class:`ensemble.forest.ForestClassifier` while computing 
       oob_score and X is a sparse.csc_matrix. By `Ankur Ankan`_.
+
+    - All regressors now consistently handle and warn when given ``y`` that is of
+      shape ``(n_samples, 1)``. By `Andreas Müller`_.
+
+    - Fix in :class:`cluster.KMeans` cluster reassignment for sparse input by
+      `Lars Buitinck`_.
+
+    - Fixed a bug in :class:`lda.LDA` that could cause asymmetric covariance 
+      matrices when using shrinkage. By `Martin Billinger`_.
 
 API changes summary
 -------------------

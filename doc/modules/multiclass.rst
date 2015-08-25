@@ -91,17 +91,13 @@ zero elements, corresponds to the subset of labels. An array such as
 sample, labels 1 and 2 in the second sample, and no labels in the third sample.
 
 Producing multilabel data as a list of sets of labels may be more intuitive.
-The transformer :class:`MultiLabelBinarizer <preprocessing.MultiLabelBinarizer>`
-will convert between a collection of collections of labels and the indicator
-format.
+The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>`
+transformer can be used to convert between a collection of collections of
+labels and the indicator format.
 
-  >>> from sklearn.datasets import make_multilabel_classification
   >>> from sklearn.preprocessing import MultiLabelBinarizer
-  >>> X, Y = make_multilabel_classification(n_samples=5, random_state=0,
-  ...                                       return_indicator=False)
-  >>> Y
-  [[2, 3, 4], [2], [0, 1, 3], [0, 1, 2, 3, 4], [0, 1, 2]]
-  >>> MultiLabelBinarizer().fit_transform(Y)
+  >>> y = [[2, 3, 4], [2], [0, 1, 3], [0, 1, 2, 3, 4], [0, 1, 2]]
+  >>> MultiLabelBinarizer().fit_transform(y)
   array([[0, 0, 1, 1, 1],
          [0, 0, 1, 0, 0],
          [1, 1, 0, 1, 0],

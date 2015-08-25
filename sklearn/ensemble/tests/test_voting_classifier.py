@@ -151,7 +151,6 @@ def test_multilabel():
     """Check if error is raised for multilabel classification."""
     X, y = make_multilabel_classification(n_classes=2, n_labels=1,
                                           allow_unlabeled=False,
-                                          return_indicator=True,
                                           random_state=123)
     clf = OneVsRestClassifier(SVC(kernel='linear'))
 

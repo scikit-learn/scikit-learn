@@ -4,7 +4,7 @@ RBF SVM parameters
 ==================
 
 This example illustrates the effect of the parameters ``gamma`` and ``C`` of
-the Radius Basis Function (RBF) kernel SVM.
+the Radial Basis Function (RBF) kernel SVM.
 
 Intuitively, the ``gamma`` parameter defines how far the influence of a single
 training example reaches, with low values meaning 'far' and high values meaning

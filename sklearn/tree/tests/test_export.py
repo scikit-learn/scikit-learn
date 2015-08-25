@@ -2,12 +2,16 @@
 Testing for export functions of decision trees (sklearn.tree.export).
 """
 
+from re import finditer
+
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz
 from sklearn.externals.six import StringIO
+from sklearn.utils.testing import assert_in
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -223,3 +227,18 @@ def test_graphviz_errors():
     # Check class_names error
     out = StringIO()
     assert_raises(IndexError, export_graphviz, clf, out, class_names=[])
+
+
+def test_friedman_mse_in_graphviz():
+    clf = DecisionTreeRegressor(criterion="friedman_mse", random_state=0)
+    clf.fit(X, y)
+    dot_data = StringIO()
+    export_graphviz(clf, out_file=dot_data)
+
+    clf = GradientBoostingClassifier(n_estimators=2, random_state=0)
+    clf.fit(X, y)
+    for estimator in clf.estimators_:
+        export_graphviz(estimator[0], out_file=dot_data)
+
+    for finding in finditer("\[.*?samples.*?\]", dot_data.getvalue()):
+        assert_in("friedman_mse", finding.group())

@@ -7,6 +7,7 @@ from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_X_y
+from ..utils.validation import _num_samples
 
 
 class LinearSVC(BaseEstimator, LinearClassifierMixin,
@@ -405,7 +406,8 @@ class SVC(BaseSVC):
          It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
          a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
-         used to precompute the kernel matrix.
+         used to pre-compute the kernel matrix from data matrices; that matrix
+         should be an array of shape ``(n_samples, n_samples)``.
 
     degree : int, optional (default=3)
         Degree of the polynomial kernel function ('poly').
@@ -1011,7 +1013,7 @@ class OneClassSVM(BaseLibSVM):
         If X is not a C-ordered contiguous array it is copied.
 
         """
-        super(OneClassSVM, self).fit(X, [], sample_weight=sample_weight,
+        super(OneClassSVM, self).fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight,
                                      **params)
         return self
 

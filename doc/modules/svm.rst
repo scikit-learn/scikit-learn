@@ -482,15 +482,17 @@ Using Python functions as kernels
 You can also use your own defined kernels by passing a function to the
 keyword ``kernel`` in the constructor.
 
-Your kernel must take as arguments two matrices and return a third matrix.
+Your kernel must take as arguments two matrices of shape
+``(n_samples_1, n_features)``, ``(n_samples_2, n_features)``
+and return a kernel matrix of shape ``(n_samples_1, n_samples_2)``.
 
 The following code defines a linear kernel and creates a classifier
 instance that will use that kernel::
 
     >>> import numpy as np
     >>> from sklearn import svm
-    >>> def my_kernel(x, y):
-    ...     return np.dot(x, y.T)
+    >>> def my_kernel(X, Y):
+    ...     return np.dot(X, Y.T)
     ...
     >>> clf = svm.SVC(kernel=my_kernel)
 

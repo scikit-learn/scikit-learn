@@ -88,8 +88,10 @@ def _check_stop_list(stop):
         return ENGLISH_STOP_WORDS
     elif isinstance(stop, six.string_types):
         raise ValueError("not a built-in stop list: %s" % stop)
+    elif stop is None:
+        return None
     else:               # assume it's a collection
-        return stop
+        return frozenset(stop)
 
 
 class VectorizerMixin(object):

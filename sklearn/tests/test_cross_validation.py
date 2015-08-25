@@ -37,7 +37,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
 
-from sklearn.preprocessing import Imputer, LabelBinarizer
+from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
 
@@ -962,15 +962,8 @@ def test_check_cv_return_types():
     assert_true(isinstance(cv, cval.StratifiedKFold))
 
     X = np.ones((5, 2))
-    y_seq_of_seqs = [[], [1, 2], [3], [0, 1, 3], [2]]
-
-    with warnings.catch_warnings(record=True):
-        # deprecated sequence of sequence format
-        cv = cval.check_cv(3, X, y_seq_of_seqs, classifier=True)
-    assert_true(isinstance(cv, cval.KFold))
-
-    y_indicator_matrix = LabelBinarizer().fit_transform(y_seq_of_seqs)
-    cv = cval.check_cv(3, X, y_indicator_matrix, classifier=True)
+    y_multilabel = [[1, 0, 1], [1, 1, 0], [0, 0, 0], [0, 1, 1], [1, 0, 0]]
+    cv = cval.check_cv(3, X, y_multilabel, classifier=True)
     assert_true(isinstance(cv, cval.KFold))
 
     y_multioutput = np.array([[1, 2], [0, 3], [0, 0], [3, 1], [2, 0]])

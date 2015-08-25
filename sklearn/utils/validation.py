@@ -652,3 +652,20 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
 
     if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
         raise NotFittedError(msg % {'name': type(estimator).__name__})
+
+
+def check_non_negative(X, whom):
+    """
+    Check if there is any negative value in an array.
+
+    Parameters
+    ----------
+    X : array-like or sparse matrix
+        Input data.
+
+    whom : string
+        Who passed X to this function.
+    """
+    X = X.data if sp.issparse(X) else X
+    if (X < 0).any():
+        raise ValueError("Negative values in data passed to %s" % whom)

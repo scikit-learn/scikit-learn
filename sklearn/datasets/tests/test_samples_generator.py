@@ -13,7 +13,6 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns
 
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -134,9 +133,10 @@ def test_make_classification_informative_features():
 
 def test_make_multilabel_classification_return_sequences():
     for allow_unlabeled, min_length in zip((True, False), (0, 1)):
-        X, Y = assert_warns(DeprecationWarning, make_multilabel_classification,
-                            n_samples=100, n_features=20, n_classes=3,
-                            random_state=0, allow_unlabeled=allow_unlabeled)
+        X, Y = make_multilabel_classification(n_samples=100, n_features=20,
+                                              n_classes=3, random_state=0,
+                                              return_indicator=False,
+                                              allow_unlabeled=allow_unlabeled)
         assert_equal(X.shape, (100, 20), "X shape mismatch")
         if not allow_unlabeled:
             assert_equal(max([max(y) for y in Y]), 2)
@@ -148,7 +148,6 @@ def test_make_multilabel_classification_return_indicator():
     for allow_unlabeled, min_length in zip((True, False), (0, 1)):
         X, Y = make_multilabel_classification(n_samples=25, n_features=20,
                                               n_classes=3, random_state=0,
-                                              return_indicator=True,
                                               allow_unlabeled=allow_unlabeled)
         assert_equal(X.shape, (25, 20), "X shape mismatch")
         assert_equal(Y.shape, (25, 3), "Y shape mismatch")
@@ -157,8 +156,7 @@ def test_make_multilabel_classification_return_indicator():
     # Also test return_distributions
     X2, Y2, p_c, p_w_c = make_multilabel_classification(
         n_samples=25, n_features=20, n_classes=3, random_state=0,
-        return_indicator=True, allow_unlabeled=allow_unlabeled,
-        return_distributions=True)
+        allow_unlabeled=allow_unlabeled, return_distributions=True)
 
     assert_array_equal(X, X2)
     assert_array_equal(Y, Y2)
