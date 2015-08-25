@@ -248,7 +248,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             ##########################################################
 
             if positive:
-                sign_active[n_active] = np.ones(C_.shape)
+                sign_active[n_active] = np.ones_like(C_)
             else:
                 sign_active[n_active] = np.sign(C_)
             m, n = n_active, C_idx + n_active
@@ -368,10 +368,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                                  least_squares)
 
         g1 = arrayfuncs.min_pos((C - Cov) / (AA - corr_eq_dir + tiny))
-        g2 = arrayfuncs.min_pos((C + Cov) / (AA + corr_eq_dir + tiny))
         if positive:
             gamma_ = min(g1, C / AA)
         else:
+            g2 = arrayfuncs.min_pos((C + Cov) / (AA + corr_eq_dir + tiny))
             gamma_ = min(g1, g2, C / AA)
 
         # TODO: better names for these variables: z
@@ -572,8 +572,9 @@ class Lars(LinearModel, RegressorMixin):
 
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
-                 precompute='auto', n_nonzero_coefs=500, positive=False,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
+                 precompute='auto', n_nonzero_coefs=500,
+                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
+                 positive=False):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
@@ -801,8 +802,8 @@ class LassoLars(Lars):
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 positive=False, eps=np.finfo(np.float).eps, copy_X=True,
-                 fit_path=True):
+                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
+                 positive=False):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
