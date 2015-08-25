@@ -58,8 +58,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         Input targets.
 
     positive : boolean (default=False)
-        Restrict coefficients to be >= 0. Be aware that you might want to
-        remove fit_intercept which is by default True.
+        Restrict coefficients to be >= 0. 
 
     max_iter : integer, optional (default=500)
         Maximum number of iterations to perform, set to infinity for no limit.
