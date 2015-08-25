@@ -456,3 +456,42 @@ def test_lars_path_readonly_data():
             shutil.rmtree(temp_folder)
         except shutil.WindowsError:
             warnings.warn("Could not delete temporary folder %s" % temp_folder)
+
+
+def test_lars_path_positive_constraint():
+    # this is the main test for the positive parameter on the lars_path method
+    # the estimator classes just make use of this function
+
+    # we do the test on the diabetes dataset
+
+    # ensure that we get negative coefficients when positive=False
+    # for method 'lar' (default)
+    alpha, active, coefs = linear_model.lars_path(
+            diabetes['data'], diabetes['target'],
+            return_path=True,
+            method='lar',
+            positive=False)
+    assert_true(coefs.min() < 0)
+    # for method 'lasso'
+    alpha, active, coefs = linear_model.lars_path(
+            diabetes['data'], diabetes['target'],
+            return_path=True,
+            method='lasso',
+            positive=False)
+    assert_true(coefs.min() < 0)
+
+    # now let's restrict the solution to be positive
+    # for method 'lar' (default)
+    alpha, active, coefs = linear_model.lars_path(
+            diabetes['data'], diabetes['target'],
+            return_path=True,
+            method='lar',
+            positive=True)
+    assert_true(coefs.min() >= 0)
+    # for method 'lasso'
+    alpha, active, coefs = linear_model.lars_path(
+            diabetes['data'], diabetes['target'],
+            return_path=True,
+            method='lasso',
+            positive=True)
+    assert_true(coefs.min() >= 0)
