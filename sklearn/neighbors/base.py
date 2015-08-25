@@ -139,7 +139,10 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("unrecognized algorithm: '%s'" % algorithm)
 
         if algorithm == 'auto':
-            alg_check = 'ball_tree'
+            if metric == 'precomputed':
+                alg_check = 'brute'
+            else:
+                alg_check = 'ball_tree'
         else:
             alg_check = algorithm
 
@@ -236,8 +239,9 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self._fit_method == 'auto':
             # A tree approach is better for small number of neighbors,
             # and KDTree is generally faster when available
-            if (self.n_neighbors is None
-                    or self.n_neighbors < self._fit_X.shape[0] // 2):
+            if ((self.n_neighbors is None or
+                 self.n_neighbors < self._fit_X.shape[0] // 2) and
+                    self.metric != 'precomputed'):
                 if self.effective_metric_ in VALID_METRICS['kd_tree']:
                     self._fit_method = 'kd_tree'
                 else:
@@ -318,6 +322,10 @@ class KNeighborsMixin(object):
         """
         if self._fit_method is None:
             raise NotFittedError("Must fit neighbors before querying.")
+
+        if (self.effective_metric_ == 'precomputed'
+                and X.shape[0] != X.shape[1]):
+            raise ValueError("Precomputed metric requires a square matrix.")
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -562,6 +570,10 @@ class RadiusNeighborsMixin(object):
         else:
             query_is_train = True
             X = self._fit_X
+
+        if self.effective_metric_ == 'precomputed' and \
+           X.shape[0] != X.shape[1]:
+            raise ValueError("Precomputed metric requires a square matrix.")
 
         if radius is None:
             radius = self.radius
