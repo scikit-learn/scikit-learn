@@ -1050,9 +1050,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
 
     # Check for sparse predictions
     if sp.issparse(p[0]) :
-        preds = p[0]
-        for i in range(1,len(p)):
-            preds = sp.vstack((preds, p[i]), format = 'csr')
+        preds = sp.vstack(p, format = 'csr')
         return preds
     else :
         p = np.concatenate(p)
