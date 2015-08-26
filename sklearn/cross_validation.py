@@ -1190,7 +1190,7 @@ def _index_param_value(X, v, indices):
     return safe_indexing(v, indices)
 
 
-def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1, proba=False,
+def cross_val_apply(estimator, X, y=None, cv=None, n_jobs=1, decision_func='predict',
                       verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Generate cross-validated estimates for each input data point
 
@@ -1227,10 +1227,9 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1, proba=False,
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
 
-    proba : boolean, optional, default: False
-        Invokes the predict_proba on the estimator 
-        otherwise uses predict.
-    
+    decision_func : string, optional, default: predict
+        Invokes the decision function on the passed estimator. Default calls predict.
+
     verbose : integer, optional
         The verbosity level.
 
@@ -1257,18 +1256,23 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1, proba=False,
     Returns
     -------
     preds : ndarray
-        This is the result of calling 'predict'
+        This is the result of calling 'decision_function'
     """
     X, y = indexable(X, y)
 
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
+    
+    # Ensure the estimator has implemented the passed decision function
+    if not hasattr(estimator, decision_func):
+        raise AttributeError(' '.join((decision_func,'not implemented in estimator')))
+
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    preds_blocks = parallel(delayed(_fit_and_predict)(clone(estimator), X, y,
+    preds_blocks = parallel(delayed(_fit_and_apply)(clone(estimator), X, y,
                                                       train, test, verbose,
-                                                      fit_params, proba)
+                                                      fit_params, decision_func)
                             for train, test in cv)
 
     preds = [p for p, _ in preds_blocks]
@@ -1285,10 +1289,8 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1, proba=False,
         preds = np.concatenate(preds)
     return preds[inv_locs]
 
-    
 
-
-def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params, proba):
+def _fit_and_apply(estimator, X, y, train, test, verbose, fit_params, decision_func):
     """Fit estimator and predict values for a given dataset split.
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -1317,13 +1319,13 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params, proba):
     fit_params : dict or None
         Parameters that will be passed to ``estimator.fit``.
     
-    proba: boolean
-        If True, use predict_proba otherwise use predict method on estimator.
+    decision_function : string
+        Invokes the decision function on the passed estimator.
     
     Returns
     -------
     preds : sequence
-        Result of calling 'estimator.predict' or 'estimator.predict_proba'
+        Result of calling 'estimator.decision_function'
 
     test : array-like
         This is the value of the test parameter
@@ -1340,11 +1342,74 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params, proba):
         estimator.fit(X_train, **fit_params)
     else:
         estimator.fit(X_train, y_train, **fit_params)
-    if proba:
-        preds = estimator.predict_proba(X_test)
-    else:
-        preds = estimator.predict(X_test)
+    
+    func = getattr(estimator, decision_func)
+    preds = func(X_test)
     return preds, test
+
+
+def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
+                      verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+    """Generate cross-validated estimates for each input data point
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit' and 'predict'
+        The object to use to fit the data.
+
+    X : array-like
+        The data to fit. Can be, for example a list, or an array at least 2d.
+
+    y : array-like, optional, default: None
+        The target variable to try to predict in the case of
+        supervised learning.
+
+    cv : cross-validation generator or int, optional, default: None
+        A cross-validation generator to use. If int, determines
+        the number of folds in StratifiedKFold if y is binary
+        or multiclass and estimator is a classifier, or the number
+        of folds in KFold otherwise. If None, it is equivalent to cv=3.
+        This generator must include all elements in the test set exactly once.
+        Otherwise, a ValueError is raised.
+
+    n_jobs : integer, optional
+        The number of CPUs to use to do the computation. -1 means
+        'all CPUs'.
+
+    verbose : integer, optional
+        The verbosity level.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method of the estimator.
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    Returns
+    -------
+    preds : ndarray
+        This is the result of calling 'predict'
+    """
+    # Preserve the existing API and delegate to cross_val_apply with 'predict' decision function.
+    preds = cross_val_apply(estimator, X, y, cv=cv, n_jobs=n_jobs, decision_func='predict',
+                      verbose=verbose, fit_params=fit_params, pre_dispatch=pre_dispatch)
+    return preds
 
 
 def _check_is_partition(locs, n):
