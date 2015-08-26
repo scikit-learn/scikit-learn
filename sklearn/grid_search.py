@@ -359,7 +359,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def __init__(self, estimator, scoring=None,
                  fit_params=None, n_jobs=1, iid=True,
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise'):
+                 error_score='raise', backend='multiprocessing'):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -371,6 +371,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.verbose = verbose
         self.pre_dispatch = pre_dispatch
         self.error_score = error_score
+        self.backend = backend
 
     @property
     def _estimator_type(self):
@@ -541,7 +542,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
-            pre_dispatch=pre_dispatch
+            pre_dispatch=pre_dispatch, backend=self.backend
         )(
             delayed(_fit_and_score)(clone(base_estimator), X, y, self.scorer_,
                                     train, test, self.verbose, parameters,
@@ -675,6 +676,20 @@ class GridSearchCV(BaseSearchCV):
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
 
+    backend : str, object, or None
+        Specify the parallelization backend implementation.
+        Supported backends are:
+          - "multiprocessing" used by default, can induce some
+            communication and memory overhead when exchanging input and
+            output data with the with the worker Python processes.
+          - "threading" is a very low-overhead backend but it suffers
+            from the Python Global Interpreter Lock if the called function
+            relies a lot on Python objects. "threading" is mostly useful
+            when the execution bottleneck is a compiled extension that
+            explicitly releases the GIL (for instance a Cython loop wrapped
+            in a "with nogil" block or an expensive call to a library such
+            as NumPy).
+        It is possible to pass a custom multiprocessing context as a backend.
 
     Examples
     --------
@@ -685,7 +700,7 @@ class GridSearchCV(BaseSearchCV):
     >>> clf = grid_search.GridSearchCV(svr, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=None, error_score=...,
+    GridSearchCV(backend=..., cv=None, error_score=...,
            estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
                          decision_function_shape=None, degree=..., gamma=...,
                          kernel='rbf', max_iter=-1, probability=False,
@@ -753,11 +768,12 @@ class GridSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
-                 pre_dispatch='2*n_jobs', error_score='raise'):
+                 pre_dispatch='2*n_jobs', error_score='raise',
+                 backend='multiprocessing'):
 
         super(GridSearchCV, self).__init__(
             estimator, scoring, fit_params, n_jobs, iid,
-            refit, cv, verbose, pre_dispatch, error_score)
+            refit, cv, verbose, pre_dispatch, error_score, backend)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
@@ -870,6 +886,20 @@ class RandomizedSearchCV(BaseSearchCV):
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
 
+    backend : str, object, or None
+        Specify the parallelization backend implementation.
+        Supported backends are:
+          - "multiprocessing" used by default, can induce some
+            communication and memory overhead when exchanging input and
+            output data with the with the worker Python processes.
+          - "threading" is a very low-overhead backend but it suffers
+            from the Python Global Interpreter Lock if the called function
+            relies a lot on Python objects. "threading" is mostly useful
+            when the execution bottleneck is a compiled extension that
+            explicitly releases the GIL (for instance a Cython loop wrapped
+            in a "with nogil" block or an expensive call to a library such
+            as NumPy).
+        It is possible to pass a custom multiprocessing context as a backend.
 
     Attributes
     ----------
@@ -921,7 +951,7 @@ class RandomizedSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise'):
+                 error_score='raise', backend='multiprocessing'):
 
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -929,7 +959,8 @@ class RandomizedSearchCV(BaseSearchCV):
         super(RandomizedSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
-            pre_dispatch=pre_dispatch, error_score=error_score)
+            pre_dispatch=pre_dispatch, error_score=error_score,
+            backend=backend)
 
     def fit(self, X, y=None):
         """Run fit on the estimator with randomly drawn parameters.
