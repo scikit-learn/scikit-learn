@@ -83,13 +83,14 @@ class Imputer(BaseEstimator, TransformerMixin):
         - If "most_frequent", then replace missing using the most frequent
           value along the axis.
         - If "knn", then replace missing using the mean of the k-nearest
-          neighbors along the axis.
+          neighbors along the axis. Only samples with no missing values are
+          considered as neighbors.
 
     axis : integer, optional (default=0)
         The axis along which to impute.
 
-        - If `axis=0`, then impute along columns.
-        - If `axis=1`, then impute along rows.
+        - If ``axis=0``, then impute along columns.
+        - If ``axis=1``, then impute along rows.
 
     verbose : integer, optional (default=0)
         Controls the verbosity of the imputer.
@@ -101,18 +102,18 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         - If X is not an array of floating values;
         - If X is sparse and `missing_values=0`;
-        - If `axis=0` and X is encoded as a CSR matrix;
-        - If `axis=1` and X is encoded as a CSC matrix.
+        - If ``axis=0`` and X is encoded as a CSR matrix;
+        - If ``axis=1`` and X is encoded as a CSC matrix.
 
     n_neighbors : int, optional (default=1)
-        It only has effect if the `strategy=knn`. It controls the number of
-        nearest neighbors used to compute the mean along the axis.
+        Controls the number of nearest neighbors used to compute the mean
+        along the axis. Only used when ``strategy=knn``
 
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
         The imputation fill value for each feature if axis == 0.
-        If `strategy=knn`, then it contains those samples having no missing value.
+        If ``strategy=knn``, then it contains those samples having no missing value.
 
     Notes
     -----
@@ -412,6 +413,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                     statistics = statistics.transpose()
 
                 batch_size = 1  # set batch size for block query
+
                 missing_index = np.where(mask.any(axis=1))[0]
                 D2 = np.empty_like(np.zeros([batch_size, statistics.shape[0],
                                              statistics.shape[1]]))

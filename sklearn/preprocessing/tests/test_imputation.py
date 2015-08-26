@@ -356,8 +356,22 @@ def test_imputation_knn():
         [-1,  2,  3,  7],
     ])
 
+    X_true_1 = np.array([
+        [-1, -1,  0,  5],
+        [0,  2, -1,  3],
+        [-1,  -1,  0, 5],
+        [-1,  2,  3,  7],
+    ])
+
     X2 = np.array([
         [np.nan, -1,  0,  np.nan],
+        [0,  2, -1,  3],
+        [-1,  -1,  0, 5],
+        [-1,  2,  3,  7],
+    ])
+
+    X_true_2 = np.array([
+        [-0.5, -1,  0,  5],
         [0,  2, -1,  3],
         [-1,  -1,  0, 5],
         [-1,  2,  3,  7],
@@ -377,32 +391,18 @@ def test_imputation_knn():
         [0,  2,  -1,  6],
     ])
 
-    X5 = np.array([
-        [999, -1,  0,  5],
-        [0,  2, -1,  3],
-        [-1,  -1,  0, 5],
-        [-1,  2,  3,  7],
-    ])
-
-    X_true_1 = np.array([
-        [-1, -1,  0,  5],
-        [0,  2, -1,  3],
-        [-1,  -1,  0, 5],
-        [-1,  2,  3,  7],
-    ])
-
-    X_true_2 = np.array([
-        [-0.5, -1,  0,  5],
-        [0,  2, -1,  3],
-        [-1,  -1,  0, 5],
-        [-1,  2,  3,  7],
-    ])
-
     X_true_4 = np.array([
         [-1, -1,  0,  5],
         [0,  2, -1,  3],
         [-1,  -1,  0, 5],
         [0,  2, -1,  6],
+    ])
+
+    X5 = np.array([
+        [999, -1,  0,  5],
+        [0,  2, -1,  3],
+        [-1,  -1,  0, 5],
+        [-1,  2,  3,  7],
     ])
 
     imputer = Imputer(missing_values='NaN', strategy="knn",
@@ -435,6 +435,7 @@ def test_imputation_knn():
     X5 = X5.astype(float)
     X_impute = imputer.fit(X5).transform(X5)
     assert_array_equal(X_true_1, X5)
+    assert_array_equal(X_impute, X5)
 
     imputer = Imputer(missing_values='NaN', strategy="knn", axis=0)
     msg = "There is no sample with complete data."

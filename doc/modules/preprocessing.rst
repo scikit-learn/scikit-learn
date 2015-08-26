@@ -388,10 +388,10 @@ values. However, this comes at the price of losing data which may be valuable
 i.e., to infer them from the known part of the data.
 
 The :class:`Imputer` class provides basic strategies for imputing missing
-values, either using the mean, the median, the most frequent value of
-the row or column in which the missing values are located or the mean of the
-k-nearest neighbors computed using samples without missing values. This class also
-allows for different missing values encodings.
+values. It can use the mean, the median, the most frequent value of
+the row or column in which the missing values are located. Alternatively it can fill
+with the mean of only the k-nearest neighbors computed using samples without missing
+values. The placeholder for missing values is configurable.
 
 The following snippet demonstrates how to replace missing values,
 encoded as ``np.nan``, using the mean value of the columns (axis 0)
@@ -425,7 +425,8 @@ Note that, here, missing values are encoded by 0 and are thus implicitly stored
 in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
-Also, knn imputation strategy will use samples with full features, and if all samples
+When using ``strategy=knn``, only samples without any missing features will be used for imputation.
+If all samples
 have missing features, this strategy will fail.
 
 :class:`Imputer` can be used in a Pipeline as a way to build a composite
