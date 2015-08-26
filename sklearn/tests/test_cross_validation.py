@@ -4,6 +4,7 @@ import warnings
 
 import numpy as np
 from scipy.sparse import coo_matrix
+from scipy.sparse import csr_matrix
 from scipy import stats
 
 from sklearn.utils.testing import assert_true
@@ -25,14 +26,15 @@ from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_digits
 from sklearn.datasets import load_iris
+from sklearn.datasets import make_multilabel_classification
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import precision_score
-
 from sklearn.externals import six
 from sklearn.externals.six.moves import zip
 
 from sklearn.linear_model import Ridge
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
@@ -1094,3 +1096,20 @@ def test_check_is_partition():
 
     p[0] = 23
     assert_false(cval._check_is_partition(p, 100))
+
+def test_cross_val_predict_sparse_prediction():
+    """Check that cross_val_predict gives the same result for sparse and dense inputs"""
+    X, Y = make_multilabel_classification(n_classes=2, n_labels=1,
+                                  allow_unlabeled=False,
+                                  return_indicator=True,
+                                  random_state=1)
+    X_sparse = csr_matrix(X)
+    Y_sparse = csr_matrix(Y)
+    classif = OneVsRestClassifier(SVC(kernel='linear'))
+    preds = cval.cross_val_predict(classif, X,
+                                               Y, cv=10)
+    preds_sparse = cval.cross_val_predict(classif, X_sparse,
+                                               Y_sparse, cv=10)
+    preds_sparse = preds_sparse.toarray()
+    assert_array_almost_equal(preds_sparse, preds)
+
