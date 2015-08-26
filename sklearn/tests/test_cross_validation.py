@@ -1028,48 +1028,54 @@ def test_cross_val_predict():
     assert_raises(ValueError, cval.cross_val_predict, est, X, y, cv=bad_cv())
 
 
-def test_cross_val_predict_proba():
+def test_cross_val_apply():
     iris = load_iris()
     X, y = iris.data, iris.target
-    cv = cval.KFold(len(iris.target))
+    classes = len(set(y))
 
-    for proba in [True, False]:
-        est = LogisticRegression()
+    # Shuffle the data before doing cross validation
+    shf = np.random.permutation(np.arange(len(X)))
+    X = X[shf]
+    y = y[shf]
     
-        if proba:
-            preds2 = np.zeros([len(y),2])
-        else:
+    cv = cval.KFold(len(iris.target))
+    est = LogisticRegression()
+
+    # Not testing 'predict' because it is tested in 'test_cross_val_predict' above
+    for func_name in ['decision_function', 'predict_proba','predict_log_proba']:
+        if func_name == 'predict':
             preds2 = np.zeros_like(y)
+        else:
+            preds2 = np.zeros([len(y),classes])
+
+        func = getattr(est, func_name)
     
-        # Naive loop (should be same as cross_val_predict):
+        # Naive loop (should be same as cross_val_apply):
         for train, test in cv:
             est.fit(X[train], y[train])
-            if proba:
-                preds2[test] = est.predict_proba(X[test])
-            else:
-                preds2[test] = est.predict(X[test])
+            preds2[test] = func(X[test])
         
-        preds = cval.cross_val_predict(est, X, y, proba=proba, cv=cv)
+        preds = cval.cross_val_apply(est, X, y, decision_func=func_name, cv=cv)
         assert_array_almost_equal(preds, preds2)
 
-        preds = cval.cross_val_predict(est, X, y, proba=proba)
+        preds = cval.cross_val_apply(est, X, y, decision_func=func_name)
         assert_equal(len(preds), len(y))
 
         cv = cval.LeaveOneOut(len(y))
-        preds = cval.cross_val_predict(est, X, y, proba=proba, cv=cv)
+        preds = cval.cross_val_apply(est, X, y, decision_func=func_name, cv=cv)
         assert_equal(len(preds), len(y))
 
         Xsp = X.copy()
         Xsp *= (Xsp > np.median(Xsp))
         Xsp = coo_matrix(Xsp)
-        preds = cval.cross_val_predict(est, Xsp, y, proba=proba)
+        preds = cval.cross_val_apply(est, Xsp, y)
         assert_array_almost_equal(len(preds), len(y))
         
         def bad_cv():
             for i in range(4):
                 yield np.array([0, 1, 2, 3]), np.array([4, 5, 6, 7, 8])
 
-        assert_raises(ValueError, cval.cross_val_predict, est, X, y, proba=proba, cv=bad_cv())
+        assert_raises(ValueError, cval.cross_val_predict, est, X, y, cv=bad_cv())
 
 
 def test_cross_val_predict_input_types():
