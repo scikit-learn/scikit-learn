@@ -45,8 +45,8 @@ missing_matrix = rng.rand(n_samples, n_features)
 th = 0.14
 mask = missing_matrix < th
 missing_samples = mask.any(axis=1)
-full_percentage = (n_samples - missing_samples.sum())/float(n_samples)
-print("Percentage of samples with full features: %f" %full_percentage )
+full_percentage = (n_samples - missing_samples.sum()) / float(n_samples)
+print("Percentage of samples with full features: %f" % full_percentage)
 
 # Estimate the score on the entire dataset, with no missing values
 
