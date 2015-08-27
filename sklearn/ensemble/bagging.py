@@ -251,7 +251,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
+        X, y = check_X_y(X, y, ['csr', 'csc'])
 
         # Remap output
         n_samples, self.n_features_ = X.shape
@@ -587,7 +587,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         """
         check_is_fitted(self, "classes_")
         # Check data
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc'])
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
@@ -865,7 +865,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         """
         check_is_fitted(self, "estimators_features_")
         # Check data
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc'])
 
         # Parallel loop
         n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
