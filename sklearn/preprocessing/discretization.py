@@ -8,9 +8,10 @@ from math import log
 import numpy as np
 from scipy.stats import entropy
 from ..base import BaseEstimator
+from sklearn.base import TransformerMixin
 from ..utils import check_array, check_consistent_length, column_or_1d
 
-class MDLP(BaseEstimator):
+class MDLP(BaseEstimator, TransformerMixin):
     """Implements the MDLP discretization criterion from Usama Fayyad's
     paper "Multi-Interval Discretization of Continuous-Valued
     Attributes for Classification Learning". Given the class labels
@@ -125,12 +126,6 @@ class MDLP(BaseEstimator):
             for i in self.continuous_features_:
                 output[:, i] = np.searchsorted(self.cut_points_[i], X[:, i])
         return output
-
-    def fit_transform(self, X, Y):
-        """Performs the fitting and the data transformations.
-        """
-        self.fit(X, Y)
-        return self.transform(X)
 
     def cat2intervals(self, X, index=None):
         """Converts a categorical feature into a list of intervals.
