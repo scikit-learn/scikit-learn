@@ -128,7 +128,7 @@ Bug fixes
     - Fixed bug in :class:`linear_model.LogisticRegressionCV` where `penalty` was ignored
       in the final fit. By `Manoj Kumar`_.
 
-    - Fixed bug in :class:`ensemble.forest.ForestClassifier` while computing 
+    - Fixed bug in :class:`ensemble.forest.ForestClassifier` while computing
       oob_score and X is a sparse.csc_matrix. By `Ankur Ankan`_.
 
     - All regressors now consistently handle and warn when given ``y`` that is of
@@ -137,8 +137,11 @@ Bug fixes
     - Fix in :class:`cluster.KMeans` cluster reassignment for sparse input by
       `Lars Buitinck`_.
 
-    - Fixed a bug in :class:`lda.LDA` that could cause asymmetric covariance 
+    - Fixed a bug in :class:`lda.LDA` that could cause asymmetric covariance
       matrices when using shrinkage. By `Martin Billinger`_.
+
+    - Fixed :func:`cross_validation.cross_val_predict` for estimators with
+      sparse predictions. By Buddha Prakash.
 
 API changes summary
 -------------------
