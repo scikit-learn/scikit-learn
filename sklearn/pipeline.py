@@ -131,6 +131,22 @@ class Pipeline(BaseEstimator):
     def _final_estimator(self):
         return self.steps[-1][1]
 
+    def get_feature_names(self):
+        """Get feature names from last step in pipeline
+
+        Returns
+        -------
+        feature_names : list of strings
+            Names of the features produced by last step in transform.
+        """
+        last_step = self.steps[-1]
+        transformer = last_step[1]
+        name = last_step[0]
+        if not hasattr(transformer, 'get_feature_names'):
+            raise AttributeError("Transformer %s does not provide"
+            					 " get_feature_names." % str(name))
+        return transformer.get_feature_names()
+
     # Estimator interface
 
     def _pre_transform(self, X, y=None, **fit_params):
