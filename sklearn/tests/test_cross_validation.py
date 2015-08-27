@@ -1097,6 +1097,7 @@ def test_check_is_partition():
     p[0] = 23
     assert_false(cval._check_is_partition(p, 100))
 
+
 def test_cross_val_predict_sparse_prediction():
     # check that cross_val_predict gives same result for sparse and dense input
     X, y = make_multilabel_classification(n_classes=2, n_labels=1,
@@ -1107,7 +1108,6 @@ def test_cross_val_predict_sparse_prediction():
     y_sparse = csr_matrix(y)
     classif = OneVsRestClassifier(SVC(kernel='linear'))
     preds = cval.cross_val_predict(classif, X, y, cv=10)
-    preds_sparse = cval.cross_val_predict(classif, X_sparse,y_sparse, cv=10)
+    preds_sparse = cval.cross_val_predict(classif, X_sparse, y_sparse, cv=10)
     preds_sparse = preds_sparse.toarray()
     assert_array_almost_equal(preds_sparse, preds)
-

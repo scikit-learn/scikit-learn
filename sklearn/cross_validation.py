@@ -1053,9 +1053,10 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     # Check for sparse predictions
     if sp.issparse(preds[0]):
         preds = sp.vstack(preds, format=preds[0].format)
-    else :
+    else:
         preds = np.concatenate(preds)
     return preds[inv_locs]
+
 
 def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
     """Fit estimator and predict values for a given dataset split.
