@@ -1042,14 +1042,20 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
                                                       train, test, verbose,
                                                       fit_params)
                             for train, test in cv)
-    p = np.concatenate([p for p, _ in preds_blocks])
+
+    preds = [p for p, _ in preds_blocks]
     locs = np.concatenate([loc for _, loc in preds_blocks])
     if not _check_is_partition(locs, _num_samples(X)):
         raise ValueError('cross_val_predict only works for partitions')
-    preds = p.copy()
-    preds[locs] = p
-    return preds
+    inv_locs = np.empty(len(locs), dtype=int)
+    inv_locs[locs] = np.arange(len(locs))
 
+    # Check for sparse predictions
+    if sp.issparse(preds[0]):
+        preds = sp.vstack(preds, format=preds[0].format)
+    else :
+        preds = np.concatenate(preds)
+    return preds[inv_locs]
 
 def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
     """Fit estimator and predict values for a given dataset split.
