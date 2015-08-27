@@ -89,8 +89,7 @@ def _generate_balanced_sample_indices(random_state, y):
     
     References
     ----------
-    .. [1] Chen, C., Liaw, A., Breiman, L. (2004) “Using Random Forest to Learn Imbalanced Data”, Tech. Rep. 666, 2004
-    
+    .. [1] Chen, C., Liaw, A., Breiman, L. (2004) "Using Random Forest to Learn Imbalanced Data", Tech. Rep. 666, 2004
     """
     classes, class_counts = np.unique(y, False, False, True)
     class_indices = [ np.nonzero(y==cls)[0] for cls in classes ]
@@ -451,7 +450,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             verbose=verbose,
             warm_start=warm_start,
             class_weight=class_weight,
-            balanced=False)
+            balanced=balanced)
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
@@ -999,6 +998,8 @@ class RandomForestClassifier(ForestClassifier):
             warm_start=warm_start,
             class_weight=class_weight,
             balanced=balanced)
+
+        print balanced
 
         self.criterion = criterion
         self.max_depth = max_depth
