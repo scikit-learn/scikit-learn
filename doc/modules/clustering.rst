@@ -1395,3 +1395,9 @@ Drawbacks
   concepts of clusters, such as density based clusters like those obtained
   through DBSCAN.
 
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_kmeans_silhouette_analysis.py` : In this example
+   the silhouette analysis is used to choose an optimal value for n_clusters.
+
+
