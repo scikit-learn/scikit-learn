@@ -6,6 +6,8 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
+from itertools import islice
+
 from . import _hashing
 from ..base import BaseEstimator, TransformerMixin
 
@@ -68,7 +70,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     >>> f.toarray()
     array([[ 0.,  0., -4., -1.,  0.,  0.,  0.,  0.,  0.,  2.],
            [ 0.,  0.,  0., -2., -5.,  0.,  0.,  0.,  0.,  0.]])
-           
+
     See also
     --------
     DictVectorizer : vectorizes string-valued features using a hash table.
