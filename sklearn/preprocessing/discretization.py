@@ -4,12 +4,11 @@
 #==============================================================================
 
 from __future__ import division
-from math import log
 import numpy as np
-from scipy.stats import entropy
 from ..base import BaseEstimator
 from sklearn.base import TransformerMixin
-from ..utils import check_array, check_consistent_length, column_or_1d
+from ..utils import check_array, check_X_y, column_or_1d
+from _mdlp import _find_cut, _reject_split
 
 class MDLP(BaseEstimator, TransformerMixin):
     """Implements the MDLP discretization criterion from Usama Fayyad's
@@ -90,7 +89,8 @@ class MDLP(BaseEstimator, TransformerMixin):
         X = check_array(X, force_all_finite=True, estimator="MDLP discretizer",
                         ensure_2d=False)
         y = column_or_1d(y)
-        check_consistent_length(X, y)
+        y = check_array(y, ensure_2d=False, dtype=int)
+        X, y = check_X_y(X, y)
 
         if self.dimensions_ == 2:
             if self.continuous_features_ is None:
@@ -210,12 +210,12 @@ class MDLP(BaseEstimator, TransformerMixin):
         while len(search_intervals) > 0:
             start, end, depth = search_intervals.pop()
 
-            k = self._find_cut(y, start, end)
+            k = _find_cut(y, start, end)
 
             # Need to see whether the "front" and "back" of the interval need
             # to be float("-inf") or float("inf")
             if (k == -1) or (depth >= self.min_depth and
-                             self._reject_split(y, start, end, k)):
+                             _reject_split(y, start, end, k)):
                 front = float("-inf") if (start == 0) else get_cut(start)
                 back = float("inf") if (end == num_samples) else get_cut(end)
 
@@ -231,73 +231,3 @@ class MDLP(BaseEstimator, TransformerMixin):
         cut_points.sort()
         return cut_points
 
-    @staticmethod
-    def _slice_entropy(y, start, end):
-        """Returns the entropy of the given slice of y. Also returns the
-        number of classes within the interval.
-        """
-        counts = np.bincount(y[start:end])
-        vals = counts / (end - start)
-        return entropy(vals), np.sum(vals != 0)
-
-    @staticmethod
-    def _reject_split(y, start, end, k):
-        """Using the minimum description length principal, determines
-        whether it is appropriate to stop cutting.
-        """
-
-        N = end - start
-        entropy1, k1 = MDLP._slice_entropy(y, start, k)
-        entropy2, k2 = MDLP._slice_entropy(y, k, end)
-        whole_entropy, k = MDLP._slice_entropy(y, start, end)
-
-        # Calculate the final values
-        gain = whole_entropy - 1 / N * ((start - k) * entropy1 +
-                                        (end - k) * entropy2)
-        entropy_diff = k * whole_entropy - k1 * entropy1 - k2 * entropy2
-        delta = log(3**k - 2) - entropy_diff
-
-        return gain <= 1 / N * (log(N - 1) + delta)
-
-    @staticmethod
-    def _find_cut(y, start, end):
-        """Finds the best cut between the specified interval.
-
-        Returns a candidate cut point index k. k == -1 if there is no good cut,
-        otherwise k is in {1, ..., len(x) - 2}
-        """
-
-        # Want to probe for the best partition _entropy in a "smart" way
-        # Input is the splitting index, to create partitions [start, ind)
-        # and [ind, end).
-        length = end - start
-
-        """
-        For each iteration, we'll have start != ind and ind != end
-        We'll also have the length of both partitions at least 1
-
-        TODO: The smarter method would be to do a one pass to collect
-        the number of positives and negatives for each cut point, and
-        perform entropy calculations that way. This method takes n^2 time per
-        iteration because of `_slice_entropy()`.
-        """
-        prev_entropy = float("inf")
-        k = -1
-        for ind in range(start + 1, end - 1):
-
-            # I choose not to use a `min` function here for this optimization.
-            if y[ind-1] == y[ind]:
-                continue
-
-            # Finds the partition entropy, and see if this entropy is minimum
-            first_half = (ind - start) / length * \
-                    MDLP._slice_entropy(y, start, ind)[0]
-            second_half = (end - ind) / length * \
-                    MDLP._slice_entropy(y, ind, end)[0]
-            curr_entropy = first_half + second_half
-
-            if prev_entropy > curr_entropy:
-                prev_entropy = curr_entropy
-                k = ind
-
-        return k  # NOTE: k == -1 if there is no good cut
