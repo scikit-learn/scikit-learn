@@ -58,7 +58,14 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         Input targets.
 
     positive : boolean (default=False)
-        Restrict coefficients to be >= 0. 
+        Restrict coefficients to be >= 0.
+        When using this option together with method 'lasso' the model
+        coefficients will not converge to the ordinary-least-squares solution
+        for small values of alpha (neither will they when using method 'lar'
+        ..). Only coeffiencts up to the smallest alpha value (alphas_[alphas_ >
+        0.].min() when fit_path=True) reached by the stepwise Lars-Lasso
+        algorithm are typically in congruence with the solution of the
+        coordinate descent lasso_path function.
 
     max_iter : integer, optional (default=500)
         Maximum number of iterations to perform, set to infinity for no limit.
@@ -498,7 +505,7 @@ class Lars(LinearModel, RegressorMixin):
 
     positive : boolean (default=False)
         Restrict coefficients to be >= 0. Be aware that you might want to
-        remove fit_intercept which is by default True.
+        remove fit_intercept which is set True by default.
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
@@ -718,7 +725,13 @@ class LassoLars(Lars):
 
     positive : boolean (default=False)
         Restrict coefficients to be >= 0. Be aware that you might want to
-        remove fit_intercept which is by default True.
+        remove fit_intercept which is set True by default.
+        Under the positive restriction the model coefficients will not converge
+        to the ordinary-least-squares solution for small values of alpha.
+        Only coeffiencts up to the smallest alpha value (alphas_[alphas_ >
+        0.].min() when fit_path=True) reached by the stepwise Lars-Lasso
+        algorithm are typically in congruence with the solution of the
+        coordinate descent Lasso estimator.
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
@@ -868,7 +881,10 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
     positive : boolean (default=False)
         Restrict coefficients to be >= 0. Be aware that you might want to
-        remove fit_intercept which is by default True.
+        remove fit_intercept which is set True by default.
+        See reservations for using this option in combination with method
+        'lasso' for expected small values of alpha in the doc of LassoLarsCV
+        and LassoLarsIC.
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
@@ -944,7 +960,7 @@ class LarsCV(Lars):
 
     positive : boolean (default=False)
         Restrict coefficients to be >= 0. Be aware that you might want to
-        remove fit_intercept which is by default True.
+        remove fit_intercept which is set True by default.
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
@@ -1127,7 +1143,15 @@ class LassoLarsCV(LarsCV):
 
     positive : boolean (default=False)
         Restrict coefficients to be >= 0. Be aware that you might want to
-        remove fit_intercept which is by default True.
+        remove fit_intercept which is set True by default.
+        Under the positive restriction the model coefficients do not converge
+        to the ordinary-least-squares solution for small values of alpha.
+        Only coeffiencts up to the smallest alpha value (alphas_[alphas_ >
+        0.].min() when fit_path=True) reached by the stepwise Lars-Lasso
+        algorithm are typically in congruence with the solution of the
+        coordinate descent Lasso estimator.
+        As a consequence using LassoLarsCV only makes sense for problems where
+        a sparse solution is expected and/or reached.
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
@@ -1237,7 +1261,15 @@ class LassoLarsIC(LassoLars):
 
     positive : boolean (default=False)
         Restrict coefficients to be >= 0. Be aware that you might want to
-        remove fit_intercept which is by default True.
+        remove fit_intercept which is set True by default.
+        Under the positive restriction the model coefficients do not converge
+        to the ordinary-least-squares solution for small values of alpha.
+        Only coeffiencts up to the smallest alpha value (alphas_[alphas_ >
+        0.].min() when fit_path=True) reached by the stepwise Lars-Lasso
+        algorithm are typically in congruence with the solution of the
+        coordinate descent Lasso estimator.
+        As a consequence using LassoLarsIC only makes sense for problems where
+        a sparse solution is expected and/or reached.
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
