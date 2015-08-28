@@ -253,6 +253,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         # Output for binary class and multi-label
         else:
             self.out_activation_ = 'logistic'
+            if self.loss == 'log_loss':
+                self.loss = 'binary_log_loss'
 
         # Initialize coefficient and intercept layers
         self.coefs_ = []

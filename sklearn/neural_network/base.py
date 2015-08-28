@@ -189,8 +189,40 @@ def log_loss(y_true, y_prob):
     """
     y_prob = np.clip(y_prob, 1e-10, 1 - 1e-10)
 
+    if y_prob.shape[1] == 1:
+        y_prob = np.append(1 - y_prob, y_prob, axis=1)
+
+    if y_true.shape[1] == 1:
+        y_true = np.append(1 - y_true, y_true, axis=1)
+
+    return -np.sum(y_true * np.log(y_prob)) / y_prob.shape[0]
+
+
+def binary_log_loss(y_true, y_prob):
+    """Compute binary logistic loss for classification.
+
+    This is identitical to log_loss in binary classification case,
+    but is kept for its use in multilabel case.
+
+    Parameters
+    ----------
+    y_true : array-like or label indicator matrix
+        Ground truth (correct) labels.
+
+    y_pred : array-like of float, shape = (n_samples, n_classes)
+        Predicted probabilities, as returned by a classifier's
+        predict_proba method.
+
+    Returns
+    -------
+    score : float
+        The degree to which the samples are correctly predicted.
+    """
+    y_prob = np.clip(y_prob, 1e-10, 1 - 1e-10)
+
     return -np.sum(y_true * np.log(y_prob) +
                   (1 - y_true) * np.log(1 - y_prob)) / y_prob.shape[0]
 
 
-LOSS_FUNCTIONS = {'squared_loss': squared_loss, 'log_loss': log_loss}
+LOSS_FUNCTIONS = {'squared_loss': squared_loss, 'log_loss': log_loss,
+                  'binary_log_loss': binary_log_loss}
