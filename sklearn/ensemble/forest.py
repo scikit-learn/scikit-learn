@@ -81,7 +81,14 @@ def _generate_sample_indices(random_state, n_samples):
 
     return sample_indices
 
-def _generate_balanced_sample_indices(random_state, y):
+def _get_class_balance_data(y):
+    """Private function used to fit function."""
+    classes, class_counts = np.unique(y, return_counts=True)
+    class_indices = [ np.nonzero(y==cls)[0] for cls in classes ]
+
+    return classes, class_counts, class_indices
+
+def _generate_balanced_sample_indices(random_state, balance_data):
     """Private function used to _parallel_build_trees function.
     
     Generates samples according to the balanced random forest method [1] (adapted for multi-class)
@@ -91,15 +98,14 @@ def _generate_balanced_sample_indices(random_state, y):
     ----------
     .. [1] Chen, C., Liaw, A., Breiman, L. (2004) "Using Random Forest to Learn Imbalanced Data", Tech. Rep. 666, 2004
     """
-    classes, class_counts = np.unique(y, False, False, True)
-    class_indices = [ np.nonzero(y==cls)[0] for cls in classes ]
-    n_classes = len(classes)
+    classes, class_counts, class_indices = balance_data
     min_count = np.min(class_counts)
+    n_class = len(classes)
     
     random_instance = check_random_state(random_state)
-    sample_indices = np.empty(n_classes*min_count, dtype=int)
+    sample_indices = np.empty(n_class*min_count, dtype=int)
     
-    for i,cls, count, indices in zip(xrange(n_classes), classes, class_counts, class_indices):
+    for i,cls, count, indices in zip(xrange(n_class), classes, class_counts, class_indices):
         random_instances = random_instance.randint(0, count, min_count)
         random_indices =  indices[random_instances]
         sample_indices[i*min_count:(i+1)*min_count]=random_indices
@@ -118,7 +124,7 @@ def _generate_unsampled_indices(random_state, n_samples):
 
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
-                          verbose=0, class_weight=None, balanced=False):
+                          verbose=0, class_weight=None, balance_data=None):
     """Private function used to fit a single tree in parallel."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
@@ -130,8 +136,8 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         else:
             curr_sample_weight = sample_weight.copy()
 
-        if balanced:
-            indices = _generate_balanced_sample_indices(tree.random_state, y)
+        if balance_data is not None:
+            indices = _generate_balanced_sample_indices(tree.random_state, balance_data)
         else:
             indices = _generate_sample_indices(tree.random_state, n_samples)
 
@@ -345,6 +351,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
                                             random_state=random_state)
                 trees.append(tree)
 
+            balance_data = _get_class_balance_data(y) if self.balanced else None
+
             # Parallel loop: we use the threading backend as the Cython code
             # for fitting the trees is internally releasing the Python GIL
             # making threading always more efficient than multiprocessing in
@@ -353,7 +361,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
                              backend="threading")(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
-                    verbose=self.verbose, class_weight=self.class_weight, balanced=self.balanced)
+                    verbose=self.verbose, class_weight=self.class_weight, balance_data=balance_data)
                 for i, t in enumerate(trees))
 
             # Collect newly grown trees
