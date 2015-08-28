@@ -999,8 +999,6 @@ class RandomForestClassifier(ForestClassifier):
             class_weight=class_weight,
             balanced=balanced)
 
-        print balanced
-
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
