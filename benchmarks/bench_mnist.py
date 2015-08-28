@@ -15,13 +15,15 @@ Example of output :
     ===========================
     Classifier               train-time   test-time   error-rate
     ------------------------------------------------------------
-    MultilayerPerceptron        475.76s       1.31s       0.0201
-    Nystroem-SVM                218.38s      17.86s       0.0229
-    ExtraTrees                   45.54s       0.52s       0.0288
-    RandomForest                 44.79s       0.32s       0.0304
-    SampledRBF-SVM              265.64s      19.78s       0.0488
-    CART                         21.13s       0.01s       0.1214
-    dummy                         0.01s       0.01s       0.8973
+    MLP_adam                     53.46s       0.11s       0.0224
+    Nystroem-SVM                112.97s       0.92s       0.0228
+    MultilayerPerceptron         24.33s       0.14s       0.0287
+    ExtraTrees                   42.99s       0.57s       0.0294
+    RandomForest                 42.70s       0.49s       0.0318
+    SampledRBF-SVM              135.81s       0.56s       0.0486
+    LinearRegression-SAG         16.67s       0.06s       0.0824
+    CART                         20.69s       0.02s       0.1219
+    dummy                         0.00s       0.01s       0.8973
 """
 from __future__ import division, print_function
 
@@ -85,14 +87,18 @@ ESTIMATORS = {
     'CART': DecisionTreeClassifier(),
     'ExtraTrees': ExtraTreesClassifier(n_estimators=100),
     'RandomForest': RandomForestClassifier(n_estimators=100),
-    'Nystroem-SVM':
-    make_pipeline(Nystroem(gamma=0.015, n_components=1000), LinearSVC(C=100)),
-    'SampledRBF-SVM':
-    make_pipeline(RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100)),
-    'LinearRegression-SAG': LogisticRegression(solver='sag', tol=1e-1, C=1e4)
+    'Nystroem-SVM': make_pipeline(
+        Nystroem(gamma=0.015, n_components=1000), LinearSVC(C=100)),
+    'SampledRBF-SVM': make_pipeline(
+        RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100)),
+    'LinearRegression-SAG': LogisticRegression(solver='sag', tol=1e-1, C=1e4),
     'MultilayerPerceptron': MLPClassifier(
         hidden_layer_sizes=(100, 100), max_iter=400, alpha=1e-4,
-        algorithm='sgd', learning_rate_init=0.5, momentum=0.9, verbose=1,
+        algorithm='sgd', learning_rate_init=0.2, momentum=0.9, verbose=1,
+        tol=1e-4, random_state=1),
+    'MLP-adam': MLPClassifier(
+        hidden_layer_sizes=(100, 100), max_iter=400, alpha=1e-4,
+        algorithm='adam', learning_rate_init=0.001, verbose=1,
         tol=1e-4, random_state=1)
 }
 

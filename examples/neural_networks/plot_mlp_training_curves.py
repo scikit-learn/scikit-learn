@@ -1,13 +1,15 @@
 """
-==================================================
-Compare SGD learning strategies for MLPClassifier
-==================================================
+========================================================
+Compare Stochastic learning strategies for MLPClassifier
+========================================================
 
-This example visualizes some training loss curves for different SGD mini-batch
-learning strategies. Because of time-constraints, we use several small
-datasets, for which L-BFGS might be more suitable. The general trend shown in
-these examples seems to carry over to larger datasets, however.
+This example visualizes some training loss curves for different stochastic
+learning strategies, including SGD and Adam. Because of time-constraints, we
+use several small datasets, for which L-BFGS might be more suitable. The
+general trend shown in these examples seems to carry over to larger datasets,
+however.
 """
+
 print(__doc__)
 import matplotlib.pyplot as plt
 from sklearn.neural_network import MLPClassifier
@@ -15,24 +17,32 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn import datasets
 
 # different learning rate schedules and momentum parameters
-params = [{'learning_rate': 'constant', 'momentum': 0},
-          {'learning_rate': 'constant', 'momentum': .9, 'nesterovs_momentum': False},
-          {'learning_rate': 'constant', 'momentum': .9, 'nesterovs_momentum': True},
-          {'learning_rate': 'invscaling', 'momentum': 0},
-          {'learning_rate': 'invscaling', 'momentum': .9, 'nesterovs_momentum': True},
-          {'learning_rate': 'invscaling', 'momentum': .9, 'nesterovs_momentum': False}]
+params = [{'algorithm': 'sgd', 'learning_rate': 'constant', 'momentum': 0,
+           'learning_rate_init': 0.2},
+          {'algorithm': 'sgd', 'learning_rate': 'constant', 'momentum': .9,
+           'nesterovs_momentum': False, 'learning_rate_init': 0.2},
+          {'algorithm': 'sgd', 'learning_rate': 'constant', 'momentum': .9,
+           'nesterovs_momentum': True, 'learning_rate_init': 0.2},
+          {'algorithm': 'sgd', 'learning_rate': 'invscaling', 'momentum': 0,
+           'learning_rate_init': 0.2},
+          {'algorithm': 'sgd', 'learning_rate': 'invscaling', 'momentum': .9,
+           'nesterovs_momentum': True, 'learning_rate_init': 0.2},
+          {'algorithm': 'sgd', 'learning_rate': 'invscaling', 'momentum': .9,
+           'nesterovs_momentum': False, 'learning_rate_init': 0.2},
+          {'algorithm': 'adam'}]
 
 labels = ["constant learning-rate", "constant with momentum",
           "constant with Nesterov's momentum",
           "inv-scaling learning-rate", "inv-scaling with momentum",
-          "inv-scaling with Nesterov's momentum"]
+          "inv-scaling with Nesterov's momentum", "adam"]
 
 plot_args = [{'c': 'red', 'linestyle': '-'},
              {'c': 'green', 'linestyle': '-'},
              {'c': 'blue', 'linestyle': '-'},
              {'c': 'red', 'linestyle': '--'},
              {'c': 'green', 'linestyle': '--'},
-             {'c': 'blue', 'linestyle': '--'}]
+             {'c': 'blue', 'linestyle': '--'},
+             {'c': 'black', 'linestyle': '-'}]
 
 
 def plot_on_dataset(X, y, ax, name):
@@ -49,7 +59,7 @@ def plot_on_dataset(X, y, ax, name):
 
     for label, param in zip(labels, params):
         print("training: %s" % label)
-        mlp = MLPClassifier(verbose=0, algorithm='sgd', random_state=0,
+        mlp = MLPClassifier(verbose=0, random_state=0,
                             max_iter=max_iter, **param)
         mlp.fit(X, y)
         mlps.append(mlp)

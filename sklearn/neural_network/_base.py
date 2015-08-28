@@ -76,7 +76,7 @@ def relu(X):
 
 
 def softmax(X):
-    """Compute the  K-way softmax function inplace.
+    """Compute the K-way softmax function inplace.
 
     Parameters
     ----------
@@ -99,13 +99,17 @@ ACTIVATIONS = {'identity': identity, 'tanh': tanh, 'logistic': logistic,
                'relu': relu, 'softmax': softmax}
 
 
-def logistic_derivative(Z):
-    """Compute the derivative of the logistic function.
+def inplace_logistic_derivative(Z):
+    """Compute the derivative of the logistic function given output value
+    from logistic function
+
+    It exploits the fact that the derivative is a simple function of the output
+    value from logistic function
 
     Parameters
     ----------
     Z : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The input data.
+        The input data which is output from logistic function
 
     Returns
     -------
@@ -115,13 +119,17 @@ def logistic_derivative(Z):
     return Z * (1 - Z)
 
 
-def tanh_derivative(Z):
-    """Compute the derivative of the hyperbolic tan function.
+def inplace_tanh_derivative(Z):
+    """Compute the derivative of the hyperbolic tan function given output value
+    from hyperbolic tan
+
+    It exploits the fact that the derivative is a simple function of the output
+    value from hyperbolic tan
 
     Parameters
     ----------
     Z : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The input data.
+        The input data which is output from hyperbolic tan function
 
     Returns
     -------
@@ -131,13 +139,14 @@ def tanh_derivative(Z):
     return 1 - (Z ** 2)
 
 
-def relu_derivative(Z):
-    """Compute the derivative of the rectified linear unit function.
+def inplace_relu_derivative(Z):
+    """Compute the derivative of the rectified linear unit function given output
+    value from relu
 
     Parameters
     ----------
     Z : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The input data.
+        The input data which is output from some relu
 
     Returns
     -------
@@ -147,8 +156,9 @@ def relu_derivative(Z):
     return (Z > 0).astype(Z.dtype)
 
 
-DERIVATIVES = {'tanh': tanh_derivative, 'logistic': logistic_derivative,
-               'relu': relu_derivative}
+DERIVATIVES = {'tanh': inplace_tanh_derivative,
+               'logistic': inplace_logistic_derivative,
+               'relu': inplace_relu_derivative}
 
 
 def squared_loss(y_true, y_pred):
@@ -157,14 +167,14 @@ def squared_loss(y_true, y_pred):
     Parameters
     ----------
     y_true : array-like or label indicator matrix
-        Ground truth (correct) labels.
+        Ground truth (correct) values.
 
     y_pred : array-like or label indicator matrix
-        Predicted labels, as returned by a regression estimator.
+        Predicted values, as returned by a regression estimator.
 
     Returns
     -------
-    score : float
+    loss : float
         The degree to which the samples are correctly predicted.
     """
     return ((y_true - y_pred) ** 2).mean() / 2
@@ -178,13 +188,13 @@ def log_loss(y_true, y_prob):
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like of float, shape = (n_samples, n_classes)
+    y_prob : array-like of float, shape = (n_samples, n_classes)
         Predicted probabilities, as returned by a classifier's
         predict_proba method.
 
     Returns
     -------
-    score : float
+    loss : float
         The degree to which the samples are correctly predicted.
     """
     y_prob = np.clip(y_prob, 1e-10, 1 - 1e-10)
@@ -209,19 +219,19 @@ def binary_log_loss(y_true, y_prob):
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like of float, shape = (n_samples, n_classes)
+    y_prob : array-like of float, shape = (n_samples, n_classes)
         Predicted probabilities, as returned by a classifier's
         predict_proba method.
 
     Returns
     -------
-    score : float
+    loss : float
         The degree to which the samples are correctly predicted.
     """
     y_prob = np.clip(y_prob, 1e-10, 1 - 1e-10)
 
     return -np.sum(y_true * np.log(y_prob) +
-                  (1 - y_true) * np.log(1 - y_prob)) / y_prob.shape[0]
+                   (1 - y_true) * np.log(1 - y_prob)) / y_prob.shape[0]
 
 
 LOSS_FUNCTIONS = {'squared_loss': squared_loss, 'log_loss': log_loss,

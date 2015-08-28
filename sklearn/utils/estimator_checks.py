@@ -245,6 +245,7 @@ def set_testing_parameters(estimator):
         # NMF
         if estimator.__class__.__name__ == 'NMF':
             estimator.set_params(max_iter=100)
+        # MLP
         if estimator.__class__.__name__ in ['MLPClassifier', 'MLPRegressor']:
             estimator.set_params(max_iter=100)
     if "n_resampling" in params:

@@ -167,56 +167,60 @@ def test_gradient():
     # This makes sure that the activation functions and their derivatives
     # are correct. The numerical and analytical computation of the gradient
     # should be close.
-    n_labels = 2
-    n_samples = 5
-    n_features = 10
-    X = np.random.random((n_samples, n_features))
-    y = 1 + np.mod(np.arange(n_samples) + 1, n_labels)
-    Y = LabelBinarizer().fit_transform(y)
+    for n_labels in [2, 3]:
+        n_samples = 5
+        n_features = 10
+        X = np.random.random((n_samples, n_features))
+        y = 1 + np.mod(np.arange(n_samples) + 1, n_labels)
+        Y = LabelBinarizer().fit_transform(y)
 
-    for activation in ACTIVATION_TYPES:
-        mlp = MLPClassifier(activation=activation, hidden_layer_sizes=10,
-                            max_iter=1, random_state=1)
-        mlp.fit(X, y)
+        for activation in ACTIVATION_TYPES:
+            mlp = MLPClassifier(activation=activation, hidden_layer_sizes=10,
+                                algorithm='l-bfgs', alpha=1e-5,
+                                learning_rate_init=0.2, max_iter=1,
+                                random_state=1)
+            mlp.fit(X, y)
 
-        theta = np.hstack([l.ravel() for l in mlp.coefs_ +
-                           mlp.intercepts_])
+            theta = np.hstack([l.ravel() for l in mlp.coefs_ +
+                               mlp.intercepts_])
 
-        layer_units = ([X.shape[1]] + [mlp.hidden_layer_sizes] +
-                       [mlp.n_outputs_])
+            layer_units = ([X.shape[1]] + [mlp.hidden_layer_sizes] +
+                           [mlp.n_outputs_])
 
-        activations = []
-        deltas = []
-        coef_grads = []
-        intercept_grads = []
+            activations = []
+            deltas = []
+            coef_grads = []
+            intercept_grads = []
 
-        activations.append(X)
-        for i in range(mlp.n_layers_ - 1):
-            activations.append(np.empty((X.shape[0],
-                                         layer_units[i + 1])))
-            deltas.append(np.empty((X.shape[0],
-                                    layer_units[i + 1])))
+            activations.append(X)
+            for i in range(mlp.n_layers_ - 1):
+                activations.append(np.empty((X.shape[0],
+                                             layer_units[i + 1])))
+                deltas.append(np.empty((X.shape[0],
+                                        layer_units[i + 1])))
 
-            fan_in = layer_units[i]
-            fan_out = layer_units[i + 1]
-            coef_grads.append(np.empty((fan_in, fan_out)))
-            intercept_grads.append(np.empty(fan_out))
+                fan_in = layer_units[i]
+                fan_out = layer_units[i + 1]
+                coef_grads.append(np.empty((fan_in, fan_out)))
+                intercept_grads.append(np.empty(fan_out))
 
-        # analytically compute the gradients
-        loss_grad_fun = lambda t: mlp._loss_grad_lbfgs(t, X, Y, activations,
-                                                       deltas, coef_grads,
-                                                       intercept_grads)
-        [value, grad] = loss_grad_fun(theta)
-        numgrad = np.zeros(np.size(theta))
-        n = np.size(theta, 0)
-        E = np.eye(n)
-        epsilon = 1e-5
-        # numerically compute the gradients
-        for i in range(n):
-            dtheta = E[:, i] * epsilon
-            numgrad[i] = (loss_grad_fun(theta + dtheta)[0] -
-                          loss_grad_fun(theta - dtheta)[0]) / (epsilon * 2.0)
-        assert_almost_equal(numgrad, grad)
+            # analytically compute the gradients
+            def loss_grad_fun(t):
+                return mlp._loss_grad_lbfgs(t, X, Y, activations, deltas,
+                                            coef_grads, intercept_grads)
+
+            [value, grad] = loss_grad_fun(theta)
+            numgrad = np.zeros(np.size(theta))
+            n = np.size(theta, 0)
+            E = np.eye(n)
+            epsilon = 1e-5
+            # numerically compute the gradients
+            for i in range(n):
+                dtheta = E[:, i] * epsilon
+                numgrad[i] = ((loss_grad_fun(theta + dtheta)[0] -
+                              loss_grad_fun(theta - dtheta)[0]) /
+                              (epsilon * 2.0))
+            assert_almost_equal(numgrad, grad)
 
 
 def test_lbfgs_classification():
@@ -262,14 +266,15 @@ def test_learning_rate_warmstart():
                             learning_rate=learning_rate, max_iter=1,
                             power_t=0.25, warm_start=True)
         mlp.fit(X, y)
-        prev_eta = mlp.learning_rate_
+        prev_eta = mlp._optimizer.learning_rate
         mlp.fit(X, y)
-        post_eta = mlp.learning_rate_
+        post_eta = mlp._optimizer.learning_rate
 
         if learning_rate == 'constant':
-            assert prev_eta == post_eta
+            assert_equal(prev_eta, post_eta)
         elif learning_rate == 'invscaling':
-            assert post_eta == mlp.learning_rate_init / pow(8 + 1, mlp.power_t)
+            assert_equal(mlp.learning_rate_init / pow(8 + 1, mlp.power_t),
+                         post_eta)
 
 
 def test_multilabel_classification():
@@ -277,14 +282,16 @@ def test_multilabel_classification():
     # test fit method
     X, y = make_multilabel_classification(n_samples=50, random_state=0,
                                           return_indicator=True)
-    mlp = MLPClassifier(algorithm='l-bfgs', hidden_layer_sizes=50,
-                        max_iter=150, random_state=0, activation='logistic')
+    mlp = MLPClassifier(algorithm='l-bfgs', hidden_layer_sizes=50, alpha=1e-5,
+                        max_iter=150, random_state=0, activation='logistic',
+                        learning_rate_init=0.2)
     mlp.fit(X, y)
     assert_equal(mlp.score(X, y), 1)
 
     # test partial fit method
     mlp = MLPClassifier(algorithm='sgd', hidden_layer_sizes=50, max_iter=150,
-                        random_state=0, activation='logistic')
+                        random_state=0, activation='logistic', alpha=1e-5,
+                        learning_rate_init=0.2)
     for i in range(100):
         mlp.partial_fit(X, y, classes=[0, 1, 2, 3, 4])
     assert_greater(mlp.score(X, y), 0.9)
@@ -301,7 +308,7 @@ def test_multioutput_regression():
 
 def test_partial_fit_classes_error():
     # Tests that passing different classes to partial_fit raises an error"""
-    X = [3, 2]
+    X = [[3, 2]]
     y = [0]
     clf = MLPClassifier(algorithm='sgd')
     clf.partial_fit(X, y, classes=[0, 1])
@@ -316,11 +323,12 @@ def test_partial_fit_classification():
         X = X
         y = y
         mlp = MLPClassifier(algorithm='sgd', max_iter=100, random_state=1,
-                            tol=0)
+                            tol=0, alpha=1e-5, learning_rate_init=0.2)
 
         mlp.fit(X, y)
         pred1 = mlp.predict(X)
-        mlp = MLPClassifier(algorithm='sgd', random_state=1)
+        mlp = MLPClassifier(algorithm='sgd', random_state=1, alpha=1e-5,
+                            learning_rate_init=0.2)
         for i in range(100):
             mlp.partial_fit(X, y, classes=np.unique(y))
         pred2 = mlp.predict(X)
@@ -367,7 +375,7 @@ def test_partial_fit_errors():
                   classes=[2])
 
     # l-bfgs doesn't support partial_fit
-    assert_false(hasattr(MLPClassifier(), 'partial_fit'))
+    assert_false(hasattr(MLPClassifier(algorithm='l-bfgs'), 'partial_fit'))
 
 
 def test_params_errors():
@@ -456,7 +464,7 @@ def test_tolerance():
 
 
 def test_verbose_sgd():
-    # Test verbose."""
+    # Test verbose.
     X = [[3, 2], [1, 6]]
     y = [1, 0]
     clf = MLPClassifier(algorithm='sgd', max_iter=2, verbose=10,
@@ -469,3 +477,29 @@ def test_verbose_sgd():
 
     sys.stdout = old_stdout
     assert 'Iteration' in output.getvalue()
+
+
+def test_early_stopping():
+    X = X_digits_binary[:100]
+    y = y_digits_binary[:100]
+    tol = 0.2
+    clf = MLPClassifier(tol=tol, max_iter=3000, algorithm='sgd',
+                        early_stopping=True)
+    clf.fit(X, y)
+    assert_greater(clf.max_iter, clf.n_iter_)
+
+    valid_scores = clf.validation_scores_
+    best_valid_score = clf.best_validation_score_
+    assert_equal(max(valid_scores), best_valid_score)
+    assert_greater(best_valid_score + tol, valid_scores[-2])
+    assert_greater(best_valid_score + tol, valid_scores[-1])
+
+
+def test_adaptive_learning_rate():
+    X = [[3, 2], [1, 6]]
+    y = [1, 0]
+    clf = MLPClassifier(tol=0.5, max_iter=3000, algorithm='sgd',
+                        learning_rate='adaptive', verbose=10)
+    clf.fit(X, y)
+    assert_greater(clf.max_iter, clf.n_iter_)
+    assert_greater(1e-6, clf._optimizer.learning_rate)

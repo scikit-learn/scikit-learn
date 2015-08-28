@@ -13,12 +13,14 @@ Multi-layer Perceptron
 ======================
 
 **Multi-layer Perceptron (MLP)** is a supervised learning algorithm that learns
-a function :math:`f(\cdot): R \rightarrow R` by training on a dataset. Given a 
-set of features :math:`X = {x_1, x_2, ..., x_m}` and a target :math:`y`, it 
-can learn a non-linear, complex functions for either classification
-or regression. It is different from logistic regression, in that between the input 
-and the output layer, there can be one or more hidden layers. Figure 1 shows 
-a one hidden layer MLP.
+a function :math:`f(\cdot): R^m \rightarrow R^o` by training on a dataset,
+where :math:`m` is the number of dimensions for input and :math:`o` is the the
+number of dimensions for output. Given a set of features :math:`X = {x_1, x_2, ..., x_m}`
+and a target :math:`y`, it can learn a non-linear function approximator for either
+classification or regression. It is different from logistic regression, in that
+between the input and the output layer, there can be one or more non-linear
+layers, called hidden layers. Figure 1 shows a one hidden layer MLP with scalar
+output.
 
 .. figure:: ../images/multilayerperceptron_network.png
    :align: center
@@ -27,11 +29,12 @@ a one hidden layer MLP.
    **Figure 1 : One hidden layer MLP.**
 
 The leftmost layer, known as the input layer, consists of a set of neurons 
-:math:`\{x_i | x_1, x_2, ..., x_m\}` representing the input features. Each hidden
-layer transforms the values from the previous layer by a weighted linear summation
-:math:`w_1x_1 + w_2x_2 + ... + w_mx_m`, followed by a non-linear activation function
-:math:`g(\cdot):R \rightarrow R` - like the hyperbolic tan function. The output layer
-receives the values from the last hidden layer and transforms them into output values.
+:math:`\{x_i | x_1, x_2, ..., x_m\}` representing the input features. Each
+neuron in the hidden layer transforms the values from the previous layer with
+a weighted linear summation :math:`w_1x_1 + w_2x_2 + ... + w_mx_m`, followed
+by a non-linear activation function :math:`g(\cdot):R \rightarrow R` - like
+the hyperbolic tan function. The output layer receives the values from the
+last hidden layer and transforms them into output values.
 
 The module contains the public attributes ``coefs_`` and ``intercepts_``.
 ``coefs_`` is a list of weight matrices, where weight matrix at index
@@ -41,7 +44,7 @@ at index :math:`i` represents the bias values added to layer :math:`i+1`.
 
 The advantages of Multi-layer Perceptron are:
 
-    + Capability to learn complex/non-linear models.
+    + Capability to learn non-linear models.
 
     + Capability to learn models in real-time (on-line learning) 
       using ``partial_fit``.
@@ -52,9 +55,6 @@ The disadvantages of Multi-layer Perceptron (MLP) include:
     + MLP with hidden layers have a non-convex loss function where there exists 
       more than one local minimum. Therefore different random weight 
       initializations can lead to different validation accuracy.
-
-    + MLP suffers from the Backpropagation diffusion problem; layers far from 
-      the output update with decreasing momentum, leading to slow convergence.
 
     + MLP requires tuning a number of hyperparameters such as the number of 
       hidden neurons, layers, and iterations.
@@ -68,8 +68,8 @@ some of these disadvantages.
 Classification
 ==============
 
-Class :class:`MLPClassifier` implements  
-a multi layer perceptron (MLP) algorithm that trains using Backpropagation. 
+Class :class:`MLPClassifier` implements a multi-layer perceptron (MLP) algorithm
+that trains using `Backpropagation <http://ufldl.stanford.edu/wiki/index.php/Backpropagation_Algorithm>`_. 
 
 MLP trains on two arrays: array X of size (n_samples, n_features), which holds 
 the training samples represented as floating point feature vectors; and array 
@@ -79,13 +79,15 @@ training samples::
     >>> from sklearn.neural_network import MLPClassifier
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
-    >>> clf = MLPClassifier(hidden_layer_sizes=(5, 2), random_state=1)
+    >>> clf = MLPClassifier(algorithm='l-bfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     MLPClassifier(activation='relu', algorithm='l-bfgs', alpha=1e-05,
-        batch_size=200, early_stopping=False, hidden_layer_sizes=(5, 2),
-        learning_rate='constant', learning_rate_init=0.2, max_iter=200,
-        momentum=0.9, nesterovs_momentum=True, power_t=0.5, random_state=1,
-        shuffle=True, tol=0.0001, verbose=False, warm_start=False)
+           batch_size=200, beta_1=0.9, beta_2=0.999, early_stopping=False,
+           epsilon=1e-08, hidden_layer_sizes=(5, 2), learning_rate='constant',
+           learning_rate_init=0.001, max_iter=200, momentum=0.9,
+           nesterovs_momentum=True, power_t=0.5, random_state=1, shuffle=True,
+           tol=0.0001, validation_fraction=0.1, verbose=False,
+           warm_start=False)
 
 After fitting (training), the model can predict labels for new samples::
 
@@ -110,9 +112,10 @@ Currently, :class:`MLPClassifier` supports only the
 Cross-Entropy loss function, which allows probability estimates by running the 
 ``predict_proba`` method.
 
-MLP trains using backpropagation. For classification, it minimizes the 
-Cross-Entropy loss function, giving a vector of probability estimates 
-:math:`P(y|x)` per sample :math:`x`:: 
+MLP trains using Backpropagation. More precisely, it trains using some form of
+gradient descent and the gradients are calculated using Backpropagation. For
+classification, it minimizes the Cross-Entropy loss function, giving a vector
+of probability estimates :math:`P(y|x)` per sample :math:`x`:: 
 
     >>> clf.predict_proba([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
     array([[ 0.,  1.],
@@ -127,17 +130,19 @@ in which a sample can belong to more than one class. For each class, the output
 of :meth:`MLPClassifier.decision_function` passes through the 
 logistic function. Values larger or equal to `0.5` are rounded to `1`, 
 otherwise to `0`. For a predicted output of a sample, the indices where the
-value is `1` represents the assigned classes of that samples::
+value is `1` represents the assigned classes of that sample::
 
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [[0, 1], [1, 1]]
-    >>> clf = MLPClassifier(hidden_layer_sizes=(15,), random_state=1)
+    >>> clf = MLPClassifier(algorithm='l-bfgs', alpha=1e-5, hidden_layer_sizes=(15,), random_state=1)
     >>> clf.fit(X, y)
     MLPClassifier(activation='relu', algorithm='l-bfgs', alpha=1e-05,
-           batch_size=200, early_stopping=False, hidden_layer_sizes=(15,),
-           learning_rate='constant', learning_rate_init=0.2, max_iter=200,
-           momentum=0.9, nesterovs_momentum=True, power_t=0.5, random_state=1,
-           shuffle=True, tol=0.0001, verbose=False, warm_start=False)
+           batch_size=200, beta_1=0.9, beta_2=0.999, early_stopping=False,
+           epsilon=1e-08, hidden_layer_sizes=(15,), learning_rate='constant',
+           learning_rate_init=0.001, max_iter=200, momentum=0.9,
+           nesterovs_momentum=True, power_t=0.5, random_state=1, shuffle=True,
+           tol=0.0001, validation_fraction=0.1, verbose=False,
+           warm_start=False)
     >>> clf.predict([1., 2.])
     array([[1, 1]])
     >>> clf.predict([0., 0.])
@@ -149,16 +154,16 @@ See the examples below and the doc string of
 .. topic:: Examples:
 
  * :ref:`example_plot_mlp_alpha.py`
- * :ref:`example_plot_mlp_nonlinear.py`
 
 
 Regression
 ==========
 
-Class :class:`MLPRegressor` implements  
-a multi layer perceptron (MLP) that trains using backpropagation with no 
-activation function in the output layer. Therefore, it uses the square error as 
-the loss function, and the output is a set of continuous values.
+Class :class:`MLPRegressor` implements a multi-layer perceptron (MLP) that
+trains using backpropagation with no activation function in the output layer,
+which can also be seen as using the identity function as activation function.
+Therefore, it uses the square error as the loss function, and the output is a
+set of continuous values.
 
 :class:`MLPRegressor` also supports multi-output regression, in 
 which a sample can have more than one target.
@@ -167,10 +172,12 @@ which a sample can have more than one target.
 Algorithms
 ==========
 
-MLP trains using either `Stochastic Gradient Descent <http://en.wikipedia.org/wiki/Stochastic_gradient_descent>`_ 
-or `L-BFGS <http://en.wikipedia.org/wiki/Limited-memory_BFGS>`_. 
-Stochastic Gradient Descent (SGD)  computes the gradient of the loss function 
-with respect to a parameter that needs adaptation, i.e.
+MLP trains using `Stochastic Gradient Descent
+<http://en.wikipedia.org/wiki/Stochastic_gradient_descent>`_,
+`Adam <http://arxiv.org/abs/1412.6980>`_, or
+`L-BFGS <http://en.wikipedia.org/wiki/Limited-memory_BFGS>`_. 
+Stochastic Gradient Descent (SGD) updates parameters using the gradient of the
+loss function with respect to a parameter that needs adaptation, i.e.
 
 .. math::
 
@@ -178,16 +185,21 @@ with respect to a parameter that needs adaptation, i.e.
     + \frac{\partial Loss}{\partial w})
     
 where :math:`\eta` is the learning rate which controls the step-size in
-the parameter space search.  :math:`Loss` is the loss function used for the network.
+the parameter space search.  :math:`Loss` is the loss function used
+for the network.
 
-With SGD, training supports online and mini-batch learning.
-
-More details can be seen in the documentation of 
+More details can be found in the documentation of 
 `SGD <http://scikit-learn.org/stable/modules/sgd.html>`_ 
 
+Adam is similar to SGD in a sense that it is a stochastic optimization
+algorithm, but it can automatically adjust the amount to update parameters
+based on adaptive estimates of lower-order moments.
+
+With SGD or Adam, training supports online and mini-batch learning.
+
 L-BFGS is a fast learning algorithm that approximates the Hessian matrix which 
-is the second-order partial derivative of a function. Further it approximates 
-the inverse of the Hessian matrix to perform parameter update. 
+represents the second-order partial derivative of a function. Further it
+approximates the inverse of the Hessian matrix to perform parameter updates.
 The implementation uses the Scipy version of 
 `L-BFGS <http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html>`_..
 
@@ -200,7 +212,7 @@ Complexity
 
 Suppose there are :math:`n` training samples, :math:`m` features, :math:`k` 
 hidden layers, each containing :math:`h` neurons - for simplicity, and :math:`o`
-output neurons.  The time complexity of backpropogation is 
+output neurons.  The time complexity of backpropagation is 
 :math:`O(n\cdot m \cdot h^k \cdot o \cdot i)`, where :math:`i` is the number 
 of iterations. Since backpropagation has a high time complexity, it is advisable
 to start with smaller number of hidden neurons and few hidden layers for 
@@ -212,74 +224,74 @@ Mathematical formulation
 
 Given a set of training examples :math:`(x_1, y_1), (x_2, y_2), \ldots, (x_n, y_n)` 
 where :math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{0, 1\}`, a one hidden 
-layer mlp learns the score function :math:`f(x) = W_2^T g(W_1^T x + b_1) + b_2` 
-where :math:`W_1, W_2 \in \mathbf{R}^m` and :math:`b_1, b_2 \in \mathbf{R}` are 
+layer one hidden neuron MLP learns the function :math:`f(x) = W_2 g(W_1^T x + b_1) + b_2` 
+where :math:`W_1 \in \mathbf{R}^m` and :math:`W_2, b_1, b_2 \in \mathbf{R}` are 
 model parameters. :math:`W_1, W_2` represent the weights of the input layer and 
-hidden layer, resepctively; and :math:`b_1, b_2` represent the bias vectors added 
-to the hidden layer and the output layer, respectively. 
+hidden layer, resepctively; and :math:`b_1, b_2` represent the bias added to
+the hidden layer and the output layer, respectively. 
 :math:`g(\cdot) : R \rightarrow R` is the activation function, set by default as 
 the hyperbolic tan. It is given as,
 
 .. math::
-      g(x)= \frac{e^x-e^{-x}}{e^x+e^{-x}}
+      g(z)= \frac{e^z-e^{-z}}{e^z+e^{-z}}
 
 For binary classification, :math:`f(x)` passes through the logistic function
-:math:`g(x)= 1/(1+e^{-x})` to get  output values between zero and one. A threshold,
-set to 0.5, would assign samples of outputs larger or equal 0.5 to the positive 
-class, and the rest to the negative class.
+:math:`g(z)=1/(1+e^{-z})` to obtain output values between zero and one. A
+threshold, set to 0.5, would assign samples of outputs larger or equal 0.5
+to the positive class, and the rest to the negative class.
 
-If there are more than two classes, :math:`f(x)` would instead pass through
-the softmax function, which is written as,
+If there are more than two classes, :math:`f(x)` itself would be a vector of
+size (n_classes,). Instead of passing through logistic function, it passes
+through the softmax function, which is written as,
 
 .. math::
-      \text{Softmax} = \frac{\exp(W_i^Tx)}{\sum_{l=1}^k\exp(W_l^Tx)} 
+      \text{Softmax(z)_i} = \frac{\exp(z_i)}{\sum_{l=1}^k\exp(z_l)} 
 
-where :math:`W_i` contains the weights incident to the output neuron representing
-class :math:`i`, and :math:`K` is the number of classes. The result is a vector 
-containing the probabilities that sample :math:`x` belong to each class. The 
-output is the class with the highest probability.
+where :math:`z_i` represents the :math:`i` th element of the input to softmax,
+which corresponds to class :math:`i`, and :math:`K` is the number of classes.
+The result is a vector containing the probabilities that sample :math:`x`
+belong to each class. The output is the class with the highest probability.
 
-In regression, the output remains as :math:`f(x)`; therefore, there is no
-output activation function.
+In regression, the output remains as :math:`f(x)`; therefore, output activation
+function is just the identity function.
 
 MLP uses different loss functions depending on the problem type. The loss 
-function for classification is Cross-Entropy, which is given as,
+function for classification is Cross-Entropy, which in binary case is given as,
 
 .. math::
 
-    Loss(x,y,W) = -y \ln {f(x)}+(1-y)\ln{(1-f(x))} + \alpha ||W||_2^2
+    Loss(\hat{y},y,W) = -y \ln {\hat{y}} - (1-y) \ln{(1-\hat{y})} + \alpha ||W||_2^2
 
-where :math: `\alpha ||W||_2^2` is an L2-norm regularization term (aka penalty)
-that penalizes model complexity; and :math:`\alpha > 0` is a non-negative 
-hyperparameter that controls the magnitude of the penalty term.
+where :math:`\alpha ||W||_2^2` is an L2-regularization term (aka penalty)
+that penalizes complex models; and :math:`\alpha > 0` is a non-negative 
+hyperparameter that controls the magnitude of the penalty.
 
 For regression, MLP uses the Square Error loss function; written as,
 
 .. math::
 
-    Loss(x,y,W) = \frac{1}{2}||f(x) - y ||_2^2 + \alpha ||W||_2^2
+    Loss(\hat{y},y,W) = \frac{1}{2}||\hat{y} - y ||_2^2 + \alpha ||W||_2^2
 
 
-Starting from initial random weights, multi layer perceptron (MLP) minimizes 
-the loss function by repeatedly updating these weights. After computing
-the loss function value, a backward pass propagates it from the output layer 
-to the initial layer, providing each weight parameter with an update value 
-meant to decrease the loss function.
+Starting from initial random weights, multi-layer perceptron (MLP) minimizes 
+the loss function by repeatedly updating these weights. After computing the
+loss, a backward pass propagates it from the output layer to the previous
+layers, providing each weight parameter with an update value meant to decrease
+the loss.
 
-In gradient descent, the weight gradient :math:`\nabla W_{loss}` with respect
-to the loss function is computed and added to the corresponding :math:`W`.
+In gradient descent, the gradient :math:`\nabla Loss_{W}` of the loss with respect
+to the weights is computed and deducted from :math:`W`.
 More formally, this is expressed as,
 
 .. math::
-
-    W^{i+1} = W^i + \epsilon \nabla W^i_{loss}
+    W^{i+1} = W^i - \epsilon \nabla {Loss}_{W}^{i}
 
 
 where :math:`i` is the iteration step, and :math:`\epsilon` is the learning rate 
-with a value ranging from 0 and 1. 
+with a value larger than 0. 
 
-The algorithm stops when it reaches the set number of iterations; or 
-when the loss value is below a certain, small number.
+The algorithm stops when it reaches a preset maximum number of iterations; or
+when the improvement in loss is below a certain, small number.
 
 
 
@@ -292,24 +304,30 @@ Tips on Practical Use
     is highly recommended to scale your data. For example, scale each
     attribute on the input vector X to [0, 1] or [-1, +1], or standardize
     it to have mean 0 and variance 1. Note that you must apply the *same* 
-    scaling to the test vector for meaningful results. 
-    You can use :class:`StandardScaler`:: for standarization.
+    scaling to the test set for meaningful results. 
+    You can use :class:`StandardScaler` for standardization.
 
-      from sklearn.preprocessing import StandardScaler
-      scaler = StandardScaler()
-      scaler.fit(X_train)  # Don't cheat - fit only on training data
-      X_train = scaler.transform(X_train)
-      X_test = scaler.transform(X_test)  # apply same transformation to test data
+      >>> from sklearn.preprocessing import StandardScaler  # doctest: +SKIP
+      >>> scaler = StandardScaler()  # doctest: +SKIP
+      >>> # Don't cheat - fit only on training data
+      >>> scaler.fit(X_train)  # doctest: +SKIP
+      >>> X_train = scaler.transform(X_train)  # doctest: +SKIP
+      >>> # apply same transformation to test data
+      >>> X_test = scaler.transform(X_test)  # doctest: +SKIP
 
-  * Finding a reasonable regularization term :math:`\alpha` is
+    An alternative and recommended approach is to use :class:`StandardScaler`
+    in a :class:`Pipeline`
+
+  * Finding a reasonable regularization parameter :math:`\alpha` is
     best done using :class:`GridSearchCV`, usually in the
     range ``10.0 ** -np.arange(1, 7)``.
 
   * Empirically, we observed that `L-BFGS` converges faster and
-    with better solutions than `SGD`. Therefore, if mini-batch
-    and online learning are unnecessary, it is best advised
-    to set :meth:`MLPClassifier.algorithm` as
-    'l-bfgs'.
+    with better solutions on small datasets. For relatively large
+    datasets, however, `Adam` is very robust. It usually converges
+    quickly and gives pretty good performance. `SGD` with momentum or
+    nesterov's momentum, on the other hand, can perform better than
+    those two algorithms if learning rate is correctly tuned.
 
 More control with warm_start
 ============================
@@ -340,3 +358,6 @@ or want to do additional monitoring, using ``warm_start=True`` and
       Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks
       of the Trade 1998.
          
+    *  `"Adam: A method for stochastic optimization."
+       <http://arxiv.org/pdf/1412.6980v8.pdf>`_
+       Kingma, Diederik, and Jimmy Ba. arXiv preprint arXiv:1412.6980 (2014).
