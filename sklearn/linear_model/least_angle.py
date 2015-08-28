@@ -37,7 +37,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
               copy_Gram=True, verbose=0, return_path=True,
-              return_n_iter=False):
+              return_n_iter=False, positive=False):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
 
     The optimization objective for the case method='lasso' is::
@@ -56,6 +56,16 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     y : array, shape: (n_samples)
         Input targets.
+
+    positive : boolean (default=False)
+        Restrict coefficients to be >= 0.
+        When using this option together with method 'lasso' the model
+        coefficients will not converge to the ordinary-least-squares solution
+        for small values of alpha (neither will they when using method 'lar'
+        ..). Only coeffiencts up to the smallest alpha value (alphas_[alphas_ >
+        0.].min() when fit_path=True) reached by the stepwise Lars-Lasso
+        algorithm are typically in congruence with the solution of the
+        coordinate descent lasso_path function.
 
     max_iter : integer, optional (default=500)
         Maximum number of iterations to perform, set to infinity for no limit.
@@ -194,9 +204,17 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     while True:
         if Cov.size:
-            C_idx = np.argmax(np.abs(Cov))
+            if positive:
+                C_idx = np.argmax(Cov)
+            else:
+                C_idx = np.argmax(np.abs(Cov))
+
             C_ = Cov[C_idx]
-            C = np.fabs(C_)
+
+            if positive:
+                C = C_
+            else:
+                C = np.fabs(C_)
         else:
             C = 0.
 
@@ -235,7 +253,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             #                                                        #
             ##########################################################
 
-            sign_active[n_active] = np.sign(C_)
+            if positive:
+                sign_active[n_active] = np.ones_like(C_)
+            else:
+                sign_active[n_active] = np.sign(C_)
             m, n = n_active, C_idx + n_active
 
             Cov[C_idx], Cov[0] = swap(Cov[C_idx], Cov[0])
@@ -353,8 +374,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                                  least_squares)
 
         g1 = arrayfuncs.min_pos((C - Cov) / (AA - corr_eq_dir + tiny))
-        g2 = arrayfuncs.min_pos((C + Cov) / (AA + corr_eq_dir + tiny))
-        gamma_ = min(g1, g2, C / AA)
+        if positive:
+            gamma_ = min(g1, C / AA)
+        else:
+            g2 = arrayfuncs.min_pos((C + Cov) / (AA + corr_eq_dir + tiny))
+            gamma_ = min(g1, g2, C / AA)
 
         # TODO: better names for these variables: z
         drop = False
@@ -479,6 +503,10 @@ class Lars(LinearModel, RegressorMixin):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
+    positive : boolean (default=False)
+        Restrict coefficients to be >= 0. Be aware that you might want to
+        remove fit_intercept which is set True by default.
+
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
@@ -538,7 +566,8 @@ class Lars(LinearModel, RegressorMixin):
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     Lars(copy_X=True, eps=..., fit_intercept=True, fit_path=True,
-       n_nonzero_coefs=1, normalize=True, precompute='auto', verbose=False)
+       n_nonzero_coefs=1, normalize=True, positive=False, precompute='auto',
+       verbose=False)
     >>> print(clf.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0. -1.11...]
 
@@ -550,13 +579,15 @@ class Lars(LinearModel, RegressorMixin):
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
+                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
+                 positive=False):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lar'
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
+        self.positive = positive 
         self.eps = eps
         self.copy_X = copy_X
         self.fit_path = fit_path
@@ -636,7 +667,7 @@ class Lars(LinearModel, RegressorMixin):
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
                     eps=self.eps, return_path=True,
-                    return_n_iter=True)
+                    return_n_iter=True, positive=self.positive)
                 self.alphas_.append(alphas)
                 self.active_.append(active)
                 self.n_iter_.append(n_iter_)
@@ -656,7 +687,8 @@ class Lars(LinearModel, RegressorMixin):
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
-                    eps=self.eps, return_path=False, return_n_iter=True)
+                    eps=self.eps, return_path=False, return_n_iter=True,
+                    positive=self.positive)
                 self.alphas_.append(alphas)
                 self.n_iter_.append(n_iter_)
             if n_targets == 1:
@@ -690,6 +722,16 @@ class LassoLars(Lars):
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
+
+    positive : boolean (default=False)
+        Restrict coefficients to be >= 0. Be aware that you might want to
+        remove fit_intercept which is set True by default.
+        Under the positive restriction the model coefficients will not converge
+        to the ordinary-least-squares solution for small values of alpha.
+        Only coeffiencts up to the smallest alpha value (alphas_[alphas_ >
+        0.].min() when fit_path=True) reached by the stepwise Lars-Lasso
+        algorithm are typically in congruence with the solution of the
+        coordinate descent Lasso estimator.
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
@@ -754,8 +796,8 @@ class LassoLars(Lars):
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     LassoLars(alpha=0.01, copy_X=True, eps=..., fit_intercept=True,
-         fit_path=True, max_iter=500, normalize=True, precompute='auto',
-         verbose=False)
+         fit_path=True, max_iter=500, normalize=True, positive=False,
+         precompute='auto', verbose=False)
     >>> print(clf.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0.         -0.963257...]
 
@@ -772,13 +814,15 @@ class LassoLars(Lars):
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
+                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
+                 positive=False):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lasso'
+        self.positive = positive 
         self.precompute = precompute
         self.copy_X = copy_X
         self.eps = eps
@@ -797,7 +841,7 @@ def _check_copy_and_writeable(array, copy=False):
 def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
                         copy=True, method='lars', verbose=False,
                         fit_intercept=True, normalize=True, max_iter=500,
-                        eps=np.finfo(np.float).eps):
+                        eps=np.finfo(np.float).eps, positive=False):
     """Compute the residues on left-out data for a full LARS path
 
     Parameters
@@ -834,6 +878,13 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
+
+    positive : boolean (default=False)
+        Restrict coefficients to be >= 0. Be aware that you might want to
+        remove fit_intercept which is set True by default.
+        See reservations for using this option in combination with method
+        'lasso' for expected small values of alpha in the doc of LassoLarsCV
+        and LassoLarsIC.
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
@@ -887,7 +938,8 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
     alphas, active, coefs = lars_path(
         X_train, y_train, Gram=Gram, copy_X=False, copy_Gram=False,
-        method=method, verbose=max(0, verbose - 1), max_iter=max_iter, eps=eps)
+        method=method, verbose=max(0, verbose - 1), max_iter=max_iter, eps=eps,
+        positive=positive)
     if normalize:
         coefs[nonzeros] /= norms[nonzeros][:, np.newaxis]
     residues = np.dot(X_test, coefs) - y_test[:, np.newaxis]
@@ -905,6 +957,10 @@ class LarsCV(Lars):
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
+
+    positive : boolean (default=False)
+        Restrict coefficients to be >= 0. Be aware that you might want to
+        remove fit_intercept which is set True by default.
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
@@ -978,8 +1034,9 @@ class LarsCV(Lars):
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
                  normalize=True, precompute='auto', cv=None,
                  max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
-                 copy_X=True):
+                 copy_X=True, positive=False):
         self.fit_intercept = fit_intercept
+        self.positive = positive
         self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
@@ -1019,7 +1076,7 @@ class LarsCV(Lars):
                 X[train], y[train], X[test], y[test], Gram=Gram, copy=False,
                 method=self.method, verbose=max(0, self.verbose - 1),
                 normalize=self.normalize, fit_intercept=self.fit_intercept,
-                max_iter=self.max_iter, eps=self.eps)
+                max_iter=self.max_iter, eps=self.eps, positive=self.positive)
             for train, test in cv)
         all_alphas = np.concatenate(list(zip(*cv_paths))[0])
         # Unique also sorts
@@ -1083,6 +1140,18 @@ class LassoLarsCV(LarsCV):
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
+
+    positive : boolean (default=False)
+        Restrict coefficients to be >= 0. Be aware that you might want to
+        remove fit_intercept which is set True by default.
+        Under the positive restriction the model coefficients do not converge
+        to the ordinary-least-squares solution for small values of alpha.
+        Only coeffiencts up to the smallest alpha value (alphas_[alphas_ >
+        0.].min() when fit_path=True) reached by the stepwise Lars-Lasso
+        algorithm are typically in congruence with the solution of the
+        coordinate descent Lasso estimator.
+        As a consequence using LassoLarsCV only makes sense for problems where
+        a sparse solution is expected and/or reached.
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
@@ -1190,6 +1259,18 @@ class LassoLarsIC(LassoLars):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
+    positive : boolean (default=False)
+        Restrict coefficients to be >= 0. Be aware that you might want to
+        remove fit_intercept which is set True by default.
+        Under the positive restriction the model coefficients do not converge
+        to the ordinary-least-squares solution for small values of alpha.
+        Only coeffiencts up to the smallest alpha value (alphas_[alphas_ >
+        0.].min() when fit_path=True) reached by the stepwise Lars-Lasso
+        algorithm are typically in congruence with the solution of the
+        coordinate descent Lasso estimator.
+        As a consequence using LassoLarsIC only makes sense for problems where
+        a sparse solution is expected and/or reached.
+
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
@@ -1243,7 +1324,7 @@ class LassoLarsIC(LassoLars):
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     LassoLarsIC(copy_X=True, criterion='bic', eps=..., fit_intercept=True,
-          max_iter=500, normalize=True, precompute='auto',
+          max_iter=500, normalize=True, positive=False, precompute='auto',
           verbose=False)
     >>> print(clf.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0.  -1.11...]
@@ -1265,9 +1346,10 @@ class LassoLarsIC(LassoLars):
     """
     def __init__(self, criterion='aic', fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps, copy_X=True):
+                 eps=np.finfo(np.float).eps, copy_X=True, positive=False):
         self.criterion = criterion
         self.fit_intercept = fit_intercept
+        self.positive = positive
         self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
@@ -1306,7 +1388,7 @@ class LassoLarsIC(LassoLars):
         alphas_, active_, coef_path_, self.n_iter_ = lars_path(
             X, y, Gram=Gram, copy_X=copy_X, copy_Gram=True, alpha_min=0.0,
             method='lasso', verbose=self.verbose, max_iter=max_iter,
-            eps=self.eps, return_n_iter=True)
+            eps=self.eps, return_n_iter=True, positive=self.positive)
 
         n_samples = X.shape[0]
 
