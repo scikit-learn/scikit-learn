@@ -944,7 +944,7 @@ class BayesianGaussianMixture(MixtureBase):
         """
         self._check_is_fitted()
         X = check_X(X, None, self.n_features)
-        p, _, _, _ = self._estimate_log_prob_resp(X)
+        p = self.score_samples(X)
         return p.mean()
 
     @property
