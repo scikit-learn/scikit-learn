@@ -4,7 +4,6 @@ import numpy as np
 from scipy import linalg
 
 from sklearn.cross_validation import train_test_split
-from sklearn.externals import joblib
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
@@ -154,7 +153,8 @@ def test_no_path_precomputed():
 
 
 def test_no_path_all_precomputed():
-    # Test that the ``return_path=False`` option with Gram and Xy remains correct
+    # Test that the ``return_path=False`` option with Gram and Xy remains
+    # correct
     X, y = 3 * diabetes.data, diabetes.target
     G = np.dot(X.T, X)
     Xy = np.dot(X.T, y)
@@ -182,13 +182,13 @@ def test_rank_deficient_design():
     # deficient input data (with n_features < rank) in the same way
     # as coordinate descent Lasso
     y = [5, 0, 5]
-    for X in ([[5,   0],
-               [0,   5],
+    for X in ([[5, 0],
+               [0, 5],
                [10, 10]],
 
-              [[10,     10,  0],
-               [1e-32,   0,  0],
-               [0,       0,  1]],
+              [[10, 10, 0],
+               [1e-32, 0, 0],
+               [0, 0, 1]],
               ):
         # To be able to use the coefs to compute the objective function,
         # we need to turn off normalization
@@ -318,9 +318,9 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
     # Note it used to be the case that Lars had to use the drop for good
     # strategy for this but this is no longer the case with the
     # equality_tolerance checks
-    X = [[1e20,  1e20,  0],
-         [-1e-32,  0,  0],
-         [1,       1,  1]]
+    X = [[1e20, 1e20, 0],
+         [-1e-32, 0, 0],
+         [1, 1, 1]]
     y = [10, 10, 1]
     alpha = .0001
 
@@ -449,53 +449,36 @@ def test_lars_path_positive_constraint():
     # we do the test on the diabetes dataset
 
     # ensure that we get negative coefficients when positive=False
-    # for method 'lar' (default)
-    alpha, active, coefs = linear_model.lars_path(
-            diabetes['data'], diabetes['target'],
-            return_path=True,
-            method='lar',
-            positive=False)
-    assert_true(coefs.min() < 0)
-    # for method 'lasso'
-    alpha, active, coefs = linear_model.lars_path(
-            diabetes['data'], diabetes['target'],
-            return_path=True,
-            method='lasso',
-            positive=False)
-    assert_true(coefs.min() < 0)
+    # and all positive when positive=True
+    # for method 'lar' (default) and lasso
+    for method in ['lar', 'lasso']:
+        alpha, active, coefs = \
+            linear_model.lars_path(diabetes['data'], diabetes['target'],
+                                   return_path=True, method=method,
+                                   positive=False)
+        assert_true(coefs.min() < 0)
 
-    # now let's restrict the solution to be positive
-    # for method 'lar' (default)
-    alpha, active, coefs = linear_model.lars_path(
-            diabetes['data'], diabetes['target'],
-            return_path=True,
-            method='lar',
-            positive=True)
-    assert_true(coefs.min() >= 0)
-    # for method 'lasso'
-    alpha, active, coefs = linear_model.lars_path(
-            diabetes['data'], diabetes['target'],
-            return_path=True,
-            method='lasso',
-            positive=True)
-    assert_true(coefs.min() >= 0)
+        alpha, active, coefs = \
+            linear_model.lars_path(diabetes['data'], diabetes['target'],
+                                   return_path=True, method=method,
+                                   positive=True)
+        assert_true(coefs.min() >= 0)
 
 
 # now we gonna test the positive option for all estimator classes
 
-default_parameter = { 'fit_intercept' : False, }
+default_parameter = {'fit_intercept': False}
 
-estimator_parameter_map = {
-        'Lars' : { 'n_nonzero_coefs' : 5, },
-        'LassoLars' : { 'alpha' : 0.1, },
-        'LarsCV' : {  },
-        'LassoLarsCV' : { },
-        'LassoLarsIC' : { },
-        }
+estimator_parameter_map = {'Lars': {'n_nonzero_coefs': 5},
+                           'LassoLars': {'alpha': 0.1},
+                           'LarsCV': {},
+                           'LassoLarsCV': {},
+                           'LassoLarsIC': {}}
+
 
 def test_estimatorclasses_positive_constraint():
     # testing the transmissibility for the positive option of all estimator
-    # classes in this same function here 
+    # classes in this same function here
 
     for estname in estimator_parameter_map:
         params = default_parameter.copy()
@@ -516,12 +499,11 @@ def test_lasso_lars_vs_lasso_cd_positive(verbose=False):
     # option. However for the middle part, the comparison of coefficient values
     # for a range of alphas, we had to make an adaptations. See below.
 
-
     # not normalized data
     X = 3 * diabetes.data
 
     alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
-            positive=True)
+                                                   positive=True)
     lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8, positive=True)
     for c, a in zip(lasso_path.T, alphas):
         if a == 0:
@@ -530,7 +512,6 @@ def test_lasso_lars_vs_lasso_cd_positive(verbose=False):
         lasso_cd.fit(X, y)
         error = linalg.norm(c - lasso_cd.coef_)
         assert_less(error, 0.01)
-
 
     # The range of alphas chosen for coefficient comparison here is restricted
     # as compared with the above test without the positive option. This is due
@@ -542,25 +523,20 @@ def test_lasso_lars_vs_lasso_cd_positive(verbose=False):
     # https://gist.github.com/michigraber/7e7d7c75eca694c7a6ff
 
     for alpha in np.linspace(6e-1, 1 - 1e-2, 20):
-        clf1 = linear_model.LassoLars(
-                fit_intercept=False, alpha=alpha, normalize=False,
-                positive=True).fit(X, y)
-        clf2 = linear_model.Lasso(
-                fit_intercept=False, alpha=alpha, tol=1e-8,
-                normalize=False, positive=True).fit(X, y)
+        clf1 = linear_model.LassoLars(fit_intercept=False, alpha=alpha,
+                                      normalize=False, positive=True).fit(X, y)
+        clf2 = linear_model.Lasso(fit_intercept=False, alpha=alpha, tol=1e-8,
+                                  normalize=False, positive=True).fit(X, y)
         err = linalg.norm(clf1.coef_ - clf2.coef_)
         assert_less(err, 1e-3)
-
 
     # normalized data
     X = diabetes.data
     alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
-            positive=True)
+                                                   positive=True)
     lasso_cd = linear_model.Lasso(fit_intercept=False, normalize=True,
                                   tol=1e-8, positive=True)
-    for c, a in zip(lasso_path.T, alphas):
-        if a == 0:
-            continue
+    for c, a in zip(lasso_path.T[:-1], alphas[:-1]):  # don't include alpha=0
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
         error = linalg.norm(c - lasso_cd.coef_)
