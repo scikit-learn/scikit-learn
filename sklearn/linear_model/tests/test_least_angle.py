@@ -512,8 +512,12 @@ def test_lasso_lars_vs_lasso_cd_positive(verbose=False):
     # Test that LassoLars and Lasso using coordinate descent give the
     # same results when using the positive option
 
-    # this test is basically a copy of the above plus the positive option
+    # This test is basically a copy of the above with additional positive
+    # option. However for the middle part, the comparison of coefficient values
+    # for a range of alphas, we had to make an adaptations. See below.
 
+
+    # not normalized data
     X = 3 * diabetes.data
 
     alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
@@ -527,7 +531,28 @@ def test_lasso_lars_vs_lasso_cd_positive(verbose=False):
         error = linalg.norm(c - lasso_cd.coef_)
         assert_less(error, 0.01)
 
-    # same test, with normalized data
+
+    # The range of alphas chosen for coefficient comparison here is restricted
+    # as compared with the above test without the positive option. This is due
+    # to the circumstance that the Lars-Lasso algorithm does not converge to
+    # the least-squares-solution for small alphas, see 'Least Angle Regression'
+    # by Efron et al 2004. The coefficients are typically in congruence up to
+    # the smallest alpha reached by the Lars-Lasso algorithm and start to
+    # diverge thereafter.  See
+    # https://gist.github.com/michigraber/7e7d7c75eca694c7a6ff
+
+    for alpha in np.linspace(6e-1, 1 - 1e-2, 20):
+        clf1 = linear_model.LassoLars(
+                fit_intercept=False, alpha=alpha, normalize=False,
+                positive=True).fit(X, y)
+        clf2 = linear_model.Lasso(
+                fit_intercept=False, alpha=alpha, tol=1e-8,
+                normalize=False, positive=True).fit(X, y)
+        err = linalg.norm(clf1.coef_ - clf2.coef_)
+        assert_less(err, 1e-3)
+
+
+    # normalized data
     X = diabetes.data
     alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
             positive=True)
@@ -540,66 +565,3 @@ def test_lasso_lars_vs_lasso_cd_positive(verbose=False):
         lasso_cd.fit(X, y)
         error = linalg.norm(c - lasso_cd.coef_)
         assert_less(error, 0.01)
-
-
-
-def evaluate_lasso_lars_vs_lasso_cd_positive_middle_part():
-    # this part of the above tests does not confirm equality of results.
-    # but i'm not entirely sure whether this is necessarily to be expected ..
-    # see comments and results below
-
-    # similar test, with the classifiers
-
-    for alpha in np.linspace(1e-2, 1 - 1e-2, 20):
-        clf1 = linear_model.LassoLars(
-                fit_intercept=False, alpha=alpha, normalize=False,
-                positive=True).fit(X, y)
-        clf2 = linear_model.Lasso(
-                fit_intercept=False, alpha=alpha, tol=1e-8,
-                normalize=False, positive=True).fit(X, y)
-        err = linalg.norm(clf1.coef_ - clf2.coef_)
-        mess = 'alpha={} \t err={} \t num_coeffs=({}/{}) (LassoLars / Lasso)'
-        print(mess.format(
-            alpha,
-            err, 
-            sum(clf1.coef_ > 0),
-            sum(clf2.coef_ > 0),
-            ))
-        #assert_less(err, 1e-3)
-
-
-    '''
-    Results produced:
-
-    In [19]: test_least_angle.evaluate_lasso_lars_vs_lasso_cd_positive_middle_part()
-    alpha=0.01 	                 err=25.7243223179 	 num_coeffs=(5/5) (LassoLars / Lasso)
-    alpha=0.0615789473684 	 err=18.2545548874 	 num_coeffs=(5/5) (LassoLars / Lasso)
-    alpha=0.113157894737 	 err=10.7847873501 	 num_coeffs=(5/5) (LassoLars / Lasso)
-    alpha=0.164736842105 	 err=3.31501982266 	 num_coeffs=(5/5) (LassoLars / Lasso)
-    alpha=0.216315789474 	 err=3.69727628935e-06 	 num_coeffs=(4/4) (LassoLars / Lasso)
-    alpha=0.267894736842 	 err=3.56502617927e-06 	 num_coeffs=(4/4) (LassoLars / Lasso)
-    alpha=0.319473684211 	 err=3.43302342569e-06 	 num_coeffs=(4/4) (LassoLars / Lasso)
-    alpha=0.371052631579 	 err=1.05509699804e-06 	 num_coeffs=(3/3) (LassoLars / Lasso)
-    alpha=0.422631578947 	 err=5.9269674114e-07 	 num_coeffs=(3/3) (LassoLars / Lasso)
-    alpha=0.474210526316 	 err=1.56511823248e-06 	 num_coeffs=(3/3) (LassoLars / Lasso)
-    alpha=0.525789473684 	 err=1.28253471214e-06 	 num_coeffs=(3/3) (LassoLars / Lasso)
-    alpha=0.577368421053 	 err=1.00002954531e-06 	 num_coeffs=(3/3) (LassoLars / Lasso)
-    alpha=0.628947368421 	 err=7.38618104242e-07 	 num_coeffs=(3/3) (LassoLars / Lasso)
-    alpha=0.680526315789 	 err=6.78234533087e-07 	 num_coeffs=(3/3) (LassoLars / Lasso)
-    alpha=0.732105263158 	 err=2.25315273789e-06 	 num_coeffs=(3/3) (LassoLars / Lasso)
-    alpha=0.783684210526 	 err=1.98825668767e-06 	 num_coeffs=(3/3) (LassoLars / Lasso)
-    alpha=0.835263157895 	 err=1.72877180183e-06 	 num_coeffs=(3/3) (LassoLars / Lasso)
-    alpha=0.886842105263 	 err=1.58242049123e-06 	 num_coeffs=(3/3) (LassoLars / Lasso)
-    alpha=0.938421052632 	 err=1.50923193078e-06 	 num_coeffs=(3/3) (LassoLars / Lasso)
-    alpha=0.99 	                 err=1.43604831986e-06 	 num_coeffs=(3/3) (LassoLars / Lasso)
-
-
-    We see that the 'equality of results' is violated for 'small' alphas.
-    This is mentioned in the original paper by Efron et al. 2004:
-
-    `The positive Lasso usually does not converge to the full OLS solution
-    beta_{m}, even fro very large choices of t.`
-
-
-    '''
-
