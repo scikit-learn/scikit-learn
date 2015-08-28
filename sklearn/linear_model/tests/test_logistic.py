@@ -675,3 +675,15 @@ def test_logreg_cv_penalty():
     lr = LogisticRegression(penalty="l1", C=1.0, solver='liblinear')
     lr.fit(X, y)
     assert_equal(np.count_nonzero(lr_cv.coef_), np.count_nonzero(lr.coef_))
+
+
+def test_logreg_predict_proba():
+    X, y = make_classification(
+        n_samples=10, n_features=20, random_state=0, n_classes=3, n_informative=10)
+    clf = LogisticRegression(multi_class="multinomial", solver="lbfgs")
+    clf.fit(X, y)
+    assert_array_almost_equal(np.sum(clf.predict_proba(X), axis=1), np.ones(10))
+
+    clf = LogisticRegression(multi_class="multinomial", solver="lbfgs")
+    clf.fit(X, y)
+    assert_array_almost_equal(np.sum(clf.predict_proba(X), axis=1), np.ones(10))
