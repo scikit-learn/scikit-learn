@@ -75,6 +75,15 @@ def _fit_binary(estimator, X, y, classes=None):
     return estimator
 
 
+def _partial_fit_binary(estimator, X, y, all_classes=None, clone_estimator=True):
+    """Incrementally fit a single binary estimator."""
+    if clone_estimator:
+        estimator = clone(estimator)
+
+    estimator.partial_fit(X, y, classes=all_classes)
+    return estimator
+
+
 def _predict_binary(estimator, X):
     """Make predictions using a single binary estimator."""
     if is_regressor(estimator):
@@ -277,6 +286,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         Y = self.label_binarizer_.fit_transform(y)
         Y = Y.tocsc()
         columns = (col.toarray().ravel() for col in Y.T)
+
         # In cases where individual estimators are very fast to train setting
         # n_jobs > 1 in can results in slower performance due to the overhead
         # of spawning threads.  See joblib issue #112.
@@ -287,6 +297,58 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             for i, column in enumerate(columns))
 
         return self
+
+    def partial_fit(self, X, y):
+        """Incrementally fit the underlying estimators on a batch of samples.
+        Throws AttributeError if the underlying estimator class does not support incremental updates via `partial_fit`.
+
+        Parameters
+        ----------
+        X : (sparse) array-like, shape = [n_samples, n_features]
+            Data.
+
+        y : (sparse) array-like, shape = [n_samples] or [n_samples, n_classes]
+            Multi-class targets. An indicator matrix turns on multilabel
+            classification.
+
+        Returns
+        -------
+        self
+        """
+        if not hasattr(self.estimator, "partial_fit"):
+            raise AttributeError("Underlying estimator (%s) does not support incremental updates!" %
+                                 self.estimator.__class__)
+
+        self.label_binarizer_ = LabelBinarizer(sparse_output=True)
+
+        Y = self.label_binarizer_.fit_transform(y)
+        Y = Y.tocsc()
+        columns = (col.toarray().ravel() for col in Y.T)
+
+        if not hasattr(self, 'estimators_'):
+            self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+                delayed(_partial_fit_binary)(
+                    self.estimator,
+                    X,
+                    column,
+                    all_classes=[0, 1],
+                    clone_estimator=True
+                ) for i, column in enumerate(columns)
+            )
+        else:
+            self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+                delayed(_partial_fit_binary)(
+                    self.estimators_[i],
+                    X,
+                    column,
+                    all_classes=[0, 1],
+                    clone_estimator=False
+                ) for i, column in enumerate(columns)
+            )
+
+        return self
+
+
 
     def predict(self, X):
         """Predict multi-class targets using underlying estimators.
