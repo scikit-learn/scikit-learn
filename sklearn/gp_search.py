@@ -19,7 +19,6 @@ from .base import is_classifier, clone
 
 #   UTILS    #
 
-
 def sample_candidates(n_candidates, param_bounds, param_isInt):
 
     n_parameters = param_isInt.shape[0]
@@ -50,6 +49,7 @@ def compute_ei(predictions, sigma, y_best):
     for i in range(ei_array.shape[0]):
         z = (y_best - predictions[i]) / sigma[i]
         ei_array[i] = sigma[i] * (z * norm.cdf(z) + norm.pdf(z))
+
     return ei_array
 
 
@@ -88,11 +88,110 @@ def is_in_ndarray(item, a):
 #    GPSearchCV    #
 class GPSearchCV(object):
     """
+    Parameters
+    ----------
+
+    parameters : dict, parameter space on which to optimize the estimator
+        The keys of the dictionnary should be the names of the parameters,
+        and the values should be lists of length 2; the first element being
+        the type of the parameter ('int', 'float' or 'cat' [for categorical]),
+        and the second element being a list of either the bounds between which
+        to search (for 'int' and 'float') or the values the parameter can take
+        (for 'cat')
+        Example : parameters = {'kernel' :  ['cat', ['rbf', 'poly']],
+                                 'd' : ['int', [1,3]],
+                                 'C' : ['float',[1,10])}
+
+    estimator : 1) sklearn estimator or 2) callable
+        1 : object type that implements the "fit" and "predict" methods,
+        as a classifier or a pipeline
+        2 : a function that computes the output given a dictionnary of
+        parameters. The returned value should be a list of one or more
+        floats if score_format == 'cv', and a float if score_format ==
+        'avg'
+
+    X : array-like, shape = [n_samples, n_features]
+        Training vector, where n_samples in the number of samples and
+        n_features is the number of features.
+
+    y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+        Target relative to X for classification or regression;
+        None for unsupervised learning.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method.
+
+    scoring : string, callable or None, optional
+        A string (see sklearn's model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+        Default is None.
+
+    cv : integer or cross-validation generator, optional
+        Relevant if the estimator is an sklearn object.
+        If an integer is passed, it is the number of folds.
+        Specific cross-validation objects can be passed, see
+        sklearn.cross_validation module for the list of possible objects
+        Default is 5.
+
+    acquisition function : string, optional
+        Function to maximize in order to choose the next parameter to test.
+        - Simple : maximize the predicted output
+        - UCB : maximize the upper confidence bound
+        - EI : maximizes the expected improvement
+        Default is 'UCB'
+
+    n_iter : int
+        Total number of iterations to perform (including n_init and
+        n_final_iter).
+        Default is 100.
+
+    n_init : int, optional
+        Number of random iterations to perform before the smart search.
+        Default is 30.
+
+    n_final_iter : int, optional
+        Number of final iterations, ie. smart iterations but with
+        acquisition_function == 'Simple'
+        Default is 5.
+
+    n_candidates : int, optional
+        Number of random candidates to sample for each GP iterations
+        Default is 500.
+
+    nugget : float, optional
+        The nugget to set for the Gaussian Process.
+        Default is 1.e-10.
+
+
+    Attributes
+    ----------
+
+    best_parameter_ : dict, the parameter set, from those tested by the
+        method _fit, that maximizes the mean of the cross-validation results.
+
+    tested_parameters_ : ndarray, the parameters tested by _fit
+
+
     Examples
-    --------
-    >>> parameters = {'kernel' :  ['cat', ['rbf','poly']],
-    ...                'd' : ['int', [1,3]],
-    ...                'C' : ['float',[1,10])}
+    -------
+    >>> from sklearn.datasets import load_digits
+    >>> iris = load_digits()
+    >>> X, y = iris.data, iris.target
+    >>> clf = RandomForestClassifier(n_estimators=20)
+    >>> parameters = {"max_depth": ['int', [3, 3]],
+                    "max_features": ['int', [1, 11]],
+                    "min_samples_split": ['int', [1, 11]],
+                    "min_samples_leaf": ['int', [1, 11]],
+                    "bootstrap": ['cat', [True, False]],
+                    "criterion": ['cat', ["gini", "entropy"]]}
+
+    >>> search = GPSearchCV(parameters,
+                            estimator=clf,
+                            X=X,
+                            y=y,
+                            n_iter=20)
+    >>> search._fit()
 
     """
 
@@ -129,6 +228,10 @@ class GPSearchCV(object):
         self.cv = cv
         self.X = X
         self.y = y
+
+        self.best_parameter_ = None
+        self.tested_parameters_ = None
+        self.cv_scores_ = None
 
         if(callable(estimator)):
             self._callable_estimator = True
@@ -173,6 +276,19 @@ class GPSearchCV(object):
         return dict_parameter
 
     def score(self, test_parameter):
+        """
+        The score function to call in order to evaluate the quality
+        of the parameter test_parameter
+
+        Parameters
+        ----------
+        tested_parameter : dict, the parameter to test
+
+        Returns
+        -------
+        score : the mean of the CV score
+        """
+
         if not self._callable_estimator:
             cv = check_cv(self.cv, self.X, self.y,
                           classifier=is_classifier(self.estimator))
@@ -196,6 +312,15 @@ class GPSearchCV(object):
         return score
 
     def _fit(self):
+        """
+        Run the hyper-parameter optimization process
+
+        Returns
+        -------
+        tested_parameters_ : ndarray, the parameters tested during the process
+
+        cv_scores_ : array of the mean CV results of the parameters tested
+        """
 
         n_tested_parameters = 0
         tested_parameters = np.zeros((self.n_iter, self.n_parameters))
@@ -279,6 +404,11 @@ class GPSearchCV(object):
         best_idx = np.argmax(cv_scores[:n_tested_parameters])
         vector_best_param = tested_parameters[best_idx]
         best_parameter = self.vector_to_dict(vector_best_param)
+
+        # store
+        self.best_parameter_ = best_parameter
+        self.tested_parameters_ = tested_parameters[:n_tested_parameters, :]
+        self.cv_scores_ = cv_scores[:n_tested_parameters]
 
         if(self.verbose):
             print ('\nTested ' + str(n_tested_parameters) + ' parameters')
