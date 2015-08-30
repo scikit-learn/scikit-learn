@@ -54,7 +54,7 @@ def _return_float_dtype(X, Y):
     return X, Y, dtype
 
 
-def check_pairwise_arrays(X, Y):
+def check_pairwise_arrays(X, Y, precomputed=False):
     """ Set X and Y appropriately and checks inputs
 
     If Y is None, it is set as a pointer to X (i.e. not a copy).
@@ -65,13 +65,18 @@ def check_pairwise_arrays(X, Y):
     Specifically, this function first ensures that both X and Y are arrays,
     then checks that they are at least two dimensional while ensuring that
     their elements are floats. Finally, the function checks that the size
-    of the second dimension of the two arrays is equal.
+    of the second dimension of the two arrays is equal, or the equivalent
+    check for a precomputed distance matrix.
 
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples_a, n_features)
 
     Y : {array-like, sparse matrix}, shape (n_samples_b, n_features)
+
+    precomputed : bool
+        True if X is to be treated as precomputed distances to the samples in
+        Y.
 
     Returns
     -------
@@ -90,7 +95,14 @@ def check_pairwise_arrays(X, Y):
     else:
         X = check_array(X, accept_sparse='csr', dtype=dtype)
         Y = check_array(Y, accept_sparse='csr', dtype=dtype)
-    if X.shape[1] != Y.shape[1]:
+
+    if precomputed:
+        if X.shape[1] != Y.shape[0]:
+            raise ValueError("Precomputed metric requires shape "
+                             "(n_queries, n_indexed). Got (%d, %d) "
+                             "for %d indexed." %
+                             (X.shape[0], X.shape[1], Y.shape[0]))
+    elif X.shape[1] != Y.shape[1]:
         raise ValueError("Incompatible dimension for X and Y matrices: "
                          "X.shape[1] == %d while Y.shape[1] == %d" % (
                              X.shape[1], Y.shape[1]))
@@ -954,7 +966,9 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     'euclidean': euclidean_distances,
     'l2': euclidean_distances,
     'l1': manhattan_distances,
-    'manhattan': manhattan_distances, }
+    'manhattan': manhattan_distances,
+    'precomputed': None,  # HACK: precomputed is always allowed, never called
+}
 
 
 def distance_metrics():
@@ -1131,6 +1145,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
                          "callable" % (metric, _VALID_METRICS))
 
     if metric == "precomputed":
+        X, _ = check_pairwise_arrays(X, Y, precomputed=True)
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
@@ -1271,6 +1286,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
 
     """
     if metric == "precomputed":
+        X, _ = check_pairwise_arrays(X, Y, precomputed=True)
         return X
     elif metric in PAIRWISE_KERNEL_FUNCTIONS:
         if filter_params:
