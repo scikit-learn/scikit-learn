@@ -20,7 +20,6 @@ optimization.
 #       package.
 
 from abc import ABCMeta, abstractmethod
-from functools import partial
 from collections import namedtuple
 import inspect
 import math
@@ -34,9 +33,9 @@ from ..externals import six
 from ..base import clone
 
 
-class Hyperparameter(namedtuple(
-     'Hyperparameter',
-     ('name', 'value_type', 'bounds', 'n_elements', 'fixed'))):
+class Hyperparameter(namedtuple('Hyperparameter',
+                                ('name', 'value_type', 'bounds',
+                                 'n_elements', 'fixed'))):
     """A kernel hyperparameter's specification in form of a namedtuple.
 
     Entries
@@ -89,7 +88,7 @@ class Hyperparameter(namedtuple(
                                      % (name, n_elements, bounds.shape[0]))
 
         if fixed is None:
-             fixed = bounds is "fixed"
+            fixed = bounds is "fixed"
         return super(Hyperparameter, cls).__new__(
             cls, name, value_type, bounds, n_elements, fixed)
 
@@ -340,7 +339,7 @@ class CompoundKernel(Kernel):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return dict(kernels=kernels)
+        return dict(kernels=self.kernels)
 
     @property
     def theta(self):
@@ -1309,7 +1308,7 @@ class RationalQuadratic(Kernel):
 
         self.hyperparameter_l = Hyperparameter("l", "numeric", l_bounds)
         self.hyperparameter_alpha = \
-             Hyperparameter("alpha", "numeric", alpha_bounds)
+            Hyperparameter("alpha", "numeric", alpha_bounds)
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.

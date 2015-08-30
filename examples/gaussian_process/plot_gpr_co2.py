@@ -63,7 +63,7 @@ from matplotlib import pyplot as plt
 
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
-    import RBF, Kernel, WhiteKernel, RationalQuadratic, ExpSineSquared
+    import RBF, WhiteKernel, RationalQuadratic, ExpSineSquared
 from sklearn.datasets import fetch_mldata
 
 data = fetch_mldata('mauna-loa-atmospheric-co2').data
@@ -74,11 +74,11 @@ y = data[:, 0]
 k1 = 66.0**2 * RBF(l=67.0)  # long term smooth rising trend
 k2 = 2.4**2 * RBF(l=90.0) * ExpSineSquared(l=1.3, p=1.0)  # seasonal component
 k3 = 0.66**2 * RationalQuadratic(l=1.2, alpha=0.78)  # medium term irregularity
-k4 = 0.18**2 * RBF(l=0.134) + WhiteKernel(c=0.19**2) # noise terms
+k4 = 0.18**2 * RBF(l=0.134) + WhiteKernel(c=0.19**2)  # noise terms
 kernel_gpml = k1 + k2 + k3 + k4
 
 gp = GaussianProcessRegressor(kernel=kernel_gpml, alpha=0,
-							         optimizer=None, normalize_y=True)
+                              optimizer=None, normalize_y=True)
 gp.fit(X, y)
 
 print("GPML kernel: %s" % gp.kernel_)
@@ -86,12 +86,12 @@ print("Log-marginal-likelihood: %.3f"
       % gp.log_marginal_likelihood(gp.kernel_.theta))
 
 # Kernel with optimized parameters
-k1 = 50.0**2 * RBF(l=50.0) # long term smooth rising trend
+k1 = 50.0**2 * RBF(l=50.0)  # long term smooth rising trend
 k2 = 2.0**2 * RBF(l=100.0) \
-	* ExpSineSquared(l=1.0, p=1.0, p_bounds="fixed") # seasonal component
-k3 = 0.5**2 * RationalQuadratic(l=1.0, alpha=1.0) # medium term irregularities
+    * ExpSineSquared(l=1.0, p=1.0, p_bounds="fixed")  # seasonal component
+k3 = 0.5**2 * RationalQuadratic(l=1.0, alpha=1.0)  # medium term irregularities
 k4 = 0.1**2 * RBF(l=0.1) + WhiteKernel(c=0.1**2,
-									   c_bounds=(1e-3, np.inf))  # noise terms
+                                       c_bounds=(1e-3, np.inf))  # noise terms
 kernel = k1 + k2 + k3 + k4
 
 gp = GaussianProcessRegressor(kernel=kernel, alpha=0,

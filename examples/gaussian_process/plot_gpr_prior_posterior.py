@@ -19,15 +19,16 @@ from matplotlib import pyplot as plt
 
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
-    ExpSineSquared, DotProduct, ConstantKernel)
+                                              ExpSineSquared, DotProduct,
+                                              ConstantKernel)
 
 
 kernels = [1.0 * RBF(l=1.0, l_bounds=(1e-1, 10.0)),
            1.0 * RationalQuadratic(l=1.0, alpha=0.1),
            1.0 * ExpSineSquared(l=1.0, p=3.0, l_bounds=(0.1, 10.0),
                                 p_bounds=(1.0, 10.0)),
-           ConstantKernel(0.1, (0.01, 10.0)) \
-                * (DotProduct(sigma_0=1.0, sigma_0_bounds=(0.0, 10.0)) ** 2),
+           ConstantKernel(0.1, (0.01, 10.0))
+               * (DotProduct(sigma_0=1.0, sigma_0_bounds=(0.0, 10.0)) ** 2),
            1.0 * Matern(l=1.0, l_bounds=(1e-1, 10.0), nu=1.5)]
 
 for fig_index, kernel in enumerate(kernels):

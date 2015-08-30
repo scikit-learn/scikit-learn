@@ -13,14 +13,12 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
-from sklearn.multiclass import OneVsRestClassifier
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
 
 # import some data to play with
 iris = datasets.load_iris()
-X = iris.data[:, :2]  # we only take the first two features. We could
-                      # avoid this ugly slicing by using a two-dim dataset
+X = iris.data[:, :2]  # we only take the first two features.
 y = np.array(iris.target, dtype=int)
 
 h = .02  # step size in the mesh
@@ -58,7 +56,7 @@ for i, clf in enumerate((gpc_rbf_isotropic, gpc_rbf_anisotropic)):
     plt.xticks(())
     plt.yticks(())
     plt.title("%s, LML: %.3f" %
-        (titles[i], clf.log_marginal_likelihood(clf.kernel_.theta)))
+              (titles[i], clf.log_marginal_likelihood(clf.kernel_.theta)))
 
 plt.tight_layout()
 plt.show()
