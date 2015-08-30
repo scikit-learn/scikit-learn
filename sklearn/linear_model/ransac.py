@@ -9,6 +9,7 @@ import numpy as np
 from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
 from ..utils import check_random_state, check_array, check_consistent_length
 from ..utils.random import sample_without_replacement
+from ..utils.validation import check_is_fitted
 from .base import LinearRegression
 
 
@@ -58,6 +59,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
     A detailed description of the algorithm can be found in the documentation
     of the ``linear_model`` sub-package.
+
+    Read more in the :ref:`User Guide <RansacRegression>`.
 
     Parameters
     ----------
@@ -195,8 +198,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         """
         X = check_array(X, accept_sparse='csr')
         y = check_array(y, ensure_2d=False)
-        if y.ndim == 1:
-            y = y.reshape(-1, 1)
         check_consistent_length(X, y)
 
         if self.base_estimator is not None:
@@ -277,10 +278,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
             # residuals of all data for current random sample model
             y_pred = base_estimator.predict(X)
-            if y_pred.ndim == 1:
-                y_pred = y_pred[:, None]
-
-            residuals_subset = residual_metric(y_pred - y)
+            diff = y_pred - y
+            if diff.ndim == 1:
+                diff = diff.reshape(-1, 1)
+            residuals_subset = residual_metric(diff)
 
             # classify data into inliers and outliers
             inlier_mask_subset = residuals_subset < residual_threshold
@@ -289,6 +290,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             # less inliers -> skip current random sample
             if n_inliers_subset < n_inliers_best:
                 continue
+            if n_inliers_subset == 0:
+                raise ValueError("No inliers found, possible cause is "
+                    "setting residual_threshold ({0}) too low.".format(
+                    self.residual_threshold))
 
             # extract inlier data set
             inlier_idxs_subset = sample_idxs[inlier_mask_subset]
@@ -351,6 +356,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         y : array, shape = [n_samples] or [n_samples, n_targets]
             Returns predicted values.
         """
+        check_is_fitted(self, 'estimator_')
+
         return self.estimator_.predict(X)
 
     def score(self, X, y):
@@ -371,4 +378,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         z : float
             Score of the prediction.
         """
+        check_is_fitted(self, 'estimator_')
+
         return self.estimator_.score(X, y)

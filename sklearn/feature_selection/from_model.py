@@ -6,6 +6,7 @@ import numpy as np
 from ..base import TransformerMixin
 from ..externals import six
 from ..utils import safe_mask, check_array
+from ..utils.validation import NotFittedError, check_is_fitted
 
 
 class _LearntSelectorMixin(TransformerMixin):
@@ -19,6 +20,10 @@ class _LearntSelectorMixin(TransformerMixin):
     """
     def transform(self, X, threshold=None):
         """Reduce X to its most important features.
+
+        Uses ``coef_`` or ``feature_importances_`` to determine the most
+        important features.  For models with a ``coef_`` for each class, the
+        absolute sum over the classes is used.
 
         Parameters
         ----------
@@ -39,21 +44,24 @@ class _LearntSelectorMixin(TransformerMixin):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
+        check_is_fitted(self, ('coef_', 'feature_importances_'), 
+                        all_or_any=any)
+
         X = check_array(X, 'csc')
         # Retrieve importance vector
         if hasattr(self, "feature_importances_"):
             importances = self.feature_importances_
 
         elif hasattr(self, "coef_"):
+            if self.coef_ is None:
+                msg = "This model is not fitted yet. Please call fit() first" 
+                raise NotFittedError(msg)
+
             if self.coef_.ndim == 1:
                 importances = np.abs(self.coef_)
-
             else:
                 importances = np.sum(np.abs(self.coef_), axis=0)
 
-        else:
-            raise ValueError("No `feature_importances_` or `coef_` on %r"
-                             % self)
         if len(importances) != X.shape[1]:
             raise ValueError("X has different number of features than"
                              " during model fitting.")

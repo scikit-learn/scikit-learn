@@ -13,6 +13,8 @@ improve estimators' accuracy scores or to boost their performance on very
 high-dimensional datasets.
 
 
+.. _variance_threshold:
+
 Removing features with low variance
 ===================================
 
@@ -43,7 +45,9 @@ so we can select using the threshold ``.8 * (1 - .8)``::
          [1, 1]])
 
 As expected, ``VarianceThreshold`` has removed the first column,
-which has a probability :math:`p = 5/6 > .8` of containing a one.
+which has a probability :math:`p = 5/6 > .8` of containing a zero.
+
+.. _univariate_feature_selection:
 
 Univariate feature selection
 ============================
@@ -101,6 +105,7 @@ univariate p-values:
 
     :ref:`example_feature_selection_plot_feature_selection.py`
 
+.. _rfe:
 
 Recursive feature elimination
 =============================
@@ -210,8 +215,8 @@ settings, using the Lasso, while :class:`RandomizedLogisticRegression` uses the
 logistic regression and is suitable for classification tasks.  To get a full
 path of stability scores you can use :func:`lasso_stability_path`.
 
-.. figure:: ../auto_examples/linear_model/linear_model.png
-   :target: ../auto_examples/linear_model/linear_model.html
+.. figure:: ../auto_examples/linear_model/images/plot_sparse_recovery_003.png
+   :target: ../auto_examples/linear_model/plot_sparse_recovery.html
    :align: center
    :scale: 60
 

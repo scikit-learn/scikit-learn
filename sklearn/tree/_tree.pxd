@@ -98,12 +98,10 @@ cdef class Splitter:
     cdef SIZE_t* constant_features       # Constant features indices
     cdef SIZE_t n_features               # X.shape[1]
     cdef DTYPE_t* feature_values         # temp. array holding feature values
+
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current node
 
-    cdef DTYPE_t* X
-    cdef SIZE_t X_sample_stride
-    cdef SIZE_t X_fx_stride
     cdef DOUBLE_t* y
     cdef SIZE_t y_stride
     cdef DOUBLE_t* sample_weight
@@ -125,7 +123,8 @@ cdef class Splitter:
     # This allows optimization with depth-based tree building.
 
     # Methods
-    cdef void init(self, np.ndarray X, np.ndarray y, DOUBLE_t* sample_weight)
+    cdef void init(self, object X, np.ndarray y,
+                   DOUBLE_t* sample_weight) except *
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end,
                          double* weighted_n_node_samples) nogil
@@ -155,6 +154,7 @@ cdef struct Node:
     SIZE_t n_node_samples                # Number of samples at the node
     DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
 
+
 cdef class Tree:
     # The Tree object is a binary tree structure constructed by the
     # TreeBuilder. The tree structure is used for predictions and
@@ -180,14 +180,17 @@ cdef class Tree:
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
                           double weighted_n_samples) nogil
-    cdef void _resize(self, SIZE_t capacity)
+    cdef void _resize(self, SIZE_t capacity) except *
     cdef int _resize_c(self, SIZE_t capacity=*) nogil
 
     cdef np.ndarray _get_value_ndarray(self)
     cdef np.ndarray _get_node_ndarray(self)
 
-    cpdef np.ndarray predict(self, np.ndarray[DTYPE_t, ndim=2] X)
-    cpdef np.ndarray apply(self, np.ndarray[DTYPE_t, ndim=2] X)
+    cpdef np.ndarray predict(self, object X)
+    cpdef np.ndarray apply(self, object X)
+    cdef np.ndarray _apply_dense(self, object X)
+    cdef np.ndarray _apply_sparse_csr(self, object X)
+
     cpdef compute_feature_importances(self, normalize=*)
 
 
@@ -210,5 +213,6 @@ cdef class TreeBuilder:
     cdef double min_weight_leaf     # Minimum weight in a leaf
     cdef SIZE_t max_depth           # Maximal tree depth
 
-    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=*)
+    cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)

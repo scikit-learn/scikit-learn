@@ -54,6 +54,8 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
                          download_if_missing=True):
     """Loader for the Olivetti faces data-set from AT&T.
 
+    Read more in the :ref:`User Guide <olivetti_faces>`.
+
     Parameters
     ----------
     data_home : optional, default: None
@@ -75,7 +77,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     Returns
     -------
     An object with the following attributes:
-    
+
     data : numpy array of shape (400, 4096)
         Each row corresponds to a ravelled face image of original size 64 x 64 pixels.
 
@@ -83,11 +85,12 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         Each row is a face image corresponding to one of the 40 subjects of the dataset.
 
     target : numpy array of shape (400, )
-        Labels associated to each face image. Those labels are ranging from 0-39 and correspond to the Subject IDs.
+        Labels associated to each face image. Those labels are ranging from
+        0-39 and correspond to the Subject IDs.
 
     DESCR : string
         Description of the modified Olivetti Faces Dataset.
- 
+
     Notes
     ------
 

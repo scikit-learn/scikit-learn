@@ -288,7 +288,7 @@ Thierry Bertin-Mahieux, Birchbox, Data Scientist
 
   <div class="logo">
 
-.. image:: images/bestofmedia-logo.gif
+.. image:: images/bestofmedia-logo.png
    :target: http://www.bestofmedia.com
 
 .. raw:: html
@@ -427,7 +427,7 @@ Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
 
 At PeerIndex we use scientific methodology to build the Influence Graph - a
 unique dataset that allows us to identify who’s really influential and in which
-context. To do this, we have to tackle a range of machine learning and
+context. To do this, we have to tackle a range of machine learning and
 predictive modeling problems. Scikit-learn has emerged as our primary tool for
 developing prototypes and making quick progress. From predicting missing data
 and classifying tweets to clustering communities of social media users, scikit-
@@ -602,8 +602,75 @@ Scikit-learn in one word: Awesome.
 
 Rafael Carrascosa, Lead developer
 
+
+`solido <http://www.solidodesign.com/>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/solido_logo.png
+   :target: http://www.solidodesign.com
+
+.. raw:: html
+
+   </div>
+
+Scikit-learn is helping to drive Moore’s Law, via Solido. Solido creates
+computer-aided design tools used by the majority of top-20 semiconductor
+companies and fabs, to design the bleeding-edge chips inside smartphones,
+automobiles, and more. Scikit-learn helps to power Solido’s algorithms for
+rare-event estimation, worst-case verification, optimization, and more. At
+Solido, we are particularly fond of scikit-learn’s libraries for Gaussian
+Process models, large-scale regularized linear regression, and classification.
+Scikit-learn has increased our productivity, because for many ML problems we no
+longer need to “roll our own” code. `This PyData 2014 talk <https://www.youtube.com/watch?v=Jm-eBD9xR3w>`_ has details.
+
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Trent McConaghy, founder, Solido Design Automation Inc.
+
 .. raw:: html
 
   </span>
+
+
+
+`INFONEA <http://www.infonea.com/en/>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/infonea.jpg
+   :target: http://www.infonea.com/en
+
+.. raw:: html
+
+   </div>
+
+We employ scikit-learn for rapid prototyping and custom-made Data Science
+solutions within our in-memory based Business Intelligence Software
+INFONEA®. As a well-documented and comprehensive collection of
+state-of-the-art algorithms and pipelining methods, scikit-learn enables
+us to provide flexible and scalable scientific analysis solutions. Thus,
+scikit-learn is immensely valuable in realizing a powerful integration of
+Data Science technology within self-service business analytics.
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Thorsten Kranz, Data Scientist, Coma Soft AG.
+
+.. raw:: html
+
+  </span>
+
 
 

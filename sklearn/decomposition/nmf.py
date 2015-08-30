@@ -20,6 +20,7 @@ from scipy.optimize import nnls
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
+from ..utils.validation import check_is_fitted, check_non_negative
 
 
 def safe_vstack(Xs):
@@ -46,12 +47,6 @@ def _sparseness(x):
     """Hoyer's measure of sparsity for a vector"""
     sqrt_n = np.sqrt(len(x))
     return (sqrt_n - np.linalg.norm(x, 1) / norm(x)) / (sqrt_n - 1)
-
-
-def check_non_negative(X, whom):
-    X = X.data if sp.issparse(X) else X
-    if (X < 0).any():
-        raise ValueError("Negative values in data passed to %s" % whom)
 
 
 def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
@@ -92,21 +87,19 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
         Initial guesses for solving X ~= WH such that
         the number of columns in W is n_components.
 
-    Remarks
-    -------
-
-    This implements the algorithm described in
-    C. Boutsidis, E. Gallopoulos: SVD based
-    initialization: A head start for nonnegative
-    matrix factorization - Pattern Recognition, 2008
+    References
+    ----------
+    C. Boutsidis, E. Gallopoulos: SVD based initialization: A head start for
+    nonnegative matrix factorization - Pattern Recognition, 2008
 
     http://tinyurl.com/nndsvd
     """
     check_non_negative(X, "NMF initialization")
     if variant not in (None, 'a', 'ar'):
         raise ValueError("Invalid variant name")
+    random_state = check_random_state(random_state)
 
-    U, S, V = randomized_svd(X, n_components)
+    U, S, V = randomized_svd(X, n_components, random_state=random_state)
     W, H = np.zeros(U.shape), np.zeros(V.shape)
 
     # The leading singular triplet is non-negative
@@ -149,7 +142,6 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
         W[W == 0] = avg
         H[H == 0] = avg
     elif variant == "ar":
-        random_state = check_random_state(random_state)
         avg = X.mean()
         W[W == 0] = abs(avg * random_state.randn(len(W[W == 0])) / 100)
         H[H == 0] = abs(avg * random_state.randn(len(H[H == 0])) / 100)
@@ -203,12 +195,10 @@ def _nls_subproblem(V, W, H, tol, max_iter, sigma=0.01, beta=0.1):
     n_iter : int
         The number of iterations done by the algorithm.
 
-    Reference
-    ---------
-
-    C.-J. Lin. Projected gradient methods
-    for non-negative matrix factorization. Neural
-    Computation, 19(2007), 2756-2779.
+    References
+    ----------
+    C.-J. Lin. Projected gradient methods for non-negative matrix factorization.
+    Neural Computation, 19(2007), 2756-2779.
     http://www.csie.ntu.edu.tw/~cjlin/nmf/
 
     """
@@ -261,6 +251,8 @@ def _nls_subproblem(V, W, H, tol, max_iter, sigma=0.01, beta=0.1):
 class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     """Non-Negative matrix factorization by Projected Gradient (NMF)
 
+    Read more in the :ref:`User Guide <NMF>`.
+
     Parameters
     ----------
     n_components : int or None
@@ -269,7 +261,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     init :  'nndsvd' |  'nndsvda' | 'nndsvdar' | 'random'
         Method used to initialize the procedure.
-        Default: 'nndsvdar' if n_components < n_features, otherwise random.
+        Default: 'nndsvd' if n_components < n_features, otherwise random.
         Valid options::
 
             'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
@@ -393,16 +385,17 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             else:
                 init = 'random'
 
-        random_state = self.random_state
+        rng = check_random_state(self.random_state)
 
         if init == 'nndsvd':
-            W, H = _initialize_nmf(X, self.n_components_)
+            W, H = _initialize_nmf(X, self.n_components_, random_state=rng)
         elif init == 'nndsvda':
-            W, H = _initialize_nmf(X, self.n_components_, variant='a')
+            W, H = _initialize_nmf(X, self.n_components_, variant='a',
+                                   random_state=rng)
         elif init == 'nndsvdar':
-            W, H = _initialize_nmf(X, self.n_components_, variant='ar')
+            W, H = _initialize_nmf(X, self.n_components_, variant='ar',
+                                   random_state=rng)
         elif init == "random":
-            rng = check_random_state(random_state)
             W = rng.randn(n_samples, self.n_components_)
             # we do not write np.abs(W, out=W) to stay compatible with
             # numpy 1.5 and earlier where the 'out' keyword is not
@@ -569,6 +562,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         data: array, [n_samples, n_components]
             Transformed data
         """
+        check_is_fitted(self, 'n_components_')
+
         X = check_array(X, accept_sparse='csc')
         Wt = np.zeros((self.n_components_, X.shape[0]))
         check_non_negative(X, "ProjectedGradientNMF.transform")

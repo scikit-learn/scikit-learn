@@ -6,6 +6,7 @@ this module can be regarded as dimensionality reduction techniques.
 
 from .nmf import NMF, ProjectedGradientNMF
 from .pca import PCA, RandomizedPCA
+from .incremental_pca import IncrementalPCA
 from .kernel_pca import KernelPCA
 from .sparse_pca import SparsePCA, MiniBatchSparsePCA
 from .truncated_svd import TruncatedSVD
@@ -15,9 +16,11 @@ from .dict_learning import (dict_learning, dict_learning_online, sparse_encode,
                             SparseCoder)
 from .factor_analysis import FactorAnalysis
 from ..utils.extmath import randomized_svd
+from .online_lda import LatentDirichletAllocation
 
 __all__ = ['DictionaryLearning',
            'FastICA',
+           'IncrementalPCA',
            'KernelPCA',
            'MiniBatchDictionaryLearning',
            'MiniBatchSparsePCA',
@@ -33,4 +36,5 @@ __all__ = ['DictionaryLearning',
            'randomized_svd',
            'sparse_encode',
            'FactorAnalysis',
-           'TruncatedSVD']
+           'TruncatedSVD',
+           'LatentDirichletAllocation']

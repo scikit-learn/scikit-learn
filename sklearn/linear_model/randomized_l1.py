@@ -21,6 +21,7 @@ from ..externals import six
 from ..externals.joblib import Memory, Parallel, delayed
 from ..utils import (as_float_array, check_random_state, check_X_y,
                      check_array, safe_mask, ConvergenceWarning)
+from ..utils.validation import check_is_fitted
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
 
@@ -87,7 +88,7 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         self : object
             Returns an instance of self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
+        X, y = check_X_y(X, y, ['csr', 'csc'], y_numeric=True)
         X = as_float_array(X, copy=False)
         n_samples, n_features = X.shape
 
@@ -121,6 +122,8 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def get_support(self, indices=False):
         """Return a mask, or list, of the features/indices selected."""
+        check_is_fitted(self, 'scores_')
+
         mask = self.scores_ > self.selection_threshold
         return mask if not indices else np.where(mask)[0]
 
@@ -186,6 +189,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     Randomized Lasso works by resampling the train data and computing
     a Lasso on each resampling. In short, the features selected more
     often are good features. It is also known as stability selection.
+
+    Read more in the :ref:`User Guide <randomized_l1>`.
 
     Parameters
     ----------
@@ -369,6 +374,8 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     a LogisticRegression on each resampling. In short, the features selected
     more often are good features. It is also known as stability selection.
 
+    Read more in the :ref:`User Guide <randomized_l1>`.
+
     Parameters
     ----------
     C : float, optional, default=1
@@ -385,7 +392,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     n_resampling : int, optional, default=200
         Number of randomized models.
 
-    selection_threshold: float, optional, default=0.25
+    selection_threshold : float, optional, default=0.25
         The score above which features should be selected.
 
     fit_intercept : boolean, optional, default=True
@@ -533,6 +540,8 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
                          eps=4 * np.finfo(np.float).eps, n_jobs=1,
                          verbose=False):
     """Stabiliy path based on randomized Lasso estimates
+
+    Read more in the :ref:`User Guide <randomized_l1>`.
 
     Parameters
     ----------

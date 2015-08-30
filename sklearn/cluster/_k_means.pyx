@@ -16,6 +16,7 @@ cimport cython
 
 from ..utils.extmath import norm
 from sklearn.utils.sparsefuncs_fast cimport add_row_csr
+from sklearn.utils.fixes import bincount
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
@@ -42,6 +43,8 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
         unsigned int n_clusters = centers.shape[0]
         unsigned int n_features = centers.shape[1]
         unsigned int n_samples = X.shape[0]
+        unsigned int x_stride = X.strides[1] / sizeof(DOUBLE)
+        unsigned int center_stride = centers.strides[1] / sizeof(DOUBLE)
         unsigned int sample_idx, center_idx, feature_idx
         unsigned int store_distances = 0
         unsigned int k
@@ -56,7 +59,8 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
 
     for center_idx in range(n_clusters):
         center_squared_norms[center_idx] = ddot(
-            n_features, &centers[center_idx, 0], 1, &centers[center_idx, 0], 1)
+            n_features, &centers[center_idx, 0], center_stride,
+            &centers[center_idx, 0], center_stride)
 
     for sample_idx in range(n_samples):
         min_dist = -1
@@ -64,8 +68,8 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
             dist = 0.0
             # hardcoded: minimize euclidean distance to cluster center:
             # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
-            dist += ddot(n_features, &X[sample_idx, 0], 1,
-                         &centers[center_idx, 0], 1)
+            dist += ddot(n_features, &X[sample_idx, 0], x_stride,
+                         &centers[center_idx, 0], center_stride)
             dist *= -2
             dist += center_squared_norms[center_idx]
             dist += x_squared_norms[sample_idx]
@@ -272,7 +276,7 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
     n_features = X.shape[1]
     cdef int i, j, c
     cdef np.ndarray[DOUBLE, ndim=2] centers = np.zeros((n_clusters, n_features))
-    n_samples_in_cluster = np.bincount(labels, minlength=n_clusters)
+    n_samples_in_cluster = bincount(labels, minlength=n_clusters)
     empty_clusters = np.where(n_samples_in_cluster == 0)[0]
     # maybe also relocate small clusters?
 
@@ -280,11 +284,11 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
         # find points to reassign empty clusters to
         far_from_centers = distances.argsort()[::-1]
 
-    for i, cluster_id in enumerate(empty_clusters):
-        # XXX two relocated clusters could be close to each other
-        new_center = X[far_from_centers[i]]
-        centers[cluster_id] = new_center
-        n_samples_in_cluster[cluster_id] = 1
+        for i, cluster_id in enumerate(empty_clusters):
+            # XXX two relocated clusters could be close to each other
+            new_center = X[far_from_centers[i]]
+            centers[cluster_id] = new_center
+            n_samples_in_cluster[cluster_id] = 1
 
     for i in range(n_samples):
         for j in range(n_features):
@@ -331,7 +335,7 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
         np.zeros((n_clusters, n_features))
     cdef np.ndarray[np.npy_intp, ndim=1] far_from_centers
     cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] n_samples_in_cluster = \
-        np.bincount(labels, minlength=n_clusters)
+        bincount(labels, minlength=n_clusters)
     cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] empty_clusters = \
         np.where(n_samples_in_cluster == 0)[0]
 
@@ -341,14 +345,14 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
         # find points to reassign empty clusters to
         far_from_centers = distances.argsort()[::-1]
 
-    for i in range(empty_clusters.shape[0]):
-        cluster_id = empty_clusters[i]
+        for i in range(empty_clusters.shape[0]):
+            cluster_id = empty_clusters[i]
 
-        # XXX two relocated clusters could be close to each other
-        centers[cluster_id] = 0.
-        add_row_csr(data, indices, indptr, far_from_centers[i],
-                    centers[cluster_id])
-        n_samples_in_cluster[cluster_id] = 1
+            # XXX two relocated clusters could be close to each other
+            centers[cluster_id] = 0.
+            add_row_csr(data, indices, indptr, far_from_centers[i],
+                        centers[cluster_id])
+            n_samples_in_cluster[cluster_id] = 1
 
     for i in range(labels.shape[0]):
         add_row_csr(data, indices, indptr, i, centers[labels[i]])

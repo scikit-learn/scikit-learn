@@ -22,6 +22,7 @@ GitHub:
 2. Clone this copy to your local disk:
 
           $ git clone git@github.com:YourLogin/scikit-learn.git
+          $ cd scikit-learn
 
 3. Create a branch to hold your changes:
 
@@ -39,9 +40,9 @@ GitHub:
 
           $ git push -u origin my-feature
 
-Finally, go to the web page of the your fork of the scikit-learn repo,
+Finally, go to the web page of your fork of the scikit-learn repo,
 and click 'Pull request' to send your changes to the maintainers for
-review. request. This will send an email to the committers.
+review. This will send an email to the committers.
 
 (If any of the above seems like magic to you, then look up the 
 [Git documentation](http://git-scm.com/documentation) on the web.)
@@ -64,7 +65,7 @@ following rules before submitting a pull request:
    to other methods available in scikit-learn.
 
 -  At least one paragraph of narrative documentation with links to
-````   references in the literature (with PDF links when possible) and
+   references in the literature (with PDF links when possible) and
    the example.
 
 The documentation should also include expected time and space

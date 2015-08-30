@@ -61,7 +61,7 @@ static struct feature_node **dense_to_sparse(double *x, npy_intp *dims,
         if (sparse[i] == NULL) {
             int k;
             for (k=0; k<i; k++)
-                free(sparse[i]);
+                free(sparse[k]);
             goto sparse_i_error;
         }
         memcpy(sparse[i], temp, count * sizeof(struct feature_node));
@@ -100,7 +100,7 @@ static struct feature_node **csr_to_sparse(double *values,
         if (sparse[i] == NULL) {
             int l;
             for (l=0; l<i; l++)
-                free(sparse[i]);
+                free(sparse[l]);
             break;
         }
 
@@ -181,7 +181,8 @@ struct problem * csr_set_problem (char *values, npy_intp *n_indices,
 /* Create a paramater struct with and return it */
 struct parameter *set_parameter(int solver_type, double eps, double C,
                                 npy_intp nr_weight, char *weight_label,
-                                char *weight, int max_iter, unsigned seed)
+                                char *weight, int max_iter, unsigned seed, 
+                                double epsilon)
 {
     struct parameter *param = malloc(sizeof(struct parameter));
     if (param == NULL)
@@ -191,7 +192,7 @@ struct parameter *set_parameter(int solver_type, double eps, double C,
     param->solver_type = solver_type;
     param->eps = eps;
     param->C = C;
-    param->p = .1;  // epsilon for epsilon-SVR; TODO pass as a parameter
+    param->p = epsilon;  // epsilon for epsilon-SVR
     param->nr_weight = (int) nr_weight;
     param->weight_label = (int *) weight_label;
     param->weight = (double *) weight;

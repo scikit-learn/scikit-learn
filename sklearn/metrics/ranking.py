@@ -23,13 +23,13 @@ import warnings
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from ..preprocessing import LabelBinarizer
 from ..utils import check_consistent_length
-from ..utils import deprecated
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.fixes import isclose
+from ..utils.fixes import bincount
 from ..utils.stats import rankdata
+from ..utils.sparsefuncs import count_nonzero
 
 from .base import _average_binary_score
 from .base import UndefinedMetricWarning
@@ -112,6 +112,8 @@ def average_precision_score(y_true, y_score, average="macro",
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task.
 
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
@@ -175,56 +177,13 @@ def average_precision_score(y_true, y_score, average="macro",
                                  average, sample_weight=sample_weight)
 
 
-@deprecated("Function 'auc_score' has been renamed to "
-            "'roc_auc_score' and will be removed in release 0.16.")
-def auc_score(y_true, y_score):
-    """Compute Area Under the Curve (AUC) from prediction scores
-
-    Note: this implementation is restricted to the binary classification task.
-
-    Parameters
-    ----------
-
-    y_true : array, shape = [n_samples]
-        True binary labels.
-
-    y_score : array, shape = [n_samples]
-        Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
-
-    Returns
-    -------
-    auc : float
-
-    References
-    ----------
-    .. [1] `Wikipedia entry for the Receiver operating characteristic
-            <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
-
-    See also
-    --------
-    average_precision_score : Area under the precision-recall curve
-
-    roc_curve : Compute Receiver operating characteristic (ROC)
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.metrics import auc_score
-    >>> y_true = np.array([0, 0, 1, 1])
-    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> auc_score(y_true, y_scores)
-    0.75
-
-    """
-    return roc_auc_score(y_true, y_score)
-
-
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     """Compute Area Under the Curve (AUC) from prediction scores
 
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task in label indicator format.
+
+    Read more in the :ref:`User Guide <roc_metrics>`.
 
     Parameters
     ----------
@@ -318,7 +277,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
         negative samples is equal to fps[-1] (thus true negatives are given by
         fps[-1] - fps).
 
-    tps : array, shape = [n_thresholds := len(np.unique(y_score))]
+    tps : array, shape = [n_thresholds <= len(np.unique(y_score))]
         An increasing count of true positives, at index i being the number
         of positive samples assigned a score >= thresholds[i]. The total
         number of positive samples is equal to tps[-1] (thus false negatives
@@ -394,6 +353,8 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     have a corresponding threshold.  This ensures that the graph starts on the
     x axis.
 
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+
     Parameters
     ----------
     y_true : array, shape = [n_samples]
@@ -418,7 +379,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
         Decreasing recall values such that element i is the recall of
         predictions with score >= thresholds[i] and the last element is 0.
 
-    thresholds : array, shape = [n_thresholds := len(np.unique(probas_pred))]
+    thresholds : array, shape = [n_thresholds <= len(np.unique(probas_pred))]
         Increasing thresholds on the decision function used to compute
         precision and recall.
 
@@ -456,6 +417,8 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None):
     """Compute Receiver operating characteristic (ROC)
 
     Note: this implementation is restricted to the binary classification task.
+
+    Read more in the :ref:`User Guide <roc_metrics>`.
 
     Parameters
     ----------
@@ -561,6 +524,8 @@ def label_ranking_average_precision_score(y_true, y_score):
     The obtained score is always strictly greater than 0 and
     the best value is 1.
 
+    Read more in the :ref:`User Guide <label_ranking_average_precision>`.
+
     Parameters
     ----------
     y_true : array or sparse matrix, shape = [n_samples, n_labels]
@@ -594,8 +559,8 @@ def label_ranking_average_precision_score(y_true, y_score):
 
     # Handle badly formated array and the degenerate case with one label
     y_type = type_of_target(y_true)
-    if (y_type != "multilabel-indicator"
-            and not (y_type == "binary" and y_true.ndim == 2)):
+    if (y_type != "multilabel-indicator" and
+            not (y_type == "binary" and y_true.ndim == 2)):
         raise ValueError("{0} format is not supported".format(y_type))
 
     y_true = csr_matrix(y_true)
@@ -616,6 +581,141 @@ def label_ranking_average_precision_score(y_true, y_score):
         scores_i = y_score[i]
         rank = rankdata(scores_i, 'max')[relevant]
         L = rankdata(scores_i[relevant], 'max')
-        out += np.divide(L, rank, dtype=float).mean()
+        out += (L / rank).mean()
 
     return out / n_samples
+
+
+def coverage_error(y_true, y_score, sample_weight=None):
+    """Coverage error measure
+
+    Compute how far we need to go through the ranked scores to cover all
+    true labels. The best value is equal to the average number
+    of labels in ``y_true`` per sample.
+
+    Ties in ``y_scores`` are broken by giving maximal rank that would have
+    been assigned to all tied values.
+
+    Read more in the :ref:`User Guide <coverage_error>`.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples, n_labels]
+        True binary labels in binary indicator format.
+
+    y_score : array, shape = [n_samples, n_labels]
+        Target scores, can either be probability estimates of the positive
+        class, confidence values, or binary decisions.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    coverage_error : float
+
+    References
+    ----------
+    .. [1] Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010).
+           Mining multi-label data. In Data mining and knowledge discovery
+           handbook (pp. 667-685). Springer US.
+
+    """
+    y_true = check_array(y_true, ensure_2d=False)
+    y_score = check_array(y_score, ensure_2d=False)
+    check_consistent_length(y_true, y_score, sample_weight)
+
+    y_type = type_of_target(y_true)
+    if y_type != "multilabel-indicator":
+        raise ValueError("{0} format is not supported".format(y_type))
+
+    if y_true.shape != y_score.shape:
+        raise ValueError("y_true and y_score have different shape")
+
+    y_score_mask = np.ma.masked_array(y_score, mask=np.logical_not(y_true))
+    y_min_relevant = y_score_mask.min(axis=1).reshape((-1, 1))
+    coverage = (y_score >= y_min_relevant).sum(axis=1)
+    coverage = coverage.filled(0)
+
+    return np.average(coverage, weights=sample_weight)
+
+
+def label_ranking_loss(y_true, y_score, sample_weight=None):
+    """Compute Ranking loss measure
+
+    Compute the average number of label pairs that are incorrectly ordered
+    given y_score weighted by the size of the label set and the number of
+    labels not in the label set.
+
+    This is similar to the error set size, but weighted by the number of
+    relevant and irrelevant labels. The best performance is achieved with
+    a ranking loss of zero.
+
+    Read more in the :ref:`User Guide <label_ranking_loss>`.
+
+    Parameters
+    ----------
+    y_true : array or sparse matrix, shape = [n_samples, n_labels]
+        True binary labels in binary indicator format.
+
+    y_score : array, shape = [n_samples, n_labels]
+        Target scores, can either be probability estimates of the positive
+        class, confidence values, or binary decisions.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    loss : float
+
+    References
+    ----------
+    .. [1] Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010).
+           Mining multi-label data. In Data mining and knowledge discovery
+           handbook (pp. 667-685). Springer US.
+
+    """
+    y_true = check_array(y_true, ensure_2d=False, accept_sparse='csr')
+    y_score = check_array(y_score, ensure_2d=False)
+    check_consistent_length(y_true, y_score, sample_weight)
+
+    y_type = type_of_target(y_true)
+    if y_type not in ("multilabel-indicator",):
+        raise ValueError("{0} format is not supported".format(y_type))
+
+    if y_true.shape != y_score.shape:
+        raise ValueError("y_true and y_score have different shape")
+
+    n_samples, n_labels = y_true.shape
+
+    y_true = csr_matrix(y_true)
+
+    loss = np.zeros(n_samples)
+    for i, (start, stop) in enumerate(zip(y_true.indptr, y_true.indptr[1:])):
+        # Sort and bin the label scores
+        unique_scores, unique_inverse = np.unique(y_score[i],
+                                                  return_inverse=True)
+        true_at_reversed_rank = bincount(
+            unique_inverse[y_true.indices[start:stop]],
+            minlength=len(unique_scores))
+        all_at_reversed_rank = bincount(unique_inverse,
+                                        minlength=len(unique_scores))
+        false_at_reversed_rank = all_at_reversed_rank - true_at_reversed_rank
+
+        # if the scores are ordered, it's possible to count the number of
+        # incorrectly ordered paires in linear time by cumulatively counting
+        # how many false labels of a given score have a score higher than the
+        # accumulated true labels with lower score.
+        loss[i] = np.dot(true_at_reversed_rank.cumsum(),
+                         false_at_reversed_rank)
+
+    n_positives = count_nonzero(y_true, axis=1)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        loss /= ((n_labels - n_positives) * n_positives)
+
+    # When there is no positive or no negative labels, those values should
+    # be consider as correct, i.e. the ranking doesn't matter.
+    loss[np.logical_or(n_positives == 0, n_positives == n_labels)] = 0.
+
+    return np.average(loss, weights=sample_weight)

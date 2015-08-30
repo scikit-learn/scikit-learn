@@ -22,14 +22,19 @@ import threading
 import atexit
 import tempfile
 import shutil
+
 try:
+    # Python 2 compat
     from cPickle import loads
     from cPickle import dumps
-    from pickle import Pickler as _Pickler  # pure Python pickler in 2
 except ImportError:
     from pickle import loads
     from pickle import dumps
-    from pickle import _Pickler  # pure Python pickler in 3
+    import copyreg
+
+# Customizable pure Python pickler in Python 2
+# customizable C-optimized pickler under Python 3.3+
+from pickle import Pickler
 
 from pickle import HIGHEST_PROTOCOL
 from io import BytesIO
@@ -257,7 +262,7 @@ class ArrayMemmapReducer(object):
 ###############################################################################
 # Enable custom pickling in Pool queues
 
-class CustomizablePickler(_Pickler):
+class CustomizablePickler(Pickler):
     """Pickler that accepts custom reducers.
 
     HIGHEST_PROTOCOL is selected by default as this pickler is used
@@ -275,23 +280,35 @@ class CustomizablePickler(_Pickler):
 
     # We override the pure Python pickler as its the only way to be able to
     # customize the dispatch table without side effects in Python 2.6
-    # to 3.2. For Python 3.3+ we could leverage the new dispatch_table
-    # feature from http://bugs.python.org/issue14166 but that would render
-    # the code more complex.
+    # to 3.2. For Python 3.3+ leverage the new dispatch_table
+    # feature from http://bugs.python.org/issue14166 that makes it possible
+    # to use the C implementation of the Pickler which is faster.
 
     def __init__(self, writer, reducers=None, protocol=HIGHEST_PROTOCOL):
-        _Pickler.__init__(self, writer, protocol=protocol)
-        # Make the dispatch registry an instance level attribute instead of a
-        # reference to the class dictionary
-        self.dispatch = _Pickler.dispatch.copy()
+        Pickler.__init__(self, writer, protocol=protocol)
+        if reducers is None:
+            reducers = {}
+        if hasattr(Pickler, 'dispatch'):
+            # Make the dispatch registry an instance level attribute instead of
+            # a reference to the class dictionary under Python 2
+            self.dispatch = Pickler.dispatch.copy()
+        else:
+            # Under Python 3 initialize the dispatch table with a copy of the
+            # default registry
+            self.dispatch_table = copyreg.dispatch_table.copy()
         for type, reduce_func in reducers.items():
             self.register(type, reduce_func)
 
     def register(self, type, reduce_func):
-        def dispatcher(self, obj):
-            reduced = reduce_func(obj)
-            self.save_reduce(obj=obj, *reduced)
-        self.dispatch[type] = dispatcher
+        if hasattr(Pickler, 'dispatch'):
+            # Python 2 pickler dispatching is not explicitly customizable.
+            # Let us use a closure to workaround this limitation.
+            def dispatcher(self, obj):
+                reduced = reduce_func(obj)
+                self.save_reduce(obj=obj, *reduced)
+            self.dispatch[type] = dispatcher
+        else:
+            self.dispatch_table[type] = reduce_func
 
 
 class CustomizablePicklingQueue(object):

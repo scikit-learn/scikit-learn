@@ -13,7 +13,6 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns
 
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -134,9 +133,10 @@ def test_make_classification_informative_features():
 
 def test_make_multilabel_classification_return_sequences():
     for allow_unlabeled, min_length in zip((True, False), (0, 1)):
-        X, Y = assert_warns(DeprecationWarning, make_multilabel_classification,
-                            n_samples=100, n_features=20, n_classes=3,
-                            random_state=0, allow_unlabeled=allow_unlabeled)
+        X, Y = make_multilabel_classification(n_samples=100, n_features=20,
+                                              n_classes=3, random_state=0,
+                                              return_indicator=False,
+                                              allow_unlabeled=allow_unlabeled)
         assert_equal(X.shape, (100, 20), "X shape mismatch")
         if not allow_unlabeled:
             assert_equal(max([max(y) for y in Y]), 2)
@@ -148,7 +148,6 @@ def test_make_multilabel_classification_return_indicator():
     for allow_unlabeled, min_length in zip((True, False), (0, 1)):
         X, Y = make_multilabel_classification(n_samples=25, n_features=20,
                                               n_classes=3, random_state=0,
-                                              return_indicator=True,
                                               allow_unlabeled=allow_unlabeled)
         assert_equal(X.shape, (25, 20), "X shape mismatch")
         assert_equal(Y.shape, (25, 3), "Y shape mismatch")
@@ -157,8 +156,7 @@ def test_make_multilabel_classification_return_indicator():
     # Also test return_distributions
     X2, Y2, p_c, p_w_c = make_multilabel_classification(
         n_samples=25, n_features=20, n_classes=3, random_state=0,
-        return_indicator=True, allow_unlabeled=allow_unlabeled,
-        return_distributions=True)
+        allow_unlabeled=allow_unlabeled, return_distributions=True)
 
     assert_array_equal(X, X2)
     assert_array_equal(Y, Y2)
@@ -208,13 +206,16 @@ def test_make_regression_multitarget():
 
 
 def test_make_blobs():
-    X, y = make_blobs(n_samples=50, n_features=2,
-                      centers=[[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
-                      random_state=0)
+    cluster_stds = np.array([0.05, 0.2, 0.4])
+    cluster_centers = np.array([[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]])
+    X, y = make_blobs(random_state=0, n_samples=50, n_features=2,
+                      centers=cluster_centers, cluster_std=cluster_stds)
 
     assert_equal(X.shape, (50, 2), "X shape mismatch")
     assert_equal(y.shape, (50,), "y shape mismatch")
     assert_equal(np.unique(y).shape, (3,), "Unexpected number of blobs")
+    for i, (ctr, std) in enumerate(zip(cluster_centers, cluster_stds)):
+        assert_almost_equal((X[y == i] - ctr).std(), std, 1, "Unexpected std")
 
 
 def test_make_friedman1():

@@ -29,7 +29,7 @@ iris.target = iris.target[perm]
 
 
 def test_classification_toy():
-    """Check classification on a toy dataset, including sparse versions."""
+    # Check classification on a toy dataset, including sparse versions.
     clf = NearestCentroid()
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
@@ -63,7 +63,7 @@ def test_precomputed():
 
 
 def test_iris():
-    """Check consistency on dataset iris."""
+    # Check consistency on dataset iris.
     for metric in ('euclidean', 'cosine'):
         clf = NearestCentroid(metric=metric).fit(iris.data, iris.target)
         score = np.mean(clf.predict(iris.data) == iris.target)
@@ -71,7 +71,7 @@ def test_iris():
 
 
 def test_iris_shrinkage():
-    """Check consistency on dataset iris, when using shrinkage."""
+    # Check consistency on dataset iris, when using shrinkage.
     for metric in ('euclidean', 'cosine'):
         for shrink_threshold in [None, 0.1, 0.5]:
             clf = NearestCentroid(metric=metric,
@@ -98,6 +98,39 @@ def test_pickle():
                        " after pickling (classification).")
 
 
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()
+def test_shrinkage_threshold_decoded_y():
+    clf = NearestCentroid(shrink_threshold=0.01)
+    y_ind = np.asarray(y)
+    y_ind[y_ind == -1] = 0
+    clf.fit(X, y_ind)
+    centroid_encoded = clf.centroids_
+    clf.fit(X, y)
+    assert_array_equal(centroid_encoded, clf.centroids_)
+
+
+def test_predict_translated_data():
+    # Test that NearestCentroid gives same results on translated data
+
+    rng = np.random.RandomState(0)
+    X = rng.rand(50, 50)
+    y = rng.randint(0, 3, 50)
+    noise = rng.rand(50)
+    clf = NearestCentroid(shrink_threshold=0.1)
+    clf.fit(X, y)
+    y_init = clf.predict(X)
+    clf = NearestCentroid(shrink_threshold=0.1)
+    X_noise = X + noise
+    clf.fit(X_noise, y)
+    y_translate = clf.predict(X_noise)
+    assert_array_equal(y_init, y_translate)
+
+
+def test_manhattan_metric():
+    # Test the manhattan metric.
+
+    clf = NearestCentroid(metric='manhattan')
+    clf.fit(X, y)
+    dense_centroid = clf.centroids_
+    clf.fit(X_csr, y)
+    assert_array_equal(clf.centroids_, dense_centroid)
+    assert_array_equal(dense_centroid, [[-1, -1], [1, 1]])

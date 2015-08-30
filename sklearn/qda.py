@@ -13,6 +13,8 @@ import numpy as np
 from .base import BaseEstimator, ClassifierMixin
 from .externals.six.moves import xrange
 from .utils import check_array, check_X_y
+from .utils.validation import check_is_fitted
+from .utils.fixes import bincount
 
 __all__ = ['QDA']
 
@@ -26,6 +28,8 @@ class QDA(BaseEstimator, ClassifierMixin):
     and using Bayes' rule.
 
     The model fits a Gaussian density to each class.
+
+    Read more in the :ref:`User Guide <lda_qda>`.
 
     Parameters
     ----------
@@ -48,13 +52,15 @@ class QDA(BaseEstimator, ClassifierMixin):
         Class priors (sum to 1).
 
     rotations_ : list of arrays
-        For each class an array of shape [n_samples, n_samples], the
-        rotation of the Gaussian distribution, i.e. its principal axis.
+        For each class k an array of shape [n_features, n_k], with
+        ``n_k = min(n_features, number of elements in class k)``
+        It is the rotation of the Gaussian distribution, i.e. its
+        principal axis.
 
-    scalings_ : array-like, shape = [n_classes, n_features]
-        Contains the scaling of the Gaussian
-        distributions along the principal axes for each
-        class, i.e. the variance in the rotated coordinate system.
+    scalings_ : list of arrays
+        For each class k an array of shape [n_k]. It contains the scaling
+        of the Gaussian distributions along its principal axes, i.e. the
+        variance in the rotated coordinate system.
 
     Examples
     --------
@@ -93,6 +99,9 @@ class QDA(BaseEstimator, ClassifierMixin):
         store_covariances : boolean
             If True the covariance matrices are computed and stored in the
             `self.covariances_` attribute.
+
+        tol : float, optional, default 1.0e-4
+            Threshold used for rank estimation.
         """
         X, y = check_X_y(X, y)
         self.classes_, y = np.unique(y, return_inverse=True)
@@ -101,7 +110,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
         if self.priors is None:
-            self.priors_ = np.bincount(y) / float(n_samples)
+            self.priors_ = bincount(y) / float(n_samples)
         else:
             self.priors_ = self.priors
 
@@ -115,6 +124,9 @@ class QDA(BaseEstimator, ClassifierMixin):
             Xg = X[y == ind, :]
             meang = Xg.mean(0)
             means.append(meang)
+            if len(Xg) == 1:
+                raise ValueError('y has only 1 sample in class %s, covariance '
+                                 'is ill defined.' % str(self.classes_[ind]))
             Xgc = Xg - meang
             # Xgc = U * S * V.T
             U, S, Vt = np.linalg.svd(Xgc, full_matrices=False)
@@ -131,11 +143,13 @@ class QDA(BaseEstimator, ClassifierMixin):
         if store_covariances:
             self.covariances_ = cov
         self.means_ = np.asarray(means)
-        self.scalings_ = np.asarray(scalings)
+        self.scalings_ = scalings
         self.rotations_ = rotations
         return self
 
     def _decision_function(self, X):
+        check_is_fitted(self, 'classes_')
+
         X = check_array(X)
         norm2 = []
         for i in range(len(self.classes_)):
@@ -145,8 +159,8 @@ class QDA(BaseEstimator, ClassifierMixin):
             X2 = np.dot(Xm, R * (S ** (-0.5)))
             norm2.append(np.sum(X2 ** 2, 1))
         norm2 = np.array(norm2).T   # shape = [len(X), n_classes]
-        return (-0.5 * (norm2 + np.sum(np.log(self.scalings_), 1))
-                + np.log(self.priors_))
+        u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
+        return (-0.5 * (norm2 + u) + np.log(self.priors_))
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.

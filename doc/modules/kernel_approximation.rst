@@ -25,6 +25,9 @@ In particular, the combination of kernel map approximations with
 Since there has not been much empirical work using approximate embeddings, it
 is advisable to compare results against exact kernel methods when possible.
 
+.. seealso::
+
+   :ref:`polynomial_regression` for an exact polynomial transformation.
 
 .. currentmodule:: sklearn.kernel_approximation
 
@@ -40,6 +43,7 @@ kernel function or a precomputed kernel matrix.
 The number of samples used - which is also the dimensionality of the features computed -
 is given by the parameter ``n_components``.
 
+.. _rbf_kernel_approx:
 
 Radial Basis Function Kernel
 ----------------------------
@@ -57,10 +61,11 @@ a linear algorithm, for example a linear SVM::
     >>> X_features = rbf_feature.fit_transform(X)
     >>> clf = SGDClassifier()   # doctest: +NORMALIZE_WHITESPACE
     >>> clf.fit(X_features, y)
-    SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
-           fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
-           loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
-           random_state=None, shuffle=False, verbose=0, warm_start=False)
+    SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
+           eta0=0.0, fit_intercept=True, l1_ratio=0.15,
+           learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
+           penalty='l2', power_t=0.5, random_state=None, shuffle=True,
+           verbose=0, warm_start=False)
     >>> clf.score(X_features, y)
     1.0
 
@@ -94,6 +99,7 @@ use of larger feature spaces more efficient.
 
     * :ref:`example_plot_kernel_approximation.py`
 
+.. _additive_chi_kernel_approx:
 
 Additive Chi Squared Kernel
 ---------------------------
@@ -126,6 +132,7 @@ with the approximate feature map provided by :class:`RBFSampler` to yield an app
 feature map for the exponentiated chi squared kernel.
 See the [VZ2010]_ for details and [VVZ2010]_ for combination with the :class:`RBFSampler`.
 
+.. _skewed_chi_kernel_approx:
 
 Skewed Chi Squared Kernel
 -------------------------

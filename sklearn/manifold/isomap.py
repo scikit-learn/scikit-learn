@@ -17,6 +17,8 @@ class Isomap(BaseEstimator, TransformerMixin):
 
     Non-linear dimensionality reduction through Isometric Mapping
 
+    Read more in the :ref:`User Guide <isomap>`.
+
     Parameters
     ----------
     n_neighbors : integer
@@ -27,11 +29,13 @@ class Isomap(BaseEstimator, TransformerMixin):
 
     eigen_solver : ['auto'|'arpack'|'dense']
         'auto' : Attempt to choose the most efficient solver
-            for the given problem.
+        for the given problem.
+
         'arpack' : Use Arnoldi decomposition to find the eigenvalues
-            and eigenvectors.
+        and eigenvectors.
+
         'dense' : Use a direct solver (i.e. LAPACK)
-            for the eigenvalue decomposition.
+        for the eigenvalue decomposition.
 
     tol : float
         Convergence tolerance passed to arpack or lobpcg.
@@ -43,9 +47,12 @@ class Isomap(BaseEstimator, TransformerMixin):
 
     path_method : string ['auto'|'FW'|'D']
         Method to use in finding shortest path.
-        'auto' : attempt to choose the best algorithm automatically
-        'FW' : Floyd-Warshall algorithm
-        'D' : Dijkstra algorithm with Fibonacci Heaps
+
+        'auto' : attempt to choose the best algorithm automatically.
+
+        'FW' : Floyd-Warshall algorithm.
+
+        'D' : Dijkstra's algorithm.
 
     neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree']
         Algorithm to use for nearest neighbors search,
@@ -72,8 +79,8 @@ class Isomap(BaseEstimator, TransformerMixin):
     References
     ----------
 
-    [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
-        framework for nonlinear dimensionality reduction. Science 290 (5500)
+    .. [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
+           framework for nonlinear dimensionality reduction. Science 290 (5500)
     """
 
     def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',

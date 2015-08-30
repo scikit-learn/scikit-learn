@@ -24,6 +24,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                            SupervisedIntegerMixin, ClassifierMixin):
     """Classifier implementing the k-nearest neighbors vote.
 
+    Read more in the :ref:`User Guide <classification>`.
+
     Parameters
     ----------
     n_neighbors : int, optional (default = 5)
@@ -192,10 +194,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
             weights = np.ones_like(neigh_ind)
-        else:
-            # Some weights may be infinite (zero distance), which can cause
-            # downstream NaN values when used for normalization.
-            weights[np.isinf(weights)] = np.finfo('f').max
 
         all_rows = np.arange(X.shape[0])
         probabilities = []
@@ -223,6 +221,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                 SupervisedIntegerMixin, ClassifierMixin):
     """Classifier implementing a vote among neighbors within a given radius
+
+    Read more in the :ref:`User Guide <classification>`.
 
     Parameters
     ----------

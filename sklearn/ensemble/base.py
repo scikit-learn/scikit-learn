@@ -10,7 +10,7 @@ import numpy as np
 from ..base import clone
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
-from ..externals.joblib import cpu_count
+from ..utils import _get_n_jobs
 
 
 class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
@@ -98,11 +98,7 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
 def _partition_estimators(n_estimators, n_jobs):
     """Private function used to partition estimators between jobs."""
     # Compute the number of jobs
-    if n_jobs == -1:
-        n_jobs = min(cpu_count(), n_estimators)
-
-    else:
-        n_jobs = min(n_jobs, n_estimators)
+    n_jobs = min(_get_n_jobs(n_jobs), n_estimators)
 
     # Partition estimators between jobs
     n_estimators_per_job = (n_estimators // n_jobs) * np.ones(n_jobs,

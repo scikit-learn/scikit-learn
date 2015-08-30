@@ -10,7 +10,7 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis,
                                        inplace_row_scale,
                                        inplace_swap_row, inplace_swap_column,
                                        min_max_axis,
-                                       count_nonzero)
+                                       count_nonzero, csc_median_axis_0)
 from sklearn.utils.sparsefuncs_fast import assign_rows_csr
 from sklearn.utils.testing import assert_raises
 
@@ -101,12 +101,15 @@ def test_densify_rows():
                        [0, 0, 0],
                        [9, 8, 7],
                        [4, 0, 5]], dtype=np.float64)
-    rows = np.array([0, 2, 3], dtype=np.intp)
-    out = np.ones((rows.shape[0], X.shape[1]), dtype=np.float64)
+    X_rows = np.array([0, 2, 3], dtype=np.intp)
+    out = np.ones((6, X.shape[1]), dtype=np.float64)
+    out_rows = np.array([1, 3, 4], dtype=np.intp)
 
-    assign_rows_csr(X, rows,
-                    np.arange(out.shape[0], dtype=np.intp)[::-1], out)
-    assert_array_equal(out, X[rows].toarray()[::-1])
+    expect = np.ones_like(out)
+    expect[out_rows] = X[X_rows, :].toarray()
+
+    assign_rows_csr(X, X_rows, out_rows, out)
+    assert_array_equal(out, expect)
 
 
 def test_inplace_column_scale():
@@ -359,3 +362,36 @@ def test_count_nonzero():
 
     assert_raises(TypeError, count_nonzero, X_csc)
     assert_raises(ValueError, count_nonzero, X_csr, axis=2)
+
+
+def test_csc_row_median():
+    # Test csc_row_median actually calculates the median.
+
+    # Test that it gives the same output when X is dense.
+    rng = np.random.RandomState(0)
+    X = rng.rand(100, 50)
+    dense_median = np.median(X, axis=0)
+    csc = sp.csc_matrix(X)
+    sparse_median = csc_median_axis_0(csc)
+    assert_array_equal(sparse_median, dense_median)
+
+    # Test that it gives the same output when X is sparse
+    X = rng.rand(51, 100)
+    X[X < 0.7] = 0.0
+    ind = rng.randint(0, 50, 10)
+    X[ind] = -X[ind]
+    csc = sp.csc_matrix(X)
+    dense_median = np.median(X, axis=0)
+    sparse_median = csc_median_axis_0(csc)
+    assert_array_equal(sparse_median, dense_median)
+
+    # Test for toy data.
+    X = [[0, -2], [-1, -1], [1, 0], [2, 1]]
+    csc = sp.csc_matrix(X)
+    assert_array_equal(csc_median_axis_0(csc), np.array([0.5, -0.5]))
+    X = [[0, -2], [-1, -5], [1, -3]]
+    csc = sp.csc_matrix(X)
+    assert_array_equal(csc_median_axis_0(csc), np.array([0., -3]))
+
+    # Test that it raises an Error for non-csc matrices.
+    assert_raises(TypeError, csc_median_axis_0, sp.csr_matrix(X))

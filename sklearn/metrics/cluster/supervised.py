@@ -16,6 +16,7 @@ from scipy.sparse import coo_matrix
 import numpy as np
 
 from .expected_mutual_info_fast import expected_mutual_information
+from ...utils.fixes import bincount
 
 
 def comb2(n):
@@ -108,6 +109,8 @@ def adjusted_rand_score(labels_true, labels_pred):
 
         adjusted_rand_score(a, b) == adjusted_rand_score(b, a)
 
+    Read more in the :ref:`User Guide <adjusted_rand_score>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -118,7 +121,7 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     Returns
     -------
-    ari: float
+    ari : float
        Similarity score between -1.0 and 1.0. Random labelings have an ARI
        close to 0.0. 1.0 stands for perfect match.
 
@@ -213,6 +216,8 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     ``label_pred`` will give the same score. This does not hold for
     homogeneity and completeness.
 
+    Read more in the :ref:`User Guide <homogeneity_completeness>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -274,6 +279,8 @@ def homogeneity_score(labels_true, labels_pred):
     will return the :func:`completeness_score` which will be different in
     general.
 
+    Read more in the :ref:`User Guide <homogeneity_completeness>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -292,7 +299,7 @@ def homogeneity_score(labels_true, labels_pred):
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
-       <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
+       <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -346,6 +353,8 @@ def completeness_score(labels_true, labels_pred):
     will return the :func:`homogeneity_score` which will be different in
     general.
 
+    Read more in the :ref:`User Guide <homogeneity_completeness>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -364,7 +373,7 @@ def completeness_score(labels_true, labels_pred):
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
-       <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
+       <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -418,6 +427,8 @@ def v_measure_score(labels_true, labels_pred):
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
+    Read more in the :ref:`User Guide <homogeneity_completeness>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -436,7 +447,7 @@ def v_measure_score(labels_true, labels_pred):
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
-       <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
+       <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -518,6 +529,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
+    Read more in the :ref:`User Guide <mutual_info_score>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -585,6 +598,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     Be mindful that this function is an order of magnitude slower than other
     metrics, such as the Adjusted Rand Index.
 
+    Read more in the :ref:`User Guide <mutual_info_score>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -596,8 +611,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     Returns
     -------
     ami: float(upperlimited by 1.0)
-       The AMI returns a value of 1 when the two partitions are identical 
-       (ie perfectly matched). Random partitions (independent labellings) have 
+       The AMI returns a value of 1 when the two partitions are identical
+       (ie perfectly matched). Random partitions (independent labellings) have
        an expected AMI around 0 on average hence can be negative.
 
     See also
@@ -676,6 +691,8 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
+    Read more in the :ref:`User Guide <mutual_info_score>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -739,7 +756,7 @@ def entropy(labels):
     if len(labels) == 0:
         return 1.0
     label_idx = np.unique(labels, return_inverse=True)[1]
-    pi = np.bincount(label_idx).astype(np.float)
+    pi = bincount(label_idx).astype(np.float)
     pi = pi[pi > 0]
     pi_sum = np.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for

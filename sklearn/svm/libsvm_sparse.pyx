@@ -37,6 +37,9 @@ cdef extern from "libsvm_sparse_helper.c":
     void copy_support   (char *, svm_csr_model *)
     void copy_intercept (char *, svm_csr_model *, np.npy_intp *)
     int copy_predict (char *, svm_csr_model *, np.npy_intp *, char *)
+    int csr_copy_predict_values (np.npy_intp *data_size, char *data, np.npy_intp *index_size,
+        	char *index, np.npy_intp *intptr_size, char *size,
+                svm_csr_model *model, char *dec_values, int nr_class)
     int csr_copy_predict (np.npy_intp *data_size, char *data, np.npy_intp *index_size,
         	char *index, np.npy_intp *intptr_size, char *size,
                 svm_csr_model *model, char *dec_values) nogil
@@ -283,8 +286,6 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
     return dec_values
 
 
-
-
 def libsvm_sparse_predict_proba(
     np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
     np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indices,
@@ -340,6 +341,70 @@ def libsvm_sparse_predict_proba(
     free_param(param)
     return dec_values
 
+
+
+
+def libsvm_sparse_decision_function(
+    np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
+    np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indices,
+    np.ndarray[np.int32_t,   ndim=1, mode='c'] T_indptr,
+    np.ndarray[np.float64_t, ndim=1, mode='c'] SV_data,
+    np.ndarray[np.int32_t,   ndim=1, mode='c'] SV_indices,
+    np.ndarray[np.int32_t,   ndim=1, mode='c'] SV_indptr,
+    np.ndarray[np.float64_t, ndim=1, mode='c'] sv_coef,
+    np.ndarray[np.float64_t, ndim=1, mode='c']
+    intercept, int svm_type, int kernel_type, int
+    degree, double gamma, double coef0, double
+    eps, double C,
+    np.ndarray[np.float64_t, ndim=1] class_weight,
+    double nu, double p, int shrinking, int probability,
+    np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
+    np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
+    np.ndarray[np.float64_t, ndim=1, mode='c'] probB):
+    """
+    Predict margin (libsvm name for this is predict_values)
+
+    We have to reconstruct model and parameters to make sure we stay
+    in sync with the python object.
+    """
+    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
+    cdef svm_parameter *param
+    cdef np.npy_intp n_class
+
+    cdef svm_csr_model *model
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
+        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    param = set_parameter(svm_type, kernel_type, degree, gamma,
+                          coef0, nu,
+                          100., # cache size has no effect on predict
+                          C, eps, p, shrinking,
+                          probability, <int> class_weight.shape[0],
+                          class_weight_label.data, class_weight.data, -1, -1)
+
+    model = csr_set_model(param, <int> nSV.shape[0], SV_data.data,
+                          SV_indices.shape, SV_indices.data,
+                          SV_indptr.shape, SV_indptr.data,
+                          sv_coef.data, intercept.data,
+                          nSV.data, probA.data, probB.data)
+
+    if svm_type > 1:
+        n_class = 1
+    else:
+        n_class = get_nr(model)
+        n_class = n_class * (n_class - 1) / 2
+
+    dec_values = np.empty((T_indptr.shape[0] - 1, n_class), dtype=np.float64)
+    if csr_copy_predict_values(T_data.shape, T_data.data,
+                        T_indices.shape, T_indices.data,
+                        T_indptr.shape, T_indptr.data,
+                        model, dec_values.data, n_class) < 0:
+        raise MemoryError("We've run out of of memory")
+    # free model and param
+    free_model_SV(model)
+    free_model(model)
+    free_param(param)
+
+    return dec_values
 
 
 def set_verbosity_wrap(int verbosity):

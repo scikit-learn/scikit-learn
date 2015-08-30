@@ -6,6 +6,8 @@
 
 
 import numpy as np
+import warnings
+
 from scipy import special, stats
 from scipy.sparse import issparse
 
@@ -14,6 +16,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
                      safe_mask)
 from ..utils.extmath import norm, safe_sparse_dot
+from ..utils.validation import check_is_fitted
 from .base import SelectorMixin
 
 
@@ -42,6 +45,8 @@ def f_oneway(*args):
     The one-way ANOVA tests the null hypothesis that 2 or more groups have
     the same population mean. The test is applied to samples from two or
     more groups, possibly with differing sizes.
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -102,15 +107,21 @@ def f_oneway(*args):
     dfwn = n_samples - n_classes
     msb = ssbn / float(dfbn)
     msw = sswn / float(dfwn)
+    constant_features_idx = np.where(msw == 0.)[0]
+    if (np.nonzero(msb)[0].size != msb.size and constant_features_idx.size):
+        warnings.warn("Features %s are constant." % constant_features_idx,
+                      UserWarning)
     f = msb / msw
     # flatten matrix to vector in sparse case
     f = np.asarray(f).ravel()
-    prob = stats.fprob(dfbn, dfwn, f)
+    prob = special.fdtrc(dfbn, dfwn, f)
     return f, prob
 
 
 def f_classif(X, y):
-    """Compute the Anova F-value for the provided sample
+    """Compute the ANOVA F-value for the provided sample.
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -127,6 +138,11 @@ def f_classif(X, y):
 
     pval : array, shape = [n_features,]
         The set of p-values.
+
+    See also
+    --------
+    chi2: Chi-squared stats of non-negative features for classification tasks.
+    f_regression: F-value between label/feature for regression tasks.
     """
     X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
@@ -152,17 +168,19 @@ def _chisquare(f_obs, f_exp):
 
 
 def chi2(X, y):
-    """Compute chi-squared statistic for each class/feature combination.
+    """Compute chi-squared stats between each non-negative feature and class.
 
     This score can be used to select the n_features features with the
     highest values for the test chi-squared statistic from X, which must
-    contain booleans or frequencies (e.g., term counts in document
-    classification), relative to the classes.
+    contain only non-negative features such as booleans or frequencies
+    (e.g., term counts in document classification), relative to the classes.
 
     Recall that the chi-square test measures dependence between stochastic
     variables, so using this function "weeds out" the features that are the
     most likely to be independent of class and therefore irrelevant for
     classification.
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -182,6 +200,11 @@ def chi2(X, y):
     Notes
     -----
     Complexity of this algorithm is O(n_classes * n_features).
+
+    See also
+    --------
+    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_regression: F-value between label/feature for regression tasks.
     """
 
     # XXX: we might want to do some of the following in logspace instead for
@@ -204,16 +227,19 @@ def chi2(X, y):
 
 
 def f_regression(X, y, center=True):
-    """Univariate linear regression tests
+    """Univariate linear regression tests.
 
     Quick linear model for testing the effect of a single regressor,
     sequentially for many regressors.
 
     This is done in 3 steps:
-    1. the regressor of interest and the data are orthogonalized
-    wrt constant regressors
-    2. the cross correlation between data and regressors is computed
-    3. it is converted to an F score then to a p-value
+
+    1. The regressor of interest and the data are orthogonalized
+       wrt constant regressors.
+    2. The cross correlation between data and regressors is computed.
+    3. It is converted to an F score then to a p-value.
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -233,6 +259,11 @@ def f_regression(X, y, center=True):
 
     pval : array, shape=(n_features,)
         p-values of F-scores.
+
+    See also
+    --------
+    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    chi2: Chi-squared stats of non-negative features for classification tasks.
     """
     if issparse(X) and center:
         raise ValueError("center=True only allowed for dense data")
@@ -288,7 +319,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
+        X, y = check_X_y(X, y, ['csr', 'csc'])
 
         if not callable(self.score_func):
             raise TypeError("The score function should be a callable, %s (%s) "
@@ -312,6 +343,8 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
 class SelectPercentile(_BaseFilter):
     """Select features according to a percentile of the highest scores.
 
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+
     Parameters
     ----------
     score_func : callable
@@ -334,6 +367,16 @@ class SelectPercentile(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
+    See also
+    --------
+    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    chi2: Chi-squared stats of non-negative features for classification tasks.
+    f_regression: F-value between label/feature for regression tasks.
+    SelectKBest: Select features based on the k highest scores.
+    SelectFpr: Select features based on a false positive rate test.
+    SelectFdr: Select features based on an estimated false discovery rate.
+    SelectFwe: Select features based on family-wise error rate.
+    GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
 
     def __init__(self, score_func=f_classif, percentile=10):
@@ -346,6 +389,8 @@ class SelectPercentile(_BaseFilter):
                              % self.percentile)
 
     def _get_support_mask(self):
+        check_is_fitted(self, 'scores_')
+
         # Cater for NaNs
         if self.percentile == 100:
             return np.ones(len(self.scores_), dtype=np.bool)
@@ -366,6 +411,8 @@ class SelectPercentile(_BaseFilter):
 
 class SelectKBest(_BaseFilter):
     """Select features according to the k highest scores.
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -390,6 +437,16 @@ class SelectKBest(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
+    See also
+    --------
+    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    chi2: Chi-squared stats of non-negative features for classification tasks.
+    f_regression: F-value between label/feature for regression tasks.
+    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectFpr: Select features based on a false positive rate test.
+    SelectFdr: Select features based on an estimated false discovery rate.
+    SelectFwe: Select features based on family-wise error rate.
+    GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
 
     def __init__(self, score_func=f_classif, k=10):
@@ -403,6 +460,8 @@ class SelectKBest(_BaseFilter):
                              % self.k)
 
     def _get_support_mask(self):
+        check_is_fitted(self, 'scores_')
+
         if self.k == 'all':
             return np.ones(self.scores_.shape, dtype=bool)
         elif self.k == 0:
@@ -423,6 +482,8 @@ class SelectFpr(_BaseFilter):
     FPR test stands for False Positive Rate test. It controls the total
     amount of false detections.
 
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+
     Parameters
     ----------
     score_func : callable
@@ -439,6 +500,17 @@ class SelectFpr(_BaseFilter):
 
     pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
+
+    See also
+    --------
+    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    chi2: Chi-squared stats of non-negative features for classification tasks.
+    f_regression: F-value between label/feature for regression tasks.
+    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectKBest: Select features based on the k highest scores.
+    SelectFdr: Select features based on an estimated false discovery rate.
+    SelectFwe: Select features based on family-wise error rate.
+    GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
@@ -446,14 +518,18 @@ class SelectFpr(_BaseFilter):
         self.alpha = alpha
 
     def _get_support_mask(self):
+        check_is_fitted(self, 'scores_')
+
         return self.pvalues_ < self.alpha
 
 
 class SelectFdr(_BaseFilter):
     """Filter: Select the p-values for an estimated false discovery rate
 
-    This uses the Benjamini-Hochberg procedure. ``alpha`` is the target false
-    discovery rate.
+    This uses the Benjamini-Hochberg procedure. ``alpha`` is an upper bound
+    on the expected false discovery rate.
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -472,6 +548,21 @@ class SelectFdr(_BaseFilter):
 
     pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/False_discovery_rate
+
+    See also
+    --------
+    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    chi2: Chi-squared stats of non-negative features for classification tasks.
+    f_regression: F-value between label/feature for regression tasks.
+    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectKBest: Select features based on the k highest scores.
+    SelectFpr: Select features based on a false positive rate test.
+    SelectFwe: Select features based on family-wise error rate.
+    GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
@@ -479,14 +570,21 @@ class SelectFdr(_BaseFilter):
         self.alpha = alpha
 
     def _get_support_mask(self):
-        alpha = self.alpha
+        check_is_fitted(self, 'scores_')
+
+        n_features = len(self.pvalues_)
         sv = np.sort(self.pvalues_)
-        threshold = sv[sv < alpha * np.arange(len(self.pvalues_))].max()
-        return self.pvalues_ <= threshold
+        selected = sv[sv <= float(self.alpha) / n_features
+                      * np.arange(n_features)]
+        if selected.size == 0:
+            return np.zeros_like(self.pvalues_, dtype=bool)
+        return self.pvalues_ <= selected.max()
 
 
 class SelectFwe(_BaseFilter):
     """Filter: Select the p-values corresponding to Family-wise error rate
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -504,6 +602,17 @@ class SelectFwe(_BaseFilter):
 
     pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
+
+    See also
+    --------
+    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    chi2: Chi-squared stats of non-negative features for classification tasks.
+    f_regression: F-value between label/feature for regression tasks.
+    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectKBest: Select features based on the k highest scores.
+    SelectFpr: Select features based on a false positive rate test.
+    SelectFdr: Select features based on an estimated false discovery rate.
+    GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
@@ -511,6 +620,8 @@ class SelectFwe(_BaseFilter):
         self.alpha = alpha
 
     def _get_support_mask(self):
+        check_is_fitted(self, 'scores_')
+
         return (self.pvalues_ < self.alpha / len(self.pvalues_))
 
 
@@ -522,6 +633,8 @@ class SelectFwe(_BaseFilter):
 # depending on the mode.
 class GenericUnivariateSelect(_BaseFilter):
     """Univariate feature selector with configurable strategy.
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -542,13 +655,24 @@ class GenericUnivariateSelect(_BaseFilter):
 
     pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
+
+    See also
+    --------
+    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    chi2: Chi-squared stats of non-negative features for classification tasks.
+    f_regression: F-value between label/feature for regression tasks.
+    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectKBest: Select features based on the k highest scores.
+    SelectFpr: Select features based on a false positive rate test.
+    SelectFdr: Select features based on an estimated false discovery rate.
+    SelectFwe: Select features based on family-wise error rate.
     """
 
-    _selection_modes = {'percentile':   SelectPercentile,
-                        'k_best':       SelectKBest,
-                        'fpr':          SelectFpr,
-                        'fdr':          SelectFdr,
-                        'fwe':          SelectFwe}
+    _selection_modes = {'percentile': SelectPercentile,
+                        'k_best': SelectKBest,
+                        'fpr': SelectFpr,
+                        'fdr': SelectFdr,
+                        'fwe': SelectFwe}
 
     def __init__(self, score_func=f_classif, mode='percentile', param=1e-5):
         super(GenericUnivariateSelect, self).__init__(score_func)
@@ -576,6 +700,8 @@ class GenericUnivariateSelect(_BaseFilter):
         self._make_selector()._check_params(X, y)
 
     def _get_support_mask(self):
+        check_is_fitted(self, 'scores_')
+
         selector = self._make_selector()
         selector.pvalues_ = self.pvalues_
         selector.scores_ = self.scores_

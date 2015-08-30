@@ -9,19 +9,25 @@ randomized trees. Single and multi-output problems are both handled.
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Joly Arnaud <arnaud.v.joly@gmail.com>
+#          Fares Hedayati <fares.hedayati@gmail.com>
+#
 # Licence: BSD 3 clause
 
 from __future__ import division
 
+
 import numbers
-import numpy as np
 from abc import ABCMeta, abstractmethod
+
+import numpy as np
+from scipy.sparse import issparse
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals import six
-from ..externals.six.moves import xrange
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import check_array, check_random_state
+from ..utils import check_array, check_random_state, compute_sample_weight
+from ..utils.validation import NotFittedError
+
 
 from ._tree import Criterion
 from ._tree import Splitter
@@ -44,14 +50,18 @@ DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
 CRITERIA_REG = {"mse": _tree.MSE, "friedman_mse": _tree.FriedmanMSE}
-SPLITTERS = {"best": _tree.BestSplitter,
-             "presort-best": _tree.PresortBestSplitter,
-             "random": _tree.RandomSplitter}
 
+DENSE_SPLITTERS = {"best": _tree.BestSplitter,
+                   "presort-best": _tree.PresortBestSplitter,
+                   "random": _tree.RandomSplitter}
+
+SPARSE_SPLITTERS = {"best": _tree.BestSparseSplitter,
+                    "random": _tree.RandomSparseSplitter}
 
 # =============================================================================
 # Base decision tree
 # =============================================================================
+
 
 class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                           _LearntSelectorMixin)):
@@ -71,7 +81,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                  min_weight_fraction_leaf,
                  max_features,
                  max_leaf_nodes,
-                 random_state):
+                 random_state,
+                 class_weight=None):
         self.criterion = criterion
         self.splitter = splitter
         self.max_depth = max_depth
@@ -81,6 +92,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.max_features = max_features
         self.random_state = random_state
         self.max_leaf_nodes = max_leaf_nodes
+        self.class_weight = class_weight
 
         self.n_features_ = None
         self.n_outputs_ = None
@@ -95,9 +107,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            The training input samples. Use ``dtype=np.float32`` for maximum
-            efficiency.
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (class labels in classification, real numbers in
@@ -121,16 +134,21 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             Returns self.
         """
         random_state = check_random_state(self.random_state)
-
-        # Convert data
         if check_input:
-            X = check_array(X, dtype=DTYPE)
+            X = check_array(X, dtype=DTYPE, accept_sparse="csc")
+            if issparse(X):
+                X.sort_indices()
+
+                if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
+                    raise ValueError("No support for np.int64 index based "
+                                     "sparse matrices")
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
         is_classification = isinstance(self, ClassifierMixin)
 
         y = np.atleast_1d(y)
+        expanded_class_weight = None
 
         if y.ndim == 1:
             # reshape is necessary to preserve the data contiguity against vs
@@ -145,10 +163,19 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             self.classes_ = []
             self.n_classes_ = []
 
-            for k in xrange(self.n_outputs_):
-                classes_k, y[:, k] = np.unique(y[:, k], return_inverse=True)
+            if self.class_weight is not None:
+                y_original = np.copy(y)
+
+            y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
+            for k in range(self.n_outputs_):
+                classes_k, y_store_unique_indices[:, k] = np.unique(y[:, k], return_inverse=True)
                 self.classes_.append(classes_k)
                 self.n_classes_.append(classes_k.shape[0])
+            y = y_store_unique_indices
+
+            if self.class_weight is not None:
+                expanded_class_weight = compute_sample_weight(
+                    self.class_weight, y_original)
 
         else:
             self.classes_ = [None] * self.n_outputs_
@@ -225,6 +252,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                  "number of samples=%d" %
                                  (len(sample_weight), n_samples))
 
+        if expanded_class_weight is not None:
+            if sample_weight is not None:
+                sample_weight = sample_weight * expanded_class_weight
+            else:
+                sample_weight = expanded_class_weight
+
         # Set min_weight_leaf from min_weight_fraction_leaf
         if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
             min_weight_leaf = (self.min_weight_fraction_leaf *
@@ -244,6 +277,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                                          self.n_classes_)
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_)
+
+        SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
         splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
@@ -276,7 +311,29 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         return self
 
-    def predict(self, X):
+    def _validate_X_predict(self, X, check_input):
+        """Validate X whenever one tries to predict, apply, predict_proba"""
+        if self.tree_ is None:
+            raise NotFittedError("Estimator not fitted, "
+                                 "call `fit` before exploiting the model.")
+
+        if check_input:
+            X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+            if issparse(X) and (X.indices.dtype != np.intc or
+                                X.indptr.dtype != np.intc):
+                raise ValueError("No support for np.int64 index based "
+                                 "sparse matrices")
+
+        n_features = X.shape[1]
+        if self.n_features_ != n_features:
+            raise ValueError("Number of features of the model must "
+                             " match the input. Model n_features is %s and "
+                             " input n_features is %s "
+                             % (self.n_features_, n_features))
+
+        return X
+
+    def predict(self, X, check_input=True):
         """Predict class or regression value for X.
 
         For a classification model, the predicted class for each sample in X is
@@ -285,29 +342,23 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
 
         Returns
         -------
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
-        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = check_array(X, dtype=DTYPE)
-
-        n_samples, n_features = X.shape
-
-        if self.tree_ is None:
-            raise Exception("Tree not initialized. Perform a fit first")
-
-        if self.n_features_ != n_features:
-            raise ValueError("Number of features of the model must "
-                             " match the input. Model n_features is %s and "
-                             " input n_features is %s "
-                             % (self.n_features_, n_features))
-
+        X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
+        n_samples = X.shape[0]
 
         # Classification
         if isinstance(self, ClassifierMixin):
@@ -317,7 +368,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 predictions = np.zeros((n_samples, self.n_outputs_))
 
-                for k in xrange(self.n_outputs_):
+                for k in range(self.n_outputs_):
                     predictions[:, k] = self.classes_[k].take(
                         np.argmax(proba[:, k], axis=1),
                         axis=0)
@@ -332,6 +383,32 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 return proba[:, :, 0]
 
+    def apply(self, X, check_input=True):
+        """
+        Returns the index of the leaf that each sample is predicted as.
+
+        Parameters
+        ----------
+        X : array_like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+
+        Returns
+        -------
+        X_leaves : array_like, shape = [n_samples,]
+            For each datapoint x in X, return the index of the leaf x
+            ends up in. Leaves are numbered within
+            ``[0; self.tree_.node_count)``, possibly with gaps in the
+            numbering.
+        """
+        X = self._validate_X_predict(X, check_input)
+        return self.tree_.apply(X)
+
     @property
     def feature_importances_(self):
         """Return the feature importances.
@@ -345,8 +422,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         feature_importances_ : array, shape = [n_features]
         """
         if self.tree_ is None:
-            raise ValueError("Estimator not fitted, "
-                             "call `fit` before `feature_importances_`.")
+            raise NotFittedError("Estimator not fitted, call `fit` before"
+                                 " `feature_importances_`.")
 
         return self.tree_.compute_feature_importances()
 
@@ -357,6 +434,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """A decision tree classifier.
+
+    Read more in the :ref:`User Guide <tree>`.
 
     Parameters
     ----------
@@ -388,7 +467,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
-        Ignored if ``max_samples_leaf`` is not None.
+        Ignored if ``max_leaf_nodes`` is not None.
 
     min_samples_split : int, optional (default=2)
         The minimum number of samples required to split an internal node.
@@ -406,6 +485,22 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
+    class_weight : dict, list of dicts, "balanced" or None, optional
+                   (default=None)
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one. For
+        multi-output problems, a list of dicts can be provided in the same
+        order as the columns of y.
+
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
+
+        For multi-output, the weights of each column of y will be multiplied.
+
+        Note that these weights will be multiplied with sample_weight (passed
+        through the fit method) if sample_weight is specified.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -414,26 +509,32 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     Attributes
     ----------
-    tree_ : Tree object
-        The underlying Tree object.
-
-    max_features_ : int,
-        The infered value of max_features.
-
     classes_ : array of shape = [n_classes] or a list of such arrays
         The classes labels (single output problem),
         or a list of arrays of class labels (multi-output problem).
-
-    n_classes_ : int or list
-        The number of classes (for single output problems),
-        or a list containing the number of classes for each
-        output (for multi-output problems).
 
     feature_importances_ : array of shape = [n_features]
         The feature importances. The higher, the more important the
         feature. The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance [4]_.
+
+    max_features_ : int,
+        The inferred value of max_features.
+
+    n_classes_ : int or list
+        The number of classes (for single output problems),
+        or a list containing the number of classes for each
+        output (for multi-output problems).
+
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
+    tree_ : Tree object
+        The underlying Tree object.
 
     See also
     --------
@@ -475,7 +576,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  min_weight_fraction_leaf=0.,
                  max_features=None,
                  random_state=None,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None,
+                 class_weight=None):
         super(DecisionTreeClassifier, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -485,15 +587,25 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
+            class_weight=class_weight,
             random_state=random_state)
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, check_input=True):
         """Predict class probabilities of the input samples X.
+
+        The predicted class probability is the fraction of samples of the same
+        class in a leaf.
+
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -502,20 +614,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = check_array(X, dtype=DTYPE)
-
-        n_samples, n_features = X.shape
-
-        if self.tree_ is None:
-            raise Exception("Tree not initialized. Perform a fit first.")
-
-        if self.n_features_ != n_features:
-            raise ValueError("Number of features of the model must "
-                             " match the input. Model n_features is %s and "
-                             " input n_features is %s "
-                             % (self.n_features_, n_features))
-
+        X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
 
         if self.n_outputs_ == 1:
@@ -529,7 +628,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         else:
             all_proba = []
 
-            for k in xrange(self.n_outputs_):
+            for k in range(self.n_outputs_):
                 proba_k = proba[:, k, :self.n_classes_[k]]
                 normalizer = proba_k.sum(axis=1)[:, np.newaxis]
                 normalizer[normalizer == 0.0] = 1.0
@@ -543,8 +642,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -559,7 +660,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             return np.log(proba)
 
         else:
-            for k in xrange(self.n_outputs_):
+            for k in range(self.n_outputs_):
                 proba[k] = np.log(proba[k])
 
             return proba
@@ -568,11 +669,14 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     """A decision tree regressor.
 
+    Read more in the :ref:`User Guide <tree>`.
+
     Parameters
     ----------
     criterion : string, optional (default="mse")
         The function to measure the quality of a split. The only supported
-        criterion is "mse" for the mean squared error.
+        criterion is "mse" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion.
 
     splitter : string, optional (default="best")
         The strategy used to choose the split at each node. Supported
@@ -598,7 +702,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
-        Ignored if ``max_samples_leaf`` is not None.
+        Ignored if ``max_leaf_nodes`` is not None.
 
     min_samples_split : int, optional (default=2)
         The minimum number of samples required to split an internal node.
@@ -624,18 +728,24 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     Attributes
     ----------
-    tree_ : Tree object
-        The underlying Tree object.
-
-    max_features_ : int,
-        The infered value of max_features.
-
     feature_importances_ : array of shape = [n_features]
         The feature importances.
         The higher, the more important the feature.
         The importance of a feature is computed as the
         (normalized) total reduction of the criterion brought
         by that feature. It is also known as the Gini importance [4]_.
+
+    max_features_ : int,
+        The inferred value of max_features.
+
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
+    tree_ : Tree object
+        The underlying Tree object.
 
     See also
     --------
@@ -702,6 +812,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Warning: Extra-trees should only be used within ensemble methods.
 
+    Read more in the :ref:`User Guide <tree>`.
+
     See also
     --------
     ExtraTreeRegressor, ExtraTreesClassifier, ExtraTreesRegressor
@@ -721,7 +833,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None,
+                 class_weight=None):
         super(ExtraTreeClassifier, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -731,6 +844,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
+            class_weight=class_weight,
             random_state=random_state)
 
 
@@ -745,6 +859,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     decision tree.
 
     Warning: Extra-trees should only be used within ensemble methods.
+
+    Read more in the :ref:`User Guide <tree>`.
 
     See also
     --------

@@ -2,6 +2,7 @@
 Test the fastica algorithm.
 """
 import itertools
+import warnings
 
 import numpy as np
 from scipy import stats
@@ -37,9 +38,7 @@ def center_and_norm(x, axis=-1):
 
 
 def test_gs():
-    """
-    Test gram schmidt orthonormalization
-    """
+    # Test gram schmidt orthonormalization
     # generate a random orthogonal  matrix
     rng = np.random.RandomState(0)
     W, _, _ = np.linalg.svd(rng.randn(10, 10))
@@ -53,8 +52,7 @@ def test_gs():
 
 
 def test_fastica_simple(add_noise=False):
-    """ Test the FastICA algorithm on very simple data.
-    """
+    # Test the FastICA algorithm on very simple data.
     rng = np.random.RandomState(0)
     # scipy.stats uses the global RNG:
     np.random.seed(0)
@@ -68,7 +66,7 @@ def test_fastica_simple(add_noise=False):
 
     # Mixing angle
     phi = 0.6
-    mixing = np.array([[np.cos(phi),  np.sin(phi)],
+    mixing = np.array([[np.cos(phi), np.sin(phi)],
                        [np.sin(phi), -np.cos(phi)]])
     m = np.dot(mixing, s)
 
@@ -145,8 +143,7 @@ def test_fastica_nowhiten():
 
 
 def test_non_square_fastica(add_noise=False):
-    """ Test the FastICA algorithm on very simple data.
-    """
+    # Test the FastICA algorithm on very simple data.
     rng = np.random.RandomState(0)
 
     n_samples = 1000
@@ -189,26 +186,28 @@ def test_non_square_fastica(add_noise=False):
 
 
 def test_fit_transform():
-    """Test FastICA.fit_transform"""
+    # Test FastICA.fit_transform
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
-    for whiten, n_components in [[True, 5], [False, 10]]:
+    for whiten, n_components in [[True, 5], [False, None]]:
+        n_components_ = (n_components if n_components is not None else
+                         X.shape[1])
 
         ica = FastICA(n_components=n_components, whiten=whiten, random_state=0)
         Xt = ica.fit_transform(X)
-        assert_equal(ica.components_.shape, (n_components, 10))
-        assert_equal(Xt.shape, (100, n_components))
+        assert_equal(ica.components_.shape, (n_components_, 10))
+        assert_equal(Xt.shape, (100, n_components_))
 
         ica = FastICA(n_components=n_components, whiten=whiten, random_state=0)
         ica.fit(X)
-        assert_equal(ica.components_.shape, (n_components, 10))
+        assert_equal(ica.components_.shape, (n_components_, 10))
         Xt2 = ica.transform(X)
 
         assert_array_almost_equal(Xt, Xt2)
 
 
 def test_inverse_transform():
-    """Test FastICA.inverse_transform"""
+    # Test FastICA.inverse_transform
     n_features = 10
     n_samples = 100
     n1, n2 = 5, 10
@@ -220,10 +219,14 @@ def test_inverse_transform():
                 (False, n2): (n_features, n2)}
     for whiten in [True, False]:
         for n_components in [n1, n2]:
+            n_components_ = (n_components if n_components is not None else
+                             X.shape[1])
             ica = FastICA(n_components=n_components, random_state=rng,
                           whiten=whiten)
-            Xt = ica.fit_transform(X)
-            expected_shape = expected[(whiten, n_components)]
+            with warnings.catch_warnings(record=True):
+                # catch "n_components ignored" warning
+                Xt = ica.fit_transform(X)
+            expected_shape = expected[(whiten, n_components_)]
             assert_equal(ica.mixing_.shape, expected_shape)
             X2 = ica.inverse_transform(Xt)
             assert_equal(X.shape, X2.shape)
@@ -231,8 +234,3 @@ def test_inverse_transform():
             # reversibility test in non-reduction case
             if n_components == X.shape[1]:
                 assert_array_almost_equal(X, X2)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.run(argv=['', __file__])

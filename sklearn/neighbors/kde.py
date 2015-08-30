@@ -24,6 +24,8 @@ TREE_DICT = {'ball_tree': BallTree, 'kd_tree': KDTree}
 class KernelDensity(BaseEstimator):
     """Kernel Density Estimation
 
+    Read more in the :ref:`User Guide <kernel_density>`.
+
     Parameters
     ----------
     bandwidth : float
@@ -110,7 +112,7 @@ class KernelDensity(BaseEstimator):
         else:
             raise ValueError("invalid algorithm: '{0}'".format(algorithm))
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit the Kernel Density model on the data.
 
         Parameters
@@ -141,8 +143,8 @@ class KernelDensity(BaseEstimator):
 
         Returns
         -------
-        density : ndarray
-            The array of log(density) evaluations.  This has shape X.shape[:-1]
+        density : ndarray, shape (n_samples,)
+            The array of log(density) evaluations.
         """
         # The returned density is normalized to the number of points.
         # For it to be a probability, we must scale it.  For this reason
@@ -156,8 +158,8 @@ class KernelDensity(BaseEstimator):
         log_density -= np.log(N)
         return log_density
 
-    def score(self, X):
-        """Compute the log probability under the model.
+    def score(self, X, y=None):
+        """Compute the total log probability under the model.
 
         Parameters
         ----------
@@ -167,8 +169,8 @@ class KernelDensity(BaseEstimator):
 
         Returns
         -------
-        logprob : array_like, shape (n_samples,)
-            Log probabilities of each data point in X.
+        logprob : float
+            Total log-likelihood of the data in X.
         """
         return np.sum(self.score_samples(X))
 

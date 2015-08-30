@@ -289,8 +289,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 @cython.cdivision(True)
 def sparse_enet_coordinate_descent(double[:] w,
                             double alpha, double beta,
-                            double[:] X_data, int[:] X_indices,
-                            int[:] X_indptr, double[:] y,
+                            np.ndarray[double, ndim=1] X_data,
+                            np.ndarray[int, ndim=1] X_indices,
+                            np.ndarray[int, ndim=1] X_indptr, np.ndarray[double, ndim=1] y,
                             double[:] X_mean, int max_iter,
                             double tol, object rng, bint random=0,
                             bint positive=0):
@@ -434,14 +435,18 @@ def sparse_enet_coordinate_descent(double[:] w,
                 # criterion
 
                 # sparse X.T / dense R dot product
+                if center:
+                    R_sum = 0.0
+                    for jj in range(n_samples):
+                        R_sum += R[jj]
+
                 for ii in range(n_features):
                     X_T_R[ii] = 0.0
                     for jj in range(X_indptr[ii], X_indptr[ii + 1]):
                         X_T_R[ii] += X_data[jj] * R[X_indices[jj]]
-                    R_sum = 0.0
-                    for jj in range(n_samples):
-                        R_sum += R[jj]
-                    X_T_R[ii] -= X_mean[ii] * R_sum
+
+                    if center:
+                        X_T_R[ii] -= X_mean[ii] * R_sum
                     XtA[ii] = X_T_R[ii] - beta * w[ii]
 
                 if positive:
@@ -483,7 +488,9 @@ def sparse_enet_coordinate_descent(double[:] w,
 @cython.wraparound(False)
 @cython.cdivision(True)
 def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
-                                 double[:, :] Q, double[:] q, double[:] y,
+                                 np.ndarray[double, ndim=2] Q,
+                                 np.ndarray[double, ndim=1] q,
+                                 np.ndarray[double, ndim=1] y,
                                  int max_iter, double tol, object rng,
                                  bint random=0, bint positive=0):
     """Cython version of the coordinate descent algorithm
@@ -624,8 +631,8 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
 @cython.wraparound(False)
 @cython.cdivision(True)
 def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
-                                       double l2_reg, double[::1, :] X,
-                                       double[:, :] Y, int max_iter,
+                                       double l2_reg, np.ndarray[double, ndim=2] X,
+                                       np.ndarray[double, ndim=2] Y, int max_iter,
                                        double tol, object rng,
                                        bint random=0):
     """Cython version of the coordinate descent algorithm

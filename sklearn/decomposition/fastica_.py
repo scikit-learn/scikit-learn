@@ -17,6 +17,7 @@ from ..externals import six
 from ..externals.six import moves
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.extmath import fast_dot
+from ..utils.validation import check_is_fitted
 
 __all__ = ['fastica', 'FastICA']
 
@@ -27,15 +28,19 @@ def _gs_decorrelation(w, W, j):
 
     Parameters
     ----------
-    w: array of shape(n), to be orthogonalized
+    w : ndarray of shape(n)
+        Array to be orthogonalized
 
-    W: array of shape(p, n), null space definition
+    W : ndarray of shape(p, n)
+        Null space definition
 
-    j: int < p
+    j : int < p
+        The no of (from the first) rows of Null space W wrt which w is
+        orthogonalized.
 
-    caveats
-    -------
-    assumes that W is orthogonal
+    Notes
+    -----
+    Assumes that W is orthogonal
     w changed in place
     """
     w -= np.dot(np.dot(w, W[:j].T), W[:j])
@@ -107,9 +112,8 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
         if lim < tol:
             break
     else:
-        warnings.warn('FastICA did not converge.' +
-                      ' You might want' +
-                      ' to increase the number of iterations.')
+        warnings.warn('FastICA did not converge. Consider increasing '
+                      'tolerance or the maximum number of iterations.')
 
     return W, ii + 1
 
@@ -144,6 +148,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             random_state=None, return_X_mean=False, compute_sources=True,
             return_n_iter=False):
     """Perform Fast Independent Component Analysis.
+
+    Read more in the :ref:`User Guide <ICA>`.
 
     Parameters
     ----------
@@ -219,7 +225,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             w = np.dot(W, K.T)
             A = w.T * (w * w.T).I
 
-    S : array, shape (n_components, n_samples) | None
+    S : array, shape (n_samples, n_components) | None
         Estimated source matrix
 
     X_mean : array, shape (n_features, )
@@ -368,6 +374,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
 class FastICA(BaseEstimator, TransformerMixin):
     """FastICA: a fast algorithm for Independent Component Analysis.
+
+    Read more in the :ref:`User Guide <ICA>`.
 
     Parameters
     ----------
@@ -530,6 +538,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        check_is_fitted(self, 'mixing_')
+
         X = check_array(X, copy=copy)
         if self.whiten:
             X -= self.mean_
@@ -551,6 +561,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_features)
         """
+        check_is_fitted(self, 'mixing_')
+
         if copy:
             X = X.copy()
         X = fast_dot(X, self.mixing_.T)

@@ -224,6 +224,8 @@ cdef class DistanceMetric:
         """
         get state for pickling
         """
+        if self.__class__.__name__ == "PyFuncDistance":
+            return (float(self.p), self.vec, self.mat, self.func, self.kwargs)
         return (float(self.p), self.vec, self.mat)
 
     def __setstate__(self, state):
@@ -233,6 +235,9 @@ cdef class DistanceMetric:
         self.p = state[0]
         self.vec = state[1]
         self.mat = state[2]
+        if self.__class__.__name__ == "PyFuncDistance":
+            self.func = state[3]
+            self.kwargs = state[4]
         self.vec_ptr = get_vec_ptr(self.vec)
         self.mat_ptr = get_mat_ptr(self.mat)
         self.size = 1
@@ -285,7 +290,7 @@ cdef class DistanceMetric:
 
     cdef DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) except -1:
         """Compute the distance between vectors x1 and x2
-        
+
         This should be overridden in a base class.
         """
         return -999
@@ -981,10 +986,10 @@ cdef class HaversineDistance(DistanceMetric):
         return 2 * asin(sqrt(sin_0 * sin_0
                              + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1))
 
-    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist):
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
         return 2 * asin(sqrt(rdist))
 
-    cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist):
+    cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) except -1:
         cdef DTYPE_t tmp = sin(0.5 * dist)
         return tmp * tmp
 

@@ -19,6 +19,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, as_float_array
 from ..utils import check_array
 from ..utils.extmath import fast_dot, fast_logdet, randomized_svd
+from ..utils.validation import check_is_fitted
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
@@ -30,13 +31,13 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     Parameters
     ----------
     spectrum: array of shape (n)
-        data spectrum
-    rank: int,
-        tested rank value
-    n_samples: int,
-        number of samples
-    dim: int,
-        embedding/empirical dimension
+        Data spectrum.
+    rank: int
+        Tested rank value.
+    n_samples: int
+        Number of samples.
+    n_features: int
+        Number of features.
 
     Returns
     -------
@@ -109,6 +110,8 @@ class PCA(BaseEstimator, TransformerMixin):
     The time complexity of this implementation is ``O(n ** 3)`` assuming
     n ~ n_samples ~ n_features.
 
+    Read more in the :ref:`User Guide <PCA>`.
+
     Parameters
     ----------
     n_components : int, None or string
@@ -140,12 +143,13 @@ class PCA(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     components_ : array, [n_components, n_features]
-        Components with maximum variance.
+        Principal axes in feature space, representing the directions of
+        maximum variance in the data.
 
     explained_variance_ratio_ : array, [n_components]
-        Percentage of variance explained by each of the selected components. \
-        k is not set then all components are stored and the sum of explained \
-        variances is equal to 1.0
+        Percentage of variance explained by each of the selected components.
+        If ``n_components`` is not set then all components are stored and the
+        sum of explained variances is equal to 1.0
 
     mean_ : array, [n_features]
         Per-feature empirical mean, estimated from the training set.
@@ -380,6 +384,8 @@ class PCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
+        check_is_fitted(self, 'mean_')
+
         X = check_array(X)
         if self.mean_ is not None:
             X = X - self.mean_
@@ -402,6 +408,8 @@ class PCA(BaseEstimator, TransformerMixin):
         -------
         X_original array-like, shape (n_samples, n_features)
         """
+        check_is_fitted(self, 'mean_')
+
         if self.whiten:
             return fast_dot(
                 X,
@@ -409,7 +417,6 @@ class PCA(BaseEstimator, TransformerMixin):
                 self.components_) + self.mean_
         else:
             return fast_dot(X, self.components_) + self.mean_
-
 
     def score_samples(self, X):
         """Return the log-likelihood of each sample
@@ -428,6 +435,8 @@ class PCA(BaseEstimator, TransformerMixin):
         ll: array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
+        check_is_fitted(self, 'mean_')
+
         X = check_array(X)
         Xr = X - self.mean_
         n_features = X.shape[1]
@@ -464,6 +473,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     Linear dimensionality reduction using approximated Singular Value
     Decomposition of the data and keeping only the most significant
     singular vectors to project the data to a lower dimensional space.
+
+    Read more in the :ref:`User Guide <RandomizedPCA>`.
 
     Parameters
     ----------
@@ -619,6 +630,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
+        check_is_fitted(self, 'mean_')
+
         X = check_array(X)
         if self.mean_ is not None:
             X = X - self.mean_
@@ -664,6 +677,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         If whitening is enabled, inverse_transform does not compute the
         exact inverse operation of transform.
         """
+        check_is_fitted(self, 'mean_')
+
         X_original = fast_dot(X, self.components_)
         if self.mean_ is not None:
             X_original = X_original + self.mean_

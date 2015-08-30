@@ -3,6 +3,7 @@ from __future__ import division, print_function
 import numpy as np
 from itertools import product
 import warnings
+from scipy.sparse import csr_matrix
 
 from sklearn import datasets
 from sklearn import svm
@@ -13,22 +14,22 @@ from sklearn.random_projection import sparse_random_matrix
 from sklearn.utils.validation import check_array, check_consistent_length
 from sklearn.utils.validation import check_random_state
 
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises, clean_warning_registry
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import auc
-from sklearn.metrics import auc_score
 from sklearn.metrics import average_precision_score
+from sklearn.metrics import coverage_error
 from sklearn.metrics import label_ranking_average_precision_score
-from sklearn.metrics import roc_curve
 from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_curve
 
 from sklearn.metrics.base import UndefinedMetricWarning
 
@@ -123,7 +124,7 @@ def _average_precision(y_true, y_score):
 
 
 def test_roc_curve():
-    """Test Area under Receiver Operating Characteristic (ROC) curve"""
+    # Test Area under Receiver Operating Characteristic (ROC) curve
     y_true, _, probas_pred = make_prediction(binary=True)
 
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
@@ -131,10 +132,6 @@ def test_roc_curve():
     expected_auc = _auc(y_true, probas_pred)
     assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
     assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
-
-    assert_almost_equal(roc_auc,
-                        ignore_warnings(auc_score)(y_true, probas_pred))
-
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
 
@@ -153,7 +150,7 @@ def test_roc_curve_end_points():
 
 
 def test_roc_returns_consistency():
-    """Test whether the returned threshold matches up with tpr"""
+    # Test whether the returned threshold matches up with tpr
     # make small toy dataset
     y_true, _, probas_pred = make_prediction(binary=True)
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
@@ -172,10 +169,8 @@ def test_roc_returns_consistency():
 
 
 def test_roc_nonrepeating_thresholds():
-    """Test to ensure that we don't return spurious repeating thresholds.
-
-    Duplicated thresholds can arise due to machine precision issues.
-    """
+    # Test to ensure that we don't return spurious repeating thresholds.
+    # Duplicated thresholds can arise due to machine precision issues.
     dataset = datasets.load_digits()
     X = dataset['data']
     y = dataset['target']
@@ -197,14 +192,14 @@ def test_roc_nonrepeating_thresholds():
 
 
 def test_roc_curve_multi():
-    """roc_curve not applicable for multi-class problems"""
+    # roc_curve not applicable for multi-class problems
     y_true, _, probas_pred = make_prediction(binary=False)
 
     assert_raises(ValueError, roc_curve, y_true, probas_pred)
 
 
 def test_roc_curve_confidence():
-    """roc_curve for confidence scores"""
+    # roc_curve for confidence scores
     y_true, _, probas_pred = make_prediction(binary=True)
 
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred - 0.5)
@@ -215,7 +210,7 @@ def test_roc_curve_confidence():
 
 
 def test_roc_curve_hard():
-    """roc_curve for hard decisions"""
+    # roc_curve for hard decisions
     y_true, pred, probas_pred = make_prediction(binary=True)
 
     # always predict one
@@ -312,7 +307,7 @@ def test_roc_curve_toydata():
     tpr, fpr, _ = roc_curve(y_true, y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
     assert_array_almost_equal(tpr, [0., 0.5, 1.])
-    assert_array_almost_equal(fpr, [np.nan,  np.nan,  np.nan])
+    assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
 
     y_true = [1, 1]
     y_score = [0.25, 0.75]
@@ -354,7 +349,7 @@ def test_roc_curve_toydata():
 
 
 def test_auc():
-    """Test Area Under Curve (AUC) computation"""
+    # Test Area Under Curve (AUC) computation
     x = [0, 1]
     y = [0, 1]
     assert_array_almost_equal(auc(x, y), 0.5)
@@ -400,9 +395,8 @@ def test_auc_errors():
 
 
 def test_auc_score_non_binary_class():
-    """Test that roc_auc_score function returns an error when trying
-    to compute AUC for non-binary class values.
-    """
+    # Test that roc_auc_score function returns an error when trying
+    # to compute AUC for non-binary class values.
     rng = check_random_state(404)
     y_pred = rng.rand(10)
     # y_true contains only one class value
@@ -420,6 +414,7 @@ def test_auc_score_non_binary_class():
     assert_raise_message(ValueError, "multiclass format is not supported",
                          roc_auc_score, y_true, y_pred)
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         rng = check_random_state(404)
         y_pred = rng.rand(10)
@@ -476,7 +471,7 @@ def test_precision_recall_curve_pos_label():
 
 
 def _test_precision_recall_curve(y_true, probas_pred):
-    """Test Precision-Recall and aread under PR curve"""
+    # Test Precision-Recall and aread under PR curve
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
     precision_recall_auc = auc(r, p)
     assert_array_almost_equal(precision_recall_auc, 0.85, 2)
@@ -613,13 +608,6 @@ def test_score_scale_invariance():
     assert_equal(roc_auc, roc_auc_scaled)
     assert_equal(roc_auc, roc_auc_shifted)
 
-    f = ignore_warnings(auc_score)
-    roc_auc = f(y_true, probas_pred)
-    roc_auc_scaled = f(y_true, 100 * probas_pred)
-    roc_auc_shifted = f(y_true, probas_pred - 10)
-    assert_equal(roc_auc, roc_auc_scaled)
-    assert_equal(roc_auc, roc_auc_shifted)
-
     pr_auc = average_precision_score(y_true, probas_pred)
     pr_auc_scaled = average_precision_score(y_true, 100 * probas_pred)
     pr_auc_shifted = average_precision_score(y_true, probas_pred - 10)
@@ -628,7 +616,7 @@ def test_score_scale_invariance():
 
 
 def check_lrap_toy(lrap_score):
-    """Check on several small example that it works """
+    # Check on several small example that it works
     assert_almost_equal(lrap_score([[0, 1]], [[0.25, 0.75]]), 1)
     assert_almost_equal(lrap_score([[0, 1]], [[0.75, 0.25]]), 1 / 2)
     assert_almost_equal(lrap_score([[1, 1]], [[0.75, 0.25]]), 1)
@@ -724,7 +712,7 @@ def check_lrap_error_raised(lrap_score):
 
 
 def check_lrap_only_ties(lrap_score):
-    """Check tie handling in score"""
+    # Check tie handling in score
     # Basic check with only ties and increasing label space
     for n_labels in range(2, 10):
         y_score = np.ones((1, n_labels))
@@ -740,7 +728,7 @@ def check_lrap_only_ties(lrap_score):
 
 
 def check_lrap_without_tie_and_increasing_score(lrap_score):
-    """ Check that Label ranking average precision works for various"""
+    # Check that Label ranking average precision works for various
     # Basic check with increasing label space size and decreasing score
     for n_labels in range(2, 10):
         y_score = n_labels - (np.arange(n_labels).reshape((1, n_labels)) + 1)
@@ -754,7 +742,7 @@ def check_lrap_without_tie_and_increasing_score(lrap_score):
 
         # Check for growing number of consecutive relevant label
         for n_relevant in range(1, n_labels):
-           # Check for a bunch of position
+            # Check for a bunch of position
             for pos in range(n_labels - n_relevant):
                 y_true = np.zeros((1, n_labels))
                 y_true[0, pos:pos + n_relevant] = 1
@@ -805,7 +793,6 @@ def check_alternative_lrap_implementation(lrap_score, n_classes=5,
                                           n_samples=20, random_state=0):
     _, y_true = make_multilabel_classification(n_features=1,
                                                allow_unlabeled=False,
-                                               return_indicator=True,
                                                random_state=random_state,
                                                n_classes=n_classes,
                                                n_samples=n_samples)
@@ -843,3 +830,147 @@ def test_label_ranking_avp():
         yield (check_alternative_lrap_implementation,
                label_ranking_average_precision_score,
                n_classes, n_samples, random_state)
+
+
+def test_coverage_error():
+    # Toy case
+    assert_almost_equal(coverage_error([[0, 1]], [[0.25, 0.75]]), 1)
+    assert_almost_equal(coverage_error([[0, 1]], [[0.75, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[1, 1]], [[0.75, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[0, 0]], [[0.75, 0.25]]), 0)
+
+    assert_almost_equal(coverage_error([[0, 0, 0]], [[0.25, 0.5, 0.75]]), 0)
+    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.25, 0.5, 0.75]]), 1)
+    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.25, 0.5, 0.75]]), 2)
+    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.25, 0.5, 0.75]]), 2)
+    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.25, 0.5, 0.75]]), 3)
+    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.25, 0.5, 0.75]]), 3)
+    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.25, 0.5, 0.75]]), 3)
+    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.25, 0.5, 0.75]]), 3)
+
+    assert_almost_equal(coverage_error([[0, 0, 0]], [[0.75, 0.5, 0.25]]), 0)
+    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.75, 0.5, 0.25]]), 3)
+    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.75, 0.5, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.75, 0.5, 0.25]]), 3)
+    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.75, 0.5, 0.25]]), 1)
+    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.75, 0.5, 0.25]]), 3)
+    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.75, 0.5, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.75, 0.5, 0.25]]), 3)
+
+    assert_almost_equal(coverage_error([[0, 0, 0]], [[0.5, 0.75, 0.25]]), 0)
+    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.5, 0.75, 0.25]]), 3)
+    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.5, 0.75, 0.25]]), 1)
+    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.5, 0.75, 0.25]]), 3)
+    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.5, 0.75, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.5, 0.75, 0.25]]), 3)
+    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.5, 0.75, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.5, 0.75, 0.25]]), 3)
+
+    # Non trival case
+    assert_almost_equal(coverage_error([[0, 1, 0], [1, 1, 0]],
+                                       [[0.1, 10., -3], [0, 1, 3]]),
+                        (1 + 3) / 2.)
+
+    assert_almost_equal(coverage_error([[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+                                       [[0.1, 10, -3], [0, 1, 3], [0, 2, 0]]),
+                        (1 + 3 + 3) / 3.)
+
+    assert_almost_equal(coverage_error([[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+                                       [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]]),
+                        (1 + 3 + 3) / 3.)
+
+
+def test_coverage_tie_handling():
+    assert_almost_equal(coverage_error([[0, 0]], [[0.5, 0.5]]), 0)
+    assert_almost_equal(coverage_error([[1, 0]], [[0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[0, 1]], [[0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[1, 1]], [[0.5, 0.5]]), 2)
+
+    assert_almost_equal(coverage_error([[0, 0, 0]], [[0.25, 0.5, 0.5]]), 0)
+    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.25, 0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.25, 0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.25, 0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.25, 0.5, 0.5]]), 3)
+    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.25, 0.5, 0.5]]), 3)
+    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.25, 0.5, 0.5]]), 3)
+    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 3)
+
+
+def test_label_ranking_loss():
+    assert_almost_equal(label_ranking_loss([[0, 1]], [[0.25, 0.75]]), 0)
+    assert_almost_equal(label_ranking_loss([[0, 1]], [[0.75, 0.25]]), 1)
+
+    assert_almost_equal(label_ranking_loss([[0, 0, 1]], [[0.25, 0.5, 0.75]]),
+                        0)
+    assert_almost_equal(label_ranking_loss([[0, 1, 0]], [[0.25, 0.5, 0.75]]),
+                        1 / 2)
+    assert_almost_equal(label_ranking_loss([[0, 1, 1]], [[0.25, 0.5, 0.75]]),
+                        0)
+    assert_almost_equal(label_ranking_loss([[1, 0, 0]], [[0.25, 0.5, 0.75]]),
+                        2 / 2)
+    assert_almost_equal(label_ranking_loss([[1, 0, 1]], [[0.25, 0.5, 0.75]]),
+                        1 / 2)
+    assert_almost_equal(label_ranking_loss([[1, 1, 0]], [[0.25, 0.5, 0.75]]),
+                        2 / 2)
+
+    # Undefined metrics -  the ranking doesn't matter
+    assert_almost_equal(label_ranking_loss([[0, 0]], [[0.75, 0.25]]), 0)
+    assert_almost_equal(label_ranking_loss([[1, 1]], [[0.75, 0.25]]), 0)
+    assert_almost_equal(label_ranking_loss([[0, 0]], [[0.5, 0.5]]), 0)
+    assert_almost_equal(label_ranking_loss([[1, 1]], [[0.5, 0.5]]), 0)
+
+    assert_almost_equal(label_ranking_loss([[0, 0, 0]], [[0.5, 0.75, 0.25]]),
+                        0)
+    assert_almost_equal(label_ranking_loss([[1, 1, 1]], [[0.5, 0.75, 0.25]]),
+                        0)
+    assert_almost_equal(label_ranking_loss([[0, 0, 0]], [[0.25, 0.5, 0.5]]),
+                        0)
+    assert_almost_equal(label_ranking_loss([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 0)
+
+    # Non trival case
+    assert_almost_equal(label_ranking_loss([[0, 1, 0], [1, 1, 0]],
+                                           [[0.1, 10., -3], [0, 1, 3]]),
+                        (0 + 2 / 2) / 2.)
+
+    assert_almost_equal(label_ranking_loss(
+        [[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+        [[0.1, 10, -3], [0, 1, 3], [0, 2, 0]]),
+        (0 + 2 / 2 + 1 / 2) / 3.)
+
+    assert_almost_equal(label_ranking_loss(
+        [[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+        [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]]),
+        (0 + 2 / 2 + 1 / 2) / 3.)
+
+    # Sparse csr matrices
+    assert_almost_equal(label_ranking_loss(
+        csr_matrix(np.array([[0, 1, 0], [1, 1, 0]])),
+        [[0.1, 10, -3], [3, 1, 3]]),
+        (0 + 2 / 2) / 2.)
+
+
+def test_ranking_appropriate_input_shape():
+    # Check that that y_true.shape != y_score.shape raise the proper exception
+    assert_raises(ValueError, label_ranking_loss, [[0, 1], [0, 1]], [0, 1])
+    assert_raises(ValueError, label_ranking_loss, [[0, 1], [0, 1]], [[0, 1]])
+    assert_raises(ValueError, label_ranking_loss,
+                  [[0, 1], [0, 1]], [[0], [1]])
+
+    assert_raises(ValueError, label_ranking_loss, [[0, 1]], [[0, 1], [0, 1]])
+    assert_raises(ValueError, label_ranking_loss,
+                  [[0], [1]], [[0, 1], [0, 1]])
+    assert_raises(ValueError, label_ranking_loss, [[0, 1], [0, 1]], [[0], [1]])
+
+
+def test_ranking_loss_ties_handling():
+    # Tie handling
+    assert_almost_equal(label_ranking_loss([[1, 0]], [[0.5, 0.5]]), 1)
+    assert_almost_equal(label_ranking_loss([[0, 1]], [[0.5, 0.5]]), 1)
+    assert_almost_equal(label_ranking_loss([[0, 0, 1]], [[0.25, 0.5, 0.5]]),
+                        1 / 2)
+    assert_almost_equal(label_ranking_loss([[0, 1, 0]], [[0.25, 0.5, 0.5]]),
+                        1 / 2)
+    assert_almost_equal(label_ranking_loss([[0, 1, 1]], [[0.25, 0.5, 0.5]]), 0)
+    assert_almost_equal(label_ranking_loss([[1, 0, 0]], [[0.25, 0.5, 0.5]]), 1)
+    assert_almost_equal(label_ranking_loss([[1, 0, 1]], [[0.25, 0.5, 0.5]]), 1)
+    assert_almost_equal(label_ranking_loss([[1, 1, 0]], [[0.25, 0.5, 0.5]]), 1)

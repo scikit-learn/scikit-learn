@@ -31,7 +31,7 @@ Note that this two-dimensional example is very degenerate:
 generally the number of features would be much greater than the
 "document length", while here we have much larger documents than vocabulary.
 Similarly, with ``n_classes > n_features``, it is much less likely that a
-feature distinguishes a particular cluss.
+feature distinguishes a particular class.
 """
 
 from __future__ import print_function
@@ -61,7 +61,6 @@ def plot_2d(ax, n_labels=1, n_classes=3, length=50):
     X, Y, p_c, p_w_c = make_ml_clf(n_samples=150, n_features=2,
                                    n_classes=n_classes, n_labels=n_labels,
                                    length=length, allow_unlabeled=False,
-                                   return_indicator=True,
                                    return_distributions=True,
                                    random_state=RANDOM_SEED)
 

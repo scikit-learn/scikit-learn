@@ -1,5 +1,8 @@
-from sklearn.base import BaseEstimator
-from sklearn.utils.testing import assert_true
+import numpy as np
+
+from ..base import BaseEstimator, ClassifierMixin
+from .testing import assert_true
+from .validation import _num_samples, check_array
 
 
 class ArraySlicingWrapper(object):
@@ -30,7 +33,7 @@ class MockDataFrame(object):
         return self.array
 
 
-class CheckingClassifier(BaseEstimator):
+class CheckingClassifier(BaseEstimator, ClassifierMixin):
     """Dummy classifier to test pipelining and meta-estimators.
 
     Checks some property of X and y in fit / predict.
@@ -49,13 +52,15 @@ class CheckingClassifier(BaseEstimator):
             assert_true(self.check_X(X))
         if self.check_y is not None:
             assert_true(self.check_y(y))
+        self.classes_ = np.unique(check_array(y, ensure_2d=False,
+                                              allow_nd=True))
 
         return self
 
     def predict(self, T):
         if self.check_X is not None:
             assert_true(self.check_X(T))
-        return T.shape[0]
+        return self.classes_[np.zeros(_num_samples(T), dtype=np.int)]
 
     def score(self, X=None, Y=None):
         if self.foo_param > 1:

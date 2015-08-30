@@ -9,19 +9,21 @@ import warnings
 
 from .murmurhash import murmurhash3_32
 from .validation import (as_float_array,
-                         assert_all_finite, warn_if_not_float,
+                         assert_all_finite,
                          check_random_state, column_or_1d, check_array,
-                         check_consistent_length, check_X_y, indexable)
-from .class_weight import compute_class_weight
+                         check_consistent_length, check_X_y, indexable,
+                         check_symmetric, DataConversionWarning)
+from .class_weight import compute_class_weight, compute_sample_weight
+from ..externals.joblib import cpu_count
 
 
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
-           "warn_if_not_float",
            "check_random_state",
-           "compute_class_weight",
+           "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
-           "check_consistent_length", "check_X_y", 'indexable']
+           "check_consistent_length", "check_X_y", 'indexable',
+           "check_symmetric"]
 
 
 class deprecated(object):
@@ -146,7 +148,14 @@ def safe_indexing(X, indices):
     """
     if hasattr(X, "iloc"):
         # Pandas Dataframes and Series
-        return X.iloc[indices]
+        try:
+            return X.iloc[indices]
+        except ValueError:
+            # Cython typed memoryviews internally used in pandas do not support
+            # readonly buffers.
+            warnings.warn("Copying input dataframe for slicing.",
+                          DataConversionWarning)
+            return X.copy().iloc[indices]
     elif hasattr(X, "shape"):
         if hasattr(X, 'take') and (hasattr(indices, 'dtype') and
                                    indices.dtype.kind == 'i'):
@@ -166,7 +175,9 @@ def resample(*arrays, **options):
 
     Parameters
     ----------
-    `*arrays` : sequence of arrays or scipy.sparse matrices with same shape[0]
+    *arrays : sequence of indexable data-structures
+        Indexable data-structures can be arrays, lists, dataframes or scipy
+        sparse matrices with consistent first dimension.
 
     replace : boolean, True by default
         Implements resampling with replacement. If False, this will implement
@@ -181,14 +192,15 @@ def resample(*arrays, **options):
 
     Returns
     -------
-    Sequence of resampled views of the collections. The original arrays are
-    not impacted.
+    resampled_arrays : sequence of indexable data-structures
+        Sequence of resampled views of the collections. The original arrays are
+        not impacted.
 
     Examples
     --------
     It is possible to mix sparse and dense arrays in the same run::
 
-      >>> X = [[1., 0.], [2., 1.], [0., 0.]]
+      >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
       >>> from scipy.sparse import coo_matrix
@@ -219,7 +231,6 @@ def resample(*arrays, **options):
 
     See also
     --------
-    :class:`sklearn.cross_validation.Bootstrap`
     :func:`sklearn.utils.shuffle`
     """
     random_state = check_random_state(options.pop('random_state', None))
@@ -242,8 +253,6 @@ def resample(*arrays, **options):
             max_n_samples, n_samples))
 
     check_consistent_length(*arrays)
-    arrays = [check_array(x, accept_sparse='csr', ensure_2d=False)
-              for x in arrays]
 
     if replace:
         indices = random_state.randint(0, n_samples, size=(max_n_samples,))
@@ -252,12 +261,9 @@ def resample(*arrays, **options):
         random_state.shuffle(indices)
         indices = indices[:max_n_samples]
 
-    resampled_arrays = []
-
-    for array in arrays:
-        array = array[indices]
-        resampled_arrays.append(array)
-
+    # convert sparse matrices to CSR for row-based indexing
+    arrays = [a.tocsr() if issparse(a) else a for a in arrays]
+    resampled_arrays = [safe_indexing(a, indices) for a in arrays]
     if len(resampled_arrays) == 1:
         # syntactic sugar for the unit argument case
         return resampled_arrays[0]
@@ -273,7 +279,9 @@ def shuffle(*arrays, **options):
 
     Parameters
     ----------
-    `*arrays` : sequence of arrays or scipy.sparse matrices with same shape[0]
+    *arrays : sequence of indexable data-structures
+        Indexable data-structures can be arrays, lists, dataframes or scipy
+        sparse matrices with consistent first dimension.
 
     random_state : int or RandomState instance
         Control the shuffling for reproducible behavior.
@@ -284,14 +292,15 @@ def shuffle(*arrays, **options):
 
     Returns
     -------
-    Sequence of shuffled views of the collections. The original arrays are
-    not impacted.
+    shuffled_arrays : sequence of indexable data-structures
+        Sequence of shuffled views of the collections. The original arrays are
+        not impacted.
 
     Examples
     --------
     It is possible to mix sparse and dense arrays in the same run::
 
-      >>> X = [[1., 0.], [2., 1.], [0., 0.]]
+      >>> X = np.array([[1., 0.], [2., 1.], [0., 0.]])
       >>> y = np.array([0, 1, 2])
 
       >>> from scipy.sparse import coo_matrix
@@ -333,6 +342,10 @@ def safe_sqr(X, copy=True):
     Parameters
     ----------
     X : array like, matrix, sparse matrix
+
+    copy : boolean, optional, default True
+        Whether to create a copy of X and operate on it or to perform
+        inplace computation (default behaviour).
 
     Returns
     -------
@@ -395,6 +408,8 @@ def gen_even_slices(n, n_packs, n_samples=None):
     [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
     """
     start = 0
+    if n_packs < 1:
+        raise ValueError("gen_even_slices got n_packs=%s, must be >=1" % n_packs)
     for pack_num in range(n_packs):
         this_n = n // n_packs
         if pack_num < n % n_packs:
@@ -407,6 +422,45 @@ def gen_even_slices(n, n_packs, n_samples=None):
             start = end
 
 
+def _get_n_jobs(n_jobs):
+    """Get number of jobs for the computation.
+
+    This function reimplements the logic of joblib to determine the actual
+    number of jobs depending on the cpu count. If -1 all CPUs are used.
+    If 1 is given, no parallel computing code is used at all, which is useful
+    for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are used.
+    Thus for n_jobs = -2, all CPUs but one are used.
+
+    Parameters
+    ----------
+    n_jobs : int
+        Number of jobs stated in joblib convention.
+
+    Returns
+    -------
+    n_jobs : int
+        The actual number of jobs as positive integer.
+
+    Examples
+    --------
+    >>> from sklearn.utils import _get_n_jobs
+    >>> _get_n_jobs(4)
+    4
+    >>> jobs = _get_n_jobs(-2)
+    >>> assert jobs == max(cpu_count() - 1, 1)
+    >>> _get_n_jobs(0)
+    Traceback (most recent call last):
+    ...
+    ValueError: Parameter n_jobs == 0 has no meaning.
+    """
+    if n_jobs < 0:
+        return max(cpu_count() + 1 + n_jobs, 1)
+    elif n_jobs == 0:
+        raise ValueError('Parameter n_jobs == 0 has no meaning.')
+    else:
+        return n_jobs
+
+
 def tosequence(x):
     """Cast iterable x to a Sequence, avoiding a copy if possible."""
     if isinstance(x, np.ndarray):
@@ -417,5 +471,9 @@ def tosequence(x):
         return list(x)
 
 
-class ConvergenceWarning(Warning):
-    "Custom warning to capture convergence problems"
+class ConvergenceWarning(UserWarning):
+    """Custom warning to capture convergence problems"""
+
+
+class DataDimensionalityWarning(UserWarning):
+    """Custom warning to notify potential issues with data dimensionality"""

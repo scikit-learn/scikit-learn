@@ -248,9 +248,10 @@ cpdef sample_without_replacement(np.int_t n_population,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    method : "auto", "tracking_selection" or "reservoir_sampling"
+    method : "auto", "tracking_selection", "reservoir_sampling" or "pool"
         If method == "auto", an algorithm is automatically selected.
-        The subset of selected integer is not randomized.
+        The order of the selected integers is undefined. If a random order is
+        desired, the selected subset should be shuffled.
 
         If method =="tracking_selection", a set based implementation is used
         which is suitable for `n_samples` <<< `n_population`.
@@ -258,7 +259,8 @@ cpdef sample_without_replacement(np.int_t n_population,
         If method == "reservoir_sampling", a reservoir sampling algorithm is
         used which is suitable for high memory constraint or when
         O(`n_samples`) ~ O(`n_population`).
-        The subset of selected integer is not randomized.
+        The order of the selected integers is undefined. If a random order is
+        desired, the selected subset should be shuffled.
 
         If method == "pool", a pool based algorithm is particularly fast, even
         faster than the tracking selection method. Hovewer, a vector containing

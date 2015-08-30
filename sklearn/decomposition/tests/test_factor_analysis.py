@@ -16,8 +16,7 @@ from sklearn.decomposition import FactorAnalysis
 
 
 def test_factor_analysis():
-    """Test FactorAnalysis ability to recover the data covariance structure
-    """
+    # Test FactorAnalysis ability to recover the data covariance structure
     rng = np.random.RandomState(0)
     n_samples, n_features, n_components = 20, 5, 3
 
@@ -71,7 +70,6 @@ def test_factor_analysis():
     fa1.max_iter = 1
     fa1.verbose = True
     assert_warns(ConvergenceWarning, fa1.fit, X)
-    assert_warns(DeprecationWarning, FactorAnalysis, verbose=1)
 
     # Test get_covariance and get_precision with n_components == n_features
     # with n_components < n_features and with n_components == 0

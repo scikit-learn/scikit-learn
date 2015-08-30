@@ -25,6 +25,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
     Fit a Bayesian ridge model and optimize the regularization parameters
     lambda (precision of the weights) and alpha (precision of the noise).
 
+    Read more in the :ref:`User Guide <bayesian_regression>`.
+
     Parameters
     ----------
     n_iter : int, optional
@@ -132,7 +134,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, dtype=np.float)
+        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
         X, y, X_mean, y_mean, X_std = self._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
         n_samples, n_features = X.shape
@@ -224,6 +226,8 @@ class ARDRegression(LinearModel, RegressorMixin):
     Also estimate the parameters lambda (precisions of the distributions of the
     weights) and alpha (precision of the distribution of the noise).
     The estimation is done by an iterative procedures (Evidence Maximization)
+
+    Read more in the :ref:`User Guide <bayesian_regression>`.
 
     Parameters
     ----------
@@ -342,7 +346,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, dtype=np.float)
+        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)

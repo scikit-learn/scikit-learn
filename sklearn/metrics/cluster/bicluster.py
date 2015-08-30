@@ -39,7 +39,6 @@ def _pairwise_similarity(a, b, similarity):
     a_rows, a_cols, b_rows, b_cols = _check_rows_and_columns(a, b)
     n_a = a_rows.shape[0]
     n_b = b_rows.shape[0]
-    result = np.zeros((n_a, n_b))
     result = np.array(list(list(similarity(a_rows[i], a_cols[i],
                                            b_rows[j], b_cols[j])
                                 for j in range(n_b))
@@ -54,6 +53,8 @@ def consensus_score(a, b, similarity="jaccard"):
     best matching between sets is found using the Hungarian algorithm.
     The final score is the sum of similarities divided by the size of
     the larger set.
+
+    Read more in the :ref:`User Guide <biclustering>`.
 
     Parameters
     ----------
@@ -82,4 +83,4 @@ def consensus_score(a, b, similarity="jaccard"):
     indices = linear_assignment(1. - matrix)
     n_a = len(a[0])
     n_b = len(b[0])
-    return np.trace(matrix[:, indices[:, 1]]) / max(n_a, n_b)
+    return matrix[indices[:, 0], indices[:, 1]].sum() / max(n_a, n_b)

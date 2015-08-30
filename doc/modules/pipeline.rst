@@ -1,8 +1,13 @@
+.. _combining_estimators:
+
+===============================================
+Pipeline and FeatureUnion: combining estimators
+===============================================
+
 .. _pipeline:
 
-==============================
 Pipeline: chaining estimators
-==============================
+=============================
 
 .. currentmodule:: sklearn.pipeline
 
@@ -23,7 +28,7 @@ The last estimator may be any type (transformer, classifier, etc.).
 
 
 Usage
-=====
+-----
 
 The :class:`Pipeline` is build using a list of ``(key, value)`` pairs, where
 the ``key`` a string containing the name you want to give this step and ``value``
@@ -37,9 +42,9 @@ is an estimator object::
     >>> clf # doctest: +NORMALIZE_WHITESPACE
     Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
         whiten=False)), ('svm', SVC(C=1.0, cache_size=200, class_weight=None,
-        coef0=0.0, degree=3, gamma=0.0, kernel='rbf', max_iter=-1,
-        probability=False, random_state=None, shrinking=True, tol=0.001,
-        verbose=False))])
+        coef0=0.0, decision_function_shape=None, degree=3, gamma='auto',
+        kernel='rbf', max_iter=-1, probability=False, random_state=None,
+        shrinking=True, tol=0.001, verbose=False))])
 
 The utility function :func:`make_pipeline` is a shorthand
 for constructing pipelines;
@@ -71,9 +76,9 @@ Parameters of the estimators in the pipeline can be accessed using the
     >>> clf.set_params(svm__C=10) # doctest: +NORMALIZE_WHITESPACE
     Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
         whiten=False)), ('svm', SVC(C=10, cache_size=200, class_weight=None,
-        coef0=0.0, degree=3, gamma=0.0, kernel='rbf', max_iter=-1,
-        probability=False, random_state=None, shrinking=True, tol=0.001,
-        verbose=False))])
+        coef0=0.0, decision_function_shape=None, degree=3, gamma='auto',
+        kernel='rbf', max_iter=-1, probability=False, random_state=None,
+        shrinking=True, tol=0.001, verbose=False))])
 
 This is particularly important for doing grid searches::
 
@@ -91,9 +96,13 @@ This is particularly important for doing grid searches::
  * :ref:`example_plot_kernel_approximation.py`
  * :ref:`example_svm_plot_svm_anova.py`
 
+.. topic:: See also:
+
+ * :ref:`grid_search`
+
 
 Notes
-=====
+-----
 
 Calling ``fit`` on the pipeline is the same as calling ``fit`` on
 each estimator in turn, ``transform`` the input and pass it on to the next step.
@@ -105,9 +114,8 @@ pipeline.
 
 .. _feature_union:
 
-==========================================
-FeatureUnion: Combining feature extractors
-==========================================
+FeatureUnion: composite feature spaces
+======================================
 
 .. currentmodule:: sklearn.pipeline
 
@@ -131,7 +139,7 @@ responsibility.)
 
 
 Usage
-=====
+-----
 
 A :class:`FeatureUnion` is built using a list of ``(key, value)`` pairs,
 where the ``key`` is the name you want to give to a given transformation
@@ -152,9 +160,10 @@ and ``value`` is an estimator object::
         transformer_weights=None)
 
 Like pipelines, feature unions have a shorthand constructor called
-:func:`make_union` that does require manual naming of the components.
+:func:`make_union` that does not require explicit naming of the components.
 
                                                                        
 .. topic:: Examples:
 
  * :ref:`example_feature_stacker.py`
+ * :ref:`example_hetero_feature_union.py`

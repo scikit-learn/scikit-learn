@@ -133,7 +133,7 @@ def test_kd_tree_kde(n_samples=100, n_features=3):
 
 
 def test_gaussian_kde(n_samples=1000):
-    """Compare gaussian KDE results to scipy.stats.gaussian_kde"""
+    # Compare gaussian KDE results to scipy.stats.gaussian_kde
     from scipy.stats import gaussian_kde
     np.random.seed(0)
     x_in = np.random.normal(0, 1, n_samples)
@@ -235,8 +235,3 @@ def test_simultaneous_sort(n_rows=10, n_pts=201):
 
     assert_array_almost_equal(dist, dist2)
     assert_array_almost_equal(ind, ind2)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()
