@@ -102,9 +102,10 @@ def test_unsupervised_inputs():
         assert_array_almost_equal(ind1, ind2)
 
 
-def test_precomputed():
+def test_precomputed(random_state=42):
     """Tests unsupervised NearestNeighbors with a distance matrix."""
     # Note: smaller samples may result in spurious test success
+    rng = np.random.RandomState(random_state)
     X = rng.random_sample((10, 4))
     Y = rng.random_sample((3, 4))
     DXX = metrics.pairwise_distances(X, metric='euclidean')
