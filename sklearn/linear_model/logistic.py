@@ -25,7 +25,7 @@ from ..utils.extmath import (logsumexp, log_logistic, safe_sparse_dot,
                              squared_norm)
 from ..utils.optimize import newton_cg
 from ..utils.validation import (as_float_array, DataConversionWarning,
-                                check_X_y)
+                                check_X_y, NotFittedError)
 from ..utils.fixes import expit
 from ..externals.joblib import Parallel, delayed
 from ..cross_validation import check_cv
@@ -1091,10 +1091,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         For a multi_class problem, if multi_class is set to be "multinomial"
         the softmax function is used to find the predicted probability of
         each class.
-        Else use a one-vs-rest approach, i.e calculating the probability
-        of each class assuming it to be positive using th logistic function.
-        Normalize across all the classes at the end such that the sum of
-        probabilities is 1.
+        Else use a one-vs-rest approach, i.e calculate the probability
+        of each class assuming it to be positive using the logistic function.
+        and normalize these values across all the classes.
 
         Parameters
         ----------
@@ -1106,7 +1105,17 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in ``self.classes_``.
         """
-        return self._predict_proba_lr(X)
+        if not hasattr(self, "coef_"):
+            raise NotFittedError("Call fit before prediction")
+        calculate_ovr = self.coef_.shape[0] == 1 or self.multi_class == "ovr"
+        if calculate_ovr:
+            return super(LogisticRegression, self)._predict_proba_lr(X)
+        else:
+            prob = self.decision_function(X)
+            np.exp(prob, prob)
+            sum_prob = np.sum(prob, axis=1).reshape((-1, 1))
+            prob /= sum_prob
+            return prob
 
     def predict_log_proba(self, X):
         """Log of probability estimates.

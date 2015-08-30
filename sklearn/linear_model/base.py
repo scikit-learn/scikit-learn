@@ -238,32 +238,16 @@ class LinearClassifierMixin(ClassifierMixin):
         1. / (1. + np.exp(-self.decision_function(X)));
         multiclass is handled by normalizing that over all classes.
         """
-        from sklearn.linear_model.logistic import (
-            LogisticRegression, LogisticRegressionCV)
-        
-        calculate_ovr = True
         prob = self.decision_function(X)
-        binary = len(prob.shape) == 1
-        if (isinstance(self, LogisticRegression) or
-            isinstance(self, LogisticRegressionCV)) and (
-                self.multi_class == "multinomial" and not binary):
-            calculate_ovr = False
-        if calculate_ovr:
-            prob *= -1
-            np.exp(prob, prob)
-            prob += 1
-            np.reciprocal(prob, prob)
-            if binary:
-                return np.vstack([1 - prob, prob]).T
-            else:
-                # OvR normalization, like LibLinear's predict_probability
-                prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
-                return prob
-
+        prob *= -1
+        np.exp(prob, prob)
+        prob += 1
+        np.reciprocal(prob, prob)
+        if prob.ndim == 1:
+            return np.vstack([1 - prob, prob]).T
         else:
-            np.exp(prob, prob)
-            sum_prob = np.sum(prob, axis=1).reshape((-1, 1))
-            prob /= sum_prob
+            # OvR normalization, like LibLinear's predict_probability
+            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
             return prob
 
 
