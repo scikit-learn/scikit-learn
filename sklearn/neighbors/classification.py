@@ -133,8 +133,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
-            A 2-D array representing the test points.
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
 
         Returns
         -------
@@ -175,8 +176,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array, shape = (n_samples, n_features)
-            A 2-D array representing the test points.
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
 
         Returns
         -------
@@ -329,8 +331,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
-            A 2-D array representing the test points.
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
 
         Returns
         -------

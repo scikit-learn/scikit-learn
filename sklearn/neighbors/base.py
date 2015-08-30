@@ -141,7 +141,10 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("unrecognized algorithm: '%s'" % algorithm)
 
         if algorithm == 'auto':
-            alg_check = 'ball_tree'
+            if metric == 'precomputed':
+                alg_check = 'brute'
+            else:
+                alg_check = 'ball_tree'
         else:
             alg_check = algorithm
 
@@ -238,8 +241,9 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self._fit_method == 'auto':
             # A tree approach is better for small number of neighbors,
             # and KDTree is generally faster when available
-            if (self.n_neighbors is None
-                    or self.n_neighbors < self._fit_X.shape[0] // 2):
+            if ((self.n_neighbors is None or
+                 self.n_neighbors < self._fit_X.shape[0] // 2) and
+                    self.metric != 'precomputed'):
                 if self.effective_metric_ in VALID_METRICS['kd_tree']:
                     self._fit_method = 'kd_tree'
                 else:
@@ -270,6 +274,11 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         return self
 
+    @property
+    def _pairwise(self):
+        # For cross-validation routines to split data correctly
+        return self.metric == 'precomputed'
+
 
 class KNeighborsMixin(object):
     """Mixin for k-neighbors searches"""
@@ -281,7 +290,8 @@ class KNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, last dimension same as that of fit data, optional
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -430,7 +440,8 @@ class KNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, last dimension same as that of fit data, optional
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -735,7 +746,8 @@ class SupervisedFloatMixin(object):
         Parameters
         ----------
         X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape = [n_samples, n_features]
+            Training data. If array or matrix, shape [n_samples, n_features],
+            or [n_samples, n_samples] if metric='precomputed'.
 
         y : {array-like, sparse matrix}
             Target values, array of float values, shape = [n_samples]
@@ -754,7 +766,8 @@ class SupervisedIntegerMixin(object):
         Parameters
         ----------
         X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape = [n_samples, n_features]
+            Training data. If array or matrix, shape [n_samples, n_features],
+            or [n_samples, n_samples] if metric='precomputed'.
 
         y : {array-like, sparse matrix}
             Target values of shape = [n_samples] or [n_samples, n_outputs]
@@ -795,6 +808,7 @@ class UnsupervisedMixin(object):
         Parameters
         ----------
         X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape = [n_samples, n_features]
+            Training data. If array or matrix, shape [n_samples, n_features],
+            or [n_samples, n_samples] if metric='precomputed'.
         """
         return self._fit(X)

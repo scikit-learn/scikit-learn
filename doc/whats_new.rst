@@ -906,6 +906,9 @@ Enhancements
    - Add multi-output support to :class:`gaussian_process.GaussianProcess`
      by John Novak.
 
+   - Support for precomputed distance matrices in nearest neighbor estimators
+     by `Robert Layton`_ and `Joel Nothman`_.
+
    - Norm computations optimized for NumPy 1.6 and later versions by
      `Lars Buitinck`_. In particular, the k-means algorithm no longer
      needs a temporary data structure the size of its input.
