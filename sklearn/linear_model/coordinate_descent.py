@@ -1223,8 +1223,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
     cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific cross-validation objects can be passed, see the
-        :mod:`sklearn.cross_validation` module for the list of possible
+        Specific cross-validation objects can be passed,
+        see the :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
     verbose : bool or integer
@@ -1361,9 +1361,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         than ``tol``.
 
     cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific cross-validation objects can be passed, see the
-        :mod:`sklearn.cross_validation` module for the list of possible
+        If an integer is passed, it is the number of fold (default 3)
+        in StratifiedKFold. Specific cross-validation objects can be passed,
+        see the :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
     verbose : bool or integer
@@ -1836,9 +1836,9 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         than ``tol``.
 
     cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific cross-validation objects can be passed, see the
-        :mod:`sklearn.cross_validation` module for the list of possible
+        If an integer is passed, it is the number of fold (default 3)
+        in StratifiedKFold. Specific cross-validation objects can be passed,
+        see the :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
     verbose : bool or integer
@@ -1986,9 +1986,9 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         than ``tol``.
 
     cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific cross-validation objects can be passed, see the
-        :mod:`sklearn.cross_validation` module for the list of possible
+        If an integer is passed, it is the number of fold (default 3)
+        in StratifiedKFold. Specific cross-validation objects can be passed, 
+        see the :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
     verbose : bool or integer

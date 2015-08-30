@@ -291,10 +291,10 @@ class RFECV(RFE, MetaEstimatorMixin):
         (rounded down) of features to remove at each iteration.
 
     cv : int or cross-validation generator, optional (default=None)
-        If int, it is the number of folds.
-        If None, 3-fold cross-validation is performed by default.
-        Specific cross-validation objects can also be passed, see
-        `sklearn.cross_validation module` for details.
+        If int, it is the number of folds. If None, 3-fold cross-validation is
+        performed by default. If the estimator is a classifier, the default is 
+        to use StratifiedKFold. Specific cross-validation objects can also be
+        passed, see`sklearn.cross_validation module` for details.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or

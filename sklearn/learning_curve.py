@@ -60,7 +60,8 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
         (default: np.linspace(0.1, 1.0, 5))
 
     cv : integer, cross-validation generator, optional
-        If an integer is passed, it is the number of folds (defaults to 3).
+        If an integer is passed, it is the number of folds (defaults to 3). 
+        If estimator is a classfier, the default is StratifiedKFold, else KFold.
         Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects
 
@@ -263,6 +264,7 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
 
     cv : integer, cross-validation generator, optional
         If an integer is passed, it is the number of folds (defaults to 3).
+        If estimator is a classfier, the default is StratifiedKFold, else KFold.
         Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects
 
