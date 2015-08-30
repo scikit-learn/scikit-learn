@@ -71,6 +71,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                max_iterations=None):
     """Perform mean shift clustering of data using a flat kernel.
 
+    Read more in the :ref:`User Guide <mean_shift>`.
+
     Parameters
     ----------
 
@@ -259,6 +261,8 @@ class MeanShift(BaseEstimator, ClusterMixin):
     eliminate near-duplicates to form the final set of centroids.
 
     Seeding is performed using a binning technique for scalability.
+
+    Read more in the :ref:`User Guide <mean_shift>`.
 
     Parameters
     ----------

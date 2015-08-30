@@ -280,7 +280,7 @@ def test_countvectorizer_stop_words():
     assert_raises(ValueError, cv.get_stop_words)
     stoplist = ['some', 'other', 'words']
     cv.set_params(stop_words=stoplist)
-    assert_equal(cv.get_stop_words(), stoplist)
+    assert_equal(cv.get_stop_words(), set(stoplist))
 
 
 def test_countvectorizer_empty_vocabulary():
@@ -561,7 +561,7 @@ def test_vectorizer_max_features():
 
 
 def test_count_vectorizer_max_features():
-    """Regression test: max_features didn't work correctly in 0.14."""
+    # Regression test: max_features didn't work correctly in 0.14.
 
     cv_1 = CountVectorizer(max_features=1)
     cv_3 = CountVectorizer(max_features=3)
@@ -752,7 +752,7 @@ def test_vectorizer_pipeline_grid_selection():
     parameters = {
         'vect__ngram_range': [(1, 1), (1, 2)],
         'vect__norm': ('l1', 'l2'),
-        'svc__loss': ('l1', 'l2'),
+        'svc__loss': ('hinge', 'squared_hinge'),
     }
 
     # find the best parameters for both the feature extraction and the
@@ -860,8 +860,7 @@ def test_pickling_vectorizer():
 
 
 def test_stop_words_removal():
-    """Ensure that deleting the stop_words_ attribute doesn't affect transform
-    """
+    # Ensure that deleting the stop_words_ attribute doesn't affect transform
 
     fitted_vectorizers = (
         TfidfVectorizer().fit(JUNK_FOOD_DOCS),

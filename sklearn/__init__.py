@@ -35,8 +35,9 @@ warnings.filterwarnings('always', category=DeprecationWarning,
 #   X.Y     # Final release
 #
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
+# 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.16.dev'
+__version__ = '0.17.dev0'
 
 
 try:
@@ -56,11 +57,11 @@ else:
     from .base import clone
     __check_build  # avoid flakes unused variable error
 
-    __all__ = ['cluster', 'covariance', 'cross_decomposition',
+    __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
                'cross_validation', 'datasets', 'decomposition', 'dummy',
                'ensemble', 'externals', 'feature_extraction',
-               'feature_selection', 'gaussian_process', 'grid_search', 'hmm',
-               'isotonic', 'kernel_approximation', 'kernel_ridge', 
+               'feature_selection', 'gaussian_process', 'grid_search',
+               'isotonic', 'kernel_approximation', 'kernel_ridge',
                'lda', 'learning_curve',
                'linear_model', 'manifold', 'metrics', 'mixture', 'multiclass',
                'naive_bayes', 'neighbors', 'neural_network', 'pipeline',

@@ -12,7 +12,7 @@ scikit-learn, but not scikit or SciKit nor sci-kit learn. Also not scikits.learn
 
 How do you pronounce the project name?
 ------------------------------------------
-sy-kit learn. sci stands for science! 
+sy-kit learn. sci stands for science!
 
 Why scikit?
 ------------
@@ -22,7 +22,48 @@ Apart from scikit-learn, another popular one is `scikit-image <http://scikit-ima
 
 How can I contribute to scikit-learn?
 -----------------------------------------
-See :ref:`contributing`.
+See :ref:`contributing`. Before wanting to add a new algorithm, which is
+usually a major and lengthy undertaking, it is recommended to start with :ref:`known
+issues <easy_issues>`.
+
+
+How can I create a bunch object?
+------------------------------------------------
+
+Don't make a bunch object! They are not part of the scikit-learn API. Bunch
+objects are just a way to package some numpy arrays. As a scikit-learn user you
+only ever need numpy arrays to feed your model with data.
+
+For instance to train a classifier, all you need is a 2D array ``X`` for the
+input variables and a 1D array ``y`` for the target variables. The array ``X``
+holds the features as columns and samples as rows . The array ``y`` contains
+integer values to encode the class membership of each sample in ``X``.
+
+To load data as numpy arrays you can use different libraries depending on the
+original data format:
+
+* `numpy.loadtxt
+  <http://docs.scipy.org/doc/numpy/reference/generated/numpy.loadtxt.html>`_ to
+  load text files (such as CSV) assuming that all the columns have an
+  homogeneous data type (e.g. all numeric values).
+
+* `scipy.io <http://docs.scipy.org/doc/scipy/reference/io.html>`_ for common
+  binary formats often used in scientific computing context.
+
+* `scipy.misc.imread <http://docs.scipy.org/doc/scipy/reference/generated/scipy.
+  misc.imread.html#scipy.misc.imread>`_ (requires the `Pillow
+  <https://pypi.python.org/pypi/Pillow>`_ package) to load pixel intensities
+  data from various image file formats.
+
+* `pandas.io <http://pandas.pydata.org/pandas-docs/stable/io.html>`_ to load
+  heterogeneously typed data from various file formats and database protocols
+  that can slice and dice before conversion to numerical features in a numpy
+  array.
+
+Note: if you manage your own numerical data it is recommended to use an
+optimized file format such as HDF5 to reduce data load times. Various libraries
+such as H5Py, PyTables and pandas provides a Python interface for reading and
+writing data in that format.
 
 Can I add this new algorithm that I (or someone else) just published?
 -------------------------------------------------------------------------
@@ -66,7 +107,7 @@ See :ref:`adding_graphical_models`.
 
 Will you add graphical models or sequence prediction to scikit-learn?
 ------------------------------------------------------------------------
-Not in the foreseeable future. 
+Not in the foreseeable future.
 scikit-learn tries to provide a unified API for the basic tasks in machine
 learning, with pipelines and meta-algorithms like grid search to tie
 everything together. The required concepts, APIs, algorithms and

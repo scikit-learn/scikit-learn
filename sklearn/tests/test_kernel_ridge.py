@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.sparse as sp
 
 from sklearn.datasets import make_regression
 from sklearn.linear_model import Ridge
@@ -10,12 +11,28 @@ from sklearn.utils.testing import assert_array_almost_equal
 
 
 X, y = make_regression(n_features=10)
+Xcsr = sp.csr_matrix(X)
+Xcsc = sp.csc_matrix(X)
 Y = np.array([y, y]).T
 
 
 def test_kernel_ridge():
     pred = Ridge(alpha=1, fit_intercept=False).fit(X, y).predict(X)
     pred2 = KernelRidge(kernel="linear", alpha=1).fit(X, y).predict(X)
+    assert_array_almost_equal(pred, pred2)
+
+
+def test_kernel_ridge_csr():
+    pred = Ridge(alpha=1, fit_intercept=False,
+                 solver="cholesky").fit(Xcsr, y).predict(Xcsr)
+    pred2 = KernelRidge(kernel="linear", alpha=1).fit(Xcsr, y).predict(Xcsr)
+    assert_array_almost_equal(pred, pred2)
+
+
+def test_kernel_ridge_csc():
+    pred = Ridge(alpha=1, fit_intercept=False,
+                 solver="cholesky").fit(Xcsc, y).predict(Xcsc)
+    pred2 = KernelRidge(kernel="linear", alpha=1).fit(Xcsc, y).predict(Xcsc)
     assert_array_almost_equal(pred, pred2)
 
 

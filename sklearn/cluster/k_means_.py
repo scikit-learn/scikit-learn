@@ -27,6 +27,7 @@ from ..utils import check_random_state
 from ..utils import as_float_array
 from ..utils import gen_batches
 from ..utils.validation import check_is_fitted
+from ..utils.validation import FLOAT_DTYPES
 from ..utils.random import choice
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
@@ -153,6 +154,8 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
             tol=1e-4, random_state=None, copy_x=True, n_jobs=1,
             return_n_iter=False):
     """K-means clustering algorithm.
+
+    Read more in the :ref:`User Guide <k_means>`.
 
     Parameters
     ----------
@@ -627,6 +630,8 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     """K-Means clustering
 
+    Read more in the :ref:`User Guide <k_means>`.
+
     Parameters
     ----------
 
@@ -670,10 +675,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     tol : float, default: 1e-4
         Relative tolerance with regards to inertia to declare convergence
 
-    n_jobs : int, default: 1
-        The number of jobs to use for the computation. This works by breaking
-        down the pairwise matrix into n_jobs even slices and computing them in
-        parallel.
+    n_jobs : int
+        The number of jobs to use for the computation. This works by computing
+        each of the n_init runs in parallel.
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debugging. For n_jobs below -1,
@@ -760,18 +764,14 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         return X
 
     def _check_test_data(self, X):
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
+                        warn_on_dtype=True)
         n_samples, n_features = X.shape
         expected_n_features = self.cluster_centers_.shape[1]
         if not n_features == expected_n_features:
             raise ValueError("Incorrect number of features. "
                              "Got %d features, expected %d" % (
                                  n_features, expected_n_features))
-        if X.dtype.kind != 'f':
-            warnings.warn("Got data type %s, converted to float "
-                          "to avoid overflows" % X.dtype,
-                          RuntimeWarning, stacklevel=2)
-            X = X.astype(np.float)
 
         return X
 
@@ -832,7 +832,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : array, shape [n_samples, k]
             X transformed in the new space.
         """
-        check_is_fitted(self, 'cluster_centers_') 
+        check_is_fitted(self, 'cluster_centers_')
 
         X = self._check_test_data(X)
         return self._transform(X)
@@ -858,7 +858,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         labels : array, shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
-        check_is_fitted(self, 'cluster_centers_') 
+        check_is_fitted(self, 'cluster_centers_')
 
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
@@ -877,7 +877,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         score : float
             Opposite of the value of X on the K-means objective.
         """
-        check_is_fitted(self, 'cluster_centers_') 
+        check_is_fitted(self, 'cluster_centers_')
 
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
@@ -1429,7 +1429,7 @@ class MiniBatchKMeans(KMeans):
         labels : array, shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
-        check_is_fitted(self, 'cluster_centers_') 
+        check_is_fitted(self, 'cluster_centers_')
 
         X = self._check_test_data(X)
         return self._labels_inertia_minibatch(X)[0]

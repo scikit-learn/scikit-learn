@@ -314,12 +314,12 @@ is the transformed training set with :math:`k` features
 To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
 
 .. math::
-    X' = X V_k^\top
+    X' = X V_k
 
 .. note::
     Most treatments of LSA in the natural language processing (NLP)
     and information retrieval (IR) literature
-    swap the axis of the matrix :math:`X` so that it has shape
+    swap the axes of the matrix :math:`X` so that it has shape
     ``n_features`` × ``n_samples``.
     We present LSA in a different way that matches the scikit-learn API better,
     but the singular values found are the same.
@@ -554,9 +554,9 @@ structure of the error covariance :math:`\Psi`:
 * :math:`\Psi = \sigma^2 \mathbf{I}`: This assumption leads to
   the probabilistic model of :class:`PCA`.
 
-* :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called Factor
-  Analysis, a classical statistical model. The matrix W is sometimes called
-  the "factor loading matrix".
+* :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called
+  :class:`FactorAnalysis`, a classical statistical model. The matrix W is
+  sometimes called the "factor loading matrix".
 
 Both model essentially estimate a Gaussian with a low-rank covariance matrix.
 Because both models are probabilistic they can be integrated in more complex
@@ -652,7 +652,7 @@ data and the components are non-negative. :class:`NMF` can be plugged in
 instead of :class:`PCA` or its variants, in the cases where the data matrix
 does not contain negative values.
 It finds a decomposition of samples :math:`X`
-into two matrices :math:`V` and :math:`H` of non-negative elements,
+into two matrices :math:`W` and :math:`H` of non-negative elements,
 by optimizing for the squared Frobenius norm:
 
 .. math::
@@ -706,16 +706,16 @@ the data.
 .. topic:: Examples:
 
     * :ref:`example_decomposition_plot_faces_decomposition.py`
-    * :ref:`example_applications_topics_extraction_with_nmf.py`
+    * :ref:`example_applications_topics_extraction_with_nmf_lda.py`
 
 .. topic:: References:
 
     * `"Learning the parts of objects by non-negative matrix factorization"
-      <http://www.seas.upenn.edu/~ddlee/Papers/nmf.pdf>`_
+      <http://hebb.mit.edu/people/seung/papers/ls-lponm-99.pdf>`_
       D. Lee, S. Seung, 1999
 
     * `"Non-negative Matrix Factorization with Sparseness Constraints"
-      <http://www.cs.helsinki.fi/u/phoyer/papers/pdf/NMFscweb.pdf>`_
+      <http://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
       P. Hoyer, 2004
 
     * `"Projected gradient methods for non-negative matrix factorization"
@@ -726,3 +726,86 @@ the data.
       matrix factorization"
       <http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf>`_
       C. Boutsidis, E. Gallopoulos, 2008
+
+
+.. _LatentDirichletAllocation:
+
+Latent Dirichlet Allocation (LDA)
+=================================
+
+Latent Dirichlet Allocation is a generative probabilistic model for collections of
+discrete dataset such as text corpora. It is also a topic model that is used for
+discovering abstract topics from a collection of documents.
+
+The graphical model of LDA is a three-level Bayesian model:
+
+.. image:: ../images/lda_model_graph.png
+   :align: center
+
+When modeling text corpora, the model assumes the following generative process for
+a corpus with :math:`D` documents and :math:`K` topics:
+
+  1. For each topic :math:`k`, draw :math:`\beta_k \sim Dirichlet(\eta),\: k =1...K`
+
+  2. For each document :math:`d`, draw :math:`\theta_d \sim Dirichlet(\alpha), \: d=1...D`
+
+  3. For each word :math:`i` in document :math:`d`:
+    a. Draw a topic index :math:`z_{di} \sim Multinomial(\theta_d)`
+    b. Draw the observed word :math:`w_{ij} \sim Multinomial(beta_{z_{di}}.)`
+
+For parameter estimation, the posterior distribution is:
+
+.. math::
+  p(z, \theta, \beta |w, \alpha, \eta) =
+    \frac{p(z, \theta, \beta|\alpha, \eta)}{p(w|\alpha, \eta)}
+
+Since the posterior is intractable, variational Bayesian method
+uses a simpler distribution :math:`q(z,\theta,\beta | \lambda, \phi, \gamma)`
+to approximate it, and those variational parameters :math:`\lambda`, :math:`\phi`,
+:math:`\gamma` are optimized to maximize the Evidence Lower Bound (ELBO):
+
+.. math::
+  log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
+    E_{q}[log\:p(w,z,\theta,\beta|\alpha,\eta)] - E_{q}[log\:q(z, \theta, \beta)]
+
+Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence 
+between :math:`q(z,\theta,\beta)` and the true posterior
+:math:`p(z, \theta, \beta |w, \alpha, \eta)`.
+
+:class:`LatentDirichletAllocation` implements online variational Bayes algorithm and supports
+both online and batch update method.
+While batch method updates variational variables after each full pass through the data,
+online method updates variational variables from mini-batch data points. Therefore,
+online method usually converges faster than batch method.
+
+.. note::
+
+  Although online method is guaranteed to converge to a local optimum point, the quality of
+  the optimum point and the speed of convergence may depend on mini-batch size and
+  attributes related to learning rate setting.
+
+When :class:`LatentDirichletAllocation` is applied on a "document-term" matrix, the matrix
+will be decomposed into a "topic-term" matrix and a "document-topic" matrix. While
+"topic-term" matrix is stored as :attr:`components_` in the model, "document-topic" matrix
+can be calculated from ``transform`` method.
+
+:class:`LatentDirichletAllocation` also implements ``partial_fit`` method. This is used
+when data can be fetched sequentially.
+
+.. topic:: Examples:
+
+    * :ref:`example_applications_topics_extraction_with_nmf_lda.py`
+
+.. topic:: References:
+
+    * `"Latent Dirichlet Allocation"
+      <https://www.cs.princeton.edu/~blei/papers/BleiNgJordan2003.pdf>`_
+      D. Blei, A. Ng, M. Jordan, 2003
+
+    * `"Online Learning for Latent Dirichlet Allocation”
+      <https://www.cs.princeton.edu/~blei/papers/HoffmanBleiBach2010b.pdf>`_
+      M. Hoffman, D. Blei, F. Bach, 2010
+
+    * `"Stochastic Variational Inference"
+      <http://www.columbia.edu/~jwp2128/Papers/HoffmanBleiWangPaisley2013.pdf>`_
+      M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013

@@ -17,13 +17,16 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import TempMemmap
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
     MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
+from sklearn.utils import check_array
 
 
 def check_warnings():
@@ -33,7 +36,7 @@ def check_warnings():
 
 
 def test_lasso_zero():
-    """Check that the lasso can handle zero data without crashing"""
+    # Check that the lasso can handle zero data without crashing
     X = [[0], [0], [0]]
     y = [0, 0, 0]
     clf = Lasso(alpha=0.1).fit(X, y)
@@ -44,12 +47,9 @@ def test_lasso_zero():
 
 
 def test_lasso_toy():
-    """
-    Test Lasso on a toy example for various values of alpha.
-
-    When validating this against glmnet notice that glmnet divides it
-    against nobs.
-    """
+    # Test Lasso on a toy example for various values of alpha.
+    # When validating this against glmnet notice that glmnet divides it
+    # against nobs.
 
     X = [[-1], [0], [1]]
     Y = [-1, 0, 1]       # just a straight line
@@ -85,14 +85,10 @@ def test_lasso_toy():
 
 
 def test_enet_toy():
-    """
-    Test ElasticNet for various parameters of alpha and l1_ratio.
-
-    Actually, the parameters alpha = 0 should not be allowed. However,
-    we test it as a border case.
-
-    ElasticNet is tested with and without precomputed Gram matrix
-    """
+    # Test ElasticNet for various parameters of alpha and l1_ratio.
+    # Actually, the parameters alpha = 0 should not be allowed. However,
+    # we test it as a border case.
+    # ElasticNet is tested with and without precomputed Gram matrix
 
     X = np.array([[-1.], [0.], [1.]])
     Y = [-1, 0, 1]       # just a straight line
@@ -395,6 +391,29 @@ def test_multi_task_lasso_and_enet():
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
 
+def test_lasso_readonly_data():
+    X = np.array([[-1], [0], [1]])
+    Y = np.array([-1, 0, 1])   # just a straight line
+    T = np.array([[2], [3], [4]])  # test sample
+    with TempMemmap((X, Y)) as (X, Y):
+        clf = Lasso(alpha=0.5)
+        clf.fit(X, Y)
+        pred = clf.predict(T)
+        assert_array_almost_equal(clf.coef_, [.25])
+        assert_array_almost_equal(pred, [0.5, 0.75, 1.])
+        assert_almost_equal(clf.dual_gap_, 0)
+
+
+def test_multi_task_lasso_readonly_data():
+    X, y, X_test, y_test = build_dataset()
+    Y = np.c_[y, y]
+    with TempMemmap((X, Y)) as (X, Y):
+        Y = np.c_[y, y]
+        clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
+        assert_true(0 < clf.dual_gap_ < 1e-5)
+        assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
+
+
 def test_enet_multitarget():
     n_targets = 3
     X, y, _, _ = build_dataset(n_samples=10, n_features=8,
@@ -540,11 +559,9 @@ def test_warm_start_convergence_with_regularizer_decrement():
 
 
 def test_random_descent():
-    """Test that both random and cyclic selection give the same results.
-
-    Ensure that the test models fully converge and check a wide
-    range of conditions.
-    """
+    # Test that both random and cyclic selection give the same results.
+    # Ensure that the test models fully converge and check a wide
+    # range of conditions.
 
     # This uses the coordinate descent algo using the gram trick.
     X, y, _, _ = build_dataset(n_samples=50, n_features=20)
@@ -587,9 +604,7 @@ def test_random_descent():
 
 
 def test_deprection_precompute_enet():
-    """
-    Test that setting precompute="auto" gives a Deprecation Warning.
-    """
+    # Test that setting precompute="auto" gives a Deprecation Warning.
 
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     clf = ElasticNet(precompute="auto")
@@ -599,9 +614,7 @@ def test_deprection_precompute_enet():
 
 
 def test_enet_path_positive():
-    """
-    Test that the coefs returned by positive=True in enet_path are positive
-    """
+    # Test that the coefs returned by positive=True in enet_path are positive
 
     X, y, _, _ = build_dataset(n_samples=50, n_features=50)
     for path in [enet_path, lasso_path]:
@@ -610,9 +623,7 @@ def test_enet_path_positive():
 
 
 def test_sparse_dense_descent_paths():
-    """
-    Test that dense and sparse input give the same input for descent paths.
-    """
+    # Test that dense and sparse input give the same input for descent paths.
     X, y, _, _ = build_dataset(n_samples=50, n_features=20)
     csr = sparse.csr_matrix(X)
     for path in [enet_path, lasso_path]:
@@ -621,6 +632,37 @@ def test_sparse_dense_descent_paths():
         assert_array_almost_equal(coefs, sparse_coefs)
 
 
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()
+def test_check_input_false():
+    X, y, _, _ = build_dataset(n_samples=20, n_features=10)
+    X = check_array(X, order='F', dtype='float64')
+    y = check_array(X, order='F', dtype='float64')
+    clf = ElasticNet(selection='cyclic', tol=1e-8)
+    # Check that no error is raised if data is provided in the right format
+    clf.fit(X, y, check_input=False)
+    X = check_array(X, order='F', dtype='float32')
+    clf.fit(X, y, check_input=True)
+    # Check that an error is raised if data is provided in the wrong format,
+    # because of check bypassing
+    assert_raises(ValueError, clf.fit, X, y, check_input=False)
+
+    # With no input checking, providing X in C order should result in false
+    # computation
+    X = check_array(X, order='C', dtype='float64')
+    clf.fit(X, y, check_input=False)
+    coef_false = clf.coef_
+    clf.fit(X, y, check_input=True)
+    coef_true = clf.coef_
+    assert_raises(AssertionError, assert_array_almost_equal,
+                  coef_true, coef_false)
+
+
+def test_overrided_gram_matrix():
+    X, y, _, _ = build_dataset(n_samples=20, n_features=10)
+    Gram = X.T.dot(X)
+    clf = ElasticNet(selection='cyclic', tol=1e-8, precompute=Gram,
+                     fit_intercept=True)
+    assert_warns_message(UserWarning,
+                         "Gram matrix was provided but X was centered"
+                         " to fit intercept, "
+                         "or X was normalized : recomputing Gram matrix.",
+                         clf.fit, X, y)

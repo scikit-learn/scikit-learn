@@ -254,7 +254,7 @@ cdef NodeData_t[::1] get_memview_NodeData_1D(
 CLASS_DOC = \
 """{BinaryTree} for fast generalized N-point problems
 
-{BinaryTree}(X, leaf_size=40, metric='minkowski', **kwargs)
+{BinaryTree}(X, leaf_size=40, metric='minkowski', \\**kwargs)
 
 Parameters
 ----------

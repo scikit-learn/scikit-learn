@@ -11,8 +11,8 @@ from scipy import linalg, optimize
 
 from ..base import BaseEstimator, RegressorMixin
 from ..metrics.pairwise import manhattan_distances
-from ..utils import check_random_state, check_array, check_consistent_length
-from ..utils.validation import  check_is_fitted
+from ..utils import check_random_state, check_array, check_X_y
+from ..utils.validation import check_is_fitted
 from . import regression_models as regression
 from . import correlation_models as correlation
 
@@ -58,6 +58,8 @@ def l1_cross_distances(X):
 
 class GaussianProcess(BaseEstimator, RegressorMixin):
     """The Gaussian Process model class.
+
+    Read more in the :ref:`User Guide <gaussian_process>`.
 
     Parameters
     ----------
@@ -264,12 +266,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self.random_state = check_random_state(self.random_state)
 
         # Force data to 2D numpy.array
-        X = check_array(X)
-        y = np.asarray(y)
+        X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
         self.y_ndim_ = y.ndim
         if y.ndim == 1:
             y = y[:, np.newaxis]
-        check_consistent_length(X, y)
 
         # Check shapes of DOE & observations
         n_samples, n_features = X.shape
@@ -718,17 +718,16 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 else:
                     # Generate a random starting point log10-uniformly
                     # distributed between bounds
-                    log10theta0 = np.log10(self.thetaL) \
-                        + self.random_state.rand(self.theta0.size).reshape(
-                            self.theta0.shape) * np.log10(self.thetaU
-                                                          / self.thetaL)
+                    log10theta0 = (np.log10(self.thetaL)
+                                   + self.random_state.rand(*self.theta0.shape)
+                                   * np.log10(self.thetaU / self.thetaL))
                     theta0 = 10. ** log10theta0
 
                 # Run Cobyla
                 try:
                     log10_optimal_theta = \
                         optimize.fmin_cobyla(minus_reduced_likelihood_function,
-                                             np.log10(theta0), constraints,
+                                             np.log10(theta0).ravel(), constraints,
                                              iprint=0)
                 except ValueError as ve:
                     print("Optimization failed. Try increasing the ``nugget``")
@@ -883,7 +882,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                              "or array of length n_samples.")
 
         # Check optimizer
-        if not self.optimizer in self._optimizer_types:
+        if self.optimizer not in self._optimizer_types:
             raise ValueError("optimizer should be one of %s"
                              % self._optimizer_types)
 

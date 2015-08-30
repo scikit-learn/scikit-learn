@@ -1,50 +1,3 @@
-.. We want the previous/next button to work on the user guide pages and on the
-   API. We have to put the doctree so that sphinx populates the
-   rellinks. Yet, we don't want it to be displayed on the main page, hence we
-   don't display through the css.
-
-.. raw:: html
-
-   <div class="no-display">
-
-.. toctree::
-
-    tutorial/index
-    user_guide
-    auto_examples/index
-    faq
-    support
-    whats_new
-    presentations
-    about
-    documentation
-    datasets/index
-    datasets/covtype
-    datasets/labeled_faces
-    datasets/mldata
-    datasets/olivetti_faces
-    datasets/twenty_newsgroups
-    modules/classes
-    testimonials/testimonials
-    developers/index
-    developers/debugging
-    developers/maintainer
-    developers/performance
-    developers/utilities
-    install
-    tutorial/basic/tutorial
-    tutorial/machine_learning_map/index
-
-
-
-.. raw:: html
-
-   </div>
-
-
-.. This is were the real work starts.
-
-
 .. raw:: html
 
     <!-- Block section -->
@@ -252,6 +205,8 @@
                 <li><em>On-going development:</em>
                 <a href="whats_new.html"><em>What's new</em> (changelog)</a>
                 </li>
+                <li><em>March 2015.</em> scikit-learn 0.16.0 is available for download (<a href="whats_new.html">Changelog</a>).
+                </li>
                 <li><em>July 2014.</em> scikit-learn 0.15.0 is available for download (<a href="whats_new.html">Changelog</a>).
                 </li>
                 <li><em>July 14-20th, 2014: international sprint.</em>
@@ -275,9 +230,9 @@
             <div class="span4">
                 <h4>Community</h4>
                 <ul>
-                <li><em>About us</em> See <a href="about.html">authors</a> # scikit-learn</li>
+                <li><em>About us</em> See <a href="about.html#people">authors</a></li>
                 <li><em>More Machine Learning</em> Find <a href="related_projects.html">related projects</a></li>
-                <li><em>Questions?</em> See <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a> # scikit-learn</li>
+                <li><em>Questions?</em> See <a href="faq/">FAQ</a> and <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
                 <li><em>Mailing list:</em> <a href="https://lists.sourceforge.net/lists/listinfo/scikit-learn-general">scikit-learn-general@lists.sourceforge.net</a></li>
                 <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
                 </ul>
@@ -384,3 +339,16 @@
     <script>
       $('#testimonials_carousel').carousel()
     </script>
+
+.. Define an order for the Table of Contents:
+
+.. toctree::
+    :maxdepth: 2
+    :hidden:
+
+    preface
+    tutorial/index
+    user_guide
+    auto_examples/index
+    modules/classes
+    developers/index

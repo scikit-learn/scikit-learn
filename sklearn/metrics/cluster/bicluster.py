@@ -54,6 +54,8 @@ def consensus_score(a, b, similarity="jaccard"):
     The final score is the sum of similarities divided by the size of
     the larger set.
 
+    Read more in the :ref:`User Guide <biclustering>`.
+
     Parameters
     ----------
     a : (rows, columns)

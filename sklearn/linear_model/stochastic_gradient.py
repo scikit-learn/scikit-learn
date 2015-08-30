@@ -6,7 +6,6 @@
 
 import numpy as np
 import scipy.sparse as sp
-import warnings
 
 from abc import ABCMeta, abstractmethod
 
@@ -15,13 +14,15 @@ from ..externals.joblib import Parallel, delayed
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import (check_array, check_random_state, check_X_y)
+from ..utils import (check_array, check_random_state, check_X_y,
+                     deprecated)
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted
 from ..externals import six
 
 from .sgd_fast import plain_sgd, average_sgd
+from ..utils.fixes import astype
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from ..utils import compute_class_weight
 from .sgd_fast import Hinge
@@ -51,7 +52,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
     """Base class for SGD classification and regression."""
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
-                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=True,
                  verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  warm_start=False, average=False):
@@ -160,7 +161,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             if coef_init is not None:
                 coef_init = np.asarray(coef_init, order="C")
                 if coef_init.shape != (n_classes, n_features):
-                    raise ValueError("Provided coef_ does not match dataset. ")
+                    raise ValueError("Provided ``coef_`` does not match dataset. ")
                 self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros((n_classes, n_features),
@@ -331,7 +332,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
     @abstractmethod
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
-                 fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
+                 fit_intercept=True, n_iter=5, shuffle=True, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  class_weight=None, warm_start=False, average=False):
@@ -511,22 +512,21 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
-        if self.class_weight == 'auto':
-            raise ValueError("class_weight 'auto' is not supported for "
-                             "partial_fit. In order to use 'auto' weights, "
-                             "use compute_class_weight('auto', classes, y). "
+        if self.class_weight in ['balanced', 'auto']:
+            raise ValueError("class_weight '{0}' is not supported for "
+                             "partial_fit. In order to use 'balanced' weights, "
+                             "use compute_class_weight('{0}', classes, y). "
                              "In place of y you can us a large enough sample "
                              "of the full training set target to properly "
                              "estimate the class frequency distributions. "
                              "Pass the resulting weights as the class_weight "
-                             "parameter.")
+                             "parameter.".format(self.class_weight))
         return self._partial_fit(X, y, alpha=self.alpha, C=1.0, loss=self.loss,
                                  learning_rate=self.learning_rate, n_iter=1,
                                  classes=classes, sample_weight=sample_weight,
                                  coef_init=None, intercept_init=None)
 
-    def fit(self, X, y, coef_init=None, intercept_init=None,
-            class_weight=None, sample_weight=None):
+    def fit(self, X, y, coef_init=None, intercept_init=None, sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -553,11 +553,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
-        if class_weight is not None:
-            warnings.warn("You are trying to set class_weight through the fit "
-                          "method, which is deprecated and will be removed in"
-                          "v0.17 of scikit-learn. Pass the class_weight into "
-                          "the constructor instead.", DeprecationWarning)
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
@@ -586,6 +581,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     parameter update crosses the 0.0 value because of the regularizer, the
     update is truncated to 0.0 to allow for learning sparse models and achieve
     online feature selection.
+
+    Read more in the :ref:`User Guide <sgd>`.
 
     Parameters
     ----------
@@ -627,7 +624,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     shuffle : bool, optional
         Whether or not the training data should be shuffled after each epoch.
-        Defaults to False.
+        Defaults to True.
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
@@ -664,14 +661,15 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     power_t : double
         The exponent for inverse scaling learning rate [default 0.5].
 
-    class_weight : dict, {class_label: weight} or "auto" or None, optional
+    class_weight : dict, {class_label: weight} or "balanced" or None, optional
         Preset for the class_weight fit parameter.
 
         Weights associated with classes. If not given, all classes
         are supposed to have weight one.
 
-        The "auto" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies.
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
@@ -679,7 +677,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
-        result in the coef_ attribute. If set to an int greater than 1,
+        result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
         average. So average=10 will begin averaging after seeing 10 samples.
 
@@ -704,7 +702,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
             eta0=0.0, fit_intercept=True, l1_ratio=0.15,
             learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
-            penalty='l2', power_t=0.5, random_state=None, shuffle=False,
+            penalty='l2', power_t=0.5, random_state=None, shuffle=True,
             verbose=0, warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -716,7 +714,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     """
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
-                 fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
+                 fit_intercept=True, n_iter=5, shuffle=True, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  class_weight=None, warm_start=False, average=False):
@@ -853,7 +851,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     @abstractmethod
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=True,
                  verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
                  warm_start=False, average=False):
@@ -873,7 +871,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                      n_iter, sample_weight,
                      coef_init, intercept_init):
         X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
-        y = y.astype(np.float64)
+        y = astype(y, np.float64, copy=False)
 
         n_samples, n_features = X.shape
 
@@ -981,7 +979,22 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                          intercept_init=intercept_init,
                          sample_weight=sample_weight)
 
+    @deprecated(" and will be removed in 0.19.")
     def decision_function(self, X):
+        """Predict using the linear model
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+
+        Returns
+        -------
+        array, shape (n_samples,)
+           Predicted target values per element in X.
+        """
+        return self._decision_function(X)
+
+    def _decision_function(self, X):
         """Predict using the linear model
 
         Parameters
@@ -1013,7 +1026,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape (n_samples,)
            Predicted target values per element in X.
         """
-        return self.decision_function(X)
+        return self._decision_function(X)
 
     def _fit_regressor(self, X, y, alpha, C, loss, learning_rate,
                        sample_weight, n_iter):
@@ -1104,6 +1117,8 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     This implementation works with data represented as dense numpy arrays of
     floating point values for the features.
 
+    Read more in the :ref:`User Guide <sgd>`.
+
     Parameters
     ----------
     loss : str, 'squared_loss', 'huber', 'epsilon_insensitive', \
@@ -1141,7 +1156,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     shuffle : bool, optional
         Whether or not the training data should be shuffled after each epoch.
-        Defaults to False.
+        Defaults to True.
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
@@ -1176,9 +1191,9 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
-        result in the coef_ attribute. If set to an int greater than 1,
+        result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
-        average. So average=10 will begin averaging after seeing 10 samples.
+        average. So ``average=10 will`` begin averaging after seeing 10 samples.
 
     Attributes
     ----------
@@ -1188,10 +1203,10 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     intercept_ : array, shape (1,)
         The intercept term.
 
-    `average_coef_` : array, shape (n_features,)
+    average_coef_ : array, shape (n_features,)
         Averaged weights assigned to the features.
 
-    `average_intercept_` : array, shape (1,)
+    average_intercept_ : array, shape (1,)
         The averaged intercept term.
 
     Examples
@@ -1208,7 +1223,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     SGDRegressor(alpha=0.0001, average=False, epsilon=0.1, eta0=0.01,
                  fit_intercept=True, l1_ratio=0.15, learning_rate='invscaling',
                  loss='squared_loss', n_iter=5, penalty='l2', power_t=0.25,
-                 random_state=None, shuffle=False, verbose=0, warm_start=False)
+                 random_state=None, shuffle=True, verbose=0, warm_start=False)
 
     See also
     --------
@@ -1216,7 +1231,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=True,
                  verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
                  warm_start=False, average=False):

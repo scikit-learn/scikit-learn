@@ -36,6 +36,8 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     The time complexity of this implementation is ``O(d ** 2)`` assuming
     d ~ n_features ~ n_components.
 
+    Read more in the :ref:`User Guide <rbm>`.
+
     Parameters
     ----------
     n_components : int, optional
@@ -210,10 +212,10 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             Values of the visible layer after one Gibbs step.
         """
         check_is_fitted(self, "components_")
-
-        rng = check_random_state(self.random_state)
-        h_ = self._sample_hiddens(v, rng)
-        v_ = self._sample_visibles(h_, rng)
+        if not hasattr(self, "random_state_"):
+            self.random_state_ = check_random_state(self.random_state)
+        h_ = self._sample_hiddens(v, self.random_state_)
+        v_ = self._sample_visibles(h_, self.random_state_)
 
         return v_
 

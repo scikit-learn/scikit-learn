@@ -28,8 +28,20 @@ except ImportError:
     from urllib.request import urlopen
     from urllib.error import HTTPError
 
+import tempfile
+import shutil
+import os.path as op
+import atexit
+
+# WindowsError only exist on Windows
+try:
+    WindowsError
+except NameError:
+    WindowsError = None
+
 import sklearn
 from sklearn.base import BaseEstimator
+from sklearn.externals import joblib
 
 # Conveniently import all assertions in one place.
 from nose.tools import assert_equal
@@ -72,7 +84,7 @@ except ImportError:
 try:
     from nose.tools import assert_raises_regex
 except ImportError:
-    # for Py 2.6
+    # for Python 2
     def assert_raises_regex(expected_exception, expected_regexp,
                             callable_obj=None, *args, **kwargs):
         """Helper function to check for message patterns in exceptions"""
@@ -81,15 +93,16 @@ except ImportError:
         try:
             callable_obj(*args, **kwargs)
             not_raised = True
-        except Exception as e:
+        except expected_exception as e:
             error_message = str(e)
             if not re.compile(expected_regexp).search(error_message):
                 raise AssertionError("Error message should match pattern "
                                      "%r. %r does not." %
                                      (expected_regexp, error_message))
         if not_raised:
-            raise AssertionError("Should have raised %r" %
-                                 expected_exception(expected_regexp))
+            raise AssertionError("%s not raised by %s" %
+                                 (expected_exception.__name__,
+                                  callable_obj.__name__))
 
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
 # assert_raises_regex but lets keep the bacward compat in scikit-learn with
@@ -212,7 +225,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
             raise AssertionError("No warning raised when calling %s"
                                  % func.__name__)
 
-        found = [warning.category is warning_class for warning in w]
+        found = [issubclass(warning.category, warning_class) for warning in w]
         if not any(found):
             raise AssertionError("No warning raised for %s with class "
                                  "%s"
@@ -235,8 +248,8 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
         if not message_found:
             raise AssertionError("Did not receive the message you expected "
-                                 "('%s') for <%s>."
-                                 % (message, func.__name__))
+                                 "('%s') for <%s>, got: '%s'"
+                                 % (message, func.__name__, msg))
 
     return result
 
@@ -387,15 +400,38 @@ else:
     assert_allclose = _assert_allclose
 
 
-def assert_raise_message(exception, message, function, *args, **kwargs):
-    """Helper function to test error messages in exceptions"""
+def assert_raise_message(exceptions, message, function, *args, **kwargs):
+    """Helper function to test error messages in exceptions
 
+    Parameters
+    ----------
+    exceptions : exception or tuple of exception
+        Name of the estimator
+
+    func : callable
+        Calable object to raise error
+
+    *args : the positional arguments to `func`.
+
+    **kw : the keyword arguments to `func`
+    """
     try:
         function(*args, **kwargs)
-        raise AssertionError("Should have raised %r" % exception(message))
-    except exception as e:
+    except exceptions as e:
         error_message = str(e)
-        assert_in(message, error_message)
+        if message not in error_message:
+            raise AssertionError("Error message does not include the expected"
+                                 " string: %r. Observed error message: %r" %
+                                 (message, error_message))
+    else:
+        # concatenate exception names
+        if isinstance(exceptions, tuple):
+            names = " or ".join(e.__name__ for e in exceptions)
+        else:
+            names = exceptions.__name__
+
+        raise AssertionError("%s not raised by %s" %
+                             (names, function.__name__))
 
 
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):
@@ -509,7 +545,8 @@ DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
              # exclude them in another way
              'ZeroEstimator', 'ScaledLogOddsEstimator',
              'QuantileEstimator', 'MeanEstimator',
-             'LogOddsEstimator', 'PriorProbabilityEstimator']
+             'LogOddsEstimator', 'PriorProbabilityEstimator',
+             '_SigmoidCalibration', 'VotingClassifier']
 
 
 def all_estimators(include_meta_estimators=False,
@@ -624,8 +661,9 @@ def if_matplotlib(func):
             import matplotlib
             matplotlib.use('Agg', warn=False)
             # this fails if no $DISPLAY specified
-            matplotlib.pylab.figure()
-        except:
+            import matplotlib.pyplot as plt
+            plt.figure()
+        except ImportError:
             raise SkipTest('Matplotlib not available.')
         else:
             return func(*args, **kwargs)
@@ -670,6 +708,37 @@ def check_skip_travis():
     """Skip test if being run on Travis."""
     if os.environ.get('TRAVIS') == "true":
         raise SkipTest("This test needs to be skipped on Travis")
+
+
+def _delete_folder(folder_path, warn=False):
+    """Utility function to cleanup a temporary folder if still existing.
+    Copy from joblib.pool (for independance)"""
+    try:
+        if os.path.exists(folder_path):
+            # This can fail under windows,
+            #  but will succeed when called by atexit
+            shutil.rmtree(folder_path)
+    except WindowsError:
+        if warn:
+            warnings.warn("Could not delete temporary folder %s" % folder_path)
+
+
+class TempMemmap(object):
+    def __init__(self, data, mmap_mode='r'):
+        self.temp_folder = tempfile.mkdtemp(prefix='sklearn_testing_')
+        self.mmap_mode = mmap_mode
+        self.data = data
+
+    def __enter__(self):
+        fpath = op.join(self.temp_folder, 'data.pkl')
+        joblib.dump(self.data, fpath)
+        data_read_only = joblib.load(fpath, mmap_mode=self.mmap_mode)
+        atexit.register(lambda: _delete_folder(self.temp_folder, warn=True))
+        return data_read_only
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        _delete_folder(self.temp_folder)
+
 
 with_network = with_setup(check_skip_network)
 with_travis = with_setup(check_skip_travis)

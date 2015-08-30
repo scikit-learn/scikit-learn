@@ -9,7 +9,7 @@ from sklearn.utils.testing import assert_raises_regexp
 
 
 def test_silhouette():
-    """Tests the Silhouette Coefficient. """
+    # Tests the Silhouette Coefficient.
     dataset = datasets.load_iris()
     X = dataset.data
     y = dataset.target
@@ -39,10 +39,8 @@ def test_silhouette():
 
 
 def test_no_nan():
-    """Assert Silhouette Coefficient != nan when there is 1 sample in a class.
-
-        This tests for the condition that caused issue 960.
-    """
+    # Assert Silhouette Coefficient != nan when there is 1 sample in a class.
+    # This tests for the condition that caused issue 960.
     # Note that there is only one sample in cluster 0. This used to cause the
     # silhouette_score to return nan (see bug #960).
     labels = np.array([1, 0, 1, 1, 1])
@@ -53,22 +51,20 @@ def test_no_nan():
 
 
 def test_correct_labelsize():
-    """ Assert 2 <= n_labels <= nsample -1 """
+    # Assert 1 < n_labels < n_samples
     dataset = datasets.load_iris()
     X = dataset.data
 
     # n_labels = n_samples
     y = np.arange(X.shape[0])
     assert_raises_regexp(ValueError,
-                         "Number of labels is %d "
-                         "but should be more than 2"
-                         "and less than n_samples - 1" % len(np.unique(y)),
+                         'Number of labels is %d\. Valid values are 2 '
+                         'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
                          silhouette_score, X, y)
 
     # n_labels = 1
     y = np.zeros(X.shape[0])
     assert_raises_regexp(ValueError,
-                         "Number of labels is %d "
-                         "but should be more than 2"
-                         "and less than n_samples - 1" % len(np.unique(y)),
+                         'Number of labels is %d\. Valid values are 2 '
+                         'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
                          silhouette_score, X, y)

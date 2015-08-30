@@ -21,7 +21,7 @@ from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import check_X_y
-from ..utils import compute_sample_weight, compute_class_weight
+from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
@@ -185,16 +185,6 @@ def _solve_svd(X, y, alpha):
     return np.dot(Vt.T, d_UT_y).T
 
 
-def _deprecate_dense_cholesky(solver):
-    if solver == 'dense_cholesky':
-        warnings.warn(DeprecationWarning(
-            "The name 'dense_cholesky' is deprecated and will "
-            "be removed in 0.17. Use 'cholesky' instead. "))
-        solver = 'cholesky'
-
-    return solver
-
-
 def _rescale_data(X, y, sample_weight):
     """Rescale data so as to support sample_weight"""
     n_samples = X.shape[0]
@@ -210,6 +200,8 @@ def _rescale_data(X, y, sample_weight):
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3, verbose=0):
     """Solve the ridge equation by the method of normal equations.
+
+    Read more in the :ref:`User Guide <ridge_regression>`.
 
     Parameters
     ----------
@@ -291,8 +283,6 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                          " %d != %d" % (n_samples, n_samples_))
 
     has_sw = sample_weight is not None
-
-    solver = _deprecate_dense_cholesky(solver)
 
     if solver == 'auto':
         # cholesky if it's a dense array and cg in
@@ -378,7 +368,8 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.solver = solver
 
     def fit(self, X, y, sample_weight=None):
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float, multi_output=True)
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float,
+                         multi_output=True, y_numeric=True)
 
         if ((sample_weight is not None) and
                 np.atleast_1d(sample_weight).ndim > 1):
@@ -388,14 +379,12 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
-        solver = _deprecate_dense_cholesky(self.solver)
-
         self.coef_ = ridge_regression(X, y,
                                       alpha=self.alpha,
                                       sample_weight=sample_weight,
                                       max_iter=self.max_iter,
                                       tol=self.tol,
-                                      solver=solver)
+                                      solver=self.solver)
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
@@ -408,6 +397,8 @@ class Ridge(_BaseRidge, RegressorMixin):
     the l2-norm. Also known as Ridge Regression or Tikhonov regularization.
     This estimator has built-in support for multi-variate regression
     (i.e., when y is a 2d-array of shape [n_samples, n_targets]).
+
+    Read more in the :ref:`User Guide <ridge_regression>`.
 
     Parameters
     ----------
@@ -465,6 +456,10 @@ class Ridge(_BaseRidge, RegressorMixin):
     coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
+    intercept_ : float | array, shape = (n_targets,)
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
+
     See also
     --------
     RidgeClassifier, RidgeCV, KernelRidge
@@ -512,6 +507,8 @@ class Ridge(_BaseRidge, RegressorMixin):
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     """Classifier using Ridge regression.
 
+    Read more in the :ref:`User Guide <ridge_regression>`.
+
     Parameters
     ----------
     alpha : float
@@ -520,10 +517,13 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         ``(2*C)^-1`` in other linear models such as LogisticRegression or
         LinearSVC.
 
-    class_weight : dict, optional
-        Weights associated with classes in the form
-        ``{class_label : weight}``. If not given, all classes are
-        supposed to have weight one.
+    class_weight : dict or 'balanced', optional
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
+
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -558,6 +558,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     coef_ : array, shape = [n_features] or [n_classes, n_features]
         Weight vector(s).
 
+    intercept_ : float | array, shape = (n_targets,)
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
+
     See also
     --------
     Ridge, RidgeClassifierCV
@@ -576,7 +580,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver)
         self.class_weight = class_weight
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model.
 
         Parameters
@@ -586,6 +590,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
         y : array-like, shape = [n_samples]
             Target values
+
+        sample_weight : float or numpy array of shape (n_samples,)
+            Sample weight.
 
         Returns
         -------
@@ -597,10 +604,11 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             y = column_or_1d(y, warn=True)
 
         if self.class_weight:
-            # get the class weight corresponding to each sample
-            sample_weight = compute_sample_weight(self.class_weight, y)
-        else:
-            sample_weight = None
+            if sample_weight is None:
+                sample_weight = 1.
+            # modify the sample weights with the corresponding class weight
+            sample_weight = (sample_weight *
+                             compute_sample_weight(self.class_weight, y))
 
         super(RidgeClassifier, self).fit(X, Y, sample_weight=sample_weight)
         return self
@@ -649,7 +657,7 @@ class _RidgeGCV(LinearModel):
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
-    def __init__(self, alphas=[0.1, 1.0, 10.0],
+    def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False,
                  scoring=None, copy_X=True,
                  gcv_mode=None, store_cv_values=False):
@@ -743,7 +751,8 @@ class _RidgeGCV(LinearModel):
         -------
         self : Returns self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float, multi_output=True)
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float,
+                         multi_output=True, y_numeric=True)
 
         n_samples, n_features = X.shape
 
@@ -828,7 +837,7 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
-    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
+    def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
                  store_cv_values=False):
@@ -874,10 +883,7 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
-            # FIXME: sample_weight must be split into training/validation data
-            #        too!
-            #fit_params = {'sample_weight' : sample_weight}
-            fit_params = {}
+            fit_params = {'sample_weight': sample_weight}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
                               parameters, fit_params=fit_params, cv=self.cv)
             gs.fit(X, y)
@@ -895,6 +901,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation.
+
+    Read more in the :ref:`User Guide <ridge_regression>`.
 
     Parameters
     ----------
@@ -957,12 +965,12 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
-    alpha_ : float
-        Estimated regularization parameter.
-
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
+
+    alpha_ : float
+        Estimated regularization parameter.
 
     See also
     --------
@@ -979,6 +987,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     By default, it performs Generalized Cross-Validation, which is a form of
     efficient Leave-One-Out cross-validation. Currently, only the n_features >
     n_samples case is handled efficiently.
+
+    Read more in the :ref:`User Guide <ridge_regression>`.
 
     Parameters
     ----------
@@ -1006,10 +1016,13 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         If None, Generalized Cross-Validation (efficient Leave-One-Out)
         will be used.
 
-    class_weight : dict, optional
-        Weights associated with classes in the form
-        ``{class_label : weight}``. If not given, all classes are
-        supposed to have weight one.
+    class_weight : dict or 'balanced', optional
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
+
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
     Attributes
     ----------
@@ -1022,6 +1035,10 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
+
+    intercept_ : float | array, shape = (n_targets,)
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
 
     alpha_ : float
         Estimated regularization parameter
@@ -1038,7 +1055,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
-    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
+    def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
                  normalize=False, scoring=None, cv=None, class_weight=None):
         super(RidgeClassifierCV, self).__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
@@ -1065,16 +1082,18 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         self : object
             Returns self.
         """
-        if sample_weight is None:
-            sample_weight = 1.
-
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.y_type_.startswith('multilabel'):
             y = column_or_1d(y, warn=True)
-        # modify the sample weights with the corresponding class weight
-        sample_weight = (sample_weight *
-                         compute_sample_weight(self.class_weight, y))
+
+        if self.class_weight:
+            if sample_weight is None:
+                sample_weight = 1.
+            # modify the sample weights with the corresponding class weight
+            sample_weight = (sample_weight *
+                             compute_sample_weight(self.class_weight, y))
+
         _BaseRidgeCV.fit(self, X, Y, sample_weight=sample_weight)
         return self
 

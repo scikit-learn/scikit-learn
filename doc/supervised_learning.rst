@@ -22,3 +22,4 @@ Supervised learning
     modules/feature_selection.rst
     modules/label_propagation.rst
     modules/isotonic.rst
+    modules/calibration.rst

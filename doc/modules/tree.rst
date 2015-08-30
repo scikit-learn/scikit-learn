@@ -90,7 +90,7 @@ Classification
 :class:`DecisionTreeClassifier` is a class capable of performing multi-class
 classification on a dataset.
 
-As other classifiers, :class:`DecisionTreeClassifier` take as input two arrays:
+As with other classifiers, :class:`DecisionTreeClassifier` takes as input two arrays:
 an array X, sparse or dense, of size ``[n_samples, n_features]``  holding the
 training samples, and an array Y of integer values, size ``[n_samples]``,
 holding the class labels for the training samples::
@@ -101,10 +101,16 @@ holding the class labels for the training samples::
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf = clf.fit(X, Y)
 
-After being fitted, the model can then be used to predict new values::
+After being fitted, the model can then be used to predict the class of samples::
 
     >>> clf.predict([[2., 2.]])
     array([1])
+
+Alternatively, the probability of each class can be predicted, which is the
+fraction of training samples of the same class in a leaf::
+
+    >>> clf.predict_proba([[2., 2.]])
+    array([[ 0.,  1.]])
 
 :class:`DecisionTreeClassifier` is capable of both binary (where the
 labels are [-1, 1]) classification and multiclass (where the labels are
@@ -145,6 +151,21 @@ a PDF file (or any other supported file type) directly in Python::
     >>> graph = pydot.graph_from_dot_data(dot_data.getvalue()) # doctest: +SKIP
     >>> graph.write_pdf("iris.pdf") # doctest: +SKIP
 
+The :func:`export_graphviz` exporter also supports a variety of aesthetic
+options, including coloring nodes by their class (or value for regression) and
+using explicit variable and class names if desired. IPython notebooks can also
+render these plots inline using the `Image()` function::
+
+    >>> from IPython.display import Image  # doctest: +SKIP
+    >>> dot_data = StringIO()  # doctest: +SKIP
+    >>> tree.export_graphviz(clf, out_file=dot_data,  # doctest: +SKIP
+                             feature_names=iris.feature_names,  # doctest: +SKIP
+                             class_names=iris.target_names,  # doctest: +SKIP
+                             filled=True, rounded=True,  # doctest: +SKIP
+                             special_characters=True)  # doctest: +SKIP
+    >>> graph = pydot.graph_from_dot_data(dot_data.getvalue())  # doctest: +SKIP
+    >>> Image(graph.create_png())  # doctest: +SKIP
+
 .. only:: html
 
     .. figure:: ../images/iris.svg
@@ -155,10 +176,16 @@ a PDF file (or any other supported file type) directly in Python::
     .. figure:: ../images/iris.pdf
        :align: center
 
-After being fitted, the model can then be used to predict new values::
+After being fitted, the model can then be used to predict the class of samples::
 
     >>> clf.predict(iris.data[:1, :])
     array([0])
+
+Alternatively, the probability of each class can be predicted, which is the
+fraction of training samples of the same class in a leaf::
+
+    >>> clf.predict_proba(iris.data[:1, :])
+    array([[ 1.,  0.,  0.]])
 
 .. figure:: ../auto_examples/tree/images/plot_iris_001.png
    :target: ../auto_examples/tree/plot_iris.html

@@ -14,6 +14,8 @@ import inspect
 import warnings
 import sys
 import functools
+import os
+import errno
 
 import numpy as np
 import scipy.sparse as sp
@@ -103,7 +105,7 @@ try:
 except TypeError:
     # Compat where astype accepted no copy argument
     def astype(array, dtype, copy=True):
-        if array.dtype == dtype:
+        if not copy and array.dtype == dtype:
             return array
         return array.astype(dtype)
 else:
@@ -226,7 +228,7 @@ except ImportError:
         """
         def within_tol(x, y, atol, rtol):
             with np.errstate(invalid='ignore'):
-                result = np.less_equal(abs(x-y), atol + rtol * abs(y))
+                result = np.less_equal(abs(x - y), atol + rtol * abs(y))
             if np.isscalar(a) and np.isscalar(b):
                 result = bool(result)
             return result
@@ -351,3 +353,25 @@ if np_version < (1, 6, 2):
 
 else:
     from numpy import bincount
+
+
+if 'exist_ok' in inspect.getargspec(os.makedirs).args:
+    makedirs = os.makedirs
+else:
+    def makedirs(name, mode=0o777, exist_ok=False):
+        """makedirs(name [, mode=0o777][, exist_ok=False])
+
+        Super-mkdir; create a leaf directory and all intermediate ones.  Works
+        like mkdir, except that any intermediate path segment (not just the
+        rightmost) will be created if it does not exist. If the target
+        directory already exists, raise an OSError if exist_ok is False.
+        Otherwise no exception is raised.  This is recursive.
+
+        """
+
+        try:
+            os.makedirs(name, mode=mode)
+        except OSError as e:
+            if (not exist_ok or e.errno != errno.EEXIST
+                    or not os.path.isdir(name)):
+                raise

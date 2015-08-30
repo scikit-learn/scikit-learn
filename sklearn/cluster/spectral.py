@@ -170,6 +170,8 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     If affinity is the adjacency matrix of a graph, this method can be
     used to find normalized graph cuts.
 
+    Read more in the :ref:`User Guide <spectral_clustering>`.
+
     Parameters
     -----------
     affinity : array-like or sparse matrix, shape: (n_samples, n_samples)
@@ -184,7 +186,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     n_clusters : integer, optional
         Number of clusters to extract.
 
-    n_components : integer, optional, default is k
+    n_components : integer, optional, default is n_clusters
         Number of eigen vectors to use for the spectral embedding
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
@@ -286,6 +288,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     Alternatively, using ``precomputed``, a user-provided affinity
     matrix can be used.
+
+    Read more in the :ref:`User Guide <spectral_clustering>`.
 
     Parameters
     -----------
@@ -424,7 +428,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                           "set ``affinity=precomputed``.")
 
         if self.affinity == 'nearest_neighbors':
-            connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors)
+            connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors, include_self=True)
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
         elif self.affinity == 'precomputed':
             self.affinity_matrix_ = X

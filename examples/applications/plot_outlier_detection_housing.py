@@ -110,7 +110,7 @@ plt.legend((legend1_values_list[0].collections[0],
            loc="upper center",
            prop=matplotlib.font_manager.FontProperties(size=12))
 plt.ylabel("accessibility to radial highways")
-plt.xlabel("pupil-teatcher ratio by town")
+plt.xlabel("pupil-teacher ratio by town")
 
 legend2_values_list = list( legend2.values() )
 legend2_keys_list = list( legend2.keys() )

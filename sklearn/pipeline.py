@@ -37,12 +37,20 @@ class Pipeline(BaseEstimator):
     For this, it enables setting parameters of the various steps using their
     names and the parameter name separated by a '__', as in the example below.
 
+    Read more in the :ref:`User Guide <pipeline>`.
+
     Parameters
     ----------
-    steps: list
+    steps : list
         List of (name, transform) tuples (implementing fit/transform) that are
         chained, in the order in which they are chained, with the last object
         an estimator.
+
+    Attributes
+    ----------
+    named_steps : dict
+        Read-only attribute to access any step parameter by user given name.
+        Keys are step names and values are steps parameters.
 
     Examples
     --------
@@ -67,18 +75,23 @@ class Pipeline(BaseEstimator):
     >>> prediction = anova_svm.predict(X)
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
     0.77...
+    >>> # getting the selected features chosen by anova_filter
+    >>> anova_svm.named_steps['anova'].get_support()
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([ True,  True,  True, False, False,  True, False,  True,  True, True,
+           False, False,  True, False,  True, False, False, False, False,
+           True], dtype=bool)
     """
 
     # BaseEstimator interface
 
     def __init__(self, steps):
-        self.named_steps = dict(steps)
         names, estimators = zip(*steps)
-        if len(self.named_steps) != len(steps):
-            raise ValueError("Names provided are not unique: %s" % (names,))
+        if len(dict(steps)) != len(steps):
+            raise ValueError("Provided step names are not unique: %s" % (names,))
 
         # shallow copy of steps
-        self.steps = tosequence(zip(names, estimators))
+        self.steps = tosequence(steps)
         transforms = estimators[:-1]
         estimator = estimators[-1]
 
@@ -94,15 +107,25 @@ class Pipeline(BaseEstimator):
                             "'%s' (type %s) doesn't)"
                             % (estimator, type(estimator)))
 
+    @property
+    def _estimator_type(self):
+        return self.steps[-1][1]._estimator_type
+
     def get_params(self, deep=True):
         if not deep:
             return super(Pipeline, self).get_params(deep=False)
         else:
-            out = self.named_steps.copy()
+            out = self.named_steps
             for name, step in six.iteritems(self.named_steps):
                 for key, value in six.iteritems(step.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value
+
+            out.update(super(Pipeline, self).get_params(deep=False))
             return out
+
+    @property
+    def named_steps(self):
+        return dict(self.steps)
 
     @property
     def _final_estimator(self):
@@ -178,6 +201,26 @@ class Pipeline(BaseEstimator):
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict(Xt)
+
+    @if_delegate_has_method(delegate='_final_estimator')
+    def fit_predict(self, X, y=None, **fit_params):
+        """Applies fit_predict of last step in pipeline after transforms.
+
+        Applies fit_transforms of a pipeline to the data, followed by the
+        fit_predict method of the final estimator in the pipeline. Valid
+        only if the final estimator implements fit_predict.
+
+        Parameters
+        ----------
+        X : iterable
+            Training data. Must fulfill input requirements of first step of
+            the pipeline.
+        y : iterable, default=None
+            Training targets. Must fulfill label requirements for all steps
+            of the pipeline.
+        """
+        Xt, fit_params = self._pre_transform(X, y, **fit_params)
+        return self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict_proba(self, X):
@@ -378,6 +421,8 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
     input data, then concatenates the results. This is useful to combine
     several feature extraction mechanisms into a single transformer.
 
+    Read more in the :ref:`User Guide <feature_union>`.
+
     Parameters
     ----------
     transformer_list: list of (string, transformer) tuples
@@ -487,6 +532,7 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
             for name, trans in self.transformer_list:
                 for key, value in iteritems(trans.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value
+            out.update(super(FeatureUnion, self).get_params(deep=False))
             return out
 
     def _update_transformer_list(self, transformers):

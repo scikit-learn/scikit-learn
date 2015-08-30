@@ -14,6 +14,7 @@ from scipy.sparse.linalg import lobpcg
 from ..base import BaseEstimator
 from ..externals import six
 from ..utils import check_random_state, check_array, check_symmetric
+from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.graph import graph_laplacian
 from ..utils.sparsetools import connected_components
 from ..utils.arpack import eigsh
@@ -22,7 +23,7 @@ from ..neighbors import kneighbors_graph
 
 
 def _graph_connected_component(graph, node_id):
-    """Find the largest graph connected components the contains one
+    """Find the largest graph connected components that contains one
     given node
 
     Parameters
@@ -37,11 +38,12 @@ def _graph_connected_component(graph, node_id):
     Returns
     -------
     connected_components_matrix : array-like, shape: (n_samples,)
-        An array of bool value indicates the indexes of the nodes
-        belong to the largest connected components of the given query
+        An array of bool value indicating the indexes of the nodes
+        belonging to the largest connected components of the given query
         node
     """
-    connected_components_matrix = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
+    connected_components_matrix = np.zeros(
+        shape=(graph.shape[0]), dtype=np.bool)
     connected_components_matrix[node_id] = True
     n_node = graph.shape[0]
     for i in range(n_node):
@@ -119,11 +121,11 @@ def _set_diag(laplacian, value):
 def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
                        norm_laplacian=True, drop_first=True):
-    """Project the sample on the first eigen vectors of the graph Laplacian.
+    """Project the sample on the first eigenvectors of the graph Laplacian.
 
     The adjacency matrix is used to compute a normalized graph Laplacian
-    whose spectrum (especially the eigen vectors associated to the
-    smallest eigen values) has an interpretation in terms of minimal
+    whose spectrum (especially the eigenvectors associated to the
+    smallest eigenvalues) has an interpretation in terms of minimal
     number of cuts necessary to split the graph into comparably sized
     components.
 
@@ -133,7 +135,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     heat kernel of a euclidean distance matrix or a k-NN matrix).
 
     However care must taken to always make the affinity matrix symmetric
-    so that the eigen vector decomposition works as expected.
+    so that the eigenvector decomposition works as expected.
+
+    Read more in the :ref:`User Guide <spectral_embedding>`.
 
     Parameters
     ----------
@@ -150,7 +154,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization of the
-        lobpcg eigen vectors decomposition when eigen_solver == 'amg'.
+        lobpcg eigenvectors decomposition when eigen_solver == 'amg'.
         By default, arpack is used.
 
     eigen_tol : float, optional, default=0.0
@@ -165,7 +169,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     norm_laplacian : bool, optional, default=True
         If True, then compute normalized Laplacian.
- 
+
     Returns
     -------
     embedding : array, shape=(n_samples, n_components)
@@ -197,7 +201,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     if eigen_solver is None:
         eigen_solver = 'arpack'
-    elif not eigen_solver in ('arpack', 'lobpcg', 'amg'):
+    elif eigen_solver not in ('arpack', 'lobpcg', 'amg'):
         raise ValueError("Unknown value for eigen_solver: '%s'."
                          "Should be 'amg', 'arpack', or 'lobpcg'"
                          % eigen_solver)
@@ -261,7 +265,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # problem.
         if not sparse.issparse(laplacian):
             warnings.warn("AMG works better for sparse matrices")
-        laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
+        # lobpcg needs double precision floats
+        laplacian = check_array(laplacian, dtype=np.float64,
+                                accept_sparse=True)
         laplacian = _set_diag(laplacian, 1)
         ml = smoothed_aggregation_solver(check_array(laplacian, 'csr'))
         M = ml.aspreconditioner()
@@ -274,7 +280,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             raise ValueError
 
     elif eigen_solver == "lobpcg":
-        laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
+        # lobpcg needs double precision floats
+        laplacian = check_array(laplacian, dtype=np.float64,
+                                accept_sparse=True)
         if n_nodes < 5 * n_components + 1:
             # see note above under arpack why lobpcg has problems with small
             # number of nodes
@@ -284,8 +292,6 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             lambdas, diffusion_map = eigh(laplacian)
             embedding = diffusion_map.T[:n_components] * dd
         else:
-            # lobpcg needs native floats
-            laplacian = laplacian.astype(np.float)
             laplacian = _set_diag(laplacian, 1)
             # We increase the number of eigenvectors requested, as lobpcg
             # doesn't behave well in low dimension
@@ -296,6 +302,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             embedding = diffusion_map.T[:n_components] * dd
             if embedding.shape[0] == 1:
                 raise ValueError
+
+    embedding = _deterministic_vector_sign_flip(embedding)
     if drop_first:
         return embedding[1:n_components].T
     else:
@@ -310,6 +318,8 @@ class SpectralEmbedding(BaseEstimator):
     The resulting transformation is given by the value of the
     eigenvectors for each data point.
 
+    Read more in the :ref:`User Guide <spectral_embedding>`.
+
     Parameters
     -----------
     n_components : integer, default: 2
@@ -322,7 +332,7 @@ class SpectralEmbedding(BaseEstimator):
 
     random_state : int seed, RandomState instance, or None, default : None
         A pseudo random number generator used for the initialization of the
-        lobpcg eigen vectors decomposition when eigen_solver == 'amg'.
+        lobpcg eigenvectors decomposition when eigen_solver == 'amg'.
 
     affinity : string or callable, default : "nearest_neighbors"
         How to construct the affinity matrix.
@@ -379,11 +389,11 @@ class SpectralEmbedding(BaseEstimator):
         return self.affinity == "precomputed"
 
     def _get_affinity_matrix(self, X, Y=None):
-        """Caclulate the affinity matrix from data
+        """Calculate the affinity matrix from data
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
+            Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
             If affinity is "precomputed"
@@ -408,7 +418,8 @@ class SpectralEmbedding(BaseEstimator):
                 self.n_neighbors_ = (self.n_neighbors
                                      if self.n_neighbors is not None
                                      else max(int(X.shape[0] / 10), 1))
-                self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors_)
+                self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors_,
+                                                         include_self=True)
                 # currently only symmetric affinity_matrix supported
                 self.affinity_matrix_ = 0.5 * (self.affinity_matrix_ +
                                                self.affinity_matrix_.T)
@@ -427,7 +438,7 @@ class SpectralEmbedding(BaseEstimator):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
+            Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
             If affinity is "precomputed"
@@ -464,7 +475,7 @@ class SpectralEmbedding(BaseEstimator):
         Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples
+            Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
             If affinity is "precomputed"

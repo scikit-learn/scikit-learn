@@ -5,7 +5,6 @@
 
 import numpy as np
 from scipy import sparse
-import warnings
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -18,9 +17,7 @@ from sklearn.datasets.samples_generator import make_regression
 
 
 def test_linear_regression():
-    """
-    Test LinearRegression on a simple dataset.
-    """
+    # Test LinearRegression on a simple dataset.
     # a simple dataset
     X = [[1], [2]]
     Y = [1, 2]
@@ -43,23 +40,8 @@ def test_linear_regression():
     assert_array_almost_equal(clf.predict(X), [0])
 
 
-def test_linear_regression_n_jobs():
-    """
-    Test for the n_jobs parameter on the fit method and the constructor
-    """
-    X = [[1], [2]]
-    Y = [1, 2]
-    clf = LinearRegression()
-    with warnings.catch_warnings(record=True):
-        clf_fit = clf.fit(X, Y, 4)
-    assert_equal(clf_fit.n_jobs, clf.n_jobs)
-    assert_equal(clf.n_jobs, 1)
-
-
 def test_fit_intercept():
-    """
-    Test assertions on betas shape.
-    """
+    # Test assertions on betas shape.
     X2 = np.array([[0.38349978, 0.61650022],
                    [0.58853682, 0.41146318]])
     X3 = np.array([[0.27677969, 0.70693172, 0.01628859],
@@ -267,7 +249,7 @@ def test_sparse_center_data():
 
 
 def test_csr_sparse_center_data():
-    """Test output format of sparse_center_data, when input is csr"""
+    # Test output format of sparse_center_data, when input is csr
     X, y = make_regression()
     X[X < 2.5] = 0.0
     csr = sparse.csr_matrix(X)

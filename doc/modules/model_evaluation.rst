@@ -155,7 +155,7 @@ take several parameters:
   certainties (``needs_threshold=True``).  The default value is
   False.
 
-* any additional parameters, such as ``beta`` in an :func:`f1_score`.
+* any additional parameters, such as ``beta`` or ``labels`` in :func:`f1_score`.
 
 Here is an example of building custom scorers, and of using the
 ``greater_is_better`` parameter::
@@ -264,7 +264,7 @@ In the following sub-sections, we will describe each of those functions,
 preceded by some notes on common API and metric definition.
 
 From binary to multiclass and multilabel
-........................................
+----------------------------------------
 
 Some metrics are essentially defined for binary classification tasks (e.g.
 :func:`f1_score`, :func:`roc_auc_score`). In these cases, by default
@@ -307,6 +307,7 @@ array of class labels, multilabel data is specified as an indicator matrix,
 in which cell ``[i, j]`` has value 1 if sample ``i`` has label ``j`` and value
 0 otherwise.
 
+.. _accuracy_score:
 
 Accuracy score
 --------------
@@ -352,6 +353,25 @@ In the multilabel case with binary label indicators: ::
     for an example of accuracy score usage using permutations of
     the dataset.
 
+.. _cohen_kappa:
+
+Cohen's kappa
+-------------
+
+The function :func:`cohen_kappa_score` computes Cohen's kappa statistic.
+This measure is intended to compare labelings by different human annotators,
+not a classifier versus a ground truth.
+
+The kappa score (see docstring) is a number between -1 and 1.
+Scores above .8 are generally considered good agreement;
+zero or lower means no agreement (practically random labels).
+
+Kappa scores can be computed for binary or multiclass problems,
+but not for multilabel problems (except by manually computing a per-label score)
+and not for more than two annotators.
+
+.. _confusion_matrix:
+
 Confusion matrix
 ----------------
 
@@ -393,6 +413,7 @@ from the :ref:`example_model_selection_plot_confusion_matrix.py` example):
     for an example of using a confusion matrix to classify text
     documents.
 
+.. _classification_report:
 
 Classification report
 ----------------------
@@ -428,6 +449,8 @@ and inferred labels::
   * See :ref:`example_model_selection_grid_search_digits.py`
     for an example of classification report usage for
     grid search with nested cross-validation.
+
+.. _hamming_loss:
 
 Hamming loss
 -------------
@@ -469,6 +492,8 @@ In the multilabel case with binary label indicators: ::
     loss, is always between zero and one, inclusive; and predicting a proper subset
     or superset of the true labels will give a Hamming loss between
     zero and one, exclusive.
+
+.. _jaccard_similarity_score:
 
 Jaccard similarity coefficient score
 -------------------------------------
@@ -649,8 +674,9 @@ specified by the ``average`` argument to the
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
 :func:`precision_score` and :func:`recall_score` functions, as described
 :ref:`above <average>`. Note that for "micro"-averaging in a multiclass setting
-will produce equal precision, recall and :math:`F`, while "weighted" averaging
-may produce an F-score that is not between precision and recall.
+with all labels included will produce equal precision, recall and :math:`F`,
+while "weighted" averaging may produce an F-score that is not between
+precision and recall.
 
 To make this more explicit, consider the following notation:
 
@@ -701,6 +727,19 @@ Then the metrics are defined as:
   ... # doctest: +ELLIPSIS
   (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2]...))
 
+For multiclass classification with a "negative class", it is possible to exclude some labels:
+
+  >>> metrics.recall_score(y_true, y_pred, labels=[1, 2], average='micro')
+  ... # excluding 0, no labels were correctly recalled
+  0.0
+
+Similarly, labels not present in the data sample may be accounted for in macro-averaging.
+
+  >>> metrics.precision_score(y_true, y_pred, labels=[0, 1, 2, 3], average='macro')
+  ... # doctest: +ELLIPSIS
+  0.166...
+
+.. _hinge_loss:
 
 Hinge loss
 ----------
@@ -769,6 +808,7 @@ with a svm classifier in a multiclass problem::
   >>> hinge_loss(y_true, pred_decision, labels)  #doctest: +ELLIPSIS
   0.56...
 
+.. _log_loss:
 
 Log loss
 --------
@@ -787,7 +827,7 @@ of the classifier given the true label:
 
 .. math::
 
-    L_{\log}(y, p) = -\log \operatorname{Pr}(y|p) = -(y \log p) + (1 - y) \log (1 - p))
+    L_{\log}(y, p) = -\log \operatorname{Pr}(y|p) = -(y \log (p) + (1 - y) \log (1 - p))
 
 This extends to the multiclass case as follows.
 Let the true labels for a set of samples
@@ -821,6 +861,7 @@ method.
 The first ``[.9, .1]`` in ``y_pred`` denotes 90% probability that the first
 sample has label 0.  The log loss is non-negative.
 
+.. _matthews_corrcoef:
 
 Matthews correlation coefficient
 ---------------------------------
@@ -863,7 +904,7 @@ Receiver operating characteristic (ROC)
 
 The function :func:`roc_curve` computes the
 `receiver operating characteristic curve, or ROC curve <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_.
- Quoting Wikipedia :
+Quoting Wikipedia :
 
   "A receiver operating characteristic (ROC), or simply ROC curve, is a
   graphical plot which illustrates the performance of a binary classifier
@@ -1002,6 +1043,8 @@ In multilabel learning, each sample can have any number of ground truth labels
 associated with it. The goal is to give high scores and better rank to
 the ground truth labels.
 
+.. _coverage_error:
+
 Coverage error
 --------------
 
@@ -1033,6 +1076,8 @@ Here is a small example of usage of this function::
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> coverage_error(y_true, y_score)
     2.5
+
+.. _label_ranking_average_precision:
 
 Label ranking average precision
 -------------------------------
@@ -1075,6 +1120,42 @@ Here is a small example of usage of this function::
     >>> label_ranking_average_precision_score(y_true, y_score) # doctest: +ELLIPSIS
     0.416...
 
+.. _label_ranking_loss:
+
+Ranking loss
+------------
+
+The :func:`label_ranking_loss` function computes the ranking loss which
+averages over the samples the number of label pairs that are incorrectly
+ordered, i.e. true labels have a lower score than false labels, weighted by the
+the inverse number of false and true labels. The lowest achievable
+ranking loss is zero.
+
+Formally, given a binary indicator matrix of the ground truth labels
+:math:`y \in \left\{0, 1\right\}^{n_\text{samples} \times n_\text{labels}}` and the
+score associated with each label
+:math:`\hat{f} \in \mathbb{R}^{n_\text{samples} \times n_\text{labels}}`,
+the ranking loss is defined as
+
+.. math::
+  \text{ranking\_loss}(y, \hat{f}) =  \frac{1}{n_{\text{samples}}}
+    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{|y_i|(n_\text{labels} - |y_i|)}
+    \left|\left\{(k, l): \hat{f}_{ik} < \hat{f}_{il}, y_{ik} = 1, y_{il} = 0 \right\}\right|
+
+where :math:`|\cdot|` is the :math:`\ell_0` norm or the cardinality of the set.
+
+Here is a small example of usage of this function::
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import label_ranking_loss
+    >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
+    >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
+    >>> label_ranking_loss(y_true, y_score) # doctest: +ELLIPSIS
+    0.75...
+    >>> # With the following prediction, we have perfect and minimal loss
+    >>> y_score = np.array([[1.0, 0.1, 0.2], [0.1, 0.2, 0.9]])
+    >>> label_ranking_loss(y_true, y_score)
+    0.0
 
 .. _regression_metrics:
 
@@ -1085,8 +1166,32 @@ Regression metrics
 
 The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure regression performance. Some of those have been enhanced
-to handle the multioutput case: :func:`mean_absolute_error`,
-:func:`mean_squared_error`, :func:`median_absolute_error` and :func:`r2_score`.
+to handle the multioutput case: :func:`mean_squared_error`,
+:func:`mean_absolute_error`, :func:`explained_variance_score` and
+:func:`r2_score`.
+
+
+These functions have an ``multioutput`` keyword argument which specifies the
+way the scores or losses for each individual target should be averaged. The
+default is ``'uniform_average'``, which specifies a uniformly weighted mean
+over outputs. If an ``ndarray`` of shape ``(n_outputs,)`` is passed, then its
+entries are interpreted as weights and an according weighted average is
+returned. If ``multioutput`` is ``'raw_values'`` is specified, then all
+unaltered individual scores or losses will be returned in an array of shape
+``(n_outputs,)``.
+
+
+The :func:`r2_score` and :func:`explained_variance_score` accept an additional
+value ``'variance_weighted'`` for the ``multioutput`` parameter. This option
+leads to a weighting of each individual score by the variance of the
+corresponding target variable. This setting quantifies the globally captured
+unscaled variance. If the target variables are of different scale, then this
+score puts more importance on well explaining the higher variance variables.
+``multioutput='variance_weighted'`` is the default value for :func:`r2_score`
+for backward compatibility. This will be changed to ``uniform_average`` in the
+future.
+
+.. _explained_variance_score:
 
 Explained variance score
 -------------------------
@@ -1113,6 +1218,16 @@ function::
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> explained_variance_score(y_true, y_pred)  # doctest: +ELLIPSIS
     0.957...
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> explained_variance_score(y_true, y_pred, multioutput='raw_values')
+    ... # doctest: +ELLIPSIS
+    array([ 0.967...,  1.        ])
+    >>> explained_variance_score(y_true, y_pred, multioutput=[0.3, 0.7])
+    ... # doctest: +ELLIPSIS
+    0.990...
+
+.. _mean_absolute_error:
 
 Mean absolute error
 -------------------
@@ -1141,8 +1256,13 @@ Here is a small example of usage of the :func:`mean_absolute_error` function::
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> mean_absolute_error(y_true, y_pred)
   0.75
+  >>> mean_absolute_error(y_true, y_pred, multioutput='raw_values')
+  array([ 0.5,  1. ])
+  >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
+  ... # doctest: +ELLIPSIS
+  0.849...
 
-
+.. _mean_squared_error:
 
 Mean squared error
 -------------------
@@ -1179,6 +1299,8 @@ function::
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
 
+.. _median_absolute_error:
+
 Median absolute error
 ---------------------
 
@@ -1205,13 +1327,18 @@ function::
   >>> median_absolute_error(y_true, y_pred)
   0.5
 
+.. _r2_score:
+
 R² score, the coefficient of determination
 -------------------------------------------
 
 The :func:`r2_score` function computes R², the `coefficient of
 determination <http://en.wikipedia.org/wiki/Coefficient_of_determination>`_.
 It provides a measure of how well future samples are likely to
-be predicted by the model.
+be predicted by the model. Best possible score is 1.0 and it can be negative
+(because the model can be arbitrarily worse). A constant model that always
+predicts the expected value of y, disregarding the input features, would get a
+R^2 score of 0.0.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value, then the score R² estimated
@@ -1232,8 +1359,20 @@ Here is a small example of usage of the :func:`r2_score` function::
   0.948...
   >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-  >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
+  >>> r2_score(y_true, y_pred, multioutput='variance_weighted')
+  ... # doctest: +ELLIPSIS
   0.938...
+  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+  >>> r2_score(y_true, y_pred, multioutput='uniform_average')
+  ... # doctest: +ELLIPSIS
+  0.936...
+  >>> r2_score(y_true, y_pred, multioutput='raw_values')
+  ... # doctest: +ELLIPSIS
+  array([ 0.965...,  0.908...])
+  >>> r2_score(y_true, y_pred, multioutput=[0.3, 0.7])
+  ... # doctest: +ELLIPSIS
+  0.925...
 
 
 .. topic:: Example:
@@ -1270,6 +1409,8 @@ implements three such simple strategies for classification:
 - ``stratified`` generates random predictions by respecting the training
   set class distribution.
 - ``most_frequent`` always predicts the most frequent label in the training set.
+- ``prior`` always predicts the class that maximizes the class prior
+  (like ``most_frequent`) and ``predict_proba`` returns the class prior.
 - ``uniform`` generates predictions uniformly at random.
 - ``constant`` always predicts a constant label that is provided by the user.
    A major motivation of this method is F1-scoring, when the positive class

@@ -247,7 +247,7 @@ Stratified k-fold
 folds: each set contains approximately the same percentage of samples of each
 target class as the complete set.
 
-Example of stratified 2-fold cross-validation on a dataset with 10 samples from
+Example of stratified 3-fold cross-validation on a dataset with 10 samples from
 two slightly unbalanced classes::
 
   >>> from sklearn.cross_validation import StratifiedKFold

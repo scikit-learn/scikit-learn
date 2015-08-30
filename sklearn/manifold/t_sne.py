@@ -114,7 +114,7 @@ def _kl_divergence(params, P, alpha, n_samples, n_components):
 def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
                       momentum=0.5, learning_rate=1000.0, min_gain=0.01,
                       min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
-                      args=[]):
+                      args=None):
     """Batch gradient descent with momentum and individual gains.
 
     Parameters
@@ -173,6 +173,9 @@ def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
     i : int
         Last iteration.
     """
+    if args is None:
+        args = []
+
     p = p0.copy().ravel()
     update = np.zeros_like(p)
     gains = np.ones_like(p)
@@ -300,6 +303,8 @@ class TSNE(BaseEstimator):
     if the number of features is very high. This will suppress some
     noise and speed up the computation of pairwise distances between
     samples. For more tips see Laurens van der Maaten's FAQ [2].
+
+    Read more in the :ref:`User Guide <t_sne>`.
 
     Parameters
     ----------
@@ -459,6 +464,8 @@ class TSNE(BaseEstimator):
 
         self.embedding_ = self._tsne(P, alpha, n_samples, random_state,
                                      X_embedded=X_embedded)
+
+        return self
 
     def _tsne(self, P, alpha, n_samples, random_state, X_embedded=None):
         """Runs t-SNE."""

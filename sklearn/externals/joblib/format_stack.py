@@ -280,9 +280,9 @@ def format_records(records):   # , print_globals=False):
             # signals exit of tokenizer
             pass
         except tokenize.TokenError as msg:
-            _m = ("An unexpected error occurred while tokenizing input\n"
+            _m = ("An unexpected error occurred while tokenizing input file %s\n"
                   "The following traceback may be corrupted or invalid\n"
-                  "The error message is: %s\n" % msg)
+                  "The error message is: %s\n" % (file, msg))
             print(_m)
 
         # prune names list of duplicates, but keep the right order

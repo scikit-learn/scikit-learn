@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import if_not_mac_os
 
+from sklearn.utils.validation import DataConversionWarning
 from sklearn.utils.extmath import row_norms
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
@@ -45,7 +46,7 @@ def test_kmeans_dtype():
     X = rnd.normal(size=(40, 2))
     X = (X * 10).astype(np.uint8)
     km = KMeans(n_init=1).fit(X)
-    pred_x = assert_warns(RuntimeWarning, km.predict, X)
+    pred_x = assert_warns(DataConversionWarning, km.predict, X)
     assert_array_equal(km.labels_, pred_x)
 
 
@@ -81,7 +82,7 @@ def test_labels_assignment_and_inertia():
 
 
 def test_minibatch_update_consistency():
-    """Check that dense and sparse minibatch update give the same results"""
+    # Check that dense and sparse minibatch update give the same results
     rng = np.random.RandomState(42)
     old_centers = centers + rng.normal(size=centers.shape)
 
@@ -261,6 +262,18 @@ def test_k_means_n_init():
     assert_raises_regexp(ValueError, "n_init", KMeans(n_init=-1).fit, X)
 
 
+def test_k_means_fortran_aligned_data():
+    # Check the KMeans will work well, even if X is a fortran-aligned data. 
+    X = np.asfortranarray([[0, 0], [0, 1], [0, 1]])
+    centers = np.array([[0, 0], [0, 1]])
+    labels = np.array([0, 1, 1])
+    km = KMeans(n_init=1, init=centers, precompute_distances=False,
+                random_state=42)
+    km.fit(X)
+    assert_array_equal(km.cluster_centers_, centers)
+    assert_array_equal(km.labels_, labels)
+
+
 def test_mb_k_means_plus_plus_init_dense_array():
     mb_k_means = MiniBatchKMeans(init="k-means++", n_clusters=n_clusters,
                                  random_state=42)
@@ -350,8 +363,7 @@ def test_minibatch_sensible_reassign_partial_fit():
     zeroed_X, true_labels = make_blobs(n_samples=n_samples, centers=5,
                                        cluster_std=1., random_state=42)
     zeroed_X[::2, :] = 0
-    mb_k_means = MiniBatchKMeans(n_clusters=20, random_state=42, verbose=10,
-                                 init="random")
+    mb_k_means = MiniBatchKMeans(n_clusters=20, random_state=42, init="random")
     for i in range(100):
         mb_k_means.partial_fit(zeroed_X)
     # there should not be too many exact zero cluster centers
@@ -481,7 +493,7 @@ def test_mini_match_k_means_invalid_init():
 
 
 def test_k_means_copyx():
-    """Check if copy_x=False returns nearly equal X after de-centering."""
+    # Check if copy_x=False returns nearly equal X after de-centering.
     my_X = X.copy()
     km = KMeans(copy_x=False, n_clusters=n_clusters, random_state=42)
     km.fit(my_X)
@@ -492,13 +504,11 @@ def test_k_means_copyx():
 
 
 def test_k_means_non_collapsed():
-    """Check k_means with a bad initialization does not yield a singleton
-
-    Starting with bad centers that are quickly ignored should not
-    result in a repositioning of the centers to the center of mass that
-    would lead to collapsed centers which in turns make the clustering
-    dependent of the numerical unstabilities.
-    """
+    # Check k_means with a bad initialization does not yield a singleton
+    # Starting with bad centers that are quickly ignored should not
+    # result in a repositioning of the centers to the center of mass that
+    # would lead to collapsed centers which in turns make the clustering
+    # dependent of the numerical unstabilities.
     my_X = np.array([[1.1, 1.1], [0.9, 1.1], [1.1, 0.9], [0.9, 1.1]])
     array_init = np.array([[1.0, 1.0], [5.0, 5.0], [-5.0, -5.0]])
     km = KMeans(init=array_init, n_clusters=3, random_state=42, n_init=1)
@@ -631,7 +641,7 @@ def test_fit_transform():
 
 
 def test_n_init():
-    """Check that increasing the number of init increases the quality"""
+    # Check that increasing the number of init increases the quality
     n_runs = 5
     n_init_range = [1, 5, 10]
     inertia = np.zeros((len(n_init_range), n_runs))

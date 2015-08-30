@@ -53,7 +53,8 @@ def _cov(X, shrinkage=None):
         if shrinkage == 'auto':
             sc = StandardScaler()  # standardize features
             X = sc.fit_transform(X)
-            s = sc.std_ * ledoit_wolf(X)[0] * sc.std_  # scale back
+            s = ledoit_wolf(X)[0]
+            s = sc.std_[:, np.newaxis] * s * sc.std_[np.newaxis, :]  # rescale
         elif shrinkage == 'empirical':
             s = empirical_covariance(X)
         else:
@@ -136,6 +137,8 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
     The fitted model can also be used to reduce the dimensionality of the input
     by projecting it to the most discriminative directions.
 
+    Read more in the :ref:`User Guide <lda_qda>`.
+
     Parameters
     ----------
     solver : string, optional
@@ -151,6 +154,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
           - None: no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
+
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
     priors : array, optional, shape (n_classes,)
@@ -449,13 +453,13 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         X_new : array, shape (n_samples, n_components)
             Transformed data.
         """
-        check_is_fitted(self, ['xbar_', 'scalings_'], all_or_any=any)
-
-        X = check_array(X)
         if self.solver == 'lsqr':
             raise NotImplementedError("transform not implemented for 'lsqr' "
                                       "solver (use 'svd' or 'eigen').")
-        elif self.solver == 'svd':
+        check_is_fitted(self, ['xbar_', 'scalings_'], all_or_any=any)
+
+        X = check_array(X)
+        if self.solver == 'svd':
             X_new = np.dot(X - self.xbar_, self.scalings_)
         elif self.solver == 'eigen':
             X_new = np.dot(X, self.scalings_)

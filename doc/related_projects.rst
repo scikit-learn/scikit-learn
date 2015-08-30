@@ -6,12 +6,11 @@ Related Projects
 
 Below is a list of sister-projects, extensions and domain specific packages.
 
-Related Packages
-----------------
-Other packages useful for data analysis and machine learning.
+Interoperability and framework enhancements
+-------------------------------------------
 
-- `Pandas <http://pandas.pydata.org>`_ Tools for working with heterogeneous and
-  columnar data, relational queries, time series and basic statistics.
+These tools adapt scikit-learn for use with other technologies or otherwise
+enhance the functionality of scikit-learn's estimators.
 
 - `sklearn_pandas <https://github.com/paulgb/sklearn-pandas/>`_ bridge for
   scikit-learn pipelines and pandas data frame with dedicated transformers.
@@ -21,23 +20,26 @@ Other packages useful for data analysis and machine learning.
   wrapper around scikit-learn that makes it easy to run machine learning
   experiments with multiple learners and large feature sets.
 
-- `theano <http://deeplearning.net/software/theano/>`_ A CPU/GPU array
-  processing framework geared towards deep learning research.
+- `auto-sklearn <https://github.com/automl/auto-sklearn/blob/master/source/index.rst>`_
+  An automated machine learning toolkit and a drop-in replacement for a
+  scikit-learn estimator
 
-- `Statsmodel <http://statsmodels.sourceforge.net/>`_ Estimating and analysing
-  statistical models. More focused on statistical tests and less on prediction
-  than scikit-learn.
+- `sklearn-pmml <https://github.com/alex-pirozhenko/sklearn-pmml>`_
+  Serialization of (some) scikit-learn estimators into PMML.
 
-- `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and fitting algorithms.
+Other estimators and tasks
+--------------------------
 
-
-Extensions and Algorithms
--------------------------
-Libraries that provide a scikit-learn like interface and can be used with
-scikit-learn tools.
+Not everything belongs or is mature enough for the central scikit-learn
+project. The following are projects providing interfaces similar to
+scikit-learn for additional learning algorithms, infrastructures
+and tasks.
 
 - `pylearn2 <http://deeplearning.net/software/pylearn2/>`_ A deep learning and
   neural network library build on theano with scikit-learn like interface.
+
+- `sklearn_theano <http://sklearn-theano.github.io/>`_ scikit-learn compatible
+  estimators, transformers, and datasets which use Theano internally
 
 - `lightning <http://www.mblondel.org/lightning/>`_ Fast state-of-the-art
   linear model solvers (SDCA, AdaGrad, SVRG, SAG, etc...).
@@ -48,10 +50,11 @@ scikit-learn tools.
 - `HMMLearn <https://github.com/hmmlearn/hmmlearn>`_ Implementation of hidden
   markov models that was previously part of scikit-learn.
 
-- `PyStruct <https://pystruct.githup.io>`_ General conditional random fields
+- `PyStruct <https://pystruct.github.io>`_ General conditional random fields
   and structured prediction.
 
-- `py-earth <https://github.com/jcrudy/py-earth>`_ Multivariate adaptive regression splines
+- `py-earth <https://github.com/jcrudy/py-earth>`_ Multivariate adaptive
+  regression splines
 
 - `sklearn-compiledtrees <https://github.com/ajtulloch/sklearn-compiledtrees/>`_
   Generate a C++ implementation of the predict function for decision trees (and
@@ -68,14 +71,68 @@ scikit-learn tools.
   Implementation of Nadaraya-Watson kernel regression with automatic bandwidth
   selection
 
+- `gplearn <https://github.com/trevorstephens/gplearn>`_ Genetic Programming
+  for symbolic regression tasks.
 
-Domain Specific Packages
--------------------------
-- `scikit-image <http://scikit-image.org/>`_ Image processing and computer vision in python.
-- `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natual language processing and some machine learning.
+- `nolearn <https://github.com/dnouri/nolearn>`_ A number of wrappers and
+  abstractions around existing neural network libraries
+
+- `sparkit-learn <https://github.com/lensacom/sparkit-learn>`_ Scikit-learn functionality and API on PySpark.
+
+- `keras <https://github.com/fchollet/keras>`_ Theano-based Deep Learning library.
+
+- `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
+  estimators as well as model visualization utilities.
+
+Statistical learning with Python
+--------------------------------
+Other packages useful for data analysis and machine learning.
+
+- `Pandas <http://pandas.pydata.org>`_ Tools for working with heterogeneous and
+  columnar data, relational queries, time series and basic statistics.
+
+- `theano <http://deeplearning.net/software/theano/>`_ A CPU/GPU array
+  processing framework geared towards deep learning research.
+
+- `Statsmodel <http://statsmodels.sourceforge.net/>`_ Estimating and analysing
+  statistical models. More focused on statistical tests and less on prediction
+  than scikit-learn.
+
+- `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
+  fitting algorithms.
+
+- `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
+  research in a consistent and reproducible way
+
+- `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
+  organize, log and reproduce experiments
+
+- `gensim <https://radimrehurek.com/gensim/>`_  A library for topic modelling,
+  document indexing and similarity retrieval
+
+- `Seaborn <http://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on 
+  matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
+
+- `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning
+  software libraries.
+
+Domain specific packages
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+- `scikit-image <http://scikit-image.org/>`_ Image processing and computer
+  vision in python.
+
+- `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natural language
+  processing and some machine learning.
+
 - `NiLearn <https://nilearn.github.io/>`_ Machine learning for neuro-imaging.
+
 - `AstroML <http://www.astroml.org/>`_  Machine learning for astronomy.
+
+- `MSMBuilder <http://www.msmbuilder.org/>`_  Machine learning for protein
+  conformational dynamics time series.
 
 Snippets and tidbits
 ---------------------
+
 The `wiki <https://github.com/scikit-learn/scikit-learn/wiki/Third-party-projects-and-code-snippets>`_ has more!

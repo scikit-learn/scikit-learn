@@ -68,7 +68,7 @@ mem = Memory(cachedir=cachedir, verbose=1)
 # Ward agglomeration followed by BayesianRidge
 connectivity = grid_to_graph(n_x=size, n_y=size)
 ward = FeatureAgglomeration(n_clusters=10, connectivity=connectivity,
-                            memory=mem, n_components=1)
+                            memory=mem)
 clf = Pipeline([('ward', ward), ('ridge', ridge)])
 # Select the optimal number of parcels with grid search
 clf = GridSearchCV(clf, {'ward__n_clusters': [10, 20, 30]}, n_jobs=1, cv=cv)

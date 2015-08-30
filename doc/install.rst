@@ -144,7 +144,7 @@ release::
 
     pip install --user --install-option="--prefix=" -U scikit-learn
 
-The ``--user`` flag ask pip to install scikit-learn in the ``$HOME/.local``
+The ``--user`` flag asks pip to install scikit-learn in the ``$HOME/.local``
 folder therefore not requiring root permission. This flag should make pip
 ignore any old version of scikit-learn previously installed on the system while
 benefiting from system packages for numpy and scipy. Those dependencies can
@@ -164,6 +164,17 @@ This packages uses distutils, which is the default way of installing
 python modules. The install command is::
 
     python setup.py install
+
+or alternatively (also from within the scikit-learn source folder)::
+
+    pip install .
+
+.. warning::
+
+   Packages installed with the ``python setup.py install`` command cannot
+   be uninstalled nor upgraded by ``pip`` later. To properly uninstall
+   scikit-learn in that case it is necessary to delete the ``sklearn`` folder
+   from your Python ``site-packages`` directory.
 
 
 .. _install_by_distribution:
@@ -213,8 +224,32 @@ Canopy and Anaconda for all supported platforms
 
 `Canopy
 <http://www.enthought.com/products/canopy>`_ and `Anaconda
-<https://store.continuum.io/cshop/anaconda/>`_ ships a recent
-version, in addition to a large set of scientific python library.
+<https://store.continuum.io/cshop/anaconda/>`_ both ship a recent
+version of scikit-learn, in addition to a large set of scientific python
+library for Windows, Mac OSX and Linux.
+
+Anaconda offers scikit-learn as part of its free distribution.
+
+
+.. warning::
+
+    To upgrade or uninstall scikit-learn installed with Anaconda
+    or ``conda`` you **should not use the pip command**. Instead:
+
+    To upgrade ``scikit-learn``::
+
+        conda update scikit-learn
+
+    To uninstall ``scikit-learn``::
+
+        conda remove scikit-learn
+
+    Upgrading with ``pip install -U scikit-learn`` or uninstalling
+    ``pip uninstall scikit-learn`` is likely fail to properly remove files
+    installed by the ``conda`` command.
+
+    pip upgrade and uninstall operations only work on packages installed
+    via ``pip install``.
 
 
 MacPorts for Mac OSX

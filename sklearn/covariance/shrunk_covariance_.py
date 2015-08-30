@@ -27,6 +27,8 @@ from ..utils import check_array
 def shrunk_covariance(emp_cov, shrinkage=0.1):
     """Calculates a covariance matrix shrunk on the diagonal
 
+    Read more in the :ref:`User Guide <shrunk_covariance>`.
+
     Parameters
     ----------
     emp_cov : array-like, shape (n_features, n_features)
@@ -63,6 +65,8 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
 class ShrunkCovariance(EmpiricalCovariance):
     """Covariance estimator with shrinkage
+
+    Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     Parameters
     ----------
@@ -145,6 +149,8 @@ class ShrunkCovariance(EmpiricalCovariance):
 
 def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     """Estimates the shrunk Ledoit-Wolf covariance matrix.
+
+    Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     Parameters
     ----------
@@ -235,22 +241,22 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 def ledoit_wolf(X, assume_centered=False, block_size=1000):
     """Estimates the shrunk Ledoit-Wolf covariance matrix.
 
+    Read more in the :ref:`User Guide <shrunk_covariance>`.
+
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
         Data from which to compute the covariance estimate
 
-    assume_centered : Boolean
+    assume_centered : boolean, default=False
         If True, data are not centered before computation.
         Useful to work with data whose mean is significantly equal to
         zero but is not exactly zero.
         If False, data are centered before computation.
 
-    block_size : int,
+    block_size : int, default=1000
         Size of the blocks into which the covariance matrix will be split.
-        If n_features > `block_size`, an error will be raised since the
-        shrunk covariance matrix will be considered as too large regarding
-        the available memory.
+        This is purely a memory optimization and does not affect results.
 
     Returns
     -------
@@ -286,10 +292,6 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
     else:
         n_samples, n_features = X.shape
 
-    if n_features > block_size:
-        raise MemoryError("LW: n_features is too large, " +
-                          "try increasing block_size")
-
     # get Ledoit-Wolf shrinkage
     shrinkage = ledoit_wolf_shrinkage(
         X, assume_centered=assume_centered, block_size=block_size)
@@ -310,23 +312,23 @@ class LedoitWolf(EmpiricalCovariance):
     Covariance Matrices", Ledoit and Wolf, Journal of Multivariate
     Analysis, Volume 88, Issue 2, February 2004, pages 365-411.
 
+    Read more in the :ref:`User Guide <shrunk_covariance>`.
+
     Parameters
     ----------
-    store_precision : bool
+    store_precision : bool, default=True
         Specify if the estimated precision is stored.
 
-    assume_centered : bool
+    assume_centered : bool, default=False
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
         If False (default), data are centered before computation.
 
-    block_size : int,
+    block_size : int, default=1000
         Size of the blocks into which the covariance matrix will be split
-        during its Ledoit-Wolf estimation.
-        If n_features > `block_size`, an error will be raised since the
-        shrunk covariance matrix will be considered as too large regarding
-        the available memory.
+        during its Ledoit-Wolf estimation. This is purely a memory
+        optimization and does not affect results.
 
     Attributes
     ----------
@@ -470,6 +472,8 @@ def oas(X, assume_centered=False):
 class OAS(EmpiricalCovariance):
     """Oracle Approximating Shrinkage Estimator
 
+    Read more in the :ref:`User Guide <shrunk_covariance>`.
+
     OAS is a particular form of shrinkage described in
     "Shrinkage Algorithms for MMSE Covariance Estimation"
     Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
@@ -480,10 +484,10 @@ class OAS(EmpiricalCovariance):
 
     Parameters
     ----------
-    store_precision : bool
+    store_precision : bool, default=True
         Specify if the estimated precision is stored.
 
-    assume_centered: bool
+    assume_centered: bool, default=False
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.

@@ -1,35 +1,42 @@
 """Tests for input validation functions"""
 
+import warnings
+
 from tempfile import NamedTemporaryFile
-import numpy as np
-from numpy.testing import assert_array_equal, assert_warns
-import scipy.sparse as sp
-from nose.tools import assert_raises, assert_true, assert_false, assert_equal
 from itertools import product
 
+import numpy as np
+from numpy.testing import assert_array_equal
+import scipy.sparse as sp
+from nose.tools import assert_raises, assert_true, assert_false, assert_equal
+
+from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_warns
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
-
+from sklearn.utils.mocking import MockDataFrame
 from sklearn.utils.estimator_checks import NotAnArray
-
 from sklearn.random_projection import sparse_random_matrix
-
 from sklearn.linear_model import ARDRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
-
 from sklearn.datasets import make_blobs
 from sklearn.utils.validation import (
     NotFittedError,
     has_fit_parameter,
-    check_is_fitted)
+    check_is_fitted,
+    check_consistent_length,
+    DataConversionWarning,
+)
 
 from sklearn.utils.testing import assert_raise_message
 
 
 def test_as_float_array():
-    """Test function for as_float_array"""
+    # Test function for as_float_array
     X = np.ones((3, 10), dtype=np.int32)
     X = X + np.arange(10, dtype=np.int32)
     # Checks that the return type is ok
@@ -62,7 +69,7 @@ def test_as_float_array():
 
 
 def test_np_matrix():
-    """Confirm that input validation code does not return np.matrix"""
+    # Confirm that input validation code does not return np.matrix
     X = np.arange(12).reshape(3, 4)
 
     assert_false(isinstance(as_float_array(X), np.matrix))
@@ -71,7 +78,7 @@ def test_np_matrix():
 
 
 def test_memmap():
-    """Confirm that input validation code doesn't copy memory mapped arrays"""
+    # Confirm that input validation code doesn't copy memory mapped arrays
 
     asflt = lambda x: as_float_array(x, copy=False)
 
@@ -87,11 +94,9 @@ def test_memmap():
 
 
 def test_ordering():
-    """Check that ordering is enforced correctly by validation utilities.
-
-    We need to check each validation utility, because a 'copy' without
-    'order=K' will kill the ordering.
-    """
+    # Check that ordering is enforced correctly by validation utilities.
+    # We need to check each validation utility, because a 'copy' without
+    # 'order=K' will kill the ordering.
     X = np.ones((10, 5))
     for A in X, X.T:
         for copy in (True, False):
@@ -105,10 +110,6 @@ def test_ordering():
     X = sp.csr_matrix(X)
     X.data = X.data[::-1]
     assert_false(X.data.flags['C_CONTIGUOUS'])
-
-    for copy in (True, False):
-        Y = check_array(X, accept_sparse='csr', copy=copy, order='C')
-        assert_true(Y.data.flags['C_CONTIGUOUS'])
 
 
 def test_check_array():
@@ -179,8 +180,16 @@ def test_check_array():
     accept_sparses = [['csr', 'coo'], ['coo', 'dok']]
     for X, dtype, accept_sparse, copy in product(Xs, dtypes, accept_sparses,
                                                  copys):
-        X_checked = check_array(X, dtype=dtype, accept_sparse=accept_sparse,
-                                copy=copy)
+        with warnings.catch_warnings(record=True) as w:
+            X_checked = check_array(X, dtype=dtype,
+                                    accept_sparse=accept_sparse, copy=copy)
+        if (dtype is object or sp.isspmatrix_dok(X)) and len(w):
+            message = str(w[0].message)
+            messages = ["object dtype is not supported by sparse matrices",
+                        "Can't check dok sparse matrix for nan or inf."]
+            assert_true(message in messages)
+        else:
+            assert_equal(len(w), 0)
         if dtype is not None:
             assert_equal(X_checked.dtype, dtype)
         else:
@@ -211,6 +220,96 @@ def test_check_array():
     assert_true(isinstance(result, np.ndarray))
 
 
+def test_check_array_pandas_dtype_object_conversion():
+    # test that data-frame like objects with dtype object
+    # get converted
+    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.object)
+    X_df = MockDataFrame(X)
+    assert_equal(check_array(X_df).dtype.kind, "f")
+    assert_equal(check_array(X_df, ensure_2d=False).dtype.kind, "f")
+    # smoke-test against dataframes with column named "dtype"
+    X_df.dtype = "Hans"
+    assert_equal(check_array(X_df, ensure_2d=False).dtype.kind, "f")
+
+
+def test_check_array_dtype_stability():
+    # test that lists with ints don't get converted to floats
+    X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    assert_equal(check_array(X).dtype.kind, "i")
+    assert_equal(check_array(X, ensure_2d=False).dtype.kind, "i")
+
+
+def test_check_array_dtype_warning():
+    X_int_list = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    X_float64 = np.asarray(X_int_list, dtype=np.float64)
+    X_float32 = np.asarray(X_int_list, dtype=np.float32)
+    X_int64 = np.asarray(X_int_list, dtype=np.int64)
+    X_csr_float64 = sp.csr_matrix(X_float64)
+    X_csr_float32 = sp.csr_matrix(X_float32)
+    X_csc_float32 = sp.csc_matrix(X_float32)
+    X_csc_int32 = sp.csc_matrix(X_int64, dtype=np.int32)
+    y = [0, 0, 1]
+    integer_data = [X_int64, X_csc_int32]
+    float64_data = [X_float64, X_csr_float64]
+    float32_data = [X_float32, X_csr_float32, X_csc_float32]
+    for X in integer_data:
+        X_checked = assert_no_warnings(check_array, X, dtype=np.float64,
+                                       accept_sparse=True)
+        assert_equal(X_checked.dtype, np.float64)
+
+        X_checked = assert_warns(DataConversionWarning, check_array, X,
+                                 dtype=np.float64,
+                                 accept_sparse=True, warn_on_dtype=True)
+        assert_equal(X_checked.dtype, np.float64)
+
+        # Check that the warning message includes the name of the Estimator
+        X_checked = assert_warns_message(DataConversionWarning,
+                                         'SomeEstimator',
+                                         check_array, X,
+                                         dtype=[np.float64, np.float32],
+                                         accept_sparse=True,
+                                         warn_on_dtype=True,
+                                         estimator='SomeEstimator')
+        assert_equal(X_checked.dtype, np.float64)
+
+        X_checked, y_checked = assert_warns_message(
+            DataConversionWarning, 'KNeighborsClassifier',
+            check_X_y, X, y, dtype=np.float64, accept_sparse=True,
+            warn_on_dtype=True, estimator=KNeighborsClassifier())
+
+        assert_equal(X_checked.dtype, np.float64)
+
+    for X in float64_data:
+        X_checked = assert_no_warnings(check_array, X, dtype=np.float64,
+                                       accept_sparse=True, warn_on_dtype=True)
+        assert_equal(X_checked.dtype, np.float64)
+        X_checked = assert_no_warnings(check_array, X, dtype=np.float64,
+                                       accept_sparse=True, warn_on_dtype=False)
+        assert_equal(X_checked.dtype, np.float64)
+
+    for X in float32_data:
+        X_checked = assert_no_warnings(check_array, X,
+                                       dtype=[np.float64, np.float32],
+                                       accept_sparse=True)
+        assert_equal(X_checked.dtype, np.float32)
+        assert_true(X_checked is X)
+
+        X_checked = assert_no_warnings(check_array, X,
+                                       dtype=[np.float64, np.float32],
+                                       accept_sparse=['csr', 'dok'],
+                                       copy=True)
+        assert_equal(X_checked.dtype, np.float32)
+        assert_false(X_checked is X)
+
+    X_checked = assert_no_warnings(check_array, X_csc_float32,
+                                   dtype=[np.float64, np.float32],
+                                   accept_sparse=['csr', 'dok'],
+                                   copy=False)
+    assert_equal(X_checked.dtype, np.float32)
+    assert_false(X_checked is X_csc_float32)
+    assert_equal(X_checked.format, 'csr')
+
+
 def test_check_array_min_samples_and_features_messages():
     # empty list is considered 2D by default:
     msg = "0 feature(s) (shape=(1, 0)) while a minimum of 1 is required."
@@ -237,6 +336,11 @@ def test_check_array_min_samples_and_features_messages():
     assert_raise_message(ValueError, msg, check_X_y, X, y,
                          ensure_min_samples=2)
 
+    # The same message is raised if the data has 2 dimensions even if this is
+    # not mandatory
+    assert_raise_message(ValueError, msg, check_X_y, X, y,
+                         ensure_min_samples=2, ensure_2d=False)
+
     # Simulate a model that would require at least 3 features (e.g. SelectKBest
     # with k=3)
     X = np.ones((10, 2))
@@ -244,6 +348,11 @@ def test_check_array_min_samples_and_features_messages():
     msg = "2 feature(s) (shape=(10, 2)) while a minimum of 3 is required."
     assert_raise_message(ValueError, msg, check_X_y, X, y,
                          ensure_min_features=3)
+
+    # Only the feature check is enabled whenever the number of dimensions is 2
+    # even if allow_nd is enabled:
+    assert_raise_message(ValueError, msg, check_X_y, X, y,
+                         ensure_min_features=3, allow_nd=True)
 
     # Simulate a case where a pipeline stage as trimmed all the features of a
     # 2D dataset.
@@ -327,3 +436,21 @@ def test_check_is_fitted():
 
     assert_equal(None, check_is_fitted(ard, "coef_"))
     assert_equal(None, check_is_fitted(svr, "support_"))
+
+
+def test_check_consistent_length():
+    check_consistent_length([1], [2], [3], [4], [5])
+    check_consistent_length([[1, 2], [[1, 2]]], [1, 2], ['a', 'b'])
+    check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
+    assert_raises_regexp(ValueError, 'inconsistent numbers of samples',
+                         check_consistent_length, [1, 2], [1])
+    assert_raises_regexp(TypeError, 'got <\w+ \'int\'>',
+                         check_consistent_length, [1, 2], 1)
+    assert_raises_regexp(TypeError, 'got <\w+ \'object\'>',
+                         check_consistent_length, [1, 2], object())
+
+    assert_raises(TypeError, check_consistent_length, [1, 2], np.array(1))
+    # Despite ensembles having __len__ they must raise TypeError
+    assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
+                         [1, 2], RandomForestRegressor())
+    # XXX: We should have a test with a string, but what is correct behaviour?

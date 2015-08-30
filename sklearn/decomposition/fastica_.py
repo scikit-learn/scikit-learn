@@ -112,9 +112,8 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
         if lim < tol:
             break
     else:
-        warnings.warn('FastICA did not converge.' +
-                      ' You might want' +
-                      ' to increase the number of iterations.')
+        warnings.warn('FastICA did not converge. Consider increasing '
+                      'tolerance or the maximum number of iterations.')
 
     return W, ii + 1
 
@@ -149,6 +148,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             random_state=None, return_X_mean=False, compute_sources=True,
             return_n_iter=False):
     """Perform Fast Independent Component Analysis.
+
+    Read more in the :ref:`User Guide <ICA>`.
 
     Parameters
     ----------
@@ -224,7 +225,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             w = np.dot(W, K.T)
             A = w.T * (w * w.T).I
 
-    S : array, shape (n_components, n_samples) | None
+    S : array, shape (n_samples, n_components) | None
         Estimated source matrix
 
     X_mean : array, shape (n_features, )
@@ -373,6 +374,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
 class FastICA(BaseEstimator, TransformerMixin):
     """FastICA: a fast algorithm for Independent Component Analysis.
+
+    Read more in the :ref:`User Guide <ICA>`.
 
     Parameters
     ----------

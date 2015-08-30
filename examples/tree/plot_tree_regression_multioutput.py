@@ -27,18 +27,18 @@ y = np.array([np.pi * np.sin(X).ravel(), np.pi * np.cos(X).ravel()]).T
 y[::5, :] += (0.5 - rng.rand(20, 2))
 
 # Fit regression model
-clf_1 = DecisionTreeRegressor(max_depth=2)
-clf_2 = DecisionTreeRegressor(max_depth=5)
-clf_3 = DecisionTreeRegressor(max_depth=8)
-clf_1.fit(X, y)
-clf_2.fit(X, y)
-clf_3.fit(X, y)
+regr_1 = DecisionTreeRegressor(max_depth=2)
+regr_2 = DecisionTreeRegressor(max_depth=5)
+regr_3 = DecisionTreeRegressor(max_depth=8)
+regr_1.fit(X, y)
+regr_2.fit(X, y)
+regr_3.fit(X, y)
 
 # Predict
 X_test = np.arange(-100.0, 100.0, 0.01)[:, np.newaxis]
-y_1 = clf_1.predict(X_test)
-y_2 = clf_2.predict(X_test)
-y_3 = clf_3.predict(X_test)
+y_1 = regr_1.predict(X_test)
+y_2 = regr_2.predict(X_test)
+y_3 = regr_3.predict(X_test)
 
 # Plot the results
 plt.figure()

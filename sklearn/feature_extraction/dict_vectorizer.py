@@ -40,6 +40,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     Features that do not occur in a sample (mapping) will have a zero value
     in the resulting array/matrix.
 
+    Read more in the :ref:`User Guide <dict_feature_extraction>`.
+
     Parameters
     ----------
     dtype : callable, optional
@@ -52,7 +54,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Whether transform should produce scipy.sparse matrices.
         True by default.
     sort: boolean, optional.
-        Whether feature_names_ and vocabulary_ should be sorted when fitting.
+        Whether ``feature_names_`` and ``vocabulary_`` should be sorted when fitting.
         True by default.
 
     Attributes
@@ -312,7 +314,9 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         return self.feature_names_
 
     def restrict(self, support, indices=False):
-        """Restrict the features to those in support.
+        """Restrict the features to those in support using feature selection.
+
+        This function modifies the estimator in-place.
 
         Parameters
         ----------
@@ -321,6 +325,26 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             member of feature selectors).
         indices : boolean, optional
             Whether support is a list of indices.
+
+        Returns
+        -------
+        self
+
+        Examples
+        --------
+        >>> from sklearn.feature_extraction import DictVectorizer
+        >>> from sklearn.feature_selection import SelectKBest, chi2
+        >>> v = DictVectorizer()
+        >>> D = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
+        >>> X = v.fit_transform(D)
+        >>> support = SelectKBest(chi2, k=2).fit(X, [0, 1])
+        >>> v.get_feature_names()
+        ['bar', 'baz', 'foo']
+        >>> v.restrict(support.get_support()) # doctest: +ELLIPSIS
+        DictVectorizer(dtype=..., separator='=', sort=True,
+                sparse=True)
+        >>> v.get_feature_names()
+        ['bar', 'foo']
         """
         if not indices:
             support = np.where(support)[0]

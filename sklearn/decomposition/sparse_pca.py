@@ -18,6 +18,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     the data.  The amount of sparseness is controllable by the coefficient
     of the L1 penalty, given by the parameter alpha.
 
+    Read more in the :ref:`User Guide <SparsePCA>`.
+
     Parameters
     ----------
     n_components : int,
@@ -172,6 +174,8 @@ class MiniBatchSparsePCA(SparsePCA):
     the data.  The amount of sparseness is controllable by the coefficient
     of the L1 penalty, given by the parameter alpha.
 
+    Read more in the :ref:`User Guide <SparsePCA>`.
+
     Parameters
     ----------
     n_components : int,
@@ -275,7 +279,6 @@ class MiniBatchSparsePCA(SparsePCA):
             shuffle=self.shuffle,
             n_jobs=self.n_jobs, method=self.method,
             random_state=random_state,
-            return_n_iter=True
-            )
+            return_n_iter=True)
         self.components_ = Vt.T
         return self

@@ -27,6 +27,8 @@ from sklearn.linear_model.ridge import RidgeClassifierCV
 from sklearn.linear_model.ridge import _solve_cholesky
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
 
+from sklearn.grid_search import GridSearchCV
+
 from sklearn.cross_validation import KFold
 
 
@@ -48,11 +50,9 @@ SPARSE_FILTER = lambda X: sp.csr_matrix(X)
 
 
 def test_ridge():
-    """Ridge regression convergence test using score
-
-    TODO: for this test to be robust, we should use a dataset instead
-    of np.random.
-    """
+    # Ridge regression convergence test using score
+    # TODO: for this test to be robust, we should use a dataset instead
+    # of np.random.
     rng = np.random.RandomState(0)
     alpha = 1.0
 
@@ -160,8 +160,7 @@ def test_ridge_sample_weights():
 
 
 def test_ridge_shapes():
-    """Test shape of coef_ and intercept_
-    """
+    # Test shape of coef_ and intercept_
     rng = np.random.RandomState(0)
     n_samples, n_features = 5, 10
     X = rng.randn(n_samples, n_features)
@@ -185,8 +184,7 @@ def test_ridge_shapes():
 
 
 def test_ridge_intercept():
-    """Test intercept with multiple targets GH issue #708
-    """
+    # Test intercept with multiple targets GH issue #708
     rng = np.random.RandomState(0)
     n_samples, n_features = 5, 10
     X = rng.randn(n_samples, n_features)
@@ -204,10 +202,8 @@ def test_ridge_intercept():
 
 
 def test_toy_ridge_object():
-    """Test BayesianRegression ridge classifier
-
-    TODO: test also n_samples > n_features
-    """
+    # Test BayesianRegression ridge classifier
+    # TODO: test also n_samples > n_features
     X = np.array([[1], [2]])
     Y = np.array([1, 2])
     clf = Ridge(alpha=0.0)
@@ -228,7 +224,7 @@ def test_toy_ridge_object():
 
 
 def test_ridge_vs_lstsq():
-    """On alpha=0., Ridge and OLS yield the same solution."""
+    # On alpha=0., Ridge and OLS yield the same solution.
 
     rng = np.random.RandomState(0)
     # we need more samples than features
@@ -249,7 +245,7 @@ def test_ridge_vs_lstsq():
 
 
 def test_ridge_individual_penalties():
-    """Tests the ridge object using individual penalties"""
+    # Tests the ridge object using individual penalties
 
     rng = np.random.RandomState(42)
 
@@ -458,9 +454,7 @@ def test_ridge_sparse_svd():
 
 
 def test_class_weights():
-    """
-    Test class weights.
-    """
+    # Test class weights.
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
     y = [1, 1, 1, -1, -1]
@@ -477,28 +471,55 @@ def test_class_weights():
     # the prediction on this point should shift
     assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
 
-    # check if class_weight = 'auto' can handle negative labels.
-    clf = RidgeClassifier(class_weight='auto')
+    # check if class_weight = 'balanced' can handle negative labels.
+    clf = RidgeClassifier(class_weight='balanced')
     clf.fit(X, y)
     assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
 
-    # class_weight = 'auto', and class_weight = None should return
+    # class_weight = 'balanced', and class_weight = None should return
     # same values when y has equal number of all labels
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0], [1.0, 1.0]])
     y = [1, 1, -1, -1]
     clf = RidgeClassifier(class_weight=None)
     clf.fit(X, y)
-    clfa = RidgeClassifier(class_weight='auto')
+    clfa = RidgeClassifier(class_weight='balanced')
     clfa.fit(X, y)
     assert_equal(len(clfa.classes_), 2)
     assert_array_almost_equal(clf.coef_, clfa.coef_)
     assert_array_almost_equal(clf.intercept_, clfa.intercept_)
 
 
+def test_class_weight_vs_sample_weight():
+    """Check class_weights resemble sample_weights behavior."""
+    for clf in (RidgeClassifier, RidgeClassifierCV):
+
+        # Iris is balanced, so no effect expected for using 'balanced' weights
+        clf1 = clf()
+        clf1.fit(iris.data, iris.target)
+        clf2 = clf(class_weight='balanced')
+        clf2.fit(iris.data, iris.target)
+        assert_almost_equal(clf1.coef_, clf2.coef_)
+
+        # Inflate importance of class 1, check against user-defined weights
+        sample_weight = np.ones(iris.target.shape)
+        sample_weight[iris.target == 1] *= 100
+        class_weight = {0: 1., 1: 100., 2: 1.}
+        clf1 = clf()
+        clf1.fit(iris.data, iris.target, sample_weight)
+        clf2 = clf(class_weight=class_weight)
+        clf2.fit(iris.data, iris.target)
+        assert_almost_equal(clf1.coef_, clf2.coef_)
+
+        # Check that sample_weight and class_weight are multiplicative
+        clf1 = clf()
+        clf1.fit(iris.data, iris.target, sample_weight ** 2)
+        clf2 = clf(class_weight=class_weight)
+        clf2.fit(iris.data, iris.target, sample_weight)
+        assert_almost_equal(clf1.coef_, clf2.coef_)
+
+
 def test_class_weights_cv():
-    """
-    Test class weights for cross validated ridge classifier.
-    """
+    # Test class weights for cross validated ridge classifier.
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
     y = [1, 1, 1, -1, -1]
@@ -514,9 +535,7 @@ def test_class_weights_cv():
 
 
 def test_ridgecv_store_cv_values():
-    """
-    Test _RidgeCV's store_cv_values attribute.
-    """
+    # Test _RidgeCV's store_cv_values attribute.
     rng = rng = np.random.RandomState(42)
 
     n_samples = 8
@@ -539,8 +558,34 @@ def test_ridgecv_store_cv_values():
     assert_equal(r.cv_values_.shape, (n_samples, n_responses, n_alphas))
 
 
+def test_ridgecv_sample_weight():
+    rng = np.random.RandomState(0)
+    alphas = (0.1, 1.0, 10.0)
+
+    # There are different algorithms for n_samples > n_features
+    # and the opposite, so test them both.
+    for n_samples, n_features in ((6, 5), (5, 10)):
+        y = rng.randn(n_samples)
+        X = rng.randn(n_samples, n_features)
+        sample_weight = 1 + rng.rand(n_samples)
+
+        cv = KFold(n_samples, 5)
+        ridgecv = RidgeCV(alphas=alphas, cv=cv)
+        ridgecv.fit(X, y, sample_weight=sample_weight)
+
+        # Check using GridSearchCV directly
+        parameters = {'alpha': alphas}
+        fit_params = {'sample_weight': sample_weight}
+        gs = GridSearchCV(Ridge(), parameters, fit_params=fit_params,
+                          cv=cv)
+        gs.fit(X, y)
+
+        assert_equal(ridgecv.alpha_, gs.best_estimator_.alpha)
+        assert_array_almost_equal(ridgecv.coef_, gs.best_estimator_.coef_)
+
+
 def test_raises_value_error_if_sample_weights_greater_than_1d():
-    """Sample weights must be either scalar or 1D"""
+    # Sample weights must be either scalar or 1D
 
     n_sampless = [2, 3]
     n_featuress = [3, 2]
@@ -570,16 +615,16 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
             ridge.fit(X, y, sample_weights_not_OK_2)
 
         assert_raise_message(ValueError,
-                              "Sample weights must be 1D array or scalar",
-                              fit_ridge_not_ok)
+                             "Sample weights must be 1D array or scalar",
+                             fit_ridge_not_ok)
 
         assert_raise_message(ValueError,
-                              "Sample weights must be 1D array or scalar",
-                              fit_ridge_not_ok_2)
+                             "Sample weights must be 1D array or scalar",
+                             fit_ridge_not_ok_2)
 
 
 def test_sparse_design_with_sample_weights():
-    """Sample weights must work with sparse matrices"""
+    # Sample weights must work with sparse matrices
 
     n_sampless = [2, 3]
     n_featuress = [3, 2]
@@ -610,8 +655,8 @@ def test_sparse_design_with_sample_weights():
 
 
 def test_raises_value_error_if_solver_not_supported():
-    """Tests whether a ValueError is raised if a non-identified solver
-    is passed to ridge_regression"""
+    # Tests whether a ValueError is raised if a non-identified solver
+    # is passed to ridge_regression
 
     wrong_solver = "This is not a solver (MagritteSolveCV QuantumBitcoin)"
 

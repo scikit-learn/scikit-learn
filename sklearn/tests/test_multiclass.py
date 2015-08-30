@@ -31,7 +31,7 @@ from sklearn.svm import LinearSVC, SVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
                                   Perceptron, LogisticRegression)
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn import svm
@@ -79,6 +79,23 @@ def test_ovr_fit_predict():
     assert_greater(np.mean(iris.target == pred), 0.65)
 
 
+def test_ovr_ovo_regressor():
+    # test that ovr and ovo work on regressors which don't have a decision_function
+    ovr = OneVsRestClassifier(DecisionTreeRegressor())
+    pred = ovr.fit(iris.data, iris.target).predict(iris.data)
+    assert_equal(len(ovr.estimators_), n_classes)
+    assert_array_equal(np.unique(pred), [0, 1, 2])
+    # we are doing something sensible
+    assert_greater(np.mean(pred == iris.target), .9)
+
+    ovr = OneVsOneClassifier(DecisionTreeRegressor())
+    pred = ovr.fit(iris.data, iris.target).predict(iris.data)
+    assert_equal(len(ovr.estimators_), n_classes * (n_classes - 1) / 2)
+    assert_array_equal(np.unique(pred), [0, 1, 2])
+    # we are doing something sensible
+    assert_greater(np.mean(pred == iris.target), .9)
+
+
 def test_ovr_fit_predict_sparse():
     for sparse in [sp.csr_matrix, sp.csc_matrix, sp.coo_matrix, sp.dok_matrix,
                    sp.lil_matrix]:
@@ -90,7 +107,6 @@ def test_ovr_fit_predict_sparse():
                                                        n_labels=3,
                                                        length=50,
                                                        allow_unlabeled=True,
-                                                       return_indicator=True,
                                                        random_state=0)
 
         X_train, Y_train = X[:80], Y[:80]
@@ -121,7 +137,7 @@ def test_ovr_fit_predict_sparse():
 
 
 def test_ovr_always_present():
-    """Test that ovr works with classes that are always present or absent."""
+    # Test that ovr works with classes that are always present or absent.
     # Note: tests is the case where _ConstantPredictor is utilised
     X = np.ones((10, 2))
     X[:5, :] = 0
@@ -213,35 +229,19 @@ def test_ovr_binary():
         conduct_test(base_clf, test_predict_proba=True)
 
 
-@ignore_warnings
 def test_ovr_multilabel():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 4, 5], [0, 5, 0], [3, 3, 3], [4, 0, 6], [6, 0, 0]])
-    y = [["spam", "eggs"], ["spam"], ["ham", "eggs", "spam"],
-         ["ham", "eggs"], ["ham"]]
-    # y = [[1, 2], [1], [0, 1, 2], [0, 2], [0]]
-    Y = np.array([[0, 1, 1],
+    y = np.array([[0, 1, 1],
                   [0, 1, 0],
                   [1, 1, 1],
                   [1, 0, 1],
                   [1, 0, 0]])
 
-    classes = set("ham eggs spam".split())
-
     for base_clf in (MultinomialNB(), LinearSVC(random_state=0),
                      LinearRegression(), Ridge(),
                      ElasticNet(), Lasso(alpha=0.5)):
-        # test input as lists of tuples
-        clf = assert_warns(DeprecationWarning,
-                           OneVsRestClassifier(base_clf).fit,
-                           X, y)
-        assert_equal(set(clf.classes_), classes)
-        y_pred = clf.predict([[0, 4, 4]])[0]
-        assert_equal(set(y_pred), set(["spam", "eggs"]))
-        assert_true(clf.multilabel_)
-
-        # test input as label indicator matrix
-        clf = OneVsRestClassifier(base_clf).fit(X, Y)
+        clf = OneVsRestClassifier(base_clf).fit(X, y)
         y_pred = clf.predict([[0, 4, 4]])[0]
         assert_array_equal(y_pred, [0, 1, 1])
         assert_true(clf.multilabel_)
@@ -263,7 +263,6 @@ def test_ovr_multilabel_dataset():
                                                        n_labels=2,
                                                        length=50,
                                                        allow_unlabeled=au,
-                                                       return_indicator=True,
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test, Y_test = X[80:], Y[80:]
@@ -288,7 +287,6 @@ def test_ovr_multilabel_predict_proba():
                                                        n_labels=3,
                                                        length=50,
                                                        allow_unlabeled=au,
-                                                       return_indicator=True,
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test = X[80:]
@@ -340,7 +338,6 @@ def test_ovr_multilabel_decision_function():
                                                    n_labels=3,
                                                    length=50,
                                                    allow_unlabeled=True,
-                                                   return_indicator=True,
                                                    random_state=0)
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]
@@ -382,11 +379,18 @@ def test_ovr_pipeline():
 
 
 def test_ovr_coef_():
-    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-    ovr.fit(iris.data, iris.target)
-    shape = ovr.coef_.shape
-    assert_equal(shape[0], n_classes)
-    assert_equal(shape[1], iris.data.shape[1])
+    for base_classifier in [SVC(kernel='linear', random_state=0), LinearSVC(random_state=0)]:
+        # SVC has sparse coef with sparse input data
+
+        ovr = OneVsRestClassifier(base_classifier)
+        for X in [iris.data, sp.csr_matrix(iris.data)]:
+            # test with dense and sparse coef
+            ovr.fit(X, iris.target)
+            shape = ovr.coef_.shape
+            assert_equal(shape[0], n_classes)
+            assert_equal(shape[1], iris.data.shape[1])
+            # don't densify sparse coefficients
+            assert_equal(sp.issparse(ovr.estimators_[0].coef_), sp.issparse(ovr.coef_))
 
 
 def test_ovr_coef_exceptions():
@@ -483,7 +487,7 @@ def test_ovo_ties():
     # not defaulting to the smallest label
     X = np.array([[1, 2], [2, 1], [-2, 1], [-2, -1]])
     y = np.array([2, 0, 1, 2])
-    multi_clf = OneVsOneClassifier(Perceptron())
+    multi_clf = OneVsOneClassifier(Perceptron(shuffle=False))
     ovo_prediction = multi_clf.fit(X, y).predict(X)
     ovo_decision = multi_clf.decision_function(X)
 
@@ -510,7 +514,7 @@ def test_ovo_ties2():
     # cycle through labels so that each label wins once
     for i in range(3):
         y = (y_ref + i) % 3
-        multi_clf = OneVsOneClassifier(Perceptron())
+        multi_clf = OneVsOneClassifier(Perceptron(shuffle=False))
         ovo_prediction = multi_clf.fit(X, y).predict(X)
         assert_equal(ovo_prediction[0], i % 3)
 
@@ -592,8 +596,3 @@ def test_deprecated():
             assert_almost_equal(predict_func(estimators_, classes_or_lb,
                                              codebook, X_test),
                                 meta_est.predict(X_test))
-
-
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()

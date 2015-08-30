@@ -156,6 +156,11 @@ It suffers from various drawbacks:
   prior to k-means clustering can alleviate this problem
   and speed up the computations.
 
+.. image:: ../auto_examples/cluster/images/plot_kmeans_assumptions_001.png
+   :target: ../auto_examples/cluster/plot_kmeans_assumptions.html
+   :align: center
+   :scale: 50
+
 K-means is often referred to as Lloyd's algorithm. In basic terms, the
 algorithm has three steps. The first step chooses the initial centroids, with
 the most basic method being to choose :math:`k` samples from the dataset
@@ -213,6 +218,8 @@ transform method of a trained model of :class:`KMeans`.
 
 .. topic:: Examples:
 
+ * :ref:`example_cluster_plot_kmeans_assumptions.py`: Demonstrating when
+   k-means performs intuitively and when it does not
  * :ref:`example_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
 
 .. topic:: References:
@@ -482,7 +489,7 @@ reproducible, but it tends to create parcels of fairly even and
 geometrical shape.
 
 =====================================  =====================================
- ``assign_labels="kmeans"`              ``assign_labels="discretize"``
+ ``assign_labels="kmeans"``              ``assign_labels="discretize"``
 =====================================  =====================================
 |lena_kmeans|                          |lena_discretize|
 =====================================  =====================================
@@ -841,6 +848,7 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
 
 To avoid the computation of global clustering, for every call of ``partial_fit``
 the user is advised
+
  1. To set ``n_clusters=None`` initially
  2. Train all data by multiple calls to partial_fit.
  3. Set ``n_clusters`` to a required value using
@@ -878,12 +886,10 @@ classes according to some similarity metric.
 
 .. currentmodule:: sklearn.metrics
 
+.. _adjusted_rand_score:
 
 Adjusted Rand index
 -------------------
-
-Presentation and usage
-~~~~~~~~~~~~~~~~~~~~~~
 
 Given the knowledge of the ground truth class assignments ``labels_true``
 and our clustering algorithm assignments of the same samples
@@ -999,12 +1005,10 @@ random labelings by defining the adjusted Rand index as follows:
  * `Wikipedia entry for the adjusted Rand index
    <http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
 
+.. _mutual_info_score:
 
 Mutual Information based scores
 -------------------------------
-
-Presentation and usage
-~~~~~~~~~~~~~~~~~~~~~~
 
 Given the knowledge of the ground truth class assignments ``labels_true`` and
 our clustering algorithm assignments of the same samples ``labels_pred``, the
@@ -1167,11 +1171,10 @@ calculated using a similar form to that of the adjusted Rand index:
  * `Wikipedia entry for the Adjusted Mutual Information
    <http://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
 
+.. _homogeneity_completeness:
+
 Homogeneity, completeness and V-measure
 ---------------------------------------
-
-Presentation and usage
-~~~~~~~~~~~~~~~~~~~~~~
 
 Given the knowledge of the ground truth class assignments of the samples,
 it is possible to define some intuitive metric using conditional entropy
@@ -1328,9 +1331,6 @@ mean of homogeneity and completeness**:
 Silhouette Coefficient
 ----------------------
 
-Presentation and usage
-~~~~~~~~~~~~~~~~~~~~~~
-
 If the ground truth labels are not known, evaluation must be performed using
 the model itself. The Silhouette Coefficient
 (:func:`sklearn.metrics.silhouette_score`)
@@ -1394,4 +1394,10 @@ Drawbacks
 - The Silhouette Coefficient is generally higher for convex clusters than other
   concepts of clusters, such as density based clusters like those obtained
   through DBSCAN.
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_kmeans_silhouette_analysis.py` : In this example
+   the silhouette analysis is used to choose an optimal value for n_clusters.
+
 

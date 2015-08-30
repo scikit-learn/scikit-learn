@@ -25,7 +25,7 @@ from scipy import sparse
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..utils import as_float_array, check_array
+from ..utils import as_float_array, check_array, check_X_y, deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
@@ -120,6 +120,7 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
     def fit(self, X, y):
         """Fit model."""
 
+    @deprecated(" and will be removed in 0.19.")
     def decision_function(self, X):
         """Decision function of the linear model.
 
@@ -133,6 +134,9 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
         C : array, shape = (n_samples,)
             Returns predicted values.
         """
+        return self._decision_function(X)
+
+    def _decision_function(self, X):
         check_is_fitted(self, "coef_")
 
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
@@ -152,7 +156,7 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
         C : array, shape = (n_samples,)
             Returns predicted values.
         """
-        return self.decision_function(X)
+        return self._decision_function(X)
 
     _center_data = staticmethod(center_data)
 
@@ -193,7 +197,7 @@ class LinearClassifierMixin(ClassifierMixin):
             class would be predicted.
         """
         if not hasattr(self, 'coef_') or self.coef_ is None:
-            raise NotFittedError("This %(name)s instance is not fitted"
+            raise NotFittedError("This %(name)s instance is not fitted "
                                  "yet" % {'name': type(self).__name__})
 
         X = check_array(X, accept_sparse='csr')
@@ -348,7 +352,7 @@ class LinearRegression(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.n_jobs = n_jobs
 
-    def fit(self, X, y, n_jobs=1):
+    def fit(self, X, y):
         """
         Fit linear model.
 
@@ -364,16 +368,9 @@ class LinearRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        if n_jobs != 1:
-            warnings.warn("The n_jobs parameter in fit is deprecated and will "
-                          "be removed in 0.17. It has been moved from the fit "
-                          "method to the LinearRegression class constructor.",
-                          DeprecationWarning, stacklevel=2)
-            n_jobs_ = n_jobs
-        else:
-            n_jobs_ = self.n_jobs
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
-        y = np.asarray(y)
+        n_jobs_ = self.n_jobs
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                         y_numeric=True, multi_output=True)
 
         X, y, X_mean, y_mean, X_std = self._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
@@ -401,7 +398,8 @@ class LinearRegression(LinearModel, RegressorMixin):
         return self
 
 
-def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
+def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
+             Xy_precompute_order=None):
     """Aux function used at beginning of fit in linear models"""
     n_samples, n_features = X.shape
     if sparse.isspmatrix(X):
@@ -412,10 +410,13 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
         # copy was done in fit if necessary
         X, y, X_mean, y_mean, X_std = center_data(
             X, y, fit_intercept, normalize, copy=copy)
-
-    if hasattr(precompute, '__array__') \
-            and not np.allclose(X_mean, np.zeros(n_features)) \
-            and not np.allclose(X_std, np.ones(n_features)):
+    if hasattr(precompute, '__array__') and (
+            fit_intercept and not np.allclose(X_mean, np.zeros(n_features))
+            or normalize and not np.allclose(X_std, np.ones(n_features))):
+        warnings.warn("Gram matrix was provided but X was centered"
+                      " to fit intercept, "
+                      "or X was normalized : recomputing Gram matrix.",
+                      UserWarning)
         # recompute Gram
         precompute = 'auto'
         Xy = None
@@ -426,11 +427,16 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
 
     if precompute is True:
         precompute = np.dot(X.T, X)
+        if Xy_precompute_order == 'F':
+            precompute = np.dot(X.T, X).T
 
     if not hasattr(precompute, '__array__'):
         Xy = None  # cannot use Xy if precompute is not Gram
 
     if hasattr(precompute, '__array__') and Xy is None:
-        Xy = np.dot(X.T, y)
+        if Xy_precompute_order == 'F':
+            Xy = np.dot(y.T, X).T
+        else:
+            Xy = np.dot(X.T, y)
 
     return X, y, X_mean, y_mean, X_std, precompute, Xy

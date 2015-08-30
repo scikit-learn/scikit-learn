@@ -1,6 +1,7 @@
 from __future__ import division, print_function
 
 import numpy as np
+from scipy import linalg
 from functools import partial
 from itertools import product
 import warnings
@@ -9,7 +10,7 @@ from sklearn import datasets
 from sklearn import svm
 
 from sklearn.datasets import make_multilabel_classification
-from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
+from sklearn.preprocessing import label_binarize
 from sklearn.utils.fixes import np_version
 from sklearn.utils.validation import check_random_state
 
@@ -28,6 +29,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import classification_report
+from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import f1_score
 from sklearn.metrics import fbeta_score
@@ -40,6 +42,7 @@ from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
+from sklearn.metrics import brier_score_loss
 
 
 from sklearn.metrics.classification import _check_targets
@@ -110,23 +113,9 @@ def test_multilabel_accuracy_score_subset_accuracy():
     assert_equal(accuracy_score(y1, np.zeros(y1.shape)), 0)
     assert_equal(accuracy_score(y2, np.zeros(y1.shape)), 0)
 
-    with ignore_warnings():  # sequence of sequences is deprecated
-        # List of tuple of label
-        y1 = [(1, 2,), (0, 2,)]
-        y2 = [(2,), (0, 2,)]
-
-        assert_equal(accuracy_score(y1, y2), 0.5)
-        assert_equal(accuracy_score(y1, y1), 1)
-        assert_equal(accuracy_score(y2, y2), 1)
-        assert_equal(accuracy_score(y2, [(), ()]), 0)
-        assert_equal(accuracy_score(y1, y2, normalize=False), 1)
-        assert_equal(accuracy_score(y1, y1, normalize=False), 2)
-        assert_equal(accuracy_score(y2, y2, normalize=False), 2)
-        assert_equal(accuracy_score(y2, [(), ()], normalize=False), 0)
-
 
 def test_precision_recall_f1_score_binary():
-    """Test Precision Recall and F1 Score for binary classification task"""
+    # Test Precision Recall and F1 Score for binary classification task
     y_true, y_pred, _ = make_prediction(binary=True)
 
     # detailed measures for each class
@@ -138,26 +127,29 @@ def test_precision_recall_f1_score_binary():
 
     # individual scoring function that can be used for grid search: in the
     # binary class case the score is the value of the measure for the positive
-    # class (e.g. label == 1)
-    ps = precision_score(y_true, y_pred)
-    assert_array_almost_equal(ps, 0.85, 2)
+    # class (e.g. label == 1). This is deprecated for average != 'binary'.
+    assert_dep_warning = partial(assert_warns, DeprecationWarning)
+    for kwargs, my_assert in [({}, assert_no_warnings),
+                              ({'average': 'binary'}, assert_no_warnings),
+                              ({'average': 'micro'}, assert_dep_warning)]:
+        ps = my_assert(precision_score, y_true, y_pred, **kwargs)
+        assert_array_almost_equal(ps, 0.85, 2)
 
-    rs = recall_score(y_true, y_pred)
-    assert_array_almost_equal(rs, 0.68, 2)
+        rs = my_assert(recall_score, y_true, y_pred, **kwargs)
+        assert_array_almost_equal(rs, 0.68, 2)
 
-    fs = f1_score(y_true, y_pred)
-    assert_array_almost_equal(fs, 0.76, 2)
+        fs = my_assert(f1_score, y_true, y_pred, **kwargs)
+        assert_array_almost_equal(fs, 0.76, 2)
 
-    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2),
-                        (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
+        assert_almost_equal(my_assert(fbeta_score, y_true, y_pred, beta=2,
+                                      **kwargs),
+                            (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
 
 
-@ignore_warnings
 def test_precision_recall_f_binary_single_class():
-    """Test precision, recall and F1 score behave with a single positive or
-    negative class
-
-    Such a case may occur with non-stratified cross-validation"""
+    # Test precision, recall and F1 score behave with a single positive or
+    # negative class
+    # Such a case may occur with non-stratified cross-validation
     assert_equal(1., precision_score([1, 1], [1, 1]))
     assert_equal(1., recall_score([1, 1], [1, 1]))
     assert_equal(1., f1_score([1, 1], [1, 1]))
@@ -167,10 +159,76 @@ def test_precision_recall_f_binary_single_class():
     assert_equal(0., f1_score([-1, -1], [-1, -1]))
 
 
-def test_average_precision_score_score_non_binary_class():
-    """Test that average_precision_score function returns an error when trying
-    to compute average_precision_score for multiclass task.
+@ignore_warnings
+def test_precision_recall_f_extra_labels():
+    """Test handling of explicit additional (not in input) labels to PRF
     """
+    y_true = [1, 3, 3, 2]
+    y_pred = [1, 1, 3, 2]
+    y_true_bin = label_binarize(y_true, classes=np.arange(5))
+    y_pred_bin = label_binarize(y_pred, classes=np.arange(5))
+    data = [(y_true, y_pred),
+            (y_true_bin, y_pred_bin)]
+
+    for i, (y_true, y_pred) in enumerate(data):
+        # No average: zeros in array
+        actual = recall_score(y_true, y_pred, labels=[0, 1, 2, 3, 4],
+                              average=None)
+        assert_array_almost_equal([0., 1., 1., .5, 0.], actual)
+
+        # Macro average is changed
+        actual = recall_score(y_true, y_pred, labels=[0, 1, 2, 3, 4],
+                              average='macro')
+        assert_array_almost_equal(np.mean([0., 1., 1., .5, 0.]), actual)
+
+        # No effect otheriwse
+        for average in ['micro', 'weighted', 'samples']:
+            if average == 'samples' and i == 0:
+                continue
+            assert_almost_equal(recall_score(y_true, y_pred,
+                                             labels=[0, 1, 2, 3, 4],
+                                             average=average),
+                                recall_score(y_true, y_pred, labels=None,
+                                             average=average))
+
+    # Error when introducing invalid label in multilabel case
+    # (although it would only affect performance if average='macro'/None)
+    for average in [None, 'macro', 'micro', 'samples']:
+        assert_raises(ValueError, recall_score, y_true_bin, y_pred_bin,
+                      labels=np.arange(6), average=average)
+        assert_raises(ValueError, recall_score, y_true_bin, y_pred_bin,
+                      labels=np.arange(-1, 4), average=average)
+
+
+@ignore_warnings
+def test_precision_recall_f_ignored_labels():
+    """Test a subset of labels may be requested for PRF"""
+    y_true = [1, 1, 2, 3]
+    y_pred = [1, 3, 3, 3]
+    y_true_bin = label_binarize(y_true, classes=np.arange(5))
+    y_pred_bin = label_binarize(y_pred, classes=np.arange(5))
+    data = [(y_true, y_pred),
+            (y_true_bin, y_pred_bin)]
+
+    for i, (y_true, y_pred) in enumerate(data):
+        recall_13 = partial(recall_score, y_true, y_pred, labels=[1, 3])
+        recall_all = partial(recall_score, y_true, y_pred, labels=None)
+
+        assert_array_almost_equal([.5, 1.], recall_13(average=None))
+        assert_almost_equal((.5 + 1.) / 2, recall_13(average='macro'))
+        assert_almost_equal((.5 * 2 + 1. * 1) / 3,
+                            recall_13(average='weighted'))
+        assert_almost_equal(2. / 3, recall_13(average='micro'))
+
+        # ensure the above were meaningful tests:
+        for average in ['macro', 'weighted', 'micro']:
+            assert_not_equal(recall_13(average=average),
+                             recall_all(average=average))
+
+
+def test_average_precision_score_score_non_binary_class():
+    # Test that average_precision_score function returns an error when trying
+    # to compute average_precision_score for multiclass task.
     rng = check_random_state(404)
     y_pred = rng.rand(10)
 
@@ -204,6 +262,7 @@ def test_average_precision_score_tied_values():
     assert_not_equal(average_precision_score(y_true, y_score), 1.)
 
 
+@ignore_warnings
 def test_precision_recall_fscore_support_errors():
     y_true, y_pred, _ = make_prediction(binary=True)
 
@@ -221,7 +280,7 @@ def test_precision_recall_fscore_support_errors():
 
 
 def test_confusion_matrix_binary():
-    """Test confusion matrix - binary classification case"""
+    # Test confusion matrix - binary classification case
     y_true, y_pred, _ = make_prediction(binary=True)
 
     def test(y_true, y_pred):
@@ -242,14 +301,35 @@ def test_confusion_matrix_binary():
          [str(y) for y in y_pred])
 
 
-@ignore_warnings
+def test_cohen_kappa():
+    # These label vectors reproduce the contingency matrix from Artstein and
+    # Poesio (2008), Table 1: np.array([[20, 20], [10, 50]]).
+    y1 = np.array([0] * 40 + [1] * 60)
+    y2 = np.array([0] * 20 + [1] * 20 + [0] * 10 + [1] * 50)
+    kappa = cohen_kappa_score(y1, y2)
+    assert_almost_equal(kappa, .348, decimal=3)
+    assert_equal(kappa, cohen_kappa_score(y2, y1))
+
+    # Add spurious labels and ignore them.
+    y1 = np.append(y1, [2] * 4)
+    y2 = np.append(y2, [2] * 4)
+    assert_equal(cohen_kappa_score(y1, y2, labels=[0, 1]), kappa)
+
+    assert_almost_equal(cohen_kappa_score(y1, y1), 1.)
+
+    # Multiclass example: Artstein and Poesio, Table 4.
+    y1 = np.array([0] * 46 + [1] * 44 + [2] * 10)
+    y2 = np.array([0] * 52 + [1] * 32 + [2] * 16)
+    assert_almost_equal(cohen_kappa_score(y1, y2), .8013, decimal=4)
+
+
 def test_matthews_corrcoef_nan():
     assert_equal(matthews_corrcoef([0], [1]), 0.0)
     assert_equal(matthews_corrcoef([0, 0], [0, 1]), 0.0)
 
 
 def test_precision_recall_f1_score_multiclass():
-    """Test Precision Recall and F1 Score for multiclass classification task"""
+    # Test Precision Recall and F1 Score for multiclass classification task
     y_true, y_pred, _ = make_prediction(binary=False)
 
     # compute scores with default labels introspection
@@ -309,7 +389,7 @@ def test_precision_refcall_f1_score_multilabel_unordered_labels():
     y_pred = np.array([[0, 0, 1, 1]])
     for average in ['samples', 'micro', 'macro', 'weighted', None]:
         p, r, f, s = precision_recall_fscore_support(
-            y_true, y_pred, labels=[4, 1, 2, 3], warn_for=[], average=average)
+            y_true, y_pred, labels=[3, 0, 1, 2], warn_for=[], average=average)
         assert_array_equal(p, 0)
         assert_array_equal(r, 0)
         assert_array_equal(f, 0)
@@ -318,10 +398,8 @@ def test_precision_refcall_f1_score_multilabel_unordered_labels():
 
 
 def test_precision_recall_f1_score_multiclass_pos_label_none():
-    """Test Precision Recall and F1 Score for multiclass classification task
-
-    GH Issue #1296
-    """
+    # Test Precision Recall and F1 Score for multiclass classification task
+    # GH Issue #1296
     # initialize data
     y_true = np.array([0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1])
     y_pred = np.array([1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1])
@@ -333,7 +411,7 @@ def test_precision_recall_f1_score_multiclass_pos_label_none():
 
 
 def test_zero_precision_recall():
-    """Check that pathological cases do not bring NaNs"""
+    # Check that pathological cases do not bring NaNs
 
     old_error_settings = np.seterr(all='raise')
 
@@ -353,7 +431,7 @@ def test_zero_precision_recall():
 
 
 def test_confusion_matrix_multiclass():
-    """Test confusion matrix - multi-class case"""
+    # Test confusion matrix - multi-class case
     y_true, y_pred, _ = make_prediction(binary=False)
 
     def test(y_true, y_pred, string_type=False):
@@ -379,7 +457,7 @@ def test_confusion_matrix_multiclass():
 
 
 def test_confusion_matrix_multiclass_subset_labels():
-    """Test confusion matrix - multi-class case with subset of labels"""
+    # Test confusion matrix - multi-class case with subset of labels
     y_true, y_pred, _ = make_prediction(binary=False)
 
     # compute confusion matrix with only first two labels considered
@@ -395,7 +473,7 @@ def test_confusion_matrix_multiclass_subset_labels():
 
 
 def test_classification_report_multiclass():
-    """Test performance report"""
+    # Test performance report
     iris = datasets.load_iris()
     y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
 
@@ -413,7 +491,6 @@ avg / total       0.51      0.53      0.47        75
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names)
     assert_equal(report, expected_report)
-
     # print classification report with label detection
     expected_report = """\
              precision    recall  f1-score   support
@@ -429,7 +506,7 @@ avg / total       0.51      0.53      0.47        75
 
 
 def test_classification_report_multiclass_with_digits():
-    """Test performance report with added digits in floating point values"""
+    # Test performance report with added digits in floating point values
     iris = datasets.load_iris()
     y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
 
@@ -447,7 +524,6 @@ avg / total    0.51375   0.53333   0.47310        75
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names, digits=5)
     assert_equal(report, expected_report)
-
     # print classification report with label detection
     expected_report = """\
              precision    recall  f1-score   support
@@ -520,15 +596,19 @@ avg / total       0.51      0.53      0.47        75
         assert_equal(report, expected_report)
 
 
-@ignore_warnings  # sequence of sequences is deprecated
 def test_multilabel_classification_report():
     n_classes = 4
     n_samples = 50
-    make_ml = make_multilabel_classification
-    _, y_true_ll = make_ml(n_features=1, n_classes=n_classes, random_state=0,
-                           n_samples=n_samples)
-    _, y_pred_ll = make_ml(n_features=1, n_classes=n_classes, random_state=1,
-                           n_samples=n_samples)
+
+    _, y_true = make_multilabel_classification(n_features=1,
+                                               n_samples=n_samples,
+                                               n_classes=n_classes,
+                                               random_state=0)
+
+    _, y_pred = make_multilabel_classification(n_features=1,
+                                               n_samples=n_samples,
+                                               n_classes=n_classes,
+                                               random_state=1)
 
     expected_report = """\
              precision    recall  f1-score   support
@@ -541,14 +621,8 @@ def test_multilabel_classification_report():
 avg / total       0.45      0.51      0.46       104
 """
 
-    lb = MultiLabelBinarizer()
-    lb.fit([range(4)])
-    y_true_bi = lb.transform(y_true_ll)
-    y_pred_bi = lb.transform(y_pred_ll)
-
-    for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
-        report = classification_report(y_true, y_pred)
-        assert_equal(report, expected_report)
+    report = classification_report(y_true, y_pred)
+    assert_equal(report, expected_report)
 
 
 def test_multilabel_zero_one_loss_subset():
@@ -564,17 +638,6 @@ def test_multilabel_zero_one_loss_subset():
     assert_equal(zero_one_loss(y1, np.zeros(y1.shape)), 1)
     assert_equal(zero_one_loss(y2, np.zeros(y1.shape)), 1)
 
-    with ignore_warnings():  # sequence of sequences is deprecated
-        # List of tuple of label
-        y1 = [(1, 2,), (0, 2,)]
-        y2 = [(2,), (0, 2,)]
-
-        assert_equal(zero_one_loss(y1, y2), 0.5)
-        assert_equal(zero_one_loss(y1, y1), 0)
-        assert_equal(zero_one_loss(y2, y2), 0)
-        assert_equal(zero_one_loss(y2, [(), ()]), 1)
-        assert_equal(zero_one_loss(y2, [tuple(), (10, )]), 1)
-
 
 def test_multilabel_hamming_loss():
     # Dense label indicator matrix format
@@ -588,19 +651,6 @@ def test_multilabel_hamming_loss():
     assert_equal(hamming_loss(y1, np.logical_not(y1)), 1)
     assert_equal(hamming_loss(y1, np.zeros(y1.shape)), 4 / 6)
     assert_equal(hamming_loss(y2, np.zeros(y1.shape)), 0.5)
-
-    with ignore_warnings():  # sequence of sequences is deprecated
-        # List of tuple of label
-        y1 = [(1, 2,), (0, 2,)]
-        y2 = [(2,), (0, 2,)]
-
-        assert_equal(hamming_loss(y1, y2), 1 / 6)
-        assert_equal(hamming_loss(y1, y1), 0)
-        assert_equal(hamming_loss(y2, y2), 0)
-        assert_equal(hamming_loss(y2, [(), ()]), 0.75)
-        assert_equal(hamming_loss(y1, [tuple(), (10, )]), 0.625)
-        assert_almost_equal(hamming_loss(y2, [tuple(), (10, )],
-                                         classes=np.arange(11)), 0.1818, 2)
 
 
 def test_multilabel_jaccard_similarity_score():
@@ -619,248 +669,204 @@ def test_multilabel_jaccard_similarity_score():
     assert_equal(jaccard_similarity_score(y1, np.zeros(y1.shape)), 0)
     assert_equal(jaccard_similarity_score(y2, np.zeros(y1.shape)), 0)
 
-    with ignore_warnings():  # sequence of sequences is deprecated
-        # List of tuple of label
-        y1 = [(1, 2,), (0, 2,)]
-        y2 = [(2,), (0, 2,)]
-
-        assert_equal(jaccard_similarity_score(y1, y2), 0.75)
-        assert_equal(jaccard_similarity_score(y1, y1), 1)
-        assert_equal(jaccard_similarity_score(y2, y2), 1)
-        assert_equal(jaccard_similarity_score(y2, [(), ()]), 0)
-
-        # |y3 inter y4 | = [0, 1, 1]
-        # |y3 union y4 | = [2, 1, 3]
-        y3 = [(0,), (1,), (3,)]
-        y4 = [(4,), (4,), (5, 6)]
-        assert_almost_equal(jaccard_similarity_score(y3, y4), 0)
-
-        # |y5 inter y6 | = [0, 1, 1]
-        # |y5 union y6 | = [2, 1, 3]
-        y5 = [(0,), (1,), (2, 3)]
-        y6 = [(1,), (1,), (2, 0)]
-
-        assert_almost_equal(jaccard_similarity_score(y5, y6), (1 + 1 / 3) / 3)
-
 
 @ignore_warnings
 def test_precision_recall_f1_score_multilabel_1():
-    """ Test precision_recall_f1_score on a crafted multilabel example
-    """
+    # Test precision_recall_f1_score on a crafted multilabel example
     # First crafted example
-    y_true_ll = [(0,), (1,), (2, 3)]
-    y_pred_ll = [(1,), (1,), (2, 0)]
-    lb = LabelBinarizer()
-    lb.fit([range(4)])
-    y_true_bi = lb.transform(y_true_ll)
-    y_pred_bi = lb.transform(y_pred_ll)
 
-    for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
+    y_true = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 1]])
+    y_pred = np.array([[0, 1, 0, 0], [0, 1, 0, 0], [1, 0, 1, 0]])
 
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average=None)
-        #tp = [0, 1, 1, 0]
-        #fn = [1, 0, 0, 1]
-        #fp = [1, 1, 0, 0]
-        # Check per class
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average=None)
 
-        assert_array_almost_equal(p, [0.0, 0.5, 1.0, 0.0], 2)
-        assert_array_almost_equal(r, [0.0, 1.0, 1.0, 0.0], 2)
-        assert_array_almost_equal(f, [0.0, 1 / 1.5, 1, 0.0], 2)
-        assert_array_almost_equal(s, [1, 1, 1, 1], 2)
+    # tp = [0, 1, 1, 0]
+    # fn = [1, 0, 0, 1]
+    # fp = [1, 1, 0, 0]
+    # Check per class
 
-        f2 = fbeta_score(y_true, y_pred, beta=2, average=None)
-        support = s
-        assert_array_almost_equal(f2, [0, 0.83, 1, 0], 2)
+    assert_array_almost_equal(p, [0.0, 0.5, 1.0, 0.0], 2)
+    assert_array_almost_equal(r, [0.0, 1.0, 1.0, 0.0], 2)
+    assert_array_almost_equal(f, [0.0, 1 / 1.5, 1, 0.0], 2)
+    assert_array_almost_equal(s, [1, 1, 1, 1], 2)
 
-        # Check macro
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="macro")
-        assert_almost_equal(p, 1.5 / 4)
-        assert_almost_equal(r, 0.5)
-        assert_almost_equal(f, 2.5 / 1.5 * 0.25)
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="macro"),
-                            np.mean(f2))
+    f2 = fbeta_score(y_true, y_pred, beta=2, average=None)
+    support = s
+    assert_array_almost_equal(f2, [0, 0.83, 1, 0], 2)
 
-        # Check micro
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="micro")
-        assert_almost_equal(p, 0.5)
-        assert_almost_equal(r, 0.5)
-        assert_almost_equal(f, 0.5)
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="micro"),
-                            (1 + 4) * p * r / (4 * p + r))
+    # Check macro
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="macro")
+    assert_almost_equal(p, 1.5 / 4)
+    assert_almost_equal(r, 0.5)
+    assert_almost_equal(f, 2.5 / 1.5 * 0.25)
+    assert_equal(s, None)
+    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2, average="macro"),
+                        np.mean(f2))
 
-        # Check weigted
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="weighted")
-        assert_almost_equal(p, 1.5 / 4)
-        assert_almost_equal(r, 0.5)
-        assert_almost_equal(f, 2.5 / 1.5 * 0.25)
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="weighted"),
-                            np.average(f2, weights=support))
-        # Check weigted
-        # |h(x_i) inter y_i | = [0, 1, 1]
-        # |y_i| = [1, 1, 2]
-        # |h(x_i)| = [1, 1, 2]
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="samples")
-        assert_almost_equal(p, 0.5)
-        assert_almost_equal(r, 0.5)
-        assert_almost_equal(f, 0.5)
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="samples"),
-                            0.5)
+    # Check micro
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="micro")
+    assert_almost_equal(p, 0.5)
+    assert_almost_equal(r, 0.5)
+    assert_almost_equal(f, 0.5)
+    assert_equal(s, None)
+    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
+                                    average="micro"),
+                        (1 + 4) * p * r / (4 * p + r))
+
+    # Check weighted
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="weighted")
+    assert_almost_equal(p, 1.5 / 4)
+    assert_almost_equal(r, 0.5)
+    assert_almost_equal(f, 2.5 / 1.5 * 0.25)
+    assert_equal(s, None)
+    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
+                                    average="weighted"),
+                        np.average(f2, weights=support))
+    # Check samples
+    # |h(x_i) inter y_i | = [0, 1, 1]
+    # |y_i| = [1, 1, 2]
+    # |h(x_i)| = [1, 1, 2]
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="samples")
+    assert_almost_equal(p, 0.5)
+    assert_almost_equal(r, 0.5)
+    assert_almost_equal(f, 0.5)
+    assert_equal(s, None)
+    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2, average="samples"),
+                        0.5)
 
 
 @ignore_warnings
 def test_precision_recall_f1_score_multilabel_2():
-    """ Test precision_recall_f1_score on a crafted multilabel example 2
-    """
+    # Test precision_recall_f1_score on a crafted multilabel example 2
     # Second crafted example
-    y_true_ll = [(1,), (2,), (2, 3)]
-    y_pred_ll = [(4,), (4,), (2, 1)]
-    lb = LabelBinarizer()
-    lb.fit([range(1, 5)])
-    y_true_bi = lb.transform(y_true_ll)
-    y_pred_bi = lb.transform(y_pred_ll)
+    y_true = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 1, 1, 0]])
+    y_pred = np.array([[0, 0, 0, 1], [0, 0, 0, 1], [1, 1, 0, 0]])
 
-    for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
-        # tp = [ 0.  1.  0.  0.]
-        # fp = [ 1.  0.  0.  2.]
-        # fn = [ 1.  1.  1.  0.]
+    # tp = [ 0.  1.  0.  0.]
+    # fp = [ 1.  0.  0.  2.]
+    # fn = [ 1.  1.  1.  0.]
 
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average=None)
-        assert_array_almost_equal(p, [0.0, 1.0, 0.0, 0.0], 2)
-        assert_array_almost_equal(r, [0.0, 0.5, 0.0, 0.0], 2)
-        assert_array_almost_equal(f, [0.0, 0.66, 0.0, 0.0], 2)
-        assert_array_almost_equal(s, [1, 2, 1, 0], 2)
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average=None)
+    assert_array_almost_equal(p, [0.0, 1.0, 0.0, 0.0], 2)
+    assert_array_almost_equal(r, [0.0, 0.5, 0.0, 0.0], 2)
+    assert_array_almost_equal(f, [0.0, 0.66, 0.0, 0.0], 2)
+    assert_array_almost_equal(s, [1, 2, 1, 0], 2)
 
-        f2 = fbeta_score(y_true, y_pred, beta=2, average=None)
-        support = s
-        assert_array_almost_equal(f2, [0, 0.55, 0, 0], 2)
+    f2 = fbeta_score(y_true, y_pred, beta=2, average=None)
+    support = s
+    assert_array_almost_equal(f2, [0, 0.55, 0, 0], 2)
 
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="micro")
-        assert_almost_equal(p, 0.25)
-        assert_almost_equal(r, 0.25)
-        assert_almost_equal(f, 2 * 0.25 * 0.25 / 0.5)
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="micro"),
-                            (1 + 4) * p * r / (4 * p + r))
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="micro")
+    assert_almost_equal(p, 0.25)
+    assert_almost_equal(r, 0.25)
+    assert_almost_equal(f, 2 * 0.25 * 0.25 / 0.5)
+    assert_equal(s, None)
+    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
+                                    average="micro"),
+                        (1 + 4) * p * r / (4 * p + r))
 
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="macro")
-        assert_almost_equal(p, 0.25)
-        assert_almost_equal(r, 0.125)
-        assert_almost_equal(f, 2 / 12)
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="macro"),
-                            np.mean(f2))
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="macro")
+    assert_almost_equal(p, 0.25)
+    assert_almost_equal(r, 0.125)
+    assert_almost_equal(f, 2 / 12)
+    assert_equal(s, None)
+    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
+                                    average="macro"),
+                        np.mean(f2))
 
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="weighted")
-        assert_almost_equal(p, 2 / 4)
-        assert_almost_equal(r, 1 / 4)
-        assert_almost_equal(f, 2 / 3 * 2 / 4)
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="weighted"),
-                            np.average(f2, weights=support))
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="weighted")
+    assert_almost_equal(p, 2 / 4)
+    assert_almost_equal(r, 1 / 4)
+    assert_almost_equal(f, 2 / 3 * 2 / 4)
+    assert_equal(s, None)
+    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
+                                    average="weighted"),
+                        np.average(f2, weights=support))
 
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="samples")
-        # Check weigted
-        # |h(x_i) inter y_i | = [0, 0, 1]
-        # |y_i| = [1, 1, 2]
-        # |h(x_i)| = [1, 1, 2]
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="samples")
+    # Check samples
+    # |h(x_i) inter y_i | = [0, 0, 1]
+    # |y_i| = [1, 1, 2]
+    # |h(x_i)| = [1, 1, 2]
 
-        assert_almost_equal(p, 1 / 6)
-        assert_almost_equal(r, 1 / 6)
-        assert_almost_equal(f, 2 / 4 * 1 / 3)
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="samples"),
-                            0.1666, 2)
+    assert_almost_equal(p, 1 / 6)
+    assert_almost_equal(r, 1 / 6)
+    assert_almost_equal(f, 2 / 4 * 1 / 3)
+    assert_equal(s, None)
+    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
+                                    average="samples"),
+                        0.1666, 2)
 
 
-@ignore_warnings
 def test_precision_recall_f1_score_with_an_empty_prediction():
-    y_true_ll = [(1,), (0,), (2, 1,)]
-    y_pred_ll = [tuple(), (3,), (2, 1)]
+    y_true = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]])
+    y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
 
-    lb = LabelBinarizer()
-    lb.fit([range(4)])
-    y_true_bi = lb.transform(y_true_ll)
-    y_pred_bi = lb.transform(y_pred_ll)
+    # true_pos = [ 0.  1.  1.  0.]
+    # false_pos = [ 0.  0.  0.  1.]
+    # false_neg = [ 1.  1.  0.  0.]
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average=None)
+    assert_array_almost_equal(p, [0.0, 1.0, 1.0, 0.0], 2)
+    assert_array_almost_equal(r, [0.0, 0.5, 1.0, 0.0], 2)
+    assert_array_almost_equal(f, [0.0, 1 / 1.5, 1, 0.0], 2)
+    assert_array_almost_equal(s, [1, 2, 1, 0], 2)
 
-    for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
-        # true_pos = [ 0.  1.  1.  0.]
-        # false_pos = [ 0.  0.  0.  1.]
-        # false_neg = [ 1.  1.  0.  0.]
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average=None)
-        assert_array_almost_equal(p, [0.0, 1.0, 1.0, 0.0], 2)
-        assert_array_almost_equal(r, [0.0, 0.5, 1.0, 0.0], 2)
-        assert_array_almost_equal(f, [0.0, 1 / 1.5, 1, 0.0], 2)
-        assert_array_almost_equal(s, [1, 2, 1, 0], 2)
+    f2 = fbeta_score(y_true, y_pred, beta=2, average=None)
+    support = s
+    assert_array_almost_equal(f2, [0, 0.55, 1, 0], 2)
 
-        f2 = fbeta_score(y_true, y_pred, beta=2, average=None)
-        support = s
-        assert_array_almost_equal(f2, [0, 0.55, 1, 0], 2)
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="macro")
+    assert_almost_equal(p, 0.5)
+    assert_almost_equal(r, 1.5 / 4)
+    assert_almost_equal(f, 2.5 / (4 * 1.5))
+    assert_equal(s, None)
+    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
+                                    average="macro"),
+                        np.mean(f2))
 
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="macro")
-        assert_almost_equal(p, 0.5)
-        assert_almost_equal(r, 1.5 / 4)
-        assert_almost_equal(f, 2.5 / (4 * 1.5))
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="macro"),
-                            np.mean(f2))
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="micro")
+    assert_almost_equal(p, 2 / 3)
+    assert_almost_equal(r, 0.5)
+    assert_almost_equal(f, 2 / 3 / (2 / 3 + 0.5))
+    assert_equal(s, None)
+    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
+                                    average="micro"),
+                        (1 + 4) * p * r / (4 * p + r))
 
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="micro")
-        assert_almost_equal(p, 2 / 3)
-        assert_almost_equal(r, 0.5)
-        assert_almost_equal(f, 2 / 3 / (2 / 3 + 0.5))
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="micro"),
-                            (1 + 4) * p * r / (4 * p + r))
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="weighted")
+    assert_almost_equal(p, 3 / 4)
+    assert_almost_equal(r, 0.5)
+    assert_almost_equal(f, (2 / 1.5 + 1) / 4)
+    assert_equal(s, None)
+    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
+                                    average="weighted"),
+                        np.average(f2, weights=support))
 
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="weighted")
-        assert_almost_equal(p, 3 / 4)
-        assert_almost_equal(r, 0.5)
-        assert_almost_equal(f, (2 / 1.5 + 1) / 4)
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="weighted"),
-                            np.average(f2, weights=support))
-
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="samples")
-        # |h(x_i) inter y_i | = [0, 0, 2]
-        # |y_i| = [1, 1, 2]
-        # |h(x_i)| = [0, 1, 2]
-        assert_almost_equal(p, 1 / 3)
-        assert_almost_equal(r, 1 / 3)
-        assert_almost_equal(f, 1 / 3)
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="samples"),
-                            0.333, 2)
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="samples")
+    # |h(x_i) inter y_i | = [0, 0, 2]
+    # |y_i| = [1, 1, 2]
+    # |h(x_i)| = [0, 1, 2]
+    assert_almost_equal(p, 1 / 3)
+    assert_almost_equal(r, 1 / 3)
+    assert_almost_equal(f, 1 / 3)
+    assert_equal(s, None)
+    assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
+                                    average="samples"),
+                        0.333, 2)
 
 
 def test_precision_recall_f1_no_labels():
@@ -905,7 +911,6 @@ def test_precision_recall_f1_no_labels():
 
 
 def test_prf_warnings():
-
     # average of per-label scores
     f, w = precision_recall_fscore_support, UndefinedMetricWarning
     my_assert = assert_warns_message
@@ -1006,10 +1011,11 @@ def test_fscore_warnings():
 
 
 def test_prf_average_compat():
-    """Ensure warning if f1_score et al.'s average is implicit for multiclass
-    """
+    # Ensure warning if f1_score et al.'s average is implicit for multiclass
     y_true = [1, 2, 3, 3]
     y_pred = [1, 2, 3, 1]
+    y_true_bin = [0, 1, 1]
+    y_pred_bin = [0, 1, 0]
 
     for metric in [precision_score, recall_score, f1_score,
                    partial(fbeta_score, beta=2)]:
@@ -1020,15 +1026,22 @@ def test_prf_average_compat():
                      'average does not act like "weighted" by default')
 
         # check binary passes without warning
-        assert_no_warnings(metric, [0, 1, 1], [0, 1, 0])
+        assert_no_warnings(metric, y_true_bin, y_pred_bin)
+
+        # but binary with pos_label=None should behave like multiclass
+        score = assert_warns(DeprecationWarning, metric,
+                             y_true_bin, y_pred_bin, pos_label=None)
+        score_weighted = assert_no_warnings(metric, y_true_bin, y_pred_bin,
+                                            pos_label=None, average='weighted')
+        assert_equal(score, score_weighted,
+                     'average does not act like "weighted" by default with '
+                     'binary data and pos_label=None')
 
 
-@ignore_warnings  # sequence of sequences is deprecated
 def test__check_targets():
-    """Check that _check_targets correctly merges target types, squeezes
-    output and fails if input lengths differ."""
+    # Check that _check_targets correctly merges target types, squeezes
+    # output and fails if input lengths differ.
     IND = 'multilabel-indicator'
-    SEQ = 'multilabel-sequences'
     MC = 'multiclass'
     BIN = 'binary'
     CNT = 'continuous'
@@ -1039,7 +1052,6 @@ def test__check_targets():
         (IND, np.array([[0, 1, 1], [1, 0, 0], [0, 0, 1]])),
         # must not be considered binary
         (IND, np.array([[0, 1], [1, 0], [1, 1]])),
-        (SEQ, [[2, 3], [1], [3]]),
         (MC, [2, 3, 1]),
         (BIN, [0, 1, 1]),
         (CNT, [0., 1.5, 1.]),
@@ -1053,13 +1065,9 @@ def test__check_targets():
     # (types will be tried in either order)
     EXPECTED = {
         (IND, IND): IND,
-        (SEQ, SEQ): IND,
         (MC, MC): MC,
         (BIN, BIN): BIN,
 
-        (IND, SEQ): None,
-        (MC, SEQ): None,
-        (BIN, SEQ): None,
         (MC, IND): None,
         (BIN, IND): None,
         (BIN, MC): MC,
@@ -1069,18 +1077,15 @@ def test__check_targets():
         (MMC, MMC): None,
         (MCN, MCN): None,
         (IND, CNT): None,
-        (SEQ, CNT): None,
         (MC, CNT): None,
         (BIN, CNT): None,
         (MMC, CNT): None,
         (MCN, CNT): None,
         (IND, MMC): None,
-        (SEQ, MMC): None,
         (MC, MMC): None,
         (BIN, MMC): None,
         (MCN, MMC): None,
         (IND, MCN): None,
-        (SEQ, MCN): None,
         (MC, MCN): None,
         (BIN, MCN): None,
     }
@@ -1100,7 +1105,7 @@ def test__check_targets():
                     _check_targets, y1, y2)
 
             else:
-                if type1 not in (BIN, MC, SEQ, IND):
+                if type1 not in (BIN, MC, IND):
                     assert_raise_message(ValueError,
                                          "{0} is not supported".format(type1),
                                          _check_targets, y1, y2)
@@ -1115,6 +1120,14 @@ def test__check_targets():
                 assert_array_equal(y1out, np.squeeze(y1))
                 assert_array_equal(y2out, np.squeeze(y2))
             assert_raises(ValueError, _check_targets, y1[:-1], y2)
+
+    # Make sure seq of seq is not supported
+    y1 = [(1, 2,), (0, 2, 3)]
+    y2 = [(2,), (0, 2,)]
+    msg = ('You appear to be using a legacy multi-label data representation. '
+           'Sequence of sequences are no longer supported; use a binary array'
+           ' or sparse matrix instead.')
+    assert_raise_message(ValueError, msg, _check_targets, y1, y2)
 
 
 def test_hinge_loss_binary():
@@ -1252,3 +1265,20 @@ def test_log_loss():
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
     loss = log_loss(y_true, y_pred)
     assert_almost_equal(loss, 1.0383217, decimal=6)
+
+
+def test_brier_score_loss():
+    # Check brier_score_loss function
+    y_true = np.array([0, 1, 1, 0, 1, 1])
+    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1., 0.95])
+    true_score = linalg.norm(y_true - y_pred) ** 2 / len(y_true)
+
+    assert_almost_equal(brier_score_loss(y_true, y_true), 0.0)
+    assert_almost_equal(brier_score_loss(y_true, y_pred), true_score)
+    assert_almost_equal(brier_score_loss(1. + y_true, y_pred),
+                        true_score)
+    assert_almost_equal(brier_score_loss(2 * y_true - 1, y_pred),
+                        true_score)
+    assert_raises(ValueError, brier_score_loss, y_true, y_pred[1:])
+    assert_raises(ValueError, brier_score_loss, y_true, y_pred + 1.)
+    assert_raises(ValueError, brier_score_loss, y_true, y_pred - 1.)
