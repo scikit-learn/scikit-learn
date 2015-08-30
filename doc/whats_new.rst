@@ -115,6 +115,8 @@ Enhancements
      :class:`decomposition.DictLearning` with coordinate descent method
      from :class:`linear_model.Lasso`. By `Arthur Mensch`_.
 
+   - Parallel processing (threaded) for queries of nearest neighbors
+     (using the ball-tree) by Nikolay Mayorov.
 
 Bug fixes
 .........
