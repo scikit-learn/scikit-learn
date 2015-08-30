@@ -33,6 +33,10 @@ New features
      function into a ``Pipeline``-compatible transformer object.
      By Joe Jevnik.
 
+   - :class:`cross_validation.LabelShuffleSplit` generates random train-test splits,
+     similar to :class:`cross_validation.ShuffleSplit`, except that the splits are 
+     conditioned on a label array. By `Brian McFee`_.
+
 Enhancements
 ............
 
@@ -3581,3 +3585,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Thomas Unterthiner: https://github.com/untom
 
 .. _Loic Esteve: https://github.com/lesteve
+
+.. _Brian McFee: https://bmcfee.github.io
