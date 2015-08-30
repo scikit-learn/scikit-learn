@@ -255,7 +255,7 @@ class LinearClassifierMixin(ClassifierMixin):
         np.exp(prob, prob)
         prob += 1
         np.reciprocal(prob, prob)
-        if len(prob.shape) == 1:
+        if prob.ndim == 1:
             return np.vstack([1 - prob, prob]).T
         else:
             # OvR normalization, like LibLinear's predict_probability
