@@ -657,9 +657,12 @@ class GridSearchCV(BaseSearchCV):
         and not the mean loss across the folds.
 
     cv : integer or cross-validation generator, default=3
-        If an integer is passed, it is the number of folds.
-        Specific cross-validation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects
+        A cross-validation generator to use. If int, determines
+        the number of folds in StratifiedKFold if estimator is a classifier
+        and the target y is binary or multiclass, or the number
+        of folds in KFold otherwise.
+        Specific cross-validation objects can be passed, see 
+        sklearn.cross_validation module for the list of possible objects.
 
     refit : boolean, default=True
         Refit the best estimator with the entire dataset.
@@ -848,9 +851,12 @@ class RandomizedSearchCV(BaseSearchCV):
         and not the mean loss across the folds.
 
     cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of folds (default 3).
-        Specific cross-validation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects
+        A cross-validation generator to use. If int, determines
+        the number of folds in StratifiedKFold if estimator is a classifier
+        and the target y is binary or multiclass, or the number
+        of folds in KFold otherwise.
+        Specific cross-validation objects can be passed, see 
+        sklearn.cross_validation module for the list of possible objects.
 
     refit : boolean, default=True
         Refit the best estimator with the entire dataset.
