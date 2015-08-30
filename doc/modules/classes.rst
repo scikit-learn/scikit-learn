@@ -169,6 +169,7 @@ Classes
    cross_validation.PredefinedSplit
    cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
+   cross_validation.LabelShuffleSplit
    cross_validation.StratifiedShuffleSplit
 
 .. autosummary::
