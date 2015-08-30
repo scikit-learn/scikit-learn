@@ -387,7 +387,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     if return_indicator in (True, 'sparse', 'dense'):
         lb = MultiLabelBinarizer(sparse_output=(return_indicator == 'sparse'))
         Y = lb.fit([range(n_classes)]).transform(Y)
-    else:
+    elif return_indicator is not False:
         raise ValueError("return_indicator must be either 'sparse', 'dense' "
                          'or False.')
     if return_distributions:
