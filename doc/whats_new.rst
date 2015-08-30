@@ -79,6 +79,10 @@ Enhancements
      option, which has a simpler forumlar and interpretation.
      By Hanna Wallach and `Andreas Müller`_.
 
+   - Add ``class_weight`` parameter to automatically weight samples by class
+     frequency for :class:`linear_model.PassiveAgressiveClassifier`. By
+     `Trevor Stephens`_.
+
    - Added backlinks from the API reference pages to the user guide. By
      `Andreas Müller`_.
 
@@ -655,7 +659,7 @@ API changes summary
 
     - The ``shuffle`` option of :class:`.linear_model.SGDClassifier`,
       :class:`linear_model.SGDRegressor`, :class:`linear_model.Perceptron`,
-      :class:`linear_model.PassiveAgressiveClassivier` and
+      :class:`linear_model.PassiveAgressiveClassifier` and
       :class:`linear_model.PassiveAgressiveRegressor` now defaults to ``True``.
 
     - :class:`cluster.DBSCAN` now uses a deterministic initialization. The
