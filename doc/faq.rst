@@ -106,7 +106,8 @@ See :ref:`adding_graphical_models`.
 .. _adding_graphical_models:
 
 Will you add graphical models or sequence prediction to scikit-learn?
-------------------------------------------------------------------------
+---------------------------------------------------------------------
+
 Not in the foreseeable future.
 scikit-learn tries to provide a unified API for the basic tasks in machine
 learning, with pipelines and meta-algorithms like grid search to tie
@@ -124,16 +125,20 @@ do structured prediction:
   approximate inference; defines the notion of sample as an instance of
   the graph structure)
 
-* `seqlearn <http://larsmans.github.io/seqlearn/>`_ handles sequences only (focuses on
-  exact inference; has HMMs, but mostly for the sake of completeness;
-  treats a feature vector as a sample and uses an offset encoding for
-  the dependencies between feature vectors)
+* `seqlearn <http://larsmans.github.io/seqlearn/>`_ handles sequences only
+  (focuses on exact inference; has HMMs, but mostly for the sake of
+  completeness; treats a feature vector as a sample and uses an offset encoding
+  for the dependencies between feature vectors)
 
 Will you add GPU support?
---------------------------
-No, or at least not in the near future. The main reason is that GPU support will introduce many software dependencies and introduce platform specific issues.
-scikit-learn is designed to be easy to install on a wide variety of platforms.
-Outside of neural networks, GPUs don't play a large role in machine learning today, and much larger gains in speed can often be achieved by a careful choice of algorithms.
+-------------------------
+
+No, or at least not in the near future. The main reason is that GPU support
+will introduce many software dependencies and introduce platform specific
+issues. scikit-learn is designed to be easy to install on a wide variety of
+platforms. Outside of neural networks, GPUs don't play a large role in machine
+learning today, and much larger gains in speed can often be achieved by a
+careful choice of algorithms.
 
 Do you support PyPy?
 --------------------
@@ -190,3 +195,48 @@ DBSCAN with Levenshtein distances::
 
 Similar tricks can be used, with some care, for tree kernels, graph kernels,
 etc.
+
+
+Why do I sometime get a crash/freeze with n_jobs > 1 under OSX or Linux?
+------------------------------------------------------------------------
+
+Several scikit-learn tools such as ``GridSearchCV`` and ``cross_val_score``
+rely internally on Python's `multiprocessing` module to parallelize execution
+onto several Python processes by passing ``n_jobs > 1`` as argument.
+
+The problem is that Python ``multiprocessing`` does a ``fork`` system call
+without following it with an ``exec`` system call for performance reasons. Many
+libraries like (some versions of) Accelerate / vecLib under OSX, (some versions
+of) MKL, the OpenMP runtime of GCC, nvidia's Cuda (and probably many others),
+manage their own internal thread pool. Upon a call to `fork`, the thread pool
+state in the child process is corrupted: the thread pool believes it has many
+threads while only the main thread state has been forked. It is possible to
+change the libraries to make them detect when a fork happens and reinitialize
+the thread pool in that case: we did that for OpenBLAS (merged upstream in
+master since 0.2.10) and we contributed a `patch
+<https://gcc.gnu.org/bugzilla/show_bug.cgi?id=60035>`_ to GCC's OpenMP runtime
+(not yet reviewed).
+
+But in the end the real culprit is Python's ``multiprocessing`` that does
+``fork`` without ``exec`` to reduce the overhead of starting and using new
+Python processes for parallel computing. Unfortunately this is a violation of
+the POSIX standard and therefore some software editors like Apple refuse to
+consider the lack of fork-safety in Accelerate / vecLib as a bug.
+
+In Python 3.4+ it is now possible to configure ``multiprocessing`` to use the
+'forkserver' or 'spawn' start methods (instead of the default 'fork') to manage
+the process pools. This should make it possible to not be subject to this issue
+anymore. To set the 'forkserver' mode globally for your program, insert the
+following instructions in your main script::
+
+    import multiprocessing
+
+    # other imports, custom code, load data, define model...
+
+    if __name__ == '__main__':
+        multiprocessing.set_start_method('forkserver')
+
+        # call scikit-learn utils with n_jobs > 1 here
+
+You can find more default on the new start methods in the `multiprocessing
+documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`_.
