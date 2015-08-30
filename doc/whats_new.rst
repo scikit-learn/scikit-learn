@@ -42,6 +42,9 @@ New features
 Enhancements
 ............
 
+   - :class:`cluster.mean_shift_.MeanShift` now supports parallel execution,
+     as implemented in the ``mean_shift`` function. By `Martino Sorbaro`_.
+
    - :class:`naive_bayes.GaussianNB` now supports fitting with ``sample_weights``.
      By `Jan Hendrik Metzen`_.
 
