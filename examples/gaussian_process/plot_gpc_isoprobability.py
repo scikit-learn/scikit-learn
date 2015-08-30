@@ -27,6 +27,7 @@ from sklearn.gaussian_process.kernels import DotProduct, ConstantKernel as C
 # A few constants
 lim = 8
 
+
 def g(x):
     """The function to predict (classification will then consist in predicting
     whether g(x) <= 0 or not)"""

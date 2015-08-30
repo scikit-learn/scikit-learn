@@ -86,13 +86,15 @@ def test_kernel_theta():
         theta_vars = map(lambda s: s.rstrip("_bounds"),
                          filter(lambda s: s.endswith("_bounds"), args))
         assert_equal(
-            set(hyperparameter.name for hyperparameter in kernel.hyperparameters),
+            set(hyperparameter.name
+                for hyperparameter in kernel.hyperparameters),
             set(theta_vars))
 
         # Check that values returned in theta are consistent with
         # hyperparameter values (being their logarithms)
         for i, hyperparameter in enumerate(kernel.hyperparameters):
-            assert_equal(theta[i], np.log(getattr(kernel, hyperparameter.name)))
+            assert_equal(theta[i],
+                         np.log(getattr(kernel, hyperparameter.name)))
 
         # Fixed kernel parameters must be excluded from theta and gradient.
         for i, hyperparameter in enumerate(kernel.hyperparameters):

@@ -8,7 +8,7 @@ import warnings
 from operator import itemgetter
 
 import numpy as np
-from scipy.linalg import cholesky, cho_solve, solve, solve_triangular
+from scipy.linalg import cholesky, cho_solve, solve_triangular
 from scipy.optimize import fmin_l_bfgs_b
 
 from sklearn.base import BaseEstimator, RegressorMixin, clone

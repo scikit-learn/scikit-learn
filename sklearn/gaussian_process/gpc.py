@@ -137,8 +137,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         of sqrt(W) is stored.
     """
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
-                 n_restarts_optimizer=0, max_iter_predict=100, warm_start=False,
-                 copy_X_train=True, random_state=None):
+                 n_restarts_optimizer=0, max_iter_predict=100,
+                 warm_start=False, copy_X_train=True, random_state=None):
         self.kernel = kernel
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
@@ -337,8 +337,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         R = W_sr[:, np.newaxis] * cho_solve((L, True), np.diag(W_sr))  # Line 7
         C = solve(L, W_sr[:, np.newaxis] * K)  # Line 8
         # Line 9: (use einsum to compute np.diag(C.T.dot(C))))
-        s_2 = -0.5*(np.diag(K) - np.einsum('ij, ij -> j', C, C)) \
-            * (pi * (1 - pi) * (1 - 2*pi))  # third derivative
+        s_2 = -0.5 * (np.diag(K) - np.einsum('ij, ij -> j', C, C)) \
+            * (pi * (1 - pi) * (1 - 2 * pi))  # third derivative
 
         for j in range(d_Z.shape[0]):
             C = K_gradient[:, :, j]   # Line 11
@@ -389,8 +389,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
             # Line 10: Compute log marginal likelihood in loop and use as
             #          convergence criterion
-            lml = -0.5*a.T.dot(f) \
-                - np.log(1 + np.exp(-(self.y_train_*2 - 1)*f)).sum() \
+            lml = -0.5 * a.T.dot(f) \
+                - np.log(1 + np.exp(-(self.y_train_ * 2 - 1) * f)).sum() \
                 - np.log(np.diag(L)).sum()
             # Check if we have converged (log marginal likelihood does
             # not decrease)
