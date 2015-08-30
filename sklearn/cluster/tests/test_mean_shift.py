@@ -46,13 +46,14 @@ def test_mean_shift():
     n_clusters_ = len(labels_unique)
     assert_equal(n_clusters_, n_clusters)
 
+
 def test_parallel():
-    ms1 = MeanShift(n_jobs=-1)
+    ms1 = MeanShift(n_jobs=2)
     ms1.fit(X)
-    
+
     ms2 = MeanShift()
     ms2.fit(X)
-    
+
     assert_array_equal(ms1.cluster_centers_,ms2.cluster_centers_)
     assert_array_equal(ms1.labels_,ms2.labels_)
 
