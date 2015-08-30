@@ -17,11 +17,12 @@ from .kd_tree import KDTree
 from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import check_X_y, check_array
+from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
 from ..utils.fixes import argpartition
 from ..utils.validation import DataConversionWarning
 from ..utils.validation import NotFittedError
 from ..externals import six
+from ..externals.joblib import Parallel, delayed
 
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
@@ -115,7 +116,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _init_params(self, n_neighbors=None, radius=None,
                      algorithm='auto', leaf_size=30, metric='minkowski',
-                     p=2, metric_params=None, **kwargs):
+                     p=2, metric_params=None, n_jobs=1, **kwargs):
         if kwargs:
             warnings.warn("Passing additional arguments to the metric "
                           "function as **kwargs is deprecated "
@@ -133,6 +134,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.metric = metric
         self.metric_params = metric_params
         self.p = p
+        self.n_jobs = n_jobs
 
         if algorithm not in ['auto', 'brute',
                              'kd_tree', 'ball_tree']:
@@ -267,7 +269,7 @@ class KNeighborsMixin(object):
     def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
 
-        Returns distance
+        Returns indices of and distances to the neighbors of each point.
 
         Parameters
         ----------
@@ -341,16 +343,17 @@ class KNeighborsMixin(object):
             )
         n_samples, _ = X.shape
         sample_range = np.arange(n_samples)[:, None]
-
+        
+        n_jobs = _get_n_jobs(self.n_jobs)
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == 'euclidean':
                 dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                          squared=True)
+                                          n_jobs=n_jobs, squared=True)
             else:
-                dist = pairwise_distances(X, self._fit_X,
-                                          self.effective_metric_,
-                                          **self.effective_metric_params_)
+                dist = pairwise_distances(
+                    X, self._fit_X, self.effective_metric_, n_jobs=n_jobs,
+                    **self.effective_metric_params_)
 
             neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
@@ -371,14 +374,21 @@ class KNeighborsMixin(object):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
-            result = self._tree.query(X, n_neighbors,
-                                      return_distance=return_distance)
+            result = Parallel(n_jobs, backend='threading')(
+                delayed(self._tree.query, check_pickle=False)(
+                    X[s], n_neighbors, return_distance)
+                for s in gen_even_slices(X.shape[0], n_jobs)
+            )
+            if return_distance:
+                dist, neigh_ind = tuple(zip(*result))
+                result = np.vstack(dist), np.vstack(neigh_ind)
+            else:
+                result = np.vstack(result)            
         else:
             raise ValueError("internal: _fit_method not recognized")
 
         if not query_is_train:
             return result
-
         else:
             # If the query data is the same as the indexed data, we would like
             # to ignore the first nearest neighbor of every sample, i.e
