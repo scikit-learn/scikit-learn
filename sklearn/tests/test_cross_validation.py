@@ -415,7 +415,7 @@ def test_stratified_shuffle_split_iter():
                       / float(len(y[test])))
             assert_array_almost_equal(p_train, p_test, 1)
             assert_equal(y[train].size + y[test].size, y.size)
-            assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
+            assert_array_equal(np.intersect1d(train, test), [])
 
 
 def test_stratified_shuffle_split_even():
@@ -483,6 +483,48 @@ def test_predefinedsplit_with_kfold_split():
         ps_test.append(test_ind)
     assert_array_equal(ps_train, kf_train)
     assert_array_equal(ps_test, kf_test)
+
+
+def test_label_shuffle_split():
+    ys = [np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
+          np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
+          np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
+          np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
+          ]
+
+    for y in ys:
+        n_iter = 6
+        test_size = 1./3
+        slo = cval.LabelShuffleSplit(y, n_iter, test_size=test_size,
+                                     random_state=0)
+
+        # Make sure the repr works
+        repr(slo)
+
+        # Test that the length is correct
+        assert_equal(len(slo), n_iter)
+
+        y_unique = np.unique(y)
+
+        for train, test in slo:
+            # First test: no train label is in the test set and vice versa
+            y_train_unique = np.unique(y[train])
+            y_test_unique = np.unique(y[test])
+            assert_false(np.any(np.in1d(y[train], y_test_unique)))
+            assert_false(np.any(np.in1d(y[test], y_train_unique)))
+
+            # Second test: train and test add up to all the data
+            assert_equal(y[train].size + y[test].size, y.size)
+
+            # Third test: train and test are disjoint
+            assert_array_equal(np.intersect1d(train, test), [])
+
+            # Fourth test: # unique train and test labels are correct,
+            #              +- 1 for rounding error
+            assert_true(abs(len(y_test_unique) -
+                            round(test_size * len(y_unique))) <= 1)
+            assert_true(abs(len(y_train_unique) -
+                            round((1.0 - test_size) * len(y_unique))) <= 1)
 
 
 def test_leave_label_out_changing_labels():
