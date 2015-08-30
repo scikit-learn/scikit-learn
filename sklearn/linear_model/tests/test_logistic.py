@@ -23,6 +23,7 @@ from sklearn.linear_model.logistic import (
     )
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.datasets import load_iris, make_classification
+from sklearn.metrics import log_loss
 
 
 X = [[-1, 0], [0, 1], [1, 1]]
@@ -677,13 +678,22 @@ def test_logreg_cv_penalty():
     assert_equal(np.count_nonzero(lr_cv.coef_), np.count_nonzero(lr.coef_))
 
 
-def test_logreg_predict_proba():
+def test_logreg_predict_proba_multinomial():
     X, y = make_classification(
         n_samples=10, n_features=20, random_state=0, n_classes=3, n_informative=10)
-    clf = LogisticRegression(multi_class="multinomial", solver="lbfgs")
-    clf.fit(X, y)
-    assert_array_almost_equal(np.sum(clf.predict_proba(X), axis=1), np.ones(10))
 
-    clf = LogisticRegression(multi_class="multinomial", solver="lbfgs")
-    clf.fit(X, y)
-    assert_array_almost_equal(np.sum(clf.predict_proba(X), axis=1), np.ones(10))
+    # Predicted probabilites using the true-entropy loss should give a smaller loss
+    # than those using the ovr method.
+    clf_multi = LogisticRegression(multi_class="multinomial", solver="lbfgs")
+    clf_multi.fit(X, y)
+    clf_multi_loss = log_loss(y, clf_multi.predict_proba(X))
+    clf_ovr = LogisticRegression(multi_class="ovr", solver="lbfgs")
+    clf_ovr.fit(X, y)
+    clf_ovr_loss = log_loss(y, clf_ovr.predict_proba(X))
+    assert_greater(clf_ovr_loss, clf_multi_loss)
+
+    # Predicted probabilites using the soft-max function should give a smaller loss
+    # than those using the logistic function.
+    clf_multi_loss = log_loss(y, clf_multi.predict_proba(X))
+    clf_wrong_loss = log_loss(y, clf_multi._predict_proba_lr(X))
+    assert_greater(clf_wrong_loss, clf_multi_loss)
