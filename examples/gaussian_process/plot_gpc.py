@@ -42,11 +42,11 @@ X = rng.uniform(0, 5, 100)[:, np.newaxis]
 y = np.array(X[:, 0] > 2.5, dtype=int)
 
 # Specify Gaussian Processes with fixed and optimized hyperparameters
-gp_fix = GaussianProcessClassifier(kernel=1.0 * RBF(l=1.0),
+gp_fix = GaussianProcessClassifier(kernel=1.0 * RBF(length_scale=1.0),
                                    optimizer=None)
 gp_fix.fit(X[:train_size], y[:train_size])
 
-gp_opt = GaussianProcessClassifier(kernel=1.0 * RBF(l=1.0))
+gp_opt = GaussianProcessClassifier(kernel=1.0 * RBF(length_scale=1.0))
 gp_opt.fit(X[:train_size], y[:train_size])
 
 print("Log Marginal Likelihood (initial): %.3f"

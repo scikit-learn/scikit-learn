@@ -134,7 +134,8 @@ The following figure illustrates both methods on an artificial dataset, which
 consists of a sinusoidal target function and strong noise. The figure compares
 the learned model of KRR and GPR based on a ExpSineSquared kernel, which is
 suited for learning periodic functions. The kernel's hyperparameters control
-the smoothness (l) and periodicity of the kernel (p). Moreover, the noise level
+the smoothness (length_scale) and periodicity of the kernel (periodicity).
+Moreover, the noise level
 of the data is learned explicitly by GPR by an additional WhiteKernel component
 in the kernel and by the regularization parameter alpha of KRR.
 
@@ -192,25 +193,25 @@ different properties of the signal:
    and the RBF's length scale are further free parameters.
 
 Maximizing the log-marginal-likelihood after subtracting the target's mean
-yields the following kernel with an LML of -84.483:
+yields the following kernel with an LML of -83.214:
 
 ::
 
-   2.5e+03 * RBF(l=49.8)
-   + 6.68 * RBF(l=100) * ExpSineSquared(l=1.37, p=1)
-   + 0.215 * RationalQuadratic(alpha=3.98, l=0.982)
-   + 0.0381 * RBF(l=0.136) + WhiteKernel(c=0.0335)
+   34.4**2 * RBF(length_scale=41.8)
+   + 3.27**2 * RBF(length_scale=180) * ExpSineSquared(length_scale=1.44,
+                                                      periodicity=1)
+   + 0.446**2 * RationalQuadratic(alpha=17.7, length_scale=0.957)
+   + 0.197**2 * RBF(length_scale=0.138) + WhiteKernel(noise_level=0.0336)
 
-Thus, most of the target signal (sqrt(2.5e+03)ppm = 50ppm) is explained by a
-long-term rising trend (length-scale 49.8 years). The periodic component has
-an amplitude of sqrt(6.68)ppm = 2.58ppm, a decay time of 100 years and a
-length-scale of 1.37. The long decay time indicates that we have a locally very
-close to periodic seasonal component. The correlated noise has an amplitude of
-sqrt(0.0381)ppm = 0.195ppm with a length scale of 0.136 years and a white-noise
-contribution of sqrt(0.0335)ppm = 0.183pm. Thus, the overall noise level is
-very small, indicating that the data can be very well explained by the model.
-The following figure shows also that the model makes very confident predictions
-until around 2015.
+Thus, most of the target signal (34.4ppm) is explained by a long-term rising
+trend (length-scale 41.8 years). The periodic component has an amplitude of
+3.27ppm, a decay time of 180 years and a length-scale of 1.44. The long decay
+time indicates that we have a locally very close to periodic seasonal
+component. The correlated noise has an amplitude of 0.197ppm with a length
+scale of 0.138 years and a white-noise contribution of 0.197ppm. Thus, the
+overall noise level is very small, indicating that the data can be very well
+explained by the model. The figure shows also that the model makes very
+confident predictions until around 2015
 
 .. figure:: ../auto_examples/gaussian_process/images/plot_gpr_co2_001.png
    :target: ../auto_examples/gaussian_process/plot_gpr_co2.html
@@ -403,23 +404,23 @@ method is ``clone_with_theta(theta)``, which returns a cloned version of the
 kernel but with the hyperparameters set to ``theta``. An illustrative example:
 
     >>> from sklearn.gaussian_process.kernels import ConstantKernel, RBF
-    >>> kernel = ConstantKernel(c=1.0, c_bounds=(0.0, 10.0)) * RBF(l=0.5, l_bounds=(0.0, 10.0)) + RBF(l=2.0, l_bounds=(0.0, 10.0))
+    >>> kernel = ConstantKernel(constant_value=1.0, constant_value_bounds=(0.0, 10.0)) * RBF(length_scale=0.5, length_scale_bounds=(0.0, 10.0)) + RBF(length_scale=2.0, length_scale_bounds=(0.0, 10.0))
     >>> for hyperparameter in kernel.hyperparameters: print(hyperparameter)
-    Hyperparameter(name='k1__k1__c', value_type='numeric', bounds=array([[  0.,  10.]]), n_elements=1, fixed=False)
-    Hyperparameter(name='k1__k2__l', value_type='numeric', bounds=array([[  0.,  10.]]), n_elements=1, fixed=False)
-    Hyperparameter(name='k2__l', value_type='numeric', bounds=array([[  0.,  10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k1__k1__constant_value', value_type='numeric', bounds=array([[  0.,  10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k1__k2__length_scale', value_type='numeric', bounds=array([[  0.,  10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k2__length_scale', value_type='numeric', bounds=array([[  0.,  10.]]), n_elements=1, fixed=False)
     >>> params = kernel.get_params()
     >>> for key in sorted(params): print("%s : %s" % (key, params[key]))
-    k1 : 1**2 * RBF(l=0.5)
+    k1 : 1**2 * RBF(length_scale=0.5)
     k1__k1 : 1**2
-    k1__k1__c : 1.0
-    k1__k1__c_bounds : (0.0, 10.0)
-    k1__k2 : RBF(l=0.5)
-    k1__k2__l : 0.5
-    k1__k2__l_bounds : (0.0, 10.0)
-    k2 : RBF(l=2)
-    k2__l : 2.0
-    k2__l_bounds : (0.0, 10.0)
+    k1__k1__constant_value : 1.0
+    k1__k1__constant_value_bounds : (0.0, 10.0)
+    k1__k2 : RBF(length_scale=0.5)
+    k1__k2__length_scale : 0.5
+    k1__k2__length_scale_bounds : (0.0, 10.0)
+    k2 : RBF(length_scale=2)
+    k2__length_scale : 2.0
+    k2__length_scale_bounds : (0.0, 10.0)
     >>> print(kernel.theta)  # Note: log-transformed
     [ 0.         -0.69314718  0.69314718]
     >>> print(kernel.bounds)  # Note: log-transformed
@@ -444,18 +445,18 @@ Basic kernels
 The :class:`ConstantKernel` kernel can be used as part of a :class:`Product`
 kernel where it scales the magnitude of the other factor (kernel) or as part
 of a :class:`Sum` kernel, where it modifies the mean of the Gaussian process.
-It depends on a parameter :math:`c`. It is defined as:
+It depends on a parameter :math:`constant\_value`. It is defined as:
 
 .. math::
-   k(x_i, x_j) = c \;\forall\; x_1, x_2
+   k(x_i, x_j) = constant\_value \;\forall\; x_1, x_2
 
 The main use-case of the :class:`WhiteKernel` kernel is as part of a
 sum-kernel where it explains the noise-component of the signal. Tuning its
-parameter :math:`c` corresponds to estimating the noise-level.
-It is defined as:
+parameter :math:`noise\_level` corresponds to estimating the noise-level.
+It is defined as:e
 
 .. math::
-    k(x_i, x_j) = c \text{ if } x_i == x_j \text{ else } 0
+    k(x_i, x_j) = noise\_level \text{ if } x_i == x_j \text{ else } 0
 
 
 Kernel operators

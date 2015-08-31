@@ -23,13 +23,15 @@ from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
                                               ConstantKernel)
 
 
-kernels = [1.0 * RBF(l=1.0, l_bounds=(1e-1, 10.0)),
-           1.0 * RationalQuadratic(l=1.0, alpha=0.1),
-           1.0 * ExpSineSquared(l=1.0, p=3.0, l_bounds=(0.1, 10.0),
-                                p_bounds=(1.0, 10.0)),
+kernels = [1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-1, 10.0)),
+           1.0 * RationalQuadratic(length_scale=1.0, alpha=0.1),
+           1.0 * ExpSineSquared(length_scale=1.0, periodicity=3.0,
+                                length_scale_bounds=(0.1, 10.0),
+                                periodicity_bounds=(1.0, 10.0)),
            ConstantKernel(0.1, (0.01, 10.0))
                * (DotProduct(sigma_0=1.0, sigma_0_bounds=(0.0, 10.0)) ** 2),
-           1.0 * Matern(l=1.0, l_bounds=(1e-1, 10.0), nu=1.5)]
+           1.0 * Matern(length_scale=1.0, length_scale_bounds=(1e-1, 10.0),
+                        nu=1.5)]
 
 for fig_index, kernel in enumerate(kernels):
     # Specify Gaussian Process
@@ -47,7 +49,7 @@ for fig_index, kernel in enumerate(kernels):
     plt.plot(X_, y_samples, lw=1)
     plt.xlim(0, 5)
     plt.ylim(-3, 3)
-    plt.title("Prior (kernel:  %s)" % kernel)
+    plt.title("Prior (kernel:  %s)" % kernel, fontsize=12)
 
     # Generate data and fit GP
     rng = np.random.RandomState(4)
@@ -69,7 +71,8 @@ for fig_index, kernel in enumerate(kernels):
     plt.xlim(0, 5)
     plt.ylim(-3, 3)
     plt.title("Posterior (kernel: %s)\n Log-Likelihood: %.3f"
-              % (gp.kernel_, gp.log_marginal_likelihood(gp.kernel_.theta)))
+              % (gp.kernel_, gp.log_marginal_likelihood(gp.kernel_.theta)),
+              fontsize=12)
     plt.tight_layout()
 
 plt.show()

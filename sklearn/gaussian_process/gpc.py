@@ -163,8 +163,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         self : returns an instance of self.
         """
         if self.kernel is None:  # Use an RBF kernel as default
-            self.kernel_ = \
-                C(1.0, c_bounds="fixed") * RBF(1.0, l_bounds="fixed")
+            self.kernel_ = C(1.0, constant_value_bounds="fixed") \
+                * RBF(1.0, length_scale_bounds="fixed")
         else:
             self.kernel_ = clone(self.kernel)
 

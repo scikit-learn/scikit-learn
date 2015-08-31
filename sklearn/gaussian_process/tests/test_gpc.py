@@ -26,8 +26,10 @@ y_mc[(fX >= -0.35) & (fX < 0.35)] = 1
 y_mc[fX > 0.35] = 2
 
 
-kernels = [RBF(l=0.1), RBF(l=1.0, l_bounds=(1e-3, 1e3)),
-           C(1.0, (1e-2, 1e2)) * RBF(l=1.0, l_bounds=(1e-3, 1e3))]
+kernels = [RBF(length_scale=0.1),
+           RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
+           C(1.0, (1e-2, 1e2))
+           * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))]
 
 
 def test_predict_consistent():
@@ -87,7 +89,8 @@ def test_random_starts():
     y = (np.sin(X).sum(axis=1) + np.sin(3 * X).sum(axis=1)) > 0
 
     kernel = C(1.0, (1e-2, 1e2)) \
-        * RBF(l=[1e-3] * n_features, l_bounds=[(1e-4, 1e+2)] * n_features)
+        * RBF(length_scale=[1e-3] * n_features,
+              length_scale_bounds=[(1e-4, 1e+2)] * n_features)
     last_lml = -np.inf
     for n_restarts_optimizer in range(9):
         gp = GaussianProcessClassifier(

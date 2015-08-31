@@ -839,21 +839,23 @@ class ConstantKernel(Kernel):
     the other factor (kernel) or as part of a sum-kernel, where it modifies
     the mean of the Gaussian process.
 
-    k(x_1, x_2) = c for all x_1, x_2
+    k(x_1, x_2) = constant_value for all x_1, x_2
 
     Parameters
     ----------
-    c : float, default: 1.0
-        The constant value which defines the covariance: k(x_1, x_2) = c
+    constant_value : float, default: 1.0
+        The constant value which defines the covariance:
+        k(x_1, x_2) = constant_value
 
-    c_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on c
+    constant_value_bounds : pair of floats >= 0, default: (1e-5, 1e5)
+        The lower and upper bound on constant_value
     """
-    def __init__(self, c=1.0, c_bounds=(1e-5, 1e5)):
-        self.c = c
-        self.c_bounds = c_bounds
+    def __init__(self, constant_value=1.0, constant_value_bounds=(1e-5, 1e5)):
+        self.constant_value = constant_value
+        self.constant_value_bounds = constant_value_bounds
 
-        self.hyperparameter_c = Hyperparameter("c", "numeric", c_bounds)
+        self.hyperparameter_constant_value = \
+            Hyperparameter("constant_value", "numeric", constant_value_bounds)
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -887,10 +889,11 @@ class ConstantKernel(Kernel):
         elif eval_gradient:
             raise ValueError("Gradient can only be evaluated when Y is None.")
 
-        K = self.c * np.ones((X.shape[0], Y.shape[0]))
+        K = self.constant_value * np.ones((X.shape[0], Y.shape[0]))
         if eval_gradient:
-            if not self.hyperparameter_c.fixed:
-                return K, self.c * np.ones((X.shape[0], X.shape[0], 1))
+            if not self.hyperparameter_constant_value.fixed:
+                return (K, self.constant_value
+                        * np.ones((X.shape[0], X.shape[0], 1)))
             else:
                 return K, np.empty((X.shape[0], X.shape[0], 0))
         else:
@@ -913,10 +916,10 @@ class ConstantKernel(Kernel):
         K_diag : array, shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return self.c * np.ones(X.shape[0])
+        return self.constant_value * np.ones(X.shape[0])
 
     def __repr__(self):
-        return "{0:.3g}**2".format(np.sqrt(self.c))
+        return "{0:.3g}**2".format(np.sqrt(self.constant_value))
 
 
 class WhiteKernel(Kernel):
@@ -926,21 +929,22 @@ class WhiteKernel(Kernel):
     explains the noise-component of the signal. Tuning its parameter
     corresponds to estimating the noise-level.
 
-    k(x_1, x_2) = c if x_1 == x_2 else 0
+    k(x_1, x_2) = noise_level if x_1 == x_2 else 0
 
     Parameters
     ----------
-    c : float, default: 1.0
+    noise_level : float, default: 1.0
         Parameter controlling the noise level
 
-    c_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on c
+    noise_level_bounds : pair of floats >= 0, default: (1e-5, 1e5)
+        The lower and upper bound on noise_level
     """
-    def __init__(self, c=1.0, c_bounds=(1e-5, 1e5)):
-        self.c = c
-        self.c_bounds = c_bounds
+    def __init__(self, noise_level=1.0, noise_level_bounds=(1e-5, 1e5)):
+        self.noise_level = noise_level
+        self.noise_level_bounds = noise_level_bounds
 
-        self.hyperparameter_c = Hyperparameter("c", "numeric", c_bounds)
+        self.hyperparameter_noise_level = \
+            Hyperparameter("noise_level", "numeric", noise_level_bounds)
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -973,10 +977,11 @@ class WhiteKernel(Kernel):
             raise ValueError("Gradient can only be evaluated when Y is None.")
 
         if Y is None:
-            K = self.c * np.eye(X.shape[0])
+            K = self.noise_level * np.eye(X.shape[0])
             if eval_gradient:
-                if not self.hyperparameter_c.fixed:
-                    return K, self.c * np.eye(X.shape[0])[:, :, np.newaxis]
+                if not self.hyperparameter_noise_level.fixed:
+                    return (K, self.noise_level
+                            * np.eye(X.shape[0])[:, :, np.newaxis])
                 else:
                     return K, np.empty((X.shape[0], X.shape[0], 0))
             else:
@@ -1001,10 +1006,11 @@ class WhiteKernel(Kernel):
         K_diag : array, shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return self.c * np.ones(X.shape[0])
+        return self.noise_level * np.ones(X.shape[0])
 
     def __repr__(self):
-        return "{0}(c={1:.3g})".format(self.__class__.__name__, self.c)
+        return "{0}(noise_level={1:.3g})".format(self.__class__.__name__,
+                                                 self.noise_level)
 
 
 class RBF(Kernel):
@@ -1012,11 +1018,11 @@ class RBF(Kernel):
 
     The RBF kernel is a stationary kernel. It is also known as the
     "squared exponential" kernel. It is parameterized by a length-scale
-    parameter l>0, which can either be a scalar (isotropic variant of
-    the kernel) or a vector with the same number of dimensions as the inputs
-    X (anisotropic variant of the kernel). The kernel given by:
+    parameter length_scale>0, which can either be a scalar (isotropic variant
+    of the kernel) or a vector with the same number of dimensions as the inputs
+    X (anisotropic variant of the kernel). The kernel is given by:
 
-    k(x_i, x_j) = exp(-1 / 2 d(x_i / l, x_j / l)^2)
+    k(x_i, x_j) = exp(-1 / 2 d(x_i / length_scale, x_j / length_scale)^2)
 
     This kernel is infinitely differentiable, which implies that GPs with this
     kernel as covariance function have mean square derivatives of all orders,
@@ -1024,33 +1030,34 @@ class RBF(Kernel):
 
     Parameters
     -----------
-    l : float or array with shape (n_features,), entries > 0, default: 1.0
+    length_scale : float or array with shape (n_features,), default: 1.0
         The length scale of the kernel. If a float, an isotropic kernel is
         used. If an array, an anisotropic kernel is used where each dimension
         of l defines the length-scale of the respective feature dimension.
 
-    l_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on l
+    length_scale_bounds : pair of floats >= 0, default: (1e-5, 1e5)
+        The lower and upper bound on length_scale
     """
-    def __init__(self, l=1.0, l_bounds=(1e-5, 1e5)):
-        if np.iterable(l):
-            if len(l) > 1:
+    def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5)):
+        if np.iterable(length_scale):
+            if len(length_scale) > 1:
                 self.anisotropic = True
-                self.l = np.asarray(l, dtype=np.float)
+                self.length_scale = np.asarray(length_scale, dtype=np.float)
             else:
                 self.anisotropic = False
-                self.l = float(l[0])
+                self.length_scale = float(length_scale[0])
         else:
             self.anisotropic = False
-            self.l = float(l)
-        self.l_bounds = l_bounds
+            self.length_scale = float(length_scale)
+        self.length_scale_bounds = length_scale_bounds
 
-        if self.anisotropic:  # anisotropic l
-            self.hyperparameter_l = \
-                Hyperparameter("l", "numeric", l_bounds, len(l))
+        if self.anisotropic:  # anisotropic length_scale
+            self.hyperparameter_length_scale = \
+                Hyperparameter("length_scale", "numeric", length_scale_bounds,
+                               len(length_scale))
         else:
-            self.hyperparameter_l = \
-                Hyperparameter("l", "numeric", l_bounds)
+            self.hyperparameter_length_scale = \
+                Hyperparameter("length_scale", "numeric", length_scale_bounds)
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -1079,13 +1086,13 @@ class RBF(Kernel):
             is True.
         """
         X = np.atleast_2d(X)
-        if self.anisotropic and X.shape[1] != self.l.shape[0]:
+        if self.anisotropic and X.shape[1] != self.length_scale.shape[0]:
             raise Exception("Anisotropic kernel must have the same number of "
                             "dimensions as data (%d!=%d)"
-                            % (self.l.shape[0], X.shape[1]))
+                            % (self.length_scale.shape[0], X.shape[1]))
 
         if Y is None:
-            dists = pdist(X / self.l, metric='sqeuclidean')
+            dists = pdist(X / self.length_scale, metric='sqeuclidean')
             K = np.exp(-.5 * dists)
             # convert from upper-triangular matrix to square matrix
             K = squareform(K)
@@ -1094,21 +1101,22 @@ class RBF(Kernel):
             if eval_gradient:
                 raise ValueError(
                     "Gradient can only be evaluated when Y is None.")
-            dists = cdist(X / self.l, Y / self.l, metric='sqeuclidean')
+            dists = cdist(X / self.length_scale, Y / self.length_scale,
+                          metric='sqeuclidean')
             K = np.exp(-.5 * dists)
 
         if eval_gradient:
-            if self.hyperparameter_l.fixed:
+            if self.hyperparameter_length_scale.fixed:
                 # Hyperparameter l kept fixed
                 return K, np.empty((X.shape[0], X.shape[0], 0))
-            elif not self.anisotropic or self.l.shape[0] == 1:
+            elif not self.anisotropic or self.length_scale.shape[0] == 1:
                 K_gradient = \
                     (K * squareform(dists))[:, :, np.newaxis]
                 return K, K_gradient
             elif self.anisotropic:
                 # We need to recompute the pairwise dimension-wise distances
                 K_gradient = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 \
-                    / (self.l ** 2)
+                    / (self.length_scale ** 2)
                 K_gradient *= K[..., np.newaxis]
                 return K, K_gradient
             else:
@@ -1119,11 +1127,12 @@ class RBF(Kernel):
 
     def __repr__(self):
         if self.anisotropic:
-            return "{0}(l=[{1}])".format(self.__class__.__name__,
-                                         ", ".join(map("{0:.3g}".format,
-                                                   self.l)))
+            return "{0}(length_scale=[{1}])".format(
+                self.__class__.__name__, ", ".join(map("{0:.3g}".format,
+                                                   self.length_scale)))
         else:  # isotropic
-            return "{0}(l={1:.3g})".format(self.__class__.__name__, self.l)
+            return "{0}(length_scale={1:.3g})".format(
+                self.__class__.__name__, self.length_scale)
 
 
 class Matern(RBF):
@@ -1142,13 +1151,13 @@ class Matern(RBF):
 
     Parameters
     -----------
-    l : float or array with shape (n_features,), entries > 0, default: 1.0
+    length_scale : float or array with shape (n_features,), default: 1.0
         The length scale of the kernel. If a float, an isotropic kernel is
         used. If an array, an anisotropic kernel is used where each dimension
         of l defines the length-scale of the respective feature dimension.
 
-    l_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on l
+    length_scale_bounds : pair of floats >= 0, default: (1e-5, 1e5)
+        The lower and upper bound on length_scale
 
     nu: float, default: 1.5
         The parameter nu controlling the smoothness of the learned function.
@@ -1162,8 +1171,9 @@ class Matern(RBF):
         Bessel function. Furthermore, in contrast to l, nu is kept fixed to
         its initial value and not optimized.
     """
-    def __init__(self, l=1.0, l_bounds=(1e-5, 1e5), nu=1.5):
-        super(Matern, self).__init__(l, l_bounds)
+    def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5),
+                 nu=1.5):
+        super(Matern, self).__init__(length_scale, length_scale_bounds)
         self.nu = nu
 
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -1193,18 +1203,19 @@ class Matern(RBF):
             is True.
         """
         X = np.atleast_2d(X)
-        if self.anisotropic and X.shape[1] != self.l.shape[0]:
+        if self.anisotropic and X.shape[1] != self.length_scale.shape[0]:
             raise Exception("Anisotropic kernel must have the same number of "
                             "dimensions as data (%d!=%d)"
-                            % (self.l.shape[0], X.shape[1]))
+                            % (self.length_scale.shape[0], X.shape[1]))
 
         if Y is None:
-            dists = pdist(X / self.l, metric='euclidean')
+            dists = pdist(X / self.length_scale, metric='euclidean')
         else:
             if eval_gradient:
                 raise ValueError(
                     "Gradient can only be evaluated when Y is None.")
-            dists = cdist(X / self.l, Y / self.l, metric='euclidean')
+            dists = cdist(X / self.length_scale, Y / self.length_scale,
+                          metric='euclidean')
 
         if self.nu == 0.5:
             K = np.exp(-dists)
@@ -1228,7 +1239,7 @@ class Matern(RBF):
             np.fill_diagonal(K, 1)
 
         if eval_gradient:
-            if self.hyperparameter_l.fixed:
+            if self.hyperparameter_length_scale.fixed:
                 # Hyperparameter l kept fixed
                 K_gradient = np.empty((X.shape[0], X.shape[0], 0))
                 return K, K_gradient
@@ -1236,7 +1247,7 @@ class Matern(RBF):
             # We need to recompute the pairwise dimension-wise distances
             if self.anisotropic:
                 D = (X[:, np.newaxis, :] - X[np.newaxis, :, :])**2 \
-                    / (self.l ** 2)
+                    / (self.length_scale ** 2)
             else:
                 D = squareform(dists**2)[:, :, np.newaxis]
 
@@ -1265,13 +1276,13 @@ class Matern(RBF):
 
     def __repr__(self):
         if self.anisotropic:
-            return "{0}(l=[{1}], nu={2:.3g})".format(
+            return "{0}(length_scale=[{1}], nu={2:.3g})".format(
                 self.__class__.__name__,
-                ", ".join(map("{0:.3g}".format, self.l)),
+                ", ".join(map("{0:.3g}".format, self.length_scale)),
                 self.nu)
         else:  # isotropic
-            return "{0}(l={1:.3g}, nu={2:.3g})".format(
-                self.__class__.__name__, self.l, self.nu)
+            return "{0}(length_scale={1:.3g}, nu={2:.3g})".format(
+                self.__class__.__name__, self.length_scale, self.nu)
 
 
 class RationalQuadratic(Kernel):
@@ -1279,34 +1290,35 @@ class RationalQuadratic(Kernel):
 
     The RationalQuadratic kernel can be seen as a scale mixture (an infinite
     sum) of RBF kernels with different characteristic length-scales. It is
-    parameterized by a length-scale parameter l>0 and a scale mixture parameter
-    alpha>0 Only the isotropic variant where l is a scalar is supported at the
-    moment. The kernel given by:
+    parameterized by a length-scale parameter length_scale>0 and a scale
+    mixture parameter alpha>0. Only the isotropic variant where length_scale is
+    a scalar is supported at the moment. The kernel given by:
 
-    k(x_i, x_j) = (1 + d(x_i, x_j)^2 / (2*alpha l^2))^-alpha
+    k(x_i, x_j) = (1 + d(x_i, x_j)^2 / (2*alpha * length_scale^2))^-alpha
 
     Parameters
     ----------
-    l : float > 0, default: 1.0
+    length_scale : float > 0, default: 1.0
         The length scale of the kernel.
 
     alpha : float > 0, default: 1.0
         Scale mixture parameter
 
-    l_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on l
+    length_scale_bounds : pair of floats >= 0, default: (1e-5, 1e5)
+        The lower and upper bound on length_scale
 
     alpha_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on alpha
     """
-    def __init__(self, l=1.0, alpha=1.0, l_bounds=(1e-5, 1e5),
-                 alpha_bounds=(1e-5, 1e5)):
-        self.l = l
+    def __init__(self, length_scale=1.0, alpha=1.0,
+                 length_scale_bounds=(1e-5, 1e5), alpha_bounds=(1e-5, 1e5)):
+        self.length_scale = length_scale
         self.alpha = alpha
-        self.l_bounds = l_bounds
+        self.length_scale_bounds = length_scale_bounds
         self.alpha_bounds = alpha_bounds
 
-        self.hyperparameter_l = Hyperparameter("l", "numeric", l_bounds)
+        self.hyperparameter_length_scale = \
+            Hyperparameter("length_scale", "numeric", length_scale_bounds)
         self.hyperparameter_alpha = \
             Hyperparameter("alpha", "numeric", alpha_bounds)
 
@@ -1339,7 +1351,7 @@ class RationalQuadratic(Kernel):
         X = np.atleast_2d(X)
         if Y is None:
             dists = squareform(pdist(X, metric='sqeuclidean'))
-            tmp = dists / (2 * self.alpha * self.l ** 2)
+            tmp = dists / (2 * self.alpha * self.length_scale ** 2)
             base = (1 + tmp)
             K = base ** -self.alpha
             np.fill_diagonal(K, 1)
@@ -1348,67 +1360,72 @@ class RationalQuadratic(Kernel):
                 raise ValueError(
                     "Gradient can only be evaluated when Y is None.")
             dists = cdist(X, Y, metric='sqeuclidean')
-            K = (1 + dists / (2 * self.alpha * self.l ** 2)) ** -self.alpha
+            K = (1 + dists / (2 * self.alpha * self.length_scale ** 2)) \
+                ** -self.alpha
 
         if eval_gradient:
-            # gradient with respect to l
-            if not self.hyperparameter_l.fixed:
-                l_gradient = dists * K / (self.l ** 2 * base)
-                l_gradient = l_gradient[:, :, np.newaxis]
+            # gradient with respect to length_scale
+            if not self.hyperparameter_length_scale.fixed:
+                length_scale_gradient = \
+                    dists * K / (self.length_scale ** 2 * base)
+                length_scale_gradient = length_scale_gradient[:, :, np.newaxis]
             else:  # l is kept fixed
-                l_gradient = np.empty((K.shape[0], K.shape[1], 0))
+                length_scale_gradient = np.empty((K.shape[0], K.shape[1], 0))
 
             # gradient with respect to alpha
             if not self.hyperparameter_alpha.fixed:
                 alpha_gradient = \
                     K * (-self.alpha * np.log(base)
-                         + dists / (2 * self.l ** 2 * base))
+                         + dists / (2 * self.length_scale ** 2 * base))
                 alpha_gradient = alpha_gradient[:, :, np.newaxis]
             else:  # alpha is kept fixed
                 alpha_gradient = np.empty((K.shape[0], K.shape[1], 0))
 
-            return K, np.dstack((alpha_gradient, l_gradient))
+            return K, np.dstack((alpha_gradient, length_scale_gradient))
         else:
             return K
 
     def __repr__(self):
-        return "{0}(alpha={1:.3g}, l={2:.3g})".format(
-            self.__class__.__name__, self.alpha, self.l)
+        return "{0}(alpha={1:.3g}, length_scale={2:.3g})".format(
+            self.__class__.__name__, self.alpha, self.length_scale)
 
 
 class ExpSineSquared(Kernel):
     """Exp-Sine-Squared kernel.
 
     The ExpSineSquared kernel allows modeling periodic functions. It is
-    parameterized by a length-scale parameter l>0 and a periodicity parameter
-    p>0. Only the isotropic variant where l is a scalar is supported at the
-    moment. The kernel given by:
+    parameterized by a length-scale parameter length_scale>0 and a periodicity
+    parameter periodicity>0. Only the isotropic variant where l is a scalar is
+    supported at the moment. The kernel given by:
 
-    k(x_i, x_j) =  exp(-2 sin(\pi / p * d(x_i, x_j)) / l)^2
+    k(x_i, x_j) = exp(-2 sin(\pi / periodicity * d(x_i, x_j)) / length_scale)^2
 
     Parameters
     ----------
-    l : float > 0, default: 1.0
+    length_scale : float > 0, default: 1.0
         The length scale of the kernel.
 
-    p : float > 0, default: 1.0
+    periodicity : float > 0, default: 1.0
         The periodicity of the kernel.
 
-    l_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on l
+    length_scale_bounds : pair of floats >= 0, default: (1e-5, 1e5)
+        The lower and upper bound on length_scale
 
-    p_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on p
+    periodicity_bounds : pair of floats >= 0, default: (1e-5, 1e5)
+        The lower and upper bound on periodicity
     """
-    def __init__(self, l=1.0, p=1.0, l_bounds=(1e-5, 1e5),
-                 p_bounds=(1e-5, 1e5)):
-        self.l = l
-        self.p = p
-        self.l_bounds = l_bounds
-        self.p_bounds = p_bounds
+    def __init__(self, length_scale=1.0, periodicity=1.0,
+                 length_scale_bounds=(1e-5, 1e5),
+                 periodicity_bounds=(1e-5, 1e5)):
+        self.length_scale = length_scale
+        self.periodicity = periodicity
+        self.length_scale_bounds = length_scale_bounds
+        self.periodicity_bounds = periodicity_bounds
 
-        self.hyperparameter_l = Hyperparameter("l", "numeric", l_bounds)
-        self.hyperparameter_p = Hyperparameter("p", "numeric", p_bounds)
+        self.hyperparameter_length_scale = \
+            Hyperparameter("length_scale", "numeric", length_scale_bounds)
+        self.hyperparameter_periodicity = \
+            Hyperparameter("periodicity", "numeric", periodicity_bounds)
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -1439,39 +1456,42 @@ class ExpSineSquared(Kernel):
         X = np.atleast_2d(X)
         if Y is None:
             dists = squareform(pdist(X, metric='euclidean'))
-            arg = np.pi * dists / self.p
+            arg = np.pi * dists / self.periodicity
             sin_of_arg = np.sin(arg)
-            K = np.exp(- 2 * (sin_of_arg / self.l) ** 2)
+            K = np.exp(- 2 * (sin_of_arg / self.length_scale) ** 2)
         else:
             if eval_gradient:
                 raise ValueError(
                     "Gradient can only be evaluated when Y is None.")
             dists = cdist(X, Y, metric='euclidean')
-            K = np.exp(- 2 * (np.sin(np.pi / self.p * dists) / self.l) ** 2)
+            K = np.exp(- 2 * (np.sin(np.pi / self.periodicity * dists)
+                              / self.length_scale) ** 2)
 
         if eval_gradient:
             cos_of_arg = np.cos(arg)
-            # gradient with respect to l
-            if not self.hyperparameter_l.fixed:
-                l_gradient = 4 / self.l**2 * sin_of_arg**2 * K
-                l_gradient = l_gradient[:, :, np.newaxis]
-            else:  # l is kept fixed
-                l_gradient = np.empty((K.shape[0], K.shape[1], 0))
+            # gradient with respect to length_scale
+            if not self.hyperparameter_length_scale.fixed:
+                length_scale_gradient = \
+                    4 / self.length_scale**2 * sin_of_arg**2 * K
+                length_scale_gradient = length_scale_gradient[:, :, np.newaxis]
+            else:  # length_scale is kept fixed
+                length_scale_gradient = np.empty((K.shape[0], K.shape[1], 0))
             # gradient with respect to p
-            if not self.hyperparameter_p.fixed:
-                p_gradient = 4 * arg / self.l**2 * cos_of_arg \
+            if not self.hyperparameter_periodicity.fixed:
+                periodicity_gradient = \
+                    4 * arg / self.length_scale**2 * cos_of_arg \
                     * sin_of_arg * K
-                p_gradient = p_gradient[:, :, np.newaxis]
+                periodicity_gradient = periodicity_gradient[:, :, np.newaxis]
             else:  # p is kept fixed
-                p_gradient = np.empty((K.shape[0], K.shape[1], 0))
+                periodicity_gradient = np.empty((K.shape[0], K.shape[1], 0))
 
-            return K, np.dstack((l_gradient, p_gradient))
+            return K, np.dstack((length_scale_gradient, periodicity_gradient))
         else:
             return K
 
     def __repr__(self):
-        return "{0}(l={1:.3g}, p={2:.3g})".format(
-            self.__class__.__name__, self.l, self.p)
+        return "{0}(length_scale={1:.3g}, periodicity={2:.3g})".format(
+            self.__class__.__name__, self.length_scale, self.periodicity)
 
 
 class DotProduct(Kernel):
