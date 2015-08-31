@@ -35,7 +35,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import (RandomTreesEmbedding, RandomForestClassifier,
                               GradientBoostingClassifier)
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.pipeline import Pipeline
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import roc_curve
 
