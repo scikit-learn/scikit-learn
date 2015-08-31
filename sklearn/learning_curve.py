@@ -59,7 +59,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
         be big enough to contain at least one sample from each class.
         (default: np.linspace(0.1, 1.0, 5))
 
-    cv : integer or cross-validation generator, default=3
+    cv : integer or cross-validation generator, optional, default=3
         A cross-validation generator to use. If int, determines the number 
         of folds in StratifiedKFold if estimator is a classifier and the 
         target y is binary or multiclass, or the number of folds in KFold 

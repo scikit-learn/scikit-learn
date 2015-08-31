@@ -991,7 +991,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
         The target variable to try to predict in the case of
         supervised learning.
 
-    cv : integer or cross-validation generator, default=3
+    cv : integer or cross-validation generator, optional, default=3
         A cross-validation generator to use. If int, determines the number 
         of folds in StratifiedKFold if estimator is a classifier and the 
         target y is binary or multiclass, or the number of folds in KFold 
@@ -1160,7 +1160,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : integer or cross-validation generator, default=3
+    cv : integer or cross-validation generator, optional, default=3
         A cross-validation generator to use. If int, determines the number 
         of folds in StratifiedKFold if estimator is a classifier and the 
         target y is binary or multiclass, or the number of folds in KFold 
@@ -1481,7 +1481,7 @@ def permutation_test_score(estimator, X, y, cv=None,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : integer or cross-validation generator, default=3
+    cv : integer or cross-validation generator, optional, default=3
         A cross-validation generator to use. If int, determines the number 
         of folds in StratifiedKFold if estimator is a classifier and the 
         target y is binary or multiclass, or the number of folds in KFold 
