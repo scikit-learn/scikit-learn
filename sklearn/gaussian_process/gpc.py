@@ -489,7 +489,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         up convergence when _posterior_mode is called several times on similar
         problems as in hyperparameter optimization.
 
-    copy_X_train : bool, optional (default: False)
+    copy_X_train : bool, optional (default: True)
         If True, a persistent copy of the training data is stored in the
         object. Otherwise, just a reference to the training data is stored,
         which might cause predictions to change if the data is modified
@@ -534,7 +534,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
     """
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
-                 warm_start=False, copy_X_train=False, random_state=None,
+                 warm_start=False, copy_X_train=True, random_state=None,
                  multi_class="one_vs_rest", n_jobs=1):
         self.kernel = kernel
         self.optimizer = optimizer
