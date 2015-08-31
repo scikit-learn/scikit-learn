@@ -36,20 +36,20 @@ different properties of the signal:
 
 Maximizing the log-marginal-likelihood after subtracting the target's mean
 yields the following kernel with an LML of -83.214:
-   1.19e+03 * RBF(l=41.8)
-   + 10.7 * RBF(l=180) * ExpSineSquared(l=1.44, p=1)
-   + 0.199 * RationalQuadratic(alpha=17.7, l=0.957)
-   + 0.0389 * RBF(l=0.138) + WhiteKernel(c=0.0336)
-Thus, most of the target signal (sqrt(1.19e+03)ppm = 34.5ppm) is explained by a
-long-term rising trend (length-scale 41.8 years). The periodic component has
-an amplitude of sqrt(10.7)ppm = 3.27ppm, a decay time of 180 years and a
-length-scale of 1.44. The long decay time indicates that we have a locally very
-close to periodic seasonal component. The correlated noise has an amplitude of
-sqrt(0.0389)ppm = 0.197ppm with a length scale of 0.138 years and a white-noise
-contribution of sqrt(0.0336)ppm = 0.183pm. Thus, the overall noise level is
-very small, indicating that the data can be very well explained by the model.
-The figure shows also that the model makes very confident predictions until
-around 2015.
+   34.4**2 * RBF(length_scale=41.8)
+   + 3.27**2 * RBF(length_scale=180) * ExpSineSquared(length_scale=1.44,
+                                                      periodicity=1)
+   + 0.446**2 * RationalQuadratic(alpha=17.7, length_scale=0.957)
+   + 0.197**2 * RBF(length_scale=0.138) + WhiteKernel(noise_level=0.0336)
+Thus, most of the target signal (34.4ppm) is explained by a long-term rising
+trend (length-scale 41.8 years). The periodic component has an amplitude of
+3.27ppm, a decay time of 180 years and a length-scale of 1.44. The long decay
+time indicates that we have a locally very close to periodic seasonal
+component. The correlated noise has an amplitude of 0.197ppm with a length
+scale of 0.138 years and a white-noise contribution of 0.197ppm. Thus, the
+overall noise level is very small, indicating that the data can be very well
+explained by the model. The figure shows also that the model makes very
+confident predictions until around 2015.
 """
 print(__doc__)
 
@@ -71,10 +71,14 @@ X = data[:, [1]]
 y = data[:, 0]
 
 # Kernel with parameters given in GPML book
-k1 = 66.0**2 * RBF(l=67.0)  # long term smooth rising trend
-k2 = 2.4**2 * RBF(l=90.0) * ExpSineSquared(l=1.3, p=1.0)  # seasonal component
-k3 = 0.66**2 * RationalQuadratic(l=1.2, alpha=0.78)  # medium term irregularity
-k4 = 0.18**2 * RBF(l=0.134) + WhiteKernel(c=0.19**2)  # noise terms
+k1 = 66.0**2 * RBF(length_scale=67.0)  # long term smooth rising trend
+k2 = 2.4**2 * RBF(length_scale=90.0) \
+    * ExpSineSquared(length_scale=1.3, periodicity=1.0)  # seasonal component
+# medium term irregularity
+k3 = 0.66**2 \
+    * RationalQuadratic(length_scale=1.2, alpha=0.78)
+k4 = 0.18**2 * RBF(length_scale=0.134) \
+    + WhiteKernel(noise_level=0.19**2)  # noise terms
 kernel_gpml = k1 + k2 + k3 + k4
 
 gp = GaussianProcessRegressor(kernel=kernel_gpml, alpha=0,
@@ -86,12 +90,15 @@ print("Log-marginal-likelihood: %.3f"
       % gp.log_marginal_likelihood(gp.kernel_.theta))
 
 # Kernel with optimized parameters
-k1 = 50.0**2 * RBF(l=50.0)  # long term smooth rising trend
-k2 = 2.0**2 * RBF(l=100.0) \
-    * ExpSineSquared(l=1.0, p=1.0, p_bounds="fixed")  # seasonal component
-k3 = 0.5**2 * RationalQuadratic(l=1.0, alpha=1.0)  # medium term irregularities
-k4 = 0.1**2 * RBF(l=0.1) + WhiteKernel(c=0.1**2,
-                                       c_bounds=(1e-3, np.inf))  # noise terms
+k1 = 50.0**2 * RBF(length_scale=50.0)  # long term smooth rising trend
+k2 = 2.0**2 * RBF(length_scale=100.0) \
+    * ExpSineSquared(length_scale=1.0, periodicity=1.0,
+                     periodicity_bounds="fixed")  # seasonal component
+# medium term irregularities
+k3 = 0.5**2 * RationalQuadratic(length_scale=1.0, alpha=1.0)
+k4 = 0.1**2 * RBF(length_scale=0.1) \
+    + WhiteKernel(noise_level=0.1**2,
+                  noise_level_bounds=(1e-3, np.inf))  # noise terms
 kernel = k1 + k2 + k3 + k4
 
 gp = GaussianProcessRegressor(kernel=kernel, alpha=0,

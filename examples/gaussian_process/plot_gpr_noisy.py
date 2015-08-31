@@ -36,8 +36,8 @@ y = 0.5 * np.sin(3 * X[:, 0]) + rng.normal(0, 0.5, X.shape[0])
 
 # First run
 plt.figure(0)
-kernel = 1.0 * RBF(l=100.0, l_bounds=(1e-2, 1e3)) \
-    + WhiteKernel(c=1, c_bounds=(1e-10, 1e+1))
+kernel = 1.0 * RBF(length_scale=100.0, length_scale_bounds=(1e-2, 1e3)) \
+    + WhiteKernel(noise_level=1, noise_level_bounds=(1e-10, 1e+1))
 gp = GaussianProcessRegressor(kernel=kernel,
                               alpha=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)
@@ -55,8 +55,8 @@ plt.tight_layout()
 
 # Second run
 plt.figure(1)
-kernel = 1.0 * RBF(l=1.0, l_bounds=(1e-2, 1e3)) \
-    + WhiteKernel(c=1e-5, c_bounds=(1e-10, 1e+1))
+kernel = 1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-2, 1e3)) \
+    + WhiteKernel(noise_level=1e-5, noise_level_bounds=(1e-10, 1e+1))
 gp = GaussianProcessRegressor(kernel=kernel,
                               alpha=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)

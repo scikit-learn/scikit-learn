@@ -23,11 +23,15 @@ X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = f(X).ravel()
 
 
-kernels = [RBF(l=1.0), RBF(l=1.0, l_bounds=(1e-3, 1e3)),
-           C(1.0, (1e-2, 1e2)) * RBF(l=1.0, l_bounds=(1e-3, 1e3)),
-           C(1.0, (1e-2, 1e2)) * RBF(l=1.0, l_bounds=(1e-3, 1e3))
+kernels = [RBF(length_scale=1.0),
+           RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
+           C(1.0, (1e-2, 1e2))
+           * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
+           C(1.0, (1e-2, 1e2))
+           * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))
            + C(1e-5, (1e-5, 1e2)),
-           C(0.1, (1e-2, 1e2)) * RBF(l=1.0, l_bounds=(1e-3, 1e3))
+           C(0.1, (1e-2, 1e2))
+           * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))
            + C(1e-5, (1e-5, 1e2))]
 
 
@@ -165,8 +169,9 @@ def test_random_starts():
         + rng.normal(scale=0.1, size=n_samples)
 
     kernel = C(1.0, (1e-2, 1e2)) \
-        * RBF(l=[1.0] * n_features, l_bounds=[(1e-4, 1e+2)] * n_features) \
-        + WhiteKernel(c=1e-5, c_bounds=(1e-5, 1e1))
+        * RBF(length_scale=[1.0] * n_features,
+              length_scale_bounds=[(1e-4, 1e+2)] * n_features) \
+        + WhiteKernel(noise_level=1e-5, noise_level_bounds=(1e-5, 1e1))
     last_lml = -np.inf
     for n_restarts_optimizer in range(9):
         gp = GaussianProcessRegressor(
@@ -212,7 +217,7 @@ def test_y_multioutput():
 
     # Test for fixed kernel that first dimension of 2d GP equals the output
     # of 1d GP and that second dimension is twice as large
-    kernel = RBF(l=1.0)
+    kernel = RBF(length_scale=1.0)
 
     gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None,
                                    normalize_y=False)
