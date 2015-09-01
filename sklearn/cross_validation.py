@@ -253,7 +253,7 @@ class KFold(_BaseKFold):
     """K-Folds cross validation iterator.
 
     Provides train/test indices to split data in train test sets. Split
-    dataset into k consecutive folds (without shuffling).
+    dataset into k consecutive folds (without shuffling by default).
 
     Each fold is then used a validation set once while the k - 1 remaining
     fold form the training set.
@@ -272,8 +272,8 @@ class KFold(_BaseKFold):
         Whether to shuffle the data before splitting into batches.
 
     random_state : None, int or RandomState
-        Pseudo-random number generator state used for random
-        sampling. If None, use default numpy RNG for shuffling
+        When shuffle=True, pseudo-random number generator state used for 
+        shuffling. If None, use default numpy RNG for shuffling.
 
     Examples
     --------
@@ -362,8 +362,8 @@ class StratifiedKFold(_BaseKFold):
         into batches.
 
     random_state : None, int or RandomState
-        Pseudo-random number generator state used for random
-        sampling. If None, use default numpy RNG for shuffling
+        When shuffle=True, pseudo-random number generator state used for 
+        shuffling. If None, use default numpy RNG for shuffling.
 
     Examples
     --------
