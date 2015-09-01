@@ -28,8 +28,8 @@ The `fetch_20newsgroups` function will not vectorize the data into numpy
 arrays but the dataset lists the filenames of the posts and their categories
 as target labels.
 
-The `fetch_20newsgroups_tfidf` function will in addition do a simple tf-idf
-vectorization step.
+The `fetch_20newsgroups_vectorized` function will in addition do a simple
+tf-idf vectorization step.
 
 """
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>

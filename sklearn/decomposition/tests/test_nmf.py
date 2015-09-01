@@ -159,7 +159,7 @@ def test_sparse_transform():
     A[A > 1.0] = 0
     A = csc_matrix(A)
 
-    model = nmf.NMF()
+    model = nmf.NMF(random_state=42)
     A_fit_tr = model.fit_transform(A)
     A_tr = model.transform(A)
     # This solver seems pretty inconsistent

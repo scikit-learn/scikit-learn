@@ -17,7 +17,7 @@ from scipy import linalg
 from scipy import sparse
 from scipy.sparse import linalg as sp_linalg
 
-from .base import LinearClassifierMixin, LinearModel
+from .base import LinearClassifierMixin, LinearModel, _rescale_data
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import check_X_y
@@ -184,17 +184,6 @@ def _solve_svd(X, y, alpha):
     d_UT_y = d * UTy
     return np.dot(Vt.T, d_UT_y).T
 
-
-def _rescale_data(X, y, sample_weight):
-    """Rescale data so as to support sample_weight"""
-    n_samples = X.shape[0]
-    sample_weight = sample_weight * np.ones(n_samples)
-    sample_weight = np.sqrt(sample_weight)
-    sw_matrix = sparse.dia_matrix((sample_weight, 0),
-                                  shape=(n_samples, n_samples))
-    X = safe_sparse_dot(sw_matrix, X)
-    y = safe_sparse_dot(sw_matrix, y)
-    return X, y
 
 
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
@@ -456,6 +445,10 @@ class Ridge(_BaseRidge, RegressorMixin):
     coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
+    intercept_ : float | array, shape = (n_targets,)
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
+
     See also
     --------
     RidgeClassifier, RidgeCV, KernelRidge
@@ -553,6 +546,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     ----------
     coef_ : array, shape = [n_features] or [n_classes, n_features]
         Weight vector(s).
+
+    intercept_ : float | array, shape = (n_targets,)
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
 
     See also
     --------
@@ -875,7 +872,7 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
-            fit_params = {'sample_weight' : sample_weight}
+            fit_params = {'sample_weight': sample_weight}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
                               parameters, fit_params=fit_params, cv=self.cv)
             gs.fit(X, y)
@@ -957,12 +954,12 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
-    alpha_ : float
-        Estimated regularization parameter.
-
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
+
+    alpha_ : float
+        Estimated regularization parameter.
 
     See also
     --------
@@ -1027,6 +1024,10 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
+
+    intercept_ : float | array, shape = (n_targets,)
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
 
     alpha_ : float
         Estimated regularization parameter

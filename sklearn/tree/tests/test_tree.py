@@ -126,7 +126,7 @@ digits.target = digits.target[perm]
 
 random_state = check_random_state(0)
 X_multilabel, y_multilabel = datasets.make_multilabel_classification(
-    random_state=0, return_indicator=True, n_samples=30, n_features=10)
+    random_state=0, n_samples=30, n_features=10)
 
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.

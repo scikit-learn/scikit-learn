@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 
 from sklearn.externals.six import iteritems
@@ -80,10 +81,6 @@ def test_pairwise_distances():
     assert_equal(S.shape[0], X.shape[0])
     assert_equal(S.shape[1], Y.shape[0])
     assert_array_almost_equal(S, S2)
-    # Tests that precomputed metric returns pointer to, and not copy of, X.
-    S = np.dot(X, X.T)
-    S2 = pairwise_distances(S, metric="precomputed")
-    assert_true(S is S2)
     # Test with sparse X and Y,
     # currently only supported for Euclidean, L1 and cosine.
     X_sparse = csr_matrix(X)
@@ -116,6 +113,38 @@ def test_pairwise_distances():
 
     # Test that a value error is raised if the metric is unkown
     assert_raises(ValueError, pairwise_distances, X, Y, metric="blah")
+
+
+def test_pairwise_precomputed():
+    for func in [pairwise_distances, pairwise_kernels]:
+        # Test correct shape
+        assert_raises_regexp(ValueError, '.* shape .*',
+                             func, np.zeros((5, 3)), metric='precomputed')
+        # with two args
+        assert_raises_regexp(ValueError, '.* shape .*',
+                             func, np.zeros((5, 3)), np.zeros((4, 4)),
+                             metric='precomputed')
+        # even if shape[1] agrees (although thus second arg is spurious)
+        assert_raises_regexp(ValueError, '.* shape .*',
+                             func, np.zeros((5, 3)), np.zeros((4, 3)),
+                             metric='precomputed')
+
+        # Test not copied (if appropriate dtype)
+        S = np.zeros((5, 5))
+        S2 = func(S, metric="precomputed")
+        assert_true(S is S2)
+        # with two args
+        S = np.zeros((5, 3))
+        S2 = func(S, np.zeros((3, 3)), metric="precomputed")
+        assert_true(S is S2)
+
+        # Test always returns float dtype
+        S = func(np.array([[1]], dtype='int'), metric='precomputed')
+        assert_equal('f', S.dtype.kind)
+
+        # Test converts list to array-like
+        S = func([[1]], metric='precomputed')
+        assert_true(isinstance(S, np.ndarray))
 
 
 def check_pairwise_parallel(func, metric, kwds):
@@ -333,6 +362,31 @@ def test_euclidean_distances():
     Y = csr_matrix(Y)
     D = euclidean_distances(X, Y)
     assert_array_almost_equal(D, [[1., 2.]])
+
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((10, 4))
+    Y = rng.random_sample((20, 4))
+    X_norm_sq = (X ** 2).sum(axis=1)
+    Y_norm_sq = (Y ** 2).sum(axis=1)
+
+    # check that we still get the right answers with {X,Y}_norm_squared
+    D1 = euclidean_distances(X, Y)
+    D2 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq)
+    D3 = euclidean_distances(X, Y, Y_norm_squared=Y_norm_sq)
+    D4 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq,
+                             Y_norm_squared=Y_norm_sq)
+    assert_array_almost_equal(D2, D1)
+    assert_array_almost_equal(D3, D1)
+    assert_array_almost_equal(D4, D1)
+
+    # check we get the wrong answer with wrong {X,Y}_norm_squared
+    X_norm_sq *= 0.5
+    Y_norm_sq *= 0.5
+    wrong_D = euclidean_distances(X, Y,
+                                  X_norm_squared=np.zeros_like(X_norm_sq),
+                                  Y_norm_squared=np.zeros_like(Y_norm_sq))
+    assert_greater(np.max(np.abs(wrong_D - D1)), .01)
+
 
 
 # Paired distances

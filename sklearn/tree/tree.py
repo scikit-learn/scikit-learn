@@ -675,7 +675,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     ----------
     criterion : string, optional (default="mse")
         The function to measure the quality of a split. The only supported
-        criterion is "mse" for the mean squared error.
+        criterion is "mse" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion.
 
     splitter : string, optional (default="best")
         The strategy used to choose the split at each node. Supported

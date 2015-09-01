@@ -22,15 +22,28 @@ New features
 
    - The new class :class:`preprocessing.RobustScaler` provides an
      alternative to :class:`preprocessing.StandardScaler` for feature-wise
-     centering and range normalization that is robust to outliers. By `Thomas Unterthiner`_.
+     centering and range normalization that is robust to outliers.
+     By `Thomas Unterthiner`_.
 
    - The new class :class:`preprocessing.MaxAbsScaler` provides an
      alternative to :class:`preprocessing.MinMaxScaler` for feature-wise
      range normalization when the data is already centered or sparse.
      By `Thomas Unterthiner`_.
 
+   - The new class :class:`preprocessing.FunctionTransformer` turns a Python
+     function into a ``Pipeline``-compatible transformer object.
+     By Joe Jevnik.
+
+   - :class:`cross_validation.LabelShuffleSplit` generates random train-test
+     splits, similar to :class:`cross_validation.ShuffleSplit`, except that
+     the splits are conditioned on a label array. By `Brian McFee`_.
+
+
 Enhancements
 ............
+
+   - :class:`cluster.mean_shift_.MeanShift` now supports parallel execution,
+     as implemented in the ``mean_shift`` function. By `Martino Sorbaro`_.
 
    - :class:`naive_bayes.GaussianNB` now supports fitting with ``sample_weights``.
      By `Jan Hendrik Metzen`_.
@@ -64,10 +77,14 @@ Enhancements
      :class:`linear_model.LogisticRegression`, by avoiding loss computation.
      By `Mathieu Blondel`_ and `Tom Dupre la Tour`_.
 
-   - The ``class_weight="auto"`` heuristic in classifiers supporting 
+   - The ``class_weight="auto"`` heuristic in classifiers supporting
      ``class_weight`` was deprecated and replaced by the ``class_weight="balanced"``
      option, which has a simpler forumlar and interpretation.
      By Hanna Wallach and `Andreas Müller`_.
+
+   - Add ``class_weight`` parameter to automatically weight samples by class
+     frequency for :class:`linear_model.PassiveAgressiveClassifier`. By
+     `Trevor Stephens`_.
 
    - Added backlinks from the API reference pages to the user guide. By
      `Andreas Müller`_.
@@ -85,6 +102,40 @@ Enhancements
    - Provide an option for sparse output from
      :func:`sklearn.metrics.pairwise.cosine_similarity`. By `Jaidev Deshpande`_.
 
+   - Add :func:`minmax_scale` to provide a function interface for
+     :class:`MinMaxScaler`. By `Thomas Unterthiner`_.
+
+   - ``dump_svmlight_file`` now handles multi-label datasets.
+     By Chih-Wei Chang.
+
+   - RCV1 dataset loader (:func:`sklearn.datasets.fetch_rcv1`).
+     By `Tom Dupre la Tour`_.
+
+   - Upgraded to joblib 0.9.0b2 to benefit from the new automatic batching of
+     short tasks. This makes it possible for scikit-learn to benefit from
+     parallelism when many very short tasks are executed in parallel, for
+     instance by the :class:`grid_search.GridSearchCV` meta-estimator
+     with ``n_jobs > 1`` used with a large grid of parameters on a small
+     dataset. By `Vlad Niculae`_, `Olivier Grisel`_ and `Loic Esteve`_.
+
+   - Improved speed (3 times per iteration) of
+     :class:`decomposition.DictLearning` with coordinate descent method
+     from :class:`linear_model.Lasso`. By `Arthur Mensch`_.
+
+   - Parallel processing (threaded) for queries of nearest neighbors
+     (using the ball-tree) by Nikolay Mayorov.
+
+   - Allow :func:`datasets.make_multilabel_classification` to output
+     a sparse ``y``. By Kashif Rasul.
+     
+   - :class:`cluster.DBSCAN` now accepts a sparse matrix of precomputed
+     distances, allowing memory-efficient distance precomputation. By
+     `Joel Nothman`_.
+     
+   - :class:`tree.DecisionTreeClassifier` now exposes an ``apply`` method
+     for retrieving the leaf indices samples are predicted as. By
+     `Daniel Galvez`_ and `Gilles Louppe`_.
+
 Bug fixes
 .........
 
@@ -100,12 +151,26 @@ Bug fixes
     - Fixed bug where :class:`grid_search.RandomizedSearchCV` could consume a
       lot of memory for large discrete grids. By `Joel Nothman`_.
 
+    - Fixed bug in :class:`linear_model.LogisticRegressionCV` where `penalty` was ignored
+      in the final fit. By `Manoj Kumar`_.
+
+    - Fixed bug in :class:`ensemble.forest.ForestClassifier` while computing
+      oob_score and X is a sparse.csc_matrix. By `Ankur Ankan`_.
+
+    - All regressors now consistently handle and warn when given ``y`` that is of
+      shape ``(n_samples, 1)``. By `Andreas Müller`_.
+
+    - Fix in :class:`cluster.KMeans` cluster reassignment for sparse input by
+      `Lars Buitinck`_.
+
+    - Fixed a bug in :class:`lda.LDA` that could cause asymmetric covariance
+      matrices when using shrinkage. By `Martin Billinger`_.
+
+    - Fixed :func:`cross_validation.cross_val_predict` for estimators with
+      sparse predictions. By Buddha Prakash.
+
 API changes summary
 -------------------
-
-    - :class:`tree.DecisionTreeClassifier` now exposes an ``apply`` method
-      for retrieving the leaf indices samples are predicted as. By
-      `Daniel Galvez`_ and `Gilles Louppe`_.
 
     - :class:`svm.SVC`` and :class:`svm.NuSVC` now have an ``decision_function_shape``
       parameter to make their decision function of shape ``(n_samples, n_classes)``
@@ -601,7 +666,7 @@ API changes summary
 
     - The ``shuffle`` option of :class:`.linear_model.SGDClassifier`,
       :class:`linear_model.SGDRegressor`, :class:`linear_model.Perceptron`,
-      :class:`linear_model.PassiveAgressiveClassivier` and
+      :class:`linear_model.PassiveAgressiveClassifier` and
       :class:`linear_model.PassiveAgressiveRegressor` now defaults to ``True``.
 
     - :class:`cluster.DBSCAN` now uses a deterministic initialization. The
@@ -851,6 +916,9 @@ Enhancements
 
    - Add multi-output support to :class:`gaussian_process.GaussianProcess`
      by John Novak.
+
+   - Support for precomputed distance matrices in nearest neighbor estimators
+     by `Robert Layton`_ and `Joel Nothman`_.
 
    - Norm computations optimized for NumPy 1.6 and later versions by
      `Lars Buitinck`_. In particular, the k-means algorithm no longer
@@ -3536,3 +3604,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Sebastian Raschka: http://sebastianraschka.com
 
 .. _Thomas Unterthiner: https://github.com/untom
+
+.. _Loic Esteve: https://github.com/lesteve
+
+.. _Brian McFee: https://bmcfee.github.io

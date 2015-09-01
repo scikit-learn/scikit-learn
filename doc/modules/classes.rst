@@ -169,6 +169,7 @@ Classes
    cross_validation.PredefinedSplit
    cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
+   cross_validation.LabelShuffleSplit
    cross_validation.StratifiedShuffleSplit
 
 .. autosummary::
@@ -218,6 +219,7 @@ Loaders
    datasets.fetch_olivetti_faces
    datasets.fetch_california_housing
    datasets.fetch_covtype
+   datasets.fetch_rcv1
    datasets.load_mlcomp
    datasets.load_sample_image
    datasets.load_sample_images
@@ -287,6 +289,7 @@ Samples generator
    decomposition.SparseCoder
    decomposition.DictionaryLearning
    decomposition.MiniBatchDictionaryLearning
+   decomposition.LatentDirichletAllocation
 
 .. autosummary::
    :toctree: generated/
@@ -1103,11 +1106,13 @@ See the :ref:`metrics` section of the user guide for further details.
    :template: class.rst
 
    preprocessing.Binarizer
+   preprocessing.FunctionTransformer
    preprocessing.Imputer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
    preprocessing.MultiLabelBinarizer
+   preprocessing.MaxAbsScaler
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
@@ -1122,8 +1127,12 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.add_dummy_feature
    preprocessing.binarize
    preprocessing.label_binarize
+   preprocessing.maxabs_scale
+   preprocessing.minmax_scale
    preprocessing.normalize
+   preprocessing.robust_scale
    preprocessing.scale
+
 
 
 :mod:`sklearn.qda`: Quadratic Discriminant Analysis

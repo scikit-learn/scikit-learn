@@ -15,6 +15,7 @@ Generalized Linear models.
 from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -24,7 +25,7 @@ from scipy import sparse
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..utils import as_float_array, check_array, check_X_y, deprecated
+from ..utils import as_float_array, check_array, check_X_y, deprecated, column_or_1d
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
@@ -110,6 +111,18 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True,
         X_std = np.ones(X.shape[1])
         y_mean = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
     return X, y, X_mean, y_mean, X_std
+
+
+def _rescale_data(X, y, sample_weight):
+    """Rescale data so as to support sample_weight"""
+    n_samples = X.shape[0]
+    sample_weight = sample_weight * np.ones(n_samples)
+    sample_weight = np.sqrt(sample_weight)
+    sw_matrix = sparse.dia_matrix((sample_weight, 0),
+                                  shape=(n_samples, n_samples))
+    X = safe_sparse_dot(sw_matrix, X)
+    y = safe_sparse_dot(sw_matrix, y)
+    return X, y
 
 
 class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
@@ -242,7 +255,7 @@ class LinearClassifierMixin(ClassifierMixin):
         np.exp(prob, prob)
         prob += 1
         np.reciprocal(prob, prob)
-        if len(prob.shape) == 1:
+        if prob.ndim == 1:
             return np.vstack([1 - prob, prob]).T
         else:
             # OvR normalization, like LibLinear's predict_probability
@@ -351,7 +364,7 @@ class LinearRegression(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """
         Fit linear model.
 
@@ -363,16 +376,28 @@ class LinearRegression(LinearModel, RegressorMixin):
         y : numpy array of shape [n_samples, n_targets]
             Target values
 
+        sample_weight : numpy array of shape [n_samples]
+            Individual weights for each sample
+
         Returns
         -------
         self : returns an instance of self.
         """
+
         n_jobs_ = self.n_jobs
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          y_numeric=True, multi_output=True)
+        
+        if ((sample_weight is not None) and np.atleast_1d(sample_weight).ndim > 1):
+            sample_weight = column_or_1d(sample_weight, warn=True)
 
         X, y, X_mean, y_mean, X_std = self._center_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
+            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            sample_weight=sample_weight)
+
+        if sample_weight is not None:
+            # Sample weight can be implemented via a simple rescaling.
+            X, y = _rescale_data(X, y, sample_weight)
 
         if sp.issparse(X):
             if y.ndim < 2:
@@ -397,7 +422,8 @@ class LinearRegression(LinearModel, RegressorMixin):
         return self
 
 
-def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
+def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
+             Xy_precompute_order=None):
     """Aux function used at beginning of fit in linear models"""
     n_samples, n_features = X.shape
     if sparse.isspmatrix(X):
@@ -408,10 +434,13 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
         # copy was done in fit if necessary
         X, y, X_mean, y_mean, X_std = center_data(
             X, y, fit_intercept, normalize, copy=copy)
-
-    if hasattr(precompute, '__array__') \
-            and not np.allclose(X_mean, np.zeros(n_features)) \
-            and not np.allclose(X_std, np.ones(n_features)):
+    if hasattr(precompute, '__array__') and (
+            fit_intercept and not np.allclose(X_mean, np.zeros(n_features))
+            or normalize and not np.allclose(X_std, np.ones(n_features))):
+        warnings.warn("Gram matrix was provided but X was centered"
+                      " to fit intercept, "
+                      "or X was normalized : recomputing Gram matrix.",
+                      UserWarning)
         # recompute Gram
         precompute = 'auto'
         Xy = None
@@ -422,11 +451,16 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
 
     if precompute is True:
         precompute = np.dot(X.T, X)
+        if Xy_precompute_order == 'F':
+            precompute = np.dot(X.T, X).T
 
     if not hasattr(precompute, '__array__'):
         Xy = None  # cannot use Xy if precompute is not Gram
 
     if hasattr(precompute, '__array__') and Xy is None:
-        Xy = np.dot(X.T, y)
+        if Xy_precompute_order == 'F':
+            Xy = np.dot(y.T, X).T
+        else:
+            Xy = np.dot(X.T, y)
 
     return X, y, X_mean, y_mean, X_std, precompute, Xy

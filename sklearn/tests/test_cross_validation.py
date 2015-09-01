@@ -4,6 +4,7 @@ import warnings
 
 import numpy as np
 from scipy.sparse import coo_matrix
+from scipy.sparse import csr_matrix
 from scipy import stats
 
 from sklearn.utils.testing import assert_true
@@ -25,19 +26,20 @@ from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_digits
 from sklearn.datasets import load_iris
+from sklearn.datasets import make_multilabel_classification
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import precision_score
-
 from sklearn.externals import six
 from sklearn.externals.six.moves import zip
 
 from sklearn.linear_model import Ridge
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
 
-from sklearn.preprocessing import Imputer, LabelBinarizer
+from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
 
@@ -413,7 +415,7 @@ def test_stratified_shuffle_split_iter():
                       / float(len(y[test])))
             assert_array_almost_equal(p_train, p_test, 1)
             assert_equal(y[train].size + y[test].size, y.size)
-            assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
+            assert_array_equal(np.intersect1d(train, test), [])
 
 
 def test_stratified_shuffle_split_even():
@@ -481,6 +483,48 @@ def test_predefinedsplit_with_kfold_split():
         ps_test.append(test_ind)
     assert_array_equal(ps_train, kf_train)
     assert_array_equal(ps_test, kf_test)
+
+
+def test_label_shuffle_split():
+    ys = [np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
+          np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
+          np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
+          np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
+          ]
+
+    for y in ys:
+        n_iter = 6
+        test_size = 1./3
+        slo = cval.LabelShuffleSplit(y, n_iter, test_size=test_size,
+                                     random_state=0)
+
+        # Make sure the repr works
+        repr(slo)
+
+        # Test that the length is correct
+        assert_equal(len(slo), n_iter)
+
+        y_unique = np.unique(y)
+
+        for train, test in slo:
+            # First test: no train label is in the test set and vice versa
+            y_train_unique = np.unique(y[train])
+            y_test_unique = np.unique(y[test])
+            assert_false(np.any(np.in1d(y[train], y_test_unique)))
+            assert_false(np.any(np.in1d(y[test], y_train_unique)))
+
+            # Second test: train and test add up to all the data
+            assert_equal(y[train].size + y[test].size, y.size)
+
+            # Third test: train and test are disjoint
+            assert_array_equal(np.intersect1d(train, test), [])
+
+            # Fourth test: # unique train and test labels are correct,
+            #              +- 1 for rounding error
+            assert_true(abs(len(y_test_unique) -
+                            round(test_size * len(y_unique))) <= 1)
+            assert_true(abs(len(y_train_unique) -
+                            round((1.0 - test_size) * len(y_unique))) <= 1)
 
 
 def test_leave_label_out_changing_labels():
@@ -962,15 +1006,8 @@ def test_check_cv_return_types():
     assert_true(isinstance(cv, cval.StratifiedKFold))
 
     X = np.ones((5, 2))
-    y_seq_of_seqs = [[], [1, 2], [3], [0, 1, 3], [2]]
-
-    with warnings.catch_warnings(record=True):
-        # deprecated sequence of sequence format
-        cv = cval.check_cv(3, X, y_seq_of_seqs, classifier=True)
-    assert_true(isinstance(cv, cval.KFold))
-
-    y_indicator_matrix = LabelBinarizer().fit_transform(y_seq_of_seqs)
-    cv = cval.check_cv(3, X, y_indicator_matrix, classifier=True)
+    y_multilabel = [[1, 0, 1], [1, 1, 0], [0, 0, 0], [0, 1, 1], [1, 0, 0]]
+    cv = cval.check_cv(3, X, y_multilabel, classifier=True)
     assert_true(isinstance(cv, cval.KFold))
 
     y_multioutput = np.array([[1, 2], [0, 3], [0, 0], [3, 1], [2, 0]])
@@ -1101,3 +1138,18 @@ def test_check_is_partition():
 
     p[0] = 23
     assert_false(cval._check_is_partition(p, 100))
+
+
+def test_cross_val_predict_sparse_prediction():
+    # check that cross_val_predict gives same result for sparse and dense input
+    X, y = make_multilabel_classification(n_classes=2, n_labels=1,
+                                          allow_unlabeled=False,
+                                          return_indicator=True,
+                                          random_state=1)
+    X_sparse = csr_matrix(X)
+    y_sparse = csr_matrix(y)
+    classif = OneVsRestClassifier(SVC(kernel='linear'))
+    preds = cval.cross_val_predict(classif, X, y, cv=10)
+    preds_sparse = cval.cross_val_predict(classif, X_sparse, y_sparse, cv=10)
+    preds_sparse = preds_sparse.toarray()
+    assert_array_almost_equal(preds_sparse, preds)

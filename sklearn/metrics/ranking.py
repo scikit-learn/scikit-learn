@@ -277,7 +277,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
         negative samples is equal to fps[-1] (thus true negatives are given by
         fps[-1] - fps).
 
-    tps : array, shape = [n_thresholds := len(np.unique(y_score))]
+    tps : array, shape = [n_thresholds <= len(np.unique(y_score))]
         An increasing count of true positives, at index i being the number
         of positive samples assigned a score >= thresholds[i]. The total
         number of positive samples is equal to tps[-1] (thus false negatives
@@ -379,7 +379,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
         Decreasing recall values such that element i is the recall of
         predictions with score >= thresholds[i] and the last element is 0.
 
-    thresholds : array, shape = [n_thresholds := len(np.unique(probas_pred))]
+    thresholds : array, shape = [n_thresholds <= len(np.unique(probas_pred))]
         Increasing thresholds on the decision function used to compute
         precision and recall.
 

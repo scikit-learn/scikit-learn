@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_not_in
+from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.cluster.dbscan_ import dbscan
 from sklearn.cluster.tests.common import generate_clustered_data
@@ -74,6 +75,22 @@ def test_dbscan_sparse():
     core_sparse, labels_sparse = dbscan(sparse.lil_matrix(X), eps=.8,
                                         min_samples=10)
     core_dense, labels_dense = dbscan(X, eps=.8, min_samples=10)
+    assert_array_equal(core_dense, core_sparse)
+    assert_array_equal(labels_dense, labels_sparse)
+
+
+def test_dbscan_sparse_precomputed():
+    D = pairwise_distances(X)
+    nn = NearestNeighbors(radius=.9).fit(X)
+    D_sparse = nn.radius_neighbors_graph(mode='distance')
+    # Ensure it is sparse not merely on diagonals:
+    assert D_sparse.nnz < D.shape[0] * (D.shape[0] - 1)
+    core_sparse, labels_sparse = dbscan(D_sparse,
+                                        eps=.8,
+                                        min_samples=10,
+                                        metric='precomputed')
+    core_dense, labels_dense = dbscan(D, eps=.8, min_samples=10,
+                                      metric='precomputed')
     assert_array_equal(core_dense, core_sparse)
     assert_array_equal(labels_dense, labels_sparse)
 
@@ -298,10 +315,10 @@ def test_dbscan_core_samples_toy():
 def test_dbscan_precomputed_metric_with_degenerate_input_arrays():
     # see https://github.com/scikit-learn/scikit-learn/issues/4641 for
     # more details
-    X = np.ones((10, 2))
+    X = np.eye(10)
     labels = DBSCAN(eps=0.5, metric='precomputed').fit(X).labels_
     assert_equal(len(set(labels)), 1)
 
-    X = np.zeros((10, 2))
+    X = np.zeros((10, 10))
     labels = DBSCAN(eps=0.5, metric='precomputed').fit(X).labels_
     assert_equal(len(set(labels)), 1)
