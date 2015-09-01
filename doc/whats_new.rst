@@ -127,6 +127,9 @@ Enhancements
 
    - Allow :func:`datasets.make_multilabel_classification` to output
      a sparse ``y``. By Kashif Rasul.
+     
+   - DBSCAN now accepts a sparse matrix of precomputed distances, allowing
+     for memory-efficient distance precomputation. By `Joel Nothman`_.
 
 Bug fixes
 .........
