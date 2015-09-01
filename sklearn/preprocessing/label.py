@@ -234,18 +234,18 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     LabelBinarizer(neg_label=0, pos_label=1, sparse_output=False)
     >>> lb.classes_
     array([1, 2, 4, 6])
-    >>> lb.transform([1, 6])
+    >>> lb.transform([1, 6]) # doctest: +ELLIPSIS
     array([[1, 0, 0, 0],
-           [0, 0, 0, 1]])
+           [0, 0, 0, 1]]...)
 
     Binary targets transform to a column vector
 
     >>> lb = preprocessing.LabelBinarizer()
-    >>> lb.fit_transform(['yes', 'no', 'no', 'yes'])
+    >>> lb.fit_transform(['yes', 'no', 'no', 'yes']) # doctest: +ELLIPSIS
     array([[1],
            [0],
            [0],
-           [1]])
+           [1]]...)
 
     Passing a 2D matrix for multilabel classification
 
@@ -254,11 +254,11 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     LabelBinarizer(neg_label=0, pos_label=1, sparse_output=False)
     >>> lb.classes_
     array([0, 1, 2])
-    >>> lb.transform([0, 1, 2, 1])
+    >>> lb.transform([0, 1, 2, 1]) # doctest: +ELLIPSIS
     array([[1, 0, 0],
            [0, 1, 0],
            [0, 0, 1],
-           [0, 1, 0]])
+           [0, 1, 0]]...)
 
     See also
     --------
@@ -441,23 +441,23 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
     Examples
     --------
     >>> from sklearn.preprocessing import label_binarize
-    >>> label_binarize([1, 6], classes=[1, 2, 4, 6])
+    >>> label_binarize([1, 6], classes=[1, 2, 4, 6]) # doctest: +ELLIPSIS
     array([[1, 0, 0, 0],
-           [0, 0, 0, 1]])
+           [0, 0, 0, 1]]...)
 
     The class ordering is preserved:
 
-    >>> label_binarize([1, 6], classes=[1, 6, 4, 2])
+    >>> label_binarize([1, 6], classes=[1, 6, 4, 2]) # doctest: +ELLIPSIS
     array([[1, 0, 0, 0],
-           [0, 1, 0, 0]])
+           [0, 1, 0, 0]]...)
 
     Binary targets transform to a column vector
 
-    >>> label_binarize(['yes', 'no', 'no', 'yes'], classes=['no', 'yes'])
+    >>> label_binarize(['yes', 'no', 'no', 'yes'], classes=['no', 'yes']) # doctest: +ELLIPSIS
     array([[1],
            [0],
            [0],
-           [1]])
+           [1]]...)
 
     See also
     --------
