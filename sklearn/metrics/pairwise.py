@@ -145,7 +145,8 @@ def check_paired_arrays(X, Y):
 
 
 # Pairwise distances
-def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
+def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
+                        X_norm_squared=None):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
@@ -157,8 +158,8 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
 
     This formulation has two advantages over other ways of computing distances.
     First, it is computationally efficient when dealing with sparse data.
-    Second, if x varies but y remains unchanged, then the right-most dot
-    product `dot(y, y)` can be pre-computed.
+    Second, if one argument varies but the other remains unchanged, then
+    `dot(x, x)` and/or `dot(y, y)` can be pre-computed.
 
     However, this is not the most precise way of doing this computation, and
     the distance matrix returned by this function may not be exactly
@@ -178,6 +179,10 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
 
     squared : boolean, optional
         Return squared Euclidean distances.
+
+    X_norm_squared : array-like, shape = [n_samples_1], optional
+        Pre-computed dot-products of vectors in X (e.g.,
+        ``(X**2).sum(axis=1)``)
 
     Returns
     -------
@@ -200,23 +205,27 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     --------
     paired_distances : distances betweens pairs of elements of X and Y.
     """
-    # should not need X_norm_squared because if you could precompute that as
-    # well as Y, then you should just pre-compute the output and not even
-    # call this function.
     X, Y = check_pairwise_arrays(X, Y)
 
-    if Y_norm_squared is not None:
+    if X_norm_squared is not None:
+        XX = check_array(X_norm_squared)
+        if XX.shape == (1, X.shape[0]):
+            XX = XX.T
+        elif XX.shape != (X.shape[0], 1):
+            raise ValueError(
+                "Incompatible dimensions for X and X_norm_squared")
+    else:
+        XX = row_norms(X, squared=True)[:, np.newaxis]
+
+    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
+        YY = XX.T
+    elif Y_norm_squared is not None:
         YY = check_array(Y_norm_squared)
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")
     else:
         YY = row_norms(Y, squared=True)[np.newaxis, :]
-
-    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
-        XX = YY.T
-    else:
-        XX = row_norms(X, squared=True)[:, np.newaxis]
 
     distances = safe_sparse_dot(X, Y.T, dense_output=True)
     distances *= -2

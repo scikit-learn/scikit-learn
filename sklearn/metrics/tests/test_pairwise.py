@@ -363,6 +363,31 @@ def test_euclidean_distances():
     D = euclidean_distances(X, Y)
     assert_array_almost_equal(D, [[1., 2.]])
 
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((10, 4))
+    Y = rng.random_sample((20, 4))
+    X_norm_sq = (X ** 2).sum(axis=1)
+    Y_norm_sq = (Y ** 2).sum(axis=1)
+
+    # check that we still get the right answers with {X,Y}_norm_squared
+    D1 = euclidean_distances(X, Y)
+    D2 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq)
+    D3 = euclidean_distances(X, Y, Y_norm_squared=Y_norm_sq)
+    D4 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq,
+                             Y_norm_squared=Y_norm_sq)
+    assert_array_almost_equal(D2, D1)
+    assert_array_almost_equal(D3, D1)
+    assert_array_almost_equal(D4, D1)
+
+    # check we get the wrong answer with wrong {X,Y}_norm_squared
+    X_norm_sq *= 0.5
+    Y_norm_sq *= 0.5
+    wrong_D = euclidean_distances(X, Y,
+                                  X_norm_squared=np.zeros_like(X_norm_sq),
+                                  Y_norm_squared=np.zeros_like(Y_norm_sq))
+    assert_greater(np.max(np.abs(wrong_D - D1)), .01)
+
+
 
 # Paired distances
 
