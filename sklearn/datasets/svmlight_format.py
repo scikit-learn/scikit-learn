@@ -342,7 +342,8 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
         n_features is the number of features.
 
     y : array-like, shape = [n_samples]
-        Target values.
+        Target values. Class labels must be an integer or float, or array-like 
+        objects of integer or float for multilabel classifications.
 
     f : string or file-like in binary mode
         If string, specifies the path that will contain the data.
