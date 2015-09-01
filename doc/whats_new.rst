@@ -127,14 +127,21 @@ Enhancements
 
    - Allow :func:`datasets.make_multilabel_classification` to output
      a sparse ``y``. By Kashif Rasul.
-     
+
    - :class:`cluster.DBSCAN` now accepts a sparse matrix of precomputed
      distances, allowing memory-efficient distance precomputation. By
      `Joel Nothman`_.
-     
+
    - :class:`tree.DecisionTreeClassifier` now exposes an ``apply`` method
      for retrieving the leaf indices samples are predicted as. By
      `Daniel Galvez`_ and `Gilles Louppe`_.
+
+   - Speed up decision tree regressors, random forest regressors, extra trees
+     regressors and gradient boosting estimators by computing a proxy
+     of the impurity improvement during the tree growth. The proxy quantity is
+     such that the split that maximizes this value also maximizes the impurity
+     improvement. By `Arnaud Joly`_, `Jacob Schreiber`_ and `Gilles Louppe`_
+
 
 Bug fixes
 .........
