@@ -128,8 +128,13 @@ Enhancements
    - Allow :func:`datasets.make_multilabel_classification` to output
      a sparse ``y``. By Kashif Rasul.
      
-   - DBSCAN now accepts a sparse matrix of precomputed distances, allowing
-     for memory-efficient distance precomputation. By `Joel Nothman`_.
+   - :class:`cluster.DBSCAN` now accepts a sparse matrix of precomputed
+     distances, allowing memory-efficient distance precomputation. By
+     `Joel Nothman`_.
+     
+   - :class:`tree.DecisionTreeClassifier` now exposes an ``apply`` method
+     for retrieving the leaf indices samples are predicted as. By
+     `Daniel Galvez`_ and `Gilles Louppe`_.
 
 Bug fixes
 .........
@@ -166,10 +171,6 @@ Bug fixes
 
 API changes summary
 -------------------
-
-    - :class:`tree.DecisionTreeClassifier` now exposes an ``apply`` method
-      for retrieving the leaf indices samples are predicted as. By
-      `Daniel Galvez`_ and `Gilles Louppe`_.
 
     - :class:`svm.SVC`` and :class:`svm.NuSVC` now have an ``decision_function_shape``
       parameter to make their decision function of shape ``(n_samples, n_classes)``
