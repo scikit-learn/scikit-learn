@@ -15,7 +15,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import if_not_mac_os
+from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
 from sklearn.utils.validation import DataConversionWarning
 from sklearn.utils.extmath import row_norms
@@ -193,15 +193,11 @@ def test_k_means_new_centers():
         np.testing.assert_array_equal(this_labels, labels)
 
 
-def _has_blas_lib(libname):
-    from numpy.distutils.system_info import get_info
-    return libname in get_info('blas_opt').get('libraries', [])
-
-
-@if_not_mac_os()
+@if_safe_multiprocessing_with_blas
 def test_k_means_plus_plus_init_2_jobs():
-    if _has_blas_lib('openblas'):
-        raise SkipTest('Multi-process bug with OpenBLAS (see issue #636)')
+    if sys.version_info[:2] < (3, 4):
+        raise SkipTest(
+            "Possible multi-process bug with some BLAS under Python < 3.4")
 
     km = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
                 random_state=42).fit(X)
@@ -263,7 +259,7 @@ def test_k_means_n_init():
 
 
 def test_k_means_fortran_aligned_data():
-    # Check the KMeans will work well, even if X is a fortran-aligned data. 
+    # Check the KMeans will work well, even if X is a fortran-aligned data.
     X = np.asfortranarray([[0, 0], [0, 1], [0, 1]])
     centers = np.array([[0, 0], [0, 1]])
     labels = np.array([0, 1, 1])
