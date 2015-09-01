@@ -6,8 +6,8 @@
 Release history
 ===============
 
-0.17
-====
+Version 0.17
+============
 
 
 Changelog
@@ -157,8 +157,8 @@ API changes summary
 
 .. _changes_0_1_16:
 
-0.16.1
-=======
+Version 0.16.1
+===============
 
 Changelog
 ---------
@@ -189,8 +189,8 @@ Bug fixes
 
 .. _changes_0_16:
 
-0.16
-====
+Version 0.16
+============
 
 Highlights
 -----------
@@ -652,8 +652,8 @@ API changes summary
 
 .. _changes_0_15_2:
 
-0.15.2
-======
+Version 0.15.2
+==============
 
 Bug fixes
 ---------
@@ -694,8 +694,8 @@ Bug fixes
 
 .. _changes_0_15_1:
 
-0.15.1
-======
+Version 0.15.1
+==============
 
 Bug fixes
 ---------
@@ -733,8 +733,8 @@ Bug fixes
 
 .. _changes_0_15:
 
-0.15
-====
+Version 0.15
+============
 
 Highlights
 -----------
@@ -1261,8 +1261,8 @@ List of contributors for release 0.15 by number of commits.
 
 .. _changes_0_14:
 
-0.14
-=======
+Version 0.14
+===============
 
 Changelog
 ---------
@@ -1644,8 +1644,8 @@ List of contributors for release 0.14 by number of commits.
 
 .. _changes_0_13_1:
 
-0.13.1
-======
+Version 0.13.1
+==============
 
 The 0.13.1 release only fixes some bugs and does not add any new functionality.
 
@@ -1690,8 +1690,8 @@ List of contributors for release 0.13.1 by number of commits.
 
 .. _changes_0_13:
 
-0.13
-====
+Version 0.13
+============
 
 New Estimator Classes
 ---------------------
@@ -2028,8 +2028,8 @@ List of contributors for release 0.13 by number of commits.
 
 .. _changes_0_12.1:
 
-0.12.1
-=======
+Version 0.12.1
+===============
 
 The 0.12.1 release is a bug-fix release with no additional features, but is
 instead a set of bug fixes
@@ -2073,8 +2073,8 @@ People
 
 .. _changes_0_12:
 
-0.12
-====
+Version 0.12
+============
 
 Changelog
 ---------
@@ -2266,8 +2266,8 @@ People
 
 .. _changes_0_11:
 
-0.11
-====
+Version 0.11
+============
 
 Changelog
 ---------
@@ -2501,8 +2501,8 @@ People
 
 .. _changes_0_10:
 
-0.10
-====
+Version 0.10
+============
 
 Changelog
 ---------
@@ -2686,8 +2686,8 @@ The following people contributed to scikit-learn since last release:
 
 .. _changes_0_9:
 
-0.9
-===
+Version 0.9
+===========
 
 scikit-learn 0.9 was released on September 2011, three months after the 0.8
 release and includes the new modules :ref:`manifold`, :ref:`dirichlet_process`
@@ -2923,8 +2923,8 @@ People
 
 .. _changes_0_8:
 
-0.8
-===
+Version 0.8
+===========
 
 scikit-learn 0.8 was released on May 2011, one month after the first
 "international" `scikit-learn coding sprint
@@ -3023,8 +3023,8 @@ People that made this release possible preceded by number of commits:
 
 .. _changes_0_7:
 
-0.7
-===
+Version 0.7
+===========
 
 scikit-learn 0.7 was released in March 2011, roughly three months
 after the 0.6 release. This release is marked by the speed
@@ -3114,8 +3114,8 @@ People that made this release possible preceded by number of commits:
 
 .. _changes_0_6:
 
-0.6
-===
+Version 0.6
+===========
 
 scikit-learn 0.6 was released on December 2010. It is marked by the
 inclusion of several new modules and a general renaming of old
@@ -3214,8 +3214,8 @@ People that made this release possible preceded by number of commits:
 .. _changes_0_5:
 
 
-0.5
-===
+Version 0.5
+===========
 
 Changelog
 ---------
@@ -3326,8 +3326,8 @@ number of commits:
      *   1  Ariel Rokem
      *   1  Matthieu Brucher
 
-0.4
-===
+Version 0.4
+===========
 
 Changelog
 ---------
