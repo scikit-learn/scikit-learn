@@ -1078,11 +1078,13 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
         The target variable to try to predict in the case of
         supervised learning.
 
-    cv : cross-validation generator or int, optional, default: None
-        A cross-validation generator to use. If int, determines
-        the number of folds in StratifiedKFold if y is binary
-        or multiclass and estimator is a classifier, or the number
-        of folds in KFold otherwise. If None, it is equivalent to cv=3.
+    cv : integer or cross-validation generator, optional, default=3
+        A cross-validation generator to use. If int, determines the number 
+        of folds in StratifiedKFold if estimator is a classifier and the 
+        target y is binary or multiclass, or the number of folds in KFold 
+        otherwise.
+        Specific cross-validation objects can be passed, see 
+        sklearn.cross_validation module for the list of possible objects.
         This generator must include all elements in the test set exactly once.
         Otherwise, a ValueError is raised.
 
@@ -1245,11 +1247,13 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : cross-validation generator or int, optional, default: None
-        A cross-validation generator to use. If int, determines
-        the number of folds in StratifiedKFold if y is binary
-        or multiclass and estimator is a classifier, or the number
-        of folds in KFold otherwise. If None, it is equivalent to cv=3.
+    cv : integer or cross-validation generator, optional, default=3
+        A cross-validation generator to use. If int, determines the number 
+        of folds in StratifiedKFold if estimator is a classifier and the 
+        target y is binary or multiclass, or the number of folds in KFold 
+        otherwise.
+        Specific cross-validation objects can be passed, see 
+        sklearn.cross_validation module for the list of possible objects.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -1564,9 +1568,12 @@ def permutation_test_score(estimator, X, y, cv=None,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific cross-validation objects can be passed, see
+    cv : integer or cross-validation generator, optional, default=3
+        A cross-validation generator to use. If int, determines the number 
+        of folds in StratifiedKFold if estimator is a classifier and the 
+        target y is binary or multiclass, or the number of folds in KFold 
+        otherwise.
+        Specific cross-validation objects can be passed, see 
         sklearn.cross_validation module for the list of possible objects.
 
     n_permutations : integer, optional
