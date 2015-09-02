@@ -115,10 +115,12 @@ def configuration(parent_package='', top_path=None):
 
     return config
 
+scipy_min_version = '0.9'
+numpy_min_version = '1.6.1'
+
 def is_scipy_installed():
     try:
         import scipy
-        scipy_min_version = '0.9'
         return parse_version(scipy.__version__) >= parse_version(scipy_min_version)
     except ImportError:
         return False
@@ -126,7 +128,6 @@ def is_scipy_installed():
 def is_numpy_installed():
     try:
         import numpy
-        numpy_min_version = '1.6.1'
         return parse_version(numpy.__version__) >= parse_version(numpy_min_version)
     except ImportError:
         return False
@@ -180,12 +181,12 @@ def setup_package():
     else:
         if is_numpy_installed() is False:
             raise ImportError("An up-to-date version of Numerical Python (NumPy) is not installed.\n"
-                             "scikit-learn requires NumPy >= 1.6.1.\n"
+                             "scikit-learn requires NumPy >= {0}.\n".format(numpy_min_version)+
                              "Installation instructions are available on scikit-learn website: "
                              "http://scikit-learn.org/stable/install.html\n")
         if is_scipy_installed() is False:
             raise ImportError("An up-to-date version of Scientific Python (SciPy) is not installed.\n"
-                             "scikit-learn requires SciPy >= 0.9.\n"
+                             "scikit-learn requires SciPy >= {0}.\n".format(scipy_min_version)+
                              "Installation instructions are available on scikit-learn website: "
                              "http://scikit-learn.org/stable/install.html\n")
         from numpy.distutils.core import setup
