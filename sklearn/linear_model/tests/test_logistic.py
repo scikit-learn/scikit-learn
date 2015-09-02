@@ -537,7 +537,6 @@ def test_logistic_regression_solvers_multiclass():
     assert_array_almost_equal(sag.coef_, ncg.coef_, decimal=4)
     assert_array_almost_equal(sag.coef_, lbf.coef_, decimal=4)
 
-
 def test_logistic_regressioncv_class_weights():
     X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
                                n_classes=3, random_state=0)
@@ -568,6 +567,84 @@ def test_logistic_regressioncv_class_weights():
     assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=4)
     assert_array_almost_equal(clf_sag.coef_, clf_lbf.coef_, decimal=4)
     assert_array_almost_equal(clf_lib.coef_, clf_sag.coef_, decimal=4)
+
+def test_logistic_regression_sample_weights():
+    X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
+                               n_classes=3, random_state=0)
+
+    # Test that liblinear fails when sample weights are provided
+    clf_lib = LogisticRegression(solver='liblinear')
+    assert_raises(ValueError, clf_lib.fit, X, y, 
+                  sample_weight=np.ones(y.shape[0]))
+
+    # Test that passing sample_weight as ones is the same as
+    # not passing them at all (default None)
+    clf_sw_none = LogisticRegression(solver='lbfgs', fit_intercept=False)
+    clf_sw_none.fit(X, y)
+    clf_sw_ones = LogisticRegression(solver='lbfgs', fit_intercept=False)
+    clf_sw_ones.fit(X, y, sample_weight=np.ones(y.shape[0]))
+    assert_array_almost_equal(clf_sw_none.coef_, clf_sw_ones.coef_, decimal=4)
+
+    # Test that sample weights work the same with the lbfgs
+    # and newton-cg solvers
+    clf_sw_lbfgs = LogisticRegression(solver='lbfgs', fit_intercept=False)
+    clf_sw_lbfgs.fit(X, y, sample_weight=y+1)
+    clf_sw_n = LogisticRegression(solver='newton-cg', fit_intercept=False)
+    clf_sw_n.fit(X, y, sample_weight=y+1)
+    assert_array_almost_equal(clf_sw_lbfgs.coef_, clf_sw_n.coef_, decimal=4)
+
+    # Test that passing class_weight as [1,2] is the same as 
+    # passing class weight = [1,1] but adjusting sample weights
+    # to be 2 for all instances of class 2
+    X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
+                               n_classes=2, random_state=0)
+    clf_cw_12 = LogisticRegression(solver='lbfgs', fit_intercept=False,
+                                     class_weight = {0: 1, 1: 2})
+    clf_cw_12.fit(X, y)
+    sample_weight = np.ones(y.shape[0])
+    sample_weight[y == 1] = 2
+    clf_sw_12 = LogisticRegression(solver='lbfgs', fit_intercept=False)
+    clf_sw_12.fit(X, y, sample_weight=sample_weight)
+    assert_array_almost_equal(clf_cw_12.coef_, clf_sw_12.coef_, decimal=4)
+
+def test_logistic_regressioncv_sample_weights():
+    X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
+                               n_classes=3, random_state=0)
+
+    # Test that liblinear fails when sample weights are provided
+    clf_lib = LogisticRegressionCV(solver='liblinear')
+    assert_raises(ValueError, clf_lib.fit, X, y, 
+                  sample_weight=np.ones(y.shape[0]))
+
+    # Test that passing sample_weight as ones is the same as
+    # not passing them at all (default None)
+    clf_sw_none = LogisticRegressionCV(solver='lbfgs', fit_intercept=False)
+    clf_sw_none.fit(X, y)
+    clf_sw_ones = LogisticRegressionCV(solver='lbfgs', fit_intercept=False)
+    clf_sw_ones.fit(X, y, sample_weight=np.ones(y.shape[0]))
+    assert_array_almost_equal(clf_sw_none.coef_, clf_sw_ones.coef_, decimal=4)
+
+    # Test that sample weights work the same with the lbfgs
+    # and newton-cg solvers
+    clf_sw_lbfgs = LogisticRegressionCV(solver='lbfgs', fit_intercept=False)
+    clf_sw_lbfgs.fit(X, y, sample_weight=y+1)
+    clf_sw_n = LogisticRegressionCV(solver='newton-cg', fit_intercept=False)
+    clf_sw_n.fit(X, y, sample_weight=y+1)
+    assert_array_almost_equal(clf_sw_lbfgs.coef_, clf_sw_n.coef_, decimal=4)
+
+    # Test that passing class_weight as [1,2] is the same as 
+    # passing class weight = [1,1] but adjusting sample weights
+    # to be 2 for all instances of class 2
+    X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
+                               n_classes=2, random_state=0)
+    clf_cw_12 = LogisticRegressionCV(solver='lbfgs', fit_intercept=False,
+                                     class_weight = {0: 1, 1: 2})
+    clf_cw_12.fit(X, y)
+    sample_weight = np.ones(y.shape[0])
+    sample_weight[y == 1] = 2
+    clf_sw_12 = LogisticRegressionCV(solver='lbfgs', fit_intercept=False)
+    clf_sw_12.fit(X, y, sample_weight=sample_weight)
+    assert_array_almost_equal(clf_cw_12.coef_, clf_sw_12.coef_, decimal=4)
 
 
 def test_logistic_regression_convergence_warnings():
