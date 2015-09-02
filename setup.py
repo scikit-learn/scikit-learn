@@ -179,13 +179,13 @@ def setup_package():
         metadata['version'] = VERSION
     else:
         if is_numpy_installed() is False:
-            raise ImportError("Numerical Python (NumPy) is not installed.\n"
-                             "scikit-learn requires NumPy.\n"
+            raise ImportError("An up-to-date version of Numerical Python (NumPy) is not installed.\n"
+                             "scikit-learn requires NumPy >= 1.6.1.\n"
                              "Installation instructions are available on scikit-learn website: "
                              "http://scikit-learn.org/stable/install.html\n")
         if is_scipy_installed() is False:
-            raise ImportError("Scientific Python (SciPy) is not installed.\n"
-                             "scikit-learn requires SciPy.\n"
+            raise ImportError("An up-to-date version of Scientific Python (SciPy) is not installed.\n"
+                             "scikit-learn requires SciPy >= 0.9.\n"
                              "Installation instructions are available on scikit-learn website: "
                              "http://scikit-learn.org/stable/install.html\n")
         from numpy.distutils.core import setup
