@@ -111,12 +111,17 @@ Enhancements
    - RCV1 dataset loader (:func:`sklearn.datasets.fetch_rcv1`).
      By `Tom Dupre la Tour`_.
 
-   - Upgraded to joblib 0.9.0b2 to benefit from the new automatic batching of
+   - Upgraded to joblib 0.9.0b4 to benefit from the new automatic batching of
      short tasks. This makes it possible for scikit-learn to benefit from
      parallelism when many very short tasks are executed in parallel, for
      instance by the :class:`grid_search.GridSearchCV` meta-estimator
      with ``n_jobs > 1`` used with a large grid of parameters on a small
      dataset. By `Vlad Niculae`_, `Olivier Grisel`_ and `Loic Esteve`_.
+
+   - Joblib 0.9.0b4 also enables the ``forkserver`` start method for
+     multiprocessing by default under non-Windows platforms for Python 3.4
+     and later in order to avoid possible crash with some version of BLAS such
+     as vecLib / Accelerate under OSX for instance. By `Olivier Grisel`_.
 
    - Improved speed (3 times per iteration) of
      :class:`decomposition.DictLearning` with coordinate descent method
