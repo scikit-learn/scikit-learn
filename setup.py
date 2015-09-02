@@ -10,6 +10,7 @@ import sys
 import os
 import shutil
 from distutils.command.clean import clean as Clean
+from pkg_resources import parse_version
 
 
 if sys.version_info[0] < 3:
@@ -117,16 +118,18 @@ def configuration(parent_package='', top_path=None):
 def is_scipy_installed():
     try:
         import scipy
+        scipy_min_version = '0.9'
+        return parse_version(scipy.__version__) >= parse_version(scipy_min_version)
     except ImportError:
         return False
-    return True
 
 def is_numpy_installed():
     try:
         import numpy
+        numpy_min_version = '1.6.1'
+        return parse_version(numpy.__version__) >= parse_version(numpy_min_version)
     except ImportError:
         return False
-    return True
 
 def setup_package():
     metadata = dict(name=DISTNAME,
