@@ -11,7 +11,8 @@ is then fitted to that data set and the resulting predictions are plotted agains
 print(__doc__)
 
 import numpy as np
-from sklearn.earth import EarthRegressor
+
+from sklearn.additive import Earth
 import pylab as pl
 
 # Create some fake data
@@ -22,7 +23,7 @@ X = 80 * np.random.uniform(size=(m, n)) - 40
 y = np.abs(X[:, 6] - 4.0) + 5 * np.random.normal(size=m)
 
 # Fit an EarthRegressor model
-model = EarthRegressor(max_degree=1)
+model = Earth(max_degree=1)
 model.fit(X, y)
 
 # Print the model

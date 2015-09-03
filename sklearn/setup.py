@@ -49,6 +49,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('metrics/tests')
     config.add_subpackage('metrics/cluster')
     config.add_subpackage('metrics/cluster/tests')
+    config.add_subpackage('additive')
     config.add_subpackage('additive/earth')
     config.add_subpackage('additive/earth/tests')
 
