@@ -129,6 +129,11 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
 
+    if balance_data is not None:
+        indices = _generate_balanced_sample_indices(tree.random_state, balance_data)
+        X = X[indices]
+        y = y[indices]
+
     if forest.bootstrap:
         n_samples = X.shape[0]
         if sample_weight is None:
@@ -136,10 +141,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         else:
             curr_sample_weight = sample_weight.copy()
 
-        if balance_data is not None:
-            indices = _generate_balanced_sample_indices(tree.random_state, balance_data)
-        else:
-            indices = _generate_sample_indices(tree.random_state, n_samples)
+        indices = _generate_sample_indices(tree.random_state, n_samples)
 
         sample_counts = bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
