@@ -36,7 +36,6 @@ from sklearn.tree import ExtraTreeClassifier
 from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
-from sklearn.tree.tree import SPARSE_SPLITTERS
 from sklearn.tree._tree import TREE_LEAF
 from sklearn import datasets
 
@@ -48,15 +47,11 @@ REG_CRITERIONS = ("mse", )
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
-    "Presort-DecisionTreeClassifier": partial(DecisionTreeClassifier,
-                                              splitter="presort-best"),
     "ExtraTreeClassifier": ExtraTreeClassifier,
 }
 
 REG_TREES = {
     "DecisionTreeRegressor": DecisionTreeRegressor,
-    "Presort-DecisionTreeRegressor": partial(DecisionTreeRegressor,
-                                             splitter="presort-best"),
     "ExtraTreeRegressor": ExtraTreeRegressor,
 }
 
@@ -65,7 +60,7 @@ ALL_TREES.update(CLF_TREES)
 ALL_TREES.update(REG_TREES)
 
 SPARSE_TREES = [name for name, Tree in ALL_TREES.items()
-                if Tree().splitter in SPARSE_SPLITTERS]
+                if Tree().splitter is 'Sparse']
 
 
 X_small = np.array([
@@ -126,7 +121,7 @@ digits.target = digits.target[perm]
 
 random_state = check_random_state(0)
 X_multilabel, y_multilabel = datasets.make_multilabel_classification(
-    random_state=0, n_samples=30, n_features=10)
+    random_state=0, return_indicator=True, n_samples=30, n_features=10)
 
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.
@@ -189,8 +184,17 @@ def test_classification_toy():
         assert_array_equal(clf.predict(T), true_result,
                            "Failed with {0}".format(name))
 
+        clf.fit(X, y, presort=True)
+        assert_array_equal(clf.predict(T), true_result,
+                           "Failed with {0}".format(name))
+
+
         clf = Tree(max_features=1, random_state=1)
         clf.fit(X, y)
+        assert_array_equal(clf.predict(T), true_result,
+                           "Failed with {0}".format(name))
+
+        clf.fit(X, y, presort=True)
         assert_array_equal(clf.predict(T), true_result,
                            "Failed with {0}".format(name))
 
@@ -204,10 +208,19 @@ def test_weighted_classification_toy():
         assert_array_equal(clf.predict(T), true_result,
                            "Failed with {0}".format(name))
 
+        clf.fit(X, y, sample_weight=np.ones(len(X)), 
+            presort=True)
+        assert_array_equal(clf.predict(T), true_result,
+                           "Failed with {0}".format(name))
+
         clf.fit(X, y, sample_weight=np.ones(len(X)) * 0.5)
         assert_array_equal(clf.predict(T), true_result,
                            "Failed with {0}".format(name))
 
+        clf.fit(X, y, sample_weight=np.ones(len(X)) * 0.5, 
+            presort=True)
+        assert_array_equal(clf.predict(T), true_result,
+                           "Failed with {0}".format(name))
 
 def test_regression_toy():
     # Check regression on a toy dataset.
@@ -217,8 +230,17 @@ def test_regression_toy():
         assert_almost_equal(reg.predict(T), true_result,
                             err_msg="Failed with {0}".format(name))
 
+        reg.fit(X, y, presort=True)
+        assert_almost_equal(reg.predict(T), true_result,
+                            err_msg="Failed with {0}".format(name))
+
         clf = Tree(max_features=1, random_state=1)
         clf.fit(X, y)
+        assert_almost_equal(reg.predict(T), true_result,
+                            err_msg="Failed with {0}".format(name))
+
+        clf = Tree(max_features=1, random_state=1)
+        clf.fit(X, y, presort=True)
         assert_almost_equal(reg.predict(T), true_result,
                             err_msg="Failed with {0}".format(name))
 
@@ -240,8 +262,16 @@ def test_xor():
         assert_equal(clf.score(X, y), 1.0,
                      "Failed with {0}".format(name))
 
+        clf.fit(X, y, presort=True)
+        assert_equal(clf.score(X, y), 1.0,
+                     "Failed with {0}".format(name))
+
         clf = Tree(random_state=0, max_features=1)
         clf.fit(X, y)
+        assert_equal(clf.score(X, y), 1.0,
+                     "Failed with {0}".format(name))
+
+        clf.fit(X, y, presort=True)
         assert_equal(clf.score(X, y), 1.0,
                      "Failed with {0}".format(name))
 
@@ -256,8 +286,20 @@ def test_iris():
                        "Failed with {0}, criterion = {1} and score = {2}"
                        "".format(name, criterion, score))
 
+        clf.fit(iris.data, iris.target, presort=True)
+        score = accuracy_score(clf.predict(iris.data), iris.target)
+        assert_greater(score, 0.9,
+                       "Failed with {0}, criterion = {1} and score = {2}"
+                       "".format(name, criterion, score))
+
         clf = Tree(criterion=criterion, max_features=2, random_state=0)
         clf.fit(iris.data, iris.target)
+        score = accuracy_score(clf.predict(iris.data), iris.target)
+        assert_greater(score, 0.5,
+                       "Failed with {0}, criterion = {1} and score = {2}"
+                       "".format(name, criterion, score))
+
+        clf.fit(iris.data, iris.target, presort=True)
         score = accuracy_score(clf.predict(iris.data), iris.target)
         assert_greater(score, 0.5,
                        "Failed with {0}, criterion = {1} and score = {2}"
@@ -275,10 +317,22 @@ def test_boston():
                     "Failed with {0}, criterion = {1} and score = {2}"
                     "".format(name, criterion, score))
 
+        reg.fit(boston.data, boston.target, presort=True)
+        score = mean_squared_error(boston.target, reg.predict(boston.data))
+        assert_less(score, 1,
+                    "Failed with {0}, criterion = {1} and score = {2}"
+                    "".format(name, criterion, score))
+
         # using fewer features reduces the learning ability of this tree,
         # but reduces training time.
         reg = Tree(criterion=criterion, max_features=6, random_state=0)
         reg.fit(boston.data, boston.target)
+        score = mean_squared_error(boston.target, reg.predict(boston.data))
+        assert_less(score, 2,
+                    "Failed with {0}, criterion = {1} and score = {2}"
+                    "".format(name, criterion, score))
+
+        reg.fit(boston.data, boston.target, presort=True)
         score = mean_squared_error(boston.target, reg.predict(boston.data))
         assert_less(score, 2,
                     "Failed with {0}, criterion = {1} and score = {2}"
@@ -291,6 +345,19 @@ def test_probability():
     for name, Tree in CLF_TREES.items():
         clf = Tree(max_depth=1, max_features=1, random_state=42)
         clf.fit(iris.data, iris.target)
+
+        prob_predict = clf.predict_proba(iris.data)
+        assert_array_almost_equal(np.sum(prob_predict, 1),
+                                  np.ones(iris.data.shape[0]),
+                                  err_msg="Failed with {0}".format(name))
+        assert_array_equal(np.argmax(prob_predict, 1),
+                           clf.predict(iris.data),
+                           err_msg="Failed with {0}".format(name))
+        assert_almost_equal(clf.predict_proba(iris.data),
+                            np.exp(clf.predict_log_proba(iris.data)), 8,
+                            err_msg="Failed with {0}".format(name))
+
+        clf.fit(iris.data, iris.target, presort=True)
 
         prob_predict = clf.predict_proba(iris.data)
         assert_array_almost_equal(np.sum(prob_predict, 1),
@@ -326,9 +393,17 @@ def test_pure_set():
         assert_array_equal(clf.predict(X), y,
                            err_msg="Failed with {0}".format(name))
 
+        clf.fit(X, y, presort=True)
+        assert_array_equal(clf.predict(X), y,
+                           err_msg="Failed with {0}".format(name))
+
     for name, TreeRegressor in REG_TREES.items():
         reg = TreeRegressor(random_state=0)
         reg.fit(X, y)
+        assert_almost_equal(clf.predict(X), y,
+                            err_msg="Failed with {0}".format(name))
+
+        reg.fit(X, y, presort=True)
         assert_almost_equal(clf.predict(X), y,
                             err_msg="Failed with {0}".format(name))
 
@@ -368,17 +443,18 @@ def test_importances():
 
     for name, Tree in CLF_TREES.items():
         clf = Tree(random_state=0)
+        for presort in True, False:
+            clf.fit(X, y, presort=presort)
+            importances = clf.feature_importances_
+            n_important = np.sum(importances > 0.1)
 
-        clf.fit(X, y)
-        importances = clf.feature_importances_
-        n_important = np.sum(importances > 0.1)
+            assert_equal(importances.shape[0], 10, "Failed with {0}".format(name))
+            assert_equal(n_important, 3, "Failed with {0}".format(name))
 
-        assert_equal(importances.shape[0], 10, "Failed with {0}".format(name))
-        assert_equal(n_important, 3, "Failed with {0}".format(name))
+            X_new = clf.transform(X, threshold="mean")
+            assert_less(0, X_new.shape[1], "Failed with {0}".format(name))
+            assert_less(X_new.shape[1], X.shape[1], "Failed with {0}".format(name))
 
-        X_new = clf.transform(X, threshold="mean")
-        assert_less(0, X_new.shape[1], "Failed with {0}".format(name))
-        assert_less(X_new.shape[1], X.shape[1], "Failed with {0}".format(name))
 
     # Check on iris that importances are the same for all builders
     clf = DecisionTreeClassifier(random_state=0)
@@ -390,6 +466,9 @@ def test_importances():
     assert_array_equal(clf.feature_importances_,
                        clf2.feature_importances_)
 
+    clf.fit(iris.data, iris.target, presort=True)
+    assert_array_equal(clf.feature_importances_,
+                       clf2.feature_importances_)
 
 @raises(ValueError)
 def test_importances_raises():
@@ -765,7 +844,7 @@ def test_memory_layout():
         y = iris.target
         assert_array_equal(est.fit(X, y).predict(X), y)
 
-        if est.splitter in SPARSE_SPLITTERS:
+        if est.splitter is 'Sparse':
             # csr matrix
             X = csr_matrix(iris.data, dtype=dtype)
             y = iris.target
@@ -1266,7 +1345,7 @@ def check_min_weight_leaf_split_level(name):
     sample_weight = [0.2, 0.2, 0.2, 0.2, 0.2]
     _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight)
 
-    if TreeEstimator().splitter in SPARSE_SPLITTERS:
+    if TreeEstimator().splitter is 'Sparse':
         _check_min_weight_leaf_split_level(TreeEstimator, csc_matrix(X), y,
                                            sample_weight)
 

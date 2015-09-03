@@ -45,8 +45,6 @@ from ..feature_selection.from_model import _LearntSelectorMixin
 
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, TREE_LEAF
-from ..tree._tree import PresortBestSplitter
-from ..tree._tree import FriedmanMSE
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -731,8 +729,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
-    def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
-                   criterion, splitter, random_state):
+    def _fit_stage(self, i, X, X_idx_sorted, y, y_pred, sample_weight, sample_mask,
+                   random_state):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
 
         assert sample_mask.dtype == np.bool
@@ -748,8 +746,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
             # induce regression tree on residuals
             tree = DecisionTreeRegressor(
-                criterion=criterion,
-                splitter=splitter,
+                criterion='mse',
+                splitter='best',
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
@@ -763,7 +761,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
             tree.fit(X, residual, sample_weight=sample_weight,
-                     check_input=False)
+                     check_input=False, presort=True, X_idx_sorted=X_idx_sorted)
 
             # update tree leaves
             loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
@@ -975,9 +973,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             y_pred = self._decision_function(X)
             self._resize_state()
 
+        X_idx_sorted = np.asfortranarray(np.argsort(X, axis=0),
+                                             dtype=np.int32)
+
         # fit the boosting stages
-        n_stages = self._fit_stages(X, y, y_pred, sample_weight, random_state,
-                                    begin_at_stage, monitor)
+        n_stages = self._fit_stages(X, X_idx_sorted, y, y_pred, sample_weight, 
+                                    random_state, begin_at_stage, monitor)
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
             self.estimators_ = self.estimators_[:n_stages]
@@ -987,7 +988,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         return self
 
-    def _fit_stages(self, X, y, y_pred, sample_weight, random_state,
+    def _fit_stages(self, X, X_idx_sorted, y, y_pred, sample_weight, random_state,
                     begin_at_stage=0, monitor=None):
         """Iteratively fits the stages.
 
@@ -1009,14 +1010,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         else:
             min_weight_leaf = 0.
 
-        # init criterion and splitter
-        criterion = FriedmanMSE(1)
-        splitter = PresortBestSplitter(criterion,
-                                       self.max_features_,
-                                       self.min_samples_leaf,
-                                       min_weight_leaf,
-                                       random_state)
-
         if self.verbose:
             verbose_reporter = VerboseReporter(self.verbose)
             verbose_reporter.init(self, begin_at_stage)
@@ -1035,9 +1028,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                                       sample_weight[~sample_mask])
 
             # fit next stage of trees
-            y_pred = self._fit_stage(i, X, y, y_pred, sample_weight,
-                                     sample_mask, criterion, splitter,
-                                     random_state)
+            y_pred = self._fit_stage(i, X, X_idx_sorted, y, y_pred, sample_weight,
+                                     sample_mask, random_state)
 
             # track deviance (= loss)
             if do_oob:
