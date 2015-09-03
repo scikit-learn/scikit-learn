@@ -29,10 +29,7 @@ from ..utils import check_array, check_random_state, compute_sample_weight
 from ..utils.validation import NotFittedError
 
 
-from ._tree import Criterion
-from ._tree import Splitter
-from ._tree import DepthFirstTreeBuilder, BestFirstTreeBuilder
-from ._tree import Tree
+from ._tree import Criterion, Splitter, SparseSplitter, TreeBuilder, Tree
 from . import _tree
 
 __all__ = ["DecisionTreeClassifier",
@@ -49,14 +46,7 @@ DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
-CRITERIA_REG = {"mse": _tree.MSE, "friedman_mse": _tree.FriedmanMSE}
-
-DENSE_SPLITTERS = {"best": _tree.BestSplitter,
-                   "presort-best": _tree.PresortBestSplitter,
-                   "random": _tree.RandomSplitter}
-
-SPARSE_SPLITTERS = {"best": _tree.BestSparseSplitter,
-                    "random": _tree.RandomSparseSplitter}
+CRITERIA_REG = {"mse": _tree.MSE}
 
 # =============================================================================
 # Base decision tree
@@ -102,7 +92,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.tree_ = None
         self.max_features_ = None
 
-    def fit(self, X, y, sample_weight=None, check_input=True):
+    def fit(self, X, y, sample_weight=None, check_input=True, presort=False,
+        X_idx_sorted=None):
         """Build a decision tree from the training set (X, y).
 
         Parameters
@@ -128,11 +119,25 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
+        presort : boolean (default='auto')
+            Presort the dataset. If X_idx_sorted has been passed in, use that.
+            If X_idx_sorted has been passed in but presort = False, do not
+            use it. If X_idx_sorted has not been passed in, but presort = True,
+            presort the dataset. Presorting works well with small trees and
+            small datasets.
+
+        X_idx_sorted : array-like, shape = [n_samples, n_features]
+            The indexes of the sorted training input samples. If many tree
+            are grown on the same dataset, this allows the ordering to be
+            cached between trees. If None, the data will be sorted here.
+            Don't use this parameter unless you know what to do.
+
         Returns
         -------
         self : object
             Returns self.
         """
+
         random_state = check_random_state(self.random_state)
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csc")
@@ -218,6 +223,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         self.max_features_ = max_features
 
+
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
                              "number of samples=%d" % (len(y), n_samples))
@@ -258,6 +264,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 sample_weight = expanded_class_weight
 
+        if sample_weight is None:
+            sample_weight = np.ones( X.shape[0], dtype=np.float32 )
+
         # Set min_weight_leaf from min_weight_fraction_leaf
         if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
             min_weight_leaf = (self.min_weight_fraction_leaf *
@@ -269,6 +278,11 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         min_samples_split = max(self.min_samples_split,
                                 2 * self.min_samples_leaf)
 
+        if X_idx_sorted is None and presort == True:
+            X_idx_sorted = np.asfortranarray(np.argsort(X, axis=0),
+                                             dtype=np.int32)
+
+
         # Build tree
         criterion = self.criterion
         if not isinstance(criterion, Criterion):
@@ -278,37 +292,40 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_)
 
-        SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
-
         splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
-            splitter = SPLITTERS[self.splitter](criterion,
-                                                self.max_features_,
-                                                self.min_samples_leaf,
-                                                min_weight_leaf,
-                                                random_state)
+            if issparse(X):
+                splitter = SparseSplitter(criterion,
+                                          self.max_features_,
+                                          self.min_samples_leaf,
+                                          min_weight_leaf,
+                                          random_state,
+                                          self.splitter == 'best')
+            else:
+                splitter = Splitter(criterion,
+                                    self.max_features_,
+                                    self.min_samples_leaf,
+                                    min_weight_leaf,
+                                    random_state,
+                                    self.splitter == 'best')
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
 
-        # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
-        if max_leaf_nodes < 0:
-            builder = DepthFirstTreeBuilder(splitter, min_samples_split,
-                                            self.min_samples_leaf,
-                                            min_weight_leaf,
-                                            max_depth)
-        else:
-            builder = BestFirstTreeBuilder(splitter, min_samples_split,
-                                           self.min_samples_leaf,
-                                           min_weight_leaf,
-                                           max_depth,
-                                           max_leaf_nodes)
+        builder = TreeBuilder(splitter, min_samples_split, 
+            self.min_samples_leaf, min_weight_leaf, max_depth,
+            max_leaf_nodes)
 
-        builder.build(self.tree_, X, y, sample_weight)
+        if max_leaf_nodes < 0:
+            builder.depth_first(self.tree_, X, y, sample_weight, presort, 
+                X_idx_sorted)
+        else:
+            builder.best_first(self.tree_, X, y, sample_weight, presort, 
+                X_idx_sorted)
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
-
+        
         return self
 
     def _validate_X_predict(self, X, check_input):
@@ -356,6 +373,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
+
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
         n_samples = X.shape[0]

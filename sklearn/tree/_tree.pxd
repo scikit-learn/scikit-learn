@@ -17,6 +17,7 @@ ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
+from sklearn.tree._utils cimport SplitRecord
 
 # =============================================================================
 # Criterion
@@ -27,54 +28,44 @@ cdef class Criterion:
     # impurity of a split on that node. It also computes the output statistics
     # such as the mean in regression and class probabilities in classification.
 
-    # Internal structures
-    cdef DOUBLE_t* y                     # Values of y
-    cdef SIZE_t y_stride                 # Stride in y (since n_outputs >= 1)
-    cdef DOUBLE_t* sample_weight         # Sample weights
+    cdef SIZE_t n_outputs
 
-    cdef SIZE_t* samples                 # Sample indices in X, y
-    cdef SIZE_t start                    # samples[start:pos] are the samples in the left node
-    cdef SIZE_t pos                      # samples[pos:end] are the samples in the right node
-    cdef SIZE_t end
+    cdef DOUBLE_t* y             
+    cdef DOUBLE_t* w        
 
-    cdef SIZE_t n_outputs                # Number of outputs
-    cdef SIZE_t n_node_samples           # Number of samples in the node (end-start)
-    cdef double weighted_n_samples       # Weighted number of samples (in total)
-    cdef double weighted_n_node_samples  # Weighted number of samples in the node
-    cdef double weighted_n_left          # Weighted number of samples in the left node
-    cdef double weighted_n_right         # Weighted number of samples in the right node
+    cdef DOUBLE_t* node_value_left
+    cdef DOUBLE_t* node_value_right
+
+    cdef DOUBLE_t* yw_cl
+    cdef DOUBLE_t* yw_cr
+
+    cdef public SIZE_t max_classes
+    cdef public SIZE_t y_stride
+
+    cdef SIZE_t min_leaf_samples
+    cdef DOUBLE_t min_leaf_weight
+    cdef SIZE_t n_samples
+    cdef DOUBLE_t weighted_n_samples
 
     # The criterion object is maintained such that left and right collected
     # statistics correspond to samples[start:pos] and samples[pos:end].
 
     # Methods
-    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                   SIZE_t end) nogil
-    cdef void reset(self) nogil
-    cdef void update(self, SIZE_t new_pos) nogil
-    cdef double node_impurity(self) nogil
-    cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil
-    cdef void node_value(self, double* dest) nogil
-    cdef double impurity_improvement(self, double impurity) nogil
+    cdef void init(self, DOUBLE_t* y, DOUBLE_t* w, SIZE_t n_samples, 
+        SIZE_t min_leaf_samples, DOUBLE_t min_leaf_weight, DOUBLE_t* w_sum,
+        DOUBLE_t* yw_sq_sum, DOUBLE_t** node_value)
 
+    cdef SplitRecord best_split(self, DTYPE_t* X_i, SIZE_t* samples, 
+        SIZE_t start, SIZE_t end, SIZE_t feature, DOUBLE_t w_sum, 
+        DOUBLE_t yw_sq_sum, DOUBLE_t* node_value) nogil
+
+    cdef SplitRecord random_split(self, DTYPE_t* X_i, SIZE_t* samples, 
+        SIZE_t start, SIZE_t end, SIZE_t feature, DOUBLE_t w_sum, 
+        DOUBLE_t yw_sq_sum, DOUBLE_t* node_value, UINT32_t* rand_r) nogil
 
 # =============================================================================
 # Splitter
 # =============================================================================
-
-cdef struct SplitRecord:
-    # Data to track sample split
-    SIZE_t feature         # Which feature to split on.
-    SIZE_t pos             # Split samples array at the given position,
-                           # i.e. count of samples below threshold for feature.
-                           # pos is >= end if the node is a leaf.
-    double threshold       # Threshold to split at.
-    double improvement     # Impurity improvement given parent node.
-    double impurity_left   # Impurity of the left split.
-    double impurity_right  # Impurity of the right split.
-
 
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
@@ -92,19 +83,26 @@ cdef class Splitter:
     cdef UINT32_t rand_r_state           # sklearn_rand_r random number state
 
     cdef SIZE_t* samples                 # Sample indices in X, y
-    cdef SIZE_t n_samples                # X.shape[0]
-    cdef double weighted_n_samples       # Weighted number of samples
+    cdef SIZE_t n_samples
+    cdef SIZE_t* sample_mask
     cdef SIZE_t* features                # Feature indices in X
-    cdef SIZE_t* constant_features       # Constant features indices
     cdef SIZE_t n_features               # X.shape[1]
-    cdef DTYPE_t* feature_values         # temp. array holding feature values
-
-    cdef SIZE_t start                    # Start position for the current node
-    cdef SIZE_t end                      # End position for the current node
 
     cdef DOUBLE_t* y
     cdef SIZE_t y_stride
     cdef DOUBLE_t* sample_weight
+
+    cdef np.ndarray X_idx_sorted
+    cdef INT32_t* X_idx_sorted_ptr
+    cdef SIZE_t X_idx_sorted_stride
+
+    cdef DTYPE_t* X
+    cdef DTYPE_t* X_i
+    cdef SIZE_t X_sample_stride
+    cdef SIZE_t X_feature_stride
+
+    cdef SIZE_t best
+    cdef bint presort
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
@@ -123,20 +121,17 @@ cdef class Splitter:
     # This allows optimization with depth-based tree building.
 
     # Methods
-    cdef void init(self, object X, np.ndarray y,
-                   DOUBLE_t* sample_weight) except *
+    cdef void init(self, object X, np.ndarray X_idx_sorted, bint presort,
+                   np.ndarray y, DOUBLE_t* sample_weight, DOUBLE_t* w_sum, 
+                   DOUBLE_t* yw_sq_sum, DOUBLE_t** node_value, 
+                   SIZE_t* n_node_samples)
 
-    cdef void node_reset(self, SIZE_t start, SIZE_t end,
-                         double* weighted_n_node_samples) nogil
+    cdef SplitRecord _split(self, SIZE_t start, SIZE_t end,
+        SIZE_t feature, DOUBLE_t w_sum, DOUBLE_t yw_sq, DOUBLE_t* node_value, 
+        SIZE_t best) nogil
 
-    cdef void node_split(self,
-                         double impurity,   # Impurity of the node
-                         SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil
-
-    cdef void node_value(self, double* dest) nogil
-
-    cdef double node_impurity(self) nogil
+    cdef SplitRecord split(self, SIZE_t start, SIZE_t end, DOUBLE_t w_sum, 
+        DOUBLE_t yw_sq, DOUBLE_t* node_value) nogil
 
 
 # =============================================================================
@@ -179,7 +174,7 @@ cdef class Tree:
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
-                          double weighted_n_samples) nogil
+                          double weighted_n_samples, DOUBLE_t* value) nogil
     cdef void _resize(self, SIZE_t capacity) except *
     cdef int _resize_c(self, SIZE_t capacity=*) nogil
 
@@ -212,7 +207,15 @@ cdef class TreeBuilder:
     cdef SIZE_t min_samples_leaf    # Minimum number of samples in a leaf
     cdef double min_weight_leaf     # Minimum weight in a leaf
     cdef SIZE_t max_depth           # Maximal tree depth
+    cdef SIZE_t max_leaf_nodes      # Maximal number of leaf nodes the tree
+                                    # can have, used in best first splitting
 
-    cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=*)
     cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)
+
+    cpdef depth_first(self, Tree tree, object X, np.ndarray y,
+                np.ndarray sample_weight, bint presort,
+                np.ndarray X_idx_sorted)
+
+    cpdef best_first(self, Tree tree, object X, np.ndarray y,
+                np.ndarray sample_weight, bint presort,
+                np.ndarray X_idx_sorted)
