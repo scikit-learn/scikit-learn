@@ -118,19 +118,24 @@ def configuration(parent_package='', top_path=None):
 scipy_min_version = '0.9'
 numpy_min_version = '1.6.1'
 
+
 def is_scipy_installed():
     try:
         import scipy
-        return parse_version(scipy.__version__) >= parse_version(scipy_min_version)
+        return parse_version(scipy.__version__) >= parse_version(
+            scipy_min_version)
     except ImportError:
         return False
+
 
 def is_numpy_installed():
     try:
         import numpy
-        return parse_version(numpy.__version__) >= parse_version(numpy_min_version)
+        return parse_version(numpy.__version__) >= parse_version(
+            numpy_min_version)
     except ImportError:
         return False
+
 
 def setup_package():
     metadata = dict(name=DISTNAME,
@@ -180,15 +185,21 @@ def setup_package():
         metadata['version'] = VERSION
     else:
         if is_numpy_installed() is False:
-            raise ImportError("An up-to-date version of Numerical Python (NumPy) is not installed.\n"
-                             "scikit-learn requires NumPy >= {0}.\n".format(numpy_min_version)+
-                             "Installation instructions are available on scikit-learn website: "
-                             "http://scikit-learn.org/stable/install.html\n")
+            raise ImportError("An up-to-date version of Numerical Python "
+                              "(NumPy) is not installed.\n"
+                              "scikit-learn requires NumPy >= {0}.\n"
+                              .format(numpy_min_version) +
+                              "Installation instructions are available "
+                              "on the scikit-learn website: "
+                              "http://scikit-learn.org/stable/install.html\n")
         if is_scipy_installed() is False:
-            raise ImportError("An up-to-date version of Scientific Python (SciPy) is not installed.\n"
-                             "scikit-learn requires SciPy >= {0}.\n".format(scipy_min_version)+
-                             "Installation instructions are available on scikit-learn website: "
-                             "http://scikit-learn.org/stable/install.html\n")
+            raise ImportError("An up-to-date version of Scientific Python "
+                              "(SciPy) is not installed.\n"
+                              "scikit-learn requires SciPy >= {0}.\n"
+                              .format(scipy_min_version) +
+                              "Installation instructions are available "
+                              "on the scikit-learn website: "
+                              "http://scikit-learn.org/stable/install.html\n")
         from numpy.distutils.core import setup
 
         metadata['configuration'] = configuration
