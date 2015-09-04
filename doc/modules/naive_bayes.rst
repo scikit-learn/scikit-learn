@@ -6,6 +6,7 @@ Naive Bayes
 
 .. currentmodule:: sklearn.naive_bayes
 
+.. TODO: add sparse parameter
 
 Naive Bayes methods are a set of supervised learning algorithms
 based on applying Bayes' theorem with the "naive" assumption of independence
