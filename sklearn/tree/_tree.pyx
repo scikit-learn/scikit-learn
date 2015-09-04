@@ -138,6 +138,13 @@ cdef class Criterion:
 
         pass
 
+    cdef void reverse_reset(self) nogil:
+        """Reset the criterion at pos=end.
+
+        This method must be implemented by the subclass.
+        """
+        pass
+
     cdef void update(self, SIZE_t new_pos) nogil:
         """Updated statistics by moving samples[pos:new_pos] to the left child.
 
@@ -434,6 +441,31 @@ cdef class ClassificationCriterion(Criterion):
             label_count_left += label_count_stride
             label_count_right += label_count_stride
 
+    cdef void reverse_reset(self) nogil:
+        """Reset the criterion at pos=end."""
+        self.pos = self.end
+
+        self.weighted_n_left = self.weighted_n_node_samples
+        self.weighted_n_right = 0.0
+
+        cdef SIZE_t n_outputs = self.n_outputs
+        cdef SIZE_t* n_classes = self.n_classes
+        cdef SIZE_t label_count_stride = self.label_count_stride
+        cdef double* label_count_total = self.label_count_total
+        cdef double* label_count_left = self.label_count_left
+        cdef double* label_count_right = self.label_count_right
+
+        cdef SIZE_t k = 0
+
+        for k in range(n_outputs):
+            memset(label_count_right, 0, n_classes[k] * sizeof(double))
+            memcpy(label_count_left, label_count_total,
+                   n_classes[k] * sizeof(double))
+
+            label_count_total += label_count_stride
+            label_count_left += label_count_stride
+            label_count_right += label_count_stride
+
     cdef void update(self, SIZE_t new_pos) nogil:
         """Updated statistics by moving samples[pos:new_pos] to the left child.
 
@@ -443,44 +475,79 @@ cdef class ClassificationCriterion(Criterion):
             The new ending position for which to move samples from the right
             child to the left child.
         """
-
         cdef DOUBLE_t* y = self.y
         cdef SIZE_t y_stride = self.y_stride
         cdef DOUBLE_t* sample_weight = self.sample_weight
 
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t pos = self.pos
+        cdef SIZE_t end = self.end
 
         cdef SIZE_t n_outputs = self.n_outputs
         cdef SIZE_t* n_classes = self.n_classes
         cdef SIZE_t label_count_stride = self.label_count_stride
         cdef double* label_count_left = self.label_count_left
         cdef double* label_count_right = self.label_count_right
+        cdef double* label_count_total = self.label_count_total
 
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
-        cdef SIZE_t label_index
+        cdef SIZE_t i = 0
+        cdef SIZE_t p = 0
+        cdef SIZE_t k = 0
+        cdef SIZE_t c = 0
+        cdef SIZE_t label_index = 0
         cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t diff_w = 0.0
 
-        # Note: We assume start <= pos < new_pos <= end
-        # Go through each sample in the new indexing
-        for p in range(pos, new_pos):
-            i = samples[p]
+        # Update statistics up to new_pos
+        #
+        # Given that
+        #   label_count_left[x] +  label_count_right[x] = label_count_total[x]
+        # and that label_count_total is known, we are going to update
+        # label_count_left from the direction that require the least amount
+        # of computations, i.e. from pos to new_pos or from end to new_po.
 
-            if sample_weight != NULL:
-                w = sample_weight[i]
+        if (new_pos - pos) <= (end - new_pos):
+            for p in range(pos, new_pos):
+                i = samples[p]
 
-            for k in range(n_outputs):
-                label_index = (k * label_count_stride +
-                               <SIZE_t> y[i * y_stride + k])
-                label_count_left[label_index] += w
-                label_count_right[label_index] -= w
+                if sample_weight != NULL:
+                    w = sample_weight[i]
 
-            diff_w += w
+                for k in range(n_outputs):
+                    label_index = (k * label_count_stride +
+                                   <SIZE_t> y[i * y_stride + k])
+                    label_count_left[label_index] += w
+
+                diff_w += w
+
+        else:
+            self.reverse_reset()
+
+            for p in range(end - 1, new_pos - 1, -1):
+                i = samples[p]
+
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+
+                for k in range(n_outputs):
+                    label_index = (k * label_count_stride +
+                                   <SIZE_t> y[i * y_stride + k])
+                    label_count_left[label_index] -= w
+
+                diff_w -= w
 
         self.weighted_n_left += diff_w
+
+        # Upate right part statistics
+        for k in range(n_outputs):
+            for c in range(n_classes[k]):
+                label_count_right[c] = (label_count_total[c] -
+                                        label_count_left[c])
+
+            label_count_right += label_count_stride
+            label_count_left += label_count_stride
+            label_count_total += label_count_stride
+
         self.weighted_n_right -= diff_w
 
         self.pos = new_pos
@@ -869,6 +936,16 @@ cdef class RegressionCriterion(Criterion):
         self.weighted_n_right = self.weighted_n_node_samples
         self.pos = self.start
 
+    cdef void reverse_reset(self) nogil:
+        """Reset the criterion at pos=end."""
+        cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
+        memset(self.sum_right, 0, n_bytes)
+        memcpy(self.sum_left, self.sum_total, n_bytes)
+
+        self.weighted_n_right = 0.0
+        self.weighted_n_left = self.weighted_n_node_samples
+        self.pos = self.end
+
     cdef void update(self, SIZE_t new_pos) nogil:
         """Updated statistics by moving samples[pos:new_pos] to the left."""
 
@@ -878,6 +955,7 @@ cdef class RegressionCriterion(Criterion):
 
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t pos = self.pos
+        cdef SIZE_t end = self.end
 
         cdef SIZE_t n_outputs = self.n_outputs
         cdef double* sum_left = self.sum_left
@@ -890,17 +968,38 @@ cdef class RegressionCriterion(Criterion):
         cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t diff_w = 0.0
 
-        # Note: We assume start <= pos < new_pos <= end
-        for p in range(pos, new_pos):
-            i = samples[p]
+        # Update statistics up to new_pos
+        #
+        # Given that
+        #           sum_left[x] +  sum_right[x] = sum_total[x]
+        # and that sum_total is known, we are going to update
+        # label_count_left from the direction that require the least amount
+        # of computations, i.e. from pos to new_pos or from end to new_po.
 
-            if sample_weight != NULL:
-                w = sample_weight[i]
+        if (new_pos - pos) <= (end - new_pos):
+            for p in range(pos, new_pos):
+                i = samples[p]
 
-            for k in range(n_outputs):
-                sum_left[k] += w * y[i * y_stride + k]
+                if sample_weight != NULL:
+                    w = sample_weight[i]
 
-            diff_w += w
+                for k in range(n_outputs):
+                    sum_left[k] += w * y[i * y_stride + k]
+
+                diff_w += w
+        else:
+            self.reverse_reset()
+
+            for p in range(end - 1, new_pos - 1, -1):
+                i = samples[p]
+
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+
+                for k in range(n_outputs):
+                    sum_left[k] -= w * y[i * y_stride + k]
+
+                diff_w -= w
 
         for k in range(n_outputs):
             sum_right[k] = sum_total[k] - sum_left[k]

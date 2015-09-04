@@ -140,8 +140,13 @@ Enhancements
      regressors and gradient boosting estimators by computing a proxy
      of the impurity improvement during the tree growth. The proxy quantity is
      such that the split that maximizes this value also maximizes the impurity
-     improvement. By `Arnaud Joly`_, `Jacob Schreiber`_ and `Gilles Louppe`_
+     improvement. By `Arnaud Joly`_, `Jacob Schreiber`_ and `Gilles Louppe`_.
 
+   - Speed up tree based methods by reducing the number of computations needed
+     when computing the impurity measure taking into account linear
+     relationship of the computed statistics. The effect is particularly
+     visible with extra trees and on datasets with categorical or sparse
+     features. By `Arnaud Joly`_.
 
 Bug fixes
 .........
