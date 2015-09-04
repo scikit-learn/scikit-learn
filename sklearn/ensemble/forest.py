@@ -133,6 +133,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         indices = _generate_balanced_sample_indices(tree.random_state, balance_data)
         X = X[indices]
         y = y[indices]
+        sample_weight = sample_weight[indices]
 
     if forest.bootstrap:
         n_samples = X.shape[0]
