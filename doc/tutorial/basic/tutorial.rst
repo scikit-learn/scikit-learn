@@ -185,7 +185,7 @@ Now you can predict new values, in particular, we can ask to the
 classifier what is the digit of our last image in the ``digits`` dataset,
 which we have not used to train the classifier::
 
-  >>> clf.predict([digits.data[-1]])
+  >>> clf.predict(digits.data[-1:])
   array([8])
 
 The corresponding image is the following:
