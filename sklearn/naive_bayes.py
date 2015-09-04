@@ -619,7 +619,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> clf = MultinomialNB()
     >>> clf.fit(X, y)
     MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
-    >>> print(clf.predict([X[2]]))
+    >>> print(clf.predict(X[2:3]))
     [3]
 
     Notes

@@ -253,7 +253,7 @@ def test_discretenb_predict_proba():
     for cls, X in zip([BernoulliNB, MultinomialNB],
                       [X_bernoulli, X_multinomial]):
         clf = cls().fit(X, y)
-        assert_equal(clf.predict([X[-1]]), 2)
+        assert_equal(clf.predict(X[-1:]), 2)
         assert_equal(clf.predict_proba([X[0]]).shape, (1, 2))
         assert_array_almost_equal(clf.predict_proba(X[:2]).sum(axis=1),
                                   np.array([1., 1.]), 6)
@@ -263,7 +263,7 @@ def test_discretenb_predict_proba():
     for cls, X in zip([BernoulliNB, MultinomialNB],
                       [X_bernoulli, X_multinomial]):
         clf = cls().fit(X, y)
-        assert_equal(clf.predict_proba([X[0]]).shape, (1, 3))
+        assert_equal(clf.predict_proba(X[0:1]).shape, (1, 3))
         assert_equal(clf.predict_proba(X[:2]).shape, (2, 3))
         assert_almost_equal(np.sum(clf.predict_proba([X[1]])), 1)
         assert_almost_equal(np.sum(clf.predict_proba([X[-1]])), 1)

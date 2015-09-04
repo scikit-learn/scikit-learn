@@ -600,7 +600,7 @@ def log_logistic(X, out=None):
     """
     is_1d = X.ndim == 1
     X = np.atleast_2d(X)
-    X = check_array(X, dtype=np.float)
+    X = check_array(X, dtype=np.float64)
 
 
     n_samples, n_features = X.shape

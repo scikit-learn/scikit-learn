@@ -220,7 +220,7 @@ def test_oas():
     assert_array_almost_equal(scov.covariance_, oa.covariance_, 4)
 
     # test with n_features = 1
-    X_1d = X[:, 0, np.newaxis]
+    X_1d = X[:, 0:1]
     oa = OAS(assume_centered=True)
     oa.fit(X_1d)
     oa_cov_from_mle, oa_shinkrage_from_mle = oas(X_1d, assume_centered=True)

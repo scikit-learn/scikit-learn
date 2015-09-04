@@ -557,6 +557,7 @@ class GraphLassoCV(GraphLasso):
         X : ndarray, shape (n_samples, n_features)
             Data from which to compute the covariance estimate
         """
+        # Covariance does not make sense for a single feature
         X = check_array(X, ensure_min_features=2)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])

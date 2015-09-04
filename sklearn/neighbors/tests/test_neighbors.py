@@ -909,21 +909,8 @@ def test_neighbors_badargs():
 
     nbrs = neighbors.NearestNeighbors().fit(X)
 
-    assert_raises(ValueError,
-                  nbrs.kneighbors_graph,
-                  X, mode='blah')
-    assert_raises(ValueError,
-                  nbrs.radius_neighbors_graph,
-                  X, mode='blah')
-
-    nbrs = neighbors.NearestNeighbors().fit(X)
-
-    assert_raises(ValueError,
-                  nbrs.kneighbors_graph,
-                  X, mode='blah')
-    assert_raises(ValueError,
-                  nbrs.radius_neighbors_graph,
-                  X, mode='blah')
+    assert_raises(ValueError, nbrs.kneighbors_graph, X, mode='blah')
+    assert_raises(ValueError, nbrs.radius_neighbors_graph, X, mode='blah')
 
 
 def test_neighbors_metrics(n_samples=20, n_features=3,
