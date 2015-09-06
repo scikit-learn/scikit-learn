@@ -85,7 +85,7 @@ def test_lda_coefs():
     assert_array_almost_equal(clf_lda_eigen.coef_, clf_lda_lsqr.coef_, 1)
 
 
-def test_lda_explained_covariance_ratio():
+def test_lda_explained_variance_ratio():
     # Test if the sum of the normalized eigen vectors values equals 1
     n_features = 2
     n_classes = 2
