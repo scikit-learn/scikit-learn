@@ -180,6 +180,12 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
     covariance_ : array-like, shape (n_features, n_features)
         Covariance matrix (shared by all classes).
 
+    explained_variance_ratio_ : array, [n_components]
+        Percentage of variance explained by each of the selected components.
+        If ``n_components`` is not set then all components are stored and the
+        sum of explained variances is equal to 1.0. Only available when eigen
+        solver is used.
+
     means_ : array-like, shape (n_classes, n_features)
         Class means.
 
