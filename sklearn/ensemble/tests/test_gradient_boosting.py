@@ -6,16 +6,21 @@ import numpy as np
 
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.cross_validation import train_test_split
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
+from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_squared_error
+from sklearn.svm import SVC, SVR
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import check_random_state, tosequence
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
@@ -1022,3 +1027,47 @@ def test_non_uniform_weights_toy_edge_case_clf():
         gb.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(gb.predict([[1, 0]]), [1])
 
+def test_classification_w_init():
+    # Test that gradient boosting a previously learned model will improve
+    # the performance of that model.
+    iris = datasets.load_digits()
+    X, y = iris.data, iris.target
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
+                                                        random_state=0)
+
+    for clf in [DecisionTreeClassifier(random_state=0),
+                RandomForestClassifier(random_state=0, n_estimators=3), 
+                SVC(random_state=0)]:
+
+        clf.fit(X_train, y_train)
+        acc1 = clf.score(X_test, y_test)
+
+        clf = GradientBoostingClassifier(random_state=0,
+                                         n_estimators=1, 
+                                         init=clf)
+        clf.fit(X_train, y_train)
+        acc2 = clf.score(X_test, y_test)
+        assert_greater_equal(acc2, acc1)
+
+
+def test_regression_w_init():
+    # Test that gradient boosting a previously learned model will improve
+    # the performance of that model.
+    boston = datasets.load_boston()
+    X, y = boston.data, boston.target
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
+                                                        random_state=0)
+
+    for clf in [DecisionTreeRegressor(random_state=0), 
+                RandomForestRegressor(random_state=0, n_estimators=3), 
+                SVR(), Ridge()]:
+
+        clf.fit(X_train, y_train)
+        acc1 = clf.score(X_test, y_test)     
+
+        clf = GradientBoostingRegressor(random_state=0,
+                                        n_estimators=1,
+                                        init=clf)
+        clf.fit(X_train, y_train)
+        acc2 = clf.score(X_test, y_test)
+        assert_greater_equal(acc2, acc1)
