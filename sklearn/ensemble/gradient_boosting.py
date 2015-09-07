@@ -34,6 +34,7 @@ from .base import BaseEnsemble
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
+from ..base import is_classifier
 from ..utils import check_random_state, check_array, check_X_y, column_or_1d
 from ..utils import check_consistent_length, deprecated
 from ..utils.extmath import logsumexp
@@ -731,6 +732,209 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
+    def fit(self, X, y, sample_weight=None, monitor=None):
+        """Fit the gradient boosting model.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values (integers in classification, real numbers in
+            regression)
+            For classification, labels must correspond to classes.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. In the case of
+            classification, splits are also ignored if they would result in any
+            single class carrying a negative weight in either child node.
+
+        monitor : callable, optional
+            The monitor is called after each iteration with the current
+            iteration, a reference to the estimator and the local variables of
+            ``_fit_stages`` as keyword arguments ``callable(i, self,
+            locals())``. If the callable returns ``True`` the fitting procedure
+            is stopped. The monitor can be used for various things such as
+            computing held-out estimates, early stopping, model introspect, and
+            snapshoting.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        # if not warmstart - clear the estimator state
+        if not self.warm_start:
+            self._clear_state()
+
+        # Check input
+        X, y = check_X_y(X, y, dtype=DTYPE)
+        n_samples, self.n_features = X.shape
+        if sample_weight is None:
+            sample_weight = np.ones(n_samples, dtype=np.float32)
+        else:
+            sample_weight = column_or_1d(sample_weight, warn=True)
+
+        check_consistent_length(X, y, sample_weight)
+
+        y = self._validate_y(y)
+        
+        random_state = check_random_state(self.random_state)
+        self._check_params()
+
+        if not self._is_initialized():
+            # init state
+            self._init_state()
+
+            # fit initial model - FIXME make sample_weight optional
+            self.init_.fit(X, y, sample_weight)
+
+            if is_classifier(self.init_): 
+                n_classes = np.unique(y).shape[0]
+            else:
+                n_classes = 1
+
+            # If the initialization estimator has a predict_proba method,
+            # either use those, or collapse to a single vector if there
+            # are only two classes
+            if hasattr(self.init_, 'predict_proba'):
+                eps = np.finfo(X.dtype).eps
+                y_pred = self.init_.predict_proba(X) + eps
+                if n_classes == 2:
+                    y_pred = np.log(y_pred[:,1] / y_pred[:,0])
+                    y_pred = y_pred.reshape(n_samples, 1)
+
+            # Otherwise, it can be a naive estimator defined above, in which
+            # case don't do anything, or a classifier whose estimates will be
+            # a vector that should be hot encoded, or a regressor whose
+            # estimates still need to be reshaped from (n_samples,) to
+            # (n_samples,1)
+            else:
+                pred = self.init_.predict(X)
+
+                if len(pred.shape) < 2:
+                    if is_classifier(self.init_):
+                        y_pred = np.zeros((n_samples, n_classes))
+                        y_pred[:, pred] = 1.0
+                        if n_classes == 2:
+                            y_pred = np.log(y_pred[:,1] / y_pred[:,0])
+                            y_pred = y_pred.reshape(n_samples, 1)
+                    else:
+                        y_pred = pred.reshape(n_samples, 1)
+                else:
+                    y_pred = pred
+
+            begin_at_stage = 0
+        else:
+            # add more estimators to fitted model
+            # invariant: warm_start = True
+            if self.n_estimators < self.estimators_.shape[0]:
+                raise ValueError('n_estimators=%d must be larger or equal to '
+                                 'estimators_.shape[0]=%d when '
+                                 'warm_start==True'
+                                 % (self.n_estimators,
+                                    self.estimators_.shape[0]))
+            begin_at_stage = self.estimators_.shape[0]
+            y_pred = self._decision_function(X)
+            self._resize_state()
+
+            if is_classifier(self.init_): 
+                n_classes = np.unique(y).shape[0]
+            else:
+                n_classes = 1
+
+        self.n_classes = n_classes
+
+        # fit the boosting stages
+        n_stages = self._fit_stages(X, y, y_pred, sample_weight, random_state,
+                                    begin_at_stage, monitor)
+        # change shape of arrays after fit (early-stopping or additional ests)
+        if n_stages != self.estimators_.shape[0]:
+            self.estimators_ = self.estimators_[:n_stages]
+            self.train_score_ = self.train_score_[:n_stages]
+            if hasattr(self, 'oob_improvement_'):
+                self.oob_improvement_ = self.oob_improvement_[:n_stages]
+
+        return self
+
+    def _fit_stages(self, X, y, y_pred, sample_weight, random_state,
+                    begin_at_stage=0, monitor=None):
+        """Iteratively fits the stages.
+
+        For each stage it computes the progress (OOB, train score)
+        and delegates to ``_fit_stage``.
+        Returns the number of stages fit; might differ from ``n_estimators``
+        due to early stopping.
+        """
+        n_samples = X.shape[0]
+        do_oob = self.subsample < 1.0
+        sample_mask = np.ones((n_samples, ), dtype=np.bool)
+        n_inbag = max(1, int(self.subsample * n_samples))
+        loss_ = self.loss_
+
+        # Set min_weight_leaf from min_weight_fraction_leaf
+        if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
+            min_weight_leaf = (self.min_weight_fraction_leaf *
+                               np.sum(sample_weight))
+        else:
+            min_weight_leaf = 0.
+
+        # init criterion and splitter
+        criterion = FriedmanMSE(1)
+        splitter = PresortBestSplitter(criterion,
+                                       self.max_features_,
+                                       self.min_samples_leaf,
+                                       min_weight_leaf,
+                                       random_state)
+
+        if self.verbose:
+            verbose_reporter = VerboseReporter(self.verbose)
+            verbose_reporter.init(self, begin_at_stage)
+
+        # perform boosting iterations
+        i = begin_at_stage
+        for i in range(begin_at_stage, self.n_estimators):
+
+            # subsampling
+            if do_oob:
+                sample_mask = _random_sample_mask(n_samples, n_inbag,
+                                                  random_state)
+                # OOB score before adding this stage
+                old_oob_score = loss_(y[~sample_mask],
+                                      y_pred[~sample_mask],
+                                      sample_weight[~sample_mask])
+
+            # fit next stage of trees
+            y_pred = self._fit_stage(i, X, y, y_pred, sample_weight,
+                                     sample_mask, criterion, splitter,
+                                     random_state)
+
+            # track deviance (= loss)
+            if do_oob:
+                self.train_score_[i] = loss_(y[sample_mask],
+                                             y_pred[sample_mask],
+                                             sample_weight[sample_mask])
+                self.oob_improvement_[i] = (
+                    old_oob_score - loss_(y[~sample_mask],
+                                          y_pred[~sample_mask],
+                                          sample_weight[~sample_mask]))
+            else:
+                # no need to fancy index w/ no subsampling
+                self.train_score_[i] = loss_(y, y_pred, sample_weight)
+
+            if self.verbose > 0:
+                verbose_reporter.update(i, self)
+
+            if monitor is not None:
+                early_stopping = monitor(i, self, locals())
+                if early_stopping:
+                    break
+        return i + 1
+
     def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
                    criterion, splitter, random_state):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
@@ -898,169 +1102,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
     def _is_initialized(self):
         return len(getattr(self, 'estimators_', [])) > 0
 
-    def fit(self, X, y, sample_weight=None, monitor=None):
-        """Fit the gradient boosting model.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes.
-
-        sample_weight : array-like, shape = [n_samples] or None
-            Sample weights. If None, then samples are equally weighted. Splits
-            that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. In the case of
-            classification, splits are also ignored if they would result in any
-            single class carrying a negative weight in either child node.
-
-        monitor : callable, optional
-            The monitor is called after each iteration with the current
-            iteration, a reference to the estimator and the local variables of
-            ``_fit_stages`` as keyword arguments ``callable(i, self,
-            locals())``. If the callable returns ``True`` the fitting procedure
-            is stopped. The monitor can be used for various things such as
-            computing held-out estimates, early stopping, model introspect, and
-            snapshoting.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        # if not warmstart - clear the estimator state
-        if not self.warm_start:
-            self._clear_state()
-
-        # Check input
-        X, y = check_X_y(X, y, dtype=DTYPE)
-        n_samples, self.n_features = X.shape
-        if sample_weight is None:
-            sample_weight = np.ones(n_samples, dtype=np.float32)
-        else:
-            sample_weight = column_or_1d(sample_weight, warn=True)
-
-        check_consistent_length(X, y, sample_weight)
-
-        y = self._validate_y(y)
-
-        random_state = check_random_state(self.random_state)
-        self._check_params()
-
-        if not self._is_initialized():
-            # init state
-            self._init_state()
-
-            # fit initial model - FIXME make sample_weight optional
-            self.init_.fit(X, y, sample_weight)
-
-            # init predictions
-            y_pred = self.init_.predict(X)
-            begin_at_stage = 0
-        else:
-            # add more estimators to fitted model
-            # invariant: warm_start = True
-            if self.n_estimators < self.estimators_.shape[0]:
-                raise ValueError('n_estimators=%d must be larger or equal to '
-                                 'estimators_.shape[0]=%d when '
-                                 'warm_start==True'
-                                 % (self.n_estimators,
-                                    self.estimators_.shape[0]))
-            begin_at_stage = self.estimators_.shape[0]
-            y_pred = self._decision_function(X)
-            self._resize_state()
-
-        # fit the boosting stages
-        n_stages = self._fit_stages(X, y, y_pred, sample_weight, random_state,
-                                    begin_at_stage, monitor)
-        # change shape of arrays after fit (early-stopping or additional ests)
-        if n_stages != self.estimators_.shape[0]:
-            self.estimators_ = self.estimators_[:n_stages]
-            self.train_score_ = self.train_score_[:n_stages]
-            if hasattr(self, 'oob_improvement_'):
-                self.oob_improvement_ = self.oob_improvement_[:n_stages]
-
-        return self
-
-    def _fit_stages(self, X, y, y_pred, sample_weight, random_state,
-                    begin_at_stage=0, monitor=None):
-        """Iteratively fits the stages.
-
-        For each stage it computes the progress (OOB, train score)
-        and delegates to ``_fit_stage``.
-        Returns the number of stages fit; might differ from ``n_estimators``
-        due to early stopping.
-        """
-        n_samples = X.shape[0]
-        do_oob = self.subsample < 1.0
-        sample_mask = np.ones((n_samples, ), dtype=np.bool)
-        n_inbag = max(1, int(self.subsample * n_samples))
-        loss_ = self.loss_
-
-        # Set min_weight_leaf from min_weight_fraction_leaf
-        if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
-            min_weight_leaf = (self.min_weight_fraction_leaf *
-                               np.sum(sample_weight))
-        else:
-            min_weight_leaf = 0.
-
-        # init criterion and splitter
-        criterion = FriedmanMSE(1)
-        splitter = PresortBestSplitter(criterion,
-                                       self.max_features_,
-                                       self.min_samples_leaf,
-                                       min_weight_leaf,
-                                       random_state)
-
-        if self.verbose:
-            verbose_reporter = VerboseReporter(self.verbose)
-            verbose_reporter.init(self, begin_at_stage)
-
-        # perform boosting iterations
-        i = begin_at_stage
-        for i in range(begin_at_stage, self.n_estimators):
-
-            # subsampling
-            if do_oob:
-                sample_mask = _random_sample_mask(n_samples, n_inbag,
-                                                  random_state)
-                # OOB score before adding this stage
-                old_oob_score = loss_(y[~sample_mask],
-                                      y_pred[~sample_mask],
-                                      sample_weight[~sample_mask])
-
-            # fit next stage of trees
-            y_pred = self._fit_stage(i, X, y, y_pred, sample_weight,
-                                     sample_mask, criterion, splitter,
-                                     random_state)
-
-            # track deviance (= loss)
-            if do_oob:
-                self.train_score_[i] = loss_(y[sample_mask],
-                                             y_pred[sample_mask],
-                                             sample_weight[sample_mask])
-                self.oob_improvement_[i] = (
-                    old_oob_score - loss_(y[~sample_mask],
-                                          y_pred[~sample_mask],
-                                          sample_weight[~sample_mask]))
-            else:
-                # no need to fancy index w/ no subsampling
-                self.train_score_[i] = loss_(y, y_pred, sample_weight)
-
-            if self.verbose > 0:
-                verbose_reporter.update(i, self)
-
-            if monitor is not None:
-                early_stopping = monitor(i, self, locals())
-                if early_stopping:
-                    break
-        return i + 1
-
     def _make_estimator(self, append=True):
         # we don't need _make_estimator
         raise NotImplementedError()
@@ -1073,7 +1114,31 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         if X.shape[1] != self.n_features:
             raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
                 self.n_features, X.shape[1]))
-        score = self.init_.predict(X).astype(np.float64)
+            # init predictions
+
+        if hasattr(self.init_, 'predict_proba'):
+            eps = np.finfo(X.dtype).eps
+            score = self.init_.predict_proba(X) + eps
+            if self.n_classes == 2:
+                score = np.log(score[:,1] / score[:,0])
+                score = score.reshape(X.shape[0], 1)
+        else:
+            pred = self.init_.predict(X)
+
+            if len(pred.shape) < 2:
+                if is_classifier(self.init_):
+                    score = np.zeros((X.shape[0], self.n_classes))
+                    score[:, pred] = 1.0
+                    if self.n_classes == 2:
+                        score = np.log(y_pred[:,1] / y_pred[:,0])
+                        score = y_pred.reshape(X.shape[0], 1)
+                else:
+                    score = pred.reshape(X.shape[0], 1)
+            else:
+                score = pred
+
+        score = score.astype(np.float64)
+
         return score
 
     def _decision_function(self, X):
@@ -1107,7 +1172,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         return score
 
     def _staged_decision_function(self, X):
-        """Compute decision function of ``X`` for each iteration.
+        """Compute decision function of ``, X`` for each iteration.
 
         This method allows monitoring (i.e. determine error on testing set)
         after each stage.
