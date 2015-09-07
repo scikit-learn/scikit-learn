@@ -491,6 +491,12 @@ class SVC(BaseSVC):
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
+
+    probA_, probB_ : array
+        probability estimates, empty array for probability=False
+
     Examples
     --------
     >>> import numpy as np
