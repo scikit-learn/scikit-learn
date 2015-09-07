@@ -88,6 +88,15 @@ People
 
   * `Arnaud Joly <http://www.ajoly.org>`_
 
-  * `Kemal Eren <http://www.kemaleren.com>`_
-
-  * `Michael Becker <http://beckerfuffle.com>`_
+  * `Jaques Grobler <https://github.com/jaquesgrobler>`_
+  
+  * `Joel Nothman <http://joelnothman.com>`_
+  
+  * `Noel Dawe <http://noel.dawe.me>`_
+  
+  * `Kyle Kastner <http://kastnerkyle.github.io>`_
+  
+  * `Manoj Kumar <https://manojbits.wordpress.com>`_
+  
+  * Alexander Fabisch
+  
