@@ -157,7 +157,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
         self.rng = check_random_state(self.random_state)
 
-        X, y = check_X_y(X, y, multi_output=True)
+        X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
 
         # Normalize target value
         if self.normalize_y:
@@ -211,7 +211,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                                                        bounds))
             # Select result from run with minimal (negative) log-marginal
             # likelihood
-            lml_values = map(itemgetter(1), optima)
+            lml_values = list(map(itemgetter(1), optima))
             self.kernel_.theta = optima[np.argmin(lml_values)][0]
             self.log_marginal_likelihood_value_ = -np.min(lml_values)
         else:
@@ -385,14 +385,14 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 if eval_gradient else -np.inf
 
         # Support multi-dimensional output of self.y_train_
-        y_fit = self.y_train_
-        if y_fit.ndim == 1:
-            y_fit = y_fit[:, np.newaxis]
+        y_train = self.y_train_
+        if y_train.ndim == 1:
+            y_train = y_train[:, np.newaxis]
 
-        alpha = cho_solve((L, True), y_fit)  # Line 3
+        alpha = cho_solve((L, True), y_train)  # Line 3
 
         # Compute log-likelihood (compare line 7)
-        log_likelihood_dims = -0.5 * np.einsum("ik,ik->k", y_fit, alpha)
+        log_likelihood_dims = -0.5 * np.einsum("ik,ik->k", y_train, alpha)
         log_likelihood_dims -= np.log(np.diag(L)).sum()
         log_likelihood_dims -= K.shape[0] / 2 * np.log(2 * np.pi)
         log_likelihood = log_likelihood_dims.sum(-1)  # sum over dimensions

@@ -220,7 +220,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                                                        bounds))
             # Select result from run with minimal (negative) log-marginal
             # likelihood
-            lml_values = map(itemgetter(1), optima)
+            lml_values = list(map(itemgetter(1), optima))
             self.kernel_.theta = optima[np.argmin(lml_values)][0]
             self.log_marginal_likelihood_value_ = -np.min(lml_values)
         else:
