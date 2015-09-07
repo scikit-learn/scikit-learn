@@ -1237,3 +1237,12 @@ li#other-versions {
   }
 
 }
+
+.avatar {
+vertical-align: top;
+-webkit-border-radius: 5px;
+-moz-border-radius: 5px;
+border-radius: 5px;
+margin-right: 50px;
+height: 100px;
+}

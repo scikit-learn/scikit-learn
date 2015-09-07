@@ -3,7 +3,26 @@
 About us
 ========
 
-.. include:: ../AUTHORS.rst
+History
+-------
+
+This project was started in 2007 as a Google Summer of Code project by
+David Cournapeau. Later that year, Matthieu Brucher started work on
+this project as part of his thesis.
+
+In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
+Michel of INRIA took leadership of the project and made the first public
+release, February the 1st 2010. Since then, several releases have appeared
+following a ~3 month cycle, and a thriving international community has
+been leading the development.
+
+Authors
+-------
+
+.. include:: authors.rst
+
+A complete list of contributors is available on `github
+<https://github.com/scikit-learn/scikit-learn/graphs/contributors>`_.
 
 .. _citing-scikit-learn:
 
