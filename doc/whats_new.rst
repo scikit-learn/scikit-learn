@@ -136,6 +136,10 @@ Enhancements
      for retrieving the leaf indices samples are predicted as. By
      `Daniel Galvez`_ and `Gilles Louppe`_.
 
+   - :class:'ensemble.GradientBoostingRegressor/Classifier' now exposes
+     an ``apply`` method for retrieving the leaf indices samples are
+     predicted as. By `Jacob Schreiber`_.
+
 Bug fixes
 .........
 
