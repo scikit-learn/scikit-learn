@@ -119,6 +119,9 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
     alpha_: array-like, shape = (n_samples,)
         Dual coefficients of training data points in kernel space
+
+    log_marginal_likelihood_value_: float
+        The log-marginal-likelihood of self.kernel_.theta
     """
     def __init__(self, kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
@@ -176,9 +179,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.X_train_ = np.copy(X) if self.copy_X_train else X
         self.y_train_ = np.copy(y) if self.copy_X_train else y
 
-        if self.kernel_.n_dims == 0:  # no tunable hyperparameters
-            pass
-        elif self.optimizer is not None:
+        if self.optimizer is not None and self.kernel_.n_dims > 0:
             # Choose hyperparameters based on maximizing the log-marginal
             # likelihood (potentially starting from several initial values)
             def obj_func(theta, eval_gradient=True):
@@ -212,6 +213,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             # likelihood
             lml_values = map(itemgetter(1), optima)
             self.kernel_.theta = optima[np.argmin(lml_values)][0]
+            self.log_marginal_likelihood_value_ = -np.min(lml_values)
+        else:
+            self.log_marginal_likelihood_value_ = \
+                self.log_marginal_likelihood(self.kernel_.theta)
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
@@ -334,19 +339,20 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             y_samples = np.hstack(y_samples)
         return y_samples
 
-    def log_marginal_likelihood(self, theta, eval_gradient=False):
+    def log_marginal_likelihood(self, theta=None, eval_gradient=False):
         """Returns log-marginal likelihood of theta for training data.
 
         Parameters
         ----------
-        theta : array-like, shape = (n_kernel_params,)
+        theta : array-like, shape = (n_kernel_params,) or None
             Kernel hyperparameters for which the log-marginal likelihood is
-            evaluated
+            evaluated. If None, the precomputed log_marginal_likelihood
+            of self.kernel_.theta is returned.
 
         eval_gradient : bool, default: False
             If True, the gradient of the log-marginal likelihood with respect
             to the kernel hyperparameters at position theta is returned
-            additionally.
+            additionally. If True, theta must not be None.
 
         Returns
         -------
@@ -358,6 +364,12 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             hyperparameters at position theta.
             Only returned when eval_gradient is True.
         """
+        if theta is None:
+            if eval_gradient:
+                raise ValueError(
+                    "Gradient can only be evaluated for theta!=None")
+            return self.log_marginal_likelihood_value_
+
         kernel = self.kernel_.clone_with_theta(theta)
 
         if eval_gradient:

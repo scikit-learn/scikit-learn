@@ -135,6 +135,9 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         Square root of W, the Hessian of log-likelihood of the latent function
         values for the observed labels. Since W is diagonal, only the diagonal
         of sqrt(W) is stored.
+
+    log_marginal_likelihood_value_: float
+        The log-marginal-likelihood of self.kernel_.theta
     """
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
@@ -185,9 +188,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             raise ValueError("{0:s} requires 2 classes.".format(
                 self.__class__.__name__))
 
-        if self.kernel_.n_dims == 0:  # no tunable hyperparameters
-            pass
-        elif self.optimizer is not None:
+        if self.optimizer is not None and self.kernel_.n_dims > 0:
             # Choose hyperparameters based on maximizing the log-marginal
             # likelihood (potentially starting from several initial values)
             def obj_func(theta, eval_gradient=True):
@@ -221,6 +222,10 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             # likelihood
             lml_values = map(itemgetter(1), optima)
             self.kernel_.theta = optima[np.argmin(lml_values)][0]
+            self.log_marginal_likelihood_value_ = -np.min(lml_values)
+        else:
+            self.log_marginal_likelihood_value_ = \
+                self.log_marginal_likelihood(self.kernel_.theta)
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
@@ -292,19 +297,20 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         return np.vstack((1 - pi_star, pi_star)).T
 
-    def log_marginal_likelihood(self, theta, eval_gradient=False):
+    def log_marginal_likelihood(self, theta=None, eval_gradient=False):
         """Returns log-marginal likelihood of theta for training data.
 
         Parameters
         ----------
-        theta : array-like, shape = (n_kernel_params,)
+        theta : array-like, shape = (n_kernel_params,) or None
             Kernel hyperparameters for which the log-marginal likelihood is
-            evaluated
+            evaluated. If None, the precomputed log_marginal_likelihood
+            of self.kernel_.theta is returned.
 
         eval_gradient : bool, default: False
             If True, the gradient of the log-marginal likelihood with respect
             to the kernel hyperparameters at position theta is returned
-            additionally.
+            additionally. If True, theta must not be None.
 
         Returns
         -------
@@ -316,6 +322,12 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             hyperparameters at position theta.
             Only returned when eval_gradient is True.
         """
+        if theta is None:
+            if eval_gradient:
+                raise ValueError(
+                    "Gradient can only be evaluated for theta!=None")
+            return self.log_marginal_likelihood_value_
+
         kernel = self.kernel_.clone_with_theta(theta)
 
         if eval_gradient:
@@ -526,6 +538,9 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         classification, a CompoundKernel is returned which consists of the
         different kernels used in the one-versus-rest classifiers.
 
+    log_marginal_likelihood_value_: float
+        The log-marginal-likelihood of self.kernel_.theta
+
     classes_ : array-like, shape = (n_classes,)
         Unique class labels.
 
@@ -589,6 +604,14 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
 
         self.base_estimator_.fit(X, y)
 
+        if self.n_classes_ > 2:
+            self.log_marginal_likelihood_value_ = np.mean(
+                [estimator.log_marginal_likelihood()
+                 for estimator in self.base_estimator_.estimators_])
+        else:
+            self.log_marginal_likelihood_value_ = \
+                self.base_estimator_.log_marginal_likelihood()
+
         return self
 
     def predict(self, X):
@@ -638,7 +661,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
                 [estimator.kernel_
                  for estimator in self.base_estimator_.estimators_])
 
-    def log_marginal_likelihood(self, theta, eval_gradient=False):
+    def log_marginal_likelihood(self, theta=None, eval_gradient=False):
         """Returns log-marginal likelihood of theta for training data.
 
         In the case of multi-class classification, the mean log-marginal
@@ -646,18 +669,19 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        theta : array-like, shape = (n_kernel_params,)
+        theta : array-like, shape = (n_kernel_params,) or none
             Kernel hyperparameters for which the log-marginal likelihood is
             evaluated. In the case of multi-class classification, theta may
             be the  hyperparameters of the compound kernel or of an individual
             kernel. In the latter case, all individual kernel get assigned the
-            same theta values.
+            same theta values. If None, the precomputed log_marginal_likelihood
+            of self.kernel_.theta is returned.
 
         eval_gradient : bool, default: False
             If True, the gradient of the log-marginal likelihood with respect
             to the kernel hyperparameters at position theta is returned
             additionally. Note that gradient computation is not supported
-            for non-binary classification.
+            for non-binary classification. If True, theta must not be None.
 
         Returns
         -------
@@ -670,6 +694,12 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
             Only returned when eval_gradient is True.
         """
         check_is_fitted(self, ["classes_", "n_classes_"])
+
+        if theta is None:
+            if eval_gradient:
+                raise ValueError(
+                    "Gradient can only be evaluated for theta!=None")
+            return self.log_marginal_likelihood_value_
 
         theta = np.asarray(theta)
         if self.n_classes_ == 2:
