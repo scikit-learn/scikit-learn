@@ -732,6 +732,173 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
+    def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
+                   criterion, splitter, random_state):
+        """Fit another stage of ``n_classes_`` trees to the boosting model. """
+
+        assert sample_mask.dtype == np.bool
+        loss = self.loss_
+        original_y = y
+
+        for k in range(loss.K):
+            if loss.is_multi_class:
+                y = np.array(original_y == k, dtype=np.float64)
+
+            residual = loss.negative_gradient(y, y_pred, k=k,
+                                              sample_weight=sample_weight)
+
+            # induce regression tree on residuals
+            tree = DecisionTreeRegressor(
+                criterion=criterion,
+                splitter=splitter,
+                max_depth=self.max_depth,
+                min_samples_split=self.min_samples_split,
+                min_samples_leaf=self.min_samples_leaf,
+                min_weight_fraction_leaf=self.min_weight_fraction_leaf,
+                max_features=self.max_features,
+                max_leaf_nodes=self.max_leaf_nodes,
+                random_state=random_state)
+
+            if self.subsample < 1.0:
+                # no inplace multiplication!
+                sample_weight = sample_weight * sample_mask.astype(np.float64)
+
+            tree.fit(X, residual, sample_weight=sample_weight,
+                     check_input=False)
+
+            # update tree leaves
+            loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
+                                         sample_weight, sample_mask,
+                                         self.learning_rate, k=k)
+
+            # add tree to ensemble
+            self.estimators_[i, k] = tree
+
+        return y_pred
+
+    def _check_params(self):
+        """Check validity of parameters and raise ValueError if not valid. """
+        if self.n_estimators <= 0:
+            raise ValueError("n_estimators must be greater than 0 but "
+                             "was %r" % self.n_estimators)
+
+        if self.learning_rate <= 0.0:
+            raise ValueError("learning_rate must be greater than 0 but "
+                             "was %r" % self.learning_rate)
+
+        if (self.loss not in self._SUPPORTED_LOSS
+                or self.loss not in LOSS_FUNCTIONS):
+            raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
+
+        if self.loss == 'deviance':
+            loss_class = (MultinomialDeviance
+                          if len(self.classes_) > 2
+                          else BinomialDeviance)
+        else:
+            loss_class = LOSS_FUNCTIONS[self.loss]
+
+        if self.loss in ('huber', 'quantile'):
+            self.loss_ = loss_class(self.n_classes_, self.alpha)
+        else:
+            self.loss_ = loss_class(self.n_classes_)
+
+        if not (0.0 < self.subsample <= 1.0):
+            raise ValueError("subsample must be in (0,1] but "
+                             "was %r" % self.subsample)
+
+        if self.init is not None:
+            if isinstance(self.init, six.string_types):
+                if self.init not in INIT_ESTIMATORS:
+                    raise ValueError('init="%s" is not supported' % self.init)
+            else:
+                if (not hasattr(self.init, 'fit')
+                        or not hasattr(self.init, 'predict')):
+                    raise ValueError("init=%r must be valid BaseEstimator "
+                                     "and support both fit and "
+                                     "predict" % self.init)
+
+        if not (0.0 < self.alpha < 1.0):
+            raise ValueError("alpha must be in (0.0, 1.0) but "
+                             "was %r" % self.alpha)
+
+        if isinstance(self.max_features, six.string_types):
+            if self.max_features == "auto":
+                # if is_classification
+                if self.n_classes_ > 1:
+                    max_features = max(1, int(np.sqrt(self.n_features)))
+                else:
+                    # is regression
+                    max_features = self.n_features
+            elif self.max_features == "sqrt":
+                max_features = max(1, int(np.sqrt(self.n_features)))
+            elif self.max_features == "log2":
+                max_features = max(1, int(np.log2(self.n_features)))
+            else:
+                raise ValueError("Invalid value for max_features: %r. "
+                                 "Allowed string values are 'auto', 'sqrt' "
+                                 "or 'log2'." % self.max_features)
+        elif self.max_features is None:
+            max_features = self.n_features
+        elif isinstance(self.max_features, (numbers.Integral, np.integer)):
+            max_features = self.max_features
+        else:  # float
+            if 0. < self.max_features <= 1.:
+                max_features = max(int(self.max_features * self.n_features), 1)
+            else:
+                raise ValueError("max_features must be in (0, n_features]")
+
+        self.max_features_ = max_features
+
+    def _init_state(self):
+        """Initialize model state and allocate model state data structures. """
+
+        if self.init is None:
+            self.init_ = self.loss_.init_estimator()
+        elif isinstance(self.init, six.string_types):
+            self.init_ = INIT_ESTIMATORS[self.init]()
+        else:
+            self.init_ = self.init
+
+        self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
+                                    dtype=np.object)
+        self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
+        # do oob?
+        if self.subsample < 1.0:
+            self.oob_improvement_ = np.zeros((self.n_estimators),
+                                             dtype=np.float64)
+
+    def _clear_state(self):
+        """Clear the state of the gradient boosting model. """
+        if hasattr(self, 'estimators_'):
+            self.estimators_ = np.empty((0, 0), dtype=np.object)
+        if hasattr(self, 'train_score_'):
+            del self.train_score_
+        if hasattr(self, 'oob_improvement_'):
+            del self.oob_improvement_
+        if hasattr(self, 'init_'):
+            del self.init_
+
+    def _resize_state(self):
+        """Add additional ``n_estimators`` entries to all attributes. """
+        # self.n_estimators is the number of additional est to fit
+        total_n_estimators = self.n_estimators
+        if total_n_estimators < self.estimators_.shape[0]:
+            raise ValueError('resize with smaller n_estimators %d < %d' %
+                             (total_n_estimators, self.estimators_[0]))
+
+        self.estimators_.resize((total_n_estimators, self.loss_.K))
+        self.train_score_.resize(total_n_estimators)
+        if (self.subsample < 1 or hasattr(self, 'oob_improvement_')):
+            # if do oob resize arrays or create new if not available
+            if hasattr(self, 'oob_improvement_'):
+                self.oob_improvement_.resize(total_n_estimators)
+            else:
+                self.oob_improvement_ = np.zeros((total_n_estimators,),
+                                                 dtype=np.float64)
+
+    def _is_initialized(self):
+        return len(getattr(self, 'estimators_', [])) > 0
+
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
@@ -934,173 +1101,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                 if early_stopping:
                     break
         return i + 1
-
-    def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
-                   criterion, splitter, random_state):
-        """Fit another stage of ``n_classes_`` trees to the boosting model. """
-
-        assert sample_mask.dtype == np.bool
-        loss = self.loss_
-        original_y = y
-
-        for k in range(loss.K):
-            if loss.is_multi_class:
-                y = np.array(original_y == k, dtype=np.float64)
-
-            residual = loss.negative_gradient(y, y_pred, k=k,
-                                              sample_weight=sample_weight)
-
-            # induce regression tree on residuals
-            tree = DecisionTreeRegressor(
-                criterion=criterion,
-                splitter=splitter,
-                max_depth=self.max_depth,
-                min_samples_split=self.min_samples_split,
-                min_samples_leaf=self.min_samples_leaf,
-                min_weight_fraction_leaf=self.min_weight_fraction_leaf,
-                max_features=self.max_features,
-                max_leaf_nodes=self.max_leaf_nodes,
-                random_state=random_state)
-
-            if self.subsample < 1.0:
-                # no inplace multiplication!
-                sample_weight = sample_weight * sample_mask.astype(np.float64)
-
-            tree.fit(X, residual, sample_weight=sample_weight,
-                     check_input=False)
-
-            # update tree leaves
-            loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
-                                         sample_weight, sample_mask,
-                                         self.learning_rate, k=k)
-
-            # add tree to ensemble
-            self.estimators_[i, k] = tree
-
-        return y_pred
-
-    def _check_params(self):
-        """Check validity of parameters and raise ValueError if not valid. """
-        if self.n_estimators <= 0:
-            raise ValueError("n_estimators must be greater than 0 but "
-                             "was %r" % self.n_estimators)
-
-        if self.learning_rate <= 0.0:
-            raise ValueError("learning_rate must be greater than 0 but "
-                             "was %r" % self.learning_rate)
-
-        if (self.loss not in self._SUPPORTED_LOSS
-                or self.loss not in LOSS_FUNCTIONS):
-            raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
-
-        if self.loss == 'deviance':
-            loss_class = (MultinomialDeviance
-                          if len(self.classes_) > 2
-                          else BinomialDeviance)
-        else:
-            loss_class = LOSS_FUNCTIONS[self.loss]
-
-        if self.loss in ('huber', 'quantile'):
-            self.loss_ = loss_class(self.n_classes_, self.alpha)
-        else:
-            self.loss_ = loss_class(self.n_classes_)
-
-        if not (0.0 < self.subsample <= 1.0):
-            raise ValueError("subsample must be in (0,1] but "
-                             "was %r" % self.subsample)
-
-        if self.init is not None:
-            if isinstance(self.init, six.string_types):
-                if self.init not in INIT_ESTIMATORS:
-                    raise ValueError('init="%s" is not supported' % self.init)
-            else:
-                if (not hasattr(self.init, 'fit')
-                        or not hasattr(self.init, 'predict')):
-                    raise ValueError("init=%r must be valid BaseEstimator "
-                                     "and support both fit and "
-                                     "predict" % self.init)
-
-        if not (0.0 < self.alpha < 1.0):
-            raise ValueError("alpha must be in (0.0, 1.0) but "
-                             "was %r" % self.alpha)
-
-        if isinstance(self.max_features, six.string_types):
-            if self.max_features == "auto":
-                # if is_classification
-                if self.n_classes_ > 1:
-                    max_features = max(1, int(np.sqrt(self.n_features)))
-                else:
-                    # is regression
-                    max_features = self.n_features
-            elif self.max_features == "sqrt":
-                max_features = max(1, int(np.sqrt(self.n_features)))
-            elif self.max_features == "log2":
-                max_features = max(1, int(np.log2(self.n_features)))
-            else:
-                raise ValueError("Invalid value for max_features: %r. "
-                                 "Allowed string values are 'auto', 'sqrt' "
-                                 "or 'log2'." % self.max_features)
-        elif self.max_features is None:
-            max_features = self.n_features
-        elif isinstance(self.max_features, (numbers.Integral, np.integer)):
-            max_features = self.max_features
-        else:  # float
-            if 0. < self.max_features <= 1.:
-                max_features = max(int(self.max_features * self.n_features), 1)
-            else:
-                raise ValueError("max_features must be in (0, n_features]")
-
-        self.max_features_ = max_features
-
-    def _init_state(self):
-        """Initialize model state and allocate model state data structures. """
-
-        if self.init is None:
-            self.init_ = self.loss_.init_estimator()
-        elif isinstance(self.init, six.string_types):
-            self.init_ = INIT_ESTIMATORS[self.init]()
-        else:
-            self.init_ = self.init
-
-        self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
-                                    dtype=np.object)
-        self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
-        # do oob?
-        if self.subsample < 1.0:
-            self.oob_improvement_ = np.zeros((self.n_estimators),
-                                             dtype=np.float64)
-
-    def _clear_state(self):
-        """Clear the state of the gradient boosting model. """
-        if hasattr(self, 'estimators_'):
-            self.estimators_ = np.empty((0, 0), dtype=np.object)
-        if hasattr(self, 'train_score_'):
-            del self.train_score_
-        if hasattr(self, 'oob_improvement_'):
-            del self.oob_improvement_
-        if hasattr(self, 'init_'):
-            del self.init_
-
-    def _resize_state(self):
-        """Add additional ``n_estimators`` entries to all attributes. """
-        # self.n_estimators is the number of additional est to fit
-        total_n_estimators = self.n_estimators
-        if total_n_estimators < self.estimators_.shape[0]:
-            raise ValueError('resize with smaller n_estimators %d < %d' %
-                             (total_n_estimators, self.estimators_[0]))
-
-        self.estimators_.resize((total_n_estimators, self.loss_.K))
-        self.train_score_.resize(total_n_estimators)
-        if (self.subsample < 1 or hasattr(self, 'oob_improvement_')):
-            # if do oob resize arrays or create new if not available
-            if hasattr(self, 'oob_improvement_'):
-                self.oob_improvement_.resize(total_n_estimators)
-            else:
-                self.oob_improvement_ = np.zeros((total_n_estimators,),
-                                                 dtype=np.float64)
-
-    def _is_initialized(self):
-        return len(getattr(self, 'estimators_', [])) > 0
 
     def _make_estimator(self, append=True):
         # we don't need _make_estimator
