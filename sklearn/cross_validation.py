@@ -279,10 +279,10 @@ class KFold(_BaseKFold):
 
     Examples
     --------
-    >>> from sklearn import cross_validation
+    >>> from sklearn.cross_validation import KFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
-    >>> kf = cross_validation.KFold(4, n_folds=2)
+    >>> kf = KFold(4, n_folds=2)
     >>> len(kf)
     2
     >>> print(kf)  # doctest: +NORMALIZE_WHITESPACE
@@ -370,11 +370,11 @@ class LabelKFold(_BaseKFold):
 
     Examples
     --------
-    >>> from sklearn import cross_validation
+    >>> from sklearn.cross_validation import LabelKFold
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 3, 4])
     >>> labels = np.array([0, 0, 2, 2])
-    >>> label_kfold = cross_validation.LabelKFold(labels, n_folds=2)
+    >>> label_kfold = LabelKFold(labels, n_folds=2)
     >>> len(label_kfold)
     2
     >>> print(label_kfold)
@@ -416,24 +416,23 @@ class LabelKFold(_BaseKFold):
                                                                 n_labels))
 
         # Weight labels by their number of occurences
-        samples_per_label = np.bincount(labels)
+        n_samples_per_label = np.bincount(labels)
 
         # Distribute the most frequent labels first
-        ind = np.argsort(samples_per_label)[::-1]
-        samples_per_label = samples_per_label[ind]
+        indices = np.argsort(n_samples_per_label)[::-1]
+        n_samples_per_label = n_samples_per_label[indices]
 
         # Total weight of each fold
-        samples_per_fold = np.zeros(n_folds, dtype=np.uint64)
+        n_samples_per_fold = np.zeros(n_folds)
 
         # Mapping from label index to fold index
-        label_to_fold = np.zeros(len(unique_labels), dtype=np.uintp)
+        label_to_fold = np.zeros(len(unique_labels))
 
-        # While there are weights, distribute them
-        # Specifically, add the biggest weight to the lightest fold
-        for label_index, w in enumerate(samples_per_label):
-            ind_min = np.argmin(samples_per_fold)
-            samples_per_fold[ind_min] += w
-            label_to_fold[ind[label_index]] = ind_min
+        # Distribute samples by adding the largest weight to the lightest fold
+        for label_index, weight in enumerate(n_samples_per_label):
+            lightest_fold = np.argmin(n_samples_per_fold)
+            n_samples_per_fold[lightest_fold] += weight
+            label_to_fold[indices[label_index]] = lightest_fold
 
         self.idxs = label_to_fold[labels]
 
@@ -486,10 +485,10 @@ class StratifiedKFold(_BaseKFold):
 
     Examples
     --------
-    >>> from sklearn import cross_validation
+    >>> from sklearn.cross_validation import StratifiedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
-    >>> skf = cross_validation.StratifiedKFold(y, n_folds=2)
+    >>> skf = StratifiedKFold(y, n_folds=2)
     >>> len(skf)
     2
     >>> print(skf)  # doctest: +NORMALIZE_WHITESPACE

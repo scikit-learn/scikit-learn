@@ -276,7 +276,7 @@ Imagine you have three subjects, each with an associated number from 1 to 3::
 
   >>> labels = [1, 1, 1, 2, 2, 2, 3, 3, 3, 3]
 
-  >>> lkf = LabelKFold(labels, 3)
+  >>> lkf = LabelKFold(labels, n_folds=3)
   >>> for train, test in lkf:
   ...     print("%s %s" % (train, test))
   [0 1 2 3 4 5] [6 7 8 9]
