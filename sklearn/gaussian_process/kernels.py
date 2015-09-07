@@ -295,6 +295,33 @@ class Kernel(six.with_metaclass(ABCMeta)):
     def __call__(self, X, Y=None, eval_gradient=False):
         """Evaluate the kernel."""
 
+    @abstractmethod
+    def diag(self, X):
+        """Returns the diagonal of the kernel k(X, X).
+
+        The result of this method is identical to np.diag(self(X)); however,
+        it can be evaluated more efficiently since only the diagonal is
+        evaluated.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Returns
+        -------
+        K_diag : array, shape (n_samples_X,)
+            Diagonal of kernel k(X, X)
+        """
+
+    @abstractmethod
+    def is_stationary(self):
+        """Returns whether the kernel is stationary. """
+
+
+class NormalizedKernelMixin(object):
+    """Mixin for kernels which are normalized: k(X, X)=1."""
+
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
 
@@ -313,6 +340,10 @@ class Kernel(six.with_metaclass(ABCMeta)):
             Diagonal of kernel k(X, X)
         """
         return np.ones(X.shape[0])
+
+
+class StationaryKernelMixin(object):
+    """Mixin for kernels which are stationary: k(X, Y)= f(X-Y)."""
 
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
@@ -431,6 +462,25 @@ class CompoundKernel(Kernel):
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
         return np.all([kernel.is_stationary() for kernel in self.kernels])
+
+    def diag(self, X):
+        """Returns the diagonal of the kernel k(X, X).
+
+        The result of this method is identical to np.diag(self(X)); however,
+        it can be evaluated more efficiently since only the diagonal is
+        evaluated.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Returns
+        -------
+        K_diag : array, shape (n_samples_X, n_kernels)
+            Diagonal of kernel k(X, X)
+        """
+        return np.vstack([kernel.diag(X) for kernel in self.kernels]).T
 
 
 class KernelOperator(Kernel):
@@ -832,7 +882,7 @@ class Exponentiation(Kernel):
         return self.kernel.is_stationary()
 
 
-class ConstantKernel(Kernel):
+class ConstantKernel(StationaryKernelMixin, Kernel):
     """Constant kernel.
 
     Can be used as part of a product-kernel where it scales the magnitude of
@@ -922,7 +972,7 @@ class ConstantKernel(Kernel):
         return "{0:.3g}**2".format(np.sqrt(self.constant_value))
 
 
-class WhiteKernel(Kernel):
+class WhiteKernel(StationaryKernelMixin, Kernel):
     """White kernel.
 
     The main use-case of this kernel is as part of a sum-kernel where it
@@ -1013,7 +1063,7 @@ class WhiteKernel(Kernel):
                                                  self.noise_level)
 
 
-class RBF(Kernel):
+class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     """Radial-basis function kernel (aka squared-exponential kernel).
 
     The RBF kernel is a stationary kernel. It is also known as the
@@ -1285,7 +1335,7 @@ class Matern(RBF):
                 self.__class__.__name__, self.length_scale, self.nu)
 
 
-class RationalQuadratic(Kernel):
+class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     """Rational Quadratic kernel.
 
     The RationalQuadratic kernel can be seen as a scale mixture (an infinite
@@ -1390,7 +1440,7 @@ class RationalQuadratic(Kernel):
             self.__class__.__name__, self.alpha, self.length_scale)
 
 
-class ExpSineSquared(Kernel):
+class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     """Exp-Sine-Squared kernel.
 
     The ExpSineSquared kernel allows modeling periodic functions. It is
