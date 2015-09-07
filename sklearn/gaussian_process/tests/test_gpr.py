@@ -22,8 +22,8 @@ X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
 X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = f(X).ravel()
 
-
-kernels = [RBF(length_scale=1.0),
+fixed_kernel = RBF(length_scale=1.0, length_scale_bounds="fixed")
+kernels = [RBF(length_scale=1.0), fixed_kernel,
            RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
            C(1.0, (1e-2, 1e2))
            * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
@@ -48,14 +48,24 @@ def test_gpr_interpolation():
 def test_lml_improving():
     """ Test that hyperparameter-tuning improves log-marginal likelihood. """
     for kernel in kernels:
+        if kernel == fixed_kernel: continue
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
         assert_greater(gpr.log_marginal_likelihood(gpr.kernel_.theta),
                        gpr.log_marginal_likelihood(kernel.theta))
 
 
+def test_lml_precomputed():
+    """ Test that lml of optimized kernel is stored correctly. """
+    for kernel in kernels:
+        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+        assert_equal(gpr.log_marginal_likelihood(gpr.kernel_.theta),
+                     gpr.log_marginal_likelihood())
+
+
 def test_converged_to_local_maximum():
     """ Test that we are in local maximum after hyperparameter-optimization."""
     for kernel in kernels:
+        if kernel == fixed_kernel: continue
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
         lml, lml_gradient = \
@@ -69,6 +79,7 @@ def test_converged_to_local_maximum():
 def test_solution_inside_bounds():
     """ Test that hyperparameter-optimization remains in bounds"""
     for kernel in kernels:
+        if kernel == fixed_kernel: continue
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
         bounds = gpr.kernel_.bounds
@@ -270,6 +281,7 @@ def test_custom_optimizer():
         return theta_opt, func_min
 
     for kernel in kernels:
+        if kernel == fixed_kernel: continue
         gpr = GaussianProcessRegressor(kernel=kernel, optimizer=optimizer)
         gpr.fit(X, y)
         # Checks that optimizer improved marginal likelihood
