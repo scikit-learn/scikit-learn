@@ -17,7 +17,7 @@ The module structure is the following:
 """
 
 # Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti,
-#          Arnaud Joly
+#          Arnaud Joly, Jacob Schreiber
 # License: BSD 3 clause
 
 from __future__ import print_function
