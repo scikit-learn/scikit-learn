@@ -111,26 +111,27 @@ def test_sparse_classification():
         X_train_sparse = sparse_format(X_train)
         X_test_sparse = sparse_format(X_test)
         for params in parameter_sets:
+            for f in ['predict', 'predict_proba', 'predict_log_proba', 'decision_function']:
+                # Trained on sparse format
+                sparse_classifier = BaggingClassifier(
+                    base_estimator=CustomSVC(),
+                    random_state=1,
+                    **params
+                ).fit(X_train_sparse, y_train)
+                sparse_results = getattr(sparse_classifier, f)(X_test_sparse)
 
-            # Trained on sparse format
-            sparse_classifier = BaggingClassifier(
-                base_estimator=CustomSVC(),
-                random_state=1,
-                **params
-            ).fit(X_train_sparse, y_train)
-            sparse_results = sparse_classifier.predict(X_test_sparse)
-
-            # Trained on dense format
-            dense_results = BaggingClassifier(
-                base_estimator=CustomSVC(),
-                random_state=1,
-                **params
-            ).fit(X_train, y_train).predict(X_test)
+                # Trained on dense format
+                dense_classifier = BaggingClassifier(
+                    base_estimator=CustomSVC(),
+                    random_state=1,
+                    **params
+                ).fit(X_train, y_train)
+                dense_results = getattr(dense_classifier, f)(X_test)
+                assert_array_equal(sparse_results, dense_results)
 
             sparse_type = type(X_train_sparse)
             types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-            assert_array_equal(sparse_results, dense_results)
             assert all([t == sparse_type for t in types])
 
 
