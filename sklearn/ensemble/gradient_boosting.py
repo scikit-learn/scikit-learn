@@ -1184,6 +1184,37 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         # Default implementation
         return y
 
+    def apply(self, X):
+        """Apply trees in the forest to X, return leaf indices.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        X_leaves : array_like, shape = [n_samples, n_estimators]
+            For each datapoint x in X and for each tree in the forest,
+            return the index of the leaf x ends up in.
+        """
+
+        if self.estimators_ is None or len(self.estimators_) == 0:
+            raise NotFittedError("Estimator not fitted, "
+                                 "call `fit` before exploiting the model.")
+
+        X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
+
+        n_estimators, n_classes = self.estimators_.shape
+        leaves = np.zeros((X.shape[0], n_estimators, n_classes))
+
+        for i in range(n_estimators):
+            for j in range(n_classes):
+                leaves[:, i, j] = self.estimators_[i, j].apply(X)
+
+        return leaves
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
@@ -1507,7 +1538,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         except AttributeError:
             raise AttributeError('loss=%r does not support predict_proba' %
                                  self.loss)
-
 
 class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     """Gradient Boosting for regression.
