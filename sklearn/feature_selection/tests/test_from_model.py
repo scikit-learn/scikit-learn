@@ -108,9 +108,8 @@ def test_partial_fit():
 
 
 def test_warm_start():
-    est = PassiveAggressiveClassifier()
-    transformer = SelectFromModel(estimator=est,
-                                  warm_start=True)
+    est = PassiveAggressiveClassifier(warm_start=True)
+    transformer = SelectFromModel(estimator=est)
     transformer.fit(iris.data, iris.target)
     id_1 = id(transformer.estimator_)
     transformer.fit(iris.data, iris.target)

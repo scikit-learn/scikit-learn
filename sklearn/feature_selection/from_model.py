@@ -200,10 +200,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
             available, the object attribute ``threshold`` is used. Otherwise,
             "mean" is used by default.
 
-    warm_start : bool, optional
-        When set to True, reuse the solution of the previous call to fit as
-        initialization, otherwise, just erase the previous solution.
-
     Attributes
     ----------
     `estimator_`: an estimator
@@ -216,10 +212,9 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         The threshold value used for feature selection.
     """
 
-    def __init__(self, estimator, threshold=None, warm_start=False):
+    def __init__(self, estimator, threshold=None):
         self.estimator = estimator
         self.threshold = threshold
-        self.warm_start = warm_start
 
     def _get_support_mask(self):
         self.threshold_ = _calculate_threshold(self.estimator, self.scores_,
@@ -245,9 +240,8 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        if not (self.warm_start and hasattr(self,"estimator_")):
+        if not hasattr(self, "estimator_"):
             self.estimator_ = clone(self.estimator)
-
         self.estimator_.fit(X, y, **fit_params)
         self.scores_ = _get_feature_importances(self.estimator_, X)
         return self
