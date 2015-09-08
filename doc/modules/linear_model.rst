@@ -692,13 +692,12 @@ Setting `multi_class` to "multinomial" with the "lbfgs" or "newton-cg" solver
 in :class:`LogisticRegression` learns a true multinomial logistic
 regression model, which means that its probability estimates should
 be better calibrated than the default "one-vs-rest" setting.
-"lbfgs" and "newton-cg" solvers cannot optimize L1-penalized models, though,
-so the "multinomial" setting does not learn sparse models.
+"lbfgs", "newton-cg" and "sag" solvers cannot optimize L1-penalized models, though, so the "multinomial" setting does not learn sparse models.
 
 The solver "sag" uses a Stochastic Average Gradient descent [3]_. It does not
 handle "multinomial" case, and is limited to L2-penalized models, yet it is
-faster than other solvers for large datasets, when both the number of samples
-and the number of features are large.
+often faster than other solvers for large datasets, when both the number of
+samples and the number of features are large.
 
 In a nutshell, one may choose the solver with the following rules:
 

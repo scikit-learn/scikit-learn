@@ -157,8 +157,8 @@ def sag(SequentialDataset dataset,
                     break
 
                 # find the current prediction, gradient
-                p = (wscale * dot(x_data_ptr, x_ind_ptr,
-                                  weights, xnnz)) + intercept
+                p = (wscale * sparse_dot(x_data_ptr, x_ind_ptr, xnnz,
+                                         weights)) + intercept
                 gradient = loss._dloss(p, y) * sample_weight
 
                 # make the updates to the sum of gradients
@@ -257,15 +257,17 @@ cdef void scale_weights(double* weights, double wscale, int n_features,
     cumulative_sums[itr % n_samples] = 0.0
 
 
-cdef double dot(double* x_data_ptr, int* x_ind_ptr, double* w_data_ptr,
-                int xnnz) nogil:
-        cdef int j, idx
-        cdef double innerprod = 0.0
+cdef double sparse_dot(double* x_data_ptr, int* x_ind_ptr, int xnnz,
+                       double* w_data_ptr) nogil:
+    """Compute dot product between sparse vector x and dense vector w."""
+    cdef int j, idx
+    cdef double innerprod = 0.0
 
-        for j in range(xnnz):
-            idx = x_ind_ptr[j]
-            innerprod += w_data_ptr[idx] * x_data_ptr[j]
-        return innerprod
+    # only consider nonzero values of x
+    for j in range(xnnz):
+        idx = x_ind_ptr[j]
+        innerprod += w_data_ptr[idx] * x_data_ptr[j]
+    return innerprod
 
 
 def get_max_squared_sum(X):

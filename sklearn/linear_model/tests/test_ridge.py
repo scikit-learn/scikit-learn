@@ -119,13 +119,13 @@ def test_ridge_sample_weights():
                 X = rng.randn(n_samples, n_features)
                 sample_weight = 1 + rng.rand(n_samples)
 
-                coefs, _ = ridge_regression(X, y,
-                                            alpha=alpha,
-                                            sample_weight=sample_weight,
-                                            solver=solver)
+                coefs = ridge_regression(X, y,
+                                         alpha=alpha,
+                                         sample_weight=sample_weight,
+                                         solver=solver)
                 # Sample weight can be implemented via a simple rescaling
                 # for the square loss.
-                coefs2, _ = ridge_regression(
+                coefs2 = ridge_regression(
                     X * np.sqrt(sample_weight)[:, np.newaxis],
                     y * np.sqrt(sample_weight),
                     alpha=alpha, solver=solver)

@@ -18,7 +18,7 @@ from scipy import sparse
 from scipy.sparse import linalg as sp_linalg
 
 from .base import LinearClassifierMixin, LinearModel, _rescale_data
-from .sag import sag_ridge
+from .sag import sag_solver
 from .sag_fast import get_max_squared_sum
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
@@ -193,7 +193,8 @@ def _solve_svd(X, y, alpha):
 
 
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
-                     max_iter=None, tol=1e-3, verbose=0, random_state=None):
+                     max_iter=None, tol=1e-3, verbose=0, random_state=None,
+                     return_n_iter=False):
     """Solve the ridge equation by the method of normal equations.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
@@ -244,8 +245,11 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
           in old scipy versions. It also uses an iterative procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent. It also uses an
-          iterative procedure, and is faster than other solvers when both
-          n_samples and n_features are large.
+          iterative procedure, and is often faster than other solvers when
+          both n_samples and n_features are large. Note that 'sag' fast
+          convergence is only guaranteed on features with approximately the
+          same scale. You can preprocess the data with a scaler from
+          sklearn.preprocessing.
 
         All last four solvers support both dense and sparse data.
 
@@ -260,10 +264,18 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         The seed of the pseudo random number generator to use when
         shuffling the data. Used in 'sag' solver.
 
+    return_n_iter : boolean, default False
+        If True, the method also returns `n_iter`, the actual number of
+        iteration performed by the solver.
+
     Returns
     -------
     coef : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
+
+    n_iter : int, optional
+        The actual number of iteration performed by the solver.
+        Only returned if `return_n_iter` is True.
 
     Notes
     -----
@@ -364,9 +376,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         coef = np.empty((y.shape[1], n_features))
         n_iter = np.empty(y.shape[1], dtype=np.int32)
         for i, (alpha_i, target) in enumerate(zip(alpha, y.T)):
-            coef_, n_iter_ = sag_ridge(
-                X, target.ravel(), sample_weight, alpha_i, max_iter, tol,
-                verbose, random_state, False, max_squared_sum)
+            coef_, n_iter_, _ = sag_solver(
+                X, target.ravel(), sample_weight, 'squared', alpha_i,
+                max_iter, tol, verbose, random_state, False, max_squared_sum,
+                dict())
             coef[i] = coef_
             n_iter[i] = n_iter_
 
@@ -382,7 +395,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         # When y was passed as a 1d-array, we flatten the coefficients.
         coef = coef.ravel()
 
-    return coef, n_iter
+    if return_n_iter:
+        return coef, n_iter
+    else:
+        return coef
 
 
 class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
@@ -415,7 +431,7 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.coef_, self.n_iter_ = ridge_regression(
             X, y, alpha=self.alpha, sample_weight=sample_weight,
             max_iter=self.max_iter, tol=self.tol, solver=self.solver,
-            random_state=self.random_state)
+            random_state=self.random_state, return_n_iter=True)
 
         self._set_intercept(X_mean, y_mean, X_std)
         return self
@@ -479,8 +495,11 @@ class Ridge(_BaseRidge, RegressorMixin):
           in old scipy versions. It also uses an iterative procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent. It also uses an
-          iterative procedure, and is faster than other solvers when both
-          n_samples and n_features are large.
+          iterative procedure, and is often faster than other solvers when
+          both n_samples and n_features are large. Note that 'sag' fast
+          convergence is only guaranteed on features with approximately the
+          same scale. You can preprocess the data with a scaler from
+          sklearn.preprocessing.
 
         All last four solvers support both dense and sparse data.
 
@@ -624,15 +643,13 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     coef_ : array, shape (n_features,) or (n_classes, n_features)
         Weight vector(s).
 
-<<<<<<< HEAD
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
-=======
+
     n_iter_ : array or None, shape (n_targets,)
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
->>>>>>> ENH add n_iter in ridge
 
     See also
     --------

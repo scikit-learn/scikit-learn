@@ -16,7 +16,7 @@ import numpy as np
 from scipy import optimize, sparse
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
-from .sag import sag_logistic
+from .sag import sag_solver
 from .sag_fast import get_max_squared_sum
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..preprocessing import LabelEncoder, LabelBinarizer
@@ -694,9 +694,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 w0 = coef_.ravel()
 
         elif solver == 'sag':
-            warm_start_sag, n_iter_i = sag_logistic(
-                X, target, sample_weight, 1. / C, max_iter, tol, verbose,
-                random_state, False, max_squared_sum, warm_start_sag)
+            w0, n_iter_i, warm_start_sag = sag_solver(
+                X, target, sample_weight, 'log', 1. / C, max_iter, tol,
+                verbose, random_state, False, max_squared_sum,
+                warm_start_sag)
             w0 = warm_start_sag['coef']
         else:
             raise ValueError("solver must be one of {'liblinear', 'lbfgs', "
@@ -965,6 +966,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             multinomial loss; 'sag' and 'liblinear' are limited to
             one-versus-rest schemes.
         - 'newton-cg', 'lbfgs' and 'sag' only handle L2 penalty.
+        Note that 'sag' fast convergence is only guaranteed on features with
+        approximately the same scale. You can preprocess the data with a
+        scaler from sklearn.preprocessing.
 
     tol : float, optional
         Tolerance for stopping criteria.
