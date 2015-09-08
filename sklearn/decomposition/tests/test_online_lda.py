@@ -13,7 +13,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import if_not_mac_os
+from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
 from sklearn.utils.validation import NotFittedError
 from sklearn.externals.six.moves import xrange
@@ -187,7 +187,7 @@ def test_lda_transform_mismatch():
     assert_raises_regexp(ValueError, r"^The provided data has", lda.partial_fit, X_2)
 
 
-@if_not_mac_os()
+@if_safe_multiprocessing_with_blas
 def test_lda_multi_jobs():
     # Test LDA batch training with multi CPU
     for method in ('online', 'batch'):
@@ -203,7 +203,7 @@ def test_lda_multi_jobs():
             assert_true(tuple(sorted(top_idx)) in correct_idx_grps)
 
 
-@if_not_mac_os()
+@if_safe_multiprocessing_with_blas
 def test_lda_partial_fit_multi_jobs():
     # Test LDA online training with multi CPU
     rng = np.random.RandomState(0)

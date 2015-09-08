@@ -676,6 +676,10 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
     """Test decorator that skips test if OS is Mac OS X and its
     major version is one of ``versions``.
     """
+    warnings.warn("if_not_mac_os is deprecated in 0.17 and will be removed"
+                  " in 0.19: use the safer and more generic"
+                  " if_safe_multiprocessing_with_blas instead",
+                  DeprecationWarning)
     mac_version, _, _ = platform.mac_ver()
     skip = '.'.join(mac_version.split('.')[:2]) in versions
 
@@ -686,6 +690,33 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
                 raise SkipTest(message)
         return func
     return decorator
+
+
+def if_safe_multiprocessing_with_blas(func):
+    """Decorator for tests involving both BLAS calls and multiprocessing
+
+    Under Python < 3.4 and POSIX (e.g. Linux or OSX), using multiprocessing in
+    conjunction with some implementation of BLAS (or other libraries that
+    manage an internal posix thread pool) can cause a crash or a freeze of the
+    Python process.
+
+    Under Python 3.4 and later, joblib uses the forkserver mode of
+    multiprocessing which does not trigger this problem.
+
+    In practice all known packaged distributions (from Linux distros or
+    Anaconda) of BLAS under Linux seems to be safe. So we this problem seems to
+    only impact OSX users.
+
+    This wrapper makes it possible to skip tests that can possibly cause
+    this crash under OSX with.
+    """
+    @wraps(func)
+    def run_test(*args, **kwargs):
+        if sys.platform == 'darwin' and sys.version_info[:2] < (3, 4):
+            raise SkipTest(
+                "Possible multi-process bug with some BLAS under Python < 3.4")
+        return func(*args, **kwargs)
+    return run_test
 
 
 def clean_warning_registry():
