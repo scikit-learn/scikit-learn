@@ -26,11 +26,12 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
 
     max_iter : int, optional
         The maximum number of passes over the training data (aka epochs).
-        The maximum number of iterations is set to 1 if using partial_fit.
-        Defaults to 5.
+        It only impacts the behavior in the `fit` method, and not the
+        `partial_fit`. Defaults to 5. Defaults to 100 in 0.19.
 
     tol : float, optional
-        The tolerance for the stopping criterion. Default to 1e-4.
+        The tolerance for the stopping criterion.
+        Defaults to 0. Defaults to 1e-4 in 0.19.
 
     shuffle : bool, optional, default True
         Whether or not the training data should be shuffled after each epoch.
@@ -95,7 +96,7 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
     https://en.wikipedia.org/wiki/Perceptron and references therein.
     """
     def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
-                 max_iter=5, tol=1e-4, shuffle=True, verbose=0, eta0=1.0,
+                 max_iter=5, tol=None, shuffle=True, verbose=0, eta0=1.0,
                  n_jobs=1, random_state=0, class_weight=None,
                  warm_start=False, n_iter=None):
         super(Perceptron, self).__init__(loss="perceptron",

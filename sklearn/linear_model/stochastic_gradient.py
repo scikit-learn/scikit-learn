@@ -49,7 +49,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
     """Base class for SGD classification and regression."""
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
-                 l1_ratio=0.15, fit_intercept=True, max_iter=5, tol=1e-4,
+                 l1_ratio=0.15, fit_intercept=True, max_iter=5, tol=None,
                  shuffle=True, verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  warm_start=False, average=False, n_iter=None):
@@ -72,14 +72,22 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self.average = average
 
         if n_iter is not None:
-            warnings.warn("n_iter parameter is deprecated and will be removed"
-                          " in 0.19. Use max_iter and tol instead.",
+            warnings.warn("n_iter parameter is deprecated in 0.17 and will be"
+                          " removed in 0.19. Use max_iter and tol instead.",
                           DeprecationWarning)
             self.max_iter = n_iter
             self.tol = 0.
 
-        self._validate_params()
+        if tol is None:
+            warnings.warn("tol parameter has been added in 0.17. "
+                          "Set it to a positive value to stop the method "
+                          "before maximum number of iteration. "
+                          "Set it to 0 to force the number of iteration. "
+                          "In 0.19, default tol value will be changed to 1e-4"
+                          ", and default max_iter value will be changed to "
+                          "100.", DeprecationWarning)
 
+        self._validate_params()
         self.coef_ = None
 
         if self.average > 0:
@@ -104,7 +112,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             raise ValueError("shuffle must be either True or False")
         if self.max_iter <= 0:
             raise ValueError("max_iter must be > zero")
-        if self.tol < 0:
+        if self.tol is not None and self.tol < 0:
             raise ValueError("tol must be >= zero")
         if not (0.0 <= self.l1_ratio <= 1.0):
             raise ValueError("l1_ratio must be in [0, 1]")
@@ -280,10 +288,12 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     # Windows
     seed = random_state.randint(0, np.iinfo(np.int32).max)
 
+    tol = 0 if est.tol is None else est.tol
+
     if not est.average:
         return plain_sgd(coef, intercept, est.loss_function,
                          penalty_type, alpha, C, est.l1_ratio,
-                         dataset, max_iter, est.tol, int(est.fit_intercept),
+                         dataset, max_iter, tol, int(est.fit_intercept),
                          int(est.verbose), int(est.shuffle), seed,
                          pos_weight, neg_weight,
                          learning_rate_type, est.eta0,
@@ -294,7 +304,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
             n_iter_ = average_sgd(coef, intercept, average_coef,
                                   average_intercept, est.loss_function,
                                   penalty_type, alpha, C, est.l1_ratio,
-                                  dataset, max_iter, est.tol,
+                                  dataset, max_iter, tol,
                                   int(est.fit_intercept), int(est.verbose),
                                   int(est.shuffle), seed, pos_weight,
                                   neg_weight, learning_rate_type, est.eta0,
@@ -327,7 +337,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
     @abstractmethod
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
-                 l1_ratio=0.15, fit_intercept=True, max_iter=5, tol=1e-4,
+                 l1_ratio=0.15, fit_intercept=True, max_iter=5, tol=None,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1,
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, class_weight=None, warm_start=False,
@@ -429,7 +439,9 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         self._partial_fit(X, y, alpha, C, loss, learning_rate, self.max_iter,
                           classes, sample_weight, coef_init, intercept_init)
 
-        if self.n_iter_ == self.max_iter:
+        if (self.tol is not None
+           and self.tol > 0
+           and self.n_iter_ == self.max_iter):
             warnings.warn("Maximum number of iteration reached before "
                           "convergence. Consider increasing max_iter to "
                           "improve the fit.",
@@ -477,6 +489,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                 1., sample_weight)
             for i in range(len(self.classes_)))
 
+        # take the maximum of n_iter_ over every binary fit
         n_iter_ = 0.
         for i, (_, intercept, n_iter_i) in enumerate(result):
             self.intercept_[i] = intercept
@@ -630,11 +643,12 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     max_iter : int, optional
         The maximum number of passes over the training data (aka epochs).
-        The maximum number of iterations is set to 1 if using partial_fit.
-        Defaults to 5.
+        It only impacts the behavior in the `fit` method, and not the
+        `partial_fit`. Defaults to 5. Defaults to 100 in 0.19.
 
     tol : float, optional
-        The tolerance for the stopping criterion. Default to 1e-4.
+        The tolerance for the stopping criterion.
+        Defaults to 0. Defaults to 1e-4 in 0.19.
 
     shuffle : bool, optional
         Whether or not the training data should be shuffled after each epoch.
@@ -717,14 +731,14 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     >>> from sklearn import linear_model
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> Y = np.array([1, 1, 2, 2])
-    >>> clf = linear_model.SGDClassifier()
+    >>> clf = linear_model.SGDClassifier(tol=0.)
     >>> clf.fit(X, Y)
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
            eta0=0.0, fit_intercept=True, l1_ratio=0.15,
            learning_rate='optimal', loss='hinge', max_iter=5, n_iter=None,
            n_jobs=1, penalty='l2', power_t=0.5, random_state=None,
-           shuffle=True, tol=0.0001, verbose=0, warm_start=False)
+           shuffle=True, tol=0.0, verbose=0, warm_start=False)
 
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -736,7 +750,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     """
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
-                 fit_intercept=True, max_iter=5, tol=1e-4, shuffle=True,
+                 fit_intercept=True, max_iter=5, tol=None, shuffle=True,
                  verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1,
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, class_weight=None, warm_start=False,
@@ -877,7 +891,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     @abstractmethod
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-                 l1_ratio=0.15, fit_intercept=True, max_iter=5, tol=1e-4,
+                 l1_ratio=0.15, fit_intercept=True, max_iter=5, tol=None,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
                  power_t=0.25, warm_start=False, average=False, n_iter=None):
@@ -971,9 +985,19 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Clear iteration count for multiple call to fit.
         self.t_ = None
 
-        return self._partial_fit(X, y, alpha, C, loss, learning_rate,
-                                 self.max_iter, sample_weight, coef_init,
-                                 intercept_init)
+        self._partial_fit(X, y, alpha, C, loss, learning_rate,
+                          self.max_iter, sample_weight, coef_init,
+                          intercept_init)
+
+        if (self.tol is not None
+           and self.tol > 0
+           and self.n_iter_ == self.max_iter):
+            warnings.warn("Maximum number of iteration reached before "
+                          "convergence. Consider increasing max_iter to "
+                          "improve the fit.",
+                          ConvergenceWarning)
+
+        return self
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             sample_weight=None):
@@ -1071,6 +1095,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Windows
         seed = random_state.randint(0, np.iinfo(np.int32).max)
 
+        tol = 0 if self.tol is None else self.tol
+
         if self.average > 0:
             self.standard_coef_, self.standard_intercept_, \
                 self.average_coef_, self.average_intercept_, self.n_iter_ =\
@@ -1083,7 +1109,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                             alpha, C,
                             self.l1_ratio,
                             dataset,
-                            max_iter, self.tol,
+                            max_iter, tol,
                             int(self.fit_intercept),
                             int(self.verbose),
                             int(self.shuffle),
@@ -1113,7 +1139,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                           alpha, C,
                           self.l1_ratio,
                           dataset,
-                          max_iter, self.tol,
+                          max_iter, tol,
                           int(self.fit_intercept),
                           int(self.verbose),
                           int(self.shuffle),
@@ -1179,11 +1205,12 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     max_iter : int, optional
         The maximum number of passes over the training data (aka epochs).
-        The maximum number of iterations is set to 1 if using partial_fit.
-        Defaults to 5.
+        It only impacts the behavior in the `fit` method, and not the
+        `partial_fit`. Defaults to 5. Defaults to 100 in 0.19.
 
     tol : float, optional
-        The tolerance for the stopping criterion. Default to 1e-4.
+        The tolerance for the stopping criterion.
+        Defaults to 0. Defaults to 1e-4 in 0.19.
 
     shuffle : bool, optional
         Whether or not the training data should be shuffled after each epoch.
@@ -1255,13 +1282,13 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = linear_model.SGDRegressor()
+    >>> clf = linear_model.SGDRegressor(tol=0.)
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDRegressor(alpha=0.0001, average=False, epsilon=0.1, eta0=0.01,
            fit_intercept=True, l1_ratio=0.15, learning_rate='invscaling',
            loss='squared_loss', max_iter=5, n_iter=None, penalty='l2',
-           power_t=0.25, random_state=None, shuffle=True, tol=0.0001,
+           power_t=0.25, random_state=None, shuffle=True, tol=0.0,
            verbose=0, warm_start=False)
 
 
@@ -1271,7 +1298,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-                 l1_ratio=0.15, fit_intercept=True, max_iter=5, tol=1e-4,
+                 l1_ratio=0.15, fit_intercept=True, max_iter=5, tol=None,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
                  power_t=0.25, warm_start=False, average=False, n_iter=None):

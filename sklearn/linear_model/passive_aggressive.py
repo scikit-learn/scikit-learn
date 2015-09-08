@@ -23,11 +23,12 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     max_iter : int, optional
         The maximum number of passes over the training data (aka epochs).
-        The maximum number of iterations is set to 1 if using partial_fit.
-        Defaults to 5.
+        It only impacts the behavior in the `fit` method, and not the
+        `partial_fit`. Defaults to 5. Defaults to 100 in 0.19.
 
     tol : float, optional
-        The tolerance for the stopping criterion. Default to 1e-4.
+        The tolerance for the stopping criterion.
+        Defaults to 0. Defaults to 1e-4 in 0.19.
 
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
@@ -92,7 +93,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    def __init__(self, C=1.0, fit_intercept=True, max_iter=5, tol=1e-4,
+    def __init__(self, C=1.0, fit_intercept=True, max_iter=5, tol=None,
                  shuffle=True, verbose=0, loss="hinge", n_jobs=1,
                  random_state=None, warm_start=False, class_weight=None,
                  n_iter=None):
@@ -200,11 +201,12 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     max_iter : int, optional
         The maximum number of passes over the training data (aka epochs).
-        The maximum number of iterations is set to 1 if using partial_fit.
-        Defaults to 5.
+        It only impacts the behavior in the `fit` method, and not the
+        `partial_fit`. Defaults to 5. Defaults to 100 in 0.19.
 
     tol : float, optional
-        The tolerance for the stopping criterion. Default to 1e-4.
+        The tolerance for the stopping criterion.
+        Defaults to 0. Defaults to 1e-4 in 0.19.
 
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
@@ -250,8 +252,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-
-    def __init__(self, C=1.0, fit_intercept=True, max_iter=5, tol=1e-4,
+    def __init__(self, C=1.0, fit_intercept=True, max_iter=5, tol=None,
                  shuffle=True, verbose=0, loss="epsilon_insensitive",
                  epsilon=DEFAULT_EPSILON, random_state=None, warm_start=False,
                  n_iter=None):
