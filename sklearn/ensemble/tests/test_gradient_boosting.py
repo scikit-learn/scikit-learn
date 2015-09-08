@@ -66,6 +66,9 @@ def test_classification_toy():
         assert np.any(deviance_decrease >= 0.0), \
             "Train deviance does not monotonically decrease."
 
+        leaves = clf.apply(X)
+        assert leaves.shape == (6, 10, 1)
+
 
 def test_parameter_checks():
     # Check input parameter validation.

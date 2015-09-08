@@ -58,6 +58,7 @@ cdef class Criterion:
                                 double* impurity_right) nogil
     cdef void node_value(self, double* dest) nogil
     cdef double impurity_improvement(self, double impurity) nogil
+    cdef double proxy_impurity_improvement(self) nogil
 
 
 # =============================================================================
