@@ -403,9 +403,6 @@ class LabelKFold(_BaseKFold):
         super(LabelKFold, self).__init__(len(labels), n_folds, shuffle,
                                          random_state)
 
-        self.n = len(labels)
-        self.n_folds = n_folds
-
         unique_labels, labels = np.unique(labels, return_inverse=True)
         n_labels = len(unique_labels)
 
