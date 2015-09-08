@@ -34,9 +34,12 @@ New features
      function into a ``Pipeline``-compatible transformer object.
      By Joe Jevnik.
 
-   - :class:`cross_validation.LabelShuffleSplit` generates random train-test
-     splits, similar to :class:`cross_validation.ShuffleSplit`, except that
-     the splits are conditioned on a label array. By `Brian McFee`_.
+   - The new classes :class:`cross_validation.LabelKFold` and
+     :class:`cross_validation.LabelShuffleSplit` generate train-test folds,
+     respectively similar to :class:`cross_validation.KFold` and
+     :class:`cross_validation.ShuffleSplit`, except that the folds are
+     conditioned on a label array. By `Brian McFee`_, Jean Kossaifi and
+     `Gilles Louppe`_.
 
 
 Enhancements

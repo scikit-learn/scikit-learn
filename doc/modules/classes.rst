@@ -162,15 +162,17 @@ Classes
    :template: class.rst
 
    cross_validation.KFold
+   cross_validation.LabelKFold
+   cross_validation.LabelShuffleSplit
    cross_validation.LeaveOneLabelOut
    cross_validation.LeaveOneOut
    cross_validation.LeavePLabelOut
    cross_validation.LeavePOut
    cross_validation.PredefinedSplit
-   cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
-   cross_validation.LabelShuffleSplit
+   cross_validation.StratifiedKFold
    cross_validation.StratifiedShuffleSplit
+
 
 .. autosummary::
    :toctree: generated/

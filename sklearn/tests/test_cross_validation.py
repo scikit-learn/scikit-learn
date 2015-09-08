@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -356,6 +357,71 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     mean_score = cval.cross_val_score(model, X, y, cv=cv).mean()
     assert_greater(0.88, mean_score)
     assert_greater(mean_score, 0.85)
+
+
+def test_label_kfold():
+    rng = np.random.RandomState(0)
+
+    # Parameters of the test
+    n_labels = 15
+    n_samples = 1000
+    n_folds = 5
+
+    # Construct the test data
+    tolerance = 0.05 * n_samples  # 5 percent error allowed
+    labels = rng.randint(0, n_labels, n_samples)
+    folds = cval.LabelKFold(labels, n_folds).idxs
+    ideal_n_labels_per_fold = n_samples // n_folds
+
+    # Check that folds have approximately the same size
+    assert_equal(len(folds), len(labels))
+    for i in np.unique(folds):
+        assert_greater_equal(tolerance,
+                             abs(sum(folds == i) - ideal_n_labels_per_fold))
+
+    # Check that each label appears only in 1 fold
+    for label in np.unique(labels):
+        assert_equal(len(np.unique(folds[labels == label])), 1)
+
+    # Check that no label is on both sides of the split
+    labels = np.asarray(labels, dtype=object)
+    for train, test in cval.LabelKFold(labels, n_folds=n_folds):
+        assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
+
+    # Construct the test data
+    labels = ['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
+              'Francis', 'Robert', 'Michel', 'Rachel', 'Lois',
+              'Michelle', 'Bernard', 'Marion', 'Laura', 'Jean',
+              'Rachel', 'Franck', 'John', 'Gael', 'Anna', 'Alix',
+              'Robert', 'Marion', 'David', 'Tony', 'Abel', 'Becky',
+              'Madmood', 'Cary', 'Mary', 'Alexandre', 'David', 'Francis',
+              'Barack', 'Abdoul', 'Rasha', 'Xi', 'Silvia']
+
+    n_labels = len(np.unique(labels))
+    n_samples = len(labels)
+    n_folds = 5
+    tolerance = 0.05 * n_samples  # 5 percent error allowed
+    folds = cval.LabelKFold(labels, n_folds).idxs
+    ideal_n_labels_per_fold = n_samples // n_folds
+
+    # Check that folds have approximately the same size
+    assert_equal(len(folds), len(labels))
+    for i in np.unique(folds):
+        assert_greater_equal(tolerance,
+                             abs(sum(folds == i) - ideal_n_labels_per_fold))
+
+    # Check that each label appears only in 1 fold
+    for label in np.unique(labels):
+        assert_equal(len(np.unique(folds[labels == label])), 1)
+
+    # Check that no label is on both sides of the split
+    labels = np.asarray(labels, dtype=object)
+    for train, test in cval.LabelKFold(labels, n_folds=n_folds):
+        assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
+
+    # Should fail if there are more folds than labels
+    labels = np.array([1, 1, 1, 2, 2])
+    assert_raises(ValueError, cval.LabelKFold, labels, n_folds=3)
 
 
 def test_shuffle_split():
