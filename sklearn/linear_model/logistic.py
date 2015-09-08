@@ -22,7 +22,7 @@ from ..svm.base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
 from ..utils.extmath import (logsumexp, log_logistic, safe_sparse_dot,
-                             squared_norm)
+                             softmax, squared_norm)
 from ..utils.optimize import newton_cg
 from ..utils.validation import (as_float_array, DataConversionWarning,
                                 check_X_y, NotFittedError)
@@ -1111,11 +1111,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if calculate_ovr:
             return super(LogisticRegression, self)._predict_proba_lr(X)
         else:
-            prob = self.decision_function(X)
-            np.exp(prob, prob)
-            sum_prob = np.sum(prob, axis=1).reshape((-1, 1))
-            prob /= sum_prob
-            return prob
+            return softmax(self.decision_function(X), copy=False)
 
     def predict_log_proba(self, X):
         """Log of probability estimates.
