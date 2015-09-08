@@ -538,9 +538,9 @@ def test_predict():
 
 
 def test_score():
-    km1 = KMeans(n_clusters=n_clusters, max_iter=1, random_state=42)
+    km1 = KMeans(n_clusters=n_clusters, max_iter=1, random_state=42, n_init=1)
     s1 = km1.fit(X).score(X)
-    km2 = KMeans(n_clusters=n_clusters, max_iter=10, random_state=42)
+    km2 = KMeans(n_clusters=n_clusters, max_iter=10, random_state=42, n_init=1)
     s2 = km2.fit(X).score(X)
     assert_greater(s2, s1)
 
@@ -634,6 +634,12 @@ def test_fit_transform():
     X1 = KMeans(n_clusters=3, random_state=51).fit(X).transform(X)
     X2 = KMeans(n_clusters=3, random_state=51).fit_transform(X)
     assert_array_equal(X1, X2)
+
+
+def test_predict_equal_labels():
+    km = KMeans( random_state=13, n_jobs=1, n_init=1, max_iter=1)
+    km.fit(X)
+    assert_array_equal(km.predict(X), km.labels_)
 
 
 def test_n_init():

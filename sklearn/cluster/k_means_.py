@@ -405,6 +405,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
     n_iter : int
         Number of iterations run.
     """
+    shift = np.inf
     random_state = check_random_state(random_state)
 
     best_labels, best_inertia, best_centers = None, None, None
@@ -442,10 +443,19 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
             best_centers = centers.copy()
             best_inertia = inertia
 
-        if squared_norm(centers_old - centers) <= tol:
+        shift = squared_norm(centers_old - centers)
+        if shift <= tol:
             if verbose:
                 print("Converged at iteration %d" % i)
+
             break
+
+        if shift > 0:
+            best_labels, best_inertia = \
+                _labels_inertia(X, x_squared_norms, best_centers,
+                                precompute_distances=precompute_distances,
+                                distances=distances)
+
     return best_labels, best_inertia, best_centers, i + 1
 
 
