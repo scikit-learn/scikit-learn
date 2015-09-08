@@ -250,13 +250,18 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         self._right_mask = np.packbits(right_mask).view(dtype=HASH_DTYPE)
 
     def _find_prefix_range(self, bin_queries, depth):
-        """Finds candidates with a matching prefix range"""
+        """Finds candidates with a matching prefix range.
+
+        depth is a scalar. bin_queries pertain to a single query through
+        different hash functions.
+        """
         candidates = []
         if (depth <= self._memorized_prefix_length):
+            index_offset = 2**(self._memorized_prefix_length - depth)
             prefixes = bin_queries // (2**(MAX_HASH_SIZE - depth))
             for i in range(self.n_estimators):
                 start = self._prefix_index[i, prefixes[i]]
-                stop = self._prefix_index[i, prefixes[i] + 1]
+                stop = self._prefix_index[i, prefixes[i] + index_offset]
                 candidates += self.original_indices_[i][start:stop].tolist()
             return candidates
         else:
@@ -264,14 +269,10 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             left_mask = self._left_mask[depth]
             right_mask = self._right_mask[depth]
             for i in range(self.n_estimators):
-                start, stop = _find_prefix_range_bisect(self.trees_[i]
-                                                        [self._prefix_index
-                                                         [i, prefixes[i]]:
-                                                         self._prefix_index
-                                                         [i, prefixes[i] + 1]],
-                                                        bin_queries[i],
-                                                        left_mask,
-                                                        right_mask)
+                start, stop = _find_prefix_range_bisect(
+                    self.trees_[i][self._prefix_index[i, prefixes[i]]:
+                                   self._prefix_index[i, prefixes[i] + 1]],
+                    bin_queries[i], left_mask, right_mask)
                 start += self._prefix_index[i, prefixes[i]]
                 stop += self._prefix_index[i, prefixes[i]]
                 candidates += self.original_indices_[i][start:stop].tolist()
@@ -334,16 +335,9 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         while (max_depth > self.min_hash_match and
                ratio_within_radius > threshold):
-            left_mask = self._left_mask[max_depth]
-            right_mask = self._right_mask[max_depth]
-            candidates = []
-            for i in range(self.n_estimators):
-                start, stop = _find_prefix_range_bisect(self.trees_[i],
-                                                        bin_queries[i],
-                                                        left_mask, right_mask)
-                candidates.extend(
-                    self.original_indices_[i][start:stop].tolist())
-            candidates = np.setdiff1d(candidates, total_candidates)
+            candidates = np.setdiff1d(self._find_prefix_range(bin_queries,
+                                                              max_depth),
+                                      total_candidates)
             total_candidates = np.append(total_candidates, candidates)
             ranks, distances = self._compute_distances(query, candidates)
             m = np.searchsorted(distances, radius, side='right')
