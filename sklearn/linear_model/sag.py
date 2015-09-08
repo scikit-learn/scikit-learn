@@ -14,10 +14,10 @@ from .sgd_fast import Log, SquaredLoss
 from .sag_fast import sag, get_max_squared_sum
 
 
-def get_auto_step_size(max_squared_sum, alpha, loss, fit_intercept):
+def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept):
     """Compute automatic step size for SAG solver
 
-    The step size is set to 1 / (alpha + L + fit_intercept) where L is
+    The step size is set to 1 / (alpha_scaled + L + fit_intercept) where L is
     the max sum of squares for over all samples.
 
     Parameters
@@ -25,8 +25,9 @@ def get_auto_step_size(max_squared_sum, alpha, loss, fit_intercept):
     max_squared_sum : float
         Maximum squared sum of X over samples.
 
-    alpha : float
-        Constant that multiplies the regularization term. Defaults to 0.0001
+    alpha_scaled : float
+        Constant that multiplies the regularization term, scaled by
+        1. / n_samples, the number of samples.
 
     loss : string, in {"log", "squared"}
         The loss function used in SAG solver.
@@ -43,16 +44,17 @@ def get_auto_step_size(max_squared_sum, alpha, loss, fit_intercept):
     """
     if loss == 'log':
         # inverse Lipschitz constant for log loss
-        return 4.0 / (max_squared_sum + int(fit_intercept) + 4.0 * alpha)
+        return 4.0 / (max_squared_sum + int(fit_intercept)
+                      + 4.0 * alpha_scaled)
     elif loss == 'squared':
         # inverse Lipschitz constant for squared loss
-        return 1.0 / (max_squared_sum + int(fit_intercept) + alpha)
+        return 1.0 / (max_squared_sum + int(fit_intercept) + alpha_scaled)
     else:
         raise ValueError("Unknown loss function for SAG solver, got %s "
                          "instead of 'log' or 'squared'" % loss)
 
 
-def sag_solver(X, y, sample_weight=None, loss='log', alpha=1e-4,
+def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
                max_iter=1000, tol=0.001, verbose=0, random_state=None,
                check_input=True, max_squared_sum=None,
                warm_start_mem=dict()):
@@ -91,7 +93,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1e-4,
         'squared' is used for regression, like in Ridge.
 
     alpha : float, optional
-        Constant that multiplies the regularization term. Defaults to 0.0001
+        Constant that multiplies the regularization term. Defaults to 1.
 
     max_iter: int, optional
         The max number of passes over the training data if the stopping
@@ -177,7 +179,8 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1e-4,
         y = check_array(y, dtype=np.float64, ensure_2d=False, order='C')
 
     n_samples, n_features = X.shape[0], X.shape[1]
-    alpha = float(alpha) / n_samples
+    # As in SGD, the alpha is scaled by n_samples.
+    alpha_scaled = float(alpha) / n_samples
 
     # initialization
     if sample_weight is None:
@@ -226,19 +229,19 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1e-4,
 
     if max_squared_sum is None:
         max_squared_sum = get_max_squared_sum(X)
-    step_size = get_auto_step_size(max_squared_sum, alpha, loss,
+    step_size = get_auto_step_size(max_squared_sum, alpha_scaled, loss,
                                    fit_intercept)
 
-    if step_size * alpha == 1:
+    if step_size * alpha_scaled == 1:
         raise ZeroDivisionError("Current sag implementation does not handle "
-                                "the case step_size * alpha == 1")
+                                "the case step_size * alpha_scaled == 1")
 
     if loss == 'log':
         class_loss = Log()
     elif loss == 'squared':
         class_loss = SquaredLoss()
     else:
-        raise ValueError("Invalid sparseness parameter: got %r instead of "
+        raise ValueError("Invalid loss parameter: got %r instead of "
                          "one of ('log', 'squared')" % loss)
 
     intercept_, num_seen, n_iter_, intercept_sum_gradient = \
@@ -247,7 +250,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1e-4,
             n_features, tol,
             max_iter,
             class_loss,
-            step_size, alpha,
+            step_size, alpha_scaled,
             sum_gradient_init.ravel(),
             gradient_memory_init.ravel(),
             seen_init.ravel(),

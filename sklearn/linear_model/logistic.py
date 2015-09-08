@@ -698,7 +698,6 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 X, target, sample_weight, 'log', 1. / C, max_iter, tol,
                 verbose, random_state, False, max_squared_sum,
                 warm_start_sag)
-            w0 = warm_start_sag['coef']
         else:
             raise ValueError("solver must be one of {'liblinear', 'lbfgs', "
                              "'newton-cg', 'sag'}, got '%s' instead" % solver)

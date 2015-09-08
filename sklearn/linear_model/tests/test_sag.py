@@ -714,7 +714,7 @@ def test_step_size_alpha_error():
     fit_intercept = False
     alpha = 1.
     msg = ("Current sag implementation does not handle the case"
-           " step_size * alpha == 1")
+           " step_size * alpha_scaled == 1")
 
     clf1 = LogisticRegression(solver='sag', C=1. / alpha,
                               fit_intercept=fit_intercept)

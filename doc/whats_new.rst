@@ -158,18 +158,16 @@ Enhancements
      visible with extra trees and on datasets with categorical or sparse
      features. By `Arnaud Joly`_.
 
-<<<<<<< HEAD
    - :class:`ensemble.GradientBoostingRegressor` and
      :class:`ensemble.GradientBoostingClassifier` now expose an ``apply``
      method for retrieving the leaf indices each sample ends up in under
      each try. By `Jacob Schreiber`_.
-=======
+
    - Added optional parameter ``random_state`` in :class:`linear_model.Ridge`
-     , to set the seed of the pseudo random generator used in ``sag`` solver.By `Tom Dupre la Tour`_.
+     , to set the seed of the pseudo random generator used in ``sag`` solver. By `Tom Dupre la Tour`_.
 
    - Added optional parameter ``warm_start`` in
      :class:`linear_model.LogisticRegression`. If set to True, the solvers ``lbfgs``, ``newton-cg`` and ``sag`` will be initialized with the coefficients computed in the previous fit. By `Tom Dupre la Tour`_.
->>>>>>> ENH add sag solver in LogisticRegression and Ridge
 
 Bug fixes
 .........
