@@ -29,11 +29,11 @@ from ..utils import check_array, check_random_state, compute_sample_weight
 from ..utils.validation import NotFittedError
 
 
-from ._tree import Criterion
-from ._tree import Splitter
+from ._criterion import Criterion
+from ._splitter import Splitter
 from ._tree import DepthFirstTreeBuilder, BestFirstTreeBuilder
 from ._tree import Tree
-from . import _tree
+from . import _tree, _splitter, _criterion
 
 __all__ = ["DecisionTreeClassifier",
            "DecisionTreeRegressor",
@@ -48,15 +48,15 @@ __all__ = ["DecisionTreeClassifier",
 DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
-CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
-CRITERIA_REG = {"mse": _tree.MSE, "friedman_mse": _tree.FriedmanMSE}
+CRITERIA_CLF = {"gini": _criterion.Gini, "entropy": _criterion.Entropy}
+CRITERIA_REG = {"mse": _criterion.MSE, "friedman_mse": _criterion.FriedmanMSE}
 
-DENSE_SPLITTERS = {"best": _tree.BestSplitter,
-                   "presort-best": _tree.PresortBestSplitter,
-                   "random": _tree.RandomSplitter}
+DENSE_SPLITTERS = {"best": _splitter.BestSplitter,
+                   "presort-best": _splitter.PresortBestSplitter,
+                   "random": _splitter.RandomSplitter}
 
-SPARSE_SPLITTERS = {"best": _tree.BestSparseSplitter,
-                    "random": _tree.RandomSparseSplitter}
+SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
+                    "random": _splitter.RandomSparseSplitter}
 
 # =============================================================================
 # Base decision tree
