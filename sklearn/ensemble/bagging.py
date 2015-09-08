@@ -634,7 +634,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         check_is_fitted(self, "classes_")
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
-            X = check_array(X)
+            X = check_array(X, accept_sparse=['csr', 'csc'])
 
             if self.n_features_ != X.shape[1]:
                 raise ValueError("Number of features of the model must "
