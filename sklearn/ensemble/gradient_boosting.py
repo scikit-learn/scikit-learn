@@ -1250,7 +1250,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         return y
 
     def apply(self, X):
-        """Apply trees in the forest to X, return leaf indices.
+        """Apply trees in the ensemble to X, return leaf indices.
 
         Parameters
         ----------
@@ -1261,9 +1261,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         Returns
         -------
-        X_leaves : array_like, shape = [n_samples, n_estimators]
-            For each datapoint x in X and for each tree in the forest,
-            return the index of the leaf x ends up in.
+        X_leaves : array_like, shape = [n_samples, n_estimators, n_classes]
+            For each datapoint x in X and for each tree in the ensemble,
+            return the index of the leaf x ends up in in each estimator.
         """
 
         if self.estimators_ is None or len(self.estimators_) == 0:
