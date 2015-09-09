@@ -560,6 +560,49 @@ cdef class Entropy(ClassificationCriterion):
 
         return total_entropy / n_outputs
 
+    cdef double proxy_impurity_improvement(self) nogil:
+        """Compute a proxy of the impurity reduction
+
+        This method is used to speed up the search for the best split.
+        It is a proxy quantity such that the split that maximizes this value
+        also maximizes the impurity improvement. It neglects all constant terms
+        of the impurity decrease for a given split.
+
+        The absolute impurity improvement is only computed by the
+        impurity_improvement method once the best split has been found.
+        """
+
+        cdef double weighted_n_left = self.weighted_n_left
+        cdef double weighted_n_right = self.weighted_n_right
+
+        cdef SIZE_t n_outputs = self.n_outputs
+        cdef SIZE_t* n_classes = self.n_classes
+        cdef SIZE_t label_count_stride = self.label_count_stride
+        cdef double* label_count_left = self.label_count_left
+        cdef double* label_count_right = self.label_count_right
+
+        cdef double wl_log_wl = weighted_n_left * log(weighted_n_left)
+        cdef double wr_log_wr = weighted_n_right * log(weighted_n_right)
+        cdef double entropy = -wl_log_wl - wr_log_wr
+        cdef double count_k
+        cdef SIZE_t k
+        cdef SIZE_t c
+
+        for k in range(n_outputs):
+            for c in range(n_classes[k]):
+                count_k = label_count_left[c]
+                if count_k > 0.0:
+                    entropy += count_k * log(count_k)
+
+                count_k = label_count_right[c]
+                if count_k > 0.0:
+                    entropy += count_k * log(count_k)
+
+            label_count_left += label_count_stride
+            label_count_right += label_count_stride
+
+        return entropy
+
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil:
         """Evaluate the impurity in children nodes
@@ -665,6 +708,49 @@ cdef class Gini(ClassificationCriterion):
             label_count_total += label_count_stride
 
         return total / n_outputs
+
+    cdef double proxy_impurity_improvement(self) nogil:
+        """Compute a proxy of the impurity reduction
+
+        This method is used to speed up the search for the best split.
+        It is a proxy quantity such that the split that maximizes this value
+        also maximizes the impurity improvement. It neglects all constant terms
+        of the impurity decrease for a given split.
+
+        The absolute impurity improvement is only computed by the
+        impurity_improvement method once the best split has been found.
+        """
+
+        cdef double weighted_n_left = self.weighted_n_left
+        cdef double weighted_n_right = self.weighted_n_right
+
+        cdef SIZE_t n_outputs = self.n_outputs
+        cdef SIZE_t* n_classes = self.n_classes
+        cdef SIZE_t label_count_stride = self.label_count_stride
+        cdef double* label_count_left = self.label_count_left
+        cdef double* label_count_right = self.label_count_right
+
+        cdef double gini_left = 0.0
+        cdef double gini_right = 0.0
+        cdef double count_k
+        cdef SIZE_t k
+        cdef SIZE_t c
+
+        for k in range(n_outputs):
+            gini_left = 0.0
+            gini_right = 0.0
+
+            for c in range(n_classes[k]):
+                count_k = label_count_left[c]
+                gini_left += count_k * count_k
+
+                count_k = label_count_right[c]
+                gini_right += count_k * count_k
+
+            label_count_left += label_count_stride
+            label_count_right += label_count_stride
+
+        return gini_left / weighted_n_left + gini_right / weighted_n_right
 
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil:
