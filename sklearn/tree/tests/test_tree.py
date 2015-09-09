@@ -1005,7 +1005,7 @@ def test_big_input():
 
 
 def test_realloc():
-    from sklearn.tree._tree import _realloc_test
+    from sklearn.tree._utils import _realloc_test
     assert_raises(MemoryError, _realloc_test)
 
 

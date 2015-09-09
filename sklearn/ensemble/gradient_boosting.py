@@ -45,8 +45,8 @@ from ..feature_selection.from_model import _LearntSelectorMixin
 
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, TREE_LEAF
-from ..tree._tree import PresortBestSplitter
-from ..tree._tree import FriedmanMSE
+from ..tree._splitter import PresortBestSplitter
+from ..tree._criterion import FriedmanMSE
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
