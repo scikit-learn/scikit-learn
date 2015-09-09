@@ -494,8 +494,10 @@ class SVC(BaseSVC):
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
 
-    probA_, probB_ : array
-        probability estimates, empty array for probability=False
+    probA_, probB_ : array, shape = [n_class * (n_class-1) / 2]
+        parameters used to produce probability estimates from decision values,
+        empty array for probability=False. See the section about scores and
+        probabilities in the SVM section of the User Guide for details.
 
     Examples
     --------
