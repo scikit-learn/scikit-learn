@@ -23,6 +23,7 @@ People
 .. hlist::
 
   * David Cournapeau
+The following people have been core contributors to scikit-learn's development and maintenance:
 
   * Jarrod Millman
 
