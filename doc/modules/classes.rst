@@ -8,8 +8,6 @@ function raw specifications may not be enough to give full guidelines on their
 uses.
 
 
-.. _base_ref:
-
 :mod:`sklearn.base`: Base classes and utility functions
 =======================================================
 
@@ -41,8 +39,6 @@ Functions
 
    base.clone
 
-
-.. _cluster_ref:
 
 :mod:`sklearn.cluster`: Clustering
 ==================================
@@ -85,8 +81,6 @@ Functions
    cluster.mean_shift
    cluster.spectral_clustering
 
-.. _bicluster_ref:
-
 :mod:`sklearn.cluster.bicluster`: Biclustering
 ==============================================
 
@@ -106,8 +100,6 @@ Classes
 
    SpectralBiclustering
    SpectralCoclustering
-
-.. _covariance_ref:
 
 :mod:`sklearn.covariance`: Covariance Estimators
 ================================================
@@ -143,8 +135,6 @@ Classes
    covariance.oas
    covariance.graph_lasso
 
-
-.. _cross_validation_ref:
 
 :mod:`sklearn.cross_validation`: Cross Validation
 =================================================
@@ -183,8 +173,6 @@ Classes
    cross_validation.cross_val_predict
    cross_validation.permutation_test_score
    cross_validation.check_cv
-
-.. _datasets_ref:
 
 :mod:`sklearn.datasets`: Datasets
 =================================
@@ -260,8 +248,6 @@ Samples generator
    datasets.make_checkerboard
 
 
-.. _decomposition_ref:
-
 :mod:`sklearn.decomposition`: Matrix Decomposition
 ==================================================
 
@@ -302,8 +288,6 @@ Samples generator
    decomposition.dict_learning_online
    decomposition.sparse_encode
 
-.. _dummy_ref:
-
 :mod:`sklearn.dummy`: Dummy estimators
 ======================================
 
@@ -325,8 +309,6 @@ Samples generator
 .. autosummary::
    :toctree: generated/
    :template: function.rst
-
-.. _ensemble_ref:
 
 :mod:`sklearn.ensemble`: Ensemble Methods
 =========================================
@@ -378,8 +360,6 @@ partial dependence
    ensemble.partial_dependence.plot_partial_dependence
 
 
-.. _feature_extraction_ref:
-
 :mod:`sklearn.feature_extraction`: Feature Extraction
 =====================================================
 
@@ -420,8 +400,6 @@ From images
 
    feature_extraction.image.PatchExtractor
 
-.. _text_feature_extraction_ref:
-
 From text
 ---------
 
@@ -440,8 +418,6 @@ From text
    feature_extraction.text.TfidfTransformer
    feature_extraction.text.TfidfVectorizer
 
-
-.. _feature_selection_ref:
 
 :mod:`sklearn.feature_selection`: Feature Selection
 ===================================================
@@ -477,8 +453,6 @@ From text
    feature_selection.f_regression
 
 
-.. _gaussian_process_ref:
-
 :mod:`sklearn.gaussian_process`: Gaussian Processes
 ===================================================
 
@@ -511,8 +485,6 @@ From text
    gaussian_process.regression_models.quadratic
 
 
-.. _grid_search_ref:
-
 :mod:`sklearn.grid_search`: Grid Search
 =======================================
 
@@ -533,8 +505,6 @@ From text
    grid_search.ParameterSampler
    grid_search.RandomizedSearchCV
 
-
-.. _isotonic_ref:
 
 :mod:`sklearn.isotonic`: Isotonic regression
 ============================================
@@ -560,8 +530,6 @@ From text
    isotonic.isotonic_regression
    isotonic.check_increasing
 
-.. _kernel_approximation_ref:
-
 :mod:`sklearn.kernel_approximation` Kernel Approximation
 ========================================================
 
@@ -582,8 +550,6 @@ From text
    kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
 
-.. _kernel_ridge_ref:
-
 :mod:`sklearn.kernel_ridge` Kernel Ridge Regression
 ========================================================
 
@@ -600,8 +566,6 @@ From text
    :template: class.rst
 
    kernel_ridge.KernelRidge
-
-.. _lda_ref:
 
 :mod:`sklearn.lda`: Linear Discriminant Analysis
 ================================================
@@ -621,8 +585,6 @@ From text
    lda.LDA
 
 
-.. _learning_curve_ref:
-
 :mod:`sklearn.learning_curve` Learning curve evaluation
 =======================================================
 
@@ -638,8 +600,6 @@ From text
 
    learning_curve.learning_curve
    learning_curve.validation_curve
-
-.. _linear_model_ref:
 
 :mod:`sklearn.linear_model`: Generalized Linear Models
 ======================================================
@@ -701,8 +661,6 @@ From text
    linear_model.orthogonal_mp_gram
 
 
-.. _manifold_ref:
-
 :mod:`sklearn.manifold`: Manifold Learning
 ==========================================
 
@@ -731,8 +689,6 @@ From text
     manifold.locally_linear_embedding
     manifold.spectral_embedding
 
-
-.. _metrics_ref:
 
 :mod:`sklearn.metrics`: Metrics
 ===============================
@@ -893,8 +849,6 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise_distances_argmin_min
 
 
-.. _mixture_ref:
-
 :mod:`sklearn.mixture`: Gaussian Mixture Models
 ===============================================
 
@@ -915,8 +869,6 @@ See the :ref:`metrics` section of the user guide for further details.
    mixture.VBGMM
 
 
-.. _multiclass_ref:
-
 :mod:`sklearn.multiclass`: Multiclass and multilabel classification
 ===================================================================
 
@@ -935,8 +887,6 @@ See the :ref:`metrics` section of the user guide for further details.
     multiclass.OneVsRestClassifier
     multiclass.OneVsOneClassifier
     multiclass.OutputCodeClassifier
-
-.. _naive_bayes_ref:
 
 :mod:`sklearn.naive_bayes`: Naive Bayes
 =======================================
@@ -957,8 +907,6 @@ See the :ref:`metrics` section of the user guide for further details.
    naive_bayes.MultinomialNB
    naive_bayes.BernoulliNB
 
-
-.. _neighbors_ref:
 
 :mod:`sklearn.neighbors`: Nearest Neighbors
 ===========================================
@@ -994,8 +942,6 @@ See the :ref:`metrics` section of the user guide for further details.
    neighbors.kneighbors_graph
    neighbors.radius_neighbors_graph
 
-.. _neural_network_ref:
-
 :mod:`sklearn.neural_network`: Neural network models
 =====================================================
 
@@ -1013,8 +959,6 @@ See the :ref:`metrics` section of the user guide for further details.
 
    neural_network.BernoulliRBM
 
-
-.. _calibration_ref:
 
 :mod:`sklearn.calibration`: Probability Calibration
 ===================================================
@@ -1041,8 +985,6 @@ See the :ref:`metrics` section of the user guide for further details.
    calibration.calibration_curve
 
 
-.. _cross_decomposition_ref:
-
 :mod:`sklearn.cross_decomposition`: Cross decomposition
 =======================================================
 
@@ -1063,8 +1005,6 @@ See the :ref:`metrics` section of the user guide for further details.
    cross_decomposition.CCA
    cross_decomposition.PLSSVD
 
-
-.. _pipeline_ref:
 
 :mod:`sklearn.pipeline`: Pipeline
 =================================
@@ -1089,8 +1029,6 @@ See the :ref:`metrics` section of the user guide for further details.
    pipeline.make_pipeline
    pipeline.make_union
 
-
-.. _preprocessing_ref:
 
 :mod:`sklearn.preprocessing`: Preprocessing and Normalization
 =============================================================
@@ -1154,8 +1092,6 @@ See the :ref:`metrics` section of the user guide for further details.
 
    qda.QDA
 
-.. _random_projection_ref:
-
 :mod:`sklearn.random_projection`: Random projection
 ===================================================
 
@@ -1181,8 +1117,6 @@ See the :ref:`metrics` section of the user guide for further details.
    random_projection.johnson_lindenstrauss_min_dim
 
 
-.. _semi_supervised_ref:
-
 :mod:`sklearn.semi_supervised` Semi-Supervised Learning
 ========================================================
 
@@ -1201,8 +1135,6 @@ See the :ref:`metrics` section of the user guide for further details.
    semi_supervised.LabelPropagation
    semi_supervised.LabelSpreading
 
-
-.. _svm_ref:
 
 :mod:`sklearn.svm`: Support Vector Machines
 ===========================================
@@ -1250,8 +1182,6 @@ Low-level methods
    svm.libsvm.cross_validation
 
 
-.. _tree_ref:
-
 :mod:`sklearn.tree`: Decision Trees
 ===================================
 
@@ -1278,8 +1208,6 @@ Low-level methods
 
    tree.export_graphviz
 
-
-.. _utils_ref:
 
 :mod:`sklearn.utils`: Utilities
 ===============================
