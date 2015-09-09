@@ -374,6 +374,10 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
 
         if ensure_2d:
             if array.ndim == 1:
+                if ensure_min_samples >= 2:
+                    raise ValueError("%s expects at least 2 samples provided "
+                                     "in a 2 dimensional array-like input"
+                                     % estimator_name)
                 warnings.warn(
                     "Passing 1d arrays as data is deprecated in 0.17 and will"
                     "raise ValueError in 0.19. Reshape your data either using "
