@@ -6,13 +6,14 @@ SPHINXOPTS    =
 SPHINXBUILD  ?= sphinx-build
 PAPER         =
 BUILDDIR      = _build
+NJOBS         = 4
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
+ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) -j $(NJOBS) .
 
-.PHONY: help clean html dirhtml pickle json latex latexpdf changes linkcheck doctest optipng
+.PHONY: help clean html dirhtml pickle json latex latexpdf changes linkcheck doctest optipng dist
 
 all: html-noplot
 
@@ -95,11 +96,14 @@ doctest:
 download-data:
 	python -c "from sklearn.datasets.lfw import check_fetch_lfw; check_fetch_lfw()"
 
-# Optimize PNG files. Needs OptiPNG. Change the -P argument to the number of
-# cores you have available, so -P 64 if you have a real computer ;)
+# Optimize PNG files. Needs OptiPNG. Change the NJOBS variable to the number of
+# cores you have available, so NJOBS=64 if you have a real computer ;)
+# Only files larger than 3KB and modified since last run are optimized.
 optipng:
-	find _build auto_examples */generated -name '*.png' -print0 \
-	  | xargs -0 -n 1 -P 4 optipng -o10
+	find _build auto_examples */generated -name '*.png' \
+		-newer _build/latest-optipng -size +3096c -print0 \
+	  | xargs -0 -n 1 -P $(NJOBS) optipng -o10
+	touch _build/latest-optipng
 
-dist: html latexpdf
+dist: html optipng latexpdf
 	cp _build/latex/user_guide.pdf _build/html/stable/_downloads/scikit-learn-docs.pdf

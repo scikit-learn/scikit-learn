@@ -13,10 +13,10 @@ Making a release
 
         $ git shortlog -ns 0.998..
 
-    - edit the doc/conf.py to increase the version number
-
-    - edit the doc/themes/scikit-learn/layout.html to change the 'News'
+    - edit ``doc/themes/scikit-learn/layout.html`` to change the 'News'
       entry of the front page.
+
+    - in the same file, edit links to past versions' documentation
 
 2. Update the version number in sklearn/__init__.py, the __version__
    variable
