@@ -218,7 +218,7 @@ def check_importances(name, n_jobs, criterion):
 
     est = ForestEstimator(n_estimators=20, n_jobs=n_jobs, random_state=0,
                           criterion=criterion)
-    est.fit(X, y, sample_weight=10 * sample_weight)
+    est.fit(X, y, sample_weight=3 * sample_weight)
     importances_bis = est.feature_importances_
     assert_almost_equal(importances, importances_bis)
 
@@ -230,7 +230,7 @@ def test_importances():
     for name, criterion in product(FOREST_REGRESSORS, ["mse"]):
         yield check_importances, name, 1, criterion
 
-    for n_jobs in [0, 1]:
+    for n_jobs in [1, 2]:
         yield check_importances, "RandomForestClassifier", 1, "gini"
 
 
