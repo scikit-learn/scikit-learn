@@ -156,6 +156,11 @@ Enhancements
      visible with extra trees and on datasets with categorical or sparse
      features. By `Arnaud Joly`_.
 
+   - :class:`ensemble.GradientBoostingRegressor` and
+     :class:`ensemble.GradientBoostingClassifier` now expose an ``apply``
+     method for retrieving the leaf indices each sample ends up in under
+     each try. By `Jacob Schreiber`_.
+
 Bug fixes
 .........
 
