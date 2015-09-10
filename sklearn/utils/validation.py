@@ -365,11 +365,12 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
 
         if ensure_2d:
             if array.ndim == 1:
-                warnings.warn("Passing 1d arrays as data is deprecated and "
-                "will be removed in 0.18. Reshape your data either using"
-                "X.reshape(-1, 1) if your data has a single feature or"
-                "X.reshape(1, -1) if it contains a single sample.",
-                              DeprecationWarning)
+                warnings.warn(
+                    "Passing 1d arrays as data is deprecated in 0.17 and will"
+                    "raise ValueError in 0.19. Reshape your data either using "
+                    "X.reshape(-1, 1) if your data has a single feature or "
+                    "X.reshape(1, -1) if it contains a single sample.",
+                    DeprecationWarning)
             array = np.atleast_2d(array)
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)

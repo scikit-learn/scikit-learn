@@ -46,10 +46,13 @@ __all__ = [
     'minmax_scale',
 ]
 
-DEPRECATION_MSG_1D = ("Passing 1d arrays as data is deprecated and "
-"will be removed in 0.18. Reshape your data either using"
-"X.reshape(-1, 1) if your data has a single feature or"
-"X.reshape(1, -1) if it contains a single sample.")
+DEPRECATION_MSG_1D = (
+    "Passing 1d arrays as data is deprecated in 0.17 and will "
+    "raise ValueError in 0.19. Reshape your data either using "
+    "X.reshape(-1, 1) if your data has a single feature or "
+    "X.reshape(1, -1) if it contains a single sample."
+)
+
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
     """Compute mean and std deviation for centering, scaling.
