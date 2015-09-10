@@ -171,20 +171,18 @@ Enhancements
      method for retrieving the leaf indices each sample ends up in under
      each try. By `Jacob Schreiber`_.
 
-<<<<<<< HEAD
    - Add ``sample_weight`` support to :class:`linear_model.LinearRegression`.
      By Sonny Hu. (`#4481 <https://github.com/scikit-learn/scikit-learn/pull/4881>`_)
 
    - Add ``n_iter_without_progress`` to :class:`manifold.TSNE` to control
      the stopping criterion. By Santi Villalba.
      (`#5185 <https://github.com/scikit-learn/scikit-learn/pull/5186>`_)
-=======
+
    - Added optional parameter ``random_state`` in :class:`linear_model.Ridge`
      , to set the seed of the pseudo random generator used in ``sag`` solver. By `Tom Dupre la Tour`_.
 
    - Added optional parameter ``warm_start`` in
      :class:`linear_model.LogisticRegression`. If set to True, the solvers ``lbfgs``, ``newton-cg`` and ``sag`` will be initialized with the coefficients computed in the previous fit. By `Tom Dupre la Tour`_.
->>>>>>> ENH add sag solver in LogisticRegression and Ridge
 
 Bug fixes
 .........
