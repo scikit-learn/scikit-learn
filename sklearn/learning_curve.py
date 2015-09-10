@@ -140,7 +140,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
             scorer, verbose) for train, test in cv)
     else:
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train[:n_train_samples], test,
+            clone(estimator), X, y, scorer, train[-n_train_samples:], test,
             verbose, parameters=None, fit_params=None, return_train_score=True)
             for train, test in cv for n_train_samples in train_sizes_abs)
         out = np.array(out)[:, :2]
@@ -217,7 +217,7 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
     train_scores, test_scores = [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
     for n_train_samples, partial_train in partitions:
-        train_subset = train[:n_train_samples]
+        train_subset = train[-n_train_samples:]
         X_train, y_train = _safe_split(estimator, X, y, train_subset)
         X_partial_train, y_partial_train = _safe_split(estimator, X, y,
                                                        partial_train)
