@@ -992,6 +992,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Number of CPU cores used during the cross-validation loop. If given
         a value of -1, all cores are used.
 
+    intercept_correction : bool
+        If set to True and class_weight is specified, apply intercept correction
+        to produce better calibrated probabilities.
+
     Attributes
     ----------
     coef_ : array, shape (n_classes, n_features)
@@ -1034,6 +1038,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Machine Learning 85(1-2):41-75.
         http://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
 
+    Gary King, Langche Zeng (2001). Logistic Regression in Rare Events Data.
+        Political Analysis (2001) 9 (2): 137-163.
+        http://gking.harvard.edu/files/0s.pdf
+
 
     See also
     --------
@@ -1041,7 +1049,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
-                 fit_intercept=True, intercept_scaling=1, class_weight=None,
+                 fit_intercept=True, intercept_scaling=1, intercept_correction=True,
+                 class_weight=None,
                  random_state=None, solver='liblinear', max_iter=100,
                  multi_class='ovr', verbose=0, warm_start=False, n_jobs=1):
 
@@ -1051,6 +1060,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.C = C
         self.fit_intercept = fit_intercept
         self.intercept_scaling = intercept_scaling
+        self.intercept_correction = intercept_correction
         self.class_weight = class_weight
         self.random_state = random_state
         self.solver = solver
@@ -1100,6 +1110,14 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                 self.class_weight, self.penalty, self.dual, self.verbose,
                 self.max_iter, self.tol, self.random_state)
             self.n_iter_ = np.array([n_iter_])
+
+            if self.class_weight is not None and self.intercept_correction:
+                # if the class weights are used, correct the intercept
+                # see King & Zeng (2001): "prior correction: equation (7)
+                target_freq = y.mean()
+                sample_freq = 0.5 if self.class_weight == 'balanced' else self.class_weight[1.0]
+                self.intercept_[0] -= np.log(
+                    (1 - target_freq) / target_freq * (sample_freq / (1 - sample_freq)))
             return self
 
         max_squared_sum = get_max_squared_sum(X) if self.solver == 'sag' \
