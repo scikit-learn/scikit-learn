@@ -57,7 +57,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.kernel_ridge import KernelRidge
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import WhiteKernel, ExpSineSquared
 

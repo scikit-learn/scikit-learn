@@ -144,16 +144,18 @@ Classes
    covariance.graph_lasso
 
 
-.. _cross_validation_ref:
+:mod:`sklearn.model_selection`: Model Selection
+===============================================
 
-:mod:`sklearn.cross_validation`: Cross Validation
-=================================================
-
-.. automodule:: sklearn.cross_validation
+.. automodule:: sklearn.model_selection
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`cross_validation` section for further details.
+**User guide:** See the :ref:`cross_validation`, :ref:`grid_search` and
+:ref:`learning_curve` sections for further details.
+
+Splitter Classes
+----------------
 
 .. currentmodule:: sklearn
 
@@ -161,28 +163,57 @@ Classes
    :toctree: generated/
    :template: class.rst
 
-   cross_validation.KFold
-   cross_validation.LabelKFold
-   cross_validation.LabelShuffleSplit
-   cross_validation.LeaveOneLabelOut
-   cross_validation.LeaveOneOut
-   cross_validation.LeavePLabelOut
-   cross_validation.LeavePOut
-   cross_validation.PredefinedSplit
-   cross_validation.ShuffleSplit
-   cross_validation.StratifiedKFold
-   cross_validation.StratifiedShuffleSplit
+   model_selection.KFold
+   model_selection.LabelKFold
+   model_selection.StratifiedKFold
+   model_selection.LeaveOneLabelOut
+   model_selection.LeavePLabelOut
+   model_selection.LeaveOneOut
+   model_selection.LeavePOut
+   model_selection.ShuffleSplit
+   model_selection.LabelShuffleSplit
+   model_selection.StratifiedShuffleSplit
+   model_selection.PredefinedSplit
 
+Splitter Functions
+------------------
+
+.. currentmodule:: sklearn
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
-   cross_validation.train_test_split
-   cross_validation.cross_val_score
-   cross_validation.cross_val_predict
-   cross_validation.permutation_test_score
-   cross_validation.check_cv
+   model_selection.train_test_split
+
+Hyper-parameter optimizers
+--------------------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   model_selection.GridSearchCV
+   model_selection.RandomizedSearchCV
+   model_selection.ParameterGrid
+   model_selection.ParameterSampler
+
+Model validation
+----------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   model_selection.cross_val_score
+   model_selection.cross_val_predict
+   model_selection.permutation_test_score
+   model_selection.learning_curve
+   model_selection.validation_curve
 
 .. _datasets_ref:
 
@@ -547,29 +578,6 @@ Kernels:
   gaussian_process.kernels.CompoundKernel
   gaussian_process.kernels.Hyperparameter
 
-.. _grid_search_ref:
-
-:mod:`sklearn.grid_search`: Grid Search
-=======================================
-
-.. automodule:: sklearn.grid_search
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`grid_search` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   grid_search.GridSearchCV
-   grid_search.ParameterGrid
-   grid_search.ParameterSampler
-   grid_search.RandomizedSearchCV
-
-
 .. _isotonic_ref:
 
 :mod:`sklearn.isotonic`: Isotonic regression
@@ -657,24 +665,6 @@ Kernels:
    discriminant_analysis.LinearDiscriminantAnalysis
    discriminant_analysis.QuadraticDiscriminantAnalysis
 
-
-.. _learning_curve_ref:
-
-:mod:`sklearn.learning_curve` Learning curve evaluation
-=======================================================
-
-.. automodule:: sklearn.learning_curve
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   learning_curve.learning_curve
-   learning_curve.validation_curve
 
 .. _linear_model_ref:
 

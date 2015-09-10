@@ -88,8 +88,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.svm import LinearSVC
-from sklearn.cross_validation import ShuffleSplit
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import ShuffleSplit
+from sklearn.model_selection import GridSearchCV
 from sklearn.utils import check_random_state
 from sklearn import datasets
 
@@ -128,8 +128,8 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
         # To get nice curve, we need a large number of iterations to
         # reduce the variance
         grid = GridSearchCV(clf, refit=False, param_grid=param_grid,
-                            cv=ShuffleSplit(n=n_samples, train_size=train_size,
-                                            n_iter=250, random_state=1))
+                            cv=ShuffleSplit(train_size=train_size, n_iter=250,
+                                            random_state=1))
         grid.fit(X, y)
         scores = [x[1] for x in grid.grid_scores_]
 

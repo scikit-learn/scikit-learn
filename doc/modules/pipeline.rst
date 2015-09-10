@@ -82,7 +82,7 @@ Parameters of the estimators in the pipeline can be accessed using the
 
 This is particularly important for doing grid searches::
 
-    >>> from sklearn.grid_search import GridSearchCV
+    >>> from sklearn.model_selection import GridSearchCV
     >>> params = dict(reduce_dim__n_components=[2, 5, 10],
     ...               svm__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(clf, param_grid=params)

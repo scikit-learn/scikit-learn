@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
-from sklearn import cross_validation
+from sklearn.model_selection import cross_val_score
 
 np.random.seed(0)
 
@@ -51,8 +51,8 @@ for i in range(len(degrees)):
     pipeline.fit(X[:, np.newaxis], y)
 
     # Evaluate the models using crossvalidation
-    scores = cross_validation.cross_val_score(pipeline,
-        X[:, np.newaxis], y, scoring="mean_squared_error", cv=10)
+    scores = cross_val_score(pipeline, X[:, np.newaxis], y,
+                             scoring="mean_squared_error", cv=10)
 
     X_test = np.linspace(0, 1, 100)
     plt.plot(X_test, pipeline.predict(X_test[:, np.newaxis]), label="Model")
