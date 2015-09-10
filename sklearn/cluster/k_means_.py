@@ -586,6 +586,9 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     random_state = check_random_state(random_state)
     n_samples = X.shape[0]
 
+    if x_squared_norms is None:
+        x_squared_norms = row_norms(X, squared=True)
+
     if init_size is not None and init_size < n_samples:
         if init_size < k:
             warnings.warn(
