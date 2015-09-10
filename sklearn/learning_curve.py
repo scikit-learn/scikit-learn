@@ -21,7 +21,7 @@ __all__ = ['learning_curve', 'validation_curve']
 
 
 def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
-                   cv=None, scoring=None, exploit_incremental_learning=False,
+                   cv=None, slice_from='start', scoring=None, exploit_incremental_learning=False,
                    n_jobs=1, pre_dispatch="all", verbose=0):
     """Learning curve.
 
@@ -60,12 +60,16 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
         (default: np.linspace(0.1, 1.0, 5))
 
     cv : integer or cross-validation generator, optional, default=3
-        A cross-validation generator to use. If int, determines the number 
-        of folds in StratifiedKFold if estimator is a classifier and the 
-        target y is binary or multiclass, or the number of folds in KFold 
+        A cross-validation generator to use. If int, determines the number
+        of folds in StratifiedKFold if estimator is a classifier and the
+        target y is binary or multiclass, or the number of folds in KFold
         otherwise.
-        Specific cross-validation objects can be passed, see 
+        Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects.
+
+    slice_from : string
+        Determines how to slice the training set. Valid values are 'start'
+        or 'end'
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -109,6 +113,9 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
         raise ValueError("An estimator must support the partial_fit interface "
                          "to exploit incremental learning")
 
+    if slice_from not in ['start', 'end']:
+        raise ValueError("slice_from must either be 'start' or 'end'")
+
     X, y = indexable(X, y)
     # Make a list since we will be iterating multiple times over the folds
     cv = list(check_cv(cv, X, y, classifier=is_classifier(estimator)))
@@ -137,10 +144,15 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose) for train, test in cv)
+            slice_from, scorer, verbose) for train, test in cv)
     else:
+        if slice_from == 'start':
+            subset_train = lambda train: train[:n_train_samples]
+        elif slice_from == 'end':
+            subset_train = lambda train: train[-n_train_samples:]
+
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train[-n_train_samples:], test,
+            clone(estimator), X, y, scorer, subset_train(train), test,
             verbose, parameters=None, fit_params=None, return_train_score=True)
             for train, test in cv for n_train_samples in train_sizes_abs)
         out = np.array(out)[:, :2]
@@ -212,12 +224,17 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
 
 def _incremental_fit_estimator(estimator, X, y, classes, train, test,
-                               train_sizes, scorer, verbose):
+                               train_sizes, slice_from, scorer, verbose):
     """Train estimator on training subsets incrementally and compute scores."""
     train_scores, test_scores = [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
     for n_train_samples, partial_train in partitions:
-        train_subset = train[-n_train_samples:]
+
+        if slice_from == 'start':
+            train_subset = train[:n_train_samples]
+        elif slice_from == 'end':
+            subset_train = train[-n_train_samples:]
+
         X_train, y_train = _safe_split(estimator, X, y, train_subset)
         X_partial_train, y_partial_train = _safe_split(estimator, X, y,
                                                        partial_train)
