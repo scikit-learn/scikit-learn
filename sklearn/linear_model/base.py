@@ -25,11 +25,13 @@ from scipy import sparse
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..utils import as_float_array, check_array, check_X_y, deprecated, column_or_1d
+from ..utils import as_float_array, check_array, check_X_y, deprecated
+from ..utils import check_random_state, column_or_1d
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
 from ..utils.validation import NotFittedError, check_is_fitted
+from ..utils.seq_dataset import ArrayDataset, CSRDataset
 
 
 ###
@@ -39,6 +41,32 @@ from ..utils.validation import NotFittedError, check_is_fitted
 
 ### TODO: bayesian_ridge_regression and bayesian_regression_ard
 ### should be squashed into its respective objects.
+
+SPARSE_INTERCEPT_DECAY = 0.01
+# For sparse data intercept updates are scaled by this decay factor to avoid
+# intercept oscillation.
+
+
+def make_dataset(X, y, sample_weight, random_state=None):
+    """Create ``Dataset`` abstraction for sparse and dense inputs.
+
+    This also returns the ``intercept_decay`` which is different
+    for sparse datasets.
+    """
+
+    rng = check_random_state(random_state)
+    # seed should never be 0 in SequentialDataset
+    seed = rng.randint(1, np.iinfo(np.int32).max)
+
+    if sp.issparse(X):
+        dataset = CSRDataset(X.data, X.indptr, X.indices,
+                             y, sample_weight, seed=seed)
+        intercept_decay = SPARSE_INTERCEPT_DECAY
+    else:
+        dataset = ArrayDataset(X, y, sample_weight, seed=seed)
+        intercept_decay = 1.0
+
+    return dataset, intercept_decay
 
 
 def sparse_center_data(X, y, fit_intercept, normalize=False):
@@ -387,7 +415,7 @@ class LinearRegression(LinearModel, RegressorMixin):
         n_jobs_ = self.n_jobs
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          y_numeric=True, multi_output=True)
-        
+
         if ((sample_weight is not None) and np.atleast_1d(sample_weight).ndim > 1):
             sample_weight = column_or_1d(sample_weight, warn=True)
 

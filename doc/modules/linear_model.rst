@@ -104,7 +104,7 @@ its ``coef_`` member::
     >>> clf = linear_model.Ridge (alpha = .5)
     >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
     Ridge(alpha=0.5, copy_X=True, fit_intercept=True, max_iter=None,
-          normalize=False, solver='auto', tol=0.001)
+          normalize=False, random_state=None, solver='auto', tol=0.001)
     >>> clf.coef_
     array([ 0.34545455,  0.34545455])
     >>> clf.intercept_ #doctest: +ELLIPSIS
@@ -670,16 +670,11 @@ Similarly, L1 regularized logistic regression solves the following optimization 
 
 The solvers implemented in the class :class:`LogisticRegression`
 are "liblinear" (which is a wrapper around the C++ library,
-LIBLINEAR), "newton-cg" and "lbfgs".
+LIBLINEAR), "newton-cg", "lbfgs" and "sag".
 
-The lbfgs and newton-cg solvers only support L2 penalization and are found
+The "lbfgs" and "newton-cg" solvers only support L2 penalization and are found
 to converge faster for some high dimensional data. L1 penalization yields
 sparse predicting weights.
-
-Several estimators are available for logistic regression.
-
-:class:`LogisticRegression` has an option of using three solvers,
-"liblinear", "lbfgs" and "newton-cg".
 
 The solver "liblinear" uses a coordinate descent (CD) algorithm based on
 Liblinear. For L1 penalization :func:`sklearn.svm.l1_min_c` allows to
@@ -697,8 +692,23 @@ Setting `multi_class` to "multinomial" with the "lbfgs" or "newton-cg" solver
 in :class:`LogisticRegression` learns a true multinomial logistic
 regression model, which means that its probability estimates should
 be better calibrated than the default "one-vs-rest" setting.
-L-BFGS and newton-cg cannot optimize L1-penalized models, though,
-so the "multinomial" setting does not learn sparse models.
+"lbfgs", "newton-cg" and "sag" solvers cannot optimize L1-penalized models, though, so the "multinomial" setting does not learn sparse models.
+
+The solver "sag" uses a Stochastic Average Gradient descent [3]_. It does not
+handle "multinomial" case, and is limited to L2-penalized models, yet it is
+often faster than other solvers for large datasets, when both the number of
+samples and the number of features are large.
+
+In a nutshell, one may choose the solver with the following rules:
+
+===========================   ======================
+Case                          Solver
+===========================   ======================
+Small dataset or L1 penalty   "liblinear"
+Multinomial loss              "lbfgs" or newton-cg"
+Large dataset                 "sag"
+===========================   ======================
+For large dataset, you may also consider using :class:`SGDClassifier` with 'log' loss.
 
 .. topic:: Examples:
 
@@ -729,13 +739,16 @@ so the "multinomial" setting does not learn sparse models.
 
 :class:`LogisticRegressionCV` implements Logistic Regression with
 builtin cross-validation to find out the optimal C parameter.
-"newton-cg" and "lbfgs" solvers are found to be faster
+"newton-cg", "sag" and "lbfgs" solvers are found to be faster
 for high-dimensional dense data, due to warm-starting.
 For the multiclass case, if `multi_class`
 option is set to "ovr", an optimal C is obtained for each class and if
 the `multi_class` option is set to "multinomial", an optimal C is
 obtained that minimizes the cross-entropy loss.
 
+.. topic:: References:
+
+    .. [3] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <http://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf>`_
 
 Stochastic Gradient Descent - SGD
 =================================
