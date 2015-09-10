@@ -186,12 +186,7 @@ def test_probability():
         yield check_probability, name
 
 
-def check_importances(name, n_jobs, criterion):
-    X, y = datasets.make_classification(n_samples=1000, n_features=10,
-                                        n_informative=3, n_redundant=0,
-                                        n_repeated=0, shuffle=False,
-                                        random_state=0)
-
+def check_importances(X, y, name, n_jobs, criterion):
     # Check variable importances.
     ForestEstimator = FOREST_ESTIMATORS[name]
 
@@ -224,14 +219,19 @@ def check_importances(name, n_jobs, criterion):
 
 
 def test_importances():
+    X, y = datasets.make_classification(n_samples=1000, n_features=10,
+                                        n_informative=3, n_redundant=0,
+                                        n_repeated=0, shuffle=False,
+                                        random_state=0)
+
     for name, criterion in product(FOREST_CLASSIFIERS, ["gini", "entropy"]):
-        yield check_importances, name, 1, criterion
+        yield check_importances, X, y, name, 1, criterion
 
     for name, criterion in product(FOREST_REGRESSORS, ["mse"]):
-        yield check_importances, name, 1, criterion
+        yield check_importances, X, y, name, 1, criterion
 
     for n_jobs in [1, 2]:
-        yield check_importances, "RandomForestClassifier", 1, "gini"
+        yield check_importances, X, y, "RandomForestClassifier", 1, "gini"
 
 
 def check_unfitted_feature_importances(name):
