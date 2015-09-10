@@ -19,6 +19,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
 
+from sklearn.utils import warnings
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -28,6 +29,7 @@ from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import clean_warning_registry
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn import datasets
@@ -194,15 +196,18 @@ def test_probability():
 def check_importances(X, y, name, criterion):
     ForestEstimator = FOREST_ESTIMATORS[name]
 
-    est = ForestEstimator(n_estimators=20, criterion=criterion,random_state=0)
+    est = ForestEstimator(n_estimators=20, criterion=criterion,
+                          random_state=0)
     est.fit(X, y)
     importances = est.feature_importances_
     n_important = np.sum(importances > 0.1)
     assert_equal(importances.shape[0], 10)
     assert_equal(n_important, 3)
 
-    X_new = est.transform(X, threshold="mean")
-    assert_less(X_new.shape[1], X.shape[1])
+    clean_warning_registry()
+    with warnings.catch_warnings(record=True) as record:
+        X_new = est.transform(X, threshold="mean")
+        assert_less(0 < X_new.shape[1], X.shape[1])
 
     # Check with parallel
     importances = est.feature_importances_

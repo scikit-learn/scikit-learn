@@ -16,7 +16,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
 from sklearn.metrics import mean_squared_error
-from sklearn.utils import check_random_state, tosequence
+from sklearn.utils import check_random_state, tosequence, warnings
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -26,6 +26,8 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import clean_warning_registry
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import DataConversionWarning
 from sklearn.utils.validation import NotFittedError
 
@@ -295,12 +297,16 @@ def test_feature_importances():
                                         presort=presort)
         clf.fit(X, y)
         assert_true(hasattr(clf, 'feature_importances_'))
+        clean_warning_registry()
+        with warnings.catch_warnings(record=True) as record:
+            X_new = clf.transform(X, threshold="mean")
+            assert_less(X_new.shape[1], X.shape[1])
 
-        X_new = clf.transform(X, threshold="mean")
-        assert_less(X_new.shape[1], X.shape[1])
+            X_new = clf.transform(X, threshold="mean")
+            assert_less(X_new.shape[1], X.shape[1])
 
-        feature_mask = clf.feature_importances_ > clf.feature_importances_.mean()
-        assert_array_almost_equal(X_new, X[:, feature_mask])
+            feature_mask = clf.feature_importances_ > clf.feature_importances_.mean()
+            assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
 def test_probability_log():
