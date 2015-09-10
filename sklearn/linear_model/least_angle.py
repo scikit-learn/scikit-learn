@@ -979,9 +979,18 @@ class LarsCV(Lars):
     max_iter: integer, optional
         Maximum number of iterations to perform.
 
-    cv : cross-validation generator, optional
-        see :mod:`sklearn.cross_validation`. If ``None`` is passed, default to
-        a 5-fold strategy
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     max_n_alphas : integer, optional
         The maximum number of points on the path used to compute the
@@ -1167,9 +1176,18 @@ class LassoLarsCV(LarsCV):
     max_iter : integer, optional
         Maximum number of iterations to perform.
 
-    cv : cross-validation generator, optional
-        see sklearn.cross_validation module. If None is passed, default to
-        a 5-fold strategy
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     max_n_alphas : integer, optional
         The maximum number of points on the path used to compute the
