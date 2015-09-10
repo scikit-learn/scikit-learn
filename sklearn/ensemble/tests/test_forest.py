@@ -210,15 +210,15 @@ def check_importances(name, n_jobs, criterion):
     sample_weight = np.ones(y.shape)
     sample_weight[y == 1] *= 100
 
-    est = ForestEstimator(n_estimators=50, n_jobs=n_jobs, random_state=0,
+    est = ForestEstimator(n_estimators=20, n_jobs=n_jobs, random_state=0,
                           criterion=criterion)
     est.fit(X, y, sample_weight=sample_weight)
     importances = est.feature_importances_
     assert_true(np.all(importances >= 0.0))
 
-    est = ForestEstimator(n_estimators=50, n_jobs=n_jobs, random_state=0,
+    est = ForestEstimator(n_estimators=20, n_jobs=n_jobs, random_state=0,
                           criterion=criterion)
-    est.fit(X, y, sample_weight=3 * sample_weight)
+    est.fit(X, y, sample_weight=10 * sample_weight)
     importances_bis = est.feature_importances_
     assert_almost_equal(importances, importances_bis)
 
