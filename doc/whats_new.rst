@@ -207,6 +207,11 @@ Enhancements
      the same. This allows gradient boosters to turn off presorting when building
      deep trees or using sparse data. By `Jacob Schreiber`_.
 
+   - Added :class:`feature_selection.SelectFromModel` meta-transformer which can
+     be used along with estimators that have `coef_` or `feature_importances_`
+     attribute to select important features of the input data. By
+     `Maheshakya Wijewardena`_, `Joel Nothman`_ and `Manoj Kumar`_.
+
 Bug fixes
 .........
 

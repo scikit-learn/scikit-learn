@@ -83,7 +83,7 @@ class _LearntSelectorMixin(TransformerMixin):
     importance of individual features for feature selection.
     """
     @deprecated('Support to use estimators as feature selectors will be '
-                'removed in version 0.17. Use SelectFromModel instead.')
+                'removed in version 0.19. Use SelectFromModel instead.')
     def transform(self, X, threshold=None):
         """Reduce X to its most important features.
 
@@ -134,52 +134,6 @@ class _LearntSelectorMixin(TransformerMixin):
         else:
             raise ValueError("Invalid threshold: all features are discarded.")
 
-    @staticmethod
-    def _set_importances(estimator, X):
-        # Retrieve importance vector
-        if hasattr(self, "feature_importances_"):
-            importances = self.feature_importances_
-
-        elif hasattr(self, "coef_"):
-            if self.coef_ is None:
-                msg = "This model is not fitted yet. Please call fit() first" 
-                raise NotFittedError(msg)
-
-            if self.coef_.ndim == 1:
-                importances = np.abs(self.coef_)
-
-        if hasattr(estimator, "feature_importances_"):
-            importances = estimator.feature_importances_
-            if importances is None:
-                raise ValueError("Importance weights not computed. Please set"
-                                 " the compute_importances parameter before "
-                                 "fit.")
-
-        elif hasattr(estimator, "coef_"):
-            if estimator.coef_.ndim == 1:
-                importances = np.abs(estimator.coef_)
-
-            else:
-                importances = np.sum(np.abs(estimator.coef_), axis=0)
-
-        if len(importances) != X.shape[1]:
-            raise ValueError("X has different number of features than"
-                             " during model fitting.")
-
-        return importances
-
-    @staticmethod
-    def _set_threshold(estimator, threshold):
-        # Retrieve threshold
-        if threshold is None:
-            if hasattr(estimator, "penalty") and estimator.penalty == "l1":
-                # the natural default threshold is 0 when l1 penalty was used
-                threshold = getattr(estimator, "threshold", 1e-5)
-            else:
-                threshold = getattr(estimator, "threshold", "mean")
-
-        return threshold
-
 
 class SelectFromModel(BaseEstimator, SelectorMixin):
     """Meta-transformer for selecting features based on importance
@@ -225,10 +179,10 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape (n_samples,)
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
@@ -250,10 +204,10 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape (n_samples,)
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
