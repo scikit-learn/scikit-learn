@@ -585,13 +585,20 @@ def test_logistic_regression_sample_weights():
     clf_sw_ones.fit(X, y, sample_weight=np.ones(y.shape[0]))
     assert_array_almost_equal(clf_sw_none.coef_, clf_sw_ones.coef_, decimal=4)
 
-    # Test that sample weights work the same with the lbfgs
-    # and newton-cg solvers
-    clf_sw_lbfgs = LogisticRegression(solver='lbfgs', fit_intercept=False)
+    # Test that sample weights work the same with the lbfgs,
+    # newton-cg, and 'sag' solvers
+    tol = 1e-7
+    clf_sw_lbfgs = LogisticRegression(solver='lbfgs', fit_intercept=False, 
+                                      tol=tol)
     clf_sw_lbfgs.fit(X, y, sample_weight=y+1)
-    clf_sw_n = LogisticRegression(solver='newton-cg', fit_intercept=False)
+    clf_sw_n = LogisticRegression(solver='newton-cg', fit_intercept=False,
+                                  tol=tol)
     clf_sw_n.fit(X, y, sample_weight=y+1)
+    clf_sw_sag = LogisticRegression(solver='sag', fit_intercept=False,
+                                    max_iter=2000, tol=tol)
+    clf_sw_sag.fit(X, y, sample_weight=y+1)
     assert_array_almost_equal(clf_sw_lbfgs.coef_, clf_sw_n.coef_, decimal=4)
+    assert_array_almost_equal(clf_sw_lbfgs.coef_, clf_sw_sag.coef_, decimal=4)
 
     # Test that passing class_weight as [1,2] is the same as 
     # passing class weight = [1,1] but adjusting sample weights
@@ -624,13 +631,20 @@ def test_logistic_regressioncv_sample_weights():
     clf_sw_ones.fit(X, y, sample_weight=np.ones(y.shape[0]))
     assert_array_almost_equal(clf_sw_none.coef_, clf_sw_ones.coef_, decimal=4)
 
-    # Test that sample weights work the same with the lbfgs
-    # and newton-cg solvers
-    clf_sw_lbfgs = LogisticRegressionCV(solver='lbfgs', fit_intercept=False)
+    # Test that sample weights work the same with the lbfgs,
+    # newton-cg, and 'sag' solvers
+    tol = 1e-7
+    clf_sw_lbfgs = LogisticRegressionCV(solver='lbfgs', fit_intercept=False, 
+                                      tol=tol)
     clf_sw_lbfgs.fit(X, y, sample_weight=y+1)
-    clf_sw_n = LogisticRegressionCV(solver='newton-cg', fit_intercept=False)
+    clf_sw_n = LogisticRegressionCV(solver='newton-cg', fit_intercept=False,
+                                  tol=tol)
     clf_sw_n.fit(X, y, sample_weight=y+1)
+    clf_sw_sag = LogisticRegressionCV(solver='sag', fit_intercept=False,
+                                    max_iter=2000, tol=tol)
+    clf_sw_sag.fit(X, y, sample_weight=y+1)
     assert_array_almost_equal(clf_sw_lbfgs.coef_, clf_sw_n.coef_, decimal=4)
+    assert_array_almost_equal(clf_sw_lbfgs.coef_, clf_sw_sag.coef_, decimal=4)
 
     # Test that passing class_weight as [1,2] is the same as 
     # passing class weight = [1,1] but adjusting sample weights

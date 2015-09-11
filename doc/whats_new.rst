@@ -184,6 +184,10 @@ Enhancements
    - Added optional parameter ``warm_start`` in
      :class:`linear_model.LogisticRegression`. If set to True, the solvers ``lbfgs``, ``newton-cg`` and ``sag`` will be initialized with the coefficients computed in the previous fit. By `Tom Dupre la Tour`_.
 
+   - Added ``sample_weight`` support to :class:`linear_model.LogisticRegression` for
+     the ``lbfgs``, ``newton-cg``, and ``sag`` solvers. By `Valentin Stolbunov`_.
+
+
 Bug fixes
 .........
 
@@ -3676,3 +3680,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Daniel Galvez: https://github.com/galv
 .. _Jacob Schreiber: https://github.com/jmschrei
 .. _Ankur Ankan: https://github.com/ankurankan
+.. _Valentin Stolbunov: http://vstolbunov.com
