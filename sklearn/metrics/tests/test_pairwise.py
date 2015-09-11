@@ -21,6 +21,7 @@ from sklearn.metrics.pairwise import linear_kernel
 from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
 from sklearn.metrics.pairwise import polynomial_kernel
 from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.metrics.pairwise import laplacian_kernel
 from sklearn.metrics.pairwise import sigmoid_kernel
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics.pairwise import cosine_distances
@@ -197,15 +198,14 @@ def callable_rbf_kernel(x, y, **kwds):
     return K
 
 
-def test_pairwise_kernels():
-    # Test the pairwise_kernels helper function.
+def test_pairwise_kernels():    # Test the pairwise_kernels helper function.
 
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((2, 4))
     # Test with all metrics that should be in PAIRWISE_KERNEL_FUNCTIONS.
-    test_metrics = ["rbf", "sigmoid", "polynomial", "linear", "chi2",
-                    "additive_chi2"]
+    test_metrics = ["rbf", "laplacian", "sigmoid", "polynomial", "linear",
+                    "chi2", "additive_chi2"]
     for metric in test_metrics:
         function = PAIRWISE_KERNEL_FUNCTIONS[metric]
         # Test with Y=None
@@ -244,6 +244,7 @@ def test_pairwise_kernels():
     K1 = pairwise_kernels(X, Y=X, metric=metric, **kwds)
     K2 = rbf_kernel(X, Y=X, **kwds)
     assert_array_almost_equal(K1, K2)
+
 
 
 def test_pairwise_kernels_filter_param():
@@ -467,7 +468,7 @@ def test_kernel_symmetry():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     for kernel in (linear_kernel, polynomial_kernel, rbf_kernel,
-                   sigmoid_kernel, cosine_similarity):
+                   laplacian_kernel, sigmoid_kernel, cosine_similarity):
         K = kernel(X, X)
         assert_array_almost_equal(K, K.T, 15)
 
@@ -477,7 +478,7 @@ def test_kernel_sparse():
     X = rng.random_sample((5, 4))
     X_sparse = csr_matrix(X)
     for kernel in (linear_kernel, polynomial_kernel, rbf_kernel,
-                   sigmoid_kernel, cosine_similarity):
+                   laplacian_kernel, sigmoid_kernel, cosine_similarity):
         K = kernel(X, X)
         K2 = kernel(X_sparse, X_sparse)
         assert_array_almost_equal(K, K2)
@@ -497,6 +498,18 @@ def test_rbf_kernel():
     K = rbf_kernel(X, X)
     # the diagonal elements of a rbf kernel are 1
     assert_array_almost_equal(K.flat[::6], np.ones(5))
+
+
+def test_laplacian_kernel():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    K = laplacian_kernel(X, X)
+    # the diagonal elements of a laplacian kernel are 1
+    assert_array_almost_equal(np.diag(K), np.ones(5))
+    
+    # off-diagonal elements are < 1 but > 0:
+    assert_true(np.all(K > 0))
+    assert_true(np.all(K - np.diag(np.diag(K)) < 1))
 
 
 def test_cosine_similarity_sparse_output():

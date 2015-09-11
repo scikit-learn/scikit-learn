@@ -812,6 +812,28 @@ def rbf_kernel(X, Y=None, gamma=None):
     np.exp(K, K)    # exponentiate K in-place
     return K
 
+def laplacian_kernel(X, Y=None, gamma=None):
+    """
+    Compute the laplacian kernel between X and Y::
+        K(x, y) = exp(-gamma ||x-y||_1)
+    for each pair of rows x in X and y in Y.
+    Read more in the :ref:`User Guide <laplacian_kernel>`.
+    Parameters
+    ----------
+    X : array of shape (n_samples_X, n_features)
+    Y : array of shape (n_samples_Y, n_features)
+    gamma : float
+    Returns
+    -------
+    kernel_matrix : array of shape (n_samples_X, n_samples_Y)
+    """
+    X, Y = check_pairwise_arrays(X, Y)
+    if gamma is None:
+        gamma = 1.0 / X.shape[1]
+
+    K = -gamma * manhattan_distances(X, Y)
+    np.exp(K, K)    # exponentiate K in-place
+    return K
 
 def cosine_similarity(X, Y=None, dense_output=True):
     """Compute cosine similarity between samples in X and Y.
@@ -1184,6 +1206,7 @@ PAIRWISE_KERNEL_FUNCTIONS = {
     'polynomial': polynomial_kernel,
     'poly': polynomial_kernel,
     'rbf': rbf_kernel,
+    'laplacian': laplacian_kernel,
     'sigmoid': sigmoid_kernel,
     'cosine': cosine_similarity, }
 
@@ -1205,6 +1228,7 @@ def kernel_metrics():
       'poly'            sklearn.pairwise.polynomial_kernel
       'polynomial'      sklearn.pairwise.polynomial_kernel
       'rbf'             sklearn.pairwise.rbf_kernel
+      'laplacian'       sklearn.pairwise.laplacian_kernel
       'sigmoid'         sklearn.pairwise.sigmoid_kernel
       'cosine'          sklearn.pairwise.cosine_similarity
       ===============   ========================================
@@ -1223,6 +1247,7 @@ KERNEL_PARAMS = {
     "poly": frozenset(["gamma", "degree", "coef0"]),
     "polynomial": frozenset(["gamma", "degree", "coef0"]),
     "rbf": frozenset(["gamma"]),
+    "laplacian": frozenset(["gamma"]),
     "sigmoid": frozenset(["gamma", "coef0"]),
 }
 
