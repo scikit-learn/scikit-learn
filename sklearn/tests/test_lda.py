@@ -85,6 +85,21 @@ def test_lda_coefs():
     assert_array_almost_equal(clf_lda_eigen.coef_, clf_lda_lsqr.coef_, 1)
 
 
+def test_lda_explained_variance_ratio():
+    # Test if the sum of the normalized eigen vectors values equals 1
+    n_features = 2
+    n_classes = 2
+    n_samples = 1000
+    X, y = make_blobs(n_samples=n_samples, n_features=n_features,
+                      centers=n_classes, random_state=11)
+
+    clf_lda_eigen = lda.LDA(solver="eigen")
+
+    clf_lda_eigen.fit(X, y)
+
+    assert_almost_equal(clf_lda_eigen.explained_variance_ratio_.sum(), 1.0, 3)
+
+
 def test_lda_transform():
     # Test LDA transform.
     clf = lda.LDA(solver="svd", n_components=1)

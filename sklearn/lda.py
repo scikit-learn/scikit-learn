@@ -180,6 +180,12 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
     covariance_ : array-like, shape (n_features, n_features)
         Covariance matrix (shared by all classes).
 
+    explained_variance_ratio_ : array, shape (n_components,)
+        Percentage of variance explained by each of the selected components.
+        If ``n_components`` is not set then all components are stored and the
+        sum of explained variances is equal to 1.0. Only available when eigen
+        solver is used.
+
     means_ : array-like, shape (n_classes, n_features)
         Class means.
 
@@ -316,6 +322,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         Sb = St - Sw  # between scatter
 
         evals, evecs = linalg.eigh(Sb, Sw)
+        self.explained_variance_ratio_ = np.sort(evals / np.sum(evals))[::-1]
         evecs = evecs[:, np.argsort(evals)[::-1]]  # sort eigenvectors
         # evecs /= np.linalg.norm(evecs, axis=0)  # doesn't work with numpy 1.6
         evecs /= np.apply_along_axis(np.linalg.norm, 0, evecs)
