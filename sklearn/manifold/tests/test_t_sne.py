@@ -1,5 +1,4 @@
 import sys
-import warnings
 from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
 import scipy.sparse as sp
@@ -449,30 +448,6 @@ def test_64bit():
             tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
                         random_state=0, method=method)
             tsne.fit_transform(X)
-
-
-def test_transform_before_fit():
-    # transform() cannot be called before fit().
-    random_state = check_random_state(0)
-    X = random_state.randn(100, 2)
-    tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
-                random_state=0, method='barnes_hut')
-    m = "Cannot call `transform` unless `fit` has"
-    assert_raises_regexp(ValueError, m, tsne.transform, X)
-
-
-def test_transform_warning():
-    # Raise a warning if fit and transform encountered the same data.
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        random_state = check_random_state(0)
-        X = random_state.randn(100, 2)
-        tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
-                    random_state=0, method='barnes_hut')
-        tsne.fit(X)
-        tsne.transform(X)
-        m = str(w[0].message)
-    assert "The transform input appears to be similar" in m
 
 
 def test_barnes_hut_angle():

@@ -14,6 +14,8 @@ from libc.math cimport sqrt, log
 cimport numpy as np
 import numpy as np
 
+cdef char* EMPTY_STRING = ""
+
 cdef extern from "math.h":
     float fabsf(float x) nogil
 
@@ -352,7 +354,7 @@ cdef int insert_many(Tree* tree, float[:,:] pos_array) nogil:
             printf("[t-SNE] inserting point %i: [%f, %f]\n", i, row[0], row[1])
         err = insert(tree.root_node, row, i, 0, 1)
         if err != 0:
-            printf("[t-SNE] ERROR\n")
+            printf("[t-SNE] ERROR\n%s", EMPTY_STRING)
             return err
         tree.n_points += 1
     return err
@@ -419,7 +421,7 @@ cdef long count_points(Node* root, long count) nogil:
             count += child.size
         elif not child.is_leaf:
             if DEBUGFLAG:
-                printf("[t-SNE] Child is not a leaf. Descending\n")
+                printf("[t-SNE] Child is not a leaf. Descending\n%s", EMPTY_STRING)
             count = count_points(child, count)
         # else case is we have an empty leaf node
         # which happens when we create a quadtree for
@@ -432,7 +434,7 @@ cdef long count_points(Node* root, long count) nogil:
 
 cdef float compute_gradient(float[:,:] val_P,
                             float[:,:] pos_reference,
-                            long[:,:] neighbors,
+                            np.int64_t[:,:] neighbors,
                             float[:,:] tot_force,
                             Node* root_node,
                             float theta,
@@ -482,12 +484,12 @@ cdef float compute_gradient(float[:,:] val_P,
 
 cdef float compute_gradient_positive(float[:,:] val_P,
                                      float[:,:] pos_reference,
-                                     long[:,:] neighbors,
+                                     np.int64_t[:,:] neighbors,
                                      float* pos_f,
                                      int n_dimensions,
                                      float dof,
                                      float sum_Q,
-                                     long start,
+                                     np.int64_t start,
                                      int verbose) nogil:
     # Sum over the following expression for i not equal to j
     # grad_i = p_ij (1 + ||y_i - y_j||^2)^-1 (y_i - y_j)
@@ -672,7 +674,7 @@ cdef void compute_non_edge_forces(Node* node,
 
 cdef float compute_error(float[:, :] val_P,
                         float[:, :] pos_reference,
-                        long[:,:] neighbors,
+                        np.int64_t[:,:] neighbors,
                         float sum_Q,
                         int n_dimensions,
                         int verbose) nogil:
@@ -716,7 +718,7 @@ def calculate_edge(pos_output):
 
 def gradient(float[:,:] pij_input, 
              float[:,:] pos_output, 
-             long[:,:] neighbors, 
+             np.int64_t[:,:] neighbors, 
              float[:,:] forces, 
              float theta,
              int n_dimensions,
@@ -751,13 +753,19 @@ def gradient(float[:,:] pij_input,
     err = insert_many(qt, pos_output)
     assert err == 0, "[t-SNE] Insertion failed"
     if verbose > 10:
-        printf("[t-SNE] Computing gradient\n")
+        # XXX: format hack to workaround lack of `const char *` type
+        # in the generated C code that triggers error with gcc 4.9
+        # and -Werror=format-security
+        printf("[t-SNE] Computing gradient\n%s", EMPTY_STRING)
     sum_Q = compute_gradient(pij_input, pos_output, neighbors, forces,
                              qt.root_node, theta, dof, skip_num_points, -1)
     C = compute_error(pij_input, pos_output, neighbors, sum_Q, n_dimensions,
                       verbose)
     if verbose > 10:
-        printf("[t-SNE] Checking tree consistency \n")
+        # XXX: format hack to workaround lack of `const char *` type
+        # in the generated C code
+        # and -Werror=format-security
+        printf("[t-SNE] Checking tree consistency\n%s", EMPTY_STRING)
     cdef long count = count_points(qt.root_node, 0)
     m = ("Tree consistency failed: unexpected number of points=%i "
          "at root node=%i" % (count, qt.root_node.cumulative_size))
@@ -769,7 +777,7 @@ def gradient(float[:,:] pij_input,
 
 
 # Helper functions
-def check_quadtree(X, long[:] counts):
+def check_quadtree(X, np.int64_t[:] counts):
     """
     Helper function to access quadtree functions for testing
     """

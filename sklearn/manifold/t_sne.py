@@ -11,7 +11,6 @@
 import numpy as np
 from scipy import linalg
 import scipy.sparse as sp
-import warnings
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from ..neighbors import BallTree
@@ -373,6 +372,8 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
     """
     if args is None:
         args = []
+    if kwargs is None:
+        kwargs = {}
 
     p = p0.copy().ravel()
     update = np.zeros_like(p)
@@ -600,9 +601,6 @@ class TSNE(BaseEstimator):
     embedding_ : array-like, shape (n_samples, n_components)
         Stores the embedding vectors.
 
-    training_data_ : array-like, shape (n_samples, n_features)
-        Stores the training data.
-
     Examples
     --------
 
@@ -610,11 +608,12 @@ class TSNE(BaseEstimator):
     >>> from sklearn.manifold import TSNE
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = TSNE(n_components=2, random_state=0)
+    >>> np.set_printoptions(suppress=True)
     >>> model.fit_transform(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    array([[  1.75677320e-04,   4.08340798e-05],
-           [  9.93642843e-05,   2.17790936e-04],
-           [  1.85517575e-04,  -9.32909822e-05],
-           [  9.54209795e-05,  -1.40144791e-05]])
+    array([[ 0.00017599,  0.00003993],
+           [ 0.00009891,  0.00021913],
+           [ 0.00018554, -0.00009357],
+           [ 0.00009528, -0.00001407]])
 
     References
     ----------
@@ -725,7 +724,6 @@ class TSNE(BaseEstimator):
         # Laurens van der Maaten, 2009.
         degrees_of_freedom = max(self.n_components - 1.0, 1)
         n_samples = X.shape[0]
-        self.training_data_ = X
         # the number of nearest neighbors to find
         k = min(n_samples - 1, int(3. * self.perplexity + 1))
 
@@ -771,8 +769,6 @@ class TSNE(BaseEstimator):
                           X_embedded=X_embedded,
                           neighbors=neighbors_nn,
                           skip_num_points=skip_num_points)
-
-        return self
 
     def _tsne(self, P, degrees_of_freedom, n_samples, random_state,
               X_embedded=None, neighbors=None, skip_num_points=0):
@@ -865,7 +861,7 @@ class TSNE(BaseEstimator):
         self.embedding_ = embedding
         return self.embedding_
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit X into an embedded space.
 
         Parameters
@@ -883,36 +879,3 @@ class TSNE(BaseEstimator):
         if self.embedding_ is None:
             raise ValueError("Cannot call `transform` unless `fit` has"
                              "already been called")
-
-    def transform(self, X):
-        """Transform X to a previously fit embedded space.
-
-        A previous training set must have already been fit.
-        The new gradient is calculated using contributions from
-        previously fit data, but only the new data is transformed.
-        This is not the equivalent of running fit_transform,
-        since calling fit(X) followed by transform(X) runs the
-        gradient calculation twice, once for just X and the second time
-        on the concatenated array [X, X].
-
-        Parameters
-        ----------
-        X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-            If the metric is 'precomputed' X must be a square distance
-            matrix. Otherwise it contains a sample per row.
-
-        Returns
-        -------
-        X_new : array, shape (n_samples, n_components)
-            Embedding of the training data in low-dimensional space.
-        """
-        self._check_fitted()
-        if np.allclose(X, self.training_data_, rtol=1e-4):
-            warnings.warn("The transform input appears to be similar "
-                          "to previously fit data. This can result in "
-                          "duplicated data; consider using fit_transform")
-
-        skip_num_points = self.embedding_.shape[0]
-        full_set = np.vstack((self.embedding_, X))
-        Xt = self._fit(full_set, skip_num_points=skip_num_points)
-        return Xt
