@@ -959,12 +959,14 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag'}
         Algorithm to use in the optimization problem.
+
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' is
             faster for large ones.
         - For multiclass problems, only 'newton-cg' and 'lbfgs' handle
             multinomial loss; 'sag' and 'liblinear' are limited to
             one-versus-rest schemes.
         - 'newton-cg', 'lbfgs' and 'sag' only handle L2 penalty.
+
         Note that 'sag' fast convergence is only guaranteed on features with
         approximately the same scale. You can preprocess the data with a
         scaler from sklearn.preprocessing.
@@ -1033,11 +1035,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         methods for logistic regression and maximum entropy models.
         Machine Learning 85(1-2):41-75.
         http://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
-
-
-    See also
-    --------
-    sklearn.linear_model.SGDClassifier
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
@@ -1284,6 +1281,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag'}
         Algorithm to use in the optimization problem.
+
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' is
             faster for large ones.
         - For multiclass problems, only 'newton-cg' and 'lbfgs' handle

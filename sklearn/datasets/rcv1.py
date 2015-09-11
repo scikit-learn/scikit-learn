@@ -96,8 +96,8 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     dataset.DESCR : string
         Description of the RCV1 dataset.
 
-    Reference
-    ---------
+    References
+    ----------
     Lewis, D. D., Yang, Y., Rose, T. G., & Li, F. (2004). RCV1: A new
     benchmark collection for text categorization research. The Journal of
     Machine Learning Research, 5, 361-397.
