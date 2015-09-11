@@ -980,11 +980,12 @@ def test_warm_start_oob():
         yield check_warm_start_oob, name
 
 
-def test_dtype_convert():
-    classifier = RandomForestClassifier()
-    CLASSES = 15
-    X = np.eye(CLASSES)
-    y = [ch for ch in 'ABCDEFGHIJKLMNOPQRSTU'[:CLASSES]]
+def test_dtype_convert(n_classes=15):
+    classifier = RandomForestClassifier(random_state=0, bootstrap=False)
+
+    X = np.eye(n_classes)
+    y = [ch for ch in 'ABCDEFGHIJKLMNOPQRSTU'[:n_classes]]
 
     result = classifier.fit(X, y).predict(X)
+    assert_array_equal(classifier.classes_, y)
     assert_array_equal(result, y)
