@@ -187,25 +187,24 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
 
     Parameters
     ----------
-    estimator : object or None(default=None)
+    estimator : object
         The base estimator from which the transformer is built.
-        If None, then a value error is raised.
 
-    threshold : string, float or None, optional (default=None)
-            The threshold value to use for feature selection. Features whose
-            importance is greater or equal are kept while the others are
-            discarded. If "median" (resp. "mean"), then the threshold value is
-            the median (resp. the mean) of the feature importances. A scaling
-            factor (e.g., "1.25*mean") may also be used. If None and if
-            available, the object attribute ``threshold`` is used. Otherwise,
-            "mean" is used by default.
+    threshold : string, float, optional
+        The threshold value to use for feature selection. Features whose
+        importance is greater or equal are kept while the others are
+        discarded. If "median" (resp. "mean"), then the threshold value is
+        the median (resp. the mean) of the feature importances. A scaling
+        factor (e.g., "1.25*mean") may also be used. If None and if
+        available, the object attribute ``threshold`` is used. Otherwise,
+        "mean" is used by default.
 
     Attributes
     ----------
     `estimator_`: an estimator
         The base estimator from which the transformer is built.
 
-    `scores_`: array, shape=(n_features,)
+    `scores_`: array, shape(n_features,)
         The importance of each feature according to the fit model.
 
     `threshold_`: float
