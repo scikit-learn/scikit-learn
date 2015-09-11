@@ -583,7 +583,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # and check length
     # Otherwise set them to 1 for all examples
     if sample_weight is not None:
-        sample_weight = np.array(sample_weight)
+        sample_weight = np.array(sample_weight, dtype=np.float64, order='C')
         check_consistent_length(y, sample_weight)
     else:
         sample_weight = np.ones(X.shape[0])
