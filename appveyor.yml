@@ -61,7 +61,7 @@ test_script:
   - "mkdir empty_folder"
   - "cd empty_folder"
 
-  - "python -c \"import nose; nose.main()\" -s -v sklearn"
+  - "python -c \"if __name__ == '__main__': import nose; nose.main()\" -s -v sklearn"
 
   # Move back to the project folder
   - "cd .."
