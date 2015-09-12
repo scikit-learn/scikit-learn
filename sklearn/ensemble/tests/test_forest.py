@@ -206,21 +206,19 @@ def check_importances(X, y, name, criterion):
     assert_less(0 < X_new.shape[1], X.shape[1])
 
     # Check with sample weights
-    sample_weight = np.ones(y.shape)
-    sample_weight[y == 1] *= 100
-
+    sample_weight = check_random_state(0).randint(1, 10, len(X))
     est = ForestEstimator(n_estimators=20, random_state=0,
                           criterion=criterion)
     est.fit(X, y, sample_weight=sample_weight)
     importances = est.feature_importances_
     assert_true(np.all(importances >= 0.0))
 
-    for scale in [3, 10, 1000, 100000]:
+    for scale in [10, 100, 1000]:
         est = ForestEstimator(n_estimators=20, random_state=0,
                               criterion=criterion)
         est.fit(X, y, sample_weight=scale * sample_weight)
         importances_bis = est.feature_importances_
-        assert_almost_equal(importances, importances_bis)
+        assert_less(np.abs(importances - importances_bis).mean(), 0.0001)
 
 
 def test_importances():
@@ -232,7 +230,7 @@ def test_importances():
     for name, criterion in product(FOREST_CLASSIFIERS, ["gini", "entropy"]):
         yield check_importances, X, y, name, criterion
 
-    for name, criterion in product(FOREST_REGRESSORS, ["mse"]):
+    for name, criterion in product(FOREST_REGRESSORS, ["mse", "friedman_mse"]):
         yield check_importances, X, y, name, criterion
 
 
@@ -242,10 +240,7 @@ def test_importances_asymptotic():
     # Understanding variable importances in forests of randomized trees, 2013).
 
     def binomial(k, n):
-        if k < 0 or k > n:
-            return 0
-        else:
-            return comb(int(n), int(k), exact=True)
+        return 0 if k < 0 or k > n else comb(int(n), int(k), exact=True)
 
     def entropy(samples):
         e = 0.
@@ -259,22 +254,20 @@ def test_importances_asymptotic():
         return e
 
     def mdi_importance(X_m, X, y):
-        n_samples, p = X.shape
+        n_samples, n_features = X.shape
 
-        variables = list(range(p))
-        variables.pop(X_m)
+        features = list(range(n_features))
+        features.pop(X_m)
+        values = [np.unique(X[:, i]) for i in range(n_features)]
+
         imp = 0.
 
-        values = []
-        for i in range(p):
-            values.append(np.unique(X[:, i]))
-
-        for k in range(p):
+        for k in range(n_features):
             # Weight of each B of size k
-            coef = 1. / (binomial(k, p) * (p - k))
+            coef = 1. / (binomial(k, n_features) * (n_features - k))
 
             # For all B of size k
-            for B in combinations(variables, k):
+            for B in combinations(features, k):
                 # For all values B=b
                 for b in product(*[values[B[j]] for j in range(k)]):
                     mask_b = np.ones(n_samples, dtype=np.bool)
@@ -331,7 +324,7 @@ def test_importances_asymptotic():
 
     # Check correctness
     assert_almost_equal(entropy(y), sum(importances))
-    assert_less(((true_importances - importances) ** 2).sum(), 0.0005)
+    assert_less(np.abs(true_importances - importances).mean(), 0.01)
 
 
 def check_unfitted_feature_importances(name):
