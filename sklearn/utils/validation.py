@@ -490,6 +490,9 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
     -------
     X_converted : object
         The converted and validated X.
+
+    y_converted : object
+        The converted and validated y.
     """
     X = check_array(X, accept_sparse, dtype, order, copy, force_all_finite,
                     ensure_2d, allow_nd, ensure_min_samples,
