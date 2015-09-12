@@ -9,6 +9,7 @@ from sklearn.utils.class_weight import compute_sample_weight
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_warns
@@ -45,14 +46,20 @@ def test_compute_class_weight_dict():
 
     # When the user specifies class weights, compute_class_weights should just
     # return them.
-    assert_array_almost_equal(class_weights.values(), cw)
+    assert_array_almost_equal(np.asarray([1.0, 2.0, 3.0]), cw)
 
     # When a class weight is specified that isn't in classes, a ValueError
     # should get raised
+    msg = 'Class label 4 not present.'
     class_weights = {0: 1.0, 1: 2.0, 2: 3.0, 4: 1.5}
-    assert_raises(ValueError, compute_class_weight, class_weights, classes, y)
+    assert_raise_message(
+        ValueError, msg, compute_class_weight, class_weights, classes, y
+    )
+    msg = 'Class label -1 not present.'
     class_weights = {-1: 5.0, 0: 1.0, 1: 2.0, 2: 3.0}
-    assert_raises(ValueError, compute_class_weight, class_weights, classes, y)
+    assert_raise_message(
+        ValueError, msg, compute_class_weight, class_weights, classes, y
+    )
 
 
 def test_compute_class_weight_invariance():
