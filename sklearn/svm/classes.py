@@ -524,6 +524,12 @@ class SVC(BaseSVC):
         implemented using liblinear. Check the See also section of
         LinearSVC for more comparison element.
 
+    Notes
+    -----
+
+    **References:**
+    `LIBSVM: A Library for Support Vector Machines
+    <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`__
     """
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto',
@@ -784,6 +790,13 @@ class SVR(BaseLibSVM, RegressorMixin):
     LinearSVR
         Scalable Linear Support Vector Machine for regression
         implemented using liblinear.
+
+    Notes
+    -----
+
+    **References:**
+    `LIBSVM: A Library for Support Vector Machines
+    <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`__
     """
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
