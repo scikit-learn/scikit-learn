@@ -496,8 +496,8 @@ class SVC(BaseSVC):
 
     probA_, probB_ : array, shape = [n_class * (n_class-1) / 2]
         parameters used to produce probability estimates from decision values,
-        empty array for probability=False. See the section about scores and
-        probabilities in the SVM section of the User Guide for details.
+        empty array for probability=False. See section 8 of
+        LIBSVM: A Library for Support Vector Machines (in References) for more.
 
     Examples
     --------
