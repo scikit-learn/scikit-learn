@@ -37,6 +37,23 @@ def test_compute_class_weight_not_present():
     assert_raises(ValueError, compute_class_weight, "auto", classes, y)
     assert_raises(ValueError, compute_class_weight, "balanced", classes, y)
 
+def test_compute_class_weight_dict():
+    classes = np.arange(3)
+    class_weights = {0: 1.0, 1: 2.0, 2: 3.0}
+    y = np.asarray([0, 0, 1, 2])
+    cw = compute_class_weight(class_weights, classes, y)
+
+    # When the user specifies class weights, compute_class_weights should just
+    # return them.
+    assert_array_almost_equal(class_weights.values(), cw)
+
+    # When a class weight is specified that isn't in classes, a ValueError
+    # should get raised
+    class_weights = {0: 1.0, 1: 2.0, 2: 3.0, 4: 1.5}
+    assert_raises(ValueError, compute_class_weight, class_weights, classes, y)
+    class_weights = {-1: 5.0, 0: 1.0, 1: 2.0, 2: 3.0}
+    assert_raises(ValueError, compute_class_weight, class_weights, classes, y)
+
 
 def test_compute_class_weight_invariance():
     # Test that results with class_weight="balanced" is invariant wrt
