@@ -39,6 +39,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.grid_search import GridSearchCV
 from sklearn.svm import LinearSVC
+from sklearn.utils.fixes import bincount
 from sklearn.utils.validation import check_random_state
 
 from sklearn.tree.tree import SPARSE_SPLITTERS
@@ -250,7 +251,7 @@ def test_importances_asymptotic():
         e = 0.
         n_samples = len(samples)
 
-        for count in np.bincount(samples):
+        for count in bincount(samples):
             p = 1. * count / n_samples
             if p > 0:
                 e -= p * np.log2(p)
@@ -260,7 +261,7 @@ def test_importances_asymptotic():
     def mdi_importance(X_m, X, y):
         n_samples, p = X.shape
 
-        variables = range(p)
+        variables = list(range(p))
         variables.pop(X_m)
         imp = 0.
 
@@ -278,7 +279,7 @@ def test_importances_asymptotic():
                 for b in product(*[values[B[j]] for j in range(k)]):
                     mask_b = np.ones(n_samples, dtype=np.bool)
 
-                    for j in xrange(k):
+                    for j in range(k):
                         mask_b &= X[:, B[j]] == b[j]
 
                     X_, y_ = X[mask_b, :], y[mask_b]
@@ -691,7 +692,7 @@ def check_min_samples_leaf(name, X, y):
                               random_state=0)
         est.fit(X, y)
         out = est.estimators_[0].tree_.apply(X)
-        node_counts = np.bincount(out)
+        node_counts = bincount(out)
         # drop inner nodes
         leaf_count = node_counts[node_counts != 0]
         assert_greater(np.min(leaf_count), 4,
@@ -725,7 +726,7 @@ def check_min_weight_fraction_leaf(name, X, y):
                 est.bootstrap = False
             est.fit(X, y, sample_weight=weights)
             out = est.estimators_[0].tree_.apply(X)
-            node_weights = np.bincount(out, weights=weights)
+            node_weights = bincount(out, weights=weights)
             # drop inner nodes
             leaf_weights = node_weights[node_weights != 0]
             assert_greater_equal(
