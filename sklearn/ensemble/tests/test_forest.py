@@ -203,7 +203,7 @@ def check_importances(X, y, name, criterion):
     assert_equal(n_important, 3)
 
     X_new = est.transform(X, threshold="mean")
-    assert_less(0 < X_new.shape[1], X.shape[1])
+    assert_less(X_new.shape[1], X.shape[1])
 
     # Check with sample weights
     sample_weight = check_random_state(0).randint(1, 10, len(X))
@@ -213,12 +213,12 @@ def check_importances(X, y, name, criterion):
     importances = est.feature_importances_
     assert_true(np.all(importances >= 0.0))
 
-    for scale in [10, 100, 1000]:
+    for scale in [0.5, 10, 100]:
         est = ForestEstimator(n_estimators=20, random_state=0,
                               criterion=criterion)
         est.fit(X, y, sample_weight=scale * sample_weight)
         importances_bis = est.feature_importances_
-        assert_less(np.abs(importances - importances_bis).mean(), 0.0001)
+        assert_less(np.abs(importances - importances_bis).mean(), 0.001)
 
 
 def test_importances():
@@ -243,15 +243,15 @@ def test_importances_asymptotic():
         return 0 if k < 0 or k > n else comb(int(n), int(k), exact=True)
 
     def entropy(samples):
-        e = 0.
         n_samples = len(samples)
+        entropy = 0.
 
         for count in bincount(samples):
             p = 1. * count / n_samples
             if p > 0:
-                e -= p * np.log2(p)
+                entropy -= p * np.log2(p)
 
-        return e
+        return entropy
 
     def mdi_importance(X_m, X, y):
         n_samples, n_features = X.shape
@@ -314,7 +314,7 @@ def test_importances_asymptotic():
         true_importances[i] = mdi_importance(i, X, y)
 
     # Estimate importances with totally randomized trees
-    clf = ExtraTreesClassifier(n_estimators=1000,
+    clf = ExtraTreesClassifier(n_estimators=500,
                                max_features=1,
                                criterion="entropy",
                                random_state=0).fit(X, y)
