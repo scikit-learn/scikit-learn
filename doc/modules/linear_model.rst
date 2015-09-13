@@ -708,6 +708,7 @@ Small dataset or L1 penalty   "liblinear"
 Multinomial loss              "lbfgs" or newton-cg"
 Large dataset                 "sag"
 ===========================   ======================
+
 For large dataset, you may also consider using :class:`SGDClassifier` with 'log' loss.
 
 .. topic:: Examples:

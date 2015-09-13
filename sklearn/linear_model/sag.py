@@ -159,8 +159,8 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
         multi_class='ovr', n_jobs=1, penalty='l2', random_state=None,
         solver='sag', tol=0.0001, verbose=0, warm_start=False)
 
-    Reference
-    ---------
+    References
+    ----------
     Schmidt, M., Roux, N. L., & Bach, F. (2013).
     Minimizing finite sums with the stochastic average gradient
     https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf

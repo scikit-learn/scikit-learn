@@ -284,6 +284,7 @@ In this example, ``X`` is ``float32``, which is cast to ``float64`` by
 
 Regression targets are cast to ``float64``, classification targets are
 maintained::
+
     >>> from sklearn import datasets
     >>> from sklearn.svm import SVC
     >>> iris = datasets.load_iris()

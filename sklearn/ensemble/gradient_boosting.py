@@ -904,7 +904,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             raise NotFittedError("Estimator not fitted, call `fit`"
                                  " before making predictions`.")
 
-
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
@@ -1220,6 +1219,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         return leaves
 
+
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
 
@@ -1341,7 +1341,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
-    estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, loss_.K]
+    estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, ``loss_.K``]
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
 
@@ -1758,6 +1758,5 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         """
 
         leaves = super(GradientBoostingRegressor, self).apply(X)
-        leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])  
+        leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves
-        
