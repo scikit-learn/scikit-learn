@@ -29,6 +29,7 @@ from sklearn.utils.extmath import fast_dot, _fast_dot
 from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import _batch_mean_variance_update
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
+from sklearn.utils.extmath import softmax
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -467,6 +468,9 @@ def test_vector_sign_flip():
     assert_array_equal(data, data_flipped * signs[:, np.newaxis])
 
 
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()
+def test_softmax():
+    rng = np.random.RandomState(0)
+    X = rng.randn(3, 5)
+    exp_X = np.exp(X)
+    sum_exp_X = np.sum(exp_X, axis=1).reshape((-1, 1))
+    assert_array_almost_equal(softmax(X), exp_X / sum_exp_X)

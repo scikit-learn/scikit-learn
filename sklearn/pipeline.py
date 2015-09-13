@@ -37,12 +37,20 @@ class Pipeline(BaseEstimator):
     For this, it enables setting parameters of the various steps using their
     names and the parameter name separated by a '__', as in the example below.
 
+    Read more in the :ref:`User Guide <pipeline>`.
+
     Parameters
     ----------
-    steps: list
+    steps : list
         List of (name, transform) tuples (implementing fit/transform) that are
         chained, in the order in which they are chained, with the last object
         an estimator.
+
+    Attributes
+    ----------
+    named_steps : dict
+        Read-only attribute to access any step parameter by user given name.
+        Keys are step names and values are steps parameters.
 
     Examples
     --------
@@ -67,18 +75,23 @@ class Pipeline(BaseEstimator):
     >>> prediction = anova_svm.predict(X)
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
     0.77...
+    >>> # getting the selected features chosen by anova_filter
+    >>> anova_svm.named_steps['anova'].get_support()
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([ True,  True,  True, False, False,  True, False,  True,  True, True,
+           False, False,  True, False,  True, False, False, False, False,
+           True], dtype=bool)
     """
 
     # BaseEstimator interface
 
     def __init__(self, steps):
-        self.named_steps = dict(steps)
         names, estimators = zip(*steps)
-        if len(self.named_steps) != len(steps):
-            raise ValueError("Names provided are not unique: %s" % (names,))
+        if len(dict(steps)) != len(steps):
+            raise ValueError("Provided step names are not unique: %s" % (names,))
 
         # shallow copy of steps
-        self.steps = tosequence(zip(names, estimators))
+        self.steps = tosequence(steps)
         transforms = estimators[:-1]
         estimator = estimators[-1]
 
@@ -102,13 +115,17 @@ class Pipeline(BaseEstimator):
         if not deep:
             return super(Pipeline, self).get_params(deep=False)
         else:
-            out = self.named_steps.copy()
+            out = self.named_steps
             for name, step in six.iteritems(self.named_steps):
                 for key, value in six.iteritems(step.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value
 
             out.update(super(Pipeline, self).get_params(deep=False))
             return out
+
+    @property
+    def named_steps(self):
+        return dict(self.steps)
 
     @property
     def _final_estimator(self):
@@ -403,6 +420,8 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
     This estimator applies a list of transformer objects in parallel to the
     input data, then concatenates the results. This is useful to combine
     several feature extraction mechanisms into a single transformer.
+
+    Read more in the :ref:`User Guide <feature_union>`.
 
     Parameters
     ----------

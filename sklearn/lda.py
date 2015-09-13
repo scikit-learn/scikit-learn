@@ -53,7 +53,8 @@ def _cov(X, shrinkage=None):
         if shrinkage == 'auto':
             sc = StandardScaler()  # standardize features
             X = sc.fit_transform(X)
-            s = sc.std_ * ledoit_wolf(X)[0] * sc.std_  # scale back
+            s = ledoit_wolf(X)[0]
+            s = sc.std_[:, np.newaxis] * s * sc.std_[np.newaxis, :]  # rescale
         elif shrinkage == 'empirical':
             s = empirical_covariance(X)
         else:
@@ -136,6 +137,8 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
     The fitted model can also be used to reduce the dimensionality of the input
     by projecting it to the most discriminative directions.
 
+    Read more in the :ref:`User Guide <lda_qda>`.
+
     Parameters
     ----------
     solver : string, optional
@@ -176,6 +179,12 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
 
     covariance_ : array-like, shape (n_features, n_features)
         Covariance matrix (shared by all classes).
+
+    explained_variance_ratio_ : array, shape (n_components,)
+        Percentage of variance explained by each of the selected components.
+        If ``n_components`` is not set then all components are stored and the
+        sum of explained variances is equal to 1.0. Only available when eigen
+        solver is used.
 
     means_ : array-like, shape (n_classes, n_features)
         Class means.
@@ -313,6 +322,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         Sb = St - Sw  # between scatter
 
         evals, evecs = linalg.eigh(Sb, Sw)
+        self.explained_variance_ratio_ = np.sort(evals / np.sum(evals))[::-1]
         evecs = evecs[:, np.argsort(evals)[::-1]]  # sort eigenvectors
         # evecs /= np.linalg.norm(evecs, axis=0)  # doesn't work with numpy 1.6
         evecs /= np.apply_along_axis(np.linalg.norm, 0, evecs)
@@ -411,7 +421,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
                           " 0.16 and will be removed from fit() in 0.18",
                           DeprecationWarning)
             self.tol = tol
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, ensure_min_samples=2)
         self.classes_ = unique_labels(y)
 
         if self.priors is None:  # estimate priors from sample

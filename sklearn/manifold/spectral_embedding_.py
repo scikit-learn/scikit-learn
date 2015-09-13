@@ -137,6 +137,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     However care must taken to always make the affinity matrix symmetric
     so that the eigenvector decomposition works as expected.
 
+    Read more in the :ref:`User Guide <spectral_embedding>`.
+
     Parameters
     ----------
     adjacency : array-like or sparse matrix, shape: (n_samples, n_samples)
@@ -263,7 +265,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # problem.
         if not sparse.issparse(laplacian):
             warnings.warn("AMG works better for sparse matrices")
-        laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
+        # lobpcg needs double precision floats
+        laplacian = check_array(laplacian, dtype=np.float64,
+                                accept_sparse=True)
         laplacian = _set_diag(laplacian, 1)
         ml = smoothed_aggregation_solver(check_array(laplacian, 'csr'))
         M = ml.aspreconditioner()
@@ -276,7 +280,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             raise ValueError
 
     elif eigen_solver == "lobpcg":
-        laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
+        # lobpcg needs double precision floats
+        laplacian = check_array(laplacian, dtype=np.float64,
+                                accept_sparse=True)
         if n_nodes < 5 * n_components + 1:
             # see note above under arpack why lobpcg has problems with small
             # number of nodes
@@ -286,8 +292,6 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             lambdas, diffusion_map = eigh(laplacian)
             embedding = diffusion_map.T[:n_components] * dd
         else:
-            # lobpcg needs native floats
-            laplacian = laplacian.astype(np.float)
             laplacian = _set_diag(laplacian, 1)
             # We increase the number of eigenvectors requested, as lobpcg
             # doesn't behave well in low dimension
@@ -313,6 +317,8 @@ class SpectralEmbedding(BaseEstimator):
     applies spectral decomposition to the corresponding graph laplacian.
     The resulting transformation is given by the value of the
     eigenvectors for each data point.
+
+    Read more in the :ref:`User Guide <spectral_embedding>`.
 
     Parameters
     -----------
@@ -445,6 +451,9 @@ class SpectralEmbedding(BaseEstimator):
         self : object
             Returns the instance itself.
         """
+
+        X = check_array(X, ensure_min_samples=2)
+
         random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, six.string_types):
             if self.affinity not in set(("nearest_neighbors", "rbf",

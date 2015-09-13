@@ -12,7 +12,6 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import coo_matrix
 
 from sklearn.random_projection import sparse_random_matrix
-from sklearn.utils.random import sample_without_replacement
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
@@ -30,6 +29,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import raises
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.validation import NotFittedError
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -127,7 +127,7 @@ digits.target = digits.target[perm]
 
 random_state = check_random_state(0)
 X_multilabel, y_multilabel = datasets.make_multilabel_classification(
-    random_state=0, return_indicator=True, n_samples=30, n_features=10)
+    random_state=0, n_samples=30, n_features=10)
 
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.
@@ -498,7 +498,7 @@ def test_error():
         assert_raises(NotFittedError, est.predict_proba, X)
 
         est.fit(X, y)
-        X2 = [-2, -1, 1]  # wrong feature shape for sample
+        X2 = [[-2, -1, 1]]  # wrong feature shape for sample
         assert_raises(ValueError, est.predict_proba, X2)
 
     for name, TreeEstimator in ALL_TREES.items():
@@ -859,10 +859,10 @@ def check_class_weights(name):
     """Check class_weights resemble sample_weights behavior."""
     TreeClassifier = CLF_TREES[name]
 
-    # Iris is balanced, so no effect expected for using 'auto' weights
+    # Iris is balanced, so no effect expected for using 'balanced' weights
     clf1 = TreeClassifier(random_state=0)
     clf1.fit(iris.data, iris.target)
-    clf2 = TreeClassifier(class_weight='auto', random_state=0)
+    clf2 = TreeClassifier(class_weight='balanced', random_state=0)
     clf2.fit(iris.data, iris.target)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
@@ -876,7 +876,7 @@ def check_class_weights(name):
     clf3.fit(iris.data, iris_multi)
     assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
     # Check against multi-output "auto" which should also have no effect
-    clf4 = TreeClassifier(class_weight='auto', random_state=0)
+    clf4 = TreeClassifier(class_weight='balanced', random_state=0)
     clf4.fit(iris.data, iris_multi)
     assert_almost_equal(clf3.feature_importances_, clf4.feature_importances_)
 
@@ -892,7 +892,7 @@ def check_class_weights(name):
 
     # Check that sample_weight and class_weight are multiplicative
     clf1 = TreeClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target, sample_weight**2)
+    clf1.fit(iris.data, iris.target, sample_weight ** 2)
     clf2 = TreeClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
@@ -1006,7 +1006,7 @@ def test_big_input():
 
 
 def test_realloc():
-    from sklearn.tree._tree import _realloc_test
+    from sklearn.tree._utils import _realloc_test
     assert_raises(MemoryError, _realloc_test)
 
 
@@ -1229,6 +1229,7 @@ def test_explicit_sparse_zeros():
         yield (check_explicit_sparse_zeros, tree)
 
 
+@ignore_warnings
 def check_raise_error_on_1d_input(name):
     TreeEstimator = ALL_TREES[name]
 
@@ -1240,9 +1241,10 @@ def check_raise_error_on_1d_input(name):
 
     est = TreeEstimator(random_state=0)
     est.fit(X_2d, y)
-    assert_raises(ValueError, est.predict, X)
+    assert_raises(ValueError, est.predict, [X])
 
 
+@ignore_warnings
 def test_1d_input():
     for name in ALL_TREES:
         yield check_raise_error_on_1d_input, name

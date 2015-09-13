@@ -64,6 +64,8 @@ def _most_frequent(array, extra_value, n_repeat):
 class Imputer(BaseEstimator, TransformerMixin):
     """Imputation transformer for completing missing values.
 
+    Read more in the :ref:`User Guide <imputation>`.
+
     Parameters
     ----------
     missing_values : integer or "NaN", optional (default="NaN")
@@ -356,7 +358,8 @@ class Imputer(BaseEstimator, TransformerMixin):
             indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
                                 np.diff(X.indptr))[mask]
 
-            X.data[mask] = valid_statistics[indexes].astype(X.dtype)
+            X.data[mask] = astype(valid_statistics[indexes], X.dtype,
+                                  copy=False)
         else:
             if sparse.issparse(X):
                 X = X.toarray()

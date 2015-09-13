@@ -304,6 +304,8 @@ class TSNE(BaseEstimator):
     noise and speed up the computation of pairwise distances between
     samples. For more tips see Laurens van der Maaten's FAQ [2].
 
+    Read more in the :ref:`User Guide <t_sne>`.
+
     Parameters
     ----------
     n_components : int, optional (default: 2)
@@ -335,6 +337,14 @@ class TSNE(BaseEstimator):
     n_iter : int, optional (default: 1000)
         Maximum number of iterations for the optimization. Should be at
         least 200.
+
+    n_iter_without_progress : int, optional (default: 30)
+        Maximum number of iterations without progress before we abort the
+        optimization.
+
+    min_grad_norm : float, optional (default: 1E-7)
+        If the gradient norm is below this threshold, the optimization will
+        be aborted.
 
     metric : string or callable, optional
         The metric to use when calculating distance between instances in a
@@ -393,6 +403,7 @@ class TSNE(BaseEstimator):
     """
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
+                 n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None):
         if init not in ["pca", "random"]:
@@ -402,6 +413,8 @@ class TSNE(BaseEstimator):
         self.early_exaggeration = early_exaggeration
         self.learning_rate = learning_rate
         self.n_iter = n_iter
+        self.n_iter_without_progress = n_iter_without_progress
+        self.min_grad_norm = min_grad_norm
         self.metric = metric
         self.init = init
         self.verbose = verbose
@@ -502,6 +515,8 @@ class TSNE(BaseEstimator):
         P /= self.early_exaggeration
         params, error, it = _gradient_descent(
             _kl_divergence, params, it=it + 1, n_iter=self.n_iter,
+            min_grad_norm=self.min_grad_norm,
+            n_iter_without_progress=self.n_iter_without_progress,
             momentum=0.8, learning_rate=self.learning_rate,
             verbose=self.verbose, args=[P, alpha, n_samples,
                                         self.n_components])

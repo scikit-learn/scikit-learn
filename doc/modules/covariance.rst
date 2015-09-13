@@ -248,6 +248,7 @@ paper. It is the same algorithm as in the R ``glasso`` package.
      graphical lasso" <http://biostatistics.oxfordjournals.org/content/9/3/432.short>`_,
      Biostatistics 9, pp 432, 2008
 
+.. _robust_covariance:
 
 Robust Covariance Estimation
 ============================

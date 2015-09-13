@@ -76,6 +76,8 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     of the ``target_variables`` and the function represented
     by the ``gbrt``.
 
+    Read more in the :ref:`User Guide <partial_dependence>`.
+
     Parameters
     ----------
     gbrt : BaseGradientBoosting
@@ -172,6 +174,8 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour
     plots.
+
+    Read more in the :ref:`User Guide <partial_dependence>`.
 
     Parameters
     ----------

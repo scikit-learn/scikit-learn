@@ -135,6 +135,14 @@ def test_clone_empty_array():
     assert_array_equal(clf.empty.data, clf2.empty.data)
 
 
+def test_clone_nan():
+    # Regression test for cloning estimators with default parameter as np.nan
+    clf = MyEstimator(empty=np.nan)
+    clf2 = clone(clf)
+
+    assert_true(clf.empty is clf2.empty)
+
+
 def test_repr():
     # Smoke test the repr of the base estimator.
     my_estimator = MyEstimator()

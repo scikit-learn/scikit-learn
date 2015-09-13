@@ -50,6 +50,8 @@ MODULE_DOCS = __doc__
 def fetch_california_housing(data_home=None, download_if_missing=True):
     """Loader for the California housing dataset from StatLib.
 
+    Read more in the :ref:`User Guide <datasets>`.
+
     Parameters
     ----------
     data_home : optional, default: None

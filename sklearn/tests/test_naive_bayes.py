@@ -253,8 +253,8 @@ def test_discretenb_predict_proba():
     for cls, X in zip([BernoulliNB, MultinomialNB],
                       [X_bernoulli, X_multinomial]):
         clf = cls().fit(X, y)
-        assert_equal(clf.predict(X[-1]), 2)
-        assert_equal(clf.predict_proba(X[0]).shape, (1, 2))
+        assert_equal(clf.predict(X[-1:]), 2)
+        assert_equal(clf.predict_proba([X[0]]).shape, (1, 2))
         assert_array_almost_equal(clf.predict_proba(X[:2]).sum(axis=1),
                                   np.array([1., 1.]), 6)
 
@@ -263,10 +263,10 @@ def test_discretenb_predict_proba():
     for cls, X in zip([BernoulliNB, MultinomialNB],
                       [X_bernoulli, X_multinomial]):
         clf = cls().fit(X, y)
-        assert_equal(clf.predict_proba(X[0]).shape, (1, 3))
+        assert_equal(clf.predict_proba(X[0:1]).shape, (1, 3))
         assert_equal(clf.predict_proba(X[:2]).shape, (2, 3))
-        assert_almost_equal(np.sum(clf.predict_proba(X[1])), 1)
-        assert_almost_equal(np.sum(clf.predict_proba(X[-1])), 1)
+        assert_almost_equal(np.sum(clf.predict_proba([X[1]])), 1)
+        assert_almost_equal(np.sum(clf.predict_proba([X[-1]])), 1)
         assert_almost_equal(np.sum(np.exp(clf.class_log_prior_)), 1)
         assert_almost_equal(np.sum(np.exp(clf.intercept_)), 1)
 
@@ -351,7 +351,7 @@ def test_sample_weight_mnb():
     clf.fit([[1, 2], [1, 2], [1, 0]],
             [0, 0, 1],
             sample_weight=[1, 1, 4])
-    assert_array_equal(clf.predict([1, 0]), [1])
+    assert_array_equal(clf.predict([[1, 0]]), [1])
     positive_prior = np.exp(clf.intercept_[0])
     assert_array_almost_equal([1 - positive_prior, positive_prior],
                               [1 / 3., 2 / 3.])
@@ -459,7 +459,7 @@ def test_bnb():
 
     # Testing data point is:
     # Chinese Chinese Chinese Tokyo Japan
-    X_test = np.array([0, 1, 1, 0, 0, 1])
+    X_test = np.array([[0, 1, 1, 0, 0, 1]])
 
     # Check the predictive probabilities are correct
     unnorm_predict_proba = np.array([[0.005183999999999999,

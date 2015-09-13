@@ -1,10 +1,18 @@
 language: python
-virtualenv:
-  system_site_packages: true
+# make it explicit that we favor the new container-based travis workers
+sudo: false
+addons:
+  apt:
+    packages:
+      # Only used by the DISTRIB="ubuntu" setting
+      - libatlas3gf-base
+      - libatlas-dev
+      - python-scipy
 env:
   matrix:
-    - DISTRIB="ubuntu" PYTHON_VERSION="2.7" INSTALL_ATLAS="true"
-      COVERAGE="true"
+    # This environment tests that scikit-learn can be built against
+    # versions of numpy, scipy with ATLAS that comes with Ubuntu Precise 12.04
+    - DISTRIB="ubuntu" PYTHON_VERSION="2.7" COVERAGE="true"
     # This environment tests the oldest supported anaconda env
     - DISTRIB="conda" PYTHON_VERSION="2.6" INSTALL_MKL="false"
       NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0"
@@ -19,7 +27,6 @@ after_success:
     # because the coverage report failed to be published.
     - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
 cache: apt
-
 notifications:
   webhooks:
     urls:

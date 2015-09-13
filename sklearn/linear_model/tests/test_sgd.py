@@ -257,6 +257,7 @@ class CommonTest(object):
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     """Test suite for the dense representation variant of SGD"""
     factory_class = SGDClassifier
+
     def test_sgd(self):
         # Check that SGD gives any results :-)
 
@@ -371,18 +372,18 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # Target must have at least two labels
         self.factory(alpha=0.01, n_iter=20).fit(X2, np.ones(9))
 
-    def test_partial_fit_weight_class_auto(self):
-        # partial_fit with class_weight='auto' not supported
+    def test_partial_fit_weight_class_balanced(self):
+        # partial_fit with class_weight='balanced' not supported"""
         assert_raises_regexp(ValueError,
-                             "class_weight 'auto' is not supported for "
-                             "partial_fit. In order to use 'auto' weights, "
-                             "use compute_class_weight\('auto', classes, y\). "
+                             "class_weight 'balanced' is not supported for "
+                             "partial_fit. In order to use 'balanced' weights, "
+                             "use compute_class_weight\('balanced', classes, y\). "
                              "In place of y you can us a large enough sample "
                              "of the full training set target to properly "
                              "estimate the class frequency distributions. "
                              "Pass the resulting weights as the class_weight "
                              "parameter.",
-                             self.factory(class_weight='auto').partial_fit,
+                             self.factory(class_weight='balanced').partial_fit,
                              X, Y, classes=np.unique(Y))
 
     def test_sgd_multiclass(self):
@@ -390,7 +391,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory(alpha=0.01, n_iter=20).fit(X2, Y2)
         assert_equal(clf.coef_.shape, (3, 2))
         assert_equal(clf.intercept_.shape, (3,))
-        assert_equal(clf.decision_function([0, 0]).shape, (1, 3))
+        assert_equal(clf.decision_function([[0, 0]]).shape, (1, 3))
         pred = clf.predict(T2)
         assert_array_equal(pred, true_result2)
 
@@ -432,7 +433,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory(alpha=0.01, n_iter=20, n_jobs=2).fit(X2, Y2)
         assert_equal(clf.coef_.shape, (3, 2))
         assert_equal(clf.intercept_.shape, (3,))
-        assert_equal(clf.decision_function([0, 0]).shape, (1, 3))
+        assert_equal(clf.decision_function([[0, 0]]).shape, (1, 3))
         pred = clf.predict(T2)
         assert_array_equal(pred, true_result2)
 
@@ -469,14 +470,14 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         for loss in ["log", "modified_huber"]:
             clf = self.factory(loss="modified_huber", alpha=0.01, n_iter=10)
             clf.fit(X, Y)
-            p = clf.predict_proba([3, 2])
+            p = clf.predict_proba([[3, 2]])
             assert_true(p[0, 1] > 0.5)
-            p = clf.predict_proba([-1, -1])
+            p = clf.predict_proba([[-1, -1]])
             assert_true(p[0, 1] < 0.5)
 
-            p = clf.predict_log_proba([3, 2])
+            p = clf.predict_log_proba([[3, 2]])
             assert_true(p[0, 1] > p[0, 0])
-            p = clf.predict_log_proba([-1, -1])
+            p = clf.predict_log_proba([[-1, -1]])
             assert_true(p[0, 1] < p[0, 0])
 
         # log loss multiclass probability estimates
@@ -488,16 +489,16 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_almost_equal(p[0].sum(), 1)
         assert_true(np.all(p[0] >= 0))
 
-        p = clf.predict_proba([-1, -1])
-        d = clf.decision_function([-1, -1])
+        p = clf.predict_proba([[-1, -1]])
+        d = clf.decision_function([[-1, -1]])
         assert_array_equal(np.argsort(p[0]), np.argsort(d[0]))
 
-        l = clf.predict_log_proba([3, 2])
-        p = clf.predict_proba([3, 2])
+        l = clf.predict_log_proba([[3, 2]])
+        p = clf.predict_proba([[3, 2]])
         assert_array_almost_equal(np.log(p), l)
 
-        l = clf.predict_log_proba([-1, -1])
-        p = clf.predict_proba([-1, -1])
+        l = clf.predict_log_proba([[-1, -1]])
+        p = clf.predict_proba([[-1, -1]])
         assert_array_almost_equal(np.log(p), l)
 
         # Modified Huber multiclass probability estimates; requires a separate
@@ -505,8 +506,8 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # ordering present in decision_function output.
         clf = self.factory(loss="modified_huber", alpha=0.01, n_iter=10)
         clf.fit(X2, Y2)
-        d = clf.decision_function([3, 2])
-        p = clf.predict_proba([3, 2])
+        d = clf.decision_function([[3, 2]])
+        p = clf.predict_proba([[3, 2]])
         if not isinstance(self, SparseSGDClassifierTestCase):
             assert_equal(np.argmax(d, axis=1), np.argmax(p, axis=1))
         else:   # XXX the sparse test gets a different X2 (?)
@@ -516,9 +517,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # which would cause naive normalization to fail (see comment
         # in SGDClassifier.predict_proba)
         x = X.mean(axis=0)
-        d = clf.decision_function(x)
+        d = clf.decision_function([x])
         if np.all(d < -1):  # XXX not true in sparse test case (why?)
-            p = clf.predict_proba(x)
+            p = clf.predict_proba([x])
             assert_array_almost_equal(p[0], [1 / 3.] * 3)
 
     def test_sgd_l1(self):
@@ -614,8 +615,8 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
         assert_almost_equal(clf1.coef_, clf2.coef_)
 
-    def test_auto_weight(self):
-        # Test class weights for imbalanced data
+    def test_balanced_weight(self):
+        # Test class weights for imbalanced data"""
         # compute reference metrics on iris dataset that is quite balanced by
         # default
         X, y = iris.data, iris.target
@@ -630,15 +631,16 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_almost_equal(metrics.f1_score(y, clf.predict(X), average='weighted'), 0.96,
                             decimal=1)
 
-        # make the same prediction using automated class_weight
-        clf_auto = self.factory(alpha=0.0001, n_iter=1000,
-                                class_weight="auto", shuffle=False).fit(X, y)
-        assert_almost_equal(metrics.f1_score(y, clf_auto.predict(X), average='weighted'), 0.96,
+        # make the same prediction using balanced class_weight
+        clf_balanced = self.factory(alpha=0.0001, n_iter=1000,
+                                    class_weight="balanced",
+                                    shuffle=False).fit(X, y)
+        assert_almost_equal(metrics.f1_score(y, clf_balanced.predict(X), average='weighted'), 0.96,
                             decimal=1)
 
         # Make sure that in the balanced case it does not change anything
-        # to use "auto"
-        assert_array_almost_equal(clf.coef_, clf_auto.coef_, 6)
+        # to use "balanced"
+        assert_array_almost_equal(clf.coef_, clf_balanced.coef_, 6)
 
         # build an very very imbalanced dataset out of iris data
         X_0 = X[y == 0, :]
@@ -653,14 +655,14 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         y_pred = clf.predict(X)
         assert_less(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
 
-        # fit a model with auto class_weight enabled
-        clf = self.factory(n_iter=1000, class_weight="auto", shuffle=False)
+        # fit a model with balanced class_weight enabled
+        clf = self.factory(n_iter=1000, class_weight="balanced", shuffle=False)
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
         assert_greater(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
 
         # fit another using a fit parameter override
-        clf = self.factory(n_iter=1000, class_weight="auto", shuffle=False)
+        clf = self.factory(n_iter=1000, class_weight="balanced", shuffle=False)
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
         assert_greater(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
@@ -703,7 +705,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf.partial_fit(X[:third], Y[:third], classes=classes)
         assert_equal(clf.coef_.shape, (1, X.shape[1]))
         assert_equal(clf.intercept_.shape, (1,))
-        assert_equal(clf.decision_function([0, 0]).shape, (1, ))
+        assert_equal(clf.decision_function([[0, 0]]).shape, (1, ))
         id1 = id(clf.coef_.data)
 
         clf.partial_fit(X[third:], Y[third:])
@@ -722,7 +724,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf.partial_fit(X2[:third], Y2[:third], classes=classes)
         assert_equal(clf.coef_.shape, (3, X2.shape[1]))
         assert_equal(clf.intercept_.shape, (3,))
-        assert_equal(clf.decision_function([0, 0]).shape, (1, 3))
+        assert_equal(clf.decision_function([[0, 0]]).shape, (1, 3))
         id1 = id(clf.coef_.data)
 
         clf.partial_fit(X2[third:], Y2[third:])
@@ -1017,7 +1019,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         clf.partial_fit(X[:third], Y[:third])
         assert_equal(clf.coef_.shape, (X.shape[1], ))
         assert_equal(clf.intercept_.shape, (1,))
-        assert_equal(clf.decision_function([0, 0]).shape, (1, ))
+        assert_equal(clf.decision_function([[0, 0]]).shape, (1, ))
         id1 = id(clf.coef_.data)
 
         clf.partial_fit(X[third:], Y[third:])

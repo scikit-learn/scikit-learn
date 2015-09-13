@@ -24,6 +24,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
     This classifier is useful as a simple baseline to compare with other
     (real) classifiers. Do not use it for real problems.
 
+    Read more in the :ref:`User Guide <dummy_estimators>`.
+
     Parameters
     ----------
     strategy : str
@@ -64,7 +66,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
     outputs_2d_ : bool,
         True if the output at fit is 2d, else false.
 
-    `sparse_output_` : bool,
+    sparse_output_ : bool,
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input y is passed in sparse format.
 
@@ -322,6 +324,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
     This regressor is useful as a simple baseline to compare with other
     (real) regressors. Do not use it for real problems.
+
+    Read more in the :ref:`User Guide <dummy_estimators>`.
 
     Parameters
     ----------

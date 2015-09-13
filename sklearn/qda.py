@@ -29,6 +29,8 @@ class QDA(BaseEstimator, ClassifierMixin):
 
     The model fits a Gaussian density to each class.
 
+    Read more in the :ref:`User Guide <lda_qda>`.
+
     Parameters
     ----------
     priors : array, optional, shape = [n_classes]
@@ -97,7 +99,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         store_covariances : boolean
             If True the covariance matrices are computed and stored in the
             `self.covariances_` attribute.
-        
+
         tol : float, optional, default 1.0e-4
             Threshold used for rank estimation.
         """

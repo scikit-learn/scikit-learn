@@ -85,6 +85,21 @@ def test_lda_coefs():
     assert_array_almost_equal(clf_lda_eigen.coef_, clf_lda_lsqr.coef_, 1)
 
 
+def test_lda_explained_variance_ratio():
+    # Test if the sum of the normalized eigen vectors values equals 1
+    n_features = 2
+    n_classes = 2
+    n_samples = 1000
+    X, y = make_blobs(n_samples=n_samples, n_features=n_features,
+                      centers=n_classes, random_state=11)
+
+    clf_lda_eigen = lda.LDA(solver="eigen")
+
+    clf_lda_eigen.fit(X, y)
+
+    assert_almost_equal(clf_lda_eigen.explained_variance_ratio_.sum(), 1.0, 3)
+
+
 def test_lda_transform():
     # Test LDA transform.
     clf = lda.LDA(solver="svd", n_components=1)
@@ -149,3 +164,17 @@ def test_lda_scaling():
         # should be able to separate the data perfectly
         assert_equal(clf.fit(x, y).score(x, y), 1.0,
                      'using covariance: %s' % solver)
+
+
+def test_covariance():
+    x, y = make_blobs(n_samples=100, n_features=5,
+                      centers=1, random_state=42)
+
+    # make features correlated
+    x = np.dot(x, np.arange(x.shape[1] ** 2).reshape(x.shape[1], x.shape[1]))
+
+    c_e = lda._cov(x, 'empirical')
+    assert_almost_equal(c_e, c_e.T)
+
+    c_s = lda._cov(x, 'auto')
+    assert_almost_equal(c_s, c_s.T)

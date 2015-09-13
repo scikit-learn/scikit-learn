@@ -106,6 +106,8 @@ def mean_absolute_error(y_true, y_pred,
                         multioutput='uniform_average'):
     """Mean absolute error regression loss
 
+    Read more in the :ref:`User Guide <mean_absolute_error>`.
+
     Parameters
     ----------
     y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
@@ -174,6 +176,8 @@ def mean_squared_error(y_true, y_pred,
                        multioutput='uniform_average'):
     """Mean squared error regression loss
 
+    Read more in the :ref:`User Guide <mean_squared_error>`.
+
     Parameters
     ----------
     y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
@@ -237,6 +241,8 @@ def mean_squared_error(y_true, y_pred,
 def median_absolute_error(y_true, y_pred):
     """Median absolute error regression loss
 
+    Read more in the :ref:`User Guide <median_absolute_error>`.
+
     Parameters
     ----------
     y_true : array-like of shape = (n_samples)
@@ -272,6 +278,8 @@ def explained_variance_score(y_true, y_pred,
     """Explained variance regression score function
 
     Best possible score is 1.0, lower values are worse.
+
+    Read more in the :ref:`User Guide <explained_variance_score>`.
 
     Parameters
     ----------
@@ -360,7 +368,12 @@ def r2_score(y_true, y_pred,
              multioutput=None):
     """R^2 (coefficient of determination) regression score function.
 
-    Best possible score is 1.0, lower values are worse.
+    Best possible score is 1.0 and it can be negative (because the
+    model can be arbitrarily worse). A constant model that always
+    predicts the expected value of y, disregarding the input features,
+    would get a R^2 score of 0.0.
+
+    Read more in the :ref:`User Guide <r2_score>`.
 
     Parameters
     ----------
@@ -444,7 +457,7 @@ def r2_score(y_true, y_pred,
     # arbitrary set to zero to avoid -inf scores, having a constant
     # y_true is not interesting for scoring a regression anyway
     output_scores[nonzero_numerator & ~nonzero_denominator] = 0.
-    if multioutput is None:
+    if multioutput is None and y_true.shape[1] != 1:
         # @FIXME change in 0.18
         warnings.warn("Default 'multioutput' behavior now corresponds to "
                       "'variance_weighted' value, it will be changed "

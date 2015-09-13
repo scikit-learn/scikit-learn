@@ -98,6 +98,8 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
     This is the structured version, that takes into account some topological
     structure between samples.
 
+    Read more in the :ref:`User Guide <hierarchical_clustering>`.
+
     Parameters
     ----------
     X : array, shape (n_samples, n_features)
@@ -310,6 +312,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
 
     This is the structured version, that takes into account some topological
     structure between samples.
+
+    Read more in the :ref:`User Guide <hierarchical_clustering>`.
 
     Parameters
     ----------
@@ -607,6 +611,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     Recursively merges the pair of clusters that minimally increases
     a given linkage distance.
 
+    Read more in the :ref:`User Guide <hierarchical_clustering>`.
+
     Parameters
     ----------
     n_clusters : int, default=2
@@ -707,7 +713,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         -------
         self
         """
-        X = check_array(X)
+        X = check_array(X, ensure_min_samples=2)
         memory = self.memory
         if isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
@@ -775,6 +781,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     Similar to AgglomerativeClustering, but recursively merges features
     instead of samples.
+
+    Read more in the :ref:`User Guide <hierarchical_clustering>`.
 
     Parameters
     ----------
@@ -861,11 +869,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         -------
         self
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
-        if not (len(X.shape) == 2 and X.shape[0] > 0):
-            raise ValueError('At least one sample is required to fit the '
-                             'model. A data matrix of shape %s was given.'
-                             % (X.shape, ))
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        ensure_min_features=2)
         return AgglomerativeClustering.fit(self, X.T, **params)
 
     @property

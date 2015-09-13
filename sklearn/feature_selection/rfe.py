@@ -14,7 +14,7 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
-from ..cross_validation import _check_cv as check_cv
+from ..cross_validation import check_cv
 from ..cross_validation import _safe_split, _score
 from ..metrics.scorer import check_scoring
 from .base import SelectorMixin
@@ -31,6 +31,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     absolute weights are the smallest are pruned from the current set features.
     That procedure is recursively repeated on the pruned set until the desired
     number of features to select is eventually reached.
+
+    Read more in the :ref:`User Guide <rfe>`.
 
     Parameters
     ----------
@@ -109,6 +111,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         self.step = step
         self.estimator_params = estimator_params
         self.verbose = verbose
+
+    @property
+    def _estimator_type(self):
+        return self.estimator._estimator_type
 
     def fit(self, X, y):
         """Fit the RFE model and then the underlying estimator on the selected
@@ -264,6 +270,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 class RFECV(RFE, MetaEstimatorMixin):
     """Feature ranking with recursive feature elimination and cross-validated
     selection of the best number of features.
+
+    Read more in the :ref:`User Guide <rfe>`.
 
     Parameters
     ----------

@@ -1,6 +1,6 @@
-=========
-Reference
-=========
+=============
+API Reference
+=============
 
 This is the class and function reference of scikit-learn. Please refer to
 the :ref:`full user guide <user_guide>` for further details, as the class and
@@ -162,14 +162,17 @@ Classes
    :template: class.rst
 
    cross_validation.KFold
+   cross_validation.LabelKFold
+   cross_validation.LabelShuffleSplit
    cross_validation.LeaveOneLabelOut
    cross_validation.LeaveOneOut
    cross_validation.LeavePLabelOut
    cross_validation.LeavePOut
    cross_validation.PredefinedSplit
-   cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
+   cross_validation.StratifiedKFold
    cross_validation.StratifiedShuffleSplit
+
 
 .. autosummary::
    :toctree: generated/
@@ -210,9 +213,7 @@ Loaders
    datasets.load_digits
    datasets.load_files
    datasets.load_iris
-   datasets.load_lfw_pairs
    datasets.fetch_lfw_pairs
-   datasets.load_lfw_people
    datasets.fetch_lfw_people
    datasets.load_linnerud
    datasets.mldata_filename
@@ -220,6 +221,7 @@ Loaders
    datasets.fetch_olivetti_faces
    datasets.fetch_california_housing
    datasets.fetch_covtype
+   datasets.fetch_rcv1
    datasets.load_mlcomp
    datasets.load_sample_image
    datasets.load_sample_images
@@ -289,6 +291,7 @@ Samples generator
    decomposition.SparseCoder
    decomposition.DictionaryLearning
    decomposition.MiniBatchDictionaryLearning
+   decomposition.LatentDirichletAllocation
 
 .. autosummary::
    :toctree: generated/
@@ -351,6 +354,7 @@ Samples generator
    ensemble.RandomForestClassifier
    ensemble.RandomTreesEmbedding
    ensemble.RandomForestRegressor
+   ensemble.VotingClassifier
 
 .. autosummary::
    :toctree: generated/
@@ -1104,16 +1108,19 @@ See the :ref:`metrics` section of the user guide for further details.
    :template: class.rst
 
    preprocessing.Binarizer
+   preprocessing.FunctionTransformer
    preprocessing.Imputer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
    preprocessing.MultiLabelBinarizer
+   preprocessing.MaxAbsScaler
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
-   preprocessing.StandardScaler
    preprocessing.PolynomialFeatures
+   preprocessing.RobustScaler
+   preprocessing.StandardScaler
 
 .. autosummary::
    :toctree: generated/
@@ -1122,8 +1129,12 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.add_dummy_feature
    preprocessing.binarize
    preprocessing.label_binarize
+   preprocessing.maxabs_scale
+   preprocessing.minmax_scale
    preprocessing.normalize
+   preprocessing.robust_scale
    preprocessing.scale
+
 
 
 :mod:`sklearn.qda`: Quadratic Discriminant Analysis

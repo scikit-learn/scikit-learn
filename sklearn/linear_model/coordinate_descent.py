@@ -17,12 +17,13 @@ from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
 from ..utils import check_array, check_X_y, deprecated
 from ..utils.validation import check_random_state
-from ..cross_validation import _check_cv as check_cv
+from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
+from ..utils.validation import column_or_1d
 from ..utils import ConvergenceWarning
 
 from . import cd_fast
@@ -131,6 +132,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
+
+    Read more in the :ref:`User Guide <lasso>`.
 
     Parameters
     ----------
@@ -274,6 +277,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     i.e. the sum of norm of each row.
 
+    Read more in the :ref:`User Guide <elastic_net>`.
+
     Parameters
     ----------
     X : {array-like}, shape (n_samples, n_features)
@@ -354,10 +359,18 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNet
     ElasticNetCV
     """
-    X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
-    if Xy is not None:
-        Xy = check_array(Xy, 'csc', dtype=np.float64, order='F', copy=False,
-                         ensure_2d=False)
+    # We expect X and y to be already float64 Fortran ordered when bypassing
+    # checks
+    check_input = 'check_input' not in params or params['check_input']
+    pre_fit = 'check_input' not in params or params['pre_fit']
+    if check_input:
+        X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
+        y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False,
+                        ensure_2d=False)
+        if Xy is not None:
+            Xy = check_array(Xy, 'csc', dtype=np.float64, order='F',
+                             copy=False,
+                             ensure_2d=False)
     n_samples, n_features = X.shape
 
     multi_output = False
@@ -374,10 +387,13 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         else:
             X_sparse_scaling = np.zeros(n_features)
 
-    # X should be normalized and fit already.
-    X, y, X_mean, y_mean, X_std, precompute, Xy = \
-        _pre_fit(X, y, Xy, precompute, normalize=False, fit_intercept=False,
-                 copy=False)
+    # X should be normalized and fit already if function is called
+    # from ElasticNet.fit
+    if pre_fit:
+        X, y, X_mean, y_mean, X_std, precompute, Xy = \
+            _pre_fit(X, y, Xy, precompute, normalize=False,
+                     fit_intercept=False,
+                     copy=False, Xy_precompute_order='F')
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
@@ -422,7 +438,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model = cd_fast.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
         elif isinstance(precompute, np.ndarray):
-            precompute = check_array(precompute, 'csc', dtype=np.float64, order='F')
+            # We expect precompute to be already Fortran ordered when bypassing
+            # checks
+            if check_input:
+                precompute = check_array(precompute, 'csc', dtype=np.float64,
+                                         order='F')
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
                 tol, rng, random, positive)
@@ -482,6 +502,8 @@ class ElasticNet(LinearModel, RegressorMixin):
     alpha corresponds to the lambda parameter in glmnet. Specifically, l1_ratio
     = 1 is the lasso penalty. Currently, l1_ratio <= 0.01 is not reliable,
     unless you supply your own sequence of alpha.
+
+    Read more in the :ref:`User Guide <elastic_net>`.
 
     Parameters
     ----------
@@ -593,7 +615,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.random_state = random_state
         self.selection = selection
 
-    def fit(self, X, y):
+    def fit(self, X, y, check_input=True):
         """Fit model with coordinate descent.
 
         Parameters
@@ -614,6 +636,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well. You are advised to use the LinearRegression "
@@ -624,14 +647,16 @@ class ElasticNet(LinearModel, RegressorMixin):
                           "slower even when n_samples > n_features. Hence "
                           "it will be removed in 0.18.",
                           DeprecationWarning, stacklevel=2)
-
-        X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
-                         order='F', copy=self.copy_X and self.fit_intercept,
-                         multi_output=True, y_numeric=True)
-
+        # We expect X and y to be already float64 Fortran ordered arrays
+        # when bypassing checks
+        if check_input:
+            X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
+                             order='F',
+                             copy=self.copy_X and self.fit_intercept,
+                             multi_output=True, y_numeric=True)
         X, y, X_mean, y_mean, X_std, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
-                     self.fit_intercept, copy=True)
+                     self.fit_intercept, copy=False, Xy_precompute_order='F')
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -670,7 +695,9 @@ class ElasticNet(LinearModel, RegressorMixin):
                           X_mean=X_mean, X_std=X_std, return_n_iter=True,
                           coef_init=coef_[k], max_iter=self.max_iter,
                           random_state=self.random_state,
-                          selection=self.selection)
+                          selection=self.selection,
+                          check_input=False,
+                          pre_fit=False)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
             self.n_iter_.append(this_iter[0])
@@ -736,6 +763,8 @@ class Lasso(ElasticNet):
 
     Technically the Lasso model is optimizing the same objective function as
     the Elastic Net with ``l1_ratio=1.0`` (no L2 penalty).
+
+    Read more in the :ref:`User Guide <lasso>`.
 
     Parameters
     ----------
@@ -1012,9 +1041,10 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                 model = ElasticNet()
             else:
                 model = Lasso()
-            if y.ndim > 1:
+            if y.ndim > 1 and y.shape[1] > 1:
                 raise ValueError("For multi-task outputs, use "
                                  "MultiTask%sCV" % (model_str))
+            y = column_or_1d(y, warn=True)
         else:
             if sparse.isspmatrix(X):
                 raise TypeError("X should be dense but a sparse matrix was"
@@ -1044,7 +1074,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             # by the model fitting itself
             X = check_array(X, 'csc', copy=False)
             if sparse.isspmatrix(X):
-                if not np.may_share_memory(reference_to_old_X.data, X.data):
+                if (hasattr(reference_to_old_X, "data") and
+                        not np.may_share_memory(reference_to_old_X.data, X.data)):
                     # X is a sparse matrix and has been copied
                     copy_X = False
             elif not np.may_share_memory(reference_to_old_X, X):
@@ -1160,6 +1191,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
     The optimization objective for Lasso is::
 
         (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
+
+    Read more in the :ref:`User Guide <lasso>`.
 
     Parameters
     ----------
@@ -1285,6 +1318,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     """Elastic Net model with iterative fitting along a regularization path
 
     The best model is selected by cross-validation.
+
+    Read more in the :ref:`User Guide <elastic_net>`.
 
     Parameters
     ----------
@@ -1463,6 +1498,8 @@ class MultiTaskElasticNet(Lasso):
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
+
+    Read more in the :ref:`User Guide <multi_task_lasso>`.
 
     Parameters
     ----------
@@ -1647,6 +1684,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     i.e. the sum of norm of earch row.
 
+    Read more in the :ref:`User Guide <multi_task_lasso>`.
+
     Parameters
     ----------
     alpha : float, optional
@@ -1754,6 +1793,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
+
+    Read more in the :ref:`User Guide <multi_task_lasso>`.
 
     Parameters
     ----------
@@ -1908,6 +1949,8 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
+
+    Read more in the :ref:`User Guide <multi_task_lasso>`.
 
     Parameters
     ----------

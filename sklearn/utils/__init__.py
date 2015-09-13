@@ -9,7 +9,7 @@ import warnings
 
 from .murmurhash import murmurhash3_32
 from .validation import (as_float_array,
-                         assert_all_finite, warn_if_not_float,
+                         assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric, DataConversionWarning)
@@ -19,7 +19,6 @@ from ..externals.joblib import cpu_count
 
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
-           "warn_if_not_float",
            "check_random_state",
            "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
@@ -352,7 +351,7 @@ def safe_sqr(X, copy=True):
     -------
     X ** 2 : element wise square
     """
-    X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+    X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], ensure_2d=False)
     if issparse(X):
         if copy:
             X = X.copy()
@@ -409,6 +408,8 @@ def gen_even_slices(n, n_packs, n_samples=None):
     [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
     """
     start = 0
+    if n_packs < 1:
+        raise ValueError("gen_even_slices got n_packs=%s, must be >=1" % n_packs)
     for pack_num in range(n_packs):
         this_n = n // n_packs
         if pack_num < n % n_packs:

@@ -286,7 +286,7 @@ def assign_rows_csr(X,
         raise ValueError("cannot assign %d rows to %d"
                          % (X_rows.shape[0], out_rows.shape[0]))
 
-    out[:] = 0.
+    out[out_rows] = 0.
     for i in range(X_rows.shape[0]):
         # XXX we could reuse add_row_csr here, but the array slice
         # is not optimized away.

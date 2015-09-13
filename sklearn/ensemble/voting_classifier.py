@@ -24,6 +24,8 @@ from ..externals import six
 class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
+    Read more in the :ref:`User Guide <voting_classifier>`.
+
     Parameters
     ----------
     estimators : list of (string, estimator) tuples
@@ -143,8 +145,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         else:  # 'hard' voting
             predictions = self._predict(X)
-            maj = np.apply_along_axis(
-                                      lambda x:
+            maj = np.apply_along_axis(lambda x:
                                       np.argmax(np.bincount(x,
                                                 weights=self.weights)),
                                       axis=1,
@@ -211,7 +212,8 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         if not deep:
             return super(VotingClassifier, self).get_params(deep=False)
         else:
-            out = self.named_estimators.copy()
+            out = super(VotingClassifier, self).get_params(deep=False)
+            out.update(self.named_estimators.copy())
             for name, step in six.iteritems(self.named_estimators):
                 for key, value in six.iteritems(step.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value

@@ -13,6 +13,8 @@ improve estimators' accuracy scores or to boost their performance on very
 high-dimensional datasets.
 
 
+.. _variance_threshold:
+
 Removing features with low variance
 ===================================
 
@@ -44,6 +46,8 @@ so we can select using the threshold ``.8 * (1 - .8)``::
 
 As expected, ``VarianceThreshold`` has removed the first column,
 which has a probability :math:`p = 5/6 > .8` of containing a zero.
+
+.. _univariate_feature_selection:
 
 Univariate feature selection
 ============================
@@ -101,6 +105,7 @@ univariate p-values:
 
     :ref:`example_feature_selection_plot_feature_selection.py`
 
+.. _rfe:
 
 Recursive feature elimination
 =============================

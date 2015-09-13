@@ -26,14 +26,14 @@ from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_array, check_random_state, compute_sample_weight
-from ..utils.validation import NotFittedError, check_is_fitted
+from ..utils.validation import NotFittedError
 
 
-from ._tree import Criterion
-from ._tree import Splitter
+from ._criterion import Criterion
+from ._splitter import Splitter
 from ._tree import DepthFirstTreeBuilder, BestFirstTreeBuilder
 from ._tree import Tree
-from . import _tree
+from . import _tree, _splitter, _criterion
 
 __all__ = ["DecisionTreeClassifier",
            "DecisionTreeRegressor",
@@ -48,15 +48,15 @@ __all__ = ["DecisionTreeClassifier",
 DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
-CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
-CRITERIA_REG = {"mse": _tree.MSE, "friedman_mse": _tree.FriedmanMSE}
+CRITERIA_CLF = {"gini": _criterion.Gini, "entropy": _criterion.Entropy}
+CRITERIA_REG = {"mse": _criterion.MSE, "friedman_mse": _criterion.FriedmanMSE}
 
-DENSE_SPLITTERS = {"best": _tree.BestSplitter,
-                   "presort-best": _tree.PresortBestSplitter,
-                   "random": _tree.RandomSplitter}
+DENSE_SPLITTERS = {"best": _splitter.BestSplitter,
+                   "presort-best": _splitter.PresortBestSplitter,
+                   "random": _splitter.RandomSplitter}
 
-SPARSE_SPLITTERS = {"best": _tree.BestSparseSplitter,
-                    "random": _tree.RandomSparseSplitter}
+SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
+                    "random": _splitter.RandomSparseSplitter}
 
 # =============================================================================
 # Base decision tree
@@ -166,10 +166,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             if self.class_weight is not None:
                 y_original = np.copy(y)
 
+            y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
             for k in range(self.n_outputs_):
-                classes_k, y[:, k] = np.unique(y[:, k], return_inverse=True)
+                classes_k, y_store_unique_indices[:, k] = np.unique(y[:, k], return_inverse=True)
                 self.classes_.append(classes_k)
                 self.n_classes_.append(classes_k.shape[0])
+            y = y_store_unique_indices
 
             if self.class_weight is not None:
                 expanded_class_weight = compute_sample_weight(
@@ -433,6 +435,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """A decision tree classifier.
 
+    Read more in the :ref:`User Guide <tree>`.
+
     Parameters
     ----------
     criterion : string, optional (default="gini")
@@ -481,14 +485,16 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
-    class_weight : dict, list of dicts, "auto" or None, optional (default=None)
+    class_weight : dict, list of dicts, "balanced" or None, optional
+                   (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
 
-        The "auto" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies in the input data.
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
         For multi-output, the weights of each column of y will be multiplied.
 
@@ -663,11 +669,14 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     """A decision tree regressor.
 
+    Read more in the :ref:`User Guide <tree>`.
+
     Parameters
     ----------
     criterion : string, optional (default="mse")
         The function to measure the quality of a split. The only supported
-        criterion is "mse" for the mean squared error.
+        criterion is "mse" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion.
 
     splitter : string, optional (default="best")
         The strategy used to choose the split at each node. Supported
@@ -803,6 +812,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Warning: Extra-trees should only be used within ensemble methods.
 
+    Read more in the :ref:`User Guide <tree>`.
+
     See also
     --------
     ExtraTreeRegressor, ExtraTreesClassifier, ExtraTreesRegressor
@@ -848,6 +859,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     decision tree.
 
     Warning: Extra-trees should only be used within ensemble methods.
+
+    Read more in the :ref:`User Guide <tree>`.
 
     See also
     --------

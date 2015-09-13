@@ -17,7 +17,7 @@ The module structure is the following:
 """
 
 # Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti,
-#          Arnaud Joly
+#          Arnaud Joly, Jacob Schreiber
 # License: BSD 3 clause
 
 from __future__ import print_function
@@ -45,8 +45,8 @@ from ..feature_selection.from_model import _LearntSelectorMixin
 
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, TREE_LEAF
-from ..tree._tree import PresortBestSplitter
-from ..tree._tree import FriedmanMSE
+from ..tree._splitter import PresortBestSplitter
+from ..tree._criterion import FriedmanMSE
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -505,7 +505,7 @@ class BinomialDeviance(ClassificationLossFunction):
 
     def _score_to_proba(self, score):
         proba = np.ones((score.shape[0], 2), dtype=np.float64)
-        proba[:, 1] = 1.0 / (1.0 + np.exp(-score.ravel()))
+        proba[:, 1] = expit(score.ravel())
         proba[:, 0] -= proba[:, 1]
         return proba
 
@@ -628,7 +628,7 @@ class ExponentialLoss(ClassificationLossFunction):
 
     def _score_to_proba(self, score):
         proba = np.ones((score.shape[0], 2), dtype=np.float64)
-        proba[:, 1] = 1.0 / (1.0 + np.exp(-2.0 * score.ravel()))
+        proba[:, 1] = expit(2.0 * score.ravel())
         proba[:, 0] -= proba[:, 1]
         return proba
 
@@ -898,6 +898,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
     def _is_initialized(self):
         return len(getattr(self, 'estimators_', [])) > 0
 
+    def _check_initialized(self):
+        """Check that the estimator is initialized, raising an error if not."""
+        if self.estimators_ is None or len(self.estimators_) == 0:
+            raise NotFittedError("Estimator not fitted, call `fit`"
+                                 " before making predictions`.")
+
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
@@ -1067,9 +1073,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
     def _init_decision_function(self, X):
         """Check input and compute prediction of ``init``. """
-        if self.estimators_ is None or len(self.estimators_) == 0:
-            raise NotFittedError("Estimator not fitted, call `fit`"
-                                 " before making predictions`.")
+        self._check_initialized()
         if X.shape[1] != self.n_features:
             raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
                 self.n_features, X.shape[1]))
@@ -1164,9 +1168,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         -------
         feature_importances_ : array, shape = [n_features]
         """
-        if self.estimators_ is None or len(self.estimators_) == 0:
-            raise NotFittedError("Estimator not fitted, call `fit` before"
-                                 " `feature_importances_`.")
+        self._check_initialized()
 
         total_sum = np.zeros((self.n_features, ), dtype=np.float64)
         for stage in self.estimators_:
@@ -1184,6 +1186,39 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         # Default implementation
         return y
 
+    def apply(self, X):
+        """Apply trees in the ensemble to X, return leaf indices.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        X_leaves : array_like, shape = [n_samples, n_estimators, n_classes]
+            For each datapoint x in X and for each tree in the ensemble,
+            return the index of the leaf x ends up in in each estimator.
+            In the case of binary classification n_classes is 1.
+        """
+
+        self._check_initialized()
+        X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
+
+        # n_classes will be equal to 1 in the binary classification or the
+        # regression case.
+        n_estimators, n_classes = self.estimators_.shape
+        leaves = np.zeros((X.shape[0], n_estimators, n_classes))
+
+        for i in range(n_estimators):
+            for j in range(n_classes):
+                estimator = self.estimators_[i, j]
+                leaves[:, i, j] = estimator.apply(X, check_input=False)
+
+        return leaves
+
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
@@ -1194,6 +1229,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     regression trees are fit on the negative gradient of the
     binomial or multinomial deviance loss function. Binary classification
     is a special case where only a single regression tree is induced.
+
+    Read more in the :ref:`User Guide <gradient_boosting>`.
 
     Parameters
     ----------
@@ -1304,7 +1341,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
-    estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, loss_.K]
+    estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, ``loss_.K``]
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
 
@@ -1515,6 +1552,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     In each stage a regression tree is fit on the negative gradient of the
     given loss function.
 
+    Read more in the :ref:`User Guide <gradient_boosting>`.
+
     Parameters
     ----------
     loss : {'ls', 'lad', 'huber', 'quantile'}, optional (default='ls')
@@ -1700,3 +1739,24 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         """
         for y in self._staged_decision_function(X):
             yield y.ravel()
+
+    def apply(self, X):
+        """Apply trees in the ensemble to X, return leaf indices.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        X_leaves : array_like, shape = [n_samples, n_estimators]
+            For each datapoint x in X and for each tree in the ensemble,
+            return the index of the leaf x ends up in in each estimator.
+        """
+
+        leaves = super(GradientBoostingRegressor, self).apply(X)
+        leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
+        return leaves

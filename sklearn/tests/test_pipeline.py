@@ -5,7 +5,7 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.externals.six.moves import zip
-from sklearn.utils.testing import assert_raises, assert_raises_regex
+from sklearn.utils.testing import assert_raises, assert_raises_regex, assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
@@ -163,6 +163,27 @@ def test_pipeline_fit_params():
     # and transformer params should not be changed
     assert_true(pipe.named_steps['transf'].a is None)
     assert_true(pipe.named_steps['transf'].b is None)
+
+
+def test_pipeline_raise_set_params_error():
+    # Test pipeline raises set params error message for nested models.
+    pipe = Pipeline([('cls', LinearRegression())])
+
+    # expected error message
+    error_msg = ('Invalid parameter %s for estimator %s. '
+                 'Check the list of available parameters '
+                 'with `estimator.get_params().keys()`.')
+
+    assert_raise_message(ValueError,
+                         error_msg % ('fake', 'Pipeline'),
+                         pipe.set_params,
+                         fake='nope')
+
+    # nested model check
+    assert_raise_message(ValueError,
+                         error_msg % ("fake", pipe),
+                         pipe.set_params,
+                         fake__estimator='nope')
 
 
 def test_pipeline_methods_pca_svm():

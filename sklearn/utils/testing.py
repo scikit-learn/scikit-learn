@@ -28,8 +28,20 @@ except ImportError:
     from urllib.request import urlopen
     from urllib.error import HTTPError
 
+import tempfile
+import shutil
+import os.path as op
+import atexit
+
+# WindowsError only exist on Windows
+try:
+    WindowsError
+except NameError:
+    WindowsError = None
+
 import sklearn
 from sklearn.base import BaseEstimator
+from sklearn.externals import joblib
 
 # Conveniently import all assertions in one place.
 from nose.tools import assert_equal
@@ -89,7 +101,8 @@ except ImportError:
                                      (expected_regexp, error_message))
         if not_raised:
             raise AssertionError("%s not raised by %s" %
-                                 (expected_exception.__name__, callable_obj.__name__))
+                                 (expected_exception.__name__,
+                                  callable_obj.__name__))
 
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
 # assert_raises_regex but lets keep the bacward compat in scikit-learn with
@@ -212,7 +225,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
             raise AssertionError("No warning raised when calling %s"
                                  % func.__name__)
 
-        found = [warning.category is warning_class for warning in w]
+        found = [issubclass(warning.category, warning_class) for warning in w]
         if not any(found):
             raise AssertionError("No warning raised for %s with class "
                                  "%s"
@@ -235,8 +248,8 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
         if not message_found:
             raise AssertionError("Did not receive the message you expected "
-                                 "('%s') for <%s>."
-                                 % (message, func.__name__))
+                                 "('%s') for <%s>, got: '%s'"
+                                 % (message, func.__name__, msg))
 
     return result
 
@@ -387,10 +400,38 @@ else:
     assert_allclose = _assert_allclose
 
 
-def assert_raise_message(exception, message, function, *args, **kwargs):
-    """Helper function to test error messages in exceptions"""
-    assert_raises_regex(
-        exception, re.escape(message), function, *args, **kwargs)
+def assert_raise_message(exceptions, message, function, *args, **kwargs):
+    """Helper function to test error messages in exceptions
+
+    Parameters
+    ----------
+    exceptions : exception or tuple of exception
+        Name of the estimator
+
+    func : callable
+        Calable object to raise error
+
+    *args : the positional arguments to `func`.
+
+    **kw : the keyword arguments to `func`
+    """
+    try:
+        function(*args, **kwargs)
+    except exceptions as e:
+        error_message = str(e)
+        if message not in error_message:
+            raise AssertionError("Error message does not include the expected"
+                                 " string: %r. Observed error message: %r" %
+                                 (message, error_message))
+    else:
+        # concatenate exception names
+        if isinstance(exceptions, tuple):
+            names = " or ".join(e.__name__ for e in exceptions)
+        else:
+            names = exceptions.__name__
+
+        raise AssertionError("%s not raised by %s" %
+                             (names, function.__name__))
 
 
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):
@@ -508,11 +549,9 @@ DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
              '_SigmoidCalibration', 'VotingClassifier']
 
 
-
 def all_estimators(include_meta_estimators=False,
                    include_other=False, type_filter=None,
                    include_dont_test=False):
-                   
     """Get a list of all estimators from sklearn.
 
     This function crawls the module and gets all classes that inherit
@@ -637,6 +676,10 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
     """Test decorator that skips test if OS is Mac OS X and its
     major version is one of ``versions``.
     """
+    warnings.warn("if_not_mac_os is deprecated in 0.17 and will be removed"
+                  " in 0.19: use the safer and more generic"
+                  " if_safe_multiprocessing_with_blas instead",
+                  DeprecationWarning)
     mac_version, _, _ = platform.mac_ver()
     skip = '.'.join(mac_version.split('.')[:2]) in versions
 
@@ -647,6 +690,33 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
                 raise SkipTest(message)
         return func
     return decorator
+
+
+def if_safe_multiprocessing_with_blas(func):
+    """Decorator for tests involving both BLAS calls and multiprocessing
+
+    Under Python < 3.4 and POSIX (e.g. Linux or OSX), using multiprocessing in
+    conjunction with some implementation of BLAS (or other libraries that
+    manage an internal posix thread pool) can cause a crash or a freeze of the
+    Python process.
+
+    Under Python 3.4 and later, joblib uses the forkserver mode of
+    multiprocessing which does not trigger this problem.
+
+    In practice all known packaged distributions (from Linux distros or
+    Anaconda) of BLAS under Linux seems to be safe. So we this problem seems to
+    only impact OSX users.
+
+    This wrapper makes it possible to skip tests that can possibly cause
+    this crash under OSX with.
+    """
+    @wraps(func)
+    def run_test(*args, **kwargs):
+        if sys.platform == 'darwin' and sys.version_info[:2] < (3, 4):
+            raise SkipTest(
+                "Possible multi-process bug with some BLAS under Python < 3.4")
+        return func(*args, **kwargs)
+    return run_test
 
 
 def clean_warning_registry():
@@ -669,6 +739,37 @@ def check_skip_travis():
     """Skip test if being run on Travis."""
     if os.environ.get('TRAVIS') == "true":
         raise SkipTest("This test needs to be skipped on Travis")
+
+
+def _delete_folder(folder_path, warn=False):
+    """Utility function to cleanup a temporary folder if still existing.
+    Copy from joblib.pool (for independance)"""
+    try:
+        if os.path.exists(folder_path):
+            # This can fail under windows,
+            #  but will succeed when called by atexit
+            shutil.rmtree(folder_path)
+    except WindowsError:
+        if warn:
+            warnings.warn("Could not delete temporary folder %s" % folder_path)
+
+
+class TempMemmap(object):
+    def __init__(self, data, mmap_mode='r'):
+        self.temp_folder = tempfile.mkdtemp(prefix='sklearn_testing_')
+        self.mmap_mode = mmap_mode
+        self.data = data
+
+    def __enter__(self):
+        fpath = op.join(self.temp_folder, 'data.pkl')
+        joblib.dump(self.data, fpath)
+        data_read_only = joblib.load(fpath, mmap_mode=self.mmap_mode)
+        atexit.register(lambda: _delete_folder(self.temp_folder, warn=True))
+        return data_read_only
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        _delete_folder(self.temp_folder)
+
 
 with_network = with_setup(check_skip_network)
 with_travis = with_setup(check_skip_travis)

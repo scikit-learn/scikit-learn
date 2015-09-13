@@ -139,8 +139,3 @@ def test_kde_pipeline_gridsearch():
     search = GridSearchCV(pipe1, param_grid=params, cv=5)
     search.fit(X)
     assert_equal(search.best_params_['kerneldensity__bandwidth'], .1)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

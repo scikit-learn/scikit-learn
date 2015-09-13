@@ -27,10 +27,12 @@ from sklearn.utils.estimator_checks import (
     _yield_all_checks,
     CROSS_DECOMPOSITION,
     check_parameters_default_constructible,
-    check_class_weight_auto_linear_classifier,
+    check_class_weight_balanced_linear_classifier,
     check_transformer_n_iter,
     check_non_transformer_estimators_n_iter,
-    check_get_params_invariance)
+    check_get_params_invariance,
+    check_fit2d_predict1d,
+    check_fit1d_1sample)
 
 
 def test_all_estimator_no_base_class():
@@ -61,7 +63,7 @@ def test_non_meta_estimators():
     for name, Estimator in estimators:
         if issubclass(Estimator, BiclusterMixin):
             continue
-        if name.endswith("HMM") or name.startswith("_"):
+        if name.startswith("_"):
             continue
         for check in _yield_all_checks(name, Estimator):
             yield check, name, Estimator
@@ -94,7 +96,7 @@ def test_configure():
         os.chdir(cwd)
 
 
-def test_class_weight_auto_linear_classifiers():
+def test_class_weight_balanced_linear_classifiers():
     classifiers = all_estimators(type_filter='classifier')
 
     clean_warning_registry()
@@ -112,7 +114,7 @@ def test_class_weight_auto_linear_classifiers():
             # the coef. Therefore it is expected to not behave exactly as the
             # other linear model.
             continue
-        yield check_class_weight_auto_linear_classifier, name, Classifier
+        yield check_class_weight_balanced_linear_classifier, name, Classifier
 
 
 @ignore_warnings
