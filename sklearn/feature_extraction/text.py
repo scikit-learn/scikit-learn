@@ -245,7 +245,7 @@ class VectorizerMixin(object):
         vocabulary = self.vocabulary
         if vocabulary is not None:
             if isinstance(vocabulary, set):
-                vocabulary = list(sorted(vocabulary))
+                vocabulary = sorted(vocabulary)
             if not isinstance(vocabulary, Mapping):
                 vocab = {}
                 for i, t in enumerate(vocabulary):
