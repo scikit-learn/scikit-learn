@@ -463,9 +463,18 @@ class GraphLassoCV(GraphLasso):
         The number of times the grid is refined. Not used if explicit
         values of alphas are passed.
 
-    cv : cross-validation generator, optional
-        see sklearn.cross_validation module. If None is passed, defaults to
-        a 3-fold strategy
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     tol: positive float, optional
         The tolerance to declare convergence: if the dual gap goes below

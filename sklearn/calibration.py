@@ -53,10 +53,21 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         with too few calibration samples (<<1000) since it tends to overfit.
         Use sigmoids (Platt's calibration) in this case.
 
-    cv : integer or cross-validation generator or "prefit", optional
-        If an integer is passed, it is the number of folds (default 3).
-        Specific cross-validation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects.
+    cv : integer/cross-validation generator/iterable or "prefit", optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs, if ``y`` is binary or multiclass,
+        :class:`StratifiedKFold` used. If ``y`` is neither binary nor
+        multiclass, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
+
         If "prefit" is passed, it is assumed that base_estimator has been
         fitted already and all data is used for calibration.
 
