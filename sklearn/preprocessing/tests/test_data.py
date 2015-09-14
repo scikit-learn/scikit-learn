@@ -1454,7 +1454,6 @@ def test_one_hot_encoder_error():
     assert_raises(ValueError, enc.transform, data)
 
 
-
 def _check_transform_selected(X, X_expected, sel):
     for M in (X, sparse.csr_matrix(X)):
         Xtr = _transform_selected(M, Binarizer().transform, sel)

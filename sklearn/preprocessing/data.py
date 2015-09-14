@@ -1794,7 +1794,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         if self.n_values == 'auto':
             mask = np.array(out.sum(axis=0)).ravel() != 0
             active_features = np.where(mask)[0]
-
             out = out[:, active_features]
             self.active_features_ = active_features
 
@@ -1831,8 +1830,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     def _transform(self, X):
         """Assumes X contains only categorical features."""
         X = check_array(X, dtype=np.int)
-
-
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
