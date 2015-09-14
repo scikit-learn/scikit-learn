@@ -820,7 +820,7 @@ def test_sample_weight():
     X = iris.data
     y = iris.target
 
-    duplicates = rng.randint(0, X.shape[0], 200)
+    duplicates = rng.randint(0, X.shape[0], 100)
 
     clf = DecisionTreeClassifier(random_state=1)
     clf.fit(X[duplicates], y[duplicates])
