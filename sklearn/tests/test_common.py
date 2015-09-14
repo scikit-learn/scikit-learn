@@ -30,7 +30,9 @@ from sklearn.utils.estimator_checks import (
     check_class_weight_balanced_linear_classifier,
     check_transformer_n_iter,
     check_non_transformer_estimators_n_iter,
-    check_get_params_invariance)
+    check_get_params_invariance,
+    check_fit2d_predict1d,
+    check_fit1d_1sample)
 
 
 def test_all_estimator_no_base_class():

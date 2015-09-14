@@ -290,11 +290,20 @@ class RFECV(RFE, MetaEstimatorMixin):
         If within (0.0, 1.0), then `step` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
-    cv : int or cross-validation generator, optional (default=None)
-        If int, it is the number of folds.
-        If None, 3-fold cross-validation is performed by default.
-        Specific cross-validation objects can also be passed, see
-        `sklearn.cross_validation module` for details.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs, if ``y`` is binary or multiclass,
+        :class:`StratifiedKFold` used. If the estimator is a classifier 
+        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or

@@ -43,7 +43,15 @@ __all__ = [
     'scale',
     'robust_scale',
     'maxabs_scale',
+    'minmax_scale',
 ]
+
+DEPRECATION_MSG_1D = (
+    "Passing 1d arrays as data is deprecated in 0.17 and will "
+    "raise ValueError in 0.19. Reshape your data either using "
+    "X.reshape(-1, 1) if your data has a single feature or "
+    "X.reshape(1, -1) if it contains a single sample."
+)
 
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
@@ -194,20 +202,20 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
 
 class MinMaxScaler(BaseEstimator, TransformerMixin):
-    """Standardizes features by scaling each feature to a given range.
+    """Transforms features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
     that it is in the given range on the training set, i.e. between
     zero and one.
 
-    The standardization is given by::
+    The transformation is given by::
 
         X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
         X_scaled = X_std * (max - min) + min
 
     where min, max = feature_range.
 
-    This standardization is often used as an alternative to zero mean,
+    This transformation is often used as an alternative to zero mean,
     unit variance scaling.
 
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
@@ -269,6 +277,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'scale_')
 
         X = check_array(X, copy=self.copy, ensure_2d=False)
+
+        if X.ndim == 1:
+            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+
         X *= self.scale_
         X += self.min_
         return X
@@ -287,6 +299,45 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X -= self.min_
         X /= self.scale_
         return X
+
+
+def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
+    """Transforms features by scaling each feature to a given range.
+
+    This estimator scales and translates each feature individually such
+    that it is in the given range on the training set, i.e. between
+    zero and one.
+
+    The transformation is given by::
+
+        X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+        X_scaled = X_std * (max - min) + min
+
+    where min, max = feature_range.
+
+    This transformation is often used as an alternative to zero mean,
+    unit variance scaling.
+
+    Read more in the :ref:`User Guide <preprocessing_scaler>`.
+
+    Parameters
+    ----------
+    feature_range: tuple (min, max), default=(0, 1)
+        Desired range of transformed data.
+
+    axis : int (0 by default)
+        axis used to scale along. If 0, independently scale each feature,
+        otherwise (if 1) scale each sample.
+
+    copy : boolean, optional, default is True
+        Set to False to perform inplace scaling and avoid a copy (if the input
+        is already a numpy array).
+    """
+    s = MinMaxScaler(feature_range=feature_range, copy=copy)
+    if axis == 0:
+        return s.fit_transform(X)
+    else:
+        return s.fit_transform(X.T).T
 
 
 class StandardScaler(BaseEstimator, TransformerMixin):
@@ -337,7 +388,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         The mean value for each feature in the training set.
 
     std_ : array of floats with shape [n_features]
-        The standard deviation for each feature in the training set. 
+        The standard deviation for each feature in the training set.
         Set to one if the standard deviation is zero for a given feature.
 
     See also
@@ -399,6 +450,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse='csr', copy=copy,
                         ensure_2d=False, warn_on_dtype=True,
                         estimator=self, dtype=FLOAT_DTYPES)
+
+        if X.ndim == 1:
+            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
@@ -504,6 +559,10 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'scale_')
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
+
+        if X.ndim == 1:
+            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+
         if sparse.issparse(X):
             if X.shape[0] == 1:
                 inplace_row_scale(X, 1.0 / self.scale_)
@@ -632,6 +691,10 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         """Makes sure centering is not enabled for sparse matrices."""
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
+
+        if X.ndim == 1:
+            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+
         if sparse.issparse(X):
             if self.with_centering:
                 raise ValueError(

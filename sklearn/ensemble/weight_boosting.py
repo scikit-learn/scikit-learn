@@ -252,11 +252,6 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 "since base_estimator does not have a "
                 "feature_importances_ attribute")
 
-    def _check_sample_weight(self):
-        if not has_fit_parameter(self.base_estimator_, "sample_weight"):
-            raise ValueError("%s doesn't support sample_weight."
-                             % self.base_estimator_.__class__.__name__)
-
     def _validate_X_predict(self, X):
         """Ensure that X is in the proper format"""
         if (self.base_estimator is None or
@@ -283,7 +278,7 @@ def _samme_proba(estimator, n_classes, X):
     # Displace zero probabilities so the log is defined.
     # Also fix negative elements which may occur with
     # negative sample weights.
-    proba[proba <= 0] = 1e-5
+    proba[proba < np.finfo(proba.dtype).eps] = np.finfo(proba.dtype).eps
     log_proba = np.log(proba)
 
     return (n_classes - 1) * (log_proba - (1. / n_classes)
@@ -422,7 +417,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                     "probabilities with a predict_proba method.\n"
                     "Please change the base estimator or set "
                     "algorithm='SAMME' instead.")
-        self._check_sample_weight()
+        if not has_fit_parameter(self.base_estimator_, "sample_weight"):
+            raise ValueError("%s doesn't support sample_weight."
+                             % self.base_estimator_.__class__.__name__)
 
     def _boost(self, iboost, X, y, sample_weight):
         """Implement a single boost.
@@ -512,7 +509,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Displace zero probabilities so the log is defined.
         # Also fix negative elements which may occur with
         # negative sample weights.
-        y_predict_proba[y_predict_proba <= 0] = 1e-5
+        proba = y_predict_proba  # alias for readability
+        proba[proba < np.finfo(proba.dtype).eps] = np.finfo(proba.dtype).eps
 
         # Boost weight using multi-class AdaBoost SAMME.R alg
         estimator_weight = (-1. * self.learning_rate
@@ -959,7 +957,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         """Check the estimator and set the base_estimator_ attribute."""
         super(AdaBoostRegressor, self)._validate_estimator(
             default=DecisionTreeRegressor(max_depth=3))
-        self._check_sample_weight()
 
     def _boost(self, iboost, X, y, sample_weight):
         """Implement a single boost for regression

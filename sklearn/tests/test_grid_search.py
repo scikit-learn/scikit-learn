@@ -629,8 +629,7 @@ def test_pickle():
 def test_grid_search_with_multioutput_data():
     # Test search with multi-output estimator
 
-    X, y = make_multilabel_classification(return_indicator=True,
-                                          random_state=0)
+    X, y = make_multilabel_classification(random_state=0)
 
     est_parameters = {"max_depth": [1, 2, 3, 4]}
     cv = KFold(y.shape[0], random_state=0)

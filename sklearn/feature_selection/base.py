@@ -103,7 +103,8 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
             # insert additional entries in indptr:
             # e.g. if transform changed indptr from [0 2 6 7] to [0 2 3]
             # col_nonzeros here will be [2 0 1] so indptr becomes [0 2 2 3]
-            col_nonzeros = self.inverse_transform(np.diff(X.indptr)).ravel()
+            it = self.inverse_transform(np.diff(X.indptr).reshape(1, -1))
+            col_nonzeros = it.ravel()
             indptr = np.concatenate([[0], np.cumsum(col_nonzeros)])
             Xt = csc_matrix((X.data, X.indices, indptr),
                             shape=(X.shape[0], len(indptr) - 1), dtype=X.dtype)

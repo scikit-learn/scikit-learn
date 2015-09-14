@@ -94,10 +94,10 @@ def test_most_frequent_and_prior_strategy():
         _check_predict_proba(clf, X, y)
 
         if strategy == "prior":
-            assert_array_equal(clf.predict_proba(X[0]),
+            assert_array_equal(clf.predict_proba([X[0]]),
                                clf.class_prior_.reshape((1, -1)))
         else:
-            assert_array_equal(clf.predict_proba(X[0]),
+            assert_array_equal(clf.predict_proba([X[0]]),
                                clf.class_prior_.reshape((1, -1)) > 0.5)
 
 

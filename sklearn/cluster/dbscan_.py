@@ -12,10 +12,12 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 import warnings
 
 import numpy as np
+from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
 from ..utils import check_array, check_consistent_length
+from ..utils.fixes import astype
 from ..neighbors import NearestNeighbors
 
 from ._dbscan_inner import dbscan_inner
@@ -49,7 +51,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         the options allowed by metrics.pairwise.pairwise_distances for its
         metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square.
+        must be square. X may be a sparse matrix, in which case only "nonzero"
+        elements may be considered neighbors for DBSCAN.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         The algorithm to be used by the NearestNeighbors module
@@ -92,6 +95,11 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     the memory complexity to O(n.d) where d is the average number of neighbors,
     while original DBSCAN had memory complexity O(n).
 
+    Sparse neighborhoods can be precomputed using
+    :func:`NearestNeighbors.radius_neighbors_graph
+    <sklearn.neighbors.NearestNeighbors.radius_neighbors_graph>`
+    with ``mode='distance'``.
+
     References
     ----------
     Ester, M., H. P. Kriegel, J. Sander, and X. Xu, "A Density-Based
@@ -115,10 +123,19 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     # Calculate neighborhood for all samples. This leaves the original point
     # in, which needs to be considered later (i.e. point i is in the
     # neighborhood of point i. While True, its useless information)
-    if metric == 'precomputed':
-        D = pairwise_distances(X, metric=metric)
+    if metric == 'precomputed' and sparse.issparse(X):
         neighborhoods = np.empty(X.shape[0], dtype=object)
-        neighborhoods[:] = [np.where(x <= eps)[0] for x in D]
+        X.sum_duplicates()  # XXX: modifies X's internals in-place
+        X_mask = X.data <= eps
+        masked_indices = astype(X.indices, np.intp, copy=False)[X_mask]
+        masked_indptr = np.cumsum(X_mask)[X.indptr[1:] - 1]
+        # insert the diagonal: a point is its own neighbor, but 0 distance
+        # means absence from sparse matrix data
+        masked_indices = np.insert(masked_indices, masked_indptr,
+                                   np.arange(X.shape[0]))
+        masked_indptr = masked_indptr[:-1] + np.arange(1, X.shape[0])
+        # split into rows
+        neighborhoods[:] = np.split(masked_indices, masked_indptr)
     else:
         neighbors_model = NearestNeighbors(radius=eps, algorithm=algorithm,
                                            leaf_size=leaf_size,
@@ -129,7 +146,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
                                                          return_distance=False)
 
     if sample_weight is None:
-        n_neighbors = np.array([len(neighbors) for neighbors in neighborhoods])
+        n_neighbors = np.array([len(neighbors)
+                                for neighbors in neighborhoods])
     else:
         n_neighbors = np.array([np.sum(sample_weight[neighbors])
                                 for neighbors in neighborhoods])
@@ -166,7 +184,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         the options allowed by metrics.pairwise.calculate_distance for its
         metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square.
+        must be square. X may be a sparse matrix, in which case only "nonzero"
+        elements may be considered neighbors for DBSCAN.
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         The algorithm to be used by the NearestNeighbors module
         to compute pointwise distances and find nearest neighbors.
@@ -199,6 +218,11 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
     while original DBSCAN had memory complexity O(n).
+
+    Sparse neighborhoods can be precomputed using
+    :func:`NearestNeighbors.radius_neighbors_graph
+    <sklearn.neighbors.NearestNeighbors.radius_neighbors_graph>`
+    with ``mode='distance'``.
 
     References
     ----------

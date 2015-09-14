@@ -29,6 +29,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import raises
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.validation import NotFittedError
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -126,7 +127,7 @@ digits.target = digits.target[perm]
 
 random_state = check_random_state(0)
 X_multilabel, y_multilabel = datasets.make_multilabel_classification(
-    random_state=0, return_indicator=True, n_samples=30, n_features=10)
+    random_state=0, n_samples=30, n_features=10)
 
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.
@@ -497,7 +498,7 @@ def test_error():
         assert_raises(NotFittedError, est.predict_proba, X)
 
         est.fit(X, y)
-        X2 = [-2, -1, 1]  # wrong feature shape for sample
+        X2 = [[-2, -1, 1]]  # wrong feature shape for sample
         assert_raises(ValueError, est.predict_proba, X2)
 
     for name, TreeEstimator in ALL_TREES.items():
@@ -819,7 +820,7 @@ def test_sample_weight():
     X = iris.data
     y = iris.target
 
-    duplicates = rng.randint(0, X.shape[0], 200)
+    duplicates = rng.randint(0, X.shape[0], 100)
 
     clf = DecisionTreeClassifier(random_state=1)
     clf.fit(X[duplicates], y[duplicates])
@@ -1005,7 +1006,7 @@ def test_big_input():
 
 
 def test_realloc():
-    from sklearn.tree._tree import _realloc_test
+    from sklearn.tree._utils import _realloc_test
     assert_raises(MemoryError, _realloc_test)
 
 
@@ -1228,6 +1229,7 @@ def test_explicit_sparse_zeros():
         yield (check_explicit_sparse_zeros, tree)
 
 
+@ignore_warnings
 def check_raise_error_on_1d_input(name):
     TreeEstimator = ALL_TREES[name]
 
@@ -1239,9 +1241,10 @@ def check_raise_error_on_1d_input(name):
 
     est = TreeEstimator(random_state=0)
     est.fit(X_2d, y)
-    assert_raises(ValueError, est.predict, X)
+    assert_raises(ValueError, est.predict, [X])
 
 
+@ignore_warnings
 def test_1d_input():
     for name in ALL_TREES:
         yield check_raise_error_on_1d_input, name

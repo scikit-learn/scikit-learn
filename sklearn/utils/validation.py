@@ -361,11 +361,21 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
                                       force_all_finite)
     else:
-        if ensure_2d:
-            array = np.atleast_2d(array)
-
         array = np.array(array, dtype=dtype, order=order, copy=copy)
-        # make sure we actually converted to numeric:
+
+        if ensure_2d:
+            if array.ndim == 1:
+                warnings.warn(
+                    "Passing 1d arrays as data is deprecated in 0.17 and will"
+                    "raise ValueError in 0.19. Reshape your data either using "
+                    "X.reshape(-1, 1) if your data has a single feature or "
+                    "X.reshape(1, -1) if it contains a single sample.",
+                    DeprecationWarning)
+            array = np.atleast_2d(array)
+            # To ensure that array flags are maintained
+            array = np.array(array, dtype=dtype, order=order, copy=copy)
+
+        # make sure we acually converted to numeric:
         if dtype_numeric and array.dtype.kind == "O":
             array = array.astype(np.float64)
         if not allow_nd and array.ndim >= 3:
@@ -480,6 +490,9 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
     -------
     X_converted : object
         The converted and validated X.
+
+    y_converted : object
+        The converted and validated y.
     """
     X = check_array(X, accept_sparse, dtype, order, copy, force_all_finite,
                     ensure_2d, allow_nd, ensure_min_samples,
@@ -652,3 +665,20 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
 
     if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
         raise NotFittedError(msg % {'name': type(estimator).__name__})
+
+
+def check_non_negative(X, whom):
+    """
+    Check if there is any negative value in an array.
+
+    Parameters
+    ----------
+    X : array-like or sparse matrix
+        Input data.
+
+    whom : string
+        Who passed X to this function.
+    """
+    X = X.data if sp.issparse(X) else X
+    if (X < 0).any():
+        raise ValueError("Negative values in data passed to %s" % whom)

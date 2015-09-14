@@ -47,6 +47,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_array
+from sklearn.linear_model import LogisticRegression
 
 # Memoize the data extraction and memory map the resulting
 # train / test splits in readonly mode
@@ -86,7 +87,8 @@ ESTIMATORS = {
     'Nystroem-SVM':
     make_pipeline(Nystroem(gamma=0.015, n_components=1000), LinearSVC(C=100)),
     'SampledRBF-SVM':
-    make_pipeline(RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100))
+    make_pipeline(RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100)),
+    'LinearRegression-SAG': LogisticRegression(solver='sag', tol=1e-1, C=1e4)
 }
 
 
@@ -120,7 +122,7 @@ if __name__ == "__main__":
     print("%s %d (size=%dMB)" % ("number of train samples:".ljust(25),
                                  X_train.shape[0], int(X_train.nbytes / 1e6)))
     print("%s %d (size=%dMB)" % ("number of test samples:".ljust(25),
-                                  X_test.shape[0], int(X_test.nbytes / 1e6)))
+                                 X_test.shape[0], int(X_test.nbytes / 1e6)))
 
     print()
     print("Training Classifiers")

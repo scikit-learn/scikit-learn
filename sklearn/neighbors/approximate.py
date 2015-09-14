@@ -435,7 +435,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         neighbors, distances = [], []
         bin_queries, max_depth = self._query(X)
         for i in range(X.shape[0]):
-            neighs, dists = self._get_candidates(X[i], max_depth[i],
+
+            neighs, dists = self._get_candidates(X[[i]], max_depth[i],
                                                  bin_queries[i],
                                                  n_neighbors)
             neighbors.append(neighs)
@@ -494,7 +495,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         neighbors, distances = [], []
         bin_queries, max_depth = self._query(X)
         for i in range(X.shape[0]):
-            neighs, dists = self._get_radius_neighbors(X[i], max_depth[i],
+
+            neighs, dists = self._get_radius_neighbors(X[[i]], max_depth[i],
                                                        bin_queries[i], radius)
             neighbors.append(neighs)
             distances.append(dists)

@@ -8,7 +8,7 @@
 .. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/github/scikit-learn/scikit-learn?branch=master&svg=true
 .. _AppVeyor: https://ci.appveyor.com/project/sklearn-ci/scikit-learn/history
 
-.. |Coveralls| image:: https://img.shields.io/coveralls/scikit-learn/scikit-learn.svg
+.. |Coveralls| image:: https://coveralls.io/repos/scikit-learn/scikit-learn/badge.svg?branch=master
 .. _Coveralls: https://coveralls.io/r/scikit-learn/scikit-learn
 
 scikit-learn

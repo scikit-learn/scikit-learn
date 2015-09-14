@@ -56,7 +56,7 @@ def test_ridge():
     rng = np.random.RandomState(0)
     alpha = 1.0
 
-    for solver in ("svd", "sparse_cg", "cholesky", "lsqr"):
+    for solver in ("svd", "sparse_cg", "cholesky", "lsqr", "sag"):
         # With more samples than features
         n_samples, n_features = 6, 5
         y = rng.randn(n_samples)
@@ -67,8 +67,8 @@ def test_ridge():
         assert_equal(ridge.coef_.shape, (X.shape[1], ))
         assert_greater(ridge.score(X, y), 0.47)
 
-        if solver == "cholesky":
-            # Currently the only solver to support sample_weight.
+        if solver in ("cholesky", "sag"):
+            # Currently the only solvers to support sample_weight.
             ridge.fit(X, y, sample_weight=np.ones(n_samples))
             assert_greater(ridge.score(X, y), 0.47)
 
@@ -80,8 +80,8 @@ def test_ridge():
         ridge.fit(X, y)
         assert_greater(ridge.score(X, y), .9)
 
-        if solver == "cholesky":
-            # Currently the only solver to support sample_weight.
+        if solver in ("cholesky", "sag"):
+            # Currently the only solvers to support sample_weight.
             ridge.fit(X, y, sample_weight=np.ones(n_samples))
             assert_greater(ridge.score(X, y), 0.9)
 
@@ -260,13 +260,13 @@ def test_ridge_individual_penalties():
         for alpha, target in zip(penalties, y.T)])
 
     coefs_indiv_pen = [
-        Ridge(alpha=penalties, solver=solver, tol=1e-6).fit(X, y).coef_
-        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky']]
+        Ridge(alpha=penalties, solver=solver, tol=1e-8).fit(X, y).coef_
+        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky', 'sag']]
     for coef_indiv_pen in coefs_indiv_pen:
         assert_array_almost_equal(coef_cholesky, coef_indiv_pen)
 
     # Test error is raised when number of targets and penalties do not match.
-    ridge = Ridge(alpha=penalties[:3])
+    ridge = Ridge(alpha=penalties[:-1])
     assert_raises(ValueError, ridge.fit, X, y)
 
 
@@ -675,3 +675,22 @@ def test_sparse_cg_max_iter():
     reg = Ridge(solver="sparse_cg", max_iter=1)
     reg.fit(X_diabetes, y_diabetes)
     assert_equal(reg.coef_.shape[0], X_diabetes.shape[1])
+
+
+@ignore_warnings
+def test_n_iter():
+    # Test that self.n_iter_ is correct.
+    n_targets = 2
+    X, y = X_diabetes, y_diabetes
+    y_n = np.tile(y, (n_targets, 1)).T
+
+    for max_iter in range(1, 4):
+        for solver in ('sag', 'lsqr'):
+            reg = Ridge(solver=solver, max_iter=max_iter, tol=1e-12)
+            reg.fit(X, y_n)
+            assert_array_equal(reg.n_iter_, np.tile(max_iter, n_targets))
+
+    for solver in ('sparse_cg', 'svd', 'cholesky'):
+        reg = Ridge(solver=solver, max_iter=1, tol=1e-1)
+        reg.fit(X, y_n)
+        assert_equal(reg.n_iter_, None)

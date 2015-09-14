@@ -173,9 +173,9 @@ Here is how to use the toy data from the previous example with this scaler::
   array([ 2.,  1.,  2.])
 
 
-As with :func:`scale`, the module further provides a
-convenience function :func:`maxabs_scale` if you don't want to
-create an object.
+As with :func:`scale`, the module further provides convenience functions
+:func:`minmax_scale` and :func:`maxabs_scale` if you don't want to create
+an object.
 
 
 Scaling sparse data
@@ -507,4 +507,24 @@ The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(
 
 Note that polynomial features are used implicitily in `kernel methods <http://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
-See :ref:`example_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.  
+See :ref:`example_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
+
+Custom transformers
+===================
+
+Often, you will want to convert an existing Python function into a transformer
+to assist in data cleaning or processing. You can implement a transformer from
+an arbitrary function with :class:`FunctionTransformer`. For example, to build
+a transformer that applies a log transformation in a pipeline, do::
+
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import FunctionTransformer
+    >>> transformer = FunctionTransformer(np.log1p)
+    >>> X = np.array([[0, 1], [2, 3]])
+    >>> transformer.transform(X)
+    array([[ 0.        ,  0.69314718],
+           [ 1.09861229,  1.38629436]])
+
+For a full code example that demonstrates using a :class:`FunctionTransformer`
+to do custom feature selection,
+see :ref:`example_preprocessing_plot_function_transformer.py`
