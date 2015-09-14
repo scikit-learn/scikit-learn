@@ -1815,7 +1815,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                    for i in range(nf)]
             self.unique_samples = samples
 
-
         return out if self.sparse else out.toarray()
 
     def fit_transform(self, X, y=None):
@@ -1847,8 +1846,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                     msg = ("unknown categorical feature(s) present %s "
                                 "during transform." % str(new_classes))
                     raise ValueError(msg)
-
-
 
         indices = self.feature_indices_
         if n_features != indices.shape[0] - 1:
