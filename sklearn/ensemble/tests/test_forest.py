@@ -205,6 +205,12 @@ def check_importances(X, y, name, criterion):
     X_new = est.transform(X, threshold="mean")
     assert_less(X_new.shape[1], X.shape[1])
 
+    # Check with parallel
+    importances = est.feature_importances_
+    est.set_params(n_jobs=2)
+    importances_parrallel = est.feature_importances_
+    assert_array_almost_equal(importances, importances_parrallel)
+
     # Check with sample weights
     sample_weight = check_random_state(0).randint(1, 10, len(X))
     est = ForestEstimator(n_estimators=20, random_state=0,
@@ -222,7 +228,7 @@ def check_importances(X, y, name, criterion):
 
 
 def test_importances():
-    X, y = datasets.make_classification(n_samples=1000, n_features=10,
+    X, y = datasets.make_classification(n_samples=500, n_features=10,
                                         n_informative=3, n_redundant=0,
                                         n_repeated=0, shuffle=False,
                                         random_state=0)
