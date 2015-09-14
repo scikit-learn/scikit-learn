@@ -1445,6 +1445,16 @@ def test_one_hot_encoder_dense():
                                  [1., 0., 1., 0., 1.]]))
 
 
+def test_one_hot_encoder_error():
+
+    enc = OneHotEncoder(handle_unknown='error')
+    data = [[1, 100], [10, 200]]
+    enc.fit(data)
+    data[0][0] = 5
+    assert_raises(ValueError, enc.transform, data)
+
+
+
 def _check_transform_selected(X, X_expected, sel):
     for M in (X, sparse.csr_matrix(X)):
         Xtr = _transform_selected(M, Binarizer().transform, sel)
@@ -1492,7 +1502,7 @@ def _check_one_hot(X, X2, cat, n_features):
 
 def test_one_hot_encoder_categorical_features():
     X = np.array([[3, 2, 1], [0, 1, 1]])
-    X2 = np.array([[1, 1, 1]])
+    X2 = np.array([[3, 1, 1]])
 
     cat = [True, False, False]
     _check_one_hot(X, X2, cat, 4)

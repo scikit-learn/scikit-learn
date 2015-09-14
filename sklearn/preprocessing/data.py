@@ -1794,8 +1794,28 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         if self.n_values == 'auto':
             mask = np.array(out.sum(axis=0)).ravel() != 0
             active_features = np.where(mask)[0]
+
             out = out[:, active_features]
             self.active_features_ = active_features
+
+            fi = self.feature_indices_
+
+            # Find indexes feature indices aprropriately
+            split_indices = np.searchsorted(active_features,
+                                            fi)
+
+            af_copy = active_features.copy()
+            split_arrays = np.split(af_copy,
+                                    split_indices[1:-1])
+            nf = n_features
+            # Adjust to get actual class labels by subtracting
+            # offsets
+            samples = [np.subtract(split_arrays[i],
+                                   self.feature_indices_[i],
+                                   split_arrays[i])
+                                   for i in range(nf)]
+            self.unique_samples = samples
+
 
         return out if self.sparse else out.toarray()
 
@@ -1811,9 +1831,27 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     def _transform(self, X):
         """Assumes X contains only categorical features."""
         X = check_array(X, dtype=np.int)
+
+
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
+
+        if (self.handle_unknown == 'error' and
+            self.n_values == 'auto'):
+            for i in range(n_features):
+                found_classes = set(np.unique(X[:, i]))
+                train_classes = set(self.unique_samples[i])
+
+                if not found_classes.issubset(train_classes):
+                    total_set = found_classes.union(train_classes)
+                    new_classes = total_set.difference(train_classes)
+
+                    msg = ("unknown categorical feature(s) present %s "
+                                "during transform." % str(new_classes))
+                    raise ValueError(msg)
+
+
 
         indices = self.feature_indices_
         if n_features != indices.shape[0] - 1:
