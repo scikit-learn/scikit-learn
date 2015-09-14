@@ -55,8 +55,8 @@ def test_lml_precomputed():
     """ Test that lml of optimized kernel is stored correctly. """
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
-        assert_equal(gpc.log_marginal_likelihood(gpc.kernel_.theta),
-                     gpc.log_marginal_likelihood())
+        assert_almost_equal(gpc.log_marginal_likelihood(gpc.kernel_.theta),
+                            gpc.log_marginal_likelihood(), 7)
 
 
 def test_converged_to_local_maximum():
