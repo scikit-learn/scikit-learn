@@ -78,7 +78,8 @@ def mean_variance_axis(X, axis):
     """
     if axis not in (0, 1, None):
         raise ValueError(
-            "Unknown axis value: %d. Use 0 for rows, or 1 for columns" % axis)
+            "Unknown axis value: %d. Use 0 for rows, 1 for columns, "
+            "or None for the entire array." % axis)
 
     if axis is None and isinstance(X, (sp.csr_matrix, sp.csc_matrix)):
         return sparse_mean_variance(X)
