@@ -230,7 +230,8 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight):
 
     Parameters
     ----------
-    w : ndarray, shape (n_classes * n_features,) or (n_classes * (n_features + 1),)
+    w : ndarray, shape (n_classes * n_features,) or
+        (n_classes * (n_features + 1),)
         Coefficient vector.
 
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
@@ -281,7 +282,8 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
 
     Parameters
     ----------
-    w : ndarray, shape (n_classes * n_features,) or (n_classes * (n_features + 1),)
+    w : ndarray, shape (n_classes * n_features,) or
+        (n_classes * (n_features + 1),)
         Coefficient vector.
 
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
@@ -328,7 +330,8 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
 
     Parameters
     ----------
-    w : ndarray, shape (n_classes * n_features,) or (n_classes * (n_features + 1),)
+    w : ndarray, shape (n_classes * n_features,) or
+        (n_classes * (n_features + 1),)
         Coefficient vector.
 
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
@@ -417,7 +420,7 @@ def _check_solver_option(solver, multi_class, penalty, dual, sample_weight):
 
     if solver == 'liblinear' and sample_weight is not None:
         raise ValueError("Solver %s does not support "
-                          "sample weights." % solver)
+                         "sample weights." % solver)
 
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
@@ -579,7 +582,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         # np.unique(y) gives labels in sorted order.
         pos_class = classes[1]
 
-    # If sample weights exist, convert them to array (support for lists) 
+    # If sample weights exist, convert them to array (support for lists)
     # and check length
     # Otherwise set them to 1 for all examples
     if sample_weight is not None:
@@ -1121,7 +1124,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
+                         order="C")
         self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
 
@@ -1526,7 +1530,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             iter_labels = [None]
 
         if self.class_weight and not(isinstance(self.class_weight, dict) or
-                                     self.class_weight in ['balanced', 'auto']):
+                                     self.class_weight in
+                                     ['balanced', 'auto']):
             raise ValueError("class_weight provided should be a "
                              "dict or 'balanced'")
 
