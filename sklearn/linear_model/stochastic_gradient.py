@@ -316,7 +316,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                  fit_intercept=True, n_iter=5, shuffle=True, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, average=False):
+                 class_weight=None, warm_start=False, average=False,
+                 scaler=None):
 
         super(BaseSGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                                 alpha=alpha, l1_ratio=l1_ratio,
@@ -332,6 +333,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         self.class_weight = class_weight
         self.classes_ = None
         self.n_jobs = int(n_jobs)
+        self.scaler = scaler
 
     def _partial_fit(self, X, y, alpha, C,
                      loss, learning_rate, n_iter,
@@ -406,6 +408,9 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         # Clear iteration count for multiple call to fit.
         self.t_ = None
+
+        if self.scaler:
+            X = self.scaler.fit_transform(X)
 
         self._partial_fit(X, y, alpha, C, loss, learning_rate, self.n_iter,
                           classes, sample_weight, coef_init, intercept_init)
@@ -662,6 +667,12 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         averaging will begin once the total number of samples seen reaches
         average. So average=10 will begin averaging after seeing 10 samples.
 
+    scaler: callable, optional
+        A callable that implements the methods ``fit_transform(X)`` and
+        ``transform(X)``. For example,
+        ``sklearn.preprocessing.StandardScaler``. Default None.
+
+
     Attributes
     ----------
     coef_ : array, shape (1, n_features) if n_classes == 2 else (n_classes,\
@@ -698,14 +709,15 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
                  fit_intercept=True, n_iter=5, shuffle=True, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, average=False):
+                 class_weight=None, warm_start=False, average=False,
+                 scaler=None):
         super(SGDClassifier, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, n_iter=n_iter, shuffle=shuffle,
             verbose=verbose, epsilon=epsilon, n_jobs=n_jobs,
             random_state=random_state, learning_rate=learning_rate, eta0=eta0,
             power_t=power_t, class_weight=class_weight, warm_start=warm_start,
-            average=average)
+            average=average, scaler=scaler)
 
     def _check_proba(self):
         check_is_fitted(self, "t_")
