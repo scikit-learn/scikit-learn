@@ -2,7 +2,7 @@
 """
 Created on Thu May 22 16:50:00 2014
 
-@author: thiolliere
+@author: thiolliere and Yuan Tang (terrytangyuan)
 """
 import numpy as np
 import scipy.optimize as opt
