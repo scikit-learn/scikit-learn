@@ -1,6 +1,5 @@
 import numpy as np
 from sklearn.metric_learning import NCA
-import pylab as pl
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_array_almost_equal
 
@@ -23,12 +22,3 @@ def test_NCA():
 	print nca.score(X, y)
 	nca.fit(X, y)
 	print nca.score(X, y)
-
-	# Plot
-	pl.subplot(2, 1, 1)
-	AX = np.dot(A, X)
-	pl.scatter(AX[0, :], AX[1, :], 30, c=y, cmap=pl.cm.Paired)
-	pl.subplot(2, 1, 2)
-	BX = np.dot(np.reshape(nca.metric, np.shape(A)), X)
-	pl.scatter(BX[0, :], BX[1, :], 30, c=y, cmap=pl.cm.Paired)
-	# pl.show()
