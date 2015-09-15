@@ -379,6 +379,9 @@ class TSNE(BaseEstimator):
     training_data_ : array-like, shape (n_samples, n_features)
         Stores the training data.
 
+    `error_` : float
+        Stores the error (Kullback-Leibler divergence) after embedding.
+
     Examples
     --------
 
@@ -524,6 +527,7 @@ class TSNE(BaseEstimator):
             print("[t-SNE] Error after %d iterations: %f" % (it + 1, error))
 
         X_embedded = params.reshape(n_samples, self.n_components)
+        self.error_ = error
 
         return X_embedded
 
