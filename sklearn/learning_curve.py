@@ -147,14 +147,16 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
             slice_from, scorer, verbose) for train, test in cv)
     else:
         if slice_from == 'start':
-            subset_train = lambda train: train[:n_train_samples]
+            subset_train = lambda train, n: train[:n]
         elif slice_from == 'end':
-            subset_train = lambda train: train[-n_train_samples:]
+            subset_train = lambda train, n: train[-n:]
 
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, subset_train(train), test,
-            verbose, parameters=None, fit_params=None, return_train_score=True)
+            clone(estimator), X, y, scorer, subset_train(train, n_train_samples),
+            test, verbose, parameters=None, fit_params=None,
+            return_train_score=True)
             for train, test in cv for n_train_samples in train_sizes_abs)
+
         out = np.array(out)[:, :2]
         n_cv_folds = out.shape[0] // n_unique_ticks
         out = out.reshape(n_cv_folds, n_unique_ticks, 2)
@@ -233,7 +235,7 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
         if slice_from == 'start':
             train_subset = train[:n_train_samples]
         elif slice_from == 'end':
-            subset_train = train[-n_train_samples:]
+            train_subset = train[-n_train_samples:]
 
         X_train, y_train = _safe_split(estimator, X, y, train_subset)
         X_partial_train, y_partial_train = _safe_split(estimator, X, y,
