@@ -366,14 +366,14 @@ def test_svr_decision_function():
     reg = svm.SVR(kernel='linear', C=0.1).fit(X, y)
 
     dec = np.dot(X, reg.coef_.T) + reg.intercept_
-    assert_array_almost_equal(dec.ravel(), reg.decision_function(X).ravel())
+    assert_array_almost_equal(dec.ravel(), ignore_warnings(reg.decision_function)(X).ravel())
 
     # rbf kernel
     reg = svm.SVR(kernel='rbf', gamma=1).fit(X, y)
 
     rbfs = rbf_kernel(X, reg.support_vectors_, gamma=reg.gamma)
     dec = np.dot(rbfs, reg.dual_coef_.T) + reg.intercept_
-    assert_array_almost_equal(dec.ravel(), reg.decision_function(X).ravel())
+    assert_array_almost_equal(dec.ravel(), ignore_warnings(reg.decision_function)(X).ravel())
 
 
 def test_weight():

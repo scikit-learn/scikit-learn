@@ -11,6 +11,7 @@ from sklearn.svm.tests import test_svm
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.testing import assert_warns, assert_raise_message
+from sklearn.utils.testing import ignore_warnings
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -63,7 +64,7 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
         msg = "cannot use sparse input in 'OneClassSVM' trained on dense data"
     else:
         assert_array_almost_equal(dense_svm.predict_proba(X_test_dense),
-            sparse_svm.predict_proba(X_test), 4)
+                                  sparse_svm.predict_proba(X_test), 4)
         msg = "cannot use sparse input in 'SVC' trained on dense data"
     if sparse.isspmatrix(X_test):
         assert_raise_message(ValueError, msg, dense_svm.predict, X_test)
@@ -81,8 +82,14 @@ def test_svc():
     kernels = ["linear", "poly", "rbf", "sigmoid"]
     for dataset in datasets:
         for kernel in kernels:
-            clf = svm.SVC(kernel=kernel, probability=True, random_state=0)
-            sp_clf = svm.SVC(kernel=kernel, probability=True, random_state=0)
+            clf = svm.SVC(kernel=kernel,
+                          probability=True,
+                          random_state=0,
+                          decision_function_shape='ovo')
+            sp_clf = svm.SVC(kernel=kernel,
+                             probability=True,
+                             random_state=0,
+                             decision_function_shape='ovo')
             check_svm_model_equal(clf, sp_clf, *dataset)
 
 
@@ -152,7 +159,7 @@ def test_sparse_decision_function():
 
     dec = safe_sparse_dot(iris.data, clf.coef_.T) + clf.intercept_
 
-    assert_array_almost_equal(dec, clf.decision_function(iris.data))
+    assert_array_almost_equal(dec, ignore_warnings(clf.decision_function)(iris.data))
 
     # binary:
     clf.fit(X, Y)
