@@ -295,11 +295,11 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # ensure binary classification if pos_label is not specified
     classes = np.unique(y_true)
     if (pos_label is None and
-        not (np.all(classes == [0, 1]) or
-             np.all(classes == [-1, 1]) or
-             np.all(classes == [0]) or
-             np.all(classes == [-1]) or
-             np.all(classes == [1]))):
+        not (np.array_equal(classes, [0, 1]) or
+             np.array_equal(classes, [-1, 1]) or
+             np.array_equal(classes, [0]) or
+             np.array_equal(classes, [-1]) or
+             np.array_equal(classes, [1]))):
         raise ValueError("Data is not binary and pos_label is not specified")
     elif pos_label is None:
         pos_label = 1.

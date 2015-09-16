@@ -93,7 +93,7 @@ REGRESSION_METRICS = {
     "mean_squared_error": mean_squared_error,
     "median_absolute_error": median_absolute_error,
     "explained_variance_score": explained_variance_score,
-    "r2_score": r2_score,
+    "r2_score": partial(r2_score, multioutput='variance_weighted'),
 }
 
 CLASSIFICATION_METRICS = {
