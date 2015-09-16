@@ -953,9 +953,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             sample_weight = column_or_1d(sample_weight, warn=True)
 
         check_consistent_length(X, y, sample_weight)
-
         y = self._validate_y(y)
-        
         random_state = check_random_state(self.random_state)
         self._check_params()
 
@@ -972,20 +970,22 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                 n_classes = 1
 
             # If the initialization estimator has a predict_proba method,
-            # either use those, or collapse to a single vector if there
-            # are only two classes
+            # either use those, or collapse to a single vector of the
+            # predicted log odds in the binary classification case. The
+            # binomial loss used in binary classification problems expects
+            # the log odds rather than predicted positive class probability.
             if hasattr(self.init_, 'predict_proba'):
                 eps = np.finfo(X.dtype).eps
                 y_pred = self.init_.predict_proba(X) + eps
                 if n_classes == 2:
-                    y_pred = np.log(y_pred[:,1] / y_pred[:,0])
+                    y_pred = np.log(y_pred[:, 1] / y_pred[:, 0])
                     y_pred = y_pred.reshape(n_samples, 1)
 
             # Otherwise, it can be a naive estimator defined above, in which
             # case don't do anything, or a classifier whose estimates will be
-            # a vector that should be hot encoded, or a regressor whose
+            # a vector that should be one hot encoded, or a regressor whose
             # estimates still need to be reshaped from (n_samples,) to
-            # (n_samples,1)
+            # (n_samples, 1)
             else:
                 pred = self.init_.predict(X)
 
@@ -994,7 +994,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                         y_pred = np.zeros((n_samples, n_classes))
                         y_pred[:, pred] = 1.0
                         if n_classes == 2:
-                            y_pred = np.log(y_pred[:,1] / y_pred[:,0])
+                            y_pred = np.log(y_pred[:, 1] / y_pred[:, 0])
                             y_pred = y_pred.reshape(n_samples, 1)
                     else:
                         y_pred = pred.reshape(n_samples, 1)
@@ -1124,7 +1124,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             eps = np.finfo(X.dtype).eps
             score = self.init_.predict_proba(X) + eps
             if self.n_classes == 2:
-                score = np.log(score[:,1] / score[:,0])
+                score = np.log(score[:, 1] / score[:, 0])
                 score = score.reshape(X.shape[0], 1)
         else:
             pred = self.init_.predict(X)
@@ -1134,8 +1134,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                     score = np.zeros((X.shape[0], self.n_classes))
                     score[:, pred] = 1.0
                     if self.n_classes == 2:
-                        score = np.log(y_pred[:,1] / y_pred[:,0])
-                        score = y_pred.reshape(X.shape[0], 1)
+                        score = np.log(score[:, 1] / score[:, 0])
+                        score = score.reshape(X.shape[0], 1)
                 else:
                     score = pred.reshape(X.shape[0], 1)
             else:

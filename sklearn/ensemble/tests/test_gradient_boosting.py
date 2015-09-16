@@ -1049,6 +1049,30 @@ def test_classification_w_init():
         acc2 = clf.score(X_test, y_test)
         assert_greater_equal(acc2, acc1)
 
+def test_binary_classification_w_init():
+    # Test that gradient boosting a previously learned model will improve
+    # the performance of that model.
+    iris = datasets.load_digits()
+    X, y = iris.data, iris.target
+    X = X[ y < 2 ]
+    y = y[ y < 2 ]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
+                                                        random_state=0)
+
+    for clf in [DecisionTreeClassifier(random_state=0),
+                RandomForestClassifier(random_state=0, n_estimators=3), 
+                SVC(random_state=0)]:
+
+        clf.fit(X_train, y_train)
+        acc1 = clf.score(X_test, y_test)
+
+        clf = GradientBoostingClassifier(random_state=0,
+                                         n_estimators=1, 
+                                         init=clf)
+        clf.fit(X_train, y_train)
+        acc2 = clf.score(X_test, y_test)
+        assert_greater_equal(acc2, acc1)
+
 
 def test_regression_w_init():
     # Test that gradient boosting a previously learned model will improve
