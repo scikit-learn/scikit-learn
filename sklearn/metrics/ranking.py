@@ -28,6 +28,7 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.fixes import isclose
 from ..utils.fixes import bincount
+from ..utils.fixes import array_equal
 from ..utils.stats import rankdata
 from ..utils.sparsefuncs import count_nonzero
 
@@ -295,11 +296,11 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # ensure binary classification if pos_label is not specified
     classes = np.unique(y_true)
     if (pos_label is None and
-        not (np.array_equal(classes, [0, 1]) or
-             np.array_equal(classes, [-1, 1]) or
-             np.array_equal(classes, [0]) or
-             np.array_equal(classes, [-1]) or
-             np.array_equal(classes, [1]))):
+        not (array_equal(classes, [0, 1]) or
+             array_equal(classes, [-1, 1]) or
+             array_equal(classes, [0]) or
+             array_equal(classes, [-1]) or
+             array_equal(classes, [1]))):
         raise ValueError("Data is not binary and pos_label is not specified")
     elif pos_label is None:
         pos_label = 1.
