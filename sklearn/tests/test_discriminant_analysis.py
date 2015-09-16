@@ -95,6 +95,26 @@ def test_lda_predict():
     assert_raises(ValueError, clf.fit, X, y)
 
 
+def test_lda_priors():
+    # Test priors (negative priors)
+    priors = np.array([0.5, -0.5])
+    clf = LinearDiscriminantAnalysis(priors=priors)
+    msg = "priors must be non-negative"
+    assert_raise_message(ValueError, msg, clf.fit, X, y)
+
+    # Test that priors passed as a list are correctly handled (run to see if
+    # failure)
+    clf = LinearDiscriminantAnalysis(priors=[0.5, 0.5])
+    clf.fit(X, y)
+
+    # Test that priors always sum to 1
+    priors = np.array([0.5, 0.6])
+    prior_norm = np.array([0.45, 0.55])
+    clf = LinearDiscriminantAnalysis(priors=priors)
+    clf.fit(X, y)
+    assert_array_almost_equal(clf.priors_, prior_norm, 2)
+
+
 def test_lda_coefs():
     # Test if the coefficients of the solvers are approximately the same.
     n_features = 2
