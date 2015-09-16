@@ -4,6 +4,7 @@
 """
 import numpy as np
 import scipy.optimize as opt
+from sklearn.base import BaseEstimator
 
 class NCAcost(object):
 
@@ -141,10 +142,10 @@ class NCAcost(object):
         return [g, gradg]
 
 
-class NCA(object):
+class NCA(BaseEstimator):
 
     def __init__(self, metric=None, dim=None,
-                 threshold=None, objective='Mahalanobis', **kwargs):
+                 threshold=None, objective='mahalanobis', **kwargs):
         """Classification and/or dimensionality reduction with the neighborhood
         component analysis.
 
@@ -192,9 +193,9 @@ class NCA(object):
         self.metric = metric
         self.dim = dim
         self.threshold = threshold
-        if objective == 'Mahalanobis':
+        if objective == 'mahalanobis':
             self.objective = NCAcost.cost
-        elif objective == 'KL-divergence':
+        elif objective == 'kl-divergence':
             self.objective = NCAcost.cost_g
         self.kwargs = kwargs
 

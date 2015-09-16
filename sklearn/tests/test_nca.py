@@ -18,7 +18,7 @@ A = np.array([[1, 0, 0], [0, 1, 0]])
 
 def test_NCA():
 	# Training
-	nca = NCA.NCA(metric=A, method='BFGS', objective='KL-divergence', options={'maxiter': 10, 'disp': True})
+	nca = NCA.NCA(metric=A, method='BFGS', objective='kl-divergence', options={'maxiter': 10, 'disp': True})
 	print nca.score(X, y)
 	nca.fit(X, y)
 	print nca.score(X, y)
