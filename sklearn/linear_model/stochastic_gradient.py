@@ -467,7 +467,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                 self.intercept_ = self.average_intercept_
             else:
                 self.coef_ = self.standard_coef_
-                self.standard_intercept_ = np.atleast_1d(intercept)
+                self.standard_intercept_ = np.atleast_1d(self.intercept_)
                 self.intercept_ = self.standard_intercept_
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
