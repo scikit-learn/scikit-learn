@@ -261,19 +261,19 @@ def test_is_multilabel():
                           msg='is_multilabel(%r) should be %s'
                           % (example, dense_exp))
 
-def test_is_sequence_of_sequences():
-    for group, group_examples in iteritems(EXAMPLES):
-        if group == 'multilabel-sequences':
-            assert_, exp = assert_true, 'True'
-            check = partial(assert_warns, DeprecationWarning,
-                            is_sequence_of_sequences)
-        else:
-            assert_, exp = assert_false, 'False'
-            check = is_sequence_of_sequences
-        for example in group_examples:
-            assert_(check(example),
-                    msg='is_sequence_of_sequences(%r) should be %s'
-                    % (example, exp))
+# def test_is_sequence_of_sequences():
+#     for group, group_examples in iteritems(EXAMPLES):
+#         if group == 'multilabel-sequences':
+#             assert_, exp = assert_true, 'True'
+#             check = partial(assert_warns, DeprecationWarning,
+#                             is_sequence_of_sequences)
+#         else:
+#             assert_, exp = assert_false, 'False'
+#             check = is_sequence_of_sequences
+#         for example in group_examples:
+#             assert_(check(example),
+#                     msg='is_sequence_of_sequences(%r) should be %s'
+#                     % (example, exp))
 
 def test_assert_non_regression_targets():
     for y_type in EXAMPLES.keys():
@@ -284,7 +284,7 @@ def test_assert_non_regression_targets():
             for example in EXAMPLES[y_type]:
                 assert_non_regression_targets(example)
 
-@ignore_warnings
+# @ignore_warnings
 def test_type_of_target():
     for group, group_examples in iteritems(EXAMPLES):
         for example in group_examples:
