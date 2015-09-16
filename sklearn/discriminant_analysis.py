@@ -429,7 +429,14 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             _, y_t = np.unique(y, return_inverse=True)  # non-negative ints
             self.priors_ = bincount(y_t) / float(len(y))
         else:
-            self.priors_ = self.priors
+            self.priors_ = np.asarray(self.priors)
+
+        if (self.priors_ < 0).any():
+            raise ValueError("priors must be non-negative")
+        if self.priors_.sum() != 1:
+            warnings.warn("The priors do not sum to 1. Renormalizing",
+                          UserWarning)
+            self.priors_ = self.priors_ / self.priors_.sum()
 
         if self.solver == 'svd':
             if self.shrinkage is not None:
