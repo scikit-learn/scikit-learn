@@ -31,3 +31,5 @@ from .regression import mean_absolute_error
 from .regression import mean_squared_error
 from .regression import median_absolute_error
 from .regression import r2_score
+from .regression import concordance_correlation_coefficient
+from .regression import pearson_correlation_coefficient
