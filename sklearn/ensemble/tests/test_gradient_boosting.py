@@ -62,6 +62,9 @@ def test_classification_toy():
         assert np.any(deviance_decrease >= 0.0), \
             "Train deviance does not monotonically decrease."
 
+        leaves = clf.apply(X)
+        assert_equal(leaves.shape, (6, 10, 1))
+
 
 def test_parameter_checks():
     # Check input parameter validation.
@@ -182,6 +185,9 @@ def test_boston():
                 assert_raises(ValueError, clf.predict, boston.data)
                 clf.fit(boston.data, boston.target,
                         sample_weight=sample_weight)
+                leaves = clf.apply(boston.data)
+                assert_equal(leaves.shape, (506, 100))
+                
                 y_pred = clf.predict(boston.data)
                 mse = mean_squared_error(boston.target, y_pred)
                 assert mse < 6.0, "Failed with loss %s and " \
@@ -206,6 +212,9 @@ def test_iris():
             score = clf.score(iris.data, iris.target)
             assert score > 0.9, "Failed with subsample %.1f " \
                 "and score = %f" % (subsample, score)
+
+            leaves = clf.apply(iris.data)
+            assert_equal(leaves.shape, (150, 100, 3))
 
 
 def test_regression_synthetic():
@@ -311,7 +320,7 @@ def test_check_inputs_predict():
     x = np.array([1.0, 2.0])[:, np.newaxis]
     assert_raises(ValueError, clf.predict, x)
 
-    x = np.array([])
+    x = np.array([[]])
     assert_raises(ValueError, clf.predict, x)
 
     x = np.array([1.0, 2.0, 3.0])[:, np.newaxis]
@@ -323,7 +332,7 @@ def test_check_inputs_predict():
     x = np.array([1.0, 2.0])[:, np.newaxis]
     assert_raises(ValueError, clf.predict, x)
 
-    x = np.array([])
+    x = np.array([[]])
     assert_raises(ValueError, clf.predict, x)
 
     x = np.array([1.0, 2.0, 3.0])[:, np.newaxis]
@@ -492,9 +501,9 @@ def test_degenerate_targets():
 
     clf = GradientBoostingRegressor(n_estimators=100, random_state=1)
     clf.fit(X, np.ones(len(X)))
-    clf.predict(rng.rand(2))
+    clf.predict([rng.rand(2)])
     assert_array_equal(np.ones((1,), dtype=np.float64),
-                       clf.predict(rng.rand(2)))
+                       clf.predict([rng.rand(2)]))
 
 
 def test_quantile_loss():
@@ -1012,3 +1021,4 @@ def test_non_uniform_weights_toy_edge_case_clf():
         gb = GradientBoostingClassifier(n_estimators=5)
         gb.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(gb.predict([[1, 0]]), [1])
+

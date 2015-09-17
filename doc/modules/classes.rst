@@ -162,14 +162,17 @@ Classes
    :template: class.rst
 
    cross_validation.KFold
+   cross_validation.LabelKFold
+   cross_validation.LabelShuffleSplit
    cross_validation.LeaveOneLabelOut
    cross_validation.LeaveOneOut
    cross_validation.LeavePLabelOut
    cross_validation.LeavePOut
    cross_validation.PredefinedSplit
-   cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
+   cross_validation.StratifiedKFold
    cross_validation.StratifiedShuffleSplit
+
 
 .. autosummary::
    :toctree: generated/
@@ -600,10 +603,10 @@ From text
 
 .. _lda_ref:
 
-:mod:`sklearn.lda`: Linear Discriminant Analysis
-================================================
+:mod:`sklearn.discriminant_analysis`: Discriminant Analysis
+===========================================================
 
-.. automodule:: sklearn.lda
+.. automodule:: sklearn.discriminant_analysis
    :no-members:
    :no-inherited-members:
 
@@ -615,7 +618,8 @@ From text
    :toctree: generated
    :template: class.rst
 
-   lda.LDA
+   discriminant_analysis.LinearDiscriminantAnalysis
+   discriminant_analysis.QuadraticDiscriminantAnalysis
 
 
 .. _learning_curve_ref:
@@ -1132,24 +1136,6 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.robust_scale
    preprocessing.scale
 
-
-
-:mod:`sklearn.qda`: Quadratic Discriminant Analysis
-===================================================
-
-.. automodule:: sklearn.qda
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`lda_qda` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated
-   :template: class.rst
-
-   qda.QDA
 
 .. _random_projection_ref:
 

@@ -28,17 +28,20 @@ from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_warns
+
 
 from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
                           TransformerMixin, ClusterMixin, BaseEstimator)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
-from sklearn.lda import LDA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 from sklearn.pipeline import make_pipeline
 from sklearn.utils.validation import DataConversionWarning
+from sklearn.utils import ConvergenceWarning
 from sklearn.cross_validation import train_test_split
 
 from sklearn.utils import shuffle
@@ -169,6 +172,11 @@ def _yield_all_checks(name, Estimator):
     if issubclass(Estimator, ClusterMixin):
         for check in _yield_clustering_checks(name, Estimator):
             yield check
+    yield check_fit2d_predict1d
+    yield check_fit2d_1sample
+    yield check_fit2d_1feature
+    yield check_fit1d_1feature
+    yield check_fit1d_1sample
 
 
 def check_estimator(Estimator):
@@ -211,7 +219,7 @@ def set_fast_parameters(estimator):
             and estimator.__class__.__name__ != "TSNE"):
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
-        # NMF
+        warnings.simplefilter("ignore", ConvergenceWarning)
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
         # LinearSVR
@@ -269,34 +277,38 @@ def check_estimator_sparse_data(name, Estimator):
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
-    X = sparse.csr_matrix(X)
+    X_csr = sparse.csr_matrix(X)
     y = (4 * rng.rand(40)).astype(np.int)
-    # catch deprecation warnings
-    with warnings.catch_warnings():
-        if name in ['Scaler', 'StandardScaler']:
-            estimator = Estimator(with_mean=False)
-        else:
-            estimator = Estimator()
-    set_fast_parameters(estimator)
-    # fit and predict
-    try:
-        estimator.fit(X, y)
-        if hasattr(estimator, "predict"):
-            estimator.predict(X)
-        if hasattr(estimator, 'predict_proba'):
-            estimator.predict_proba(X)
-    except TypeError as e:
-        if 'sparse' not in repr(e):
+    for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
+        X = X_csr.asformat(sparse_format)
+        # catch deprecation warnings
+        with warnings.catch_warnings():
+            if name in ['Scaler', 'StandardScaler']:
+                estimator = Estimator(with_mean=False)
+            else:
+                estimator = Estimator()
+        set_fast_parameters(estimator)
+        # fit and predict
+        try:
+            estimator.fit(X, y)
+            if hasattr(estimator, "predict"):
+                pred = estimator.predict(X)
+                assert_equal(pred.shape, (X.shape[0],))
+            if hasattr(estimator, 'predict_proba'):
+                probs = estimator.predict_proba(X)
+                assert_equal(probs.shape, (X.shape[0], 4))
+        except TypeError as e:
+            if 'sparse' not in repr(e):
+                print("Estimator %s doesn't seem to fail gracefully on "
+                      "sparse data: error message state explicitly that "
+                      "sparse input is not supported if this is not the case."
+                      % name)
+                raise
+        except Exception:
             print("Estimator %s doesn't seem to fail gracefully on "
-                  "sparse data: error message state explicitly that "
-                  "sparse input is not supported if this is not the case."
-                  % name)
+                  "sparse data: it should raise a TypeError if sparse input "
+                  "is explicitly not supported." % name)
             raise
-    except Exception:
-        print("Estimator %s doesn't seem to fail gracefully on "
-              "sparse data: it should raise a TypeError if sparse input "
-              "is explicitly not supported." % name)
-        raise
 
 
 def check_dtype_object(name, Estimator):
@@ -325,6 +337,124 @@ def check_dtype_object(name, Estimator):
     X[0, 0] = {'foo': 'bar'}
     msg = "argument must be a string or a number"
     assert_raises_regex(TypeError, msg, estimator.fit, X, y)
+
+
+@ignore_warnings
+def check_fit2d_predict1d(name, Estimator):
+    # check by fitting a 2d array and prediting with a 1d array
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(20, 3))
+    y = X[:, 0].astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    set_random_state(estimator, 1)
+    estimator.fit(X, y)
+
+    for method in ["predict", "transform", "decision_function",
+                   "predict_proba"]:
+        if hasattr(estimator, method):
+            try:
+                assert_warns(DeprecationWarning,
+                             getattr(estimator, method), X[0])
+            except ValueError:
+                pass
+
+
+@ignore_warnings
+def check_fit2d_1sample(name, Estimator):
+    # check by fitting a 2d array and prediting with a 1d array
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(1, 10))
+    y = X[:, 0].astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    set_random_state(estimator, 1)
+    try:
+        estimator.fit(X, y)
+    except ValueError:
+        pass
+
+
+@ignore_warnings
+def check_fit2d_1feature(name, Estimator):
+    # check by fitting a 2d array and prediting with a 1d array
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(10, 1))
+    y = X[:, 0].astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    set_random_state(estimator, 1)
+    try:
+        estimator.fit(X, y)
+    except ValueError:
+        pass
+
+
+@ignore_warnings
+def check_fit1d_1feature(name, Estimator):
+    # check fitting 1d array with 1 feature
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(20))
+    y = X.astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    set_random_state(estimator, 1)
+
+    try:
+        estimator.fit(X, y)
+    except ValueError:
+        pass
+
+
+@ignore_warnings
+def check_fit1d_1sample(name, Estimator):
+    # check fitting 1d array with 1 feature
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(20))
+    y = np.array([1])
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_fast_parameters(estimator)
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    set_random_state(estimator, 1)
+
+    try:
+        estimator.fit(X, y)
+    except ValueError :
+        pass
 
 
 def check_transformer_general(name, Transformer):
@@ -514,8 +644,8 @@ def check_estimators_empty_data_messages(name, Estimator):
     # the following y should be accepted by both classifiers and regressors
     # and ignored by unsupervised models
     y = multioutput_estimator_convert_y_2d(name, np.array([1, 0, 1]))
-    msg = "0 feature(s) (shape=(3, 0)) while a minimum of 1 is required."
-    assert_raise_message(ValueError, msg, e.fit, X_zero_features, y)
+    msg = "0 feature\(s\) \(shape=\(3, 0\)\) while a minimum of \d* is required."
+    assert_raises_regex(ValueError, msg, e.fit, X_zero_features, y)
 
 
 def check_estimators_nan_inf(name, Estimator):
@@ -946,7 +1076,8 @@ def check_regressors_int(name, Regressor):
 
 def check_regressors_train(name, Regressor):
     X, y = _boston_subset()
-    y = StandardScaler().fit_transform(y)   # X is already scaled
+    y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
+    y = y.ravel()
     y = multioutput_estimator_convert_y_2d(name, y)
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
@@ -1185,7 +1316,7 @@ def check_estimators_data_not_an_array(name, Estimator, X, y):
 
 
 def check_parameters_default_constructible(name, Estimator):
-    classifier = LDA()
+    classifier = LinearDiscriminantAnalysis()
     # test default-constructibility
     # get rid of deprecation warnings
     with warnings.catch_warnings(record=True):

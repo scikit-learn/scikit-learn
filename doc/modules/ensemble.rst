@@ -306,6 +306,9 @@ the transformation performs an implicit, non-parametric density estimation.
  * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
    dimensionality reduction techniques on handwritten digits.
 
+ * :ref:`example_ensemble_plot_feature_transformation.py` compares
+   supervised and unsupervised tree based feature transformations.
+
 .. seealso::
 
    :ref:`manifold` techniques can also be useful to derive non-linear

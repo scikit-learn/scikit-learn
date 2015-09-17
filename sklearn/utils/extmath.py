@@ -582,15 +582,15 @@ def log_logistic(X, out=None):
 
     Parameters
     ----------
-    X: array-like, shape (M, N)
+    X: array-like, shape (M, N) or (M, )
         Argument to the logistic function
 
-    out: array-like, shape: (M, N), optional:
+    out: array-like, shape: (M, N) or (M, ), optional:
         Preallocated output array.
 
     Returns
     -------
-    out: array, shape (M, N)
+    out: array, shape (M, N) or (M, )
         Log of the logistic function evaluated at every point in x
 
     Notes
@@ -599,7 +599,9 @@ def log_logistic(X, out=None):
     http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
     """
     is_1d = X.ndim == 1
-    X = check_array(X, dtype=np.float)
+    X = np.atleast_2d(X)
+    X = check_array(X, dtype=np.float64)
+
 
     n_samples, n_features = X.shape
 
@@ -611,6 +613,40 @@ def log_logistic(X, out=None):
     if is_1d:
         return np.squeeze(out)
     return out
+
+
+def softmax(X, copy=True):
+    """
+    Calculate the softmax function.
+
+    The softmax function is calculated by
+    np.exp(X) / np.sum(np.exp(X), axis=1)
+
+    This will cause overflow when large values are exponentiated.
+    Hence the largest value in each row is subtracted from each data
+    point to prevent this.
+
+    Parameters
+    ----------
+    X: array-like, shape (M, N)
+        Argument to the logistic function
+
+    copy: bool, optional
+        Copy X or not.
+
+    Returns
+    -------
+    out: array, shape (M, N)
+        Softmax function evaluated at every point in x
+    """
+    if copy:
+        X = np.copy(X)
+    max_prob = np.max(X, axis=1).reshape((-1, 1))
+    X -= max_prob
+    np.exp(X, X)
+    sum_prob = np.sum(X, axis=1).reshape((-1, 1))
+    X /= sum_prob
+    return X
 
 
 def safe_min(X):

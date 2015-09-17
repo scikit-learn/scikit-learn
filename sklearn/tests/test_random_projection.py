@@ -211,7 +211,7 @@ def test_sparse_random_projection_transformer_invalid_density():
 def test_random_projection_transformer_invalid_input():
     for RandomProjection in all_RandomProjection:
         assert_raises(ValueError,
-                      RandomProjection(n_components='auto').fit, [0, 1, 2])
+                      RandomProjection(n_components='auto').fit, [[0, 1, 2]])
 
         assert_raises(ValueError,
                       RandomProjection(n_components=-10).fit, data)
