@@ -991,11 +991,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
                 if len(pred.shape) < 2:
                     if is_classifier(self.init_):
-                        y_pred = np.zeros((n_samples, n_classes))
-                        y_pred[:, pred] = 1.0
-                        if n_classes == 2:
-                            y_pred = np.log(y_pred[:, 1] / y_pred[:, 0])
-                            y_pred = y_pred.reshape(n_samples, 1)
+                        raise ValueError("init model must have a "
+                                         "'predict_proba' method if a "
+                                         "classifier")
                     else:
                         y_pred = pred.reshape(n_samples, 1)
                 else:
@@ -1131,11 +1129,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
             if len(pred.shape) < 2:
                 if is_classifier(self.init_):
-                    score = np.zeros((X.shape[0], self.n_classes))
-                    score[:, pred] = 1.0
-                    if self.n_classes == 2:
-                        score = np.log(score[:, 1] / score[:, 0])
-                        score = score.reshape(X.shape[0], 1)
+                    raise ValueError("init model must have a "
+                                     "'predict_proba' method if a "
+                                     "classifier")
                 else:
                     score = pred.reshape(X.shape[0], 1)
             else:

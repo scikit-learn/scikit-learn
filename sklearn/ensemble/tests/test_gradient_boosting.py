@@ -7,6 +7,7 @@ import numpy as np
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.cross_validation import train_test_split
+from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
@@ -1035,9 +1036,8 @@ def test_classification_w_init():
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
                                                         random_state=0)
 
-    for clf in [DecisionTreeClassifier(random_state=0),
-                RandomForestClassifier(random_state=0, n_estimators=3), 
-                SVC(random_state=0)]:
+    for clf in [ExtraTreesClassifier(random_state=0, n_estimators=3),
+                RandomForestClassifier(random_state=0, n_estimators=3)]:
 
         clf.fit(X_train, y_train)
         acc1 = clf.score(X_test, y_test)
@@ -1060,8 +1060,8 @@ def test_binary_classification_w_init():
                                                         random_state=0)
 
     for clf in [DecisionTreeClassifier(random_state=0),
-                RandomForestClassifier(random_state=0, n_estimators=3), 
-                SVC(random_state=0)]:
+                ExtraTreesClassifier(random_state=0, n_estimators=3),
+                RandomForestClassifier(random_state=0, n_estimators=3)]:
 
         clf.fit(X_train, y_train)
         acc1 = clf.score(X_test, y_test)
@@ -1083,7 +1083,8 @@ def test_regression_w_init():
                                                         random_state=0)
 
     for clf in [DecisionTreeRegressor(random_state=0), 
-                RandomForestRegressor(random_state=0, n_estimators=3), 
+                RandomForestRegressor(random_state=0, n_estimators=3),
+                ExtraTreesRegressor(random_state=0, n_estimators=3), 
                 SVR(), Ridge()]:
 
         clf.fit(X_train, y_train)
@@ -1095,3 +1096,14 @@ def test_regression_w_init():
         clf.fit(X_train, y_train)
         acc2 = clf.score(X_test, y_test)
         assert_greater_equal(acc2, acc1)
+
+def test_error_on_bad_init():
+    # Test that an error will be raised when a bad init is passed in.
+
+    boston = datasets.load_boston()
+    X, y = boston.data, boston.target
+
+    clf = GradientBoostingClassifier(random_state=0, n_estimators=2,
+                                     init=SVC())
+
+    assert_raises(ValueError, clf.fit, X, y)
