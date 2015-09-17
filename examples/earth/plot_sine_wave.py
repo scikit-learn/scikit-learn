@@ -12,7 +12,7 @@ print(__doc__)
 
 import numpy as np
 import pylab as pl
-from sklearn.earth import EarthRegressor
+from sklearn.additive import Earth
 
 # Create some fake data
 np.random.seed(2)
@@ -24,7 +24,7 @@ y = 100 * \
     20 * np.random.normal(size=m)
 
 # Fit an EarthRegressor model
-model = EarthRegressor(max_degree=3, minspan_alpha=.5)
+model = Earth(max_degree=3, minspan_alpha=.5)
 model.fit(X, y)
 
 # Print the model
