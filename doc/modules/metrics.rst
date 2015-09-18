@@ -182,5 +182,5 @@ The chi squared kernel is most commonly used on histograms (bags) of visual word
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
-      http://eprints.pascal-network.org/archive/00002309/01/Zhang06-IJCV.pdf
+      http://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
 
