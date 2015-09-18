@@ -132,9 +132,9 @@ def bicluster_ncut(i):
         return sys.float_info.max
     row_complement = np.nonzero(np.logical_not(cocluster.rows_[i]))[0]
     col_complement = np.nonzero(np.logical_not(cocluster.columns_[i]))[0]
-    weight = X[rows[:, np.newaxis], cols].sum()
-    cut = (X[row_complement[:, np.newaxis], cols].sum() +
-           X[rows[:, np.newaxis], col_complement].sum())
+    weight = X[rows][:, cols].sum()
+    cut = (X[row_complement][:, cols].sum() +
+           X[rows][:, col_complement].sum())
     return cut / weight
 
 
