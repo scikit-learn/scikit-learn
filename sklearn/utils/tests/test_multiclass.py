@@ -261,20 +261,6 @@ def test_is_multilabel():
                           msg='is_multilabel(%r) should be %s'
                           % (example, dense_exp))
 
-# def test_is_sequence_of_sequences():
-#     for group, group_examples in iteritems(EXAMPLES):
-#         if group == 'multilabel-sequences':
-#             assert_, exp = assert_true, 'True'
-#             check = partial(assert_warns, DeprecationWarning,
-#                             is_sequence_of_sequences)
-#         else:
-#             assert_, exp = assert_false, 'False'
-#             check = is_sequence_of_sequences
-#         for example in group_examples:
-#             assert_(check(example),
-#                     msg='is_sequence_of_sequences(%r) should be %s'
-#                     % (example, exp))
-
 def test_assert_non_regression_targets():
     for y_type in EXAMPLES.keys():
         if y_type in ["unknown", "continuous", 'continuous-multioutput']:
