@@ -21,7 +21,7 @@ from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
 from ..utils.fixes import argpartition
 from ..utils.validation import DataConversionWarning
 from ..utils.validation import NotFittedError
-from ..utils.multiclass import assert_non_regression_targets
+from ..utils.multiclass import check_non_regression_targets
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 
@@ -789,7 +789,7 @@ class SupervisedIntegerMixin(object):
         else:
             self.outputs_2d_ = True
 
-        assert_non_regression_targets(y)
+        check_non_regression_targets(y)
         self.classes_ = []
         self._y = np.empty(y.shape, dtype=np.int)
         for k in range(self._y.shape[1]):

@@ -29,7 +29,7 @@ from ..utils.optimize import newton_cg
 from ..utils.validation import (DataConversionWarning,
                                 check_X_y, NotFittedError)
 from ..utils.fixes import expit
-from ..utils.multiclass import assert_non_regression_targets
+from ..utils.multiclass import check_non_regression_targets
 from ..externals.joblib import Parallel, delayed
 from ..cross_validation import check_cv
 from ..externals import six
@@ -1127,7 +1127,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, 
                          order="C")
-        assert_non_regression_targets(y)
+        check_non_regression_targets(y)
         self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
 
@@ -1493,7 +1493,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                          order="C")
         max_squared_sum = get_max_squared_sum(X) if self.solver == 'sag' \
             else None
-        assert_non_regression_targets(y)
+        check_non_regression_targets(y)
 
         if y.ndim == 2 and y.shape[1] == 1:
             warnings.warn(

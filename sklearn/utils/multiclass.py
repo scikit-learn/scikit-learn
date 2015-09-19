@@ -156,7 +156,7 @@ def is_multilabel(y):
         return len(labels) < 3 and (y.dtype.kind in 'biu' or  # bool, int, uint
                                     _is_integral_float(labels))
 
-def assert_non_regression_targets(y):
+def check_non_regression_targets(y):
     """Determine if target `y` is of non regression type
 
     For the moment, the following (as defined in type_of_target) are allowed:

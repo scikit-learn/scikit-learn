@@ -23,7 +23,7 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils.fixes import bincount
 from ..utils.metaestimators import if_delegate_has_method
-from ..utils.multiclass import assert_non_regression_targets
+from ..utils.multiclass import check_non_regression_targets
 
 from .base import BaseEnsemble, _partition_estimators
 
@@ -545,7 +545,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     def _validate_y(self, y):
         y = column_or_1d(y, warn=True)
-        assert_non_regression_targets(y)
+        check_non_regression_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
 

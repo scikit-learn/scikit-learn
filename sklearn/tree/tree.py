@@ -32,7 +32,7 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.validation import NotFittedError
-from ..utils.multiclass import assert_non_regression_targets
+from ..utils.multiclass import check_non_regression_targets
 
 
 from ._criterion import Criterion
@@ -174,7 +174,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.n_outputs_ = y.shape[1]
 
         if is_classification:
-            assert_non_regression_targets(y)
+            check_non_regression_targets(y)
             y = np.copy(y)
 
             self.classes_ = []
