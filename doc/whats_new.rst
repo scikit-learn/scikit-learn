@@ -54,6 +54,9 @@ New features
 
 Enhancements
 ............
+   - :class:`manifold.TSNE` now supports approximate optimization via the
+     Barnes-Hut method, leading to much faster fitting. By Christopher Erick Moody.
+     (`#4025 <https://github.com/scikit-learn/scikit-learn/pull/4025>`_)
 
    - :class:`cluster.mean_shift_.MeanShift` now supports parallel execution,
      as implemented in the ``mean_shift`` function. By `Martino Sorbaro`_.
@@ -182,7 +185,9 @@ Enhancements
      , to set the seed of the pseudo random generator used in ``sag`` solver. By `Tom Dupre la Tour`_.
 
    - Added optional parameter ``warm_start`` in
-     :class:`linear_model.LogisticRegression`. If set to True, the solvers ``lbfgs``, ``newton-cg`` and ``sag`` will be initialized with the coefficients computed in the previous fit. By `Tom Dupre la Tour`_.
+     :class:`linear_model.LogisticRegression`. If set to True, the solvers
+     ``lbfgs``, ``newton-cg`` and ``sag`` will be initialized with the
+     coefficients computed in the previous fit. By `Tom Dupre la Tour`_.
 
    - Added ``sample_weight`` support to :class:`linear_model.LogisticRegression` for
      the ``lbfgs``, ``newton-cg``, and ``sag`` solvers. By `Valentin Stolbunov`_.
