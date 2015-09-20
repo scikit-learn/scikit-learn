@@ -35,6 +35,9 @@ New features
    - Added new supervised learning algorithm: :ref:`Multi-layer Perceptron <multilayer_perceptron>`
      (`#3204 <https://github.com/scikit-learn/scikit-learn/pull/3204>`_) by `Issam H. Laradji`_
 
+   - Added :class:`linear_model.HuberRegressor`, a linear model robust to outliers.
+     (`#5291 <https://github.com/scikit-learn/scikit-learn/pull/5291>`_) by `Manoj Kumar`_.
+
 Enhancements
 ............
 
