@@ -223,7 +223,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
     n_iter_ : int
         Number of passes over the dataset.
-    
 
     References
     ----------

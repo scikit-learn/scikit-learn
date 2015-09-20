@@ -107,11 +107,11 @@ plot_embedding(X_pca,
 #----------------------------------------------------------------------
 # Projection on to the first 2 linear discriminant components
 
-print("Computing LDA projection")
+print("Computing Linear Discriminant Analysis projection")
 X2 = X.copy()
 X2.flat[::X.shape[1] + 1] += 0.01  # Make X invertible
 t0 = time()
-X_lda = lda.LDA(n_components=2).fit_transform(X2, y)
+X_lda = discriminant_analysis.LinearDiscriminantAnalysis(n_components=2).fit_transform(X2, y)
 plot_embedding(X_lda,
                "Linear Discriminant projection of the digits (time %.2fs)" %
                (time() - t0))

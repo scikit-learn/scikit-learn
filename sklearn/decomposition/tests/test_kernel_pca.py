@@ -39,7 +39,7 @@ def test_kernel_pca():
 
             # non-regression test: previously, gamma would be 0 by default,
             # forcing all eigenvalues to 0 under the poly kernel
-            assert_not_equal(X_fit_transformed, [])
+            assert_not_equal(X_fit_transformed.size, 0)
 
             # transform new data
             X_pred_transformed = kpca.transform(X_pred)

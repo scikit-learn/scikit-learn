@@ -41,9 +41,22 @@ New features
      conditioned on a label array. By `Brian McFee`_, Jean Kossaifi and
      `Gilles Louppe`_.
 
+   - :class:`decomposition.LatentDirichletAllocation` implements the Latent
+     Dirichlet Allocation topic model with online  variational
+     inference. By `Chyi-Kwei Yau`_, with code based on an implementation
+     by Matt Hoffman. (`#3659 <https://github.com/scikit-learn/scikit-learn/pull/3659>`_)
+
+   - The new solver ``sag`` implements a Stochastic Average Gradient descent
+     and is available in both :class:`linear_model.LogisticRegression` and
+     :class:`linear_model.Ridge`. This solver is very efficient for large
+     datasets. By `Danny Sullivan`_ and `Tom Dupre la Tour`_.
+     (`#4738 <https://github.com/scikit-learn/scikit-learn/pull/4738>`_)
 
 Enhancements
 ............
+   - :class:`manifold.TSNE` now supports approximate optimization via the
+     Barnes-Hut method, leading to much faster fitting. By Christopher Erick Moody.
+     (`#4025 <https://github.com/scikit-learn/scikit-learn/pull/4025>`_)
 
    - :class:`cluster.mean_shift_.MeanShift` now supports parallel execution,
      as implemented in the ``mean_shift`` function. By `Martino Sorbaro`_.
@@ -156,6 +169,30 @@ Enhancements
      visible with extra trees and on datasets with categorical or sparse
      features. By `Arnaud Joly`_.
 
+   - :class:`ensemble.GradientBoostingRegressor` and
+     :class:`ensemble.GradientBoostingClassifier` now expose an ``apply``
+     method for retrieving the leaf indices each sample ends up in under
+     each try. By `Jacob Schreiber`_.
+
+   - Add ``sample_weight`` support to :class:`linear_model.LinearRegression`.
+     By Sonny Hu. (`#4481 <https://github.com/scikit-learn/scikit-learn/pull/4881>`_)
+
+   - Add ``n_iter_without_progress`` to :class:`manifold.TSNE` to control
+     the stopping criterion. By Santi Villalba.
+     (`#5185 <https://github.com/scikit-learn/scikit-learn/pull/5186>`_)
+
+   - Added optional parameter ``random_state`` in :class:`linear_model.Ridge`
+     , to set the seed of the pseudo random generator used in ``sag`` solver. By `Tom Dupre la Tour`_.
+
+   - Added optional parameter ``warm_start`` in
+     :class:`linear_model.LogisticRegression`. If set to True, the solvers
+     ``lbfgs``, ``newton-cg`` and ``sag`` will be initialized with the
+     coefficients computed in the previous fit. By `Tom Dupre la Tour`_.
+
+   - Added ``sample_weight`` support to :class:`linear_model.LogisticRegression` for
+     the ``lbfgs``, ``newton-cg``, and ``sag`` solvers. By `Valentin Stolbunov`_.
+
+
 Bug fixes
 .........
 
@@ -188,6 +225,10 @@ Bug fixes
 
     - Fixed :func:`cross_validation.cross_val_predict` for estimators with
       sparse predictions. By Buddha Prakash.
+
+    - Fixed the ``predict_proba`` method of :class:`linear_model.LogisticRegression`
+      to use soft-max instead of one-vs-rest normalization. By `Manoj Kumar`_.
+      (`#5182 <https://github.com/scikit-learn/scikit-learn/pull/5182>`_)
 
 API changes summary
 -------------------
@@ -318,8 +359,8 @@ New features
    - Add :class:`cluster.Birch`, an online clustering algorithm. By
      `Manoj Kumar`_, `Alexandre Gramfort`_ and `Joel Nothman`_.
 
-   - Added shrinkage support to :class:`lda.LDA` using two new solvers. By
-     `Clemens Brunner`_ and `Martin Billinger`_.
+   - Added shrinkage support to :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+     using two new solvers. By `Clemens Brunner`_ and `Martin Billinger`_.
 
    - Added :class:`kernel_ridge.KernelRidge`, an implementation of
      kernelized ridge regression.
@@ -726,8 +767,8 @@ Bug fixes
   - Explicitly close open files to avoid ``ResourceWarnings`` under Python 3.
     By Calvin Giles.
 
-  - The ``transform`` of :class:`lda.LDA` now projects the input on the most
-    discriminant directions. By Martin Billinger.
+  - The ``transform`` of :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+    now projects the input on the most discriminant directions. By Martin Billinger.
 
   - Fixed potential overflow in ``_tree.safe_realloc`` by `Lars Buitinck`_.
 
@@ -2234,9 +2275,9 @@ API changes summary
    - Fixed API inconsistency: :meth:`linear_model.SGDClassifier.predict_proba` now
      returns 2d array when fit on two classes.
 
-   - Fixed API inconsistency: :meth:`qda.QDA.decision_function` and
-     :meth:`lda.LDA.decision_function` now return 1d arrays when fit on two
-     classes.
+   - Fixed API inconsistency: :meth:`discriminant_analysis.QuadraticDiscriminantAnalysis.decision_function`
+     and :meth:`discriminant_analysis.LinearDiscriminantAnalysis.decision_function` now return 1d arrays
+     when fit on two classes.
 
    - Grid of alphas used for fitting :class:`linear_model.LassoCV` and
      :class:`linear_model.ElasticNetCV` is now stored
@@ -3021,8 +3062,8 @@ Some other modules benefited from significant improvements or cleanups.
 
   - Add attribute converged to Gaussian Mixture Models by Vincent Schut.
 
-  - Implemented ``transform``, ``predict_log_proba`` in :class:`lda.LDA`
-    By `Mathieu Blondel`_.
+  - Implemented ``transform``, ``predict_log_proba`` in
+    :class:`discriminant_analysis.LinearDiscriminantAnalysis` By `Mathieu Blondel`_.
 
   - Refactoring in the :ref:`svm` module and bug fixes by `Fabian Pedregosa`_,
     `Gael Varoquaux`_ and Amit Aides.
@@ -3636,3 +3677,12 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Brian McFee: https://bmcfee.github.io
 
 .. _Vighnesh Birodkar: https://github.com/vighneshbirodkar
+
+.. _Chyi-Kwei Yau: https://github.com/chyikwei
+.. _Martino Sorbaro: https://github.com/martinosorb
+.. _Jaidev Deshpande: https://github.com/jaidevd
+.. _Arthur Mensch: https://github.com/arthurmensch
+.. _Daniel Galvez: https://github.com/galv
+.. _Jacob Schreiber: https://github.com/jmschrei
+.. _Ankur Ankan: https://github.com/ankurankan
+.. _Valentin Stolbunov: http://vstolbunov.com

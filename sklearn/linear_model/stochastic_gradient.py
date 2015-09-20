@@ -12,6 +12,7 @@ from abc import ABCMeta, abstractmethod
 from ..externals.joblib import Parallel, delayed
 
 from .base import LinearClassifierMixin, SparseCoefMixin
+from .base import make_dataset
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import (check_array, check_random_state, check_X_y,
@@ -23,7 +24,6 @@ from ..externals import six
 
 from .sgd_fast import plain_sgd, average_sgd
 from ..utils.fixes import astype
-from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from ..utils import compute_class_weight
 from .sgd_fast import Hinge
 from .sgd_fast import SquaredHinge
@@ -40,12 +40,8 @@ LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
 
 PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 
-SPARSE_INTERCEPT_DECAY = 0.01
-"""For sparse data intercept updates are scaled by this decay factor to avoid
-intercept oscillation."""
-
 DEFAULT_EPSILON = 0.1
-"""Default value of ``epsilon`` parameter. """
+# Default value of ``epsilon`` parameter.
 
 
 class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
@@ -214,21 +210,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                                                order="C")
 
 
-def _make_dataset(X, y_i, sample_weight):
-    """Create ``Dataset`` abstraction for sparse and dense inputs.
-
-    This also returns the ``intercept_decay`` which is different
-    for sparse datasets.
-    """
-    if sp.issparse(X):
-        dataset = CSRDataset(X.data, X.indptr, X.indices, y_i, sample_weight)
-        intercept_decay = SPARSE_INTERCEPT_DECAY
-    else:
-        dataset = ArrayDataset(X, y_i, sample_weight)
-        intercept_decay = 1.0
-    return dataset, intercept_decay
-
-
 def _prepare_fit_binary(est, y, i):
     """Initialization for fit_binary.
 
@@ -272,7 +253,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     y_i, coef, intercept, average_coef, average_intercept = \
         _prepare_fit_binary(est, y, i)
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
-    dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
+    dataset, intercept_decay = make_dataset(X, y_i, sample_weight)
 
     penalty_type = est._get_penalty_type(est.penalty)
     learning_rate_type = est._get_learning_rate_type(learning_rate)
@@ -1030,7 +1011,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def _fit_regressor(self, X, y, alpha, C, loss, learning_rate,
                        sample_weight, n_iter):
-        dataset, intercept_decay = _make_dataset(X, y, sample_weight)
+        dataset, intercept_decay = make_dataset(X, y, sample_weight)
 
         loss_function = self._get_loss_function(loss)
         penalty_type = self._get_penalty_type(self.penalty)

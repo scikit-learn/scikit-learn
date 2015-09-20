@@ -680,3 +680,15 @@ def test_k_means_function():
 
     # to many clusters desired
     assert_raises(ValueError, k_means, X, n_clusters=X.shape[0] + 1)
+
+
+def test_x_squared_norms_init_centroids():
+    """Test that x_squared_norms can be None in _init_centroids"""
+    from sklearn.cluster.k_means_ import _init_centroids
+
+    X_norms = np.sum(X**2, axis=1)
+    precompute = _init_centroids(
+        X, 3, "k-means++", random_state=0, x_squared_norms=X_norms)
+    assert_array_equal(
+        precompute,
+        _init_centroids(X, 3, "k-means++", random_state=0))

@@ -35,12 +35,13 @@ from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
                           TransformerMixin, ClusterMixin, BaseEstimator)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
-from sklearn.lda import LDA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 from sklearn.pipeline import make_pipeline
 from sklearn.utils.validation import DataConversionWarning
+from sklearn.utils import ConvergenceWarning
 from sklearn.cross_validation import train_test_split
 
 from sklearn.utils import shuffle
@@ -218,7 +219,7 @@ def set_fast_parameters(estimator):
             and estimator.__class__.__name__ != "TSNE"):
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
-        # NMF
+        warnings.simplefilter("ignore", ConvergenceWarning)
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
         # LinearSVR
@@ -1315,7 +1316,7 @@ def check_estimators_data_not_an_array(name, Estimator, X, y):
 
 
 def check_parameters_default_constructible(name, Estimator):
-    classifier = LDA()
+    classifier = LinearDiscriminantAnalysis()
     # test default-constructibility
     # get rid of deprecation warnings
     with warnings.catch_warnings(record=True):
