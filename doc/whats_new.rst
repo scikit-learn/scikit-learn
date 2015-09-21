@@ -22,6 +22,15 @@ New features
      :class:`feature_selection.SelectPercentile` as score functions.
      By `Andrea Bravi`_ and `Nikolay Mayorov`_.
 
+   - Class :class:`decomposition.RandomizedPCA` is now factored into :class:`decomposition.PCA`
+     and it is available calling with parameter ``svd_solver='randomized'``.
+     The default number of ``n_iter`` for ``'randomized'`` has changed to 4. The old
+     behavior of PCA is recovered by ``svd_solver='full'``. An additional solver
+     calls `arpack` and performs truncated (non-randomized) SVD. By default,
+     the best solver is selected depending on the size of the input and the
+     number of components requested.
+     (`#5299 <https://github.com/scikit-learn/scikit-learn/pull/5299>`_) by `Giorgio Patrini`_.
+
    - The Gaussian Process module has been reimplemented and now offers classification
      and regression estimators through :class:`gaussian_process.GaussianProcessClassifier`
      and  :class:`gaussian_process.GaussianProcessRegressor`. Among other things, the new
@@ -114,17 +123,26 @@ Bug fixes
     - :class:`StratifiedKFold` now raises error if all n_labels for individual classes is less than n_folds.
       (`#6182 <https://github.com/scikit-learn/scikit-learn/pull/6182>`_) by `Devashish Deshpande`_.
 
-    - :class:`RandomizedPCA` default number of `iterated_power` is 2 instead of 3.
-      This is a speed up with a minor precision decrease. (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
+    - :class:`RandomizedPCA` default number of `iterated_power` is 4 instead of 3.
+      (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
 
-    - :func:`randomized_svd` performs 2 power iterations by default, instead or 0.
-      In practice this is often enough for obtaining a good approximation of the
-      true eigenvalues/vectors in the presence of noise. (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
+    - :func:`utils.extmath.randomized_svd` performs 4 power iterations by default, instead or 0.
+      In practice this is enough for obtaining a good approximation of the
+      true eigenvalues/vectors in the presence of noise. When `n_components` is
+      small (< .1 * min(X.shape)) `n_iter` is set to 7, unless the user specifies
+      a higher number. This improves precision with few components.
+      (`#5299 <https://github.com/scikit-learn/scikit-learn/pull/5299>`_) by `Giorgio Patrini`_.
 
-    - :func:`randomized_range_finder` is more numerically stable when many
+    - :func:`utils.extmath.randomized_range_finder` is more numerically stable when many
       power iterations are requested, since it applies LU normalization by default.
       If `n_iter<2` numerical issues are unlikely, thus no normalization is applied.
-      Other normalization options are available: 'none', 'LU' and 'QR'. (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
+      Other normalization options are available: 'none', 'LU' and 'QR'.
+      (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
+
+    - Whiten/non-whiten inconsistency between components of :class:`decomposition.PCA`
+      and :class:`decomposition.RandomizedPCA` (now factored into PCA, see the
+      New features) is fixed. `components_` are stored with no whitening.
+      (`#5299 <https://github.com/scikit-learn/scikit-learn/pull/5299>`_) by `Giorgio Patrini`_.
 
     - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized
       Laplacian matrix was incorrectly set to 1. (`#4995 <https://github.com/scikit-learn/scikit-learn/pull/4995>`_) By `Peter Fischer`_.
@@ -213,7 +231,8 @@ Changelog
 
 New features
 ............
-   - All the Scaler classes but :class:`RobustScaler` can be fitted online by
+
+   - All the Scaler classes but :class:`preprocessing.RobustScaler` can be fitted online by
      calling `partial_fit`. By `Giorgio Patrini`_.
 
    - The new class :class:`ensemble.VotingClassifier` implements a
@@ -445,6 +464,7 @@ Enhancements
 
 Bug fixes
 .........
+
     - Fixed non-determinism in :class:`dummy.DummyClassifier` with sparse
       multi-label output. By `Andreas Müller`_.
 

@@ -566,6 +566,8 @@ def test_random_trees_dense_equal():
     assert_array_equal(X_transformed_sparse.toarray(), X_transformed_dense)
 
 
+# Ignore warnings from switching to more power iterations in randomized_svd
+@ignore_warnings
 def test_random_hasher():
     # test random forest hashing on circles dataset
     # make sure that it is linearly separable.

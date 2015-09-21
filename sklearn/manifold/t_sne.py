@@ -18,7 +18,7 @@ from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.extmath import _ravel
-from ..decomposition import RandomizedPCA
+from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
 from . import _barnes_hut_tsne
@@ -695,7 +695,8 @@ class TSNE(BaseEstimator):
                             'memory. Otherwise consider dimensionality '
                             'reduction techniques (e.g. TruncatedSVD)')
         else:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=np.float64)
+            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                            dtype=np.float64)
         random_state = check_random_state(self.random_state)
 
         if self.early_exaggeration < 1.0:
@@ -763,8 +764,8 @@ class TSNE(BaseEstimator):
                                 "or then equal to one")
 
         if self.init == 'pca':
-            pca = RandomizedPCA(n_components=self.n_components,
-                                random_state=random_state)
+            pca = PCA(n_components=self.n_components, svd_solver='randomized',
+                      random_state=random_state)
             X_embedded = pca.fit_transform(X)
         elif isinstance(self.init, np.ndarray):
             X_embedded = self.init
