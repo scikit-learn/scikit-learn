@@ -24,7 +24,7 @@ def test_optics():
 
     samples, labels = clust2.extract(0.4)
 
-    assert samples[:] == None
+    assert samples.size == 0
     assert labels[0] == -1
 
 
