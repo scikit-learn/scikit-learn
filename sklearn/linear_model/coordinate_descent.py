@@ -2155,20 +2155,20 @@ class AdaptiveLasso(Lasso):
     Gasso, G., Rakotomamonjy, A., & Canu, S.
     Recovering Sparse Signals With a Certain Family of Nonconvex
     Penalties and DC Programming
-    IEEE Trans. Signal Process., 4686-4698.
+    IEEE Trans. Signal Process., 2009, 4686-4698.
 
     Zou, H., & Li, R.
     One-step sparse estimates in nonconcave penalized likelihood models.
-    The Annals of Statistics Ann. Statist., 1509-1533.
+    The Annals of Statistics Ann. Statist., 2008, 1509-1533.
 
     Buhlmann, P., & Meier, L.
     Discussion: One-step sparse estimates in nonconcave penalized likelihood
     models.
-    The Annals of Statistics Ann. Statist., 1534-1541.
+    The Annals of Statistics Ann. Statist., 2008, 1534-1541.
 
     Zou, Hui.
     The Adaptive Lasso and Its Oracle Properties
-    Journal of the American Statistical Association
+    Journal of the American Statistical Association, 2006.
     """
     def __init__(self, max_lasso_iterations=20, gamma=1, alpha=1.0,
                  eps=1e-3, ada_tol=1e-4, fit_intercept=True, normalize=False,
