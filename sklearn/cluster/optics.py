@@ -32,15 +32,15 @@ class setOfObjects(BallTree):
         self._n = len(self.data)
         # Start all points as 'unprocessed' ##
         self._processed = sp.zeros((self._n, 1), dtype=bool)
-        self._reachability = sp.ones(self._n) * sp.inf
-        self._core_dist = sp.ones(self._n) * sp.nan
+        self.reachability_ = sp.ones(self._n) * sp.inf
+        self.core_dists_ = sp.ones(self._n) * sp.nan
         self._index = sp.array(range(self._n))
         self._nneighbors = sp.ones(self._n, dtype=int)
         # Start all points as noise ##
         self._cluster_id = -sp.ones(self._n, dtype=int)
         self._is_core = sp.zeros(self._n, dtype=bool)
         # Ordering is important below... ###
-        self._ordered_list = []
+        self.ordering_ = []
 
 
 def _prep_optics(self, epsilon, min_samples):
@@ -68,7 +68,7 @@ def _prep_optics(self, epsilon, min_samples):
     # Check to see if that there is at least one cluster
     if len(core_query) >= 1:
         core_dist = self.query(core_query, k=min_samples)[0][:, -1]
-        self._core_dist[mask_idx] = core_dist
+        self.core_dists_[mask_idx] = core_dist
 
 
 # Main OPTICS loop #
@@ -92,14 +92,14 @@ def _build_optics(SetOfObjects, epsilon):
 # OPTICS helper functions; these should not be public #
 
 # Not parallelizable. The order that entries are written to
-# the '_ordered_list' is important!
+# the 'ordering_' is important!
 
 
 def _expandClusterOrder(SetOfObjects, point, epsilon):
-    if SetOfObjects._core_dist[point] <= epsilon:
+    if SetOfObjects.core_dists_[point] <= epsilon:
         while not SetOfObjects._processed[point]:
             SetOfObjects._processed[point] = True
-            SetOfObjects._ordered_list.append(point)
+            SetOfObjects.ordering_.append(point)
             point = _set_reach_dist(SetOfObjects, point, epsilon)
     else:
         SetOfObjects._processed[point] = True    # Probably not needed... #
@@ -122,16 +122,16 @@ def _set_reach_dist(SetOfObjects, point_index, epsilon):
         # n_pr is 'not processed'
         n_pr = indices[(SetOfObjects._processed[indices] < 1)[0].T]
         rdists = sp.maximum(dists[(SetOfObjects._processed[indices] < 1)[0].T],
-                            SetOfObjects._core_dist[point_index])
+                            SetOfObjects.core_dists_[point_index])
 
-        new_reach = sp.minimum(SetOfObjects._reachability[n_pr], rdists)
-        SetOfObjects._reachability[n_pr] = new_reach
+        new_reach = sp.minimum(SetOfObjects.reachability_[n_pr], rdists)
+        SetOfObjects.reachability_[n_pr] = new_reach
 
         # Checks to see if everything is already processed;
         # if so, return control to main loop ##
         if n_pr.size > 0:
             # Define return order based on reachability distance ###
-            return n_pr[sp.argmin(SetOfObjects._reachability[n_pr])]
+            return n_pr[sp.argmin(SetOfObjects.reachability_[n_pr])]
         else:
             return point_index
 
@@ -162,7 +162,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     Attributes
     ----------
-    `core_samples` : array, shape = [n_core_samples]
+    `core_sample_indices_` : array, shape = [n_core_samples]
         Indices of core samples.
     `labels_` : array, shape = [n_samples]
         Cluster labels for each point in the dataset given to fit().
@@ -199,17 +199,17 @@ class OPTICS(BaseEstimator, ClusterMixin):
         _prep_optics(tree, self.eps * 5.0, self.min_samples)
         _build_optics(tree, self.eps * 5.0)
         self._index = tree._index[:]
-        self._reachability = tree._reachability[:]
-        self._core_dist = tree._core_dist[:]
+        self.reachability_ = tree.reachability_[:]
+        self.core_dists_ = tree.core_dists_[:]
         self._cluster_id = tree._cluster_id[:]
         self._is_core = tree._is_core[:]
-        self._ordered_list = tree._ordered_list[:]
+        self.ordering_ = tree.ordering_[:]
         _ExtractDBSCAN(self, self.eps)  # extraction needs to be < eps
         self.labels_ = self._cluster_id[:]
-        self.core_samples = self._index[self._is_core[:] == True]
+        self.core_sample_indices_ = self._index[self._is_core[:] == True]
         self.n_clusters = max(self._cluster_id)
         self.processed = True
-        return self  # self.core_samples, self.labels_
+        return self  # self.core_sample_indices_, self.labels_
 
     def extract(self, epsPrime):
         """Performs DBSCAN equivalent extraction for arbitrary epsilon.
@@ -222,8 +222,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         Returns
         -------
-        New core_samples and labels_ arrays. Modifies OPTICS object and stores
-        core_samples and lables_ as attributes."""
+        New core_sample_indices_ and labels_ arrays. Modifies OPTICS object and stores
+        core_sample_indices_ and lables_ as attributes."""
 
         if self.processed is True:
             if epsPrime > self.eps * 5.0:
@@ -232,13 +232,13 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 self.eps_prime = epsPrime
                 _ExtractDBSCAN(self, epsPrime)
                 self.labels_ = self._cluster_id[:]
-                self.core_samples = self._index[self._is_core[:] == True]
+                self.core_sample_indices_ = self._index[self._is_core[:] == True]
                 self.labels_ = self._cluster_id[:]
                 self.n_clusters = max(self._cluster_id)
                 if epsPrime > (self.eps * 1.05):
                     print("Warning, eps is close to epsPrime:")
                     print("Output may be unstable")
-                return self.core_samples, self.labels_
+                return self.core_sample_indices_, self.labels_
         else:
             print("Run fit method first")
 
@@ -251,9 +251,9 @@ def _ExtractDBSCAN(SetOfObjects, epsilon_prime):
 
     # Start Cluster_id at zero, incremented to '1' for first cluster
     cluster_id = 0
-    for entry in SetOfObjects._ordered_list:
-        if SetOfObjects._reachability[entry] > epsilon_prime:
-            if SetOfObjects._core_dist[entry] <= epsilon_prime:
+    for entry in SetOfObjects.ordering_:
+        if SetOfObjects.reachability_[entry] > epsilon_prime:
+            if SetOfObjects.core_dists_[entry] <= epsilon_prime:
                 cluster_id += 1
                 SetOfObjects._cluster_id[entry] = cluster_id
             else:
@@ -263,7 +263,7 @@ def _ExtractDBSCAN(SetOfObjects, epsilon_prime):
                 SetOfObjects._is_core[entry] = 0
         else:
             SetOfObjects._cluster_id[entry] = cluster_id
-            if SetOfObjects._core_dist[entry] <= epsilon_prime:
+            if SetOfObjects.core_dists_[entry] <= epsilon_prime:
                 # One (i.e., 'True') for core points #
                 SetOfObjects._is_core[entry] = 1
             else:
