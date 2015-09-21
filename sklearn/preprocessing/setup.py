@@ -1,24 +1,34 @@
-#-----------------------------------------------------------------------------
-# Copyright (c) 2012, Enthought, Inc.
-# All rights reserved.  See LICENSE.txt for details.
-#
-# Author: Kurt W. Smith
-# Date: 26 March 2012
-#-----------------------------------------------------------------------------
-
 from distutils.core import setup
-from distutils.extension import Extension
-from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 import numpy
-exts = [Extension("_mdlp", ["_mdlp.pyx"], include_dirs=[numpy.get_include()])]
 
 setup(
-    cmdclass = {'build_ext': build_ext},
-    ext_modules = exts,
+    ext_modules=cythonize("_mdlp.pyx"),
+    include_dirs=[numpy.get_include()],
+    extra_compiler_args=["-03"]
 )
 
-#setup(
-#    ext_modules=cythonize("_mdlp.pyx"),
-#    include_dirs=[numpy.get_include()]
-#)
+import os
+
+import numpy
+from numpy.distutils.misc_util import Configuration
+
+
+def configuration(parent_package="", top_path=None):
+    config = Configuration("discretization", parent_package, top_path)
+    libraries = []
+    if os.name == 'posix':
+        libraries.append('m')
+    config.add_extension("_mdlp",
+                         sources=["_mdlp.c"],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries,
+                         extra_compile_args=["-O3"])
+
+    config.add_subpackage("tests")
+
+    return config
+
+if __name__ == "__main__":
+    from numpy.distutils.core import setup
+    setup(**configuration().todict())

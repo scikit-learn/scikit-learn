@@ -68,6 +68,7 @@ class MDLP(BaseEstimator, TransformerMixin):
         self.shuffle = shuffle
         self.cut_points_ = None
         self.dimensions_ = None
+        self.n_features_ = None
 
     def fit(self, X, y):
         """Finds the intervals of interest from the input data.
@@ -86,13 +87,13 @@ class MDLP(BaseEstimator, TransformerMixin):
             raise ValueError("Invalid input dimension for `X`. Input shape is"
                              "{0}".format(X.shape))
 
-        X = check_array(X, force_all_finite=True, estimator="MDLP discretizer",
-                        ensure_2d=False)
+        X, y = check_X_y(X, y, force_all_finite=True, estimator="MDLP Discretizer",
+                         ensure_2d=False)
         y = column_or_1d(y)
         y = check_array(y, ensure_2d=False, dtype=int)
-        X, y = check_X_y(X, y)
 
         if self.dimensions_ == 2:
+            self.n_features_ = X.shape[1]
             if self.continuous_features_ is None:
                 self.continuous_features_ = range(X.shape[1])
 
@@ -119,9 +120,19 @@ class MDLP(BaseEstimator, TransformerMixin):
         if self.cut_points_ is None:
             raise ValueError("You must fit the MDLP discretizer before "
                              "transforming data.")
+        if self.dimensions_ != len(X.shape):
+            raise ValueError("Dimensions of X does not match original number "
+                             "of ddimensions. Expected {0}, got {1}" \
+                             .format(self.dimensions_, len(X.shape)))
+
+        X = check_array(X, force_all_finite=True, estimator="MDLP Discretizer")
         if self.dimensions_ == 1:
             output = np.searchsorted(self.cut_points_, X)
         else:
+            if X.shape[1] != self.n_features_:
+                raise ValueError("Dimension of X does not match original number "
+                                 "of features. Expected {0}, got {1}" \
+                                 .format(self.n_features_, X.shape[1]))
             output = X.copy()
             for i in self.continuous_features_:
                 output[:, i] = np.searchsorted(self.cut_points_[i], X[:, i])
