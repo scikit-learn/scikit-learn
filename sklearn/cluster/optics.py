@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
-#
-# Author:   Shane Grigsby         #
-# Email:    refuge@rocktalus.com  #
-# Date:     May 2013              #
-# Updated:  Nov 2014              #
-
+#                                              #
+# Authors:                                     #
+#     Shane Grigsby <refuge@rocktalus.com      #
+#     Sean Freeman                             #
+# Date:             May  2013                  #
+# Updated:          Nov  2014                  #
+# Benchmarked:      Sept 2015                  #
 
 # Imports #
 
@@ -37,7 +38,7 @@ class setOfObjects(BallTree):
         self._nneighbors = sp.ones(self._n, dtype=int)
         # Start all points as noise ##
         self._cluster_id = -sp.ones(self._n, dtype=int)
-        self._is_core = sp.ones(self._n, dtype=bool)
+        self._is_core = sp.zeros(self._n, dtype=bool)
         # Ordering is important below... ###
         self._ordered_list = []
 
