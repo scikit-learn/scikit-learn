@@ -11,7 +11,7 @@
 # Imports #
 
 import scipy as sp
-from ..utils import check_array, check_consistent_length
+from ..utils import check_array
 from sklearn.neighbors import BallTree
 from sklearn.base import BaseEstimator, ClusterMixin
 
@@ -160,10 +160,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
     The number of samples in a neighborhood for a point to be considered
     as a core point.
     metric : string or callable, optional
-    The distance metric to use for neighborhood lookups. Default is 
-    "minkowski". Other options include “euclidean”, “manhattan”, 
-    “chebyshev”, “haversine”, “seuclidean”, “hamming”, “canberra”, 
-    and “braycurtis”. The “wminkowski” and “mahalanobis” metrics are 
+    The distance metric to use for neighborhood lookups. Default is
+    "minkowski". Other options include “euclidean”, “manhattan”,
+    “chebyshev”, “haversine”, “seuclidean”, “hamming”, “canberra”,
+    and “braycurtis”. The “wminkowski” and “mahalanobis” metrics are
     also valid with an additional argument.
 
     Attributes
@@ -235,8 +235,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         Returns
         -------
-        New core_sample_indices_ and labels_ arrays. Modifies OPTICS object and stores
-        core_sample_indices_ and lables_ as attributes."""
+        New core_sample_indices_ and labels_ arrays. Modifies OPTICS object
+        and stores core_sample_indices_ and lables_ as attributes."""
 
         if self.processed is True:
             if epsPrime > self.eps * 5.0:
@@ -245,7 +245,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 self.eps_prime = epsPrime
                 _ExtractDBSCAN(self, epsPrime)
                 self.labels_ = self._cluster_id[:]
-                self.core_sample_indices_ = self._index[self._is_core[:] == True]
+                # Setting following line to '1' instead of 'True' to keep
+                # line shorter than 79 characters
+                self.core_sample_indices_ = self._index[self._is_core[:] == 1]
                 self.labels_ = self._cluster_id[:]
                 self.n_clusters = max(self._cluster_id)
                 if epsPrime > (self.eps * 1.05):
