@@ -2,22 +2,18 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+
 from sklearn.preprocessing import MDLP
-from sklearn.preprocessing._mdlp import _slice_entropy
+from sklearn.preprocessing._mdlp import slice_entropy
 
 import numpy as np
-
-def main():
-    test_mdlp_iris()
-    test_slice_entropy()
-
 
 def test_slice_entropy():
 
     y = np.array([0, 0, 0, 1, 1, 0, 1, 3, 1, 1])
 
-    entropy1, k1 = _slice_entropy(y, 0, 3)
-    entropy2, k2 = _slice_entropy(y, 3, 10)
+    entropy1, k1 = slice_entropy(y, 0, 3)
+    entropy2, k2 = slice_entropy(y, 3, 10)
 
     assert_equal(entropy1, 0, "Entropy was not calculated correctly.")
     assert_equal(k1, 1, "Incorrect number of classes found.")
@@ -188,7 +184,3 @@ def test_mdlp_iris():
 
     assert_array_equal(transformed, expected,
                        err_msg="MDLP output is inconsistent with previous runs.")
-
-
-if __name__ == "__main__":
-    main()

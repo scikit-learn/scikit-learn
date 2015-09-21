@@ -10,10 +10,12 @@ def configuration(parent_package="", top_path=None):
     if os.name == 'posix':
         libraries.append('m')
     config.add_extension("_mdlp",
-                         sources=["_mdlp.c"],
+                         sources=["_mdlp.cpp"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
-                         extra_compile_args=["-O3"])
+                         extra_compile_args=["-O3"],
+                         language="c++"
+                         )
 
     config.add_subpackage("tests")
 
