@@ -196,8 +196,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
         X = check_array(X)
 
         tree = setOfObjects(X)  # ,self.metric)
-        _prep_optics(tree, self.eps * 10.0, self.min_samples)
-        _build_optics(tree, self.eps * 10.0)
+        _prep_optics(tree, self.eps * 5.0, self.min_samples)
+        _build_optics(tree, self.eps * 5.0)
         self._index = tree._index[:]
         self._reachability = tree._reachability[:]
         self._core_dist = tree._core_dist[:]
@@ -226,8 +226,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
         core_samples and lables_ as attributes."""
 
         if self.processed is True:
-            if epsPrime > self.eps * 10.0:
-                print('Specify an epsilon smaller than ' + str(self.eps * 10))
+            if epsPrime > self.eps * 5.0:
+                print('Specify an epsilon smaller than ' + str(self.eps * 5))
             else:
                 self.eps_prime = epsPrime
                 _ExtractDBSCAN(self, epsPrime)
@@ -235,7 +235,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 self.core_samples = self._index[self._is_core[:] == True]
                 self.labels_ = self._cluster_id[:]
                 self.n_clusters = max(self._cluster_id)
-                if epsPrime > (self.eps * 1.1):
+                if epsPrime > (self.eps * 1.05):
                     print("Warning, eps is close to epsPrime:")
                     print("Output may be unstable")
                 return self.core_samples, self.labels_
