@@ -159,6 +159,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
     min_samples : int, optional
     The number of samples in a neighborhood for a point to be considered
     as a core point.
+    metric : string or callable, optional
+    The distance metric to use for neighborhood lookups. Default is 
+    "minkowski". Other options include “euclidean”, “manhattan”, 
+    “chebyshev”, “haversine”, “seuclidean”, “hamming”, “canberra”, 
+    and “braycurtis”. The “wminkowski” and “mahalanobis” metrics are 
+    also valid with an additional argument.
 
     Attributes
     ----------
@@ -167,6 +173,13 @@ class OPTICS(BaseEstimator, ClusterMixin):
     `labels_` : array, shape = [n_samples]
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
+    `reachability_` : array, shape = [n_samples]
+        Reachability distances per sample
+    `ordering_` : array, shape = [n_samples]
+        The cluster ordered list of sample indices
+    `core_dists_` : array, shape = [n_samples]
+        Distance at which each sample becomes a core point.
+        Points which will never be core have a distance of inf.
 
     References
     ----------
@@ -175,10 +188,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
     Record 28, no. 2 (1999): 49-60.
     """
 
-    def __init__(self, eps=0.5, min_samples=5):  # , metric='euclidean'):
+    def __init__(self, eps=0.5, min_samples=5, metric='minkowski', **kwargs):
         self.eps = eps
         self.min_samples = min_samples
-        # self.metric = metric
+        self.metric = metric
         self.processed = False
 
     def fit(self, X, y=None):
