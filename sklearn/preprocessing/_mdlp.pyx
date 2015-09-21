@@ -55,7 +55,6 @@ def MDLPDiscretize(col, y, bint shuffle, int min_depth):
                 cut_points.insert(front)
             if back != INFINITY:
                 cut_points.insert(back)
-
             continue
 
         left_level = <LEVEL> PyMem_Malloc(LEVEL_SIZE)
@@ -67,7 +66,6 @@ def MDLPDiscretize(col, y, bint shuffle, int min_depth):
 
     output = np.array([num for num in cut_points])
     output = np.sort(output)
-    print output
     return output
 
 cdef unwrap(LEVEL level):
@@ -78,7 +76,7 @@ cdef float get_cut(np.ndarray[np.float64_t, ndim=1] col, int ind):
     return (col[ind-1] + col[ind]) / 2
 
 @cython.boundscheck(False)
-def slice_entropy(np.ndarray[np.int64_t, ndim=1] y, SIZE_t start, SIZE_t end):
+def slice_entropy(np.ndarray[np.int64_t, ndim=1] y not None, SIZE_t start, SIZE_t end):
     """Returns the entropy of the given slice of y. Also returns the
     number of classes within the interval.
 
