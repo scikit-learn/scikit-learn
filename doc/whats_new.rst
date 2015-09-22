@@ -253,6 +253,17 @@ API changes summary
       to be explicitly shaped ``(n_samples, n_features)``.
       By `Vighnesh Birodkar`_.
 
+    - :class:`lda.LDA` and :class:`qda.QDA` have been moved to
+      :class:`discriminant_analysis.LinearDiscriminantAnalysis` and 
+      :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
+
+    - The ``store_covariance`` and ``tol`` parameters have been moved from
+      the fit method to the constructor in
+      :class:`discriminant_analysis.LinearDiscriminantAnalysis` and the
+      ``store_covariances`` and ``tol`` parameters have been moved from the
+      fit method to the constructor in
+      :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
+
 .. _changes_0_1_16:
 
 Version 0.16.1
