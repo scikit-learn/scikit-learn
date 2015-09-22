@@ -62,6 +62,9 @@ class TransfT(T):
     def transform(self, X, y=None):
         return X
 
+    def inverse_transform(self, X, y=None):
+        return X
+
 
 class FitParamT(object):
     """Mock classifier
@@ -325,6 +328,25 @@ def test_pipeline_transform():
     X_back = pipeline.inverse_transform(X_trans)
     X_back2 = pca.inverse_transform(X_trans)
     assert_array_almost_equal(X_back, X_back2)
+
+
+def test_pipeline_arbitrary_transform():
+    # Test that a pipeline can transform arbitrary data (not only
+    # arrays) and that the pipeline produces the same result as the
+    # plain transformer.
+
+    xfrm = TransfT()
+    pipeline = Pipeline([('xfrm', xfrm)])
+
+    for y in [None, 'test', 1, {'a': 'b'}]:
+        yt1 = xfrm.transform(y)
+        yt2 = pipeline.transform(y)
+        assert_equal(yt1, yt2)
+
+        y1 = xfrm.inverse_transform(yt1)
+        y2 = pipeline.inverse_transform(yt2)
+        assert_equal(y, y1)
+        assert_equal(y, y2)
 
 
 def test_pipeline_fit_transform():

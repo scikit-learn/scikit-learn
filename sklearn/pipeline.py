@@ -303,8 +303,6 @@ class Pipeline(BaseEstimator):
             Data to inverse transform. Must fulfill output requirements of the
             last step of the pipeline.
         """
-        if X.ndim == 1:
-            X = X[None, :]
         Xt = X
         for name, step in self.steps[::-1]:
             Xt = step.inverse_transform(Xt)
