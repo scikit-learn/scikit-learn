@@ -332,7 +332,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         self.intercept_ = (-0.5 * np.diag(np.dot(self.means_, self.coef_.T))
                            + np.log(self.priors_))
 
-    def _solve_svd(self, X, y, store_covariance=False, tol=1.0e-4):
+    def _solve_svd(self, X, y):
         """SVD solver.
 
         Parameters
@@ -342,18 +342,12 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         y : array-like, shape (n_samples,) or (n_samples, n_targets)
             Target values.
-
-        store_covariance : bool, optional
-            Additionally compute class covariance matrix (default False).
-
-        tol : float, optional
-            Threshold used for rank estimation.
         """
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
 
         self.means_ = _class_means(X, y)
-        if store_covariance:
+        if self.store_covariance:
             self.covariance_ = _class_cov(X, y, self.priors_)
 
         Xc = []
@@ -376,7 +370,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         # SVD of centered (within)scaled data
         U, S, V = linalg.svd(X, full_matrices=False)
 
-        rank = np.sum(S > tol)
+        rank = np.sum(S > self.tol)
         if rank < n_features:
             warnings.warn("Variables are collinear.")
         # Scaling of within covariance is: V' 1/S
@@ -391,7 +385,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         # (n_classes) centers
         _, S, V = linalg.svd(X, full_matrices=0)
 
-        rank = np.sum(S > tol * S[0])
+        rank = np.sum(S > self.tol * S[0])
         self.scalings_ = np.dot(scalings, V.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)
         self.intercept_ = (-0.5 * np.sum(coef ** 2, axis=1)
@@ -399,7 +393,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         self.coef_ = np.dot(coef, self.scalings_.T)
         self.intercept_ -= np.dot(self.xbar_, self.coef_.T)
 
-    def fit(self, X, y, store_covariance=False, tol=1.0e-4):
+    def fit(self, X, y, store_covariance=None, tol=None):
         """Fit LinearDiscriminantAnalysis model according to the given
            training data and parameters.
 
@@ -412,14 +406,17 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             Target values.
         """
         if store_covariance:
-            warnings.warn("'store_covariance' was moved to the __init__()"
-                          "method in version 0.16 and will be removed from"
-                          "fit() in version 0.18.", DeprecationWarning)
-        else:
-            store_covariance = self.store_covariance
-        if tol != 1.0e-4:
-            warnings.warn("'tol' was moved to __init__() method in version"
-                          " 0.16 and will be removed from fit() in 0.18",
+            warnings.warn("The parameter 'store_covariance' is deprecated as "
+                          "of version 0.17 and will be removed in 0.19. The "
+                          "parameter is no longer necessary because the value "
+                          "is set via the estimator initialisation or "
+                          "set_params method.", DeprecationWarning)
+            self.store_covariance = store_covariance
+        if tol:
+            warnings.warn("The parameter 'tol' is deprecated as of version "
+                          "0.17 and will be removed in 0.19. The parameter is "
+                          "no longer necessary because the value is set via "
+                          "the estimator initialisation or set_params method.",
                           DeprecationWarning)
             self.tol = tol
         X, y = check_X_y(X, y, ensure_min_samples=2)
@@ -441,7 +438,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         if self.solver == 'svd':
             if self.shrinkage is not None:
                 raise NotImplementedError('shrinkage not supported')
-            self._solve_svd(X, y, store_covariance=store_covariance, tol=tol)
+            self._solve_svd(X, y)
         elif self.solver == 'lsqr':
             self._solve_lsqr(X, y, shrinkage=self.shrinkage)
         elif self.solver == 'eigen':
@@ -564,6 +561,13 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         of the Gaussian distributions along its principal axes, i.e. the
         variance in the rotated coordinate system.
 
+    store_covariances : boolean
+        If True the covariance matrices are computed and stored in the
+        `self.covariances_` attribute.
+
+    tol : float, optional, default 1.0e-4
+        Threshold used for rank estimation.
+
     Examples
     --------
     >>> from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
@@ -572,7 +576,9 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = QuadraticDiscriminantAnalysis()
     >>> clf.fit(X, y)
-    QuadraticDiscriminantAnalysis(priors=None, reg_param=0.0)
+    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    QuadraticDiscriminantAnalysis(priors=None, reg_param=0.0,
+                                  store_covariances=False, tol=0.0001)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -582,11 +588,14 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         Discriminant Analysis
     """
 
-    def __init__(self, priors=None, reg_param=0.):
+    def __init__(self, priors=None, reg_param=0., store_covariances=False,
+                 tol=1.0e-4):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
+        self.store_covariances = store_covariances
+        self.tol = tol
 
-    def fit(self, X, y, store_covariances=False, tol=1.0e-4):
+    def fit(self, X, y, store_covariances=None, tol=None):
         """Fit the model according to the given training data and parameters.
 
         Parameters
@@ -597,14 +606,21 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         y : array, shape = [n_samples]
             Target values (integers)
-
-        store_covariances : boolean
-            If True the covariance matrices are computed and stored in the
-            `self.covariances_` attribute.
-
-        tol : float, optional, default 1.0e-4
-            Threshold used for rank estimation.
         """
+        if store_covariances:
+            warnings.warn("The parameter 'store_covariances' is deprecated as "
+                          "of version 0.17 and will be removed in 0.19. The "
+                          "parameter is no longer necessary because the value "
+                          "is set via the estimator initialisation or "
+                          "set_params method.", DeprecationWarning)
+            self.store_covariances = store_covariances
+        if tol:
+            warnings.warn("The parameter 'tol' is deprecated as of version "
+                          "0.17 and will be removed in 0.19. The parameter is "
+                          "no longer necessary because the value is set via "
+                          "the estimator initialisation or set_params method.",
+                          DeprecationWarning)
+            self.tol = tol
         X, y = check_X_y(X, y)
         self.classes_, y = np.unique(y, return_inverse=True)
         n_samples, n_features = X.shape
@@ -617,7 +633,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             self.priors_ = self.priors
 
         cov = None
-        if store_covariances:
+        if self.store_covariances:
             cov = []
         means = []
         scalings = []
@@ -632,17 +648,17 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             Xgc = Xg - meang
             # Xgc = U * S * V.T
             U, S, Vt = np.linalg.svd(Xgc, full_matrices=False)
-            rank = np.sum(S > tol)
+            rank = np.sum(S > self.tol)
             if rank < n_features:
                 warnings.warn("Variables are collinear")
             S2 = (S ** 2) / (len(Xg) - 1)
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
-            if store_covariances:
+            if self.store_covariances:
                 # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))
             scalings.append(S2)
             rotations.append(Vt.T)
-        if store_covariances:
+        if self.store_covariances:
             self.covariances_ = cov
         self.means_ = np.asarray(means)
         self.scalings_ = scalings
