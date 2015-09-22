@@ -529,7 +529,7 @@ META_ESTIMATORS = ["OneVsOneClassifier",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
 OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
-         "GridSearchCV", "SelectFromModel"]
+         "SelectFromModel"]
 
 # some trange ones
 DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',

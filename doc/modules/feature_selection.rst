@@ -131,6 +131,26 @@ number of features.
       elimination example with automatic tuning of the number of features
       selected with cross-validation.
 
+.. _select_from_model:
+
+Feature selection using SelectFromModel
+=======================================
+
+:class:`SelectFromModel` is a meta-transformer that can be used along with any
+estimator that has a ``coef_`` or ``feature_importances_`` attribute after fitting.
+It should be given a threshold parameter below which the features are considered
+unimportant and removed. If one has no idea of the prior value of the threshold,
+string inputs like "mean" or "median" or even values like "0.1*mean" can be given
+which SelectFromModel parses internally.
+
+For examples on how it is to be used refer to the sections below.
+
+.. topic:: Examples
+
+    * :ref:`example_feature_selection_select_from_model.py`: Selecting the two
+      most important features from the Boston dataset without knowing the
+      threshold beforehand.
+
 
 .. _l1_feature_selection:
 
@@ -145,19 +165,22 @@ Selecting non-zero coefficients
 :ref:`Linear models <linear_model>` penalized with the L1 norm have
 sparse solutions: many of their estimated coefficients are zero. When the goal
 is to reduce the dimensionality of the data to use with another classifier,
-they expose a ``transform`` method to select the non-zero coefficient. In
-particular, sparse estimators useful for this purpose are the
-:class:`linear_model.Lasso` for regression, and
+they can be used along with :class:`feature_selection.SelectFromModel`
+to select the non-zero coefficient. In particular, sparse estimators useful for
+this purpose are the :class:`linear_model.Lasso` for regression, and
 of :class:`linear_model.LogisticRegression` and :class:`svm.LinearSVC`
 for classification::
 
   >>> from sklearn.svm import LinearSVC
   >>> from sklearn.datasets import load_iris
+  >>> from sklearn.feature_selection import SelectFromModel
   >>> iris = load_iris()
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
-  >>> X_new = LinearSVC(C=0.01, penalty="l1", dual=False).fit_transform(X, y)
+  >>> lsvc = LinearSVC(C=0.01, penalty="l1", dual=False).fit(X, y)
+  >>> model = SelectFromModel(lsvc)
+  >>> X_new = model.transform(X)
   >>> X_new.shape
   (150, 3)
 
@@ -246,18 +269,22 @@ Tree-based feature selection
 Tree-based estimators (see the :mod:`sklearn.tree` module and forest
 of trees in the :mod:`sklearn.ensemble` module) can be used to compute
 feature importances, which in turn can be used to discard irrelevant
-features::
+features (when coupled with the :class:`feature_selection.SelectFromModel`
+meta-transformer)::
 
   >>> from sklearn.ensemble import ExtraTreesClassifier
   >>> from sklearn.datasets import load_iris
+  >>> from sklearn.feature_selection import SelectFromModel
   >>> iris = load_iris()
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
   >>> clf = ExtraTreesClassifier()
-  >>> X_new = clf.fit(X, y).transform(X)
+  >>> clf = clf.fit(X, y)
   >>> clf.feature_importances_  # doctest: +SKIP
   array([ 0.04...,  0.05...,  0.4...,  0.4...])
+  >>> model = SelectFromModel(clf)
+  >>> X_new = model.transform(X)
   >>> X_new.shape               # doctest: +SKIP
   (150, 2)
 
@@ -278,7 +305,7 @@ the actual learning. The recommended way to do this in scikit-learn is
 to use a :class:`sklearn.pipeline.Pipeline`::
 
   clf = Pipeline([
-    ('feature_selection', LinearSVC(penalty="l1")),
+    ('feature_selection', SelectFromModel(LinearSVC(penalty="l1"))),
     ('classification', RandomForestClassifier())
   ])
   clf.fit(X, y)

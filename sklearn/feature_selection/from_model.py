@@ -138,8 +138,7 @@ class _LearntSelectorMixin(TransformerMixin):
 
 
 class SelectFromModel(BaseEstimator, SelectorMixin):
-    """Meta-transformer for selecting features based on importance
-       weights.
+    """Meta-transformer for selecting features based on importance weights.
 
     Parameters
     ----------
@@ -185,7 +184,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
                                                self.threshold)
         return scores >= self.threshold_
 
-    def fit(self, X, y, **fit_params):
+    def fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer.
 
         Parameters
@@ -209,7 +208,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         self.estimator_.fit(X, y, **fit_params)
         return self
 
-    def partial_fit(self, X, y, **fit_params):
+    def partial_fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer only once.
 
         Parameters

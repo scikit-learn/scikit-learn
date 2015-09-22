@@ -3,12 +3,14 @@ import scipy.sparse as sp
 
 from nose.tools import assert_raises, assert_true
 
+from sklearn.utils import warnings
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import clean_warning_registry
 
 from sklearn import datasets
 from sklearn.linear_model import LogisticRegression
@@ -31,7 +33,9 @@ def test_transform_linear_model():
                 X = func(iris.data)
                 clf.set_params(penalty="l1")
                 clf.fit(X, iris.target)
-                X_new = clf.transform(X, thresh)
+                clean_warning_registry()
+                with warnings.catch_warnings(record=True) as record:
+                    X_new = clf.transform(X, thresh)
                 if isinstance(clf, SGDClassifier):
                     assert_true(X_new.shape[1] <= X.shape[1])
                 else:
@@ -128,3 +132,16 @@ def test_fitted_estimator():
     clf.fit(iris.data, iris.target)
     model = SelectFromModel(clf)
     assert_array_equal(model.transform(iris.data), X_transform)
+
+
+def test_threshold_string():
+    est = RandomForestClassifier(n_estimators=50, random_state=0)
+    model = SelectFromModel(est, threshold="0.5*mean")
+    model.fit(iris.data, iris.target)
+    X_transform = model.transform(iris.data)
+
+    # Calculate the threshold from the estimator directly.
+    est.fit(iris.data, iris.target)
+    threshold = 0.5 * np.mean(est.feature_importances_)
+    model = SelectFromModel(est, threshold=threshold)
+    assert_array_equal(X_transform, model.transform(iris.data))

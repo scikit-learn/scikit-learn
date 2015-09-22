@@ -34,14 +34,14 @@ n_features = sfm.transform(X).shape[1]
 # Note that the attribute can be set directly instead of repeatedly
 # fitting the metatransformer.
 while n_features > 2:
-	sfm.threshold += 0.1
-	X_transform = sfm.transform(X)
-	n_features = X_transform.shape[1]
+    sfm.threshold += 0.1
+    X_transform = sfm.transform(X)
+    n_features = X_transform.shape[1]
 
 # Plot the selected two features from X.
 plt.title(
-	"Features selected from Boston using SelectFromModel with "
-	"threshold %0.3f." % sfm.threshold)
+    "Features selected from Boston using SelectFromModel with "
+    "threshold %0.3f." % sfm.threshold)
 feature1 = X_transform[:, 0]
 feature2 = X_transform[:, 1] 
 plt.plot(feature1, feature2, 'r.')
