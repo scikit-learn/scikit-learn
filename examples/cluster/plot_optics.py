@@ -32,7 +32,7 @@ clust.fit(X)
 # Plot result
 
 core_samples_mask = np.zeros_like(clust.labels_, dtype=bool)
-core_samples_mask[clust.core_samples] = True
+core_samples_mask[clust.core_sample_indices_] = True
 
 import matplotlib.pyplot as plt
 
@@ -65,7 +65,7 @@ clust.extract(.11)
 
 
 core_samples_mask = np.zeros_like(clust.labels_, dtype=bool)
-core_samples_mask[clust.core_samples] = True
+core_samples_mask[clust.core_sample_indices_] = True
 
 # Black removed and is used for noise instead.
 unique_labels = set(clust.labels_)
