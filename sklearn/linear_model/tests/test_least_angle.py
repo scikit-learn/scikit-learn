@@ -333,7 +333,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
     lars_coef_ = lars.coef_
     lars_obj = objective_function(lars_coef_)
 
-    coord_descent = linear_model.Lasso(alpha=alpha, tol=1e-10, normalize=False)
+    coord_descent = linear_model.Lasso(alpha=alpha, tol=1e-4, normalize=False)
     cd_coef_ = coord_descent.fit(X, y).coef_
     cd_obj = objective_function(cd_coef_)
 
@@ -360,6 +360,7 @@ def test_lars_n_nonzero_coefs(verbose=False):
     assert_equal(len(lars.alphas_), 7)
 
 
+@ignore_warnings
 def test_multitarget():
     # Assure that estimators receiving multidimensional y do the right thing
     X = diabetes.data

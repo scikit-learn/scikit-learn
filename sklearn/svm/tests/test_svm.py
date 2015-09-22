@@ -347,13 +347,14 @@ def test_decision_function_shape():
     assert_equal(dec.shape, (len(X_train), 10))
 
     # check deprecation warning
-    clf.decision_function_shape = None
+    clf = svm.SVC(kernel='linear', C=0.1).fit(X_train, y_train)
     msg = "change the shape of the decision function"
     dec = assert_warns_message(ChangedBehaviorWarning, msg,
                                clf.decision_function, X_train)
     assert_equal(dec.shape, (len(X_train), 10))
 
 
+@ignore_warnings
 def test_svr_decision_function():
     # Test SVR's decision_function
     # Sanity check, test that decision_function implemented in python

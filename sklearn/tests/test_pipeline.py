@@ -214,7 +214,7 @@ def test_pipeline_methods_preprocessing_svm():
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
     pca = RandomizedPCA(n_components=2, whiten=True)
-    clf = SVC(probability=True, random_state=0)
+    clf = SVC(probability=True, random_state=0, decision_function_shape='ovr')
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([('preprocess', preprocessing), ('svc', clf)])

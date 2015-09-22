@@ -38,8 +38,9 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
-from sklearn.svm.base import BaseLibSVM
+from sklearn.svm.base import BaseLibSVM, BaseSVC
 from sklearn.pipeline import make_pipeline
+from sklearn.decomposition import NMF, ProjectedGradientNMF
 from sklearn.utils.validation import DataConversionWarning
 from sklearn.utils import ConvergenceWarning
 from sklearn.cross_validation import train_test_split
@@ -213,8 +214,9 @@ def _boston_subset(n_samples=200):
     return BOSTON
 
 
-def set_fast_parameters(estimator):
-    # speed up some estimators
+def set_testing_parameters(estimator):
+    # set parameters to speed up some estimators and
+    # avoid deprecated behaviour
     params = estimator.get_params()
     if ("n_iter" in params
             and estimator.__class__.__name__ != "TSNE"):
@@ -241,6 +243,9 @@ def set_fast_parameters(estimator):
     if "n_init" in params:
         # K-Means
         estimator.set_params(n_init=2)
+    if "decision_function_shape" in params:
+        # SVC
+        estimator.set_params(decision_function_shape='ovo')
 
     if estimator.__class__.__name__ == "SelectFdr":
         # be tolerant of noisy datasets (not actually speed)
@@ -260,6 +265,10 @@ def set_fast_parameters(estimator):
         # SelectKBest has a default of k=10
         # which is more feature than we have in most case.
         estimator.set_params(k=1)
+
+    if isinstance(estimator, NMF):
+        if not isinstance(estimator, ProjectedGradientNMF):
+            estimator.set_params(solver='cd')
 
 
 class NotAnArray(object):
@@ -291,7 +300,7 @@ def check_estimator_sparse_data(name, Estimator):
                 estimator = Estimator(with_mean=False)
             else:
                 estimator = Estimator()
-        set_fast_parameters(estimator)
+        set_testing_parameters(estimator)
         # fit and predict
         try:
             estimator.fit(X, y)
@@ -323,7 +332,7 @@ def check_dtype_object(name, Estimator):
     y = multioutput_estimator_convert_y_2d(name, y)
     with warnings.catch_warnings():
         estimator = Estimator()
-    set_fast_parameters(estimator)
+    set_testing_parameters(estimator)
 
     estimator.fit(X, y)
     if hasattr(estimator, "predict"):
@@ -351,7 +360,7 @@ def check_fit2d_predict1d(name, Estimator):
     y = X[:, 0].astype(np.int)
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()
-    set_fast_parameters(estimator)
+    set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -379,7 +388,7 @@ def check_fit2d_1sample(name, Estimator):
     y = X[:, 0].astype(np.int)
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()
-    set_fast_parameters(estimator)
+    set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -401,7 +410,7 @@ def check_fit2d_1feature(name, Estimator):
     y = X[:, 0].astype(np.int)
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()
-    set_fast_parameters(estimator)
+    set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -423,7 +432,7 @@ def check_fit1d_1feature(name, Estimator):
     y = X.astype(np.int)
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()
-    set_fast_parameters(estimator)
+    set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -446,7 +455,7 @@ def check_fit1d_1sample(name, Estimator):
     y = np.array([1])
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()
-    set_fast_parameters(estimator)
+    set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -505,7 +514,7 @@ def _check_transformer(name, Transformer, X, y):
     with warnings.catch_warnings(record=True):
         transformer = Transformer()
     set_random_state(transformer)
-    set_fast_parameters(transformer)
+    set_testing_parameters(transformer)
 
     # fit
 
@@ -576,7 +585,7 @@ def check_pipeline_consistency(name, Estimator):
     X -= X.min()
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()
-    set_fast_parameters(estimator)
+    set_testing_parameters(estimator)
     set_random_state(estimator)
     pipeline = make_pipeline(estimator)
     estimator.fit(X, y)
@@ -600,7 +609,7 @@ def check_fit_score_takes_y(name, Estimator):
     y = np.arange(10) % 3
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()
-    set_fast_parameters(estimator)
+    set_testing_parameters(estimator)
     set_random_state(estimator)
     funcs = ["fit", "score", "partial_fit", "fit_predict", "fit_transform"]
 
@@ -627,7 +636,7 @@ def check_estimators_dtypes(name, Estimator):
     for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
         with warnings.catch_warnings(record=True):
             estimator = Estimator()
-        set_fast_parameters(estimator)
+        set_testing_parameters(estimator)
         set_random_state(estimator, 1)
         estimator.fit(X_train, y)
 
@@ -639,7 +648,7 @@ def check_estimators_dtypes(name, Estimator):
 
 def check_estimators_empty_data_messages(name, Estimator):
     e = Estimator()
-    set_fast_parameters(e)
+    set_testing_parameters(e)
     set_random_state(e, 1)
 
     X_zero_samples = np.empty(0).reshape(0, 3)
@@ -674,7 +683,7 @@ def check_estimators_nan_inf(name, Estimator):
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
             estimator = Estimator()
-            set_fast_parameters(estimator)
+            set_testing_parameters(estimator)
             set_random_state(estimator, 1)
             # try to fit
             try:
@@ -724,6 +733,7 @@ def check_estimators_nan_inf(name, Estimator):
                     raise AssertionError(error_string_transform, Estimator)
 
 
+@ignore_warnings
 def check_estimators_pickle(name, Estimator):
     """Test that we can pickle all estimators"""
     check_methods = ["predict", "transform", "decision_function",
@@ -743,7 +753,7 @@ def check_estimators_pickle(name, Estimator):
         estimator = Estimator()
 
     set_random_state(estimator)
-    set_fast_parameters(estimator)
+    set_testing_parameters(estimator)
     estimator.fit(X, y)
 
     result = dict()
@@ -768,7 +778,7 @@ def check_estimators_partial_fit_n_features(name, Alg):
     X -= X.min()
     with warnings.catch_warnings(record=True):
         alg = Alg()
-    set_fast_parameters(alg)
+    set_testing_parameters(alg)
     if isinstance(alg, ClassifierMixin):
         classes = np.unique(y)
         alg.partial_fit(X, y, classes=classes)
@@ -786,7 +796,7 @@ def check_clustering(name, Alg):
     # catch deprecation and neighbors warnings
     with warnings.catch_warnings(record=True):
         alg = Alg()
-    set_fast_parameters(alg)
+    set_testing_parameters(alg)
     if hasattr(alg, "n_clusters"):
         alg.set_params(n_clusters=3)
     set_random_state(alg)
@@ -839,7 +849,7 @@ def check_classifiers_one_label(name, Classifier):
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
         classifier = Classifier()
-        set_fast_parameters(classifier)
+        set_testing_parameters(classifier)
         # try to fit
         try:
             classifier.fit(X_train, y)
@@ -862,6 +872,7 @@ def check_classifiers_one_label(name, Classifier):
             raise exc
 
 
+@ignore_warnings  # Warnings are raised by decision function
 def check_classifiers_train(name, Classifier):
     X_m, y_m = make_blobs(n_samples=300, random_state=0)
     X_m, y_m = shuffle(X_m, y_m, random_state=7)
@@ -878,7 +889,7 @@ def check_classifiers_train(name, Classifier):
             classifier = Classifier()
         if name in ['BernoulliNB', 'MultinomialNB']:
             X -= X.min()
-        set_fast_parameters(classifier)
+        set_testing_parameters(classifier)
         set_random_state(classifier)
         # raises error on malformed input for fit
         assert_raises(ValueError, classifier.fit, X, y[:-1])
@@ -941,7 +952,7 @@ def check_estimators_fit_returns_self(name, Estimator):
 
     estimator = Estimator()
 
-    set_fast_parameters(estimator)
+    set_testing_parameters(estimator)
     set_random_state(estimator)
 
     assert_true(estimator.fit(X, y) is estimator)
@@ -990,7 +1001,7 @@ def check_supervised_y_2d(name, Estimator):
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
         estimator = Estimator()
-    set_fast_parameters(estimator)
+    set_testing_parameters(estimator)
     set_random_state(estimator)
     # fit
     estimator.fit(X, y)
@@ -1036,7 +1047,7 @@ def check_classifiers_classes(name, Classifier):
             classifier = Classifier()
         if name == 'BernoulliNB':
             classifier.set_params(binarize=X.mean())
-        set_fast_parameters(classifier)
+        set_testing_parameters(classifier)
         set_random_state(classifier)
         # fit
         classifier.fit(X, y_)
@@ -1062,8 +1073,8 @@ def check_regressors_int(name, Regressor):
         # separate estimators to control random seeds
         regressor_1 = Regressor()
         regressor_2 = Regressor()
-    set_fast_parameters(regressor_1)
-    set_fast_parameters(regressor_2)
+    set_testing_parameters(regressor_1)
+    set_testing_parameters(regressor_2)
     set_random_state(regressor_1)
     set_random_state(regressor_2)
 
@@ -1090,7 +1101,7 @@ def check_regressors_train(name, Regressor):
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
         regressor = Regressor()
-    set_fast_parameters(regressor)
+    set_testing_parameters(regressor)
     if not hasattr(regressor, 'alphas') and hasattr(regressor, 'alpha'):
         # linear regressors need to set alpha, but not generalized CV ones
         regressor.alpha = 0.01
@@ -1127,7 +1138,7 @@ def check_regressors_no_decision_function(name, Regressor):
     y = multioutput_estimator_convert_y_2d(name, X[:, 0])
     regressor = Regressor()
 
-    set_fast_parameters(regressor)
+    set_testing_parameters(regressor)
     if hasattr(regressor, "n_components"):
         # FIXME CCA, PLS is not robust to rank 1 effects
         regressor.n_components = 1
@@ -1235,7 +1246,7 @@ def check_estimators_overwrite_params(name, Estimator):
         # catch deprecation warnings
         estimator = Estimator()
 
-    set_fast_parameters(estimator)
+    set_testing_parameters(estimator)
     set_random_state(estimator)
 
     # Make a physical copy of the orginal estimator parameters before fitting.
@@ -1306,8 +1317,8 @@ def check_estimators_data_not_an_array(name, Estimator, X, y):
         # separate estimators to control random seeds
         estimator_1 = Estimator()
         estimator_2 = Estimator()
-    set_fast_parameters(estimator_1)
-    set_fast_parameters(estimator_2)
+    set_testing_parameters(estimator_1)
+    set_testing_parameters(estimator_2)
     set_random_state(estimator_1)
     set_random_state(estimator_2)
 

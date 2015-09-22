@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone
@@ -1031,6 +1032,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
                 assert_almost_equal(cd.coef_, sgd.coef_, decimal=2,
                                     err_msg=err_msg)
 
+    @ignore_warnings
     def test_partial_fit(self):
         third = X.shape[0] // 3
         clf = self.factory(alpha=0.01)
