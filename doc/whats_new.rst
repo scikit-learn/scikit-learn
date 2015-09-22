@@ -239,6 +239,10 @@ Bug fixes
       to use soft-max instead of one-vs-rest normalization. By `Manoj Kumar`_.
       (`#5182 <https://github.com/scikit-learn/scikit-learn/pull/5182>`_)
 
+    - Fixed the :func:`partial_fit` method of :class:`linear_model.SGDClassifier`
+      when called with ``average=True``. By `Andrew Lamb`_.
+      (`#5282 <https://github.com/scikit-learn/scikit-learn/pull/5282>`_)
+
 API changes summary
 -------------------
 
@@ -3695,3 +3699,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Jacob Schreiber: https://github.com/jmschrei
 .. _Ankur Ankan: https://github.com/ankurankan
 .. _Valentin Stolbunov: http://vstolbunov.com
+.. _Andrew Lamb: https://github.com/andylamb
