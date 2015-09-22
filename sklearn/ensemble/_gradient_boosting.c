@@ -1092,6 +1092,12 @@ struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion {
   double weighted_n_node_samples;
   double weighted_n_left;
   double weighted_n_right;
+  double *node_sum;
+  double *node_sum_left;
+  double *node_sum_right;
+  double yw_sq_sum;
+  double yw_sq_sum_left;
+  double yw_sq_sum_right;
 };
 
 
