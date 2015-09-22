@@ -261,7 +261,7 @@ API changes summary
       caused confusion in how the array elements should be interpreted
       as features or as samples. All data arrays are now expected
       to be explicitly shaped ``(n_samples, n_features)``.
-      By `Vighnesh Birodkar`_.
+      By `Vighnesh Birodkar`_
 
     - :class:`lda.LDA` and :class:`qda.QDA` have been moved to
       :class:`discriminant_analysis.LinearDiscriminantAnalysis` and 
@@ -273,6 +273,13 @@ API changes summary
       ``store_covariances`` and ``tol`` parameters have been moved from the
       fit method to the constructor in
       :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
+
+    - Models inheriting from ``_LearntSelectorMixin`` will no longer support the
+      transform methods. (i.e,  RandomForests, GradientBoosting, LogisticRegression,
+      DecisionTrees, SVMs and SGD related models). Wrap these models around the
+      metatransfomer :class:`feature_selection.SelectFromModel` to remove
+      features (according to `coefs_` or `feature_importances_`)
+      which are below a certain threshold value instead.
 
 .. _changes_0_1_16:
 

@@ -22,7 +22,7 @@ from sklearn.linear_model import LassoCV
 boston = load_boston()
 X, y = boston['data'], boston['target']
 
-# We use the base estimator since the L1 norm promotes sparsity of features.
+# We use the base estimator LassoCV since the L1 norm promotes sparsity of features.
 clf = LassoCV()
 
 # Set a minimum threshold of 0.25

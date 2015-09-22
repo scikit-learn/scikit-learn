@@ -5,14 +5,14 @@ import numpy as np
 
 from .base import SelectorMixin
 from ..base import (TransformerMixin, BaseEstimator, clone,
-    MetaEstimatorMixin)
+                    MetaEstimatorMixin)
 from ..externals import six
 
 from ..utils import safe_mask, check_array, deprecated
 from ..utils.validation import NotFittedError, check_is_fitted
 
 
-def _get_feature_importances(estimator, X):
+def _get_feature_importances(estimator):
     """Retrieve or aggregate feature importances from estimator"""
     if hasattr(estimator, "feature_importances_"):
         importances = estimator.feature_importances_
@@ -25,12 +25,11 @@ def _get_feature_importances(estimator, X):
             importances = np.sum(np.abs(estimator.coef_), axis=0)
 
     else:
-        raise ValueError("Missing `feature_importances_` or `coef_`"
-                         " attribute, did you forget to set the "
-                         "estimator's parameter to compute it?")
-    if len(importances) != X.shape[1]:
-        raise ValueError("X has different number of features than"
-                         " during model fitting.")
+        raise ValueError(
+            "The underlying estimator %s has no `coef_` or "
+            "`feature_importances_` attribute. Either pass a fitted estimator"
+            " to SelectFromModel or call fit before calling transform."
+            % estimator.__class__.__name__)
 
     return importances
 
@@ -110,11 +109,14 @@ class _LearntSelectorMixin(TransformerMixin):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
-        check_is_fitted(self, ('coef_', 'feature_importances_'), 
+        check_is_fitted(self, ('coef_', 'feature_importances_'),
                         all_or_any=any)
 
         X = check_array(X, 'csc')
-        importances = _get_feature_importances(self, X)
+        importances = _get_feature_importances(self)
+        if len(importances) != X.shape[1]:
+            raise ValueError("X has different number of features than"
+                             " during model fitting.")
 
         if threshold is None:
             threshold = getattr(self, 'threshold', None)
@@ -143,6 +145,10 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
     ----------
     estimator : object
         The base estimator from which the transformer is built.
+        This can be both a fitted or a non-fitted estimator.
+        If it a fitted estimator, then transform can be called directly,
+        otherwise train the model using fit and then transform to do
+        feature selection.
 
     threshold : string, float, optional
         The threshold value to use for feature selection. Features whose
@@ -157,9 +163,8 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
     ----------
     `estimator_`: an estimator
         The base estimator from which the transformer is built.
-
-    `scores_`: array, shape(n_features,)
-        The importance of each feature according to the fit model.
+        This is stored only when a non-fitted estimator is passed to the
+        SelectFromModel.
 
     `threshold_`: float
         The threshold value used for feature selection.
@@ -170,9 +175,15 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         self.threshold = threshold
 
     def _get_support_mask(self):
-        self.threshold_ = _calculate_threshold(self.estimator, self.scores_,
+        # SelectFromModel can directly call on transform.
+        if hasattr(self, "estimator_"):
+            estimator = self.estimator_
+        else:
+            estimator = self.estimator
+        scores = _get_feature_importances(estimator)
+        self.threshold_ = _calculate_threshold(estimator, scores,
                                                self.threshold)
-        return self.scores_ >= self.threshold_
+        return scores >= self.threshold_
 
     def fit(self, X, y, **fit_params):
         """Fit the SelectFromModel meta-transformer.
@@ -196,7 +207,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         if not hasattr(self, "estimator_"):
             self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X, y, **fit_params)
-        self.scores_ = _get_feature_importances(self.estimator_, X)
         return self
 
     def partial_fit(self, X, y, **fit_params):
@@ -221,5 +231,4 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         if not hasattr(self, "estimator_"):
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)
-        self.scores_ = _get_feature_importances(self.estimator_, X)
         return self

@@ -7,6 +7,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 
 from sklearn import datasets
@@ -115,3 +116,15 @@ def test_warm_start():
     transformer.fit(iris.data, iris.target)
     id_2 = id(transformer.estimator_)
     assert_equal(id_1, id_2)
+
+
+def test_fitted_estimator():
+    """Test that a fitted estimator can be passed to SelectFromModel."""
+    clf = SGDClassifier(alpha=0.1, n_iter=10, shuffle=True, random_state=0)
+    model = SelectFromModel(clf)
+    model.fit(iris.data, iris.target)
+    X_transform = model.transform(iris.data)
+
+    clf.fit(iris.data, iris.target)
+    model = SelectFromModel(clf)
+    assert_array_equal(model.transform(iris.data), X_transform)
