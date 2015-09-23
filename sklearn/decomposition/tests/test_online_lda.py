@@ -326,8 +326,9 @@ def test_lda_empty_docs():
 def test_dirichlet_expectation():
     """Test Cython version of Dirichlet expectation calculation."""
     x = np.logspace(-100, 10, 10000)
-    assert_allclose(_dirichlet_expectation_1d(x),
-                    np.exp(psi(x) - psi(np.sum(x))),
+    expectation = np.empty_like(x)
+    _dirichlet_expectation_1d(x, 0, expectation)
+    assert_allclose(expectation, np.exp(psi(x) - psi(np.sum(x))),
                     atol=1e-19)
 
     x = x.reshape(100, 100)
