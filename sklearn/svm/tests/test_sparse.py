@@ -81,8 +81,10 @@ def test_svc():
     kernels = ["linear", "poly", "rbf", "sigmoid"]
     for dataset in datasets:
         for kernel in kernels:
-            clf = svm.SVC(kernel=kernel, probability=True, random_state=0)
-            sp_clf = svm.SVC(kernel=kernel, probability=True, random_state=0)
+            clf = svm.SVC(kernel=kernel, probability=True, random_state=0,
+                          decision_function_shape='ovo')
+            sp_clf = svm.SVC(kernel=kernel, probability=True, random_state=0,
+                             decision_function_shape='ovo')
             check_svm_model_equal(clf, sp_clf, *dataset)
 
 
@@ -148,7 +150,8 @@ def test_sparse_decision_function():
     #returns the same as the one in libsvm
 
     # multi class:
-    clf = svm.SVC(kernel='linear', C=0.1).fit(iris.data, iris.target)
+    svc = svm.SVC(kernel='linear', C=0.1, decision_function_shape='ovo')
+    clf = svc.fit(iris.data, iris.target)
 
     dec = safe_sparse_dot(iris.data, clf.coef_.T) + clf.intercept_
 
