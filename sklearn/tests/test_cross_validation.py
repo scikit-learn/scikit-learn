@@ -359,7 +359,7 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     assert_greater(mean_score, 0.85)
 
 
-def test_label_kfold():
+def check_label_kfold(shuffle):
     rng = np.random.RandomState(0)
 
     # Parameters of the test
@@ -370,7 +370,10 @@ def test_label_kfold():
     # Construct the test data
     tolerance = 0.05 * n_samples  # 5 percent error allowed
     labels = rng.randint(0, n_labels, n_samples)
-    folds = cval.LabelKFold(labels, n_folds).idxs
+    folds = cval.LabelKFold(labels,
+                            n_folds=n_folds,
+                            shuffle=shuffle,
+                            random_state=rng).idxs
     ideal_n_labels_per_fold = n_samples // n_folds
 
     # Check that folds have approximately the same size
@@ -385,7 +388,10 @@ def test_label_kfold():
 
     # Check that no label is on both sides of the split
     labels = np.asarray(labels, dtype=object)
-    for train, test in cval.LabelKFold(labels, n_folds=n_folds):
+    for train, test in cval.LabelKFold(labels,
+                                       n_folds=n_folds,
+                                       shuffle=shuffle,
+                                       random_state=rng):
         assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
 
     # Construct the test data
@@ -402,7 +408,10 @@ def test_label_kfold():
     n_samples = len(labels)
     n_folds = 5
     tolerance = 0.05 * n_samples  # 5 percent error allowed
-    folds = cval.LabelKFold(labels, n_folds).idxs
+    folds = cval.LabelKFold(labels,
+                            n_folds=n_folds,
+                            shuffle=shuffle,
+                            random_state=rng).idxs
     ideal_n_labels_per_fold = n_samples // n_folds
 
     # Check that folds have approximately the same size
@@ -416,12 +425,20 @@ def test_label_kfold():
         assert_equal(len(np.unique(folds[labels == label])), 1)
 
     # Check that no label is on both sides of the split
-    for train, test in cval.LabelKFold(labels, n_folds=n_folds):
+    for train, test in cval.LabelKFold(labels,
+                                       n_folds=n_folds,
+                                       shuffle=shuffle,
+                                       random_state=rng):
         assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
 
     # Should fail if there are more folds than labels
     labels = np.array([1, 1, 1, 2, 2])
     assert_raises(ValueError, cval.LabelKFold, labels, n_folds=3)
+
+
+def test_label_kfold():
+    for shuffle in [False, True]:
+        yield check_label_kfold, shuffle
 
 
 def test_shuffle_split():
