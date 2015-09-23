@@ -457,8 +457,8 @@ cdef class ClassificationCriterion(Criterion):
 
                 self.weighted_n_left -= w
 
-        # Upate right part statistics
-        self.weighted_n_right = self.weighted_n_samples - self.weigted_n_left
+        # Update right part statistics
+        self.weighted_n_right = self.weighted_n_node_samples - self.weighted_n_left
         for k in range(self.n_outputs):
             for c in range(n_classes[k]):
                 sum_right[c] = sum_total[c] - sum_left[c]
@@ -946,18 +946,18 @@ cdef class MSE(RegressionCriterion):
             if sample_weight != NULL:
                 w = sample_weight[i]
 
-            for k in range(n_outputs):
-                y_ik = y[i * y_stride + k]
+            for k in range(self.n_outputs):
+                y_ik = y[i * self.y_stride + k]
                 sq_sum_left += w * y_ik * y_ik
 
         sq_sum_right = self.sq_sum_total - sq_sum_left
 
-        impurity_left[0] = self.sq_sum_left / self.weighted_n_left
-        impurity_right[0] = self.sq_sum_right / self.weighted_n_right
+        impurity_left[0] = sq_sum_left / self.weighted_n_left
+        impurity_right[0] = sq_sum_right / self.weighted_n_right
 
         for k in range(self.n_outputs):
-            impurity_left[0] -= sum_left[k] / weighted_n_left
-            impurity_right[0] -= sum_right[k] / weighted_n_right 
+            impurity_left[0] -= (sum_left[k] / self.weighted_n_left) ** 2.0
+            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0 
 
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
