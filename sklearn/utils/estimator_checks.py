@@ -4,7 +4,6 @@ import types
 import warnings
 import sys
 import traceback
-import inspect
 import pickle
 from copy import deepcopy
 
@@ -18,6 +17,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_equal
@@ -45,6 +45,7 @@ from sklearn.utils import ConvergenceWarning
 from sklearn.cross_validation import train_test_split
 
 from sklearn.utils import shuffle
+from sklearn.utils.fixes import signature
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris, load_boston, make_blobs
 
@@ -607,8 +608,11 @@ def check_fit_score_takes_y(name, Estimator):
         func = getattr(estimator, func_name, None)
         if func is not None:
             func(X, y)
-            args = inspect.getargspec(func).args
-            assert_true(args[2] in ["y", "Y"])
+            args = [p.name for p in signature(func).parameters.values()]
+            assert_true(args[1] in ["y", "Y"],
+                        "Expected y or Y as second argument for method "
+                        "%s of %s. Got arguments: %r."
+                        % (func_name, Estimator.__name__, args))
 
 
 @ignore_warnings
@@ -1342,35 +1346,42 @@ def check_parameters_default_constructible(name, Estimator):
         # this comes from getattr. Gets rid of deprecation decorator.
         init = getattr(estimator.__init__, 'deprecated_original',
                        estimator.__init__)
+
         try:
-            args, varargs, kws, defaults = inspect.getargspec(init)
-        except TypeError:
+            def param_filter(p):
+                """Identify hyper parameters of an estimator"""
+                return (p.name != 'self'
+                        and p.kind != p.VAR_KEYWORD
+                        and p.kind != p.VAR_POSITIONAL)
+
+            init_params = [p for p in signature(init).parameters.values()
+                           if param_filter(p)]
+        except (TypeError, ValueError):
             # init is not a python function.
             # true for mixins
             return
         params = estimator.get_params()
         if name in META_ESTIMATORS:
-            # they need a non-default argument
-            args = args[2:]
-        else:
-            args = args[1:]
-        if args:
-            # non-empty list
-            assert_equal(len(args), len(defaults))
-        else:
-            return
-        for arg, default in zip(args, defaults):
-            assert_in(type(default), [str, int, float, bool, tuple, type(None),
-                                      np.float64, types.FunctionType, Memory])
-            if arg not in params.keys():
+            # they can need a non-default argument
+            init_params = init_params[1:]
+
+        for init_param in init_params:
+            assert_not_equal(init_param.default, init_param.empty,
+                             "parameter %s for %s has no default value"
+                             % (init_param.name, type(estimator).__name__))
+            assert_in(type(init_param.default),
+                      [str, int, float, bool, tuple, type(None),
+                       np.float64, types.FunctionType, Memory])
+            if init_param.name not in params.keys():
                 # deprecated parameter, not in get_params
-                assert_true(default is None)
+                assert_true(init_param.default is None)
                 continue
 
-            if isinstance(params[arg], np.ndarray):
-                assert_array_equal(params[arg], default)
+            param_value = params[init_param.name]
+            if isinstance(param_value, np.ndarray):
+                assert_array_equal(param_value, init_param.default)
             else:
-                assert_equal(params[arg], default)
+                assert_equal(param_value, init_param.default)
 
 
 def multioutput_estimator_convert_y_2d(name, y):
