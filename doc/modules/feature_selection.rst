@@ -138,35 +138,29 @@ Feature selection using SelectFromModel
 
 :class:`SelectFromModel` is a meta-transformer that can be used along with any
 estimator that has a ``coef_`` or ``feature_importances_`` attribute after fitting.
-It should be given a threshold parameter below which the features are considered
+It should be given a ``threshold`` parameter below which the features are considered
 unimportant and removed. If one has no idea of the prior value of the threshold,
-string inputs like "mean" or "median" or even values like "0.1*mean" can be given
-which SelectFromModel parses internally.
+string inputs like ``"mean"`` or ``"median"`` or even values like ``"0.1*mean"``
+can be given which :class:`SelectFromModel` parses internally.
 
 For examples on how it is to be used refer to the sections below.
 
 .. topic:: Examples
 
-    * :ref:`example_feature_selection_select_from_model.py`: Selecting the two
+    * :ref:`example_feature_selection_plot_select_from_model_boston.py`: Selecting the two
       most important features from the Boston dataset without knowing the
       threshold beforehand.
 
-
-.. _l1_feature_selection:
-
 L1-based feature selection
-==========================
+--------------------------
 
 .. currentmodule:: sklearn
-
-Selecting non-zero coefficients
----------------------------------
 
 :ref:`Linear models <linear_model>` penalized with the L1 norm have
 sparse solutions: many of their estimated coefficients are zero. When the goal
 is to reduce the dimensionality of the data to use with another classifier,
 they can be used along with :class:`feature_selection.SelectFromModel`
-to select the non-zero coefficient. In particular, sparse estimators useful for
+to select the non-zero coefficients. In particular, sparse estimators useful for
 this purpose are the :class:`linear_model.Lasso` for regression, and
 of :class:`linear_model.LogisticRegression` and :class:`svm.LinearSVC`
 for classification::
@@ -264,12 +258,12 @@ of features non zero.
      http://hal.inria.fr/hal-00354771/
 
 Tree-based feature selection
-============================
+----------------------------
 
 Tree-based estimators (see the :mod:`sklearn.tree` module and forest
 of trees in the :mod:`sklearn.ensemble` module) can be used to compute
 feature importances, which in turn can be used to discard irrelevant
-features (when coupled with the :class:`feature_selection.SelectFromModel`
+features (when coupled with the :class:`sklearn.feature_selection.SelectFromModel`
 meta-transformer)::
 
   >>> from sklearn.ensemble import ExtraTreesClassifier
@@ -311,6 +305,7 @@ to use a :class:`sklearn.pipeline.Pipeline`::
   clf.fit(X, y)
 
 In this snippet we make use of a :class:`sklearn.svm.LinearSVC`
+coupled with :class:`sklearn.feature_selection.SelectFromModel`
 to evaluate feature importances and select the most relevant features.
 Then, a :class:`sklearn.ensemble.RandomForestClassifier` is trained on the
 transformed output, i.e. using only relevant features. You can perform

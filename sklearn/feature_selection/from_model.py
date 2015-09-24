@@ -145,14 +145,14 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
     estimator : object
         The base estimator from which the transformer is built.
         This can be both a fitted or a non-fitted estimator.
-        If it a fitted estimator, then transform can be called directly,
-        otherwise train the model using fit and then transform to do
+        If it a fitted estimator, then ``transform`` can be called directly,
+        otherwise train the model using ``fit`` and then ``transform`` to do
         feature selection.
 
     threshold : string, float, optional
         The threshold value to use for feature selection. Features whose
         importance is greater or equal are kept while the others are
-        discarded. If "median" (resp. "mean"), then the threshold value is
+        discarded. If "median" (resp. "mean"), then the ``threshold`` value is
         the median (resp. the mean) of the feature importances. A scaling
         factor (e.g., "1.25*mean") may also be used. If None and if
         available, the object attribute ``threshold`` is used. Otherwise,
@@ -163,12 +163,11 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
     `estimator_`: an estimator
         The base estimator from which the transformer is built.
         This is stored only when a non-fitted estimator is passed to the
-        SelectFromModel.
+        ``SelectFromModel``.
 
     `threshold_`: float
         The threshold value used for feature selection.
     """
-
     def __init__(self, estimator, threshold=None):
         self.estimator = estimator
         self.threshold = threshold

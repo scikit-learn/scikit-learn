@@ -123,7 +123,10 @@ def test_warm_start():
 
 
 def test_fitted_estimator():
-    """Test that a fitted estimator can be passed to SelectFromModel."""
+    """Test that a fitted estimator can be passed to SelectFromModel.
+
+    If this is done fit need not be used and transform can be used directly.
+    """
     clf = SGDClassifier(alpha=0.1, n_iter=10, shuffle=True, random_state=0)
     model = SelectFromModel(clf)
     model.fit(iris.data, iris.target)
@@ -145,3 +148,15 @@ def test_threshold_string():
     threshold = 0.5 * np.mean(est.feature_importances_)
     model = SelectFromModel(est, threshold=threshold)
     assert_array_equal(X_transform, model.transform(iris.data))
+
+
+def test_threshold_without_refitting():
+    """Test that the threshold can be set without refitting the model."""
+    clf = SGDClassifier(alpha=0.1, n_iter=10, shuffle=True, random_state=0)
+    model = SelectFromModel(clf, threshold=0.1)
+    model.fit(iris.data, iris.target)
+    X_transform = model.transform(iris.data)
+
+    # Set a higher threshold to filter out more features.
+    model.threshold = 1.0
+    assert_greater(X_transform.shape[1], model.transform(iris.data).shape[1])
