@@ -884,7 +884,6 @@ def check_classifiers_train(name, Classifier):
         n_samples, n_features = X.shape
         with warnings.catch_warnings(record=True):
             kwargs = get_kwargs(Classifier)
-            print('kwargs = ', kwargs)
             classifier = Classifier(**kwargs)
         if name in ['BernoulliNB', 'MultinomialNB']:
             X -= X.min()
