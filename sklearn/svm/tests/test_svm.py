@@ -341,13 +341,12 @@ def test_decision_function_shape():
     assert_array_equal(clf.predict(X_test), np.argmax(dec, axis=1))
 
     # check shape of ovo_decition_function=True
-    clf = svm.SVC(kernel='linear', C=0.1,
-                  decision_function_shape='ovo').fit(X_train, y_train)
+    clf = svm.SVC(kernel='linear', C=0.1).fit(X_train, y_train)
     dec = clf.decision_function(X_train)
     assert_equal(dec.shape, (len(X_train), 10))
 
     # check deprecation warning
-    clf.decision_function_shape = None
+    #clf.decision_function_shape = None
     msg = "change the shape of the decision function"
     dec = assert_warns_message(ChangedBehaviorWarning, msg,
                                clf.decision_function, X_train)

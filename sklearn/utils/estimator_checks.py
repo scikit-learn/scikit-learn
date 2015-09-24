@@ -38,7 +38,7 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
-from sklearn.svm.base import BaseLibSVM
+from sklearn.svm.base import BaseLibSVM, BaseSVC
 from sklearn.pipeline import make_pipeline
 from sklearn.utils.validation import DataConversionWarning
 from sklearn.utils import ConvergenceWarning
@@ -212,6 +212,12 @@ def _boston_subset(n_samples=200):
         BOSTON = X, y
     return BOSTON
 
+def get_kwargs(estimator_class):
+    "Get special kwargs that might be required for an estimator."
+
+    if issubclass(estimator_class, BaseSVC):
+        return {'decision_function_shape':'ovo'}
+    return {}
 
 def set_fast_parameters(estimator):
     # speed up some estimators
@@ -350,7 +356,8 @@ def check_fit2d_predict1d(name, Estimator):
     X = 3 * rnd.uniform(size=(20, 3))
     y = X[:, 0].astype(np.int)
     y = multioutput_estimator_convert_y_2d(name, y)
-    estimator = Estimator()
+    kwargs = get_kwargs(Estimator)
+    estimator = Estimator(**kwargs)
     set_fast_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
@@ -626,7 +633,8 @@ def check_estimators_dtypes(name, Estimator):
     y = multioutput_estimator_convert_y_2d(name, y)
     for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
         with warnings.catch_warnings(record=True):
-            estimator = Estimator()
+            kwargs = get_kwargs(Estimator)
+            estimator = Estimator(**kwargs)
         set_fast_parameters(estimator)
         set_random_state(estimator, 1)
         estimator.fit(X_train, y)
@@ -875,7 +883,9 @@ def check_classifiers_train(name, Classifier):
         n_classes = len(classes)
         n_samples, n_features = X.shape
         with warnings.catch_warnings(record=True):
-            classifier = Classifier()
+            kwargs = get_kwargs(Classifier)
+            print('kwargs = ', kwargs)
+            classifier = Classifier(**kwargs)
         if name in ['BernoulliNB', 'MultinomialNB']:
             X -= X.min()
         set_fast_parameters(classifier)
