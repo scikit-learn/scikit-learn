@@ -586,7 +586,8 @@ def test_logistic_regression_sample_weights():
             clf_sw_none.fit(X, y)
             clf_sw_ones = LR(solver=solver, fit_intercept=False)
             clf_sw_ones.fit(X, y, sample_weight=np.ones(y.shape[0]))
-            assert_array_almost_equal(clf_sw_none.coef_, clf_sw_ones.coef_, decimal=4)
+            assert_array_almost_equal(
+                clf_sw_none.coef_, clf_sw_ones.coef_, decimal=4)
 
         # Test that sample weights work the same with the lbfgs,
         # newton-cg, and 'sag' solvers
@@ -597,8 +598,15 @@ def test_logistic_regression_sample_weights():
         clf_sw_sag = LR(solver='sag', fit_intercept=False,
                         max_iter=2000, tol=1e-7)
         clf_sw_sag.fit(X, y, sample_weight=y + 1)
-        assert_array_almost_equal(clf_sw_lbfgs.coef_, clf_sw_n.coef_, decimal=4)
-        assert_array_almost_equal(clf_sw_lbfgs.coef_, clf_sw_sag.coef_, decimal=4)
+        clf_sw_liblinear = LR(solver='liblinear', fit_intercept=False,
+                              max_iter=50, tol=1e-7)
+        clf_sw_liblinear.fit(X, y, sample_weight=y + 1)
+        assert_array_almost_equal(
+            clf_sw_lbfgs.coef_, clf_sw_n.coef_, decimal=4)
+        assert_array_almost_equal(
+            clf_sw_lbfgs.coef_, clf_sw_sag.coef_, decimal=4)
+        assert_array_almost_equal(
+            clf_sw_lbfgs.coef_, clf_sw_liblinear.coef_, decimal=4)
 
         # Test that passing class_weight as [1,2] is the same as
         # passing class weight = [1,1] but adjusting sample weights
@@ -609,12 +617,13 @@ def test_logistic_regression_sample_weights():
             clf_cw_12.fit(X, y)
             clf_sw_12 = LR(solver=solver, fit_intercept=False)
             clf_sw_12.fit(X, y, sample_weight=sample_weight)
-            assert_array_almost_equal(clf_cw_12.coef_, clf_sw_12.coef_, decimal=4)
+            assert_array_almost_equal(
+                clf_cw_12.coef_, clf_sw_12.coef_, decimal=4)
 
     # Test the above for l1 penalty and l2 penalty with dual=True.
     # since the patched liblinear code is different.
     clf_cw = LogisticRegression(
-        solver="liblinear", fit_intercept=False, class_weight={0:1, 1:2},
+        solver="liblinear", fit_intercept=False, class_weight={0: 1, 1: 2},
         penalty="l1")
     clf_cw.fit(X, y)
     clf_sw = LogisticRegression(
@@ -623,7 +632,7 @@ def test_logistic_regression_sample_weights():
     assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
 
     clf_cw = LogisticRegression(
-        solver="liblinear", fit_intercept=False, class_weight={0:1, 1:2},
+        solver="liblinear", fit_intercept=False, class_weight={0: 1, 1: 2},
         penalty="l2", dual=True)
     clf_cw.fit(X, y)
     clf_sw = LogisticRegression(

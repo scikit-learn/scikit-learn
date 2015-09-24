@@ -10,7 +10,8 @@ from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..multiclass import _ovr_decision_function
-from ..utils import check_array, check_random_state, column_or_1d, check_X_y
+from ..utils import check_array, check_consistent_length, check_random_state
+from ..utils import column_or_1d, check_X_y
 from ..utils import compute_class_weight, deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
@@ -891,6 +892,10 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
     if sample_weight is None:
         sample_weight = np.ones(X.shape[0])
+    else:
+        sample_weight = np.array(sample_weight, dtype=np.float64, order='C')
+        check_consistent_length(sample_weight, X)
+
     solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)
     raw_coef_, n_iter_ = liblinear.train_wrap(
         X, y_ind, sp.isspmatrix(X), solver_type, tol, bias, C,
