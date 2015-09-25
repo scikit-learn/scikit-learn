@@ -498,10 +498,10 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
                     ensure_2d, allow_nd, ensure_min_samples,
                     ensure_min_features, warn_on_dtype, estimator)
     if multi_output:
-        y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False,
-                        dtype=None)
+        y = check_array(y, 'csr', copy=copy, force_all_finite=True,
+                        ensure_2d=False, dtype=None)
     else:
-        y = column_or_1d(y, warn=True)
+        y = column_or_1d(y, warn=True, copy=copy, order=order)
         _assert_all_finite(y)
     if y_numeric and y.dtype.kind == 'O':
         y = y.astype(np.float64)
@@ -511,7 +511,7 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
     return X, y
 
 
-def column_or_1d(y, warn=False):
+def column_or_1d(y, warn=False, copy=False, order='C'):
     """ Ravel column or 1d numpy array, else raises an error
 
     Parameters
@@ -519,7 +519,13 @@ def column_or_1d(y, warn=False):
     y : array-like
 
     warn : boolean, default False
-       To control display of warnings.
+        To control display of warnings.
+
+    copy: boolean, default False
+        Whether or not to copy y.
+
+    order: 'C' or 'F', default 'C'
+        Whether y is C or Fortran contiguous.
 
     Returns
     -------
@@ -527,17 +533,16 @@ def column_or_1d(y, warn=False):
 
     """
     shape = np.shape(y)
-    if len(shape) == 1:
-        return np.ravel(y)
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn("A column-vector y was passed when a 1d array was"
                           " expected. Please change the shape of y to "
                           "(n_samples, ), for example using ravel().",
                           DataConversionWarning, stacklevel=2)
-        return np.ravel(y)
-
-    raise ValueError("bad input shape {0}".format(shape))
+        y = np.ravel(y)
+    elif len(shape) != 1:
+        raise ValueError("bad input shape {0}".format(shape))
+    return np.array(y, copy=copy, order=order)
 
 
 def check_random_state(seed):

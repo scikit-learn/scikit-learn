@@ -458,3 +458,10 @@ def test_check_consistent_length():
     assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
                          [1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
+
+
+def test_check_X_y_copies_y():
+    X = np.array([[1, 2], [2, 3]])
+    y = np.array([1, 2])
+    X_copy, y_copy = check_X_y(X, y, copy=True)
+    assert_false(np.may_share_memory(y, y_copy))
