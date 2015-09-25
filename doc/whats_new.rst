@@ -38,7 +38,7 @@ New features
      :class:`cross_validation.LabelShuffleSplit` generate train-test folds,
      respectively similar to :class:`cross_validation.KFold` and
      :class:`cross_validation.ShuffleSplit`, except that the folds are
-     conditioned on a label array. By `Brian McFee`_, Jean Kossaifi and
+     conditioned on a label array. By `Brian McFee`_, `Jean Kossaifi`_ and
      `Gilles Louppe`_.
 
    - :class:`decomposition.LatentDirichletAllocation` implements the Latent
@@ -2853,7 +2853,7 @@ Changelog
      `Alexandre Gramfort`_
 
    - Printing an estimator now behaves independently of architectures
-     and Python version thanks to Jean Kossaifi.
+     and Python version thanks to `Jean Kossaifi`_.
 
    - :ref:`Loader for libsvm/svmlight format <libsvm_loader>` by
      `Mathieu Blondel`_ and `Lars Buitinck`_
@@ -3008,7 +3008,7 @@ People
    - 56  `Gilles Louppe`_
    - 42  Robert Layton
    - 38  Nelle Varoquaux
-   - 32  Jean Kossaifi
+   - 32  `Jean Kossaifi`_
    - 30  Conrad Lee
    - 22  Pietro Berkes
    - 18  andy
@@ -3706,3 +3706,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Jacob Schreiber: https://github.com/jmschrei
 .. _Ankur Ankan: https://github.com/ankurankan
 .. _Valentin Stolbunov: http://vstolbunov.com
+.. _Jean Kossaifi: https://github.com/JeanKossaifi
