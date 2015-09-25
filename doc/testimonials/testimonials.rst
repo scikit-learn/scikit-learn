@@ -693,4 +693,37 @@ Thorsten Kranz, Data Scientist, Coma Soft AG.
   </span>
 
 
+`Dataiku <http://www.dataiku.com/>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/dataiku_logo.png
+    :width: 120pt
+    :target: http://www.dataiku.com
+
+.. raw:: html
+
+   </div>
+
+Our software, Data Science Studio (DSS), enables users to create data services 
+that combine ETL with Machine Learning. Our Machine Learning module integrates 
+many scikit-learn algorithms. The scikit-learn library is a perfect integration 
+with DSS because it offers algorithms for virtually all business cases. Our goal 
+is to offer a transparent and flexible tool that makes it easier to optimize 
+time consuming aspects of building a data service, preparing data, and training 
+machine learning algorithms on all types of data.
+
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Florian Douetteau, CEO, Dataiku
+
+.. raw:: html
+
+  </span>
 
