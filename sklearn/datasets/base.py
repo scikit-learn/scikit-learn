@@ -282,13 +282,12 @@ def load_iris():
 
     with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
         fdescr = rst_file.read()
-
+    feature_names = np.array(['sepal length (cm)', 'sepal width (cm)',
+                              'petal length (cm)', 'petal width (cm)'])
     return Bunch(data=data, target=target,
                  target_names=target_names,
                  DESCR=fdescr,
-                 feature_names=['sepal length (cm)', 'sepal width (cm)',
-                                'petal length (cm)', 'petal width (cm)'])
-
+                 feature_names=feature_names)
 
 def load_digits(n_class=10):
     """Load and return the digits dataset (classification).

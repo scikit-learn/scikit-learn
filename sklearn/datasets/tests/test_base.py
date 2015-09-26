@@ -178,6 +178,7 @@ def test_load_iris():
     assert_equal(res.target.size, 150)
     assert_equal(res.target_names.size, 3)
     assert_true(res.DESCR)
+    assert_equal(res.feature_names.size, 4)
 
 
 def test_load_boston():
