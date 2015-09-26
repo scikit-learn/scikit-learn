@@ -401,9 +401,9 @@ def load_linnerud():
                                     skiprows=1)
     # Read header
     with open(base_dir + 'linnerud_exercise.csv') as f:
-        header_exercise = f.readline().split()
+        header_exercise = np.array(f.readline().split())
     with open(base_dir + 'linnerud_physiological.csv') as f:
-        header_physiological = f.readline().split()
+        header_physiological = np.array(f.readline().split())
     with open(dirname(__file__) + '/descr/linnerud.rst') as f:
         descr = f.read()
 

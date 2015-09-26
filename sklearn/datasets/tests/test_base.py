@@ -171,6 +171,8 @@ def test_load_linnerud():
     assert_equal(res.target.shape, (20, 3))
     assert_equal(len(res.target_names), 3)
     assert_true(res.DESCR)
+    assert_equal(res.feature_names.size, 3)
+    assert_equal(res.target_names.size, 3)
 
 
 def test_load_iris():
