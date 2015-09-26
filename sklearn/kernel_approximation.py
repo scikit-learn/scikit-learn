@@ -431,7 +431,21 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
-    def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
+
+    KERNEL_DEFAULT_PARAMS = {
+            "additive_chi2": {},
+            "chi2": {},
+            #"chi2": [{"gamma": 1.}],
+            "cosine": {},
+            #"exp_chi2": frozenset(["gamma"]),
+            "linear": {},
+            "poly": {"gamma": None, "degree": 3, "coef0": 1},
+            "polynomial": {"gamma": None, "degree": 3, "coef0": 1},
+            "rbf": {"gamma": None},
+            "sigmoid": {"gamma": None, "coef0": 1},
+        }
+
+    def __init__(self, kernel="rbf", gamma=None, coef0=None, degree=None,
                  kernel_params=None, n_components=100, random_state=None):
         self.kernel = kernel
         self.gamma = gamma
@@ -440,6 +454,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         self.kernel_params = kernel_params
         self.n_components = n_components
         self.random_state = random_state
+        
 
     def fit(self, X, y=None):
         """Fit estimator to data.
@@ -514,8 +529,14 @@ class Nystroem(BaseEstimator, TransformerMixin):
         if params is None:
             params = {}
         if not callable(self.kernel):
-            params['gamma'] = self.gamma
-            params['degree'] = self.degree
-            params['coef0'] = self.coef0
+            if self.kernel in self.KERNEL_DEFAULT_PARAMS:
+                for k, v in self.KERNEL_DEFAULT_PARAMS[self.kernel].iteritems():
+                    params[k] = getattr(self, k)
+                    if params[k] is None:
+                        params[k] = v 
+            else: 
+                raise ValueError("Unknown kernel %r" % self.kernel)
+
+        print("Current parameters %s" % params)
 
         return params
