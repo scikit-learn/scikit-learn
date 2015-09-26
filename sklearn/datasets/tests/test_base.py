@@ -125,6 +125,7 @@ def test_load_digits():
     digits = load_digits()
     assert_equal(digits.data.shape, (1797, 64))
     assert_equal(numpy.unique(digits.target).size, 10)
+    assert_equal(digits.target_names.size, 10)
 
 
 def test_load_digits_n_class_lt_10():
