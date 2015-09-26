@@ -16,11 +16,12 @@ import numpy as np
 from scipy import sparse
 
 from .base import BaseEstimator, TransformerMixin
-from .externals.joblib import Parallel, delayed
+from .externals.joblib import Parallel, delayed, logger
 from .externals import six
 from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
 from .externals.six import iteritems
+import time
 
 __all__ = ['Pipeline', 'FeatureUnion']
 
@@ -72,7 +73,8 @@ class Pipeline(BaseEstimator):
     >>> # and a parameter 'C' of the svm
     >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
     ...                                              # doctest: +ELLIPSIS
-    Pipeline(steps=[...])
+    Pipeline(steps=[...],
+         verbose=False)
     >>> prediction = anova_svm.predict(X)
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
     0.77...
@@ -86,27 +88,50 @@ class Pipeline(BaseEstimator):
 
     # BaseEstimator interface
 
-    def __init__(self, steps):
+    def __init__(self, steps, verbose=False):
         names, estimators = zip(*steps)
         if len(dict(steps)) != len(steps):
             raise ValueError("Provided step names are not unique: %s" % (names,))
 
         # shallow copy of steps
         self.steps = tosequence(steps)
+        self.verbose = verbose
         transforms = estimators[:-1]
         estimator = estimators[-1]
 
-        for t in transforms:
+        for i, t in enumerate(transforms):
+            if hasattr(t, "fit"):
+                transforms[i].fit = self._wrap_timer(t.fit, names[i], "fit")
+
+            if hasattr(t, "transform"):
+                transforms[i].transform = self._wrap_timer(t.transform,
+                                                           names[i], "transform")
+
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                     hasattr(t, "transform")):
                 raise TypeError("All intermediate steps of the chain should "
                                 "be transforms and implement fit and transform"
                                 " '%s' (type %s) doesn't)" % (t, type(t)))
 
-        if not hasattr(estimator, "fit"):
+        if hasattr(estimator, "fit"):
+            estimator.fit = self._wrap_timer(estimator.fit, names[-1], "fit")
+        else:
             raise TypeError("Last step of chain should implement fit "
                             "'%s' (type %s) doesn't)"
                             % (estimator, type(estimator)))
+
+    def _wrap_timer(self, f, name, action):
+        def timed_f(*args, **kwargs):
+            start_time = time.time()
+            ret = f(*args, **kwargs)
+            elapsed_time = time.time() - start_time
+            time_str = logger.short_format_time(elapsed_time)
+            if self.verbose:
+                print('[Pipeline] %s, %s, %s' % (name, action, time_str))
+
+            return ret
+
+        return timed_f
 
     @property
     def _estimator_type(self):
@@ -379,7 +404,8 @@ def make_pipeline(*steps):
     >>> make_pipeline(StandardScaler(), GaussianNB())    # doctest: +NORMALIZE_WHITESPACE
     Pipeline(steps=[('standardscaler',
                      StandardScaler(copy=True, with_mean=True, with_std=True)),
-                    ('gaussiannb', GaussianNB())])
+                    ('gaussiannb', GaussianNB())],
+         verbose=False)
 
     Returns
     -------
