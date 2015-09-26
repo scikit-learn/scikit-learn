@@ -11,6 +11,7 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
+import six 
 from scipy.linalg import svd
 
 from .base import BaseEstimator
@@ -528,7 +529,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
             params = {}
         if not callable(self.kernel):
             if self.kernel in self.KERNEL_DEFAULT_PARAMS:
-                for k, v in self.KERNEL_DEFAULT_PARAMS[self.kernel].iteritems():
+                for k, v in six.iteritems(self.KERNEL_DEFAULT_PARAMS[self.kernel]):
                     params[k] = getattr(self, k)
                     if params[k] is None:
                         params[k] = v 
