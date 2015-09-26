@@ -453,7 +453,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         self.kernel_params = kernel_params
         self.n_components = n_components
         self.random_state = random_state
-        
+
     def fit(self, X, y=None):
         """Fit estimator to data.
 
