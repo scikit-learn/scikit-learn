@@ -84,6 +84,9 @@ and tasks.
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
   estimators as well as model visualization utilities.
 
+- `kmodes <https://github.com/nicodv/kmodes>`_ k-modes clustering algorithm for categorical data, and
+  several of its variations.
+
 Statistical learning with Python
 --------------------------------
 Other packages useful for data analysis and machine learning.
