@@ -454,7 +454,6 @@ class Nystroem(BaseEstimator, TransformerMixin):
         self.n_components = n_components
         self.random_state = random_state
         
-
     def fit(self, X, y=None):
         """Fit estimator to data.
 
@@ -535,7 +534,4 @@ class Nystroem(BaseEstimator, TransformerMixin):
                         params[k] = v 
             else: 
                 raise ValueError("Unknown kernel %r" % self.kernel)
-
-        print("Current parameters %s" % params)
-
         return params
