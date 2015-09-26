@@ -11,7 +11,6 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-import six 
 from scipy.linalg import svd
 
 from .base import BaseEstimator
@@ -20,7 +19,7 @@ from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels
-
+from .externals import six
 
 class RBFSampler(BaseEstimator, TransformerMixin):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
