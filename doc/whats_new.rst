@@ -617,6 +617,7 @@ Enhancements
 
    - Added :func:`metrics.pairwise.laplacian_kernel`.  By `Clyde Fare <https://github.com/Clyde-fare>`_.
 
+<<<<<<< fc66544f931fdde8d4beda323fd5e7b05949fd16
    - :class:`covariance.GraphLasso` allows separate control of the convergence criterion
      for the Elastic-Net subproblem via  the ``enet_tol`` parameter.
 
@@ -637,6 +638,10 @@ Enhancements
    - Added the ``fit_predict`` method to :class:`pipeline.Pipeline`.
 
    - Added the :func:`preprocessing.min_max_scale` function.
+
+   - Added optional parameter ``verbose`` in :class:`pipeline.Pipeline` for showing
+     progress and timing of each step. By Sam Zhang.
+     (`#5298 <https://github.com/scikit-learn/scikit-learn/issues/5298>`_)
 
 Bug fixes
 .........

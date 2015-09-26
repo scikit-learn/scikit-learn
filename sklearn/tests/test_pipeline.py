@@ -1,6 +1,7 @@
 """
 Test the pipeline module.
 """
+import sys
 import numpy as np
 from scipy import sparse
 
@@ -450,7 +451,6 @@ def test_feature_union_feature_names():
         assert_true("chars__" in feat or "words__" in feat)
     assert_equal(len(feature_names), 35)
 
-
 def test_classes_property():
     iris = load_iris()
     X = iris.data
@@ -465,10 +465,34 @@ def test_classes_property():
     clf.fit(X, y)
     assert_array_equal(clf.classes_, np.unique(y))
 
-
 def test_X1d_inverse_transform():
     transformer = TransfT()
     pipeline = make_pipeline(transformer)
     X = np.ones(10)
     msg = "1d X will not be reshaped in pipeline.inverse_transform"
     assert_warns_message(FutureWarning, msg, pipeline.inverse_transform, X)
+
+def test_verbosity():
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+
+    old_stdout = sys.stdout
+    try:
+        out = StringIO()
+        sys.stdout = out
+
+        nonverbose_reg = Pipeline([
+            ('kbest', SelectKBest(k=1)), ('lr', LinearRegression())
+        ], verbose=False)
+        nonverbose_reg.fit(X, y)
+        assert_true("[Pipeline]" not in out.getvalue())
+
+        verbose_reg = Pipeline([
+            ('kbest', SelectKBest(k=1)), ('lr', LinearRegression())
+        ], verbose=True)
+        verbose_reg.fit(X, y)
+        assert_true("[Pipeline] (step 0 of 1) kbest ..." in out.getvalue())
+        assert_true("[Pipeline] (step 1 of 1) lr ..." in out.getvalue())
+    finally:
+        sys.stdout = old_stdout

@@ -16,11 +16,12 @@ import numpy as np
 from scipy import sparse
 
 from .base import BaseEstimator, TransformerMixin
-from .externals.joblib import Parallel, delayed
+from .externals.joblib import Parallel, delayed, logger
 from .externals import six
 from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
 from .externals.six import iteritems
+import time
 
 __all__ = ['Pipeline', 'FeatureUnion']
 
@@ -72,7 +73,8 @@ class Pipeline(BaseEstimator):
     >>> # and a parameter 'C' of the svm
     >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
     ...                                              # doctest: +ELLIPSIS
-    Pipeline(steps=[...])
+    Pipeline(steps=[...],
+         verbose=False)
     >>> prediction = anova_svm.predict(X)
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
     0.77...
@@ -86,7 +88,7 @@ class Pipeline(BaseEstimator):
 
     # BaseEstimator interface
 
-    def __init__(self, steps):
+    def __init__(self, steps, verbose=False):
         names, estimators = zip(*steps)
         if len(dict(steps)) != len(steps):
             raise ValueError("Provided step names are not unique: %s"
@@ -94,6 +96,7 @@ class Pipeline(BaseEstimator):
 
         # shallow copy of steps
         self.steps = tosequence(steps)
+        self.verbose = verbose
         transforms = estimators[:-1]
         estimator = estimators[-1]
 
@@ -141,12 +144,19 @@ class Pipeline(BaseEstimator):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X
-        for name, transform in self.steps[:-1]:
+        for i, (name, transform) in enumerate(self.steps[:-1]):
+            start_time = time.time()
             if hasattr(transform, "fit_transform"):
                 Xt = transform.fit_transform(Xt, y, **fit_params_steps[name])
             else:
                 Xt = transform.fit(Xt, y, **fit_params_steps[name]) \
                               .transform(Xt)
+            if self.verbose:
+                elapsed = time.time() - start_time
+                time_str = logger.short_format_time(elapsed)
+                print('[Pipeline] (step %d of %d) %s ... %s' % (i,
+                    len(self.steps[:-1]), name, time_str))
+
         return Xt, fit_params_steps[self.steps[-1][0]]
 
     def fit(self, X, y=None, **fit_params):
@@ -163,7 +173,15 @@ class Pipeline(BaseEstimator):
             the pipeline.
         """
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
+        start_time = time.time()
         self.steps[-1][-1].fit(Xt, y, **fit_params)
+        if self.verbose:
+            elapsed = time.time() - start_time
+            time_str = logger.short_format_time(elapsed)
+            print('[Pipeline] (step %d of %d) %s ... %s' %
+                    (len(self.steps[:-1]), len(self.steps[:-1]),
+                        self.steps[-1][0], time_str))
+
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -182,10 +200,19 @@ class Pipeline(BaseEstimator):
             the pipeline.
         """
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
+        start_time = time.time()
         if hasattr(self.steps[-1][-1], 'fit_transform'):
-            return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
+            ret = self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
         else:
-            return self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
+            ret = self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
+
+        if self.verbose:
+            elapsed = time.time() - start_time
+            time_str = logger.short_format_time(elapsed)
+            print('[Pipeline] (step %d of %d) %s ... %s' %
+                    (len(self.steps[:-1]), len(self.steps[:-1]),
+                        self.steps[-1][0], time_str))
+        return ret
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X):
@@ -380,7 +407,7 @@ def make_pipeline(*steps):
     >>> make_pipeline(StandardScaler(), GaussianNB(priors=None))    # doctest: +NORMALIZE_WHITESPACE
     Pipeline(steps=[('standardscaler',
                      StandardScaler(copy=True, with_mean=True, with_std=True)),
-                    ('gaussiannb', GaussianNB(priors=None))])
+             verbose=False)
 
     Returns
     -------
