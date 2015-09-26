@@ -266,6 +266,10 @@ Enhancements
 
    - Added :func:`metrics.pairwise.laplacian_kernel`.  By `Clyde Fare <https://github.com/Clyde-fare>`_.
 
+   - Added optional parameter ``verbose`` in :class:`pipeline.Pipeline` for showing
+     progress and timing of each step. By Sam Zhang.
+     (`#5298 <https://github.com/scikit-learn/scikit-learn/issues/5298>`_)
+
 Bug fixes
 .........
     - Fixed non-determinism in :class:`dummy.DummyClassifier` with sparse
