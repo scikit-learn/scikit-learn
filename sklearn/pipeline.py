@@ -99,39 +99,17 @@ class Pipeline(BaseEstimator):
         transforms = estimators[:-1]
         estimator = estimators[-1]
 
-        for i, t in enumerate(transforms):
-            if hasattr(t, "fit"):
-                transforms[i].fit = self._wrap_timer(t.fit, names[i], "fit")
-
-            if hasattr(t, "transform"):
-                transforms[i].transform = self._wrap_timer(t.transform,
-                                                           names[i], "transform")
-
+        for t in transforms:
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                     hasattr(t, "transform")):
                 raise TypeError("All intermediate steps of the chain should "
                                 "be transforms and implement fit and transform"
                                 " '%s' (type %s) doesn't)" % (t, type(t)))
 
-        if hasattr(estimator, "fit"):
-            estimator.fit = self._wrap_timer(estimator.fit, names[-1], "fit")
-        else:
+        if not hasattr(estimator, "fit"):
             raise TypeError("Last step of chain should implement fit "
                             "'%s' (type %s) doesn't)"
                             % (estimator, type(estimator)))
-
-    def _wrap_timer(self, f, name, action):
-        def timed_f(*args, **kwargs):
-            start_time = time.time()
-            ret = f(*args, **kwargs)
-            elapsed_time = time.time() - start_time
-            time_str = logger.short_format_time(elapsed_time)
-            if self.verbose:
-                print('[Pipeline] %s, %s, %s' % (name, action, time_str))
-
-            return ret
-
-        return timed_f
 
     @property
     def _estimator_type(self):
@@ -166,11 +144,17 @@ class Pipeline(BaseEstimator):
             fit_params_steps[step][param] = pval
         Xt = X
         for name, transform in self.steps[:-1]:
+            start_time = time.time()
             if hasattr(transform, "fit_transform"):
                 Xt = transform.fit_transform(Xt, y, **fit_params_steps[name])
             else:
                 Xt = transform.fit(Xt, y, **fit_params_steps[name]) \
                               .transform(Xt)
+            if self.verbose:
+                elapsed = time.time() - start_time
+                time_str = logger.short_format_time(elapsed)
+                print('[Pipeline] %s ... %s' % (name, time_str))
+
         return Xt, fit_params_steps[self.steps[-1][0]]
 
     def fit(self, X, y=None, **fit_params):
@@ -187,7 +171,13 @@ class Pipeline(BaseEstimator):
             the pipeline.
         """
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
+        start_time = time.time()
         self.steps[-1][-1].fit(Xt, y, **fit_params)
+        if self.verbose:
+            elapsed = time.time() - start_time
+            time_str = logger.short_format_time(elapsed)
+            print('[Pipeline] %s ... %s' % (self.steps[-1][0], time_str))
+
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -206,10 +196,17 @@ class Pipeline(BaseEstimator):
             the pipeline.
         """
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
+        start_time = time.time()
         if hasattr(self.steps[-1][-1], 'fit_transform'):
-            return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
+            ret = self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
         else:
-            return self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
+            ret = self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
+
+        if self.verbose:
+            elapsed = time.time() - start_time
+            time_str = logger.short_format_time(elapsed)
+            print('[Pipeline] %s ... %s' % (self.steps[-1][0], time_str))
+        return ret
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X):

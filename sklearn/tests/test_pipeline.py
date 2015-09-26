@@ -492,8 +492,7 @@ def test_verbosity():
             ('kbest', SelectKBest(k=1)), ('lr', LinearRegression())
         ], verbose=True)
         verbose_reg.fit(X, y)
-        assert_true("[Pipeline] kbest, fit" in out.getvalue())
-        assert_true("[Pipeline] kbest, transform" in out.getvalue())
-        assert_true("[Pipeline] lr, fit" in out.getvalue())
+        assert_true("[Pipeline] kbest ..." in out.getvalue())
+        assert_true("[Pipeline] lr ..." in out.getvalue())
     finally:
         sys.stdout = old_stdout
