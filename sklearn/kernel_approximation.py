@@ -437,7 +437,6 @@ class Nystroem(BaseEstimator, TransformerMixin):
             "chi2": {},
             #"chi2": [{"gamma": 1.}],
             "cosine": {},
-            #"exp_chi2": frozenset(["gamma"]),
             "linear": {},
             "poly": {"gamma": None, "degree": 3, "coef0": 1},
             "polynomial": {"gamma": None, "degree": 3, "coef0": 1},
