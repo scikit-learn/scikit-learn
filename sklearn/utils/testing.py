@@ -61,6 +61,7 @@ import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
+from sklearn.cluster import DBSCAN
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
@@ -647,8 +648,20 @@ def all_estimators(include_meta_estimators=False,
     return sorted(set(estimators))
 
 
+NON_RANDOM_CLASSES = (DBSCAN,)
+
+
 def set_random_state(estimator, random_state=0):
-    if "random_state" in estimator.get_params().keys():
+    """Set random state of an estimator if it has the `random_state` param.
+
+    Classes for whom random_state is deprecated are ignored. Currently DBSCAN
+    is one such class.
+    """
+
+    if isinstance(estimator, NON_RANDOM_CLASSES):
+        return
+
+    if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
 
 
