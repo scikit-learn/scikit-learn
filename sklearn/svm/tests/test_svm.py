@@ -353,6 +353,7 @@ def test_decision_function_shape():
     assert_equal(dec.shape, (len(X_train), 10))
 
 
+@ignore_warnings
 def test_svr_decision_function():
     # Test SVR's decision_function
     # Sanity check, test that decision_function implemented in python

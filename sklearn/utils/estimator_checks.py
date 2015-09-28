@@ -727,6 +727,7 @@ def check_estimators_nan_inf(name, Estimator):
                     raise AssertionError(error_string_transform, Estimator)
 
 
+@ignore_warnings
 def check_estimators_pickle(name, Estimator):
     """Test that we can pickle all estimators"""
     check_methods = ["predict", "transform", "decision_function",
@@ -865,6 +866,7 @@ def check_classifiers_one_label(name, Classifier):
             raise exc
 
 
+@ignore_warnings  # Warnings are raised by decision function
 def check_classifiers_train(name, Classifier):
     X_m, y_m = make_blobs(n_samples=300, random_state=0)
     X_m, y_m = shuffle(X_m, y_m, random_state=7)

@@ -360,6 +360,7 @@ def test_lars_n_nonzero_coefs(verbose=False):
     assert_equal(len(lars.alphas_), 7)
 
 
+@ignore_warnings
 def test_multitarget():
     # Assure that estimators receiving multidimensional y do the right thing
     X = diabetes.data
