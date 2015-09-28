@@ -290,6 +290,84 @@ def load_iris():
                                 'petal length (cm)', 'petal width (cm)'])
 
 
+def load_breast_cancer():
+    """Load and return the breast cancer wisconsin dataset (classification).
+
+    The breast cancer dataset is a classic and very easy binary classification
+    dataset.
+
+    =================   ==============
+    Classes                          2
+    Samples per class    212(M),357(B)
+    Samples total                  569
+    Dimensionality                  30
+    Features            real, positive
+    =================   ==============
+
+    Returns
+    -------
+    data : Bunch
+        Dictionary-like object, the interesting attributes are:
+        'data', the data to learn, 'target', the classification labels,
+        'target_names', the meaning of the labels, 'feature_names', the
+        meaning of the features, and 'DESCR', the
+        full description of the dataset.
+
+    The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
+    downloaded from:
+    https://goo.gl/U2Uwz2
+
+    Examples
+    --------
+    Let's say you are interested in the samples 10, 50, and 85, and want to
+    know their class name.
+
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> data = load_breast_cancer()
+    >>> data.target[[10, 50, 85]]
+    array([0, 1, 0])
+    >>> list(data.target_names)
+    ['malignant', 'benign']
+    """
+    module_path = dirname(__file__)
+    with open(join(module_path, 'data', 'breast_cancer.csv')) as csv_file:
+        data_file = csv.reader(csv_file)
+        first_line = next(data_file)
+        n_samples = int(first_line[0])
+        n_features = int(first_line[1])
+        target_names = np.array(first_line[2:4])
+        data = np.empty((n_samples, n_features))
+        target = np.empty((n_samples,), dtype=np.int)
+
+        for count, value in enumerate(data_file):
+            data[count] = np.asarray(value[:-1], dtype=np.float)
+            target[count] = np.asarray(value[-1], dtype=np.int)
+
+    with open(join(module_path, 'descr', 'breast_cancer.rst')) as rst_file:
+        fdescr = rst_file.read()
+
+    feature_names = np.array(['mean radius', 'mean texture',
+                              'mean perimeter', 'mean area',
+                              'mean smoothness', 'mean compactness',
+                              'mean concavity', 'mean concave points',
+                              'mean symmetry', 'mean fractal dimension',
+                              'radius error', 'texture error',
+                              'perimeter error', 'area error',
+                              'smoothness error', 'compactness error',
+                              'concavity error', 'concave points error',
+                              'symmetry error', 'fractal dimension error',
+                              'worst radius', 'worst texture',
+                              'worst perimeter', 'worst area',
+                              'worst smoothness', 'worst compactness',
+                              'worst concavity', 'worst concave points',
+                              'worst symmetry', 'worst fractal dimension'])
+
+    return Bunch(data=data, target=target,
+                 target_names=target_names,
+                 DESCR=fdescr,
+                 feature_names=feature_names)
+
+
 def load_digits(n_class=10):
     """Load and return the digits dataset (classification).
 
