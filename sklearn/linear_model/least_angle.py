@@ -520,6 +520,10 @@ class Lars(LinearModel, RegressorMixin):
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
+    
+    n_jobs : integer, optional
+        Number of CPUs to use during the cross validation. If ``-1``, use
+        all the CPUs
 
     eps : float, optional
         The machine-precision regularization in the computation of the
@@ -527,6 +531,7 @@ class Lars(LinearModel, RegressorMixin):
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
+
 
     fit_path : boolean
         If True the full path is stored in the ``coef_path_`` attribute.
@@ -565,7 +570,7 @@ class Lars(LinearModel, RegressorMixin):
     >>> clf = linear_model.Lars(n_nonzero_coefs=1)
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    Lars(copy_X=True, eps=..., fit_intercept=True, fit_path=True,
+    Lars(copy_X=True, eps=..., fit_intercept=True, fit_path=True, n_jobs=1,
        n_nonzero_coefs=1, normalize=True, positive=False, precompute='auto',
        verbose=False)
     >>> print(clf.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
@@ -578,7 +583,7 @@ class Lars(LinearModel, RegressorMixin):
 
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
-                 precompute='auto', n_nonzero_coefs=500,
+                 precompute='auto', n_nonzero_coefs=500, n_jobs=1,
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
                  positive=False):
         self.fit_intercept = fit_intercept
@@ -588,6 +593,7 @@ class Lars(LinearModel, RegressorMixin):
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
         self.positive = positive
+        self.n_jobs = n_jobs
         self.eps = eps
         self.copy_X = copy_X
         self.fit_path = fit_path
@@ -657,17 +663,19 @@ class Lars(LinearModel, RegressorMixin):
         self.n_iter_ = []
 
         if self.fit_path:
+            lars_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                delayed(lars_path)(
+                    X, y[:, k], Gram=Gram, Xy=None if Xy is None else Xy[:, k],
+                    copy_X=self.copy_X, copy_Gram=True, alpha_min=alpha,
+                    method=self.method, verbose=max(0, self.verbose - 1),
+                    max_iter=max_iter, eps=self.eps, return_path=True,
+                    return_n_iter=True, positive=self.positive)
+                for k in xrange(n_targets))
             self.coef_ = []
             self.active_ = []
             self.coef_path_ = []
-            for k in xrange(n_targets):
-                this_Xy = None if Xy is None else Xy[:, k]
-                alphas, active, coef_path, n_iter_ = lars_path(
-                    X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
-                    copy_Gram=True, alpha_min=alpha, method=self.method,
-                    verbose=max(0, self.verbose - 1), max_iter=max_iter,
-                    eps=self.eps, return_path=True,
-                    return_n_iter=True, positive=self.positive)
+            for index, (alphas,active,coef_path,
+                        n_iter_) in enumerate(lars_paths):
                 self.alphas_.append(alphas)
                 self.active_.append(active)
                 self.n_iter_.append(n_iter_)
@@ -750,6 +758,10 @@ class LassoLars(Lars):
     max_iter : integer, optional
         Maximum number of iterations to perform.
 
+    n_jobs : integer, optional
+        Number of CPUs to use during the cross validation. If ``-1``, use
+        all the CPUs
+
     eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
@@ -796,8 +808,8 @@ class LassoLars(Lars):
     >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     LassoLars(alpha=0.01, copy_X=True, eps=..., fit_intercept=True,
-         fit_path=True, max_iter=500, normalize=True, positive=False,
-         precompute='auto', verbose=False)
+        fit_path=True, max_iter=500, n_jobs=1, normalize=True,
+        positive=False, precompute='auto', verbose=False)
     >>> print(clf.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0.         -0.963257...]
 
@@ -814,8 +826,8 @@ class LassoLars(Lars):
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 positive=False):
+                 n_jobs=1, eps=np.finfo(np.float).eps, copy_X=True,
+                 fit_path=True, positive=False):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
@@ -825,6 +837,7 @@ class LassoLars(Lars):
         self.positive = positive
         self.precompute = precompute
         self.copy_X = copy_X
+        self.n_jobs = n_jobs
         self.eps = eps
         self.fit_path = fit_path
 
