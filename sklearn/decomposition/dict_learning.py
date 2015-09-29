@@ -26,7 +26,7 @@ from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
                    regularization=None, copy_cov=True,
-                   init=None, max_iter=1000):
+                   init=None, max_iter=1000, verbose=0):
     """Generic sparse coding
 
     Each column of the result is the solution to a Lasso problem.
@@ -73,6 +73,9 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         Whether to copy the precomputed covariance matrix; if False, it may be
         overwritten.
 
+    verbose: int
+        Controls the verbosity; the higher, the more messages. Defaults to 0.
+
     Returns
     -------
     code: array of shape (n_components, n_features)
@@ -97,8 +100,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         alpha = float(regularization) / n_features  # account for scaling
         try:
             err_mgt = np.seterr(all='ignore')
+
+            # Not passing in verbose=max(0, verbose-1) because Lars.fit already
+            # corrects the verbosity level.
             lasso_lars = LassoLars(alpha=alpha, fit_intercept=False,
-                                   verbose=False, normalize=False,
+                                   verbose=verbose, normalize=False,
                                    precompute=gram, fit_path=False)
             lasso_lars.fit(dictionary.T, X.T, Xy=cov)
             new_code = lasso_lars.coef_
@@ -107,6 +113,10 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
     elif algorithm == 'lasso_cd':
         alpha = float(regularization) / n_features  # account for scaling
+
+        # TODO: Make verbosity argument for Lasso?
+        # sklearn.linear_model.coordinate_descent.enet_path has a verbosity
+        # argument that we could pass in from Lasso.
         clf = Lasso(alpha=alpha, fit_intercept=False, normalize=False,
                     precompute=gram, max_iter=max_iter, warm_start=True)
         clf.coef_ = init
@@ -116,7 +126,10 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
     elif algorithm == 'lars':
         try:
             err_mgt = np.seterr(all='ignore')
-            lars = Lars(fit_intercept=False, verbose=False, normalize=False,
+
+            # Not passing in verbose=max(0, verbose-1) because Lars.fit already
+            # corrects the verbosity level.
+            lars = Lars(fit_intercept=False, verbose=verbose, normalize=False,
                         precompute=gram, n_nonzero_coefs=int(regularization),
                         fit_path=False)
             lars.fit(dictionary.T, X.T, Xy=cov)
@@ -129,6 +142,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
                     np.maximum(np.abs(cov) - regularization, 0)).T)
 
     elif algorithm == 'omp':
+        # TODO: Should verbose argument be passed to this?
         new_code = orthogonal_mp_gram(gram, cov, regularization, None,
                                       row_norms(X, squared=True),
                                       copy_Xy=copy_cov).T
@@ -142,7 +156,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 # XXX : could be moved to the linear_model module
 def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                   n_nonzero_coefs=None, alpha=None, copy_cov=True, init=None,
-                  max_iter=1000, n_jobs=1):
+                  max_iter=1000, n_jobs=1, verbose=0):
     """Sparse coding
 
     Each row of the result is the solution to a sparse coding problem.
@@ -206,6 +220,9 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     n_jobs: int, optional
         Number of parallel jobs to run.
 
+    verbose : int, optional
+        Controls the verbosity; the higher, the more messages. Defaults to 0.
+
     Returns
     -------
     code: array of shape (n_samples, n_components)
@@ -246,7 +263,8 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                               algorithm=algorithm,
                               regularization=regularization, copy_cov=copy_cov,
                               init=init,
-                              max_iter=max_iter)
+                              max_iter=max_iter,
+                              verbose=verbose)
         # This ensure that dimensionality of code is always 2,
         # consistant with the case n_jobs > 1
         if code.ndim == 1:
@@ -257,7 +275,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     code = np.empty((n_samples, n_components))
     slices = list(gen_even_slices(n_samples, _get_n_jobs(n_jobs)))
 
-    code_views = Parallel(n_jobs=n_jobs)(
+    code_views = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_sparse_encode)(
             X[this_slice], dictionary, gram,
             cov[:, this_slice] if cov is not None else None,
