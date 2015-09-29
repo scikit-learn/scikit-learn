@@ -434,8 +434,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
     KERNEL_DEFAULT_PARAMS = {
             "additive_chi2": {},
-            "chi2": {},
-            #"chi2": [{"gamma": 1.}],
+            "chi2": {"gamma": 1.},
             "cosine": {},
             "linear": {},
             "poly": {"gamma": None, "degree": 3, "coef0": 1},
