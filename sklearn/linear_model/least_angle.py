@@ -522,7 +522,7 @@ class Lars(LinearModel, RegressorMixin):
         If ``True``, X will be copied; else, it may be overwritten.
     
     n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
+        Number of CPUs to use for the computation . If ``-1``, use
         all the CPUs
 
     eps : float, optional
@@ -758,7 +758,7 @@ class LassoLars(Lars):
         Maximum number of iterations to perform.
 
     n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
+        Number of CPUs to use during the computation. If ``-1``, use
         all the CPUs
 
     eps : float, optional
