@@ -412,6 +412,16 @@ class LabelKFold(_BaseKFold):
                      " than the number of labels: {1}.").format(n_folds,
                                                                 n_labels))
 
+        if shuffle:
+            # In case of ties in label weights, label names are indirectly
+            # used to assign samples to folds. When shuffle=True, label names
+            # are randomized to obtain random fold assigments.
+            rng = check_random_state(self.random_state)
+            unique_labels = np.arange(n_labels, dtype=np.int)
+            rng.shuffle(unique_labels)
+            labels = unique_labels[labels]
+            unique_labels, labels = np.unique(labels, return_inverse=True)
+
         # Weight labels by their number of occurences
         n_samples_per_label = np.bincount(labels)
 
@@ -433,13 +443,9 @@ class LabelKFold(_BaseKFold):
 
         self.idxs = label_to_fold[labels]
 
-        if shuffle:
-            rng = check_random_state(self.random_state)
-            rng.shuffle(self.idxs)
-
     def _iter_test_indices(self):
-        for i in range(self.n_folds):
-            yield (self.idxs == i)
+        for f in range(self.n_folds):
+            yield np.where(self.idxs == f)[0]
 
     def __repr__(self):
         return '{0}.{1}(n_labels={2}, n_folds={3})'.format(
@@ -1211,7 +1217,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
           - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier 
+        :class:`StratifiedKFold` used. If the estimator is a classifier
         or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -1385,7 +1391,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
           - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier 
+        :class:`StratifiedKFold` used. If the estimator is a classifier
         or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -1649,7 +1655,7 @@ def check_cv(cv, X=None, y=None, classifier=False):
           - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier 
+        :class:`StratifiedKFold` used. If the estimator is a classifier
         or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -1722,7 +1728,7 @@ def permutation_test_score(estimator, X, y, cv=None,
           - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier 
+        :class:`StratifiedKFold` used. If the estimator is a classifier
         or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various

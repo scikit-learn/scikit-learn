@@ -101,7 +101,8 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
             cnts = X[idx_d, ids]
 
         doc_topic_d = doc_topic_distr[idx_d, :]
-        exp_doc_topic_d = exp_doc_topic[idx_d, :]
+        # The next one is a copy, since the inner loop overwrites it.
+        exp_doc_topic_d = exp_doc_topic[idx_d, :].copy()
         exp_topic_word_d = exp_topic_word_distr[:, ids]
 
         # Iterate between `doc_topic_d` and `norm_phi` until convergence
@@ -112,9 +113,11 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
             # exp(E[log(theta_{dk})]) * exp(E[log(beta_{dw})]).
             norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + EPS
 
-            doc_topic_d = (doc_topic_prior + exp_doc_topic_d *
+            doc_topic_d = (exp_doc_topic_d *
                            np.dot(cnts / norm_phi, exp_topic_word_d.T))
-            exp_doc_topic_d = _dirichlet_expectation_1d(doc_topic_d)
+            # Note: adds doc_topic_prior to doc_topic_d, in-place.
+            _dirichlet_expectation_1d(doc_topic_d, doc_topic_prior,
+                                      exp_doc_topic_d)
 
             if mean_change(last_d, doc_topic_d) < mean_change_tol:
                 break
@@ -306,7 +309,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self.exp_dirichlet_component_ = np.exp(
             _dirichlet_expectation_2d(self.components_))
 
-    def _e_step(self, X, cal_sstats, random_init):
+    def _e_step(self, X, cal_sstats, random_init, parallel=None):
         """E-step in EM update.
 
         Parameters
@@ -323,6 +326,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             distribution randomly in the E-step. Set it to True in training
             steps.
 
+        parallel : joblib.Parallel (optional)
+            Pre-initialized instance of joblib.Parallel.
+
         Returns
         -------
         (doc_topic_distr, suff_stats) :
@@ -334,10 +340,13 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         """
 
         # Run e-step in parallel
-        n_jobs = _get_n_jobs(self.n_jobs)
         random_state = self.random_state_ if random_init else None
 
-        results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        # TODO: make Parallel._effective_n_jobs public instead?
+        n_jobs = _get_n_jobs(self.n_jobs)
+        if parallel is None:
+            parallel = Parallel(n_jobs=n_jobs, verbose=self.verbose)
+        results = parallel(
             delayed(_update_doc_distribution)(X[idx_slice, :],
                                               self.exp_dirichlet_component_,
                                               self.doc_topic_prior_,
@@ -362,7 +371,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         return (doc_topic_distr, suff_stats)
 
-    def _em_step(self, X, total_samples, batch_update):
+    def _em_step(self, X, total_samples, batch_update, parallel=None):
         """EM update for 1 iteration.
 
         update `_component` by batch VB or online VB.
@@ -380,6 +389,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             Parameter that controls updating method.
             `True` for batch learning, `False` for online learning.
 
+        parallel : joblib.Parallel
+            Pre-initialized instance of joblib.Parallel
+
         Returns
         -------
         doc_topic_distr : array, shape=(n_samples, n_topics)
@@ -387,7 +399,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         """
 
         # E-step
-        _, suff_stats = self._e_step(X, cal_sstats=True, random_init=True)
+        _, suff_stats = self._e_step(X, cal_sstats=True, random_init=True,
+                                     parallel=parallel)
 
         # M-step
         if batch_update:
@@ -450,9 +463,13 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 "the model was trained with feature size %d." %
                 (n_features, self.components_.shape[1]))
 
-        for idx_slice in gen_batches(n_samples, batch_size):
-            self._em_step(X[idx_slice, :], total_samples=self.total_samples,
-                          batch_update=False)
+        n_jobs = _get_n_jobs(self.n_jobs)
+        with Parallel(n_jobs=n_jobs, verbose=self.verbose) as parallel:
+            for idx_slice in gen_batches(n_samples, batch_size):
+                self._em_step(X[idx_slice, :],
+                              total_samples=self.total_samples,
+                              batch_update=False,
+                              parallel=parallel)
 
         return self
 
@@ -483,28 +500,32 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self._init_latent_vars(n_features)
         # change to perplexity later
         last_bound = None
-        for i in xrange(max_iter):
-            if learning_method == 'online':
-                for idx_slice in gen_batches(n_samples, batch_size):
-                    self._em_step(X[idx_slice, :], total_samples=n_samples,
-                                  batch_update=False)
-            else:
-                # batch update
-                self._em_step(X, total_samples=n_samples, batch_update=True)
+        n_jobs = _get_n_jobs(self.n_jobs)
+        with Parallel(n_jobs=n_jobs, verbose=self.verbose) as parallel:
+            for i in xrange(max_iter):
+                if learning_method == 'online':
+                    for idx_slice in gen_batches(n_samples, batch_size):
+                        self._em_step(X[idx_slice, :], total_samples=n_samples,
+                                      batch_update=False, parallel=parallel)
+                else:
+                    # batch update
+                    self._em_step(X, total_samples=n_samples,
+                                  batch_update=True, parallel=parallel)
 
-            # check perplexity
-            if evaluate_every > 0 and (i + 1) % evaluate_every == 0:
-                doc_topics_distr, _ = self._e_step(X, cal_sstats=False,
-                                                   random_init=False)
-                bound = self.perplexity(X, doc_topics_distr,
-                                        sub_sampling=False)
-                if self.verbose:
-                    print('iteration: %d, perplexity: %.4f' % (i + 1, bound))
+                # check perplexity
+                if evaluate_every > 0 and (i + 1) % evaluate_every == 0:
+                    doc_topics_distr, _ = self._e_step(X, cal_sstats=False,
+                                                       random_init=False)
+                    bound = self.perplexity(X, doc_topics_distr,
+                                            sub_sampling=False)
+                    if self.verbose:
+                        print('iteration: %d, perplexity: %.4f'
+                              % (i + 1, bound))
 
-                if last_bound and abs(last_bound - bound) < self.perp_tol:
-                    break
-                last_bound = bound
-            self.n_iter_ += 1
+                    if last_bound and abs(last_bound - bound) < self.perp_tol:
+                        break
+                    last_bound = bound
+                self.n_iter_ += 1
         return self
 
     def transform(self, X):

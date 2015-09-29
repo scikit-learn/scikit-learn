@@ -57,6 +57,9 @@ cdef class Splitter:
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current node
 
+    cdef bint presort                    # Whether to use presorting, only
+                                         # allowed on dense data
+
     cdef DOUBLE_t* y
     cdef SIZE_t y_stride
     cdef DOUBLE_t* sample_weight
@@ -79,7 +82,8 @@ cdef class Splitter:
 
     # Methods
     cdef void init(self, object X, np.ndarray y,
-                   DOUBLE_t* sample_weight) except *
+                   DOUBLE_t* sample_weight,
+                   np.ndarray X_idx_sorted=*) except *
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end,
                          double* weighted_n_node_samples) nogil

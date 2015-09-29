@@ -38,7 +38,7 @@ New features
      :class:`cross_validation.LabelShuffleSplit` generate train-test folds,
      respectively similar to :class:`cross_validation.KFold` and
      :class:`cross_validation.ShuffleSplit`, except that the folds are
-     conditioned on a label array. By `Brian McFee`_, Jean Kossaifi and
+     conditioned on a label array. By `Brian McFee`_, `Jean Kossaifi`_ and
      `Gilles Louppe`_.
 
    - :class:`decomposition.LatentDirichletAllocation` implements the Latent
@@ -51,6 +51,16 @@ New features
      :class:`linear_model.Ridge`. This solver is very efficient for large
      datasets. By `Danny Sullivan`_ and `Tom Dupre la Tour`_.
      (`#4738 <https://github.com/scikit-learn/scikit-learn/pull/4738>`_)
+
+   - The new solver ``cd`` implements a Coordinate Descent in
+     :class:`decomposition.NMF`. Previous solver based on Projected Gradient is
+     still available setting new parameter ``solver`` to ``pg``, but is
+     deprecated and will be removed in 0.19, along with
+     :class:`decompositionProjectedGradientNMF` and parameters``sparseness``,
+     ``eta``, ``beta`` and ``nls_max_iter``. New parameters ``alpha`` and
+     ``l1_ratio`` control L1 and L2 regularizations, and ``shuffle`` adds a
+     shuffling step in ``cd`` solver.
+     By `Tom Dupre la Tour`_ and `Mathieu Blondel`_.
 
 Enhancements
 ............
@@ -192,6 +202,10 @@ Enhancements
    - Added ``sample_weight`` support to :class:`linear_model.LogisticRegression` for
      the ``lbfgs``, ``newton-cg``, and ``sag`` solvers. By `Valentin Stolbunov`_.
 
+   - Added optional parameter ``presort`` to :class:`ensemble.GradientBoostingRegressor` 
+     and :class:`ensemble.GradientBoostingClassifier`, keeping default behavior
+     the same. This allows gradient boosters to turn off presorting when building
+     deep trees or using sparse data. By `Jacob Schreiber`_.
 
 Bug fixes
 .........
@@ -243,6 +257,17 @@ API changes summary
       as features or as samples. All data arrays are now expected
       to be explicitly shaped ``(n_samples, n_features)``.
       By `Vighnesh Birodkar`_.
+
+    - :class:`lda.LDA` and :class:`qda.QDA` have been moved to
+      :class:`discriminant_analysis.LinearDiscriminantAnalysis` and 
+      :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
+
+    - The ``store_covariance`` and ``tol`` parameters have been moved from
+      the fit method to the constructor in
+      :class:`discriminant_analysis.LinearDiscriminantAnalysis` and the
+      ``store_covariances`` and ``tol`` parameters have been moved from the
+      fit method to the constructor in
+      :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
 
 .. _changes_0_1_16:
 
@@ -2833,7 +2858,7 @@ Changelog
      `Alexandre Gramfort`_
 
    - Printing an estimator now behaves independently of architectures
-     and Python version thanks to Jean Kossaifi.
+     and Python version thanks to `Jean Kossaifi`_.
 
    - :ref:`Loader for libsvm/svmlight format <libsvm_loader>` by
      `Mathieu Blondel`_ and `Lars Buitinck`_
@@ -2988,7 +3013,7 @@ People
    - 56  `Gilles Louppe`_
    - 42  Robert Layton
    - 38  Nelle Varoquaux
-   - 32  Jean Kossaifi
+   - 32  `Jean Kossaifi`_
    - 30  Conrad Lee
    - 22  Pietro Berkes
    - 18  andy
@@ -3686,3 +3711,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Jacob Schreiber: https://github.com/jmschrei
 .. _Ankur Ankan: https://github.com/ankurankan
 .. _Valentin Stolbunov: http://vstolbunov.com
+.. _Jean Kossaifi: https://github.com/JeanKossaifi

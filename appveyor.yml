@@ -25,13 +25,14 @@ environment:
       PYTHON_VERSION: "2.7.8"
       PYTHON_ARCH: "64"
 
-    - PYTHON: "C:\\Python34"
-      PYTHON_VERSION: "3.4.1"
+    - PYTHON: "C:\\Python35"
+      PYTHON_VERSION: "3.5.0"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python34-x64"
-      PYTHON_VERSION: "3.4.1"
+    - PYTHON: "C:\\Python35-x64"
+      PYTHON_VERSION: "3.5.0"
       PYTHON_ARCH: "64"
+
 
 
 install:
@@ -81,3 +82,11 @@ notifications:
     url: https://webhooks.gitter.im/e/0dc8e57cd38105aeb1b4
     on_build_success: false
     on_build_failure: True
+
+cache:
+  # Use the appveyor cache to avoid re-downloading large archives such
+  # the MKL numpy and scipy wheels mirrored on a rackspace cloud
+  # container, speed up the appveyor jobs and reduce bandwidth
+  # usage on our rackspace account.
+  - '%APPDATA%\pip\Cache'
+

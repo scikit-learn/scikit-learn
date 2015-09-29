@@ -13,7 +13,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..externals import six
-from inspect import getargspec
+from ..utils.fixes import signature
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -568,7 +568,7 @@ def has_fit_parameter(estimator, parameter):
     True
 
     """
-    return parameter in getargspec(estimator.fit)[0]
+    return parameter in signature(estimator.fit).parameters
 
 
 def check_symmetric(array, tol=1E-10, raise_warning=True,

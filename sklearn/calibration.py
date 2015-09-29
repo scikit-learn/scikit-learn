@@ -8,7 +8,6 @@
 # License: BSD 3 clause
 
 from __future__ import division
-import inspect
 import warnings
 
 from math import log
@@ -20,6 +19,7 @@ from .base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
 from .preprocessing import LabelBinarizer
 from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted
+from .utils.fixes import signature
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .cross_validation import check_cv
@@ -153,10 +153,10 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
             cv = check_cv(self.cv, X, y, classifier=True)
-            arg_names = inspect.getargspec(base_estimator.fit)[0]
+            fit_parameters = signature(base_estimator.fit).parameters
             estimator_name = type(base_estimator).__name__
             if (sample_weight is not None
-                    and "sample_weight" not in arg_names):
+                    and "sample_weight" not in fit_parameters):
                 warnings.warn("%s does not support sample_weight. Samples"
                               " weights are only used for the calibration"
                               " itself." % estimator_name)

@@ -10,6 +10,7 @@ estimator, as a chain of transforms and estimators.
 # Licence: BSD
 
 from collections import defaultdict
+from warnings import warn
 
 import numpy as np
 from scipy import sparse
@@ -304,6 +305,8 @@ class Pipeline(BaseEstimator):
             last step of the pipeline.
         """
         if X.ndim == 1:
+            warn("From version 0.19, a 1d X will not be reshaped in"
+                 " pipeline.inverse_transform any more.", FutureWarning)
             X = X[None, :]
         Xt = X
         for name, step in self.steps[::-1]:

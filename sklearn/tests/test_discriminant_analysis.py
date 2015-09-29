@@ -260,7 +260,7 @@ def test_qda_store_covariances():
     assert_true(not hasattr(clf, 'covariances_'))
 
     # Test the actual attribute:
-    clf = QuadraticDiscriminantAnalysis().fit(X6, y6, store_covariances=True)
+    clf = QuadraticDiscriminantAnalysis(store_covariances=True).fit(X6, y6)
     assert_true(hasattr(clf, 'covariances_'))
 
     assert_array_almost_equal(

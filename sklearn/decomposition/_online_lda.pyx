@@ -31,29 +31,32 @@ def mean_change(np.ndarray[ndim=1, dtype=np.float64_t] arr_1,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=np.float64_t] arr):
+def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=np.float64_t] doc_topic,
+                              double doc_topic_prior,
+                              np.ndarray[ndim=1, dtype=np.float64_t] out):
     """Dirichlet expectation for a single sample:
-    exp(E[log(theta)]) for theta ~ Dir(arr).
+        exp(E[log(theta)]) for theta ~ Dir(doc_topic)
+    after adding doc_topic_prior to doc_topic, in-place.
 
-    Equivalent to np.exp(psi(arr) - psi(np.sum(arr))).
+    Equivalent to
+        doc_topic += doc_topic_prior
+        out[:] = np.exp(psi(doc_topic) - psi(np.sum(doc_topic)))
     """
 
-    cdef np.float64_t total, psi_total
-    cdef np.ndarray[ndim=1, dtype=np.float64_t] d_exp
+    cdef np.float64_t dt, psi_total, total
     cdef np.npy_intp i, size
 
-    size = arr.shape[0]
-    d_exp = np.empty_like(arr)
+    size = doc_topic.shape[0]
 
     total = 0.0
     for i in range(size):
-        total += arr[i]
+        dt = doc_topic[i] + doc_topic_prior
+        doc_topic[i] = dt
+        total += dt
     psi_total = psi(total)
 
     for i in range(size):
-        d_exp[i] = exp(psi(arr[i]) - psi_total)
-
-    return d_exp
+        out[i] = exp(psi(doc_topic[i]) - psi_total)
 
 
 @cython.boundscheck(False)
@@ -65,7 +68,7 @@ def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=np.float64_t] arr):
     Equivalent to psi(arr) - psi(np.sum(arr, axis=1))[:, np.newaxis].
 
     Note that unlike _dirichlet_expectation_1d, this function doesn't compute
-    the exp.
+    the exp and doesn't add in the prior.
     """
     cdef np.float64_t row_total, psi_row_total
     cdef np.ndarray[ndim=2, dtype=np.float64_t] d_exp
