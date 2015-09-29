@@ -995,6 +995,7 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
  */
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
 struct __pyx_t_7sklearn_4tree_9_splitter_SplitRecord;
+struct __pyx_opt_args_7sklearn_4tree_9_splitter_8Splitter_init;
 
 /* "sklearn/tree/_splitter.pxd":23
  * ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
@@ -1010,6 +1011,18 @@ struct __pyx_t_7sklearn_4tree_9_splitter_SplitRecord {
   double improvement;
   double impurity_left;
   double impurity_right;
+};
+
+/* "sklearn/tree/_splitter.pxd":84
+ * 
+ *     # Methods
+ *     cdef void init(self, object X, np.ndarray y,             # <<<<<<<<<<<<<<
+ *                    DOUBLE_t* sample_weight,
+ *                    np.ndarray X_idx_sorted=*) except *
+ */
+struct __pyx_opt_args_7sklearn_4tree_9_splitter_8Splitter_init {
+  int __pyx_n;
+  PyArrayObject *X_idx_sorted;
 };
 struct __pyx_t_7sklearn_4tree_5_tree_Node;
 struct __pyx_opt_args_7sklearn_4tree_5_tree_4Tree__resize_c;
@@ -1061,12 +1074,13 @@ struct __pyx_opt_args_7sklearn_4tree_5_tree_4Tree_compute_feature_importances {
  *     cdef SIZE_t max_depth           # Maximal tree depth
  * 
  *     cpdef build(self, Tree tree, object X, np.ndarray y,             # <<<<<<<<<<<<<<
- *                 np.ndarray sample_weight=*)
- *     cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)
+ *                 np.ndarray sample_weight=*,
+ *                 np.ndarray X_idx_sorted=*)
  */
 struct __pyx_opt_args_7sklearn_4tree_5_tree_11TreeBuilder_build {
   int __pyx_n;
   PyArrayObject *sample_weight;
+  PyArrayObject *X_idx_sorted;
 };
 
 /* "sklearn/tree/_criterion.pxd":21
@@ -1123,6 +1137,7 @@ struct __pyx_obj_7sklearn_4tree_9_splitter_Splitter {
   __pyx_t_7sklearn_4tree_9_splitter_DTYPE_t *feature_values;
   __pyx_t_7sklearn_4tree_9_splitter_SIZE_t start;
   __pyx_t_7sklearn_4tree_9_splitter_SIZE_t end;
+  int presort;
   __pyx_t_7sklearn_4tree_9_splitter_DOUBLE_t *y;
   __pyx_t_7sklearn_4tree_9_splitter_SIZE_t y_stride;
   __pyx_t_7sklearn_4tree_9_splitter_DOUBLE_t *sample_weight;
@@ -1278,7 +1293,7 @@ static struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_Criterion *__pyx_vtab
  */
 
 struct __pyx_vtabstruct_7sklearn_4tree_9_splitter_Splitter {
-  void (*init)(struct __pyx_obj_7sklearn_4tree_9_splitter_Splitter *, PyObject *, PyArrayObject *, __pyx_t_7sklearn_4tree_9_splitter_DOUBLE_t *);
+  void (*init)(struct __pyx_obj_7sklearn_4tree_9_splitter_Splitter *, PyObject *, PyArrayObject *, __pyx_t_7sklearn_4tree_9_splitter_DOUBLE_t *, struct __pyx_opt_args_7sklearn_4tree_9_splitter_8Splitter_init *__pyx_optional_args);
   void (*node_reset)(struct __pyx_obj_7sklearn_4tree_9_splitter_Splitter *, __pyx_t_7sklearn_4tree_9_splitter_SIZE_t, __pyx_t_7sklearn_4tree_9_splitter_SIZE_t, double *);
   void (*node_split)(struct __pyx_obj_7sklearn_4tree_9_splitter_Splitter *, double, struct __pyx_t_7sklearn_4tree_9_splitter_SplitRecord *, __pyx_t_7sklearn_4tree_9_splitter_SIZE_t *);
   void (*node_value)(struct __pyx_obj_7sklearn_4tree_9_splitter_Splitter *, double *);

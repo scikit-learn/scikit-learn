@@ -50,14 +50,14 @@ REG_CRITERIONS = ("mse", )
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
     "Presort-DecisionTreeClassifier": partial(DecisionTreeClassifier,
-                                              splitter="presort-best"),
+                                              presort=True),
     "ExtraTreeClassifier": ExtraTreeClassifier,
 }
 
 REG_TREES = {
     "DecisionTreeRegressor": DecisionTreeRegressor,
     "Presort-DecisionTreeRegressor": partial(DecisionTreeRegressor,
-                                             splitter="presort-best"),
+                                             presort=True),
     "ExtraTreeRegressor": ExtraTreeRegressor,
 }
 
@@ -65,8 +65,8 @@ ALL_TREES = dict()
 ALL_TREES.update(CLF_TREES)
 ALL_TREES.update(REG_TREES)
 
-SPARSE_TREES = [name for name, Tree in ALL_TREES.items()
-                if Tree().splitter in SPARSE_SPLITTERS]
+SPARSE_TREES = ["DecisionTreeClassifier", "DecisionTreeRegressor",
+                "ExtraTreeClassifier", "ExtraTreeRegressor"]
 
 
 X_small = np.array([
@@ -766,7 +766,7 @@ def test_memory_layout():
         y = iris.target
         assert_array_equal(est.fit(X, y).predict(X), y)
 
-        if est.splitter in SPARSE_SPLITTERS:
+        if not est.presort:
             # csr matrix
             X = csr_matrix(iris.data, dtype=dtype)
             y = iris.target
@@ -1269,7 +1269,7 @@ def check_min_weight_leaf_split_level(name):
     sample_weight = [0.2, 0.2, 0.2, 0.2, 0.2]
     _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight)
 
-    if TreeEstimator().splitter in SPARSE_SPLITTERS:
+    if not TreeEstimator().presort:
         _check_min_weight_leaf_split_level(TreeEstimator, csc_matrix(X), y,
                                            sample_weight)
 
@@ -1303,3 +1303,21 @@ def test_public_apply():
 
     for name in SPARSE_TREES:
         yield (check_public_apply_sparse, name)
+
+
+def check_presort_sparse(est, X, y):
+    assert_raises(ValueError, est.fit, X, y )
+
+def test_presort_sparse():
+    ests = (DecisionTreeClassifier(presort=True), 
+            DecisionTreeRegressor(presort=True))
+    sparse_matrices = (csr_matrix, csc_matrix, coo_matrix)
+
+    y, X = datasets.make_multilabel_classification(random_state=0,
+                                                   n_samples=50,
+                                                   n_features=1,
+                                                   n_classes=20)
+    y = y[:, 0]
+
+    for est, sparse_matrix in product(ests, sparse_matrices):
+        yield check_presort_sparse, est, sparse_matrix(X), y

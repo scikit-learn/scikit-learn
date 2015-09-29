@@ -114,8 +114,7 @@ def check_iris_criterion(name, criterion):
     # Check consistency on dataset iris.
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
-    clf = ForestClassifier(n_estimators=10, criterion=criterion,
-                           random_state=1)
+    clf = ForestClassifier(n_estimators=10, criterion=criterion, random_state=1)
     clf.fit(iris.data, iris.target)
     score = clf.score(iris.data, iris.target)
     assert_greater(score, 0.9, "Failed with criterion %s and score = %f"
@@ -138,7 +137,8 @@ def check_boston_criterion(name, criterion):
     # Check consistency on dataset boston house prices.
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    clf = ForestRegressor(n_estimators=5, criterion=criterion, random_state=1)
+    clf = ForestRegressor(n_estimators=5, criterion=criterion, 
+                          random_state=1)
     clf.fit(boston.data, boston.target)
     score = clf.score(boston.data, boston.target)
     assert_greater(score, 0.95, "Failed with max_features=None, criterion %s "
@@ -194,8 +194,7 @@ def test_probability():
 def check_importances(X, y, name, criterion):
     ForestEstimator = FOREST_ESTIMATORS[name]
 
-    est = ForestEstimator(n_estimators=20, criterion=criterion,
-                          random_state=0)
+    est = ForestEstimator(n_estimators=20, criterion=criterion,random_state=0)
     est.fit(X, y)
     importances = est.feature_importances_
     n_important = np.sum(importances > 0.1)
@@ -213,15 +212,13 @@ def check_importances(X, y, name, criterion):
 
     # Check with sample weights
     sample_weight = check_random_state(0).randint(1, 10, len(X))
-    est = ForestEstimator(n_estimators=20, random_state=0,
-                          criterion=criterion)
+    est = ForestEstimator(n_estimators=20, random_state=0, criterion=criterion)
     est.fit(X, y, sample_weight=sample_weight)
     importances = est.feature_importances_
     assert_true(np.all(importances >= 0.0))
 
     for scale in [0.5, 10, 100]:
-        est = ForestEstimator(n_estimators=20, random_state=0,
-                              criterion=criterion)
+        est = ForestEstimator(n_estimators=20, random_state=0, criterion=criterion)
         est.fit(X, y, sample_weight=scale * sample_weight)
         importances_bis = est.feature_importances_
         assert_less(np.abs(importances - importances_bis).mean(), 0.001)

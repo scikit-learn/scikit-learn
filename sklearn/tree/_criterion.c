@@ -3552,7 +3552,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
  * 
  *                 self.weighted_n_left -= w             # <<<<<<<<<<<<<<
  * 
- *         # Upate right part statistics
+ *         # Update right part statistics
  */
       __pyx_v_self->__pyx_base.weighted_n_left = (__pyx_v_self->__pyx_base.weighted_n_left - __pyx_v_w);
     }
@@ -3561,7 +3561,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
 
   /* "sklearn/tree/_criterion.pyx":461
  * 
- *         # Upate right part statistics
+ *         # Update right part statistics
  *         self.weighted_n_right = self.weighted_n_node_samples - self.weighted_n_left             # <<<<<<<<<<<<<<
  *         for k in range(self.n_outputs):
  *             for c in range(n_classes[k]):
@@ -3569,7 +3569,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   __pyx_v_self->__pyx_base.weighted_n_right = (__pyx_v_self->__pyx_base.weighted_n_node_samples - __pyx_v_self->__pyx_base.weighted_n_left);
 
   /* "sklearn/tree/_criterion.pyx":462
- *         # Upate right part statistics
+ *         # Update right part statistics
  *         self.weighted_n_right = self.weighted_n_node_samples - self.weighted_n_left
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
  *             for c in range(n_classes[k]):
