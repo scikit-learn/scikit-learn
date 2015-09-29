@@ -532,7 +532,6 @@ class Lars(LinearModel, RegressorMixin):
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
-
     fit_path : boolean
         If True the full path is stored in the ``coef_path_`` attribute.
         If you compute the solution for a large problem or many targets,
