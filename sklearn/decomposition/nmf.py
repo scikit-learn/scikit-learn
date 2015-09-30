@@ -474,8 +474,13 @@ def _update_coordinate_descent(X, W, Ht, alpha, l1_ratio, shuffle,
     if l1_reg != 0.:
         XHt -= l1_reg
 
-    seed = random_state.randint(np.iinfo(np.int32).max)
-    return _update_cdnmf_fast(W, HHt, XHt, shuffle, seed)
+    if shuffle:
+        permutation = random_state.permutation(n_components)
+    else:
+        permutation = np.arange(n_components)
+    # The following seems to be required on 64-bit Windows w/ Python 3.5.
+    permutation = np.asarray(permutation, dtype=np.intp)
+    return _update_cdnmf_fast(W, HHt, XHt, permutation)
 
 
 def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, alpha=0.001,
@@ -525,8 +530,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, alpha=0.001,
         The verbosity level.
 
     shuffle : boolean, default: False
-        If True, the samples will be taken in shuffled order during
-        coordinate descent.
+        If true, randomize the order of coordinates in the CD solver.
 
     random_state : integer seed, RandomState instance, or None (default)
         Random number generator seed control.
@@ -684,9 +688,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     verbose : integer, default: 0
         The verbosity level.
 
-    shuffle : boolean
-        If True, the samples will be taken in shuffled order during
-        coordinate descent.
+    shuffle : boolean, default: False
+        If true, randomize the order of coordinates in the CD solver.
 
     nls_max_iter : integer, default: 2000
         Number of iterations in NLS subproblem.
@@ -861,9 +864,8 @@ class NMF(BaseEstimator, TransformerMixin):
         For l1_ratio = 1 it is an elementwise L1 penalty.
         For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
 
-    shuffle : boolean
-        If True, the samples will be taken in shuffled order during
-        coordinate descent.
+    shuffle : boolean, default: False
+        If true, randomize the order of coordinates in the CD solver.
 
     nls_max_iter : integer, default: 2000
         Number of iterations in NLS subproblem.
