@@ -1215,15 +1215,14 @@ def kernel_metrics():
 
 
 KERNEL_PARAMS = {
-    "additive_chi2": (),
-    "chi2": (),
-    "cosine": (),
-    "exp_chi2": frozenset(["gamma"]),
-    "linear": (),
-    "poly": frozenset(["gamma", "degree", "coef0"]),
-    "polynomial": frozenset(["gamma", "degree", "coef0"]),
-    "rbf": frozenset(["gamma"]),
-    "sigmoid": frozenset(["gamma", "coef0"]),
+            "additive_chi2": {},
+            "chi2": {"gamma": 1.},
+            "cosine": {},
+            "linear": {},
+            "poly": {"gamma": None, "degree": 3, "coef0": 1},
+            "polynomial": {"gamma": None, "degree": 3, "coef0": 1},
+            "rbf": {"gamma": None},
+            "sigmoid": {"gamma": None, "coef0": 1},
 }
 
 
