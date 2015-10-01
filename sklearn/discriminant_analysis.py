@@ -419,7 +419,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
                           "the estimator initialisation or set_params method.",
                           DeprecationWarning)
             self.tol = tol
-        X, y = check_X_y(X, y, ensure_min_samples=2)
+        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self)
         self.classes_ = unique_labels(y)
 
         if self.priors is None:  # estimate priors from sample

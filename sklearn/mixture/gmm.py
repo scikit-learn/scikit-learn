@@ -462,7 +462,8 @@ class GMM(BaseEstimator):
         """
 
         # initialization step
-        X = check_array(X, dtype=np.float64, ensure_min_samples=2)
+        X = check_array(X, dtype=np.float64, ensure_min_samples=2,
+                        estimator=self)
         if X.shape[0] < self.n_components:
             raise ValueError(
                 'GMM estimation with %s components, but got only %s samples' %
