@@ -448,7 +448,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter,
     return W, H, n_iter
 
 
-def _update_coordinate_descent(X, W, Ht, alpha, l1_ratio, shuffle,
+def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle,
                                random_state):
     """Helper function for _fit_coordinate_descent
 
@@ -461,10 +461,6 @@ def _update_coordinate_descent(X, W, Ht, alpha, l1_ratio, shuffle,
 
     HHt = fast_dot(Ht.T, Ht)
     XHt = safe_sparse_dot(X, Ht)
-
-    # L1 and L2 regularizations
-    l1_reg = 1. * l1_ratio * alpha
-    l2_reg = (1. - l1_ratio) * alpha
 
     # L2 regularization corresponds to increase the diagonal of HHt
     if l2_reg != 0.:
@@ -557,39 +553,43 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, alpha=0.001,
     Ht = check_array(H.T, order='C')
     X = check_array(X, accept_sparse='csr')
 
-    alpha_H = 0.
-    alpha_W = 0.
+    # L1 and L2 regularization
+    l1_H, l2_H, l1_W, l2_W = 0, 0, 0, 0
     if regularization in ('both', 'components'):
-        alpha_H = float(alpha)
+        alpha = float(alpha)
+        l1_H = l1_ratio * alpha
+        l2_H = (1. - l1_ratio) * alpha
     if regularization in ('both', 'transformation'):
-        alpha_W = float(alpha)
+        alpha = float(alpha)
+        l1_W = l1_ratio * alpha
+        l2_W = (1. - l1_ratio) * alpha
 
     rng = check_random_state(random_state)
 
     for n_iter in range(max_iter):
-            violation = 0.
+        violation = 0.
 
-            # Update W
-            violation += _update_coordinate_descent(X, W, Ht, alpha_W,
-                                                    l1_ratio, shuffle, rng)
-            # Update H
-            if update_H:
-                violation += _update_coordinate_descent(X.T, Ht, W, alpha_H,
-                                                        l1_ratio, shuffle, rng)
+        # Update W
+        violation += _update_coordinate_descent(X, W, Ht, l1_W, l2_W,
+                                                shuffle, rng)
+        # Update H
+        if update_H:
+            violation += _update_coordinate_descent(X.T, Ht, W, l1_H, l2_H,
+                                                    shuffle, rng)
 
-            if n_iter == 0:
-                violation_init = violation
+        if n_iter == 0:
+            violation_init = violation
 
-            if violation_init == 0:
-                break
+        if violation_init == 0:
+            break
 
+        if verbose:
+            print("violation:", violation / violation_init)
+
+        if violation / violation_init <= tol:
             if verbose:
-                print("violation:", violation / violation_init)
-
-            if violation / violation_init <= tol:
-                if verbose:
-                    print("Converged at iteration", n_iter + 1)
-                break
+                print("Converged at iteration", n_iter + 1)
+            break
 
     return W, Ht.T, n_iter
 
