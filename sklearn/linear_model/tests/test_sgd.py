@@ -253,6 +253,12 @@ class CommonTest(object):
                                   decimal=16)
         assert_almost_equal(clf1.intercept_, average_intercept, decimal=16)
 
+    @raises(ValueError)
+    def test_sgd_bad_alpha_for_optimal_learning_rate(self):
+        # Check whether expected ValueError on bad alpha, i.e. 0
+        # since alpha is used to compute the optimal learning rate
+        self.factory(alpha=0, learning_rate="optimal")
+
 
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     """Test suite for the dense representation variant of SGD"""
