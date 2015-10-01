@@ -40,6 +40,7 @@ from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM, BaseSVC
 from sklearn.pipeline import make_pipeline
+from sklearn.decomposition import NMF, ProjectedGradientNMF
 from sklearn.utils.validation import DataConversionWarning
 from sklearn.utils import ConvergenceWarning
 from sklearn.cross_validation import train_test_split
@@ -263,6 +264,10 @@ def set_optimal_parameters(estimator):
         # SelectKBest has a default of k=10
         # which is more feature than we have in most case.
         estimator.set_params(k=1)
+
+    if isinstance(estimator, NMF):
+        if not isinstance(estimator, ProjectedGradientNMF):
+            estimator.set_params(solver='cd')
 
 
 class NotAnArray(object):
