@@ -357,6 +357,15 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
             # list of accepted types.
             dtype = dtype[0]
 
+    if estimator is not None:
+        if isinstance(estimator, six.string_types):
+            estimator_name = estimator
+        else:
+            estimator_name = estimator.__class__.__name__
+    else:
+        estimator_name = "Estimator"
+    context = " by %s" % estimator_name if estimator is not None else ""
+
     if sp.issparse(array):
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
                                       force_all_finite)
@@ -379,8 +388,8 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
         if dtype_numeric and array.dtype.kind == "O":
             array = array.astype(np.float64)
         if not allow_nd and array.ndim >= 3:
-            raise ValueError("Found array with dim %d. Expected <= 2" %
-                             array.ndim)
+            raise ValueError("Found array with dim %d. %s expected <= 2."
+                             % (array.ndim, estimator_name))
         if force_all_finite:
             _assert_all_finite(array)
 
@@ -389,23 +398,21 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
         n_samples = _num_samples(array)
         if n_samples < ensure_min_samples:
             raise ValueError("Found array with %d sample(s) (shape=%s) while a"
-                             " minimum of %d is required."
-                             % (n_samples, shape_repr, ensure_min_samples))
+                             " minimum of %d is required%s."
+                             % (n_samples, shape_repr, ensure_min_samples,
+                                context))
 
     if ensure_min_features > 0 and array.ndim == 2:
         n_features = array.shape[1]
         if n_features < ensure_min_features:
             raise ValueError("Found array with %d feature(s) (shape=%s) while"
-                             " a minimum of %d is required."
-                             % (n_features, shape_repr, ensure_min_features))
+                             " a minimum of %d is required%s."
+                             % (n_features, shape_repr, ensure_min_features,
+                                context))
 
     if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:
-        msg = ("Data with input dtype %s was converted to %s"
-               % (dtype_orig, array.dtype))
-        if estimator is not None:
-            if not isinstance(estimator, six.string_types):
-                estimator = estimator.__class__.__name__
-            msg += " by %s" % estimator
+        msg = ("Data with input dtype %s was converted to %s%s."
+               % (dtype_orig, array.dtype, context))
         warnings.warn(msg, DataConversionWarning)
     return array
 
