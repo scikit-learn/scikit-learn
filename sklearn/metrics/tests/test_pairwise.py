@@ -115,6 +115,17 @@ def test_pairwise_distances():
     assert_raises(ValueError, pairwise_distances, X, Y, metric="blah")
 
 
+def test_constant_row_cosine():
+    # Test correct handling of costant columns
+    np.random.seed(42)
+    X1 = np.random.rand(10, 3)
+    for const in [0, 1]:
+        X1[-1, :] = const
+        for X2 in [X1, -X1, X1 + np.arange(3)]:
+            dist = pairwise_distances(X1, X2, metric='cosine')
+            assert_true(dist.all() >= 0.0)
+
+
 def test_pairwise_precomputed():
     for func in [pairwise_distances, pairwise_kernels]:
         # Test correct shape
