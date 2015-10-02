@@ -573,4 +573,5 @@ def test_constant_row_all():
                 tsne = TSNE(metric=metric)
                 tsne.fit_transform(Y)
             except ValueError:
+                print(metric + ' raised a ValueError.')
                 assert False
