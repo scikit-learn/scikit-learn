@@ -68,6 +68,7 @@ def test_non_meta_estimators():
             continue
         for check in _yield_all_checks(name, Estimator):
             if issubclass(Estimator, ProjectedGradientNMF):
+                # The ProjectedGradientNMF class is deprecated
                 with ignore_warnings():
                     yield check, name, Estimator
             else:
@@ -185,6 +186,7 @@ def test_transformer_n_iter():
     transformers = all_estimators(type_filter='transformer')
     for name, Estimator in transformers:
         if issubclass(Estimator, ProjectedGradientNMF):
+            # The ProjectedGradientNMF class is deprecated
             with ignore_warnings():
                 estimator = Estimator()
         else:
@@ -196,6 +198,7 @@ def test_transformer_n_iter():
 
         if hasattr(estimator, "max_iter") and name not in external_solver:
             if isinstance(estimator, ProjectedGradientNMF):
+                # The ProjectedGradientNMF class is deprecated
                 with ignore_warnings():
                     yield check_transformer_n_iter, name, estimator
             else:
@@ -210,6 +213,7 @@ def test_get_params_invariance():
     estimators = all_estimators(include_meta_estimators=False, include_other=True)
     for name, Estimator in estimators:
         if hasattr(Estimator, 'get_params'):
+            # The ProjectedGradientNMF class is deprecated
             if issubclass(Estimator, ProjectedGradientNMF):
                 with ignore_warnings():
                     yield check_get_params_invariance, name, Estimator
