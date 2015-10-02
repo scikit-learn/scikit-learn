@@ -56,10 +56,10 @@ New features
      :class:`decomposition.NMF`. Previous solver based on Projected Gradient is
      still available setting new parameter ``solver`` to ``pg``, but is
      deprecated and will be removed in 0.19, along with
-     :class:`decompositionProjectedGradientNMF` and parameters``sparseness``,
+     :class:`decomposition.ProjectedGradientNMF` and parameters ``sparseness``,
      ``eta``, ``beta`` and ``nls_max_iter``. New parameters ``alpha`` and
-     ``l1_ratio`` control L1 and L2 regularizations, and ``shuffle`` adds a
-     shuffling step in ``cd`` solver.
+     ``l1_ratio`` control L1 and L2 regularization, and ``shuffle`` adds a
+     shuffling step in the ``cd`` solver.
      By `Tom Dupre la Tour`_ and `Mathieu Blondel`_.
 
 Enhancements
