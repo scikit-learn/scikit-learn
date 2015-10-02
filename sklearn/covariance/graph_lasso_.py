@@ -205,7 +205,8 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         d_gap = np.inf
         for i in range(max_iter):
             for idx in range(n_features):
-                sub_covariance = covariance_[indices != idx].T[indices != idx]
+                sub_covariance = np.ascontiguousarray(
+                    covariance_[indices != idx].T[indices != idx])
                 row = emp_cov[idx, indices != idx]
                 with np.errstate(**errors):
                     if mode == 'cd':
