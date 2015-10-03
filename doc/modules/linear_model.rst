@@ -266,8 +266,8 @@ They also tend to break when the problem is badly conditioned
 
   * :ref:`example_linear_model_plot_lasso_model_selection.py`
 
-.. _multi_task_lasso:
 
+.. _multi_task_lasso:
 
 Multi-task Lasso
 ================
@@ -297,7 +297,6 @@ columns.
 .. topic:: Examples:
 
   * :ref:`example_linear_model_plot_multi_task_lasso_support.py`
-
 
 
 Mathematically, it consists of a linear model trained with a mixed
@@ -353,6 +352,31 @@ The class :class:`ElasticNetCV` can be used to set the parameters
   * :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`example_linear_model_plot_lasso_coordinate_descent_path.py`
 
+
+
+.. _multi_task_elastic_net:
+
+Multi-task Elastic Net
+======================
+
+The :class:`MultiTaskElasticNet` is an elastic-net model that estimates sparse
+coefficients for multiple regression problems jointly: ``y`` is a 2D array,
+of shape (n_samples, n_tasks).The constraint is that the selected
+features are the same for all the regression problems, also called tasks.
+
+Mathematically, it consists of a linear model trained with a mixed
+:math:`\ell_1` :math:`\ell_2` prior as regularizer.
+The objective function to minimize is:
+
+.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_2 ^ 2 + \alpha ||W||_{21}}
+
+where;
+
+.. math:: ||W||_{2 1} = \sum_i \sqrt{\sum_j w_{ij}^2}
+
+
+The implementation in the class :class:`MultiTaskLasso` uses coordinate descent as
+the algorithm to fit the coefficients.
 
 
 .. _least_angle_regression:
