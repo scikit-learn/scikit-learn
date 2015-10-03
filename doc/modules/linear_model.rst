@@ -378,7 +378,7 @@ where;
 .. math:: ||W||_{2 1} = \sum_i \sqrt{\sum_j w_{ij}^2}
 
 
-The implementation in the class :class:`MultiTaskLasso` uses coordinate descent as
+The implementation in the class :class:`MultiTaskElasticNet` uses coordinate descent as
 the algorithm to fit the coefficients.
 
 The class :class:`MultiTaskElasticNetCV` can be used to set the parameters
