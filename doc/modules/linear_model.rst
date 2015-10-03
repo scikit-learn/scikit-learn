@@ -266,46 +266,8 @@ They also tend to break when the problem is badly conditioned
 
   * :ref:`example_linear_model_plot_lasso_model_selection.py`
 
-.. _elastic_net:
-
-Elastic Net
-===========
-:class:`ElasticNet` is a linear regression model trained with L1 and L2 prior
-as regularizer. This combination allows for learning a sparse model where
-few of the weights are non-zero like :class:`Lasso`, while still maintaining
-the regularization properties of :class:`Ridge`. We control the convex
-combination of L1 and L2 using the ``l1_ratio`` parameter.
-
-Elastic-net is useful when there are multiple features which are
-correlated with one another. Lasso is likely to pick one of these
-at random, while elastic-net is likely to pick both.
-
-A practical advantage of trading-off between Lasso and Ridge is it allows
-Elastic-Net to inherit some of Ridge's stability under rotation.
-
-The objective function to minimize is in this case
-
-.. math::
-
-    \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha \rho ||w||_1 +
-    \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
-
-
-.. figure:: ../auto_examples/linear_model/images/plot_lasso_coordinate_descent_path_001.png
-   :target: ../auto_examples/linear_model/plot_lasso_coordinate_descent_path.html
-   :align: center
-   :scale: 50%
-
-The class :class:`ElasticNetCV` can be used to set the parameters
-``alpha`` (:math:`\alpha`) and ``l1_ratio`` (:math:`\rho`) by cross-validation.
-
-.. topic:: Examples:
-
-  * :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
-  * :ref:`example_linear_model_plot_lasso_coordinate_descent_path.py`
-
-
 .. _multi_task_lasso:
+
 
 Multi-task Lasso
 ================
@@ -351,6 +313,47 @@ where;
 
 The implementation in the class :class:`MultiTaskLasso` uses coordinate descent as
 the algorithm to fit the coefficients.
+
+
+.. _elastic_net:
+
+Elastic Net
+===========
+:class:`ElasticNet` is a linear regression model trained with L1 and L2 prior
+as regularizer. This combination allows for learning a sparse model where
+few of the weights are non-zero like :class:`Lasso`, while still maintaining
+the regularization properties of :class:`Ridge`. We control the convex
+combination of L1 and L2 using the ``l1_ratio`` parameter.
+
+Elastic-net is useful when there are multiple features which are
+correlated with one another. Lasso is likely to pick one of these
+at random, while elastic-net is likely to pick both.
+
+A practical advantage of trading-off between Lasso and Ridge is it allows
+Elastic-Net to inherit some of Ridge's stability under rotation.
+
+The objective function to minimize is in this case
+
+.. math::
+
+    \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha \rho ||w||_1 +
+    \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
+
+
+.. figure:: ../auto_examples/linear_model/images/plot_lasso_coordinate_descent_path_001.png
+   :target: ../auto_examples/linear_model/plot_lasso_coordinate_descent_path.html
+   :align: center
+   :scale: 50%
+
+The class :class:`ElasticNetCV` can be used to set the parameters
+``alpha`` (:math:`\alpha`) and ``l1_ratio`` (:math:`\rho`) by cross-validation.
+
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
+  * :ref:`example_linear_model_plot_lasso_coordinate_descent_path.py`
+
+
 
 .. _least_angle_regression:
 
