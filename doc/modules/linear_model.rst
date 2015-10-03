@@ -266,15 +266,15 @@ They also tend to break when the problem is badly conditioned
 
   * :ref:`example_linear_model_plot_lasso_model_selection.py`
 
-.. _multi_task_lasso:
 
+.. _multi_task_lasso:
 
 Multi-task Lasso
 ================
 
 The :class:`MultiTaskLasso` is a linear model that estimates sparse
 coefficients for multiple regression problems jointly: ``y`` is a 2D array,
-of shape (n_samples, n_tasks). The constraint is that the selected
+of shape ``(n_samples, n_tasks)``. The constraint is that the selected
 features are the same for all the regression problems, also called tasks.
 
 The following figure compares the location of the non-zeros in W obtained
@@ -299,16 +299,21 @@ columns.
   * :ref:`example_linear_model_plot_multi_task_lasso_support.py`
 
 
-
 Mathematically, it consists of a linear model trained with a mixed
 :math:`\ell_1` :math:`\ell_2` prior as regularizer.
 The objective function to minimize is:
 
-.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_2 ^ 2 + \alpha ||W||_{21}}
+.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro} ^ 2 + \alpha ||W||_{21}}
 
 where;
 
-.. math:: ||W||_{2 1} = \sum_i \sqrt{\sum_j w_{ij}^2}
+:math:`Fro` indicates the Frobenius norm:
+
+.. math:: ||A||_{Fro} = \sqrt{\sum_{ij} a_{ij}^2}
+
+and
+
+.. math:: ||A||_{2 1} = \sum_i \sqrt{\sum_j a_{ij}^2}
 
 
 The implementation in the class :class:`MultiTaskLasso` uses coordinate descent as
@@ -353,6 +358,32 @@ The class :class:`ElasticNetCV` can be used to set the parameters
   * :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`example_linear_model_plot_lasso_coordinate_descent_path.py`
 
+
+
+.. _multi_task_elastic_net:
+
+Multi-task Elastic Net
+======================
+
+The :class:`MultiTaskElasticNet` is an elastic-net model that estimates sparse
+coefficients for multiple regression problems jointly: ``y`` is a 2D array,
+of shape ``(n_samples, n_tasks)``. The constraint is that the selected
+features are the same for all the regression problems, also called tasks.
+
+Mathematically, it consists of a linear model trained with a mixed
+:math:`\ell_1` :math:`\ell_2` prior as regularizer.
+The objective function to minimize is:
+
+.. math::
+
+    \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_{Fro}^2 + \alpha \rho ||w||_{2 1} +
+    \frac{\alpha(1-\rho)}{2} ||w||_{Fro}^2}
+
+The implementation in the class :class:`MultiTaskElasticNet` uses coordinate descent as
+the algorithm to fit the coefficients.
+
+The class :class:`MultiTaskElasticNetCV` can be used to set the parameters
+``alpha`` (:math:`\alpha`) and ``l1_ratio`` (:math:`\rho`) by cross-validation.
 
 
 .. _least_angle_regression:
