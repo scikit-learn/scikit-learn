@@ -368,7 +368,10 @@ Mathematically, it consists of a linear model trained with a mixed
 :math:`\ell_1` :math:`\ell_2` prior as regularizer.
 The objective function to minimize is:
 
-.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_2 ^ 2 + \alpha ||W||_{21}}
+.. math::
+
+    \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha \rho ||w||_{2 1} +
+    \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
 
 where;
 
@@ -377,6 +380,9 @@ where;
 
 The implementation in the class :class:`MultiTaskLasso` uses coordinate descent as
 the algorithm to fit the coefficients.
+
+The class :class:`MultiTaskElasticNetCV` can be used to set the parameters
+``alpha`` (:math:`\alpha`) and ``l1_ratio`` (:math:`\rho`) by cross-validation.
 
 
 .. _least_angle_regression:
