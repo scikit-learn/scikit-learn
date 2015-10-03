@@ -687,23 +687,26 @@ class Lars(LinearModel, RegressorMixin):
                                    self.coef_)]
                 self.n_iter_ = self.n_iter_[0]
         else:
+            lars_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                delayed(lars_path)(
+                    X, y[:, k], Gram=Gram, Xy=None if Xy is None else Xy[:, k],
+                    copy_X=self.copy_X, copy_Gram=True, alpha_min=alpha,
+                    method=self.method, verbose=max(0, self.verbose - 1),
+                    max_iter=max_iter, eps=self.eps, return_path=False,
+                    return_n_iter=True, positive=self.positive)
+                for k in xrange(n_targets))
+
             self.coef_ = np.empty((n_targets, n_features))
-            for k in xrange(n_targets):
-                this_Xy = None if Xy is None else Xy[:, k]
-                alphas, _, self.coef_[k], n_iter_ = lars_path(
-                    X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
-                    copy_Gram=True, alpha_min=alpha, method=self.method,
-                    verbose=max(0, self.verbose - 1), max_iter=max_iter,
-                    eps=self.eps, return_path=False, return_n_iter=True,
-                    positive=self.positive)
+            for index, (alphas,_,coef_path,n_iter_) in enumerate(lars_paths):
                 self.alphas_.append(alphas)
                 self.n_iter_.append(n_iter_)
+                self.coef_[index] = coef_path
+
             if n_targets == 1:
                 self.alphas_ = self.alphas_[0]
                 self.n_iter_ = self.n_iter_[0]
         self._set_intercept(X_mean, y_mean, X_std)
         return self
-
 
 class LassoLars(Lars):
     """Lasso model fit with Least Angle Regression a.k.a. Lars
