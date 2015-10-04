@@ -102,6 +102,11 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         if self.learning_rate in ("constant", "invscaling"):
             if self.eta0 <= 0.0:
                 raise ValueError("eta0 must be > 0")
+        if self.learning_rate == "optimal":
+            if self.alpha == 0:
+                raise ValueError("alpha must be > 0 since "
+                                 "learning_rate is 'optimal'. alpha is used "
+                                 "to compute the optimal learning rate.")
 
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
@@ -588,6 +593,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
+        Also used to compute learning_rate when set to 'optimal'.
 
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
@@ -630,7 +636,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     learning_rate : string, optional
         The learning rate schedule:
         constant: eta = eta0
-        optimal: eta = 1.0 / (t + t0) [default]
+        optimal: eta = 1.0 / (alpha * (t + t0)) [default]
         invscaling: eta = eta0 / pow(t, power_t)
         where t0 is chosen by a heuristic proposed by Leon Bottou.
 
@@ -1120,6 +1126,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
+        Also used to compute learning_rate when set to 'optimal'.
 
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
