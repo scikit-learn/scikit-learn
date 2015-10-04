@@ -5,7 +5,6 @@
 """Classification and regression using Stochastic Gradient Descent (SGD)."""
 
 import numpy as np
-import scipy.sparse as sp
 
 from abc import ABCMeta, abstractmethod
 
@@ -102,11 +101,10 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         if self.learning_rate in ("constant", "invscaling"):
             if self.eta0 <= 0.0:
                 raise ValueError("eta0 must be > 0")
-        if self.learning_rate == "optimal":
-            if self.alpha == 0:
-                raise ValueError("alpha must be > 0 since "
-                                 "learning_rate is 'optimal'. alpha is used "
-                                 "to compute the optimal learning rate.")
+        if self.learning_rate == "optimal" and self.alpha == 0:
+            raise ValueError("alpha must be > 0 since "
+                             "learning_rate is 'optimal'. alpha is used "
+                             "to compute the optimal learning rate.")
 
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
@@ -162,7 +160,8 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             if coef_init is not None:
                 coef_init = np.asarray(coef_init, order="C")
                 if coef_init.shape != (n_classes, n_features):
-                    raise ValueError("Provided ``coef_`` does not match dataset. ")
+                    raise ValueError("Provided ``coef_`` does not match "
+                                     "dataset. ")
                 self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros((n_classes, n_features),
@@ -360,8 +359,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
         elif n_features != self.coef_.shape[-1]:
-            raise ValueError("Number of features %d does not match previous data %d."
-                             % (n_features, self.coef_.shape[-1]))
+            raise ValueError("Number of features %d does not match previous "
+                             "data %d." % (n_features, self.coef_.shape[-1]))
 
         self.loss_function = self._get_loss_function(loss)
         if self.t_ is None:
@@ -500,8 +499,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         """
         if self.class_weight in ['balanced', 'auto']:
             raise ValueError("class_weight '{0}' is not supported for "
-                             "partial_fit. In order to use 'balanced' weights, "
-                             "use compute_class_weight('{0}', classes, y). "
+                             "partial_fit. In order to use 'balanced' weights,"
+                             " use compute_class_weight('{0}', classes, y). "
                              "In place of y you can us a large enough sample "
                              "of the full training set target to properly "
                              "estimate the class frequency distributions. "
@@ -512,7 +511,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                  classes=classes, sample_weight=sample_weight,
                                  coef_init=None, intercept_init=None)
 
-    def fit(self, X, y, coef_init=None, intercept_init=None, sample_weight=None):
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -871,8 +871,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             self._allocate_parameter_mem(1, n_features,
                                          coef_init, intercept_init)
         elif n_features != self.coef_.shape[-1]:
-            raise ValueError("Number of features %d does not match previous data %d."
-                             % (n_features, self.coef_.shape[-1]))
+            raise ValueError("Number of features %d does not match previous "
+                             "data %d." % (n_features, self.coef_.shape[-1]))
         if self.average > 0 and self.average_coef_ is None:
             self.average_coef_ = np.zeros(n_features,
                                           dtype=np.float64,
@@ -1181,7 +1181,8 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
-        average. So ``average=10 will`` begin averaging after seeing 10 samples.
+        average. So ``average=10 will`` begin averaging after seeing 10
+        samples.
 
     Attributes
     ----------
