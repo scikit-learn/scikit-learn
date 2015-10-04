@@ -582,9 +582,9 @@ class Lars(LinearModel, RegressorMixin):
 
     """
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
-                 precompute='auto', n_nonzero_coefs=500, n_jobs=1,
+                 precompute='auto', n_nonzero_coefs=500,
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 positive=False):
+                 positive=False, n_jobs=1):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
@@ -828,8 +828,8 @@ class LassoLars(Lars):
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 n_jobs=1, eps=np.finfo(np.float).eps, copy_X=True,
-                 fit_path=True, positive=False):
+                 eps=np.finfo(np.float).eps, copy_X=True,
+                 fit_path=True, positive=False, n_jobs=1):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
