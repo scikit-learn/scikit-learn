@@ -241,8 +241,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     n_components = dictionary.shape[0]
 
     if gram is None and algorithm != 'threshold':
-        # Transposing product to ensure Fortran ordering
-        gram = np.dot(dictionary, dictionary.T).T
+        gram = np.dot(dictionary, dictionary.T)
 
     if cov is None and algorithm != 'lasso_cd':
         copy_cov = False
@@ -496,9 +495,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
             sys.stdout.write(".")
             sys.stdout.flush()
         elif verbose:
-            print ("Iteration % 3i "
-                   "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
-                   % (ii, dt, dt / 60, current_cost))
+            print("Iteration % 3i "
+                  "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
+                  % (ii, dt, dt / 60, current_cost))
 
         # Update code
         code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,

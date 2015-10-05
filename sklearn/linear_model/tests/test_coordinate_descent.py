@@ -641,19 +641,14 @@ def test_check_input_false():
     clf.fit(X, y, check_input=False)
     X = check_array(X, order='F', dtype='float32')
     clf.fit(X, y, check_input=True)
-    # Check that an error is raised if data is provided in the wrong format,
+    # Check that an error is raised if data is provided in the wrong dtype,
     # because of check bypassing
     assert_raises(ValueError, clf.fit, X, y, check_input=False)
 
     # With no input checking, providing X in C order should result in false
     # computation
     X = check_array(X, order='C', dtype='float64')
-    clf.fit(X, y, check_input=False)
-    coef_false = clf.coef_
-    clf.fit(X, y, check_input=True)
-    coef_true = clf.coef_
-    assert_raises(AssertionError, assert_array_almost_equal,
-                  coef_true, coef_false)
+    assert_raises(ValueError, clf.fit, X, y, check_input=False)
 
 
 def test_overrided_gram_matrix():

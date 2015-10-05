@@ -254,7 +254,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
-              verbose=False, return_n_iter=False, positive=False, **params):
+              verbose=False, return_n_iter=False, positive=False,
+              check_input=True, **params):
     """Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
@@ -331,6 +332,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     positive : bool, default False
         If set to True, forces coefficients to be positive.
 
+    check_input : bool, default True
+        Skip input validation checks, including the Gram matrix when provided
+        assuming there are handled by the caller when check_input=False.
+
     Returns
     -------
     alphas : array, shape (n_alphas,)
@@ -361,15 +366,13 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     """
     # We expect X and y to be already float64 Fortran ordered when bypassing
     # checks
-    check_input = 'check_input' not in params or params['check_input']
-    pre_fit = 'check_input' not in params or params['pre_fit']
     if check_input:
         X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
         y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False,
                         ensure_2d=False)
         if Xy is not None:
-            Xy = check_array(Xy, 'csc', dtype=np.float64, order='F',
-                             copy=False,
+            # Xy should be a 1d contiguous array or a 2D C ordered array
+            Xy = check_array(Xy, dtype=np.float64, order='C', copy=False,
                              ensure_2d=False)
     n_samples, n_features = X.shape
 
@@ -389,11 +392,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     # X should be normalized and fit already if function is called
     # from ElasticNet.fit
-    if pre_fit:
+    if check_input:
         X, y, X_mean, y_mean, X_std, precompute, Xy = \
             _pre_fit(X, y, Xy, precompute, normalize=False,
-                     fit_intercept=False,
-                     copy=False, Xy_precompute_order='F')
+                     fit_intercept=False, copy=False)
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
@@ -441,8 +443,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             # We expect precompute to be already Fortran ordered when bypassing
             # checks
             if check_input:
-                precompute = check_array(precompute, 'csc', dtype=np.float64,
-                                         order='F')
+                precompute = check_array(precompute, dtype=np.float64,
+                                         order='C')
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
                 tol, rng, random, positive)
@@ -654,10 +656,11 @@ class ElasticNet(LinearModel, RegressorMixin):
                              order='F',
                              copy=self.copy_X and self.fit_intercept,
                              multi_output=True, y_numeric=True)
+            y = check_array(y, dtype=np.float64, order='F', copy=False,
+                            ensure_2d=False)
         X, y, X_mean, y_mean, X_std, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
-                     self.fit_intercept, copy=False, Xy_precompute_order='F')
-
+                     self.fit_intercept, copy=False)
         if y.ndim == 1:
             y = y[:, np.newaxis]
         if Xy is not None and Xy.ndim == 1:
@@ -696,8 +699,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                           coef_init=coef_[k], max_iter=self.max_iter,
                           random_state=self.random_state,
                           selection=self.selection,
-                          check_input=False,
-                          pre_fit=False)
+                          check_input=False)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
             self.n_iter_.append(this_iter[0])
