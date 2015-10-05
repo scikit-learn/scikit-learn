@@ -23,7 +23,7 @@ from .fixes import np_version
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
-from .validation import check_array, NonBLASDotWarning
+from .validation import as_float_array, check_array, NonBLASDotWarning
 
 
 def norm(x):
@@ -154,6 +154,33 @@ if np_version < (1, 7, 2) and _have_blas_gemm():
             return np.dot(A, B)
 else:
     fast_dot = np.dot
+
+
+def fast_cov(X, bias=0, rowvar=True):
+    """Covariance matrix of X.
+
+    This function is faster and more memory-efficient than np.cov
+    (at least as of NumPy 1.10; 1.11 will receive similar optimizations).
+
+    Based on the NumPy version.
+    """
+    if bias not in [0, 1]:
+        raise ValueError("expected bias=0 or bias=1, got bias=%r" % bias)
+    ddof = 1 - bias
+
+    X = as_float_array(X, copy=True, force_all_finite=False)
+    if not rowvar and X.shape[0] != 1:
+        X = X.T
+    X -= np.average(X, axis=1)[:, np.newaxis]
+
+    if X.shape[0] > X.shape[1]:
+        X *= 1. / np.sqrt(X.shape[1] - ddof)
+        c = np.dot(X, X.T)
+    else:
+        c = np.dot(X, X.T)
+        c *= 1. / np.float64(X.shape[1] - ddof)
+
+    return c.squeeze()
 
 
 def density(w, **kwargs):

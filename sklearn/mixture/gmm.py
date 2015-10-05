@@ -16,7 +16,7 @@ from time import time
 
 from ..base import BaseEstimator
 from ..utils import check_random_state, check_array
-from ..utils.extmath import logsumexp
+from ..utils.extmath import fast_cov, logsumexp
 from ..utils.validation import check_is_fitted
 from .. import cluster
 
@@ -492,7 +492,7 @@ class GMM(BaseEstimator):
                     print('\tWeights have been initialized.')
 
             if 'c' in self.init_params or not hasattr(self, 'covars_'):
-                cv = np.cov(X.T) + self.min_covar * np.eye(X.shape[1])
+                cv = fast_cov(X.T) + self.min_covar * np.eye(X.shape[1])
                 if not cv.shape:
                     cv.shape = (1, 1)
                 self.covars_ = \

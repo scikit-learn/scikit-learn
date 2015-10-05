@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
@@ -25,6 +26,7 @@ from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import log_logistic
+from sklearn.utils.extmath import fast_cov
 from sklearn.utils.extmath import fast_dot, _fast_dot
 from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import _batch_mean_variance_update
@@ -322,6 +324,18 @@ def test_logistic_sigmoid():
 
     extreme_x = np.array([-100., 100.])
     assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
+
+
+def test_fast_cov():
+    rng = np.random.RandomState(123)
+    with ignore_warnings():
+        for X in [rng.randn(3, 19), rng.randn(14, 1), rng.randn(1, 1)]:
+            X.flags['WRITEABLE'] = False
+            assert_array_almost_equal(fast_cov(X), np.cov(X))
+            assert_array_almost_equal(fast_cov(X, bias=1), np.cov(X, bias=1))
+            X = X.astype(np.float32)
+            assert_array_almost_equal(fast_cov(X, rowvar=False),
+                                      np.cov(X, rowvar=False))
 
 
 def test_fast_dot():

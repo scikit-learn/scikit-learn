@@ -17,7 +17,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator
 from ..utils import check_array
-from ..utils.extmath import fast_logdet, pinvh
+from ..utils.extmath import fast_cov, fast_logdet, pinvh
 
 
 def log_likelihood(emp_cov, precision):
@@ -76,9 +76,10 @@ def empirical_covariance(X, assume_centered=False):
                       "You may want to reshape your data array")
 
     if assume_centered:
-        covariance = np.dot(X.T, X) / X.shape[0]
+        covariance = np.dot(X.T, X)
+        covariance /= X.shape[0]
     else:
-        covariance = np.cov(X.T, bias=1)
+        covariance = fast_cov(X.T, bias=1)
 
     if covariance.ndim == 0:
         covariance = np.array([[covariance]])
