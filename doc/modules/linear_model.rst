@@ -370,12 +370,16 @@ The objective function to minimize is:
 
 .. math::
 
-    \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha \rho ||w||_{2 1} +
-    \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
+    \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_{Fro}^2 + \alpha \rho ||w||_{2 1} +
+    \frac{\alpha(1-\rho)}{2} ||w||_{Fro}^2}
 
 where;
 
 .. math:: ||W||_{2 1} = \sum_i \sqrt{\sum_j w_{ij}^2}
+
+and :math:`Fro` indicates the Frobenius norm:
+
+.. math:: ||W||_Fro = \sqrt{\sum_i \sum_j w_{ij}^2}
 
 
 The implementation in the class :class:`MultiTaskElasticNet` uses coordinate descent as
