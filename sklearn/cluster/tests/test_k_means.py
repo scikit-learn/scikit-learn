@@ -16,6 +16,9 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
+from sklearn.utils.testing import if_not_mac_os
+from sklearn.utils.testing import assert_raise_message
+
 
 from sklearn.utils.validation import DataConversionWarning
 from sklearn.utils.extmath import row_norms
@@ -538,9 +541,9 @@ def test_predict():
 
 
 def test_score():
-    km1 = KMeans(n_clusters=n_clusters, max_iter=1, random_state=42)
+    km1 = KMeans(n_clusters=n_clusters, max_iter=1, random_state=42, n_init=1)
     s1 = km1.fit(X).score(X)
-    km2 = KMeans(n_clusters=n_clusters, max_iter=10, random_state=42)
+    km2 = KMeans(n_clusters=n_clusters, max_iter=10, random_state=42, n_init=1)
     s2 = km2.fit(X).score(X)
     assert_greater(s2, s1)
 
@@ -636,6 +639,12 @@ def test_fit_transform():
     assert_array_equal(X1, X2)
 
 
+def test_predict_equal_labels():
+    km = KMeans(random_state=13, n_jobs=1, n_init=1, max_iter=1)
+    km.fit(X)
+    assert_array_equal(km.predict(X), km.labels_)
+
+
 def test_n_init():
     # Check that increasing the number of init increases the quality
     n_runs = 5
@@ -692,3 +701,9 @@ def test_x_squared_norms_init_centroids():
     assert_array_equal(
         precompute,
         _init_centroids(X, 3, "k-means++", random_state=0))
+
+
+def test_max_iter_error():
+
+    km = KMeans(max_iter=-1)
+    assert_raise_message(ValueError, 'Number of iterations should be', km.fit, X)

@@ -255,6 +255,10 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
                          " n_init=%d must be bigger than zero." % n_init)
     random_state = check_random_state(random_state)
 
+    if max_iter <= 0:
+        raise ValueError('Number of iterations should be a positive number,'
+        ' got %d instead' % max_iter)
+
     best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
     tol = _tolerance(X, tol)
@@ -442,10 +446,21 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
             best_centers = centers.copy()
             best_inertia = inertia
 
-        if squared_norm(centers_old - centers) <= tol:
+        shift = squared_norm(centers_old - centers)
+        if shift <= tol:
             if verbose:
                 print("Converged at iteration %d" % i)
+
             break
+
+    if shift > 0:
+        # rerun E-step in case of non-convergence so that predicted labels
+        # match cluster centers
+        best_labels, best_inertia = \
+            _labels_inertia(X, x_squared_norms, best_centers,
+                            precompute_distances=precompute_distances,
+                            distances=distances)
+
     return best_labels, best_inertia, best_centers, i + 1
 
 
