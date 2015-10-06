@@ -35,7 +35,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     for prediction. In case that cv="prefit" is passed to __init__,
     it is it is assumed that base_estimator has been
     fitted already and all data is used for calibration. Note that
-    data for fitting the classifier and for calibrating it must be disjpint.
+    data for fitting the classifier and for calibrating it must be disjoint.
 
     Read more in the :ref:`User Guide <calibration>`.
 
