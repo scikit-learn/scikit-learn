@@ -16,6 +16,9 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
+from sklearn.utils.testing import if_not_mac_os
+from sklearn.utils.testing import assert_raise_message
+
 
 from sklearn.utils.validation import DataConversionWarning
 from sklearn.utils.extmath import row_norms
@@ -698,3 +701,9 @@ def test_x_squared_norms_init_centroids():
     assert_array_equal(
         precompute,
         _init_centroids(X, 3, "k-means++", random_state=0))
+
+
+def test_max_iter_error():
+
+    km = KMeans(max_iter=-1)
+    assert_raise_message(ValueError, 'Number of iterations should be', km.fit, X)

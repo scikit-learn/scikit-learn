@@ -255,6 +255,10 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
                          " n_init=%d must be bigger than zero." % n_init)
     random_state = check_random_state(random_state)
 
+    if max_iter <= 0:
+        raise ValueError('Number of iterations should be a positive number,'
+        ' got %d instead' % max_iter)
+
     best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
     tol = _tolerance(X, tol)
