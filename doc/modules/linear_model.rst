@@ -379,7 +379,7 @@ where;
 
 and :math:`Fro` indicates the Frobenius norm:
 
-.. math:: ||W||_Fro = \sqrt{\sum_i \sum_j w_{ij}^2}
+.. math:: ||W||_{Fro} = \sqrt{\sum_i \sum_j w_{ij}^2}
 
 
 The implementation in the class :class:`MultiTaskElasticNet` uses coordinate descent as
