@@ -454,6 +454,8 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
             break
 
     if shift > 0:
+        # rerun E-step in case of non-convergence so that predicted labels
+        # match cluster centers
         best_labels, best_inertia = \
             _labels_inertia(X, x_squared_norms, best_centers,
                             precompute_distances=precompute_distances,
