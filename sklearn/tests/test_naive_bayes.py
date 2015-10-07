@@ -473,6 +473,6 @@ def test_naive_bayes_scale_invariance():
     iris = load_iris()
     X, y = iris.data, iris.target
     labels = [GaussianNB().fit(f * X, y).predict(f * X)
-              for f in [1E-5, 1, 1E5]]
+              for f in [1E-10, 1, 1E10]]
     assert_array_equal(labels[0], labels[1])
-    assert_array_equal(labels[0], labels[2])
+    assert_array_equal(labels[1], labels[2])

@@ -324,7 +324,7 @@ class GaussianNB(BaseNB):
         # will cause numerical errors. To address this, we artificially
         # boost the variance by epsilon, a small fraction of the standard
         # deviation of the largest dimension.
-        epsilon = 1e-9 * np.var(X, 0).max()
+        epsilon = 1e-9 * np.var(X, axis=0).max()
 
         if _refit:
             self.classes_ = None
