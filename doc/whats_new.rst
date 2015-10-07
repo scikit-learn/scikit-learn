@@ -324,6 +324,10 @@ Bug fixes
       <https://github.com/scikit-learn/scikit-learn/pull/4478>`_)
       By `Andreas Müller`_, `Loic Esteve`_ and `Giorgio Patrini`_.
 
+    - Fixed bug in :class:`cross_decomposition.PLS` that yielded unstable and
+      platform dependent output, and failed on `fit_transform`.
+       By `Arthur Mensch`_.
+
 API changes summary
 -------------------
     - Attribute `data_min`, `data_max` and `data_range` in
