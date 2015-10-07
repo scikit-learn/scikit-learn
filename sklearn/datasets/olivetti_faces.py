@@ -23,7 +23,7 @@ consists of 64x64 images.
 # License: BSD 3 clause
 
 from io import BytesIO
-from os.path import join, exists
+from os.path import exists
 from os import makedirs
 try:
     # Python 2
@@ -38,6 +38,7 @@ import numpy as np
 from scipy.io.matlab import loadmat
 
 from .base import get_data_home, Bunch
+from .base import _pkl_filepath
 from ..utils import check_random_state
 from ..externals import joblib
 
@@ -108,17 +109,18 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
         makedirs(data_home)
-    if not exists(join(data_home, TARGET_FILENAME)):
+    filepath = _pkl_filepath(data_home, TARGET_FILENAME)
+    if not exists(filepath):
         print('downloading Olivetti faces from %s to %s'
               % (DATA_URL, data_home))
         fhandle = urlopen(DATA_URL)
         buf = BytesIO(fhandle.read())
         mfile = loadmat(buf)
         faces = mfile['faces'].T.copy()
-        joblib.dump(faces, join(data_home, TARGET_FILENAME), compress=6)
+        joblib.dump(faces, filepath, compress=6)
         del mfile
     else:
-        faces = joblib.load(join(data_home, TARGET_FILENAME))
+        faces = joblib.load(filepath)
     # We want floating point data, but float32 is enough (there is only
     # one byte of precision in the original uint8s anyway)
     faces = np.float32(faces)
