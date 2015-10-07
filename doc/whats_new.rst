@@ -248,6 +248,10 @@ Bug fixes
       when called with ``average=True``. By `Andrew Lamb`_.
       (`#5282 <https://github.com/scikit-learn/scikit-learn/pull/5282>`_)
 
+    - Dataset fetchers use different filenames under Python 2 and Python 3 to
+      avoid pickling compatibility issues. By `Olivier Grisel`_.
+      (`#5355 <https://github.com/scikit-learn/scikit-learn/pull/5355>`_)
+
 API changes summary
 -------------------
 
