@@ -170,16 +170,19 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X,))
     solve_cholesky, = get_lapack_funcs(('potrs',), (X,))
 
-    if Gram is None:
+    if Gram is None or Gram is False:
+        Gram = None
         if copy_X:
             # force copy. setting the array to be fortran-ordered
             # speeds up the calculation of the (partial) Gram matrix
             # and allows to easily swap columns
             X = X.copy('F')
-    elif isinstance(Gram, string_types) and Gram == 'auto':
-        Gram = None
-        if X.shape[0] > X.shape[1]:
+
+    elif isinstance(Gram, string_types) and Gram == 'auto' or Gram is True:
+        if Gram is True or X.shape[0] > X.shape[1]:
             Gram = np.dot(X.T, X)
+        else:
+            Gram = None
     elif copy_Gram:
         Gram = Gram.copy()
 
@@ -598,16 +601,14 @@ class Lars(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.fit_path = fit_path
 
-    def _get_gram(self):
-        # precompute if n_samples > n_features
-        precompute = self.precompute
-        if hasattr(precompute, '__array__'):
-            Gram = precompute
-        elif precompute == 'auto':
-            Gram = 'auto'
-        else:
-            Gram = None
-        return Gram
+    def _get_gram(self, precompute, X, y):
+        if (not hasattr(precompute, '__array__')) and (
+                (precompute is True) or
+                (precompute == 'auto' and X.shape[0] > X.shape[1]) or
+                (precompute == 'auto' and y.shape[1] > 1)):
+            precompute = np.dot(X.T, X)
+
+        return precompute
 
     def _fit(self, X, y, max_iter, alpha, fit_path, Xy=None):
         """Auxiliary method to fit the model using X, y as training data"""
@@ -623,14 +624,7 @@ class Lars(LinearModel, RegressorMixin):
 
         n_targets = y.shape[1]
 
-        precompute = self.precompute
-        if not hasattr(precompute, '__array__') and (
-                precompute is True or
-                (precompute == 'auto' and X.shape[0] > X.shape[1]) or
-                (precompute == 'auto' and y.shape[1] > 1)):
-            Gram = np.dot(X.T, X)
-        else:
-            Gram = self._get_gram()
+        Gram = self._get_gram(self.precompute, X, y)
 
         self.alphas_ = []
         self.n_iter_ = []
@@ -1000,10 +994,10 @@ class LarsCV(Lars):
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | 'auto'
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to ``'auto'`` let us decide. The Gram
-        matrix can also be passed as argument.
+        calculations. If set to ``'auto'`` let us decide. The Gram matrix
+        cannot be passed as argument since we will use only subsets of X.
 
     max_iter : integer, optional
         Maximum number of iterations to perform.
@@ -1108,7 +1102,13 @@ class LarsCV(Lars):
         # init cross-validation generator
         cv = check_cv(self.cv, classifier=False)
 
-        Gram = 'auto' if self.precompute else None
+        # As we use cross-validation, the Gram matrix is not precomputed here
+        Gram = self.precompute
+        if hasattr(Gram, '__array__'):
+            warnings.warn("Parameter 'precompute' cannot be an array in "
+                          "%s. Automatically switch to 'auto' instead."
+                          % self.__class__.__name__)
+            Gram = 'auto'
 
         cv_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(_lars_path_residues)(
@@ -1212,10 +1212,10 @@ class LassoLarsCV(LarsCV):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | 'auto'
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to ``'auto'`` let us decide. The Gram
-        matrix can also be passed as argument.
+        calculations. If set to ``'auto'`` let us decide. The Gram matrix
+        cannot be passed as argument since we will use only subsets of X.
 
     max_iter : integer, optional
         Maximum number of iterations to perform.
@@ -1471,7 +1471,7 @@ class LassoLarsIC(LassoLars):
             X, y, self.fit_intercept, self.normalize, self.copy_X)
         max_iter = self.max_iter
 
-        Gram = self._get_gram()
+        Gram = self.precompute
 
         alphas_, active_, coef_path_, self.n_iter_ = lars_path(
             X, y, Gram=Gram, copy_X=copy_X, copy_Gram=True, alpha_min=0.0,
