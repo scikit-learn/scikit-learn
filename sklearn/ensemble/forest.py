@@ -83,8 +83,21 @@ def _generate_sample_indices(random_state, n_samples):
 
 def _get_class_balance_data(y):
     """Private function used to fit function."""
-    classes, class_counts = np.unique(y, return_counts=True)
-    class_indices = [ np.nonzero(y==cls)[0] for cls in classes ]
+    if len(y.shape) == 1:
+        classes, class_counts = np.unique(y, return_counts=True)
+        class_indices = [ np.nonzero(y==cls)[0] for cls in classes ]
+
+    else:
+        classes, class_counts, class_indices = [],[],[]
+        for i in xrange(y.shape[1]):
+            y_i = y[:,i]
+            classes_i, class_counts_i = np.unique(y_i, return_counts=True)
+            class_indices_i = [ np.nonzero(y==cls)[0] for cls in classes_i ]
+            classes_i = [(i, cls) for cls in classes_i]
+            
+            classes.extend(classes_i)
+            class_counts.extend(class_counts_i)
+            class_indices.extend(class_indices_i)
 
     return classes, class_counts, class_indices
 
@@ -101,10 +114,10 @@ def _generate_balanced_sample_indices(random_state, balance_data):
     classes, class_counts, class_indices = balance_data
     min_count = np.min(class_counts)
     n_class = len(classes)
-    
+
     random_instance = check_random_state(random_state)
     sample_indices = np.empty(n_class*min_count, dtype=int)
-    
+
     for i,cls, count, indices in zip(xrange(n_class), classes, class_counts, class_indices):
         random_instances = random_instance.randint(0, count, min_count)
         random_indices =  indices[random_instances]
@@ -307,8 +320,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.n_outputs_ = y.shape[1]
 
         y, expanded_class_weight = self._validate_y_class_weight(y)
-        if self.balanced and self.n_outputs_ > 1:
-            raise NotImplementedError("Multi-output balanced random forest is not impemented.")
+#        if self.balanced and self.n_outputs_ > 1:
+#            raise NotImplementedError("Multi-output balanced random forest is not impemented.")
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
