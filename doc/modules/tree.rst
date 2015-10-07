@@ -317,7 +317,7 @@ relevant samples, and retaining a running label count, will reduce the complexit
 at each node to :math:`O(n_{features}\log(n_{samples}))`, which results in a
 total cost of :math:`O(n_{features}n_{samples}\log(n_{samples}))`. This is an option
 for all tree based algorithms. By default it is turned on for gradient boosting,
-where in general it makes training faster, but turned off for all other algorithms as 
+where in general it makes training faster, but turned off for all other algorithms as
 it tends to slow down training when training deep trees.
 
 
@@ -475,7 +475,7 @@ Cross-Entropy
 
 .. math::
 
-    H(X_m) = \sum_k p_{mk} \log(p_{mk})
+    H(X_m) = - \sum_k p_{mk} \log(p_{mk})
 
 and Misclassification
 
