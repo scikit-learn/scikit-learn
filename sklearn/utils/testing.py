@@ -648,9 +648,6 @@ def all_estimators(include_meta_estimators=False,
     return sorted(set(estimators))
 
 
-NON_RANDOM_CLASSES = (DBSCAN,)
-
-
 def set_random_state(estimator, random_state=0):
     """Set random state of an estimator if it has the `random_state` param.
 
@@ -658,7 +655,7 @@ def set_random_state(estimator, random_state=0):
     is one such class.
     """
 
-    if isinstance(estimator, NON_RANDOM_CLASSES):
+    if isinstance(estimator, DBSCAN):
         return
 
     if "random_state" in estimator.get_params():
