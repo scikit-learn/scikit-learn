@@ -306,10 +306,16 @@ Bug fixes
       (`#5360 <https://github.com/scikit-learn/scikit-learn/pull/5360>`_)
       By `Tom Dupre la Tour`_.
 
+<<<<<<< HEAD
     - Fixed a performance bug in :class:`decomposition.RandomizedPCA` on data
       with a large number of features and fewer samples. (`#4478
       <https://github.com/scikit-learn/scikit-learn/pull/4478>`_)
       By `Andreas Müller`_, `Loic Esteve`_ and `Giorgio Patrini`_.
+=======
+    - Fixed bug in :class:`cross_decomposition.PLS` that yielded unstable and
+      platform dependent output, and failed on `fit_transform`.
+       By `Arthur Mensch`_.
+>>>>>>> 307d0c7... Fix fit_transform, stability issue and scale issue in PLS
 
 API changes summary
 -------------------
