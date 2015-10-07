@@ -263,6 +263,12 @@ Bug fixes
     - Fixed a bug in :class:`naive_bayes.GaussianNB` which caused classification
       results to depend on scale. By `Jake Vanderplas`_.
 
+    - Fixed temporarily :class:`linear_model.Ridge`, which was incorrect
+      when fitting the intercept in the case of sparse data. The fix
+      automatically changes the solver to 'sag' in this case.
+      (`#5360 <https://github.com/scikit-learn/scikit-learn/pull/5360>`_)
+      By `Tom Dupre la Tour`_.
+
 API changes summary
 -------------------
 
