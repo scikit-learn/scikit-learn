@@ -244,6 +244,10 @@ Bug fixes
       to use soft-max instead of one-vs-rest normalization. By `Manoj Kumar`_.
       (`#5182 <https://github.com/scikit-learn/scikit-learn/pull/5182>`_)
 
+    - Dataset fetchers use different filenames under Python 2 and Python 3 to
+      avoid pickling compatibility issues. By `Olivier Grisel`_.
+      (`#5355 <https://github.com/scikit-learn/scikit-learn/pull/5355>`_)
+
 API changes summary
 -------------------
 
