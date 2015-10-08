@@ -206,6 +206,9 @@ Enhancements
      and :class:`ensemble.GradientBoostingClassifier`, keeping default behavior
      the same. This allows gradient boosters to turn off presorting when building
      deep trees or using sparse data. By `Jacob Schreiber`_.
+   
+   - Altered :func:`metrics.roc_curve` to drop unnecessary thresholds by
+     default. By `Graham Clenaghan`_.
 
 Bug fixes
 .........
@@ -243,6 +246,14 @@ Bug fixes
     - Fixed the ``predict_proba`` method of :class:`linear_model.LogisticRegression`
       to use soft-max instead of one-vs-rest normalization. By `Manoj Kumar`_.
       (`#5182 <https://github.com/scikit-learn/scikit-learn/pull/5182>`_)
+
+    - Fixed the :func:`partial_fit` method of :class:`linear_model.SGDClassifier`
+      when called with ``average=True``. By `Andrew Lamb`_.
+      (`#5282 <https://github.com/scikit-learn/scikit-learn/pull/5282>`_)
+
+    - Dataset fetchers use different filenames under Python 2 and Python 3 to
+      avoid pickling compatibility issues. By `Olivier Grisel`_.
+      (`#5355 <https://github.com/scikit-learn/scikit-learn/pull/5355>`_)
 
     - Fixed a bug in :class:`naive_bayes.GaussianNB` which caused classification
       results to depend on scale. By `Jake Vanderplas`_.
@@ -3715,3 +3726,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Ankur Ankan: https://github.com/ankurankan
 .. _Valentin Stolbunov: http://vstolbunov.com
 .. _Jean Kossaifi: https://github.com/JeanKossaifi
+.. _Andrew Lamb: https://github.com/andylamb
+.. _Graham Clenaghan: https://github.com/gclenaghan

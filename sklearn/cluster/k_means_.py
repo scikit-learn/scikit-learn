@@ -140,6 +140,18 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 ###############################################################################
 # K-means batch estimation by EM (expectation maximization)
 
+def _validate_center_shape(X, n_centers, centers):
+    """Check if centers is compatible with X and n_centers"""
+    if len(centers) != n_centers:
+        raise ValueError('The shape of the initial centers (%s) '
+                         'does not match the number of clusters %i'
+                         % (centers.shape, n_centers))
+    if centers.shape[1] != X.shape[1]:
+        raise ValueError(
+            "The number of features of the initial centers %s "
+            "does not match the number of features of the data %s."
+            % (centers.shape[1], X.shape[1]))
+
 
 def _tolerance(X, tol):
     """Return a tolerance which is independent of the dataset"""
@@ -285,7 +297,9 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         X -= X_mean
 
     if hasattr(init, '__array__'):
-        init = np.asarray(init).copy()
+        init = check_array(init, dtype=np.float64, copy=True)
+        _validate_center_shape(X, n_clusters, init)
+
         init -= X_mean
         if n_init != 1:
             warnings.warn(
@@ -638,11 +652,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     if sp.issparse(centers):
         centers = centers.toarray()
 
-    if len(centers) != k:
-        raise ValueError('The shape of the initial centers (%s) '
-                         'does not match the number of clusters %i'
-                         % (centers.shape, k))
-
+    _validate_center_shape(X, k, centers)
     return centers
 
 
@@ -758,10 +768,6 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     def __init__(self, n_clusters=8, init='k-means++', n_init=10, max_iter=300,
                  tol=1e-4, precompute_distances='auto',
                  verbose=0, random_state=None, copy_x=True, n_jobs=1):
-
-        if hasattr(init, '__array__'):
-            n_clusters = init.shape[0]
-            init = np.asarray(init, dtype=np.float64)
 
         self.n_clusters = n_clusters
         self.init = init

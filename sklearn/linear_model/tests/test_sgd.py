@@ -738,6 +738,19 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # check that coef_ haven't been re-allocated
         assert_true(id1, id2)
 
+    def test_partial_fit_multiclass_average(self):
+        third = X2.shape[0] // 3
+        clf = self.factory(alpha=0.01, average=X2.shape[0])
+        classes = np.unique(Y2)
+
+        clf.partial_fit(X2[:third], Y2[:third], classes=classes)
+        assert_equal(clf.coef_.shape, (3, X2.shape[1]))
+        assert_equal(clf.intercept_.shape, (3,))
+
+        clf.partial_fit(X2[third:], Y2[third:])
+        assert_equal(clf.coef_.shape, (3, X2.shape[1]))
+        assert_equal(clf.intercept_.shape, (3,))
+
     def test_fit_then_partial_fit(self):
         # Partial_fit should work after initial fit in the multiclass case.
         # Non-regression test for #2496; fit would previously produce a

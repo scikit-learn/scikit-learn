@@ -6,6 +6,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
@@ -44,6 +45,15 @@ def test_pca():
         precision = pca.get_precision()
         assert_array_almost_equal(np.dot(cov, precision),
                                   np.eye(X.shape[1]), 12)
+
+
+def test_no_empty_slice_warning():
+    # test if we avoid numpy warnings for computing over empty arrays
+    n_components = 10
+    n_features = n_components + 2  # anything > n_comps triggerred it in 0.16
+    X = np.random.uniform(-1, 1, size=(n_components, n_features))
+    pca = PCA(n_components=n_components)
+    assert_no_warnings(pca.fit, X)
 
 
 def test_whitening():

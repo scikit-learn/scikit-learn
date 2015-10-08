@@ -49,6 +49,7 @@ import scipy.sparse as sp
 from .base import get_data_home
 from .base import Bunch
 from .base import load_files
+from .base import _pkl_filepath
 from ..utils import check_random_state
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
@@ -200,7 +201,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     """
 
     data_home = get_data_home(data_home=data_home)
-    cache_path = os.path.join(data_home, CACHE_NAME)
+    cache_path = _pkl_filepath(data_home, CACHE_NAME)
     twenty_home = os.path.join(data_home, "20news_home")
     cache = None
     if os.path.exists(cache_path):
@@ -324,7 +325,7 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None):
     filebase = '20newsgroup_vectorized'
     if remove:
         filebase += 'remove-' + ('-'.join(remove))
-    target_file = os.path.join(data_home, filebase + ".pk")
+    target_file = _pkl_filepath(data_home, filebase + ".pkl")
 
     # we shuffle but use a fixed seed for the memoization
     data_train = fetch_20newsgroups(data_home=data_home,
