@@ -303,11 +303,17 @@ Mathematically, it consists of a linear model trained with a mixed
 :math:`\ell_1` :math:`\ell_2` prior as regularizer.
 The objective function to minimize is:
 
-.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_2 ^ 2 + \alpha ||W||_{21}}
+.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro} ^ 2 + \alpha ||W||_{21}}
 
 where;
 
-.. math:: ||W||_{2 1} = \sum_i \sqrt{\sum_j w_{ij}^2}
+:math:`Fro` indicates the Frobenius norm:
+
+.. math:: ||A||_{Fro} = \sqrt{\sum_{ij} a_{ij}^2}
+
+and
+
+.. math:: ||A||_{2 1} = \sum_i \sqrt{\sum_j a_{ij}^2}
 
 
 The implementation in the class :class:`MultiTaskLasso` uses coordinate descent as
@@ -372,15 +378,6 @@ The objective function to minimize is:
 
     \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_{Fro}^2 + \alpha \rho ||w||_{2 1} +
     \frac{\alpha(1-\rho)}{2} ||w||_{Fro}^2}
-
-where;
-
-.. math:: ||W||_{2 1} = \sum_i \sqrt{\sum_j w_{ij}^2}
-
-and :math:`Fro` indicates the Frobenius norm:
-
-.. math:: ||W||_{Fro} = \sqrt{\sum_i \sum_j w_{ij}^2}
-
 
 The implementation in the class :class:`MultiTaskElasticNet` uses coordinate descent as
 the algorithm to fit the coefficients.
