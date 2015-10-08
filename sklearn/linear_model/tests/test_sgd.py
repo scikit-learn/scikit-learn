@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone
@@ -1038,7 +1039,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         clf.partial_fit(X[:third], Y[:third])
         assert_equal(clf.coef_.shape, (X.shape[1], ))
         assert_equal(clf.intercept_.shape, (1,))
-        assert_equal(clf.decision_function([[0, 0]]).shape, (1, ))
+        assert_equal(ignore_warnings(clf.decision_function)([[0, 0]]).shape, (1, ))
         id1 = id(clf.coef_.data)
 
         clf.partial_fit(X[third:], Y[third:])

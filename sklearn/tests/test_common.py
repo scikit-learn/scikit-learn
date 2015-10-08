@@ -66,7 +66,8 @@ def test_non_meta_estimators():
         if name.startswith("_"):
             continue
         for check in _yield_all_checks(name, Estimator):
-            yield check, name, Estimator
+            with ignore_warnings():
+                yield check, name, Estimator
 
 
 def test_configure():
@@ -105,7 +106,7 @@ def test_class_weight_balanced_linear_classifiers():
             (name, clazz)
             for name, clazz in classifiers
             if 'class_weight' in clazz().get_params().keys()
-               and issubclass(clazz, LinearClassifierMixin)]
+            and issubclass(clazz, LinearClassifierMixin)]
 
     for name, Classifier in linear_classifiers:
         if name == "LogisticRegressionCV":
@@ -167,7 +168,7 @@ def test_non_transformer_estimators_n_iter():
 
                 # Tested in test_transformer_n_iter below
                 elif (name in CROSS_DECOMPOSITION or
-                      name in ['LinearSVC', 'LogisticRegression']):
+                              name in ['LinearSVC', 'LogisticRegression']):
                     continue
 
                 else:
