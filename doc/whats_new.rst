@@ -206,6 +206,9 @@ Enhancements
      and :class:`ensemble.GradientBoostingClassifier`, keeping default behavior
      the same. This allows gradient boosters to turn off presorting when building
      deep trees or using sparse data. By `Jacob Schreiber`_.
+   
+   - Altered :func:`metrics.roc_curve` to drop unnecessary thresholds by
+     default. By `Graham Clenaghan`_.
 
 Bug fixes
 .........
@@ -3721,3 +3724,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Valentin Stolbunov: http://vstolbunov.com
 .. _Jean Kossaifi: https://github.com/JeanKossaifi
 .. _Andrew Lamb: https://github.com/andylamb
+.. _Graham Clenaghan: https://github.com/gclenaghan
