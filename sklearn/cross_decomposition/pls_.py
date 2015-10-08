@@ -103,7 +103,7 @@ def _check_inputs(X, Y, sample_weight=None, copy=True):
 
     Returns
     -------
-    X, Y, sample_weifht (if specified) as numpy arrays, of correct dimensions.
+    X, Y, sample_weight (if specified) as numpy arrays, of correct dimensions.
     """
     
     check_consistent_length(X, Y)
