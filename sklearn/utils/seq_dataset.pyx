@@ -209,8 +209,8 @@ cdef class ArrayDataset(SequentialDataset):
     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
                       int *nnz, double *y, double *sample_weight,
                       int current_index) nogil:
-        cdef int sample_idx = self.index_data_ptr[current_index]
-        cdef int offset = sample_idx * self.stride
+        cdef long long sample_idx = self.index_data_ptr[current_index]
+        cdef long long offset = sample_idx * self.stride
 
         y[0] = self.Y_data_ptr[sample_idx]
         x_data_ptr[0] = self.X_data_ptr + offset
@@ -281,8 +281,8 @@ cdef class CSRDataset(SequentialDataset):
     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
                       int *nnz, double *y, double *sample_weight,
                       int current_index) nogil:
-        cdef int sample_idx = self.index_data_ptr[current_index]
-        cdef int offset = self.X_indptr_ptr[sample_idx]
+        cdef long long sample_idx = self.index_data_ptr[current_index]
+        cdef long long offset = self.X_indptr_ptr[sample_idx]
         y[0] = self.Y_data_ptr[sample_idx]
         x_data_ptr[0] = self.X_data_ptr + offset
         x_ind_ptr[0] = self.X_indices_ptr + offset
