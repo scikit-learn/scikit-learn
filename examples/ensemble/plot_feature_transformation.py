@@ -54,9 +54,10 @@ X_train, X_train_lr, y_train, y_train_lr = train_test_split(X_train,
 rt = RandomTreesEmbedding(max_depth=3, n_estimators=n_estimator)
 rt_lm = LogisticRegression()
 rt.fit(X_train, y_train)
-rt_lm.fit(SelectFromModel(rt).transform(X_train_lr), y_train_lr)
+rt_lm.fit(SelectFromModel(rt, prefit=True).transform(X_train_lr), y_train_lr)
 
-y_pred_rt = rt_lm.predict_proba(SelectFromModel(rt).transform(X_test))[:, 1]
+y_pred_rt = rt_lm.predict_proba(
+	SelectFromModel(rt, prefit=True).transform(X_test))[:, 1]
 fpr_rt_lm, tpr_rt_lm, _ = roc_curve(y_test, y_pred_rt)
 
 # Supervised transformation based on random forests

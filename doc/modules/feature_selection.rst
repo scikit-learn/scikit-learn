@@ -173,7 +173,7 @@ for classification::
   >>> X.shape
   (150, 4)
   >>> lsvc = LinearSVC(C=0.01, penalty="l1", dual=False).fit(X, y)
-  >>> model = SelectFromModel(lsvc)
+  >>> model = SelectFromModel(lsvc, prefit=True)
   >>> X_new = model.transform(X)
   >>> X_new.shape
   (150, 3)
@@ -277,7 +277,7 @@ meta-transformer)::
   >>> clf = clf.fit(X, y)
   >>> clf.feature_importances_  # doctest: +SKIP
   array([ 0.04...,  0.05...,  0.4...,  0.4...])
-  >>> model = SelectFromModel(clf)
+  >>> model = SelectFromModel(clf, prefit=True)
   >>> X_new = model.transform(X)
   >>> X_new.shape               # doctest: +SKIP
   (150, 2)

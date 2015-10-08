@@ -3,14 +3,13 @@ import scipy.sparse as sp
 
 from nose.tools import assert_raises, assert_true
 
-from sklearn.utils import warnings
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import clean_warning_registry
+from sklearn.utils.testing import assert_warns
 
 from sklearn import datasets
 from sklearn.linear_model import LogisticRegression
@@ -33,9 +32,8 @@ def test_transform_linear_model():
                 X = func(iris.data)
                 clf.set_params(penalty="l1")
                 clf.fit(X, iris.target)
-                clean_warning_registry()
-                with warnings.catch_warnings(record=True) as record:
-                    X_new = clf.transform(X, thresh)
+                X_new = assert_warns(
+                    DeprecationWarning, clf.transform, X, thresh)
                 if isinstance(clf, SGDClassifier):
                     assert_true(X_new.shape[1] <= X.shape[1])
                 else:
@@ -48,10 +46,10 @@ def test_transform_linear_model():
 
 def test_invalid_input():
     clf = SGDClassifier(alpha=0.1, n_iter=10, shuffle=True, random_state=None)
-
-    clf.fit(iris.data, iris.target)
-    assert_raises(ValueError, clf.transform, iris.data, "gobbledigook")
-    assert_raises(ValueError, clf.transform, iris.data, ".5 * gobbledigook")
+    for threshold in ["gobbledigook", ".5 * gobbledigook"]:
+        model = SelectFromModel(clf, threshold=threshold)
+        model.fit(iris.data, iris.target)
+        assert_raises(ValueError, model.transform, iris.data)
 
 
 def test_validate_estimator():
@@ -133,7 +131,7 @@ def test_fitted_estimator():
     X_transform = model.transform(iris.data)
 
     clf.fit(iris.data, iris.target)
-    model = SelectFromModel(clf)
+    model = SelectFromModel(clf, prefit=True)
     assert_array_equal(model.transform(iris.data), X_transform)
 
 
@@ -146,7 +144,7 @@ def test_threshold_string():
     # Calculate the threshold from the estimator directly.
     est.fit(iris.data, iris.target)
     threshold = 0.5 * np.mean(est.feature_importances_)
-    model = SelectFromModel(est, threshold=threshold)
+    model = SelectFromModel(est, threshold=threshold, prefit=True)
     assert_array_equal(X_transform, model.transform(iris.data))
 
 

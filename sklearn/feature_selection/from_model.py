@@ -66,6 +66,10 @@ def _calculate_threshold(estimator, importances, threshold):
         elif threshold == "mean":
             threshold = np.mean(importances)
 
+        else:
+            raise ValueError("Expected threshold='mean' or threshold='median' "
+                             "got %s" % threshold)
+
     else:
         threshold = float(threshold)
 
@@ -144,10 +148,8 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
     ----------
     estimator : object
         The base estimator from which the transformer is built.
-        This can be both a fitted or a non-fitted estimator.
-        If it a fitted estimator, then ``transform`` can be called directly,
-        otherwise train the model using ``fit`` and then ``transform`` to do
-        feature selection.
+        This can be both a fitted (if ``prefit`` is set to True)
+        or a non-fitted estimator.
 
     threshold : string, float, optional
         The threshold value to use for feature selection. Features whose
@@ -158,26 +160,39 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         available, the object attribute ``threshold`` is used. Otherwise,
         "mean" is used by default.
 
+    prefit : bool, default True
+        Whether a prefit model is expected to be passed into the constructor
+        directly or not. If True, ``transform`` must be called directly
+        and SelectFromModel cannot be used with ``cross_val_score``,
+        ``GridSearchCV`` and similar utilities that clone the estimator.
+        Otherwise train the model using ``fit`` and then ``transform`` to do
+        feature selection.
+
     Attributes
     ----------
     `estimator_`: an estimator
         The base estimator from which the transformer is built.
         This is stored only when a non-fitted estimator is passed to the
-        ``SelectFromModel``.
+        ``SelectFromModel``, i.e when prefit is False.
 
     `threshold_`: float
         The threshold value used for feature selection.
     """
-    def __init__(self, estimator, threshold=None):
+    def __init__(self, estimator, threshold=None, prefit=False):
         self.estimator = estimator
         self.threshold = threshold
+        self.prefit = prefit
 
     def _get_support_mask(self):
         # SelectFromModel can directly call on transform.
-        if hasattr(self, "estimator_"):
+        if self.prefit:
+            estimator = self.estimator
+        elif hasattr(self, 'estimator_'):
             estimator = self.estimator_
         else:
-            estimator = self.estimator
+            raise ValueError(
+                'Either fit the model before transform or set "prefit=True"'
+                ' while passing the fitted estimator to the constructor.')
         scores = _get_feature_importances(estimator)
         self.threshold_ = _calculate_threshold(estimator, scores,
                                                self.threshold)
@@ -202,6 +217,10 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
+        if self.prefit:
+            raise ValueError(
+                'Fitting will overwrite your already fitted model. Call '
+                'transform directly.')
         if not hasattr(self, "estimator_"):
             self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X, y, **fit_params)
@@ -226,6 +245,10 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
+        if self.prefit:
+            raise ValueError(
+                'Fitting will overwrite your already fitted model. Call '
+                'transform directly.')
         if not hasattr(self, "estimator_"):
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)

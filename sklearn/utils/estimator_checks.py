@@ -61,6 +61,16 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
+# Estimators with deprecated transform methods. Can be removed in 0.19 when
+# _LearntSelectorMixin is removed.
+DEPRECATED_TRANSFORM = [
+    "RandomForestClassifier", "RandomForestRegressor", "ExtraTreesClassifier",
+    "ExtraTreesRegressor", "RandomTreesEmbedding", "DecisionTreeClassifier",
+    "DecisionTreeRegressor", "ExtraTreeClassifier", "ExtraTreeRegressor",
+    "LinearSVC", "SGDClassifier", "SGDRegressor", "Perceptron",
+    "LogisticRegression", "LogisticRegressionCV",
+    "GradientBoostingClassifier", "GradientBoostingRegressor"]
+
 
 def _yield_non_meta_checks(name, Estimator):
     yield check_estimators_dtypes
@@ -168,8 +178,9 @@ def _yield_all_checks(name, Estimator):
         for check in _yield_regressor_checks(name, Estimator):
             yield check
     if issubclass(Estimator, TransformerMixin):
-        for check in _yield_transformer_checks(name, Estimator):
-            yield check
+        if name not in DEPRECATED_TRANSFORM:
+            for check in _yield_transformer_checks(name, Estimator):
+                yield check
     if issubclass(Estimator, ClusterMixin):
         for check in _yield_clustering_checks(name, Estimator):
             yield check
@@ -329,7 +340,8 @@ def check_dtype_object(name, Estimator):
     if hasattr(estimator, "predict"):
         estimator.predict(X)
 
-    if hasattr(estimator, "transform"):
+    if (hasattr(estimator, "transform") and
+            name not in DEPRECATED_TRANSFORM):
         estimator.transform(X)
 
     try:

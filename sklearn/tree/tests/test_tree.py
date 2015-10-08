@@ -16,7 +16,6 @@ from sklearn.random_projection import sparse_random_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
 
-from sklearn.utils import warnings
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -27,7 +26,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import clean_warning_registry
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import raises
 
 from sklearn.utils.validation import check_random_state
@@ -380,12 +379,10 @@ def test_importances():
         assert_equal(importances.shape[0], 10, "Failed with {0}".format(name))
         assert_equal(n_important, 3, "Failed with {0}".format(name))
 
-
-        clean_warning_registry()
-        with warnings.catch_warnings(record=True) as record:
-            X_new = clf.transform(X, threshold="mean")
-            assert_less(0, X_new.shape[1], "Failed with {0}".format(name))
-            assert_less(X_new.shape[1], X.shape[1], "Failed with {0}".format(name))
+        X_new = assert_warns(
+            DeprecationWarning, clf.transform, X, threshold="mean")
+        assert_less(0, X_new.shape[1], "Failed with {0}".format(name))
+        assert_less(X_new.shape[1], X.shape[1], "Failed with {0}".format(name))
 
     # Check on iris that importances are the same for all builders
     clf = DecisionTreeClassifier(random_state=0)

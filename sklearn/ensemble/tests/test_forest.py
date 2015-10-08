@@ -29,7 +29,6 @@ from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import clean_warning_registry
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn import datasets
@@ -204,10 +203,11 @@ def check_importances(X, y, name, criterion):
     assert_equal(importances.shape[0], 10)
     assert_equal(n_important, 3)
 
-    clean_warning_registry()
-    with warnings.catch_warnings(record=True) as record:
-        X_new = est.transform(X, threshold="mean")
-        assert_less(0 < X_new.shape[1], X.shape[1])
+    # XXX: Remove this test in 0.19 after transform support to estimators
+    # is removed.
+    X_new = assert_warns(
+        DeprecationWarning, est.transform, X, threshold="mean")
+    assert_less(0 < X_new.shape[1], X.shape[1])
 
     # Check with parallel
     importances = est.feature_importances_

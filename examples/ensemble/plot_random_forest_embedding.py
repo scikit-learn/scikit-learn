@@ -39,7 +39,7 @@ X, y = make_circles(factor=0.5, random_state=0, noise=0.05)
 # use RandomTreesEmbedding to transform data
 hasher = RandomTreesEmbedding(n_estimators=10, random_state=0, max_depth=3)
 hasher.fit(X)
-model = SelectFromModel(hasher)
+model = SelectFromModel(hasher, prefit=True)
 X_transformed = model.transform(X)
 
 # Visualize result using PCA
