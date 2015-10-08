@@ -124,7 +124,7 @@ K-means
 
 The :class:`KMeans` algorithm clusters data by trying to separate samples
 in n groups of equal variance, minimizing a criterion known as the
-`inertia <inertia>` or within-cluster sum-of-squares.
+`inertia <inertia>`_ or within-cluster sum-of-squares.
 This algorithm requires the number of clusters to be specified.
 It scales well to large number of samples and has been used
 across a large range of application areas in many different fields.
