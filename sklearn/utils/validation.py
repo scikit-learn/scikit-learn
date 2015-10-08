@@ -682,3 +682,28 @@ def check_non_negative(X, whom):
     X = X.data if sp.issparse(X) else X
     if (X < 0).any():
         raise ValueError("Negative values in data passed to %s" % whom)
+
+
+def check_weights(W, whom, nonzero_sum=True):
+    """
+    Check if input array makes sense as sample_weights:
+    * all finite.
+    * no negative value.
+    * sum to greater than zero (this check can optionally be disabled).
+
+    Parameters
+    ----------
+    W : array-like or sparse matrix
+        Input data.
+
+    whom : string
+        Who passed W to this function.
+
+    nonzero_sum : boolean (default=True)
+        Whether to fail on sum of elements == 0.0.
+    """
+    check_non_negative(W, whom)
+    assert_all_finite(W)
+
+    if nonzero_sum and np.sum(W) == 0.0:
+        raise ValueError("Sum is zero in data passed to %s" % whom)
