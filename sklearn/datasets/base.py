@@ -279,7 +279,7 @@ def load_iris():
         target = np.empty((n_samples,), dtype=np.int)
 
         for i, ir in enumerate(data_file):
-            data[i] = np.asarray(ir[:-1], dtype=np.float)
+            data[i] = np.asarray(ir[:-1], dtype=np.float64)
             target[i] = np.asarray(ir[-1], dtype=np.int)
 
     with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
@@ -342,7 +342,7 @@ def load_breast_cancer():
         target = np.empty((n_samples,), dtype=np.int)
 
         for count, value in enumerate(data_file):
-            data[count] = np.asarray(value[:-1], dtype=np.float)
+            data[count] = np.asarray(value[:-1], dtype=np.float64)
             target[count] = np.asarray(value[-1], dtype=np.int)
 
     with open(join(module_path, 'descr', 'breast_cancer.rst')) as rst_file:
@@ -536,8 +536,8 @@ def load_boston():
         feature_names = np.array(temp)
 
         for i, d in enumerate(data_file):
-            data[i] = np.asarray(d[:-1], dtype=np.float)
-            target[i] = np.asarray(d[-1], dtype=np.float)
+            data[i] = np.asarray(d[:-1], dtype=np.float64)
+            target[i] = np.asarray(d[-1], dtype=np.float64)
 
     return Bunch(data=data,
                  target=target,

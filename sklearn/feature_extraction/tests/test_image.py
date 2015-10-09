@@ -51,8 +51,8 @@ def test_grid_to_graph():
     assert_true(A.dtype == np.bool)
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.int)
     assert_true(A.dtype == np.int)
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.float)
-    assert_true(A.dtype == np.float)
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.float64)
+    assert_true(A.dtype == np.float64)
 
 
 def test_connect_regions():
@@ -80,7 +80,7 @@ def _downsampled_lena():
             + lena[1::2, 1::2])
     lena = (lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2]
             + lena[1::2, 1::2])
-    lena = lena.astype(np.float)
+    lena = lena.astype(np.float32)
     lena /= 16.0
     return lena
 

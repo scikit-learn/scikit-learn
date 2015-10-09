@@ -886,7 +886,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
 
         class_weight_ = compute_class_weight(class_weight, classes_, y)
     else:
-        class_weight_ = np.empty(0, dtype=np.float)
+        class_weight_ = np.empty(0, dtype=np.float64)
         y_ind = y
     liblinear.set_verbosity_wrap(verbose)
     rnd = check_random_state(random_state)
