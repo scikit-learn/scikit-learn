@@ -255,6 +255,9 @@ Bug fixes
       avoid pickling compatibility issues. By `Olivier Grisel`_.
       (`#5355 <https://github.com/scikit-learn/scikit-learn/pull/5355>`_)
 
+    - Fixed a bug in :class:`naive_bayes.GaussianNB` which caused classification
+      results to depend on scale. By `Jake Vanderplas`_.
+
 API changes summary
 -------------------
 
