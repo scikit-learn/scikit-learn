@@ -138,10 +138,12 @@ Feature selection using SelectFromModel
 
 :class:`SelectFromModel` is a meta-transformer that can be used along with any
 estimator that has a ``coef_`` or ``feature_importances_`` attribute after fitting.
-It should be given a ``threshold`` parameter below which the features are considered
-unimportant and removed. If one has no idea of the prior value of the threshold,
-string inputs like ``"mean"`` or ``"median"`` or even values like ``"0.1*mean"``
-can be given which :class:`SelectFromModel` parses internally.
+The features are considered unimportant and removed, if the corresponding
+``coef_`` or ``feature_importances_`` values are below the provided
+``threshold`` parameter. Apart from specifying the threshold numerically,
+there are build-in heuristics for finding a threshold using a string argument.
+Available heuristics are "mean", "median" and float multiples of these like
+"0.1*mean".
 
 For examples on how it is to be used refer to the sections below.
 

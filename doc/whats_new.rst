@@ -261,7 +261,7 @@ API changes summary
       caused confusion in how the array elements should be interpreted
       as features or as samples. All data arrays are now expected
       to be explicitly shaped ``(n_samples, n_features)``.
-      By `Vighnesh Birodkar`_
+      By `Vighnesh Birodkar`_.
 
     - :class:`lda.LDA` and :class:`qda.QDA` have been moved to
       :class:`discriminant_analysis.LinearDiscriminantAnalysis` and 
