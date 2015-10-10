@@ -1182,14 +1182,14 @@ def test_cross_val_apply():
             est.fit(X[train], y[train])
             preds2[test] = func(X[test])
         
-        preds = cval.cross_val_apply(est, X, y, decision_func=func_name, cv=cv)
+        preds = cval.cross_val_apply(est, X, y, apply_func=func_name, cv=cv)
         assert_array_almost_equal(preds, preds2)
 
-        preds = cval.cross_val_apply(est, X, y, decision_func=func_name)
+        preds = cval.cross_val_apply(est, X, y, apply_func=func_name)
         assert_equal(len(preds), len(y))
 
         cv = cval.LeaveOneOut(len(y))
-        preds = cval.cross_val_apply(est, X, y, decision_func=func_name, cv=cv)
+        preds = cval.cross_val_apply(est, X, y, apply_func=func_name, cv=cv)
         assert_equal(len(preds), len(y))
 
         Xsp = X.copy()

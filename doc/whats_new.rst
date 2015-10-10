@@ -62,6 +62,12 @@ New features
      shuffling step in the ``cd`` solver.
      By `Tom Dupre la Tour`_ and `Mathieu Blondel`_.
 
+   - The new function :func:`cross_validation.cross_val_apply` provides a
+     generalized alternative to :func:`cross_validation.cross_val_predict` where 
+     one can pass functions such as `predict_proba` into the cross validation framework. 
+     By `Sears Merritt`_.
+
+
 Enhancements
 ............
    - :class:`manifold.TSNE` now supports approximate optimization via the
