@@ -14,7 +14,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy import linalg
 from ..utils import arpack
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_weights
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
@@ -111,12 +111,14 @@ def _check_inputs(X, Y, sample_weight=None, copy=True):
     Y = check_array(Y, dtype=np.float64, copy=copy, ensure_2d=False)
     if Y.ndim == 1:
         Y = Y.reshape(-1, 1)
+        
     if sample_weight is not None:
         sample_weight = check_array(sample_weight, dtype=np.float64, ensure_2d=False)
         check_consistent_length(Y, sample_weight)
         if sample_weight.ndim != 1:
             raise ValueError('sample_weight must be 1D, one weight per row of data.')
-
+        check_weights(sample_weight, 'check_weights() from sklearn.pls module')
+        
     return X, Y, sample_weight
 
 
