@@ -973,7 +973,7 @@ def _index_param_value(X, v, indices):
     return safe_indexing(v, indices)
 
 
-def cross_val_apply(estimator, X, y=None, cv=None, n_jobs=1, decision_func='predict',
+def cross_val_apply(estimator, X, y=None, cv=None, n_jobs=1, apply_func='predict',
                       verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Generate cross-validated estimates for each input data point
 
@@ -1003,8 +1003,8 @@ def cross_val_apply(estimator, X, y=None, cv=None, n_jobs=1, decision_func='pred
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
 
-    decision_func : string, optional, default: predict
-        Invokes the decision function on the passed estimator. Default calls predict.
+    apply_func : string, optional, default: predict
+        Invokes the passed function on the passed estimator. Default calls predict.
 
     verbose : integer, optional
         The verbosity level.
@@ -1032,15 +1032,15 @@ def cross_val_apply(estimator, X, y=None, cv=None, n_jobs=1, decision_func='pred
     Returns
     -------
     preds : ndarray
-        This is the result of calling 'decision_function'
+        This is the result of calling 'apply_func'
     """
     X, y = indexable(X, y)
 
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     
     # Ensure the estimator has implemented the passed decision function
-    if not hasattr(estimator, decision_func):
-        raise AttributeError(' '.join((decision_func,'not implemented in estimator')))
+    if not hasattr(estimator, apply_func):
+        raise AttributeError(' '.join((apply_func,'not implemented in estimator')))
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -1048,7 +1048,7 @@ def cross_val_apply(estimator, X, y=None, cv=None, n_jobs=1, decision_func='pred
                         pre_dispatch=pre_dispatch)
     preds_blocks = parallel(delayed(_fit_and_apply)(clone(estimator), X, y,
                                                       train, test, verbose,
-                                                      fit_params, decision_func)
+                                                      fit_params, apply_func)
                             for train, test in cv)
     p = np.concatenate([p for p, _ in preds_blocks])
     locs = np.concatenate([loc for _, loc in preds_blocks])
@@ -1059,7 +1059,7 @@ def cross_val_apply(estimator, X, y=None, cv=None, n_jobs=1, decision_func='pred
     return preds
 
 
-def _fit_and_apply(estimator, X, y, train, test, verbose, fit_params, decision_func):
+def _fit_and_apply(estimator, X, y, train, test, verbose, fit_params, apply_func):
     """Fit estimator and predict values for a given dataset split.
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -1088,13 +1088,13 @@ def _fit_and_apply(estimator, X, y, train, test, verbose, fit_params, decision_f
     fit_params : dict or None
         Parameters that will be passed to ``estimator.fit``.
     
-    decision_function : string
-        Invokes the decision function on the passed estimator.
+    apply_func : string
+        Invokes the apply_func on the passed estimator.
     
     Returns
     -------
     preds : sequence
-        Result of calling 'estimator.decision_function'
+        Result of calling 'estimator.apply_func'
 
     test : array-like
         This is the value of the test parameter
@@ -1112,7 +1112,7 @@ def _fit_and_apply(estimator, X, y, train, test, verbose, fit_params, decision_f
     else:
         estimator.fit(X_train, y_train, **fit_params)
     
-    func = getattr(estimator, decision_func)
+    func = getattr(estimator, apply_func)
     preds = func(X_test)
     return preds, test
 
@@ -1175,8 +1175,8 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     preds : ndarray
         This is the result of calling 'predict'
     """
-    # Preserve the existing API and delegate to cross_val_apply with 'predict' decision function.
-    preds = cross_val_apply(estimator, X, y, cv=cv, n_jobs=n_jobs, decision_func='predict',
+    # Preserve the existing API and delegate to cross_val_apply with 'predict' function.
+    preds = cross_val_apply(estimator, X, y, cv=cv, n_jobs=n_jobs, apply_func='predict',
                       verbose=verbose, fit_params=fit_params, pre_dispatch=pre_dispatch)
     return preds
 

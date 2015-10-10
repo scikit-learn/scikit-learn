@@ -33,6 +33,11 @@ New features
      function into a ``Pipeline``-compatible transformer object.
      By Joe Jevnik.
 
+   - The new function :func:`cross_validation.cross_val_apply` provides a
+     generalized alternative to :func:`cross_validation.cross_val_predict` where 
+     one can pass functions such as `predict_proba` into the cross validation framework. 
+     By `Sears Merritt`_.
+
 Enhancements
 ............
 
