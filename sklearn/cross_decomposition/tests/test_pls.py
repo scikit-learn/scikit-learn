@@ -133,6 +133,17 @@ def test_pls():
          [-0.13143144, -0.26348971, -0.17092916]])
     assert_array_almost_equal(pls_2.y_loadings_, y_loadings)
 
+    # 2.1) Regression PLS (PLS2) with sample weights: "Non regression test"
+    # =====================================================================
+    pls_2W = pls_.PLSRegression(n_components=X.shape[1])
+    # Results should be same as before if sample weights are identical.
+    pls_2W.fit(X, Y, sample_weight = np.zeros(X.shape[0]) + 3)
+    assert_array_almost_equal(pls_2W.x_weights_, x_weights)
+    assert_array_almost_equal(pls_2W.x_loadings_, x_loadings)
+    assert_array_almost_equal(pls_2W.y_weights_, y_weights)
+    assert_array_almost_equal(pls_2W.y_loadings_, y_loadings)
+
+    
     # 3) Another non-regression test of Canonical PLS on random dataset
     # =================================================================
     # The results were checked against the R-package plspm
