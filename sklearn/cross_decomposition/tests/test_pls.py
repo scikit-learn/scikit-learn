@@ -135,15 +135,42 @@ def test_pls():
 
     # 2.1) Regression PLS (PLS2) with sample weights: "Non regression test"
     # =====================================================================
-    pls_2W = pls_.PLSRegression(n_components=X.shape[1])
     # Results should be same as before if sample weights are identical.
-    pls_2W.fit(X, Y, sample_weight = np.zeros(X.shape[0]) + 3)
+    W = np.zeros(X.shape[0]) + 3
+    pls_2W = pls_.PLSRegression(n_components=X.shape[1])
+    pls_2W.fit(X, Y, sample_weight=W)
     assert_array_almost_equal(pls_2W.x_weights_, x_weights)
     assert_array_almost_equal(pls_2W.x_loadings_, x_loadings)
     assert_array_almost_equal(pls_2W.y_weights_, y_weights)
     assert_array_almost_equal(pls_2W.y_loadings_, y_loadings)
 
-    
+    # Results should be same if sample weight is 0 or sample is removed.
+    W[0] = 0
+    pls_2W = pls_.PLSRegression(n_components=X.shape[1])
+    pls_2W.fit(X, Y, sample_weight=W)
+    pls_20 = pls_.PLSRegression(n_components=X.shape[1])
+    pls_20.fit(X[1:], Y[1:])
+    assert_array_almost_equal(pls_2W.x_weights_, pls_20.x_weights_)
+    assert_array_almost_equal(pls_2W.x_loadings_, pls_20.x_loadings_)
+    assert_array_almost_equal(pls_2W.y_weights_, pls_20.y_weights_)
+    assert_array_almost_equal(pls_2W.y_loadings_, pls_20.y_loadings_)
+
+    # Results should be same if sample weight is double or sample is duped.
+    X2 = X.copy()
+    Y2 = Y.copy()
+    X2[0] = X[1]
+    Y2[0] = Y[1]
+    pls_20 = pls_.PLSRegression(n_components=X.shape[1])
+    pls_20.fit(X2, Y2)
+    W[1] *= 2
+    pls_2W = pls_.PLSRegression(n_components=X.shape[1])
+    pls_2W.fit(X[1:], Y[1:], sample_weight=W[1:])
+    assert_array_almost_equal(pls_2W.x_weights_, pls_20.x_weights_)
+    assert_array_almost_equal(pls_2W.x_loadings_, pls_20.x_loadings_)
+    assert_array_almost_equal(pls_2W.y_weights_, pls_20.y_weights_)
+    assert_array_almost_equal(pls_2W.y_loadings_, pls_20.y_loadings_)
+
+        
     # 3) Another non-regression test of Canonical PLS on random dataset
     # =================================================================
     # The results were checked against the R-package plspm
