@@ -16,6 +16,7 @@
 # Licence: BSD 3 clause
 
 from cpython cimport Py_INCREF, PyObject
+from cpython.exc cimport PyErr_CheckSignals
 
 from libc.stdlib cimport free
 from libc.stdlib cimport realloc
@@ -198,8 +199,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
             # got return code -1 - out-of-memory
             raise MemoryError()
 
-        with nogil:
-            while not stack.is_empty():
+        while not stack.is_empty():
+            with nogil:
                 stack.pop(&stack_record)
 
                 start = stack_record.start
@@ -255,6 +256,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 if depth > max_depth_seen:
                     max_depth_seen = depth
+            PyErr_CheckSignals()
 
             if rc >= 0:
                 rc = tree._resize_c(tree.node_count)
@@ -344,8 +346,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         if rc == -1:
             raise MemoryError()
 
-        with nogil:
-            while not frontier.is_empty():
+        while not frontier.is_empty():
+            with nogil:
                 frontier.pop(&record)
 
                 node = &tree.nodes[record.node_id]
@@ -398,6 +400,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
                 if record.depth > max_depth_seen:
                     max_depth_seen = record.depth
+            PyErr_CheckSignals()
 
             if rc >= 0:
                 rc = tree._resize_c(tree.node_count)
