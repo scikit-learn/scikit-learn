@@ -18,9 +18,11 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification
 from sklearn.ensemble import ExtraTreesClassifier
 
+n_features = 10
+
 # Build a classification task using 3 informative features
 X, y = make_classification(n_samples=1000,
-                           n_features=10,
+                           n_features=n_features,
                            n_informative=3,
                            n_redundant=0,
                            n_repeated=0,
@@ -41,14 +43,14 @@ indices = np.argsort(importances)[::-1]
 # Print the feature ranking
 print("Feature ranking:")
 
-for f in range(10):
+for f in range(n_features):
     print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
 
 # Plot the feature importances of the forest
 plt.figure()
 plt.title("Feature importances")
-plt.bar(range(10), importances[indices],
+plt.bar(range(n_features), importances[indices],
        color="r", yerr=std[indices], align="center")
-plt.xticks(range(10), indices)
-plt.xlim([-1, 10])
+plt.xticks(range(n_features), indices)
+plt.xlim([-1, n_features])
 plt.show()
