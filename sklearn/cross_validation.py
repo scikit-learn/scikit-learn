@@ -973,8 +973,9 @@ def _index_param_value(X, v, indices):
     return safe_indexing(v, indices)
 
 
-def cross_val_apply(estimator, X, y=None, cv=None, n_jobs=1, apply_func='predict',
-                      verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+def cross_val_apply(estimator, X, y=None, cv=None, n_jobs=1, 
+                    apply_func='predict', verbose=0, fit_params=None, 
+                    pre_dispatch='2*n_jobs'):
     """Generate cross-validated estimates for each input data point
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -1003,8 +1004,8 @@ def cross_val_apply(estimator, X, y=None, cv=None, n_jobs=1, apply_func='predict
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
 
-    apply_func : string, optional, default: predict
-        Invokes the passed function on the passed estimator. Default calls predict.
+    apply_func : string, optional, default: 'predict'
+        Invokes the passed function on the passed estimator.
 
     verbose : integer, optional
         The verbosity level.
@@ -1032,7 +1033,7 @@ def cross_val_apply(estimator, X, y=None, cv=None, n_jobs=1, apply_func='predict
     Returns
     -------
     preds : ndarray
-        This is the result of calling 'apply_func'
+        This is the result of calling ``apply_func``
     """
     X, y = indexable(X, y)
 

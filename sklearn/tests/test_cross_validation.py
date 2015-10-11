@@ -1042,11 +1042,8 @@ def test_cross_val_apply():
     est = LogisticRegression()
 
     # Not testing 'predict' because it is tested in 'test_cross_val_predict' above
-    for func_name in ['decision_function', 'predict_proba','predict_log_proba']:
-        if func_name == 'predict':
-            preds2 = np.zeros_like(y)
-        else:
-            preds2 = np.zeros([len(y),classes])
+    for func_name in ['decision_function', 'predict_proba', 'predict_log_proba']:
+        preds2 = np.zeros([len(y),classes])
 
         func = getattr(est, func_name)
     
