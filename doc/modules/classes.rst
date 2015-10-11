@@ -463,6 +463,7 @@ From text
    feature_selection.SelectKBest
    feature_selection.SelectFpr
    feature_selection.SelectFdr
+   feature_selection.SelectFromModel
    feature_selection.SelectFwe
    feature_selection.RFE
    feature_selection.RFECV

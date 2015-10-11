@@ -210,6 +210,11 @@ Enhancements
    - Altered :func:`metrics.roc_curve` to drop unnecessary thresholds by
      default. By `Graham Clenaghan`_.
 
+   - Added :class:`feature_selection.SelectFromModel` meta-transformer which can
+     be used along with estimators that have `coef_` or `feature_importances_`
+     attribute to select important features of the input data. By
+     `Maheshakya Wijewardena`_, `Joel Nothman`_ and `Manoj Kumar`_.
+
 Bug fixes
 .........
 
@@ -282,6 +287,13 @@ API changes summary
       ``store_covariances`` and ``tol`` parameters have been moved from the
       fit method to the constructor in
       :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
+
+    - Models inheriting from ``_LearntSelectorMixin`` will no longer support the
+      transform methods. (i.e,  RandomForests, GradientBoosting, LogisticRegression,
+      DecisionTrees, SVMs and SGD related models). Wrap these models around the
+      metatransfomer :class:`feature_selection.SelectFromModel` to remove
+      features (according to `coefs_` or `feature_importances_`)
+      which are below a certain threshold value instead.
 
 .. _changes_0_1_16:
 

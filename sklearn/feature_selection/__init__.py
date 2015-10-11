@@ -20,6 +20,8 @@ from .variance_threshold import VarianceThreshold
 from .rfe import RFE
 from .rfe import RFECV
 
+from .from_model import SelectFromModel
+
 __all__ = ['GenericUnivariateSelect',
            'RFE',
            'RFECV',
@@ -32,4 +34,5 @@ __all__ = ['GenericUnivariateSelect',
            'chi2',
            'f_classif',
            'f_oneway',
-           'f_regression']
+           'f_regression',
+           'SelectFromModel']
