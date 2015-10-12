@@ -652,6 +652,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         # We expect X and y to be already float64 Fortran ordered arrays
         # when bypassing checks
         if check_input:
+            y = np.asarray(y, dtype=np.float64)
             X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
                              order='F',
                              copy=self.copy_X and self.fit_intercept,
