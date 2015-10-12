@@ -603,18 +603,22 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 class GridSearchCV(BaseSearchCV):
     """Exhaustive search over specified parameter values for an estimator.
 
-    Important members are fit, predict.
+    GridSearchCV is a meta-estimator which wraps another supervised or
+    unsupervised estimator. Parameters of the wrapped estimator are
+    chosen from a pre-specified grid such that the cros-validation
+    score is maximized.
 
-    GridSearchCV implements a "fit" method and a "predict" method like
-    any classifier except that the parameters of the classifier
-    used to predict is optimized by cross-validation.
+    By default, the cross-validation score is computed using the ``score()``
+    method of the wrapped estimator; alternative scoring behavior can be
+    specified with the ``scoring`` parameter (see below).
 
     Read more in the :ref:`User Guide <grid_search>`.
 
     Parameters
     ----------
-    estimator : object type that implements the "fit" and "predict" methods
+    estimator : estimator object
         A object of that type is instantiated for each grid point.
+        This is assumed to derive from sklearn.base.BaseEstimator.
 
     param_grid : dict or list of dictionaries
         Dictionary with parameters names (string) as keys and lists of
@@ -627,6 +631,7 @@ class GridSearchCV(BaseSearchCV):
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+        This parameter is required if estimator does not have a "score" method.
 
     fit_params : dict, optional
         Parameters to pass to the fit method.
