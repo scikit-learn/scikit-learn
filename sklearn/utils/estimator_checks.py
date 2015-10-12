@@ -1507,4 +1507,5 @@ def check_classifiers_regression_target(name, Estimator):
     boston = load_boston()
     X, y = boston.data, boston.target
     e = Estimator()
-    assert_raise_message(ValueError, "Unknown label type", e.fit, X, y)
+    msg = 'Unknown label type: '
+    assert_raises_regex(ValueError, msg, e.fit, X, y)

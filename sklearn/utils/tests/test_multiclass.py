@@ -265,7 +265,9 @@ def test_check_classification_targets():
     for y_type in EXAMPLES.keys():
         if y_type in ["unknown", "continuous", 'continuous-multioutput']:
             for example in EXAMPLES[y_type]:
-                assert_raises(ValueError, check_non_regression_targets, example)
+                msg = 'Unknown label type: '
+                assert_raises_regex(ValueError, msg, 
+                    check_classification_targets, example)
         else:
             for example in EXAMPLES[y_type]:
                 check_classification_targets(example)
