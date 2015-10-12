@@ -1576,7 +1576,12 @@ def check_estimator_fit_reset(name, Estimator):
     # Some estimators work only on non-negative inputs
     if name in ('AdditiveChi2Sampler', 'SkewedChi2Sampler',
                 'NMF', 'MultinomialNB', 'ProjectedGradientNMF'):
-        X1 -= X1.min(), X2, X3, X4, X5, X6 = map(np.fabs, (X1, X2, X3, X4, X5, X6))
+        X1 -= X1.min()
+        X2 -= X2.min()
+        X3 -= X3.min()
+        X4 -= X4.min()
+        X5 -= X5.min()
+        X6 -= X6.min()
 
     y1, y2, y3, y4, y5, y6 = map(multioutput_estimator_convert_y_2d,
                                  (name,)*6, (y1, y2, y3, y4, y5, y6))
