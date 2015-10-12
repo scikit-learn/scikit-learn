@@ -156,13 +156,12 @@ def is_multilabel(y):
         return len(labels) < 3 and (y.dtype.kind in 'biu' or  # bool, int, uint
                                     _is_integral_float(labels))
 
-def check_non_regression_targets(y):
-    """Determine if target `y` is of non regression type
+def check_classification_targets(y):
+    """Ensure that target y is of a non-regression type.
 
-    For the moment, the following (as defined in type_of_target) are allowed:
-        - 'binary', 'multiclass', 'multiclass-multioutput', 
+    Only the following target types (as defined in type_of_target) are allowed:
+        'binary', 'multiclass', 'multiclass-multioutput', 
         'multilabel-indicator', 'multilabel-sequences'
-        - 'continuous', if only there are only two unique values
 
     Parameters
     ----------
