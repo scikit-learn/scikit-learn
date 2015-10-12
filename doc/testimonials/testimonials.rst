@@ -709,7 +709,8 @@ Thorsten Kranz, Data Scientist, Coma Soft AG.
    </div>
 
 Our software, Data Science Studio (DSS), enables users to create data services 
-that combine ETL with Machine Learning. Our Machine Learning module integrates 
+that combine `ETL <https://en.wikipedia.org/wiki/Extract,_transform,_load>`_ with 
+Machine Learning. Our Machine Learning module integrates 
 many scikit-learn algorithms. The scikit-learn library is a perfect integration 
 with DSS because it offers algorithms for virtually all business cases. Our goal 
 is to offer a transparent and flexible tool that makes it easier to optimize 
