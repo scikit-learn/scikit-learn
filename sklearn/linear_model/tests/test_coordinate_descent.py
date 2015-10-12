@@ -608,9 +608,18 @@ def test_sparse_dense_descent_paths():
         
 def test_adaptive_lasso_same_as_lasso():
     # Test that the adaptive lasso gives the same results as the Lasso when
-    # n_lasso_iterations is 1
+    # max_lasso_iterations is 1
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
     clf1 = AdaptiveLasso(max_iter=max_iter, max_lasso_iterations=1).fit(X, y)
     clf2 = Lasso(max_iter=max_iter).fit(X, y)
     assert_array_almost_equal(clf1.coef_,clf2.coef_)
+
+def test_adaptive_lasso_sparser_estimates():
+    # Test that the adaptive lasso gives sparser coefficients than a Lasso
+    X, y, X_test, y_test = build_dataset()
+    max_iter = 150
+    clf1 = AdaptiveLasso(max_iter=max_iter).fit(X, y)
+    clf2 = Lasso(max_iter=max_iter).fit(X, y)
+    
+    assert_greater(sum(clf1.coef_ == 0), sum(clf2.coef_ == 0))

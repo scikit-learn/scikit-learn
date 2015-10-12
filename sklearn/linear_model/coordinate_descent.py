@@ -2170,7 +2170,7 @@ class AdaptiveLasso(Lasso):
     The Adaptive Lasso and Its Oracle Properties
     Journal of the American Statistical Association, 2006.
     """
-    def __init__(self, max_lasso_iterations=20, gamma=1, alpha=1.0,
+    def __init__(self, max_lasso_iterations=20, gamma=1., alpha=1.0,
                  eps=1e-3, ada_tol=1e-4, fit_intercept=True, normalize=False,
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, positive=False,
@@ -2221,12 +2221,15 @@ class AdaptiveLasso(Lasso):
         X_sparse = sparse.isspmatrix(X)
 
         if self.gamma != 1:
-            obj = lambda beta: 1. / (2 * n_samples) * np.sum((y - X.dot(beta)) ** 2) \
-                + self.alpha * 1 / (-self.gamma + 1) \
-                * np.sum(np.power(np.abs(beta) + self.eps, -self.gamma + 1))
+            def obj(beta):
+                return 1. / (2 * n_samples) * np.sum((y - X.dot(beta)) ** 2) \
+                    + self.alpha / (-self.gamma + 1) \
+                    * np.sum(np.power(np.abs(beta) + self.eps,
+                                      -self.gamma + 1))
         else:
-            obj = lambda beta: 1. / (2 * n_samples) * np.sum((y - X.dot(beta)) ** 2) \
-                + self.alpha * np.sum(np.log(np.abs(beta) + self.eps))
+            def obj(beta):
+                return 1. / (2 * n_samples) * np.sum((y - X.dot(beta)) ** 2) \
+                    + self.alpha * np.sum(np.log(np.abs(beta) + self.eps))
 
         this_obj = None
         k = 1
