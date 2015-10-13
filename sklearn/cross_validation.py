@@ -408,8 +408,12 @@ class LabelKFold(_BaseKFold):
         super(LabelKFold, self).__init__(len(labels), n_folds, shuffle,
                                          random_state)
 
-        unique_labels, unique_indices, unique_inverse = np.unique(
-                labels, return_index=True, return_inverse=True)
+        unique_labels, unique_inverse = np.unique(
+                labels, return_inverse=True)
+        # separate call to get unique_indices to work around bug in Numpy 1.6.2
+        # https://github.com/numpy/numpy/issues/2785
+        _unique_labels, unique_indices = np.unique(
+                unique_inverse, return_index=True)
         n_labels = len(unique_labels)
 
         if n_folds > n_labels:
