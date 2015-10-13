@@ -368,7 +368,7 @@ def check_label_kfold(shuffle, rng):
 
     # Construct the test data
     tolerance = 0.05 * n_samples  # 5 percent error allowed
-    labels = rng.randint(0, n_labels, n_samples)
+    labels = np.random.RandomState(rng).randint(0, n_labels, n_samples)
     folds = cval.LabelKFold(labels,
                             n_folds=n_folds,
                             shuffle=shuffle,
