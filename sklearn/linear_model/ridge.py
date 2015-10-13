@@ -269,9 +269,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         iteration performed by the solver.
 
     return_intercept : boolean, default False
-        If True, the method also returns the intercept, and the solver
-        is automatically changed to 'sag'. This is only a temporary fix
-        for fitting the intercept with sparse data.
+        If True and if X is sparse, the method also returns the intercept,
+        and the solver is automatically changed to 'sag'. This is only a
+        temporary fix for fitting the intercept with sparse data. For dense
+        data, use sklearn.linear_model.center_data before your regression.
 
     Returns
     -------
@@ -282,11 +283,15 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         The actual number of iteration performed by the solver.
         Only returned if `return_n_iter` is True.
 
+    intercept : float or array, shape = [n_targets]
+        The intercept of the model. Only returned if `return_intercept`
+        is True and if X is a scipy sparse array.
+
     Notes
     -----
     This function won't compute the intercept.
     """
-    if return_intercept and solver != 'sag':
+    if return_intercept and sparse.issparse(X) and solver != 'sag':
         warnings.warn("In Ridge, only 'sag' solver can currently fit the "
                       "intercept when X is sparse. Solver has been "
                       "automatically changed into 'sag'.")
@@ -451,6 +456,7 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
+        # temporary fix for fitting the intercept with sparse data using 'sag'
         if sparse.issparse(X) and self.fit_intercept:
             self.coef_, self.n_iter_, self.intercept_ = ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
