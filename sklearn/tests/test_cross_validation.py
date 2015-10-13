@@ -1154,6 +1154,28 @@ def test_cross_val_predict():
 
     assert_raises(ValueError, cval.cross_val_predict, est, X, y, cv=bad_cv())
 
+    # setup for exercising the predict_function parameter
+    est = KNeighborsClassifier()
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    cv = cval.StratifiedKFold(y)
+    # populate prediction arrays via knn classifier ie the 'answers'
+    pred_target = np.zeros_like(y)
+    pred_proba = np.zeros((y.size, len(iris.target_names)))
+    for train, test in cv:
+        est.fit(X[train], y[train])
+        pred_target[test] = est.predict(X[test])
+        pred_proba[test, :] = est.predict_proba(X[test])
+    # test string argument for predict_function
+    pred_proba_cvp = cval.cross_val_predict(est, X, y, cv=cv, predict_function='predict_proba')
+    assert_array_almost_equal(pred_proba, pred_proba_cvp)
+    # test multi-function list argument for predict_function
+    pred_target_cvp, pred_proba_cvp = \
+        cval.cross_val_predict(est, X, y, cv=cv,
+                               predict_function=['predict', 'predict_proba'])
+    assert_array_almost_equal(pred_target, pred_target_cvp)
+    assert_array_almost_equal(pred_proba, pred_proba_cvp)
+
 
 def test_cross_val_predict_input_types():
     clf = Ridge()
