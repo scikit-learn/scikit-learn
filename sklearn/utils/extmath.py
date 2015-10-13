@@ -8,6 +8,7 @@ Extended math utilities.
 #          Lars Buitinck
 #          Stefan van der Walt
 #          Kyle Kastner
+#          Giorgio Patrini
 # License: BSD 3 clause
 
 from __future__ import division
@@ -544,9 +545,9 @@ def svd_flip(u, v, u_based_decision=True):
         so one can compute `np.dot(u * s, v)`.
 
     u_based_decision : boolean, (default=True)
-        If True, use the columns of u as the basis for sign flipping. Otherwise,
-        use the rows of v. The choice of which variable to base the decision on
-        is generally algorithm dependent.
+        If True, use the columns of u as the basis for sign flipping.
+        Otherwise, use the rows of v. The choice of which variable to base the
+        decision on is generally algorithm dependent.
 
 
     Returns
@@ -601,7 +602,6 @@ def log_logistic(X, out=None):
     is_1d = X.ndim == 1
     X = np.atleast_2d(X)
     X = check_array(X, dtype=np.float64)
-
 
     n_samples, n_features = X.shape
 
@@ -677,8 +677,15 @@ def make_nonnegative(X, min_value=0):
     return X
 
 
-def _batch_mean_variance_update(X, old_mean, old_variance, old_sample_count):
-    """Calculate an average mean update and a Youngs and Cramer variance update.
+def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
+                              last_sample_count=0):
+    """Calculate mean update and a Youngs and Cramer variance update.
+
+    last_mean and last_variance are statistics computed at the last step by the
+    function. Both must be initialized to 0.0. In case no scaling is required
+    last_variance can be None. The mean is always required and returned because
+    necessary for the calculation of the variance. last_n_samples_seen is the
+    number of samples encountered until now.
 
     From the paper "Algorithms for computing the sample variance: analysis and
     recommendations", by Chan, Golub, and LeVeque.
@@ -688,38 +695,59 @@ def _batch_mean_variance_update(X, old_mean, old_variance, old_sample_count):
     X : array-like, shape (n_samples, n_features)
         Data to use for variance update
 
-    old_mean : array-like, shape: (n_features,)
+    last_mean : array-like, shape: (n_features,)
 
-    old_variance : array-like, shape: (n_features,)
+    last_variance : array-like, shape: (n_features,)
 
-    old_sample_count : int
+    last_sample_count : int
 
     Returns
     -------
     updated_mean : array, shape (n_features,)
 
     updated_variance : array, shape (n_features,)
+        If None, only mean is computed
 
     updated_sample_count : int
 
     References
     ----------
-    T. Chan, G. Golub, R. LeVeque. Algorithms for computing the sample variance:
-        recommendations, The American Statistician, Vol. 37, No. 3, pp. 242-247
+    T. Chan, G. Golub, R. LeVeque. Algorithms for computing the sample
+        variance: recommendations, The American Statistician, Vol. 37, No. 3,
+        pp. 242-247
 
+    Also, see the sparse implementation of this in
+    `utils.sparsefuncs.incr_mean_variance_axis` and
+    `utils.sparsefuncs_fast.incr_mean_variance_axis0`
     """
+    # old = stats until now
+    # new = the current increment
+    # updated = the aggregated stats
+    last_sum = last_mean * last_sample_count
     new_sum = X.sum(axis=0)
-    new_variance = X.var(axis=0) * X.shape[0]
-    old_sum = old_mean * old_sample_count
-    n_samples = X.shape[0]
-    updated_sample_count = old_sample_count + n_samples
-    partial_variance = old_sample_count / (n_samples * updated_sample_count) * (
-        n_samples / old_sample_count * old_sum - new_sum) ** 2
-    unnormalized_variance = old_variance * old_sample_count + new_variance + \
-        partial_variance
-    return ((old_sum + new_sum) / updated_sample_count,
-            unnormalized_variance / updated_sample_count,
-            updated_sample_count)
+
+    new_sample_count = X.shape[0]
+    updated_sample_count = last_sample_count + new_sample_count
+
+    updated_mean = (last_sum + new_sum) / updated_sample_count
+
+    if last_variance is None:
+        updated_variance = None
+    else:
+        new_unnormalized_variance = X.var(axis=0) * new_sample_count
+        if last_sample_count == 0:  # Avoid division by 0
+            updated_unnormalized_variance = new_unnormalized_variance
+        else:
+            last_over_new_count = last_sample_count / new_sample_count
+            last_unnormalized_variance = last_variance * last_sample_count
+            updated_unnormalized_variance = (
+                last_unnormalized_variance +
+                new_unnormalized_variance +
+                last_over_new_count / updated_sample_count *
+                (last_sum / last_over_new_count - new_sum) ** 2)
+        updated_variance = updated_unnormalized_variance / updated_sample_count
+
+    return updated_mean, updated_variance, updated_sample_count
 
 
 def _deterministic_vector_sign_flip(u):

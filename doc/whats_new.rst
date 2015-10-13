@@ -15,6 +15,8 @@ Changelog
 
 New features
 ............
+   - All the Scaler classes but :class:`RobustScaler` can be fitted online by
+     calling `partial_fit`. By `Giorgio Patrini`_.
 
    - The new class :class:`ensemble.VotingClassifier` implements a
      "majority rule" / "soft voting" ensemble classifier to combine
@@ -202,11 +204,11 @@ Enhancements
    - Added ``sample_weight`` support to :class:`linear_model.LogisticRegression` for
      the ``lbfgs``, ``newton-cg``, and ``sag`` solvers. By `Valentin Stolbunov`_.
 
-   - Added optional parameter ``presort`` to :class:`ensemble.GradientBoostingRegressor` 
+   - Added optional parameter ``presort`` to :class:`ensemble.GradientBoostingRegressor`
      and :class:`ensemble.GradientBoostingClassifier`, keeping default behavior
      the same. This allows gradient boosters to turn off presorting when building
      deep trees or using sparse data. By `Jacob Schreiber`_.
-   
+
    - Altered :func:`metrics.roc_curve` to drop unnecessary thresholds by
      default. By `Graham Clenaghan`_.
 
@@ -217,7 +219,6 @@ Enhancements
 
 Bug fixes
 .........
-
     - Fixed non-determinism in :class:`dummy.DummyClassifier` with sparse
       multi-label output. By `Andreas Müller`_.
 
@@ -271,6 +272,15 @@ Bug fixes
 
 API changes summary
 -------------------
+    - Attribute `data_min`, `data_max` and `data_range` in
+      :class:`preprocessing.MinMaxScaler` are deprecated and won't be available
+      from 0.19. Instead, the class now exposes `data_min_`, `data_max_`
+      and `data_range_`. By `Giorgio Patrini`_.
+
+    - All Scaler classes now have an `scale_` attribute, the feature-wise
+      rescaling applied by their `transform` methods. The old attribute `std_`
+      in :class:`preprocessing.StandardScaler` is deprecated and superseded
+      by `scale_`; it won't be available in 0.19. By `Giorgio Patrini`_.
 
     - :class:`svm.SVC`` and :class:`svm.NuSVC` now have an ``decision_function_shape``
       parameter to make their decision function of shape ``(n_samples, n_classes)``
@@ -284,7 +294,7 @@ API changes summary
       By `Vighnesh Birodkar`_.
 
     - :class:`lda.LDA` and :class:`qda.QDA` have been moved to
-      :class:`discriminant_analysis.LinearDiscriminantAnalysis` and 
+      :class:`discriminant_analysis.LinearDiscriminantAnalysis` and
       :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
 
     - The ``store_covariance`` and ``tol`` parameters have been moved from
