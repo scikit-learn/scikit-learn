@@ -194,7 +194,7 @@ def _solve_svd(X, y, alpha):
 
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3, verbose=0, random_state=None,
-                     return_n_iter=False):
+                     return_n_iter=False, return_intercept=False):
     """Solve the ridge equation by the method of normal equations.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
@@ -268,6 +268,12 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         If True, the method also returns `n_iter`, the actual number of
         iteration performed by the solver.
 
+    return_intercept : boolean, default False
+        If True and if X is sparse, the method also returns the intercept,
+        and the solver is automatically changed to 'sag'. This is only a
+        temporary fix for fitting the intercept with sparse data. For dense
+        data, use sklearn.linear_model.center_data before your regression.
+
     Returns
     -------
     coef : array, shape = [n_features] or [n_targets, n_features]
@@ -277,10 +283,20 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         The actual number of iteration performed by the solver.
         Only returned if `return_n_iter` is True.
 
+    intercept : float or array, shape = [n_targets]
+        The intercept of the model. Only returned if `return_intercept`
+        is True and if X is a scipy sparse array.
+
     Notes
     -----
     This function won't compute the intercept.
     """
+    if return_intercept and sparse.issparse(X) and solver != 'sag':
+        warnings.warn("In Ridge, only 'sag' solver can currently fit the "
+                      "intercept when X is sparse. Solver has been "
+                      "automatically changed into 'sag'.")
+        solver = 'sag'
+
     # SAG needs X and y columns to be C-contiguous and np.float64
     if solver == 'sag':
         X = check_array(X, accept_sparse=['csr'],
@@ -375,14 +391,22 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
         coef = np.empty((y.shape[1], n_features))
         n_iter = np.empty(y.shape[1], dtype=np.int32)
+        intercept = np.zeros((y.shape[1], ))
         for i, (alpha_i, target) in enumerate(zip(alpha, y.T)):
+            start = {'coef': np.zeros(n_features + int(return_intercept))}
             coef_, n_iter_, _ = sag_solver(
                 X, target.ravel(), sample_weight, 'squared', alpha_i,
                 max_iter, tol, verbose, random_state, False, max_squared_sum,
-                dict())
-            coef[i] = coef_
+                start)
+            if return_intercept:
+                coef[i] = coef_[:-1]
+                intercept[i] = coef_[-1]
+            else:
+                coef[i] = coef_
             n_iter[i] = n_iter_
 
+        if intercept.shape[0] == 1:
+            intercept = intercept[0]
         coef = np.asarray(coef)
 
     if solver == 'svd':
@@ -395,7 +419,11 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         # When y was passed as a 1d-array, we flatten the coefficients.
         coef = coef.ravel()
 
-    if return_n_iter:
+    if return_n_iter and return_intercept:
+        return coef, n_iter, intercept
+    elif return_intercept:
+        return coef, intercept
+    elif return_n_iter:
         return coef, n_iter
     else:
         return coef
@@ -428,12 +456,22 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
-        self.coef_, self.n_iter_ = ridge_regression(
-            X, y, alpha=self.alpha, sample_weight=sample_weight,
-            max_iter=self.max_iter, tol=self.tol, solver=self.solver,
-            random_state=self.random_state, return_n_iter=True)
+        # temporary fix for fitting the intercept with sparse data using 'sag'
+        if sparse.issparse(X) and self.fit_intercept:
+            self.coef_, self.n_iter_, self.intercept_ = ridge_regression(
+                X, y, alpha=self.alpha, sample_weight=sample_weight,
+                max_iter=self.max_iter, tol=self.tol, solver=self.solver,
+                random_state=self.random_state, return_n_iter=True,
+                return_intercept=True)
+            self.intercept_ += y_mean
+        else:
+            self.coef_, self.n_iter_ = ridge_regression(
+                X, y, alpha=self.alpha, sample_weight=sample_weight,
+                max_iter=self.max_iter, tol=self.tol, solver=self.solver,
+                random_state=self.random_state, return_n_iter=True,
+                return_intercept=False)
+            self._set_intercept(X_mean, y_mean, X_std)
 
-        self._set_intercept(X_mean, y_mean, X_std)
         return self
 
 
