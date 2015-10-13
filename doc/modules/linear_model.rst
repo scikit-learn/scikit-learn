@@ -274,7 +274,7 @@ Multi-task Lasso
 
 The :class:`MultiTaskLasso` is a linear model that estimates sparse
 coefficients for multiple regression problems jointly: ``y`` is a 2D array,
-of shape (n_samples, n_tasks). The constraint is that the selected
+of shape ``(n_samples, n_tasks)``. The constraint is that the selected
 features are the same for all the regression problems, also called tasks.
 
 The following figure compares the location of the non-zeros in W obtained
@@ -367,7 +367,7 @@ Multi-task Elastic Net
 
 The :class:`MultiTaskElasticNet` is an elastic-net model that estimates sparse
 coefficients for multiple regression problems jointly: ``y`` is a 2D array,
-of shape (n_samples, n_tasks).The constraint is that the selected
+of shape ``(n_samples, n_tasks)``. The constraint is that the selected
 features are the same for all the regression problems, also called tasks.
 
 Mathematically, it consists of a linear model trained with a mixed
