@@ -406,12 +406,19 @@ def check_label_kfold(shuffle, rng):
     n_labels = len(np.unique(labels))
     n_samples = len(labels)
     n_folds = 5
-    tolerance = 0.05 * n_samples  # 5 percent error allowed
+    tolerance = 0.1 * n_samples  # 10 percent error allowed
     folds = cval.LabelKFold(labels,
                             n_folds=n_folds,
                             shuffle=shuffle,
                             random_state=rng).idxs
     ideal_n_labels_per_fold = n_samples // n_folds
+
+    # Shuffle should have an effect
+    otherfolds = cval.LabelKFold(labels,
+                            n_folds=n_folds,
+                            shuffle=not shuffle,
+                            random_state=rng).idxs
+    assert_not_equal(list(folds), list(otherfolds))
 
     # Check that folds have approximately the same size
     assert_equal(len(folds), len(labels))
@@ -433,13 +440,6 @@ def check_label_kfold(shuffle, rng):
     # Should fail if there are more folds than labels
     labels = np.array([1, 1, 1, 2, 2])
     assert_raises(ValueError, cval.LabelKFold, labels, n_folds=3)
-
-    # shuffle should have an effect
-    otherfolds = cval.LabelKFold(labels,
-                            n_folds=n_folds,
-                            shuffle=not shuffle,
-                            random_state=rng).idxs
-    assert_not_equal(folds, otherfolds)
 
 
 def test_label_kfold():
