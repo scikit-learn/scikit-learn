@@ -85,9 +85,9 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     TruncatedSVD(algorithm='randomized', n_components=5, n_iter=5,
             random_state=42, tol=0.0)
     >>> print(svd.explained_variance_ratio_) # doctest: +ELLIPSIS
-    [ 0.07825... 0.05528... 0.05445... 0.04997... 0.04134...]
+    [ 0.0782... 0.0552... 0.0544... 0.0499... 0.0413...]
     >>> print(svd.explained_variance_ratio_.sum()) # doctest: +ELLIPSIS
-    0.27930...
+    0.279...
 
     See also
     --------
