@@ -1194,22 +1194,28 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
                       verbose=0, fit_params=None, pre_dispatch='2*n_jobs',
                       predict_function='predict'):
     """Generate cross-validated estimates for each input data point
+    Read more in the :ref:`User Guide <cross_validation>`.
     Parameters
     ----------
-    estimator : estimator must implement 'fit' and the methods(s) specified by
-        predict_function
+    estimator : estimator object implementing 'fit' and the methods(s)
+        specified by ``predict_function``.
     X : array-like
         The data to fit. Can be, for example a list, or an array at least 2d.
     y : array-like, optional, default: None
         The target variable to try to predict in the case of
         supervised learning.
-    cv : cross-validation generator or int, optional, default: None
-        A cross-validation generator to use. If int, determines
-        the number of folds in StratifiedKFold if y is binary
-        or multiclass and estimator is a classifier, or the number
-        of folds in KFold otherwise. If None, it is equivalent to cv=3.
-        This generator must include all elements in the test set exactly once.
-        Otherwise, a ValueError is raised.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+        For integer/None inputs, if ``y`` is binary or multiclass,
+        :class:`StratifiedKFold` used. If the estimator is a classifier
+        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
@@ -1230,17 +1236,13 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
               spawned
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
-    predict_function : string, or list, optional
+    predict_function : string, or list of string
         Specifies the prediction method(s) to invoke on the provided estimator.
-        For example, 'predict_proba' or 'decision_function'. If a list of
-        methods is provided, then a tuple of predictions will be returned in
-        identical order.
-
     Returns
     -------
     preds : ndarray, or tuple of ndarray
-        This is the result of calling the method(s) provided in parameter
-        predict_function.
+        This is the result of calling the method(s) specified in parameter
+        ``predict_function``.
     """
     X, y = indexable(X, y)
 
@@ -1294,11 +1296,11 @@ def _concat_arrays(arrays):
 def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
                      predict_function='predict'):
     """Fit estimator and predict values for a given dataset split.
+    Read more in the :ref:`User Guide <cross_validation>`.
     Parameters
     ----------
-    estimator : estimator object
-        estimator must implement 'fit' and the methods(s) specified by
-        predict_function
+    estimator : estimator object implementing 'fit' and the methods(s)
+        specified by ``predict_function``.
     X : array-like of shape at least 2D
         The data to fit.
     y : array-like, optional, default: None
@@ -1312,13 +1314,13 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         The verbosity level.
     fit_params : dict or None
         Parameters that will be passed to ``estimator.fit``.
-    predict_function : string, or list
+    predict_function : string, or list of string
         Specifies the prediction method(s) to invoke on the provided estimator.
     Returns
     -------
     preds : ndarray, or tuple of ndarray
-        This is the result of calling the method(s) provided in parameter
-        predict_function.
+        This is the result of calling the method(s) specified in parameter
+        ``predict_function``.
     test : array-like
         This is the value of the test parameter
     """
