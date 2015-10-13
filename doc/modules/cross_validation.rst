@@ -279,9 +279,9 @@ Imagine you have three subjects, each with an associated number from 1 to 3::
   >>> lkf = LabelKFold(labels, n_folds=3)
   >>> for train, test in lkf:
   ...     print("%s %s" % (train, test))
-  [0 1 2 3 4 5] [6 7 8 9]
-  [0 1 2 6 7 8 9] [3 4 5]
   [3 4 5 6 7 8 9] [0 1 2]
+  [0 1 2 6 7 8 9] [3 4 5]
+  [0 1 2 3 4 5] [6 7 8 9]
 
 Each subject is in a different testing fold, and the same subject is never in
 both testing and training. Notice that the folds do not have exactly the same
