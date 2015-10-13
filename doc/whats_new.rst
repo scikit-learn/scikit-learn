@@ -215,6 +215,11 @@ Enhancements
      attribute to select important features of the input data. By
      `Maheshakya Wijewardena`_, `Joel Nothman`_ and `Manoj Kumar`_.
 
+    - Added predict function argument to :func:`cross_validation.cross_val_predict`, as a
+    string or list of strings. This avoids the need for multiple (potentially costly) fits if
+    multiple types of predictions are required.
+    By `Paul Triantafyllou`_.
+
 Bug fixes
 .........
 
