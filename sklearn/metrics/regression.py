@@ -26,6 +26,7 @@ import numpy as np
 
 from ..utils.validation import check_array, check_consistent_length
 from ..utils.validation import column_or_1d
+#from ..utils.stats import _weighted_percentile
 
 import warnings
 
@@ -239,6 +240,7 @@ def mean_squared_error(y_true, y_pred,
 
 
 def median_absolute_error(y_true, y_pred):
+#def median_absolute_error(y_true, y_pred, sample_weight=None):
     """Median absolute error regression loss
 
     Read more in the :ref:`User Guide <median_absolute_error>`.
@@ -250,6 +252,9 @@ def median_absolute_error(y_true, y_pred):
 
     y_pred : array-like of shape = (n_samples)
         Estimated target values.
+
+    sample_weight: array-like of shape = [n_samples]
+        Sample Weights.
 
     Returns
     -------
@@ -270,6 +275,7 @@ def median_absolute_error(y_true, y_pred):
     if y_type == 'continuous-multioutput':
         raise ValueError("Multioutput not supported in median_absolute_error")
     return np.median(np.abs(y_pred - y_true))
+    #return _weighted_percentile(np.abs(y_pred - y_true))
 
 
 def explained_variance_score(y_true, y_pred,

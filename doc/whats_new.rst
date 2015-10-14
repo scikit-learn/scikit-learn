@@ -470,6 +470,9 @@ Enhancements
      :func:`metrics.jaccard_similarity_score` and :func:`metrics.log_loss`.
      By `Jatin Shah`_.
 
+   - Add ``sample_weight`` parameter to `metrics.median_absolute_error` and
+     `metrics.log_loss`. By `Saurabh Jha`_.
+
    - Support sparse multilabel indicator representation in
      :class:`preprocessing.LabelBinarizer` and
      :class:`multiclass.OneVsRestClassifier` (by `Hamzeh Alsalhi`_ with thanks
