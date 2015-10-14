@@ -217,6 +217,8 @@ Enhancements
      attribute to select important features of the input data. By
      `Maheshakya Wijewardena`_, `Joel Nothman`_ and `Manoj Kumar`_.
 
+   - Added :func:`metrics.pairwise.laplacian_kernel`.  By `Clyde Fare <https://github.com/Clyde-fare>`_.
+
 Bug fixes
 .........
     - Fixed non-determinism in :class:`dummy.DummyClassifier` with sparse
