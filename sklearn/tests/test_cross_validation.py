@@ -837,6 +837,27 @@ def test_train_test_split():
         assert_equal(np.sum(train == 1), np.sum(train == 2))
 
 
+def test_train_test_split_with_indices():
+    X = np.arange(100).reshape((10, 10))
+    y = np.arange(10)
+
+    split = cval.train_test_split(X, y, test_size=None, train_size=.2)
+    split_with_indices = cval.train_test_split(X, y, test_size=None, train_size=.2, return_indices=True)
+
+    # verify that specifying 'return_indices=True' return 2 additional objects
+    assert_equal(len(split)+2, len(split_with_indices))
+
+    X_train, X_test, y_train, y_test, train_indices, test_indices = split_with_indices
+    # verify the indices arrays are disjoint
+    assert_equal(len(np.intersect1d(test_indices, train_indices)), 0)
+
+    # verify the returned indices are indeed the indices used to divide the train/test sets
+    assert_array_equal(X_train, X[train_indices])
+    assert_array_equal(X_test, X[test_indices])
+    assert_array_equal(y_train, y[train_indices])
+    assert_array_equal(y_test, y[test_indices])
+
+
 def train_test_split_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [MockDataFrame]
