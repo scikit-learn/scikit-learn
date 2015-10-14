@@ -14,6 +14,7 @@ from .ranking import roc_auc_score
 from .ranking import roc_curve
 
 from .classification import accuracy_score
+from .classification import balanced_accuracy_score
 from .classification import classification_report
 from .classification import cohen_kappa_score
 from .classification import confusion_matrix

@@ -40,6 +40,7 @@ from ..utils.sparsefuncs import count_nonzero
 from ..utils.fixes import bincount
 
 from .base import UndefinedMetricWarning
+from .base import _average_binary_score
 
 
 def _check_targets(y_true, y_pred):
@@ -177,6 +178,106 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
         score = y_true == y_pred
 
     return _weighted_sum(score, sample_weight, normalize)
+
+
+def balanced_accuracy_score(y_true, y_pred, sample_weight=None, labels=1):
+    """Balanced accuracy classification score.
+
+    This function only support binary and multiclass classification for now.
+
+    Parameters
+    ----------
+    y_true : array-like or label indicator matrix
+        Ground truth (correct) labels.
+
+    y_pred : array-like or label indicator matrix
+        Predicted labels, as returned by a classifier.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    labels : array of int or int, 1 by defualt
+        Indicate multiple positive labels
+
+    Returns
+    -------
+    score : float
+        score = (sensitive + specificity) / 2
+
+        The best performance is 1.
+
+    See also
+    --------
+    accuracy_score, jaccard_similarity_score, hamming_loss, zero_one_loss
+
+    Notes
+    -----
+    In binary and multiclass classification, this function is equal
+    to the ``jaccard_similarity_score`` function.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import balanced_accuracy_score
+    >>> y_pred = [0, 1, 1, 1]
+    >>> y_true = [0, 1, 0, 1]
+    >>> balanced_accuracy_score(y_true, y_pred)
+    0.75
+
+    In the multiclass case
+    >>> y_pred = [0, 1, 2, 4]
+    >>> y_true = [0, 2, 3, 4]
+    >>> balanced_accuracy_score(y_true, y_pred, labels=2)
+    0.33333333333333331
+
+    In the multilabel case with binary label indicators:
+    >>> balanced_accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
+    0.75
+    """
+
+    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+    # Only support binary nad multiclass classification for now
+    if y_type not in ["binary", "multiclass", "multilabel-indicator"]:
+        raise ValueError("%s is not yet implemented" % y_type)
+
+    if isinstance(labels, int):
+        labels = [labels]
+
+    # Turn multiclass into binary
+    y_true = np.in1d(y_true, labels).reshape(y_true.shape).astype(int)
+    y_pred = np.in1d(y_pred, labels).reshape(y_pred.shape).astype(int)
+
+    def _1d_balanced_accuracy_score(y_true, y_pred, sample_weight=None):
+        # Positive and negative index in y_true
+        n_idx = np.where(y_true == 0)[0]
+        p_idx = np.where(y_true == 1)[0]
+
+        score = y_true == y_pred
+
+        if sample_weight is None:
+            sample_weight = np.ones(y_true.shape[0])
+
+        # Handle the edge cases
+        if len(p_idx) == 0:
+            sensitive = 1
+        else:
+            sensitive = np.average(score[p_idx], weights=sample_weight[p_idx])
+
+        if len(n_idx) == 0:
+            specificity = 1
+        else:
+            specificity = np.average(score[n_idx], weights=sample_weight[n_idx])
+
+        score = (sensitive + specificity) / 2
+
+        return score
+
+    return _average_binary_score(
+        _1d_balanced_accuracy_score,
+        y_true,
+        y_pred,
+        average='macro',
+        sample_weight=sample_weight)
 
 
 def confusion_matrix(y_true, y_pred, labels=None):
