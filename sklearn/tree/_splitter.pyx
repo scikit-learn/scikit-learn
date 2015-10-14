@@ -712,6 +712,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j
         cdef SIZE_t p
+        cdef SIZE_t q
         cdef SIZE_t feature_stride
         # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
@@ -802,36 +803,43 @@ cdef class RandomSplitter(BaseDenseSplitter):
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
                     # Construct a random split
-                    is_categorical = self.n_categories[current.feature] > 0
-                    if is_categorical:
-                        split_seed = our_rand_r(random_state)
-                        current.split_value.cat_split = (split_seed << 32) | 1
-                    else:
-                        current.split_value.threshold = rand_uniform(
-                            min_feature_value, max_feature_value, random_state)
-                        if current.split_value.threshold == max_feature_value:
-                            current.split_value.threshold = min_feature_value
-
-                    # Partition
-                    make_bit_cache(current.split_value, self.n_categories[current.feature],
-                                   self._bit_cache)
-                    partition_end = end
-                    p = start
-                    while p < partition_end:
-                        current_feature_value = Xf[p]
-                        if goes_left(current_feature_value, current.split_value,
-                                     self.n_categories[current.feature], self._bit_cache):
-                            p += 1
+                    # Repeat up to 20 times if a trivial split is constructed
+                    # (this can only happen with a categorical feature)
+                    for q in range(20):
+                        is_categorical = self.n_categories[current.feature] > 0
+                        if is_categorical:
+                            split_seed = our_rand_r(random_state)
+                            current.split_value.cat_split = (split_seed << 32) | 1
                         else:
-                            partition_end -= 1
+                            current.split_value.threshold = rand_uniform(
+                                min_feature_value, max_feature_value, random_state)
+                            if current.split_value.threshold == max_feature_value:
+                                current.split_value.threshold = min_feature_value
 
-                            Xf[p] = Xf[partition_end]
-                            Xf[partition_end] = current_feature_value
+                        # Partition
+                        make_bit_cache(current.split_value, self.n_categories[current.feature],
+                                       self._bit_cache)
+                        partition_end = end
+                        p = start
+                        while p < partition_end:
+                            current_feature_value = Xf[p]
+                            if goes_left(current_feature_value, current.split_value,
+                                         self.n_categories[current.feature], self._bit_cache):
+                                p += 1
+                            else:
+                                partition_end -= 1
 
-                            samples[p], samples[partition_end] = (
-                                samples[partition_end], samples[p])
+                                Xf[p] = Xf[partition_end]
+                                Xf[partition_end] = current_feature_value
 
-                    current.pos = partition_end
+                                samples[p], samples[partition_end] = (
+                                    samples[partition_end], samples[p])
+
+                        current.pos = partition_end
+
+                        # Break early if a non-trivial split was found
+                        if partition_end != start and partition_end != end:
+                            break
 
                     # Reject if min_samples_leaf is not guaranteed
                     if (((current.pos - start) < min_samples_leaf) or
