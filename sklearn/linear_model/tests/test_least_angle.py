@@ -370,7 +370,7 @@ def test_multitarget():
     for estimator in (linear_model.LassoLars(), linear_model.Lars()):
         estimator.fit(X, Y)
         Y_pred = estimator.predict(X)
-        Y_dec = estimator.decision_function(X)
+        Y_dec = assert_warns(DeprecationWarning, estimator.decision_function, X)
         assert_array_almost_equal(Y_pred, Y_dec)
         alphas, active, coef, path = (estimator.alphas_, estimator.active_,
                                       estimator.coef_, estimator.coef_path_)
