@@ -34,7 +34,6 @@ from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from sklearn.metrics.pairwise import PAIRED_DISTANCES
 from sklearn.metrics.pairwise import check_pairwise_arrays
 from sklearn.metrics.pairwise import check_paired_arrays
-from sklearn.metrics.pairwise import _parallel_pairwise
 from sklearn.metrics.pairwise import paired_distances
 from sklearn.metrics.pairwise import paired_euclidean_distances
 from sklearn.metrics.pairwise import paired_manhattan_distances
@@ -246,7 +245,6 @@ def test_pairwise_kernels():    # Test the pairwise_kernels helper function.
     assert_array_almost_equal(K1, K2)
 
 
-
 def test_pairwise_kernels_filter_param():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
@@ -389,7 +387,6 @@ def test_euclidean_distances():
     assert_greater(np.max(np.abs(wrong_D - D1)), .01)
 
 
-
 # Paired distances
 
 def test_paired_euclidean_distances():
@@ -506,7 +503,7 @@ def test_laplacian_kernel():
     K = laplacian_kernel(X, X)
     # the diagonal elements of a laplacian kernel are 1
     assert_array_almost_equal(np.diag(K), np.ones(5))
-    
+
     # off-diagonal elements are < 1 but > 0:
     assert_true(np.all(K > 0))
     assert_true(np.all(K - np.diag(np.diag(K)) < 1))

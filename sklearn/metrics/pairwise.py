@@ -528,8 +528,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
 
 
 def cosine_distances(X, Y=None):
-    """
-    Compute cosine distance between samples in X and Y.
+    """Compute cosine distance between samples in X and Y.
 
     Cosine distance is defined as 1.0 minus the cosine similarity.
 
@@ -812,17 +811,23 @@ def rbf_kernel(X, Y=None, gamma=None):
     np.exp(K, K)    # exponentiate K in-place
     return K
 
+
 def laplacian_kernel(X, Y=None, gamma=None):
-    """
-    Compute the laplacian kernel between X and Y::
+    """Compute the laplacian kernel between X and Y.
+
+    The laplacian kernel is defined as::
+
         K(x, y) = exp(-gamma ||x-y||_1)
+
     for each pair of rows x in X and y in Y.
     Read more in the :ref:`User Guide <laplacian_kernel>`.
+
     Parameters
     ----------
     X : array of shape (n_samples_X, n_features)
     Y : array of shape (n_samples_Y, n_features)
     gamma : float
+
     Returns
     -------
     kernel_matrix : array of shape (n_samples_X, n_samples_Y)
@@ -834,6 +839,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
     K = -gamma * manhattan_distances(X, Y)
     np.exp(K, K)    # exponentiate K in-place
     return K
+
 
 def cosine_similarity(X, Y=None, dense_output=True):
     """Compute cosine similarity between samples in X and Y.
