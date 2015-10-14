@@ -30,7 +30,6 @@ from .base import BaseEnsemble
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
-
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
 
@@ -63,6 +62,7 @@ from ..utils.fixes import bincount
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
 from ..utils.validation import  NotFittedError
+from ..utils.multiclass import check_classification_targets
 
 
 class QuantileEstimator(BaseEstimator):
@@ -1427,6 +1427,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             presort=presort)
 
     def _validate_y(self, y):
+        check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
         return y
