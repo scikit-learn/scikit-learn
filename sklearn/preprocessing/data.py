@@ -1313,7 +1313,7 @@ def binarize(X, threshold=0.0, copy=True):
 
     Parameters
     ----------
-    XX : {array-like, sparse matrix}, shape [n_samples, n_features]
+    X : {array-like, sparse matrix}, shape [n_samples, n_features]
         The data to binarize, element by element.
         scipy.sparse matrices should be in CSR or CSC format to avoid an
         un-necessary copy.

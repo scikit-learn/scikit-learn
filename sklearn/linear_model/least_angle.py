@@ -916,14 +916,10 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     residues : array, shape (n_alphas, n_samples)
         Residues of the prediction on the test data
     """
-    X_train = as_float_array(_check_copy_and_writeable(X_train, copy),
-                             copy=False)
-    y_train = as_float_array(_check_copy_and_writeable(y_train, copy),
-                             copy=False)
-    X_test = as_float_array(_check_copy_and_writeable(X_test, copy),
-                            copy=False)
-    y_test = as_float_array(_check_copy_and_writeable(y_test, copy),
-                            copy=False)
+    X_train = _check_copy_and_writeable(X_train, copy)
+    y_train = _check_copy_and_writeable(y_train, copy)
+    X_test = _check_copy_and_writeable(X_test, copy)
+    y_test = _check_copy_and_writeable(y_test, copy)
 
     if fit_intercept:
         X_mean = X_train.mean(axis=0)
@@ -1078,6 +1074,8 @@ class LarsCV(Lars):
         """
         self.fit_path = True
         X, y = check_X_y(X, y, y_numeric=True)
+        X = as_float_array(X, copy=self.copy_X)
+        y = as_float_array(y, copy=self.copy_X)
 
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=False)
