@@ -18,8 +18,8 @@ from .base import TransformerMixin
 from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
-from .metrics.pairwise import pairwise_kernels
-
+from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
+from .externals import six
 
 class RBFSampler(BaseEstimator, TransformerMixin):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
@@ -431,7 +431,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
-    def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
+
+    def __init__(self, kernel="rbf", gamma=None, coef0=None, degree=None,
                  kernel_params=None, n_components=100, random_state=None):
         self.kernel = kernel
         self.gamma = gamma
@@ -514,8 +515,11 @@ class Nystroem(BaseEstimator, TransformerMixin):
         if params is None:
             params = {}
         if not callable(self.kernel):
-            params['gamma'] = self.gamma
-            params['degree'] = self.degree
-            params['coef0'] = self.coef0
-
+            if self.kernel in KERNEL_PARAMS:
+                for k, v in six.iteritems(KERNEL_PARAMS[self.kernel]):
+                    params[k] = getattr(self, k)
+                    if params[k] is None:
+                        params[k] = v 
+            else: 
+                raise ValueError("Unknown kernel %r" % self.kernel)
         return params
