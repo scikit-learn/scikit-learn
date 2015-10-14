@@ -40,6 +40,7 @@ from ..tree._tree import DTYPE
 from ..utils import check_array, check_X_y, check_random_state
 from ..metrics import accuracy_score, r2_score
 from sklearn.utils.validation import has_fit_parameter, check_is_fitted
+from sklearn.utils.validation import as_float_array
 
 __all__ = [
     'AdaBoostClassifier',
@@ -1003,6 +1004,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         generator = check_random_state(self.random_state)
 
+        sample_weight = check_array(sample_weight, dtype=np.float64)
+
         # Weighted sampling of the training set with replacement
         # For NumPy >= 1.7.0 use np.random.choice
         cdf = sample_weight.cumsum()
@@ -1047,9 +1050,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         estimator_weight = self.learning_rate * np.log(1. / beta)
 
         if not iboost == self.n_estimators - 1:
-            sample_weight *= np.power(
-                beta,
-                (1. - error_vect) * self.learning_rate)
+            sample_weight *= as_float_array(np.power(
+                beta, (1. - error_vect) * self.learning_rate), copy=False)
 
         return sample_weight, estimator_weight, estimator_error
 
