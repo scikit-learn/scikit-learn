@@ -726,7 +726,6 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
         cdef bint is_categorical
-        cdef UINT32_t split_n_draw
         cdef UINT64_t split_seed
 
         _init_split(&best, end)
@@ -805,13 +804,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
                     # Construct a random split
                     is_categorical = self.n_categories[current.feature] > 0
                     if is_categorical:
-                        # split_n_draw is the number of categories to send left
-                        # TODO: this should be a binomial draw
-                        split_n_draw = rand_int(1, self.n_categories[current.feature],
-                                                random_state) & <SIZE_t>0x7FFFFFFF
                         split_seed = our_rand_r(random_state)
-                        current.split_value.cat_split = (
-                            (split_seed << 32) | (split_n_draw << 1) | 1)
+                        current.split_value.cat_split = (split_seed << 32) | 1
                     else:
                         current.split_value.threshold = rand_uniform(
                             min_feature_value, max_feature_value, random_state)

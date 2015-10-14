@@ -35,10 +35,9 @@ ctypedef union SplitValue:
     # for up to 64 categories, sending samples left if the bit
     # corresponding to their category is 1 or right if it is 0. If the
     # LSB is 1, then the more significant 32 bits of cat_split is a
-    # random seed and the next 31 bits are the number of deviates to
-    # draw. To evaluate a sample, draw the required set of categories
-    # and check if the sample's feature value is in the set. If so,
-    # send it left; otherwise right. This second method allows up to
+    # random seed. To evaluate a sample, use the random seed to flip a
+    # coin (category_value + 1) times and send it left if the last
+    # flip gives 1; otherwise right. This second method allows up to
     # 2**31 category values, but can only be used for RandomSplitter.
     DOUBLE_t threshold
     UINT64_t cat_split
