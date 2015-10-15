@@ -272,6 +272,11 @@ Bug fixes
       (`#5360 <https://github.com/scikit-learn/scikit-learn/pull/5360>`_)
       By `Tom Dupre la Tour`_.
 
+    - Fixed a performance bug in :class:`decomposition.RandomizedPCA` on data
+      with a large number of features and fewer samples. (`#4478
+      <https://github.com/scikit-learn/scikit-learn/pull/4478>`_)
+      By `Andreas Müller`_, `Loic Esteve`_ and `Giorgio Patrini`_.
+
 API changes summary
 -------------------
     - Attribute `data_min`, `data_max` and `data_range` in
