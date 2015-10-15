@@ -63,7 +63,7 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
         msg = "cannot use sparse input in 'OneClassSVM' trained on dense data"
     else:
         assert_array_almost_equal(dense_svm.predict_proba(X_test_dense),
-            sparse_svm.predict_proba(X_test), 4)
+                                  sparse_svm.predict_proba(X_test), 4)
         msg = "cannot use sparse input in 'SVC' trained on dense data"
     if sparse.isspmatrix(X_test):
         assert_raise_message(ValueError, msg, dense_svm.predict, X_test)
