@@ -29,8 +29,8 @@ from time import time
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import offsetbox
-from sklearn import (manifold, datasets, decomposition, ensemble, lda,
-                     random_projection)
+from sklearn import (manifold, datasets, decomposition, ensemble,
+                     discriminant_analysis, random_projection)
 
 digits = datasets.load_digits(n_class=6)
 X = digits.data
