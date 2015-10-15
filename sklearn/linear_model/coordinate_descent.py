@@ -1333,7 +1333,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     Parameters
     ----------
-    l1_ratio : float, optional
+    l1_ratio : float or array of floats, optional
         float between 0 and 1 passed to ElasticNet (scaling between
         l1 and l2 penalties). For ``l1_ratio = 0``
         the penalty is an L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty.
@@ -1831,6 +1831,12 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         For l1_ratio = 0 the penalty is an L1/L2 penalty. For l1_ratio = 1 it
         is an L1 penalty.
         For ``0 < l1_ratio < 1``, the penalty is a combination of L1/L2 and L2.
+        This parameter can be a list, in which case the different
+        values are tested by cross-validation and the one giving the best
+        prediction score is used. Note that a good choice of list of
+        values for l1_ratio is often to put more values close to 1
+        (i.e. Lasso) and less close to 0 (i.e. Ridge), as in ``[.1, .5, .7,
+        .9, .95, .99, 1]``
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
