@@ -151,6 +151,9 @@ Enhancements
      and later in order to avoid possible crash with some version of BLAS such
      as vecLib / Accelerate under OSX for instance. By `Olivier Grisel`_.
 
+   - For more details about changes in joblib 0.9.2 see the release notes:
+     https://github.com/joblib/joblib/blob/master/CHANGES.rst#release-092
+
    - Improved speed (3 times per iteration) of
      :class:`decomposition.DictLearning` with coordinate descent method
      from :class:`linear_model.Lasso`. By `Arthur Mensch`_.
