@@ -34,7 +34,6 @@ New features
      function into a ``Pipeline``-compatible transformer object.
      By Joe Jevnik.
 
-<<<<<<< HEAD
    - The new classes :class:`cross_validation.LabelKFold` and
      :class:`cross_validation.LabelShuffleSplit` generate train-test folds,
      respectively similar to :class:`cross_validation.KFold` and
@@ -63,17 +62,12 @@ New features
      shuffling step in the ``cd`` solver.
      By `Tom Dupre la Tour`_ and `Mathieu Blondel`_.
 
-=======
->>>>>>> bbb72af814f529deb10e8c3825cbc8fd2d0cfbdc
    - The new function :func:`cross_validation.cross_val_apply` provides a
      generalized alternative to :func:`cross_validation.cross_val_predict` where 
      one can pass functions such as `predict_proba` into the cross validation framework. 
      By `Sears Merritt`_.
 
-<<<<<<< HEAD
 
-=======
->>>>>>> bbb72af814f529deb10e8c3825cbc8fd2d0cfbdc
 Enhancements
 ............
    - :class:`manifold.TSNE` now supports approximate optimization via the
