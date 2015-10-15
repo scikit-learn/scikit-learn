@@ -38,7 +38,7 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
-from sklearn.svm.base import BaseLibSVM, BaseSVC
+from sklearn.svm.base import BaseLibSVM
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import NMF, ProjectedGradientNMF
 from sklearn.utils.validation import DataConversionWarning
@@ -479,7 +479,7 @@ def check_fit1d_1sample(name, Estimator):
 
     try:
         estimator.fit(X, y)
-    except ValueError :
+    except ValueError:
         pass
 
 
@@ -1158,7 +1158,6 @@ def check_regressors_train(name, Regressor):
     # and furthermore assumes the presence of outliers, hence
     # skipped
     if name not in ('PLSCanonical', 'CCA', 'RANSACRegressor'):
-        print(regressor)
         assert_greater(regressor.score(X, y_), 0.5)
 
 
@@ -1500,6 +1499,7 @@ def check_get_params_invariance(name, estimator):
 
     assert_true(all(item in deep_params.items() for item in
                     shallow_params.items()))
+
 
 def check_classifiers_regression_target(name, Estimator):
     # Check if classifier throws an exception when fed regression targets
