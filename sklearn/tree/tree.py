@@ -66,6 +66,117 @@ DENSE_SPLITTERS = {"best": _splitter.BestSplitter,
 SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
                     "random": _splitter.RandomSparseSplitter}
 
+
+# =============================================================================
+# Support functions
+# =============================================================================
+def preproc_categorical(X, categorical, check_input):
+    """Preprocess categorical features by mapping them to
+    range(n_categories). Used for fitting.
+
+    Parameters
+    ----------
+    X : array-like, shape=(n_samples, n_features)
+        Feature array
+    categorical : array-like or str
+        Specification of which features are categorical. See fit().
+    check_input : bool
+        If False, bypass creation of category map and transformation
+        of X. Use only if you know what you are doing.
+
+    Returns
+    -------
+    X : array, shape=(n_samples, n_features)
+        Transformed copy of the feature array (or the original if
+        there are no categorical features)
+    n_categories : array, shape=(n_features,)
+        Number of categories for each feature (-1 if non-categorical)
+    category_map : list, length n_features
+        For each feature, a dictionary relating values to transformed
+        values, or an empty dictionary for non-categorical features
+
+    """
+    n_features = np.shape(X)[1]
+    if isinstance(categorical, str):
+        if categorical == "None":
+            categorical = np.array([])
+        elif categorical == "All":
+            categorical = np.arange(n_features)
+        else:
+            raise ValueError("Invalid value for categorical: %s. Allowed"
+                             " strings are 'All' or 'None'" % categorical)
+    categorical = np.asarray(categorical)
+    if categorical.dtype == np.bool:
+        if categorical.shape != (n_features,):
+            raise ValueError("Shape of boolean parameter categorical must"
+                             " be (n_features,)")
+        categorical = np.nonzero(categorical)[0]
+    if (len(categorical.shape) != 1 or
+        categorical.size > n_features or
+        (categorical.size > 0 and
+         (np.min(categorical) < 0 or
+          np.max(categorical) >= n_features))):
+        raise ValueError("Invalid shape or invalid feature index for"
+                         " parameter categorical")
+    if issparse(X) and categorical.size > 0:
+        raise NotImplementedError("Categorical features not supported with"
+                                  " sparse inputs")
+
+    n_categories = np.full(n_features, -1, dtype=np.int32)
+    category_map = [{}] * n_features
+    if categorical.size > 0 and check_input:
+        X = np.copy(X)
+    for feature in categorical:
+        rounded = np.round(X[:, feature]).astype(np.int64)
+        unique_rounded = np.unique(rounded)
+        if check_input:
+            category_map[feature] = dict(zip(unique_rounded, count()))
+            X[:, feature] = np.array([category_map[feature][x]
+                                      for x in rounded], dtype=DTYPE)
+        n_categories[feature] = len(unique_rounded)
+
+    return X, n_categories, category_map
+
+
+def validate_categorical(X, category_map):
+    """Map categorical features onto sequential integers. Used for
+    predicting.
+
+    Parameters
+    ----------
+    X : array-like, shape=(n_samples, n_features)
+        Feature array
+    category_map : list, length n_features
+        For each feature, a dictionary relating values to transformed
+        values, or an empty dictionary for non-categorical features
+
+    Returns
+    -------
+    X : array, shape=(n_samples, n_features)
+        Transformed copy of the feature array (or the original if
+        there are no categorical features)
+    """
+    if category_map is None:
+        return X
+
+    n_categories = np.array([len(x) for x in category_map])
+    categorical_features = np.nonzero(n_categories > 0)[0]
+    if categorical_features.size > 0:
+        if issparse(X):
+            raise NotImplementedError("Categorical features not supported"
+                                      " with sparse inputs")
+        X = np.copy(X)
+    for feature in categorical_features:
+        rounded = np.round(X[:, feature]).astype('int64')
+        new_cat = set(rounded) - set(category_map[feature])
+        new_cat_map = dict(zip(new_cat, count(n_categories[feature])))
+        X[:, feature] = np.array(
+            [category_map[feature].get(x, new_cat_map.get(x))
+             for x in rounded]).astype(DTYPE)
+
+    return X
+
+
 # =============================================================================
 # Base decision tree
 # =============================================================================
@@ -312,41 +423,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 sample_weight = expanded_class_weight
 
-        if isinstance(categorical, str):
-            if categorical == "None":
-                categorical = np.array([])
-            elif categorical == "All":
-                categorical = np.arange(self.n_features_)
-            else:
-                raise ValueError("Invalid value for categorical: %s. Allowed"
-                                 " strings are 'All' or 'None'" % categorical)
-        categorical = np.atleast_1d(categorical).flatten()
-        if categorical.dtype == np.bool:
-            if categorical.size != self.n_features_:
-                raise ValueError("Shape of boolean parameter categorical must"
-                                 " be [n_features]")
-            categorical = np.nonzero(categorical)[0]
-        if (categorical.size > self.n_features_ or
-            (categorical.size > 0 and
-             (np.min(categorical) < 0 or
-              np.max(categorical) >= self.n_features_))):
-            raise ValueError("Invalid shape or invalid feature index for"
-                             " parameter categorical")
-        if issparse(X) and len(categorical) > 0:
-            raise NotImplementedError("Categorical features not supported with"
-                                      " sparse inputs")
-
-        # Determine the number of categories in each categorical feature
-        n_categories = np.zeros(self.n_features_, dtype=np.int32) - 1
-        self.category_map_ = [None] * self.n_features_
-        if categorical.size > 0:
-            X = np.copy(X)
-        for feature in categorical:
-            rounded = np.round(X[:, feature]).astype(np.int64)
-            self.category_map_[feature] = dict(zip(set(rounded), count()))
-            X[:, feature] = np.array([self.category_map_[feature][x]
-                                      for x in rounded]).astype(DTYPE)
-            n_categories[feature] = len(self.category_map_[feature])
+        # Do preprocessing of categorical variables
+        X, n_categories, self.category_map_ = preproc_categorical(
+            X, categorical, check_input)
 
         # Set min_weight_leaf from min_weight_fraction_leaf
         if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
@@ -453,22 +532,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                              "input n_features is %s "
                              % (self.n_features_, n_features))
 
-        # Map categorical features onto integers
-        n_categories = self.tree_.n_categories
-        categorical_features = np.nonzero(n_categories > 0)[0]
-        if categorical_features.size > 0:
-            if issparse(X):
-                raise NotImplementedError("Categorical features not supported"
-                                          " with sparse inputs")
-            X = np.copy(X)
-        for feature in categorical_features:
-            rounded = np.round(X[:, feature]).astype('int64')
-            new_cat = set(rounded) - set(self.category_map_[feature])
-            new_cat_map = dict(zip(new_cat, count(n_categories[feature])))
-            X[:, feature] = np.array(
-                [self.category_map_[feature].get(x, new_cat_map.get(x))
-                 for x in rounded]).astype(DTYPE)
-
         return X
 
     def predict(self, X, check_input=True):
@@ -487,7 +550,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         check_input : boolean, (default=True)
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you are doing.
 
         Returns
         -------
@@ -496,6 +559,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         """
 
         X = self._validate_X_predict(X, check_input)
+        if check_input:
+            X = validate_categorical(X, self.category_map_)
+
         proba = self.tree_.predict(X)
         n_samples = X.shape[0]
 
@@ -537,7 +603,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         check_input : boolean, (default=True)
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you are doing.
 
         Returns
         -------
@@ -548,6 +614,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             numbering.
         """
         X = self._validate_X_predict(X, check_input)
+        if check_input:
+            X = validate_categorical(X, self.category_map_)
+
         return self.tree_.apply(X)
 
     def decision_path(self, X, check_input=True):
@@ -782,7 +851,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         check_input : boolean, (default=True)
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you are doing.
 
         Parameters
         ----------
@@ -799,6 +868,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             classes corresponds to that in the attribute `classes_`.
         """
         X = self._validate_X_predict(X, check_input)
+        if check_input:
+            X = validate_categorical(X, self.category_map_)
+
         proba = self.tree_.predict(X)
 
         if self.n_outputs_ == 1:

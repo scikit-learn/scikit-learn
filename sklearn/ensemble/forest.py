@@ -57,7 +57,8 @@ from ..feature_selection.from_model import _LearntSelectorMixin
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
-                    ExtraTreeClassifier, ExtraTreeRegressor)
+                    ExtraTreeClassifier, ExtraTreeRegressor,
+                    preproc_categorical, validate_categorical)
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
 from ..exceptions import DataConversionWarning, NotFittedError
@@ -155,6 +156,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.verbose = verbose
         self.warm_start = warm_start
         self.class_weight = class_weight
+        self.category_map_ = None
 
     def apply(self, X):
         """Apply trees in the forest to X, return leaf indices.
@@ -260,6 +262,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             # ensemble sorts the indices.
             X.sort_indices()
 
+        # Preprocess categorical variables
+        X, _, self.category_map_ = preproc_categorical(
+            X, categorical, check_input=True)
+
         # Remap output
         n_samples, self.n_features_ = X.shape
 
@@ -361,7 +367,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             raise NotFittedError("Estimator not fitted, "
                                  "call `fit` before exploiting the model.")
 
-        return self.estimators_[0]._validate_X_predict(X, check_input=True)
+        X = self.estimators_[0]._validate_X_predict(X, check_input=True)
+        X = validate_categorical(X, self.category_map_)
+
+        return X
 
     @property
     def feature_importances_(self):
