@@ -31,6 +31,7 @@ from ..utils.validation import FLOAT_DTYPES
 from ..utils.random import choice
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
+from ..externals.six import string_types
 
 from . import _k_means
 
@@ -269,7 +270,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
 
     if max_iter <= 0:
         raise ValueError('Number of iterations should be a positive number,'
-        ' got %d instead' % max_iter)
+                         ' got %d instead' % max_iter)
 
     best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
@@ -634,10 +635,10 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         raise ValueError(
             "n_samples=%d should be larger than k=%d" % (n_samples, k))
 
-    if init == 'k-means++':
+    if isinstance(init, string_types) and init == 'k-means++':
         centers = _k_init(X, k, random_state=random_state,
                           x_squared_norms=x_squared_norms)
-    elif init == 'random':
+    elif isinstance(init, string_types) and init == 'random':
         seeds = random_state.permutation(n_samples)[:k]
         centers = X[seeds]
     elif hasattr(init, '__array__'):

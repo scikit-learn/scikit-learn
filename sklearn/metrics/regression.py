@@ -26,6 +26,7 @@ import numpy as np
 
 from ..utils.validation import check_array, check_consistent_length
 from ..utils.validation import column_or_1d
+from ..externals.six import string_types
 
 import warnings
 
@@ -162,11 +163,12 @@ def mean_absolute_error(y_true, y_pred,
         y_true, y_pred, multioutput)
     output_errors = np.average(np.abs(y_pred - y_true),
                                weights=sample_weight, axis=0)
-    if multioutput == 'raw_values':
-        return output_errors
-    elif multioutput == 'uniform_average':
-        # pass None as weights to np.average: uniform mean
-        multioutput = None
+    if isinstance(multioutput, string_types):
+        if multioutput == 'raw_values':
+            return output_errors
+        elif multioutput == 'uniform_average':
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
 
     return np.average(output_errors, weights=multioutput)
 
@@ -229,11 +231,12 @@ def mean_squared_error(y_true, y_pred,
         y_true, y_pred, multioutput)
     output_errors = np.average((y_true - y_pred) ** 2, axis=0,
                                weights=sample_weight)
-    if multioutput == 'raw_values':
-        return output_errors
-    elif multioutput == 'uniform_average':
-        # pass None as weights to np.average: uniform mean
-        multioutput = None
+    if isinstance(multioutput, string_types):
+        if multioutput == 'raw_values':
+            return output_errors
+        elif multioutput == 'uniform_average':
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
 
     return np.average(output_errors, weights=multioutput)
 
@@ -464,20 +467,21 @@ def r2_score(y_true, y_pred,
                       "to 'uniform_average' in 0.18.",
                       DeprecationWarning)
         multioutput = 'variance_weighted'
-    if multioutput == 'raw_values':
-        # return scores individually
-        return output_scores
-    elif multioutput == 'uniform_average':
-        # passing None as weights results is uniform mean
-        avg_weights = None
-    elif multioutput == 'variance_weighted':
-        avg_weights = denominator
-        # avoid fail on constant y or one-element arrays
-        if not np.any(nonzero_denominator):
-            if not np.any(nonzero_numerator):
-                return 1.0
-            else:
-                return 0.0
+    if isinstance(multioutput, string_types):
+        if multioutput == 'raw_values':
+            # return scores individually
+            return output_scores
+        elif multioutput == 'uniform_average':
+            # passing None as weights results is uniform mean
+            avg_weights = None
+        elif multioutput == 'variance_weighted':
+            avg_weights = denominator
+            # avoid fail on constant y or one-element arrays
+            if not np.any(nonzero_denominator):
+                if not np.any(nonzero_numerator):
+                    return 1.0
+                else:
+                    return 0.0
     else:
         avg_weights = multioutput
 

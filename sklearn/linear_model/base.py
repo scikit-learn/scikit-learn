@@ -34,13 +34,13 @@ from ..utils.validation import NotFittedError, check_is_fitted
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 
 
-###
-### TODO: intercept for all models
-### We should define a common function to center data instead of
-### repeating the same code inside each fit method.
+#
+# TODO: intercept for all models
+# We should define a common function to center data instead of
+# repeating the same code inside each fit method.
 
-### TODO: bayesian_ridge_regression and bayesian_regression_ard
-### should be squashed into its respective objects.
+# TODO: bayesian_ridge_regression and bayesian_regression_ard
+# should be squashed into its respective objects.
 
 SPARSE_INTERCEPT_DECAY = 0.01
 # For sparse data intercept updates are scaled by this decay factor to avoid
@@ -474,7 +474,7 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
         Xy = None
 
     # precompute if n_samples > n_features
-    if precompute == 'auto':
+    if isinstance(precompute, six.string_types) and precompute == 'auto':
         precompute = (n_samples > n_features)
 
     if precompute is True:
