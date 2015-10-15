@@ -1,3 +1,4 @@
+
 # Authors:
 #
 #          Giorgio Patrini
@@ -1247,6 +1248,13 @@ def test_binarizer():
         X_bin = binarizer.transform(X)
         if init is not list:
             assert_true(X_bin is X)
+
+        binarizer = Binarizer(copy=False)
+        X_float = np.array([[1, 0, 5], [2, 3, -1]], dtype=np.float64)
+        X_bin = binarizer.transform(X_float)
+        if init is not list:
+            assert_true(X_bin is X_float)
+
         X_bin = toarray(X_bin)
         assert_equal(np.sum(X_bin == 0), 2)
         assert_equal(np.sum(X_bin == 1), 4)

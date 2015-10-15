@@ -1074,6 +1074,8 @@ class LarsCV(Lars):
         """
         self.fit_path = True
         X, y = check_X_y(X, y, y_numeric=True)
+        X = as_float_array(X, copy=self.copy_X)
+        y = as_float_array(y, copy=self.copy_X)
 
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=False)

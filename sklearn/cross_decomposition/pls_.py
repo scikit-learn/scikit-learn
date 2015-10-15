@@ -14,7 +14,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy import linalg
 from ..utils import arpack
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
@@ -375,14 +375,14 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
         check_is_fitted(self, 'x_mean_')
-        X = check_array(X, copy=copy)
+        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         # Normalize
         X -= self.x_mean_
         X /= self.x_std_
         # Apply rotation
         x_scores = np.dot(X, self.x_rotations_)
         if Y is not None:
-            Y = check_array(Y, ensure_2d=False, copy=copy)
+            Y = check_array(Y, ensure_2d=False, copy=copy, dtype=FLOAT_DTYPES)
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
             Y -= self.y_mean_
@@ -410,7 +410,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         be an issue in high dimensional space.
         """
         check_is_fitted(self, 'x_mean_')
-        X = check_array(X, copy=copy)
+        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         # Normalize
         X -= self.x_mean_
         X /= self.x_std_

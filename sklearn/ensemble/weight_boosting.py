@@ -29,7 +29,7 @@ import numpy as np
 from numpy.core.umath_tests import inner1d
 
 from .base import BaseEnsemble
-from ..base import ClassifierMixin, RegressorMixin
+from ..base import ClassifierMixin, RegressorMixin, is_regressor
 from ..externals import six
 from ..externals.six.moves import zip
 from ..externals.six.moves import xrange as range
@@ -107,7 +107,8 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             dtype = None
             accept_sparse = ['csr', 'csc']
 
-        X, y = check_X_y(X, y, accept_sparse=accept_sparse, dtype=dtype)
+        X, y = check_X_y(X, y, accept_sparse=accept_sparse, dtype=dtype,
+                         y_numeric=is_regressor(self))
 
         if sample_weight is None:
             # Initialize weights to 1 / n_samples

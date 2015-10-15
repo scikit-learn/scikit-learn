@@ -323,7 +323,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
 
-        X = check_array(X, copy=self.copy, ensure_2d=False)
+        X = check_array(X, copy=self.copy, ensure_2d=False, dtype=FLOAT_DTYPES)
         if X.ndim == 1:
             warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
@@ -341,7 +341,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
 
-        X = check_array(X, copy=self.copy, ensure_2d=False)
+        X = check_array(X, copy=self.copy, ensure_2d=False, dtype=FLOAT_DTYPES)
         if X.ndim == 1:
             warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
@@ -1068,14 +1068,14 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
            [4, 5]])
     >>> poly = PolynomialFeatures(2)
     >>> poly.fit_transform(X)
-    array([[ 1,  0,  1,  0,  0,  1],
-           [ 1,  2,  3,  4,  6,  9],
-           [ 1,  4,  5, 16, 20, 25]])
+    array([[  1.,   0.,   1.,   0.,   0.,   1.],
+           [  1.,   2.,   3.,   4.,   6.,   9.],
+           [  1.,   4.,   5.,  16.,  20.,  25.]])
     >>> poly = PolynomialFeatures(interaction_only=True)
     >>> poly.fit_transform(X)
-    array([[ 1,  0,  1,  0],
-           [ 1,  2,  3,  6],
-           [ 1,  4,  5, 20]])
+    array([[  1.,   0.,   1.,   0.],
+           [  1.,   2.,   3.,   6.],
+           [  1.,   4.,   5.,  20.]])
 
     Attributes
     ----------
@@ -1149,7 +1149,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
 
-        X = check_array(X)
+        X = check_array(X, dtype=FLOAT_DTYPES)
         n_samples, n_features = X.shape
 
         if n_features != self.n_input_features_:
@@ -1313,7 +1313,7 @@ def binarize(X, threshold=0.0, copy=True):
 
     Parameters
     ----------
-    XX : {array-like, sparse matrix}, shape [n_samples, n_features]
+    X : {array-like, sparse matrix}, shape [n_samples, n_features]
         The data to binarize, element by element.
         scipy.sparse matrices should be in CSR or CSC format to avoid an
         un-necessary copy.
@@ -1438,7 +1438,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
-        K = check_array(K)
+        K = check_array(K, dtype=FLOAT_DTYPES)
         n_samples = K.shape[0]
         self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
         self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
@@ -1461,9 +1461,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'K_fit_all_')
 
-        K = check_array(K)
-        if copy:
-            K = K.copy()
+        K = check_array(K, copy=copy, dtype=FLOAT_DTYPES)
 
         K_pred_cols = (np.sum(K, axis=1) /
                        self.K_fit_rows_.shape[0])[:, np.newaxis]
@@ -1503,7 +1501,7 @@ def add_dummy_feature(X, value=1.0):
     array([[ 1.,  0.,  1.],
            [ 1.,  1.,  0.]])
     """
-    X = check_array(X, accept_sparse=['csc', 'csr', 'coo'])
+    X = check_array(X, accept_sparse=['csc', 'csr', 'coo'], dtype=FLOAT_DTYPES)
     n_samples, n_features = X.shape
     shape = (n_samples, n_features + 1)
     if sparse.issparse(X):
@@ -1558,7 +1556,7 @@ def _transform_selected(X, transform, selected="all", copy=True):
     if selected == "all":
         return transform(X)
 
-    X = check_array(X, accept_sparse='csc', copy=copy)
+    X = check_array(X, accept_sparse='csc', copy=copy, dtype=FLOAT_DTYPES)
 
     if len(selected) == 0:
         return X
