@@ -88,7 +88,8 @@ def test_whitening():
         X_whitened2 = pca.transform(X_)
         assert_array_almost_equal(X_whitened, X_whitened2)
 
-        assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components), 6)
+        assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components),
+                            decimal=6)
         assert_almost_equal(X_whitened.mean(axis=0), np.zeros(n_components))
 
         X_ = X.copy()
@@ -123,7 +124,8 @@ def test_explained_variance():
                               np.var(X_pca, axis=0))
 
     X_rpca = rpca.transform(X)
-    assert_array_almost_equal(rpca.explained_variance_, np.var(X_rpca, axis=0), 1)
+    assert_array_almost_equal(rpca.explained_variance_, np.var(X_rpca, axis=0),
+                              decimal=1)
 
 
 def test_pca_check_projection():
