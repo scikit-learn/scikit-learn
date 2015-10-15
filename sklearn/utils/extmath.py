@@ -288,8 +288,8 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
 
-    if transpose == 'auto' and n_samples > n_features:
-        transpose = True
+    if transpose == 'auto':
+        transpose = n_samples < n_features
     if transpose:
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
