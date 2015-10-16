@@ -271,8 +271,6 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """Compute the minimum and maximum to be used for later scaling.
 
-        It always resets the object's internal state first.
-
         Parameters
         ----------
         X : array-like, shape [n_samples, n_features]
@@ -527,8 +525,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """Compute the mean and std to be used for later scaling.
 
-        It always resets the object's internal state first.
-
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape [n_samples, n_features]
@@ -726,8 +722,6 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         """Compute the maximum absolute value to be used for later scaling.
-
-        It always resets the object's internal state first.
 
         Parameters
         ----------
