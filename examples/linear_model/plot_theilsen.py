@@ -48,6 +48,8 @@ print(__doc__)
 estimators = [('OLS', LinearRegression()),
               ('Theil-Sen', TheilSenRegressor(random_state=42)),
               ('RANSAC', RANSACRegressor(random_state=42)), ]
+colors = {'OLS':'green', 'Theil-Sen':'blue', 'RANSAC':'red'}
+linestyle = {'OLS':'-', 'Theil-Sen':':', 'RANSAC':'--'}
 
 ##############################################################################
 # Outliers only in the y direction
@@ -71,7 +73,7 @@ for name, estimator in estimators:
     estimator.fit(X, y)
     elapsed_time = time.time() - t0
     y_pred = estimator.predict(line_x.reshape(2, 1))
-    plt.plot(line_x, y_pred,
+    plt.plot(line_x, y_pred, color = colors[name], linestyle = linestyle[name],
              label='%s (fit time: %.2fs)' % (name, elapsed_time))
 
 plt.axis('tight')
@@ -100,7 +102,7 @@ for name, estimator in estimators:
     estimator.fit(X, y)
     elapsed_time = time.time() - t0
     y_pred = estimator.predict(line_x.reshape(2, 1))
-    plt.plot(line_x, y_pred,
+    plt.plot(line_x, y_pred, color = colors[name], linestyle = linestyle[name],
              label='%s (fit time: %.2fs)' % (name, elapsed_time))
 
 plt.axis('tight')
