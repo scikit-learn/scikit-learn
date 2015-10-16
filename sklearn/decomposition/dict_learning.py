@@ -545,7 +545,7 @@ def _update_gain(gain, code, gain_rate, verbose=False):
 #         print(code.shape, gain_.shape, gain_/Z, np.mean(gain_/Z), Z)
     return gain
 
-def dict_learning_grad(X, eta=0.02, n_components=2, transform_n_nonzero_coefs=10, n_iter=100, 
+def dict_learning_grad(X, eta=0.02, n_components=2, transform_n_nonzero_coefs=10, alpha=None, n_iter=100, 
                        gain_rate=0.001, alpha_homeo=0.02,
                        return_code=True, dict_init=None, callback=None,
                        batch_size=100, verbose=False, shuffle=True, n_jobs=1,
@@ -677,12 +677,14 @@ def dict_learning_grad(X, eta=0.02, n_components=2, transform_n_nonzero_coefs=10
 #     dictionary = np.ascontiguousarray(dictionary.T)
 # 
     dictionary = random_state.randn(n_features, n_components)
-    norm = np.ones(n_components)
-    for k in range(n_components):
-        norm[k] = np.sqrt(np.sum(dictionary[:, k]**2))
-    dictionary /= norm[np.newaxis, :]
-    for k in range(n_components):
-        norm[k] = np.sqrt(np.sum(dictionary[:, k]**2))
+    norm = np.sqrt(np.sum(dictionary**2, axis=1)).T
+#     norm = np.ones(n_components)
+#     for k in range(n_components):
+#         norm[k] = np.sqrt(np.sum(dictionary[:, k]**2))
+    dictionary /= norm[:, np.newaxis]
+    norm = np.sqrt(np.sum(dictionary**2, axis=1)).T
+#     for k in range(n_components):
+#         norm[k] = np.sqrt(np.sum(dictionary[:, k]**2))
 
     if verbose == 1:
         print('[dict_learning]', end=' ')
@@ -705,29 +707,28 @@ def dict_learning_grad(X, eta=0.02, n_components=2, transform_n_nonzero_coefs=10
         dt = (time.time() - t0)
         if verbose > 0:
             if ii % int(n_iter/verbose) == 0:
-                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
-                       % (ii, dt, dt / 60))
+                print ("Iteration % 3i /  % 3i (elapsed time: % 3is, % 4.1fmn)"
+                       % (ii, n_iter, dt, dt / 60))
                 print("Norm ", norm.min(), norm.max(), norm.argmin())
                 print("Gain ", gain.min(), gain.max(), gain.argmax())
 
-        this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
+        this_code = sparse_encode(this_X, dictionary.T, algorithm=method, alpha=alpha,
                                   n_nonzero_coefs=transform_n_nonzero_coefs, n_jobs=n_jobs).T
 
         # Update dictionary
         residual = this_X - np.dot(this_code.T, dictionary.T)
-        dictionary *= (1-eta)
-        # TODO vectorize self.psi += self.nu * np.outer(residual, a)
-        for k in range(n_components):
-            dictionary[:, k] += eta * np.dot(residual.T, this_code[k, :])
-            norm[k] = np.sqrt(np.sum(dictionary[:, k]**2))
-        dictionary /= norm[np.newaxis, :]
+        residual /= this_code.shape[1] # divide by the number of samples
+        dictionary += eta * np.dot(residual.T, this_code.T)
+        norm = np.sqrt(np.sum(dictionary**2, axis=1)).T
+        dictionary /= norm[:, np.newaxis]
 
         # Update gain
         if gain_rate>0.:
             gain_ = _update_gain(gain_, this_code, gain_rate, verbose=verbose)
-            gain = gain * (gain_**alpha_homeo)
-            dictionary /= gain[np.newaxis, :]
-#             dictionary /= np.sqrt(gain)[np.newaxis, :]
+            gain = gain_**alpha_homeo
+            gain /= gain.mean()
+#             dictionary /= gain[np.newaxis, :]
+            dictionary /= np.sqrt(gain)[np.newaxis, :]
         # Maybe we need a stopping criteria based on the amount of
         # modification in the dictionary
         if callback is not None:
@@ -738,7 +739,8 @@ def dict_learning_grad(X, eta=0.02, n_components=2, transform_n_nonzero_coefs=10
             print('Learning code...', end=' ')
         elif verbose == 1:
             print('|', end=' ')
-        code = sparse_encode(X, dictionary.T, algorithm=method, n_nonzero_coefs=transform_n_nonzero_coefs,
+        code = sparse_encode(X, dictionary.T, algorithm=method, alpha=alpha,
+                             n_nonzero_coefs=transform_n_nonzero_coefs,
                              n_jobs=n_jobs)
         if verbose > 1:
             dt = (time.time() - t0)
