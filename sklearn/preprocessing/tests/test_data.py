@@ -1498,3 +1498,19 @@ def test_one_hot_encoder_unknown_transform():
     oh = OneHotEncoder(handle_unknown='42')
     oh.fit(X)
     assert_raises(ValueError, oh.transform, y)
+
+
+def test_fit_cold_start():
+    X = iris.data
+    X_2d = X[:, :2]
+
+    # Scalers that have a partial_fit method
+    scalers = [StandardScaler(with_mean=False, with_std=False),
+               MinMaxScaler(),
+               MaxAbsScaler()]
+
+    for scaler in scalers:
+        scaler.fit_transform(X)
+        # with a different shape, this may break the scaler unless the internal
+        # state is reset
+        scaler.fit_transform(X_2d)
