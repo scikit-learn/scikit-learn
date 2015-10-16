@@ -7,7 +7,8 @@ import numpy as np
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises, assert_warns
+from sklearn.utils import ConvergenceWarning
 
 from sklearn.cluster.affinity_propagation_ import AffinityPropagation
 from sklearn.cluster.affinity_propagation_ import affinity_propagation
@@ -66,7 +67,14 @@ def test_affinity_propagation_predict():
     labels2 = af.predict(X)
     assert_array_equal(labels, labels2)
 
-
+    
+def test_affinity_propagation_convergence_warning():
+    # Test warning in AffinityPropagation.fit
+    af = AffinityPropagation(affinity="euclidean", max_iter=1)
+    assert_warns(ConvergenceWarning, af.fit, X)
+    assert_raises(ValueError, af.predict, X)
+    
+    
 def test_affinity_propagation_predict_error():
     # Test exception in AffinityPropagation.predict
     # Not fitted.

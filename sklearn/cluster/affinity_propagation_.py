@@ -4,11 +4,13 @@
 #        Gael Varoquaux gael.varoquaux@normalesup.org
 
 # License: BSD 3 clause
+import warnings
 
 import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array, check_array
+from ..utils import ConvergenceWarning
 from ..utils.validation import check_is_fitted
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
@@ -176,8 +178,13 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         cluster_centers_indices = np.unique(labels)
         labels = np.searchsorted(cluster_centers_indices, labels)
     else:
+        warnings.warn('affinity_propagation did not converge. '
+                      'No exemplars identified. You might '
+                      'want to increase the damping factor and/or '
+                      'number of iterations',
+                      ConvergenceWarning)
         labels = np.empty((n_samples, 1))
-        cluster_centers_indices = None
+        cluster_centers_indices = []
         labels.fill(np.nan)
 
     if return_n_iter:
@@ -292,11 +299,15 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
                              "'euclidean'. Got %s instead"
                              % str(self.affinity))
 
-        self.cluster_centers_indices_, self.labels_, self.n_iter_ = \
-            affinity_propagation(
-                self.affinity_matrix_, self.preference, max_iter=self.max_iter,
-                convergence_iter=self.convergence_iter, damping=self.damping,
-                copy=self.copy, verbose=self.verbose, return_n_iter=True)
+        with warnings.catch_warnings():
+            warnings.simplefilter('always', ConvergenceWarning)
+            self.cluster_centers_indices_, self.labels_, self.n_iter_ = \
+                affinity_propagation(
+                    self.affinity_matrix_, self.preference,
+                    max_iter=self.max_iter,
+                    convergence_iter=self.convergence_iter,
+                    damping=self.damping,
+                    copy=self.copy, verbose=self.verbose, return_n_iter=True)
 
         if self.affinity != "precomputed":
             self.cluster_centers_ = X[self.cluster_centers_indices_].copy()
@@ -317,6 +328,9 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self, "cluster_centers_indices_")
+        if len(self.cluster_centers_indices_) == 0:
+            raise ValueError("Predict method not supported when Fit did not converge.")
+            
         if not hasattr(self, "cluster_centers_"):
             raise ValueError("Predict method is not supported when "
                              "affinity='precomputed'.")
