@@ -395,7 +395,7 @@ def check_fit2d_predict1d(name, Estimator):
 
 @ignore_warnings
 def check_fit2d_1sample(name, Estimator):
-    # check by fitting a 2d array and prediting with a 1d array
+    # check by fitting a 2d array with only one sample
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(1, 10))
     y = X[:, 0].astype(np.int)
@@ -411,13 +411,14 @@ def check_fit2d_1sample(name, Estimator):
     set_random_state(estimator, 1)
     try:
         estimator.fit(X, y)
-    except ValueError:
-        pass
-
+    except:
+        # The message should say something about only one sample
+        msg = "sample"
+        assert_raise_message(ValueError, msg, estimator, X, y)
 
 @ignore_warnings
 def check_fit2d_1feature(name, Estimator):
-    # check by fitting a 2d array and prediting with a 1d array
+    # check by fitting a 2d array with only one feature
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(10, 1))
     y = X[:, 0].astype(np.int)
@@ -433,8 +434,10 @@ def check_fit2d_1feature(name, Estimator):
     set_random_state(estimator, 1)
     try:
         estimator.fit(X, y)
-    except ValueError:
-        pass
+    except:
+        # The message should say something about only one feature
+        msg = "feature"
+        assert_raise_message(ValueError, msg, estimator, X, y)
 
 
 @ignore_warnings
