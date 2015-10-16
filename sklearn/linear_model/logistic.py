@@ -632,7 +632,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                       order='F')
         mask_classes = classes
 
-    if class_weight == "auto":
+    if class_weight in ["auto", "balanced"]:
         y_ = y_bin if multi_class == 'ovr' else y
         class_weight_ = compute_class_weight(class_weight, mask_classes,
                                              y_)
