@@ -252,8 +252,26 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     def data_min(self):
         return self.data_min_
 
+    def _reset(self):
+        """Reset internal data-dependent state of the scaler, if necessary.
+
+        __init__ parameters are not touched.
+        """
+
+        # Checking one attribute is enough, becase they are all set together
+        # in partial_fit
+        if hasattr(self, 'scale_'):
+            del self.scale_
+            del self.min_
+            del self.n_samples_seen_
+            del self.data_min_
+            del self.data_max_
+            del self.data_range_
+
     def fit(self, X, y=None):
         """Compute the minimum and maximum to be used for later scaling.
+
+        It always resets the object's internal state first.
 
         Parameters
         ----------
@@ -261,6 +279,9 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             The data used to compute the per-feature minimum and maximum
             used for later scaling along the features axis.
         """
+
+        # Reset internal state before fitting
+        self._reset()
         return self.partial_fit(X, y)
 
     def partial_fit(self, X, y=None):
@@ -489,8 +510,24 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     def std_(self):
         return self.scale_
 
+    def _reset(self):
+        """Reset internal data-dependent state of the scaler, if necessary.
+
+        __init__ parameters are not touched.
+        """
+
+        # Checking one attribute is enough, becase they are all set together
+        # in partial_fit
+        if hasattr(self, 'scale_'):
+            del self.scale_
+            del self.n_samples_seen_
+            del self.mean_
+            del self.var_
+
     def fit(self, X, y=None):
         """Compute the mean and std to be used for later scaling.
+
+        It always resets the object's internal state first.
 
         Parameters
         ----------
@@ -500,6 +537,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
         y: Passthrough for ``Pipeline`` compatibility.
         """
+
+        # Reset internal state before fitting
+        self._reset()
         return self.partial_fit(X, y)
 
     def partial_fit(self, X, y=None):
@@ -671,8 +711,23 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
     def __init__(self, copy=True):
         self.copy = copy
 
+    def _reset(self):
+        """Reset internal data-dependent state of the scaler, if necessary.
+
+        __init__ parameters are not touched.
+        """
+
+        # Checking one attribute is enough, becase they are all set together
+        # in partial_fit
+        if hasattr(self, 'scale_'):
+            del self.scale_
+            del self.n_samples_seen_
+            del self.max_abs_
+
     def fit(self, X, y=None):
         """Compute the maximum absolute value to be used for later scaling.
+
+        It always resets the object's internal state first.
 
         Parameters
         ----------
@@ -680,6 +735,9 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             The data used to compute the per-feature minimum and maximum
             used for later scaling along the features axis.
         """
+
+        # Reset internal state before fitting
+        self._reset()
         return self.partial_fit(X, y)
 
     def partial_fit(self, X, y=None):
