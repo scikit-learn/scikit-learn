@@ -66,7 +66,7 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
 # _LearntSelectorMixin is removed.
 DEPRECATED_TRANSFORM = [
     "RandomForestClassifier", "RandomForestRegressor", "ExtraTreesClassifier",
-    "ExtraTreesRegressor", "RandomTreesEmbedding", "DecisionTreeClassifier",
+    "ExtraTreesRegressor", "DecisionTreeClassifier",
     "DecisionTreeRegressor", "ExtraTreeClassifier", "ExtraTreeRegressor",
     "LinearSVC", "SGDClassifier", "SGDRegressor", "Perceptron",
     "LogisticRegression", "LogisticRegressionCV",
