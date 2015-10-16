@@ -15,7 +15,7 @@ from ..metrics import pairwise_distances_argmin
 
 
 def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
-                         damping=0.5, copy=True, verbose=False,
+                         damping=0.9, copy=True, verbose=False,
                          return_n_iter=False):
     """Perform Affinity Propagation Clustering of data
 
@@ -43,7 +43,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     max_iter : int, optional, default: 200
         Maximum number of iterations
 
-    damping : float, optional, default: 0.5
+    damping : float, optional, default: 0.9
         Damping factor between 0.5 and 1.
 
     copy : boolean, optional, default: True
@@ -195,7 +195,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    damping : float, optional, default: 0.5
+    damping : float, optional, default: 0.9
         Damping factor between 0.5 and 1.
 
     convergence_iter : int, optional, default: 15
@@ -218,7 +218,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     affinity : string, optional, default=``euclidean``
         Which affinity to use. At the moment ``precomputed`` and
         ``euclidean`` are supported. ``euclidean`` uses the
-        negative squared euclidean distance between points.
+        negative euclidean distance between points.
 
     verbose : boolean, optional, default: False
         Whether to be verbose.
@@ -255,7 +255,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     Between Data Points", Science Feb. 2007
     """
 
-    def __init__(self, damping=.5, max_iter=200, convergence_iter=15,
+    def __init__(self, damping=.9, max_iter=200, convergence_iter=15,
                  copy=True, preference=None, affinity='euclidean',
                  verbose=False):
 
@@ -286,7 +286,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         if self.affinity == "precomputed":
             self.affinity_matrix_ = X
         elif self.affinity == "euclidean":
-            self.affinity_matrix_ = -euclidean_distances(X, squared=True)
+            self.affinity_matrix_ = -euclidean_distances(X, squared=False)
         else:
             raise ValueError("Affinity must be 'precomputed' or "
                              "'euclidean'. Got %s instead"

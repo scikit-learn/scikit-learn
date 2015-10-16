@@ -23,7 +23,7 @@ X, _ = make_blobs(n_samples=60, n_features=2, centers=centers,
 def test_affinity_propagation():
     # Affinity Propagation algorithm
     # Compute similarities
-    S = -euclidean_distances(X, squared=True)
+    S = -euclidean_distances(X, squared=False)
     preference = np.median(S) * 10
     # Compute Affinity Propagation
     cluster_centers_indices, labels = affinity_propagation(
