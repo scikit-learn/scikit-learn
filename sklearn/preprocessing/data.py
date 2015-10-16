@@ -1704,6 +1704,10 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     n_values_ : array of shape (n_features,)
         Maximum number of values per feature.
 
+    unique_samples_ : list of length `n_features`
+        Each entry is an array of the unique samples found in each feature.
+        Only available when n_values is ``'auto'``.
+
     Examples
     --------
     Given a dataset with three features and two samples, we let the encoder
@@ -1797,23 +1801,19 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             out = out[:, active_features]
             self.active_features_ = active_features
 
-            fi = self.feature_indices_
-
-            # Find indexes feature indices aprropriately
+            # Find the index of the start of each class in the
+            # `active_features` array
             split_indices = np.searchsorted(active_features,
-                                            fi)
+                                            self.feature_indices_)
 
             af_copy = active_features.copy()
-            split_arrays = np.split(af_copy,
-                                    split_indices[1:-1])
-            nf = n_features
-            # Adjust to get actual class labels by subtracting
-            # offsets
+            split_arrays = np.split(af_copy, split_indices[1:-1])
+            # Adjust to get actual class labels by subtracting offsets
             samples = [np.subtract(split_arrays[i],
                                    self.feature_indices_[i],
                                    split_arrays[i])
-                                   for i in range(nf)]
-            self.unique_samples = samples
+                                   for i in range(n_features)]
+            self.unique_samples_ = samples
 
         return out if self.sparse else out.toarray()
 
@@ -1837,14 +1837,14 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             self.n_values == 'auto'):
             for i in range(n_features):
                 found_classes = set(np.unique(X[:, i]))
-                train_classes = set(self.unique_samples[i])
+                train_classes = set(self.unique_samples_[i])
 
                 if not found_classes.issubset(train_classes):
                     total_set = found_classes.union(train_classes)
                     new_classes = total_set.difference(train_classes)
 
-                    msg = ("unknown categorical feature(s) present %s "
-                                "during transform." % str(new_classes))
+                    msg = ("unknown categorical feature(s) present"
+                                "during transform : %s" % str(new_classes))
                     raise ValueError(msg)
 
         indices = self.feature_indices_
