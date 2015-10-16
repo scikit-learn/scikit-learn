@@ -644,7 +644,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
 
-        if self.precompute == 'auto':
+        if (isinstance(self.precompute, six.string_types)
+                and self.precompute == 'auto'):
             warnings.warn("Setting precompute to 'auto', was found to be "
                           "slower even when n_samples > n_features. Hence "
                           "it will be removed in 0.18.",

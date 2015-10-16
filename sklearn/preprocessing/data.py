@@ -1553,7 +1553,7 @@ def _transform_selected(X, transform, selected="all", copy=True):
     -------
     X : array or sparse matrix, shape=(n_samples, n_features_new)
     """
-    if selected == "all":
+    if isinstance(selected, six.string_types) and selected == "all":
         return transform(X)
 
     X = check_array(X, accept_sparse='csc', copy=copy, dtype=FLOAT_DTYPES)
