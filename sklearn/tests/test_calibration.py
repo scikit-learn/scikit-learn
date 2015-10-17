@@ -9,6 +9,7 @@ from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_greater_equal,
                                    assert_array_equal,
                                    assert_raises,
+                                   ignore_warnings,
                                    assert_warns_message)
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
@@ -23,6 +24,7 @@ from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
 
+@ignore_warnings
 def test_calibration():
     """Test calibration objects with isotonic and sigmoid"""
     n_samples = 100

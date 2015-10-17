@@ -19,6 +19,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     Non-linear dimensionality reduction through the use of kernels (see
     :ref:`metrics`).
 
+    Read more in the :ref:`User Guide <kernel_PCA>`.
+
     Parameters
     ----------
     n_components: int or None

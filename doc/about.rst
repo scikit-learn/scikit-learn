@@ -10,7 +10,7 @@ About us
 Citing scikit-learn
 -------------------
 
-If you use scikit-learn in scientific publication, we would appreciate
+If you use scikit-learn in a scientific publication, we would appreciate
 citations to the following paper:
 
  `Scikit-learn: Machine Learning in Python
@@ -31,6 +31,27 @@ citations to the following paper:
     year={2011}
    }
 
+If you want to cite scikit-learn for its API or design, you may also want to consider the
+following paper:
+
+`API design for machine learning software: experiences from the scikit-learn
+project <http://arxiv.org/abs/1309.0238>`_, Buitinck *et al.*, 2013.
+
+Bibtex entry::
+
+    @inproceedings{sklearn_api,
+      author    = {Lars Buitinck and Gilles Louppe and Mathieu Blondel and
+                   Fabian Pedregosa and Andreas Mueller and Olivier Grisel and
+                   Vlad Niculae and Peter Prettenhofer and Alexandre Gramfort
+                   and Jaques Grobler and Robert Layton and Jake VanderPlas and
+                   Arnaud Joly and Brian Holt and Ga{\"{e}}l Varoquaux},
+      title     = {{API} design for machine learning software: experiences from the scikit-learn
+                   project},
+      booktitle = {ECML PKDD Workshop: Languages for Data Mining and Machine Learning},
+      year      = {2013},
+      pages = {108--122},
+    }
+
 Artwork
 -------
 
@@ -48,6 +69,7 @@ provided funding for Fabian Pedregosa (2010-2012), Jaques Grobler
 full-time. It also hosts coding sprints and other events.
 
 .. image:: images/inria-logo.jpg
+   :width: 200pt
    :align: center
 
 `Paris-Saclay Center for Data Science <http://www.datascience-paris-saclay.fr>`_
@@ -55,6 +77,7 @@ funded one year for a developer to work on the project full-time
 (2014-2015).
 
 .. image:: images/cds-logo.png
+   :width: 200pt
    :align: center
 
 The following students were sponsored by `Google <http://code.google.com/opensource/>`_
@@ -141,30 +164,30 @@ The 2013' Paris international sprint
 
 
 .. |telecom| image:: http://f.hypotheses.org/wp-content/blogs.dir/331/files/2011/03/Logo-TPT.jpg
-   :width: 150px
+   :width: 120pt
    :target: http://www.telecom-paristech.fr/
 
 
 .. |tinyclues| image:: http://www.tinyclues.com/static/img/logo.png
-   :width: 150px
+   :width: 120pt
    :target: http://www.tinyclues.com/
 
 
 .. |afpy| image:: http://www.afpy.org/logo.png
-   :width: 150px
+   :width: 120pt
    :target: http://www.afpy.org
 
 
 .. |SGR| image:: http://www.svi.cnrs-bellevue.fr/wikimedia/images/Logo_svi_inp.png
-   :width: 150px
+   :width: 120pt
    :target: http://www.svi.cnrs-bellevue.fr
 
 .. |FNRS| image:: http://www.fnrs.be/uploaddocs/images/COMMUNIQUER/FRS-FNRS_rose_transp.png
-   :width: 150px
+   :width: 120pt
    :target: http://www.frs-fnrs.be/
 
 .. figure:: http://sites.uclouvain.be/dysco/pmwiki/uploads/Main/dysco.gif
-   :width: 150px
+   :width: 120pt
    :target: http://sites.uclouvain.be/dysco/
 
    IAP VII/19 - DYSCO

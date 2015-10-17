@@ -298,6 +298,8 @@ def fast_mcd(X, support_fraction=None,
              random_state=None):
     """Estimates the Minimum Covariance Determinant matrix.
 
+    Read more in the :ref:`User Guide <robust_covariance>`.
+
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
@@ -359,11 +361,7 @@ def fast_mcd(X, support_fraction=None,
     """
     random_state = check_random_state(random_state)
 
-    X = np.asarray(X)
-    if X.ndim == 1:
-        X = np.reshape(X, (1, -1))
-        warnings.warn("Only one sample available. "
-                      "You may want to reshape your data array")
+    X = check_array(X, ensure_min_samples=2, estimator='fast_mcd')
     n_samples, n_features = X.shape
 
     # minimum breakdown value
@@ -511,6 +509,8 @@ class MinCovDet(EmpiricalCovariance):
     One should consider projection pursuit methods to deal with multi-modal
     datasets.
 
+    Read more in the :ref:`User Guide <robust_covariance>`.
+
     Parameters
     ----------
     store_precision : bool
@@ -605,7 +605,7 @@ class MinCovDet(EmpiricalCovariance):
             Returns self.
 
         """
-        X = check_array(X)
+        X = check_array(X, ensure_min_samples=2, estimator='MinCovDet')
         random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank

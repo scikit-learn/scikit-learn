@@ -24,6 +24,8 @@ TREE_DICT = {'ball_tree': BallTree, 'kd_tree': KDTree}
 class KernelDensity(BaseEstimator):
     """Kernel Density Estimation
 
+    Read more in the :ref:`User Guide <kernel_density>`.
+
     Parameters
     ----------
     bandwidth : float

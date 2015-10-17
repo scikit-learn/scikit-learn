@@ -7,6 +7,8 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 
 import numpy as np
 
+from sklearn.base import BaseEstimator
+
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -16,6 +18,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.grid_search import GridSearchCV, ParameterGrid
@@ -27,7 +30,7 @@ from sklearn.svm import SVC, SVR
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SelectKBest
 from sklearn.cross_validation import train_test_split
-from sklearn.datasets import load_boston, load_iris
+from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
 
 from scipy.sparse import csc_matrix, csr_matrix
@@ -108,26 +111,27 @@ def test_sparse_classification():
         X_train_sparse = sparse_format(X_train)
         X_test_sparse = sparse_format(X_test)
         for params in parameter_sets:
+            for f in ['predict', 'predict_proba', 'predict_log_proba', 'decision_function']:
+                # Trained on sparse format
+                sparse_classifier = BaggingClassifier(
+                    base_estimator=CustomSVC(decision_function_shape='ovr'),
+                    random_state=1,
+                    **params
+                ).fit(X_train_sparse, y_train)
+                sparse_results = getattr(sparse_classifier, f)(X_test_sparse)
 
-            # Trained on sparse format
-            sparse_classifier = BaggingClassifier(
-                base_estimator=CustomSVC(),
-                random_state=1,
-                **params
-            ).fit(X_train_sparse, y_train)
-            sparse_results = sparse_classifier.predict(X_test_sparse)
-
-            # Trained on dense format
-            dense_results = BaggingClassifier(
-                base_estimator=CustomSVC(),
-                random_state=1,
-                **params
-            ).fit(X_train, y_train).predict(X_test)
+                # Trained on dense format
+                dense_classifier = BaggingClassifier(
+                    base_estimator=CustomSVC(decision_function_shape='ovr'),
+                    random_state=1,
+                    **params
+                ).fit(X_train, y_train)
+                dense_results = getattr(dense_classifier, f)(X_test)
+                assert_array_equal(sparse_results, dense_results)
 
             sparse_type = type(X_train_sparse)
             types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-            assert_array_equal(sparse_results, dense_results)
             assert all([t == sparse_type for t in types])
 
 
@@ -435,7 +439,7 @@ def test_parallel_classification():
     assert_array_almost_equal(y1, y3)
 
     # decision_function
-    ensemble = BaggingClassifier(SVC(),
+    ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
@@ -445,7 +449,7 @@ def test_parallel_classification():
     decisions2 = ensemble.decision_function(X_test)
     assert_array_almost_equal(decisions1, decisions2)
 
-    ensemble = BaggingClassifier(SVC(),
+    ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=1,
                                  random_state=0).fit(X_train, y_train)
 
@@ -551,6 +555,111 @@ def test_bagging_with_pipeline():
     estimator.fit(iris.data, iris.target)
 
 
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()
+class DummyZeroEstimator(BaseEstimator):
+
+    def fit(self, X, y):
+        self.classes_ = np.unique(y)
+        return self
+
+    def predict(self, X):
+        return self.classes_[np.zeros(X.shape[0], dtype=int)]
+
+
+def test_bagging_sample_weight_unsupported_but_passed():
+    estimator = BaggingClassifier(DummyZeroEstimator())
+    rng = check_random_state(0)
+
+    estimator.fit(iris.data, iris.target).predict(iris.data)
+    assert_raises(ValueError, estimator.fit, iris.data, iris.target,
+                  sample_weight=rng.randint(10, size=(iris.data.shape[0])))
+
+
+def test_warm_start(random_state=42):
+    # Test if fitting incrementally with warm start gives a forest of the
+    # right size and the same results as a normal fit.
+    X, y = make_hastie_10_2(n_samples=20, random_state=1)
+
+    clf_ws = None
+    for n_estimators in [5, 10]:
+        if clf_ws is None:
+            clf_ws = BaggingClassifier(n_estimators=n_estimators,
+                                       random_state=random_state,
+                                       warm_start=True)
+        else:
+            clf_ws.set_params(n_estimators=n_estimators)
+        clf_ws.fit(X, y)
+        assert_equal(len(clf_ws), n_estimators)
+
+    clf_no_ws = BaggingClassifier(n_estimators=10, random_state=random_state,
+                                  warm_start=False)
+    clf_no_ws.fit(X, y)
+
+    assert_equal(set([tree.random_state for tree in clf_ws]),
+                 set([tree.random_state for tree in clf_no_ws]))
+
+
+def test_warm_start_smaller_n_estimators():
+    # Test if warm start'ed second fit with smaller n_estimators raises error.
+    X, y = make_hastie_10_2(n_samples=20, random_state=1)
+    clf = BaggingClassifier(n_estimators=5, warm_start=True)
+    clf.fit(X, y)
+    clf.set_params(n_estimators=4)
+    assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_warm_start_equal_n_estimators():
+    # Test that nothing happens when fitting without increasing n_estimators
+    X, y = make_hastie_10_2(n_samples=20, random_state=1)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=43)
+
+    clf = BaggingClassifier(n_estimators=5, warm_start=True, random_state=83)
+    clf.fit(X_train, y_train)
+
+    y_pred = clf.predict(X_test)
+    # modify X to nonsense values, this should not change anything
+    X_train += 1.
+
+    assert_warns_message(UserWarning,
+                         "Warm-start fitting without increasing n_estimators does not",
+                         clf.fit, X_train, y_train)
+    assert_array_equal(y_pred, clf.predict(X_test))
+
+
+def test_warm_start_equivalence():
+    # warm started classifier with 5+5 estimators should be equivalent to
+    # one classifier with 10 estimators
+    X, y = make_hastie_10_2(n_samples=20, random_state=1)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=43)
+
+    clf_ws = BaggingClassifier(n_estimators=5, warm_start=True,
+                               random_state=3141)
+    clf_ws.fit(X_train, y_train)
+    clf_ws.set_params(n_estimators=10)
+    clf_ws.fit(X_train, y_train)
+    y1 = clf_ws.predict(X_test)
+
+    clf = BaggingClassifier(n_estimators=10, warm_start=False,
+                            random_state=3141)
+    clf.fit(X_train, y_train)
+    y2 = clf.predict(X_test)
+
+    assert_array_almost_equal(y1, y2)
+
+
+def test_warm_start_with_oob_score_fails():
+    # Check using oob_score and warm_start simultaneously fails
+    X, y = make_hastie_10_2(n_samples=20, random_state=1)
+    clf = BaggingClassifier(n_estimators=5, warm_start=True, oob_score=True)
+    assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_oob_score_removed_on_warm_start():
+    X, y = make_hastie_10_2(n_samples=2000, random_state=1)
+
+    clf = BaggingClassifier(n_estimators=50, oob_score=True)
+    clf.fit(X, y)
+
+    clf.set_params(warm_start=True, oob_score=False, n_estimators=100)
+    clf.fit(X, y)
+
+    assert_raises(AttributeError, getattr, clf, "oob_score_")

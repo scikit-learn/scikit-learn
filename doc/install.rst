@@ -144,7 +144,7 @@ release::
 
     pip install --user --install-option="--prefix=" -U scikit-learn
 
-The ``--user`` flag ask pip to install scikit-learn in the ``$HOME/.local``
+The ``--user`` flag asks pip to install scikit-learn in the ``$HOME/.local``
 folder therefore not requiring root permission. This flag should make pip
 ignore any old version of scikit-learn previously installed on the system while
 benefiting from system packages for numpy and scipy. Those dependencies can

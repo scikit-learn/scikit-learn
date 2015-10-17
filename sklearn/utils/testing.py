@@ -7,6 +7,7 @@
 #          Olivier Grisel
 #          Arnaud Joly
 #          Denis Engemann
+#          Giorgio Patrini
 # License: BSD 3 clause
 import os
 import inspect
@@ -28,8 +29,20 @@ except ImportError:
     from urllib.request import urlopen
     from urllib.error import HTTPError
 
+import tempfile
+import shutil
+import os.path as op
+import atexit
+
+# WindowsError only exist on Windows
+try:
+    WindowsError
+except NameError:
+    WindowsError = None
+
 import sklearn
 from sklearn.base import BaseEstimator
+from sklearn.externals import joblib
 
 # Conveniently import all assertions in one place.
 from nose.tools import assert_equal
@@ -45,17 +58,20 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
+from numpy.testing import assert_approx_equal
 import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
+from sklearn.cluster import DBSCAN
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
-           "assert_greater", "assert_greater_equal"]
+           "assert_greater", "assert_greater_equal",
+           "assert_approx_equal"]
 
 
 try:
@@ -72,7 +88,7 @@ except ImportError:
 try:
     from nose.tools import assert_raises_regex
 except ImportError:
-    # for Py 2.6
+    # for Python 2
     def assert_raises_regex(expected_exception, expected_regexp,
                             callable_obj=None, *args, **kwargs):
         """Helper function to check for message patterns in exceptions"""
@@ -81,15 +97,16 @@ except ImportError:
         try:
             callable_obj(*args, **kwargs)
             not_raised = True
-        except Exception as e:
+        except expected_exception as e:
             error_message = str(e)
             if not re.compile(expected_regexp).search(error_message):
                 raise AssertionError("Error message should match pattern "
                                      "%r. %r does not." %
                                      (expected_regexp, error_message))
         if not_raised:
-            raise AssertionError("Should have raised %r" %
-                                 expected_exception(expected_regexp))
+            raise AssertionError("%s not raised by %s" %
+                                 (expected_exception.__name__,
+                                  callable_obj.__name__))
 
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
 # assert_raises_regex but lets keep the bacward compat in scikit-learn with
@@ -212,7 +229,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
             raise AssertionError("No warning raised when calling %s"
                                  % func.__name__)
 
-        found = [warning.category is warning_class for warning in w]
+        found = [issubclass(warning.category, warning_class) for warning in w]
         if not any(found):
             raise AssertionError("No warning raised for %s with class "
                                  "%s"
@@ -235,8 +252,8 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
         if not message_found:
             raise AssertionError("Did not receive the message you expected "
-                                 "('%s') for <%s>."
-                                 % (message, func.__name__))
+                                 "('%s') for <%s>, got: '%s'"
+                                 % (message, func.__name__, msg))
 
     return result
 
@@ -387,15 +404,38 @@ else:
     assert_allclose = _assert_allclose
 
 
-def assert_raise_message(exception, message, function, *args, **kwargs):
-    """Helper function to test error messages in exceptions"""
+def assert_raise_message(exceptions, message, function, *args, **kwargs):
+    """Helper function to test error messages in exceptions
 
+    Parameters
+    ----------
+    exceptions : exception or tuple of exception
+        Name of the estimator
+
+    func : callable
+        Calable object to raise error
+
+    *args : the positional arguments to `func`.
+
+    **kw : the keyword arguments to `func`
+    """
     try:
         function(*args, **kwargs)
-        raise AssertionError("Should have raised %r" % exception(message))
-    except exception as e:
+    except exceptions as e:
         error_message = str(e)
-        assert_in(message, error_message)
+        if message not in error_message:
+            raise AssertionError("Error message does not include the expected"
+                                 " string: %r. Observed error message: %r" %
+                                 (message, error_message))
+    else:
+        # concatenate exception names
+        if isinstance(exceptions, tuple):
+            names = " or ".join(e.__name__ for e in exceptions)
+        else:
+            names = exceptions.__name__
+
+        raise AssertionError("%s not raised by %s" %
+                             (names, function.__name__))
 
 
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):
@@ -492,8 +532,8 @@ META_ESTIMATORS = ["OneVsOneClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
-OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV",
-         "RandomizedSearchCV"]
+OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
+         "SelectFromModel"]
 
 # some trange ones
 DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
@@ -510,7 +550,7 @@ DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
              'ZeroEstimator', 'ScaledLogOddsEstimator',
              'QuantileEstimator', 'MeanEstimator',
              'LogOddsEstimator', 'PriorProbabilityEstimator',
-             '_SigmoidCalibration']
+             '_SigmoidCalibration', 'VotingClassifier']
 
 
 def all_estimators(include_meta_estimators=False,
@@ -612,7 +652,16 @@ def all_estimators(include_meta_estimators=False,
 
 
 def set_random_state(estimator, random_state=0):
-    if "random_state" in estimator.get_params().keys():
+    """Set random state of an estimator if it has the `random_state` param.
+
+    Classes for whom random_state is deprecated are ignored. Currently DBSCAN
+    is one such class.
+    """
+
+    if isinstance(estimator, DBSCAN):
+        return
+
+    if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
 
 
@@ -625,8 +674,9 @@ def if_matplotlib(func):
             import matplotlib
             matplotlib.use('Agg', warn=False)
             # this fails if no $DISPLAY specified
-            matplotlib.pylab.figure()
-        except:
+            import matplotlib.pyplot as plt
+            plt.figure()
+        except ImportError:
             raise SkipTest('Matplotlib not available.')
         else:
             return func(*args, **kwargs)
@@ -639,6 +689,10 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
     """Test decorator that skips test if OS is Mac OS X and its
     major version is one of ``versions``.
     """
+    warnings.warn("if_not_mac_os is deprecated in 0.17 and will be removed"
+                  " in 0.19: use the safer and more generic"
+                  " if_safe_multiprocessing_with_blas instead",
+                  DeprecationWarning)
     mac_version, _, _ = platform.mac_ver()
     skip = '.'.join(mac_version.split('.')[:2]) in versions
 
@@ -649,6 +703,33 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
                 raise SkipTest(message)
         return func
     return decorator
+
+
+def if_safe_multiprocessing_with_blas(func):
+    """Decorator for tests involving both BLAS calls and multiprocessing
+
+    Under Python < 3.4 and POSIX (e.g. Linux or OSX), using multiprocessing in
+    conjunction with some implementation of BLAS (or other libraries that
+    manage an internal posix thread pool) can cause a crash or a freeze of the
+    Python process.
+
+    Under Python 3.4 and later, joblib uses the forkserver mode of
+    multiprocessing which does not trigger this problem.
+
+    In practice all known packaged distributions (from Linux distros or
+    Anaconda) of BLAS under Linux seems to be safe. So we this problem seems to
+    only impact OSX users.
+
+    This wrapper makes it possible to skip tests that can possibly cause
+    this crash under OSX with.
+    """
+    @wraps(func)
+    def run_test(*args, **kwargs):
+        if sys.platform == 'darwin' and sys.version_info[:2] < (3, 4):
+            raise SkipTest(
+                "Possible multi-process bug with some BLAS under Python < 3.4")
+        return func(*args, **kwargs)
+    return run_test
 
 
 def clean_warning_registry():
@@ -671,6 +752,37 @@ def check_skip_travis():
     """Skip test if being run on Travis."""
     if os.environ.get('TRAVIS') == "true":
         raise SkipTest("This test needs to be skipped on Travis")
+
+
+def _delete_folder(folder_path, warn=False):
+    """Utility function to cleanup a temporary folder if still existing.
+    Copy from joblib.pool (for independance)"""
+    try:
+        if os.path.exists(folder_path):
+            # This can fail under windows,
+            #  but will succeed when called by atexit
+            shutil.rmtree(folder_path)
+    except WindowsError:
+        if warn:
+            warnings.warn("Could not delete temporary folder %s" % folder_path)
+
+
+class TempMemmap(object):
+    def __init__(self, data, mmap_mode='r'):
+        self.temp_folder = tempfile.mkdtemp(prefix='sklearn_testing_')
+        self.mmap_mode = mmap_mode
+        self.data = data
+
+    def __enter__(self):
+        fpath = op.join(self.temp_folder, 'data.pkl')
+        joblib.dump(self.data, fpath)
+        data_read_only = joblib.load(fpath, mmap_mode=self.mmap_mode)
+        atexit.register(lambda: _delete_folder(self.temp_folder, warn=True))
+        return data_read_only
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        _delete_folder(self.temp_folder)
+
 
 with_network = with_setup(check_skip_network)
 with_travis = with_setup(check_skip_travis)

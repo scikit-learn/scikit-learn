@@ -24,6 +24,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                            SupervisedIntegerMixin, ClassifierMixin):
     """Classifier implementing the k-nearest neighbors vote.
 
+    Read more in the :ref:`User Guide <classification>`.
+
     Parameters
     ----------
     n_neighbors : int, optional (default = 5)
@@ -72,8 +74,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric_params: dict, optional (default = None)
-        additional keyword arguments for the metric function.
+    metric_params : dict, optional (default = None)
+        Additional keyword arguments for the metric function.
+
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        Doesn't affect :meth:`fit` method.
 
     Examples
     --------
@@ -112,12 +119,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5,
                  weights='uniform', algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, **kwargs):
+                 p=2, metric='minkowski', metric_params=None, n_jobs=1,
+                 **kwargs):
 
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
                           leaf_size=leaf_size, metric=metric, p=p,
-                          metric_params=metric_params, **kwargs)
+                          metric_params=metric_params, n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -125,8 +133,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
-            A 2-D array representing the test points.
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
 
         Returns
         -------
@@ -167,8 +176,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array, shape = (n_samples, n_features)
-            A 2-D array representing the test points.
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
 
         Returns
         -------
@@ -219,6 +229,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                 SupervisedIntegerMixin, ClassifierMixin):
     """Classifier implementing a vote among neighbors within a given radius
+
+    Read more in the :ref:`User Guide <classification>`.
 
     Parameters
     ----------
@@ -274,8 +286,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         neighbors on given radius).
         If set to None, ValueError is raised, when outlier is detected.
 
-    metric_params: dict, optional (default = None)
-        additional keyword arguments for the metric function.
+    metric_params : dict, optional (default = None)
+        Additional keyword arguments for the metric function.
 
     Examples
     --------
@@ -319,8 +331,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
-            A 2-D array representing the test points.
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
 
         Returns
         -------

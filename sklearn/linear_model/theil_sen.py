@@ -19,8 +19,8 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import check_array, check_random_state, ConvergenceWarning
-from ..utils import check_consistent_length, _get_n_jobs
+from ..utils import check_random_state, ConvergenceWarning
+from ..utils import check_X_y, _get_n_jobs
 from ..utils.random import choice
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange as range
@@ -207,6 +207,8 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     reached, the subsets are chosen randomly. In a final step, the spatial
     median (or L1 median) is calculated of all least square solutions.
 
+    Read more in the :ref:`User Guide <theil_sen_regression>`.
+
     Parameters
     ----------
     fit_intercept : boolean, optional, default True
@@ -253,16 +255,16 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = (n_features)
+    coef_ : array, shape = (n_features)
         Coefficients of the regression model (median of distribution).
 
-    `intercept_` : float
+    intercept_ : float
         Estimated intercept of regression model.
 
-    `breakdown_` : float
+    breakdown_ : float
         Approximated breakdown point.
 
-    `n_iter_` : int
+    n_iter_ : int
         Number of iterations needed for the spatial median.
 
     n_subpopulation_ : int
@@ -341,9 +343,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         self : returns an instance of self.
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
-        y = check_array(y, ensure_2d=False)
-        check_consistent_length(X, y)
+        X, y = check_X_y(X, y, y_numeric=True)
         n_samples, n_features = X.shape
         n_subsamples, self.n_subpopulation_ = self._check_subparams(n_samples,
                                                                     n_features)

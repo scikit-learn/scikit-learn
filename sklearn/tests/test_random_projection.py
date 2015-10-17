@@ -116,18 +116,18 @@ def check_input_with_sparse_random_matrix(random_matrix):
 def test_basic_property_of_random_matrix():
     # Check basic properties of random matrix generation
     for random_matrix in all_random_matrix:
-        check_input_size_random_matrix(random_matrix)
-        check_size_generated(random_matrix)
-        check_zero_mean_and_unit_norm(random_matrix)
+        yield check_input_size_random_matrix, random_matrix
+        yield check_size_generated, random_matrix
+        yield check_zero_mean_and_unit_norm, random_matrix
 
     for random_matrix in all_sparse_random_matrix:
-        check_input_with_sparse_random_matrix(random_matrix)
+        yield check_input_with_sparse_random_matrix, random_matrix
 
         random_matrix_dense = \
             lambda n_components, n_features, random_state: random_matrix(
                 n_components, n_features, random_state=random_state,
                 density=1.0)
-        check_zero_mean_and_unit_norm(random_matrix_dense)
+        yield check_zero_mean_and_unit_norm, random_matrix_dense
 
 
 def test_gaussian_random_matrix():
@@ -211,7 +211,7 @@ def test_sparse_random_projection_transformer_invalid_density():
 def test_random_projection_transformer_invalid_input():
     for RandomProjection in all_RandomProjection:
         assert_raises(ValueError,
-                      RandomProjection(n_components='auto').fit, [0, 1, 2])
+                      RandomProjection(n_components='auto').fit, [[0, 1, 2]])
 
         assert_raises(ValueError,
                       RandomProjection(n_components=-10).fit, data)

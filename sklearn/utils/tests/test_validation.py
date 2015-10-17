@@ -6,11 +6,15 @@ from tempfile import NamedTemporaryFile
 from itertools import product
 
 import numpy as np
-from numpy.testing import assert_array_equal, assert_warns
+from numpy.testing import assert_array_equal
 import scipy.sparse as sp
 from nose.tools import assert_raises, assert_true, assert_false, assert_equal
 
 from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils.mocking import MockDataFrame
@@ -25,7 +29,9 @@ from sklearn.utils.validation import (
     NotFittedError,
     has_fit_parameter,
     check_is_fitted,
-    check_consistent_length)
+    check_consistent_length,
+    DataConversionWarning,
+)
 
 from sklearn.utils.testing import assert_raise_message
 
@@ -78,13 +84,13 @@ def test_memmap():
     asflt = lambda x: as_float_array(x, copy=False)
 
     with NamedTemporaryFile(prefix='sklearn-test') as tmp:
-        M = np.memmap(tmp, shape=100, dtype=np.float32)
+        M = np.memmap(tmp, shape=(10, 10), dtype=np.float32)
         M[:] = 0
 
         for f in (check_array, np.asarray, asflt):
             X = f(M)
             X[:] = 1
-            assert_array_equal(X.ravel(), M)
+            assert_array_equal(X.ravel(), M.ravel())
             X[:] = 0
 
 
@@ -106,11 +112,8 @@ def test_ordering():
     X.data = X.data[::-1]
     assert_false(X.data.flags['C_CONTIGUOUS'])
 
-    for copy in (True, False):
-        Y = check_array(X, accept_sparse='csr', copy=copy, order='C')
-        assert_true(Y.data.flags['C_CONTIGUOUS'])
 
-
+@ignore_warnings
 def test_check_array():
     # accept_sparse == None
     # raise error on sparse inputs
@@ -118,6 +121,7 @@ def test_check_array():
     X_csr = sp.csr_matrix(X)
     assert_raises(TypeError, check_array, X_csr)
     # ensure_2d
+    assert_warns(DeprecationWarning, check_array, [0, 1, 2])
     X_array = check_array([0, 1, 2])
     assert_equal(X_array.ndim, 2)
     X_array = check_array([0, 1, 2], ensure_2d=False)
@@ -238,10 +242,81 @@ def test_check_array_dtype_stability():
     assert_equal(check_array(X, ensure_2d=False).dtype.kind, "i")
 
 
+def test_check_array_dtype_warning():
+    X_int_list = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    X_float64 = np.asarray(X_int_list, dtype=np.float64)
+    X_float32 = np.asarray(X_int_list, dtype=np.float32)
+    X_int64 = np.asarray(X_int_list, dtype=np.int64)
+    X_csr_float64 = sp.csr_matrix(X_float64)
+    X_csr_float32 = sp.csr_matrix(X_float32)
+    X_csc_float32 = sp.csc_matrix(X_float32)
+    X_csc_int32 = sp.csc_matrix(X_int64, dtype=np.int32)
+    y = [0, 0, 1]
+    integer_data = [X_int64, X_csc_int32]
+    float64_data = [X_float64, X_csr_float64]
+    float32_data = [X_float32, X_csr_float32, X_csc_float32]
+    for X in integer_data:
+        X_checked = assert_no_warnings(check_array, X, dtype=np.float64,
+                                       accept_sparse=True)
+        assert_equal(X_checked.dtype, np.float64)
+
+        X_checked = assert_warns(DataConversionWarning, check_array, X,
+                                 dtype=np.float64,
+                                 accept_sparse=True, warn_on_dtype=True)
+        assert_equal(X_checked.dtype, np.float64)
+
+        # Check that the warning message includes the name of the Estimator
+        X_checked = assert_warns_message(DataConversionWarning,
+                                         'SomeEstimator',
+                                         check_array, X,
+                                         dtype=[np.float64, np.float32],
+                                         accept_sparse=True,
+                                         warn_on_dtype=True,
+                                         estimator='SomeEstimator')
+        assert_equal(X_checked.dtype, np.float64)
+
+        X_checked, y_checked = assert_warns_message(
+            DataConversionWarning, 'KNeighborsClassifier',
+            check_X_y, X, y, dtype=np.float64, accept_sparse=True,
+            warn_on_dtype=True, estimator=KNeighborsClassifier())
+
+        assert_equal(X_checked.dtype, np.float64)
+
+    for X in float64_data:
+        X_checked = assert_no_warnings(check_array, X, dtype=np.float64,
+                                       accept_sparse=True, warn_on_dtype=True)
+        assert_equal(X_checked.dtype, np.float64)
+        X_checked = assert_no_warnings(check_array, X, dtype=np.float64,
+                                       accept_sparse=True, warn_on_dtype=False)
+        assert_equal(X_checked.dtype, np.float64)
+
+    for X in float32_data:
+        X_checked = assert_no_warnings(check_array, X,
+                                       dtype=[np.float64, np.float32],
+                                       accept_sparse=True)
+        assert_equal(X_checked.dtype, np.float32)
+        assert_true(X_checked is X)
+
+        X_checked = assert_no_warnings(check_array, X,
+                                       dtype=[np.float64, np.float32],
+                                       accept_sparse=['csr', 'dok'],
+                                       copy=True)
+        assert_equal(X_checked.dtype, np.float32)
+        assert_false(X_checked is X)
+
+    X_checked = assert_no_warnings(check_array, X_csc_float32,
+                                   dtype=[np.float64, np.float32],
+                                   accept_sparse=['csr', 'dok'],
+                                   copy=False)
+    assert_equal(X_checked.dtype, np.float32)
+    assert_false(X_checked is X_csc_float32)
+    assert_equal(X_checked.format, 'csr')
+
+
 def test_check_array_min_samples_and_features_messages():
     # empty list is considered 2D by default:
     msg = "0 feature(s) (shape=(1, 0)) while a minimum of 1 is required."
-    assert_raise_message(ValueError, msg, check_array, [])
+    assert_raise_message(ValueError, msg, check_array, [[]])
 
     # If considered a 1D collection when ensure_2d=False, then the minimum
     # number of samples will break:
@@ -254,7 +329,8 @@ def test_check_array_min_samples_and_features_messages():
 
     # But this works if the input data is forced to look like a 2 array with
     # one sample and one feature:
-    X_checked = check_array(42, ensure_2d=True)
+    X_checked = assert_warns(DeprecationWarning, check_array, [42],
+                             ensure_2d=True)
     assert_array_equal(np.array([[42]]), X_checked)
 
     # Simulate a model that would need at least 2 samples to be well defined

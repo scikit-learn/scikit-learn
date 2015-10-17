@@ -31,8 +31,8 @@ from sklearn.datasets import load_digits
 from sklearn.ensemble import RandomForestClassifier
 
 # get some data
-iris = load_digits()
-X, y = iris.data, iris.target
+digits = load_digits()
+X, y = digits.data, digits.target
 
 # build a classifier
 clf = RandomForestClassifier(n_estimators=20)
