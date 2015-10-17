@@ -131,6 +131,22 @@ def _yield_classifier_checks(name, Classifier):
     if 'class_weight' in Classifier().get_params().keys():
         yield check_class_weight_classifiers
 
+def check_supervised_y_no_nan(name, Estimator):
+    if "MultiTask" in name:
+        # The following checks are only those that work on 1d y's
+        # TODO: Test with Multitask later
+        return
+    X = np.random.randn(10, 5)
+    y = np.random.randn(10) / 0.
+    errmsg = "Input contains NaN, infinity or a value too large for " \
+             "dtype('float64')."
+    try:
+        Estimator().fit(X, y)
+    except ValueError:
+        pass
+    else:
+        raise ValueError("Estimator {0} should have raised error on fitting "
+                         "array with NaN value.".format(Estimator.__name__))
 
 def _yield_regressor_checks(name, Regressor):
     # TODO: test with intercept
@@ -141,6 +157,7 @@ def _yield_regressor_checks(name, Regressor):
     yield check_estimators_partial_fit_n_features
     yield check_regressors_no_decision_function
     yield check_supervised_y_2d
+    yield check_supervised_y_no_nan
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
