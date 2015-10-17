@@ -70,6 +70,7 @@ Classes
    cluster.MiniBatchKMeans
    cluster.MeanShift
    cluster.SpectralClustering
+   cluster.KernelKMeans
 
 Functions
 ---------

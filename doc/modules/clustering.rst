@@ -103,6 +103,12 @@ Overview of clustering methods
      - Large dataset, outlier removal, data reduction.
      - Euclidean distance between points
 
+   * - :ref:'Kernel K-Means'
+     - number of clusters
+	 - Medium ``n_clusters`` and ``n_samples``
+	 - Non-linear dataset
+	 - Kernel method to calculate distance
+
 Non-flat geometry clustering is useful when the clusters have a specific
 shape, i.e. a non-flat manifold, and the standard euclidean distance is
 not the right metric. This case arises in the two top rows of the figure
@@ -879,6 +885,29 @@ the user is advised
    JBirch - Java implementation of BIRCH clustering algorithm
    https://code.google.com/archive/p/jbirch
 
+.. _kernel_kmeans:
+
+Kernel K-Means
+==============
+
+The :class:`KernelKMeans` algorithm is an enhancement of the :class:`KMeans` algorithm
+which uses a kernel function to generate an appropriate non-linear mapping drom the
+original (input) space to a higher-dimensional feature space to extract clusters
+that are non-linearly seperable in input space.
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_kernel_kmeans_iris.py`: Clustering iris dataset
+
+
+.. topic:: References:
+
+ * `"Kernel k-means, Spectral Clustering and Normalized Cuts"
+   <http://dl.acm.org/citation.cfm?id=1014118>`_
+   Inderjit S. Dhillon, Yuqiang Guan, Brian Kulis, 
+   *Proceedings of the tenth ACM SIGKDD international 
+   conference on Knowledge discovery and data mining*,
+   KDD (2004)
 
 .. _clustering_evaluation:
 
