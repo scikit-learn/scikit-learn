@@ -132,18 +132,24 @@ def _yield_classifier_checks(name, Classifier):
         yield check_class_weight_classifiers
 
 def check_supervised_y_no_nan(name, Estimator):
-    if "MultiTask" in name:
-        # The following checks are only those that work on 1d y's
-        # TODO: Test with Multitask later
-        return
+    # Checks that the Estimator targets are not NaN.
+
+    warnings.simplefilter("ignore")
     X = np.random.randn(10, 5)
-    y = np.random.randn(10) / 0.
+    y1 = np.random.randn(10) / 0.
+    y2 = np.random.randn(10, 2) / 0.
+
     errmsg = "Input contains NaN, infinity or a value too large for " \
              "dtype('float64')."
     try:
-        Estimator().fit(X, y)
-    except ValueError:
-        pass
+        if "MultiTask" in name:
+            Estimator().fit(X, y2)
+        else:
+            Estimator().fit(X, y1)
+    except ValueError as e:
+        if e.message != errmsg:
+            warnings.warn("Estimator {0} raised warning as expected, but "
+                          "does not match expected error message")
     else:
         raise ValueError("Estimator {0} should have raised error on fitting "
                          "array with NaN value.".format(Estimator.__name__))
