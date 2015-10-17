@@ -713,7 +713,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         -------
         self
         """
-        X = check_array(X, ensure_min_samples=2)
+        X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = self.memory
         if isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
@@ -870,7 +870,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         self
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        ensure_min_features=2)
+                        ensure_min_features=2, estimator=self)
         return AgglomerativeClustering.fit(self, X.T, **params)
 
     @property

@@ -7,6 +7,7 @@
 #          Olivier Grisel
 #          Arnaud Joly
 #          Denis Engemann
+#          Giorgio Patrini
 # License: BSD 3 clause
 import os
 import inspect
@@ -57,17 +58,20 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
+from numpy.testing import assert_approx_equal
 import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
+from sklearn.cluster import DBSCAN
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
-           "assert_greater", "assert_greater_equal"]
+           "assert_greater", "assert_greater_equal",
+           "assert_approx_equal"]
 
 
 try:
@@ -528,8 +532,8 @@ META_ESTIMATORS = ["OneVsOneClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
-OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV",
-         "RandomizedSearchCV"]
+OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
+         "SelectFromModel"]
 
 # some trange ones
 DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
@@ -648,7 +652,16 @@ def all_estimators(include_meta_estimators=False,
 
 
 def set_random_state(estimator, random_state=0):
-    if "random_state" in estimator.get_params().keys():
+    """Set random state of an estimator if it has the `random_state` param.
+
+    Classes for whom random_state is deprecated are ignored. Currently DBSCAN
+    is one such class.
+    """
+
+    if isinstance(estimator, DBSCAN):
+        return
+
+    if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
 
 

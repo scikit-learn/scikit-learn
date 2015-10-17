@@ -17,8 +17,8 @@ env:
     - DISTRIB="conda" PYTHON_VERSION="2.6" INSTALL_MKL="false"
       NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0"
     # This environment tests the newest supported anaconda env
-    - DISTRIB="conda" PYTHON_VERSION="3.4" INSTALL_MKL="true"
-      NUMPY_VERSION="1.8.1" SCIPY_VERSION="0.14.0"
+    - DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
+      NUMPY_VERSION="1.10.1" SCIPY_VERSION="0.16.0"
 install: source continuous_integration/install.sh
 script: bash continuous_integration/test_script.sh
 after_success:

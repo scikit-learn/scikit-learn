@@ -14,6 +14,7 @@ from ..utils import check_array, check_random_state, column_or_1d
 from ..utils import ConvergenceWarning, compute_class_weight, deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, NotFittedError
+from ..utils.multiclass import check_classification_targets
 from ..externals import six
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -511,6 +512,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
 
     def _validate_targets(self, y):
         y_ = column_or_1d(y, warn=True)
+        check_classification_targets(y)
         cls, y = np.unique(y_, return_inverse=True)
         self.class_weight_ = compute_class_weight(self.class_weight, cls, y_)
         if len(cls) < 2:

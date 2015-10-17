@@ -205,7 +205,8 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         d_gap = np.inf
         for i in range(max_iter):
             for idx in range(n_features):
-                sub_covariance = covariance_[indices != idx].T[indices != idx]
+                sub_covariance = np.ascontiguousarray(
+                    covariance_[indices != idx].T[indices != idx])
                 row = emp_cov[idx, indices != idx]
                 with np.errstate(**errors):
                     if mode == 'cd':
@@ -336,7 +337,8 @@ class GraphLasso(EmpiricalCovariance):
     def fit(self, X, y=None):
 
         # Covariance does not make sense for a single feature
-        X = check_array(X, ensure_min_features=2, ensure_min_samples=2)
+        X = check_array(X, ensure_min_features=2, ensure_min_samples=2,
+                        estimator=self)
 
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
@@ -570,7 +572,7 @@ class GraphLassoCV(GraphLasso):
             Data from which to compute the covariance estimate
         """
         # Covariance does not make sense for a single feature
-        X = check_array(X, ensure_min_features=2)
+        X = check_array(X, ensure_min_features=2, estimator=self)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:

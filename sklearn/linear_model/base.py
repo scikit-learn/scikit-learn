@@ -34,13 +34,13 @@ from ..utils.validation import NotFittedError, check_is_fitted
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 
 
-###
-### TODO: intercept for all models
-### We should define a common function to center data instead of
-### repeating the same code inside each fit method.
+#
+# TODO: intercept for all models
+# We should define a common function to center data instead of
+# repeating the same code inside each fit method.
 
-### TODO: bayesian_ridge_regression and bayesian_regression_ard
-### should be squashed into its respective objects.
+# TODO: bayesian_ridge_regression and bayesian_regression_ard
+# should be squashed into its respective objects.
 
 SPARSE_INTERCEPT_DECAY = 0.01
 # For sparse data intercept updates are scaled by this decay factor to avoid
@@ -450,10 +450,10 @@ class LinearRegression(LinearModel, RegressorMixin):
         return self
 
 
-def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
-             Xy_precompute_order=None):
+def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
     """Aux function used at beginning of fit in linear models"""
     n_samples, n_features = X.shape
+
     if sparse.isspmatrix(X):
         precompute = False
         X, y, X_mean, y_mean, X_std = sparse_center_data(
@@ -474,21 +474,31 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
         Xy = None
 
     # precompute if n_samples > n_features
-    if precompute == 'auto':
+    if isinstance(precompute, six.string_types) and precompute == 'auto':
         precompute = (n_samples > n_features)
 
     if precompute is True:
-        precompute = np.dot(X.T, X)
-        if Xy_precompute_order == 'F':
-            precompute = np.dot(X.T, X).T
+        # make sure that the 'precompute' array is contiguous.
+        precompute = np.empty(shape=(n_features, n_features), dtype=X.dtype,
+                              order='C')
+        np.dot(X.T, X, out=precompute)
 
     if not hasattr(precompute, '__array__'):
         Xy = None  # cannot use Xy if precompute is not Gram
 
     if hasattr(precompute, '__array__') and Xy is None:
-        if Xy_precompute_order == 'F':
-            Xy = np.dot(y.T, X).T
+        common_dtype = np.find_common_type([X.dtype, y.dtype], [])
+        if y.ndim == 1:
+            # Xy is 1d, make sure it is contiguous.
+            Xy = np.empty(shape=n_features, dtype=common_dtype, order='C')
+            np.dot(X.T, y, out=Xy)
         else:
-            Xy = np.dot(X.T, y)
+            # Make sure that Xy is always F contiguous even if X or y are not
+            # contiguous: the goal is to make it fast to extract the data for a
+            # specific target.
+            n_targets = y.shape[1]
+            Xy = np.empty(shape=(n_features, n_targets), dtype=common_dtype,
+                          order='F')
+            np.dot(y.T, X, out=Xy.T)
 
     return X, y, X_mean, y_mean, X_std, precompute, Xy

@@ -7,7 +7,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_raises_regex, assert_true
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_estimators_unfitted
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import AdaBoostClassifier
 from sklearn.utils.validation import check_X_y, check_array
 
 
@@ -91,7 +91,7 @@ def test_check_estimator():
     assert_true(msg in string_buffer.getvalue())
 
     # doesn't error on actual estimator
-    check_estimator(LogisticRegression)
+    check_estimator(AdaBoostClassifier)
 
 
 def test_check_estimators_unfitted():

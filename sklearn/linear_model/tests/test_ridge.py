@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_warns
 
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
@@ -26,6 +27,7 @@ from sklearn.linear_model.ridge import RidgeClassifier
 from sklearn.linear_model.ridge import RidgeClassifierCV
 from sklearn.linear_model.ridge import _solve_cholesky
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
+from sklearn.datasets import make_regression
 
 from sklearn.grid_search import GridSearchCV
 
@@ -413,11 +415,11 @@ def _test_ridge_classifiers(filter_):
 
 
 def _test_tolerance(filter_):
-    ridge = Ridge(tol=1e-5)
+    ridge = Ridge(tol=1e-5, fit_intercept=False)
     ridge.fit(filter_(X_diabetes), y_diabetes)
     score = ridge.score(filter_(X_diabetes), y_diabetes)
 
-    ridge2 = Ridge(tol=1e-3)
+    ridge2 = Ridge(tol=1e-3, fit_intercept=False)
     ridge2.fit(filter_(X_diabetes), y_diabetes)
     score2 = ridge2.score(filter_(X_diabetes), y_diabetes)
 
@@ -449,7 +451,7 @@ def test_ridge_cv_sparse_svd():
 def test_ridge_sparse_svd():
     X = sp.csc_matrix(rng.rand(100, 10))
     y = rng.rand(100)
-    ridge = Ridge(solver='svd')
+    ridge = Ridge(solver='svd', fit_intercept=False)
     assert_raises(TypeError, ridge.fit, X, y)
 
 
@@ -694,3 +696,22 @@ def test_n_iter():
         reg = Ridge(solver=solver, max_iter=1, tol=1e-1)
         reg.fit(X, y_n)
         assert_equal(reg.n_iter_, None)
+
+
+def test_ridge_fit_intercept_sparse():
+    X, y = make_regression(n_samples=1000, n_features=2, n_informative=2,
+                           bias=10., random_state=42)
+    X_csr = sp.csr_matrix(X)
+
+    dense = Ridge(alpha=1., tol=1.e-15, solver='sag', fit_intercept=True)
+    sparse = Ridge(alpha=1., tol=1.e-15, solver='sag', fit_intercept=True)
+    dense.fit(X, y)
+    sparse.fit(X_csr, y)
+    assert_almost_equal(dense.intercept_, sparse.intercept_)
+    assert_array_almost_equal(dense.coef_, sparse.coef_)
+
+    # test the solver switch and the corresponding warning
+    sparse = Ridge(alpha=1., tol=1.e-15, solver='lsqr', fit_intercept=True)
+    assert_warns(UserWarning, sparse.fit, X_csr, y)
+    assert_almost_equal(dense.intercept_, sparse.intercept_)
+    assert_array_almost_equal(dense.coef_, sparse.coef_)

@@ -1,10 +1,31 @@
 .. currentmodule:: sklearn
 
-.. _changes_0_17:
+.. _changes_0_18:
 
 ===============
 Release history
 ===============
+
+Version 0.18
+============
+
+Changelog
+---------
+
+New features
+............
+ 
+Enhancements
+............
+ 
+Bug fixes
+.........
+
+API changes summary
+-------------------
+ 
+ 
+.. _changes_0_17:
 
 Version 0.17
 ============
@@ -15,6 +36,8 @@ Changelog
 
 New features
 ............
+   - All the Scaler classes but :class:`RobustScaler` can be fitted online by
+     calling `partial_fit`. By `Giorgio Patrini`_.
 
    - The new class :class:`ensemble.VotingClassifier` implements a
      "majority rule" / "soft voting" ensemble classifier to combine
@@ -56,10 +79,10 @@ New features
      :class:`decomposition.NMF`. Previous solver based on Projected Gradient is
      still available setting new parameter ``solver`` to ``pg``, but is
      deprecated and will be removed in 0.19, along with
-     :class:`decompositionProjectedGradientNMF` and parameters``sparseness``,
+     :class:`decomposition.ProjectedGradientNMF` and parameters ``sparseness``,
      ``eta``, ``beta`` and ``nls_max_iter``. New parameters ``alpha`` and
-     ``l1_ratio`` control L1 and L2 regularizations, and ``shuffle`` adds a
-     shuffling step in ``cd`` solver.
+     ``l1_ratio`` control L1 and L2 regularization, and ``shuffle`` adds a
+     shuffling step in the ``cd`` solver.
      By `Tom Dupre la Tour`_ and `Mathieu Blondel`_.
 
 Enhancements
@@ -137,17 +160,20 @@ Enhancements
    - RCV1 dataset loader (:func:`sklearn.datasets.fetch_rcv1`).
      By `Tom Dupre la Tour`_.
 
-   - Upgraded to joblib 0.9.0b4 to benefit from the new automatic batching of
+   - Upgraded to joblib 0.9.2 to benefit from the new automatic batching of
      short tasks. This makes it possible for scikit-learn to benefit from
      parallelism when many very short tasks are executed in parallel, for
      instance by the :class:`grid_search.GridSearchCV` meta-estimator
      with ``n_jobs > 1`` used with a large grid of parameters on a small
      dataset. By `Vlad Niculae`_, `Olivier Grisel`_ and `Loic Esteve`_.
 
-   - Joblib 0.9.0b4 also enables the ``forkserver`` start method for
+   - Joblib 0.9.2 also enables the ``forkserver`` start method for
      multiprocessing by default under non-Windows platforms for Python 3.4
      and later in order to avoid possible crash with some version of BLAS such
      as vecLib / Accelerate under OSX for instance. By `Olivier Grisel`_.
+
+   - For more details about changes in joblib 0.9.2 see the release notes:
+     https://github.com/joblib/joblib/blob/master/CHANGES.rst#release-092
 
    - Improved speed (3 times per iteration) of
      :class:`decomposition.DictLearning` with coordinate descent method
@@ -202,14 +228,23 @@ Enhancements
    - Added ``sample_weight`` support to :class:`linear_model.LogisticRegression` for
      the ``lbfgs``, ``newton-cg``, and ``sag`` solvers. By `Valentin Stolbunov`_.
 
-   - Added optional parameter ``presort`` to :class:`ensemble.GradientBoostingRegressor` 
+   - Added optional parameter ``presort`` to :class:`ensemble.GradientBoostingRegressor`
      and :class:`ensemble.GradientBoostingClassifier`, keeping default behavior
      the same. This allows gradient boosters to turn off presorting when building
      deep trees or using sparse data. By `Jacob Schreiber`_.
 
+   - Altered :func:`metrics.roc_curve` to drop unnecessary thresholds by
+     default. By `Graham Clenaghan`_.
+
+   - Added :class:`feature_selection.SelectFromModel` meta-transformer which can
+     be used along with estimators that have `coef_` or `feature_importances_`
+     attribute to select important features of the input data. By
+     `Maheshakya Wijewardena`_, `Joel Nothman`_ and `Manoj Kumar`_.
+
+   - Added :func:`metrics.pairwise.laplacian_kernel`.  By `Clyde Fare <https://github.com/Clyde-fare>`_.
+
 Bug fixes
 .........
-
     - Fixed non-determinism in :class:`dummy.DummyClassifier` with sparse
       multi-label output. By `Andreas Müller`_.
 
@@ -244,8 +279,39 @@ Bug fixes
       to use soft-max instead of one-vs-rest normalization. By `Manoj Kumar`_.
       (`#5182 <https://github.com/scikit-learn/scikit-learn/pull/5182>`_)
 
+    - Fixed the :func:`partial_fit` method of :class:`linear_model.SGDClassifier`
+      when called with ``average=True``. By `Andrew Lamb`_.
+      (`#5282 <https://github.com/scikit-learn/scikit-learn/pull/5282>`_)
+
+    - Dataset fetchers use different filenames under Python 2 and Python 3 to
+      avoid pickling compatibility issues. By `Olivier Grisel`_.
+      (`#5355 <https://github.com/scikit-learn/scikit-learn/pull/5355>`_)
+
+    - Fixed a bug in :class:`naive_bayes.GaussianNB` which caused classification
+      results to depend on scale. By `Jake Vanderplas`_.
+
+    - Fixed temporarily :class:`linear_model.Ridge`, which was incorrect
+      when fitting the intercept in the case of sparse data. The fix
+      automatically changes the solver to 'sag' in this case.
+      (`#5360 <https://github.com/scikit-learn/scikit-learn/pull/5360>`_)
+      By `Tom Dupre la Tour`_.
+
+    - Fixed a performance bug in :class:`decomposition.RandomizedPCA` on data
+      with a large number of features and fewer samples. (`#4478
+      <https://github.com/scikit-learn/scikit-learn/pull/4478>`_)
+      By `Andreas Müller`_, `Loic Esteve`_ and `Giorgio Patrini`_.
+
 API changes summary
 -------------------
+    - Attribute `data_min`, `data_max` and `data_range` in
+      :class:`preprocessing.MinMaxScaler` are deprecated and won't be available
+      from 0.19. Instead, the class now exposes `data_min_`, `data_max_`
+      and `data_range_`. By `Giorgio Patrini`_.
+
+    - All Scaler classes now have an `scale_` attribute, the feature-wise
+      rescaling applied by their `transform` methods. The old attribute `std_`
+      in :class:`preprocessing.StandardScaler` is deprecated and superseded
+      by `scale_`; it won't be available in 0.19. By `Giorgio Patrini`_.
 
     - :class:`svm.SVC`` and :class:`svm.NuSVC` now have an ``decision_function_shape``
       parameter to make their decision function of shape ``(n_samples, n_classes)``
@@ -259,7 +325,7 @@ API changes summary
       By `Vighnesh Birodkar`_.
 
     - :class:`lda.LDA` and :class:`qda.QDA` have been moved to
-      :class:`discriminant_analysis.LinearDiscriminantAnalysis` and 
+      :class:`discriminant_analysis.LinearDiscriminantAnalysis` and
       :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
 
     - The ``store_covariance`` and ``tol`` parameters have been moved from
@@ -268,6 +334,13 @@ API changes summary
       ``store_covariances`` and ``tol`` parameters have been moved from the
       fit method to the constructor in
       :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
+
+    - Models inheriting from ``_LearntSelectorMixin`` will no longer support the
+      transform methods. (i.e,  RandomForests, GradientBoosting, LogisticRegression,
+      DecisionTrees, SVMs and SGD related models). Wrap these models around the
+      metatransfomer :class:`feature_selection.SelectFromModel` to remove
+      features (according to `coefs_` or `feature_importances_`)
+      which are below a certain threshold value instead.
 
 .. _changes_0_1_16:
 
@@ -3712,3 +3785,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Ankur Ankan: https://github.com/ankurankan
 .. _Valentin Stolbunov: http://vstolbunov.com
 .. _Jean Kossaifi: https://github.com/JeanKossaifi
+.. _Andrew Lamb: https://github.com/andylamb
+.. _Graham Clenaghan: https://github.com/gclenaghan

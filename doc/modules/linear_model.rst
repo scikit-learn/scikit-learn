@@ -180,7 +180,7 @@ the parameter vector.
 The implementation in the class :class:`Lasso` uses coordinate descent as
 the algorithm to fit the coefficients. See :ref:`least_angle_regression`
 for another implementation::
-    
+
     >>> from sklearn import linear_model
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit([[0, 0], [1, 1]], [0, 1])
@@ -1079,9 +1079,9 @@ of a given degree.  It can be used as follows::
            [4, 5]])
     >>> poly = PolynomialFeatures(degree=2)
     >>> poly.fit_transform(X)
-    array([[ 1,  0,  1,  0,  0,  1],
-           [ 1,  2,  3,  4,  6,  9],
-           [ 1,  4,  5, 16, 20, 25]])
+    array([[  1.,   0.,   1.,   0.,   0.,   1.],
+           [  1.,   2.,   3.,   4.,   6.,   9.],
+           [  1.,   4.,   5.,  16.,  20.,  25.]])
 
 The features of ``X`` have been transformed from :math:`[x_1, x_2]` to
 :math:`[1, x_1, x_2, x_1^2, x_1 x_2, x_2^2]`, and can now be used within
@@ -1125,10 +1125,10 @@ This way, we can solve the XOR problem with a linear classifier::
     >>> y = X[:, 0] ^ X[:, 1]
     >>> X = PolynomialFeatures(interaction_only=True).fit_transform(X)
     >>> X
-    array([[1, 0, 0, 0],
-           [1, 0, 1, 0],
-           [1, 1, 0, 0],
-           [1, 1, 1, 1]])
+    array([[ 1.,  0.,  0.,  0.],
+           [ 1.,  0.,  1.,  0.],
+           [ 1.,  1.,  0.,  0.],
+           [ 1.,  1.,  1.,  1.]])
     >>> clf = Perceptron(fit_intercept=False, n_iter=10, shuffle=False).fit(X, y)
     >>> clf.score(X, y)
     1.0

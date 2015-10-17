@@ -2,10 +2,11 @@
 #          Olivier Grisel
 #          Peter Prettenhofer
 #          Lars Buitinck
+#          Giorgio Patrini
 #
 # Licence: BSD 3 clause
 
-from libc.math cimport fabs, sqrt
+from libc.math cimport fabs, sqrt, pow
 cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
@@ -15,7 +16,6 @@ np.import_array()
 
 
 ctypedef np.float64_t DOUBLE
-
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -169,6 +169,105 @@ def csc_mean_variance_axis0(X):
         variances[i] /= n_samples
 
     return means, variances
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def incr_mean_variance_axis0(X, last_mean, last_var, unsigned long last_n):
+    """Compute mean and variance along axis 0 on a CSR or CSC matrix.
+
+    last_mean, last_var are the statistics computed at the last step by this
+    function. Both must be initilized to 0.0. last_n is the
+    number of samples encountered until now and is initialized at 0.
+
+    Parameters
+    ----------
+    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
+      Input data.
+
+    last_mean: float array with shape (n_features,)
+      Array of feature-wise means to update with the new data X.
+
+    last_var: float array with shape (n_features,)
+      Array of feature-wise var to update with the new data X.
+
+    last_n: int
+      Number of samples seen so far, before X.
+
+    Returns
+    -------
+
+    updated_mean: float array with shape (n_features,)
+      Feature-wise means
+
+    updated_variance: float array with shape (n_features,)
+      Feature-wise variances
+
+    updated_n : int
+      Updated number of samples seen
+
+    References
+    ----------
+
+    T. Chan, G. Golub, R. LeVeque. Algorithms for computing the sample
+      variance: recommendations, The American Statistician, Vol. 37, No. 3,
+      pp. 242-247
+
+    Also, see the non-sparse implementation of this in
+    `utils.extmath._batch_mean_variance_update`.
+
+    """
+    cdef unsigned long n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
+    cdef unsigned int i
+
+    # last = stats until now
+    # new = the current increment
+    # updated = the aggregated stats
+    # when arrays, they are indexed by i per-feature
+    cdef np.ndarray[DOUBLE, ndim=1] new_mean = np.zeros(n_features,
+                                                      dtype=np.float64)
+    cdef np.ndarray[DOUBLE, ndim=1] new_var = np.zeros_like(new_mean)
+    cdef unsigned long new_n
+    cdef np.ndarray[DOUBLE, ndim=1] updated_mean = np.zeros_like(new_mean)
+    cdef np.ndarray[DOUBLE, ndim=1] updated_var = np.zeros_like(new_mean)
+    cdef unsigned long updated_n
+    cdef DOUBLE last_over_new_n
+
+    # Obtain new stats first
+    new_n = n_samples
+    if isinstance(X, sp.csr_matrix):
+        new_mean, new_var = csr_mean_variance_axis0(X)
+    elif isinstance(X, sp.csc_matrix):
+        new_mean, new_var = csc_mean_variance_axis0(X)
+
+    # First pass
+    if last_n == 0:
+        return new_mean, new_var, new_n
+    # Next passes
+    else:
+        updated_n = last_n + new_n
+        last_over_new_n = last_n / new_n
+
+    for i in xrange(n_features):
+        # Unnormalized old stats
+        last_mean[i] *= last_n
+        last_var[i] *= last_n
+
+        # Unnormalized new stats
+        new_mean[i] *= new_n
+        new_var[i] *= new_n
+
+        # Update stats
+        updated_var[i] = (last_var[i] + new_var[i] +
+                          last_over_new_n / updated_n *
+                          (last_mean[i] / last_over_new_n - new_mean[i]) ** 2)
+
+        updated_mean[i] = (last_mean[i] + new_mean[i]) / updated_n
+        updated_var[i] = updated_var[i] / updated_n
+
+    return updated_mean, updated_var, updated_n
 
 
 @cython.boundscheck(False)

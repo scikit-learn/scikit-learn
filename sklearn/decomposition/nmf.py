@@ -448,7 +448,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter,
     return W, H, n_iter
 
 
-def _update_coordinate_descent(X, W, Ht, alpha, l1_ratio, shuffle,
+def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle,
                                random_state):
     """Helper function for _fit_coordinate_descent
 
@@ -462,10 +462,6 @@ def _update_coordinate_descent(X, W, Ht, alpha, l1_ratio, shuffle,
     HHt = fast_dot(Ht.T, Ht)
     XHt = safe_sparse_dot(X, Ht)
 
-    # L1 and L2 regularizations
-    l1_reg = 1. * l1_ratio * alpha
-    l2_reg = (1. - l1_ratio) * alpha
-
     # L2 regularization corresponds to increase the diagonal of HHt
     if l2_reg != 0.:
         # adds l2_reg only on the diagonal
@@ -474,8 +470,13 @@ def _update_coordinate_descent(X, W, Ht, alpha, l1_ratio, shuffle,
     if l1_reg != 0.:
         XHt -= l1_reg
 
-    seed = random_state.randint(np.iinfo(np.int32).max)
-    return _update_cdnmf_fast(W, HHt, XHt, shuffle, seed)
+    if shuffle:
+        permutation = random_state.permutation(n_components)
+    else:
+        permutation = np.arange(n_components)
+    # The following seems to be required on 64-bit Windows w/ Python 3.5.
+    permutation = np.asarray(permutation, dtype=np.intp)
+    return _update_cdnmf_fast(W, HHt, XHt, permutation)
 
 
 def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, alpha=0.001,
@@ -525,8 +526,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, alpha=0.001,
         The verbosity level.
 
     shuffle : boolean, default: False
-        If True, the samples will be taken in shuffled order during
-        coordinate descent.
+        If true, randomize the order of coordinates in the CD solver.
 
     random_state : integer seed, RandomState instance, or None (default)
         Random number generator seed control.
@@ -553,39 +553,43 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, alpha=0.001,
     Ht = check_array(H.T, order='C')
     X = check_array(X, accept_sparse='csr')
 
-    alpha_H = 0.
-    alpha_W = 0.
+    # L1 and L2 regularization
+    l1_H, l2_H, l1_W, l2_W = 0, 0, 0, 0
     if regularization in ('both', 'components'):
-        alpha_H = float(alpha)
+        alpha = float(alpha)
+        l1_H = l1_ratio * alpha
+        l2_H = (1. - l1_ratio) * alpha
     if regularization in ('both', 'transformation'):
-        alpha_W = float(alpha)
+        alpha = float(alpha)
+        l1_W = l1_ratio * alpha
+        l2_W = (1. - l1_ratio) * alpha
 
     rng = check_random_state(random_state)
 
     for n_iter in range(max_iter):
-            violation = 0.
+        violation = 0.
 
-            # Update W
-            violation += _update_coordinate_descent(X, W, Ht, alpha_W,
-                                                    l1_ratio, shuffle, rng)
-            # Update H
-            if update_H:
-                violation += _update_coordinate_descent(X.T, Ht, W, alpha_H,
-                                                        l1_ratio, shuffle, rng)
+        # Update W
+        violation += _update_coordinate_descent(X, W, Ht, l1_W, l2_W,
+                                                shuffle, rng)
+        # Update H
+        if update_H:
+            violation += _update_coordinate_descent(X.T, Ht, W, l1_H, l2_H,
+                                                    shuffle, rng)
 
-            if n_iter == 0:
-                violation_init = violation
+        if n_iter == 0:
+            violation_init = violation
 
-            if violation_init == 0:
-                break
+        if violation_init == 0:
+            break
 
+        if verbose:
+            print("violation:", violation / violation_init)
+
+        if violation / violation_init <= tol:
             if verbose:
-                print("violation:", violation / violation_init)
-
-            if violation / violation_init <= tol:
-                if verbose:
-                    print("Converged at iteration", n_iter + 1)
-                break
+                print("Converged at iteration", n_iter + 1)
+            break
 
     return W, Ht.T, n_iter
 
@@ -684,9 +688,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     verbose : integer, default: 0
         The verbosity level.
 
-    shuffle : boolean
-        If True, the samples will be taken in shuffled order during
-        coordinate descent.
+    shuffle : boolean, default: False
+        If true, randomize the order of coordinates in the CD solver.
 
     nls_max_iter : integer, default: 2000
         Number of iterations in NLS subproblem.
@@ -861,9 +864,8 @@ class NMF(BaseEstimator, TransformerMixin):
         For l1_ratio = 1 it is an elementwise L1 penalty.
         For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
 
-    shuffle : boolean
-        If True, the samples will be taken in shuffled order during
-        coordinate descent.
+    shuffle : boolean, default: False
+        If true, randomize the order of coordinates in the CD solver.
 
     nls_max_iter : integer, default: 2000
         Number of iterations in NLS subproblem.

@@ -39,7 +39,7 @@ def test_neighbors_accuracy_with_n_candidates():
 
     for i, n_candidates in enumerate(n_candidates_values):
         lshf = LSHForest(n_candidates=n_candidates)
-        lshf.fit(X)
+        ignore_warnings(lshf.fit)(X)
         for j in range(n_iter):
             query = X[rng.randint(0, n_samples)].reshape(1, -1)
 
@@ -74,7 +74,7 @@ def test_neighbors_accuracy_with_n_estimators():
 
     for i, t in enumerate(n_estimators):
         lshf = LSHForest(n_candidates=500, n_estimators=t)
-        lshf.fit(X)
+        ignore_warnings(lshf.fit)(X)
         for j in range(n_iter):
             query = X[rng.randint(0, n_samples)].reshape(1, -1)
             neighbors = lshf.kneighbors(query, n_neighbors=n_points,
@@ -111,7 +111,7 @@ def test_kneighbors():
     # Test unfitted estimator
     assert_raises(ValueError, lshf.kneighbors, X[0])
 
-    lshf.fit(X)
+    ignore_warnings(lshf.fit)(X)
 
     for i in range(n_iter):
         n_neighbors = rng.randint(0, n_samples)
@@ -162,7 +162,7 @@ def test_radius_neighbors():
     # Test unfitted estimator
     assert_raises(ValueError, lshf.radius_neighbors, X[0])
 
-    lshf.fit(X)
+    ignore_warnings(lshf.fit)(X)
 
     for i in range(n_iter):
         # Select a random point in the dataset as the query
@@ -218,6 +218,7 @@ def test_radius_neighbors():
                                      sorted_dists_approx)))
 
 
+@ignore_warnings
 def test_radius_neighbors_boundary_handling():
     X = [[0.999, 0.001], [0.5, 0.5], [0, 1.], [-1., 0.001]]
     n_points = len(X)
@@ -286,7 +287,7 @@ def test_distances():
     X = rng.rand(n_samples, n_features)
 
     lshf = LSHForest()
-    lshf.fit(X)
+    ignore_warnings(lshf.fit)(X)
 
     for i in range(n_iter):
         n_neighbors = rng.randint(0, n_samples)
@@ -312,7 +313,7 @@ def test_fit():
     X = rng.rand(n_samples, n_features)
 
     lshf = LSHForest(n_estimators=n_estimators)
-    lshf.fit(X)
+    ignore_warnings(lshf.fit)(X)
 
     # _input_array = X
     assert_array_equal(X, lshf._fit_X)
@@ -343,16 +344,16 @@ def test_partial_fit():
     lshf = LSHForest()
 
     # Test unfitted estimator
-    lshf.partial_fit(X)
+    ignore_warnings(lshf.partial_fit)(X)
     assert_array_equal(X, lshf._fit_X)
 
-    lshf.fit(X)
+    ignore_warnings(lshf.fit)(X)
 
     # Insert wrong dimension
     assert_raises(ValueError, lshf.partial_fit,
                   np.random.randn(n_samples_partial_fit, n_features - 1))
 
-    lshf.partial_fit(X_partial_fit)
+    ignore_warnings(lshf.partial_fit)(X_partial_fit)
 
     # size of _input_array = samples + 1 after insertion
     assert_equal(lshf._fit_X.shape[0],
@@ -379,7 +380,7 @@ def test_hash_functions():
 
     lshf = LSHForest(n_estimators=n_estimators,
                      random_state=rng.randint(0, np.iinfo(np.int32).max))
-    lshf.fit(X)
+    ignore_warnings(lshf.fit)(X)
 
     hash_functions = []
     for i in range(n_estimators):
@@ -405,7 +406,7 @@ def test_candidates():
 
     # For zero candidates
     lshf = LSHForest(min_hash_match=32)
-    lshf.fit(X_train)
+    ignore_warnings(lshf.fit)(X_train)
 
     message = ("Number of candidates is not sufficient to retrieve"
                " %i neighbors with"
@@ -419,7 +420,7 @@ def test_candidates():
 
     # For candidates less than n_neighbors
     lshf = LSHForest(min_hash_match=31)
-    lshf.fit(X_train)
+    ignore_warnings(lshf.fit)(X_train)
 
     message = ("Number of candidates is not sufficient to retrieve"
                " %i neighbors with"
@@ -441,7 +442,7 @@ def test_graphs():
     for n_samples in n_samples_sizes:
         X = rng.rand(n_samples, n_features)
         lshf = LSHForest(min_hash_match=0)
-        lshf.fit(X)
+        ignore_warnings(lshf.fit)(X)
 
         kneighbors_graph = lshf.kneighbors_graph(X)
         radius_neighbors_graph = lshf.radius_neighbors_graph(X)

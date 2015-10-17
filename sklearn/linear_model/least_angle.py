@@ -26,6 +26,7 @@ from ..cross_validation import check_cv
 from ..utils import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
+from ..externals.six import string_types
 
 import scipy
 solve_triangular_args = {}
@@ -179,7 +180,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             # speeds up the calculation of the (partial) Gram matrix
             # and allows to easily swap columns
             X = X.copy('F')
-    elif Gram == 'auto':
+    elif isinstance(Gram, string_types) and Gram == 'auto':
         Gram = None
         if X.shape[0] > X.shape[1]:
             Gram = np.dot(X.T, X)
@@ -1074,6 +1075,8 @@ class LarsCV(Lars):
         """
         self.fit_path = True
         X, y = check_X_y(X, y, y_numeric=True)
+        X = as_float_array(X, copy=self.copy_X)
+        y = as_float_array(y, copy=self.copy_X)
 
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=False)
