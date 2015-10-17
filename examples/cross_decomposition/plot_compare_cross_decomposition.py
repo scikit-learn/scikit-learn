@@ -121,9 +121,9 @@ pls2 = PLSRegression(n_components=3)
 pls2.fit(X, Y)
 print("True B (such that: Y = XB + Err)")
 print(B)
-# compare pls2.coefs with B
+# compare pls2.coef_ with B
 print("Estimated B")
-print(np.round(pls2.coefs, 1))
+print(np.round(pls2.coef_, 1))
 pls2.predict(X)
 
 ###############################################################################
@@ -137,7 +137,7 @@ pls1 = PLSRegression(n_components=3)
 pls1.fit(X, y)
 # note that the number of compements exceeds 1 (the dimension of y)
 print("Estimated betas")
-print(np.round(pls1.coefs, 1))
+print(np.round(pls1.coef_, 1))
 
 ###############################################################################
 # CCA (PLS mode B with symmetric deflation)

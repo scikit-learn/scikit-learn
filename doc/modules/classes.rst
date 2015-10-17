@@ -1,6 +1,6 @@
-=========
-Reference
-=========
+=============
+API Reference
+=============
 
 This is the class and function reference of scikit-learn. Please refer to
 the :ref:`full user guide <user_guide>` for further details, as the class and
@@ -70,7 +70,6 @@ Classes
    cluster.MiniBatchKMeans
    cluster.MeanShift
    cluster.SpectralClustering
-   cluster.Ward
 
 Functions
 ---------
@@ -163,14 +162,17 @@ Classes
    :template: class.rst
 
    cross_validation.KFold
+   cross_validation.LabelKFold
+   cross_validation.LabelShuffleSplit
    cross_validation.LeaveOneLabelOut
    cross_validation.LeaveOneOut
    cross_validation.LeavePLabelOut
    cross_validation.LeavePOut
    cross_validation.PredefinedSplit
-   cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
+   cross_validation.StratifiedKFold
    cross_validation.StratifiedShuffleSplit
+
 
 .. autosummary::
    :toctree: generated/
@@ -211,9 +213,7 @@ Loaders
    datasets.load_digits
    datasets.load_files
    datasets.load_iris
-   datasets.load_lfw_pairs
    datasets.fetch_lfw_pairs
-   datasets.load_lfw_people
    datasets.fetch_lfw_people
    datasets.load_linnerud
    datasets.mldata_filename
@@ -221,6 +221,7 @@ Loaders
    datasets.fetch_olivetti_faces
    datasets.fetch_california_housing
    datasets.fetch_covtype
+   datasets.fetch_rcv1
    datasets.load_mlcomp
    datasets.load_sample_image
    datasets.load_sample_images
@@ -290,6 +291,7 @@ Samples generator
    decomposition.SparseCoder
    decomposition.DictionaryLearning
    decomposition.MiniBatchDictionaryLearning
+   decomposition.LatentDirichletAllocation
 
 .. autosummary::
    :toctree: generated/
@@ -352,6 +354,7 @@ Samples generator
    ensemble.RandomForestClassifier
    ensemble.RandomTreesEmbedding
    ensemble.RandomForestRegressor
+   ensemble.VotingClassifier
 
 .. autosummary::
    :toctree: generated/
@@ -460,6 +463,7 @@ From text
    feature_selection.SelectKBest
    feature_selection.SelectFpr
    feature_selection.SelectFdr
+   feature_selection.SelectFromModel
    feature_selection.SelectFwe
    feature_selection.RFE
    feature_selection.RFECV
@@ -600,10 +604,10 @@ From text
 
 .. _lda_ref:
 
-:mod:`sklearn.lda`: Linear Discriminant Analysis
-================================================
+:mod:`sklearn.discriminant_analysis`: Discriminant Analysis
+===========================================================
 
-.. automodule:: sklearn.lda
+.. automodule:: sklearn.discriminant_analysis
    :no-members:
    :no-inherited-members:
 
@@ -615,7 +619,8 @@ From text
    :toctree: generated
    :template: class.rst
 
-   lda.LDA
+   discriminant_analysis.LinearDiscriminantAnalysis
+   discriminant_analysis.QuadraticDiscriminantAnalysis
 
 
 .. _learning_curve_ref:
@@ -814,7 +819,7 @@ details.
 
    metrics.coverage_error
    metrics.label_ranking_average_precision_score
-
+   metrics.label_ranking_loss
 
 
 Clustering metrics
@@ -885,6 +890,7 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
+   metrics.pairwise.laplacian_kernel
    metrics.pairwise_distances
    metrics.pairwise_distances_argmin
    metrics.pairwise_distances_argmin_min
@@ -1105,16 +1111,19 @@ See the :ref:`metrics` section of the user guide for further details.
    :template: class.rst
 
    preprocessing.Binarizer
+   preprocessing.FunctionTransformer
    preprocessing.Imputer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
    preprocessing.MultiLabelBinarizer
+   preprocessing.MaxAbsScaler
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
-   preprocessing.StandardScaler
    preprocessing.PolynomialFeatures
+   preprocessing.RobustScaler
+   preprocessing.StandardScaler
 
 .. autosummary::
    :toctree: generated/
@@ -1123,26 +1132,12 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.add_dummy_feature
    preprocessing.binarize
    preprocessing.label_binarize
+   preprocessing.maxabs_scale
+   preprocessing.minmax_scale
    preprocessing.normalize
+   preprocessing.robust_scale
    preprocessing.scale
 
-
-:mod:`sklearn.qda`: Quadratic Discriminant Analysis
-===================================================
-
-.. automodule:: sklearn.qda
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`lda_qda` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated
-   :template: class.rst
-
-   qda.QDA
 
 .. _random_projection_ref:
 
@@ -1287,5 +1282,6 @@ Low-level methods
    :template: function.rst
 
    utils.check_random_state
+   utils.estimator_checks.check_estimator
    utils.resample
    utils.shuffle

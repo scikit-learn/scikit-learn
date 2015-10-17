@@ -122,6 +122,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     points. Its value does not depend on the norm of the vector points but
     only on their relative angles.
 
+    Read more in the :ref:`User Guide <approximate_nearest_neighbors>`.
+
     Parameters
     ----------
 
@@ -187,11 +189,11 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
       >>> X_train = [[5, 5, 2], [21, 5, 5], [1, 1, 1], [8, 9, 1], [6, 10, 2]]
       >>> X_test = [[9, 1, 6], [3, 1, 10], [7, 10, 3]]
-      >>> lshf = LSHForest()
+      >>> lshf = LSHForest(random_state=42)
       >>> lshf.fit(X_train)  # doctest: +NORMALIZE_WHITESPACE
       LSHForest(min_hash_match=4, n_candidates=50, n_estimators=10,
                 n_neighbors=5, radius=1.0, radius_cutoff_ratio=0.9,
-                random_state=None)
+                random_state=42)
       >>> distances, indices = lshf.kneighbors(X_test, n_neighbors=2)
       >>> distances                                        # doctest: +ELLIPSIS
       array([[ 0.069...,  0.149...],
@@ -226,10 +228,15 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             # needed since _fit_X[np.array([])] doesn't work if _fit_X sparse
             return np.empty(0, dtype=np.int), np.empty(0, dtype=float)
 
-        distances = pairwise_distances(query, self._fit_X[candidates],
+        if sparse.issparse(self._fit_X):
+            candidate_X = self._fit_X[candidates]
+        else:
+            candidate_X = self._fit_X.take(candidates, axis=0, mode='clip')
+        distances = pairwise_distances(query, candidate_X,
                                        metric='cosine')[0]
         distance_positions = np.argsort(distances)
-        return distance_positions, distances[distance_positions]
+        distances = distances.take(distance_positions, mode='clip', axis=0)
+        return distance_positions, distances
 
     def _generate_masks(self):
         """Creates left and right masks for all hash lengths."""
@@ -428,7 +435,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         neighbors, distances = [], []
         bin_queries, max_depth = self._query(X)
         for i in range(X.shape[0]):
-            neighs, dists = self._get_candidates(X[i], max_depth[i],
+
+            neighs, dists = self._get_candidates(X[[i]], max_depth[i],
                                                  bin_queries[i],
                                                  n_neighbors)
             neighbors.append(neighs)
@@ -487,7 +495,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         neighbors, distances = [], []
         bin_queries, max_depth = self._query(X)
         for i in range(X.shape[0]):
-            neighs, dists = self._get_radius_neighbors(X[i], max_depth[i],
+
+            neighs, dists = self._get_radius_neighbors(X[[i]], max_depth[i],
                                                        bin_queries[i], radius)
             neighbors.append(neighs)
             distances.append(dists)

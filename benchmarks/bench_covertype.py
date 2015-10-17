@@ -53,7 +53,7 @@ import numpy as np
 
 from sklearn.datasets import fetch_covtype, get_data_home
 from sklearn.svm import LinearSVC
-from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
@@ -105,7 +105,8 @@ ESTIMATORS = {
     'SGD': SGDClassifier(alpha=0.001, n_iter=2),
     'GaussianNB': GaussianNB(),
     'liblinear': LinearSVC(loss="l2", penalty="l2", C=1000, dual=False,
-                           tol=1e-3)
+                           tol=1e-3),
+    'SAG': LogisticRegression(solver='sag', max_iter=2, C=1000)
 }
 
 

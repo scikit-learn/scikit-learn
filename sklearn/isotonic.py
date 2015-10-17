@@ -14,6 +14,10 @@ import warnings
 import math
 
 
+__all__ = ['check_increasing', 'isotonic_regression',
+           'IsotonicRegression']
+
+
 def check_increasing(x, y):
     """Determine whether y is monotonically correlated with x.
 
@@ -83,6 +87,8 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
         - y[i] are inputs (real numbers)
         - y_[i] are fitted
         - w[i] are optional strictly positive weights (default to 1.0)
+
+    Read more in the :ref:`User Guide <isotonic>`.
 
     Parameters
     ----------
@@ -158,6 +164,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         - ``X`` specifies the order.
           If ``X`` is non-decreasing then ``y_`` is non-decreasing.
         - ``w[i]`` are optional strictly positive weights (default to 1.0)
+
+    Read more in the :ref:`User Guide <isotonic>`.
 
     Parameters
     ----------

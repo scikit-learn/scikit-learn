@@ -5,18 +5,20 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.externals.six.moves import zip
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises, assert_raises_regex, assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
+from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.decomposition import PCA, RandomizedPCA, TruncatedSVD
 from sklearn.datasets import load_iris
@@ -61,6 +63,9 @@ class TransfT(T):
     def transform(self, X, y=None):
         return X
 
+    def inverse_transform(self, X):
+        return X
+
 
 class FitParamT(object):
     """Mock classifier
@@ -87,7 +92,8 @@ def test_pipeline_init():
     clf = T()
     pipe = Pipeline([('svc', clf)])
     assert_equal(pipe.get_params(deep=True),
-                 dict(svc__a=None, svc__b=None, svc=clf))
+                 dict(svc__a=None, svc__b=None, svc=clf,
+                      **pipe.get_params(deep=False)))
 
     # Check that params are set
     pipe.set_params(svc__a=0.1)
@@ -118,8 +124,15 @@ def test_pipeline_init():
     assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
 
     # Check that apart from estimators, the parameters are the same
-    params = pipe.get_params()
-    params2 = pipe2.get_params()
+    params = pipe.get_params(deep=True)
+    params2 = pipe2.get_params(deep=True)
+
+    for x in pipe.get_params(deep=False):
+        params.pop(x)
+
+    for x in pipe2.get_params(deep=False):
+        params2.pop(x)
+
     # Remove estimators that where copied
     params.pop('svc')
     params.pop('anova')
@@ -155,6 +168,27 @@ def test_pipeline_fit_params():
     assert_true(pipe.named_steps['transf'].b is None)
 
 
+def test_pipeline_raise_set_params_error():
+    # Test pipeline raises set params error message for nested models.
+    pipe = Pipeline([('cls', LinearRegression())])
+
+    # expected error message
+    error_msg = ('Invalid parameter %s for estimator %s. '
+                 'Check the list of available parameters '
+                 'with `estimator.get_params().keys()`.')
+
+    assert_raise_message(ValueError,
+                         error_msg % ('fake', 'Pipeline'),
+                         pipe.set_params,
+                         fake='nope')
+
+    # nested model check
+    assert_raise_message(ValueError,
+                         error_msg % ("fake", pipe),
+                         pipe.set_params,
+                         fake__estimator='nope')
+
+
 def test_pipeline_methods_pca_svm():
     # Test the various methods of the pipeline (pca + svm).
     iris = load_iris()
@@ -180,7 +214,7 @@ def test_pipeline_methods_preprocessing_svm():
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
     pca = RandomizedPCA(n_components=2, whiten=True)
-    clf = SVC(probability=True, random_state=0)
+    clf = SVC(probability=True, random_state=0, decision_function_shape='ovr')
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([('preprocess', preprocessing), ('svc', clf)])
@@ -200,6 +234,36 @@ def test_pipeline_methods_preprocessing_svm():
         assert_equal(decision_function.shape, (n_samples, n_classes))
 
         pipe.score(X, y)
+
+
+def test_fit_predict_on_pipeline():
+    # test that the fit_predict method is implemented on a pipeline
+    # test that the fit_predict on pipeline yields same results as applying
+    # transform and clustering steps separately
+    iris = load_iris()
+    scaler = StandardScaler()
+    km = KMeans(random_state=0)
+
+    # first compute the transform and clustering step separately
+    scaled = scaler.fit_transform(iris.data)
+    separate_pred = km.fit_predict(scaled)
+
+    # use a pipeline to do the transform and clustering in one step
+    pipe = Pipeline([('scaler', scaler), ('Kmeans', km)])
+    pipeline_pred = pipe.fit_predict(iris.data)
+
+    assert_array_almost_equal(pipeline_pred, separate_pred)
+
+
+def test_fit_predict_on_pipeline_without_fit_predict():
+    # tests that a pipeline does not have fit_predict method when final
+    # step of pipeline does not have fit_predict defined
+    scaler = StandardScaler()
+    pca = PCA()
+    pipe = Pipeline([('scaler', scaler), ('pca', pca)])
+    assert_raises_regex(AttributeError,
+                        "'PCA' object has no attribute 'fit_predict'",
+                        getattr, pipe, 'fit_predict')
 
 
 def test_feature_union():
@@ -399,3 +463,11 @@ def test_classes_property():
     assert_raises(AttributeError, getattr, clf, "classes_")
     clf.fit(X, y)
     assert_array_equal(clf.classes_, np.unique(y))
+
+
+def test_X1d_inverse_transform():
+    transformer = TransfT()
+    pipeline = make_pipeline(transformer)
+    X = np.ones(10)
+    msg = "1d X will not be reshaped in pipeline.inverse_transform"
+    assert_warns_message(FutureWarning, msg, pipeline.inverse_transform, X)

@@ -70,6 +70,7 @@ def empirical_covariance(X, assume_centered=False):
     X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
+
     if X.shape[0] == 1:
         warnings.warn("Only one sample available. "
                       "You may want to reshape your data array")
@@ -79,11 +80,15 @@ def empirical_covariance(X, assume_centered=False):
     else:
         covariance = np.cov(X.T, bias=1)
 
+    if covariance.ndim == 0:
+        covariance = np.array([[covariance]])
     return covariance
 
 
 class EmpiricalCovariance(BaseEstimator):
     """Maximum likelihood covariance estimator
+
+    Read more in the :ref:`User Guide <covariance>`.
 
     Parameters
     ----------

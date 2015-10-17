@@ -36,6 +36,8 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     The time complexity of this implementation is ``O(d ** 2)`` assuming
     d ~ n_features ~ n_components.
 
+    Read more in the :ref:`User Guide <rbm>`.
+
     Parameters
     ----------
     n_components : int, optional

@@ -13,6 +13,7 @@ sparse matrices.
 import numpy as np
 from scipy import sparse
 
+from .validation import check_array
 from .graph_shortest_path import graph_shortest_path
 
 
@@ -113,7 +114,7 @@ def graph_laplacian(csgraph, normed=False, return_diag=False):
 
     if normed and (np.issubdtype(csgraph.dtype, np.int)
                    or np.issubdtype(csgraph.dtype, np.uint)):
-        csgraph = csgraph.astype(np.float)
+        csgraph = check_array(csgraph, dtype=np.float64, accept_sparse=True)
 
     if sparse.isspmatrix(csgraph):
         return _laplacian_sparse(csgraph, normed=normed,

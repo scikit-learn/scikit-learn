@@ -8,12 +8,14 @@ from .ranking import auc
 from .ranking import average_precision_score
 from .ranking import coverage_error
 from .ranking import label_ranking_average_precision_score
+from .ranking import label_ranking_loss
 from .ranking import precision_recall_curve
 from .ranking import roc_auc_score
 from .ranking import roc_curve
 
 from .classification import accuracy_score
 from .classification import classification_report
+from .classification import cohen_kappa_score
 from .classification import confusion_matrix
 from .classification import f1_score
 from .classification import fbeta_score
@@ -80,6 +82,7 @@ __all__ = [
     'homogeneity_score',
     'jaccard_similarity_score',
     'label_ranking_average_precision_score',
+    'label_ranking_loss',
     'log_loss',
     'make_scorer',
     'matthews_corrcoef',

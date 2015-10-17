@@ -58,7 +58,7 @@ def test_kd_tree_query_radius(n_samples=100, n_features=10):
     rad = np.sqrt(((X - query_pt) ** 2).sum(1))
 
     for r in np.linspace(rad[0], rad[-1], 100):
-        ind = kdt.query_radius(query_pt, r + eps)[0]
+        ind = kdt.query_radius([query_pt], r + eps)[0]
         i = np.where(rad <= r + eps)[0]
 
         ind.sort()
@@ -77,7 +77,7 @@ def test_kd_tree_query_radius_distance(n_samples=100, n_features=10):
     rad = np.sqrt(((X - query_pt) ** 2).sum(1))
 
     for r in np.linspace(rad[0], rad[-1], 100):
-        ind, dist = kdt.query_radius(query_pt, r + eps, return_distance=True)
+        ind, dist = kdt.query_radius([query_pt], r + eps, return_distance=True)
 
         ind = ind[0]
         dist = dist[0]
@@ -235,8 +235,3 @@ def test_simultaneous_sort(n_rows=10, n_pts=201):
 
     assert_array_almost_equal(dist, dist2)
     assert_array_almost_equal(ind, ind2)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

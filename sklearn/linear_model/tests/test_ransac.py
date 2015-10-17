@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.testing import assert_equal, assert_raises
 from numpy.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_raises_regexp
 from scipy import sparse
 
 from sklearn.utils.testing import assert_less
@@ -135,7 +136,19 @@ def test_ransac_predict():
                                        residual_threshold=0.5, random_state=0)
     ransac_estimator.fit(X, y)
 
-    assert_equal(ransac_estimator.predict(X), np.zeros((100, 1)))
+    assert_equal(ransac_estimator.predict(X), np.zeros(100))
+
+
+def test_ransac_resid_thresh_no_inliers():
+    # When residual_threshold=0.0 there are no inliers and a
+    # ValueError with a message should be raised
+    base_estimator = LinearRegression()
+    ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
+                                       residual_threshold=0.0, random_state=0)
+
+    assert_raises_regexp(ValueError,
+                    "No inliers.*residual_threshold.*0\.0",
+                    ransac_estimator.fit, X, y)
 
 
 def test_ransac_sparse_coo():
@@ -201,7 +214,7 @@ def test_ransac_none_estimator():
 def test_ransac_min_n_samples():
     base_estimator = LinearRegression()
     ransac_estimator1 = RANSACRegressor(base_estimator, min_samples=2,
-                                        residual_threshold=5,  random_state=0)
+                                        residual_threshold=5, random_state=0)
     ransac_estimator2 = RANSACRegressor(base_estimator,
                                         min_samples=2. / X.shape[0],
                                         residual_threshold=5, random_state=0)
@@ -340,7 +353,3 @@ def test_ransac_dynamic_max_trials():
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        stop_probability=1.1)
     assert_raises(ValueError, ransac_estimator.fit, X, y)
-
-
-if __name__ == "__main__":
-    np.testing.run_module_suite()

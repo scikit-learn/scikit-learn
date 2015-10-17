@@ -88,7 +88,8 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         self : object
             Returns an instance of self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], y_numeric=True)
+        X, y = check_X_y(X, y, ['csr', 'csc'], y_numeric=True,
+                         ensure_min_samples=2, estimator=self)
         X = as_float_array(X, copy=False)
         n_samples, n_features = X.shape
 
@@ -189,6 +190,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     Randomized Lasso works by resampling the train data and computing
     a Lasso on each resampling. In short, the features selected more
     often are good features. It is also known as stability selection.
+
+    Read more in the :ref:`User Guide <randomized_l1>`.
 
     Parameters
     ----------
@@ -372,6 +375,8 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     a LogisticRegression on each resampling. In short, the features selected
     more often are good features. It is also known as stability selection.
 
+    Read more in the :ref:`User Guide <randomized_l1>`.
+
     Parameters
     ----------
     C : float, optional, default=1
@@ -536,6 +541,8 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
                          eps=4 * np.finfo(np.float).eps, n_jobs=1,
                          verbose=False):
     """Stabiliy path based on randomized Lasso estimates
+
+    Read more in the :ref:`User Guide <randomized_l1>`.
 
     Parameters
     ----------

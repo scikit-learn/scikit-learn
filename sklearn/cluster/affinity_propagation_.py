@@ -21,6 +21,8 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
                          return_n_iter=False):
     """Perform Affinity Propagation Clustering of data
 
+    Read more in the :ref:`User Guide <affinity_propagation>`.
+
     Parameters
     ----------
 
@@ -190,6 +192,8 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 
 class AffinityPropagation(BaseEstimator, ClusterMixin):
     """Perform Affinity Propagation Clustering of data.
+
+    Read more in the :ref:`User Guide <affinity_propagation>`.
 
     Parameters
     ----------
