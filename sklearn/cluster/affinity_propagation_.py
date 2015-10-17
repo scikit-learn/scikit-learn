@@ -17,7 +17,7 @@ from ..metrics import pairwise_distances_argmin
 
 
 def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
-                         damping=0.9, copy=True, verbose=False,
+                         damping=None, copy=True, verbose=False,
                          return_n_iter=False):
     """Perform Affinity Propagation Clustering of data
 
@@ -45,7 +45,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     max_iter : int, optional, default: 200
         Maximum number of iterations
 
-    damping : float, optional, default: 0.9
+    damping : float, optional, default: 0.5
         Damping factor between 0.5 and 1.
 
     copy : boolean, optional, default: True
@@ -80,6 +80,12 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
     """
+    if damping is None:
+        warnings.warn("damping=0.5 has been deprecated "
+                      "in favor of 0.9",
+                      DeprecationWarning)
+        damping = 0.5
+    
     S = as_float_array(S, copy=copy)
     n_samples = S.shape[0]
 
@@ -202,7 +208,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    damping : float, optional, default: 0.9
+    damping : float, optional, default: 0.5
         Damping factor between 0.5 and 1.
 
     convergence_iter : int, optional, default: 15
@@ -222,11 +228,12 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         preferences value. If the preferences are not passed as arguments,
         they will be set to the median of the input similarities.
 
-    affinity : string, optional, default=``euclidean``
-        Which affinity to use. At the moment ``precomputed`` and
-        ``euclidean`` are supported. ``euclidean`` uses the
-        negative euclidean distance between points.
-
+    affinity : string, optional, default=``sqeuclidean``
+        Which affinity to use. At the moment ``precomputed``, ``euclidean``,
+        and ``sqeuclidean`` are supported. ``sqeuclidean`` and ``euclidean``
+        use the negative squared euclidean distances between points.
+        ``euclidean`` will mean non-squared distances in future versions.
+        
     verbose : boolean, optional, default: False
         Whether to be verbose.
 
@@ -262,8 +269,8 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     Between Data Points", Science Feb. 2007
     """
 
-    def __init__(self, damping=.9, max_iter=200, convergence_iter=15,
-                 copy=True, preference=None, affinity='euclidean',
+    def __init__(self, damping=None, max_iter=200, convergence_iter=15,
+                 copy=True, preference=None, affinity='sqeuclidean',
                  verbose=False):
 
         self.damping = damping
@@ -293,7 +300,13 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         if self.affinity == "precomputed":
             self.affinity_matrix_ = X
         elif self.affinity == "euclidean":
+            warnings.warn("Using squared distances. In the future please use " 
+                          "sqeuclidean for squared and euclidean for "
+                          "for non-squared distances.",
+                          DeprecationWarning)
             self.affinity_matrix_ = -euclidean_distances(X, squared=False)
+        elif self.affinity == "sqeuclidean":
+            self.affinity_matrix_ = -euclidean_distances(X, squared=True)
         else:
             raise ValueError("Affinity must be 'precomputed' or "
                              "'euclidean'. Got %s instead"

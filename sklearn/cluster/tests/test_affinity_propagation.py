@@ -24,7 +24,7 @@ X, _ = make_blobs(n_samples=60, n_features=2, centers=centers,
 def test_affinity_propagation():
     # Affinity Propagation algorithm
     # Compute similarities
-    S = -euclidean_distances(X, squared=False)
+    S = -euclidean_distances(X, squared=True)
     preference = np.median(S) * 10
     # Compute Affinity Propagation
     cluster_centers_indices, labels = affinity_propagation(
@@ -67,13 +67,14 @@ def test_affinity_propagation_predict():
     labels2 = af.predict(X)
     assert_array_equal(labels, labels2)
 
+def test_affinity_propagation_deprecation_warning():
+    # Test DeprecationWarning for parameter 'euclidean'
+    af = AffinityPropagation(affinity="euclidean", damping=0.9)
+    assert_warns(DeprecationWarning, af.fit, X)
     
-def test_affinity_propagation_convergence_warning():
-    # Test warning in AffinityPropagation.fit
-    af = AffinityPropagation(affinity="euclidean", max_iter=1)
-    assert_warns(ConvergenceWarning, af.fit, X)
-    assert_raises(ValueError, af.predict, X)
-    
+    # Test DeprecationWarning for default damping=0.5
+    af = AffinityPropagation()
+    assert_warns(DeprecationWarning, af.fit, X)
     
 def test_affinity_propagation_predict_error():
     # Test exception in AffinityPropagation.predict
