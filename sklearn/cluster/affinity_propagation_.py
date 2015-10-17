@@ -312,15 +312,13 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
                              "'euclidean'. Got %s instead"
                              % str(self.affinity))
 
-        with warnings.catch_warnings():
-            warnings.simplefilter('always', ConvergenceWarning)
-            self.cluster_centers_indices_, self.labels_, self.n_iter_ = \
-                affinity_propagation(
-                    self.affinity_matrix_, self.preference,
-                    max_iter=self.max_iter,
-                    convergence_iter=self.convergence_iter,
-                    damping=self.damping,
-                    copy=self.copy, verbose=self.verbose, return_n_iter=True)
+        self.cluster_centers_indices_, self.labels_, self.n_iter_ = \
+            affinity_propagation(
+                self.affinity_matrix_, self.preference,
+                max_iter=self.max_iter,
+                convergence_iter=self.convergence_iter,
+                damping=self.damping,
+                copy=self.copy, verbose=self.verbose, return_n_iter=True)
 
         if self.affinity != "precomputed":
             self.cluster_centers_ = X[self.cluster_centers_indices_].copy()
