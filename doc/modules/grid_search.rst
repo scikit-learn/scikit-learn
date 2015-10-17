@@ -72,6 +72,8 @@ evaluated and the best combination is retained.
       classifier (here a linear SVM trained with SGD with either elastic
       net or L2 penalty) using a :class:`pipeline.Pipeline` instance.
 
+.. _randomized_parameter_search:
+
 Randomized Parameter Optimization
 =================================
 While using a grid of parameter settings is currently the most widely used

@@ -274,6 +274,8 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
 class MDS(BaseEstimator):
     """Multidimensional scaling
 
+    Read more in the :ref:`User Guide <multidimensional_scaling>`.
+
     Parameters
     ----------
     metric : boolean, optional, default: True
@@ -394,7 +396,7 @@ class MDS(BaseEstimator):
             warnings.warn("The MDS API has changed. ``fit`` now constructs an"
                           " dissimilarity matrix from data. To use a custom "
                           "dissimilarity matrix, set "
-                          "``dissimilarity=precomputed``.")
+                          "``dissimilarity='precomputed'``.")
 
         if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X

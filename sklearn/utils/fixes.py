@@ -10,14 +10,20 @@ at which the fixe is no longer needed.
 #
 # License: BSD 3 clause
 
-import inspect
 import warnings
 import sys
 import functools
+import os
+import errno
 
 import numpy as np
 import scipy.sparse as sp
 import scipy
+
+try:
+    from inspect import signature
+except ImportError:
+    from ..externals.funcsigs import signature
 
 
 def _parse_version(version_string):
@@ -61,7 +67,7 @@ except ImportError:
 
 
 # little danse to see if np.copy has an 'order' keyword argument
-if 'order' in inspect.getargspec(np.copy)[0]:
+if 'order' in signature(np.copy).parameters:
     def safe_copy(X):
         # Copy, but keep the order
         return np.copy(X, order='K')
@@ -103,7 +109,7 @@ try:
 except TypeError:
     # Compat where astype accepted no copy argument
     def astype(array, dtype, copy=True):
-        if array.dtype == dtype:
+        if not copy and array.dtype == dtype:
             return array
         return array.astype(dtype)
 else:
@@ -226,7 +232,7 @@ except ImportError:
         """
         def within_tol(x, y, atol, rtol):
             with np.errstate(invalid='ignore'):
-                result = np.less_equal(abs(x-y), atol + rtol * abs(y))
+                result = np.less_equal(abs(x - y), atol + rtol * abs(y))
             if np.isscalar(a) and np.isscalar(b):
                 result = bool(result)
             return result
@@ -351,3 +357,39 @@ if np_version < (1, 6, 2):
 
 else:
     from numpy import bincount
+
+
+if 'exist_ok' in signature(os.makedirs).parameters:
+    makedirs = os.makedirs
+else:
+    def makedirs(name, mode=0o777, exist_ok=False):
+        """makedirs(name [, mode=0o777][, exist_ok=False])
+
+        Super-mkdir; create a leaf directory and all intermediate ones.  Works
+        like mkdir, except that any intermediate path segment (not just the
+        rightmost) will be created if it does not exist. If the target
+        directory already exists, raise an OSError if exist_ok is False.
+        Otherwise no exception is raised.  This is recursive.
+
+        """
+
+        try:
+            os.makedirs(name, mode=mode)
+        except OSError as e:
+            if (not exist_ok or e.errno != errno.EEXIST
+                    or not os.path.isdir(name)):
+                raise
+
+
+if np_version < (1, 8, 1):
+    def array_equal(a1, a2):
+        # copy-paste from numpy 1.8.1
+        try:
+            a1, a2 = np.asarray(a1), np.asarray(a2)
+        except:
+            return False
+        if a1.shape != a2.shape:
+            return False
+        return bool(np.asarray(a1 == a2).all())
+else:
+    from numpy import array_equal

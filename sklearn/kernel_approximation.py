@@ -24,8 +24,10 @@ from .metrics.pairwise import pairwise_kernels
 class RBFSampler(BaseEstimator, TransformerMixin):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
     of its Fourier transform.
-    
+
     It implements a variant of Random Kitchen Sinks.[1]
+
+    Read more in the :ref:`User Guide <rbf_kernel_approx>`.
 
     Parameters
     ----------
@@ -110,6 +112,8 @@ class RBFSampler(BaseEstimator, TransformerMixin):
 class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
     """Approximates feature map of the "skewed chi-squared" kernel by Monte
     Carlo approximation of its Fourier transform.
+
+    Read more in the :ref:`User Guide <skewed_chi_kernel_approx>`.
 
     Parameters
     ----------
@@ -214,6 +218,8 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     Optimal choices for the sampling interval for certain data ranges can be
     computed (see the reference). The default values should be reasonable.
 
+    Read more in the :ref:`User Guide <additive_chi_kernel_approx>`.
+
     Parameters
     ----------
     sample_steps : int, optional
@@ -239,9 +245,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     References
     ----------
     See `"Efficient additive kernels via explicit feature maps"
-    <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
-    Vedaldi, A. and Zisserman, A., Computer Vision and Pattern Recognition 2010
-
+    <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>`_
+    A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence,
+    2011
     """
 
     def __init__(self, sample_steps=2, sample_interval=None):
@@ -357,6 +363,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
     Constructs an approximate feature map for an arbitrary kernel
     using a subset of the data as basis.
+
+    Read more in the :ref:`User Guide <nystroem_kernel_approx>`.
 
     Parameters
     ----------

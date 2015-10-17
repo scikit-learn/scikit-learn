@@ -59,6 +59,8 @@ def l1_cross_distances(X):
 class GaussianProcess(BaseEstimator, RegressorMixin):
     """The Gaussian Process model class.
 
+    Read more in the :ref:`User Guide <gaussian_process>`.
+
     Parameters
     ----------
     regr : string or callable, optional
@@ -716,17 +718,16 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 else:
                     # Generate a random starting point log10-uniformly
                     # distributed between bounds
-                    log10theta0 = np.log10(self.thetaL) \
-                        + self.random_state.rand(self.theta0.size).reshape(
-                            self.theta0.shape) * np.log10(self.thetaU
-                                                          / self.thetaL)
+                    log10theta0 = (np.log10(self.thetaL)
+                                   + self.random_state.rand(*self.theta0.shape)
+                                   * np.log10(self.thetaU / self.thetaL))
                     theta0 = 10. ** log10theta0
 
                 # Run Cobyla
                 try:
                     log10_optimal_theta = \
                         optimize.fmin_cobyla(minus_reduced_likelihood_function,
-                                             np.log10(theta0), constraints,
+                                             np.log10(theta0).ravel(), constraints,
                                              iprint=0)
                 except ValueError as ve:
                     print("Optimization failed. Try increasing the ``nugget``")
@@ -824,7 +825,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Check regression weights if given (Ordinary Kriging)
         if self.beta0 is not None:
-            self.beta0 = check_array(self.beta0)
+            self.beta0 = np.atleast_2d(self.beta0)
             if self.beta0.shape[1] != 1:
                 # Force to column vector
                 self.beta0 = self.beta0.T
@@ -844,12 +845,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                              "'light', %s was given." % self.storage_mode)
 
         # Check correlation parameters
-        self.theta0 = check_array(self.theta0)
+        self.theta0 = np.atleast_2d(self.theta0)
         lth = self.theta0.size
 
         if self.thetaL is not None and self.thetaU is not None:
-            self.thetaL = check_array(self.thetaL)
-            self.thetaU = check_array(self.thetaU)
+            self.thetaL = np.atleast_2d(self.thetaL)
+            self.thetaU = np.atleast_2d(self.thetaU)
             if self.thetaL.size != lth or self.thetaU.size != lth:
                 raise ValueError("theta0, thetaL and thetaU must have the "
                                  "same length.")

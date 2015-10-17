@@ -16,7 +16,7 @@ from sklearn.utils.testing import (
     assert_raise_message)
 
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.lda import LDA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 try:
     from nose.tools import assert_less
@@ -60,9 +60,9 @@ def test_assert_greater_equal():
 
 
 def test_set_random_state():
-    lda = LDA()
+    lda = LinearDiscriminantAnalysis()
     tree = DecisionTreeClassifier()
-    # LDA doesn't have random state: smoke test
+    # Linear Discriminant Analysis doesn't have random state: smoke test
     set_random_state(lda, 3)
     set_random_state(tree, 3)
     assert_equal(tree.random_state, 3)
@@ -71,6 +71,9 @@ def test_set_random_state():
 def test_assert_raise_message():
     def _raise_ValueError(message):
         raise ValueError(message)
+
+    def _no_raise():
+        pass
 
     assert_raise_message(ValueError, "test",
                          _raise_ValueError, "test")
@@ -82,6 +85,15 @@ def test_assert_raise_message():
     assert_raises(ValueError,
                   assert_raise_message, TypeError, "something else",
                   _raise_ValueError, "test")
+
+    assert_raises(AssertionError,
+                  assert_raise_message, ValueError, "test",
+                  _no_raise)
+
+    # multiple exceptions in a tuple
+    assert_raises(AssertionError,
+                  assert_raise_message, (ValueError, AttributeError),
+                  "test", _no_raise)
 
 
 # This class is inspired from numpy 1.7 with an alteration to check

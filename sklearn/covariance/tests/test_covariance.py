@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_greater
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, EmpiricalCovariance, \
@@ -42,8 +43,7 @@ def test_covariance():
                   cov.error_norm, emp_cov, norm='foo')
     # Mahalanobis distances computation test
     mahal_dist = cov.mahalanobis(X)
-    print(np.amin(mahal_dist), np.amax(mahal_dist))
-    assert(np.amin(mahal_dist) > 0)
+    assert_greater(np.amin(mahal_dist), 0)
 
     # test with n_features = 1
     X_1d = X[:, 0].reshape((-1, 1))
@@ -55,8 +55,8 @@ def test_covariance():
         cov.error_norm(empirical_covariance(X_1d), norm='spectral'), 0)
 
     # test with one sample
-    # FIXME I don't know what this test does
-    X_1sample = np.arange(5)
+    # Create X with 1 sample and 5 features
+    X_1sample = np.arange(5).reshape(1, 5)
     cov = EmpiricalCovariance()
     assert_warns(UserWarning, cov.fit, X_1sample)
     assert_array_almost_equal(cov.covariance_,
@@ -172,8 +172,8 @@ def test_ledoit_wolf():
     assert_array_almost_equal(empirical_covariance(X_1d), lw.covariance_, 4)
 
     # test with one sample
-    # FIXME I don't know what this test does
-    X_1sample = np.arange(5)
+    # warning should be raised when using only 1 sample
+    X_1sample = np.arange(5).reshape(1, 5)
     lw = LedoitWolf()
     assert_warns(UserWarning, lw.fit, X_1sample)
     assert_array_almost_equal(lw.covariance_,
@@ -220,7 +220,7 @@ def test_oas():
     assert_array_almost_equal(scov.covariance_, oa.covariance_, 4)
 
     # test with n_features = 1
-    X_1d = X[:, 0].reshape((-1, 1))
+    X_1d = X[:, 0:1]
     oa = OAS(assume_centered=True)
     oa.fit(X_1d)
     oa_cov_from_mle, oa_shinkrage_from_mle = oas(X_1d, assume_centered=True)
@@ -259,8 +259,8 @@ def test_oas():
     assert_array_almost_equal(empirical_covariance(X_1d), oa.covariance_, 4)
 
     # test with one sample
-    # FIXME I don't know what this test does
-    X_1sample = np.arange(5)
+    # warning should be raised when using only 1 sample
+    X_1sample = np.arange(5).reshape(1, 5)
     oa = OAS()
     assert_warns(UserWarning, oa.fit, X_1sample)
     assert_array_almost_equal(oa.covariance_,

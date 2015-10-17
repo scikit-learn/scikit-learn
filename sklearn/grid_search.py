@@ -20,8 +20,8 @@ import warnings
 import numpy as np
 
 from .base import BaseEstimator, is_classifier, clone
-from .base import MetaEstimatorMixin
-from .cross_validation import _check_cv as check_cv
+from .base import MetaEstimatorMixin, ChangedBehaviorWarning
+from .cross_validation import check_cv
 from .cross_validation import _fit_and_score
 from .externals.joblib import Parallel, delayed
 from .externals import six
@@ -41,6 +41,8 @@ class ParameterGrid(object):
 
     Can be used to iterate over parameter value combinations with the
     Python built-in function iter.
+
+    Read more in the :ref:`User Guide <grid_search>`.
 
     Parameters
     ----------
@@ -67,6 +69,8 @@ class ParameterGrid(object):
     >>> list(ParameterGrid(grid)) == [{'kernel': 'linear'},
     ...                               {'kernel': 'rbf', 'gamma': 1},
     ...                               {'kernel': 'rbf', 'gamma': 10}]
+    True
+    >>> ParameterGrid(grid)[1] == {'kernel': 'rbf', 'gamma': 1}
     True
 
     See also
@@ -109,6 +113,47 @@ class ParameterGrid(object):
         return sum(product(len(v) for v in p.values()) if p else 1
                    for p in self.param_grid)
 
+    def __getitem__(self, ind):
+        """Get the parameters that would be ``ind``th in iteration
+
+        Parameters
+        ----------
+        ind : int
+            The iteration index
+
+        Returns
+        -------
+        params : dict of string to any
+            Equal to list(self)[ind]
+        """
+        # This is used to make discrete sampling without replacement memory
+        # efficient.
+        for sub_grid in self.param_grid:
+            # XXX: could memoize information used here
+            if not sub_grid:
+                if ind == 0:
+                    return {}
+                else:
+                    ind -= 1
+                    continue
+
+            # Reverse so most frequent cycling parameter comes first
+            keys, values_lists = zip(*sorted(sub_grid.items())[::-1])
+            sizes = [len(v_list) for v_list in values_lists]
+            total = np.product(sizes)
+
+            if ind >= total:
+                # Try the next grid
+                ind -= total
+            else:
+                out = {}
+                for key, v_list, n in zip(keys, values_lists, sizes):
+                    ind, offset = divmod(ind, n)
+                    out[key] = v_list[offset]
+                return out
+
+        raise IndexError('ParameterGrid index out of range')
+
 
 class ParameterSampler(object):
     """Generator on parameters sampled from given distributions.
@@ -125,6 +170,8 @@ class ParameterSampler(object):
     ``numpy.random``. Hence setting ``random_state`` will not guarantee a
     deterministic iteration whenever ``scipy.stats`` distributions are used to
     define the parameter search space.
+
+    Read more in the :ref:`User Guide <grid_search>`.
 
     Parameters
     ----------
@@ -170,7 +217,6 @@ class ParameterSampler(object):
         self.random_state = random_state
 
     def __iter__(self):
-        samples = []
         # check if all distributions are given as lists
         # in this case we want to sample without replacement
         all_lists = np.all([not hasattr(v, "rvs")
@@ -178,8 +224,8 @@ class ParameterSampler(object):
         rnd = check_random_state(self.random_state)
 
         if all_lists:
-            # get complete grid and yield from it
-            param_grid = list(ParameterGrid(self.param_distributions))
+            # look up sampled parameter settings in parameter grid
+            param_grid = ParameterGrid(self.param_distributions)
             grid_size = len(param_grid)
 
             if grid_size < self.n_iter:
@@ -194,14 +240,13 @@ class ParameterSampler(object):
         else:
             # Always sort the keys of a dictionary, for reproducibility
             items = sorted(self.param_distributions.items())
-            while len(samples) < self.n_iter:
+            for _ in six.moves.range(self.n_iter):
                 params = dict()
                 for k, v in items:
                     if hasattr(v, "rvs"):
                         params[k] = v.rvs()
                     else:
                         params[k] = v[rnd.randint(len(v))]
-                samples.append(params)
                 yield params
 
     def __len__(self):
@@ -222,7 +267,10 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         Targets for input data.
 
     estimator : estimator object
-        This estimator will be cloned and then fitted.
+        A object of that type is instantiated for each grid point.
+        This is assumed to implement the scikit-learn estimator interface.
+        Either estimator needs to provide a ``score`` function,
+        or ``scoring`` must be passed.
 
     parameters : dict
         Parameters to be set on estimator for this grid point.
@@ -306,10 +354,6 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
             self.parameters)
 
 
-class ChangedBehaviorWarning(UserWarning):
-    pass
-
-
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
     """Base class for hyper parameter search with cross-validation."""
@@ -331,8 +375,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.pre_dispatch = pre_dispatch
         self.error_score = error_score
 
+    @property
+    def _estimator_type(self):
+        return self.estimator._estimator_type
+
     def score(self, X, y=None):
-        """Returns the score on the given data, if the estimator has been refit
+        """Returns the score on the given data, if the estimator has been refit.
 
         This uses the score defined by ``scoring`` where provided, and the
         ``best_estimator_.score`` method otherwise.
@@ -560,14 +608,23 @@ class GridSearchCV(BaseSearchCV):
 
     Important members are fit, predict.
 
-    GridSearchCV implements a "fit" method and a "predict" method like
-    any classifier except that the parameters of the classifier
-    used to predict is optimized by cross-validation.
+    GridSearchCV implements a "fit" and a "score" method.
+    It also implements "predict", "predict_proba", "decision_function",
+    "transform" and "inverse_transform" if they are implemented in the
+    estimator used.
+
+    The parameters of the estimator used to apply these methods are optimized
+    by cross-validated grid-search over a parameter grid.
+
+    Read more in the :ref:`User Guide <grid_search>`.
 
     Parameters
     ----------
-    estimator : object type that implements the "fit" and "predict" methods
+    estimator : estimator object.
         A object of that type is instantiated for each grid point.
+        This is assumed to implement the scikit-learn estimator interface.
+        Either estimator needs to provide a ``score`` function,
+        or ``scoring`` must be passed.
 
     param_grid : dict or list of dictionaries
         Dictionary with parameters names (string) as keys and lists of
@@ -576,15 +633,16 @@ class GridSearchCV(BaseSearchCV):
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+        If ``None``, the ``score`` method of the estimator is used.
 
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-    n_jobs : int, default 1
+    n_jobs : int, default=1
         Number of jobs to run in parallel.
 
     pre_dispatch : int, or string, optional
@@ -609,10 +667,20 @@ class GridSearchCV(BaseSearchCV):
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
 
-    cv : integer or cross-validation generator, default=3
-        If an integer is passed, it is the number of folds.
-        Specific cross-validation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs, if ``y`` is binary or multiclass,
+        :class:`StratifiedKFold` used. If the estimator is a classifier
+        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     refit : boolean, default=True
         Refit the best estimator with the entire dataset.
@@ -640,9 +708,10 @@ class GridSearchCV(BaseSearchCV):
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None, error_score=...,
            estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
-                         degree=..., gamma=..., kernel='rbf', max_iter=-1,
-                         probability=False, random_state=None, shrinking=True,
-                         tol=..., verbose=False),
+                         decision_function_shape=None, degree=..., gamma=...,
+                         kernel='rbf', max_iter=-1, probability=False,
+                         random_state=None, shrinking=True, tol=...,
+                         verbose=False),
            fit_params={}, iid=..., n_jobs=1,
            param_grid=..., pre_dispatch=..., refit=...,
            scoring=..., verbose=...)
@@ -703,10 +772,9 @@ class GridSearchCV(BaseSearchCV):
 
     """
 
-    def __init__(self, estimator, param_grid, scoring=None, loss_func=None,
-                 score_func=None, fit_params=None, n_jobs=1, iid=True,
-                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise'):
+    def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
+                 n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
+                 pre_dispatch='2*n_jobs', error_score='raise'):
 
         super(GridSearchCV, self).__init__(
             estimator, scoring, fit_params, n_jobs, iid,
@@ -735,9 +803,14 @@ class GridSearchCV(BaseSearchCV):
 class RandomizedSearchCV(BaseSearchCV):
     """Randomized search on hyper parameters.
 
-    RandomizedSearchCV implements a "fit" method and a "predict" method like
-    any classifier except that the parameters of the classifier
-    used to predict is optimized by cross-validation.
+
+    RandomizedSearchCV implements a "fit" and a "score" method.
+    It also implements "predict", "predict_proba", "decision_function",
+    "transform" and "inverse_transform" if they are implemented in the
+    estimator used.
+
+    The parameters of the estimator used to apply these methods are optimized
+    by cross-validated search over parameter settings.
 
     In contrast to GridSearchCV, not all parameter values are tried out, but
     rather a fixed number of parameter settings is sampled from the specified
@@ -750,10 +823,15 @@ class RandomizedSearchCV(BaseSearchCV):
     It is highly recommended to use continuous distributions for continuous
     parameters.
 
+    Read more in the :ref:`User Guide <randomized_parameter_search>`.
+
     Parameters
     ----------
-    estimator : object type that implements the "fit" and "predict" methods
-        A object of that type is instantiated for each parameter setting.
+    estimator : estimator object.
+        A object of that type is instantiated for each grid point.
+        This is assumed to implement the scikit-learn estimator interface.
+        Either estimator needs to provide a ``score`` function,
+        or ``scoring`` must be passed.
 
     param_distributions : dict
         Dictionary with parameters names (string) as keys and distributions
@@ -765,10 +843,11 @@ class RandomizedSearchCV(BaseSearchCV):
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+        If ``None``, the ``score`` method of the estimator is used.
 
     fit_params : dict, optional
         Parameters to pass to the fit method.
@@ -798,10 +877,20 @@ class RandomizedSearchCV(BaseSearchCV):
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
 
-    cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of folds (default 3).
-        Specific cross-validation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs, if ``y`` is binary or multiclass,
+        :class:`StratifiedKFold` used. If the estimator is a classifier
+        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     refit : boolean, default=True
         Refit the best estimator with the entire dataset.
@@ -810,6 +899,10 @@ class RandomizedSearchCV(BaseSearchCV):
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
+
+    random_state : int or RandomState
+        Pseudo random number generator state used for random uniform sampling
+        from lists of possible values instead of scipy.stats distributions.
 
     error_score : 'raise' (default) or numeric
         Value to assign to the score if an error occurs in estimator fitting.

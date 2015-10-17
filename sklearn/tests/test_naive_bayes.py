@@ -60,6 +60,38 @@ def test_gnb_prior():
     assert_array_almost_equal(clf.class_prior_.sum(), 1)
 
 
+def test_gnb_sample_weight():
+    """Test whether sample weights are properly used in GNB. """
+    # Sample weights all being 1 should not change results
+    sw = np.ones(6)
+    clf = GaussianNB().fit(X, y)
+    clf_sw = GaussianNB().fit(X, y, sw)
+
+    assert_array_almost_equal(clf.theta_, clf_sw.theta_)
+    assert_array_almost_equal(clf.sigma_, clf_sw.sigma_)
+
+    # Fitting twice with half sample-weights should result
+    # in same result as fitting once with full weights
+    sw = rng.rand(y.shape[0])
+    clf1 = GaussianNB().fit(X, y, sample_weight=sw)
+    clf2 = GaussianNB().partial_fit(X, y, classes=[1, 2], sample_weight=sw / 2)
+    clf2.partial_fit(X, y, sample_weight=sw / 2)
+
+    assert_array_almost_equal(clf1.theta_, clf2.theta_)
+    assert_array_almost_equal(clf1.sigma_, clf2.sigma_)
+
+    # Check that duplicate entries and correspondingly increased sample
+    # weights yield the same result
+    ind = rng.randint(0, X.shape[0], 20)
+    sample_weight = np.bincount(ind, minlength=X.shape[0])
+
+    clf_dupl = GaussianNB().fit(X[ind], y[ind])
+    clf_sw = GaussianNB().fit(X, y, sample_weight)
+
+    assert_array_almost_equal(clf_dupl.theta_, clf_sw.theta_)
+    assert_array_almost_equal(clf_dupl.sigma_, clf_sw.sigma_)
+
+
 def test_discrete_prior():
     # Test whether class priors are properly set.
     for cls in [BernoulliNB, MultinomialNB]:
@@ -221,8 +253,8 @@ def test_discretenb_predict_proba():
     for cls, X in zip([BernoulliNB, MultinomialNB],
                       [X_bernoulli, X_multinomial]):
         clf = cls().fit(X, y)
-        assert_equal(clf.predict(X[-1]), 2)
-        assert_equal(clf.predict_proba(X[0]).shape, (1, 2))
+        assert_equal(clf.predict(X[-1:]), 2)
+        assert_equal(clf.predict_proba([X[0]]).shape, (1, 2))
         assert_array_almost_equal(clf.predict_proba(X[:2]).sum(axis=1),
                                   np.array([1., 1.]), 6)
 
@@ -231,10 +263,10 @@ def test_discretenb_predict_proba():
     for cls, X in zip([BernoulliNB, MultinomialNB],
                       [X_bernoulli, X_multinomial]):
         clf = cls().fit(X, y)
-        assert_equal(clf.predict_proba(X[0]).shape, (1, 3))
+        assert_equal(clf.predict_proba(X[0:1]).shape, (1, 3))
         assert_equal(clf.predict_proba(X[:2]).shape, (2, 3))
-        assert_almost_equal(np.sum(clf.predict_proba(X[1])), 1)
-        assert_almost_equal(np.sum(clf.predict_proba(X[-1])), 1)
+        assert_almost_equal(np.sum(clf.predict_proba([X[1]])), 1)
+        assert_almost_equal(np.sum(clf.predict_proba([X[-1]])), 1)
         assert_almost_equal(np.sum(np.exp(clf.class_log_prior_)), 1)
         assert_almost_equal(np.sum(np.exp(clf.intercept_)), 1)
 
@@ -319,7 +351,7 @@ def test_sample_weight_mnb():
     clf.fit([[1, 2], [1, 2], [1, 0]],
             [0, 0, 1],
             sample_weight=[1, 1, 4])
-    assert_array_equal(clf.predict([1, 0]), [1])
+    assert_array_equal(clf.predict([[1, 0]]), [1])
     positive_prior = np.exp(clf.intercept_[0])
     assert_array_almost_equal([1 - positive_prior, positive_prior],
                               [1 / 3., 2 / 3.])
@@ -427,10 +459,20 @@ def test_bnb():
 
     # Testing data point is:
     # Chinese Chinese Chinese Tokyo Japan
-    X_test = np.array([0, 1, 1, 0, 0, 1])
+    X_test = np.array([[0, 1, 1, 0, 0, 1]])
 
     # Check the predictive probabilities are correct
     unnorm_predict_proba = np.array([[0.005183999999999999,
                                       0.02194787379972565]])
     predict_proba = unnorm_predict_proba / np.sum(unnorm_predict_proba)
     assert_array_almost_equal(clf.predict_proba(X_test), predict_proba)
+
+
+def test_naive_bayes_scale_invariance():
+    # Scaling the data should not change the prediction results
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    labels = [GaussianNB().fit(f * X, y).predict(f * X)
+              for f in [1E-10, 1, 1E10]]
+    assert_array_equal(labels[0], labels[1])
+    assert_array_equal(labels[1], labels[2])

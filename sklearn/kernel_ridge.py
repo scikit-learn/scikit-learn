@@ -34,6 +34,8 @@ class KernelRidge(BaseEstimator, RegressorMixin):
     This estimator has built-in support for multi-variate regression
     (i.e., when y is a 2d-array of shape [n_samples, n_targets]).
 
+    Read more in the :ref:`User Guide <kernel_ridge>`.
+
     Parameters
     ----------
     alpha : {float, array-like}, shape = [n_targets]
@@ -49,8 +51,8 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         should return a floating point number.
 
     gamma : float, default=None
-        Gamma parameter for the RBF, polynomial, exponential chi2 and
-        sigmoid kernels. Interpretation of the default value is left to
+        Gamma parameter for the RBF, laplacian, polynomial, exponential chi2
+        and sigmoid kernels. Interpretation of the default value is left to
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
 
@@ -141,9 +143,9 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         self : returns an instance of self.
         """
         # Convert data
-        X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True)
+        X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True,
+                         y_numeric=True)
 
-        n_samples = X.shape[0]
         K = self._get_kernel(X)
         alpha = np.atleast_1d(self.alpha)
 
