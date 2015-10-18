@@ -230,10 +230,10 @@ def check_estimator(Estimator):
     Parameters
     ----------
     Estimator : class
-        Class to check.
+        Class to check. Estimator is a class object (not an instance).
 
     """
-    name = Estimator.__class__.__name__
+    name = Estimator.__name__
     check_parameters_default_constructible(name, Estimator)
     for check in _yield_all_checks(name, Estimator):
         check(name, Estimator)
