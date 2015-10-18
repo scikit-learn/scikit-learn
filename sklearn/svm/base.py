@@ -10,8 +10,8 @@ from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..multiclass import _ovr_decision_function
-from ..utils import check_array, check_random_state, column_or_1d
-from ..utils import compute_class_weight, deprecated
+from ..utils import check_array, check_random_state, column_or_1d, check_X_y
+from ..utils import ConvergenceWarning, compute_class_weight, deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
@@ -151,7 +151,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
 
-        X = check_array(X, accept_sparse='csr', dtype=np.float64, order='C')
+        #X = check_array(X, accept_sparse='csr', dtype=np.float64, order='C')
+        X, y = check_X_y(X, y, dtype=np.float64, order='C', accept_sparse='csr')
         y = self._validate_targets(y)
 
         sample_weight = np.asarray([]

@@ -142,7 +142,7 @@ def check_supervised_y_no_nan(name, Estimator):
     errmsg = "Input contains NaN, infinity or a value too large for " \
              "dtype('float64')."
     try:
-        if "MultiTask" in name:
+        if "MultiTask" in Estimator.__name__:
             Estimator().fit(X, y2)
         else:
             Estimator().fit(X, y1)
