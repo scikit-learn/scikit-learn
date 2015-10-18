@@ -10,14 +10,14 @@ Build-Depends: debhelper (>= 7.0.50), dh-autoreconf,
                python-numpy, python-scipy,
                python-nose,
                python-matplotlib,
-               python-joblib (>= 0.4.5),
+               python-joblib (>= 0.9.2),
                python3-all-dev,
                cython3,
                python3-setuptools,
                python3-numpy, python3-scipy,
                python3-nose,
                python3-matplotlib,
-               python3-joblib (>= 0.4.5),
+               python3-joblib (>= 0.9.2),
                libsvm-dev (>= 2.84.0),
                libatlas3-base,
 Build-Depends-Indep:
@@ -33,7 +33,7 @@ Replaces: python-scikits-learn (<< 0.9~)
 Breaks: python-scikits-learn (<< 0.9~)
 Architecture: all
 Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-scipy, python-sklearn-lib(>= ${source:Version}),
-         python-joblib (>= 0.4.5),
+         python-joblib (>= 0.9.2),
 Provides: ${python:Provides}
 Recommends: python-nose, python-matplotlib
 Suggests: python-dap, python-scikits-optimization, python-sklearn-doc, ipython
@@ -61,7 +61,7 @@ Description: low-level implementations and bindings for scikit-learn
 Package: python3-sklearn
 Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends}, python3-numpy, python3-scipy, python3-sklearn-lib(>= ${source:Version}),
-         python3-joblib (>= 0.4.5),
+         python3-joblib (>= 0.9.2),
 Provides: ${python:Provides}
 Recommends: python-nose, python-matplotlib
 Suggests: python3-dap, python-sklearn-doc, ipython3
