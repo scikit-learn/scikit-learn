@@ -203,8 +203,9 @@ def test_v_measure_and_mutual_information(seed=36):
 
 
 def test_max_n_classes():
-    labels_true = np.random.random(53)
-    labels_pred = np.random.random(53)
+    rng = np.random.RandomState(seed=0)
+    labels_true = rng.rand(53)
+    labels_pred = rng.rand(53)
     labels_zero = np.zeros(53)
     labels_true[:2] = 0
     labels_zero[:3] = 1
