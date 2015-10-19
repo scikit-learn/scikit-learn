@@ -1228,7 +1228,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         return XP
 
 
-def normalize(X, norm='l2', axis=1, copy=True):
+def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
     """Scale input vectors individually to unit norm (vector length).
 
     Read more in the :ref:`User Guide <preprocessing_normalization>`.
@@ -1252,6 +1252,9 @@ def normalize(X, norm='l2', axis=1, copy=True):
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
+
+    return_norm : boolean, default False
+        whether to return the computed norms
 
     See also
     --------
@@ -1297,7 +1300,10 @@ def normalize(X, norm='l2', axis=1, copy=True):
     if axis == 0:
         X = X.T
 
-    return X
+    if return_norm:
+        return X, norms
+    else:
+        return X
 
 
 class Normalizer(BaseEstimator, TransformerMixin):

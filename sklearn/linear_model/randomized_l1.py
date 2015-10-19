@@ -15,7 +15,7 @@ from scipy.sparse import issparse
 from scipy import sparse
 from scipy.interpolate import interp1d
 
-from .base import center_data
+from .base import _preprocess_data
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.joblib import Memory, Parallel, delayed
@@ -71,7 +71,7 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
     def __init__(self):
         pass
 
-    _center_data = staticmethod(center_data)
+    _preprocess_data = staticmethod(_preprocess_data)
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -94,9 +94,8 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         X = as_float_array(X, copy=False)
         n_samples, n_features = X.shape
 
-        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                                                        self.fit_intercept,
-                                                        self.normalize)
+        X, y, X_offset, y_offset, X_scale = \
+            self._preprocess_data(X, y, self.fit_intercept, self.normalize)
 
         estimator_func, params = self._make_estimator_and_params(X, y)
         memory = self.memory
@@ -223,8 +222,15 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional, default True
+    normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     precompute : True | False | 'auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -405,8 +411,15 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional, default=True
+    normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     tol : float, optional, default=1e-3
          tolerance for stopping criteria of LogisticRegression
@@ -500,11 +513,11 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
                       fit_intercept=self.fit_intercept)
         return _randomized_logistic, params
 
-    def _center_data(self, X, y, fit_intercept, normalize=False):
+    def _preprocess_data(self, X, y, fit_intercept, normalize=False):
         """Center the data in X but not in y"""
-        X, _, Xmean, _, X_std = center_data(X, y, fit_intercept,
-                                            normalize=normalize)
-        return X, y, Xmean, y, X_std
+        X, _, X_offset, _, X_scale = _preprocess_data(X, y, fit_intercept,
+                                                      normalize=normalize)
+        return X, y, X_offset, y, X_scale
 
 
 ###############################################################################
