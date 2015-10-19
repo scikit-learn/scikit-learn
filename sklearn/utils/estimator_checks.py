@@ -148,8 +148,8 @@ def check_supervised_y_no_nan(name, Estimator):
             Estimator().fit(X, y1)
     except ValueError as e:
         if e.message != errmsg:
-            warnings.warn("Estimator {0} raised warning as expected, but "
-                          "does not match expected error message")
+            raise ValueError("Estimator {0} raised warning as expected, but "
+                             "does not match expected error message")
     else:
         raise ValueError("Estimator {0} should have raised error on fitting "
                          "array with NaN value.".format(Estimator.__name__))
@@ -718,6 +718,7 @@ def check_estimators_empty_data_messages(name, Estimator):
 
 
 def check_estimators_nan_inf(name, Estimator):
+    # Checks that Estimator X's do not contain NaN or inf.
     rnd = np.random.RandomState(0)
     X_train_finite = rnd.uniform(size=(10, 3))
     X_train_nan = rnd.uniform(size=(10, 3))
