@@ -392,6 +392,12 @@ class LinearRegression(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.n_jobs = n_jobs
 
+    @property
+    @deprecated("residues_ is deprecated and will be removed in 0.19")
+    def residues_(self):
+        """Get the residues of the fitted model."""
+        return self._residues
+
     def fit(self, X, y, sample_weight=None):
         """
         Fit linear model.
@@ -440,7 +446,7 @@ class LinearRegression(LinearModel, RegressorMixin):
                 self.coef_ = np.vstack(out[0] for out in outs)
                 self.residues_ = np.vstack(out[3] for out in outs)
         else:
-            self.coef_, self.residues_, self.rank_, self.singular_ = \
+            self.coef_, self._residues, self.rank_, self.singular_ = \
                 linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
 
