@@ -218,41 +218,62 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self._cluster_id = tree._cluster_id[:]
         self._is_core = tree._is_core[:]
         self.ordering_ = tree.ordering_[:]
-        _ExtractDBSCAN(self, self.eps)  # extraction needs to be < eps
+        _extractDBSCAN(self, self.eps)  # extraction needs to be < eps
         self.labels_ = self._cluster_id[:]
         self.core_sample_indices_ = self._index[self._is_core[:] == True]
         self.n_clusters = max(self._cluster_id)
         self.processed = True
         return self  # self.core_sample_indices_, self.labels_
 
-    def extract(self, epsPrime):
+    def extract(self, epsilon_prime=self.eps, clustering='dbscan',
+                significant_ratio=0.75, similarity_ratio=0.4, 
+                min_reach_ratio=0.1):
         """Performs DBSCAN equivalent extraction for arbitrary epsilon.
         Can be run multiple times.
 
         Parameters
         ----------
-        epsilon_prime: float or int
-        Must be less than or equal to what was used for prep and build steps
-
+        epsilon_prime: float or int, optional
+        Used for 'dbscan' clustering. Must be less than or equal to what 
+        was used for prep and build steps
+        clustering: {'dbscan', hierarchical'}, optional
+        Type of cluster extraction to perform; defaults to 'dbscan'.
+        significant_ratio : float, optional
+        Used for hierarchical clustering. The ratio for the reachability 
+        score of a local maximum compared to its neighbors to be considered 
+        significant.
+        similarity_ratio : float, optional
+        Used for hierarchical clustering. The ratio for the reachability 
+        score of a split point compared to the parent split point for it to 
+        be considered similar.
+        min_reach_ratio : float, optional
+        Used for hierarchical clustering. The ratio of the largest 
+        reachability score that a local maximum needs to reach in order to 
+        be considered.
+        
         Returns
         -------
         New core_sample_indices_ and labels_ arrays. Modifies OPTICS object
         and stores core_sample_indices_ and lables_ as attributes."""
 
         if self.processed is True:
-            if epsPrime > self.eps * 5.0:
+            if epsilon_prime > self.eps * 5.0:
                 print('Specify an epsilon smaller than ' + str(self.eps * 5))
             else:
-                self.eps_prime = epsPrime
-                _ExtractDBSCAN(self, epsPrime)
+                if clustering == 'dbscan':
+                    self.eps_prime = epsilon_prime
+                    _extractDBSCAN(self, epsilon_prime)
+                elif clustering == 'hierarchical':
+                    _hierarchical_extraction(self, significant_ratio, 
+                                             similarity_ratio, 
+                                             min_reach_ratio)   
                 self.labels_ = self._cluster_id[:]
                 # Setting following line to '1' instead of 'True' to keep
                 # line shorter than 79 characters
                 self.core_sample_indices_ = self._index[self._is_core[:] == 1]
-                self.labels_ = self._cluster_id[:]
                 self.n_clusters = max(self._cluster_id)
-                if epsPrime > (self.eps * 1.05):
-                    print("Warning, eps is close to epsPrime:")
+                if epsilon_prime > (self.eps * 1.05):
+                    print("Warning, eps is close to epsilon_prime:")
                     print("Output may be unstable")
                 return self.core_sample_indices_, self.labels_
         else:
@@ -263,7 +284,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 # Important: Epsilon prime should be less than epsilon used in OPTICS #
 
 
-def _ExtractDBSCAN(setofobjects, epsilon_prime):
+def _extractDBSCAN(setofobjects, epsilon_prime):
 
     # Start Cluster_id at zero, incremented to '1' for first cluster
     cluster_id = 0
@@ -285,27 +306,21 @@ def _ExtractDBSCAN(setofobjects, epsilon_prime):
             else:
                 # Zero (i.e., 'False') for non-core, non-noise points #
                 setofobjects._is_core[entry] = 0
-"""
-Algorithms for extracting clusters from a reachability plot.
-"""
 
-# Author: Fredrik Appelros (fredrik.appelros@gmail.com), Carl Ekerot (kalle@implode.se)
+
+# Algorithm for hierarchical extraction of clusters from a reachability plot.
+# Authors: Fredrik Appelros (fredrik.appelros@gmail.com), 
+#          Carl Ekerot (kalle@implode.se)
+# Modified: Shane Grigsby, October 2015
 # License: BSD
 
-
-def hierarchical_extraction(ordering, reachability_distances, min_cluster_size,
-        significant_ratio=0.75, similarity_ratio=0.4, min_reach_ratio=0.1):
+def _hierarchical_extraction(self, significant_ratio=0.75, 
+                             similarity_ratio=0.4, min_reach_ratio=0.1):
     """
     Constructs a tree structure from an OPTICS ordering and a set of
     reachability distances and extracts clusters from this structure.
     Parameters
     ----------
-    ordering : array [n_samples]
-        Indices of the samples in the order generated by OPTICS.
-    reachability_distances : array [n_samples]
-        Reachability distance for each sample.
-    min_cluster_size : int
-        The minimum size of a cluster in number of samples.
     significant_ratio : float
         The ratio for the reachability score of a local maximum
         compared to its neighbors to be considered significant.
@@ -327,18 +342,19 @@ def hierarchical_extraction(ordering, reachability_distances, min_cluster_size,
     representations." Advances in Knowledge Discovery and Data Mining (2003):
     567-567.
     """
-    R = np.asarray([reachability_distances[i] for i in ordering])
-    n = len(ordering)
+    R = np.asarray([self.reachability_[i] for i in self.ordering_])
+    n = len(ordering_)
 
     # Find local maximas
     L = []
-    for i in xrange(0, min_cluster_size):
-        if np.argmax(R[0:i + min_cluster_size + 1]) == i:
+    for i in xrange(0, self.min_samples):
+        if np.argmax(R[0:i + self.min_samples + 1]) == i:
             L.append(i)
-        if np.argmax(R[n - 2 * min_cluster_size + i:n]) == i:
-            L.append(n - min_cluster_size + i)
-    for i in xrange(min_cluster_size, n - min_cluster_size):
-        if np.argmax(R[i - min_cluster_size:i + min_cluster_size + 1]) == min_cluster_size:
+        if np.argmax(R[n - 2 * self.min_samples + i:n]) == i:
+            L.append(n - self.min_samples + i)
+    for i in xrange(self.min_samples, n - self.min_samples):
+        if (np.argmax(R[i - self.min_samples:i + self.min_samples + 1]) == 
+            self.min_samples):
             L.append(i)
     # Sort local maximas in order of their reachability
     L.sort(key=lambda x: R[x])
@@ -377,10 +393,11 @@ def hierarchical_extraction(ordering, reachability_distances, min_cluster_size,
         if avg_reach_left <= significant_ratio * R[s] >= avg_reach_right:
             children = []
             left_size = child_left.right - child_left.left
-            if left_size >= min_cluster_size or left_size == child_left.right:
+            if left_size >= self.min_samples or left_size == child_left.right:
                 children.append((child_left, L_left))
             right_size = child_right.right - child_right.left
-            if right_size >= min_cluster_size or right_size == n - child_right.left:
+            if (right_size >= self.min_samples or right_size == 
+                n - child_right.left):
                 children.append((child_right, L_right))
             if not children:
                 leaves.append(node)
@@ -403,14 +420,10 @@ def hierarchical_extraction(ordering, reachability_distances, min_cluster_size,
     root = Node(0, n)
     cluster_tree(root, None, L)
 
-    labels = -np.ones(n)
+    self._cluster_id = -np.ones(n)
     for (i, leaf) in enumerate(leaves):
         for j in xrange(leaf.left, leaf.right):
-            labels[ordering[j]] = i
-
-    return labels
-
-EXTRACTION_FUNCTIONS = {
-    'hierarchical': hierarchical_extraction,
-}
+            self._cluster_id[self.ordering[j]] = i
+    self._is_core[self.labels == -1] = 0 
+    self._is_core[self.labels_[:] >= 0] = 1
 
