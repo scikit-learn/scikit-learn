@@ -21,9 +21,12 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     # Use the miniconda installer for faster download / install of conda
     # itself
+    mkdir -p download
+    cd download
     wget http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh \
         -O miniconda.sh
     chmod +x miniconda.sh && ./miniconda.sh -b
+    cd ..
     export PATH=/home/travis/miniconda/bin:$PATH
     conda update --yes conda
 
@@ -33,11 +36,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
         numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION
     source activate testenv
 
+    # Resolve MKL usage
     if [[ "$INSTALL_MKL" == "true" ]]; then
-        # Make sure that MKL is used
         conda install --yes mkl
     else
-        # Make sure that MKL is not used
         conda remove --yes --features mkl || echo "MKL not installed"
     fi
 
@@ -46,6 +48,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # virtualenv but we want to used numpy installed through apt-get
     # install.
     deactivate
+
     # Create a new virtualenv using system site packages for numpy and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
