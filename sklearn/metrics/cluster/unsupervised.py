@@ -63,8 +63,8 @@ def silhouette_score(X, labels, metric='euclidean', blockwise='auto',
         heuristics.
 
     sample_size : int or None
-        The size of the sample to use when computing the Silhouette Coefficient 
-        on a random subset of the data. 
+        The size of the sample to use when computing the Silhouette Coefficient
+        on a random subset of the data.
         If ``sample_size is None``, no sampling is used.
 
     n_jobs : integer, optional
@@ -73,7 +73,7 @@ def silhouette_score(X, labels, metric='euclidean', blockwise='auto',
         Memory consumption is proportional to the number of CPUs.
 
     random_state : integer or numpy.RandomState, optional
-        The generator used to randomly select a subset of samples if 
+        The generator used to randomly select a subset of samples if
         ``sample_size is not None``. If an integer is given, it fixes the seed.
         Defaults to the global numpy random number generator.
 
@@ -209,8 +209,8 @@ def silhouette_samples(X, labels, metric='euclidean', blockwise='auto',
         n_jobs = 1
 
     if blockwise == 'auto':
-        # Temporary
-        blockwise = False
+        n_labels = len(np.unique(labels))
+        blockwise = not (n_labels > 50 and X.shape[0] < 5 * n_labels)
     if not blockwise:
         distances = pairwise_distances(X, metric=metric, **kwds)
         n = labels.shape[0]
@@ -222,8 +222,8 @@ def silhouette_samples(X, labels, metric='euclidean', blockwise='auto',
         # Intra distance
         A = np.zeros(labels.size, dtype=float)
         intra_dist = Parallel(n_jobs=n_jobs)(
-            delayed(_intra_cluster_distances_block)
-                (X[np.where(labels == label)[0]], metric, **kwds)
+            delayed(_intra_cluster_distances_block)(
+                X[np.where(labels == label)[0]], metric, **kwds)
             for label in np.unique(labels))
         for label, dist in zip(np.unique(labels), intra_dist):
             A[np.where(labels == label)[0]] = dist
@@ -239,7 +239,7 @@ def silhouette_samples(X, labels, metric='euclidean', blockwise='auto',
                     X[np.where(labels == label_a)[0]],
                     X[np.where(labels == label_b)[0]],
                     metric, **kwds)
-                for label_a, label_b in combinations(unique_labels, 2))
+            for label_a, label_b in combinations(unique_labels, 2))
 
         # Take the distance to the closest cluster
         for (label_a, label_b), (values_a, values_b) in \
@@ -250,8 +250,6 @@ def silhouette_samples(X, labels, metric='euclidean', blockwise='auto',
                 indices_b = np.where(labels == label_b)[0]
                 B[indices_b] = np.minimum(values_b, B[indices_b])
                 del indices_b
-    else:
-        raise ValueError('Unknown method: %s' % method)
     sil_samples = (B - A) / np.maximum(A, B)
     return sil_samples
 
