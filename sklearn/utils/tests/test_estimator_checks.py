@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_raises_regex, assert_true
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.ensemble import AdaBoostClassifier
+from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.utils.validation import check_X_y, check_array
 
 
@@ -93,6 +94,7 @@ def test_check_estimator():
 
     # doesn't error on actual estimator
     check_estimator(AdaBoostClassifier)
+    check_estimator(MultiTaskElasticNet)
 
 
 def test_check_estimators_unfitted():
