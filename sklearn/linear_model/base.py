@@ -3,8 +3,8 @@ Generalized Linear models.
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#         Olivier Grisel <olivier.grisel@ensta.org>
+# Fabian Pedregosa <fabian.pedregosa@inria.fr>
+# Olivier Grisel <olivier.grisel@ensta.org>
 #         Vincent Michel <vincent.michel@inria.fr>
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Mathieu Blondel <mathieu@mblondel.org>
@@ -375,6 +375,14 @@ class LinearRegression(LinearModel, RegressorMixin):
         is a 2D array of shape (n_targets, n_features), while if only
         one target is passed, this is a 1D array of length n_features.
 
+    residues_ : array, shape (n_targets,) or (1,) or empty
+        Sum of residuals. Squared Euclidean 2-norm for each target passed
+        during the fit. If the linear regression problem is under-determined
+        (the number of linearly independent rows of the training matrix is less
+        than its number of linearly independent columns), this is an empty
+        array. If the target vector passed during the fit is 1-dimensional,
+        this is a (1,) shape array.
+
     intercept_ : array
         Independent term in the linear model.
 
@@ -416,7 +424,8 @@ class LinearRegression(LinearModel, RegressorMixin):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          y_numeric=True, multi_output=True)
 
-        if ((sample_weight is not None) and np.atleast_1d(sample_weight).ndim > 1):
+        if ((sample_weight is not None) and np.atleast_1d(
+                sample_weight).ndim > 1):
             sample_weight = column_or_1d(sample_weight, warn=True)
 
         X, y, X_mean, y_mean, X_std = self._center_data(
