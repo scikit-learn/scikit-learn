@@ -75,7 +75,8 @@ def test_check_estimator():
     msg = "Estimator doesn't check for NaN and inf in predict"
     assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)
     # check for sparse matrix input handling
-    msg = "Estimator type doesn't seem to fail gracefully on sparse data"
+    name = NoSparseClassifier.__name__
+    msg = "Estimator " + name + " doesn't seem to fail gracefully on sparse data"
     # the check for sparse input handling prints to the stdout,
     # instead of raising an error, so as not to remove the original traceback.
     # that means we need to jump through some hoops to catch it.
