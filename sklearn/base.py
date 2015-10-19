@@ -10,8 +10,11 @@ from scipy import sparse
 from .externals import six
 from .utils.fixes import signature
 from .utils.deprecation import deprecated
-from .exceptions import ChangedBehaviorWarning
+from .exceptions import ChangedBehaviorWarning as ChangedBehaviorWarning_
 
+
+class ChangedBehaviorWarning(ChangedBehaviorWarning_):
+    pass
 
 ChangedBehaviorWarning = deprecated("ChangedBehaviorWarning has been moved "
                                     "into the sklearn.exceptions module. "

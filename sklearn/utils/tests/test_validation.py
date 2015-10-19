@@ -26,12 +26,13 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 from sklearn.datasets import make_blobs
 from sklearn.utils.validation import (
-    NotFittedError,
     has_fit_parameter,
     check_is_fitted,
     check_consistent_length,
-    DataConversionWarning,
 )
+
+from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
 

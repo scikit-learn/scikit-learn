@@ -16,29 +16,41 @@ from ..externals import six
 from ..utils.fixes import signature
 from .deprecation import deprecated
 from ..exceptions import DataConversionWarning as DataConversionWarning_
-from ..exceptions import NonBLASDotWarning
+from ..exceptions import NonBLASDotWarning as NonBLASDotWarning_
 from ..exceptions import NotFittedError as NotFittedError_
 
+
+class DataConversionWarning(DataConversionWarning_):
+    pass
 
 DataConversionWarning = deprecated("DataConversionWarning has been moved "
                                    "into the sklearn.exceptions module. "
                                    "It will not be available here from "
-                                   "version 0.19")(DataConversionWarning_)
+                                   "version 0.19")(DataConversionWarning)
+
+
+class NonBLASDotWarning(NonBLASDotWarning_):
+    pass
 
 NonBLASDotWarning = deprecated("NonBLASDotWarning has been moved "
                                "into the sklearn.exceptions module. "
                                "It will not be available here from "
                                "version 0.19")(NonBLASDotWarning)
 
+
+class NotFittedError(NotFittedError_):
+    pass
+
 NotFittedError = deprecated("NotFittedError has been moved into the "
                             "sklearn.exceptions module. It will not be "
-                            "available here from version 0.19")(NotFittedError_)
+                            "available here from version 0.19")(NotFittedError)
+
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 # Silenced by default to reduce verbosity. Turn on at runtime for
 # performance profiling.
-warnings.simplefilter('ignore', NonBLASDotWarning)
+warnings.simplefilter('ignore', NonBLASDotWarning_)
 
 
 def _assert_all_finite(X):
@@ -674,6 +686,7 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
         attributes = [attributes]
 
     if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
+        # FIXME NotFittedError_ --> NotFittedError in 0.19
         raise NotFittedError_(msg % {'name': type(estimator).__name__})
 
 
