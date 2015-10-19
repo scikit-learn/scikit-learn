@@ -809,9 +809,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
         if sparse.issparse(X):
-            if X.shape[0] == 1:
-                inplace_row_scale(X, self.scale_)
-            else:
+            if self.scale_ is not None:
                 inplace_column_scale(X, self.scale_)
         else:
             X *= self.scale_
