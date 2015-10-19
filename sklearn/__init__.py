@@ -37,7 +37,7 @@ warnings.filterwarnings('always', category=DeprecationWarning,
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.17.dev0'
+__version__ = '0.18.dev0'
 
 
 try:
@@ -66,10 +66,9 @@ else:
                'linear_model', 'manifold', 'metrics', 'mixture', 'multiclass',
                'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
                'preprocessing', 'qda', 'random_projection', 'semi_supervised',
-               'svm', 'tree',
+               'svm', 'tree', 'discriminant_analysis',
                # Non-modules:
                'clone']
-
 
 def setup_module(module):
     """Fixture for the tests to assure globally controllable seeding of RNGs"""

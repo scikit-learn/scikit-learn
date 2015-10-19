@@ -14,7 +14,9 @@ import numpy as np
 
 from ..externals import six
 
+from . import _criterion
 from . import _tree
+
 
 
 def _color_brew(n):
@@ -169,7 +171,6 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
 
     def node_to_str(tree, node_id, criterion):
         # Generate the node content string
-
         if tree.n_outputs == 1:
             value = tree.value[node_id][0, :]
         else:
@@ -208,7 +209,9 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
 
         # Write impurity
         if impurity:
-            if not isinstance(criterion, six.string_types):
+            if isinstance(criterion, _criterion.FriedmanMSE):
+                criterion = "friedman_mse"
+            elif not isinstance(criterion, six.string_types):
                 criterion = "impurity"
             if labels:
                 node_string += '%s = ' % criterion
@@ -267,7 +270,7 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
                                           np.argmax(value),
                                           characters[2])
             node_string += class_name
-
+            
         # Clean up any trailing newlines
         if node_string[-2:] == '\\n':
             node_string = node_string[:-2]

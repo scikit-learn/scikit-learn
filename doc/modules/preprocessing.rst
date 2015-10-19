@@ -78,7 +78,7 @@ This class is hence suitable for use in the early steps of a
   >>> scaler.mean_                                      # doctest: +ELLIPSIS
   array([ 1. ...,  0. ...,  0.33...])
 
-  >>> scaler.std_                                       # doctest: +ELLIPSIS
+  >>> scaler.scale_                                       # doctest: +ELLIPSIS
   array([ 0.81...,  0.81...,  1.24...])
 
   >>> scaler.transform(X)                               # doctest: +ELLIPSIS
@@ -398,7 +398,7 @@ Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
   >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
-  OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
+  OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
          handle_unknown='error', n_values='auto', sparse=True)
   >>> enc.transform([[0, 1, 3]]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
@@ -484,9 +484,9 @@ Often it's useful to add complexity to the model by considering nonlinear featur
            [4, 5]])
     >>> poly = PolynomialFeatures(2)
     >>> poly.fit_transform(X)                             # doctest: +ELLIPSIS
-    array([[ 1,  0,  1,  0,  0,  1],
-           [ 1,  2,  3,  4,  6,  9],
-           [ 1,  4,  5, 16, 20, 25]])
+    array([[  1.,   0.,   1.,   0.,   0.,   1.],
+           [  1.,   2.,   3.,   4.,   6.,   9.],
+           [  1.,   4.,   5.,  16.,  20.,  25.]])
 
 The features of X have been transformed from :math:`(X_1, X_2)` to :math:`(1, X_1, X_2, X_1^2, X_1X_2, X_2^2)`.
 
@@ -499,9 +499,9 @@ In some cases, only interaction terms among features are required, and it can be
            [6, 7, 8]])
     >>> poly = PolynomialFeatures(degree=3, interaction_only=True)
     >>> poly.fit_transform(X)                             # doctest: +ELLIPSIS
-    array([[  1,   0,   1,   2,   0,   0,   2,   0],
-           [  1,   3,   4,   5,  12,  15,  20,  60],
-           [  1,   6,   7,   8,  42,  48,  56, 336]])
+    array([[   1.,    0.,    1.,    2.,    0.,    0.,    2.,    0.],
+           [   1.,    3.,    4.,    5.,   12.,   15.,   20.,   60.],
+           [   1.,    6.,    7.,    8.,   42.,   48.,   56.,  336.]])
 
 The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
 

@@ -219,8 +219,8 @@ def chi2(X, y):
 
     observed = safe_sparse_dot(Y.T, X)          # n_classes * n_features
 
-    feature_count = check_array(X.sum(axis=0))
-    class_prob = check_array(Y.mean(axis=0))
+    feature_count = X.sum(axis=0).reshape(1, -1)
+    class_prob = Y.mean(axis=0).reshape(1, -1)
     expected = np.dot(class_prob.T, feature_count)
 
     return _chisquare(observed, expected)
@@ -267,7 +267,7 @@ def f_regression(X, y, center=True):
     """
     if issparse(X) and center:
         raise ValueError("center=True only allowed for dense data")
-    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float)
+    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64)
     if center:
         y = y - np.mean(y)
         X = X.copy('F')  # faster in fortran
@@ -319,7 +319,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
+        X, y = check_X_y(X, y, ['csr', 'csc'])
 
         if not callable(self.score_func):
             raise TypeError("The score function should be a callable, %s (%s) "

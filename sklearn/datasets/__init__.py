@@ -8,6 +8,7 @@ from .base import load_diabetes
 from .base import load_digits
 from .base import load_files
 from .base import load_iris
+from .base import load_breast_cancer
 from .base import load_linnerud
 from .base import load_boston
 from .base import get_data_home
@@ -70,6 +71,7 @@ __all__ = ['clear_data_home',
            'load_digits',
            'load_files',
            'load_iris',
+           'load_breast_cancer',
            'load_lfw_pairs',
            'load_lfw_people',
            'load_linnerud',

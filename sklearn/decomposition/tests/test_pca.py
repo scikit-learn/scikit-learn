@@ -6,6 +6,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
@@ -46,6 +47,15 @@ def test_pca():
                                   np.eye(X.shape[1]), 12)
 
 
+def test_no_empty_slice_warning():
+    # test if we avoid numpy warnings for computing over empty arrays
+    n_components = 10
+    n_features = n_components + 2  # anything > n_comps triggerred it in 0.16
+    X = np.random.uniform(-1, 1, size=(n_components, n_features))
+    pca = PCA(n_components=n_components)
+    assert_no_warnings(pca.fit, X)
+
+
 def test_whitening():
     # Check that PCA output has unit-variance
     rng = np.random.RandomState(0)
@@ -78,7 +88,8 @@ def test_whitening():
         X_whitened2 = pca.transform(X_)
         assert_array_almost_equal(X_whitened, X_whitened2)
 
-        assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components))
+        assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components),
+                            decimal=6)
         assert_almost_equal(X_whitened.mean(axis=0), np.zeros(n_components))
 
         X_ = X.copy()
@@ -113,8 +124,8 @@ def test_explained_variance():
                               np.var(X_pca, axis=0))
 
     X_rpca = rpca.transform(X)
-    assert_array_almost_equal(rpca.explained_variance_,
-                              np.var(X_rpca, axis=0))
+    assert_array_almost_equal(rpca.explained_variance_, np.var(X_rpca, axis=0),
+                              decimal=1)
 
 
 def test_pca_check_projection():

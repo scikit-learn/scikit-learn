@@ -205,7 +205,8 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         d_gap = np.inf
         for i in range(max_iter):
             for idx in range(n_features):
-                sub_covariance = covariance_[indices != idx].T[indices != idx]
+                sub_covariance = np.ascontiguousarray(
+                    covariance_[indices != idx].T[indices != idx])
                 row = emp_cov[idx, indices != idx]
                 with np.errstate(**errors):
                     if mode == 'cd':
@@ -334,7 +335,11 @@ class GraphLasso(EmpiricalCovariance):
         self.store_precision = True
 
     def fit(self, X, y=None):
-        X = check_array(X)
+
+        # Covariance does not make sense for a single feature
+        X = check_array(X, ensure_min_features=2, ensure_min_samples=2,
+                        estimator=self)
+
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -460,9 +465,18 @@ class GraphLassoCV(GraphLasso):
         The number of times the grid is refined. Not used if explicit
         values of alphas are passed.
 
-    cv : cross-validation generator, optional
-        see sklearn.cross_validation module. If None is passed, defaults to
-        a 3-fold strategy
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     tol: positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
@@ -557,7 +571,8 @@ class GraphLassoCV(GraphLasso):
         X : ndarray, shape (n_samples, n_features)
             Data from which to compute the covariance estimate
         """
-        X = check_array(X)
+        # Covariance does not make sense for a single feature
+        X = check_array(X, ensure_min_features=2, estimator=self)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:

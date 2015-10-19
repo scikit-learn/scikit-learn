@@ -318,9 +318,13 @@ class GaussianNB(BaseNB):
         self : object
             Returns self.
         """
-
         X, y = check_X_y(X, y)
-        epsilon = 1e-9
+
+        # If the ratio of data variance between dimensions is too small, it
+        # will cause numerical errors. To address this, we artificially
+        # boost the variance by epsilon, a small fraction of the standard
+        # deviation of the largest dimension.
+        epsilon = 1e-9 * np.var(X, axis=0).max()
 
         if _refit:
             self.classes_ = None
@@ -478,6 +482,7 @@ class BaseDiscreteNB(BaseNB):
         # We convert it to np.float64 to support sample_weight consistently
         Y = Y.astype(np.float64)
         if sample_weight is not None:
+            sample_weight = np.atleast_2d(sample_weight)
             Y *= check_array(sample_weight).T
 
         class_prior = self.class_prior
@@ -528,6 +533,7 @@ class BaseDiscreteNB(BaseNB):
         # this means we also don't have to cast X to floating point
         Y = Y.astype(np.float64)
         if sample_weight is not None:
+            sample_weight = np.atleast_2d(sample_weight)
             Y *= check_array(sample_weight).T
 
         class_prior = self.class_prior
@@ -617,7 +623,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> clf = MultinomialNB()
     >>> clf.fit(X, y)
     MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
-    >>> print(clf.predict(X[2]))
+    >>> print(clf.predict(X[2:3]))
     [3]
 
     Notes
@@ -715,7 +721,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
     BernoulliNB(alpha=1.0, binarize=0.0, class_prior=None, fit_prior=True)
-    >>> print(clf.predict(X[2]))
+    >>> print(clf.predict(X[2:3]))
     [3]
 
     References

@@ -86,6 +86,7 @@ def test_libsvm_iris():
     assert_array_equal(pred, pred2)
 
 
+@ignore_warnings
 def test_single_sample_1d():
     # Test whether SVCs work on a single sample given as a 1-d array
 
@@ -346,16 +347,16 @@ def test_decision_function_shape():
     assert_equal(dec.shape, (len(X_train), 10))
 
     # check deprecation warning
-    clf.decision_function_shape = None
+    clf = svm.SVC(kernel='linear', C=0.1).fit(X_train, y_train)
     msg = "change the shape of the decision function"
     dec = assert_warns_message(ChangedBehaviorWarning, msg,
                                clf.decision_function, X_train)
     assert_equal(dec.shape, (len(X_train), 10))
 
 
-def test_svr_decision_function():
+def test_svr_predict():
     # Test SVR's decision_function
-    # Sanity check, test that decision_function implemented in python
+    # Sanity check, test that predict implemented in python
     # returns the same as the one in libsvm
 
     X = iris.data
@@ -365,14 +366,14 @@ def test_svr_decision_function():
     reg = svm.SVR(kernel='linear', C=0.1).fit(X, y)
 
     dec = np.dot(X, reg.coef_.T) + reg.intercept_
-    assert_array_almost_equal(dec.ravel(), reg.decision_function(X).ravel())
+    assert_array_almost_equal(dec.ravel(), reg.predict(X).ravel())
 
     # rbf kernel
     reg = svm.SVR(kernel='rbf', gamma=1).fit(X, y)
 
     rbfs = rbf_kernel(X, reg.support_vectors_, gamma=reg.gamma)
     dec = np.dot(rbfs, reg.dual_coef_.T) + reg.intercept_
-    assert_array_almost_equal(dec.ravel(), reg.decision_function(X).ravel())
+    assert_array_almost_equal(dec.ravel(), reg.predict(X).ravel())
 
 
 def test_weight():
@@ -399,11 +400,11 @@ def test_sample_weights():
     # TODO: check on NuSVR, OneClass, etc.
     clf = svm.SVC()
     clf.fit(X, Y)
-    assert_array_equal(clf.predict(X[2]), [1.])
+    assert_array_equal(clf.predict([X[2]]), [1.])
 
     sample_weight = [.1] * 3 + [10] * 3
     clf.fit(X, Y, sample_weight=sample_weight)
-    assert_array_equal(clf.predict(X[2]), [2.])
+    assert_array_equal(clf.predict([X[2]]), [2.])
 
     # test that rescaling all samples is the same as changing C
     clf = svm.SVC()

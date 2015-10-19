@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import TempMemmap
@@ -25,6 +26,7 @@ from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
     MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
+from sklearn.utils import check_array
 
 
 def check_warnings():
@@ -628,3 +630,47 @@ def test_sparse_dense_descent_paths():
         _, coefs, _ = path(X, y, fit_intercept=False)
         _, sparse_coefs, _ = path(csr, y, fit_intercept=False)
         assert_array_almost_equal(coefs, sparse_coefs)
+
+
+def test_check_input_false():
+    X, y, _, _ = build_dataset(n_samples=20, n_features=10)
+    X = check_array(X, order='F', dtype='float64')
+    y = check_array(X, order='F', dtype='float64')
+    clf = ElasticNet(selection='cyclic', tol=1e-8)
+    # Check that no error is raised if data is provided in the right format
+    clf.fit(X, y, check_input=False)
+    X = check_array(X, order='F', dtype='float32')
+    clf.fit(X, y, check_input=True)
+    # Check that an error is raised if data is provided in the wrong dtype,
+    # because of check bypassing
+    assert_raises(ValueError, clf.fit, X, y, check_input=False)
+
+    # With no input checking, providing X in C order should result in false
+    # computation
+    X = check_array(X, order='C', dtype='float64')
+    assert_raises(ValueError, clf.fit, X, y, check_input=False)
+
+
+def test_overrided_gram_matrix():
+    X, y, _, _ = build_dataset(n_samples=20, n_features=10)
+    Gram = X.T.dot(X)
+    clf = ElasticNet(selection='cyclic', tol=1e-8, precompute=Gram,
+                     fit_intercept=True)
+    assert_warns_message(UserWarning,
+                         "Gram matrix was provided but X was centered"
+                         " to fit intercept, "
+                         "or X was normalized : recomputing Gram matrix.",
+                         clf.fit, X, y)
+
+
+def test_lasso_non_float_y():
+    X = [[0, 0], [1, 1], [-1, -1]]
+    y = [0, 1, 2]
+    y_float = [0.0, 1.0, 2.0]
+
+    for model in [ElasticNet, Lasso]:
+        clf = model(fit_intercept=False)
+        clf.fit(X, y)
+        clf_float = model(fit_intercept=False)
+        clf_float.fit(X, y_float)
+        assert_array_equal(clf.coef_, clf_float.coef_)

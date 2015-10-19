@@ -15,6 +15,7 @@ Generalized Linear models.
 from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -25,19 +26,47 @@ from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import as_float_array, check_array, check_X_y, deprecated
+from ..utils import check_random_state, column_or_1d
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
 from ..utils.validation import NotFittedError, check_is_fitted
+from ..utils.seq_dataset import ArrayDataset, CSRDataset
 
 
-###
-### TODO: intercept for all models
-### We should define a common function to center data instead of
-### repeating the same code inside each fit method.
+#
+# TODO: intercept for all models
+# We should define a common function to center data instead of
+# repeating the same code inside each fit method.
 
-### TODO: bayesian_ridge_regression and bayesian_regression_ard
-### should be squashed into its respective objects.
+# TODO: bayesian_ridge_regression and bayesian_regression_ard
+# should be squashed into its respective objects.
+
+SPARSE_INTERCEPT_DECAY = 0.01
+# For sparse data intercept updates are scaled by this decay factor to avoid
+# intercept oscillation.
+
+
+def make_dataset(X, y, sample_weight, random_state=None):
+    """Create ``Dataset`` abstraction for sparse and dense inputs.
+
+    This also returns the ``intercept_decay`` which is different
+    for sparse datasets.
+    """
+
+    rng = check_random_state(random_state)
+    # seed should never be 0 in SequentialDataset
+    seed = rng.randint(1, np.iinfo(np.int32).max)
+
+    if sp.issparse(X):
+        dataset = CSRDataset(X.data, X.indptr, X.indices,
+                             y, sample_weight, seed=seed)
+        intercept_decay = SPARSE_INTERCEPT_DECAY
+    else:
+        dataset = ArrayDataset(X, y, sample_weight, seed=seed)
+        intercept_decay = 1.0
+
+    return dataset, intercept_decay
 
 
 def sparse_center_data(X, y, fit_intercept, normalize=False):
@@ -110,6 +139,18 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True,
         X_std = np.ones(X.shape[1])
         y_mean = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
     return X, y, X_mean, y_mean, X_std
+
+
+def _rescale_data(X, y, sample_weight):
+    """Rescale data so as to support sample_weight"""
+    n_samples = X.shape[0]
+    sample_weight = sample_weight * np.ones(n_samples)
+    sample_weight = np.sqrt(sample_weight)
+    sw_matrix = sparse.dia_matrix((sample_weight, 0),
+                                  shape=(n_samples, n_samples))
+    X = safe_sparse_dot(sw_matrix, X)
+    y = safe_sparse_dot(sw_matrix, y)
+    return X, y
 
 
 class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
@@ -242,7 +283,7 @@ class LinearClassifierMixin(ClassifierMixin):
         np.exp(prob, prob)
         prob += 1
         np.reciprocal(prob, prob)
-        if len(prob.shape) == 1:
+        if prob.ndim == 1:
             return np.vstack([1 - prob, prob]).T
         else:
             # OvR normalization, like LibLinear's predict_probability
@@ -351,7 +392,7 @@ class LinearRegression(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """
         Fit linear model.
 
@@ -363,16 +404,28 @@ class LinearRegression(LinearModel, RegressorMixin):
         y : numpy array of shape [n_samples, n_targets]
             Target values
 
+        sample_weight : numpy array of shape [n_samples]
+            Individual weights for each sample
+
         Returns
         -------
         self : returns an instance of self.
         """
+
         n_jobs_ = self.n_jobs
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          y_numeric=True, multi_output=True)
 
+        if ((sample_weight is not None) and np.atleast_1d(sample_weight).ndim > 1):
+            sample_weight = column_or_1d(sample_weight, warn=True)
+
         X, y, X_mean, y_mean, X_std = self._center_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
+            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            sample_weight=sample_weight)
+
+        if sample_weight is not None:
+            # Sample weight can be implemented via a simple rescaling.
+            X, y = _rescale_data(X, y, sample_weight)
 
         if sp.issparse(X):
             if y.ndim < 2:
@@ -400,6 +453,7 @@ class LinearRegression(LinearModel, RegressorMixin):
 def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
     """Aux function used at beginning of fit in linear models"""
     n_samples, n_features = X.shape
+
     if sparse.isspmatrix(X):
         precompute = False
         X, y, X_mean, y_mean, X_std = sparse_center_data(
@@ -408,25 +462,43 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
         # copy was done in fit if necessary
         X, y, X_mean, y_mean, X_std = center_data(
             X, y, fit_intercept, normalize, copy=copy)
-
-    if hasattr(precompute, '__array__') \
-            and not np.allclose(X_mean, np.zeros(n_features)) \
-            and not np.allclose(X_std, np.ones(n_features)):
+    if hasattr(precompute, '__array__') and (
+            fit_intercept and not np.allclose(X_mean, np.zeros(n_features))
+            or normalize and not np.allclose(X_std, np.ones(n_features))):
+        warnings.warn("Gram matrix was provided but X was centered"
+                      " to fit intercept, "
+                      "or X was normalized : recomputing Gram matrix.",
+                      UserWarning)
         # recompute Gram
         precompute = 'auto'
         Xy = None
 
     # precompute if n_samples > n_features
-    if precompute == 'auto':
+    if isinstance(precompute, six.string_types) and precompute == 'auto':
         precompute = (n_samples > n_features)
 
     if precompute is True:
-        precompute = np.dot(X.T, X)
+        # make sure that the 'precompute' array is contiguous.
+        precompute = np.empty(shape=(n_features, n_features), dtype=X.dtype,
+                              order='C')
+        np.dot(X.T, X, out=precompute)
 
     if not hasattr(precompute, '__array__'):
         Xy = None  # cannot use Xy if precompute is not Gram
 
     if hasattr(precompute, '__array__') and Xy is None:
-        Xy = np.dot(X.T, y)
+        common_dtype = np.find_common_type([X.dtype, y.dtype], [])
+        if y.ndim == 1:
+            # Xy is 1d, make sure it is contiguous.
+            Xy = np.empty(shape=n_features, dtype=common_dtype, order='C')
+            np.dot(X.T, y, out=Xy)
+        else:
+            # Make sure that Xy is always F contiguous even if X or y are not
+            # contiguous: the goal is to make it fast to extract the data for a
+            # specific target.
+            n_targets = y.shape[1]
+            Xy = np.empty(shape=(n_features, n_targets), dtype=common_dtype,
+                          order='F')
+            np.dot(y.T, X, out=Xy.T)
 
     return X, y, X_mean, y_mean, X_std, precompute, Xy

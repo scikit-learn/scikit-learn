@@ -28,6 +28,7 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.fixes import isclose
 from ..utils.fixes import bincount
+from ..utils.fixes import array_equal
 from ..utils.stats import rankdata
 from ..utils.sparsefuncs import count_nonzero
 
@@ -277,7 +278,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
         negative samples is equal to fps[-1] (thus true negatives are given by
         fps[-1] - fps).
 
-    tps : array, shape = [n_thresholds := len(np.unique(y_score))]
+    tps : array, shape = [n_thresholds <= len(np.unique(y_score))]
         An increasing count of true positives, at index i being the number
         of positive samples assigned a score >= thresholds[i]. The total
         number of positive samples is equal to tps[-1] (thus false negatives
@@ -295,11 +296,11 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # ensure binary classification if pos_label is not specified
     classes = np.unique(y_true)
     if (pos_label is None and
-        not (np.all(classes == [0, 1]) or
-             np.all(classes == [-1, 1]) or
-             np.all(classes == [0]) or
-             np.all(classes == [-1]) or
-             np.all(classes == [1]))):
+        not (array_equal(classes, [0, 1]) or
+             array_equal(classes, [-1, 1]) or
+             array_equal(classes, [0]) or
+             array_equal(classes, [-1]) or
+             array_equal(classes, [1]))):
         raise ValueError("Data is not binary and pos_label is not specified")
     elif pos_label is None:
         pos_label = 1.
@@ -379,7 +380,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
         Decreasing recall values such that element i is the recall of
         predictions with score >= thresholds[i] and the last element is 0.
 
-    thresholds : array, shape = [n_thresholds := len(np.unique(probas_pred))]
+    thresholds : array, shape = [n_thresholds <= len(np.unique(probas_pred))]
         Increasing thresholds on the decision function used to compute
         precision and recall.
 
@@ -413,7 +414,8 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
 
 
-def roc_curve(y_true, y_score, pos_label=None, sample_weight=None):
+def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
+              drop_intermediate=True):
     """Compute Receiver operating characteristic (ROC)
 
     Note: this implementation is restricted to the binary classification task.
@@ -436,6 +438,10 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
+
+    drop_intermediate : boolean, optional (default=True)
+        Whether to drop some suboptimal thresholds which would not appear
+        on a plotted ROC curve.
 
     Returns
     -------
@@ -485,6 +491,24 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None):
     """
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight)
+
+    # Attempt to drop thresholds corresponding to points in between and
+    # collinear with other points. These are always suboptimal and do not
+    # appear on a plotted ROC curve (and thus do not affect the AUC).
+    # Here np.diff(_, 2) is used as a "second derivative" to tell if there
+    # is a corner at the point. Both fps and tps must be tested to handle
+    # thresholds with multiple data points (which are combined in
+    # _binary_clf_curve). This keeps all cases where the point should be kept,
+    # but does not drop more complicated cases like fps = [1, 3, 7],
+    # tps = [1, 2, 4]; there is no harm in keeping too many thresholds.
+    if drop_intermediate and len(fps) > 2:
+        optimal_idxs = np.where(np.r_[True,
+                                      np.logical_or(np.diff(fps, 2),
+                                                    np.diff(tps, 2)),
+                                      True])[0]
+        fps = fps[optimal_idxs]
+        tps = tps[optimal_idxs]
+        thresholds = thresholds[optimal_idxs]
 
     if tps.size == 0 or fps[0] != 0:
         # Add an extra threshold position if necessary

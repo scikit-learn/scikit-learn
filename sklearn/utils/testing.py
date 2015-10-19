@@ -7,6 +7,7 @@
 #          Olivier Grisel
 #          Arnaud Joly
 #          Denis Engemann
+#          Giorgio Patrini
 # License: BSD 3 clause
 import os
 import inspect
@@ -57,17 +58,20 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
+from numpy.testing import assert_approx_equal
 import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
+from sklearn.cluster import DBSCAN
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
-           "assert_greater", "assert_greater_equal"]
+           "assert_greater", "assert_greater_equal",
+           "assert_approx_equal"]
 
 
 try:
@@ -528,8 +532,8 @@ META_ESTIMATORS = ["OneVsOneClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
-OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV",
-         "RandomizedSearchCV"]
+OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
+         "SelectFromModel"]
 
 # some trange ones
 DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
@@ -648,7 +652,16 @@ def all_estimators(include_meta_estimators=False,
 
 
 def set_random_state(estimator, random_state=0):
-    if "random_state" in estimator.get_params().keys():
+    """Set random state of an estimator if it has the `random_state` param.
+
+    Classes for whom random_state is deprecated are ignored. Currently DBSCAN
+    is one such class.
+    """
+
+    if isinstance(estimator, DBSCAN):
+        return
+
+    if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
 
 
@@ -676,6 +689,10 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
     """Test decorator that skips test if OS is Mac OS X and its
     major version is one of ``versions``.
     """
+    warnings.warn("if_not_mac_os is deprecated in 0.17 and will be removed"
+                  " in 0.19: use the safer and more generic"
+                  " if_safe_multiprocessing_with_blas instead",
+                  DeprecationWarning)
     mac_version, _, _ = platform.mac_ver()
     skip = '.'.join(mac_version.split('.')[:2]) in versions
 
@@ -686,6 +703,33 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
                 raise SkipTest(message)
         return func
     return decorator
+
+
+def if_safe_multiprocessing_with_blas(func):
+    """Decorator for tests involving both BLAS calls and multiprocessing
+
+    Under Python < 3.4 and POSIX (e.g. Linux or OSX), using multiprocessing in
+    conjunction with some implementation of BLAS (or other libraries that
+    manage an internal posix thread pool) can cause a crash or a freeze of the
+    Python process.
+
+    Under Python 3.4 and later, joblib uses the forkserver mode of
+    multiprocessing which does not trigger this problem.
+
+    In practice all known packaged distributions (from Linux distros or
+    Anaconda) of BLAS under Linux seems to be safe. So we this problem seems to
+    only impact OSX users.
+
+    This wrapper makes it possible to skip tests that can possibly cause
+    this crash under OSX with.
+    """
+    @wraps(func)
+    def run_test(*args, **kwargs):
+        if sys.platform == 'darwin' and sys.version_info[:2] < (3, 4):
+            raise SkipTest(
+                "Possible multi-process bug with some BLAS under Python < 3.4")
+        return func(*args, **kwargs)
+    return run_test
 
 
 def clean_warning_registry():

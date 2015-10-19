@@ -7,7 +7,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.datasets import make_multilabel_classification
-from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
+from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import check_random_state
 from sklearn.utils import shuffle
@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
@@ -94,7 +93,7 @@ REGRESSION_METRICS = {
     "mean_squared_error": mean_squared_error,
     "median_absolute_error": median_absolute_error,
     "explained_variance_score": explained_variance_score,
-    "r2_score": r2_score,
+    "r2_score": partial(r2_score, multioutput='variance_weighted'),
 }
 
 CLASSIFICATION_METRICS = {
@@ -279,8 +278,7 @@ THRESHOLDED_MULTILABEL_METRICS = [
     "coverage_error", "label_ranking_loss",
 ]
 
-# Classification metrics with  "multilabel-indicator" and
-# "multilabel-sequence" format support
+# Classification metrics with  "multilabel-indicator" format
 MULTILABELS_METRICS = [
     "accuracy_score", "unnormalized_accuracy_score",
     "hamming_loss",
@@ -659,37 +657,20 @@ def test_multilabel_representation_invariance():
     # Generate some data
     n_classes = 4
     n_samples = 50
-    # using sequence of sequences is deprecated, but still tested
-    make_ml = ignore_warnings(make_multilabel_classification)
-    _, y1 = make_ml(n_features=1, n_classes=n_classes, random_state=0,
-                    n_samples=n_samples)
-    _, y2 = make_ml(n_features=1, n_classes=n_classes, random_state=1,
-                    n_samples=n_samples)
 
-    # Be sure to have at least one empty label
-    y1 += ([], )
-    y2 += ([], )
+    _, y1 = make_multilabel_classification(n_features=1, n_classes=n_classes,
+                                           random_state=0, n_samples=n_samples,
+                                           allow_unlabeled=True)
+    _, y2 = make_multilabel_classification(n_features=1, n_classes=n_classes,
+                                           random_state=1, n_samples=n_samples,
+                                           allow_unlabeled=True)
 
-    # NOTE: The "sorted" trick is necessary to shuffle labels, because it
-    # allows to return the shuffled tuple.
-    rng = check_random_state(42)
-    shuffled = lambda x: sorted(x, key=lambda *args: rng.rand())
-    y1_shuffle = [shuffled(x) for x in y1]
-    y2_shuffle = [shuffled(x) for x in y2]
+    # To make sure at least one empty label is present
+    y1 += [0]*n_classes
+    y2 += [0]*n_classes
 
-    # Let's have redundant labels
-    y2_redundant = [x * rng.randint(1, 4) for x in y2]
-
-    # Binary indicator matrix format
-    lb = MultiLabelBinarizer().fit([range(n_classes)])
-    y1_binary_indicator = lb.transform(y1)
-    y2_binary_indicator = lb.transform(y2)
-
-    y1_sparse_indicator = sp.coo_matrix(y1_binary_indicator)
-    y2_sparse_indicator = sp.coo_matrix(y2_binary_indicator)
-
-    y1_shuffle_binary_indicator = lb.transform(y1_shuffle)
-    y2_shuffle_binary_indicator = lb.transform(y2_shuffle)
+    y1_sparse_indicator = sp.coo_matrix(y1)
+    y2_sparse_indicator = sp.coo_matrix(y2)
 
     for name in MULTILABELS_METRICS:
         metric = ALL_METRICS[name]
@@ -699,7 +680,7 @@ def test_multilabel_representation_invariance():
             metric.__module__ = 'tmp'
             metric.__name__ = name
 
-        measure = metric(y1_binary_indicator, y2_binary_indicator)
+        measure = metric(y1, y2)
 
         # Check representation invariance
         assert_almost_equal(metric(y1_sparse_indicator,
@@ -709,38 +690,21 @@ def test_multilabel_representation_invariance():
                                     "between dense and sparse indicator "
                                     "formats." % name)
 
-        # Check shuffling invariance with dense binary indicator matrix
-        assert_almost_equal(metric(y1_shuffle_binary_indicator,
-                                   y2_shuffle_binary_indicator), measure,
-                            err_msg="%s failed shuffling invariance "
-                                    " with dense binary indicator format."
-                                    % name)
 
-        # Check deprecation warnings related to sequence of sequences
-        deprecated_metric = partial(assert_warns, DeprecationWarning, metric)
+def test_raise_value_error_multilabel_sequences():
+    # make sure the multilabel-sequence format raises ValueError
+    multilabel_sequences = [
+        [[0, 1]],
+        [[1], [2], [0, 1]],
+        [(), (2), (0, 1)],
+        [[]],
+        [()],
+        np.array([[], [1, 2]], dtype='object')]
 
-        # Check representation invariance
-        assert_almost_equal(deprecated_metric(y1, y2),
-                            measure,
-                            err_msg="%s failed representation invariance  "
-                                    "between list of list of labels "
-                                    "format and dense binary indicator "
-                                    "format." % name)
-
-        # Check invariance with redundant labels with list of labels
-        assert_almost_equal(deprecated_metric(y1, y2_redundant), measure,
-                            err_msg="%s failed rendundant label invariance"
-                                    % name)
-
-        # Check shuffling invariance with list of labels
-        assert_almost_equal(deprecated_metric(y1_shuffle, y2_shuffle), measure,
-                            err_msg="%s failed shuffling invariance "
-                                    "with list of list of labels format."
-                                    % name)
-
-        # Check raises error with mix input representation
-        assert_raises(ValueError, deprecated_metric, y1, y2_binary_indicator)
-        assert_raises(ValueError, deprecated_metric, y1_binary_indicator, y2)
+    for name in MULTILABELS_METRICS:
+        metric = ALL_METRICS[name]
+        for seq in multilabel_sequences:
+            assert_raises(ValueError, metric, seq, seq)
 
 
 def test_normalize_option_binary_classification(n_samples=20):
@@ -778,42 +742,30 @@ def test_normalize_option_multilabel_classification():
     # Test in the multilabel case
     n_classes = 4
     n_samples = 100
-    # using sequence of sequences is deprecated, but still tested
-    make_ml = ignore_warnings(make_multilabel_classification)
-    _, y_true = make_ml(n_features=1, n_classes=n_classes,
-                        random_state=0, n_samples=n_samples)
-    _, y_pred = make_ml(n_features=1, n_classes=n_classes,
-                        random_state=1, n_samples=n_samples)
 
-    # Be sure to have at least one empty label
-    y_true += ([], )
-    y_pred += ([], )
-    n_samples += 1
+    # for both random_state 0 and 1, y_true and y_pred has at least one
+    # unlabelled entry
+    _, y_true = make_multilabel_classification(n_features=1,
+                                               n_classes=n_classes,
+                                               random_state=0,
+                                               allow_unlabeled=True,
+                                               n_samples=n_samples)
+    _, y_pred = make_multilabel_classification(n_features=1,
+                                               n_classes=n_classes,
+                                               random_state=1,
+                                               allow_unlabeled=True,
+                                               n_samples=n_samples)
 
-    lb = MultiLabelBinarizer().fit([range(n_classes)])
-    y_true_binary_indicator = lb.transform(y_true)
-    y_pred_binary_indicator = lb.transform(y_pred)
+    # To make sure at least one empty label is present
+    y_true += [0]*n_classes
+    y_pred += [0]*n_classes
 
     for name in METRICS_WITH_NORMALIZE_OPTION:
         metrics = ALL_METRICS[name]
-
-        # List of list of labels
-        measure = assert_warns(DeprecationWarning, metrics, y_true, y_pred,
-                               normalize=True)
+        measure = metrics(y_true, y_pred, normalize=True)
         assert_greater(measure, 0,
                        msg="We failed to test correctly the normalize option")
-        assert_almost_equal(ignore_warnings(metrics)(y_true, y_pred,
-                                                     normalize=False)
-                            / n_samples, measure,
-                            err_msg="Failed with %s" % name)
-
-        # Indicator matrix format
-        measure = metrics(y_true_binary_indicator,
-                          y_pred_binary_indicator, normalize=True)
-        assert_greater(measure, 0,
-                       msg="We failed to test correctly the normalize option")
-        assert_almost_equal(metrics(y_true_binary_indicator,
-                                    y_pred_binary_indicator, normalize=False)
+        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
                             / n_samples, measure,
                             err_msg="Failed with %s" % name)
 
@@ -896,7 +848,6 @@ def test_averaging_multiclass(n_samples=50, n_classes=3):
 def test_averaging_multilabel(n_classes=5, n_samples=40):
     _, y = make_multilabel_classification(n_features=1, n_classes=n_classes,
                                           random_state=5, n_samples=n_samples,
-                                          return_indicator=True,
                                           allow_unlabeled=False)
     y_true = y[:20]
     y_pred = y[20:]
@@ -1043,32 +994,13 @@ def test_sample_weight_invariance(n_samples=50):
         else:
             yield check_sample_weight_invariance, name, metric, y_true, y_pred
 
-    # multilabel sequence
-    y_true = 2 * [(1, 2, ), (1, ), (0, ), (0, 1), (1, 2)]
-    y_pred = 2 * [(0, 2, ), (2, ), (0, ), (2, ), (1,)]
-    y_score = random_state.randn(10, 3)
-
-    for name in MULTILABELS_METRICS:
-        if name in METRICS_WITHOUT_SAMPLE_WEIGHT:
-            continue
-        metric = ALL_METRICS[name]
-
-        if name in THRESHOLDED_METRICS:
-            yield (check_sample_weight_invariance, name, metric, y_true,
-                   y_score)
-        else:
-            yield (check_sample_weight_invariance, name, metric, y_true,
-                   y_pred)
-
     # multilabel indicator
-    _, ya = make_multilabel_classification(
-        n_features=1, n_classes=20,
-        random_state=0, n_samples=100,
-        return_indicator=True, allow_unlabeled=False)
-    _, yb = make_multilabel_classification(
-        n_features=1, n_classes=20,
-        random_state=1, n_samples=100,
-        return_indicator=True, allow_unlabeled=False)
+    _, ya = make_multilabel_classification(n_features=1, n_classes=20,
+                                           random_state=0, n_samples=100,
+                                           allow_unlabeled=False)
+    _, yb = make_multilabel_classification(n_features=1, n_classes=20,
+                                           random_state=1, n_samples=100,
+                                           allow_unlabeled=False)
     y_true = np.vstack([ya, yb])
     y_pred = np.vstack([ya, ya])
     y_score = random_state.randint(1, 4, size=y_true.shape)

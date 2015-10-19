@@ -26,9 +26,12 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import raises
+
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.validation import NotFittedError
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -49,14 +52,14 @@ REG_CRITERIONS = ("mse", )
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
     "Presort-DecisionTreeClassifier": partial(DecisionTreeClassifier,
-                                              splitter="presort-best"),
+                                              presort=True),
     "ExtraTreeClassifier": ExtraTreeClassifier,
 }
 
 REG_TREES = {
     "DecisionTreeRegressor": DecisionTreeRegressor,
     "Presort-DecisionTreeRegressor": partial(DecisionTreeRegressor,
-                                             splitter="presort-best"),
+                                             presort=True),
     "ExtraTreeRegressor": ExtraTreeRegressor,
 }
 
@@ -64,8 +67,8 @@ ALL_TREES = dict()
 ALL_TREES.update(CLF_TREES)
 ALL_TREES.update(REG_TREES)
 
-SPARSE_TREES = [name for name, Tree in ALL_TREES.items()
-                if Tree().splitter in SPARSE_SPLITTERS]
+SPARSE_TREES = ["DecisionTreeClassifier", "DecisionTreeRegressor",
+                "ExtraTreeClassifier", "ExtraTreeRegressor"]
 
 
 X_small = np.array([
@@ -126,7 +129,7 @@ digits.target = digits.target[perm]
 
 random_state = check_random_state(0)
 X_multilabel, y_multilabel = datasets.make_multilabel_classification(
-    random_state=0, return_indicator=True, n_samples=30, n_features=10)
+    random_state=0, n_samples=30, n_features=10)
 
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.
@@ -376,7 +379,8 @@ def test_importances():
         assert_equal(importances.shape[0], 10, "Failed with {0}".format(name))
         assert_equal(n_important, 3, "Failed with {0}".format(name))
 
-        X_new = clf.transform(X, threshold="mean")
+        X_new = assert_warns(
+            DeprecationWarning, clf.transform, X, threshold="mean")
         assert_less(0, X_new.shape[1], "Failed with {0}".format(name))
         assert_less(X_new.shape[1], X.shape[1], "Failed with {0}".format(name))
 
@@ -497,7 +501,7 @@ def test_error():
         assert_raises(NotFittedError, est.predict_proba, X)
 
         est.fit(X, y)
-        X2 = [-2, -1, 1]  # wrong feature shape for sample
+        X2 = [[-2, -1, 1]]  # wrong feature shape for sample
         assert_raises(ValueError, est.predict_proba, X2)
 
     for name, TreeEstimator in ALL_TREES.items():
@@ -765,7 +769,7 @@ def test_memory_layout():
         y = iris.target
         assert_array_equal(est.fit(X, y).predict(X), y)
 
-        if est.splitter in SPARSE_SPLITTERS:
+        if not est.presort:
             # csr matrix
             X = csr_matrix(iris.data, dtype=dtype)
             y = iris.target
@@ -819,7 +823,7 @@ def test_sample_weight():
     X = iris.data
     y = iris.target
 
-    duplicates = rng.randint(0, X.shape[0], 200)
+    duplicates = rng.randint(0, X.shape[0], 100)
 
     clf = DecisionTreeClassifier(random_state=1)
     clf.fit(X[duplicates], y[duplicates])
@@ -1005,7 +1009,7 @@ def test_big_input():
 
 
 def test_realloc():
-    from sklearn.tree._tree import _realloc_test
+    from sklearn.tree._utils import _realloc_test
     assert_raises(MemoryError, _realloc_test)
 
 
@@ -1228,6 +1232,7 @@ def test_explicit_sparse_zeros():
         yield (check_explicit_sparse_zeros, tree)
 
 
+@ignore_warnings
 def check_raise_error_on_1d_input(name):
     TreeEstimator = ALL_TREES[name]
 
@@ -1239,9 +1244,10 @@ def check_raise_error_on_1d_input(name):
 
     est = TreeEstimator(random_state=0)
     est.fit(X_2d, y)
-    assert_raises(ValueError, est.predict, X)
+    assert_raises(ValueError, est.predict, [X])
 
 
+@ignore_warnings
 def test_1d_input():
     for name in ALL_TREES:
         yield check_raise_error_on_1d_input, name
@@ -1266,7 +1272,7 @@ def check_min_weight_leaf_split_level(name):
     sample_weight = [0.2, 0.2, 0.2, 0.2, 0.2]
     _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight)
 
-    if TreeEstimator().splitter in SPARSE_SPLITTERS:
+    if not TreeEstimator().presort:
         _check_min_weight_leaf_split_level(TreeEstimator, csc_matrix(X), y,
                                            sample_weight)
 
@@ -1300,3 +1306,21 @@ def test_public_apply():
 
     for name in SPARSE_TREES:
         yield (check_public_apply_sparse, name)
+
+
+def check_presort_sparse(est, X, y):
+    assert_raises(ValueError, est.fit, X, y )
+
+def test_presort_sparse():
+    ests = (DecisionTreeClassifier(presort=True), 
+            DecisionTreeRegressor(presort=True))
+    sparse_matrices = (csr_matrix, csc_matrix, coo_matrix)
+
+    y, X = datasets.make_multilabel_classification(random_state=0,
+                                                   n_samples=50,
+                                                   n_features=1,
+                                                   n_classes=20)
+    y = y[:, 0]
+
+    for est, sparse_matrix in product(ests, sparse_matrices):
+        yield check_presort_sparse, est, sparse_matrix(X), y

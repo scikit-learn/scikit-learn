@@ -22,7 +22,7 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # License: BSD 3 clause
 
 from io import BytesIO
-from os.path import join, exists
+from os.path import exists
 from os import makedirs
 from zipfile import ZipFile
 try:
@@ -35,6 +35,7 @@ except ImportError:
 import numpy as np
 
 from .base import get_data_home, Bunch
+from .base import _pkl_filepath
 from ..externals import joblib
 
 
@@ -86,7 +87,8 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
         makedirs(data_home)
-    if not exists(join(data_home, TARGET_FILENAME)):
+    filepath = _pkl_filepath(data_home, TARGET_FILENAME)
+    if not exists(filepath):
         print('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
         fhandle = urlopen(DATA_URL)
         buf = BytesIO(fhandle.read())
@@ -96,12 +98,11 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
             cadata = BytesIO(cadata_fd.read())
             # skip the first 27 lines (documentation)
             cal_housing = np.loadtxt(cadata, skiprows=27)
-            joblib.dump(cal_housing, join(data_home, TARGET_FILENAME),
-                        compress=6)
+            joblib.dump(cal_housing, filepath, compress=6)
         finally:
             zip_file.close()
     else:
-        cal_housing = joblib.load(join(data_home, TARGET_FILENAME))
+        cal_housing = joblib.load(filepath)
 
     feature_names = ["MedInc", "HouseAge", "AveRooms", "AveBedrms",
                      "Population", "AveOccup", "Latitude", "Longitude"]

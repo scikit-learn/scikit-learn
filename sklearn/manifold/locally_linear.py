@@ -315,10 +315,10 @@ def locally_linear_embedding(
                                     return_distance=False)
         neighbors = neighbors[:, 1:]
 
-        Yi = np.empty((n_neighbors, 1 + n_components + dp), dtype=np.float)
+        Yi = np.empty((n_neighbors, 1 + n_components + dp), dtype=np.float64)
         Yi[:, 0] = 1
 
-        M = np.zeros((N, N), dtype=np.float)
+        M = np.zeros((N, N), dtype=np.float64)
 
         use_svd = (n_neighbors > d_in)
 
@@ -419,7 +419,7 @@ def locally_linear_embedding(
 
         #Now calculate M.
         # This is the [N x N] matrix whose null space is the desired embedding
-        M = np.zeros((N, N), dtype=np.float)
+        M = np.zeros((N, N), dtype=np.float64)
         for i in range(N):
             s_i = s_range[i]
 

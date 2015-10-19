@@ -15,12 +15,19 @@ curve (AUC) is usually better.
 The "steepness" of ROC curves is also important, since it is ideal to maximize
 the true positive rate while minimizing the false positive rate.
 
+Multiclass settings
+-------------------
+
 ROC curves are typically used in binary classification to study the output of
 a classifier. In order to extend ROC curve and ROC area to multi-class
 or multi-label classification, it is necessary to binarize the output. One ROC
 curve can be drawn per label, but one can also draw a ROC curve by considering
 each element of the label indicator matrix as a binary prediction
 (micro-averaging).
+
+Another evaluation measure for multi-class classification is
+macro-averaging, which gives equal weight to the classification of each
+label.
 
 .. note::
 
@@ -73,6 +80,8 @@ for i in range(n_classes):
 fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_score.ravel())
 roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
+
+##############################################################################
 # Plot of a ROC curve for a specific class
 plt.figure()
 plt.plot(fpr[2], tpr[2], label='ROC curve (area = %0.2f)' % roc_auc[2])
@@ -85,11 +94,26 @@ plt.title('Receiver operating characteristic example')
 plt.legend(loc="lower right")
 plt.show()
 
-# Plot ROC curve
+
+##############################################################################
+# Plot ROC curves for the multiclass problem
+
+# Compute macro-average ROC curve and ROC area
+fpr["macro"] = np.mean([fpr[i] for i in range(n_classes)], axis=0)
+tpr["macro"] = np.mean([tpr[i] for i in range(n_classes)], axis=0)
+roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
 plt.figure()
 plt.plot(fpr["micro"], tpr["micro"],
          label='micro-average ROC curve (area = {0:0.2f})'
-               ''.format(roc_auc["micro"]))
+               ''.format(roc_auc["micro"]),
+         linewidth=2)
+
+plt.plot(fpr["macro"], tpr["macro"],
+         label='macro-average ROC curve (area = {0:0.2f})'
+               ''.format(roc_auc["macro"]),
+         linewidth=2)
+
 for i in range(n_classes):
     plt.plot(fpr[i], tpr[i], label='ROC curve of class {0} (area = {1:0.2f})'
                                    ''.format(i, roc_auc[i]))

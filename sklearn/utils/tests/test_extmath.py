@@ -27,8 +27,9 @@ from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import log_logistic
 from sklearn.utils.extmath import fast_dot, _fast_dot
 from sklearn.utils.extmath import svd_flip
-from sklearn.utils.extmath import _batch_mean_variance_update
+from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
+from sklearn.utils.extmath import softmax
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -348,17 +349,17 @@ def test_fast_dot():
 
         # Malformed data.
 
-        ## ndim == 0
+        # ndim == 0
         E = np.empty(0)
         assert_raises(ValueError, _fast_dot, E, E)
 
-        ## ndim == 1
+        # ndim == 1
         assert_raises(ValueError, _fast_dot, A, A[0])
 
-        ## ndim > 2
+        # ndim > 2
         assert_raises(ValueError, _fast_dot, A.T, np.array([A, A]))
 
-        ## min(shape) == 1
+        # min(shape) == 1
         assert_raises(ValueError, _fast_dot, A, A[0, :][None, :])
 
         # test for matrix mismatch error
@@ -415,11 +416,90 @@ def test_incremental_variance_update_formulas():
     old_means = X1.mean(axis=0)
     old_variances = X1.var(axis=0)
     old_sample_count = X1.shape[0]
-    final_means, final_variances, final_count = _batch_mean_variance_update(
-        X2, old_means, old_variances, old_sample_count)
+    final_means, final_variances, final_count = \
+        _incremental_mean_and_var(X2, old_means, old_variances,
+                                  old_sample_count)
     assert_almost_equal(final_means, A.mean(axis=0), 6)
     assert_almost_equal(final_variances, A.var(axis=0), 6)
     assert_almost_equal(final_count, A.shape[0])
+
+
+def test_incremental_variance_numerical_stability():
+    # Test Youngs and Cramer incremental variance formulas.
+
+    def np_var(A):
+        return A.var(axis=0)
+
+    # Naive one pass variance computation - not numerically stable
+    # https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
+    def one_pass_var(X):
+        n = X.shape[0]
+        exp_x2 = (X ** 2).sum(axis=0) / n
+        expx_2 = (X.sum(axis=0) / n) ** 2
+        return exp_x2 - expx_2
+
+    # Two-pass algorithm, stable.
+    # We use it as a benchmark. It is not an online algorithm
+    # https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Two-pass_algorithm
+    def two_pass_var(X):
+        mean = X.mean(axis=0)
+        Y = X.copy()
+        return np.mean((Y - mean)**2, axis=0)
+
+    # Naive online implementation
+    # https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
+    # This works only for chunks for size 1
+    def naive_mean_variance_update(x, last_mean, last_variance,
+                                   last_sample_count):
+        updated_sample_count = (last_sample_count + 1)
+        samples_ratio = last_sample_count / float(updated_sample_count)
+        updated_mean = x / updated_sample_count + last_mean * samples_ratio
+        updated_variance = last_variance * samples_ratio + \
+            (x - last_mean) * (x - updated_mean) / updated_sample_count
+        return updated_mean, updated_variance, updated_sample_count
+
+    # We want to show a case when one_pass_var has error > 1e-3 while
+    # _batch_mean_variance_update has less.
+    tol = 200
+    n_features = 2
+    n_samples = 10000
+    x1 = np.array(1e8, dtype=np.float64)
+    x2 = np.log(1e-5, dtype=np.float64)
+    A0 = x1 * np.ones((n_samples // 2, n_features), dtype=np.float64)
+    A1 = x2 * np.ones((n_samples // 2, n_features), dtype=np.float64)
+    A = np.vstack((A0, A1))
+
+    # Older versions of numpy have different precision
+    # In some old version, np.var is not stable
+    if np.abs(np_var(A) - two_pass_var(A)).max() < 1e-6:
+        stable_var = np_var
+    else:
+        stable_var = two_pass_var
+
+    # Naive one pass var: >tol (=1063)
+    assert_greater(np.abs(stable_var(A) - one_pass_var(A)).max(), tol)
+
+    # Starting point for online algorithms: after A0
+
+    # Naive implementation: >tol (436)
+    mean, var, n = A0[0, :], np.zeros(n_features), n_samples // 2
+    for i in range(A1.shape[0]):
+        mean, var, n = \
+            naive_mean_variance_update(A1[i, :], mean, var, n)
+    assert_equal(n, A.shape[0])
+    # the mean is also slightly unstable
+    assert_greater(np.abs(A.mean(axis=0) - mean).max(), 1e-6)
+    assert_greater(np.abs(stable_var(A) - var).max(), tol)
+
+    # Robust implementation: <tol (177)
+    mean, var, n = A0[0, :], np.zeros(n_features), n_samples // 2
+    for i in range(A1.shape[0]):
+        mean, var, n = \
+            _incremental_mean_and_var(A1[i, :].reshape((1, A1.shape[1])),
+                                      mean, var, n)
+    assert_equal(n, A.shape[0])
+    assert_array_almost_equal(A.mean(axis=0), mean)
+    assert_greater(tol, np.abs(stable_var(A) - var).max())
 
 
 def test_incremental_variance_ddof():
@@ -441,7 +521,7 @@ def test_incremental_variance_ddof():
                 incremental_count = batch.shape[0]
                 sample_count = batch.shape[0]
             else:
-                result = _batch_mean_variance_update(
+                result = _incremental_mean_and_var(
                     batch, incremental_means, incremental_variances,
                     sample_count)
                 (incremental_means, incremental_variances,
@@ -465,3 +545,11 @@ def test_vector_sign_flip():
     assert_array_equal(max_abs_rows, max_rows)
     signs = np.sign(data[range(data.shape[0]), max_abs_rows])
     assert_array_equal(data, data_flipped * signs[:, np.newaxis])
+
+
+def test_softmax():
+    rng = np.random.RandomState(0)
+    X = rng.randn(3, 5)
+    exp_X = np.exp(X)
+    sum_exp_X = np.sum(exp_X, axis=1).reshape((-1, 1))
+    assert_array_almost_equal(softmax(X), exp_X / sum_exp_X)

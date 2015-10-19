@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_warns
 
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
@@ -26,6 +27,7 @@ from sklearn.linear_model.ridge import RidgeClassifier
 from sklearn.linear_model.ridge import RidgeClassifierCV
 from sklearn.linear_model.ridge import _solve_cholesky
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
+from sklearn.datasets import make_regression
 
 from sklearn.grid_search import GridSearchCV
 
@@ -56,7 +58,7 @@ def test_ridge():
     rng = np.random.RandomState(0)
     alpha = 1.0
 
-    for solver in ("svd", "sparse_cg", "cholesky", "lsqr"):
+    for solver in ("svd", "sparse_cg", "cholesky", "lsqr", "sag"):
         # With more samples than features
         n_samples, n_features = 6, 5
         y = rng.randn(n_samples)
@@ -67,8 +69,8 @@ def test_ridge():
         assert_equal(ridge.coef_.shape, (X.shape[1], ))
         assert_greater(ridge.score(X, y), 0.47)
 
-        if solver == "cholesky":
-            # Currently the only solver to support sample_weight.
+        if solver in ("cholesky", "sag"):
+            # Currently the only solvers to support sample_weight.
             ridge.fit(X, y, sample_weight=np.ones(n_samples))
             assert_greater(ridge.score(X, y), 0.47)
 
@@ -80,8 +82,8 @@ def test_ridge():
         ridge.fit(X, y)
         assert_greater(ridge.score(X, y), .9)
 
-        if solver == "cholesky":
-            # Currently the only solver to support sample_weight.
+        if solver in ("cholesky", "sag"):
+            # Currently the only solvers to support sample_weight.
             ridge.fit(X, y, sample_weight=np.ones(n_samples))
             assert_greater(ridge.score(X, y), 0.9)
 
@@ -260,13 +262,13 @@ def test_ridge_individual_penalties():
         for alpha, target in zip(penalties, y.T)])
 
     coefs_indiv_pen = [
-        Ridge(alpha=penalties, solver=solver, tol=1e-6).fit(X, y).coef_
-        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky']]
+        Ridge(alpha=penalties, solver=solver, tol=1e-8).fit(X, y).coef_
+        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky', 'sag']]
     for coef_indiv_pen in coefs_indiv_pen:
         assert_array_almost_equal(coef_cholesky, coef_indiv_pen)
 
     # Test error is raised when number of targets and penalties do not match.
-    ridge = Ridge(alpha=penalties[:3])
+    ridge = Ridge(alpha=penalties[:-1])
     assert_raises(ValueError, ridge.fit, X, y)
 
 
@@ -413,11 +415,11 @@ def _test_ridge_classifiers(filter_):
 
 
 def _test_tolerance(filter_):
-    ridge = Ridge(tol=1e-5)
+    ridge = Ridge(tol=1e-5, fit_intercept=False)
     ridge.fit(filter_(X_diabetes), y_diabetes)
     score = ridge.score(filter_(X_diabetes), y_diabetes)
 
-    ridge2 = Ridge(tol=1e-3)
+    ridge2 = Ridge(tol=1e-3, fit_intercept=False)
     ridge2.fit(filter_(X_diabetes), y_diabetes)
     score2 = ridge2.score(filter_(X_diabetes), y_diabetes)
 
@@ -449,7 +451,7 @@ def test_ridge_cv_sparse_svd():
 def test_ridge_sparse_svd():
     X = sp.csc_matrix(rng.rand(100, 10))
     y = rng.rand(100)
-    ridge = Ridge(solver='svd')
+    ridge = Ridge(solver='svd', fit_intercept=False)
     assert_raises(TypeError, ridge.fit, X, y)
 
 
@@ -675,3 +677,41 @@ def test_sparse_cg_max_iter():
     reg = Ridge(solver="sparse_cg", max_iter=1)
     reg.fit(X_diabetes, y_diabetes)
     assert_equal(reg.coef_.shape[0], X_diabetes.shape[1])
+
+
+@ignore_warnings
+def test_n_iter():
+    # Test that self.n_iter_ is correct.
+    n_targets = 2
+    X, y = X_diabetes, y_diabetes
+    y_n = np.tile(y, (n_targets, 1)).T
+
+    for max_iter in range(1, 4):
+        for solver in ('sag', 'lsqr'):
+            reg = Ridge(solver=solver, max_iter=max_iter, tol=1e-12)
+            reg.fit(X, y_n)
+            assert_array_equal(reg.n_iter_, np.tile(max_iter, n_targets))
+
+    for solver in ('sparse_cg', 'svd', 'cholesky'):
+        reg = Ridge(solver=solver, max_iter=1, tol=1e-1)
+        reg.fit(X, y_n)
+        assert_equal(reg.n_iter_, None)
+
+
+def test_ridge_fit_intercept_sparse():
+    X, y = make_regression(n_samples=1000, n_features=2, n_informative=2,
+                           bias=10., random_state=42)
+    X_csr = sp.csr_matrix(X)
+
+    dense = Ridge(alpha=1., tol=1.e-15, solver='sag', fit_intercept=True)
+    sparse = Ridge(alpha=1., tol=1.e-15, solver='sag', fit_intercept=True)
+    dense.fit(X, y)
+    sparse.fit(X_csr, y)
+    assert_almost_equal(dense.intercept_, sparse.intercept_)
+    assert_array_almost_equal(dense.coef_, sparse.coef_)
+
+    # test the solver switch and the corresponding warning
+    sparse = Ridge(alpha=1., tol=1.e-15, solver='lsqr', fit_intercept=True)
+    assert_warns(UserWarning, sparse.fit, X_csr, y)
+    assert_almost_equal(dense.intercept_, sparse.intercept_)
+    assert_array_almost_equal(dense.coef_, sparse.coef_)

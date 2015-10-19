@@ -126,14 +126,16 @@ def _average_precision(y_true, y_score):
 def test_roc_curve():
     # Test Area under Receiver Operating Characteristic (ROC) curve
     y_true, _, probas_pred = make_prediction(binary=True)
-
-    fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
-    roc_auc = auc(fpr, tpr)
     expected_auc = _auc(y_true, probas_pred)
-    assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
-    assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
-    assert_equal(fpr.shape, tpr.shape)
-    assert_equal(fpr.shape, thresholds.shape)
+
+    for drop in [True, False]:
+        fpr, tpr, thresholds = roc_curve(y_true, probas_pred,
+                                         drop_intermediate=drop)
+        roc_auc = auc(fpr, tpr)
+        assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
+        assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
+        assert_equal(fpr.shape, tpr.shape)
+        assert_equal(fpr.shape, thresholds.shape)
 
 
 def test_roc_curve_end_points():
@@ -142,7 +144,7 @@ def test_roc_curve_end_points():
     rng = np.random.RandomState(0)
     y_true = np.array([0] * 50 + [1] * 50)
     y_pred = rng.randint(3, size=100)
-    fpr, tpr, thr = roc_curve(y_true, y_pred)
+    fpr, tpr, thr = roc_curve(y_true, y_pred, drop_intermediate=True)
     assert_equal(fpr[0], 0)
     assert_equal(fpr[-1], 1)
     assert_equal(fpr.shape, tpr.shape)
@@ -187,7 +189,7 @@ def test_roc_nonrepeating_thresholds():
     y_true = [yy < 5 for yy in y[test]]
 
     # Check for repeating values in the thresholds
-    fpr, tpr, thresholds = roc_curve(y_true, y_score)
+    fpr, tpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=False)
     assert_equal(thresholds.size, np.unique(np.round(thresholds, 2)).size)
 
 
@@ -346,6 +348,23 @@ def test_roc_curve_toydata():
     assert_almost_equal(roc_auc_score(y_true, y_score, average="weighted"), .5)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), .5)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), .5)
+
+
+def test_roc_curve_drop_intermediate():
+    # Test that drop_intermediate drops the correct thresholds
+    y_true = [0, 0, 0, 0, 1, 1]
+    y_score = [0., 0.2, 0.5, 0.6, 0.7, 1.0]
+    tpr, fpr, thresholds = roc_curve(y_true, y_score)
+    assert_array_almost_equal(thresholds, [1., 0.7, 0.])
+
+    # Test dropping thresholds with repeating scores
+    y_true = [0, 0, 0, 0, 0, 0, 0,
+              1, 1, 1, 1, 1, 1]
+    y_score = [0., 0.1, 0.6, 0.6, 0.7, 0.8, 0.9,
+               0.6, 0.7, 0.8, 0.9, 0.9, 1.0]
+    tpr, fpr, thresholds = roc_curve(y_true, y_score)
+    assert_array_almost_equal(thresholds,
+                              [1.0, 0.9, 0.7, 0.6, 0.])
 
 
 def test_auc():
@@ -793,7 +812,6 @@ def check_alternative_lrap_implementation(lrap_score, n_classes=5,
                                           n_samples=20, random_state=0):
     _, y_true = make_multilabel_classification(n_features=1,
                                                allow_unlabeled=False,
-                                               return_indicator=True,
                                                random_state=random_state,
                                                n_classes=n_classes,
                                                n_samples=n_samples)

@@ -236,8 +236,7 @@ def test_thresholded_scorers():
 def test_thresholded_scorers_multilabel_indicator_data():
     # Test that the scorer work with multilabel-indicator format
     # for multilabel and multi-output multi-class classifier
-    X, y = make_multilabel_classification(return_indicator=True,
-                                          allow_unlabeled=False,
+    X, y = make_multilabel_classification(allow_unlabeled=False,
                                           random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
@@ -311,7 +310,6 @@ def test_scorer_sample_weight():
     # scores really should be unequal.
     X, y = make_classification(random_state=0)
     _, y_ml = make_multilabel_classification(n_samples=X.shape[0],
-                                             return_indicator=True,
                                              random_state=0)
     split = train_test_split(X, y, y_ml, random_state=0)
     X_train, X_test, y_train, y_test, y_ml_train, y_ml_test = split
