@@ -9,6 +9,7 @@ Generalized Linear models.
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Lars Buitinck <L.J.Buitinck@uva.nl>
+#         Maryan Morel <maryan.morel@polytechnique.edu>
 #
 # License: BSD 3 clause
 
@@ -392,6 +393,12 @@ class LinearRegression(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.n_jobs = n_jobs
 
+    @property
+    @deprecated("residues_ is deprecated and will be removed in 0.19")
+    def residues_(self):
+        """Get the residues of the fitted model."""
+        return self._residues
+
     def fit(self, X, y, sample_weight=None):
         """
         Fit linear model.
@@ -431,16 +438,16 @@ class LinearRegression(LinearModel, RegressorMixin):
             if y.ndim < 2:
                 out = sparse_lsqr(X, y)
                 self.coef_ = out[0]
-                self.residues_ = out[3]
+                self._residues = out[3]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
                     delayed(sparse_lsqr)(X, y[:, j].ravel())
                     for j in range(y.shape[1]))
                 self.coef_ = np.vstack(out[0] for out in outs)
-                self.residues_ = np.vstack(out[3] for out in outs)
+                self._residues = np.vstack(out[3] for out in outs)
         else:
-            self.coef_, self.residues_, self.rank_, self.singular_ = \
+            self.coef_, self._residues, self.rank_, self.singular_ = \
                 linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
 
