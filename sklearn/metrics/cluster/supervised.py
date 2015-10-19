@@ -60,8 +60,8 @@ def contingency_matrix(labels_true, labels_pred, eps=None, max_n_classes=5000):
         matrix. This helps to stop NaN propagation.
         If ``None``, nothing is adjusted.
 
-    max_n_classes: int
-        Maximal number of classes handled for contingency_matrix.
+    max_n_classes : int, optional (default=5000)
+        Maximal number of classeses handled for contingency_matrix.
         This help to avoid Memory error with regression target
         for mutual_information.
 
@@ -132,8 +132,8 @@ def adjusted_rand_score(labels_true, labels_pred, max_n_classes=5000):
     labels_pred : array, shape = [n_samples]
         Cluster labels to evaluate
 
-    max_n_classes : int
-        Maximal number of class handled by the adjusted_rand_score
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the adjusted_rand_score
         metric. Setting it too high can lead to MemoryError or OS
         freeze
 
@@ -246,8 +246,8 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred,
     labels_pred : array, shape = [n_samples]
         cluster labels to evaluate
 
-    max_n_classes : int
-        Maximal number of class handled by the adjusted_rand_score
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the adjusted_rand_score
         metric. Setting it too high can lead to MemoryError or OS
         freeze
 
@@ -315,8 +315,8 @@ def homogeneity_score(labels_true, labels_pred, max_n_classes=5000):
     labels_pred : array, shape = [n_samples]
         cluster labels to evaluate
 
-    max_n_classes : int
-        Maximal number of class handled by the adjusted_rand_score
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the adjusted_rand_score
         metric. Setting it too high can lead to MemoryError or OS
         freeze
 
@@ -395,8 +395,8 @@ def completeness_score(labels_true, labels_pred, max_n_classes=5000):
     labels_pred : array, shape = [n_samples]
         cluster labels to evaluate
 
-    max_n_classes : int
-        Maximal number of class handled by the adjusted_rand_score
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the adjusted_rand_score
         metric. Setting it too high can lead to MemoryError or OS
         freeze
 
@@ -475,8 +475,8 @@ def v_measure_score(labels_true, labels_pred, max_n_classes=5000):
     labels_pred : array, shape = [n_samples]
         cluster labels to evaluate
 
-    max_n_classes : int
-        Maximal number of class handled by the adjusted_rand_score
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the adjusted_rand_score
         metric. Setting it too high can lead to MemoryError or OS
         freeze
 
@@ -589,8 +589,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None,
         If value is ``None``, it will be computed, otherwise the given value is
         used, with ``labels_true`` and ``labels_pred`` ignored.
 
-    max_n_classes : int
-        Maximal number of class handled by the mutual_info_score
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the mutual_info_score
         metric. Setting it too high can lead to MemoryError or OS
         freeze
 
@@ -659,8 +659,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred, max_n_classes=5000):
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    max_n_classes : int
-        Maximal number of class handled by the adjusted_rand_score
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the adjusted_rand_score
         metric. Setting it too high can lead to MemoryError or OS
         freeze
 
@@ -758,8 +758,8 @@ def normalized_mutual_info_score(labels_true, labels_pred, max_n_classes=5000):
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    max_n_classes : int
-        Maximal number of class handled by the adjusted_rand_score
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the adjusted_rand_score
         metric. Setting it too high can lead to MemoryError or OS
         freeze
 
