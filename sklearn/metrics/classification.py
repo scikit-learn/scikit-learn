@@ -1461,7 +1461,7 @@ def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
-    check_consistent_length(y_true, y_pred, sample_weight)
+    #check_consistent_length(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
     if classes is None:
@@ -1469,9 +1469,14 @@ def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
     else:
         classes = np.asarray(classes)
 
+    if sample_weight is None:
+        weight_average = 1.
+    else:
+        weight_average = np.mean(sample_weight)
+
     if y_type.startswith('multilabel'):
-        n_differences = count_nonzero(y_true - y_pred, sample_weight)
-        return (n_differences / (y_true.shape[0] * len(classes)))
+        n_differences = count_nonzero(y_true - y_pred, sample_weight=sample_weight)
+        return (n_differences / (y_true.shape[0] * len(classes) * weight_average))
 
     elif y_type in ["binary", "multiclass"]:
         return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)

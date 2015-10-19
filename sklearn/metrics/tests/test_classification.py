@@ -643,6 +643,7 @@ def test_multilabel_hamming_loss():
     # Dense label indicator matrix format
     y1 = np.array([[0, 1, 1], [1, 0, 1]])
     y2 = np.array([[0, 0, 1], [1, 0, 1]])
+    w = np.array([1, 3])
 
     assert_equal(hamming_loss(y1, y2), 1 / 6)
     assert_equal(hamming_loss(y1, y1), 0)
@@ -651,6 +652,9 @@ def test_multilabel_hamming_loss():
     assert_equal(hamming_loss(y1, 1 - y1), 1)
     assert_equal(hamming_loss(y1, np.zeros(y1.shape)), 4 / 6)
     assert_equal(hamming_loss(y2, np.zeros(y1.shape)), 0.5)
+    assert_equal(hamming_loss(y1, y2, sample_weight=w), 1. / 12)
+    assert_equal(hamming_loss(y1, 1-y2, sample_weight=w), 11. / 12)
+    assert_equal(hamming_loss(y1, np.zeros_like(y1), sample_weight=w), 2. / 3)
 
 
 def test_multilabel_jaccard_similarity_score():
