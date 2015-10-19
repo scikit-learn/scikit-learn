@@ -1326,9 +1326,14 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     If metric is 'precomputed', Y is ignored and X is returned.
 
     """
+    # import GPKernel locally to prevent circular imports
+    from ..gaussian_process.kernels import Kernel as GPKernel
+
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(X, Y, precomputed=True)
         return X
+    elif isinstance(metric, GPKernel):
+        func = metric.__call__
     elif metric in PAIRWISE_KERNEL_FUNCTIONS:
         if filter_params:
             kwds = dict((k, kwds[k]) for k in kwds

@@ -495,22 +495,30 @@ From text
   :toctree: generated/
   :template: class.rst
 
+  gaussian_process.GaussianProcessRegressor
+  gaussian_process.GaussianProcessClassifier
   gaussian_process.GaussianProcess
 
+Kernels:
+
 .. autosummary::
-   :toctree: generated
-   :template: function.rst
+  :toctree: generated/
+  :template: class.rst
 
-   gaussian_process.correlation_models.absolute_exponential
-   gaussian_process.correlation_models.squared_exponential
-   gaussian_process.correlation_models.generalized_exponential
-   gaussian_process.correlation_models.pure_nugget
-   gaussian_process.correlation_models.cubic
-   gaussian_process.correlation_models.linear
-   gaussian_process.regression_models.constant
-   gaussian_process.regression_models.linear
-   gaussian_process.regression_models.quadratic
-
+  gaussian_process.kernels.Kernel
+  gaussian_process.kernels.Sum
+  gaussian_process.kernels.Product
+  gaussian_process.kernels.Exponentiation
+  gaussian_process.kernels.ConstantKernel
+  gaussian_process.kernels.WhiteKernel
+  gaussian_process.kernels.RBF
+  gaussian_process.kernels.Matern
+  gaussian_process.kernels.RationalQuadratic
+  gaussian_process.kernels.ExpSineSquared
+  gaussian_process.kernels.DotProduct
+  gaussian_process.kernels.PairwiseKernel
+  gaussian_process.kernels.CompoundKernel
+  gaussian_process.kernels.Hyperparameter
 
 .. _grid_search_ref:
 

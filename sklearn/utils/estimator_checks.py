@@ -55,6 +55,7 @@ BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'ExtraTreeRegressor', 'ExtraTreesRegressor', 'GaussianProcess',
+                'GaussianProcessRegressor',
                 'KNeighborsRegressor', 'KernelRidge', 'Lars', 'Lasso',
                 'LassoLars', 'LinearRegression', 'MultiTaskElasticNet',
                 'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV',
@@ -143,8 +144,9 @@ def _yield_regressor_checks(name, Regressor):
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
-    # Test if NotFittedError is raised
-    yield check_estimators_unfitted
+    if name != "GaussianProcessRegressor":
+        # Test if NotFittedError is raised
+        yield check_estimators_unfitted
 
 
 def _yield_transformer_checks(name, Transformer):
