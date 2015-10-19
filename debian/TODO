@@ -17,13 +17,8 @@ see #609287)
 neurodebian@head2:~/deb/builds/scikit-learn/0.16.1-2$ lintian scikit-learn_0.16.1-2_amd64.changes
 E: scikit-learn source: source-is-missing doc/themes/scikit-learn/static/jquery.js
 W: scikit-learn source: invalid-short-name-in-dep5-copyright bsd (paragraph at line 10)
-W: python-sklearn-doc: embedded-javascript-library usr/share/doc/python-sklearn-doc/html/stable/_static/jquery.js please use libjs-jquery
-W: python-sklearn-doc: embedded-javascript-library usr/share/doc/python-sklearn-doc/html/stable/_static/underscore.js please use libjs-underscore
 E: python-sklearn-doc: privacy-breach-donation usr/share/doc/python-sklearn-doc/html/stable/about.html (https://www.paypalobjects.com/en_us/i/btn/btn_donatecc_lg.gif)
-E: python-sklearn-doc: privacy-breach-google-cse usr/share/doc/python-sklearn-doc/html/stable/about.html
 E: python-sklearn-doc: privacy-breach-logo usr/share/doc/python-sklearn-doc/html/stable/about.html (http://www.tinyclues.com/static/img/logo.png)
-E: python-sklearn-doc: privacy-breach-google-cse usr/share/doc/python-sklearn-doc/html/stable/auto_examples/applications/face_recognition.html
-E: python-sklearn-doc: privacy-breach-google-cse usr/share/doc/python-sklearn-doc/html/stable/auto_examples/applications/plot_model_complexity_influence.html
 ...
 E: python-sklearn-doc: privacy-breach-may-use-debian-package usr/share/doc/python-sklearn-doc/html/stable/tutorial/machine_learning_map/index.html You may use libjs-jquery package. (https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js)
 W: python-sklearn: image-file-in-usr-lib usr/lib/python2.7/dist-packages/sklearn/datasets/images/china.jpg

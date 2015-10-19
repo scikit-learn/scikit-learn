@@ -73,7 +73,8 @@ else
 	echo "<HTML><BODY><P>sklearn documentation was not built.<P>Please visit <A HREF='http://scikit-learn.org'>http://scikit-learn.org</A></BODY></HTML>" >| doc/_build/html/index.html
 endif
 	: # Use jquery from Debian package, so prune shipped one
-	-rm doc/_build/html/_static/jquery.js
+	-rm doc/_build/html/stable/_static/jquery.js
+	-rm doc/_build/html/stable/_static/underscore.js
 	dh_installdocs -A AUTHORS.rst README*.rst
 
 override_dh_installchangelogs:
