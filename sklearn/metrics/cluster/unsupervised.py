@@ -12,7 +12,7 @@ import numpy as np
 
 from ...utils import check_random_state
 from ..pairwise import pairwise_distances
-from ...externals.joblib import Parallel, delayed
+from ...externals.joblib import Parallel, delayed, cpu_count
 
 
 def silhouette_score(X, labels, metric='euclidean', blockwise='auto',
@@ -59,8 +59,8 @@ def silhouette_score(X, labels, metric='euclidean', blockwise='auto',
         clusterwise distance matrices, dividing memory consumption by
         approximately the squared number of clusters. The latter allows
         parallelization through ``n_jobs`` parameter.
-        Default is 'auto' that choses the method to use depending on some
-        heuristics.
+        Default is 'auto' that chooses the fastest option without
+        consideration for memory consumption.
 
     sample_size : int or None
         The size of the sample to use when computing the Silhouette Coefficient
@@ -69,7 +69,7 @@ def silhouette_score(X, labels, metric='euclidean', blockwise='auto',
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
-        'all CPUs'. This option can only be used with ``method="blockwise"``.
+        'all CPUs'. This option must be used with ``blockwise={True, 'auto'}``.
         Memory consumption is proportional to the number of CPUs.
 
     random_state : integer or numpy.RandomState, optional
@@ -113,10 +113,11 @@ def silhouette_score(X, labels, metric='euclidean', blockwise='auto',
         random_state = check_random_state(random_state)
         indices = random_state.permutation(X.shape[0])[:sample_size]
         if metric == "precomputed":
-            if blockwise is True:
-                raise ValueError('Precomputed matrix is not compatible with'
-                        ' blockwise computation')
-            blockwise = False
+            #if blockwise is True:
+            #    raise ValueError('Precomputed matrix is not compatible with'
+            #            ' blockwise computation')
+            #blockwise = False
+            #n_jobs = 1
             X, labels = X[indices].T[indices].T, labels[indices]
         else:
             X, labels = X[indices], labels[indices]
@@ -171,12 +172,12 @@ def silhouette_samples(X, labels, metric='euclidean', blockwise='auto',
         clusterwise distance matrices, dividing memory consumption by
         approximately the squared number of clusters. The latter allows
         parallelization through ``n_jobs`` parameter.
-        Default is 'auto' that choses the method to use depending on some
-        heuristics.
+        Default is 'auto' that chooses the fastest option without
+        consideration for memory consumption.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
-        'all CPUs'. This option can only be used with ``method="blockwise"``.
+        'all CPUs'. This option must be used with ``blockwise={True, 'auto'}``.
         Memory consumption is proportional to the number of CPUs.
 
     `**kwds` : optional keyword parameters
@@ -209,8 +210,11 @@ def silhouette_samples(X, labels, metric='euclidean', blockwise='auto',
         n_jobs = 1
 
     if blockwise == 'auto':
-        n_labels = len(np.unique(labels))
-        blockwise = not (n_labels > 50 and X.shape[0] < 5 * n_labels)
+        #n_labels = len(np.unique(labels))
+        #if n_jobs is None:
+        #    n_jobs = cpu_count()
+        #blockwise = not (n_labels / n_jobs > 50 and X.shape[0] < 5 * n_labels)
+        blackwise = False
     if not blockwise:
         distances = pairwise_distances(X, metric=metric, **kwds)
         n = labels.shape[0]
@@ -239,7 +243,8 @@ def silhouette_samples(X, labels, metric='euclidean', blockwise='auto',
                     X[np.where(labels == label_a)[0]],
                     X[np.where(labels == label_b)[0]],
                     metric, **kwds)
-            for label_a, label_b in combinations(unique_labels, 2))
+            for label_a, label_b in combinations(unique_labels, 2)
+        )
 
         # Take the distance to the closest cluster
         for (label_a, label_b), (values_a, values_b) in \
