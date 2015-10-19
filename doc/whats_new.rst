@@ -14,6 +14,13 @@ Changelog
 
 New features
 ............
+
+   - The Gaussian Process module has been reimplemented and now offers classification 
+     and regression estimators through :class:`gaussian_process.GaussianProcessClassifier` 
+     and  :class:`gaussian_process.GaussianProcessRegressor`. Among other things, the new 
+     implementation supports kernel engineering, gradient-based hyperparameter optimization or 
+     sampling of functions from GP prior and GP posterior. Extenstive documentation and 
+     examples are provided. By `Jan Hendrik Metzen`_.
  
 Enhancements
 ............
