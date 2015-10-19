@@ -203,9 +203,9 @@ def test_v_measure_and_mutual_information(seed=36):
 
 
 def test_max_n_classes():
-    labels_true = np.random.random(5003)
-    labels_pred = np.random.random(5003)
-    labels_zero = np.zeros(5003)
+    labels_true = np.random.random(53)
+    labels_pred = np.random.random(53)
+    labels_zero = np.zeros(53)
     labels_true[:2] = 0
     labels_zero[:3] = 1
     labels_pred[:2] = 0
@@ -215,10 +215,10 @@ def test_max_n_classes():
                     "max_n_classes to the scoring function")
         assert_raise_message(ValueError, expected, score_func,
                              labels_true, labels_pred,
-                             max_n_classes=500)
+                             max_n_classes=50)
         expected = ("Too many clusters for a clustering metric. If you "
                     "want to increase the limit, pass parameter "
                     "max_n_classes to the scoring function")
         assert_raise_message(ValueError, expected, score_func,
                              labels_zero, labels_pred,
-                             max_n_classes=500)
+                             max_n_classes=50)
