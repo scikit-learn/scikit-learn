@@ -142,17 +142,18 @@ def check_supervised_y_no_nan(name, Estimator):
     errmsg = "Input contains NaN, infinity or a value too large for " \
              "dtype('float64')."
     try:
-        if "MultiTask" in Estimator.__name__:
+        if "MultiTask" in name:
             Estimator().fit(X, y2)
         else:
             Estimator().fit(X, y1)
     except ValueError as e:
-        if e.message != errmsg:
+        if str(e) != errmsg:
             raise ValueError("Estimator {0} raised warning as expected, but "
-                             "does not match expected error message")
+                             "does not match expected error message" \
+                             .format(name))
     else:
         raise ValueError("Estimator {0} should have raised error on fitting "
-                         "array with NaN value.".format(Estimator.__name__))
+                         "array with NaN value.".format(name))
 
 def _yield_regressor_checks(name, Regressor):
     # TODO: test with intercept
