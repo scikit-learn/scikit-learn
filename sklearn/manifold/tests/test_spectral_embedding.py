@@ -5,7 +5,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 from scipy.linalg import eigh
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import assert_array_almost_equal
 
 from nose.tools import assert_raises
 from nose.plugins.skip import SkipTest
