@@ -937,6 +937,29 @@ def test_maxabs_scaler_large_negative_value():
     assert_array_almost_equal(X_trans, X_expected)
 
 
+def test_maxabs_scaler_transform_one_row_csr():
+    """Check MaxAbsScaler on transforming csr matrix with one row"""
+    X_train_csr = sparse.csr_matrix([[1., 0., 3.],
+                                     [0., 2., 4.]])
+
+    scaler = MaxAbsScaler()
+    X_train_trans =_csr = scaler.fit_transform(X_train_csr)
+    X_train_expected = sparse.csr_matrix([[1., 0., 0.75],
+                                          [0., 1., 1.]])
+    assert_array_almost_equal(X_train_trans.A, X_train_expected.A)
+
+    X_query = sparse.csr_matrix([[0.5, 1., 1.]])
+    X_query_expected = sparse.csr_matrix([[0.5, 0.5, 0.25]])
+
+    try:
+        X_query_trans = scaler.transform(X_query)
+    except AssertionError:
+        assert_array_almost_equal(
+            sparse.csr_matrix(X_query.shape).A,
+            X_query_expected.A,
+            err_msg="Shouldn't return AssertionError for 1-row csr_matrix")
+
+
 @ignore_warnings
 def test_deprecation_minmax_scaler():
     rng = np.random.RandomState(0)
