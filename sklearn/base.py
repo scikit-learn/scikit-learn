@@ -9,6 +9,7 @@ import numpy as np
 from scipy import sparse
 from .externals import six
 from .utils.fixes import signature
+from .utils.deprecation import deprecated
 from .exceptions import ChangedBehaviorWarning
 
 

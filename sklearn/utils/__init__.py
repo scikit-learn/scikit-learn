@@ -13,11 +13,11 @@ from .validation import (as_float_array,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric)
+from .deprecation import deprecated
 from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
-from .exceptions import ConvergenceWarning
-from .exceptions import DataConversionWarning as DataConversionWarning_
-from .utils import deprecated
+from ..exceptions import ConvergenceWarning
+from ..exceptions import DataConversionWarning as DataConversionWarning_
 
 
 ConvergenceWarning = deprecated("ConvergenceWarning has been moved "
@@ -37,88 +37,6 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "column_or_1d", "safe_indexing",
            "check_consistent_length", "check_X_y", 'indexable',
            "check_symmetric"]
-
-
-class deprecated(object):
-    """Decorator to mark a function or class as deprecated.
-
-    Issue a warning when the function is called/the class is instantiated and
-    adds a warning to the docstring.
-
-    The optional extra argument will be appended to the deprecation message
-    and the docstring. Note: to use this with the default value for extra, put
-    in an empty of parentheses:
-
-    >>> from sklearn.utils import deprecated
-    >>> deprecated() # doctest: +ELLIPSIS
-    <sklearn.utils.deprecated object at ...>
-
-    >>> @deprecated()
-    ... def some_function(): pass
-    """
-
-    # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary,
-    # but with many changes.
-
-    def __init__(self, extra=''):
-        """
-        Parameters
-        ----------
-        extra: string
-          to be added to the deprecation messages
-
-        """
-        self.extra = extra
-
-    def __call__(self, obj):
-        if isinstance(obj, type):
-            return self._decorate_class(obj)
-        else:
-            return self._decorate_fun(obj)
-
-    def _decorate_class(self, cls):
-        msg = "Class %s is deprecated" % cls.__name__
-        if self.extra:
-            msg += "; %s" % self.extra
-
-        # FIXME: we should probably reset __new__ for full generality
-        init = cls.__init__
-
-        def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning)
-            return init(*args, **kwargs)
-        cls.__init__ = wrapped
-
-        wrapped.__name__ = '__init__'
-        wrapped.__doc__ = self._update_doc(init.__doc__)
-        wrapped.deprecated_original = init
-
-        return cls
-
-    def _decorate_fun(self, fun):
-        """Decorate function fun"""
-
-        msg = "Function %s is deprecated" % fun.__name__
-        if self.extra:
-            msg += "; %s" % self.extra
-
-        def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning)
-            return fun(*args, **kwargs)
-
-        wrapped.__name__ = fun.__name__
-        wrapped.__dict__ = fun.__dict__
-        wrapped.__doc__ = self._update_doc(fun.__doc__)
-
-        return wrapped
-
-    def _update_doc(self, olddoc):
-        newdoc = "DEPRECATED"
-        if self.extra:
-            newdoc = "%s: %s" % (newdoc, self.extra)
-        if olddoc:
-            newdoc = "%s\n\n%s" % (newdoc, olddoc)
-        return newdoc
 
 
 def safe_mask(X, mask):
@@ -422,7 +340,8 @@ def gen_even_slices(n, n_packs, n_samples=None):
     """
     start = 0
     if n_packs < 1:
-        raise ValueError("gen_even_slices got n_packs=%s, must be >=1" % n_packs)
+        raise ValueError("gen_even_slices got n_packs=%s, must be >=1"
+                         % n_packs)
     for pack_num in range(n_packs):
         this_n = n // n_packs
         if pack_num < n % n_packs:
@@ -482,5 +401,3 @@ def tosequence(x):
         return x
     else:
         return list(x)
-
-

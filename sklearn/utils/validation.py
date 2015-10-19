@@ -14,7 +14,7 @@ import scipy.sparse as sp
 
 from ..externals import six
 from ..utils.fixes import signature
-from . import deprecated
+from .deprecation import deprecated
 from ..exceptions import DataConversionWarning as DataConversionWarning_
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError as NotFittedError_
