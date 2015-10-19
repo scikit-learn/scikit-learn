@@ -234,7 +234,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
     moments_1[:n_samples] = 1
     moments_2 = np.zeros((n_nodes, n_features), order='C')
     moments_2[:n_samples] = X
-    inertia = np.empty(len(coord_row), dtype=np.float, order='C')
+    inertia = np.empty(len(coord_row), dtype=np.float64, order='C')
     _hierarchical.compute_ward_dist(moments_1, moments_2, coord_row, coord_col,
                                     inertia)
     inertia = list(six.moves.zip(inertia, coord_row, coord_col))
@@ -279,7 +279,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
         coord_row = np.empty(coord_col.shape, dtype=np.intp, order='C')
         coord_row.fill(k)
         n_additions = len(coord_row)
-        ini = np.empty(n_additions, dtype=np.float, order='C')
+        ini = np.empty(n_additions, dtype=np.float64, order='C')
 
         _hierarchical.compute_ward_dist(moments_1, moments_2,
                                         coord_row, coord_col, ini)

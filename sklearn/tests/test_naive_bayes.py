@@ -332,7 +332,7 @@ def check_sample_weight_multiclass(cls):
         [1, 0, 0],
     ]
     y = [0, 0, 1, 2]
-    sample_weight = np.array([1, 1, 2, 2], dtype=np.float)
+    sample_weight = np.array([1, 1, 2, 2], dtype=np.float64)
     sample_weight /= sample_weight.sum()
     clf = cls().fit(X, y, sample_weight=sample_weight)
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])

@@ -161,7 +161,7 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
     X -= X.mean(axis=0)
     y -= y.mean()
 
-    alpha = np.atleast_1d(np.asarray(alpha, dtype=np.float))
+    alpha = np.atleast_1d(np.asarray(alpha, dtype=np.float64))
 
     X = (1 - weights) * X
     with warnings.catch_warnings():
@@ -355,7 +355,7 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
     else:
         X *= (1 - weights)
 
-    C = np.atleast_1d(np.asarray(C, dtype=np.float))
+    C = np.atleast_1d(np.asarray(C, dtype=np.float64))
     scores = np.zeros((X.shape[1], len(C)), dtype=np.bool)
 
     for this_C, this_scores in zip(C, scores.T):

@@ -112,7 +112,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         if sample_weight is None:
             # Initialize weights to 1 / n_samples
-            sample_weight = np.empty(X.shape[0], dtype=np.float)
+            sample_weight = np.empty(X.shape[0], dtype=np.float64)
             sample_weight[:] = 1. / X.shape[0]
         else:
             # Normalize existing weights
@@ -129,8 +129,8 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         # Clear any previous fit results
         self.estimators_ = []
-        self.estimator_weights_ = np.zeros(self.n_estimators, dtype=np.float)
-        self.estimator_errors_ = np.ones(self.n_estimators, dtype=np.float)
+        self.estimator_weights_ = np.zeros(self.n_estimators, dtype=np.float64)
+        self.estimator_errors_ = np.ones(self.n_estimators, dtype=np.float64)
 
         for iboost in range(self.n_estimators):
             # Boosting step
