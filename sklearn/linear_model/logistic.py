@@ -632,10 +632,11 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                       order='F')
         mask_classes = classes
 
-    if class_weight == "auto":
+    if class_weight in ["auto", "balanced"]:
+        y_ = y_bin if multi_class == 'ovr' else y
         class_weight_ = compute_class_weight(class_weight, mask_classes,
-                                             y_bin)
-        sample_weight *= class_weight_[le.fit_transform(y_bin)]
+                                             y_)
+        sample_weight *= class_weight_[le.fit_transform(y_)]
 
     if coef is not None:
         # it must work both giving the bias term and not
@@ -1125,7 +1126,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, 
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
                          order="C")
         check_classification_targets(y)
         self.classes_ = np.unique(y)

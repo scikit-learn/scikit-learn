@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_raise_message
@@ -875,3 +876,12 @@ def test_warm_start():
                         assert_greater(2.0, cum_diff, msg)
                     else:
                         assert_greater(cum_diff, 2.0, msg)
+
+
+def test_multinomial_logistic_regression_with_classweight_auto():
+    X, y = make_classification(n_classes=5, n_informative=5, random_state=42)
+    model = LogisticRegression(multi_class='multinomial',
+                               class_weight='auto', solver='lbfgs')
+    assert_warns_message(DeprecationWarning,
+                         "class_weight='auto' heuristic is deprecated",
+                         model.fit, X, y)
