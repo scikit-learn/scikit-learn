@@ -2,6 +2,8 @@ scikit-learn (0.17.0~b1-1) UNRELEASED; urgency=medium
 
   * Fresh beta release -- test build
     - requires joblib >= 0.9.2
+  * debian/patches
+    - deb_disable_google_anals to disable google tracking
   *  LOOK INTO TODOS
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 17 Oct 2015 17:47:10 -0500
