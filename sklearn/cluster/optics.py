@@ -74,7 +74,7 @@ def _prep_optics(self, epsilon, min_samples):
 # Main OPTICS loop #
 
 
-def _build_optics(SetOfObjects, epsilon):
+def _build_optics(setofobjects, epsilon):
     """Builds OPTICS ordered list of clustering structure
 
     Parameters
@@ -85,9 +85,9 @@ def _build_optics(SetOfObjects, epsilon):
         epsilons reduce run time. This should be equal to epsilon
         in 'prep_optics' """
 
-    for point in SetOfObjects._index:
-        if not SetOfObjects._processed[point]:
-            _expandClusterOrder(SetOfObjects, point, epsilon)
+    for point in setofobjects._index:
+        if not setofobjects._processed[point]:
+            _expandClusterOrder(setofobjects, point, epsilon)
 
 # OPTICS helper functions; these should not be public #
 
@@ -95,43 +95,43 @@ def _build_optics(SetOfObjects, epsilon):
 # the 'ordering_' is important!
 
 
-def _expandClusterOrder(SetOfObjects, point, epsilon):
-    if SetOfObjects.core_dists_[point] <= epsilon:
-        while not SetOfObjects._processed[point]:
-            SetOfObjects._processed[point] = True
-            SetOfObjects.ordering_.append(point)
-            point = _set_reach_dist(SetOfObjects, point, epsilon)
+def _expandClusterOrder(setofobjects, point, epsilon):
+    if setofobjects.core_dists_[point] <= epsilon:
+        while not setofobjects._processed[point]:
+            setofobjects._processed[point] = True
+            setofobjects.ordering_.append(point)
+            point = _set_reach_dist(setofobjects, point, epsilon)
     else:
-        SetOfObjects._processed[point] = True    # Probably not needed... #
+        setofobjects._processed[point] = True    # Probably not needed... #
 
 
 # As above, not parallelizable. Parallelizing would allow items in
 # the 'unprocessed' list to switch to 'processed'
-def _set_reach_dist(SetOfObjects, point_index, epsilon):
+def _set_reach_dist(setofobjects, point_index, epsilon):
 
     # Assumes that the query returns ordered (smallest distance first)
     # entries. This is the case for the balltree query...
 
-    dists, indices = SetOfObjects.query(SetOfObjects.data[point_index],
-                                        SetOfObjects._nneighbors[point_index])
+    dists, indices = setofobjects.query(setofobjects.data[point_index],
+                                        setofobjects._nneighbors[point_index])
 
     # Checks to see if there more than one member in the neighborhood ##
     if sp.iterable(dists):
 
         # Masking processed values ##
         # n_pr is 'not processed'
-        n_pr = indices[(SetOfObjects._processed[indices] < 1)[0].T]
-        rdists = sp.maximum(dists[(SetOfObjects._processed[indices] < 1)[0].T],
-                            SetOfObjects.core_dists_[point_index])
+        n_pr = indices[(setofobjects._processed[indices] < 1)[0].T]
+        rdists = sp.maximum(dists[(setofobjects._processed[indices] < 1)[0].T],
+                            setofobjects.core_dists_[point_index])
 
-        new_reach = sp.minimum(SetOfObjects.reachability_[n_pr], rdists)
-        SetOfObjects.reachability_[n_pr] = new_reach
+        new_reach = sp.minimum(setofobjects.reachability_[n_pr], rdists)
+        setofobjects.reachability_[n_pr] = new_reach
 
         # Checks to see if everything is already processed;
         # if so, return control to main loop ##
         if n_pr.size > 0:
             # Define return order based on reachability distance ###
-            return n_pr[sp.argmin(SetOfObjects.reachability_[n_pr])]
+            return n_pr[sp.argmin(setofobjects.reachability_[n_pr])]
         else:
             return point_index
 
@@ -262,25 +262,25 @@ class OPTICS(BaseEstimator, ClusterMixin):
 # Important: Epsilon prime should be less than epsilon used in OPTICS #
 
 
-def _ExtractDBSCAN(SetOfObjects, epsilon_prime):
+def _ExtractDBSCAN(setofobjects, epsilon_prime):
 
     # Start Cluster_id at zero, incremented to '1' for first cluster
     cluster_id = 0
-    for entry in SetOfObjects.ordering_:
-        if SetOfObjects.reachability_[entry] > epsilon_prime:
-            if SetOfObjects.core_dists_[entry] <= epsilon_prime:
+    for entry in setofobjects.ordering_:
+        if setofobjects.reachability_[entry] > epsilon_prime:
+            if setofobjects.core_dists_[entry] <= epsilon_prime:
                 cluster_id += 1
-                SetOfObjects._cluster_id[entry] = cluster_id
+                setofobjects._cluster_id[entry] = cluster_id
             else:
                 # This is only needed for compatibility for repeated scans.
                 # -1 is Noise points
-                SetOfObjects._cluster_id[entry] = -1
-                SetOfObjects._is_core[entry] = 0
+                setofobjects._cluster_id[entry] = -1
+                setofobjects._is_core[entry] = 0
         else:
-            SetOfObjects._cluster_id[entry] = cluster_id
-            if SetOfObjects.core_dists_[entry] <= epsilon_prime:
+            setofobjects._cluster_id[entry] = cluster_id
+            if setofobjects.core_dists_[entry] <= epsilon_prime:
                 # One (i.e., 'True') for core points #
-                SetOfObjects._is_core[entry] = 1
+                setofobjects._is_core[entry] = 1
             else:
                 # Zero (i.e., 'False') for non-core, non-noise points #
-                SetOfObjects._is_core[entry] = 0
+                setofobjects._is_core[entry] = 0
