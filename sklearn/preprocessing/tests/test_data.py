@@ -945,6 +945,8 @@ def test_maxabs_scaler_transform_one_row_csr():
     X_trans = scaler.transform(X)
     X_expected = sparse.csr_matrix([[1., 1., 1.]])
     assert_array_almost_equal(X_trans.toarray(), X_expected.toarray())
+    X_scaled_back = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X.toarray(), X_scaled_back.toarray())
 
 
 @ignore_warnings
