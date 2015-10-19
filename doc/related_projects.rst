@@ -53,6 +53,9 @@ and tasks.
 - `PyStruct <https://pystruct.github.io>`_ General conditional random fields
   and structured prediction.
 
+- `pomegranate <https://github.com/jmschrei/pomegranate>`_ Probabilistic modelling
+  for Python, with an emphasis on hidden Markov models.
+
 - `py-earth <https://github.com/jcrudy/py-earth>`_ Multivariate adaptive
   regression splines
 
