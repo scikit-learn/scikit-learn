@@ -13,6 +13,8 @@ import sys
 import pkgutil
 
 from sklearn.externals.six import PY3
+from sklearn.externals.six.moves import zip
+from sklearn.externals.funcsigs import signature
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_greater
@@ -219,3 +221,15 @@ def test_get_params_invariance():
                     yield check_get_params_invariance, name, Estimator
             else:
                 yield check_get_params_invariance, name, Estimator
+            yield check_transformer_n_iter, name, estimator
+
+
+def test_sample_weight_consistency():
+    estimators = all_estimators()
+
+    for name, Estimator in estimators:
+        if not 'sample_weight' in signature(Estimator.fit).keys():
+            continue
+        print (name)
+
+
