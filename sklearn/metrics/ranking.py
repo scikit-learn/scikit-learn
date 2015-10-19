@@ -441,7 +441,8 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
 
     drop_intermediate : boolean, optional (default=True)
         Whether to drop some suboptimal thresholds which would not appear
-        on a plotted ROC curve.
+        on a plotted ROC curve. This is useful in order to create lighter
+        ROC curves.
 
     Returns
     -------

@@ -354,7 +354,7 @@ def test_roc_curve_drop_intermediate():
     # Test that drop_intermediate drops the correct thresholds
     y_true = [0, 0, 0, 0, 1, 1]
     y_score = [0., 0.2, 0.5, 0.6, 0.7, 1.0]
-    tpr, fpr, thresholds = roc_curve(y_true, y_score)
+    tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
     assert_array_almost_equal(thresholds, [1., 0.7, 0.])
 
     # Test dropping thresholds with repeating scores
@@ -362,7 +362,7 @@ def test_roc_curve_drop_intermediate():
               1, 1, 1, 1, 1, 1]
     y_score = [0., 0.1, 0.6, 0.6, 0.7, 0.8, 0.9,
                0.6, 0.7, 0.8, 0.9, 0.9, 1.0]
-    tpr, fpr, thresholds = roc_curve(y_true, y_score)
+    tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
     assert_array_almost_equal(thresholds,
                               [1.0, 0.9, 0.7, 0.6, 0.])
 
