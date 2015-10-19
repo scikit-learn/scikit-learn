@@ -361,13 +361,6 @@ class LabelKFold(_BaseKFold):
     n_folds : int, default=3
         Number of folds. Must be at least 2.
 
-    shuffle : boolean, optional
-        Whether to shuffle the data before splitting into batches.
-
-    random_state : None, int or RandomState
-        When shuffle=True, pseudo-random number generator state used for
-        shuffling. If None, use default numpy RNG for shuffling.
-
     Examples
     --------
     >>> from sklearn.cross_validation import LabelKFold
@@ -399,9 +392,9 @@ class LabelKFold(_BaseKFold):
     LeaveOneLabelOut for splitting the data according to explicit,
     domain-specific stratification of the dataset.
     """
-    def __init__(self, labels, n_folds=3, shuffle=False, random_state=None):
-        super(LabelKFold, self).__init__(len(labels), n_folds, shuffle,
-                                         random_state)
+    def __init__(self, labels, n_folds=3):
+        super(LabelKFold, self).__init__(len(labels), n_folds,
+                                         shuffle=False, random_state=None)
 
         unique_labels, labels = np.unique(labels, return_inverse=True)
         n_labels = len(unique_labels)
@@ -411,16 +404,6 @@ class LabelKFold(_BaseKFold):
                     ("Cannot have number of folds n_folds={0} greater"
                      " than the number of labels: {1}.").format(n_folds,
                                                                 n_labels))
-
-        if shuffle:
-            # In case of ties in label weights, label names are indirectly
-            # used to assign samples to folds. When shuffle=True, label names
-            # are randomized to obtain random fold assigments.
-            rng = check_random_state(self.random_state)
-            unique_labels = np.arange(n_labels, dtype=np.int)
-            rng.shuffle(unique_labels)
-            labels = unique_labels[labels]
-            unique_labels, labels = np.unique(labels, return_inverse=True)
 
         # Weight labels by their number of occurences
         n_samples_per_label = np.bincount(labels)
