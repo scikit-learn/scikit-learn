@@ -130,10 +130,6 @@ Enhancements
      (`#4294 <https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by
      `Raghav R V`_.
 
-   - The random forest, extra trees and decision tree estimators now has a
-     method ``decision_path`` which returns the decision path of samples in
-     the tree. By `Arnaud Joly`_.
-
    - The random forest, extra tree and decision tree estimators now has a
      method ``decision_path`` which returns the decision path of samples in
      the tree. By `Arnaud Joly`_.
@@ -283,6 +279,10 @@ Bug fixes
       with them as parameters, could not be passed to :func:`base.clone`.
       By `Loic Esteve`_.
 
+    - :func:`pairwise_distances` now converts arrays to boolean arrays when
+      required in scipy.spatial.distance.
+      (`#5460 https://github.com/scikit-learn/scikit-learn/pull/5460>`_)
+      By `Tom Dupre la Tour`_.
 
 API changes summary
 -------------------

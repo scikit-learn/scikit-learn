@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.validation import check_random_state
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn import neighbors, datasets
+from sklearn.exceptions import DataConversionWarning
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -1200,3 +1201,17 @@ def test_dtype_convert():
 
     result = classifier.fit(X, y).predict(X)
     assert_array_equal(result, y)
+
+
+# ignore conversion to boolean in pairwise_distances
+@ignore_warnings(category=DataConversionWarning)
+def test_pairwise_boolean_distance():
+    # Non-regression test for #4523
+    #'brute'     : uses scipy.spatial.distance through pairwise_distances
+    #'ball_tree' : uses sklearn.neighbors.dist_metrics
+    X = np.random.uniform(size=(6, 5))
+    NN = neighbors.NearestNeighbors
+
+    nn1 = NN(metric="jaccard", algorithm='brute').fit(X)
+    nn2 = NN(metric="jaccard", algorithm='ball_tree').fit(X)
+    assert_array_equal(nn1.kneighbors(X)[0], nn2.kneighbors(X)[0])
