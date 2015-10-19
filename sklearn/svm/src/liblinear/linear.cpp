@@ -1244,8 +1244,9 @@ static int solve_l2r_l1l2_svr(
 // See Algorithm 5 of Yu et al., MLJ 2010
 
 
-#define GETC(i) upper_bound[y[i]+1]*sample_weight[i]
-// To support weights for instances (sample_weight*class_weight), use GETC(i) (i)
+#define SAMPLE_WEIGHT(i) upper_bound[y[i]+1]*sample_weight[i]
+// To support weights for instances, use SAMPLE_WEIGHT(i)
+// Each instance is weighted by sample_weight*class_weight)
 
 int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, double Cn,
 					   int max_iter)
@@ -1276,12 +1277,12 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 	}
 
 	// Initial alpha can be set here. Note that
-	// 0 < alpha[i] < GETC(i)
-	// alpha[2*i] + alpha[2*i+1] = GETC(i)
+	// 0 < alpha[i] < SAMPLE_WEIGHT(i)
+	// alpha[2*i] + alpha[2*i+1] = SAMPLE_WEIGHT(i)
 	for(i=0; i<l; i++)
 	{
-		alpha[2*i] = min(0.001*GETC(i), 1e-8);
-		alpha[2*i+1] = GETC(i) - alpha[2*i];
+		alpha[2*i] = min(0.001*SAMPLE_WEIGHT(i), 1e-8);
+		alpha[2*i+1] = SAMPLE_WEIGHT(i) - alpha[2*i];
 	}
 
 	for(i=0; i<w_size; i++)
@@ -1313,7 +1314,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 		{
 			i = index[s];
 			schar yi = y[i];
-			double C = GETC(i);
+			double C = SAMPLE_WEIGHT(i);
 			double ywTx = 0, xisq = xTx[i];
 			feature_node *xi = prob->x[i];
 			while (xi->index != -1)
@@ -1396,7 +1397,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 	v *= 0.5;
 	for(i=0; i<l; i++)
 		v += alpha[2*i] * log(alpha[2*i]) + alpha[2*i+1] * log(alpha[2*i+1])
-			- GETC(i) * log(GETC(i));
+			- SAMPLE_WEIGHT(i) * log(SAMPLE_WEIGHT(i));
 	info("Objective value = %lf\n", v);
 
 	delete [] xTx;
@@ -1705,9 +1706,10 @@ static int solve_l1r_l2_svc(
 // solution will be put in w
 //
 // See Yuan et al. (2011) and appendix of LIBLINEAR paper, Fan et al. (2008)
-#undef GETC
-#define GETC(i) C[y[i]+1]*sample_weight[i]
-// To support weights (sample_weight*class_weight) for instances, use GETC(i) (i)
+#undef SAMPLE_WEIGHT
+#define SAMPLE_WEIGHT(i) C[y[i]+1]*sample_weight[i]
+// To support weights for instances, use SAMPLE_WEIGHT(i)
+// Each instance is weighted by (class_weight*sample_weight)
 
 static int solve_l1r_lr(
 	const problem *prob_col, double *w, double eps,
@@ -1777,7 +1779,7 @@ static int solve_l1r_lr(
 			double val = x->value;
 			exp_wTx[ind] += w[j]*val;
 			if(y[ind] == -1)
-				xjneg_sum[j] += GETC(ind)*val;
+				xjneg_sum[j] += SAMPLE_WEIGHT(ind)*val;
 			x++;
 		}
 	}
@@ -1785,8 +1787,8 @@ static int solve_l1r_lr(
 	{
 		exp_wTx[j] = exp(exp_wTx[j]);
 		double tau_tmp = 1/(1+exp_wTx[j]);
-		tau[j] = GETC(j)*tau_tmp;
-		D[j] = GETC(j)*exp_wTx[j]*tau_tmp*tau_tmp;
+		tau[j] = SAMPLE_WEIGHT(j)*tau_tmp;
+		D[j] = SAMPLE_WEIGHT(j)*exp_wTx[j]*tau_tmp*tau_tmp;
 	}
 
 	while(newton_iter < max_newton_iter)
@@ -1962,7 +1964,7 @@ static int solve_l1r_lr(
 		negsum_xTd = 0;
 		for(int i=0; i<l; i++)
 			if(y[i] == -1)
-				negsum_xTd += GETC(i)*xTd[i];
+				negsum_xTd += SAMPLE_WEIGHT(i)*xTd[i];
 
 		int num_linesearch;
 		for(num_linesearch=0; num_linesearch < max_num_linesearch; num_linesearch++)
@@ -1973,7 +1975,7 @@ static int solve_l1r_lr(
 			{
 				double exp_xTd = exp(xTd[i]);
 				exp_wTx_new[i] = exp_wTx[i]*exp_xTd;
-				cond += GETC(i)*log((1+exp_wTx_new[i])/(exp_xTd+exp_wTx_new[i]));
+				cond += SAMPLE_WEIGHT(i)*log((1+exp_wTx_new[i])/(exp_xTd+exp_wTx_new[i]));
 			}
 
 			if(cond <= 0)
@@ -1985,8 +1987,8 @@ static int solve_l1r_lr(
 				{
 					exp_wTx[i] = exp_wTx_new[i];
 					double tau_tmp = 1/(1+exp_wTx[i]);
-					tau[i] = GETC(i)*tau_tmp;
-					D[i] = GETC(i)*exp_wTx[i]*tau_tmp*tau_tmp;
+					tau[i] = SAMPLE_WEIGHT(i)*tau_tmp;
+					D[i] = SAMPLE_WEIGHT(i)*exp_wTx[i]*tau_tmp*tau_tmp;
 				}
 				break;
 			}
@@ -2053,9 +2055,9 @@ static int solve_l1r_lr(
 		}
 	for(j=0; j<l; j++)
 		if(y[j] == 1)
-			v += GETC(j)*log(1+1/exp_wTx[j]);
+			v += SAMPLE_WEIGHT(j)*log(1+1/exp_wTx[j]);
 		else
-			v += GETC(j)*log(1+exp_wTx[j]);
+			v += SAMPLE_WEIGHT(j)*log(1+exp_wTx[j]);
 
 	info("Objective value = %lf\n", v);
 	info("#nonzeros/#features = %d/%d\n", nnz, w_size);
@@ -2496,6 +2498,7 @@ model* train(const problem *prob, const parameter *param)
 		free(sub_prob.x);
 		free(sub_prob.y);
 		free(weighted_C);
+		delete[] sample_weight;
 	}
 	return model_;
 }

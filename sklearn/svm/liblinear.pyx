@@ -11,11 +11,11 @@ cimport liblinear
 np.import_array()
 
 
-def train_wrap(X, np.ndarray[np.float64_t,   ndim=1, mode='c'] Y,
+def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
                bint is_sparse, int solver_type, double eps, double bias,
                double C, np.ndarray[np.float64_t, ndim=1] class_weight,
                int max_iter, unsigned random_seed, double epsilon,
-               np.ndarray[np.float64_t, ndim=1] sample_weight):
+               np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight):
     cdef parameter *param
     cdef problem *problem
     cdef model *model
