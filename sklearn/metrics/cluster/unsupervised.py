@@ -113,11 +113,6 @@ def silhouette_score(X, labels, metric='euclidean', blockwise='auto',
         random_state = check_random_state(random_state)
         indices = random_state.permutation(X.shape[0])[:sample_size]
         if metric == "precomputed":
-            #if blockwise is True:
-            #    raise ValueError('Precomputed matrix is not compatible with'
-            #            ' blockwise computation')
-            #blockwise = False
-            #n_jobs = 1
             X, labels = X[indices].T[indices].T, labels[indices]
         else:
             X, labels = X[indices], labels[indices]
@@ -205,16 +200,24 @@ def silhouette_samples(X, labels, metric='euclidean', blockwise='auto',
     if blockwise not in [True, False, 'auto']:
         raise ValueError("Blockwise parameter must be True, False or 'auto'. "
                          "You have set it to %s." % str(blockwise))
+
+    if metric == "precomputed" and blockwise is True:
+        raise ValueError('Precomputed matrix is not compatible with'
+                         ' blockwise computation')
     if blockwise is False and n_jobs != 1:
         warnings.warn('Parallelization is only available for blockwise method')
         n_jobs = 1
-
     if blockwise == 'auto':
-        #n_labels = len(np.unique(labels))
-        #if n_jobs is None:
-        #    n_jobs = cpu_count()
-        #blockwise = not (n_labels / n_jobs > 50 and X.shape[0] < 5 * n_labels)
-        blackwise = False
+        if metric == 'precomputed':
+            blockwise = False
+            n_jobs = 1
+        else:
+            n_labels = len(np.unique(labels))
+            if n_jobs is None:
+                n_jobs = cpu_count()
+            blockwise = not (n_labels / n_jobs > 50 and
+                             X.shape[0] < 5 * n_labels)
+
     if not blockwise:
         distances = pairwise_distances(X, metric=metric, **kwds)
         n = labels.shape[0]
