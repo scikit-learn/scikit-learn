@@ -409,12 +409,23 @@ def check_fit2d_1sample(name, Estimator):
         estimator.n_clusters = 1
 
     set_random_state(estimator, 1)
+
     try:
         estimator.fit(X, y)
-    except:
+    except ValueError as e:
         # The message should say something about only one sample
-        msg = "sample"
-        assert_raise_message(ValueError, msg, estimator, X, y)
+        if 'sample' not in repr(e):
+            print("Estimator %s doesn't seem to fail gracefully when fitting "
+                  "an array with only one sample: error message state "
+                  "explicitly that fitting with only one sample is not "
+                  "supported." % name)
+            raise
+    except Exception:
+        print("Estimator %s doesn't seem to fail gracefully when fitting an "
+              "array with only one sample: it should raise a ValueError if "
+              "fitting with only one sample is explicitly not supported")
+        raise
+
 
 @ignore_warnings
 def check_fit2d_1feature(name, Estimator):
@@ -432,12 +443,22 @@ def check_fit2d_1feature(name, Estimator):
         estimator.n_clusters = 1
 
     set_random_state(estimator, 1)
+
     try:
         estimator.fit(X, y)
-    except:
+    except ValueError as e:
         # The message should say something about only one feature
-        msg = "feature"
-        assert_raise_message(ValueError, msg, estimator, X, y)
+        if 'feature' not in repr(e):
+            print("Estimator %s doesn't seem to fail gracefully when fitting "
+                  "an array with only one feature: error message state "
+                  "explicitly that fitting with only one feature is not "
+                  "supported." % name)
+            raise
+    except Exception:
+        print("Estimator %s doesn't seem to fail gracefully when fitting an "
+              "array with only one feature: it should raise a ValueError if "
+              "fitting with only one feature is explicitly not supported")
+        raise
 
 
 @ignore_warnings
