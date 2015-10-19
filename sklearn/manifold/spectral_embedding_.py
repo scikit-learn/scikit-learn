@@ -44,14 +44,20 @@ def _graph_connected_component(graph, node_id):
     """
     connected_components_matrix = np.zeros(
         shape=(graph.shape[0]), dtype=np.bool)
-    connected_components_matrix[node_id] = True
+    nodes_to_explore = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
+    nodes_to_explore[node_id] = True
     n_node = graph.shape[0]
+    nodes_to_add = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
     for i in range(n_node):
-        last_num_component = connected_components_matrix.sum()
-        _, node_to_add = np.where(graph[connected_components_matrix] != 0)
-        connected_components_matrix[node_to_add] = True
-        if last_num_component >= connected_components_matrix.sum():
+        nodes_to_add.fill(False)
+        for i in np.where(nodes_to_explore)[0]:
+            nodes_to_add = np.logical_or(nodes_to_add, graph[i] != 0)
+        connected_components_matrix = np.logical_or(
+            connected_components_matrix, nodes_to_explore)
+        if not nodes_to_add.any():
             break
+        # Swap arrays
+        nodes_to_explore, nodes_to_add = nodes_to_add, nodes_to_explore
     return connected_components_matrix
 
 
