@@ -15,7 +15,7 @@ from ..pairwise import pairwise_distances
 from ...externals.joblib import Parallel, delayed
 
 
-def silhouette_score(X, labels, metric='euclidean', method='global',
+def silhouette_score(X, labels, metric='euclidean', blockwise='auto',
                      sample_size=None, n_jobs=1, random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
 
@@ -52,14 +52,15 @@ def silhouette_score(X, labels, metric='euclidean', method='global',
         <sklearn.metrics.pairwise.pairwise_distances>`. If X is the distance
         array itself, use ``metric="precomputed"``.
 
-    method: {'global', 'blockwise'}
-        The method used to compute distance matrix between samples. Default is
-        ``global`` which means that the full distance matrix is computed
-        yielding in fast computation but high memory consumption. The
-        ``blockwise`` option computes clusterwise distance matrices, dividing
-        memory consumption by approximately the squared number of clusters.
-        The ``blockwise`` method allows parallelization through ``n_jobs``
-        parameter.
+    blockwise: {'auto', True, False}
+        Enables blockwise computation of the distance matrix.
+        If false, the full distance matrix is computed yielding in fast
+        computation but high memory consumption. If True, it computes
+        clusterwise distance matrices, dividing memory consumption by
+        approximately the squared number of clusters. The latter allows
+        parallelization through ``n_jobs`` parameter.
+        Default is 'auto' that choses the method to use depending on some
+        heuristics.
 
     sample_size : int or None
         The size of the sample to use when computing the Silhouette Coefficient 
@@ -104,21 +105,27 @@ def silhouette_score(X, labels, metric='euclidean', method='global',
         raise ValueError("Number of labels is %d. Valid values are 2 "
                          "to n_samples - 1 (inclusive)" % n_labels)
 
+    if blockwise not in [True, False, 'auto']:
+        raise ValueError("Blockwise parameter must be True, False or 'auto'. "
+                         "You have set it to %s." % str(blockwise))
+
     if sample_size is not None:
         random_state = check_random_state(random_state)
         indices = random_state.permutation(X.shape[0])[:sample_size]
         if metric == "precomputed":
-            if method == "blockwise":
+            if blockwise is True:
                 raise ValueError('Precomputed matrix is not compatible with'
                         ' blockwise computation')
+            blockwise = False
             X, labels = X[indices].T[indices].T, labels[indices]
         else:
             X, labels = X[indices], labels[indices]
-    return np.mean(silhouette_samples(X, labels, metric=metric, method=method,
+    return np.mean(silhouette_samples(X, labels, metric=metric,
+                                      blockwise=blockwise,
                                       n_jobs=n_jobs, **kwds))
 
 
-def silhouette_samples(X, labels, metric='euclidean', method='global',
+def silhouette_samples(X, labels, metric='euclidean', blockwise='auto',
                        n_jobs=1, **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
@@ -157,14 +164,15 @@ def silhouette_samples(X, labels, metric='euclidean', method='global',
         allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
         the distance array itself, use "precomputed" as the metric.
 
-    method: {'global', 'blockwise'}
-        The method used to compute distance matrix between samples. Default is
-        ``global`` which means that the full distance matrix is computed
-        yielding in fast computation but high memory consumption. The
-        ``blockwise`` option computes clusterwise distance matrices, dividing
-        memory consumption by approximately the squared number of clusters.
-        The ``blockwise`` method allows parallelization through ``n_jobs``
-        parameter.
+    blockwise: {'auto', True, False}
+        Enables blockwise computation of the distance matrix.
+        If false, the full distance matrix is computed yielding in fast
+        computation but high memory consumption. If True, it computes
+        clusterwise distance matrices, dividing memory consumption by
+        approximately the squared number of clusters. The latter allows
+        parallelization through ``n_jobs`` parameter.
+        Default is 'auto' that choses the method to use depending on some
+        heuristics.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -193,17 +201,24 @@ def silhouette_samples(X, labels, metric='euclidean', method='global',
        <http://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
-    if method == 'global' and n_jobs != 1:
+    if blockwise not in [True, False, 'auto']:
+        raise ValueError("Blockwise parameter must be True, False or 'auto'. "
+                         "You have set it to %s." % str(blockwise))
+    if blockwise is False and n_jobs != 1:
         warnings.warn('Parallelization is only available for blockwise method')
         n_jobs = 1
-    if method == 'global':
+
+    if blockwise == 'auto':
+        # Temporary
+        blockwise = False
+    if not blockwise:
         distances = pairwise_distances(X, metric=metric, **kwds)
         n = labels.shape[0]
         A = np.array([_intra_cluster_distance(distances[i], labels, i)
                       for i in range(n)])
         B = np.array([_nearest_cluster_distance(distances[i], labels, i)
                       for i in range(n)])
-    elif method == 'blockwise':
+    else:
         # Intra distance
         A = np.zeros(labels.size, dtype=float)
         intra_dist = Parallel(n_jobs=n_jobs)(
