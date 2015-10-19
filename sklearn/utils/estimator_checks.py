@@ -153,7 +153,7 @@ def check_supervised_y_no_nan(name, Estimator):
                              .format(name))
     else:
         raise ValueError("Estimator {0} should have raised error on fitting "
-                         "array with NaN value.".format(name))
+                         "array y with NaN value.".format(name))
 
 def _yield_regressor_checks(name, Regressor):
     # TODO: test with intercept
