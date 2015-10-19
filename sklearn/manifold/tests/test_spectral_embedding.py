@@ -11,6 +11,7 @@ from nose.plugins.skip import SkipTest
 
 from sklearn.manifold.spectral_embedding_ import SpectralEmbedding
 from sklearn.manifold.spectral_embedding_ import _graph_is_connected
+from sklearn.manifold.spectral_embedding_ import _graph_connected_component
 from sklearn.manifold import spectral_embedding
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics import normalized_mutual_info_score
@@ -56,6 +57,15 @@ def test_spectral_embedding_two_components(seed=36):
     # second component
     affinity[n_sample::,
              n_sample::] = np.abs(random_state.randn(n_sample, n_sample)) + 2
+
+    # Test of internal _graph_connected_component before connection
+    component = _graph_connected_component(affinity, 0)
+    assert_true(component[:n_sample].all())
+    assert_true(not component[n_sample:].any())
+    component = _graph_connected_component(affinity, -1)
+    assert_true(not component[:n_sample].any())
+    assert_true(component[n_sample:].all())
+
     # connection
     affinity[0, n_sample + 1] = 1
     affinity[n_sample + 1, 0] = 1
