@@ -48,6 +48,7 @@ from sklearn.metrics import brier_score_loss
 from sklearn.metrics.classification import _check_targets
 from sklearn.metrics.base import UndefinedMetricWarning
 
+from scipy.spatial.distance import hamming as sp_hamming
 
 ###############################################################################
 # Utilities for testing
@@ -655,6 +656,8 @@ def test_multilabel_hamming_loss():
     assert_equal(hamming_loss(y1, y2, sample_weight=w), 1. / 12)
     assert_equal(hamming_loss(y1, 1-y2, sample_weight=w), 11. / 12)
     assert_equal(hamming_loss(y1, np.zeros_like(y1), sample_weight=w), 2. / 3)
+    # sp_hamming only works with 1-D arrays
+    assert_equal(hamming_loss(y1[0], y2[0]), sp_hamming(y1[0], y2[0]))
 
 
 def test_multilabel_jaccard_similarity_score():
