@@ -54,7 +54,7 @@ def _return_float_dtype(X, Y):
     return X, Y, dtype
 
 
-def check_pairwise_arrays(X, Y, precomputed=False):
+def check_pairwise_arrays(X, Y, precomputed=False, dtype=None):
     """ Set X and Y appropriately and checks inputs
 
     If Y is None, it is set as a pointer to X (i.e. not a copy).
@@ -88,13 +88,21 @@ def check_pairwise_arrays(X, Y, precomputed=False):
         If Y was None, safe_Y will be a pointer to X.
 
     """
-    X, Y, dtype = _return_float_dtype(X, Y)
+    X, Y, dtype_float = _return_float_dtype(X, Y)
+
+    warn_on_dtype = dtype is not None
+    estimator = 'check_pairwise_arrays'
+    if dtype is None:
+        dtype = dtype_float
 
     if Y is X or Y is None:
-        X = Y = check_array(X, accept_sparse='csr', dtype=dtype)
+        X = Y = check_array(X, accept_sparse='csr', dtype=dtype,
+                            warn_on_dtype=warn_on_dtype, estimator=estimator)
     else:
-        X = check_array(X, accept_sparse='csr', dtype=dtype)
-        Y = check_array(Y, accept_sparse='csr', dtype=dtype)
+        X = check_array(X, accept_sparse='csr', dtype=dtype,
+                        warn_on_dtype=warn_on_dtype, estimator=estimator)
+        Y = check_array(Y, accept_sparse='csr', dtype=dtype,
+                        warn_on_dtype=warn_on_dtype, estimator=estimator)
 
     if precomputed:
         if X.shape[1] != Y.shape[0]:
@@ -1208,13 +1216,31 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         if issparse(X) or issparse(Y):
             raise TypeError("scipy distance metrics do not"
                             " support sparse matrices.")
-        X, Y = check_pairwise_arrays(X, Y)
+
+        dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
+
+        X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
+
         if n_jobs == 1 and X is Y:
             return distance.squareform(distance.pdist(X, metric=metric,
                                                       **kwds))
         func = partial(distance.cdist, metric=metric, **kwds)
 
     return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
+
+
+# These distances recquire boolean arrays, when using scipy.spatial.distance
+PAIRWISE_BOOLEAN_FUNCTIONS = [
+    'dice',
+    'jaccard',
+    'kulsinski',
+    'matching',
+    'rogerstanimoto',
+    'russellrao',
+    'sokalmichener',
+    'sokalsneath',
+    'yule',
+]
 
 
 # Helper functions - distance
