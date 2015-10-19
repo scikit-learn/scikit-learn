@@ -351,6 +351,11 @@ class LabelKFold(_BaseKFold):
     The folds are approximately balanced in the sense that the number of
     distinct labels is approximately the same in each fold.
 
+    When ``shuffle`` is ``False``, the labels are distributed over folds
+    according to the order in which they first appear in ``labels``. This makes
+    it possible to get approximately stratified folds by sorting the samples on
+    an attribute beforehand.
+
     Parameters
     ----------
     labels : array-like with shape (n_samples, )
@@ -385,14 +390,14 @@ class LabelKFold(_BaseKFold):
     ...     y_train, y_test = y[train_index], y[test_index]
     ...     print(X_train, X_test, y_train, y_test)
     ...
-    TRAIN: [0 1] TEST: [2 3]
-    [[1 2]
-     [3 4]] [[5 6]
-     [7 8]] [1 2] [3 4]
     TRAIN: [2 3] TEST: [0 1]
     [[5 6]
      [7 8]] [[1 2]
      [3 4]] [3 4] [1 2]
+    TRAIN: [0 1] TEST: [2 3]
+    [[1 2]
+     [3 4]] [[5 6]
+     [7 8]] [1 2] [3 4]
 
     See also
     --------
@@ -403,7 +408,12 @@ class LabelKFold(_BaseKFold):
         super(LabelKFold, self).__init__(len(labels), n_folds, shuffle,
                                          random_state)
 
-        unique_labels, labels = np.unique(labels, return_inverse=True)
+        unique_labels, unique_inverse = np.unique(
+                labels, return_inverse=True)
+        # separate call to get unique_indices to work around bug in Numpy 1.6.2
+        # https://github.com/numpy/numpy/issues/2785
+        _unique_labels, unique_indices = np.unique(
+                unique_inverse, return_index=True)
         n_labels = len(unique_labels)
 
         if n_folds > n_labels:
@@ -412,36 +422,33 @@ class LabelKFold(_BaseKFold):
                      " than the number of labels: {1}.").format(n_folds,
                                                                 n_labels))
 
+        # np.unique gives labels in sorted order; this maps the
+        # indices of labels to their order of first occurrence
+        ordering = np.argsort(unique_indices)
+
         if shuffle:
-            # In case of ties in label weights, label names are indirectly
-            # used to assign samples to folds. When shuffle=True, label names
-            # are randomized to obtain random fold assigments.
+            # When shuffle=True, the order of labels is randomized to obtain
+            # random fold assigments.
             rng = check_random_state(self.random_state)
-            unique_labels = np.arange(n_labels, dtype=np.int)
-            rng.shuffle(unique_labels)
-            labels = unique_labels[labels]
-            unique_labels, labels = np.unique(labels, return_inverse=True)
+            rng.shuffle(ordering)
 
         # Weight labels by their number of occurences
-        n_samples_per_label = np.bincount(labels)
-
-        # Distribute the most frequent labels first
-        indices = np.argsort(n_samples_per_label)[::-1]
-        n_samples_per_label = n_samples_per_label[indices]
+        n_samples_per_label = np.bincount(unique_inverse)
 
         # Total weight of each fold
-        n_samples_per_fold = np.zeros(n_folds)
+        n_samples_per_fold = np.zeros(n_folds, dtype=np.intp)
 
         # Mapping from label index to fold index
-        label_to_fold = np.zeros(len(unique_labels))
+        label_to_fold = np.zeros(n_labels, dtype=np.intp)
 
-        # Distribute samples by adding the largest weight to the lightest fold
-        for label_index, weight in enumerate(n_samples_per_label):
-            lightest_fold = np.argmin(n_samples_per_fold)
-            n_samples_per_fold[lightest_fold] += weight
-            label_to_fold[indices[label_index]] = lightest_fold
+        # Distribute samples by adding labels to the fold with the least number
+        # of samples at each iteration
+        for n in ordering:
+            fold = np.argmin(n_samples_per_fold)
+            n_samples_per_fold[fold] += n_samples_per_label[n]
+            label_to_fold[n] = fold
 
-        self.idxs = label_to_fold[labels]
+        self.idxs = label_to_fold[unique_inverse]
 
     def _iter_test_indices(self):
         for f in range(self.n_folds):

@@ -359,8 +359,7 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     assert_greater(mean_score, 0.85)
 
 
-def check_label_kfold(shuffle):
-    rng = np.random.RandomState(0)
+def check_label_kfold(shuffle, rng):
 
     # Parameters of the test
     n_labels = 15
@@ -369,7 +368,7 @@ def check_label_kfold(shuffle):
 
     # Construct the test data
     tolerance = 0.05 * n_samples  # 5 percent error allowed
-    labels = rng.randint(0, n_labels, n_samples)
+    labels = np.random.RandomState(rng).randint(0, n_labels, n_samples)
     folds = cval.LabelKFold(labels,
                             n_folds=n_folds,
                             shuffle=shuffle,
@@ -407,12 +406,19 @@ def check_label_kfold(shuffle):
     n_labels = len(np.unique(labels))
     n_samples = len(labels)
     n_folds = 5
-    tolerance = 0.05 * n_samples  # 5 percent error allowed
+    tolerance = 0.1 * n_samples  # 10 percent error allowed
     folds = cval.LabelKFold(labels,
                             n_folds=n_folds,
                             shuffle=shuffle,
                             random_state=rng).idxs
     ideal_n_labels_per_fold = n_samples // n_folds
+
+    # Shuffle should have an effect
+    otherfolds = cval.LabelKFold(labels,
+                            n_folds=n_folds,
+                            shuffle=not shuffle,
+                            random_state=rng).idxs
+    assert_not_equal(list(folds), list(otherfolds))
 
     # Check that folds have approximately the same size
     assert_equal(len(folds), len(labels))
@@ -437,8 +443,9 @@ def check_label_kfold(shuffle):
 
 
 def test_label_kfold():
-    for shuffle in [False, True]:
-        yield check_label_kfold, shuffle
+    yield check_label_kfold, False, 0
+    for random_state in range(3):
+        yield check_label_kfold, True, random_state
 
 
 def test_shuffle_split():
