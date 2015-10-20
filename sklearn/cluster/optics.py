@@ -103,7 +103,8 @@ def _expandClusterOrder(setofobjects, point, epsilon):
             setofobjects.ordering_.append(point)
             point = _set_reach_dist(setofobjects, point, epsilon)
     else:
-        setofobjects._processed[point] = True    # Probably not needed... #
+        setofobjects.ordering_.insert(0, point) # better way? For v. noisy p's
+        setofobjects._processed[point] = True
 
 
 # As above, not parallelizable. Parallelizing would allow items in
@@ -209,15 +210,15 @@ class OPTICS(BaseEstimator, ClusterMixin):
         #  Checks for sparse matrices
         X = check_array(X)
 
-        tree = setOfObjects(X)  # ,self.metric)
-        _prep_optics(tree, self.eps * 5.0, self.min_samples)
-        _build_optics(tree, self.eps * 5.0)
-        self._index = tree._index[:]
-        self.reachability_ = tree.reachability_[:]
-        self.core_dists_ = tree.core_dists_[:]
-        self._cluster_id = tree._cluster_id[:]
-        self._is_core = tree._is_core[:]
-        self.ordering_ = tree.ordering_[:]
+        self.tree = setOfObjects(X)  # ,self.metric)
+        _prep_optics(self.tree, self.eps * 5.0, self.min_samples)
+        _build_optics(self.tree, self.eps * 5.0)
+        self._index = self.tree._index[:]
+        self.reachability_ = self.tree.reachability_[:]
+        self.core_dists_ = self.tree.core_dists_[:]
+        self._cluster_id = self.tree._cluster_id[:]
+        self._is_core = self.tree._is_core[:]
+        self.ordering_ = self.tree.ordering_[:]
         _extractDBSCAN(self, self.eps)  # extraction needs to be < eps
         self.labels_ = self._cluster_id[:]
         self.core_sample_indices_ = self._index[self._is_core[:] == True]
@@ -225,7 +226,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.processed = True
         return self  # self.core_sample_indices_, self.labels_
 
-    def extract(self, epsilon_prime=self.eps, clustering='dbscan',
+    def extract(self, epsilon_prime, clustering='dbscan',
                 significant_ratio=0.75, similarity_ratio=0.4, 
                 min_reach_ratio=0.1):
         """Performs DBSCAN equivalent extraction for arbitrary epsilon.
@@ -343,7 +344,9 @@ def _hierarchical_extraction(self, significant_ratio=0.75,
     567-567.
     """
     R = np.asarray([self.reachability_[i] for i in self.ordering_])
-    n = len(ordering_)
+    # problems with inf reach. dists... setting first point to 0 reach dist
+    R[0] = 0
+    n = len(self.ordering_)
 
     # Find local maximas
     L = []
@@ -420,10 +423,9 @@ def _hierarchical_extraction(self, significant_ratio=0.75,
     root = Node(0, n)
     cluster_tree(root, None, L)
 
-    self._cluster_id = -np.ones(n)
+    self._cluster_id[:] = -np.ones(n)
     for (i, leaf) in enumerate(leaves):
         for j in xrange(leaf.left, leaf.right):
-            self._cluster_id[self.ordering[j]] = i
-    self._is_core[self.labels == -1] = 0 
-    self._is_core[self.labels_[:] >= 0] = 1
-
+            self._cluster_id[self.ordering_[j]] = i
+    #self._is_core[self._cluster_id[:] == -1] = 0 
+    #self._is_core[self._cluster_id[:] >= 0] = 1
