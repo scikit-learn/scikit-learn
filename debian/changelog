@@ -4,6 +4,9 @@ scikit-learn (0.17.0~b1-1) UNRELEASED; urgency=medium
     - requires joblib >= 0.9.2
   * debian/patches
     - deb_disable_google_anals to disable google tracking
+    - deb_nopaypal  to refer to upstream website and not incorporate
+      paypal form in the doc
+    - deb_no_online_jquery  to avoid referring to online jquery
   * use system-wide libjs-underscore
   *  LOOK INTO TODOS
 
