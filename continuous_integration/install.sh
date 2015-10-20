@@ -32,11 +32,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
     cd
     mkdir -p download
     cd download
-    echo 'We are in :'
-    pwd
-    echo 'with those files:'
+    echo "Cached in $HOME/download :"
     ls -l
-    echo
     echo
     if [[ ! -f miniconda.sh ]]
         then
@@ -67,13 +64,6 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # virtualenv but we want to used numpy installed through apt-get
     # install.
     deactivate
-
-    if [ -e testvenv ]; then
-        echo 'testvenv cached:'
-        ls testvenv
-        echo 
-        echo
-    fi
     # Create a new virtualenv using system site packages for numpy and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
