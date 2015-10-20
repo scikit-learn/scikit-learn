@@ -79,6 +79,9 @@ Enhancements
    - :class:`linear_model.RANSACRegressor` now supports ``sample_weights``.
      By `Imaculate`_.
 
+   - Add parameter ``loss`` to :class:`linear_model.RANSACRegressor` to measure the
+     error on the samples for every trial. By `Manoj Kumar`_.
+
 Bug fixes
 .........
 
@@ -114,6 +117,8 @@ API changes summary
      the :mod:`model_selection` module.
      (`#4294 <https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by `Raghav R V`_.
 
+   - ``residual_metric`` has been deprecated in :class:`linear_model.RANSACRegressor`.
+     Use ``loss`` instead. By `Manoj Kumar`_.
 
 .. _changes_0_17:
 

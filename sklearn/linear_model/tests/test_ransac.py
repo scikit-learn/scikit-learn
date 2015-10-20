@@ -1,9 +1,18 @@
-import numpy as np
-from numpy.testing import assert_equal, assert_raises, assert_array_equal,assert_array_almost_equal
-from sklearn.utils.testing import assert_raises_regexp, assert_almost_equal, assert_less
 from scipy import sparse
+
+import numpy as np
+from scipy import sparse
+
+from numpy.testing import assert_equal, assert_raises
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal
+
 from sklearn.utils import check_random_state
-from sklearn.linear_model import LinearRegression, RANSACRegressor,Lasso
+from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.linear_model import LinearRegression, RANSACRegressor, Lasso
 from sklearn.linear_model.ransac import _dynamic_max_trials
 
 
@@ -265,6 +274,7 @@ def test_ransac_multi_dimensional_targets():
     assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
 
+# XXX: Remove in 0.20
 def test_ransac_residual_metric():
     residual_metric1 = lambda dy: np.sum(np.abs(dy), axis=1)
     residual_metric2 = lambda dy: np.sum(dy ** 2, axis=1)
@@ -283,6 +293,38 @@ def test_ransac_residual_metric():
 
     # multi-dimensional
     ransac_estimator0.fit(X, yyy)
+    assert_warns(DeprecationWarning, ransac_estimator1.fit, X, yyy)
+    assert_warns(DeprecationWarning, ransac_estimator2.fit, X, yyy)
+    assert_array_almost_equal(ransac_estimator0.predict(X),
+                              ransac_estimator1.predict(X))
+    assert_array_almost_equal(ransac_estimator0.predict(X),
+                              ransac_estimator2.predict(X))
+
+    # one-dimensional
+    ransac_estimator0.fit(X, y)
+    assert_warns(DeprecationWarning, ransac_estimator2.fit, X, y)
+    assert_array_almost_equal(ransac_estimator0.predict(X),
+                              ransac_estimator2.predict(X))
+
+def test_ransac_residual_loss():
+    loss_multi1 = lambda y_true, y_pred: np.sum(np.abs(y_true - y_pred), axis=1)
+    loss_multi2 = lambda y_true, y_pred: np.sum((y_true - y_pred) ** 2, axis=1)
+
+    loss_mono = lambda y_true, y_pred : np.abs(y_true - y_pred)
+    yyy = np.column_stack([y, y, y])
+
+    base_estimator = LinearRegression()
+    ransac_estimator0 = RANSACRegressor(base_estimator, min_samples=2,
+                                        residual_threshold=5, random_state=0)
+    ransac_estimator1 = RANSACRegressor(base_estimator, min_samples=2,
+                                        residual_threshold=5, random_state=0,
+                                        loss=loss_multi1)
+    ransac_estimator2 = RANSACRegressor(base_estimator, min_samples=2,
+                                        residual_threshold=5, random_state=0,
+                                        loss=loss_multi2)
+
+    # multi-dimensional
+    ransac_estimator0.fit(X, yyy)
     ransac_estimator1.fit(X, yyy)
     ransac_estimator2.fit(X, yyy)
     assert_array_almost_equal(ransac_estimator0.predict(X),
@@ -292,7 +334,14 @@ def test_ransac_residual_metric():
 
     # one-dimensional
     ransac_estimator0.fit(X, y)
+    ransac_estimator2.loss = loss_mono
     ransac_estimator2.fit(X, y)
+    assert_array_almost_equal(ransac_estimator0.predict(X),
+                              ransac_estimator2.predict(X))
+    ransac_estimator3 = RANSACRegressor(base_estimator, min_samples=2,
+                                        residual_threshold=5, random_state=0,
+                                        loss="squared_loss")
+    ransac_estimator3.fit(X, y)
     assert_array_almost_equal(ransac_estimator0.predict(X),
                               ransac_estimator2.predict(X))
 
