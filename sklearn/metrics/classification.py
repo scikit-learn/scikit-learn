@@ -1461,7 +1461,6 @@ def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
-    #check_consistent_length(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
     if classes is None:
