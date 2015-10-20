@@ -14,6 +14,13 @@ export CC=gcc
 export CXX=g++
 
 
+echo 'List files from cached directories'
+echo 'pip:'
+ls $HOME/.cache/pip
+echo 'download'
+ls $HOME/download
+
+
 if [[ "$DISTRIB" == "conda" ]]; then
     # Deactivate the travis-provided virtual environment and setup a
     # conda-based environment instead
@@ -21,8 +28,16 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     # Use the miniconda installer for faster download / install of conda
     # itself
+    pushd .
+    cd
     mkdir -p download
     cd download
+    echo 'We are in :'
+    pwd
+    echo 'with those files:'
+    ls -l
+    echo
+    echo
     if [[ ! -f miniconda.sh ]]
         then
         wget http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh \
@@ -32,6 +47,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     cd ..
     export PATH=/home/travis/miniconda/bin:$PATH
     conda update --yes conda
+    popd
 
     # Configure the conda environment and put it in the path using the
     # provided versions
@@ -52,6 +68,12 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # install.
     deactivate
 
+    if [ -e testvenv ]; then
+        echo 'testvenv cached:'
+        ls testvenv
+        echo 
+        echo
+    fi
     # Create a new virtualenv using system site packages for numpy and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
