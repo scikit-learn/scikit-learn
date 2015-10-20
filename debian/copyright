@@ -9,7 +9,7 @@ License: BSD-3
 
 Files: doc/sphinxext/*
 Copyright: 2008, Stefan van der Walt <stefan@mentat.za.net>, Pauli Virtanen <pav@iki.fi>
-License: BSD
+License: BSD-2
   1. Redistributions of source code must retain the above copyright
      notice, this list of conditions and the following disclaimer.
   2. Redistributions in binary form must reproduce the above copyright
