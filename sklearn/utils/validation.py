@@ -383,7 +383,10 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
                                       force_all_finite)
     else:
-        array = np.array(array, dtype=dtype, order=order, copy=copy)
+        # Do not physically copy memory map : if type(array) == np.memmap:
+        # type(array) == np.array
+        # array.base is array_orig
+        array = np.asarray(array, dtype=dtype, order=order)
 
         if ensure_2d:
             if array.ndim == 1:
@@ -398,10 +401,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
                     "X.reshape(1, -1) if it contains a single sample.",
                     DeprecationWarning)
             array = np.atleast_2d(array)
-            # To ensure that array flags are maintained
-            array = np.array(array, dtype=dtype, order=order, copy=copy)
 
-        array = np.asarray(array, dtype=dtype, order=order)
         # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind == "O":
             array = array.astype(np.float64)
