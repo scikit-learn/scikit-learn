@@ -31,8 +31,9 @@ from ..utils import check_random_state, column_or_1d
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
-from ..utils.validation import NotFittedError, check_is_fitted
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
+from ..utils.validation import check_is_fitted
+from ..exceptions import NotFittedError
 
 
 #

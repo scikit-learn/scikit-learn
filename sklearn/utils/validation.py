@@ -14,32 +14,43 @@ import scipy.sparse as sp
 
 from ..externals import six
 from ..utils.fixes import signature
+from .deprecation import deprecated
+from ..exceptions import DataConversionWarning as DataConversionWarning_
+from ..exceptions import NonBLASDotWarning as NonBLASDotWarning_
+from ..exceptions import NotFittedError as NotFittedError_
+
+
+class DataConversionWarning(DataConversionWarning_):
+    pass
+
+DataConversionWarning = deprecated("DataConversionWarning has been moved "
+                                   "into the sklearn.exceptions module. "
+                                   "It will not be available here from "
+                                   "version 0.19")(DataConversionWarning)
+
+
+class NonBLASDotWarning(NonBLASDotWarning_):
+    pass
+
+NonBLASDotWarning = deprecated("NonBLASDotWarning has been moved "
+                               "into the sklearn.exceptions module. "
+                               "It will not be available here from "
+                               "version 0.19")(NonBLASDotWarning)
+
+
+class NotFittedError(NotFittedError_):
+    pass
+
+NotFittedError = deprecated("NotFittedError has been moved into the "
+                            "sklearn.exceptions module. It will not be "
+                            "available here from version 0.19")(NotFittedError)
+
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
-
-class DataConversionWarning(UserWarning):
-    """A warning on implicit data conversions happening in the code"""
-    pass
-
-warnings.simplefilter("always", DataConversionWarning)
-
-
-class NonBLASDotWarning(UserWarning):
-    """A warning on implicit dispatch to numpy.dot"""
-
-
-class NotFittedError(ValueError, AttributeError):
-    """Exception class to raise if estimator is used before fitting
-
-    This class inherits from both ValueError and AttributeError to help with
-    exception handling and backward compatibility.
-    """
-
-
 # Silenced by default to reduce verbosity. Turn on at runtime for
 # performance profiling.
-warnings.simplefilter('ignore', NonBLASDotWarning)
+warnings.simplefilter('ignore', NonBLASDotWarning_)
 
 
 def _assert_all_finite(X):
@@ -417,7 +428,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:
         msg = ("Data with input dtype %s was converted to %s%s."
                % (dtype_orig, array.dtype, context))
-        warnings.warn(msg, DataConversionWarning)
+        warnings.warn(msg, DataConversionWarning_)
     return array
 
 
@@ -545,7 +556,7 @@ def column_or_1d(y, warn=False):
             warnings.warn("A column-vector y was passed when a 1d array was"
                           " expected. Please change the shape of y to "
                           "(n_samples, ), for example using ravel().",
-                          DataConversionWarning, stacklevel=2)
+                          DataConversionWarning_, stacklevel=2)
         return np.ravel(y)
 
     raise ValueError("bad input shape {0}".format(shape))
@@ -675,7 +686,8 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
         attributes = [attributes]
 
     if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
-        raise NotFittedError(msg % {'name': type(estimator).__name__})
+        # FIXME NotFittedError_ --> NotFittedError in 0.19
+        raise NotFittedError_(msg % {'name': type(estimator).__name__})
 
 
 def check_non_negative(X, whom):

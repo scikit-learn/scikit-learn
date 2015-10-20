@@ -46,7 +46,7 @@ from sklearn.metrics import brier_score_loss
 
 
 from sklearn.metrics.classification import _check_targets
-from sklearn.metrics.base import UndefinedMetricWarning
+from sklearn.exceptions import UndefinedMetricWarning
 
 
 ###############################################################################

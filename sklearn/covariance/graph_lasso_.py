@@ -16,7 +16,7 @@ from scipy import linalg
 from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
                                     log_likelihood)
 
-from ..utils import ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 from ..utils.extmath import pinvh
 from ..utils.validation import check_random_state, check_array
 from ..linear_model import lars_path

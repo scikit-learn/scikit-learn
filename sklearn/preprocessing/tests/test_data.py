@@ -48,7 +48,7 @@ from sklearn.preprocessing.data import RobustScaler
 from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
-from sklearn.utils.validation import DataConversionWarning
+from sklearn.exceptions import DataConversionWarning
 
 from sklearn import datasets
 

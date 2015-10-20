@@ -28,10 +28,11 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import raises
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.utils.validation import check_random_state
-from sklearn.utils.validation import NotFittedError
-from sklearn.utils.testing import ignore_warnings
+
+from sklearn.exceptions import NotFittedError
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -1312,7 +1313,7 @@ def check_presort_sparse(est, X, y):
     assert_raises(ValueError, est.fit, X, y )
 
 def test_presort_sparse():
-    ests = (DecisionTreeClassifier(presort=True), 
+    ests = (DecisionTreeClassifier(presort=True),
             DecisionTreeRegressor(presort=True))
     sparse_matrices = (csr_matrix, csc_matrix, coo_matrix)
 

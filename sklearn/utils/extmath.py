@@ -24,7 +24,8 @@ from .fixes import np_version
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
-from .validation import check_array, NonBLASDotWarning
+from .validation import check_array
+from ..exceptions import NonBLASDotWarning
 
 
 def norm(x):
@@ -101,9 +102,11 @@ def _fast_dot(A, B):
 
     if A.dtype != B.dtype or any(x.dtype not in (np.float32, np.float64)
                                  for x in [A, B]):
-        warnings.warn('Data must be of same type. Supported types '
-                      'are 32 and 64 bit float. '
-                      'Falling back to np.dot.', NonBLASDotWarning)
+        warnings.warn('Falling back to np.dot. '
+                      'Data must be of same type of either '
+                      '32 or 64 bit float for the BLAS function, gemm, to be '
+                      'used for an efficient dot operation. ',
+                      NonBLASDotWarning)
         raise ValueError
 
     if min(A.shape) == 1 or min(B.shape) == 1 or A.ndim != 2 or B.ndim != 2:
@@ -145,7 +148,7 @@ if np_version < (1, 7, 2) and _have_blas_gemm():
             execute the following lines of code:
 
             >> import warnings
-            >> from sklearn.utils.validation import NonBLASDotWarning
+            >> from sklearn.exceptions import NonBLASDotWarning
             >> warnings.simplefilter('always', NonBLASDotWarning)
         """
         try:

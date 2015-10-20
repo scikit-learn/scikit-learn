@@ -7,7 +7,7 @@
 import numpy as np
 import warnings
 
-from ..utils import ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 from ..utils import check_array
 from .base import make_dataset
 from .sgd_fast import Log, SquaredLoss

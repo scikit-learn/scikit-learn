@@ -4,12 +4,12 @@
 import numpy as np
 
 from .base import SelectorMixin
-from ..base import (TransformerMixin, BaseEstimator, clone,
-                    MetaEstimatorMixin)
+from ..base import TransformerMixin, BaseEstimator, clone
 from ..externals import six
 
 from ..utils import safe_mask, check_array, deprecated
-from ..utils.validation import NotFittedError, check_is_fitted
+from ..utils.validation import check_is_fitted
+from ..exceptions import NotFittedError
 
 
 def _get_feature_importances(estimator):

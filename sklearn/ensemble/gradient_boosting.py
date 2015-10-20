@@ -61,8 +61,8 @@ from ..utils.fixes import expit
 from ..utils.fixes import bincount
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
-from ..utils.validation import  NotFittedError
 from ..utils.multiclass import check_classification_targets
+from ..exceptions import  NotFittedError
 
 
 class QuantileEstimator(BaseEstimator):

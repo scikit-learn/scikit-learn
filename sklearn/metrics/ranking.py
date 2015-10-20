@@ -31,9 +31,9 @@ from ..utils.fixes import bincount
 from ..utils.fixes import array_equal
 from ..utils.stats import rankdata
 from ..utils.sparsefuncs import count_nonzero
+from ..exceptions import UndefinedMetricWarning
 
 from .base import _average_binary_score
-from .base import UndefinedMetricWarning
 
 
 def auc(x, y, reorder=False):

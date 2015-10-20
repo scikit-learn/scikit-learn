@@ -8,7 +8,7 @@ from numpy.testing import (assert_array_almost_equal, assert_array_equal,
 from sklearn import datasets, svm, linear_model, base
 from sklearn.datasets import make_classification, load_digits, make_blobs
 from sklearn.svm.tests import test_svm
-from sklearn.utils import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.testing import assert_warns, assert_raise_message
 

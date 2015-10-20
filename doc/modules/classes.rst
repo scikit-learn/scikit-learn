@@ -378,6 +378,31 @@ partial dependence
    ensemble.partial_dependence.plot_partial_dependence
 
 
+.. _exceptions_ref:
+
+:mod:`sklearn.exceptions`: Exceptions and warnings
+==================================================
+
+.. automodule:: sklearn.exceptions
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class_without_init.rst
+
+   exceptions.NotFittedError
+   exceptions.ChangedBehaviorWarning
+   exceptions.ConvergenceWarning
+   exceptions.DataConversionWarning
+   exceptions.DataDimensionalityWarning
+   exceptions.EfficiencyWarning
+   exceptions.FitFailedWarning
+   exceptions.NonBLASDotWarning
+   exceptions.UndefinedMetricWarning
+
 .. _feature_extraction_ref:
 
 :mod:`sklearn.feature_extraction`: Feature Extraction

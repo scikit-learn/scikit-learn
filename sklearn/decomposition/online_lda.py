@@ -18,10 +18,11 @@ from scipy.special import gammaln
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
                      gen_batches, gen_even_slices, _get_n_jobs)
-from ..utils.validation import NotFittedError, check_non_negative
+from ..utils.validation import check_non_negative
 from ..utils.extmath import logsumexp
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
+from ..exceptions import NotFittedError
 
 from ._online_lda import (mean_change, _dirichlet_expectation_1d,
                           _dirichlet_expectation_2d)

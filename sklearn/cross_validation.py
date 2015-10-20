@@ -32,6 +32,7 @@ from .externals.six.moves import zip
 from .metrics.scorer import check_scoring
 from .utils.fixes import bincount
 from .gaussian_process.kernels import Kernel as GPKernel
+from .exceptions import FitFailedWarning
 
 __all__ = ['KFold',
            'LabelKFold',
@@ -1426,10 +1427,6 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                                               fit_params)
                       for train, test in cv)
     return np.array(scores)[:, 0]
-
-
-class FitFailedWarning(RuntimeWarning):
-    pass
 
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
