@@ -41,14 +41,13 @@ from sklearn.gaussian_process.kernels import RBF
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
 h = .02  # step size in the mesh
 
 names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Gaussian Process",
          "Decision Tree", "Random Forest", "AdaBoost", "Naive Bayes",
-         "Linear Discriminant Analysis", "Quadratic Discriminant Analysis"]
+         "QDA"]
 
 classifiers = [
     KNeighborsClassifier(3),
@@ -59,7 +58,6 @@ classifiers = [
     RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
     AdaBoostClassifier(),
     GaussianNB(),
-    LinearDiscriminantAnalysis(),
     QuadraticDiscriminantAnalysis()]
 
 X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
@@ -76,7 +74,7 @@ datasets = [make_moons(noise=0.3, random_state=0),
 figure = plt.figure(figsize=(27, 9))
 i = 1
 # iterate over datasets
-for ds in datasets:
+for ds_cnt, ds in enumerate(datasets):
     # preprocess dataset, split into training and test part
     X, y = ds
     X = StandardScaler().fit_transform(X)
@@ -92,6 +90,8 @@ for ds in datasets:
     cm = plt.cm.RdBu
     cm_bright = ListedColormap(['#FF0000', '#0000FF'])
     ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
+    if ds_cnt == 0:
+        ax.set_title("Input data")
     # Plot the training points
     ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright)
     # and testing points
@@ -129,7 +129,8 @@ for ds in datasets:
         ax.set_ylim(yy.min(), yy.max())
         ax.set_xticks(())
         ax.set_yticks(())
-        ax.set_title(name)
+        if ds_cnt == 0:
+            ax.set_title(name)
         ax.text(xx.max() - .3, yy.min() + .3, ('%.2f' % score).lstrip('0'),
                 size=15, horizontalalignment='right')
         i += 1
