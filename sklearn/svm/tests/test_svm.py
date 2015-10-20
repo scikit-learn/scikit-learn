@@ -533,56 +533,42 @@ def test_linearsvx_loss_penalty_deprecations():
            " for the %s will be removed in %s")
 
     # LinearSVC
-    # loss l1/L1 --> hinge
+    # loss l1 --> hinge
     assert_warns_message(DeprecationWarning,
                          msg % ("l1", "hinge", "loss='l1'", "1.0"),
                          svm.LinearSVC(loss="l1").fit, X, y)
 
-    # loss l2/L2 --> squared_hinge
+    # loss l2 --> squared_hinge
     assert_warns_message(DeprecationWarning,
-                         msg % ("L2", "squared_hinge", "loss='L2'", "1.0"),
-                         svm.LinearSVC(loss="L2").fit, X, y)
+                         msg % ("l2", "squared_hinge", "loss='l2'", "1.0"),
+                         svm.LinearSVC(loss="l2").fit, X, y)
 
     # LinearSVR
-    # loss l1/L1 --> epsilon_insensitive
+    # loss l1 --> epsilon_insensitive
     assert_warns_message(DeprecationWarning,
-                         msg % ("L1", "epsilon_insensitive", "loss='L1'",
+                         msg % ("l1", "epsilon_insensitive", "loss='l1'",
                                 "1.0"),
-                         svm.LinearSVR(loss="L1").fit, X, y)
+                         svm.LinearSVR(loss="l1").fit, X, y)
 
-    # loss l2/L2 --> squared_epsilon_insensitive
+    # loss l2 --> squared_epsilon_insensitive
     assert_warns_message(DeprecationWarning,
                          msg % ("l2", "squared_epsilon_insensitive",
                                 "loss='l2'", "1.0"),
                          svm.LinearSVR(loss="l2").fit, X, y)
 
 
-# FIXME remove in 0.18
-def test_linear_svx_uppercase_loss_penalty():
-    # Check if Upper case notation is supported by _fit_liblinear
+def test_linear_svx_uppercase_loss_penality_raises_error():
+    # Check if Upper case notation raises error at _fit_liblinear
     # which is called by fit
+
     X, y = [[0.0], [1.0]], [0, 1]
 
-    msg = ("loss='%s' has been deprecated in favor of "
-           "loss='%s' as of 0.16. Backward compatibility"
-           " for the uppercase notation will be removed in %s")
+    assert_raise_message(ValueError, "loss='SQuared_hinge' is not supported",
+                         svm.LinearSVC(loss="SQuared_hinge").fit, X, y)
 
-    # loss SQUARED_hinge --> squared_hinge
-    assert_warns_message(DeprecationWarning,
-                         msg % ("SQUARED_hinge", "squared_hinge", "0.18"),
-                         svm.LinearSVC(loss="SQUARED_hinge").fit, X, y)
-
-    # penalty L2 --> l2
-    assert_warns_message(DeprecationWarning,
-                         msg.replace("loss", "penalty")
-                         % ("L2", "l2", "0.18"),
+    assert_raise_message(ValueError, ("The combination of penalty='L2'"
+                         " and loss='squared_hinge' is not supported"),
                          svm.LinearSVC(penalty="L2").fit, X, y)
-
-    # loss EPSILON_INSENSITIVE --> epsilon_insensitive
-    assert_warns_message(DeprecationWarning,
-                         msg % ("EPSILON_INSENSITIVE", "epsilon_insensitive",
-                                "0.18"),
-                         svm.LinearSVR(loss="EPSILON_INSENSITIVE").fit, X, y)
 
 
 def test_linearsvc():
