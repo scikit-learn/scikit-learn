@@ -135,6 +135,7 @@ def check_supervised_y_no_nan(name, Estimator):
     # Checks that the Estimator targets are not NaN.
 
     warnings.simplefilter("ignore")
+    np.random.seed(888)
     X = np.random.randn(10, 5)
     y1 = np.random.randn(10) / 0.
     y2 = np.random.randn(10, 2) / 0.
