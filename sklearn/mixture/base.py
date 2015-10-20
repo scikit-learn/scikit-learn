@@ -11,7 +11,7 @@ from ..base import DensityMixin
 from .. import cluster
 from ..utils import check_random_state, check_array
 from ..utils.extmath import logsumexp
-from sklearn.utils import ConvergenceWarning
+from ..utils import ConvergenceWarning
 
 
 def check_shape(param, param_shape, name):

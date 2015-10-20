@@ -2,24 +2,24 @@ import numpy as np
 from scipy import linalg
 from scipy.special import gamma, digamma
 
-from sklearn.datasets.samples_generator import make_spd_matrix
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_allclose
+from ...datasets.samples_generator import make_spd_matrix
+from ...utils.testing import assert_array_almost_equal
+from ...utils.testing import assert_array_equal
+from ...utils.testing import assert_raise_message
+from ...utils.testing import assert_almost_equal
+from ...utils.testing import assert_allclose
 
-from sklearn.mixture import BayesianGaussianMixture
-from sklearn.mixture.bayesianmixture import _define_prior_shape
-from sklearn.mixture.tests.test_gaussianmixture import RandData
-from sklearn.covariance import EmpiricalCovariance
+from ...mixture import BayesianGaussianMixture
+from ...mixture.bayesian_mixture import _define_prior_shape
+from ...mixture.tests.test_gaussian_mixture import RandData
+from ...covariance import EmpiricalCovariance
 
 rng = np.random.RandomState(0)
 PRECISION_TYPE = ['full', 'tied', 'diag', 'spherical']
 
 
 def test_check_mu_prior():
-    from sklearn.mixture.bayesianmixture import _check_mu_prior
+    from ...mixture.bayesian_mixture import _check_mu_prior
 
     param_shape = _define_prior_shape(RandData.n_features, 'full')
 
@@ -69,7 +69,7 @@ def test_check_mu_prior():
 
 
 def test_check_lambda_nu_prior():
-    from sklearn.mixture.bayesianmixture import _check_lambda_nu_prior
+    from ...mixture.bayesian_mixture import _check_lambda_nu_prior
     param_shape = _define_prior_shape(RandData.n_features, 'full')
 
     lambda_nu_prior_bad_shape = np.array([10])
@@ -93,7 +93,7 @@ def test_check_lambda_nu_prior():
 
 
 def test_check_lambda_W_prior():
-    from sklearn.mixture.bayesianmixture import _check_lambda_prior
+    from ...mixture.bayesian_mixture import _check_lambda_prior
     param_shape = _define_prior_shape(RandData.n_features, 'full')
 
     lambda_W_prior_bad_shape = rng.rand(RandData.n_features + 1,
@@ -159,26 +159,26 @@ def test_check_lambda_W_prior():
     assert_array_equal(
         lambda_W_prior,
         _check_lambda_prior(lambda_nu_prior, lambda_W_prior,
-        param_shape['lambda_nu_prior'], param_shape['lambda_W_prior'],
-                            'diag')[1]
+                            param_shape['lambda_nu_prior'],
+                            param_shape['lambda_W_prior'], 'diag')[1]
     )
     assert_array_equal(
         lambda_nu_prior,
         _check_lambda_prior(lambda_nu_prior, lambda_W_prior,
-        param_shape['lambda_nu_prior'], param_shape['lambda_W_prior'],
-                            'diag')[0]
+                            param_shape['lambda_nu_prior'],
+                            param_shape['lambda_W_prior'], 'diag')[0]
     )
 
 
 def test_log_dirichlet_norm():
-    from sklearn.mixture.bayesianmixture import _log_dirichlet_norm
+    from ...mixture.bayesian_mixture import _log_dirichlet_norm
     alpha = rng.rand(2)
     assert_allclose(np.log(gamma(np.sum(alpha)) / np.prod(gamma(alpha))),
                     _log_dirichlet_norm(alpha))
 
 
 def test_log_wishart_norm():
-    from sklearn.mixture.bayesianmixture import _log_wishart_norm
+    from ...mixture.bayesian_mixture import _log_wishart_norm
     n_dim = RandData.n_features
     nu = np.abs(rng.rand()) + 1
     W = make_spd_matrix(n_dim, rng)
@@ -197,9 +197,8 @@ def test_log_wishart_norm():
     log_lambda = rng.rand()
 
 
-
 def test_log_gamma_norm_spherical():
-    from sklearn.mixture.bayesianmixture import _log_gamma_norm_spherical
+    from ...mixture.bayesian_mixture import _log_gamma_norm_spherical
     a = 1 + rng.rand()
     b = 1 + rng.rand()
     assert_array_almost_equal(np.log(np.power(b, -a) / gamma(a)),
@@ -207,7 +206,7 @@ def test_log_gamma_norm_spherical():
 
 
 def test_log_gamma_norm_diag():
-    from sklearn.mixture.bayesianmixture import _log_gamma_norm_diag
+    from ...mixture.bayesian_mixture import _log_gamma_norm_diag
     a = 1 + rng.rand()
     b = 1 + rng.rand(10)
     assert_array_almost_equal(np.sum(np.log(np.power(1. / b, a) / gamma(a))),
@@ -422,11 +421,9 @@ def test_e_step():
     assert_allclose(bgm._log_lambda, digamma(.5 * bgm.lambda_nu_) +
                     np.log(2) - np.log(bgm.lambda_inv_W_.squeeze()))
     assert_array_equal(bgm._inv_W_chol, np.sqrt(bgm.lambda_inv_W_))
-    test_prob = (.5 * bgm._log_lambda
-                 - .5 * np.log(2 * np.pi)
-                 - .5 * (1 / bgm.mu_beta_
-                         + bgm.lambda_nu_ *
-                         (X - bgm.mu_m_) ** 2 / bgm.lambda_inv_W_))
+    test_prob = (.5 * bgm._log_lambda - .5 * np.log(2 * np.pi) -
+                 .5 * (1 / bgm.mu_beta_ + bgm.lambda_nu_ *
+                       (X - bgm.mu_m_) ** 2 / bgm.lambda_inv_W_))
     assert_allclose(log_prob.squeeze(), test_prob.squeeze())
     assert_array_equal(resp.squeeze(), np.ones(n_samples))
 
@@ -451,11 +448,9 @@ def test_e_step():
     _, log_prob, resp, _ = bgm._estimate_log_prob_resp(X)
     assert_allclose(bgm._log_lambda, digamma(bgm.lambda_nu_) -
                     np.log(bgm.lambda_inv_W_.squeeze()))
-    test_prob = (.5 * bgm._log_lambda
-                 - .5 * np.log(2 * np.pi)
-                 - .5 * (1 / bgm.mu_beta_
-                         + bgm.lambda_nu_ *
-                         (X - bgm.mu_m_) ** 2 / bgm.lambda_inv_W_))
+    test_prob = (.5 * bgm._log_lambda - .5 * np.log(2 * np.pi) -
+                 .5 * (1 / bgm.mu_beta_ + bgm.lambda_nu_ *
+                       (X - bgm.mu_m_) ** 2 / bgm.lambda_inv_W_))
     assert_allclose(log_prob.squeeze(), test_prob.squeeze())
     assert_array_equal(resp.squeeze(), np.ones(n_samples))
 
@@ -520,8 +515,8 @@ def test_estimate_lower_bound():
                       (bgm.mu_m_ - bgm.mu_m_prior_) ** 2 /
                       bgm.lambda_inv_W_) +
                 bgm._log_wishart_norm_prior +
-                .5 * (bgm.lambda_nu_prior_ - 2) * bgm._log_lambda
-                - .5 * bgm.lambda_nu_ * bgm.lambda_inv_W_prior_ /
+                .5 * (bgm.lambda_nu_prior_ - 2) * bgm._log_lambda -
+                .5 * bgm.lambda_nu_ * bgm.lambda_inv_W_prior_ /
                 bgm.lambda_inv_W_)
     assert_allclose(pml, test_pml)
 
@@ -531,12 +526,12 @@ def test_estimate_lower_bound():
 
     # _estimate_q_weight
     qweight = bgm._estimate_q_weight()
-    from sklearn.mixture.bayesianmixture import _log_dirichlet_norm
+    from ...mixture.bayesian_mixture import _log_dirichlet_norm
     assert_array_equal(qweight, _log_dirichlet_norm(bgm.weight_alpha_))
 
     # _estimate_q_mu_lambda
     qml = bgm._estimate_q_mu_lambda()
-    from sklearn.mixture.bayesianmixture import _wishart_entropy
+    from ...mixture.bayesian_mixture import _wishart_entropy
     test_qml = (.5 * bgm._log_lambda +
                 .5 * np.log(bgm.mu_beta_ / (2 * np.pi)) - .5 -
                 _wishart_entropy(1, bgm.lambda_nu_[0],
@@ -564,15 +559,15 @@ def test_estimate_lower_bound():
     # reuse test_pml of 'full'
     pml = bgm._estimate_p_mu_lambda()
     test_pml = (.5 * (np.log(bgm.mu_beta_prior_ / (2 * np.pi)) +
-                     bgm._log_lambda - bgm.mu_beta_prior_ / bgm.mu_beta_ -
-                     bgm.mu_beta_prior_ * bgm.lambda_nu_ *
+                      bgm._log_lambda - bgm.mu_beta_prior_ / bgm.mu_beta_ -
+                      bgm.mu_beta_prior_ * bgm.lambda_nu_ *
                       (bgm.mu_m_ - bgm.mu_m_prior_) ** 2 / bgm.lambda_inv_W_) +
                 bgm.n_components * bgm._log_gamma_norm_prior +
                 (bgm.lambda_nu_prior_ - 1) * bgm._log_lambda -
                 bgm.lambda_nu_ * bgm.lambda_inv_W_prior_ / bgm.lambda_inv_W_)
     assert_array_equal(pml, test_pml)
     qml = bgm._estimate_q_mu_lambda()
-    from sklearn.mixture.bayesianmixture import _gamma_entropy_diag
+    from ...mixture.bayesian_mixture import _gamma_entropy_diag
     test_qml = (.5 * bgm._log_lambda +
                 .5 * np.log(bgm.mu_beta_ / (2 * np.pi)) -
                 .5 -
@@ -592,6 +587,7 @@ def test_estimate_lower_bound():
     # reuse test_qml from 'diag'
     assert_allclose(qml, test_qml)
 
+
 def test_BayesianGaussianMixture_fit():
     n_features = RandData.n_features
     n_components = RandData.n_components
@@ -604,8 +600,9 @@ def test_BayesianGaussianMixture_fit():
         X = RandData.X[p_type]
         g = BayesianGaussianMixture(n_components=n_components * 2,
                                     precision_type=p_type, n_init=2,
-                                    max_iter=500, reg_covar=0, alpha_prior=1e-10,
-                                    init_params='random', random_state=rng)
+                                    max_iter=500, reg_covar=0,
+                                    alpha_prior=1e-10, init_params='random',
+                                    random_state=rng)
         g.fit(X)
 
         mixture_weight = np.sort(g.weights_)[n_components:]
@@ -636,8 +633,8 @@ def test_GaussianMixture_fit_best_params():
     for p_type in PRECISION_TYPE:
         X = RandData.X[p_type]
         g = BayesianGaussianMixture(n_components=n_components, n_init=1,
-                                    max_iter=100, reg_covar=0, random_state=rng,
-                                    precision_type=p_type)
+                                    max_iter=100, reg_covar=0,
+                                    random_state=rng, precision_type=p_type)
         ll = []
         for _ in range(n_init):
             g.fit(X)
@@ -649,4 +646,3 @@ def test_GaussianMixture_fit_best_params():
                                          precision_type=p_type)
         g_best.fit(X)
         assert_almost_equal(ll.min(), g_best.score(X))
-

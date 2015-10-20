@@ -7,9 +7,9 @@ from .gmm import GMM, distribute_covar_matrix_to_match_covariance_type
 from .gmm import _validate_covars
 from .dpgmm import DPGMM, VBGMM
 
-from .gaussianmixture import GaussianMixture
-from .bayesianmixture import BayesianGaussianMixture
-from .dpgaussianmixture import DirichletProcessGaussianMixture
+from .gaussian_mixture import GaussianMixture
+from .bayesian_mixture import BayesianGaussianMixture
+from .dp_gaussian_mixture import DirichletProcessGaussianMixture
 
 
 __all__ = ['DPGMM',

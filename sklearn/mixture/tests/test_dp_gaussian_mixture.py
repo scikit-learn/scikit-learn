@@ -1,22 +1,22 @@
 import numpy as np
 from scipy.special import gamma, digamma
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_allclose
+from ...utils.testing import assert_array_almost_equal
+from ...utils.testing import assert_array_equal
+from ...utils.testing import assert_raise_message
+from ...utils.testing import assert_almost_equal
+from ...utils.testing import assert_allclose
 
-from sklearn.mixture import DirichletProcessGaussianMixture
-from sklearn.mixture.bayesianmixture import _define_prior_shape
-from sklearn.mixture.tests.test_gaussianmixture import RandData
-from sklearn.covariance import EmpiricalCovariance
+from ...mixture import DirichletProcessGaussianMixture
+from ...mixture.bayesian_mixture import _define_prior_shape
+from ...mixture.tests.test_gaussian_mixture import RandData
+from ...covariance import EmpiricalCovariance
 
 rng = np.random.RandomState(0)
 
 
 def test_log_beta_norm():
-    from sklearn.mixture.dpgaussianmixture import _log_beta_norm
+    from ...mixture.dp_gaussian_mixture import _log_beta_norm
     a, b = rng.rand(), rng.rand()
     assert_allclose(np.log(gamma(a + b)/gamma(a)/gamma(b)),
                     _log_beta_norm(a, b))
@@ -137,7 +137,7 @@ def test_estimate_p_weight():
                                             digamma(gamma_a + gamma_b)))
 
     # _estimate_q_weight
-    from sklearn.mixture.dpgaussianmixture import _log_beta_norm
+    from ...mixture.dp_gaussian_mixture import _log_beta_norm
     qweight = dpgm._estimate_q_weight()
     assert_array_equal(qweight,
                        _log_beta_norm(gamma_a, gamma_b) +
@@ -183,4 +183,3 @@ def test_DPGaussianMixture_fit():
             ecov = EmpiricalCovariance()
             ecov.covariance_ = cov_test[h]
             assert_allclose(ecov.error_norm(cov_pred[k]), 0, atol=0.1)
-

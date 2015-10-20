@@ -3,7 +3,7 @@ import numpy as np
 from scipy.special import digamma, gammaln
 
 from ..utils.validation import check_is_fitted
-from .bayesianmixture import BayesianGaussianMixture, check_shape
+from .bayesian_mixture import BayesianGaussianMixture, check_shape
 
 
 def _log_beta_norm(a, b):

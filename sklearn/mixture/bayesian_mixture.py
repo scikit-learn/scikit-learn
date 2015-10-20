@@ -6,7 +6,7 @@ from scipy.special import digamma, gammaln
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from .base import MixtureBase, check_shape, check_X
-from .gaussianmixture import estimate_Gaussian_suffstat
+from .gaussian_mixture import estimate_Gaussian_suffstat
 
 
 def _define_prior_shape(n_features, precision_type):

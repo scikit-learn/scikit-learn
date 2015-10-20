@@ -2,23 +2,23 @@ import sys
 import numpy as np
 from scipy import stats
 
-from sklearn.datasets.samples_generator import make_spd_matrix
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils import ConvergenceWarning
+from ...datasets.samples_generator import make_spd_matrix
+from ...utils.testing import assert_array_almost_equal
+from ...utils.testing import assert_array_equal
+from ...utils.testing import assert_equal
+from ...utils.testing import assert_true
+from ...utils.testing import assert_raise_message
+from ...utils.testing import assert_almost_equal
+from ...utils.testing import assert_allclose
+from ...utils.testing import assert_greater
+from ...utils.testing import assert_warns_message
+from ...utils import ConvergenceWarning
 
-from sklearn import mixture
-from sklearn.mixture.gaussianmixture import estimate_Gaussian_suffstat_Sk
-from sklearn.covariance import EmpiricalCovariance
-from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.externals.six.moves import cStringIO as StringIO
+from ...mixture.gaussian_mixture import GaussianMixture
+from ...mixture.gaussian_mixture import estimate_Gaussian_suffstat_Sk
+from ...covariance import EmpiricalCovariance
+from ...metrics.cluster import adjusted_rand_score
+from ...externals.six.moves import cStringIO as StringIO
 
 
 rng = np.random.RandomState(0)
@@ -89,21 +89,21 @@ def test_GaussianMixture_parameters():
                          "Invalid value for 'n_init': %d "
                          "Estimation requires at least one run"
                          % n_init,
-                         mixture.GaussianMixture, n_init=n_init)
+                         GaussianMixture, n_init=n_init)
 
     max_iter = 0
     assert_raise_message(ValueError,
                          "Invalid value for 'max_iter': %d "
                          "Estimation requires at least one iteration"
                          % max_iter,
-                         mixture.GaussianMixture, max_iter=max_iter)
+                         GaussianMixture, max_iter=max_iter)
 
     reg_covar = -1
     assert_raise_message(ValueError,
                          "Invalid value for 'reg_covar': %.5f "
                          "regularization on covariance must be "
                          "non-negative" % reg_covar,
-                         mixture.GaussianMixture, reg_covar=reg_covar)
+                         GaussianMixture, reg_covar=reg_covar)
 
     # covariance_type should be in [spherical, diag, tied, full]
     covariance_type = 'bad_covariance_type'
@@ -112,11 +112,11 @@ def test_GaussianMixture_parameters():
                          "'covariance_type' should be in "
                          "['spherical', 'tied', 'diag', 'full']"
                          % covariance_type,
-                         mixture.GaussianMixture,
+                         GaussianMixture,
                          covariance_type=covariance_type)
 
     init_params = 'bad_method'
-    g = mixture.GaussianMixture(init_params=init_params)
+    g = GaussianMixture(init_params=init_params)
     assert_raise_message(ValueError,
                          "Unimplemented initialization method '%s'"
                          % init_params, g._initialize, X=rng.rand(10, 2))
@@ -156,7 +156,7 @@ def test_check_weights():
     n_components = RandData.n_components
 
     weights_bad = rng.rand(n_components, 1)
-    g = mixture.GaussianMixture(weights=weights_bad, n_components=n_components)
+    g = GaussianMixture(weights=weights_bad, n_components=n_components)
     assert_raise_message(ValueError,
                          "The parameter 'weights' should have the shape of "
                          "(%d,), "
@@ -164,7 +164,7 @@ def test_check_weights():
                          g._check_initial_parameters)
 
     weights_bad = rng.rand(n_components) + 1
-    g = mixture.GaussianMixture(weights=weights_bad, n_components=n_components)
+    g = GaussianMixture(weights=weights_bad, n_components=n_components)
     assert_raise_message(ValueError,
                          "The parameter 'weights' should be in the range "
                          "[0, 1], but got max value %.5f, min value %.5f"
@@ -173,14 +173,14 @@ def test_check_weights():
 
     weights_bad = rng.rand(n_components)
     weights_bad = weights_bad/(weights_bad.sum() + 1)
-    g = mixture.GaussianMixture(weights=weights_bad, n_components=n_components)
+    g = GaussianMixture(weights=weights_bad, n_components=n_components)
     assert_raise_message(ValueError,
                          "The parameter 'weights' should be normalized, "
                          "but got sum(weights) = %.5f" % np.sum(weights_bad),
                          g._check_initial_parameters)
 
     weights = RandData.weights
-    g = mixture.GaussianMixture(weights=weights, n_components=n_components)
+    g = GaussianMixture(weights=weights, n_components=n_components)
     g._check_initial_parameters()
     assert_array_equal(weights, g.weights_init)
 
@@ -190,7 +190,7 @@ def test_check_means():
     n_features = RandData.n_features
 
     means_bad = rng.rand(n_components + 1, n_features)
-    g = mixture.GaussianMixture(means=means_bad, n_components=n_components)
+    g = GaussianMixture(means=means_bad, n_components=n_components)
     g.n_features = n_features
     assert_raise_message(ValueError,
                          "The parameter 'means' should have the shape of "
@@ -199,7 +199,7 @@ def test_check_means():
                          g._check_initial_parameters)
 
     means = RandData.means
-    g = mixture.GaussianMixture(means=means, n_components=n_components)
+    g = GaussianMixture(means=means, n_components=n_components)
     g.n_features = n_features
     g._check_initial_parameters()
     assert_array_equal(means, g.means_init)
@@ -211,8 +211,8 @@ def test_check_covars():
 
     # full
     covars_bad = rng.rand(n_components + 1, n_features, n_features)
-    g = mixture.GaussianMixture(n_components=n_components, covars=covars_bad,
-                                covariance_type='full')
+    g = GaussianMixture(n_components=n_components, covars=covars_bad,
+                        covariance_type='full')
     g.n_features = n_features
     assert_raise_message(
         ValueError,
@@ -224,8 +224,8 @@ def test_check_covars():
     covars_bad = rng.rand(n_components, n_features, n_features)
     covars_bad[0] = np.eye(n_features)
     covars_bad[0, 0, 0] = -1
-    g = mixture.GaussianMixture(n_components=n_components, covars=covars_bad,
-                                covariance_type='full')
+    g = GaussianMixture(n_components=n_components, covars=covars_bad,
+                        covariance_type='full')
     g.n_features = n_features
     assert_raise_message(
         ValueError,
@@ -234,16 +234,16 @@ def test_check_covars():
         % 0, g._check_initial_parameters)
 
     covars = RandData.covariances['full']
-    g = mixture.GaussianMixture(n_components=n_components, covars=covars,
-                                covariance_type='full')
+    g = GaussianMixture(n_components=n_components, covars=covars,
+                        covariance_type='full')
     g.n_features = n_features
     g._check_initial_parameters()
     assert_array_equal(covars, g.covars_init)
 
     # tied
     covars_bad = rng.rand(n_features + 1, n_features + 1)
-    g = mixture.GaussianMixture(n_components=n_components, covars=covars_bad,
-                                covariance_type='tied')
+    g = GaussianMixture(n_components=n_components, covars=covars_bad,
+                        covariance_type='tied')
     g.n_features = n_features
     assert_raise_message(
         ValueError,
@@ -253,23 +253,23 @@ def test_check_covars():
         g._check_initial_parameters)
     covars_bad = np.eye(n_features)
     covars_bad[0, 0] = -1
-    g = mixture.GaussianMixture(n_components=n_components, covars=covars_bad,
-                                covariance_type='tied')
+    g = GaussianMixture(n_components=n_components, covars=covars_bad,
+                        covariance_type='tied')
     g.n_features = n_features
     assert_raise_message(ValueError, "'tied covariance' should be "
                          "symmetric, positive-definite",
                          g._check_initial_parameters)
     covars = RandData.covariances['tied']
-    g = mixture.GaussianMixture(n_components=n_components, covars=covars,
-                                covariance_type='tied')
+    g = GaussianMixture(n_components=n_components, covars=covars,
+                        covariance_type='tied')
     g.n_features = n_features
     g._check_initial_parameters()
     assert_array_equal(covars, g.covars_init)
 
     # diag
     covars_bad = rng.rand(n_components + 1, n_features)
-    g = mixture.GaussianMixture(n_components=n_components, covars=covars_bad,
-                                covariance_type='diag')
+    g = GaussianMixture(n_components=n_components, covars=covars_bad,
+                        covariance_type='diag')
     g.n_features = n_features
     assert_raise_message(
         ValueError,
@@ -279,22 +279,22 @@ def test_check_covars():
         g._check_initial_parameters)
 
     covars_bad = np.ones((n_components, n_features)) * -1
-    g = mixture.GaussianMixture(n_components=n_components, covars=covars_bad,
-                                covariance_type='diag')
+    g = GaussianMixture(n_components=n_components, covars=covars_bad,
+                        covariance_type='diag')
     g.n_features = n_features
     assert_raise_message(ValueError, "'diag covariance' should be positive",
                          g._check_initial_parameters)
     covars = RandData.covariances['diag']
-    g = mixture.GaussianMixture(n_components=n_components, covars=covars,
-                                covariance_type='diag')
+    g = GaussianMixture(n_components=n_components, covars=covars,
+                        covariance_type='diag')
     g.n_features = n_features
     g._check_initial_parameters()
     assert_array_equal(covars, g.covars_init)
 
     # spherical
     covars_bad = rng.rand(n_components + 1)
-    g = mixture.GaussianMixture(n_components=n_components, covars=covars_bad,
-                                covariance_type='spherical')
+    g = GaussianMixture(n_components=n_components, covars=covars_bad,
+                        covariance_type='spherical')
     g.n_features = n_features
     assert_raise_message(
         ValueError,
@@ -304,15 +304,15 @@ def test_check_covars():
         g._check_initial_parameters)
     covars_bad = np.ones(n_components)
     covars_bad[0] = -1
-    g = mixture.GaussianMixture(n_components=n_components, covars=covars_bad,
-                                covariance_type='spherical')
+    g = GaussianMixture(n_components=n_components, covars=covars_bad,
+                        covariance_type='spherical')
     g.n_features = n_features
     assert_raise_message(ValueError, "'spherical covariance' should be "
                                      "positive",
                          g._check_initial_parameters)
     covars = RandData.covariances['spherical']
-    g = mixture.GaussianMixture(n_components=n_components, covars=covars,
-                                covariance_type='spherical')
+    g = GaussianMixture(n_components=n_components, covars=covars,
+                        covariance_type='spherical')
     g.n_features = n_features
     g._check_initial_parameters()
     assert_array_equal(covars, g.covars_init)
@@ -358,11 +358,13 @@ def test_suffstat_Sk_tied():
     X = rng.rand(n_samples, n_features)
     nk = resp.sum(axis=0)
     xk = np.dot(resp.T, X) / nk[:, np.newaxis]
-    covars_pred_full = estimate_Gaussian_suffstat_Sk(resp, X, nk, xk, 0, 'full')
+    covars_pred_full = estimate_Gaussian_suffstat_Sk(resp, X, nk, xk, 0,
+                                                     'full')
     covars_pred_full = np.sum(nk[:, np.newaxis, np.newaxis] * covars_pred_full,
                               0) / n_samples
 
-    covars_pred_tied = estimate_Gaussian_suffstat_Sk(resp, X, nk, xk, 0, 'tied')
+    covars_pred_tied = estimate_Gaussian_suffstat_Sk(resp, X, nk, xk, 0,
+                                                     'tied')
     ecov = EmpiricalCovariance()
     ecov.covariance_ = covars_pred_full
     assert_almost_equal(ecov.error_norm(covars_pred_tied, norm='frobenius'), 0)
@@ -380,9 +382,12 @@ def test_suffstat_Sk_diag():
     X = rng.rand(n_samples, n_features)
     nk = resp.sum(axis=0)
     xk = np.dot(resp.T, X) / nk[:, np.newaxis]
-    covars_pred_full = estimate_Gaussian_suffstat_Sk(resp, X, nk, xk, 0, 'full')
-    covars_pred_full = np.array([np.diag(np.diag(d)) for d in covars_pred_full])
-    covars_pred_diag = estimate_Gaussian_suffstat_Sk(resp, X, nk, xk, 0, 'diag')
+    covars_pred_full = estimate_Gaussian_suffstat_Sk(resp, X, nk, xk, 0,
+                                                     'full')
+    covars_pred_full = np.array([np.diag(np.diag(d)) for d in
+                                 covars_pred_full])
+    covars_pred_diag = estimate_Gaussian_suffstat_Sk(resp, X, nk, xk, 0,
+                                                     'diag')
     covars_pred_diag = np.array([np.diag(d) for d in covars_pred_diag])
     ecov = EmpiricalCovariance()
     for (cov_full, cov_diag) in zip(covars_pred_full, covars_pred_diag):
@@ -402,9 +407,10 @@ def test_Gaussian_suffstat_Sk_spherical():
     resp = np.ones((n_samples, 1))
     nk = np.array([n_samples])
     xk = X.mean()
-    covars_pred_spherical = estimate_Gaussian_suffstat_Sk(resp, X, nk, xk, 0, 'spherical')
-    covars_pred_spherical2 = np.dot(X.flatten().T, X.flatten()) / (n_features
-                                                                   * n_samples)
+    covars_pred_spherical = estimate_Gaussian_suffstat_Sk(resp, X, nk, xk, 0,
+                                                          'spherical')
+    covars_pred_spherical2 = (np.dot(X.flatten().T, X.flatten()) /
+                              (n_features * n_samples))
     assert_almost_equal(covars_pred_spherical, covars_pred_spherical2)
 
 
@@ -418,10 +424,10 @@ def _naive_lmvnpdf_diag(X, means, covars):
 
 def test_GaussianMixture_log_probabilities():
     # test aginst with _naive_lmvnpdf_diag
-    from ..gaussianmixture import (_estimate_log_Gaussian_prob_full,
-                                   _estimate_log_Gaussian_prob_diag,
-                                   _estimate_log_Gaussian_prob_tied,
-                                   _estimate_log_Gaussian_prob_spherical)
+    from ..gaussian_mixture import (_estimate_log_Gaussian_prob_full,
+                                    _estimate_log_Gaussian_prob_diag,
+                                    _estimate_log_Gaussian_prob_tied,
+                                    _estimate_log_Gaussian_prob_spherical)
     n_samples = RandData.n_samples
     n_features = RandData.n_features
     n_components = RandData.n_components
@@ -453,10 +459,12 @@ def test_GaussianMixture_log_probabilities():
     log_prob_naive = _naive_lmvnpdf_diag(X, means,
                                          [[k] * n_features for k in
                                           covars_spherical])
-    log_prob = _estimate_log_Gaussian_prob_spherical(X, means, covars_spherical)
+    log_prob = _estimate_log_Gaussian_prob_spherical(X, means,
+                                                     covars_spherical)
     assert_array_almost_equal(log_prob, log_prob_naive)
 
 # skip tests on weighted_log_probabilities, log_weights
+
 
 def test_GaussianMixture_estimate_log_prob_resp():
     # test whether responsibilities are normalized
@@ -469,11 +477,9 @@ def test_GaussianMixture_estimate_log_prob_resp():
         weights = RandData.weights
         means = RandData.means
         covariances = RandData.covariances[cov_type]
-        g = mixture.GaussianMixture(n_components=n_components,
-                                    random_state=rng,
-                                    weights=weights,
-                                    means=means, covars=covariances,
-                                    covariance_type=cov_type)
+        g = GaussianMixture(n_components=n_components, random_state=rng,
+                            weights=weights, means=means, covars=covariances,
+                            covariance_type=cov_type)
         g._initialize(X)
         _, _, resp, _ = g._estimate_log_prob_resp(X)
         assert_array_almost_equal(resp.sum(axis=1), np.ones(n_samples))
@@ -483,12 +489,11 @@ def test_GaussianMixture_predict_predict_proba():
     for cov_type in COVARIANCE_TYPE:
         X = RandData.X[cov_type]
         Y = RandData.Y
-        g = mixture.GaussianMixture(n_components=RandData.n_components,
-                                    random_state=rng,
-                                    weights=RandData.weights,
-                                    means=RandData.means,
-                                    covars=RandData.covariances[cov_type],
-                                    covariance_type=cov_type)
+        g = GaussianMixture(n_components=RandData.n_components,
+                            random_state=rng, weights=RandData.weights,
+                            means=RandData.means,
+                            covars=RandData.covariances[cov_type],
+                            covariance_type=cov_type)
         g._initialize(X)
         Y_pred = g.predict(X)
         Y_pred_proba = g.predict_proba(X).argmax(axis=1)
@@ -503,10 +508,9 @@ def test_GaussianMixture_fit():
 
     for cov_type in COVARIANCE_TYPE:
         X = RandData.X[cov_type]
-        g = mixture.GaussianMixture(n_components=n_components, n_init=20,
-                                    max_iter=100, reg_covar=0,
-                                    random_state=rng,
-                                    covariance_type=cov_type)
+        g = GaussianMixture(n_components=n_components, n_init=20, max_iter=100,
+                            reg_covar=0, random_state=rng,
+                            covariance_type=cov_type)
         g.fit(X)
         # needs more data to pass the test with rtol=1e-7
         assert_allclose(np.sort(g.weights_), np.sort(RandData.weights),
@@ -545,18 +549,17 @@ def test_GaussianMixture_fit_best_params():
     n_init = 10
     for cov_type in COVARIANCE_TYPE:
         X = RandData.X[cov_type]
-        g = mixture.GaussianMixture(n_components=n_components, n_init=1,
-                                    max_iter=100, reg_covar=0, random_state=rng,
-                                    covariance_type=cov_type)
+        g = GaussianMixture(n_components=n_components, n_init=1,
+                            max_iter=100, reg_covar=0, random_state=rng,
+                            covariance_type=cov_type)
         ll = []
         for _ in range(n_init):
             g.fit(X)
             ll.append(g.score(X))
         ll = np.array(ll)
-        g_best = mixture.GaussianMixture(n_components=n_components,
-                                         n_init=n_init, max_iter=100,
-                                         reg_covar=0, random_state=rng,
-                                         covariance_type=cov_type)
+        g_best = GaussianMixture(n_components=n_components,
+                                 n_init=n_init, max_iter=100, reg_covar=0,
+                                 random_state=rng, covariance_type=cov_type)
         g_best.fit(X)
         assert_almost_equal(ll.min(), g_best.score(X))
 
@@ -566,10 +569,9 @@ def test_GaussianMixture_fit_convergence_warning():
     max_iter = 1
     for cov_type in COVARIANCE_TYPE:
         X = RandData.X[cov_type]
-        g = mixture.GaussianMixture(n_components=n_components, n_init=1,
-                                    max_iter=max_iter,
-                                    reg_covar=0, random_state=rng,
-                                    covariance_type=cov_type)
+        g = GaussianMixture(n_components=n_components, n_init=1,
+                            max_iter=max_iter, reg_covar=0, random_state=rng,
+                            covariance_type=cov_type)
         assert_warns_message(ConvergenceWarning,
                              'Initialization %d is not converged. '
                              'Try different init parameters, '
@@ -583,7 +585,7 @@ def test_GaussianMixture_n_parameters():
     n_samples, n_features, n_components = 7, 5, 2
     n_params = {'spherical': 13, 'diag': 21, 'tied': 26, 'full': 41}
     for cv_type in COVARIANCE_TYPE:
-        g = mixture.GaussianMixture(
+        g = GaussianMixture(
             n_components=n_components, covariance_type=cv_type,
             random_state=rng)
         g.n_features = n_features
@@ -594,9 +596,11 @@ def test_GaussianMixture_aic_bic():
     # Test the aic and bic criteria
     n_samples, n_features, n_components = 50, 3, 2
     X = rng.randn(n_samples, n_features)
-    SGH = 0.5 * (np.log(np.linalg.det(np.cov(X.T, bias=1))) + n_features * (1 + np.log(2 * np.pi)))  # standard gaussian entropy
+    # standard gaussian entropy
+    SGH = 0.5 * (np.log(np.linalg.det(np.cov(X.T, bias=1))) +
+                 n_features * (1 + np.log(2 * np.pi)))
     for cv_type in COVARIANCE_TYPE:
-        g = mixture.GaussianMixture(
+        g = GaussianMixture(
             n_components=n_components, covariance_type=cv_type,
             random_state=rng)
         g.fit(X)
@@ -612,18 +616,15 @@ def test_GaussianMixture_verbose():
     n_components = RandData.n_components
     for cov_type in COVARIANCE_TYPE:
         X = RandData.X[cov_type]
-        g = mixture.GaussianMixture(n_components=n_components, n_init=1,
-                                    max_iter=100, reg_covar=0, random_state=rng,
-                                    covariance_type=cov_type,
-                                    verbose=1)
-        h = mixture.GaussianMixture(n_components=n_components, n_init=1,
-                                    max_iter=100, reg_covar=0, random_state=rng,
-                                    covariance_type=cov_type,
-                                    verbose=2)
-        k = mixture.GaussianMixture(n_components=n_components, n_init=1,
-                                    max_iter=100, reg_covar=0, random_state=rng,
-                                    covariance_type=cov_type,
-                                    verbose=20)
+        g = GaussianMixture(n_components=n_components, n_init=1,
+                            max_iter=100, reg_covar=0, random_state=rng,
+                            covariance_type=cov_type, verbose=1)
+        h = GaussianMixture(n_components=n_components, n_init=1,
+                            max_iter=100, reg_covar=0, random_state=rng,
+                            covariance_type=cov_type, verbose=2)
+        k = GaussianMixture(n_components=n_components, n_init=1,
+                            max_iter=100, reg_covar=0, random_state=rng,
+                            covariance_type=cov_type, verbose=20)
         old_stdout = sys.stdout
         sys.stdout = StringIO()
         try:
