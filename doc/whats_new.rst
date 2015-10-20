@@ -3594,7 +3594,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Alexandre Gramfort: http://alexandre.gramfort.net
 
-.. _Fabian Pedregosa: http://fseoane.net/blog/
+.. _Fabian Pedregosa: http://fa.bianp.net
 
 .. _Mathieu Blondel: http://www.mblondel.org
 
