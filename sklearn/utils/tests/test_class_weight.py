@@ -19,10 +19,6 @@ def test_compute_class_weight():
     # Test (and demo) compute_class_weight.
     y = np.asarray([2, 2, 2, 3, 3, 4])
     classes = np.unique(y)
-    cw = assert_warns(DeprecationWarning,
-                      compute_class_weight, "auto", classes, y)
-    assert_almost_equal(cw.sum(), classes.shape)
-    assert_true(cw[0] < cw[1] < cw[2])
 
     cw = compute_class_weight("balanced", classes, y)
     # total effect of samples is preserved
@@ -94,24 +90,12 @@ def test_compute_class_weight_auto_negative():
     # Test with balanced class labels.
     classes = np.array([-2, -1, 0])
     y = np.asarray([-1, -1, 0, 0, -2, -2])
-    cw = assert_warns(DeprecationWarning, compute_class_weight, "auto",
-                      classes, y)
-    assert_almost_equal(cw.sum(), classes.shape)
-    assert_equal(len(cw), len(classes))
-    assert_array_almost_equal(cw, np.array([1., 1., 1.]))
-
     cw = compute_class_weight("balanced", classes, y)
     assert_equal(len(cw), len(classes))
     assert_array_almost_equal(cw, np.array([1., 1., 1.]))
 
     # Test with unbalanced class labels.
     y = np.asarray([-1, 0, 0, -2, -2, -2])
-    cw = assert_warns(DeprecationWarning, compute_class_weight, "auto",
-                      classes, y)
-    assert_almost_equal(cw.sum(), classes.shape)
-    assert_equal(len(cw), len(classes))
-    assert_array_almost_equal(cw, np.array([0.545, 1.636, 0.818]), decimal=3)
-
     cw = compute_class_weight("balanced", classes, y)
     assert_equal(len(cw), len(classes))
     class_counts = np.bincount(y + 2)
@@ -123,12 +107,6 @@ def test_compute_class_weight_auto_unordered():
     # Test compute_class_weight when classes are unordered
     classes = np.array([1, 0, 3])
     y = np.asarray([1, 0, 0, 3, 3, 3])
-    cw = assert_warns(DeprecationWarning, compute_class_weight, "auto",
-                      classes, y)
-    assert_almost_equal(cw.sum(), classes.shape)
-    assert_equal(len(cw), len(classes))
-    assert_array_almost_equal(cw, np.array([1.636, 0.818, 0.545]), decimal=3)
-
     cw = compute_class_weight("balanced", classes, y)
     class_counts = np.bincount(y)[classes]
     assert_almost_equal(np.dot(cw, class_counts), y.shape[0])
@@ -139,9 +117,6 @@ def test_compute_sample_weight():
     # Test (and demo) compute_sample_weight.
     # Test with balanced classes
     y = np.asarray([1, 1, 1, 2, 2, 2])
-    sample_weight = assert_warns(DeprecationWarning,
-                                 compute_sample_weight, "auto", y)
-    assert_array_almost_equal(sample_weight, [1., 1., 1., 1., 1., 1.])
     sample_weight = compute_sample_weight("balanced", y)
     assert_array_almost_equal(sample_weight, [1., 1., 1., 1., 1., 1.])
 
@@ -151,18 +126,11 @@ def test_compute_sample_weight():
 
     # Test with column vector of balanced classes
     y = np.asarray([[1], [1], [1], [2], [2], [2]])
-    sample_weight = assert_warns(DeprecationWarning,
-                                 compute_sample_weight, "auto", y)
-    assert_array_almost_equal(sample_weight, [1., 1., 1., 1., 1., 1.])
     sample_weight = compute_sample_weight("balanced", y)
     assert_array_almost_equal(sample_weight, [1., 1., 1., 1., 1., 1.])
 
     # Test with unbalanced classes
     y = np.asarray([1, 1, 1, 2, 2, 2, 3])
-    sample_weight = assert_warns(DeprecationWarning,
-                                 compute_sample_weight, "auto", y)
-    expected_auto = np.asarray([.6, .6, .6, .6, .6, .6, 1.8])
-    assert_array_almost_equal(sample_weight, expected_auto)
     sample_weight = compute_sample_weight("balanced", y)
     expected_balanced = np.array([0.7777, 0.7777, 0.7777, 0.7777, 0.7777, 0.7777, 2.3333])
     assert_array_almost_equal(sample_weight, expected_balanced, decimal=4)
@@ -173,9 +141,6 @@ def test_compute_sample_weight():
 
     # Test with multi-output of balanced classes
     y = np.asarray([[1, 0], [1, 0], [1, 0], [2, 1], [2, 1], [2, 1]])
-    sample_weight = assert_warns(DeprecationWarning,
-                                 compute_sample_weight, "auto", y)
-    assert_array_almost_equal(sample_weight, [1., 1., 1., 1., 1., 1.])
     sample_weight = compute_sample_weight("balanced", y)
     assert_array_almost_equal(sample_weight, [1., 1., 1., 1., 1., 1.])
 
@@ -186,9 +151,6 @@ def test_compute_sample_weight():
 
     # Test with multi-output of unbalanced classes
     y = np.asarray([[1, 0], [1, 0], [1, 0], [2, 1], [2, 1], [2, 1], [3, -1]])
-    sample_weight = assert_warns(DeprecationWarning,
-                                 compute_sample_weight, "auto", y)
-    assert_array_almost_equal(sample_weight, expected_auto ** 2)
     sample_weight = compute_sample_weight("balanced", y)
     assert_array_almost_equal(sample_weight, expected_balanced ** 2, decimal=3)
 
@@ -197,60 +159,38 @@ def test_compute_sample_weight_with_subsample():
     # Test compute_sample_weight with subsamples specified.
     # Test with balanced classes and all samples present
     y = np.asarray([1, 1, 1, 2, 2, 2])
-    sample_weight = assert_warns(DeprecationWarning,
-                                 compute_sample_weight, "auto", y)
-    assert_array_almost_equal(sample_weight, [1., 1., 1., 1., 1., 1.])
     sample_weight = compute_sample_weight("balanced", y, range(6))
     assert_array_almost_equal(sample_weight, [1., 1., 1., 1., 1., 1.])
 
     # Test with column vector of balanced classes and all samples present
     y = np.asarray([[1], [1], [1], [2], [2], [2]])
-    sample_weight = assert_warns(DeprecationWarning,
-                                 compute_sample_weight, "auto", y)
-    assert_array_almost_equal(sample_weight, [1., 1., 1., 1., 1., 1.])
     sample_weight = compute_sample_weight("balanced", y, range(6))
     assert_array_almost_equal(sample_weight, [1., 1., 1., 1., 1., 1.])
 
     # Test with a subsample
     y = np.asarray([1, 1, 1, 2, 2, 2])
-    sample_weight = assert_warns(DeprecationWarning,
-                                 compute_sample_weight, "auto", y, range(4))
-    assert_array_almost_equal(sample_weight, [.5, .5, .5, 1.5, 1.5, 1.5])
     sample_weight = compute_sample_weight("balanced", y, range(4))
     assert_array_almost_equal(sample_weight, [2. / 3, 2. / 3,
                                               2. / 3, 2., 2., 2.])
 
     # Test with a bootstrap subsample
     y = np.asarray([1, 1, 1, 2, 2, 2])
-    sample_weight = assert_warns(DeprecationWarning, compute_sample_weight,
-                                 "auto", y, [0, 1, 1, 2, 2, 3])
-    expected_auto = np.asarray([1 / 3., 1 / 3., 1 / 3., 5 / 3., 5 / 3., 5 / 3.])
-    assert_array_almost_equal(sample_weight, expected_auto)
     sample_weight = compute_sample_weight("balanced", y, [0, 1, 1, 2, 2, 3])
     expected_balanced = np.asarray([0.6, 0.6, 0.6, 3., 3., 3.])
     assert_array_almost_equal(sample_weight, expected_balanced)
 
     # Test with a bootstrap subsample for multi-output
     y = np.asarray([[1, 0], [1, 0], [1, 0], [2, 1], [2, 1], [2, 1]])
-    sample_weight = assert_warns(DeprecationWarning, compute_sample_weight,
-                                 "auto", y, [0, 1, 1, 2, 2, 3])
-    assert_array_almost_equal(sample_weight, expected_auto ** 2)
     sample_weight = compute_sample_weight("balanced", y, [0, 1, 1, 2, 2, 3])
     assert_array_almost_equal(sample_weight, expected_balanced ** 2)
 
     # Test with a missing class
     y = np.asarray([1, 1, 1, 2, 2, 2, 3])
-    sample_weight = assert_warns(DeprecationWarning, compute_sample_weight,
-                                 "auto", y, range(6))
-    assert_array_almost_equal(sample_weight, [1., 1., 1., 1., 1., 1., 0.])
     sample_weight = compute_sample_weight("balanced", y, range(6))
     assert_array_almost_equal(sample_weight, [1., 1., 1., 1., 1., 1., 0.])
 
     # Test with a missing class for multi-output
     y = np.asarray([[1, 0], [1, 0], [1, 0], [2, 1], [2, 1], [2, 1], [2, 2]])
-    sample_weight = assert_warns(DeprecationWarning, compute_sample_weight,
-                                 "auto", y, range(6))
-    assert_array_almost_equal(sample_weight, [1., 1., 1., 1., 1., 1., 0.])
     sample_weight = compute_sample_weight("balanced", y, range(6))
     assert_array_almost_equal(sample_weight, [1., 1., 1., 1., 1., 1., 0.])
 

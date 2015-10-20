@@ -786,7 +786,7 @@ def test_train_test_split():
 
     # conversion of lists to arrays (deprecated?)
     with warnings.catch_warnings(record=True):
-        split = cval.train_test_split(X, X_s, y.tolist(), allow_lists=False)
+        split = cval.train_test_split(X, X_s, y.tolist())
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
     assert_array_equal(X_train, X_s_train.toarray())
     assert_array_equal(X_test, X_s_test.toarray())
@@ -835,16 +835,12 @@ def train_test_split_pandas():
         assert_true(isinstance(X_train, InputFeatureType))
         assert_true(isinstance(X_test, InputFeatureType))
 
-
 def train_test_split_mock_pandas():
     # X mock dataframe
     X_df = MockDataFrame(X)
     X_train, X_test = cval.train_test_split(X_df)
     assert_true(isinstance(X_train, MockDataFrame))
     assert_true(isinstance(X_test, MockDataFrame))
-    X_train_arr, X_test_arr = cval.train_test_split(X_df, allow_lists=False)
-    assert_true(isinstance(X_train_arr, np.ndarray))
-    assert_true(isinstance(X_test_arr, np.ndarray))
 
 
 def test_cross_val_score_with_score_func_classification():

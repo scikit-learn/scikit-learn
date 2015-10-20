@@ -531,13 +531,11 @@ class ElasticNet(LinearModel, RegressorMixin):
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
-        WARNING : The ``'auto'`` option is deprecated and will
-        be removed in 0.18.
 
     max_iter : int, optional
         The maximum number of iterations
@@ -644,12 +642,6 @@ class ElasticNet(LinearModel, RegressorMixin):
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
 
-        if (isinstance(self.precompute, six.string_types)
-                and self.precompute == 'auto'):
-            warnings.warn("Setting precompute to 'auto', was found to be "
-                          "slower even when n_samples > n_features. Hence "
-                          "it will be removed in 0.18.",
-                          DeprecationWarning, stacklevel=2)
         # We expect X and y to be already float64 Fortran ordered arrays
         # when bypassing checks
         if check_input:
@@ -790,13 +782,11 @@ class Lasso(ElasticNet):
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | array-like, default=False
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
-        WARNING : The ``'auto'`` option is deprecated and will
-        be removed in 0.18.
 
     max_iter : int, optional
         The maximum number of iterations
