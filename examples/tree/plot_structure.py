@@ -3,12 +3,12 @@
 Understanding the decision tree structure
 =========================================
 
-The decision tree structure could be analysed to gain further insight on the
+The decision tree structure can be analysed to gain further insight on the
 relation between the features and the target to predict. In this example, we
 show how to retrieve:
     - the binary tree structure;
-    - the nodes that were reaches by a sample using the decision_paths method;
-    - the leaf that was reaches by a sample using the apply method;
+    - the nodes that were reached by a sample using the decision_paths method;
+    - the leaf that was reached by a sample using the apply method;
     - the rules that were used to predict a sample;
     - the decision path shared by a group of samples.
 
@@ -29,7 +29,7 @@ estimator = DecisionTreeRegressor(max_leaf_nodes=3, random_state=0)
 estimator.fit(X_train, y_train)
 
 # The decision estimator has an attribute called tree_  which stores the entire
-# tree structure and allow to access to low level attribute. The binary tree
+# tree structure and allows access to low level attributes. The binary tree
 # tree_ is represented as a number of parallel arrays. The i-th element of each
 # array holds information about the node `i`. Node 0 is the tree's root. NOTE:
 # Some of the arrays only apply to either leaves or split nodes, resp. In this
@@ -42,17 +42,18 @@ estimator.fit(X_train, y_train)
 #   - threshold, threshold value at the node
 #
 
-# Using those array, we can parse the tree structure:
+# Using those arrays, we can parse the tree structure:
 
 print("The binary tree structure has %s nodes and has "
       "the following tree structure:"
       % estimator.tree_.node_count)
 
-for i in np.arange(estimator.tree_.node_count):
+for i in range(estimator.tree_.node_count):
     if estimator.tree_.children_left[i] == estimator.tree_.children_right[i]:
         print("node=%s leaf node." % i)
     else:
-        print("node=%s test node: go to node %s if X[:, %s] <= %ss else %s."
+        print("node=%s test node: go to node %s if X[:, %s] <= %ss else to "
+              "node %s."
               % (i,
                  estimator.tree_.children_left[i],
                  estimator.tree_.feature[i],
@@ -63,7 +64,7 @@ print()
 
 # First let's retrieve the decision path of each sample. The decision_paths
 # method allows to retrieve the node indicator function. A non zero elements at
-# position (i, j) indicates that the sample i goes # through the node j.
+# position (i, j) indicates that the sample i goes sthrough the node j.
 
 node_indicator = estimator.decision_paths(X_test)
 
@@ -89,8 +90,9 @@ for i, node_id in enumerate(node_index):
     else:
         threshold_sign = ">"
 
-    print("rule %s : (X[%s, %s] (= %s) %s %s)"
+    print("rule %s from node %s : (X[%s, %s] (= %s) %s %s)"
           % (i,
+             node_id,
              sample_id,
              estimator.tree_.feature[node_id],
              X_test[i, estimator.tree_.feature[node_id]],

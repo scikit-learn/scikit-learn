@@ -472,7 +472,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         indicator : sparse csr array, shape = [n_samples, n_nodes]
             Return a node indicator matrix where non zero elements
-            indicates that the samples goes through the samples.
+            indicates that the samples goes through the nodes.
 
         """
         X = self._validate_X_predict(X, check_input)
