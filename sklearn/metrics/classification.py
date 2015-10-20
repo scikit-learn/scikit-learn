@@ -178,6 +178,70 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
+def balanced_accuracy_score(y_true, y_pred):
+    """Balanced accuracy score
+
+    The balanced accuracy score is defined as
+    0.5 * true positives / (true positives + false negatives) +
+    0.5 * true negatives / (true negatives + false positives)
+
+    This function is equal to the average of positive label recall
+    and negative label recall.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        Ground truth (correct) target values.
+
+    y_pred : array, shape = [n_samples]
+        Estimated targets as returned by a classifier.
+
+    Returns
+    -------
+    score : float
+        return the balanced accuracy score.
+
+        The best performance is 1.
+
+    References
+    ----
+    .. [1] `Wikipedia entry for balanced accuracy
+    http://en.wikipedia.org/wiki/Accuracy_and_precision#In_binary_classification
+
+    Examples
+    --------
+    >>> from sklearn.metrics import balanced_accuracy_score
+    >>> y_true = [0, 0, 1, 1]
+    >>> y_pred = [0, 1, 1, 1]
+    >>> balanced_accuracy_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.75...
+
+    >>> y_true = [0, 1, 1, 1, 1]
+    >>> y_pred = [1, 1, 1, 1, 1]
+    >>> balanced_accuracy_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.5...
+
+    >>> y_true = ['b', 'a', 'a', 'a']
+    >>> y_pred = ['a', 'a', 'b', 'a']
+    >>> balanced_accuracy_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.33...
+
+    """
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    if y_type != 'binary':
+        raise ValueError("%s is not supported" % y_type)
+
+    # Label encoding
+    lb = LabelBinarizer()
+    y_true_binary = lb.fit_transform(y_true)
+    y_pred_binary = lb.transform(y_pred)
+
+    pos_recall = recall_score(y_true_binary, y_pred_binary)
+    neg_recall = recall_score(1 - y_true_binary, 1 - y_pred_binary)
+
+    return np.average([pos_recall, neg_recall])
+
+
 def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 

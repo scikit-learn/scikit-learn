@@ -27,6 +27,7 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import classification_report
 from sklearn.metrics import cohen_kappa_score
@@ -112,6 +113,43 @@ def test_multilabel_accuracy_score_subset_accuracy():
     assert_equal(accuracy_score(y1, np.logical_not(y1)), 0)
     assert_equal(accuracy_score(y1, np.zeros(y1.shape)), 0)
     assert_equal(accuracy_score(y2, np.zeros(y1.shape)), 0)
+
+
+def test_balanced_accuracy_score():
+    # Test balanced accuracy score for binary classification task
+
+    # test on an imbalanced data set
+    y_true = np.array([0, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+    y_pred = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+
+    assert_equal(balanced_accuracy_score(y_true, y_pred), 0.5)
+
+    # test the function with the equation defined as
+    # 0.5 * true positives / (true positives + false negatives) +
+    # 0.5 * true negatives / (true negatives + false positives)
+    y_true, y_pred, _ = make_prediction(binary=True)
+    tn, fp, fn, tp = np.bincount(y_true * 2 + y_pred, minlength=4)
+    bas = 0.5 * tp / (tp + fn) + 0.5 * tn / (tn + fp)
+    assert_equal(balanced_accuracy_score(y_true, y_pred), bas)
+
+    # test using string labels
+    y_true = np.array(['a', 'b', 'a', 'b'])
+    y_pred = np.array(['a', 'b', 'a', 'a'])
+
+    assert_equal(balanced_accuracy_score(y_true, y_pred), 0.75)
+
+
+def test_balanced_accuracy_score_on_non_binary_class():
+    # Test that balanced_accuracy_score returns an error when trying
+    # to comptue balanced_accuracy_score for multiclass task.
+    rng = check_random_state(404)
+    y_pred = rng.randint(0, 3, size=10)
+
+    # y_true contains three different class values
+    y_true = rng.randint(0, 3, size=10)
+
+    assert_raise_message(ValueError, "multiclass is not supported",
+                         balanced_accuracy_score, y_true, y_pred)
 
 
 def test_precision_recall_f1_score_binary():
