@@ -728,7 +728,7 @@ def dict_learning_grad(X, eta=0.02, n_components=2, transform_n_nonzero_coefs=10
             gain = gain_**alpha_homeo
             gain /= gain.mean()
 #             dictionary /= gain[np.newaxis, :]
-            dictionary /= np.sqrt(gain)[np.newaxis, :]
+            dictionary /= gain[np.newaxis, :]
         # Maybe we need a stopping criteria based on the amount of
         # modification in the dictionary
         if callback is not None:
