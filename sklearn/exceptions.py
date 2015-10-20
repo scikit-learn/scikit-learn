@@ -114,4 +114,4 @@ class NonBLASDotWarning(EfficiencyWarning):
 
 
 class UndefinedMetricWarning(UserWarning):
-    pass
+    """Warning used when the metric is invalid"""
