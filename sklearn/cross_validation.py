@@ -1794,9 +1794,10 @@ def train_test_split(*arrays, **options):
 
     Parameters
     ----------
-    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
-        Python lists or tuples occurring in arrays are converted to 1D numpy
-        arrays.
+    *arrays : Sequence of arrays or scipy.sparse matrices with same shape[0]
+        Output type depends on the input type provided. Lists or Pandas DataFrames are not converted 
+        to numpy arrays, but they are kept in the same format.
+        
 
     test_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
