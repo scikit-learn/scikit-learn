@@ -25,8 +25,7 @@ from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 from ..utils.fast_dict import IntFloatDict
 
-if sys.version_info[0] > 2:
-    xrange = range
+from ..externals.six.moves import xrange
 
 ###############################################################################
 # For non fully-connected graphs
