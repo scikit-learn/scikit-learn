@@ -1,3 +1,4 @@
+
 """
 The :mod:`sklearn.model_selection.validate` module includes classes and
 functions to validate the model.
@@ -6,6 +7,7 @@ functions to validate the model.
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>,
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Raghav R V <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
 
@@ -109,9 +111,7 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
     """
-    if labels is not None:
-        X, y, labels = indexable(X, y, labels)
-    X, y = indexable(X, y)
+    X, y, labels = indexable(X, y, labels)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
@@ -332,7 +332,7 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
 
     Returns
     -------
-    preds : ndarray
+    predictions : ndarray
         This is the result of calling 'predict'
     """
     X, y, labels = indexable(X, y, labels)
@@ -342,26 +342,27 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    preds_blocks = parallel(delayed(_fit_and_predict)(clone(estimator), X, y,
-                                                      train, test, verbose,
-                                                      fit_params)
-                            for train, test in cv.split(X, y, labels))
+    prediction_blocks = parallel(delayed(_fit_and_predict)(
+        clone(estimator), X, y, train, test, verbose, fit_params)
+        for train, test in cv.split(X, y, labels))
 
-    preds = [p for p, _ in preds_blocks]
-    locs = np.concatenate([loc for _, loc in preds_blocks])
+    # Concatenate the predictions
+    predictions = [pred_block_i for pred_block_i, _ in prediction_blocks]
+    test_indices = np.concatenate([indices_i
+                                   for _, indices_i in prediction_blocks])
 
-    if not _check_is_permutation(locs, _num_samples(X)):
+    if not _check_is_permutation(test_indices, _num_samples(X)):
         raise ValueError('cross_val_predict only works for partitions')
 
-    inv_locs = np.empty(len(locs), dtype=int)
-    inv_locs[locs] = np.arange(len(locs))
+    inv_test_indices = np.empty(len(test_indices), dtype=int)
+    inv_test_indices[test_indices] = np.arange(len(test_indices))
 
     # Check for sparse predictions
-    if sp.issparse(preds[0]):
-        preds = sp.vstack(preds, format=preds[0].format)
+    if sp.issparse(predictions[0]):
+        predictions = sp.vstack(predictions, format=predictions[0].format)
     else:
-        preds = np.concatenate(preds)
-    return preds[inv_locs]
+        predictions = np.concatenate(predictions)
+    return predictions[inv_test_indices]
 
 
 def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
@@ -395,7 +396,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
 
     Returns
     -------
-    preds : sequence
+    predictions : sequence
         Result of calling 'estimator.predict'
 
     test : array-like
@@ -413,18 +414,18 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
         estimator.fit(X_train, **fit_params)
     else:
         estimator.fit(X_train, y_train, **fit_params)
-    preds = estimator.predict(X_test)
-    return preds, test
+    predictions = estimator.predict(X_test)
+    return predictions, test
 
 
-def _check_is_permutation(locs, n):
-    """Check whether locs is a reordering of the array np.arange(n)
+def _check_is_permutation(indices, n_samples):
+    """Check whether indices is a reordering of the array np.arange(n_samples)
 
     Parameters
     ----------
-    locs : ndarray
+    indices : ndarray
         integer array to test
-    n : int
+    n_samples : int
         number of expected elements
 
     Returns
@@ -432,10 +433,10 @@ def _check_is_permutation(locs, n):
     is_partition : bool
         True iff sorted(locs) is range(n)
     """
-    if len(locs) != n:
+    if len(indices) != n_samples:
         return False
-    hit = np.zeros(n, bool)
-    hit[locs] = True
+    hit = np.zeros(n_samples, bool)
+    hit[indices] = True
     if not np.all(hit):
         return False
     return True
@@ -567,13 +568,13 @@ def _permutation_test_score(estimator, X, y, labels, cv, scorer):
 def _shuffle(y, labels, random_state):
     """Return a shuffled copy of y eventually shuffle among same labels."""
     if labels is None:
-        ind = random_state.permutation(len(y))
+        indices = random_state.permutation(len(y))
     else:
-        ind = np.arange(len(labels))
+        indices = np.arange(len(labels))
         for label in np.unique(labels):
             this_mask = (labels == label)
-            ind[this_mask] = random_state.permutation(ind[this_mask])
-    return y[ind]
+            indices[this_mask] = random_state.permutation(indices[this_mask])
+    return y[indices]
 
 
 def learning_curve(estimator, X, y, labels=None,
@@ -684,14 +685,6 @@ def learning_curve(estimator, X, y, labels=None,
     # Make a list since we will be iterating multiple times over the folds
     cv_iter = list(cv_iter)
     scorer = check_scoring(estimator, scoring=scoring)
-
-    # HACK as long as boolean indices are allowed in cv generators
-    if cv_iter[0][0].dtype == bool:
-        new_cv_iter = []
-        for i in range(len(cv_iter)):
-            new_cv_iter.append((np.nonzero(cv_iter[i][0])[0],
-                                np.nonzero(cv_iter[i][1])[0]))
-        cv_iter = new_cv_iter
 
     n_max_training_samples = len(cv_iter[0][0])
     # Because the lengths of folds can be significantly different, it is

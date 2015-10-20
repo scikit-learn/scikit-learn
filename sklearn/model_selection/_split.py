@@ -1,3 +1,4 @@
+
 """
 The :mod:`sklearn.model_selection.split` module includes classes and
 functions to split the data based on a preset strategy.
@@ -71,10 +72,10 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
             train/test set.
         """
         X, y, labels = indexable(X, y, labels)
-        ind = np.arange(_num_samples(X))
+        indices = np.arange(_num_samples(X))
         for test_index in self._iter_test_masks(X, y, labels):
-            train_index = ind[np.logical_not(test_index)]
-            test_index = ind[test_index]
+            train_index = indices[np.logical_not(test_index)]
+            test_index = indices[test_index]
             yield train_index, test_index
 
     # Since subclasses must implement either _iter_test_masks or
@@ -159,8 +160,16 @@ class LeaveOneOut(BaseCrossValidator):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : (Ignored, exists for compatibility.)
-        labels : (Ignored, exists for compatibility.)
+        y : object
+            Always ignored, exists for compatibility.
+
+        labels : object
+            Always ignored, exists for compatibility.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
         """
         return _num_samples(X)
 
@@ -172,9 +181,8 @@ class LeavePOut(BaseCrossValidator):
     in testing on all distinct samples of size p, while the remaining n - p
     samples form the training set in each iteration.
 
-    Note: ``LeavePOut(p)`` is NOT equivalent to ``KFold(n_folds=n // p)``
-    (``n`` = number of samples) which creates non-overlapping
-    test sets.
+    Note: ``LeavePOut(p)`` is NOT equivalent to
+    ``KFold(n_folds=n_samples // p)`` which creates non-overlapping test sets.
 
     Due to the high number of iterations which grows combinatorically with the
     number of samples this cross-validation method can be very costly. For
@@ -226,8 +234,11 @@ class LeavePOut(BaseCrossValidator):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : (Ignored, exists for compatibility.)
-        labels : (Ignored, exists for compatibility.)
+        y : object
+            Always ignored, exists for compatibility.
+
+        labels : object
+            Always ignored, exists for compatibility.
         """
         return int(comb(_num_samples(X), self.p, exact=True))
 
@@ -274,11 +285,12 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
             train/test set.
         """
         X, y, labels = indexable(X, y, labels)
-        n = _num_samples(X)
-        if self.n_folds > n:
+        n_samples = _num_samples(X)
+        if self.n_folds > n_samples:
             raise ValueError(
                 ("Cannot have number of folds n_folds={0} greater"
-                 " than the number of samples: {1}.").format(self.n_folds, n))
+                 " than the number of samples: {1}.").format(self.n_folds,
+                                                             n_samples))
 
         for train, test in super(_BaseKFold, self).split(X, y, labels):
             yield train, test
@@ -288,9 +300,19 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
 
         Parameters
         ----------
-        X : (Ignored, exists for compatibility.)
-        y : (Ignored, exists for compatibility.)
-        labels : (Ignored, exists for compatibility.)
+        X : object
+            Always ignored, exists for compatibility.
+
+        y : object
+            Always ignored, exists for compatibility.
+
+        labels : object
+            Always ignored, exists for compatibility.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
         """
         return self.n_folds
 
@@ -357,18 +379,18 @@ class KFold(_BaseKFold):
         self.shuffle = shuffle
 
     def _iter_test_indices(self, X, y=None, labels=None):
-        n = _num_samples(X)
-        idxs = np.arange(n)
+        n_samples = _num_samples(X)
+        indices = np.arange(n_samples)
         if self.shuffle:
-            check_random_state(self.random_state).shuffle(idxs)
+            check_random_state(self.random_state).shuffle(indices)
 
         n_folds = self.n_folds
-        fold_sizes = (n // n_folds) * np.ones(n_folds, dtype=np.int)
-        fold_sizes[:n % n_folds] += 1
+        fold_sizes = (n_samples // n_folds) * np.ones(n_folds, dtype=np.int)
+        fold_sizes[:n_samples % n_folds] += 1
         current = 0
         for fold_size in fold_sizes:
             start, stop = current, current + fold_size
-            yield idxs[start:stop]
+            yield indices[start:stop]
             current = stop
 
 
@@ -450,10 +472,10 @@ class LabelKFold(_BaseKFold):
             n_samples_per_fold[lightest_fold] += weight
             label_to_fold[indices[label_index]] = lightest_fold
 
-        idxs = label_to_fold[labels]
+        indices = label_to_fold[labels]
 
         for f in range(self.n_folds):
-            yield np.where(idxs == f)[0]
+            yield np.where(indices == f)[0]
 
 
 class StratifiedKFold(_BaseKFold):
@@ -537,7 +559,7 @@ class StratifiedKFold(_BaseKFold):
             for c in y_counts]
 
         test_folds = np.zeros(n_samples, dtype=np.int)
-        for test_fold_idx, per_cls_splits in enumerate(zip(*per_cls_cvs)):
+        for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
             for cls, (_, test_split) in zip(unique_y, per_cls_splits):
                 cls_test_folds = test_folds[y == cls]
                 # the test split can be too big because we used
@@ -546,7 +568,7 @@ class StratifiedKFold(_BaseKFold):
                 # (we use a warning instead of raising an exception)
                 # If this is the case, let's trim it:
                 test_split = test_split[test_split < len(cls_test_folds)]
-                cls_test_folds[test_split] = test_fold_idx
+                cls_test_folds[test_split] = test_fold_indices
                 test_folds[y == cls] = cls_test_folds
 
         return test_folds
@@ -608,12 +630,20 @@ class LeaveOneLabelOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : (Ignored, exists for compatibility.)
-        y : (Ignored, exists for compatibility.)
+        X : object
+            Always ignored, exists for compatibility.
+
+        y : object
+            Always ignored, exists for compatibility.
 
         labels : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
         """
         return len(np.unique(labels))
 
@@ -678,10 +708,9 @@ class LeavePLabelOut(BaseCrossValidator):
         labels = np.array(labels, copy=True)
         unique_labels = np.unique(labels)
         combi = combinations(range(len(unique_labels)), self.n_labels)
-        for idx in combi:
+        for indices in combi:
             test_index = np.zeros(_num_samples(X), dtype=np.bool)
-            idx = np.array(idx)
-            for l in unique_labels[idx]:
+            for l in unique_labels[np.array(indices)]:
                 test_index[labels == l] = True
             yield test_index
 
@@ -690,12 +719,20 @@ class LeavePLabelOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : (Ignored, exists for compatibility.)
-        y : (Ignored, exists for compatibility.)
+        X : object
+            Always ignored, exists for compatibility.
+
+        y : object
+            Always ignored, exists for compatibility.
 
         labels : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
         """
         return int(comb(len(np.unique(labels)), self.n_labels, exact=True))
 
@@ -740,9 +777,19 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
 
         Parameters
         ----------
-        X : (Ignored, exists for compatibility.)
-        y : (Ignored, exists for compatibility.)
-        labels : (Ignored, exists for compatibility.)
+        X : object
+            Always ignored, exists for compatibility.
+
+        y : object
+            Always ignored, exists for compatibility.
+
+        labels : object
+            Always ignored, exists for compatibility.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
         """
         return self.n_iter
 
@@ -808,13 +855,13 @@ class ShuffleSplit(BaseShuffleSplit):
     """
 
     def _iter_indices(self, X, y=None, labels=None):
-        n = _num_samples(X)
-        n_train, n_test = _validate_shuffle_split(n, self.test_size,
+        n_samples = _num_samples(X)
+        n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
                                                   self.train_size)
         rng = check_random_state(self.random_state)
         for i in range(self.n_iter):
             # random partition
-            permutation = rng.permutation(n)
+            permutation = rng.permutation(n_samples)
             ind_test = permutation[:n_test]
             ind_train = permutation[n_test:(n_test + n_train)]
             yield ind_train, ind_test
@@ -945,55 +992,55 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             n_iter, test_size, train_size, random_state)
 
     def _iter_indices(self, X, y, labels=None):
-        n = _num_samples(X)
-        n_train, n_test = _validate_shuffle_split(n, self.test_size,
+        n_samples = _num_samples(X)
+        n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
                                                   self.train_size)
         classes, y_indices = np.unique(y, return_inverse=True)
-        n_cls = classes.shape[0]
+        n_classes = classes.shape[0]
 
-        if np.min(bincount(y_indices)) < 2:
+        class_counts = bincount(y_indices)
+        if np.min(class_counts) < 2:
             raise ValueError("The least populated class in y has only 1"
                              " member, which is too few. The minimum"
                              " number of labels for any class cannot"
                              " be less than 2.")
 
-        if n_train < n_cls:
+        if n_train < n_classes:
             raise ValueError('The train_size = %d should be greater or '
                              'equal to the number of classes = %d' %
-                             (n_train, n_cls))
-        if n_test < n_cls:
+                             (n_train, n_classes))
+        if n_test < n_classes:
             raise ValueError('The test_size = %d should be greater or '
                              'equal to the number of classes = %d' %
-                             (n_test, n_cls))
+                             (n_test, n_classes))
 
         rng = check_random_state(self.random_state)
-        cls_count = bincount(y_indices)
-        p_i = cls_count / float(n)
+        p_i = class_counts / float(n_samples)
         n_i = np.round(n_train * p_i).astype(int)
-        t_i = np.minimum(cls_count - n_i,
+        t_i = np.minimum(class_counts - n_i,
                          np.round(n_test * p_i).astype(int))
 
-        for n in range(self.n_iter):
+        for _ in range(self.n_iter):
             train = []
             test = []
 
-            for i, cls in enumerate(classes):
-                permutation = rng.permutation(cls_count[i])
-                cls_i = np.where((y == cls))[0][permutation]
+            for i, class_i in enumerate(classes):
+                permutation = rng.permutation(class_counts[i])
+                perm_indices_class_i = np.where((y == class_i))[0][permutation]
 
-                train.extend(cls_i[:n_i[i]])
-                test.extend(cls_i[n_i[i]:n_i[i] + t_i[i]])
+                train.extend(perm_indices_class_i[:n_i[i]])
+                test.extend(perm_indices_class_i[n_i[i]:n_i[i] + t_i[i]])
 
             # Because of rounding issues (as n_train and n_test are not
             # dividers of the number of elements per class), we may end
             # up here with less samples in train and test than asked for.
             if len(train) < n_train or len(test) < n_test:
                 # We complete by affecting randomly the missing indexes
-                missing_idx = np.where(bincount(train + test,
-                                                minlength=len(y)) == 0)[0]
-                missing_idx = rng.permutation(missing_idx)
-                train.extend(missing_idx[:(n_train - len(train))])
-                test.extend(missing_idx[-(n_test - len(test)):])
+                missing_indices = np.where(bincount(train + test,
+                                                    minlength=len(y)) == 0)[0]
+                missing_indices = rng.permutation(missing_indices)
+                train.extend(missing_indices[:(n_train - len(train))])
+                test.extend(missing_indices[-(n_test - len(test)):])
 
             train = rng.permutation(train)
             test = rng.permutation(test)
@@ -1020,8 +1067,8 @@ def _validate_shuffle_split_init(test_size, train_size):
             if train_size >= 1.:
                 raise ValueError("train_size=%f should be smaller "
                                  "than 1.0 or be an integer" % train_size)
-            elif ((np.asarray(test_size).dtype.kind == 'f') and
-                    ((train_size + test_size) > 1.)):
+            elif (np.asarray(test_size).dtype.kind == 'f' and
+                    (train_size + test_size) > 1.):
                 raise ValueError('The sum of test_size and train_size = %f, '
                                  'should be smaller than 1.0. Reduce '
                                  'test_size and/or train_size.' %
@@ -1031,38 +1078,37 @@ def _validate_shuffle_split_init(test_size, train_size):
             raise ValueError("Invalid value for train_size: %r" % train_size)
 
 
-def _validate_shuffle_split(n, test_size, train_size):
-    if ((test_size is not None) and (np.asarray(test_size).dtype.kind == 'i')
-            and (test_size >= n)):
-        raise ValueError('test_size=%d should be smaller '
-                         'than the number of samples %d' % (test_size, n))
+def _validate_shuffle_split(n_samples, test_size, train_size):
+    if (test_size is not None and np.asarray(test_size).dtype.kind == 'i'
+            and test_size >= n_samples):
+        raise ValueError('test_size=%d should be smaller than the number of '
+                         'samples %d' % (test_size, n_samples))
 
-    if ((train_size is not None) and (np.asarray(train_size).dtype.kind == 'i')
-            and (train_size >= n)):
-        raise ValueError("train_size=%d should be smaller "
-                         "than the number of samples %d" % (train_size, n))
+    if (train_size is not None and np.asarray(train_size).dtype.kind == 'i'
+            and train_size >= n_samples):
+        raise ValueError("train_size=%d should be smaller than the number of"
+                         " samples %d" % (train_size, n_samples))
 
     if np.asarray(test_size).dtype.kind == 'f':
-        n_test = ceil(test_size * n)
+        n_test = ceil(test_size * n_samples)
     elif np.asarray(test_size).dtype.kind == 'i':
         n_test = float(test_size)
 
     if train_size is None:
-        n_train = n - n_test
+        n_train = n_samples - n_test
+    elif np.asarray(train_size).dtype.kind == 'f':
+        n_train = floor(train_size * n_samples)
     else:
-        if np.asarray(train_size).dtype.kind == 'f':
-            n_train = floor(train_size * n)
-        else:
-            n_train = float(train_size)
+        n_train = float(train_size)
 
     if test_size is None:
-        n_test = n - n_train
+        n_test = n_samples - n_train
 
-    if n_train + n_test > n:
+    if n_train + n_test > n_samples:
         raise ValueError('The sum of train_size and test_size = %d, '
                          'should be smaller than the number of '
                          'samples %d. Reduce test_size and/or '
-                         'train_size.' % (n_train + n_test, n))
+                         'train_size.' % (n_train + n_test, n_samples))
 
     return int(n_train), int(n_test)
 
@@ -1106,9 +1152,14 @@ class PredefinedSplit(BaseCrossValidator):
 
         Parameters
         ----------
-        X : (Ignored, exists for compatibility.)
-        y : (Ignored, exists for compatibility.)
-        labels : (Ignored, exists for compatibility.)
+        X : object
+            Always ignored, exists for compatibility.
+
+        y : object
+            Always ignored, exists for compatibility.
+
+        labels : object
+            Always ignored, exists for compatibility.
         """
         ind = np.arange(len(self.test_fold))
         for test_index in self._iter_test_masks():
@@ -1129,9 +1180,19 @@ class PredefinedSplit(BaseCrossValidator):
 
         Parameters
         ----------
-        X : (Ignored, exists for compatibility.)
-        y : (Ignored, exists for compatibility.)
-        labels : (Ignored, exists for compatibility.)
+        X : object
+            Always ignored, exists for compatibility.
+
+        y : object
+            Always ignored, exists for compatibility.
+
+        labels : object
+            Always ignored, exists for compatibility.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
         """
         return len(self.unique_folds)
 
@@ -1146,9 +1207,19 @@ class _CVIterableWrapper(BaseCrossValidator):
 
         Parameters
         ----------
-        X : (Ignored, exists for compatibility.)
-        y : (Ignored, exists for compatibility.)
-        labels : (Ignored, exists for compatibility.)
+        X : object
+            Always ignored, exists for compatibility.
+
+        y : object
+            Always ignored, exists for compatibility.
+
+        labels : object
+            Always ignored, exists for compatibility.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
         """
         return len(self.cv)  # Both iterables and old-cv objects support len
 
@@ -1157,9 +1228,14 @@ class _CVIterableWrapper(BaseCrossValidator):
 
         Parameters
         ----------
-        X : (Ignored, exists for compatibility.)
-        y : (Ignored, exists for compatibility.)
-        labels : (Ignored, exists for compatibility.)
+        X : object
+            Always ignored, exists for compatibility.
+
+        y : object
+            Always ignored, exists for compatibility.
+
+        labels : object
+            Always ignored, exists for compatibility.
         """
         for train, test in self.cv:
             yield train, test
@@ -1209,7 +1285,7 @@ def check_cv(cv=3, y=None, classifier=False):
             return KFold(cv)
 
     if not hasattr(cv, 'split'):
-        if (not isinstance(cv, Iterable)) or isinstance(cv, str):
+        if not isinstance(cv, Iterable) or isinstance(cv, str):
             raise ValueError("Expected cv as an integer, cross-validation "
                              "object (from sklearn.model_selection) "
                              "or and iterable. Got %s." % cv)
@@ -1334,7 +1410,7 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         if getattr(estimator, "_pairwise", False):
             raise ValueError("Precomputed kernels or affinity matrices have "
                              "to be passed as arrays or sparse matrices.")
-        X_subset = [X[idx] for idx in indices]
+        X_subset = [X[index] for index in indices]
     else:
         if getattr(estimator, "_pairwise", False):
             # X is a precomputed square kernel matrix

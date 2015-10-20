@@ -530,14 +530,13 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                  'of samples (%i) than data (X: %i samples)'
                                  % (len(y), n_samples))
         cv = check_cv(cv, y, classifier=is_classifier(estimator))
-        len_cv = cv.get_n_splits(X, y, labels)
+        n_splits = cv.get_n_splits(X, y, labels)
 
-        if self.verbose > 0:
-            if isinstance(parameter_iterable, Sized):
-                n_candidates = len(parameter_iterable)
-                print("Fitting {0} folds for each of {1} candidates, totalling"
-                      " {2} fits".format(len_cv, n_candidates,
-                                         n_candidates * len_cv))
+        if self.verbose > 0 and isinstance(parameter_iterable, Sized):
+            n_candidates = len(parameter_iterable)
+            print("Fitting {0} folds for each of {1} candidates, totalling"
+                  " {2} fits".format(n_splits, n_candidates,
+                                     n_candidates * n_splits))
 
         base_estimator = clone(self.estimator)
 
@@ -558,12 +557,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         scores = list()
         grid_scores = list()
-        for grid_start in range(0, n_fits, len_cv):
+        for grid_start in range(0, n_fits, n_splits):
             n_test_samples = 0
             score = 0
             all_scores = []
             for this_score, this_n_test_samples, _, parameters in \
-                    out[grid_start:grid_start + len_cv]:
+                    out[grid_start:grid_start + n_splits]:
                 all_scores.append(this_score)
                 if self.iid:
                     this_score *= this_n_test_samples
@@ -572,7 +571,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             if self.iid:
                 score /= float(n_test_samples)
             else:
-                score /= float(len_cv)
+                score /= float(n_splits)
             scores.append((score, parameters))
             # TODO: shall we also store the test_fold_sizes?
             grid_scores.append(_CVScoreTuple(
@@ -777,8 +776,9 @@ class GridSearchCV(BaseSearchCV):
                  pre_dispatch='2*n_jobs', error_score='raise'):
 
         super(GridSearchCV, self).__init__(
-            estimator, scoring, fit_params, n_jobs, iid,
-            refit, cv, verbose, pre_dispatch, error_score)
+            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch, error_score=error_score)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
@@ -796,9 +796,9 @@ class GridSearchCV(BaseSearchCV):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        labels : array-like of int with shape (n_samples,), optional
-            Arbitrary domain-specific stratification of the data to be used
-            to draw the splits by the cross validation iterator.
+        labels : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
         """
         return self._fit(X, y, labels, ParameterGrid(self.param_grid))
 
@@ -986,9 +986,9 @@ class RandomizedSearchCV(BaseSearchCV):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        labels : array-like of int with shape (n_samples,), optional
-            Arbitrary domain-specific stratification of the data to be used
-            to draw the splits by the cross validation iterator.
+        labels : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
         """
         sampled_params = ParameterSampler(self.param_distributions,
                                           self.n_iter,
