@@ -264,3 +264,5 @@ features::
 .. include:: labeled_faces.rst
 
 .. include:: covtype.rst
+
+.. include:: rcv1.rst

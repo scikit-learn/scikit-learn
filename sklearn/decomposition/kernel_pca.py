@@ -7,7 +7,8 @@ import numpy as np
 from scipy import linalg
 
 from ..utils.arpack import eigsh
-from ..utils.validation import check_is_fitted, NotFittedError
+from ..utils.validation import check_is_fitted
+from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
@@ -18,6 +19,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
     Non-linear dimensionality reduction through the use of kernels (see
     :ref:`metrics`).
+
+    Read more in the :ref:`User Guide <kernel_PCA>`.
 
     Parameters
     ----------

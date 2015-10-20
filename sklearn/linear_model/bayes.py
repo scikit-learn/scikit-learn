@@ -25,6 +25,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
     Fit a Bayesian ridge model and optimize the regularization parameters
     lambda (precision of the weights) and alpha (precision of the noise).
 
+    Read more in the :ref:`User Guide <bayesian_regression>`.
+
     Parameters
     ----------
     n_iter : int, optional
@@ -224,6 +226,8 @@ class ARDRegression(LinearModel, RegressorMixin):
     Also estimate the parameters lambda (precisions of the distributions of the
     weights) and alpha (precision of the distribution of the noise).
     The estimation is done by an iterative procedures (Evidence Maximization)
+
+    Read more in the :ref:`User Guide <bayesian_regression>`.
 
     Parameters
     ----------

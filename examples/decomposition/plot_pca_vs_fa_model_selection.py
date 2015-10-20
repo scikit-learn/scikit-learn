@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 """
 ===============================================================
 Model selection with Probabilistic PCA and Factor Analysis (FA)

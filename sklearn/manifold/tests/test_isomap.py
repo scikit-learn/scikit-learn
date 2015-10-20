@@ -111,8 +111,3 @@ def test_pipeline():
          ('clf', neighbors.KNeighborsClassifier())])
     clf.fit(X, y)
     assert_less(.9, clf.score(X, y))
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

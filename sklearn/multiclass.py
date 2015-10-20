@@ -46,7 +46,6 @@ from .utils import check_random_state
 from .utils.validation import _num_samples
 from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
-from .utils import deprecated
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
 
@@ -95,90 +94,6 @@ def _check_estimator(estimator):
                          "decision_function or predict_proba!")
 
 
-@deprecated("fit_ovr is deprecated and will be removed in 0.18."
-            "Use the OneVsRestClassifier instead.")
-def fit_ovr(estimator, X, y, n_jobs=1):
-    """Fit a one-vs-the-rest strategy.
-
-    Parameters
-    ----------
-    estimator : estimator object
-        An estimator object implementing `fit` and one of `decision_function`
-        or `predict_proba`.
-
-    X : (sparse) array-like, shape = [n_samples, n_features]
-        Data.
-
-    y : (sparse) array-like, shape = [n_samples] or [n_samples, n_classes]
-        Multi-class targets. An indicator matrix turns on multilabel
-        classification.
-
-    Returns
-    -------
-    estimators : list of estimators object
-        The list of fitted estimator.
-
-    lb : fitted LabelBinarizer
-
-    """
-    ovr = OneVsRestClassifier(estimator, n_jobs=n_jobs).fit(X, y)
-    return ovr.estimators_, ovr.label_binarizer_
-
-
-@deprecated("predict_ovr is deprecated and will be removed in 0.18."
-            "Use the OneVsRestClassifier instead.")
-def predict_ovr(estimators, label_binarizer, X):
-    """Predict multi-class targets using the one vs rest strategy.
-
-    Parameters
-    ----------
-    estimators : list of `n_classes` estimators, Estimators used for
-        predictions. The list must be homogeneous with respect to the type of
-        estimators. fit_ovr supplies this list as part of its output.
-
-    label_binarizer : LabelBinarizer object, Object used to transform
-        multiclass labels to binary labels and vice-versa. fit_ovr supplies
-        this object as part of its output.
-
-    X : (sparse) array-like, shape = [n_samples, n_features]
-        Data.
-
-    Returns
-    -------
-    y : (sparse) array-like, shape = [n_samples] or [n_samples, n_classes].
-        Predicted multi-class targets.
-    """
-    e_types = set([type(e) for e in estimators if not
-                   isinstance(e, _ConstantPredictor)])
-    if len(e_types) > 1:
-        raise ValueError("List of estimators must contain estimators of the"
-                         " same type but contains types {0}".format(e_types))
-
-    ovr = OneVsRestClassifier(clone(estimators[0]))
-    ovr.estimators_ = estimators
-    ovr.label_binarizer_ = label_binarizer
-
-    return ovr.predict(X)
-
-
-@deprecated("predict_proba_ovr is deprecated and will be removed in 0.18."
-            "Use the OneVsRestClassifier instead.")
-def predict_proba_ovr(estimators, X, is_multilabel):
-    e_types = set([type(e) for e in estimators if not
-                   isinstance(e, _ConstantPredictor)])
-    if len(e_types) > 1:
-        raise ValueError("List of estimators must contain estimators of the"
-                         " same type but contains types {0}".format(e_types))
-
-    Y = np.array([e.predict_proba(X)[:, 1] for e in estimators]).T
-
-    if not is_multilabel:
-        # Then, probabilities should be normalized to 1.
-        Y /= np.sum(Y, axis=1)[:, np.newaxis]
-
-    return Y
-
-
 class _ConstantPredictor(BaseEstimator):
 
     def fit(self, X, y):
@@ -220,6 +135,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     In the multilabel learning literature, OvR is also known as the binary
     relevance method.
+
+    Read more in the :ref:`User Guide <ovr_classification>`.
 
     Parameters
     ----------
@@ -400,7 +317,10 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         if not hasattr(self.estimators_[0], "coef_"):
             raise AttributeError(
                 "Base estimator doesn't have a coef_ attribute.")
-        return np.array([e.coef_.ravel() for e in self.estimators_])
+        coefs = [e.coef_ for e in self.estimators_]
+        if sp.issparse(coefs[0]):
+            return sp.vstack(coefs)
+        return np.vstack(coefs)
 
     @property
     def intercept_(self):
@@ -422,30 +342,6 @@ def _fit_ovo_binary(estimator, X, y, i, j):
     return _fit_binary(estimator, X[ind[cond]], y_binary, classes=[i, j])
 
 
-@deprecated("fit_ovo is deprecated and will be removed in 0.18."
-            "Use the OneVsOneClassifier instead.")
-def fit_ovo(estimator, X, y, n_jobs=1):
-    ovo = OneVsOneClassifier(estimator, n_jobs=n_jobs).fit(X, y)
-    return ovo.estimators_, ovo.classes_
-
-
-@deprecated("predict_ovo is deprecated and will be removed in 0.18."
-            "Use the OneVsOneClassifier instead.")
-def predict_ovo(estimators, classes, X):
-    """Make predictions using the one-vs-one strategy."""
-
-    e_types = set([type(e) for e in estimators if not
-                   isinstance(e, _ConstantPredictor)])
-    if len(e_types) > 1:
-        raise ValueError("List of estimators must contain estimators of the"
-                         " same type but contains types {0}".format(e_types))
-
-    ovo = OneVsOneClassifier(clone(estimators[0]))
-    ovo.estimators_ = estimators
-    ovo.classes_ = classes
-    return ovo.predict(X)
-
-
 class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     """One-vs-one multiclass strategy
 
@@ -458,6 +354,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     `n_samples`. This is because each individual learning problem only involves
     a small subset of the data whereas, with one-vs-the-rest, the complete
     dataset is used `n_classes` times.
+
+    Read more in the :ref:`User Guide <ovo_classification>`.
 
     Parameters
     ----------
@@ -549,83 +447,58 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """
         check_is_fitted(self, 'estimators_')
 
-        n_samples = X.shape[0]
-        n_classes = self.classes_.shape[0]
-        votes = np.zeros((n_samples, n_classes))
-        sum_of_confidences = np.zeros((n_samples, n_classes))
-
-        k = 0
-        for i in range(n_classes):
-            for j in range(i + 1, n_classes):
-                pred = self.estimators_[k].predict(X)
-                confidence_levels_ij = _predict_binary(self.estimators_[k], X)
-                sum_of_confidences[:, i] -= confidence_levels_ij
-                sum_of_confidences[:, j] += confidence_levels_ij
-                votes[pred == 0, i] += 1
-                votes[pred == 1, j] += 1
-                k += 1
-
-        max_confidences = sum_of_confidences.max()
-        min_confidences = sum_of_confidences.min()
-
-        if max_confidences == min_confidences:
-            return votes
-
-        # Scale the sum_of_confidences to (-0.5, 0.5) and add it with votes.
-        # The motivation is to use confidence levels as a way to break ties in
-        # the votes without switching any decision made based on a difference
-        # of 1 vote.
-        eps = np.finfo(sum_of_confidences.dtype).eps
-        max_abs_confidence = max(abs(max_confidences), abs(min_confidences))
-        scale = (0.5 - eps) / max_abs_confidence
-        return votes + sum_of_confidences * scale
+        predictions = np.vstack([est.predict(X) for est in self.estimators_]).T
+        confidences = np.vstack([_predict_binary(est, X) for est in self.estimators_]).T
+        return _ovr_decision_function(predictions, confidences,
+                                      len(self.classes_))
 
 
-@deprecated("fit_ecoc is deprecated and will be removed in 0.18."
-            "Use the OutputCodeClassifier instead.")
-def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
-    """Fit an error-correcting output-code strategy.
+def _ovr_decision_function(predictions, confidences, n_classes):
+    """Compute a continuous, tie-breaking ovr decision function.
+
+    It is important to include a continuous value, not only votes,
+    to make computing AUC or calibration meaningful.
 
     Parameters
     ----------
-    estimator : estimator object
-        An estimator object implementing `fit` and one of `decision_function`
-        or `predict_proba`.
+    predictions : array-like, shape (n_samples, n_classifiers)
+        Predicted classes for each binary classifier.
 
-    code_size : float, optional
-        Percentage of the number of classes to be used to create the code book.
+    confidences : array-like, shape (n_samples, n_classifiers)
+        Decision functions or predicted probabilities for positive class
+        for each binary classifier.
 
-    random_state : numpy.RandomState, optional
-        The generator used to initialize the codebook. Defaults to
-        numpy.random.
-
-
-    Returns
-    --------
-    estimators : list of `int(n_classes * code_size)` estimators
-        Estimators used for predictions.
-
-    classes : numpy array of shape [n_classes]
-        Array containing labels.
-
-    code_book_ : numpy array of shape [n_classes, code_size]
-        Binary array containing the code of each class.
+    n_classes : int
+        Number of classes. n_classifiers must be
+        ``n_classes * (n_classes - 1 ) / 2``
     """
-    ecoc = OutputCodeClassifier(estimator, random_state=random_state,
-                                n_jobs=n_jobs).fit(X, y)
-    return ecoc.estimators_, ecoc.classes_, ecoc.code_book_
+    n_samples = predictions.shape[0]
+    votes = np.zeros((n_samples, n_classes))
+    sum_of_confidences = np.zeros((n_samples, n_classes))
 
+    k = 0
+    for i in range(n_classes):
+        for j in range(i + 1, n_classes):
+            sum_of_confidences[:, i] -= confidences[:, k]
+            sum_of_confidences[:, j] += confidences[:, k]
+            votes[predictions[:, k] == 0, i] += 1
+            votes[predictions[:, k] == 1, j] += 1
+            k += 1
 
-@deprecated("predict_ecoc is deprecated and will be removed in 0.18."
-            "Use the OutputCodeClassifier instead.")
-def predict_ecoc(estimators, classes, code_book, X):
-    """Make predictions using the error-correcting output-code strategy."""
-    ecoc = OutputCodeClassifier(clone(estimators[0]))
-    ecoc.classes_ = classes
-    ecoc.estimators_ = estimators
-    ecoc.code_book_ = code_book
+    max_confidences = sum_of_confidences.max()
+    min_confidences = sum_of_confidences.min()
 
-    return ecoc.predict(X)
+    if max_confidences == min_confidences:
+        return votes
+
+    # Scale the sum_of_confidences to (-0.5, 0.5) and add it with votes.
+    # The motivation is to use confidence levels as a way to break ties in
+    # the votes without switching any decision made based on a difference
+    # of 1 vote.
+    eps = np.finfo(sum_of_confidences.dtype).eps
+    max_abs_confidence = max(abs(max_confidences), abs(min_confidences))
+    scale = (0.5 - eps) / max_abs_confidence
+    return votes + sum_of_confidences * scale
 
 
 class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
@@ -639,6 +512,8 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     that the number of classifiers used can be controlled by the user, either
     for compressing the model (0 < code_size < 1) or for making the model more
     robust to errors (code_size > 1). See the documentation for more details.
+
+    Read more in the :ref:`User Guide <ecoc>`.
 
     Parameters
     ----------

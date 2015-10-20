@@ -33,9 +33,11 @@ def log_multivariate_normal_density(X, means, covars, covariance_type='diag'):
     X : array_like, shape (n_samples, n_features)
         List of n_features-dimensional data points.  Each row corresponds to a
         single data point.
+
     means : array_like, shape (n_components, n_features)
         List of n_features-dimensional mean vectors for n_components Gaussians.
         Each row corresponds to a single mean vector.
+
     covars : array_like
         List of n_components covariance parameters for each Gaussian. The shape
         depends on `covariance_type`:
@@ -43,6 +45,7 @@ def log_multivariate_normal_density(X, means, covars, covariance_type='diag'):
             (n_features, n_features)    if 'tied',
             (n_components, n_features)    if 'diag',
             (n_components, n_features, n_features) if 'full'
+
     covariance_type : string
         Type of the covariance parameters.  Must be one of
         'spherical', 'tied', 'diag', 'full'.  Defaults to 'diag'.
@@ -119,6 +122,7 @@ class GMM(BaseEstimator):
     Initializes parameters such that every mixture component has zero
     mean and identity covariance.
 
+    Read more in the :ref:`User Guide <gmm>`.
 
     Parameters
     ----------
@@ -181,8 +185,6 @@ class GMM(BaseEstimator):
 
     converged_ : bool
         True when convergence was reached in fit(), False otherwise.
-
-
 
     See Also
     --------
@@ -268,13 +270,15 @@ class GMM(BaseEstimator):
 
     def _get_covars(self):
         """Covariance parameters for each mixture component.
-        The shape depends on `cvtype`::
 
-            (`n_states`, 'n_features')                if 'spherical',
-            (`n_features`, `n_features`)              if 'tied',
-            (`n_states`, `n_features`)                if 'diag',
-            (`n_states`, `n_features`, `n_features`)  if 'full'
-            """
+        The shape depends on ``cvtype``::
+
+            (n_states, n_features)                if 'spherical',
+            (n_features, n_features)              if 'tied',
+            (n_states, n_features)                if 'diag',
+            (n_states, n_features, n_features)    if 'full'
+
+        """
         if self.covariance_type == 'full':
             return self.covars_
         elif self.covariance_type == 'diag':
@@ -323,8 +327,8 @@ class GMM(BaseEstimator):
             raise ValueError('The shape of X  is not compatible with self')
 
         lpr = (log_multivariate_normal_density(X, self.means_, self.covars_,
-                                               self.covariance_type)
-               + np.log(self.weights_))
+                                               self.covariance_type) +
+               np.log(self.weights_))
         logprob = logsumexp(lpr, axis=1)
         responsibilities = np.exp(lpr - logprob[:, np.newaxis])
         return logprob, responsibilities
@@ -420,8 +424,8 @@ class GMM(BaseEstimator):
         return X
 
     def fit_predict(self, X, y=None):
-        """
-        Fit and then predict labels for data.
+        """Fit and then predict labels for data.
+
         Warning: due to the final maximization step in the EM algorithm,
         with low iterations the prediction may not be 100% accurate
 
@@ -458,7 +462,8 @@ class GMM(BaseEstimator):
         """
 
         # initialization step
-        X = check_array(X, dtype=np.float64)
+        X = check_array(X, dtype=np.float64, ensure_min_samples=2,
+                        estimator=self)
         if X.shape[0] < self.n_components:
             raise ValueError(
                 'GMM estimation with %s components, but got only %s samples' %
@@ -471,7 +476,7 @@ class GMM(BaseEstimator):
 
         for init in range(self.n_init):
             if self.verbose > 0:
-                print('Initialization '+str(init+1))
+                print('Initialization ' + str(init + 1))
                 start_init_time = time()
 
             if 'm' in self.init_params or not hasattr(self, 'means_'):
@@ -508,7 +513,7 @@ class GMM(BaseEstimator):
 
             for i in range(self.n_iter):
                 if self.verbose > 0:
-                    print('\tEM iteration '+str(i+1))
+                    print('\tEM iteration ' + str(i + 1))
                     start_iter_time = time()
                 prev_log_likelihood = current_log_likelihood
                 # Expectation step
@@ -521,7 +526,7 @@ class GMM(BaseEstimator):
                 if prev_log_likelihood is not None:
                     change = abs(current_log_likelihood - prev_log_likelihood)
                     if self.verbose > 1:
-                        print('\t\tChange: '+str(change))
+                        print('\t\tChange: ' + str(change))
                     if change < tol:
                         self.converged_ = True
                         if self.verbose > 0:
@@ -532,8 +537,8 @@ class GMM(BaseEstimator):
                 self._do_mstep(X, responsibilities, self.params,
                                self.min_covar)
                 if self.verbose > 1:
-                    print('\t\tEM iteration '+str(i+1)+' took {0:.5f}s'.format(
-                        time()-start_iter_time))
+                    print('\t\tEM iteration ' + str(i + 1) + ' took {0:.5f}s'.format(
+                        time() - start_iter_time))
 
             # if the results are better, keep it
             if self.n_iter:
@@ -546,8 +551,8 @@ class GMM(BaseEstimator):
                         print('\tBetter parameters were found.')
 
             if self.verbose > 1:
-                print('\tInitialization '+str(init+1)+' took {0:.5f}s'.format(
-                    time()-start_init_time))
+                print('\tInitialization ' + str(init + 1) + ' took {0:.5f}s'.format(
+                    time() - start_init_time))
 
         # check the existence of an init param that was not subject to
         # likelihood computation issue.
@@ -653,7 +658,7 @@ class GMM(BaseEstimator):
 
 
 #########################################################################
-## some helper routines
+# some helper routines
 #########################################################################
 
 
@@ -684,8 +689,7 @@ def _log_multivariate_normal_density_tied(X, means, covars):
 
 
 def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
-    """Log probability for full covariance matrices.
-    """
+    """Log probability for full covariance matrices."""
     n_samples, n_dim = X.shape
     nmix = len(means)
     log_prob = np.empty((n_samples, nmix))
@@ -751,8 +755,7 @@ def _validate_covars(covars, covariance_type, n_components):
 
 def distribute_covar_matrix_to_match_covariance_type(
         tied_cv, covariance_type, n_components):
-    """Create all the covariance matrices from a given template
-    """
+    """Create all the covariance matrices from a given template"""
     if covariance_type == 'spherical':
         cv = np.tile(tied_cv.mean() * np.ones(tied_cv.shape[1]),
                      (n_components, 1))

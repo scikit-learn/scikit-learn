@@ -133,6 +133,7 @@ parameters to maximize the likelihood of the data given those
 assignments. Repeating this process is guaranteed to always converge
 to a local optimum. 
 
+.. _vbgmm:
 
 VBGMM classifier: variational Gaussian mixtures
 ================================================

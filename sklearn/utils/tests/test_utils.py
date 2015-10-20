@@ -3,10 +3,11 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 from scipy.linalg import pinv2
+from itertools import chain
 
 from sklearn.utils.testing import (assert_equal, assert_raises, assert_true,
                                    assert_almost_equal, assert_array_equal,
-                                   SkipTest, assert_warns)
+                                   SkipTest, assert_raises_regex)
 
 from sklearn.utils import check_random_state
 from sklearn.utils import deprecated
@@ -15,9 +16,9 @@ from sklearn.utils import safe_mask
 from sklearn.utils import column_or_1d
 from sklearn.utils import safe_indexing
 from sklearn.utils import shuffle
+from sklearn.utils import gen_even_slices
 from sklearn.utils.extmath import pinvh
 from sklearn.utils.mocking import MockDataFrame
-from sklearn.utils.validation import DataConversionWarning
 
 
 def test_make_rng():
@@ -172,8 +173,8 @@ def test_safe_indexing_pandas():
     # this happens in joblib memmapping
     X.setflags(write=False)
     X_df_readonly = pd.DataFrame(X)
-    X_df_ro_indexed = assert_warns(DataConversionWarning, safe_indexing,
-                                   X_df_readonly, inds)
+    with warnings.catch_warnings(record=True):
+        X_df_ro_indexed = safe_indexing(X_df_readonly, inds)
 
     assert_array_equal(np.array(X_df_ro_indexed), X_indexed)
 
@@ -228,3 +229,15 @@ def test_shuffle_dont_convert_to_array():
     assert_array_equal(e_s.toarray(), np.array([[4, 5],
                                                 [2, 3],
                                                 [0, 1]]))
+
+
+def test_gen_even_slices():
+    # check that gen_even_slices contains all samples
+    some_range = range(10)
+    joined_range = list(chain(*[some_range[slice] for slice in gen_even_slices(10, 3)]))
+    assert_array_equal(some_range, joined_range)
+
+    # check that passing negative n_chunks raises an error
+    slices = gen_even_slices(10, -1)
+    assert_raises_regex(ValueError, "gen_even_slices got n_packs=-1, must be"
+                        " >=1", next, slices)

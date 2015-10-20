@@ -14,7 +14,7 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
-from ..cross_validation import _check_cv as check_cv
+from ..cross_validation import check_cv
 from ..cross_validation import _safe_split, _score
 from ..metrics.scorer import check_scoring
 from .base import SelectorMixin
@@ -31,6 +31,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     absolute weights are the smallest are pruned from the current set features.
     That procedure is recursively repeated on the pruned set until the desired
     number of features to select is eventually reached.
+
+    Read more in the :ref:`User Guide <rfe>`.
 
     Parameters
     ----------
@@ -109,6 +111,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         self.step = step
         self.estimator_params = estimator_params
         self.verbose = verbose
+
+    @property
+    def _estimator_type(self):
+        return self.estimator._estimator_type
 
     def fit(self, X, y):
         """Fit the RFE model and then the underlying estimator on the selected
@@ -265,6 +271,8 @@ class RFECV(RFE, MetaEstimatorMixin):
     """Feature ranking with recursive feature elimination and cross-validated
     selection of the best number of features.
 
+    Read more in the :ref:`User Guide <rfe>`.
+
     Parameters
     ----------
     estimator : object
@@ -282,11 +290,20 @@ class RFECV(RFE, MetaEstimatorMixin):
         If within (0.0, 1.0), then `step` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
-    cv : int or cross-validation generator, optional (default=None)
-        If int, it is the number of folds.
-        If None, 3-fold cross-validation is performed by default.
-        Specific cross-validation objects can also be passed, see
-        `sklearn.cross_validation module` for details.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs, if ``y`` is binary or multiclass,
+        :class:`StratifiedKFold` used. If the estimator is a classifier 
+        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or

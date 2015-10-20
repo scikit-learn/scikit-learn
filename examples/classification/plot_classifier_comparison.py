@@ -36,26 +36,31 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_moons, make_circles, make_classification
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
+from sklearn.gaussian_process import GaussianProcessClassifier
+from sklearn.gaussian_process.kernels import RBF
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
-from sklearn.lda import LDA
-from sklearn.qda import QDA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
 h = .02  # step size in the mesh
 
-names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Decision Tree",
-         "Random Forest", "AdaBoost", "Naive Bayes", "LDA", "QDA"]
+names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Gaussian Process",
+         "Decision Tree", "Random Forest", "AdaBoost", "Naive Bayes",
+         "Linear Discriminant Analysis", "Quadratic Discriminant Analysis"]
+
 classifiers = [
     KNeighborsClassifier(3),
     SVC(kernel="linear", C=0.025),
     SVC(gamma=2, C=1),
+    GaussianProcessClassifier(1.0 * RBF(1.0), warm_start=True),
     DecisionTreeClassifier(max_depth=5),
     RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
     AdaBoostClassifier(),
     GaussianNB(),
-    LDA(),
-    QDA()]
+    LinearDiscriminantAnalysis(),
+    QuadraticDiscriminantAnalysis()]
 
 X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
                            random_state=1, n_clusters_per_class=1)
@@ -75,7 +80,8 @@ for ds in datasets:
     # preprocess dataset, split into training and test part
     X, y = ds
     X = StandardScaler().fit_transform(X)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.4)
+    X_train, X_test, y_train, y_test = \
+        train_test_split(X, y, test_size=.4, random_state=42)
 
     x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
     y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
@@ -128,5 +134,5 @@ for ds in datasets:
                 size=15, horizontalalignment='right')
         i += 1
 
-figure.subplots_adjust(left=.02, right=.98)
+plt.tight_layout()
 plt.show()

@@ -4,6 +4,7 @@ import warnings
 
 import numpy as np
 from scipy.sparse import coo_matrix
+from scipy.sparse import csr_matrix
 from scipy import stats
 
 from sklearn.utils.testing import assert_true
@@ -12,6 +13,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -25,19 +27,20 @@ from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_digits
 from sklearn.datasets import load_iris
+from sklearn.datasets import make_multilabel_classification
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import precision_score
-
 from sklearn.externals import six
 from sklearn.externals.six.moves import zip
 
 from sklearn.linear_model import Ridge
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
 
-from sklearn.preprocessing import Imputer, LabelBinarizer
+from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
 
@@ -95,7 +98,7 @@ class MockClassifier(object):
     def predict(self, T):
         if self.allow_nd:
             T = T.reshape(len(T), -1)
-        return T.shape[0]
+        return T[:, 0]
 
     def score(self, X=None, Y=None):
         return 1. / (1 + np.abs(self.a))
@@ -108,7 +111,9 @@ X_sparse = coo_matrix(X)
 W_sparse = coo_matrix((np.array([1]), (np.array([1]), np.array([0]))),
                       shape=(10, 1))
 P_sparse = coo_matrix(np.eye(5))
-y = np.arange(10) // 2
+
+# avoid StratifiedKFold's Warning about least populated class in y
+y = np.arange(10) % 3
 
 ##############################################################################
 # Tests
@@ -286,12 +291,10 @@ def test_shuffle_kfold():
 
     all_folds = None
     for train, test in kf:
-        sorted_array = np.arange(100)
-        assert_true(np.any(sorted_array != ind[train]))
-        sorted_array = np.arange(101, 200)
-        assert_true(np.any(sorted_array != ind[train]))
-        sorted_array = np.arange(201, 300)
-        assert_true(np.any(sorted_array != ind[train]))
+        assert_true(np.any(np.arange(100) != ind[test]))
+        assert_true(np.any(np.arange(100, 200) != ind[test]))
+        assert_true(np.any(np.arange(200, 300) != ind[test]))
+
         if all_folds is None:
             all_folds = ind[test].copy()
         else:
@@ -356,6 +359,71 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     assert_greater(mean_score, 0.85)
 
 
+def test_label_kfold():
+    rng = np.random.RandomState(0)
+
+    # Parameters of the test
+    n_labels = 15
+    n_samples = 1000
+    n_folds = 5
+
+    # Construct the test data
+    tolerance = 0.05 * n_samples  # 5 percent error allowed
+    labels = rng.randint(0, n_labels, n_samples)
+    folds = cval.LabelKFold(labels, n_folds=n_folds).idxs
+    ideal_n_labels_per_fold = n_samples // n_folds
+
+    # Check that folds have approximately the same size
+    assert_equal(len(folds), len(labels))
+    for i in np.unique(folds):
+        assert_greater_equal(tolerance,
+                             abs(sum(folds == i) - ideal_n_labels_per_fold))
+
+    # Check that each label appears only in 1 fold
+    for label in np.unique(labels):
+        assert_equal(len(np.unique(folds[labels == label])), 1)
+
+    # Check that no label is on both sides of the split
+    labels = np.asarray(labels, dtype=object)
+    for train, test in cval.LabelKFold(labels, n_folds=n_folds):
+        assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
+
+    # Construct the test data
+    labels = ['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
+              'Francis', 'Robert', 'Michel', 'Rachel', 'Lois',
+              'Michelle', 'Bernard', 'Marion', 'Laura', 'Jean',
+              'Rachel', 'Franck', 'John', 'Gael', 'Anna', 'Alix',
+              'Robert', 'Marion', 'David', 'Tony', 'Abel', 'Becky',
+              'Madmood', 'Cary', 'Mary', 'Alexandre', 'David', 'Francis',
+              'Barack', 'Abdoul', 'Rasha', 'Xi', 'Silvia']
+    labels = np.asarray(labels, dtype=object)
+
+    n_labels = len(np.unique(labels))
+    n_samples = len(labels)
+    n_folds = 5
+    tolerance = 0.05 * n_samples  # 5 percent error allowed
+    folds = cval.LabelKFold(labels, n_folds=n_folds).idxs
+    ideal_n_labels_per_fold = n_samples // n_folds
+
+    # Check that folds have approximately the same size
+    assert_equal(len(folds), len(labels))
+    for i in np.unique(folds):
+        assert_greater_equal(tolerance,
+                             abs(sum(folds == i) - ideal_n_labels_per_fold))
+
+    # Check that each label appears only in 1 fold
+    for label in np.unique(labels):
+        assert_equal(len(np.unique(folds[labels == label])), 1)
+
+    # Check that no label is on both sides of the split
+    for train, test in cval.LabelKFold(labels, n_folds=n_folds):
+        assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
+
+    # Should fail if there are more folds than labels
+    labels = np.array([1, 1, 1, 2, 2])
+    assert_raises(ValueError, cval.LabelKFold, labels, n_folds=3)
+
+
 def test_shuffle_split():
     ss1 = cval.ShuffleSplit(10, test_size=0.2, random_state=0)
     ss2 = cval.ShuffleSplit(10, test_size=2, random_state=0)
@@ -413,7 +481,7 @@ def test_stratified_shuffle_split_iter():
                       / float(len(y[test])))
             assert_array_almost_equal(p_train, p_test, 1)
             assert_equal(y[train].size + y[test].size, y.size)
-            assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
+            assert_array_equal(np.intersect1d(train, test), [])
 
 
 def test_stratified_shuffle_split_even():
@@ -481,6 +549,48 @@ def test_predefinedsplit_with_kfold_split():
         ps_test.append(test_ind)
     assert_array_equal(ps_train, kf_train)
     assert_array_equal(ps_test, kf_test)
+
+
+def test_label_shuffle_split():
+    ys = [np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
+          np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
+          np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
+          np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
+          ]
+
+    for y in ys:
+        n_iter = 6
+        test_size = 1. / 3
+        slo = cval.LabelShuffleSplit(y, n_iter, test_size=test_size,
+                                     random_state=0)
+
+        # Make sure the repr works
+        repr(slo)
+
+        # Test that the length is correct
+        assert_equal(len(slo), n_iter)
+
+        y_unique = np.unique(y)
+
+        for train, test in slo:
+            # First test: no train label is in the test set and vice versa
+            y_train_unique = np.unique(y[train])
+            y_test_unique = np.unique(y[test])
+            assert_false(np.any(np.in1d(y[train], y_test_unique)))
+            assert_false(np.any(np.in1d(y[test], y_train_unique)))
+
+            # Second test: train and test add up to all the data
+            assert_equal(y[train].size + y[test].size, y.size)
+
+            # Third test: train and test are disjoint
+            assert_array_equal(np.intersect1d(train, test), [])
+
+            # Fourth test: # unique train and test labels are correct,
+            #              +- 1 for rounding error
+            assert_true(abs(len(y_test_unique) -
+                            round(test_size * len(y_unique))) <= 1)
+            assert_true(abs(len(y_train_unique) -
+                            round((1.0 - test_size) * len(y_unique))) <= 1)
 
 
 def test_leave_label_out_changing_labels():
@@ -695,6 +805,19 @@ def test_train_test_split():
     assert_equal(split[1].shape, (3, 5, 3, 2))
     assert_equal(split[2].shape, (7, 7, 11))
     assert_equal(split[3].shape, (3, 7, 11))
+
+    # test stratification option
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2])
+    for test_size, exp_test_size in zip([2, 4, 0.25, 0.5, 0.75],
+                                        [2, 4, 2, 4, 6]):
+        train, test = cval.train_test_split(y,
+                                            test_size=test_size,
+                                            stratify=y,
+                                            random_state=0)
+        assert_equal(len(test), exp_test_size)
+        assert_equal(len(test) + len(train), len(y))
+        # check the 1:1 ratio of ones and twos in the data is preserved
+        assert_equal(np.sum(train == 1), np.sum(train == 2))
 
 
 def train_test_split_pandas():
@@ -937,31 +1060,24 @@ def test_permutation_test_score_allow_nans():
 
 def test_check_cv_return_types():
     X = np.ones((9, 2))
-    cv = cval._check_cv(3, X, classifier=False)
+    cv = cval.check_cv(3, X, classifier=False)
     assert_true(isinstance(cv, cval.KFold))
 
     y_binary = np.array([0, 1, 0, 1, 0, 0, 1, 1, 1])
-    cv = cval._check_cv(3, X, y_binary, classifier=True)
+    cv = cval.check_cv(3, X, y_binary, classifier=True)
     assert_true(isinstance(cv, cval.StratifiedKFold))
 
     y_multiclass = np.array([0, 1, 0, 1, 2, 1, 2, 0, 2])
-    cv = cval._check_cv(3, X, y_multiclass, classifier=True)
+    cv = cval.check_cv(3, X, y_multiclass, classifier=True)
     assert_true(isinstance(cv, cval.StratifiedKFold))
 
     X = np.ones((5, 2))
-    y_seq_of_seqs = [[], [1, 2], [3], [0, 1, 3], [2]]
-
-    with warnings.catch_warnings(record=True):
-        # deprecated sequence of sequence format
-        cv = cval._check_cv(3, X, y_seq_of_seqs, classifier=True)
-    assert_true(isinstance(cv, cval.KFold))
-
-    y_indicator_matrix = LabelBinarizer().fit_transform(y_seq_of_seqs)
-    cv = cval._check_cv(3, X, y_indicator_matrix, classifier=True)
+    y_multilabel = [[1, 0, 1], [1, 1, 0], [0, 0, 0], [0, 1, 1], [1, 0, 0]]
+    cv = cval.check_cv(3, X, y_multilabel, classifier=True)
     assert_true(isinstance(cv, cval.KFold))
 
     y_multioutput = np.array([[1, 2], [0, 3], [0, 0], [3, 1], [2, 0]])
-    cv = cval._check_cv(3, X, y_multioutput, classifier=True)
+    cv = cval.check_cv(3, X, y_multioutput, classifier=True)
     assert_true(isinstance(cv, cval.KFold))
 
 
@@ -1022,6 +1138,56 @@ def test_cross_val_predict():
     assert_raises(ValueError, cval.cross_val_predict, est, X, y, cv=bad_cv())
 
 
+def test_cross_val_predict_input_types():
+    clf = Ridge()
+    # Smoke test
+    predictions = cval.cross_val_predict(clf, X, y)
+    assert_equal(predictions.shape, (10,))
+
+    # test with multioutput y
+    predictions = cval.cross_val_predict(clf, X_sparse, X)
+    assert_equal(predictions.shape, (10, 2))
+
+    predictions = cval.cross_val_predict(clf, X_sparse, y)
+    assert_array_equal(predictions.shape, (10,))
+
+    # test with multioutput y
+    predictions = cval.cross_val_predict(clf, X_sparse, X)
+    assert_array_equal(predictions.shape, (10, 2))
+
+    # test with X and y as list
+    list_check = lambda x: isinstance(x, list)
+    clf = CheckingClassifier(check_X=list_check)
+    predictions = cval.cross_val_predict(clf, X.tolist(), y.tolist())
+
+    clf = CheckingClassifier(check_y=list_check)
+    predictions = cval.cross_val_predict(clf, X, y.tolist())
+
+    # test with 3d X and
+    X_3d = X[:, :, np.newaxis]
+    check_3d = lambda x: x.ndim == 3
+    clf = CheckingClassifier(check_X=check_3d)
+    predictions = cval.cross_val_predict(clf, X_3d, y)
+    assert_array_equal(predictions.shape, (10,))
+
+
+def test_cross_val_predict_pandas():
+    # check cross_val_score doesn't destroy pandas dataframe
+    types = [(MockDataFrame, MockDataFrame)]
+    try:
+        from pandas import Series, DataFrame
+        types.append((Series, DataFrame))
+    except ImportError:
+        pass
+    for TargetType, InputFeatureType in types:
+        # X dataframe, y series
+        X_df, y_ser = InputFeatureType(X), TargetType(y)
+        check_df = lambda x: isinstance(x, InputFeatureType)
+        check_series = lambda x: isinstance(x, TargetType)
+        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
+        cval.cross_val_predict(clf, X_df, y_ser)
+
+
 def test_sparse_fit_params():
     iris = load_iris()
     X, y = iris.data, iris.target
@@ -1038,3 +1204,18 @@ def test_check_is_partition():
 
     p[0] = 23
     assert_false(cval._check_is_partition(p, 100))
+
+
+def test_cross_val_predict_sparse_prediction():
+    # check that cross_val_predict gives same result for sparse and dense input
+    X, y = make_multilabel_classification(n_classes=2, n_labels=1,
+                                          allow_unlabeled=False,
+                                          return_indicator=True,
+                                          random_state=1)
+    X_sparse = csr_matrix(X)
+    y_sparse = csr_matrix(y)
+    classif = OneVsRestClassifier(SVC(kernel='linear'))
+    preds = cval.cross_val_predict(classif, X, y, cv=10)
+    preds_sparse = cval.cross_val_predict(classif, X_sparse, y_sparse, cv=10)
+    preds_sparse = preds_sparse.toarray()
+    assert_array_almost_equal(preds_sparse, preds)

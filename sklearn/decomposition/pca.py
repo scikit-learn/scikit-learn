@@ -110,6 +110,8 @@ class PCA(BaseEstimator, TransformerMixin):
     The time complexity of this implementation is ``O(n ** 3)`` assuming
     n ~ n_samples ~ n_features.
 
+    Read more in the :ref:`User Guide <PCA>`.
+
     Parameters
     ----------
     n_components : int, None or string
@@ -141,12 +143,13 @@ class PCA(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     components_ : array, [n_components, n_features]
-        Components with maximum variance.
+        Principal axes in feature space, representing the directions of
+        maximum variance in the data.
 
     explained_variance_ratio_ : array, [n_components]
-        Percentage of variance explained by each of the selected components. \
-        k is not set then all components are stored and the sum of explained \
-        variances is equal to 1.0
+        Percentage of variance explained by each of the selected components.
+        If ``n_components`` is not set then all components are stored and the
+        sum of explained variances is equal to 1.0
 
     mean_ : array, [n_features]
         Per-feature empirical mean, estimated from the training set.
@@ -297,7 +300,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
-        if n_components < n_features:
+        if n_components < min(n_features, n_samples):
             self.noise_variance_ = explained_variance_[n_components:].mean()
         else:
             self.noise_variance_ = 0.
@@ -415,7 +418,6 @@ class PCA(BaseEstimator, TransformerMixin):
         else:
             return fast_dot(X, self.components_) + self.mean_
 
-
     def score_samples(self, X):
         """Return the log-likelihood of each sample
 
@@ -471,6 +473,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     Linear dimensionality reduction using approximated Singular Value
     Decomposition of the data and keeping only the most significant
     singular vectors to project the data to a lower dimensional space.
+
+    Read more in the :ref:`User Guide <RandomizedPCA>`.
 
     Parameters
     ----------

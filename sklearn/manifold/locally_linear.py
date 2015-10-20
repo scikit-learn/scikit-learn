@@ -11,6 +11,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
 from ..utils.arpack import eigsh
 from ..utils.validation import check_is_fitted
+from ..utils.validation import FLOAT_DTYPES
 from ..neighbors import NearestNeighbors
 
 
@@ -38,14 +39,10 @@ def barycenter_weights(X, Z, reg=1e-3):
     -----
     See developers note for more information.
     """
-    X = np.asarray(X)
-    Z = np.asarray(Z)
+    X = check_array(X, dtype=FLOAT_DTYPES)
+    Z = check_array(Z, dtype=FLOAT_DTYPES, allow_nd=True)
 
     n_samples, n_neighbors = X.shape[0], Z.shape[1]
-    if X.dtype.kind == 'i':
-        X = X.astype(np.float)
-    if Z.dtype.kind == 'i':
-        Z = Z.astype(np.float)
     B = np.empty((n_samples, n_neighbors), dtype=X.dtype)
     v = np.ones(n_neighbors, dtype=X.dtype)
 
@@ -183,6 +180,8 @@ def locally_linear_embedding(
         random_state=None):
     """Perform a Locally Linear Embedding analysis on the data.
 
+    Read more in the :ref:`User Guide <locally_linear_embedding>`.
+
     Parameters
     ----------
     X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
@@ -316,10 +315,10 @@ def locally_linear_embedding(
                                     return_distance=False)
         neighbors = neighbors[:, 1:]
 
-        Yi = np.empty((n_neighbors, 1 + n_components + dp), dtype=np.float)
+        Yi = np.empty((n_neighbors, 1 + n_components + dp), dtype=np.float64)
         Yi[:, 0] = 1
 
-        M = np.zeros((N, N), dtype=np.float)
+        M = np.zeros((N, N), dtype=np.float64)
 
         use_svd = (n_neighbors > d_in)
 
@@ -420,7 +419,7 @@ def locally_linear_embedding(
 
         #Now calculate M.
         # This is the [N x N] matrix whose null space is the desired embedding
-        M = np.zeros((N, N), dtype=np.float)
+        M = np.zeros((N, N), dtype=np.float64)
         for i in range(N):
             s_i = s_range[i]
 
@@ -499,6 +498,8 @@ def locally_linear_embedding(
 
 class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
     """Locally Linear Embedding
+
+    Read more in the :ref:`User Guide <locally_linear_embedding>`.
 
     Parameters
     ----------
@@ -619,7 +620,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
                 eigen_solver=self.eigen_solver, tol=self.tol,
                 max_iter=self.max_iter, method=self.method,
                 hessian_tol=self.hessian_tol, modified_tol=self.modified_tol,
-                random_state=random_state)
+                random_state=random_state, reg=self.reg)
 
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X

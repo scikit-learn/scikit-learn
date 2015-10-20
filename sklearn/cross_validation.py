@@ -31,8 +31,11 @@ from .externals.six import with_metaclass
 from .externals.six.moves import zip
 from .metrics.scorer import check_scoring
 from .utils.fixes import bincount
+from .gaussian_process.kernels import Kernel as GPKernel
+from .exceptions import FitFailedWarning
 
 __all__ = ['KFold',
+           'LabelKFold',
            'LeaveOneLabelOut',
            'LeaveOneOut',
            'LeavePLabelOut',
@@ -41,6 +44,7 @@ __all__ = ['KFold',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
            'PredefinedSplit',
+           'LabelShuffleSplit',
            'check_cv',
            'cross_val_score',
            'cross_val_predict',
@@ -107,6 +111,8 @@ class LeaveOneOut(_PartitionIterator):
     For large datasets one should favor KFold, StratifiedKFold or
     ShuffleSplit.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     n : int
@@ -165,6 +171,8 @@ class LeavePOut(_PartitionIterator):
     Due to the high number of iterations which grows combinatorically with the
     number of samples this cross validation method can be very costly. For
     large datasets one should favor KFold, StratifiedKFold or ShuffleSplit.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -249,10 +257,12 @@ class KFold(_BaseKFold):
     """K-Folds cross validation iterator.
 
     Provides train/test indices to split data in train test sets. Split
-    dataset into k consecutive folds (without shuffling).
+    dataset into k consecutive folds (without shuffling by default).
 
     Each fold is then used a validation set once while the k - 1 remaining
     fold form the training set.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -266,15 +276,15 @@ class KFold(_BaseKFold):
         Whether to shuffle the data before splitting into batches.
 
     random_state : None, int or RandomState
-        Pseudo-random number generator state used for random
-        sampling. If None, use default numpy RNG for shuffling
+        When shuffle=True, pseudo-random number generator state used for
+        shuffling. If None, use default numpy RNG for shuffling.
 
     Examples
     --------
-    >>> from sklearn import cross_validation
+    >>> from sklearn.cross_validation import KFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
-    >>> kf = cross_validation.KFold(4, n_folds=2)
+    >>> kf = KFold(4, n_folds=2)
     >>> len(kf)
     2
     >>> print(kf)  # doctest: +NORMALIZE_WHITESPACE
@@ -297,6 +307,8 @@ class KFold(_BaseKFold):
     StratifiedKFold: take label information into account to avoid building
     folds with imbalanced class distributions (for binary or multiclass
     classification tasks).
+
+    LabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, n, n_folds=3, shuffle=False,
@@ -332,6 +344,106 @@ class KFold(_BaseKFold):
         return self.n_folds
 
 
+class LabelKFold(_BaseKFold):
+    """K-fold iterator variant with non-overlapping labels.
+
+    The same label will not appear in two different folds (the number of
+    distinct labels has to be at least equal to the number of folds).
+
+    The folds are approximately balanced in the sense that the number of
+    distinct labels is approximately the same in each fold.
+
+    Parameters
+    ----------
+    labels : array-like with shape (n_samples, )
+        Contains a label for each sample.
+        The folds are built so that the same label does not appear in two
+        different folds.
+
+    n_folds : int, default=3
+        Number of folds. Must be at least 2.
+
+    Examples
+    --------
+    >>> from sklearn.cross_validation import LabelKFold
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    >>> y = np.array([1, 2, 3, 4])
+    >>> labels = np.array([0, 0, 2, 2])
+    >>> label_kfold = LabelKFold(labels, n_folds=2)
+    >>> len(label_kfold)
+    2
+    >>> print(label_kfold)
+    sklearn.cross_validation.LabelKFold(n_labels=4, n_folds=2)
+    >>> for train_index, test_index in label_kfold:
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
+    ...     print(X_train, X_test, y_train, y_test)
+    ...
+    TRAIN: [0 1] TEST: [2 3]
+    [[1 2]
+     [3 4]] [[5 6]
+     [7 8]] [1 2] [3 4]
+    TRAIN: [2 3] TEST: [0 1]
+    [[5 6]
+     [7 8]] [[1 2]
+     [3 4]] [3 4] [1 2]
+
+    See also
+    --------
+    LeaveOneLabelOut for splitting the data according to explicit,
+    domain-specific stratification of the dataset.
+    """
+    def __init__(self, labels, n_folds=3):
+        super(LabelKFold, self).__init__(len(labels), n_folds,
+                                         shuffle=False, random_state=None)
+
+        unique_labels, labels = np.unique(labels, return_inverse=True)
+        n_labels = len(unique_labels)
+
+        if n_folds > n_labels:
+            raise ValueError(
+                    ("Cannot have number of folds n_folds={0} greater"
+                     " than the number of labels: {1}.").format(n_folds,
+                                                                n_labels))
+
+        # Weight labels by their number of occurences
+        n_samples_per_label = np.bincount(labels)
+
+        # Distribute the most frequent labels first
+        indices = np.argsort(n_samples_per_label)[::-1]
+        n_samples_per_label = n_samples_per_label[indices]
+
+        # Total weight of each fold
+        n_samples_per_fold = np.zeros(n_folds)
+
+        # Mapping from label index to fold index
+        label_to_fold = np.zeros(len(unique_labels))
+
+        # Distribute samples by adding the largest weight to the lightest fold
+        for label_index, weight in enumerate(n_samples_per_label):
+            lightest_fold = np.argmin(n_samples_per_fold)
+            n_samples_per_fold[lightest_fold] += weight
+            label_to_fold[indices[label_index]] = lightest_fold
+
+        self.idxs = label_to_fold[labels]
+
+    def _iter_test_indices(self):
+        for f in range(self.n_folds):
+            yield np.where(self.idxs == f)[0]
+
+    def __repr__(self):
+        return '{0}.{1}(n_labels={2}, n_folds={3})'.format(
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.n,
+            self.n_folds,
+        )
+
+    def __len__(self):
+        return self.n_folds
+
+
 class StratifiedKFold(_BaseKFold):
     """Stratified K-Folds cross validation iterator
 
@@ -340,6 +452,8 @@ class StratifiedKFold(_BaseKFold):
     This cross-validation object is a variation of KFold that
     returns stratified folds. The folds are made by preserving
     the percentage of samples for each class.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -354,15 +468,15 @@ class StratifiedKFold(_BaseKFold):
         into batches.
 
     random_state : None, int or RandomState
-        Pseudo-random number generator state used for random
-        sampling. If None, use default numpy RNG for shuffling
+        When shuffle=True, pseudo-random number generator state used for
+        shuffling. If None, use default numpy RNG for shuffling.
 
     Examples
     --------
-    >>> from sklearn import cross_validation
+    >>> from sklearn.cross_validation import StratifiedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
-    >>> skf = cross_validation.StratifiedKFold(y, n_folds=2)
+    >>> skf = StratifiedKFold(y, n_folds=2)
     >>> len(skf)
     2
     >>> print(skf)  # doctest: +NORMALIZE_WHITESPACE
@@ -380,6 +494,9 @@ class StratifiedKFold(_BaseKFold):
     All the folds have size trunc(n_samples / n_folds), the last one has the
     complementary.
 
+    See also
+    --------
+    LabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, y, n_folds=3, shuffle=False,
@@ -455,6 +572,8 @@ class LeaveOneLabelOut(_PartitionIterator):
     For instance the labels could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     labels : array-like of int with shape (n_samples,)
@@ -486,6 +605,9 @@ class LeaveOneLabelOut(_PartitionIterator):
      [3 4]] [[5 6]
      [7 8]] [1 2] [1 2]
 
+    See also
+    --------
+    LabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, labels):
@@ -525,6 +647,8 @@ class LeavePLabelOut(_PartitionIterator):
     ``p`` different values of the labels while the latter uses samples
     all assigned the same labels.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     labels : array-like of int with shape (n_samples,)
@@ -559,6 +683,10 @@ class LeavePLabelOut(_PartitionIterator):
     TRAIN: [0] TEST: [1 2]
     [[1 2]] [[3 4]
      [5 6]] [1] [2 1]
+
+    See also
+    --------
+    LabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, labels, p):
@@ -623,6 +751,8 @@ class ShuffleSplit(BaseShuffleSplit):
     Note: contrary to other cross-validation strategies, random splits
     do not guarantee that all folds will be different, although this is
     still very likely for sizeable datasets.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -774,6 +904,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     do not guarantee that all folds will be different, although this is
     still very likely for sizeable datasets.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     y : array, [n_samples]
@@ -898,6 +1030,8 @@ class PredefinedSplit(_PartitionIterator):
     scheme. Each sample can be assigned to at most one test set fold, as
     specified by the user through the ``test_fold`` parameter.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     test_fold : "array-like, shape (n_samples,)
@@ -944,6 +1078,92 @@ class PredefinedSplit(_PartitionIterator):
         return len(self.unique_folds)
 
 
+class LabelShuffleSplit(ShuffleSplit):
+    '''Shuffle-Labels-Out cross-validation iterator
+
+    Provides randomized train/test indices to split data according to a
+    third-party provided label. This label information can be used to encode
+    arbitrary domain specific stratifications of the samples as integers.
+
+    For instance the labels could be the year of collection of the samples
+    and thus allow for cross-validation against time-based splits.
+
+    The difference between LeavePLabelOut and LabelShuffleSplit is that
+    the former generates splits using all subsets of size ``p`` unique labels,
+    whereas LabelShuffleSplit generates a user-determined number of random
+    test splits, each with a user-determined fraction of unique labels.
+
+    For example, a less computationally intensive alternative to
+    ``LeavePLabelOut(labels, p=10)`` would be
+    ``LabelShuffleSplit(labels, test_size=10, n_iter=100)``.
+
+    Note: The parameters ``test_size`` and ``train_size`` refer to labels, and
+    not to samples, as in ShuffleSplit.
+
+    Parameters
+    ----------
+    labels :  array, [n_samples]
+        Labels of samples
+
+    n_iter : int (default 5)
+        Number of re-shuffling & splitting iterations.
+
+    test_size : float (default 0.2), int, or None
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the labels to include in the test split. If
+        int, represents the absolute number of test labels. If None,
+        the value is automatically set to the complement of the train size.
+
+    train_size : float, int, or None (default is None)
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the labels to include in the train split. If
+        int, represents the absolute number of train labels. If None,
+        the value is automatically set to the complement of the test size.
+
+    random_state : int or RandomState
+        Pseudo-random number generator state used for random sampling.
+    '''
+    def __init__(self, labels, n_iter=5, test_size=0.2, train_size=None,
+                 random_state=None):
+
+        classes, label_indices = np.unique(labels, return_inverse=True)
+
+        super(LabelShuffleSplit, self).__init__(
+            len(classes),
+            n_iter=n_iter,
+            test_size=test_size,
+            train_size=train_size,
+            random_state=random_state)
+
+        self.labels = labels
+        self.classes = classes
+        self.label_indices = label_indices
+
+    def __repr__(self):
+        return ('%s(labels=%s, n_iter=%d, test_size=%s, '
+                'random_state=%s)' % (
+                    self.__class__.__name__,
+                    self.labels,
+                    self.n_iter,
+                    str(self.test_size),
+                    self.random_state,
+                ))
+
+    def __len__(self):
+        return self.n_iter
+
+    def _iter_indices(self):
+        for label_train, label_test in super(LabelShuffleSplit,
+                                             self)._iter_indices():
+            # these are the indices of classes in the partition
+            # invert them into data indices
+
+            train = np.flatnonzero(np.in1d(self.label_indices, label_train))
+            test = np.flatnonzero(np.in1d(self.label_indices, label_test))
+
+            yield train, test
+
+
 ##############################################################################
 def _index_param_value(X, v, indices):
     """Private helper function for parameter value indexing."""
@@ -959,6 +1179,8 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
                       verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Generate cross-validated estimates for each input data point
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     estimator : estimator object implementing 'fit' and 'predict'
@@ -971,13 +1193,20 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
         The target variable to try to predict in the case of
         supervised learning.
 
-    cv : cross-validation generator or int, optional, default: None
-        A cross-validation generator to use. If int, determines
-        the number of folds in StratifiedKFold if y is binary
-        or multiclass and estimator is a classifier, or the number
-        of folds in KFold otherwise. If None, it is equivalent to cv=3.
-        This generator must include all elements in the test set exactly once.
-        Otherwise, a ValueError is raised.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs, if ``y`` is binary or multiclass,
+        :class:`StratifiedKFold` used. If the estimator is a classifier
+        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -1013,7 +1242,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     """
     X, y = indexable(X, y)
 
-    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
@@ -1022,17 +1251,26 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
                                                       train, test, verbose,
                                                       fit_params)
                             for train, test in cv)
-    p = np.concatenate([p for p, _ in preds_blocks])
+
+    preds = [p for p, _ in preds_blocks]
     locs = np.concatenate([loc for _, loc in preds_blocks])
-    if not _check_is_partition(locs, X.shape[0]):
+    if not _check_is_partition(locs, _num_samples(X)):
         raise ValueError('cross_val_predict only works for partitions')
-    preds = p.copy()
-    preds[locs] = p
-    return preds
+    inv_locs = np.empty(len(locs), dtype=int)
+    inv_locs[locs] = np.arange(len(locs))
+
+    # Check for sparse predictions
+    if sp.issparse(preds[0]):
+        preds = sp.vstack(preds, format=preds[0].format)
+    else:
+        preds = np.concatenate(preds)
+    return preds[inv_locs]
 
 
 def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
     """Fit estimator and predict values for a given dataset split.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
@@ -1110,6 +1348,8 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                     verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     estimator : estimator object implementing 'fit'
@@ -1127,11 +1367,20 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : cross-validation generator or int, optional, default: None
-        A cross-validation generator to use. If int, determines
-        the number of folds in StratifiedKFold if y is binary
-        or multiclass and estimator is a classifier, or the number
-        of folds in KFold otherwise. If None, it is equivalent to cv=3.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs, if ``y`` is binary or multiclass,
+        :class:`StratifiedKFold` used. If the estimator is a classifier
+        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -1167,7 +1416,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     """
     X, y = indexable(X, y)
 
-    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -1178,10 +1427,6 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                                               fit_params)
                       for train, test in cv)
     return np.array(scores)[:, 0]
-
-
-class FitFailedWarning(RuntimeWarning):
-    pass
 
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
@@ -1314,7 +1559,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
 def _safe_split(estimator, X, y, indices, train_indices=None):
     """Create subset of dataset and properly handle kernels."""
-    if hasattr(estimator, 'kernel') and callable(estimator.kernel):
+    if hasattr(estimator, 'kernel') and callable(estimator.kernel) \
+       and not isinstance(estimator.kernel, GPKernel):
         # cannot compute the kernel values with custom function
         raise ValueError("Cannot use a custom kernel function. "
                          "Precompute the kernel matrix instead.")
@@ -1382,11 +1628,20 @@ def check_cv(cv, X=None, y=None, classifier=False):
 
     Parameters
     ----------
-    cv : int, a cv generator instance, or None
-        The input specifying which cv generator to use. It can be an
-        integer, in which case it is the number of folds in a KFold,
-        None, in which case 3 fold is used, or another object, that
-        will then be used as a cv generator.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs, if ``y`` is binary or multiclass,
+        :class:`StratifiedKFold` used. If the estimator is a classifier
+        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     X : array-like
         The data the cross-val object will be applied on.
@@ -1404,11 +1659,6 @@ def check_cv(cv, X=None, y=None, classifier=False):
         The return value is guaranteed to be a cv generator instance, whatever
         the input type.
     """
-    return _check_cv(cv, X=X, y=y, classifier=classifier)
-
-
-def _check_cv(cv, X=None, y=None, classifier=False):
-    # This exists for internal use while indices is being deprecated.
     is_sparse = sp.issparse(X)
     if cv is None:
         cv = 3
@@ -1432,6 +1682,8 @@ def permutation_test_score(estimator, X, y, cv=None,
                            random_state=0, verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     estimator : estimator object implementing 'fit'
@@ -1449,10 +1701,20 @@ def permutation_test_score(estimator, X, y, cv=None,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific cross-validation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs, if ``y`` is binary or multiclass,
+        :class:`StratifiedKFold` used. If the estimator is a classifier
+        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     n_permutations : integer, optional
         Number of times to permute ``y``.
@@ -1497,7 +1759,7 @@ def permutation_test_score(estimator, X, y, cv=None,
 
     """
     X, y = indexable(X, y)
-    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
     random_state = check_random_state(random_state)
 
@@ -1525,6 +1787,8 @@ def train_test_split(*arrays, **options):
     data into a single call for splitting (and optionally subsampling)
     data in a oneliner.
 
+    Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
@@ -1546,6 +1810,10 @@ def train_test_split(*arrays, **options):
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
+
+    stratify : array-like or None (default is None)
+        If not None, data is split in a stratified fashion, using this as
+        the labels array.
 
     Returns
     -------
@@ -1596,6 +1864,7 @@ def train_test_split(*arrays, **options):
 
     allow_nd = options.pop('allow_nd', None)
     allow_lists = options.pop('allow_lists', None)
+    stratify = options.pop('stratify', None)
 
     if allow_lists is not None:
         warnings.warn("The allow_lists option is deprecated and will be "
@@ -1615,10 +1884,15 @@ def train_test_split(*arrays, **options):
     if test_size is None and train_size is None:
         test_size = 0.25
     arrays = indexable(*arrays)
-    n_samples = _num_samples(arrays[0])
-    cv = ShuffleSplit(n_samples, test_size=test_size,
-                      train_size=train_size,
-                      random_state=random_state)
+    if stratify is not None:
+        cv = StratifiedShuffleSplit(stratify, test_size=test_size,
+                                    train_size=train_size,
+                                    random_state=random_state)
+    else:
+        n_samples = _num_samples(arrays[0])
+        cv = ShuffleSplit(n_samples, test_size=test_size,
+                          train_size=train_size,
+                          random_state=random_state)
 
     train, test = next(iter(cv))
     return list(chain.from_iterable((safe_indexing(a, train),

@@ -18,6 +18,7 @@ from ..externals.six import moves
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.extmath import fast_dot
 from ..utils.validation import check_is_fitted
+from ..utils.validation import FLOAT_DTYPES
 
 __all__ = ['fastica', 'FastICA']
 
@@ -149,6 +150,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             return_n_iter=False):
     """Perform Fast Independent Component Analysis.
 
+    Read more in the :ref:`User Guide <ICA>`.
+
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
@@ -259,7 +262,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     fun_args = {} if fun_args is None else fun_args
     # make interface compatible with other decompositions
     # a copy is required only for non whitened data
-    X = check_array(X, copy=whiten).T
+    X = check_array(X, copy=whiten, dtype=FLOAT_DTYPES).T
 
     alpha = fun_args.get('alpha', 1.0)
     if not 1 <= alpha <= 2:
@@ -372,6 +375,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
 class FastICA(BaseEstimator, TransformerMixin):
     """FastICA: a fast algorithm for Independent Component Analysis.
+
+    Read more in the :ref:`User Guide <ICA>`.
 
     Parameters
     ----------
@@ -536,7 +541,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'mixing_')
 
-        X = check_array(X, copy=copy)
+        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         if self.whiten:
             X -= self.mean_
 
@@ -559,8 +564,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'mixing_')
 
-        if copy:
-            X = X.copy()
+        X = check_array(X, copy=(copy and self.whiten), dtype=FLOAT_DTYPES)
         X = fast_dot(X, self.mixing_.T)
         if self.whiten:
             X += self.mean_

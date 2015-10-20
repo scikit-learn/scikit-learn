@@ -88,6 +88,8 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
         - y_[i] are fitted
         - w[i] are optional strictly positive weights (default to 1.0)
 
+    Read more in the :ref:`User Guide <isotonic>`.
+
     Parameters
     ----------
     y : iterable of floating-point values
@@ -117,11 +119,11 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     "Active set algorithms for isotonic regression; A unifying framework"
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
-    y = np.asarray(y, dtype=np.float)
+    y = np.asarray(y, dtype=np.float64)
     if sample_weight is None:
         sample_weight = np.ones(len(y), dtype=y.dtype)
     else:
-        sample_weight = np.asarray(sample_weight, dtype=np.float)
+        sample_weight = np.asarray(sample_weight, dtype=np.float64)
     if not increasing:
         y = y[::-1]
         sample_weight = sample_weight[::-1]
@@ -162,6 +164,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         - ``X`` specifies the order.
           If ``X`` is non-decreasing then ``y_`` is non-decreasing.
         - ``w[i]`` are optional strictly positive weights (default to 1.0)
+
+    Read more in the :ref:`User Guide <isotonic>`.
 
     Parameters
     ----------

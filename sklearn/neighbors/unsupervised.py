@@ -10,6 +10,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
                        RadiusNeighborsMixin, UnsupervisedMixin):
     """Unsupervised learner for implementing neighbor searches.
 
+    Read more in the :ref:`User Guide <unsupervised_neighbors>`.
+
     Parameters
     ----------
     n_neighbors : int, optional (default = 5)
@@ -42,7 +44,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
- 
+
     metric : string or callable, default 'minkowski'
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
@@ -69,8 +71,13 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    metric_params: dict, optional (default = None)
-        additional keyword arguments for the metric function.
+    metric_params : dict, optional (default = None)
+        Additional keyword arguments for the metric function.
+
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        Affects only :meth:`k_neighbors` and :meth:`kneighbors_graph` methods.
 
     Examples
     --------
@@ -86,8 +93,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
       ... #doctest: +ELLIPSIS
       array([[2, 0]]...)
 
-      >>> rng = neigh.radius_neighbors([0, 0, 1.3], 0.4, return_distance=False)
-      >>> np.asarray(rng[0][0])
+      >>> nbrs = neigh.radius_neighbors([[0, 0, 1.3]], 0.4, return_distance=False)
+      >>> np.asarray(nbrs[0][0])
       array(2)
 
     See also
@@ -108,9 +115,9 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5, radius=1.0,
                  algorithm='auto', leaf_size=30, metric='minkowski',
-                 p=2, metric_params=None, **kwargs):
+                 p=2, metric_params=None, n_jobs=1, **kwargs):
         self._init_params(n_neighbors=n_neighbors,
                           radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size, metric=metric, p=p,
-                          metric_params=metric_params, **kwargs)
+                          metric_params=metric_params, n_jobs=n_jobs, **kwargs)

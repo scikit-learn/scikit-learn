@@ -17,23 +17,29 @@ from __future__ import division
 
 
 import numbers
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 
 import numpy as np
 from scipy.sparse import issparse
 
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import BaseEstimator
+from ..base import ClassifierMixin
+from ..base import RegressorMixin
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import check_array, check_random_state, compute_sample_weight
-from ..utils.validation import NotFittedError, check_is_fitted
+from ..utils import check_array
+from ..utils import check_random_state
+from ..utils import compute_sample_weight
+from ..utils.multiclass import check_classification_targets
+from ..exceptions import NotFittedError
 
-
-from ._tree import Criterion
-from ._tree import Splitter
-from ._tree import DepthFirstTreeBuilder, BestFirstTreeBuilder
+from ._criterion import Criterion
+from ._splitter import Splitter
+from ._tree import DepthFirstTreeBuilder
+from ._tree import BestFirstTreeBuilder
 from ._tree import Tree
-from . import _tree
+from . import _tree, _splitter, _criterion
 
 __all__ = ["DecisionTreeClassifier",
            "DecisionTreeRegressor",
@@ -48,15 +54,14 @@ __all__ = ["DecisionTreeClassifier",
 DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
-CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
-CRITERIA_REG = {"mse": _tree.MSE, "friedman_mse": _tree.FriedmanMSE}
+CRITERIA_CLF = {"gini": _criterion.Gini, "entropy": _criterion.Entropy}
+CRITERIA_REG = {"mse": _criterion.MSE, "friedman_mse": _criterion.FriedmanMSE}
 
-DENSE_SPLITTERS = {"best": _tree.BestSplitter,
-                   "presort-best": _tree.PresortBestSplitter,
-                   "random": _tree.RandomSplitter}
+DENSE_SPLITTERS = {"best": _splitter.BestSplitter,
+                   "random": _splitter.RandomSplitter}
 
-SPARSE_SPLITTERS = {"best": _tree.BestSparseSplitter,
-                    "random": _tree.RandomSparseSplitter}
+SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
+                    "random": _splitter.RandomSparseSplitter}
 
 # =============================================================================
 # Base decision tree
@@ -82,7 +87,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                  max_features,
                  max_leaf_nodes,
                  random_state,
-                 class_weight=None):
+                 class_weight=None,
+                 presort=False):
         self.criterion = criterion
         self.splitter = splitter
         self.max_depth = max_depth
@@ -93,6 +99,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.random_state = random_state
         self.max_leaf_nodes = max_leaf_nodes
         self.class_weight = class_weight
+        self.presort = presort
 
         self.n_features_ = None
         self.n_outputs_ = None
@@ -102,7 +109,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.tree_ = None
         self.max_features_ = None
 
-    def fit(self, X, y, sample_weight=None, check_input=True):
+    def fit(self, X, y, sample_weight=None, check_input=True, 
+            X_idx_sorted=None):
         """Build a decision tree from the training set (X, y).
 
         Parameters
@@ -128,11 +136,18 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
+        X_idx_sorted : array-like, shape = [n_samples, n_features], optional
+            The indexes of the sorted training input samples. If many tree
+            are grown on the same dataset, this allows the ordering to be
+            cached between trees. If None, the data will be sorted here.
+            Don't use this parameter unless you know what to do.
+
         Returns
         -------
         self : object
             Returns self.
         """
+
         random_state = check_random_state(self.random_state)
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csc")
@@ -158,6 +173,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.n_outputs_ = y.shape[1]
 
         if is_classification:
+            check_classification_targets(y)
             y = np.copy(y)
 
             self.classes_ = []
@@ -166,10 +182,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             if self.class_weight is not None:
                 y_original = np.copy(y)
 
+            y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
             for k in range(self.n_outputs_):
-                classes_k, y[:, k] = np.unique(y[:, k], return_inverse=True)
+                classes_k, y_store_unique_indices[:, k] = np.unique(y[:, k], return_inverse=True)
                 self.classes_.append(classes_k)
                 self.n_classes_.append(classes_k.shape[0])
+            y = y_store_unique_indices
 
             if self.class_weight is not None:
                 expanded_class_weight = compute_sample_weight(
@@ -267,6 +285,33 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         min_samples_split = max(self.min_samples_split,
                                 2 * self.min_samples_leaf)
 
+
+        presort = self.presort
+        # Allow presort to be 'auto', which means True if the dataset is dense,
+        # otherwise it will be False.
+        if self.presort == 'auto' and issparse(X):
+            presort = False
+        elif self.presort == 'auto':
+            presort = True
+        
+        if presort == True and issparse(X):
+            raise ValueError("Presorting is not supported for sparse matrices.")
+
+        # If multiple trees are built on the same dataset, we only want to
+        # presort once. Splitters now can accept presorted indices if desired, 
+        # but do not handle any presorting themselves. Ensemble algorithms which
+        # desire presorting must do presorting themselves and pass that matrix
+        # into each tree.
+        if X_idx_sorted is None and presort:
+                X_idx_sorted = np.asfortranarray(np.argsort(X, axis=0),
+                                                 dtype=np.int32)
+
+        if presort and X_idx_sorted.shape != X.shape:
+            raise ValueError("The shape of X (X.shape = {}) doesn't match "
+                             "the shape of X_idx_sorted (X_idx_sorted"
+                             ".shape = {})".format(X.shape, 
+                                                   X_idx_sorted.shape))
+
         # Build tree
         criterion = self.criterion
         if not isinstance(criterion, Criterion):
@@ -284,7 +329,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                                 self.max_features_,
                                                 self.min_samples_leaf,
                                                 min_weight_leaf,
-                                                random_state)
+                                                random_state,
+                                                self.presort)
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
 
@@ -301,7 +347,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                            max_depth,
                                            max_leaf_nodes)
 
-        builder.build(self.tree_, X, y, sample_weight)
+        builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
@@ -354,6 +400,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
+
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
         n_samples = X.shape[0]
@@ -433,6 +480,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """A decision tree classifier.
 
+    Read more in the :ref:`User Guide <tree>`.
+
     Parameters
     ----------
     criterion : string, optional (default="gini")
@@ -481,14 +530,16 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
-    class_weight : dict, list of dicts, "auto" or None, optional (default=None)
+    class_weight : dict, list of dicts, "balanced" or None, optional
+                   (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
 
-        The "auto" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies in the input data.
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
         For multi-output, the weights of each column of y will be multiplied.
 
@@ -501,28 +552,41 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    presort : bool, optional (default=False)
+        Whether to presort the data to speed up the finding of best splits in
+        fitting. For the default settings of a decision tree on large
+        datasets, setting this to true may slow down the training process.
+        When using either a smaller dataset or a restricted depth, this may
+        speed up the training.
+
     Attributes
     ----------
-    tree_ : Tree object
-        The underlying Tree object.
-
-    max_features_ : int,
-        The inferred value of max_features.
-
     classes_ : array of shape = [n_classes] or a list of such arrays
         The classes labels (single output problem),
         or a list of arrays of class labels (multi-output problem).
-
-    n_classes_ : int or list
-        The number of classes (for single output problems),
-        or a list containing the number of classes for each
-        output (for multi-output problems).
 
     feature_importances_ : array of shape = [n_features]
         The feature importances. The higher, the more important the
         feature. The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance [4]_.
+
+    max_features_ : int,
+        The inferred value of max_features.
+
+    n_classes_ : int or list
+        The number of classes (for single output problems),
+        or a list containing the number of classes for each
+        output (for multi-output problems).
+
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
+    tree_ : Tree object
+        The underlying Tree object.
 
     See also
     --------
@@ -565,7 +629,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
-                 class_weight=None):
+                 class_weight=None,
+                 presort=False):
         super(DecisionTreeClassifier, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -576,7 +641,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             class_weight=class_weight,
-            random_state=random_state)
+            random_state=random_state,
+            presort=presort)
 
     def predict_proba(self, X, check_input=True):
         """Predict class probabilities of the input samples X.
@@ -657,11 +723,14 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     """A decision tree regressor.
 
+    Read more in the :ref:`User Guide <tree>`.
+
     Parameters
     ----------
     criterion : string, optional (default="mse")
         The function to measure the quality of a split. The only supported
-        criterion is "mse" for the mean squared error.
+        criterion is "mse" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion.
 
     splitter : string, optional (default="best")
         The strategy used to choose the split at each node. Supported
@@ -711,20 +780,33 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    presort : bool, optional (default=False)
+        Whether to presort the data to speed up the finding of best splits in
+        fitting. For the default settings of a decision tree on large
+        datasets, setting this to true may slow down the training process.
+        When using either a smaller dataset or a restricted depth, this may
+        speed up the training.
+
     Attributes
     ----------
-    tree_ : Tree object
-        The underlying Tree object.
-
-    max_features_ : int,
-        The inferred value of max_features.
-
     feature_importances_ : array of shape = [n_features]
         The feature importances.
         The higher, the more important the feature.
         The importance of a feature is computed as the
         (normalized) total reduction of the criterion brought
         by that feature. It is also known as the Gini importance [4]_.
+
+    max_features_ : int,
+        The inferred value of max_features.
+
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
+    tree_ : Tree object
+        The underlying Tree object.
 
     See also
     --------
@@ -766,7 +848,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  min_weight_fraction_leaf=0.,
                  max_features=None,
                  random_state=None,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None,
+                 presort=False):
         super(DecisionTreeRegressor, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -776,7 +859,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
-            random_state=random_state)
+            random_state=random_state,
+            presort=presort)
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -790,6 +874,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     decision tree.
 
     Warning: Extra-trees should only be used within ensemble methods.
+
+    Read more in the :ref:`User Guide <tree>`.
 
     See also
     --------
@@ -836,6 +922,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     decision tree.
 
     Warning: Extra-trees should only be used within ensemble methods.
+
+    Read more in the :ref:`User Guide <tree>`.
 
     See also
     --------

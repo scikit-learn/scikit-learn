@@ -25,8 +25,7 @@ from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 from ..utils.fast_dict import IntFloatDict
 
-if sys.version_info[0] > 2:
-    xrange = range
+from ..externals.six.moves import xrange
 
 ###############################################################################
 # For non fully-connected graphs
@@ -97,6 +96,8 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
 
     This is the structured version, that takes into account some topological
     structure between samples.
+
+    Read more in the :ref:`User Guide <hierarchical_clustering>`.
 
     Parameters
     ----------
@@ -232,7 +233,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
     moments_1[:n_samples] = 1
     moments_2 = np.zeros((n_nodes, n_features), order='C')
     moments_2[:n_samples] = X
-    inertia = np.empty(len(coord_row), dtype=np.float, order='C')
+    inertia = np.empty(len(coord_row), dtype=np.float64, order='C')
     _hierarchical.compute_ward_dist(moments_1, moments_2, coord_row, coord_col,
                                     inertia)
     inertia = list(six.moves.zip(inertia, coord_row, coord_col))
@@ -277,7 +278,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
         coord_row = np.empty(coord_col.shape, dtype=np.intp, order='C')
         coord_row.fill(k)
         n_additions = len(coord_row)
-        ini = np.empty(n_additions, dtype=np.float, order='C')
+        ini = np.empty(n_additions, dtype=np.float64, order='C')
 
         _hierarchical.compute_ward_dist(moments_1, moments_2,
                                         coord_row, coord_col, ini)
@@ -310,6 +311,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
 
     This is the structured version, that takes into account some topological
     structure between samples.
+
+    Read more in the :ref:`User Guide <hierarchical_clustering>`.
 
     Parameters
     ----------
@@ -607,6 +610,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     Recursively merges the pair of clusters that minimally increases
     a given linkage distance.
 
+    Read more in the :ref:`User Guide <hierarchical_clustering>`.
+
     Parameters
     ----------
     n_clusters : int, default=2
@@ -707,7 +712,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         -------
         self
         """
-        X = check_array(X)
+        X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = self.memory
         if isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
@@ -775,6 +780,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     Similar to AgglomerativeClustering, but recursively merges features
     instead of samples.
+
+    Read more in the :ref:`User Guide <hierarchical_clustering>`.
 
     Parameters
     ----------
@@ -861,11 +868,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         -------
         self
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
-        if not (len(X.shape) == 2 and X.shape[0] > 0):
-            raise ValueError('At least one sample is required to fit the '
-                             'model. A data matrix of shape %s was given.'
-                             % (X.shape, ))
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        ensure_min_features=2, estimator=self)
         return AgglomerativeClustering.fit(self, X.T, **params)
 
     @property

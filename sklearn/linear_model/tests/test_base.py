@@ -10,8 +10,10 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 
 from sklearn.linear_model.base import LinearRegression
-from sklearn.linear_model.base import center_data, sparse_center_data
+from sklearn.linear_model.base import center_data, sparse_center_data, _rescale_data
 from sklearn.utils import check_random_state
+from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_greater
 from sklearn.datasets.samples_generator import make_sparse_uncorrelated
 from sklearn.datasets.samples_generator import make_regression
 
@@ -38,6 +40,55 @@ def test_linear_regression():
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(clf.intercept_, [0])
     assert_array_almost_equal(clf.predict(X), [0])
+
+
+def test_linear_regression_sample_weights():
+    rng = np.random.RandomState(0)
+
+    for n_samples, n_features in ((6, 5), (5, 10)):
+        y = rng.randn(n_samples)
+        X = rng.randn(n_samples, n_features)
+        sample_weight = 1.0 + rng.rand(n_samples)
+
+        clf = LinearRegression()
+        clf.fit(X, y, sample_weight)
+        coefs1 = clf.coef_
+
+        assert_equal(clf.coef_.shape, (X.shape[1], ))
+        assert_greater(clf.score(X, y), 0.9)
+        assert_array_almost_equal(clf.predict(X), y)
+
+        # Sample weight can be implemented via a simple rescaling
+        # for the square loss.
+        scaled_y = y * np.sqrt(sample_weight)
+        scaled_X = X * np.sqrt(sample_weight)[:, np.newaxis]
+        clf.fit(X, y)
+        coefs2 = clf.coef_
+
+        assert_array_almost_equal(coefs1, coefs2)
+
+
+def test_raises_value_error_if_sample_weights_greater_than_1d():
+    # Sample weights must be either scalar or 1D
+
+    n_sampless = [2, 3]
+    n_featuress = [3, 2]
+
+    rng = np.random.RandomState(42)
+
+    for n_samples, n_features in zip(n_sampless, n_featuress):
+        X = rng.randn(n_samples, n_features)
+        y = rng.randn(n_samples)
+        sample_weights_OK = rng.randn(n_samples) ** 2 + 1
+        sample_weights_OK_1 = 1.
+        sample_weights_OK_2 = 2.
+
+        clf = LinearRegression()
+
+        # make sure the "OK" sample weights actually work
+        clf.fit(X, y, sample_weights_OK)
+        clf.fit(X, y, sample_weights_OK_1)
+        clf.fit(X, y, sample_weights_OK_2)
 
 
 def test_fit_intercept():
@@ -255,3 +306,19 @@ def test_csr_sparse_center_data():
     csr = sparse.csr_matrix(X)
     csr_, y, _, _, _ = sparse_center_data(csr, y, True)
     assert_equal(csr_.getformat(), 'csr')
+
+
+def test_rescale_data():
+    n_samples = 200
+    n_features = 2
+
+    rng = np.random.RandomState(0)
+    sample_weight = 1.0 + rng.rand(n_samples)
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
+    rescaled_X, rescaled_y = _rescale_data(X, y, sample_weight)
+    rescaled_X2 = X * np.sqrt(sample_weight)[:, np.newaxis]
+    rescaled_y2 = y * np.sqrt(sample_weight)
+    assert_array_almost_equal(rescaled_X, rescaled_X2)
+    assert_array_almost_equal(rescaled_y, rescaled_y2)
+

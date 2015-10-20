@@ -14,7 +14,8 @@ from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.validation import NotFittedError, check_is_fitted
+from ..utils.validation import check_is_fitted
+from ..exceptions import NotFittedError
 from .hierarchical import AgglomerativeClustering
 
 
@@ -327,6 +328,8 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     Tree. It is then clubbed together with the subcluster that has the
     centroid closest to the new sample. This is done recursively till it
     ends up at the subcluster of the leaf of the tree has the closest centroid.
+
+    Read more in the :ref:`User Guide <birch>`.
 
     Parameters
     ----------

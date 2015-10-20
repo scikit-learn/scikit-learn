@@ -234,8 +234,3 @@ def test_inverse_transform():
             # reversibility test in non-reduction case
             if n_components == X.shape[1]:
                 assert_array_almost_equal(X, X2)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.run(argv=['', __file__])

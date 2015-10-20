@@ -112,6 +112,8 @@ class OutlierDetectionMixin(object):
 class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
     """An object for detecting outliers in a Gaussian distributed dataset.
 
+    Read more in the :ref:`User Guide <outlier_detection>`.
+
     Attributes
     ----------
     `contamination` : float, 0. < contamination < 0.5

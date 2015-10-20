@@ -13,10 +13,6 @@ set -e
 export CC=gcc
 export CXX=g++
 
-sudo apt-get update -qq
-if [[ "$INSTALL_ATLAS" == "true" ]]; then
-    sudo apt-get install -qq libatlas3gf-base libatlas-dev
-fi
 
 if [[ "$DISTRIB" == "conda" ]]; then
     # Deactivate the travis-provided virtual environment and setup a
@@ -46,8 +42,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
     fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
-    # Use standard ubuntu packages in their default version
-    sudo apt-get install -qq python-scipy
     # At the time of writing numpy 1.9.1 is included in the travis
     # virtualenv but we want to used numpy installed through apt-get
     # install.

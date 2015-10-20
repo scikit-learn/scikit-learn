@@ -8,24 +8,13 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 
-from sklearn.multiclass import fit_ovr
-from sklearn.multiclass import fit_ovo
-from sklearn.multiclass import fit_ecoc
-from sklearn.multiclass import predict_ovr
-from sklearn.multiclass import predict_ovo
-from sklearn.multiclass import predict_ecoc
-from sklearn.multiclass import predict_proba_ovr
-
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
-
-from sklearn.preprocessing import LabelBinarizer
 
 from sklearn.svm import LinearSVC, SVC
 from sklearn.naive_bayes import MultinomialNB
@@ -49,10 +38,6 @@ n_classes = 3
 def test_ovr_exceptions():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ovr.predict, [])
-
-    with ignore_warnings():
-        assert_raises(ValueError, predict_ovr, [LinearSVC(), MultinomialNB()],
-                      LabelBinarizer(), [])
 
     # Fail on multioutput data
     assert_raises(ValueError, OneVsRestClassifier(MultinomialNB()).fit,
@@ -107,7 +92,6 @@ def test_ovr_fit_predict_sparse():
                                                        n_labels=3,
                                                        length=50,
                                                        allow_unlabeled=True,
-                                                       return_indicator=True,
                                                        random_state=0)
 
         X_train, Y_train = X[:80], Y[:80]
@@ -230,35 +214,19 @@ def test_ovr_binary():
         conduct_test(base_clf, test_predict_proba=True)
 
 
-@ignore_warnings
 def test_ovr_multilabel():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 4, 5], [0, 5, 0], [3, 3, 3], [4, 0, 6], [6, 0, 0]])
-    y = [["spam", "eggs"], ["spam"], ["ham", "eggs", "spam"],
-         ["ham", "eggs"], ["ham"]]
-    # y = [[1, 2], [1], [0, 1, 2], [0, 2], [0]]
-    Y = np.array([[0, 1, 1],
+    y = np.array([[0, 1, 1],
                   [0, 1, 0],
                   [1, 1, 1],
                   [1, 0, 1],
                   [1, 0, 0]])
 
-    classes = set("ham eggs spam".split())
-
     for base_clf in (MultinomialNB(), LinearSVC(random_state=0),
                      LinearRegression(), Ridge(),
                      ElasticNet(), Lasso(alpha=0.5)):
-        # test input as lists of tuples
-        clf = assert_warns(DeprecationWarning,
-                           OneVsRestClassifier(base_clf).fit,
-                           X, y)
-        assert_equal(set(clf.classes_), classes)
-        y_pred = clf.predict([[0, 4, 4]])[0]
-        assert_equal(set(y_pred), set(["spam", "eggs"]))
-        assert_true(clf.multilabel_)
-
-        # test input as label indicator matrix
-        clf = OneVsRestClassifier(base_clf).fit(X, Y)
+        clf = OneVsRestClassifier(base_clf).fit(X, y)
         y_pred = clf.predict([[0, 4, 4]])[0]
         assert_array_equal(y_pred, [0, 1, 1])
         assert_true(clf.multilabel_)
@@ -280,7 +248,6 @@ def test_ovr_multilabel_dataset():
                                                        n_labels=2,
                                                        length=50,
                                                        allow_unlabeled=au,
-                                                       return_indicator=True,
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test, Y_test = X[80:], Y[80:]
@@ -305,7 +272,6 @@ def test_ovr_multilabel_predict_proba():
                                                        n_labels=3,
                                                        length=50,
                                                        allow_unlabeled=au,
-                                                       return_indicator=True,
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test = X[80:]
@@ -357,7 +323,6 @@ def test_ovr_multilabel_decision_function():
                                                    n_labels=3,
                                                    length=50,
                                                    allow_unlabeled=True,
-                                                   return_indicator=True,
                                                    random_state=0)
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]
@@ -399,11 +364,18 @@ def test_ovr_pipeline():
 
 
 def test_ovr_coef_():
-    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-    ovr.fit(iris.data, iris.target)
-    shape = ovr.coef_.shape
-    assert_equal(shape[0], n_classes)
-    assert_equal(shape[1], iris.data.shape[1])
+    for base_classifier in [SVC(kernel='linear', random_state=0), LinearSVC(random_state=0)]:
+        # SVC has sparse coef with sparse input data
+
+        ovr = OneVsRestClassifier(base_classifier)
+        for X in [iris.data, sp.csr_matrix(iris.data)]:
+            # test with dense and sparse coef
+            ovr.fit(X, iris.target)
+            shape = ovr.coef_.shape
+            assert_equal(shape[0], n_classes)
+            assert_equal(shape[1], iris.data.shape[1])
+            # don't densify sparse coefficients
+            assert_equal(sp.issparse(ovr.estimators_[0].coef_), sp.issparse(ovr.coef_))
 
 
 def test_ovr_coef_exceptions():
@@ -568,49 +540,3 @@ def test_ecoc_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
-
-
-@ignore_warnings
-def test_deprecated():
-    base_estimator = DecisionTreeClassifier(random_state=0)
-    X, Y = iris.data, iris.target
-    X_train, Y_train = X[:80], Y[:80]
-    X_test = X[80:]
-
-    all_metas = [
-        (OneVsRestClassifier, fit_ovr, predict_ovr, predict_proba_ovr),
-        (OneVsOneClassifier, fit_ovo, predict_ovo, None),
-        (OutputCodeClassifier, fit_ecoc, predict_ecoc, None),
-    ]
-
-    for MetaEst, fit_func, predict_func, proba_func in all_metas:
-        try:
-            meta_est = MetaEst(base_estimator,
-                               random_state=0).fit(X_train, Y_train)
-
-            fitted_return = fit_func(base_estimator, X_train, Y_train,
-                                     random_state=0)
-        except TypeError:
-            meta_est = MetaEst(base_estimator).fit(X_train, Y_train)
-            fitted_return = fit_func(base_estimator, X_train, Y_train)
-
-        if len(fitted_return) == 2:
-            estimators_, classes_or_lb = fitted_return
-            assert_almost_equal(predict_func(estimators_, classes_or_lb,
-                                             X_test),
-                                meta_est.predict(X_test))
-            if proba_func is not None:
-                assert_almost_equal(proba_func(estimators_, X_test,
-                                               is_multilabel=False),
-                                    meta_est.predict_proba(X_test))
-
-        else:
-            estimators_, classes_or_lb, codebook = fitted_return
-            assert_almost_equal(predict_func(estimators_, classes_or_lb,
-                                             codebook, X_test),
-                                meta_est.predict(X_test))
-
-
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()

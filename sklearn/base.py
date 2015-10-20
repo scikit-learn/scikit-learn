@@ -3,15 +3,26 @@
 # License: BSD 3 clause
 
 import copy
-import inspect
 import warnings
 
 import numpy as np
 from scipy import sparse
 from .externals import six
+from .utils.fixes import signature
+from .utils.deprecation import deprecated
+from .exceptions import ChangedBehaviorWarning as ChangedBehaviorWarning_
 
 
-###############################################################################
+class ChangedBehaviorWarning(ChangedBehaviorWarning_):
+    pass
+
+ChangedBehaviorWarning = deprecated("ChangedBehaviorWarning has been moved "
+                                    "into the sklearn.exceptions module. "
+                                    "It will not be available here from "
+                                    "version 0.19")(ChangedBehaviorWarning)
+
+
+##############################################################################
 def clone(estimator, safe=True):
     """Constructs a new estimator with the same parameters.
 
@@ -89,7 +100,12 @@ def clone(estimator, safe=True):
                     and param1.shape == param2.shape
                 )
         else:
-            equality_test = new_object_params[name] == params_set[name]
+            new_obj_val = new_object_params[name]
+            params_set_val = params_set[name]
+            # The following construct is required to check equality on special
+            # singletons such as np.nan that are not equal to them-selves:
+            equality_test = (new_obj_val == params_set_val or
+                             new_obj_val is params_set_val)
         if not equality_test:
             raise RuntimeError('Cannot clone object %s, as the constructor '
                                'does not seem to set parameter %s' %
@@ -172,19 +188,20 @@ class BaseEstimator(object):
 
         # introspect the constructor arguments to find the model parameters
         # to represent
-        args, varargs, kw, default = inspect.getargspec(init)
-        if varargs is not None:
-            raise RuntimeError("scikit-learn estimators should always "
-                               "specify their parameters in the signature"
-                               " of their __init__ (no varargs)."
-                               " %s doesn't follow this convention."
-                               % (cls, ))
-        # Remove 'self'
-        # XXX: This is going to fail if the init is a staticmethod, but
-        # who would do this?
-        args.pop(0)
-        args.sort()
-        return args
+        init_signature = signature(init)
+        # Consider the constructor parameters excluding 'self'
+        parameters = [p for p in init_signature.parameters.values()
+                      if p.name != 'self' and p.kind != p.VAR_KEYWORD]
+        for p in parameters:
+            if p.kind == p.VAR_POSITIONAL:
+                raise RuntimeError("scikit-learn estimators should always "
+                                   "specify their parameters in the signature"
+                                   " of their __init__ (no varargs)."
+                                   " %s with constructor %s doesn't "
+                                   " follow this convention."
+                                   % (cls, init_signature))
+        # Extract and sort argument names excluding 'self'
+        return sorted([p.name for p in parameters])
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -245,15 +262,19 @@ class BaseEstimator(object):
                 # nested objects case
                 name, sub_name = split
                 if name not in valid_params:
-                    raise ValueError('Invalid parameter %s for estimator %s' %
+                    raise ValueError('Invalid parameter %s for estimator %s. '
+                                     'Check the list of available parameters '
+                                     'with `estimator.get_params().keys()`.' %
                                      (name, self))
                 sub_object = valid_params[name]
                 sub_object.set_params(**{sub_name: value})
             else:
                 # simple objects case
                 if key not in valid_params:
-                    raise ValueError('Invalid parameter %s ' 'for estimator %s'
-                                     % (key, self.__class__.__name__))
+                    raise ValueError('Invalid parameter %s for estimator %s. '
+                                     'Check the list of available parameters '
+                                     'with `estimator.get_params().keys()`.' %
+                                     (key, self.__class__.__name__))
                 setattr(self, key, value)
         return self
 
@@ -307,7 +328,10 @@ class RegressorMixin(object):
         The coefficient R^2 is defined as (1 - u/v), where u is the regression
         sum of squares ((y_true - y_pred) ** 2).sum() and v is the residual
         sum of squares ((y_true - y_true.mean()) ** 2).sum().
-        Best possible score is 1.0, lower values are worse.
+        Best possible score is 1.0 and it can be negative (because the
+        model can be arbitrarily worse). A constant model that always
+        predicts the expected value of y, disregarding the input features,
+        would get a R^2 score of 0.0.
 
         Parameters
         ----------
@@ -327,7 +351,8 @@ class RegressorMixin(object):
         """
 
         from .metrics import r2_score
-        return r2_score(y, self.predict(X), sample_weight=sample_weight)
+        return r2_score(y, self.predict(X), sample_weight=sample_weight,
+                        multioutput='variance_weighted')
 
 
 ###############################################################################

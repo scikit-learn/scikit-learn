@@ -16,12 +16,12 @@ from scipy import linalg
 from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
                                     log_likelihood)
 
-from ..utils import ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 from ..utils.extmath import pinvh
 from ..utils.validation import check_random_state, check_array
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
-from ..cross_validation import _check_cv as check_cv, cross_val_score
+from ..cross_validation import check_cv, cross_val_score
 from ..externals.joblib import Parallel, delayed
 import collections
 
@@ -84,6 +84,8 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 return_n_iter=False):
     """l1-penalized covariance estimator
 
+    Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
+
     Parameters
     ----------
     emp_cov : 2D ndarray, shape (n_features, n_features)
@@ -107,7 +109,9 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
 
     enet_tol : positive float, optional
         The tolerance for the elastic net solver used to calculate the descent
-        direction. Only used for mode='cd'.
+        direction. This parameter controls the accuracy of the search direction
+        for a given column update, not of the overall parameter estimate. Only
+        used for mode='cd'.
 
     max_iter : integer, optional
         The maximum number of iterations.
@@ -201,7 +205,8 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         d_gap = np.inf
         for i in range(max_iter):
             for idx in range(n_features):
-                sub_covariance = covariance_[indices != idx].T[indices != idx]
+                sub_covariance = np.ascontiguousarray(
+                    covariance_[indices != idx].T[indices != idx])
                 row = emp_cov[idx, indices != idx]
                 with np.errstate(**errors):
                     if mode == 'cd':
@@ -265,6 +270,8 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
 class GraphLasso(EmpiricalCovariance):
     """Sparse inverse covariance estimation with an l1-penalized estimator.
 
+    Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
+
     Parameters
     ----------
     alpha : positive float, default 0.01
@@ -279,6 +286,12 @@ class GraphLasso(EmpiricalCovariance):
     tol : positive float, default 1e-4
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped.
+
+    enet_tol : positive float, optional
+        The tolerance for the elastic net solver used to calculate the descent
+        direction. This parameter controls the accuracy of the search direction
+        for a given column update, not of the overall parameter estimate. Only
+        used for mode='cd'.
 
     max_iter : integer, default 100
         The maximum number of iterations.
@@ -309,11 +322,12 @@ class GraphLasso(EmpiricalCovariance):
     graph_lasso, GraphLassoCV
     """
 
-    def __init__(self, alpha=.01, mode='cd', tol=1e-4, max_iter=100,
-                 verbose=False, assume_centered=False):
+    def __init__(self, alpha=.01, mode='cd', tol=1e-4, enet_tol=1e-4,
+                 max_iter=100, verbose=False, assume_centered=False):
         self.alpha = alpha
         self.mode = mode
         self.tol = tol
+        self.enet_tol = enet_tol
         self.max_iter = max_iter
         self.verbose = verbose
         self.assume_centered = assume_centered
@@ -321,7 +335,11 @@ class GraphLasso(EmpiricalCovariance):
         self.store_precision = True
 
     def fit(self, X, y=None):
-        X = check_array(X)
+
+        # Covariance does not make sense for a single feature
+        X = check_array(X, ensure_min_features=2, ensure_min_samples=2,
+                        estimator=self)
+
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -330,15 +348,17 @@ class GraphLasso(EmpiricalCovariance):
             X, assume_centered=self.assume_centered)
         self.covariance_, self.precision_, self.n_iter_ = graph_lasso(
             emp_cov, alpha=self.alpha, mode=self.mode, tol=self.tol,
-            max_iter=self.max_iter, verbose=self.verbose,
-            return_n_iter=True)
+            enet_tol=self.enet_tol, max_iter=self.max_iter,
+            verbose=self.verbose, return_n_iter=True)
         return self
 
 
 # Cross-validation with GraphLasso
 def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
-                     tol=1e-4, max_iter=100, verbose=False):
+                     tol=1e-4, enet_tol=1e-4, max_iter=100, verbose=False):
     """l1-penalized covariance estimator along a path of decreasing alphas
+
+    Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
     Parameters
     ----------
@@ -359,6 +379,12 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
     tol : positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped.
+
+    enet_tol : positive float, optional
+        The tolerance for the elastic net solver used to calculate the descent
+        direction. This parameter controls the accuracy of the search direction
+        for a given column update, not of the overall parameter estimate. Only
+        used for mode='cd'.
 
     max_iter : integer, optional
         The maximum number of iterations.
@@ -396,7 +422,7 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
             # Capture the errors, and move on
             covariance_, precision_ = graph_lasso(
                 emp_cov, alpha=alpha, cov_init=covariance_, mode=mode, tol=tol,
-                max_iter=max_iter, verbose=inner_verbose)
+                enet_tol=enet_tol, max_iter=max_iter, verbose=inner_verbose)
             covariances_.append(covariance_)
             precisions_.append(precision_)
             if X_test is not None:
@@ -425,6 +451,8 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 class GraphLassoCV(GraphLasso):
     """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
 
+    Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
+
     Parameters
     ----------
     alphas : integer, or list positive float, optional
@@ -437,13 +465,28 @@ class GraphLassoCV(GraphLasso):
         The number of times the grid is refined. Not used if explicit
         values of alphas are passed.
 
-    cv : cross-validation generator, optional
-        see sklearn.cross_validation module. If None is passed, defaults to
-        a 3-fold strategy
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
+
+        For integer/None inputs :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     tol: positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped.
+
+    enet_tol : positive float, optional
+        The tolerance for the elastic net solver used to calculate the descent
+        direction. This parameter controls the accuracy of the search direction
+        for a given column update, not of the overall parameter estimate. Only
+        used for mode='cd'.
 
     max_iter: integer, optional
         Maximum number of iterations.
@@ -466,7 +509,6 @@ class GraphLassoCV(GraphLasso):
         Useful when working with data whose mean is almost, but not exactly
         zero.
         If False, data are centered before computation.
-
 
     Attributes
     ----------
@@ -506,12 +548,13 @@ class GraphLassoCV(GraphLasso):
     """
 
     def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
-                 max_iter=100, mode='cd', n_jobs=1, verbose=False,
-                 assume_centered=False):
+                 enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=1,
+                 verbose=False, assume_centered=False):
         self.alphas = alphas
         self.n_refinements = n_refinements
         self.mode = mode
         self.tol = tol
+        self.enet_tol = enet_tol
         self.max_iter = max_iter
         self.verbose = verbose
         self.cv = cv
@@ -528,7 +571,8 @@ class GraphLassoCV(GraphLasso):
         X : ndarray, shape (n_samples, n_features)
             Data from which to compute the covariance estimate
         """
-        X = check_array(X)
+        # Covariance does not make sense for a single feature
+        X = check_array(X, ensure_min_features=2, estimator=self)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -572,7 +616,7 @@ class GraphLassoCV(GraphLasso):
                     delayed(graph_lasso_path)(
                         X[train], alphas=alphas,
                         X_test=X[test], mode=self.mode,
-                        tol=self.tol,
+                        tol=self.tol, enet_tol=self.enet_tol,
                         max_iter=int(.1 * self.max_iter),
                         verbose=inner_verbose)
                     for train, test in cv)
@@ -644,6 +688,6 @@ class GraphLassoCV(GraphLasso):
         # Finally fit the model with the selected alpha
         self.covariance_, self.precision_, self.n_iter_ = graph_lasso(
             emp_cov, alpha=best_alpha, mode=self.mode, tol=self.tol,
-            max_iter=self.max_iter, verbose=inner_verbose,
-            return_n_iter=True)
+            enet_tol=self.enet_tol, max_iter=self.max_iter,
+            verbose=inner_verbose, return_n_iter=True)
         return self

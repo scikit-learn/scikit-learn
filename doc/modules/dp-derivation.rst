@@ -246,7 +246,7 @@ You can verify this by normalizing the previous term.
 .. math::
 
    \log \nu_{z_{i,k}} \propto \Psi(\gamma_{k,1}) -
-   \Psi(\gamma_{k,1} + \gamma_{k,2}) + E_Q[\log P(X_i|z_i=k)] +
+   \Psi(\gamma_{k,1} + \gamma_{k,2}) + E_q[\log P(X_i|z_i=k)] +
    \sum_{j < k} \left (\Psi(\gamma_{j,2}) -
    \Psi(\gamma_{j,1}+\gamma_{j,2})\right).
 

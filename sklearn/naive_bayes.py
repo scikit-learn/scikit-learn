@@ -113,6 +113,8 @@ class GaussianNB(BaseNB):
 
         http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf
 
+    Read more in the :ref:`User Guide <gaussian_naive_bayes>`.
+
     Attributes
     ----------
     class_prior_ : array, shape (n_classes,)
@@ -316,9 +318,13 @@ class GaussianNB(BaseNB):
         self : object
             Returns self.
         """
-
         X, y = check_X_y(X, y)
-        epsilon = 1e-9
+
+        # If the ratio of data variance between dimensions is too small, it
+        # will cause numerical errors. To address this, we artificially
+        # boost the variance by epsilon, a small fraction of the standard
+        # deviation of the largest dimension.
+        epsilon = 1e-9 * np.var(X, axis=0).max()
 
         if _refit:
             self.classes_ = None
@@ -472,9 +478,11 @@ class BaseDiscreteNB(BaseNB):
             msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
             raise ValueError(msg % (X.shape[0], y.shape[0]))
 
-        # convert to float to support sample weight consistently
+        # label_binarize() returns arrays with dtype=np.int64.
+        # We convert it to np.float64 to support sample_weight consistently
         Y = Y.astype(np.float64)
         if sample_weight is not None:
+            sample_weight = np.atleast_2d(sample_weight)
             Y *= check_array(sample_weight).T
 
         class_prior = self.class_prior
@@ -520,10 +528,12 @@ class BaseDiscreteNB(BaseNB):
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
-        # convert to float to support sample weight consistently;
+        # LabelBinarizer().fit_transform() returns arrays with dtype=np.int64.
+        # We convert it to np.float64 to support sample_weight consistently;
         # this means we also don't have to cast X to floating point
         Y = Y.astype(np.float64)
         if sample_weight is not None:
+            sample_weight = np.atleast_2d(sample_weight)
             Y *= check_array(sample_weight).T
 
         class_prior = self.class_prior
@@ -561,6 +571,8 @@ class MultinomialNB(BaseDiscreteNB):
     discrete features (e.g., word counts for text classification). The
     multinomial distribution normally requires integer feature counts. However,
     in practice, fractional counts such as tf-idf may also work.
+
+    Read more in the :ref:`User Guide <multinomial_naive_bayes>`.
 
     Parameters
     ----------
@@ -611,7 +623,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> clf = MultinomialNB()
     >>> clf.fit(X, y)
     MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
-    >>> print(clf.predict(X[2]))
+    >>> print(clf.predict(X[2:3]))
     [3]
 
     Notes
@@ -663,6 +675,8 @@ class BernoulliNB(BaseDiscreteNB):
     difference is that while MultinomialNB works with occurrence counts,
     BernoulliNB is designed for binary/boolean features.
 
+    Read more in the :ref:`User Guide <bernoulli_naive_bayes>`.
+
     Parameters
     ----------
     alpha : float, optional (default=1.0)
@@ -707,7 +721,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
     BernoulliNB(alpha=1.0, binarize=0.0, class_prior=None, fit_prior=True)
-    >>> print(clf.predict(X[2]))
+    >>> print(clf.predict(X[2:3]))
     [3]
 
     References
