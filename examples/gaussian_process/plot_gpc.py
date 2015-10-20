@@ -92,7 +92,7 @@ plt.plot(np.exp(gp_opt.kernel_.theta)[0], np.exp(gp_opt.kernel_.theta)[1],
 plt.pcolor(Theta0, Theta1, LML)
 plt.xscale("log")
 plt.yscale("log")
-plt.colorbar(label="Log-marginal Likelihood")
+plt.colorbar()
 plt.xlabel("Magnitude")
 plt.ylabel("Length-scale")
 plt.title("Log-marginal-likelihood")
