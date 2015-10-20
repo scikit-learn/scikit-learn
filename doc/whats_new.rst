@@ -19,7 +19,7 @@ New features
      and regression estimators through :class:`gaussian_process.GaussianProcessClassifier` 
      and  :class:`gaussian_process.GaussianProcessRegressor`. Among other things, the new 
      implementation supports kernel engineering, gradient-based hyperparameter optimization or 
-     sampling of functions from GP prior and GP posterior. Extenstive documentation and 
+     sampling of functions from GP prior and GP posterior. Extensive documentation and 
      examples are provided. By `Jan Hendrik Metzen`_.
  
 Enhancements
