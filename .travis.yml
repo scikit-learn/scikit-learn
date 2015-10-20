@@ -41,4 +41,3 @@ cache:
   directories:
     - $HOME/.cache/pip
     - $HOME/download
-    - $HOME/testenv
