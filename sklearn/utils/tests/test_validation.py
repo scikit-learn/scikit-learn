@@ -446,7 +446,8 @@ def test_check_array_memmap():
     X = np.ones((4, 4))
     with TempMemmap(X, mmap_mode='r') as X:
         Z = check_array(X, copy=False)
-        assert(isinstance(Z, np.memmap))
+        assert_true(Z.base is X)
+        assert_false(Z.flags['WRITEABLE'])
 
 
 def test_check_consistent_length():
