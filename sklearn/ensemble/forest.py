@@ -209,7 +209,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             Returns self.
         """
         # Validate or convert input data
-        X = check_array(X, dtype=DTYPE, accept_sparse="csc")
+        X, y = check_X_y(X, y, accept_sparse="csc", dtype=DTYPE)
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
