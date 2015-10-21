@@ -384,7 +384,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
                                       force_all_finite)
     else:
         # Do not physically copy memory map : if type(array) == np.memmap:
-        # type(array) == np.array
+        # type(array) == np.ndarray
         # array.base is array_orig
         array = np.asarray(array, dtype=dtype, order=order)
 
@@ -433,7 +433,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
                % (dtype_orig, array.dtype, context))
         warnings.warn(msg, DataConversionWarning_)
 
-    if copy and array is array_orig:
+    if copy and np.may_share_memory(array,array_orig):
         array = np.array(array, dtype=dtype, order=order)
 
     return array
