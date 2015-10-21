@@ -948,6 +948,9 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
+        .. versionadded:: 0.17
+           *cd* coordinate descent method to improve speed.
+
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
     'threshold'}
         Algorithm used to transform the data
@@ -959,6 +962,9 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
         the projection ``dictionary * X'``
+
+        .. versionadded:: 0.17
+           *lasso_cd* coordinate descent method to improve speed.
 
     transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
         Number of nonzero coefficients to target in each column of the
