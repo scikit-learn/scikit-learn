@@ -879,6 +879,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     sample mean / variance in a negative way. In such cases, the median and
     the interquartile range often give better results.
 
+    .. versionadded:: 0.17
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
     Parameters
