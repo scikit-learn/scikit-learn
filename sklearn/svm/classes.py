@@ -453,7 +453,7 @@ class SVC(BaseSVC):
         Hard limit on iterations within solver, or -1 for no limit.
 
     decision_function_shape : 'ovo', 'ovr' or None, default=None
-        Whether to return a one-vs-rest ('ovr') ecision function of shape
+        Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
         (n_samples, n_classes * (n_classes - 1) / 2).
@@ -600,7 +600,7 @@ class NuSVC(BaseSVC):
         Hard limit on iterations within solver, or -1 for no limit.
 
     decision_function_shape : 'ovo', 'ovr' or None, default=None
-        Whether to return a one-vs-rest ('ovr') ecision function of shape
+        Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
         (n_samples, n_classes * (n_classes - 1) / 2).

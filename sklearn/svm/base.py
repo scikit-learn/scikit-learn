@@ -79,14 +79,10 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
 
-        # FIXME Remove gamma=0.0 support in 0.18
         if gamma == 0:
-            msg = ("gamma=%s has been deprecated in favor of "
-                   "gamma='%s' as of 0.17. Backward compatibility"
-                   " for gamma=%s will be removed in %s")
-            invalid_gamma = 0.0
-            warnings.warn(msg % (invalid_gamma, "auto", invalid_gamma, "0.18"),
-                          DeprecationWarning)
+            msg = ("The gamma value of 0.0 is invalid. Use 'auto' to set"
+                   " gamma to a value of 1 / n_features.")
+            raise ValueError(msg)
 
         self._impl = impl
         self.kernel = kernel
@@ -175,13 +171,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                              "boolean masks (use `indices=True` in CV)."
                              % (sample_weight.shape, X.shape))
 
-        # FIXME remove (self.gamma == 0) in 0.18
-        if (self.kernel in ['poly', 'rbf']) and ((self.gamma == 0) or
-                                                 (self.gamma == 'auto')):
-            # if custom gamma is not provided ...
+        if self.gamma == 'auto':
             self._gamma = 1.0 / X.shape[1]
-        elif self.gamma == 'auto':
-            self._gamma = 0.0
         else:
             self._gamma = self.gamma
 
@@ -749,13 +740,11 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         raise ValueError("`multi_class` must be one of `ovr`, "
                          "`crammer_singer`, got %r" % multi_class)
 
-    # FIXME loss.lower() --> loss in 0.18
-    _solver_pen = _solver_type_dict.get(loss.lower(), None)
+    _solver_pen = _solver_type_dict.get(loss, None)
     if _solver_pen is None:
         error_string = ("loss='%s' is not supported" % loss)
     else:
-        # FIME penalty.lower() --> penalty in 0.18
-        _solver_dual = _solver_pen.get(penalty.lower(), None)
+        _solver_dual = _solver_pen.get(penalty, None)
         if _solver_dual is None:
             error_string = ("The combination of penalty='%s' "
                             "and loss='%s' is not supported"
@@ -863,23 +852,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     n_iter_ : int
         Maximum number of iterations run across all classes.
     """
-    # FIXME Remove case insensitivity in 0.18 ---------------------
-    loss_l, penalty_l = loss.lower(), penalty.lower()
-
-    msg = ("loss='%s' has been deprecated in favor of "
-           "loss='%s' as of 0.16. Backward compatibility"
-           " for the uppercase notation will be removed in %s")
-    if (not loss.islower()) and loss_l not in ('l1', 'l2'):
-        warnings.warn(msg % (loss, loss_l, "0.18"),
-                      DeprecationWarning)
-    if not penalty.islower():
-        warnings.warn(msg.replace("loss", "penalty")
-                      % (penalty, penalty_l, "0.18"),
-                      DeprecationWarning)
-    # -------------------------------------------------------------
-
-    # FIXME loss_l --> loss in 0.18
-    if loss_l not in ['epsilon_insensitive', 'squared_epsilon_insensitive']:
+    if loss not in ['epsilon_insensitive', 'squared_epsilon_insensitive']:
         enc = LabelEncoder()
         y_ind = enc.fit_transform(y)
         classes_ = enc.classes_
