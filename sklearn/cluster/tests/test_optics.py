@@ -6,6 +6,7 @@ from sklearn.cluster.optics import OPTICS
 def test_optics():
     '''
     Tests the optics clustering method and all functions inside it
+    'auto' mode
     '''
 
 
@@ -21,6 +22,32 @@ def test_optics():
     # Run the fit
 
     clust2 = clust.fit(X)
+
+    samples, labels = clust2.extract(0.4)
+
+    assert samples.size == 0
+    assert labels[0] == -1
+
+def test_optics2():
+    '''
+    Tests the optics clustering method and all functions inside it
+    'dbscan' mode
+    '''
+
+
+    ##############################################################################
+
+    ##############################################################################
+    # Compute OPTICS
+    # Note the large eps; seeding problems when eps is close to
+    # desired epsPrime 
+    X = [[1,1]]
+    clust = OPTICS(eps=0.3, min_samples=10)
+
+    # Run the fit
+
+    clust2 = clust.fit(X)
+    clust2 = clust.extract(0.3, 'dbscan')
 
     samples, labels = clust2.extract(0.4)
 

@@ -221,14 +221,15 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self._cluster_id = self.tree._cluster_id[:]
         self._is_core = self.tree._is_core[:]
         self.ordering_ = self.tree.ordering_[:]
-        _extractDBSCAN(self, self.eps)  # extraction needs to be < eps
+        #_extractDBSCAN(self, self.eps)  # extraction needs to be < eps
+        _extract_auto(self)
         self.labels_ = self._cluster_id[:]
         self.core_sample_indices_ = self._index[self._is_core[:] == True]
         self.n_clusters = max(self._cluster_id)
         self.processed = True
         return self  # self.core_sample_indices_, self.labels_
 
-    def extract(self, epsilon_prime, clustering='dbscan',
+    def extract(self, epsilon_prime, clustering='auto',
                 significant_ratio=0.75, similarity_ratio=0.4, 
                 min_reach_ratio=0.1):
         """Performs DBSCAN equivalent extraction for arbitrary epsilon.
@@ -241,18 +242,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         was used for prep and build steps
         clustering: {'dbscan', hierarchical'}, optional
         Type of cluster extraction to perform; defaults to 'dbscan'.
-        significant_ratio : float, optional
-        Used for hierarchical clustering. The ratio for the reachability 
-        score of a local maximum compared to its neighbors to be considered 
-        significant.
-        similarity_ratio : float, optional
-        Used for hierarchical clustering. The ratio for the reachability 
-        score of a split point compared to the parent split point for it to 
-        be considered similar.
-        min_reach_ratio : float, optional
-        Used for hierarchical clustering. The ratio of the largest 
-        reachability score that a local maximum needs to reach in order to 
-        be considered.
         
         Returns
         -------
@@ -268,10 +257,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
                     _extractDBSCAN(self, epsilon_prime)
                 elif clustering == 'auto':
                     _extract_auto(self)
-                elif clustering == 'hierarchical':
-                    _hierarchical_extraction(self, significant_ratio, 
-                                             similarity_ratio, 
-                                             min_reach_ratio)   
+                else:
+                    print(clustering + " is not a valid clustering method")
                 self.labels_ = self._cluster_id[:]
                 # Setting following line to '1' instead of 'True' to keep
                 # line shorter than 79 characters
