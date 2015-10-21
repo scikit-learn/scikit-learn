@@ -136,16 +136,13 @@ def check_supervised_y_no_nan(name, Estimator):
 
     rng = np.random.RandomState(888)
     X = rng.randn(10, 5)
-    y1 = np.ones(10) * np.inf
-    y2 = np.ones((10, 2)) * np.inf
+    y = np.ones(10) * np.inf
 
     errmsg = "Input contains NaN, infinity or a value too large for " \
              "dtype('float64')."
     try:
-        if "MultiTask" in name:
-            Estimator().fit(X, y2)
-        else:
-            Estimator().fit(X, y1)
+        y = multioutput_estimator_convert_y_2d(name, y)
+        Estimator().fit(X, y)
     except ValueError as e:
         if str(e) != errmsg:
             raise ValueError("Estimator {0} raised warning as expected, but "
@@ -1469,7 +1466,7 @@ def check_non_transformer_estimators_n_iter(name, estimator,
     X, y_ = iris.data, iris.target
 
     if multi_output:
-        y_ = y_[:, np.newaxis]
+        y_ = np.reshape(y_, (-1, 1))
 
     set_random_state(estimator, 0)
     if name == 'AffinityPropagation':
