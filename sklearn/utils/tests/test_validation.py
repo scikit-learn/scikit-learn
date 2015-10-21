@@ -444,10 +444,14 @@ def test_check_is_fitted():
 
 def test_check_array_memmap():
     X = np.ones((4, 4))
+    # Let memmap passed
     with TempMemmap(X, mmap_mode='r') as X:
         Z = check_array(X, copy=False)
-        assert_true(Z.base is X)
+        assert_true(np.may_share_memory(X, Z))
         assert_false(Z.flags['WRITEABLE'])
+        Z = check_array(X, copy=True)
+        assert_false(np.may_share_memory(X, Z))
+        assert_true(Z.flags['WRITEABLE'])
 
 
 def test_check_consistent_length():
