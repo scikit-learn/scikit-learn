@@ -437,16 +437,17 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         y = y_store_unique_indices
 
         if self.class_weight is not None:
-            valid_presets = ('auto', 'balanced', 'balanced_subsample', 'subsample', 'auto')
+            valid_presets = ('auto', 'balanced', 'subsample', 'balanced_subsample')
             if isinstance(self.class_weight, six.string_types):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
                                      '"balanced" and "balanced_subsample". Given "%s".'
                                      % self.class_weight)
                 if self.class_weight == "subsample":
-                    warn("class_weight='subsample' is deprecated and will be removed in 0.18."
-                         " It was replaced by class_weight='balanced_subsample' "
-                         "using the balanced strategy.", DeprecationWarning)
+                    warn("class_weight='subsample' is deprecated in 0.17 and"
+                         "will be removed in 0.19. It was replaced by "
+                         "class_weight='balanced_subsample' using the balanced"
+                         "strategy.", DeprecationWarning)
                 if self.warm_start:
                     warn('class_weight presets "balanced" or "balanced_subsample" are '
                          'not recommended for warm_start if the fitted data '

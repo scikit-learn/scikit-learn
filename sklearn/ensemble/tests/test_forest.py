@@ -920,7 +920,6 @@ def check_class_weight_balanced_and_bootstrap_multi_output(name):
     clf = ForestClassifier(class_weight='subsample', random_state=0)
     ignore_warnings(clf.fit)(X, _y)
 
-
 def test_class_weight_balanced_and_bootstrap_multi_output():
     for name in FOREST_CLASSIFIERS:
         yield check_class_weight_balanced_and_bootstrap_multi_output, name

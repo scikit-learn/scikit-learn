@@ -24,7 +24,7 @@ import scipy.sparse as sp
 from .base import is_classifier, clone
 from .utils import indexable, check_random_state, safe_indexing
 from .utils.validation import (_is_arraylike, _num_samples,
-                               check_array, column_or_1d)
+                               column_or_1d)
 from .utils.multiclass import type_of_target
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
@@ -1857,29 +1857,10 @@ def train_test_split(*arrays, **options):
     test_size = options.pop('test_size', None)
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
-    dtype = options.pop('dtype', None)
-    if dtype is not None:
-        warnings.warn("dtype option is ignored and will be removed in 0.18.",
-                      DeprecationWarning)
-
-    allow_nd = options.pop('allow_nd', None)
-    allow_lists = options.pop('allow_lists', None)
     stratify = options.pop('stratify', None)
-
-    if allow_lists is not None:
-        warnings.warn("The allow_lists option is deprecated and will be "
-                      "assumed True in 0.18 and removed.", DeprecationWarning)
 
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
-    if allow_nd is not None:
-        warnings.warn("The allow_nd option is deprecated and will be "
-                      "assumed True in 0.18 and removed.", DeprecationWarning)
-    if allow_lists is False or allow_nd is False:
-        arrays = [check_array(x, 'csr', allow_nd=allow_nd,
-                              force_all_finite=False, ensure_2d=False)
-                  if x is not None else x
-                  for x in arrays]
 
     if test_size is None and train_size is None:
         test_size = 0.25
