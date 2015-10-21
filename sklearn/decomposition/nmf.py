@@ -842,7 +842,12 @@ class NMF(BaseEstimator, TransformerMixin):
     solver : 'pg' | 'cd'
         Numerical solver to use:
         'pg' is a (deprecated) Projected Gradient solver.
+
+        .. versionchanged:: 0.17
+
         'cd' is a Coordinate Descent solver.
+
+        .. versionadded:: 0.17
 
     tol : double, default: 1e-4
         Tolerance value used in stopping conditions.
@@ -857,6 +862,8 @@ class NMF(BaseEstimator, TransformerMixin):
         Constant that multiplies the regularization terms. Set it to zero to
         have no regularization.
 
+        .. versionadded:: 0.17
+
     l1_ratio : double, default: 0.
         The regularization mixing parameter, with 0 <= l1_ratio <= 1.
         For l1_ratio = 0 the penalty is an elementwise L2 penalty
@@ -864,8 +871,12 @@ class NMF(BaseEstimator, TransformerMixin):
         For l1_ratio = 1 it is an elementwise L1 penalty.
         For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
 
+        .. versionadded:: 0.17
+
     shuffle : boolean, default: False
         If true, randomize the order of coordinates in the CD solver.
+
+        .. versionadded:: 0.17
 
     nls_max_iter : integer, default: 2000
         Number of iterations in NLS subproblem.

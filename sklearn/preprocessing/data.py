@@ -685,6 +685,8 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
 
     This scaler can also be applied to sparse CSR or CSC matrices.
 
+    .. versionadded:: 0.17
+
     Parameters
     ----------
     copy : boolean, optional, default is True

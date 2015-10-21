@@ -544,6 +544,9 @@ class Ridge(_BaseRidge, RegressorMixin):
         All last four solvers support both dense and sparse data. However,
         only 'sag' supports sparse input when `fit_intercept` is True.
 
+        .. versionadded:: 0.17
+           Stochastic Average Gradient descent solver.
+
     tol : float
         Precision of the solution.
 

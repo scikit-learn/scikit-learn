@@ -1008,6 +1008,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         approximately the same scale. You can preprocess the data with a
         scaler from sklearn.preprocessing.
 
+        .. versionadded:: 0.17
+
     tol : float, optional
         Tolerance for stopping criteria.
 
