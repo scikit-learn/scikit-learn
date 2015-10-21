@@ -134,8 +134,8 @@ def _yield_classifier_checks(name, Classifier):
 def check_supervised_y_no_nan(name, Estimator):
     # Checks that the Estimator targets are not NaN.
 
-    np.random.seed(888)
-    X = np.random.randn(10, 5)
+    rng = np.random.RandomState(888)
+    X = rng.randn(10, 5)
     y1 = np.ones(10) * np.inf
     y2 = np.ones((10, 2)) * np.inf
 
