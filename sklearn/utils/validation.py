@@ -484,8 +484,7 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
 
     multi_output : boolean (default=False)
         Whether to allow 2-d y (array or sparse matrix). If false, y will be
-        validated as a vector. y cannot have np.nan or np.inf values if
-        multi_output=True.
+        validated as a vector.
 
     ensure_min_samples : int (default=1)
         Make sure that X has a minimum number of samples in its first
