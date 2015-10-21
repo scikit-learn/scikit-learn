@@ -71,9 +71,10 @@ else:
                'isotonic', 'kernel_approximation', 'kernel_ridge',
                'learning_curve', 'linear_model', 'manifold', 'metrics',
                'mixture', 'model_selection', 'multiclass', 'multioutput',
-               'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
-               'preprocessing', 'random_projection', 'semi_supervised',
-               'svm', 'tree', 'discriminant_analysis', 'impute', 'compose',
+               'naive_bayes', 'neighbors', 'neural_network',
+               'partial_dependence', 'pipeline', 'preprocessing',
+               'random_projection', 'semi_supervised', 'svm', 'tree',
+               'discriminant_analysis', 'impute', 'compose',
                # Non-modules:
                'clone', 'get_config', 'set_config', 'config_context']
 

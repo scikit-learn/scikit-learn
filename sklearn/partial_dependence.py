@@ -1,4 +1,4 @@
-"""Partial dependence plots for tree ensembles. """
+"""Partial dependence plots for regressors and classifiers. """
 
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
