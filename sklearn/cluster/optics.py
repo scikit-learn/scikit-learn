@@ -13,6 +13,7 @@
 
 import scipy as sp
 import numpy as np
+import sys
 from ..utils import check_array
 from sklearn.neighbors import BallTree
 from sklearn.base import BaseEstimator, ClusterMixin
@@ -265,6 +266,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 if clustering == 'dbscan':
                     self.eps_prime = epsilon_prime
                     _extractDBSCAN(self, epsilon_prime)
+                elif clustering == 'auto':
+                    _extract_auto(self)
                 elif clustering == 'hierarchical':
                     _hierarchical_extraction(self, significant_ratio, 
                                              similarity_ratio, 
@@ -309,11 +312,79 @@ def _extractDBSCAN(setofobjects, epsilon_prime):
                 # Zero (i.e., 'False') for non-core, non-noise points #
                 setofobjects._is_core[entry] = 0
 
-# Automatic clustering
-# Author:     Amy X. Zhang, 2012
+# Automatic cluster extraction
+# Author:     Amy X. Zhang, 2012-2014
 # Modified:   Shane Grigsby, 2015
 
-def isLocalMaxima(index,RPlot,RPoints,nghsize):
+# Extraction wrapper
+def _extract_auto(setofobjects):
+    RPlot = []
+    RPoints = []
+    for item in setofobjects.ordering_:
+        RPlot.append(setofobjects.reachability_[item])
+        RPoints.append([setofobjects.tree.data[item][0],
+                        setofobjects.tree.data[item][1]])
+    rootNode = _automatic_cluster(RPlot, RPoints)
+    leaves = _get_leaves(rootNode, [])
+    # Start cluster id's at 1
+    clustid = 1
+    # Start all points as non-core noise
+    setofobjects._cluster_id[:] = -1
+    setofobjects._is_core[:] = 0
+    for leaf in leaves:
+        index = setofobjects.ordering_[leaf.start:leaf.end]
+        setofobjects._cluster_id[index] = clustid
+        setofobjects._is_core[index] = 1
+        clustid += 1
+
+# Main extraction function
+def _automatic_cluster(RPlot, RPoints):
+
+    min_cluster_size_ratio = .005
+    min_neighborhood_size = 2
+    min_maxima_ratio = 0.001
+    
+    min_cluster_size = int(min_cluster_size_ratio * len(RPoints))
+
+    if min_cluster_size < 5:
+        min_cluster_size = 5
+        
+    nghsize = int(min_maxima_ratio*len(RPoints))
+
+    if nghsize < min_neighborhood_size:
+        nghsize = min_neighborhood_size
+    
+    localMaximaPoints = _find_local_maxima(RPlot, RPoints, nghsize)
+    
+    rootNode = TreeNode(RPoints, 0, len(RPoints), None)
+    _cluster_tree(rootNode, None, localMaximaPoints, 
+                RPlot, RPoints, min_cluster_size)
+
+    return rootNode    
+
+# automatic cluster helper classes and functions
+class TreeNode(object):
+    def __init__(self, points, start, end, parentNode):
+        self.points = points
+        self.start = start
+        self.end = end
+        self.parentNode = parentNode
+        self.children = []
+        self.splitpoint = -1
+
+    def __str__(self):
+        return "start: %d, end %d, split: %d" % (self.start, 
+                                                 self.end, 
+                                                 self.splitpoint)
+
+        
+    def assignSplitPoint(self,splitpoint):
+        self.splitpoint = splitpoint
+
+    def addChild(self, child):
+        self.children.append(child)
+
+def _is_local_maxima(index, RPlot, RPoints, nghsize):
     # 0 = point at index is not local maxima
     # 1 = point at index is local maxima
     
@@ -330,24 +401,24 @@ def isLocalMaxima(index,RPlot,RPoints,nghsize):
     
     return 1
 
-def findLocalMaxima(RPlot, RPoints, nghsize):
+def _find_local_maxima(RPlot, RPoints, nghsize):
     
     localMaximaPoints = {}
     
     # 1st and last points on Reachability Plot are not taken 
     # as local maxima points
-    for i in range(1,len(RPoints)-1):
+    for i in range(1, len(RPoints)-1):
         # if the point is a local maxima on the reachability plot with 
         # regard to nghsize, insert it into priority queue and maxima list
         if (RPlot[i] > RPlot[i-1] and RPlot[i] >= RPlot[i+1] and 
-            isLocalMaxima(i,RPlot,RPoints,nghsize) == 1):
+            _is_local_maxima(i,RPlot,RPoints,nghsize) == 1):
 
             localMaximaPoints[i] = RPlot[i]
     
     return sorted(localMaximaPoints, 
                   key=localMaximaPoints.__getitem__ , reverse=True)
     
-def clusterTree(node, parentNode, localMaximaPoints, 
+def _cluster_tree(node, parentNode, localMaximaPoints, 
                 RPlot, RPoints, min_cluster_size):
     # node is a node or the root of the tree in the first call
     # parentNode is parent node of N or None if node is root of the tree
@@ -362,8 +433,8 @@ def clusterTree(node, parentNode, localMaximaPoints,
     localMaximaPoints = localMaximaPoints[1:]
 
     # create two new nodes and add to list of nodes
-    Node1 = TreeNode(RPoints[node.start:s],node.start,s, node)
-    Node2 = TreeNode(RPoints[s+1:node.end],s+1, node.end, node)
+    Node1 = TreeNode(RPoints[node.start:s], node.start, s, node)
+    Node2 = TreeNode(RPoints[s+1:node.end], s+1, node.end, node)
     LocalMax1 = []
     LocalMax2 = []
 
@@ -383,7 +454,7 @@ def clusterTree(node, parentNode, localMaximaPoints,
     if RPlot[s] < significantMin:
         node.assignSplitPoint(-1)
         #if splitpoint is not significant, ignore this split and continue
-        clusterTree(node,parentNode, localMaximaPoints, 
+        _cluster_tree(node,parentNode, localMaximaPoints, 
                     RPlot, RPoints, min_cluster_size)
         return
         
@@ -391,13 +462,13 @@ def clusterTree(node, parentNode, localMaximaPoints,
     # only check a certain ratio of points in the child 
     # nodes formed to the left and right of the maxima
     checkRatio = .8
-    checkValue1 = int(NP.round(checkRatio*len(Node1.points)))
-    checkValue2 = int(NP.round(checkRatio*len(Node2.points)))
+    checkValue1 = int(np.round(checkRatio*len(Node1.points)))
+    checkValue2 = int(np.round(checkRatio*len(Node2.points)))
     if checkValue2 == 0:
         checkValue2 = 1
-    avgReachValue1 = float(NP.average(RPlot[(Node1.end - 
+    avgReachValue1 = float(np.average(RPlot[(Node1.end - 
                                              checkValue1):Node1.end]))
-    avgReachValue2 = float(NP.average(RPlot[Node2.start:(Node2.start + 
+    avgReachValue2 = float(np.average(RPlot[Node2.start:(Node2.start + 
                                                          checkValue2)]))
 
 
@@ -431,7 +502,7 @@ def clusterTree(node, parentNode, localMaximaPoints,
             node.assignSplitPoint(-1)
             # since splitpoint is not significant, 
             # ignore this split and continue (reject both child nodes)
-            clusterTree(node, parentNode, localMaximaPoints, 
+            _cluster_tree(node, parentNode, localMaximaPoints, 
                         RPlot, RPoints, min_cluster_size)
             return
  
@@ -465,8 +536,8 @@ def clusterTree(node, parentNode, localMaximaPoints,
     similaritythreshold = 0.4
     bypassNode = 0
     if parentNode != None:
-        sumRP = NP.average(RPlot[node.start:node.end])
-        sumParent = NP.average(RPlot[parentNode.start:parentNode.end])
+        sumRP = np.average(RPlot[node.start:node.end])
+        sumParent = np.average(RPlot[parentNode.start:parentNode.end])
         if (float(float(node.end-node.start) / 
                   float(parentNode.end-parentNode.start)) > 
              similaritythreshold): #1)
@@ -477,21 +548,31 @@ def clusterTree(node, parentNode, localMaximaPoints,
     for nl in Nodelist:
         if bypassNode == 1:
             parentNode.addChild(nl[0])
-            clusterTree(nl[0], parentNode, nl[1], RPlot, RPoints, 
+            _cluster_tree(nl[0], parentNode, nl[1], RPlot, RPoints, 
                         min_cluster_size)
         else:
             node.addChild(nl[0])
-            clusterTree(nl[0], node, nl[1], RPlot, RPoints, min_cluster_size)
-        
+            _cluster_tree(nl[0], node, nl[1], RPlot, RPoints, min_cluster_size)
+ 
 
-def printTree(node, num):
+def _get_leaves(node, arr):
+    if node is not None:
+        if node.splitpoint == -1:
+            arr.append(node)
+        for n in node.children:
+            _get_leaves(n,arr)
+    return arr
+
+# Mostly depreciated functions; some could be useful if they can fit in 
+# with the sklearn API...
+def _print_tree(node, num):
     if node is not None:
         print "Level %d" % num
         print str(node)
         for n in node.children:
-            printTree(n, num+1)
+            _print_tree(n, num+1)
 
-def writeTree(fileW, locationMap, RPoints, node, num):
+def _write_tree(fileW, locationMap, RPoints, node, num):
     if node is not None:
         fileW.write("Level " + str(num) + "\n")
         fileW.write(str(node) + "\n")
@@ -505,10 +586,10 @@ def writeTree(fileW, locationMap, RPoints, node, num):
             fileW.write(s)
         fileW.write("\n")
         for n in node.children:
-            writeTree(fileW, locationMap, RPoints, n, num+1)
+            _write_tree(fileW, locationMap, RPoints, n, num+1)
 
 
-def getArray(node,num, arr):
+def _get_array(node, num, arr):
     if node is not None:
         if len(arr) <= num:
             arr.append([])
@@ -518,22 +599,12 @@ def getArray(node,num, arr):
             arr[num] = []
             arr[num].append(node)
         for n in node.children:
-            getArray(n,num+1,arr)
+            _get_array(n,num+1,arr)
         return arr
     else:
         return arr
 
-
-def getLeaves(node, arr):
-    if node is not None:
-        if node.splitpoint == -1:
-            arr.append(node)
-        for n in node.children:
-            getLeaves(n,arr)
-    return arr
-
-
-def graphTree(root, RPlot):
+def _graph_tree(root, RPlot):
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -542,63 +613,15 @@ def graphTree(root, RPlot):
     ax.vlines(a1, 0, RPlot)
     
     num = 2
-    graphNode(root, num, ax)
+    _graph_node(root, num, ax)
 
     plt.savefig('RPlot.png', dpi=None, facecolor='w', edgecolor='w',
       orientation='portrait', papertype=None, format=None,
      transparent=False, bbox_inches=None, pad_inches=0.1)
     plt.show()
 
-            
-def graphNode(node, num, ax):
+def _graph_node(node, num, ax):
     ax.hlines(num,node.start,node.end,color="red")
     for item in node.children:
-        graphNode(item, num - .4, ax)
+        _graph_node(item, num - .4, ax)
 
-def automaticCluster(RPlot, RPoints):
-
-    min_cluster_size_ratio = .005
-    min_neighborhood_size = 2
-    min_maxima_ratio = 0.001
-    
-    min_cluster_size = int(min_cluster_size_ratio * len(RPoints))
-
-    if min_cluster_size < 5:
-        min_cluster_size = 5
-    
-    
-    nghsize = int(min_maxima_ratio*len(RPoints))
-
-    if nghsize < min_neighborhood_size:
-        nghsize = min_neighborhood_size
-    
-    localMaximaPoints = findLocalMaxima(RPlot, RPoints, nghsize)
-    
-    rootNode = TreeNode(RPoints, 0, len(RPoints), None)
-    clusterTree(rootNode, None, localMaximaPoints, 
-                RPlot, RPoints, min_cluster_size)
-
-
-    return rootNode
-    
-
-class TreeNode(object):
-    def __init__(self, points, start, end, parentNode):
-        self.points = points
-        self.start = start
-        self.end = end
-        self.parentNode = parentNode
-        self.children = []
-        self.splitpoint = -1
-
-    def __str__(self):
-        return "start: %d, end %d, split: %d" % (self.start, 
-                                                 self.end, 
-                                                 self.splitpoint)
-
-        
-    def assignSplitPoint(self,splitpoint):
-        self.splitpoint = splitpoint
-
-    def addChild(self, child):
-        self.children.append(child)
