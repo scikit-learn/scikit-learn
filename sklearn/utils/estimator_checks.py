@@ -137,11 +137,11 @@ def check_supervised_y_no_nan(name, Estimator):
     rng = np.random.RandomState(888)
     X = rng.randn(10, 5)
     y = np.ones(10) * np.inf
+    y = multioutput_estimator_convert_y_2d(name, y)
 
     errmsg = "Input contains NaN, infinity or a value too large for " \
              "dtype('float64')."
     try:
-        y = multioutput_estimator_convert_y_2d(name, y)
         Estimator().fit(X, y)
     except ValueError as e:
         if str(e) != errmsg:
