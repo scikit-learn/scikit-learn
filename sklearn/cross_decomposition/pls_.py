@@ -47,7 +47,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
         if mode == "B":
             if X_pinv is None:
                 # We use slower pinv2 (same as np.linalg.pinv) for stability
-                # reason
+                # reasons
                 X_pinv = linalg.pinv2(X, **pinv2_args)
             x_weights = np.dot(X_pinv, y_score)
         else:  # mode A
