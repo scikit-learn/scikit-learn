@@ -54,7 +54,12 @@ def compute_class_weight(class_weight, classes, y):
 
         # inversely proportional to the number of samples in the class
         if class_weight == 'auto':
-            raise ValueError('auto keyword is not supported anymore.')
+            recip_freq = 1. / bincount(y_ind)
+            weight = recip_freq[le.transform(classes)] / np.mean(recip_freq)
+            warnings.warn("The class_weight='auto' heuristic is deprecated in"
+                          " 0.17 in favor of a new heuristic "
+                          "class_weight='balanced'. 'auto' will be removed in"
+                          " 0.19", DeprecationWarning)
         else:
             recip_freq = len(y) / (len(le.classes_) *
                                    bincount(y_ind).astype(np.float64))
