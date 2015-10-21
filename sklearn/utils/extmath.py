@@ -195,11 +195,14 @@ def randomized_range_finder(A, size, n_iter=2,
     Parameters
     ----------
     A: 2D array
-        The input data matrix
+        The input data matrix.
+
     size: integer
         Size of the return array
+
     n_iter: integer
         Number of power iterations used to stabilize the result
+
     power_iteration_normalizer: 'auto' (default), 'QR', 'LU', 'none'
         Whether the power iterations are normalized with step-by-step
         QR factorization (the slowest but most accurate), 'none'
@@ -207,6 +210,9 @@ def randomized_range_finder(A, size, n_iter=2,
         typically 5 or larger), or 'LU' factorization (numerically stable
         but can lose slightly in accuracy). The 'auto' mode applies no
         normalization if `n_iter`<=2 and switches to LU otherwise.
+
+        .. versionadded:: 0.18
+
     random_state: RandomState or an int seed (0 by default)
         A random number generator instance
 
@@ -283,6 +289,8 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=2,
         Number of power iterations (can be used to deal with very noisy
         problems).
 
+        .. versionchanged:: 0.18
+
     power_iteration_normalizer: 'auto' (default), 'QR', 'LU', 'none'
         Whether the power iterations are normalized with step-by-step
         QR factorization (the slowest but most accurate), 'none'
@@ -291,12 +299,16 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=2,
         but can lose slightly in accuracy). The 'auto' mode applies no
         normalization if `n_iter`<=2 and switches to LU otherwise.
 
+        .. versionadded:: 0.18
+
     transpose: True, False or 'auto' (default)
         Whether the algorithm should be applied to M.T instead of M. The
         result should approximately be the same. The 'auto' mode will
         trigger the transposition if M.shape[1] > M.shape[0] since this
         implementation of randomized SVD tend to be a little faster in that
         case.
+
+        .. versionchanged:: 0.18
 
     flip_sign: boolean, (True by default)
         The output of a singular value decomposition is only unique up to a

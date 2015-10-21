@@ -488,7 +488,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         use fit_transform(X) instead.
 
     iterated_power : int, optional
-        Number of iterations for the power method. 3 by default.
+        Number of iterations for the power method. 2 by default.
+
+        .. versionchanged:: 0.18
 
     whiten : bool, optional
         When True (False by default) the `components_` vectors are divided
@@ -510,8 +512,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         Components with maximum variance.
 
     explained_variance_ratio_ : array, [n_components]
-        Percentage of variance explained by each of the selected components. \
-        k is not set then all components are stored and the sum of explained \
+        Percentage of variance explained by each of the selected components.
+        k is not set then all components are stored and the sum of explained
         variances is equal to 1.0
 
     mean_ : array, [n_features]
