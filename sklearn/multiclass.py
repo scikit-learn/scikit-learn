@@ -215,7 +215,9 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     def partial_fit(self, X, y):
         """Incrementally fit the underlying estimators on a batch of samples.
-        Throws AttributeError if the underlying estimator class does not support incremental updates via `partial_fit`.
+
+        Throws AttributeError if the underlying estimator class does not
+        support incremental updates via `partial_fit`.
 
         Parameters
         ----------
@@ -231,8 +233,9 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self
         """
         if not hasattr(self.estimator, "partial_fit"):
-            raise AttributeError("Underlying estimator (%s) does not support incremental updates!" %
-                                 self.estimator.__class__)
+            raise AttributeError("Underlying estimator (%s) does not support "
+                                 "incremental updates!"
+                                 % self.estimator.__class__)
 
         self.label_binarizer_ = LabelBinarizer(sparse_output=True)
 
@@ -262,8 +265,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             )
 
         return self
-
-
 
     def predict(self, X):
         """Predict multi-class targets using underlying estimators.
