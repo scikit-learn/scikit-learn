@@ -9,8 +9,6 @@ Reference: Based on the publications of Bell & Sejnowski 1995 (Infomax)
 #          Denis A. Engeman <denis.engemann@gemail.com>
 #
 # License: BSD (3-clause)
-
-import math
 import warnings
 import numpy as np
 from scipy import linalg
@@ -167,7 +165,7 @@ def infomax(X, n_components=None, whiten=True, weights=None, l_rate=None,
 
     if n_components is None:
         n_components = min(n_samples, n_features)
-    if n_components > min(n_samples, n_features):
+    if (n_components > min(n_samples, n_features)):
         n_components = min(n_samples, n_features)
         print("n_components is too large: it will be set to %s" % n_components)
 
@@ -183,6 +181,7 @@ def infomax(X, n_components=None, whiten=True, weights=None, l_rate=None,
         # X must be casted to floats to avoid typing issues with numpy
         # 2.0 and the line below
         X1 = X  # copy has been taken care of
+
     n_features = n_components
     n_features_square = n_features ** 2
 
@@ -190,13 +189,13 @@ def infomax(X, n_components=None, whiten=True, weights=None, l_rate=None,
     # heuristic default - may need adjustment for
     # large or tiny data sets
     if l_rate is None:
-        l_rate = 0.01 / math.log(n_features ** 2 + 1)
+        l_rate = 0.01 / np.log(n_features ** 2 + 1)
 
     if block is None:
-        block = int(math.floor(math.sqrt(n_samples / 3.0)))
+        block = int(np.floor(np.sqrt(n_samples / 3.0)))
 
     if extended:
-        print('computing%sInfomax ICA' % ' Extended ')
+        print('computing %s Infomax ICA' % ' Extended ')
 
     if block == 0:
         block += 1
@@ -320,8 +319,8 @@ def infomax(X, n_components=None, whiten=True, weights=None, l_rate=None,
             delta = oldwtchange.reshape(1, n_features_square)
             change = np.sum(delta * delta, dtype=np.float64)
             if step > 2:
-                angledelta = math.acos(np.sum(delta * olddelta) /
-                                       math.sqrt(change * oldchange))
+                angledelta = np.arccos(np.sum(delta * olddelta) /
+                                       np.sqrt(change * oldchange))
                 angledelta *= degconst
 
             if verbose:
