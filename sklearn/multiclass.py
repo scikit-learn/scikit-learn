@@ -74,11 +74,8 @@ def _fit_binary(estimator, X, y, classes=None):
     return estimator
 
 
-def _partial_fit_binary(estimator, X, y, all_classes=None, clone_estimator=True):
+def _partial_fit_binary(estimator, X, y, all_classes=None):
     """Incrementally fit a single binary estimator."""
-    if clone_estimator:
-        estimator = clone(estimator)
-
     estimator.partial_fit(X, y, classes=all_classes)
     return estimator
 
@@ -242,27 +239,16 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         Y = self.label_binarizer_.fit_transform(y)
         Y = Y.tocsc()
         columns = (col.toarray().ravel() for col in Y.T)
+        n_classes = Y.shape[1]
 
         if not hasattr(self, 'estimators_'):
-            self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_partial_fit_binary)(
-                    self.estimator,
-                    X,
-                    column,
-                    all_classes=[0, 1],
-                    clone_estimator=True
-                ) for i, column in enumerate(columns)
-            )
-        else:
-            self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_partial_fit_binary)(
-                    self.estimators_[i],
-                    X,
-                    column,
-                    all_classes=[0, 1],
-                    clone_estimator=False
-                ) for i, column in enumerate(columns)
-            )
+            self.estimators_ = [clone(self.estimator) for _ in range(n_classes)]
+
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_partial_fit_binary)(
+                self.estimators_[i], X, column, all_classes=[0, 1]
+            ) for i, column in enumerate(columns)
+        )
 
         return self
 
