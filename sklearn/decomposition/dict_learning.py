@@ -356,12 +356,10 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
             dictionary[:, k] = random_state.randn(n_samples)
             # Setting corresponding coefs to 0
             code[k, :] = 0.0
-            # DICTIONARY NORMALIZATION : norm = 1, as it is for a new random vector
             dictionary[:, k] /= sqrt(np.dot(dictionary[:, k],
                                             dictionary[:, k]))
         else:
-            # DICTIONARY NORMALIZATION
-            dictionary[:, k] /= np.max((sqrt(atom_norm_square), 1.))
+            dictionary[:, k] /= sqrt(atom_norm_square)
             # R <- -1.0 * U_k * V_k^T + R
             R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
     if return_r2:
@@ -387,7 +385,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
         (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                      (U,V)
-                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
+                    with || V_k ||_2 = 1 for all  0 <= k < n_components
 
     where V is the dictionary and U is the sparse code.
 
@@ -586,10 +584,6 @@ def _update_gain(gain, code, gain_rate, verbose=False):
     if gain_rate>0.:
         n_components, n_samples = code.shape
         gain = (1 - gain_rate)*gain + gain_rate * np.sum(code**2, axis=1)/n_samples
-#         gain_ = np.sum(code**2, axis=1)
-#         Z = np.sum(gain_)/n_components
-#         if Z>0: gain = (1 - gain_rate)*gain + gain_rate * gain_/Z
-#         print(code.shape, gain_.shape, gain_/Z, np.mean(gain_/Z), Z)
     return gain
 
 def dict_learning_grad(X, eta=0.02, n_components=2, transform_n_nonzero_coefs=10, alpha=None, n_iter=100, 
@@ -696,49 +690,24 @@ def dict_learning_grad(X, eta=0.02, n_components=2, transform_n_nonzero_coefs=10
     if n_components is None:
         n_components = X.shape[1]
 
-#     if method not in ('lars', 'cd'):
-#         raise ValueError('Coding method not supported as a fit algorithm.')
-#     method = 'lasso_' + method
-
     t0 = time.time()
     n_samples, n_features = X.shape
-    # Avoid integer division problems
-#     alpha = float(alpha)
     random_state = check_random_state(random_state)
 
     if n_jobs == -1:
         n_jobs = cpu_count()
 
-#     # Init V with SVD of X
-#     if dict_init is not None:
-#         dictionary = dict_init
-#     else:
-#         _, S, dictionary = randomized_svd(X, n_components)
-#         dictionary = S[:, np.newaxis] * dictionary
-#     r = len(dictionary)
-#     if n_components <= r:
-#         dictionary = dictionary[:n_components, :]
-#     else:
-#         dictionary = np.r_[dictionary,
-#                            np.zeros((n_components - r, dictionary.shape[1]))]
-#     dictionary = np.ascontiguousarray(dictionary.T)
-# 
     dictionary = random_state.randn(n_features, n_components)
     norm = np.sqrt(np.sum(dictionary**2, axis=1)).T
-#     norm = np.ones(n_components)
-#     for k in range(n_components):
-#         norm[k] = np.sqrt(np.sum(dictionary[:, k]**2))
     dictionary /= norm[:, np.newaxis]
     norm = np.sqrt(np.sum(dictionary**2, axis=1)).T
-#     for k in range(n_components):
-#         norm[k] = np.sqrt(np.sum(dictionary[:, k]**2))
 
     if verbose == 1:
         print('[dict_learning]', end=' ')
     gain = np.ones(n_components)
     gain_ = np.ones(n_components)
 
-    n_batches = floor(float(len(X)) / batch_size)
+    n_batches = ceil(float(len(X)) / batch_size)
     if shuffle:
         X_train = X.copy()
         random_state.shuffle(X_train)
@@ -756,8 +725,6 @@ def dict_learning_grad(X, eta=0.02, n_components=2, transform_n_nonzero_coefs=10
             if ii % int(n_iter/verbose) == 0:
                 print ("Iteration % 3i /  % 3i (elapsed time: % 3is, % 4.1fmn)"
                        % (ii, n_iter, dt, dt / 60))
-                print("Norm ", norm.min(), norm.max(), norm.argmin())
-                print("Gain ", gain.min(), gain.max(), gain.argmax())
 
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method, alpha=alpha,
                                   n_nonzero_coefs=transform_n_nonzero_coefs, n_jobs=n_jobs).T
@@ -769,12 +736,11 @@ def dict_learning_grad(X, eta=0.02, n_components=2, transform_n_nonzero_coefs=10
         norm = np.sqrt(np.sum(dictionary**2, axis=1)).T
         dictionary /= norm[:, np.newaxis]
 
-        # Update gain
+        # Update and apply gain
         if gain_rate>0.:
             gain_ = _update_gain(gain_, this_code, gain_rate, verbose=verbose)
             gain = gain_**alpha_homeo
             gain /= gain.mean()
-#             dictionary /= gain[np.newaxis, :]
             dictionary /= gain[np.newaxis, :]
         # Maybe we need a stopping criteria based on the amount of
         # modification in the dictionary
@@ -816,7 +782,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
         (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                      (U,V)
-                     with || V_k ||_2 <= 1 for all  0 <= k < n_components
+                     with || V_k ||_2 = 1 for all  0 <= k < n_components
 
     where V is the dictionary and U is the sparse code. This is
     accomplished by repeatedly iterating over mini-batches by slicing
@@ -956,8 +922,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)
 
+    # The covariance of the dictionary
     if inner_stats is None:
-        # The covariance of the dictionary
         A = np.zeros((n_components, n_components))
         # The data approximation
         B = np.zeros((n_features, n_components))
@@ -1180,7 +1146,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
         (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
-                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
+                    with || V_k ||_2 = 1 for all  0 <= k < n_components
 
     Read more in the :ref:`User Guide <DictionaryLearning>`.
 
@@ -1513,7 +1479,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
-                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
+                    with || V_k ||_2 = 1 for all  0 <= k < n_components
 
     Read more in the :ref:`User Guide <DictionaryLearning>`.
 
