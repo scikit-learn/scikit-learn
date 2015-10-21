@@ -104,7 +104,7 @@ node_index = node_indicator.indices[node_indicator.indptr[sample_id]:
                                     node_indicator.indptr[sample_id + 1]]
 
 print('Rules used to predict sample %s: ' % sample_id)
-for i, node_id in enumerate(node_index):
+for node_id in node_index:
     if is_leaves[node_id]:
         continue
 
@@ -113,9 +113,8 @@ for i, node_id in enumerate(node_index):
     else:
         threshold_sign = ">"
 
-    print("rule %s from node %s : (X[%s, %s] (= %s) %s %s)"
-          % (i,
-             node_id,
+    print("decision id node %s : (X[%s, %s] (= %s) %s %s)"
+          % (node_id,
              sample_id,
              feature[node_id],
              X_test[i, feature[node_id]],
