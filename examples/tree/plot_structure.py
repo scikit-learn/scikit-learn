@@ -8,7 +8,8 @@ relation between the features and the target to predict. In this example, we
 show how to retrieve:
     - the binary tree structure;
     - the depth of each node and whether or not it's a leaf.
-    - the nodes that were reached by a sample using the decision_paths method;
+    - the nodes that were reached by a sample using the ``decision_path``
+      method;
     - the leaf that was reached by a sample using the apply method;
     - the rules that were used to predict a sample;
     - the decision path shared by a group of samples.
@@ -85,7 +86,7 @@ for i in range(n_nodes):
                  ))
 print()
 
-# First let's retrieve the decision path of each sample. The decision_paths
+# First let's retrieve the decision path of each sample. The decision_path
 # method allows to retrieve the node indicator function. A non zero elements at
 # position (i, j) indicates that the sample i goes sthrough the node j.
 
@@ -107,7 +108,7 @@ for i, node_id in enumerate(node_index):
     if is_leaves[node_id]:
         continue
 
-    if (X_test[i, feature[node_id]] <= threshold[node_id]):
+    if (X_test[sample_id, feature[node_id]] <= threshold[node_id]):
         threshold_sign = "<="
     else:
         threshold_sign = ">"
