@@ -48,6 +48,8 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy.sparse import issparse
+from scipy.sparse import hstack as sparse_hstack
+
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed
@@ -181,6 +183,39 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             for tree in self.estimators_)
 
         return np.array(results).T
+
+    def decision_path(self, X):
+        """Return the decision path in the forest
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        indicator : sparse csr array, shape = [n_samples, n_nodes]
+            Return a node indicator matrix where non zero elements
+            indicates that the samples goes through the nodes.
+
+        n_nodes_ptr : array of size (n_estimators + 1, )
+            The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
+            gives the indicator value for the i-th estimator.
+        """
+        X = self._validate_X_predict(X)
+        indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                              backend="threading")(
+            delayed(_parallel_helper)(tree, 'decision_path', X,
+                                      check_input=False)
+            for tree in self.estimators_)
+
+        n_nodes = [0]
+        n_nodes.extend([i.shape[1] for i in indicators])
+        n_nodes_ptr = np.array(n_nodes).cumsum()
+
+        return sparse_hstack(indicators).tocsr(), n_nodes_ptr
 
     def fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).
