@@ -18,13 +18,14 @@ from sklearn.base import is_classifier, is_regressor
 from sklearn.cross_validation import train_test_split
 from sklearn.externals.six import PY3
 from sklearn.externals.six.moves import zip
-from sklearn.externals.funcsigs import signature
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import set_random_state
+from sklearn.utils.validation import has_fit_parameter
 
 from numpy.testing import assert_array_almost_equal
 
@@ -238,6 +239,7 @@ def test_sample_weight_consistency(random_state=42):
     rng = check_random_state(random_state)
 
     sample_weight = rng.randint(1, 4, (n_samples,))
+    print('sample_weight = ', sample_weight)
 
     X_clf, y_clf = datasets.make_classification(
         n_samples=n_samples, n_features=n_features,
@@ -258,7 +260,7 @@ def test_sample_weight_consistency(random_state=42):
     train, test = train_test_split(range(n_samples))
 
     for name, Estimator in estimators:
-        if 'sample_weight' not in signature(Estimator.fit).parameters.keys():
+        if not has_fit_parameter(Estimator, 'sample_weight'):
             continue
         if is_classifier(Estimator):
             X, y = X_clf, y_clf
@@ -269,11 +271,15 @@ def test_sample_weight_consistency(random_state=42):
             continue
 
         try:
-            estimator_sw = Estimator().fit(X[train], y[train],
-                                       sample_weight=sample_weight[train])
+            estimator_sw = Estimator()
+            set_random_state(estimator_sw, random_state=random_state)
+            estimator_sw.fit(X[train], y[train], sample_weight=sample_weight[train])
             X_aug_train, y_aug_train = aug((X[train], y[train]),
                                        sample_weight[train])
-            estimator_aug = Estimator().fit(X_aug_train, y_aug_train)
+            estimator_aug = Estimator()
+            set_random_state(estimator_aug, random_state=random_state)
+            estimator_aug.fit(X_aug_train, y_aug_train)
+
         except ValueError:
             # LogisticRegression liblinear (standard solver)
             # does not support sample weights, but the argument is there
@@ -282,10 +288,68 @@ def test_sample_weight_consistency(random_state=42):
         # if estimator has `coef_` attribute, then compare the two
         if hasattr(estimator_sw, 'coef_'):
             yield (assert_array_almost_equal,
-                   estimator_sw.coef_, estimator_aug.coef_)
+                   estimator_sw.coef_, estimator_aug.coef_, 6, name+' coef_ not equal')
 
         pred_sw = estimator_sw.predict(X[test])
         pred_aug = estimator_aug.predict(X[test])
 
-        yield assert_array_almost_equal, pred_sw, pred_aug
+        yield assert_array_almost_equal, pred_sw, pred_aug, 6, name+' prediction not equal'
+
+
+
+def test_sample_weight_0(random_state=42):
+    estimators = all_estimators()
+
+    n_samples, n_features = 20, 5
+    rng = check_random_state(random_state)
+
+    #sample_weight = rng.uniform(-0.2, .8, (n_samples,))
+    sample_weight = (rng.permutation(n_samples)<(n_samples/2.))*1
+    print('sample_weight = ', sample_weight)
+
+    X_clf, y_clf = datasets.make_classification(
+        n_samples=n_samples, n_features=n_features,
+        random_state=random_state)
+    X_reg, y_reg = datasets.make_regression(
+        n_samples=n_samples, n_features=n_features,
+        n_informative=2, random_state=random_state)
+
+    train, test = train_test_split(range(n_samples))
+
+    for name, Estimator in estimators:
+
+        if not has_fit_parameter(Estimator, 'sample_weight'):
+            continue
+        if is_classifier(Estimator):
+            X, y = X_clf, y_clf
+        elif is_regressor(Estimator):
+            X, y = X_reg, y_reg
+        else:
+            print ("%s is neither classifier nor regressor" % name)
+            continue
+
+        try:
+            estimator_sw = Estimator()
+            set_random_state(estimator_sw, random_state=random_state)
+            estimator_sw.fit(X[train], y[train], sample_weight=sample_weight[train])
+            X_aug_train, y_aug_train = X[train][sample_weight[train]==1], \
+                                       y[train][sample_weight[train]==1]
+            estimator_aug = Estimator()
+            set_random_state(estimator_aug, random_state=random_state)
+            estimator_aug.fit(X_aug_train, y_aug_train)
+        except ValueError:
+            # LogisticRegression liblinear (standard solver)
+            # does not support sample weights, but the argument is there
+            continue
+
+        # if estimator has `coef_` attribute, then compare the two
+        if hasattr(estimator_sw, 'coef_'):
+            yield (assert_array_almost_equal,
+                   estimator_sw.coef_, estimator_aug.coef_, 6, name+' coef_ not equal')
+
+        pred_sw = estimator_sw.predict(X[test])
+        pred_aug = estimator_aug.predict(X[test])
+
+        yield assert_array_almost_equal, pred_sw, pred_aug, 6, name+' prediction not equal'
+
 
