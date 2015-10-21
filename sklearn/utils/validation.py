@@ -440,10 +440,10 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
     """Input validation for standard estimators.
 
     Checks X and y for consistent length, enforces X 2d and y 1d.
-    Standard input checks are only applied to y. For multi-label y,
-    set multi_output=True to allow 2d and sparse y.
-    If the dtype of X is object, attempt converting to float,
-    raising on failure.
+    Standard input checks are only applied to y, such as checking that y
+    does not have np.nan or np.inf targets. For multi-label y, set
+    multi_output=True to allow 2d and sparse y.  If the dtype of X is
+    object, attempt converting to float, raising on failure.
 
     Parameters
     ----------
@@ -473,7 +473,8 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
         be triggered by a conversion.
 
     force_all_finite : boolean (default=True)
-        Whether to raise an error on np.inf and np.nan in X.
+        Whether to raise an error on np.inf and np.nan in X. This parameter
+        does not influence whether y can have np.inf or np.nan values.
 
     ensure_2d : boolean (default=True)
         Whether to make X at least 2d.
@@ -483,7 +484,8 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
 
     multi_output : boolean (default=False)
         Whether to allow 2-d y (array or sparse matrix). If false, y will be
-        validated as a vector.
+        validated as a vector. y cannot have np.nan or np.inf values if
+        multi_output=True.
 
     ensure_min_samples : int (default=1)
         Make sure that X has a minimum number of samples in its first
