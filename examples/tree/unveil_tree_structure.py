@@ -128,7 +128,6 @@ common_nodes = (node_indicator.toarray()[sample_ids].sum(axis=0) ==
 
 common_node_id = np.arange(n_nodes)[common_nodes]
 
-print("\nThe following sample %s share the node %s  in the tree"
+print("\nThe following samples %s share the node %s  in the tree"
       % (sample_ids, common_node_id))
-print("It is %s %% of all nodes."
-      % (len(common_node_id) / n_nodes * 100,))
+print("It is %s %% of all nodes." % (100 * len(common_node_id) / n_nodes,))
