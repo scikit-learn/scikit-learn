@@ -309,7 +309,7 @@ def _init_temp_memory(mmap_mode='r'):
         temp_folder = tempfile.mkdtemp(prefix='sklearn_checks_temp_')
         _TEMP_READONLY_MEMMAP_MEMORY = Memory(cachedir=temp_folder,
                                               mmap_mode=mmap_mode, verbose=0)
-        # Cannot use atexit as it is called everytime a test end,
+        # Cannot use atexit as it is called everytime a test ends,
         #  thus forcing us to regenerate cache at every check
         # atexit.register(_clear_temp_memory(warn=True))
 

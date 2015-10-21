@@ -168,7 +168,9 @@ class IncrementalPCA(_BasePCA):
         self.explained_variance_ratio_ = None
         self.noise_variance_ = None
 
-        X = check_array(X, copy=self.copy, dtype=[np.float64, np.float32])
+        # because fit will perform inplace modifications
+        copy = not X.flags.writable or self.copy
+        X = check_array(X, copy=copy, dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
 
         if self.batch_size is None:

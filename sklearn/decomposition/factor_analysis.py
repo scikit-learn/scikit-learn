@@ -151,7 +151,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        X = check_array(X, copy=self.copy, dtype=np.float64)
+        copy = not X.flags.writable or self.copy
+        X = check_array(X, copy=copy, dtype=np.float64)
 
         n_samples, n_features = X.shape
         n_components = self.n_components
@@ -247,14 +248,15 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'components_')
 
-        X = check_array(X)
+        copy = copy if copy is not None else self.copy
+        X = check_array(X, copy=copy)
         Ih = np.eye(len(self.components_))
 
-        X_transformed = X - self.mean_
+        X -= self.mean_
 
         Wpsi = self.components_ / self.noise_variance_
         cov_z = linalg.inv(Ih + np.dot(Wpsi, self.components_.T))
-        tmp = fast_dot(X_transformed, Wpsi.T)
+        tmp = fast_dot(X, Wpsi.T)
         X_transformed = fast_dot(tmp, cov_z)
 
         return X_transformed

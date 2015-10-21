@@ -305,7 +305,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             raise TypeError("MinMaxScaler does no support sparse input. "
                             "You may consider to use MaxAbsScaler instead.")
 
-        X = check_array(X, copy=self.copy, ensure_2d=False, warn_on_dtype=True,
+        X = check_array(X, copy=False, ensure_2d=False, warn_on_dtype=True,
                         estimator=self, dtype=FLOAT_DTYPES)
 
         if X.ndim == 1:
@@ -557,7 +557,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
         y: Passthrough for ``Pipeline`` compatibility.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+        X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
                         ensure_2d=False, warn_on_dtype=True,
                         estimator=self, dtype=FLOAT_DTYPES)
 
@@ -748,7 +748,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
 
         y: Passthrough for ``Pipeline`` compatibility.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+        X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
                         ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
 
         if X.ndim == 1:
@@ -960,7 +960,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         """
         if sparse.issparse(X):
             raise TypeError("RobustScaler cannot be fitted on sparse inputs")
-        X = self._check_array(X, self.copy)
+        X = self._check_array(X, copy=False)
         if X.ndim == 1:
             warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
         if self.with_centering:
@@ -1449,7 +1449,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         This method is just there to implement the usual API and hence
         work in pipelines.
         """
-        check_array(X, accept_sparse='csr')
+        check_array(X, accept_sparse='csr', copy=False)
         return self
 
     def transform(self, X, y=None, copy=None):

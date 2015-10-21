@@ -298,7 +298,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             affinity_propagation(
                 self.affinity_matrix_, self.preference, max_iter=self.max_iter,
                 convergence_iter=self.convergence_iter, damping=self.damping,
-                copy=self.copy, verbose=self.verbose, return_n_iter=True)
+                copy=False, verbose=self.verbose, return_n_iter=True)
 
         if self.affinity != "precomputed":
             self.cluster_centers_ = X[self.cluster_centers_indices_].copy()
