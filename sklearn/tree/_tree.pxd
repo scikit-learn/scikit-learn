@@ -70,9 +70,9 @@ cdef class Tree:
     cdef np.ndarray _apply_dense(self, object X)
     cdef np.ndarray _apply_sparse_csr(self, object X)
 
-    cpdef object decision_paths(self, object X)
-    cdef object _decision_paths_dense(self, object X)
-    cdef object _decision_paths_sparse_csr(self, object X)
+    cpdef object decision_path(self, object X)
+    cdef object _decision_path_dense(self, object X)
+    cdef object _decision_path_sparse_csr(self, object X)
 
     cpdef compute_feature_importances(self, normalize=*)
 

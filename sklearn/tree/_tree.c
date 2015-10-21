@@ -1064,7 +1064,7 @@ struct __pyx_opt_args_7sklearn_4tree_5_tree_4Tree__resize_c {
 };
 
 /* "sklearn/tree/_tree.pxd":77
- *     cdef object _decision_paths_sparse_csr(self, object X)
+ *     cdef object _decision_path_sparse_csr(self, object X)
  * 
  *     cpdef compute_feature_importances(self, normalize=*)             # <<<<<<<<<<<<<<
  * 
@@ -1364,16 +1364,16 @@ struct __pyx_vtabstruct_7sklearn_4tree_5_tree_Tree {
   PyArrayObject *(*apply)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *, int __pyx_skip_dispatch);
   PyArrayObject *(*_apply_dense)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *);
   PyArrayObject *(*_apply_sparse_csr)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *);
-  PyObject *(*decision_paths)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *, int __pyx_skip_dispatch);
-  PyObject *(*_decision_paths_dense)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *);
-  PyObject *(*_decision_paths_sparse_csr)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *);
+  PyObject *(*decision_path)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *, int __pyx_skip_dispatch);
+  PyObject *(*_decision_path_dense)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *);
+  PyObject *(*_decision_path_sparse_csr)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *);
   PyObject *(*compute_feature_importances)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, int __pyx_skip_dispatch, struct __pyx_opt_args_7sklearn_4tree_5_tree_4Tree_compute_feature_importances *__pyx_optional_args);
 };
 static struct __pyx_vtabstruct_7sklearn_4tree_5_tree_Tree *__pyx_vtabptr_7sklearn_4tree_5_tree_Tree;
 static PyArrayObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__apply_dense(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *);
 static PyArrayObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__apply_sparse_csr(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *);
-static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_dense(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *);
-static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_sparse_csr(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *);
+static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_path_dense(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *);
+static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_path_sparse_csr(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *);
 
 
 /* "sklearn/tree/_tree.pyx":89
@@ -1825,9 +1825,9 @@ static PyArrayObject *__pyx_f_7sklearn_4tree_5_tree_4Tree_predict(struct __pyx_o
 static PyArrayObject *__pyx_f_7sklearn_4tree_5_tree_4Tree_apply(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X, int __pyx_skip_dispatch); /* proto*/
 static PyArrayObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__apply_dense(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X); /* proto*/
 static PyArrayObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__apply_sparse_csr(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X); /* proto*/
-static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree_decision_paths(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X, int __pyx_skip_dispatch); /* proto*/
-static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_dense(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X); /* proto*/
-static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_sparse_csr(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X); /* proto*/
+static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree_decision_path(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X, int __pyx_skip_dispatch); /* proto*/
+static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_path_dense(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X); /* proto*/
+static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_path_sparse_csr(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X); /* proto*/
 static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree_compute_feature_importances(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, int __pyx_skip_dispatch, struct __pyx_opt_args_7sklearn_4tree_5_tree_4Tree_compute_feature_importances *__pyx_optional_args); /* proto*/
 static PyArrayObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__get_value_ndarray(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self); /* proto*/
 static PyArrayObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__get_node_ndarray(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self); /* proto*/
@@ -1989,7 +1989,7 @@ static PyObject *__pyx_pf_7sklearn_4tree_5_tree_4Tree_6__getstate__(struct __pyx
 static PyObject *__pyx_pf_7sklearn_4tree_5_tree_4Tree_8__setstate__(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_d); /* proto */
 static PyObject *__pyx_pf_7sklearn_4tree_5_tree_4Tree_10predict(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X); /* proto */
 static PyObject *__pyx_pf_7sklearn_4tree_5_tree_4Tree_12apply(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X); /* proto */
-static PyObject *__pyx_pf_7sklearn_4tree_5_tree_4Tree_14decision_paths(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X); /* proto */
+static PyObject *__pyx_pf_7sklearn_4tree_5_tree_4Tree_14decision_path(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X); /* proto */
 static PyObject *__pyx_pf_7sklearn_4tree_5_tree_4Tree_16compute_feature_importances(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_normalize); /* proto */
 static PyObject *__pyx_pf_7sklearn_4tree_5_tree_4Tree_10n_features___get__(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self); /* proto */
 static int __pyx_pf_7sklearn_4tree_5_tree_4Tree_10n_features_2__set__(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
@@ -2100,10 +2100,10 @@ static char __pyx_k_X_idx_sorted[] = "X_idx_sorted";
 static char __pyx_k_c_contiguous[] = "c_contiguous";
 static char __pyx_k_scipy_sparse[] = "scipy.sparse";
 static char __pyx_k_sort_indices[] = "sort_indices";
+static char __pyx_k_decision_path[] = "decision_path";
 static char __pyx_k_sample_weight[] = "sample_weight";
 static char __pyx_k_TREE_UNDEFINED[] = "TREE_UNDEFINED";
 static char __pyx_k_asfortranarray[] = "asfortranarray";
-static char __pyx_k_decision_paths[] = "decision_paths";
 static char __pyx_k_max_leaf_nodes[] = "max_leaf_nodes";
 static char __pyx_k_n_node_samples[] = "n_node_samples";
 static char __pyx_k_min_weight_leaf[] = "min_weight_leaf";
@@ -2159,7 +2159,7 @@ static PyObject *__pyx_n_s_copy;
 static PyObject *__pyx_n_s_csc_matrix;
 static PyObject *__pyx_n_s_csr_matrix;
 static PyObject *__pyx_n_s_data;
-static PyObject *__pyx_n_s_decision_paths;
+static PyObject *__pyx_n_s_decision_path;
 static PyObject *__pyx_n_s_dtype;
 static PyObject *__pyx_n_s_feature;
 static PyObject *__pyx_n_s_flags;
@@ -9749,7 +9749,7 @@ static PyArrayObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__apply_sparse_csr(stru
  * 
  *         return out             # <<<<<<<<<<<<<<
  * 
- *     cpdef object decision_paths(self, object X):
+ *     cpdef object decision_path(self, object X):
  */
   __Pyx_XDECREF(((PyObject *)__pyx_r));
   __Pyx_INCREF(((PyObject *)__pyx_v_out));
@@ -9799,13 +9799,13 @@ static PyArrayObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__apply_sparse_csr(stru
 /* "sklearn/tree/_tree.pyx":868
  *         return out
  * 
- *     cpdef object decision_paths(self, object X):             # <<<<<<<<<<<<<<
+ *     cpdef object decision_path(self, object X):             # <<<<<<<<<<<<<<
  *         """Finds the decision path (=node) for each sample in X."""
  *         if issparse(X):
  */
 
-static PyObject *__pyx_pw_7sklearn_4tree_5_tree_4Tree_15decision_paths(PyObject *__pyx_v_self, PyObject *__pyx_v_X); /*proto*/
-static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree_decision_paths(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X, int __pyx_skip_dispatch) {
+static PyObject *__pyx_pw_7sklearn_4tree_5_tree_4Tree_15decision_path(PyObject *__pyx_v_self, PyObject *__pyx_v_X); /*proto*/
+static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree_decision_path(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X, int __pyx_skip_dispatch) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -9817,14 +9817,14 @@ static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree_decision_paths(struct __pyx
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("decision_paths", 0);
+  __Pyx_RefNannySetupContext("decision_path", 0);
   /* Check if called by wrapper */
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_decision_paths); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 868; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_decision_path); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 868; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
-    if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_7sklearn_4tree_5_tree_4Tree_15decision_paths)) {
+    if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_7sklearn_4tree_5_tree_4Tree_15decision_path)) {
       __Pyx_XDECREF(__pyx_r);
       __Pyx_INCREF(__pyx_t_1);
       __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
@@ -9861,10 +9861,10 @@ static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree_decision_paths(struct __pyx
   }
 
   /* "sklearn/tree/_tree.pyx":870
- *     cpdef object decision_paths(self, object X):
+ *     cpdef object decision_path(self, object X):
  *         """Finds the decision path (=node) for each sample in X."""
  *         if issparse(X):             # <<<<<<<<<<<<<<
- *             return self._decision_paths_sparse_csr(X)
+ *             return self._decision_path_sparse_csr(X)
  *         else:
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_issparse); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 870; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -9901,12 +9901,12 @@ static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree_decision_paths(struct __pyx
     /* "sklearn/tree/_tree.pyx":871
  *         """Finds the decision path (=node) for each sample in X."""
  *         if issparse(X):
- *             return self._decision_paths_sparse_csr(X)             # <<<<<<<<<<<<<<
+ *             return self._decision_path_sparse_csr(X)             # <<<<<<<<<<<<<<
  *         else:
- *             return self._decision_paths_dense(X)
+ *             return self._decision_path_dense(X)
  */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_1 = __pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_sparse_csr(__pyx_v_self, __pyx_v_X); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 871; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __pyx_f_7sklearn_4tree_5_tree_4Tree__decision_path_sparse_csr(__pyx_v_self, __pyx_v_X); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 871; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_r = __pyx_t_1;
     __pyx_t_1 = 0;
@@ -9915,14 +9915,14 @@ static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree_decision_paths(struct __pyx
   /*else*/ {
 
     /* "sklearn/tree/_tree.pyx":873
- *             return self._decision_paths_sparse_csr(X)
+ *             return self._decision_path_sparse_csr(X)
  *         else:
- *             return self._decision_paths_dense(X)             # <<<<<<<<<<<<<<
+ *             return self._decision_path_dense(X)             # <<<<<<<<<<<<<<
  * 
- *     cdef inline object _decision_paths_dense(self, object X):
+ *     cdef inline object _decision_path_dense(self, object X):
  */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_1 = __pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_dense(__pyx_v_self, __pyx_v_X); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 873; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __pyx_f_7sklearn_4tree_5_tree_4Tree__decision_path_dense(__pyx_v_self, __pyx_v_X); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 873; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_r = __pyx_t_1;
     __pyx_t_1 = 0;
@@ -9932,7 +9932,7 @@ static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree_decision_paths(struct __pyx
   /* "sklearn/tree/_tree.pyx":868
  *         return out
  * 
- *     cpdef object decision_paths(self, object X):             # <<<<<<<<<<<<<<
+ *     cpdef object decision_path(self, object X):             # <<<<<<<<<<<<<<
  *         """Finds the decision path (=node) for each sample in X."""
  *         if issparse(X):
  */
@@ -9944,7 +9944,7 @@ static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree_decision_paths(struct __pyx
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("sklearn.tree._tree.Tree.decision_paths", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("sklearn.tree._tree.Tree.decision_path", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -9953,29 +9953,29 @@ static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree_decision_paths(struct __pyx
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7sklearn_4tree_5_tree_4Tree_15decision_paths(PyObject *__pyx_v_self, PyObject *__pyx_v_X); /*proto*/
-static char __pyx_doc_7sklearn_4tree_5_tree_4Tree_14decision_paths[] = "Finds the decision path (=node) for each sample in X.";
-static PyObject *__pyx_pw_7sklearn_4tree_5_tree_4Tree_15decision_paths(PyObject *__pyx_v_self, PyObject *__pyx_v_X) {
+static PyObject *__pyx_pw_7sklearn_4tree_5_tree_4Tree_15decision_path(PyObject *__pyx_v_self, PyObject *__pyx_v_X); /*proto*/
+static char __pyx_doc_7sklearn_4tree_5_tree_4Tree_14decision_path[] = "Finds the decision path (=node) for each sample in X.";
+static PyObject *__pyx_pw_7sklearn_4tree_5_tree_4Tree_15decision_path(PyObject *__pyx_v_self, PyObject *__pyx_v_X) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("decision_paths (wrapper)", 0);
-  __pyx_r = __pyx_pf_7sklearn_4tree_5_tree_4Tree_14decision_paths(((struct __pyx_obj_7sklearn_4tree_5_tree_Tree *)__pyx_v_self), ((PyObject *)__pyx_v_X));
+  __Pyx_RefNannySetupContext("decision_path (wrapper)", 0);
+  __pyx_r = __pyx_pf_7sklearn_4tree_5_tree_4Tree_14decision_path(((struct __pyx_obj_7sklearn_4tree_5_tree_Tree *)__pyx_v_self), ((PyObject *)__pyx_v_X));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7sklearn_4tree_5_tree_4Tree_14decision_paths(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X) {
+static PyObject *__pyx_pf_7sklearn_4tree_5_tree_4Tree_14decision_path(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("decision_paths", 0);
+  __Pyx_RefNannySetupContext("decision_path", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_7sklearn_4tree_5_tree_4Tree_decision_paths(__pyx_v_self, __pyx_v_X, 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 868; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __pyx_f_7sklearn_4tree_5_tree_4Tree_decision_path(__pyx_v_self, __pyx_v_X, 1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 868; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -9984,7 +9984,7 @@ static PyObject *__pyx_pf_7sklearn_4tree_5_tree_4Tree_14decision_paths(struct __
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("sklearn.tree._tree.Tree.decision_paths", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("sklearn.tree._tree.Tree.decision_path", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -9993,14 +9993,14 @@ static PyObject *__pyx_pf_7sklearn_4tree_5_tree_4Tree_14decision_paths(struct __
 }
 
 /* "sklearn/tree/_tree.pyx":875
- *             return self._decision_paths_dense(X)
+ *             return self._decision_path_dense(X)
  * 
- *     cdef inline object _decision_paths_dense(self, object X):             # <<<<<<<<<<<<<<
+ *     cdef inline object _decision_path_dense(self, object X):             # <<<<<<<<<<<<<<
  *         """Finds the decision path (=node) for each sample in X."""
  * 
  */
 
-static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_dense(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X) {
+static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_path_dense(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X) {
   PyArrayObject *__pyx_v_X_ndarray = 0;
   __pyx_t_7sklearn_4tree_5_tree_DTYPE_t *__pyx_v_X_ptr;
   __pyx_t_7sklearn_4tree_5_tree_SIZE_t __pyx_v_X_sample_stride;
@@ -10045,7 +10045,7 @@ static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_dense(struc
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("_decision_paths_dense", 0);
+  __Pyx_RefNannySetupContext("_decision_path_dense", 0);
   __pyx_pybuffer_indptr.pybuffer.buf = NULL;
   __pyx_pybuffer_indptr.refcount = 0;
   __pyx_pybuffernd_indptr.data = NULL;
@@ -10692,7 +10692,7 @@ static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_dense(struc
  * 
  *         return out             # <<<<<<<<<<<<<<
  * 
- *     cdef inline object _decision_paths_sparse_csr(self, object X):
+ *     cdef inline object _decision_path_sparse_csr(self, object X):
  */
   __Pyx_XDECREF(__pyx_r);
   __Pyx_INCREF(__pyx_v_out);
@@ -10700,9 +10700,9 @@ static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_dense(struc
   goto __pyx_L0;
 
   /* "sklearn/tree/_tree.pyx":875
- *             return self._decision_paths_dense(X)
+ *             return self._decision_path_dense(X)
  * 
- *     cdef inline object _decision_paths_dense(self, object X):             # <<<<<<<<<<<<<<
+ *     cdef inline object _decision_path_dense(self, object X):             # <<<<<<<<<<<<<<
  *         """Finds the decision path (=node) for each sample in X."""
  * 
  */
@@ -10721,7 +10721,7 @@ static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_dense(struc
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_indices.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_indptr.rcbuffer->pybuffer);
   __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
-  __Pyx_AddTraceback("sklearn.tree._tree.Tree._decision_paths_dense", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("sklearn.tree._tree.Tree._decision_path_dense", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   goto __pyx_L2;
   __pyx_L0:;
@@ -10742,12 +10742,12 @@ static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_dense(struc
 /* "sklearn/tree/_tree.pyx":935
  *         return out
  * 
- *     cdef inline object _decision_paths_sparse_csr(self, object X):             # <<<<<<<<<<<<<<
+ *     cdef inline object _decision_path_sparse_csr(self, object X):             # <<<<<<<<<<<<<<
  *         """Finds the decision path (=node) for each sample in X."""
  * 
  */
 
-static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_sparse_csr(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X) {
+static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_path_sparse_csr(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_self, PyObject *__pyx_v_X) {
   PyArrayObject *__pyx_v_X_data_ndarray = 0;
   PyArrayObject *__pyx_v_X_indices_ndarray = 0;
   PyArrayObject *__pyx_v_X_indptr_ndarray = 0;
@@ -10810,7 +10810,7 @@ static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_sparse_csr(
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("_decision_paths_sparse_csr", 0);
+  __Pyx_RefNannySetupContext("_decision_path_sparse_csr", 0);
   __pyx_pybuffer_X_data_ndarray.pybuffer.buf = NULL;
   __pyx_pybuffer_X_data_ndarray.refcount = 0;
   __pyx_pybuffernd_X_data_ndarray.data = NULL;
@@ -11676,7 +11676,7 @@ static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_sparse_csr(
   /* "sklearn/tree/_tree.pyx":935
  *         return out
  * 
- *     cdef inline object _decision_paths_sparse_csr(self, object X):             # <<<<<<<<<<<<<<
+ *     cdef inline object _decision_path_sparse_csr(self, object X):             # <<<<<<<<<<<<<<
  *         """Finds the decision path (=node) for each sample in X."""
  * 
  */
@@ -11698,7 +11698,7 @@ static PyObject *__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_sparse_csr(
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_indices.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_indptr.rcbuffer->pybuffer);
   __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
-  __Pyx_AddTraceback("sklearn.tree._tree.Tree._decision_paths_sparse_csr", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("sklearn.tree._tree.Tree._decision_path_sparse_csr", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   goto __pyx_L2;
   __pyx_L0:;
@@ -15190,7 +15190,7 @@ static PyMethodDef __pyx_methods_7sklearn_4tree_5_tree_Tree[] = {
   {"__setstate__", (PyCFunction)__pyx_pw_7sklearn_4tree_5_tree_4Tree_9__setstate__, METH_O, __pyx_doc_7sklearn_4tree_5_tree_4Tree_8__setstate__},
   {"predict", (PyCFunction)__pyx_pw_7sklearn_4tree_5_tree_4Tree_11predict, METH_O, __pyx_doc_7sklearn_4tree_5_tree_4Tree_10predict},
   {"apply", (PyCFunction)__pyx_pw_7sklearn_4tree_5_tree_4Tree_13apply, METH_O, __pyx_doc_7sklearn_4tree_5_tree_4Tree_12apply},
-  {"decision_paths", (PyCFunction)__pyx_pw_7sklearn_4tree_5_tree_4Tree_15decision_paths, METH_O, __pyx_doc_7sklearn_4tree_5_tree_4Tree_14decision_paths},
+  {"decision_path", (PyCFunction)__pyx_pw_7sklearn_4tree_5_tree_4Tree_15decision_path, METH_O, __pyx_doc_7sklearn_4tree_5_tree_4Tree_14decision_path},
   {"compute_feature_importances", (PyCFunction)__pyx_pw_7sklearn_4tree_5_tree_4Tree_17compute_feature_importances, METH_VARARGS|METH_KEYWORDS, __pyx_doc_7sklearn_4tree_5_tree_4Tree_16compute_feature_importances},
   {0, 0, 0, 0}
 };
@@ -15586,7 +15586,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_csc_matrix, __pyx_k_csc_matrix, sizeof(__pyx_k_csc_matrix), 0, 0, 1, 1},
   {&__pyx_n_s_csr_matrix, __pyx_k_csr_matrix, sizeof(__pyx_k_csr_matrix), 0, 0, 1, 1},
   {&__pyx_n_s_data, __pyx_k_data, sizeof(__pyx_k_data), 0, 0, 1, 1},
-  {&__pyx_n_s_decision_paths, __pyx_k_decision_paths, sizeof(__pyx_k_decision_paths), 0, 0, 1, 1},
+  {&__pyx_n_s_decision_path, __pyx_k_decision_path, sizeof(__pyx_k_decision_path), 0, 0, 1, 1},
   {&__pyx_n_s_dtype, __pyx_k_dtype, sizeof(__pyx_k_dtype), 0, 0, 1, 1},
   {&__pyx_n_s_feature, __pyx_k_feature, sizeof(__pyx_k_feature), 0, 0, 1, 1},
   {&__pyx_n_s_flags, __pyx_k_flags, sizeof(__pyx_k_flags), 0, 0, 1, 1},
@@ -15884,9 +15884,9 @@ PyMODINIT_FUNC PyInit__tree(void)
   __pyx_vtable_7sklearn_4tree_5_tree_Tree.apply = (PyArrayObject *(*)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *, int __pyx_skip_dispatch))__pyx_f_7sklearn_4tree_5_tree_4Tree_apply;
   __pyx_vtable_7sklearn_4tree_5_tree_Tree._apply_dense = (PyArrayObject *(*)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *))__pyx_f_7sklearn_4tree_5_tree_4Tree__apply_dense;
   __pyx_vtable_7sklearn_4tree_5_tree_Tree._apply_sparse_csr = (PyArrayObject *(*)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *))__pyx_f_7sklearn_4tree_5_tree_4Tree__apply_sparse_csr;
-  __pyx_vtable_7sklearn_4tree_5_tree_Tree.decision_paths = (PyObject *(*)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *, int __pyx_skip_dispatch))__pyx_f_7sklearn_4tree_5_tree_4Tree_decision_paths;
-  __pyx_vtable_7sklearn_4tree_5_tree_Tree._decision_paths_dense = (PyObject *(*)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *))__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_dense;
-  __pyx_vtable_7sklearn_4tree_5_tree_Tree._decision_paths_sparse_csr = (PyObject *(*)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *))__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_paths_sparse_csr;
+  __pyx_vtable_7sklearn_4tree_5_tree_Tree.decision_path = (PyObject *(*)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *, int __pyx_skip_dispatch))__pyx_f_7sklearn_4tree_5_tree_4Tree_decision_path;
+  __pyx_vtable_7sklearn_4tree_5_tree_Tree._decision_path_dense = (PyObject *(*)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *))__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_path_dense;
+  __pyx_vtable_7sklearn_4tree_5_tree_Tree._decision_path_sparse_csr = (PyObject *(*)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, PyObject *))__pyx_f_7sklearn_4tree_5_tree_4Tree__decision_path_sparse_csr;
   __pyx_vtable_7sklearn_4tree_5_tree_Tree.compute_feature_importances = (PyObject *(*)(struct __pyx_obj_7sklearn_4tree_5_tree_Tree *, int __pyx_skip_dispatch, struct __pyx_opt_args_7sklearn_4tree_5_tree_4Tree_compute_feature_importances *__pyx_optional_args))__pyx_f_7sklearn_4tree_5_tree_4Tree_compute_feature_importances;
   if (PyType_Ready(&__pyx_type_7sklearn_4tree_5_tree_Tree) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 484; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_type_7sklearn_4tree_5_tree_Tree.tp_print = 0;

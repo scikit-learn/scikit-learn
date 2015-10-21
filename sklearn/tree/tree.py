@@ -454,7 +454,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         X = self._validate_X_predict(X, check_input)
         return self.tree_.apply(X)
 
-    def decision_paths(self, X, check_input=True):
+    def decision_path(self, X, check_input=True):
         """Return the decision path in the tree
 
         Parameters
@@ -476,7 +476,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         """
         X = self._validate_X_predict(X, check_input)
-        return self.tree_.decision_paths(X)
+        return self.tree_.decision_path(X)
 
     @property
     def feature_importances_(self):

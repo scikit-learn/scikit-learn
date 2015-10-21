@@ -1223,12 +1223,12 @@ def check_explicit_sparse_zeros(tree, max_depth=3,
         assert_array_almost_equal(s.apply(X1), d.apply(X2))
         assert_array_almost_equal(s.apply(X1), s.tree_.apply(X1))
 
-        assert_array_almost_equal(s.tree_.decision_paths(X1).toarray(),
-                                  d.tree_.decision_paths(X2).toarray())
-        assert_array_almost_equal(s.decision_paths(X1).toarray(),
-                                  d.decision_paths(X2).toarray())
-        assert_array_almost_equal(s.decision_paths(X1).toarray(),
-                                  s.tree_.decision_paths(X1).toarray())
+        assert_array_almost_equal(s.tree_.decision_path(X1).toarray(),
+                                  d.tree_.decision_path(X2).toarray())
+        assert_array_almost_equal(s.decision_path(X1).toarray(),
+                                  d.decision_path(X2).toarray())
+        assert_array_almost_equal(s.decision_path(X1).toarray(),
+                                  s.tree_.decision_path(X1).toarray())
 
         assert_array_almost_equal(s.predict(X1), d.predict(X2))
 
@@ -1346,7 +1346,7 @@ def check_decision_path(name):
     est = TreeEstimator(random_state=0, max_depth=2)
     est.fit(X, y)
 
-    node_indicator_csr = est.decision_paths(X)
+    node_indicator_csr = est.decision_path(X)
     node_indicator = node_indicator_csr.toarray()
     assert_equal(node_indicator.shape, (n_samples, est.tree_.node_count))
 

@@ -89,7 +89,7 @@ print()
 # method allows to retrieve the node indicator function. A non zero elements at
 # position (i, j) indicates that the sample i goes sthrough the node j.
 
-node_indicator = estimator.decision_paths(X_test)
+node_indicator = estimator.decision_path(X_test)
 
 # Similarly, we can also have the leaves ids reach by each sample.
 

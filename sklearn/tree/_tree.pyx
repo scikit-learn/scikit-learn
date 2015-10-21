@@ -865,14 +865,14 @@ cdef class Tree:
 
         return out
 
-    cpdef object decision_paths(self, object X):
+    cpdef object decision_path(self, object X):
         """Finds the decision path (=node) for each sample in X."""
         if issparse(X):
-            return self._decision_paths_sparse_csr(X)
+            return self._decision_path_sparse_csr(X)
         else:
-            return self._decision_paths_dense(X)
+            return self._decision_path_dense(X)
 
-    cdef inline object _decision_paths_dense(self, object X):
+    cdef inline object _decision_path_dense(self, object X):
         """Finds the decision path (=node) for each sample in X."""
 
         # Check input
@@ -932,7 +932,7 @@ cdef class Tree:
 
         return out
 
-    cdef inline object _decision_paths_sparse_csr(self, object X):
+    cdef inline object _decision_path_sparse_csr(self, object X):
         """Finds the decision path (=node) for each sample in X."""
 
         # Check input
