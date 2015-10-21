@@ -10,7 +10,7 @@ from numpy.testing import assert_array_equal
 import scipy.sparse as sp
 from nose.tools import assert_raises, assert_true, assert_false, assert_equal
 
-from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_raises_regexp, TempMemmap
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_warns
@@ -441,6 +441,13 @@ def test_check_is_fitted():
 
     assert_equal(None, check_is_fitted(ard, "coef_"))
     assert_equal(None, check_is_fitted(svr, "support_"))
+
+def test_check_array_memmap():
+    X = np.ones((4, 4))
+    with TempMemmap(X, mmap_mode='r') as X:
+        Z = check_array(X, copy=False)
+        assert_true(Z.base is X)
+        assert_false(Z.flags['WRITEABLE'])
 
 
 def test_check_consistent_length():

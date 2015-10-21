@@ -305,7 +305,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             raise TypeError("MinMaxScaler does no support sparse input. "
                             "You may consider to use MaxAbsScaler instead.")
 
-        X = check_array(X, copy=self.copy, ensure_2d=False, warn_on_dtype=True,
+        X = check_array(X, copy=False, ensure_2d=False, warn_on_dtype=True,
                         estimator=self, dtype=FLOAT_DTYPES)
 
         if X.ndim == 1:
@@ -332,7 +332,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         self.data_range_ = data_range
         return self
 
-    def transform(self, X):
+    def transform(self, X, copy=None):
         """Scaling features of X according to feature_range.
 
         Parameters
@@ -341,8 +341,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             Input data that will be transformed.
         """
         check_is_fitted(self, 'scale_')
-
-        X = check_array(X, copy=self.copy, ensure_2d=False, dtype=FLOAT_DTYPES)
+        copy = copy if copy is not None else self.copy
+        X = check_array(X, copy=copy, ensure_2d=False, dtype=FLOAT_DTYPES)
         if X.ndim == 1:
             warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
@@ -350,7 +350,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X += self.min_
         return X
 
-    def inverse_transform(self, X):
+    def inverse_transform(self, X, copy=None):
         """Undo the scaling of X according to feature_range.
 
         Parameters
@@ -359,8 +359,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             Input data that will be transformed. It cannot be sparse.
         """
         check_is_fitted(self, 'scale_')
-
-        X = check_array(X, copy=self.copy, ensure_2d=False, dtype=FLOAT_DTYPES)
+        copy = copy if copy is not None else self.copy
+        X = check_array(X, copy=copy, ensure_2d=False, dtype=FLOAT_DTYPES)
         if X.ndim == 1:
             warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
@@ -557,7 +557,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
         y: Passthrough for ``Pipeline`` compatibility.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+        X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
                         ensure_2d=False, warn_on_dtype=True,
                         estimator=self, dtype=FLOAT_DTYPES)
 
@@ -748,7 +748,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
 
         y: Passthrough for ``Pipeline`` compatibility.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+        X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
                         ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
 
         if X.ndim == 1:
@@ -772,7 +772,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         self.scale_ = _handle_zeros_in_scale(max_abs)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X, y=None, copy=None):
         """Scale the data
 
         Parameters
@@ -781,7 +781,8 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             The data that should be scaled.
         """
         check_is_fitted(self, 'scale_')
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+        copy = copy if copy is not None else self.copy
+        X = check_array(X, accept_sparse=('csr', 'csc'), copy=copy,
                         ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
 
         if X.ndim == 1:
@@ -793,7 +794,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             X /= self.scale_
         return X
 
-    def inverse_transform(self, X):
+    def inverse_transform(self, X, copy=None):
         """Scale back the data to the original representation
 
         Parameters
@@ -802,6 +803,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             The data that should be transformed back.
         """
         check_is_fitted(self, 'scale_')
+        copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
         if X.ndim == 1:
@@ -928,9 +930,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         self.with_scaling = with_scaling
         self.copy = copy
 
-    def _check_array(self, X, copy):
+    def _check_array(self, X, copy=False):
         """Makes sure centering is not enabled for sparse matrices."""
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+        X = check_array(X, accept_sparse=('csr', 'csc'), copy=copy,
                         ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
 
         if X.ndim == 1:
@@ -954,7 +956,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         """
         if sparse.issparse(X):
             raise TypeError("RobustScaler cannot be fitted on sparse inputs")
-        X = self._check_array(X, self.copy)
+        X = self._check_array(X, copy=False)
         if X.ndim == 1:
             warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
         if self.with_centering:
@@ -966,7 +968,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X, y=None, copy=None):
         """Center and scale the data
 
         Parameters
@@ -978,7 +980,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             check_is_fitted(self, 'center_')
         if self.with_scaling:
             check_is_fitted(self, 'scale_')
-        X = self._check_array(X, self.copy)
+        copy = copy if copy is not None else self.copy
+        X = self._check_array(X, copy)
         if X.ndim == 1:
             warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
@@ -995,7 +998,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 X /= self.scale_
         return X
 
-    def inverse_transform(self, X):
+    def inverse_transform(self, X, copy=None):
         """Scale back the data to the original representation
 
         Parameters
@@ -1007,7 +1010,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             check_is_fitted(self, 'center_')
         if self.with_scaling:
             check_is_fitted(self, 'scale_')
-        X = self._check_array(X, self.copy)
+        copy = copy if copy is not None else self.copy
+        X = self._check_array(X, copy)
         if X.ndim == 1:
             warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
@@ -1443,7 +1447,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         This method is just there to implement the usual API and hence
         work in pipelines.
         """
-        check_array(X, accept_sparse='csr')
+        check_array(X, accept_sparse='csr', copy=False)
         return self
 
     def transform(self, X, y=None, copy=None):
