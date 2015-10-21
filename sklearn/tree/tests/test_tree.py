@@ -1337,6 +1337,14 @@ def test_presort_sparse():
         yield check_presort_sparse, est, sparse_matrix(X), y
 
 
+def test_decision_path_hardcoded():
+    X = iris.data
+    y = iris.target
+    est = DecisionTreeClassifier(random_state=0, max_depth=1).fit(X, y)
+    node_indicator = est.decision_path(X[:2]).toarray()
+    assert_array_equal(node_indicator, [[1, 1, 0], [1, 0, 1]])
+
+
 def check_decision_path(name):
     X = iris.data
     y = iris.target
