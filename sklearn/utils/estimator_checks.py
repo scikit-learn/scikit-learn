@@ -134,11 +134,10 @@ def _yield_classifier_checks(name, Classifier):
 def check_supervised_y_no_nan(name, Estimator):
     # Checks that the Estimator targets are not NaN.
 
-    warnings.simplefilter("ignore")
     np.random.seed(888)
     X = np.random.randn(10, 5)
-    y1 = np.random.randn(10) / 0.
-    y2 = np.random.randn(10, 2) / 0.
+    y1 = np.ones(10) * np.inf
+    y2 = np.ones((10, 2)) * np.inf
 
     errmsg = "Input contains NaN, infinity or a value too large for " \
              "dtype('float64')."
@@ -1457,9 +1456,8 @@ def check_parameters_default_constructible(name, Estimator):
 def multioutput_estimator_convert_y_2d(name, y):
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
     # Convert into a 2-D y for those estimators.
-    if name in (['MultiTaskElasticNetCV', 'MultiTaskLassoCV',
-                 'MultiTaskLasso', 'MultiTaskElasticNet']):
-        return y[:, np.newaxis]
+    if "MultiTask" in name:
+        return np.reshape(y, (-1, 1))
     return y
 
 
