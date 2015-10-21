@@ -102,6 +102,7 @@ print("Time for GPR prediction with standard-deviation: %.3f"
       % (time.time() - stime))
 
 # Plot results
+plt.figure(figsize = (10,5))
 plt.scatter(X, y, c='k', label='data')
 plt.plot(X_plot, np.sin(X_plot), c='k', label='True')
 plt.plot(X_plot, y_kr, c='g', label='KRR (%s)' % kr.best_params_)
@@ -111,6 +112,7 @@ plt.fill_between(X_plot[:, 0], y_gpr - y_std, y_gpr + y_std, color='r',
 plt.xlabel('data')
 plt.ylabel('target')
 plt.xlim(0, 20)
+plt.ylim(-4, 4)
 plt.title('GPR versus Kernel Ridge')
-plt.legend(loc="best", prop={'size': 10})
+plt.legend(loc=9, prop={'size': 10})
 plt.show()
