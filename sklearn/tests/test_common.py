@@ -239,7 +239,6 @@ def test_sample_weight_consistency(random_state=42):
     rng = check_random_state(random_state)
 
     sample_weight = rng.randint(1, 4, (n_samples,))
-    print('sample_weight = ', sample_weight)
 
     X_clf, y_clf = datasets.make_classification(
         n_samples=n_samples, n_features=n_features,
@@ -303,9 +302,7 @@ def test_sample_weight_0(random_state=42):
     n_samples, n_features = 20, 5
     rng = check_random_state(random_state)
 
-    #sample_weight = rng.uniform(-0.2, .8, (n_samples,))
     sample_weight = (rng.permutation(n_samples)<(n_samples/2.))*1
-    print('sample_weight = ', sample_weight)
 
     X_clf, y_clf = datasets.make_classification(
         n_samples=n_samples, n_features=n_features,
