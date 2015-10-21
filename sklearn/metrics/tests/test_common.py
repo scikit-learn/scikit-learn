@@ -346,7 +346,6 @@ NOT_SYMMETRIC_METRICS = [
 METRICS_WITHOUT_SAMPLE_WEIGHT = [
     "cohen_kappa_score",
     "confusion_matrix",
-    "hamming_loss",
     "matthews_corrcoef_score",
     "median_absolute_error",
 ]

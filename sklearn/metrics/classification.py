@@ -201,6 +201,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
         If none is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used in sorted order.
 
+
     Returns
     -------
     C : array, shape = [n_classes, n_classes]
@@ -1391,7 +1392,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     return report
 
 
-def hamming_loss(y_true, y_pred, classes=None):
+def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -1408,6 +1409,9 @@ def hamming_loss(y_true, y_pred, classes=None):
 
     classes : array, shape = [n_labels], optional
         Integer array of labels.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
 
     Returns
     -------
@@ -1463,12 +1467,17 @@ def hamming_loss(y_true, y_pred, classes=None):
     else:
         classes = np.asarray(classes)
 
+    if sample_weight is None:
+        weight_average = 1.
+    else:
+        weight_average = np.mean(sample_weight)
+
     if y_type.startswith('multilabel'):
-        n_differences = count_nonzero(y_true - y_pred)
-        return (n_differences / (y_true.shape[0] * len(classes)))
+        n_differences = count_nonzero(y_true - y_pred, sample_weight=sample_weight)
+        return (n_differences / (y_true.shape[0] * len(classes) * weight_average))
 
     elif y_type in ["binary", "multiclass"]:
-        return sp_hamming(y_true, y_pred)
+        return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)
     else:
         raise ValueError("{0} is not supported".format(y_type))
 
