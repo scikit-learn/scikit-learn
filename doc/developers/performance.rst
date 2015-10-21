@@ -72,9 +72,17 @@ following:
      parallelism** that is amenable to **multi-processing** by using the
      ``joblib.Parallel`` class.
 
-When using Cython, include the generated C source code alongside with
-the Cython source code. The goal is to make it possible to install the
-scikit on any machine with Python, Numpy, Scipy and C/C++ compiler.
+When using Cython, use either
+
+   $ python setup.py build_ext -i
+   $ python setup.py install
+
+to generate C files. You are responsible for adding .c/.cpp extensions along
+with build parameters in each submodule ``setup.py``.
+
+C/C++ generated files are embedded in distributed stable packages. The goal is
+to make it possible to install scikit-learn stable version
+on any machine with Python, Numpy, Scipy and C/C++ compiler.
 
 Fast matrix multiplications
 ===========================

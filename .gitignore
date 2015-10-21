@@ -53,3 +53,10 @@ benchmarks/bench_covertype_data/
 *.prefs
 .pydevproject
 .idea
+
+cythonize.dat
+*.c
+*.cpp
+
+!*/src/*.c
+!*/src/*.cpp

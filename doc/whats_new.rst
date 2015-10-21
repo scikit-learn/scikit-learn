@@ -52,6 +52,10 @@ Enhancements
       provided as a percentage of the training samples. By
       `yelite`_ and `Arnaud Joly`_
 
+    - Codebase does not contain C/C++ cython generated files: they are
+    generated during build. Distribution packages will still contain generated
+    C/C++ files. By `Arthur Mensch`_
+
 Bug fixes
 .........
 
