@@ -11,7 +11,7 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..multiclass import _ovr_decision_function
 from ..utils import check_array, check_random_state, column_or_1d, check_X_y
-from ..utils import ConvergenceWarning, compute_class_weight, deprecated
+from ..utils import compute_class_weight, deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
