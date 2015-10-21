@@ -91,7 +91,7 @@ print()
 
 node_indicator = estimator.decision_path(X_test)
 
-# Similarly, we can also have the leaves ids reach by each sample.
+# Similarly, we can also have the leaves ids reached by each sample.
 
 leave_id = estimator.apply(X_test)
 
