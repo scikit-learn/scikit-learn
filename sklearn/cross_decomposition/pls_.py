@@ -541,12 +541,7 @@ class PLSRegression(_PLS):
     :ref:http://www.eigenvector.com/Docs/Wise_pls_properties.pdf
 
     For each component k, find weights u, v that optimizes:
-<<<<<<< HEAD
-    ``max corr(Xk W[:, k], Yk C[:, k]) * var(Xk W[:, k]) var(Yk C[:, k])``,
-     such that ``|C[:, k]| = 1``
-=======
     ``max corr(Xk u, Yk v) * std(Xk u) std(Yk u)``, such that ``|u| = 1``
->>>>>>> Adressed comments
 
     Note that it maximizes both the correlations between the scores and the
     intra-block variances.
@@ -679,14 +674,8 @@ class PLSCanonical(_PLS):
     Slides explaining PLS
     :ref:http://www.eigenvector.com/Docs/Wise_pls_properties.pdf
 
-<<<<<<< HEAD
-    For each component k, find weights u, v that optimizes:
-    ``max corr(Xk W[:, k], Yk C[:, k]) * var(Xk W[:, k]) var(Yk C[:, k])``,
-     such that ``|C[:, k]| = 1``
-=======
     For each component k, find weights u, v that optimize::
     max corr(Xk u, Yk v) * std(Xk u) std(Yk u), such that ``|u| = |v| = 1``
->>>>>>> Adressed comments
 
     Note that it maximizes both the correlations between the scores and the
     intra-block variances.
@@ -800,8 +789,8 @@ class PLSSVD(BaseEstimator, TransformerMixin):
                              % (self.n_components, str(X.shape), str(Y.shape)))
 
         # Scale (in place)
-        X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ = \
-            _center_scale_xy(X, Y, self.scale)
+        X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ = (
+            _center_scale_xy(X, Y, self.scale))
         # svd(X'Y)
         C = np.dot(X.T, Y)
 
