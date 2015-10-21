@@ -33,6 +33,11 @@ from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import LeaveOneLabelOut
+from sklearn.model_selection import LeavePLabelOut
+from sklearn.model_selection import LabelKFold
+from sklearn.model_selection import LabelShuffleSplit
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import ParameterGrid
@@ -216,6 +221,34 @@ def test_grid_search_score_method():
 
     assert_almost_equal(score_accuracy, score_no_scoring)
     assert_almost_equal(score_auc, score_no_score_auc)
+
+
+def test_grid_search_labels():
+    # Check if ValueError (when labels is None) propagates to GridSearchCV
+    # And also check if labels is correctly passed to the cv object
+    rng = np.random.RandomState(0)
+
+    X, y = make_classification(n_samples=15, n_classes=2, random_state=0)
+    labels = rng.randint(0, 3, 15)
+
+    clf = LinearSVC(random_state=0)
+    grid = {'C': [1]}
+
+    label_cvs = [LeaveOneLabelOut(), LeavePLabelOut(2), LabelKFold(),
+                 LabelShuffleSplit()]
+    for cv in label_cvs:
+        gs = GridSearchCV(clf, grid, cv=cv)
+        assert_raise_message(ValueError,
+                             "The labels parameter should not be None",
+                             gs.fit, X, y)
+        gs.fit(X, y, labels)
+
+    non_label_cvs = [StratifiedKFold(), StratifiedShuffleSplit()]
+    for cv in non_label_cvs:
+        print(cv)
+        gs = GridSearchCV(clf, grid, cv=cv)
+        # Should not raise an error
+        gs.fit(X, y)
 
 
 def test_trivial_grid_scores():
@@ -482,6 +515,7 @@ def test_y_as_list():
     assert_true(hasattr(grid_search, "grid_scores_"))
 
 
+@ignore_warnings
 def test_pandas_input():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]

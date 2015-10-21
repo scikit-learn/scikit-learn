@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_almost_equal
@@ -25,6 +26,10 @@ from sklearn.model_selection import permutation_test_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import LeaveOneOut
+from sklearn.model_selection import LeaveOneLabelOut
+from sklearn.model_selection import LeavePLabelOut
+from sklearn.model_selection import LabelKFold
+from sklearn.model_selection import LabelShuffleSplit
 from sklearn.model_selection import learning_curve
 from sklearn.model_selection import validation_curve
 from sklearn.model_selection._validation import _check_is_permutation
@@ -161,6 +166,25 @@ def test_cross_val_score():
 
     clf = MockClassifier(allow_nd=False)
     assert_raises(ValueError, cross_val_score, clf, X_3d, y)
+
+
+def test_cross_val_score_predict_labels():
+    # Check if ValueError (when labels is None) propagates to cross_val_score
+    # and cross_val_predict
+    # And also check if labels is correctly passed to the cv object
+    X, y = make_classification(n_samples=20, n_classes=2, random_state=0)
+
+    clf = SVC(kernel="linear")
+
+    label_cvs = [LeaveOneLabelOut(), LeavePLabelOut(2), LabelKFold(),
+                 LabelShuffleSplit()]
+    for cv in label_cvs:
+        assert_raise_message(ValueError,
+                             "The labels parameter should not be None",
+                             cross_val_score, estimator=clf, X=X, y=y, cv=cv)
+        assert_raise_message(ValueError,
+                             "The labels parameter should not be None",
+                             cross_val_predict, estimator=clf, X=X, y=y, cv=cv)
 
 
 def test_cross_val_score_pandas():

@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.model_selection.search` includes utilities to fine-tune the
+The :mod:`sklearn.model_selection._search` includes utilities to fine-tune the
 parameters of an estimator.
 """
 from __future__ import print_function
@@ -76,7 +76,8 @@ class ParameterGrid(object):
     See also
     --------
     :class:`GridSearchCV`:
-        uses ``ParameterGrid`` to perform a full parallelized parameter search.
+        Uses :class:`ParameterGrid` to perform a full parallelized parameter
+        search.
     """
 
     def __init__(self, param_grid):
@@ -518,18 +519,17 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         """Actual fitting,  performing the search over parameters."""
 
         estimator = self.estimator
-        cv = self.cv
+        cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
         self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
 
         n_samples = _num_samples(X)
-        X, y = indexable(X, y)
+        X, y, labels = indexable(X, y, labels)
 
         if y is not None:
             if len(y) != n_samples:
                 raise ValueError('Target variable (y) has a different number '
                                  'of samples (%i) than data (X: %i samples)'
                                  % (len(y), n_samples))
-        cv = check_cv(cv, y, classifier=is_classifier(estimator))
         n_splits = cv.get_n_splits(X, y, labels)
 
         if self.verbose > 0 and isinstance(parameter_iterable, Sized):

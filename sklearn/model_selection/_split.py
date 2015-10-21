@@ -1,6 +1,5 @@
-
 """
-The :mod:`sklearn.model_selection.split` module includes classes and
+The :mod:`sklearn.model_selection._split` module includes classes and
 functions to split the data based on a preset strategy.
 """
 
@@ -70,6 +69,14 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
         labels : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
         """
         X, y, labels = indexable(X, y, labels)
         indices = np.arange(_num_samples(X))
@@ -171,6 +178,8 @@ class LeaveOneOut(BaseCrossValidator):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
+        if X is None:
+            raise ValueError("The X parameter should not be None")
         return _num_samples(X)
 
 
@@ -240,6 +249,8 @@ class LeavePOut(BaseCrossValidator):
         labels : object
             Always ignored, exists for compatibility.
         """
+        if X is None:
+            raise ValueError("The X parameter should not be None")
         return int(comb(_num_samples(X), self.p, exact=True))
 
 
@@ -283,6 +294,14 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
         labels : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
         """
         X, y, labels = indexable(X, y, labels)
         n_samples = _num_samples(X)
@@ -445,6 +464,9 @@ class LabelKFold(_BaseKFold):
                                          random_state=None)
 
     def _iter_test_indices(self, X, y, labels):
+        if labels is None:
+            raise ValueError("The labels parameter should not be None")
+
         unique_labels, labels = np.unique(labels, return_inverse=True)
         n_labels = len(unique_labels)
 
@@ -555,8 +577,8 @@ class StratifiedKFold(_BaseKFold):
         # So we pass np.zeroes(max(c, n_folds)) as data to the KFold
         per_cls_cvs = [
             KFold(self.n_folds, shuffle=self.shuffle,
-                  random_state=rng).split(np.zeros(max(c, self.n_folds)))
-            for c in y_counts]
+                  random_state=rng).split(np.zeros(max(count, self.n_folds)))
+            for count in y_counts]
 
         test_folds = np.zeros(n_samples, dtype=np.int)
         for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
@@ -619,6 +641,8 @@ class LeaveOneLabelOut(BaseCrossValidator):
     """
 
     def _iter_test_masks(self, X, y, labels):
+        if labels is None:
+            raise ValueError("The labels parameter should not be None")
         # We make a copy of labels to avoid side-effects during iteration
         labels = np.array(labels, copy=True)
         unique_labels = np.unique(labels)
@@ -645,6 +669,8 @@ class LeaveOneLabelOut(BaseCrossValidator):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
+        if labels is None:
+            raise ValueError("The labels parameter should not be None")
         return len(np.unique(labels))
 
 
@@ -705,6 +731,8 @@ class LeavePLabelOut(BaseCrossValidator):
         self.n_labels = n_labels
 
     def _iter_test_masks(self, X, y, labels):
+        if labels is None:
+            raise ValueError("The labels parameter should not be None")
         labels = np.array(labels, copy=True)
         unique_labels = np.unique(labels)
         combi = combinations(range(len(unique_labels)), self.n_labels)
@@ -734,6 +762,8 @@ class LeavePLabelOut(BaseCrossValidator):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
+        if labels is None:
+            raise ValueError("The labels parameter should not be None")
         return int(comb(len(np.unique(labels)), self.n_labels, exact=True))
 
 
@@ -763,6 +793,14 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         labels : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
         """
         X, y, labels = indexable(X, y, labels)
         for train, test in self._iter_indices(X, y, labels):
@@ -813,7 +851,7 @@ class ShuffleSplit(BaseShuffleSplit):
     n_iter : int (default 10)
         Number of re-shuffling & splitting iterations.
 
-    test_size : float (default 0.1), int, or None
+    test_size : float, int, or None, default 0.1
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split. If
         int, represents the absolute number of test samples. If None,
@@ -920,6 +958,8 @@ class LabelShuffleSplit(ShuffleSplit):
             random_state=random_state)
 
     def _iter_indices(self, X, y, labels):
+        if labels is None:
+            raise ValueError("The labels parameter should not be None")
         classes, label_indices = np.unique(labels, return_inverse=True)
         for label_train, label_test in super(
                 LabelShuffleSplit, self)._iter_indices(X=classes):
@@ -1049,6 +1089,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 
 def _validate_shuffle_split_init(test_size, train_size):
+    """Validation helper to check the test_size and train_size at init
+
+    NOTE This does not take into account the number of samples which is known
+    only at split
+    """
     if test_size is None and train_size is None:
         raise ValueError('test_size and train_size can not both be None')
 
@@ -1079,6 +1124,10 @@ def _validate_shuffle_split_init(test_size, train_size):
 
 
 def _validate_shuffle_split(n_samples, test_size, train_size):
+    """
+    Validation helper to check if the test/test sizes are meaningful wrt to the
+    size of the data (n_samples)
+    """
     if (test_size is not None and np.asarray(test_size).dtype.kind == 'i'
             and test_size >= n_samples):
         raise ValueError('test_size=%d should be smaller than the number of '
@@ -1160,6 +1209,14 @@ class PredefinedSplit(BaseCrossValidator):
 
         labels : object
             Always ignored, exists for compatibility.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
         """
         ind = np.arange(len(self.test_fold))
         for test_index in self._iter_test_masks():
@@ -1236,6 +1293,14 @@ class _CVIterableWrapper(BaseCrossValidator):
 
         labels : object
             Always ignored, exists for compatibility.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
         """
         for train, test in self.cv:
             yield train, test
@@ -1284,7 +1349,7 @@ def check_cv(cv=3, y=None, classifier=False):
         else:
             return KFold(cv)
 
-    if not hasattr(cv, 'split'):
+    if not hasattr(cv, 'split') or isinstance(cv, str):
         if not isinstance(cv, Iterable) or isinstance(cv, str):
             raise ValueError("Expected cv as an integer, cross-validation "
                              "object (from sklearn.model_selection) "

@@ -5,13 +5,16 @@ import warnings
 import numpy as np
 from scipy.sparse import coo_matrix
 from scipy import stats
+from scipy.misc import comb
 from itertools import combinations
+from itertools import combinations_with_replacement
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_not_equal
@@ -36,13 +39,18 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import PredefinedSplit
 from sklearn.model_selection import check_cv
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
+
+from sklearn.svm import LinearSVC
 
 from sklearn.model_selection._split import _safe_split
 from sklearn.model_selection._split import _validate_shuffle_split
 from sklearn.model_selection._split import _CVIterableWrapper
+from sklearn.model_selection._split import _build_repr
 
 from sklearn.datasets import load_digits
 from sklearn.datasets import load_iris
+from sklearn.datasets import make_classification
 
 from sklearn.externals import six
 from sklearn.externals.six.moves import zip
@@ -52,6 +60,8 @@ from sklearn.svm import SVC
 X = np.ones(10)
 y = np.arange(10) // 2
 P_sparse = coo_matrix(np.eye(5))
+iris = load_iris()
+digits = load_digits()
 
 
 class MockClassifier(object):
@@ -119,19 +129,32 @@ class MockClassifier(object):
 
 @ignore_warnings
 def test_cross_validator_with_default_indices():
+    n_samples = 4
+    n_unique_labels = 4
+    n_folds = 2
+    p = 2
+    n_iter = 10  # (the default value)
+
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     X_1d = np.array([1, 2, 3, 4])
     y = np.array([1, 1, 2, 2])
     labels = np.array([1, 2, 3, 4])
     loo = LeaveOneOut()
-    lpo = LeavePOut(2)
-    kf = KFold(2)
-    skf = StratifiedKFold(2)
+    lpo = LeavePOut(p)
+    kf = KFold(n_folds)
+    skf = StratifiedKFold(n_folds)
     lolo = LeaveOneLabelOut()
-    lopo = LeavePLabelOut(2)
+    lopo = LeavePLabelOut(p)
     ss = ShuffleSplit(random_state=0)
-    ps = PredefinedSplit([1, 1, 2, 2])
+    ps = PredefinedSplit([1, 1, 2, 2])  # n_splits = np of unique folds = 2
+
+    n_splits = [n_samples, comb(n_samples, p), n_folds, n_folds,
+                n_unique_labels, comb(n_unique_labels, p), n_iter, 2]
+
     for i, cv in enumerate([loo, lpo, kf, skf, lolo, lopo, ss, ps]):
+        # Test if get_n_splits works correctly
+        assert_equal(n_splits[i], cv.get_n_splits(X, y, labels))
+
         # Test if the cross-validator works as expected even if
         # the data is 1d
         np.testing.assert_equal(list(cv.split(X, y, labels)),
@@ -207,6 +230,9 @@ def test_kfold_valueerrors():
     assert_raises(ValueError, StratifiedKFold, 1.5)
     assert_raises(ValueError, StratifiedKFold, 2.0)
 
+    # When shuffle is not  a bool:
+    assert_raises(TypeError, KFold, n_folds=4, shuffle=None)
+
 
 def test_kfold_indices():
     # Check all indices are returned in the test folds
@@ -219,6 +245,9 @@ def test_kfold_indices():
     X2 = np.ones(17)
     kf = KFold(3)
     check_cv_coverage(kf, X2, y=None, labels=None, expected_n_iter=3)
+
+    # Check if get_n_splits returns the number of folds
+    assert_equal(5, KFold(5).get_n_splits(X2))
 
 
 def test_kfold_no_shuffle():
@@ -267,6 +296,9 @@ def test_stratified_kfold_no_shuffle():
     train, test = next(splits)
     assert_array_equal(test, [2, 5, 6])
     assert_array_equal(train, [0, 1, 3, 4])
+
+    # Check if get_n_splits returns the number of folds
+    assert_equal(5, StratifiedKFold(5).get_n_splits(X, y))
 
 
 def test_stratified_kfold_ratios():
@@ -393,7 +425,6 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     # estimates a much higher accuracy (around 0.96) than than the non
     # shuffling variant (around 0.86).
 
-    digits = load_digits()
     X, y = digits.data[:800], digits.target[:800]
     model = SVC(C=10, gamma=0.005)
 
@@ -559,6 +590,8 @@ def test_predefinedsplit_with_kfold_split():
     ps_train = []
     ps_test = []
     ps = PredefinedSplit(folds)
+    # n_splits is simply the no of unique folds
+    assert_equal(len(np.unique(folds)), ps.get_n_splits())
     for train_ind, test_ind in ps.split():
         ps_train.append(train_ind)
         ps_test.append(test_ind)
@@ -623,6 +656,11 @@ def test_leave_label_out_changing_labels():
             assert_array_equal(train, train_chan)
             assert_array_equal(test, test_chan)
 
+    # n_splits = no of 2 (p) label combinations of the unique labels = 3C2 = 3
+    assert_equal(3, LeavePLabelOut(n_labels=2).get_n_splits(X, y, labels))
+    # n_splits = no of unique labels (C(uniq_lbls, 1) = n_unique_labels)
+    assert_equal(3, LeaveOneLabelOut().get_n_splits(X, y, labels))
+
 
 def test_train_test_split_errors():
     assert_raises(ValueError, train_test_split)
@@ -681,6 +719,7 @@ def test_train_test_split():
         assert_equal(np.sum(train == 1), np.sum(train == 2))
 
 
+@ignore_warnings
 def train_test_split_pandas():
     # check train_test_split doesn't destroy pandas dataframe
     types = [MockDataFrame]
@@ -734,7 +773,6 @@ def test_safe_split_with_precomputed_kernel():
     clf = SVC()
     clfp = SVC(kernel="precomputed")
 
-    iris = load_iris()
     X, y = iris.data, iris.target
     K = np.dot(X, X.T)
 
@@ -758,7 +796,7 @@ def test_train_test_split_allow_nans():
     train_test_split(X, y, test_size=0.2, random_state=42)
 
 
-def test_check_cv_return_types():
+def test_check_cv():
     X = np.ones(9)
     cv = check_cv(3, classifier=False)
     # Use numpy.testing.assert_equal which recursively compares
@@ -796,6 +834,8 @@ def test_check_cv_return_types():
     cv2 = check_cv(OldSKF(y_multiclass, n_folds=3))
     np.testing.assert_equal(list(cv1.split(X, y_multiclass)),
                             list(cv2.split()))
+
+    assert_raises(ValueError, check_cv, cv="lolo")
 
 
 def test_cv_iterable_wrapper():
@@ -881,8 +921,10 @@ def test_label_kfold():
                              abs(sum(folds == i) - ideal_n_labels_per_fold))
 
     # Check that each label appears only in 1 fold
-    for label in np.unique(labels):
-        assert_equal(len(np.unique(folds[labels == label])), 1)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        for label in np.unique(labels):
+            assert_equal(len(np.unique(folds[labels == label])), 1)
 
     # Check that no label is on both sides of the split
     labels = np.asarray(labels, dtype=object)
@@ -891,4 +933,36 @@ def test_label_kfold():
 
     # Should fail if there are more folds than labels
     labels = np.array([1, 1, 1, 2, 2])
-    assert_raises(ValueError, next, LabelKFold(n_folds=3).split(X, y, labels))
+    X = y = np.ones(len(labels))
+    assert_raises_regexp(ValueError, "Cannot have number of folds.*greater",
+                         next, LabelKFold(n_folds=3).split(X, y, labels))
+
+
+def test_nested_cv():
+    # Test if nested cross validation works with different combinations of cv
+    rng = np.random.RandomState(0)
+
+    X, y = make_classification(n_samples=15, n_classes=2, random_state=0)
+    labels = rng.randint(0, 5, 15)
+
+    cvs = [LeaveOneLabelOut(), LeaveOneOut(), LabelKFold(), StratifiedKFold(),
+           StratifiedShuffleSplit(n_iter=10, random_state=0)]
+
+    for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
+        gs = GridSearchCV(LinearSVC(random_state=0), param_grid={'C': [1, 10]},
+                          cv=inner_cv)
+        cross_val_score(gs, X=X, y=y, labels=labels, cv=outer_cv,
+                        fit_params={'labels': labels})
+
+
+def test_build_repr():
+    class MockSplitter:
+        def __init__(self, a, b=0, c=None):
+            self.a = a
+            self.b = b
+            self.c = c
+
+        def __repr__(self):
+            return _build_repr(self)
+
+    assert_equal(repr(MockSplitter(5, 6)), "MockSplitter(a=5, b=6, c=None)")

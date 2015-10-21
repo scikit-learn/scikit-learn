@@ -1,6 +1,5 @@
-
 """
-The :mod:`sklearn.model_selection.validate` module includes classes and
+The :mod:`sklearn.model_selection._validation` module includes classes and
 functions to validate the model.
 """
 
