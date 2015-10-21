@@ -41,8 +41,8 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import NMF, ProjectedGradientNMF
-from sklearn.utils.validation import DataConversionWarning
-from sklearn.utils import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import DataConversionWarning
 from sklearn.cross_validation import train_test_split
 
 from sklearn.utils import shuffle
@@ -55,6 +55,7 @@ BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'ExtraTreeRegressor', 'ExtraTreesRegressor', 'GaussianProcess',
+                'GaussianProcessRegressor',
                 'KNeighborsRegressor', 'KernelRidge', 'Lars', 'Lasso',
                 'LassoLars', 'LinearRegression', 'MultiTaskElasticNet',
                 'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV',
@@ -143,8 +144,9 @@ def _yield_regressor_checks(name, Regressor):
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
-    # Test if NotFittedError is raised
-    yield check_estimators_unfitted
+    if name != "GaussianProcessRegressor":
+        # Test if NotFittedError is raised
+        yield check_estimators_unfitted
 
 
 def _yield_transformer_checks(name, Transformer):

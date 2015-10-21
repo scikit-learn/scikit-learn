@@ -19,12 +19,11 @@ from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
 from ..utils.fixes import argpartition
-from ..utils.validation import DataConversionWarning
-from ..utils.validation import NotFittedError
 from ..utils.multiclass import check_classification_targets
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
-
+from ..exceptions import NotFittedError
+from ..exceptions import DataConversionWarning
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
                      kd_tree=KDTree.valid_metrics,
@@ -43,14 +42,6 @@ VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
 VALID_METRICS_SPARSE = dict(ball_tree=[],
                             kd_tree=[],
                             brute=PAIRWISE_DISTANCE_FUNCTIONS.keys())
-
-
-class NeighborsWarning(UserWarning):
-    pass
-
-
-# Make sure that NeighborsWarning are displayed more than once
-warnings.simplefilter("always", NeighborsWarning)
 
 
 def _check_weights(weights):
@@ -117,16 +108,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _init_params(self, n_neighbors=None, radius=None,
                      algorithm='auto', leaf_size=30, metric='minkowski',
-                     p=2, metric_params=None, n_jobs=1, **kwargs):
-        if kwargs:
-            warnings.warn("Passing additional arguments to the metric "
-                          "function as **kwargs is deprecated "
-                          "and will no longer be supported in 0.18. "
-                          "Use metric_params instead.",
-                          DeprecationWarning, stacklevel=3)
-            if metric_params is None:
-                metric_params = {}
-            metric_params.update(kwargs)
+                     p=2, metric_params=None, n_jobs=1):
 
         self.n_neighbors = n_neighbors
         self.radius = radius
@@ -362,7 +344,7 @@ class KNeighborsMixin(object):
             )
         n_samples, _ = X.shape
         sample_range = np.arange(n_samples)[:, None]
-        
+
         n_jobs = _get_n_jobs(self.n_jobs)
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
@@ -402,7 +384,7 @@ class KNeighborsMixin(object):
                 dist, neigh_ind = tuple(zip(*result))
                 result = np.vstack(dist), np.vstack(neigh_ind)
             else:
-                result = np.vstack(result)            
+                result = np.vstack(result)
         else:
             raise ValueError("internal: _fit_method not recognized")
 

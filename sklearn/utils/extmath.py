@@ -24,7 +24,8 @@ from .fixes import np_version
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
-from .validation import check_array, NonBLASDotWarning
+from .validation import check_array
+from ..exceptions import NonBLASDotWarning
 
 
 def norm(x):
@@ -101,9 +102,11 @@ def _fast_dot(A, B):
 
     if A.dtype != B.dtype or any(x.dtype not in (np.float32, np.float64)
                                  for x in [A, B]):
-        warnings.warn('Data must be of same type. Supported types '
-                      'are 32 and 64 bit float. '
-                      'Falling back to np.dot.', NonBLASDotWarning)
+        warnings.warn('Falling back to np.dot. '
+                      'Data must be of same type of either '
+                      '32 or 64 bit float for the BLAS function, gemm, to be '
+                      'used for an efficient dot operation. ',
+                      NonBLASDotWarning)
         raise ValueError
 
     if min(A.shape) == 1 or min(B.shape) == 1 or A.ndim != 2 or B.ndim != 2:
@@ -145,7 +148,7 @@ if np_version < (1, 7, 2) and _have_blas_gemm():
             execute the following lines of code:
 
             >> import warnings
-            >> from sklearn.utils.validation import NonBLASDotWarning
+            >> from sklearn.exceptions import NonBLASDotWarning
             >> warnings.simplefilter('always', NonBLASDotWarning)
         """
         try:
@@ -184,17 +187,32 @@ def safe_sparse_dot(a, b, dense_output=False):
         return fast_dot(a, b)
 
 
-def randomized_range_finder(A, size, n_iter, random_state=None):
+def randomized_range_finder(A, size, n_iter=2,
+                            power_iteration_normalizer='auto',
+                            random_state=None):
     """Computes an orthonormal matrix whose range approximates the range of A.
 
     Parameters
     ----------
     A: 2D array
-        The input data matrix
+        The input data matrix.
+
     size: integer
         Size of the return array
+
     n_iter: integer
         Number of power iterations used to stabilize the result
+
+    power_iteration_normalizer: 'auto' (default), 'QR', 'LU', 'none'
+        Whether the power iterations are normalized with step-by-step
+        QR factorization (the slowest but most accurate), 'none'
+        (the fastest but numerically unstable when `n_iter` is large, e.g.
+        typically 5 or larger), or 'LU' factorization (numerically stable
+        but can lose slightly in accuracy). The 'auto' mode applies no
+        normalization if `n_iter`<=2 and switches to LU otherwise.
+
+        .. versionadded:: 0.18
+
     random_state: RandomState or an int seed (0 by default)
         A random number generator instance
 
@@ -211,28 +229,45 @@ def randomized_range_finder(A, size, n_iter, random_state=None):
     Finding structure with randomness: Stochastic algorithms for constructing
     approximate matrix decompositions
     Halko, et al., 2009 (arXiv:909) http://arxiv.org/pdf/0909.4061
+
+    An implementation of a randomized algorithm for principal component
+    analysis
+    A. Szlam et al. 2014
     """
     random_state = check_random_state(random_state)
 
-    # generating random gaussian vectors r with shape: (A.shape[1], size)
-    R = random_state.normal(size=(A.shape[1], size))
+    # Generating normal random vectors with shape: (A.shape[1], size)
+    Q = random_state.normal(size=(A.shape[1], size))
 
-    # sampling the range of A using by linear projection of r
-    Y = safe_sparse_dot(A, R)
-    del R
+    # Deal with "auto" mode
+    if power_iteration_normalizer == 'auto':
+        if n_iter <= 2:
+            power_iteration_normalizer = 'none'
+        else:
+            power_iteration_normalizer = 'LU'
 
-    # perform power iterations with Y to further 'imprint' the top
-    # singular vectors of A in Y
-    for i in xrange(n_iter):
-        Y = safe_sparse_dot(A, safe_sparse_dot(A.T, Y))
+    # Perform power iterations with Q to further 'imprint' the top
+    # singular vectors of A in Q
+    for i in range(n_iter):
+        if power_iteration_normalizer == 'none':
+            Q = safe_sparse_dot(A, Q)
+            Q = safe_sparse_dot(A.T, Q)
+        elif power_iteration_normalizer == 'LU':
+            Q, _ = linalg.lu(safe_sparse_dot(A, Q), permute_l=True)
+            Q, _ = linalg.lu(safe_sparse_dot(A.T, Q), permute_l=True)
+        elif power_iteration_normalizer == 'QR':
+            Q, _ = linalg.qr(safe_sparse_dot(A, Q),  mode='economic')
+            Q, _ = linalg.qr(safe_sparse_dot(A.T, Q),  mode='economic')
 
-    # extracting an orthonormal basis of the A range samples
-    Q, R = linalg.qr(Y, mode='economic')
+    # Sample the range of A using by linear projection of Q
+    # Extract an orthonormal basis
+    Q, _ = linalg.qr(safe_sparse_dot(A, Q),  mode='economic')
     return Q
 
 
-def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
-                   transpose='auto', flip_sign=True, random_state=0):
+def randomized_svd(M, n_components, n_oversamples=10, n_iter=2,
+                   power_iteration_normalizer='auto', transpose='auto',
+                   flip_sign=True, random_state=0):
     """Computes a truncated randomized SVD
 
     Parameters
@@ -246,18 +281,34 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
     n_oversamples: int (default is 10)
         Additional number of random vectors to sample the range of M so as
         to ensure proper conditioning. The total number of random vectors
-        used to find the range of M is n_components + n_oversamples.
+        used to find the range of M is n_components + n_oversamples. Smaller
+        number can improve speed but can negatively impact the quality of
+        approximation of singular vectors and singular values.
 
-    n_iter: int (default is 0)
+    n_iter: int (default is 2)
         Number of power iterations (can be used to deal with very noisy
         problems).
+
+        .. versionchanged:: 0.18
+
+    power_iteration_normalizer: 'auto' (default), 'QR', 'LU', 'none'
+        Whether the power iterations are normalized with step-by-step
+        QR factorization (the slowest but most accurate), 'none'
+        (the fastest but numerically unstable when `n_iter` is large, e.g.
+        typically 5 or larger), or 'LU' factorization (numerically stable
+        but can lose slightly in accuracy). The 'auto' mode applies no
+        normalization if `n_iter`<=2 and switches to LU otherwise.
+
+        .. versionadded:: 0.18
 
     transpose: True, False or 'auto' (default)
         Whether the algorithm should be applied to M.T instead of M. The
         result should approximately be the same. The 'auto' mode will
         trigger the transposition if M.shape[1] > M.shape[0] since this
         implementation of randomized SVD tend to be a little faster in that
-        case).
+        case.
+
+        .. versionchanged:: 0.18
 
     flip_sign: boolean, (True by default)
         The output of a singular value decomposition is only unique up to a
@@ -283,6 +334,10 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
 
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
+
+    * An implementation of a randomized algorithm for principal component
+      analysis
+      A. Szlam et al. 2014
     """
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
@@ -294,7 +349,8 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    Q = randomized_range_finder(M, n_random, n_iter, random_state)
+    Q = randomized_range_finder(M, n_random, n_iter,
+                                power_iteration_normalizer, random_state)
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)

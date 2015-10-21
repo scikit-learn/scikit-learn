@@ -105,7 +105,7 @@ silently dispatched to ``numpy.dot``. If you want to be sure when the original
 activate the related warning::
 
   >>> import warnings
-  >>> from sklearn.utils.validation import NonBLASDotWarning
+  >>> from sklearn.exceptions import NonBLASDotWarning
   >>> warnings.simplefilter('always', NonBLASDotWarning) # doctest: +SKIP
 
 .. _profiling-python-code:

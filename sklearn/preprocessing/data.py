@@ -788,10 +788,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
         if sparse.issparse(X):
-            if X.shape[0] == 1:
-                inplace_row_scale(X, 1.0 / self.scale_)
-            else:
-                inplace_column_scale(X, 1.0 / self.scale_)
+            inplace_column_scale(X, 1.0 / self.scale_)
         else:
             X /= self.scale_
         return X
@@ -811,10 +808,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
         if sparse.issparse(X):
-            if X.shape[0] == 1:
-                inplace_row_scale(X, self.scale_)
-            else:
-                inplace_column_scale(X, self.scale_)
+            inplace_column_scale(X, self.scale_)
         else:
             X *= self.scale_
         return X
@@ -1703,7 +1697,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> enc = OneHotEncoder()
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
+    OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
            handle_unknown='error', n_values='auto', sparse=True)
     >>> enc.n_values_
     array([2, 3, 4])
@@ -1720,7 +1714,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
       encoding of dictionary items or strings.
     """
     def __init__(self, n_values="auto", categorical_features="all",
-                 dtype=np.float, sparse=True, handle_unknown='error'):
+                 dtype=np.float64, sparse=True, handle_unknown='error'):
         self.n_values = n_values
         self.categorical_features = categorical_features
         self.dtype = dtype

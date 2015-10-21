@@ -31,9 +31,8 @@ from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
-from ..utils.validation import NotFittedError
 from ..utils.multiclass import check_classification_targets
-
+from ..exceptions import NotFittedError
 
 from ._criterion import Criterion
 from ._splitter import Splitter

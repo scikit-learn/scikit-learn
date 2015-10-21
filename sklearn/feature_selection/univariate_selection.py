@@ -267,7 +267,7 @@ def f_regression(X, y, center=True):
     """
     if issparse(X) and center:
         raise ValueError("center=True only allowed for dense data")
-    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float)
+    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64)
     if center:
         y = y - np.mean(y)
         X = X.copy('F')  # faster in fortran

@@ -59,7 +59,7 @@ else:
 
     __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
                'cross_validation', 'datasets', 'decomposition', 'dummy',
-               'ensemble', 'externals', 'feature_extraction',
+               'ensemble', 'exceptions', 'externals', 'feature_extraction',
                'feature_selection', 'gaussian_process', 'grid_search',
                'isotonic', 'kernel_approximation', 'kernel_ridge',
                'lda', 'learning_curve',

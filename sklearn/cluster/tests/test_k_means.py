@@ -20,7 +20,6 @@ from sklearn.utils.testing import if_not_mac_os
 from sklearn.utils.testing import assert_raise_message
 
 
-from sklearn.utils.validation import DataConversionWarning
 from sklearn.utils.extmath import row_norms
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
@@ -29,6 +28,7 @@ from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.externals.six.moves import cStringIO as StringIO
+from sklearn.exceptions import DataConversionWarning
 
 
 # non centered, sparse centers to check the

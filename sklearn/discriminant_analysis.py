@@ -55,7 +55,7 @@ def _cov(X, shrinkage=None):
         if shrinkage == 'auto':
             sc = StandardScaler()  # standardize features
             X = sc.fit_transform(X)
-            s = sc.std_ * ledoit_wolf(X)[0] * sc.std_  # scale back
+            s = sc.scale_ * ledoit_wolf(X)[0] * sc.scale_  # scale back
         elif shrinkage == 'empirical':
             s = empirical_covariance(X)
         else:

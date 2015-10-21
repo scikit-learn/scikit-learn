@@ -181,10 +181,14 @@ def test_exactly_zero_info_score():
     for i in np.logspace(1, 4, 4).astype(np.int):
         labels_a, labels_b = np.ones(i, dtype=np.int),\
             np.arange(i, dtype=np.int)
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
-        assert_equal(v_measure_score(labels_a, labels_b), 0.0)
-        assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b,
+                                                  max_n_classes=1e4), 0.0)
+        assert_equal(v_measure_score(labels_a, labels_b,
+                                     max_n_classes=1e4), 0.0)
+        assert_equal(adjusted_mutual_info_score(labels_a, labels_b,
+                                                max_n_classes=1e4), 0.0)
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b,
+                                                  max_n_classes=1e4), 0.0)
 
 
 def test_v_measure_and_mutual_information(seed=36):
@@ -196,3 +200,26 @@ def test_v_measure_and_mutual_information(seed=36):
         assert_almost_equal(v_measure_score(labels_a, labels_b),
                             2.0 * mutual_info_score(labels_a, labels_b) /
                             (entropy(labels_a) + entropy(labels_b)), 0)
+
+
+def test_max_n_classes():
+    rng = np.random.RandomState(seed=0)
+    labels_true = rng.rand(53)
+    labels_pred = rng.rand(53)
+    labels_zero = np.zeros(53)
+    labels_true[:2] = 0
+    labels_zero[:3] = 1
+    labels_pred[:2] = 0
+    for score_func in score_funcs:
+        expected = ("Too many classes for a clustering metric. If you "
+                    "want to increase the limit, pass parameter "
+                    "max_n_classes to the scoring function")
+        assert_raise_message(ValueError, expected, score_func,
+                             labels_true, labels_pred,
+                             max_n_classes=50)
+        expected = ("Too many clusters for a clustering metric. If you "
+                    "want to increase the limit, pass parameter "
+                    "max_n_classes to the scoring function")
+        assert_raise_message(ValueError, expected, score_func,
+                             labels_zero, labels_pred,
+                             max_n_classes=50)

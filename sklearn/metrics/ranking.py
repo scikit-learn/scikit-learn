@@ -31,9 +31,9 @@ from ..utils.fixes import bincount
 from ..utils.fixes import array_equal
 from ..utils.stats import rankdata
 from ..utils.sparsefuncs import count_nonzero
+from ..exceptions import UndefinedMetricWarning
 
 from .base import _average_binary_score
-from .base import UndefinedMetricWarning
 
 
 def auc(x, y, reorder=False):
@@ -441,7 +441,8 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
 
     drop_intermediate : boolean, optional (default=True)
         Whether to drop some suboptimal thresholds which would not appear
-        on a plotted ROC curve.
+        on a plotted ROC curve. This is useful in order to create lighter
+        ROC curves.
 
     Returns
     -------

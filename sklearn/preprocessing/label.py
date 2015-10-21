@@ -214,20 +214,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         'continuous-multioutput', 'binary', 'multiclass',
         'mutliclass-multioutput', 'multilabel-indicator', and 'unknown'.
 
-    multilabel_ : boolean
-        True if the transformer was fitted on a multilabel rather than a
-        multiclass set of labels. The ``multilabel_`` attribute is deprecated
-        and will be removed in 0.18
-
     sparse_input_ : boolean,
         True if the input data to transform is given as a sparse matrix, False
         otherwise.
-
-    indicator_matrix_ : str
-        'sparse' when the input data to tansform is a multilable-indicator and
-        is sparse, None otherwise. The ``indicator_matrix_`` attribute is
-        deprecated as of version 0.16 and will be removed in 0.18
-
 
     Examples
     --------

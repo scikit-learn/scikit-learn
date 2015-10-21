@@ -26,8 +26,9 @@ from ..utils import check_random_state
 from ..utils.extmath import (logsumexp, log_logistic, safe_sparse_dot,
                              softmax, squared_norm)
 from ..utils.optimize import newton_cg
-from ..utils.validation import (DataConversionWarning,
-                                check_X_y, NotFittedError)
+from ..utils.validation import check_X_y
+from ..exceptions import DataConversionWarning
+from ..exceptions import NotFittedError
 from ..utils.fixes import expit
 from ..utils.multiclass import check_classification_targets
 from ..externals.joblib import Parallel, delayed
@@ -1125,7 +1126,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, 
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
                          order="C")
         check_classification_targets(y)
         self.classes_ = np.unique(y)

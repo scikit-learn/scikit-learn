@@ -3,12 +3,13 @@ Generalized Linear models.
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#         Olivier Grisel <olivier.grisel@ensta.org>
+# Fabian Pedregosa <fabian.pedregosa@inria.fr>
+# Olivier Grisel <olivier.grisel@ensta.org>
 #         Vincent Michel <vincent.michel@inria.fr>
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Lars Buitinck <L.J.Buitinck@uva.nl>
+#         Maryan Morel <maryan.morel@polytechnique.edu>
 #
 # License: BSD 3 clause
 
@@ -30,8 +31,9 @@ from ..utils import check_random_state, column_or_1d
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
-from ..utils.validation import NotFittedError, check_is_fitted
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
+from ..utils.validation import check_is_fitted
+from ..exceptions import NotFittedError
 
 
 #
@@ -375,6 +377,14 @@ class LinearRegression(LinearModel, RegressorMixin):
         is a 2D array of shape (n_targets, n_features), while if only
         one target is passed, this is a 1D array of length n_features.
 
+    residues_ : array, shape (n_targets,) or (1,) or empty
+        Sum of residuals. Squared Euclidean 2-norm for each target passed
+        during the fit. If the linear regression problem is under-determined
+        (the number of linearly independent rows of the training matrix is less
+        than its number of linearly independent columns), this is an empty
+        array. If the target vector passed during the fit is 1-dimensional,
+        this is a (1,) shape array.
+
     intercept_ : array
         Independent term in the linear model.
 
@@ -391,6 +401,12 @@ class LinearRegression(LinearModel, RegressorMixin):
         self.normalize = normalize
         self.copy_X = copy_X
         self.n_jobs = n_jobs
+
+    @property
+    @deprecated("residues_ is deprecated and will be removed in 0.19")
+    def residues_(self):
+        """Get the residues of the fitted model."""
+        return self._residues
 
     def fit(self, X, y, sample_weight=None):
         """
@@ -416,7 +432,8 @@ class LinearRegression(LinearModel, RegressorMixin):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          y_numeric=True, multi_output=True)
 
-        if ((sample_weight is not None) and np.atleast_1d(sample_weight).ndim > 1):
+        if ((sample_weight is not None) and np.atleast_1d(
+                sample_weight).ndim > 1):
             sample_weight = column_or_1d(sample_weight, warn=True)
 
         X, y, X_mean, y_mean, X_std = self._center_data(
@@ -431,16 +448,16 @@ class LinearRegression(LinearModel, RegressorMixin):
             if y.ndim < 2:
                 out = sparse_lsqr(X, y)
                 self.coef_ = out[0]
-                self.residues_ = out[3]
+                self._residues = out[3]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
                     delayed(sparse_lsqr)(X, y[:, j].ravel())
                     for j in range(y.shape[1]))
                 self.coef_ = np.vstack(out[0] for out in outs)
-                self.residues_ = np.vstack(out[3] for out in outs)
+                self._residues = np.vstack(out[3] for out in outs)
         else:
-            self.coef_, self.residues_, self.rank_, self.singular_ = \
+            self.coef_, self._residues, self.rank_, self.singular_ = \
                 linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
 

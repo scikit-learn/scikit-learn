@@ -53,6 +53,9 @@ and tasks.
 - `PyStruct <https://pystruct.github.io>`_ General conditional random fields
   and structured prediction.
 
+- `pomegranate <https://github.com/jmschrei/pomegranate>`_ Probabilistic modelling
+  for Python, with an emphasis on hidden Markov models.
+
 - `py-earth <https://github.com/jcrudy/py-earth>`_ Multivariate adaptive
   regression splines
 
@@ -83,6 +86,9 @@ and tasks.
 
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
   estimators as well as model visualization utilities.
+
+- `kmodes <https://github.com/nicodv/kmodes>`_ k-modes clustering algorithm for categorical data, and
+  several of its variations.
 
 Statistical learning with Python
 --------------------------------

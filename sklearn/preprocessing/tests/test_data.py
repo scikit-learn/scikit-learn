@@ -48,7 +48,7 @@ from sklearn.preprocessing.data import RobustScaler
 from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
-from sklearn.utils.validation import DataConversionWarning
+from sklearn.exceptions import DataConversionWarning
 
 from sklearn import datasets
 
@@ -935,6 +935,18 @@ def test_maxabs_scaler_large_negative_value():
                   [0., 1., -1.0,       0.0],
                   [0., 0.,  0.0,      -1.0]]
     assert_array_almost_equal(X_trans, X_expected)
+
+
+def test_maxabs_scaler_transform_one_row_csr():
+    """Check MaxAbsScaler on transforming csr matrix with one row"""
+    X = sparse.csr_matrix([[0.5, 1., 1.]])
+    scaler = MaxAbsScaler()
+    scaler = scaler.fit(X)
+    X_trans = scaler.transform(X)
+    X_expected = sparse.csr_matrix([[1., 1., 1.]])
+    assert_array_almost_equal(X_trans.toarray(), X_expected.toarray())
+    X_scaled_back = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X.toarray(), X_scaled_back.toarray())
 
 
 @ignore_warnings

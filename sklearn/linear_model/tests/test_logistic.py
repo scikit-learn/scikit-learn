@@ -14,7 +14,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.linear_model.logistic import (
     LogisticRegression,

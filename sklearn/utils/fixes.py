@@ -78,7 +78,7 @@ else:
 
 try:
     if (not np.allclose(np.divide(.4, 1, casting="unsafe"),
-                        np.divide(.4, 1, casting="unsafe", dtype=np.float))
+                        np.divide(.4, 1, casting="unsafe", dtype=np.float64))
             or not np.allclose(np.divide(.4, 1), .4)):
         raise TypeError('Divide not working with dtype: '
                         'https://github.com/numpy/numpy/issues/3484')
