@@ -413,8 +413,7 @@ def check_fit2d_1sample(name, Estimator):
     try:
         estimator.fit(X, y)
     except ValueError as e:
-        # The message should say something about only one sample
-        if 'sample' not in repr(e):
+        if ('sample' not  in repr(e)) and ('classes' not in repr(e)):
             print("Estimator %s doesn't seem to fail gracefully when fitting "
                   "an array with only one sample: error message state "
                   "explicitly that fitting with only one sample is not "
