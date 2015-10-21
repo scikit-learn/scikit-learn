@@ -299,7 +299,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
             return most_frequent
 
-    def transform(self, X):
+    def transform(self, X, copy=None):
         """Impute all missing values in X.
 
         Parameters
@@ -311,7 +311,8 @@ class Imputer(BaseEstimator, TransformerMixin):
             check_is_fitted(self, 'statistics_')
 
         # Copy just once
-        X = as_float_array(X, copy=self.copy, force_all_finite=False)
+        copy = copy if copy is not None else self.copy
+        X = as_float_array(X, copy=copy, force_all_finite=False)
 
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data need to be recomputed
