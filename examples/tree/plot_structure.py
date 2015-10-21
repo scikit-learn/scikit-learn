@@ -6,13 +6,13 @@ Understanding the decision tree structure
 The decision tree structure can be analysed to gain further insight on the
 relation between the features and the target to predict. In this example, we
 show how to retrieve:
-    - the binary tree structure;
-    - the depth of each node and whether or not it's a leaf.
-    - the nodes that were reached by a sample using the ``decision_path``
-      method;
-    - the leaf that was reached by a sample using the apply method;
-    - the rules that were used to predict a sample;
-    - the decision path shared by a group of samples.
+
+- the binary tree structure;
+- the depth of each node and whether or not it's a leaf;
+- the nodes that were reached by a sample using the ``decision_path`` method;
+- the leaf that was reached by a sample using the apply method;
+- the rules that were used to predict a sample;
+- the decision path shared by a group of samples.
 
 """
 import numpy as np
@@ -129,7 +129,7 @@ common_nodes = (node_indicator.toarray()[sample_ids].sum(axis=0) ==
 
 common_node_id = np.arange(n_nodes)[common_nodes]
 
-print("\nThe following sample %s shares the following node %s  in the tree"
+print("\nThe following sample %s share the node %s  in the tree"
       % (sample_ids, common_node_id))
 print("It is %s %% of all nodes."
       % (len(common_node_id) / n_nodes * 100,))
