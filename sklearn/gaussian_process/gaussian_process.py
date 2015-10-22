@@ -267,7 +267,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Force data to 2D numpy.array
         X, y = check_X_y(X, y, multi_output=True, y_numeric=True,
-                         ensure_min_samples=2)
+                         ensure_min_samples=1)
         self.y_ndim_ = y.ndim
         if y.ndim == 1:
             y = y[:, np.newaxis]

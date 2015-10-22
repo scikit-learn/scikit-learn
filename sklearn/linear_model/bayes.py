@@ -347,11 +347,8 @@ class ARDRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
-
-        if len(np.unique(y)) < 2:
-            raise ValueError("The targets should consist of at least two "
-                             "unique values")
+        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True,
+                         ensure_min_samples=2)
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)

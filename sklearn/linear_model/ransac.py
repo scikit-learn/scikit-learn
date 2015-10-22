@@ -236,10 +236,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         else:
             residual_metric = self.residual_metric
 
-        if len(np.unique(y)) < 2:
-            raise ValueError("The targets should consist of at least two "
-                             "unique values")
-
         random_state = check_random_state(self.random_state)
 
         try:  # Not all estimator accept a random_state
