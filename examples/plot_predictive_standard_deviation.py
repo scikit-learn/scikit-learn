@@ -31,6 +31,7 @@ print(__doc__)
 import numpy as np
 from scipy.stats import norm
 from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, WhiteKernel
 from sklearn.ensemble import RandomForestRegressor, BaggingRegressor
 from sklearn.metrics import mean_squared_error
 from matplotlib import pyplot as pl
@@ -55,10 +56,13 @@ y += noise
 # its standard deviation
 x = np.atleast_2d(np.linspace(0, 10, 1000)).T
 
-regrs = {"Gaussian Process": GaussianProcessRegressor(alpha=(dy / y) ** 2),
-         "Random Forest": RandomForestRegressor(n_estimators=250),
-         "Bagging": BaggingRegressor(n_estimators=250)}
-
+regrs = {
+    "Gaussian Process": GaussianProcessRegressor(
+        alpha=(dy / y) ** 2, kernel=1.0 * RBF() + WhiteKernel(),
+        n_restarts_optimizer=100),
+    "Random Forest": RandomForestRegressor(n_estimators=250),
+    "Bagging": BaggingRegressor(n_estimators=250)
+}
 
 # Plot predictive distributions of different regressors
 fig = pl.figure()
