@@ -232,3 +232,47 @@ def test_score_sample_weight():
                                    sample_weight=sample_weight),
                          msg="Unweighted and weighted scores "
                              "are unexpectedly equal")
+
+
+def test_clone_pandas_dataframe():
+    try:
+        import pandas as pd
+    except ImportError:
+        return
+    from sklearn.base import TransformerMixin
+
+    class DummyEstimator(BaseEstimator, TransformerMixin):
+        """This is a dummpy class for generating numerical features
+
+        This feature extractor extracts numerical features from pandas data
+        frame.
+
+        Parameters
+        ----------
+
+        df: pandas data frame
+            The pandas data frame parameter.
+
+        Notes
+        -----
+        """
+        def __init__(self, df):
+            self.df = df
+
+        def fit(self, X, y=None):
+            pass
+
+        def transform(self, X, y=None):
+            pass
+
+    # Generate a data frame
+    d = {"a": [1, 2, 3],
+         "b": [4, 5, 6],
+         "c": [7, 8, 9]}
+    df = pd.DataFrame(d)
+
+    # Get an estimator instance
+    de = DummyEstimator(df)
+
+    # Clone the estimator
+    clone(de)
