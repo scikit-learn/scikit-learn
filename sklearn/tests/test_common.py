@@ -27,7 +27,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import set_random_state
 from sklearn.utils.validation import has_fit_parameter
 
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_equal
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
@@ -236,7 +236,10 @@ def test_sample_weight_consistency(random_state=42):
     exclude = [
                'AdaBoostClassifier', 'AdaBoostRegressor', 
                'BaggingClassifier', 'BaggingRegressor',
-               'GradientBoostingRegressor', 'ExtraTreesRegressor',
+               'GradientBoostingClassifier', 'GradientBoostingRegressor', 
+               'ExtraTreeClassifier', 'ExtraTreeRegressor',
+               'ExtraTreesClassifier', 'ExtraTreesRegressor',
+               'DecisionTreeClassifier','DecisionTreeRegressor',
                'LogisticRegression', 'LogisticRegressionCV', 'LinearSVC',
                'MultinomialNB',  # Requires positive samples
                'CalibratedClassifierCV',  # This is a meta-estimator using LinearSVC
@@ -291,6 +294,8 @@ def test_sample_weight_consistency(random_state=42):
         estimator_sw.fit(X[train], y[train], sample_weight=sample_weight[train])
         X_aug_train, y_aug_train = aug((X[train], y[train]),
                                    sample_weight[train])
+        assert_equal(X_aug_train.shape[0], np.sum(sample_weight[train]))
+
         estimator_aug = Estimator()
         set_random_state(estimator_aug, random_state=random_state)
         estimator_aug.fit(X_aug_train, y_aug_train)
@@ -310,16 +315,19 @@ def test_sample_weight_consistency(random_state=42):
 
 def test_sample_weight_0(random_state=42):
     exclude = [
-               'AdaBoostClassifier', 'AdaBoostRegressor', 
+               'AdaBoostClassifier', 'AdaBoostRegressor',
                'BaggingClassifier', 'BaggingRegressor',
-               'GradientBoostingRegressor', 'ExtraTreesRegressor',
+               'GradientBoostingClassifier', 'GradientBoostingRegressor',
+               'ExtraTreeClassifier', 'ExtraTreeRegressor',
+               'ExtraTreesClassifier', 'ExtraTreesRegressor',
+               'DecisionTreeClassifier','DecisionTreeRegressor',
                'LogisticRegression', 'LogisticRegressionCV', 'LinearSVC',
                'MultinomialNB',  # Requires positive samples
                'CalibratedClassifierCV',  # This is a meta-estimator using LinearSVC
                'SGDClassifier',  # Doesn't work. Probably more data needed
                'SGDRegressor',  # Doesn't work. Probably more data needed
                'Perceptron',  # Uses SGD too. Doesn't work. Probably more data needed
-               'RidgeClassifierCV', 'RidgeCV', 
+               'RidgeClassifierCV', 'RidgeCV',
                'RandomForestClassifier', 'RandomForestRegressor',
                ]
     estimators = all_estimators()
