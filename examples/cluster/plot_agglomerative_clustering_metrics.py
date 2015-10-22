@@ -76,7 +76,7 @@ labels = ('Waveform 1', 'Waveform 2', 'Waveform 3')
 # Plot the ground-truth labelling
 plt.figure()
 plt.axes([0, 0, 1, 1])
-for l, c, n in zip(range(n_clusters), 'rgb',
+for l, c, n in zip(range(n_clusters), ['navy', 'yellowgreen', 'darkorange'],
                    labels):
     lines = plt.plot(X[y == l].T, c=c, alpha=.5)
     lines[0].set_label(n)
@@ -111,7 +111,7 @@ for index, metric in enumerate(["cosine", "euclidean", "cityblock"]):
     plt.suptitle("Interclass %s distances" % metric, size=18)
     plt.tight_layout()
 
-
+colors = ['navy', 'c', 'yellowgreen', 'darkorange']
 # Plot clustering results
 for index, metric in enumerate(["cosine", "euclidean", "cityblock"]):
     model = AgglomerativeClustering(n_clusters=n_clusters,
@@ -119,7 +119,7 @@ for index, metric in enumerate(["cosine", "euclidean", "cityblock"]):
     model.fit(X)
     plt.figure()
     plt.axes([0, 0, 1, 1])
-    for l, c in zip(np.arange(model.n_clusters), 'rgbk'):
+    for l, c in zip(np.arange(model.n_clusters), colors):
         plt.plot(X[model.labels_ == l].T, c=c, alpha=.5)
     plt.axis('tight')
     plt.axis('off')

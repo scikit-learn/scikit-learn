@@ -74,13 +74,14 @@ plots = []
 legends = []
 
 cases = [
-    (KMeans, 'k-means++', {}),
-    (KMeans, 'random', {}),
-    (MiniBatchKMeans, 'k-means++', {'max_no_improvement': 3}),
-    (MiniBatchKMeans, 'random', {'max_no_improvement': 3, 'init_size': 500}),
+    (KMeans, 'k-means++', {}, 'navy'),
+    (KMeans, 'random', {}, 'c'),
+    (MiniBatchKMeans, 'k-means++', {'max_no_improvement': 3}, 'cornflowerblue'),
+    (MiniBatchKMeans, 'random', {'max_no_improvement': 3, 'init_size': 500},
+     'darkorange'),
 ]
 
-for factory, init, params in cases:
+for factory, init, params, color in cases:
     print("Evaluation of %s with %s init" % (factory.__name__, init))
     inertia = np.empty((len(n_init_range), n_runs))
 
@@ -90,7 +91,8 @@ for factory, init, params in cases:
             km = factory(n_clusters=n_clusters, init=init, random_state=run_id,
                          n_init=n_init, **params).fit(X)
             inertia[i, run_id] = km.inertia_
-    p = plt.errorbar(n_init_range, inertia.mean(axis=1), inertia.std(axis=1))
+    p = plt.errorbar(n_init_range, inertia.mean(axis=1), inertia.std(axis=1),
+                     color=color, lw=2)
     plots.append(p[0])
     legends.append("%s with %s init" % (factory.__name__, init))
 

@@ -57,10 +57,10 @@ def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
     return scores
 
 score_funcs = [
-    metrics.adjusted_rand_score,
-    metrics.v_measure_score,
-    metrics.adjusted_mutual_info_score,
-    metrics.mutual_info_score,
+    (metrics.adjusted_rand_score, "navy"),
+    (metrics.v_measure_score, "turquoise"),
+    (metrics.adjusted_mutual_info_score, "cornflowerblue"),
+    (metrics.mutual_info_score, "darkorange")
 ]
 
 # 2 independent random clusterings with equal cluster number
@@ -72,7 +72,7 @@ plt.figure(1)
 
 plots = []
 names = []
-for score_func in score_funcs:
+for score_func, color in score_funcs:
     print("Computing %s for %d values of n_clusters and n_samples=%d"
           % (score_func.__name__, len(n_clusters_range), n_samples))
 
@@ -80,7 +80,8 @@ for score_func in score_funcs:
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
     print("done in %0.3fs" % (time() - t0))
     plots.append(plt.errorbar(
-        n_clusters_range, np.median(scores, axis=1), scores.std(axis=1))[0])
+        n_clusters_range, np.median(scores, axis=1), scores.std(axis=1),
+        color=color, lw=2)[0])
     names.append(score_func.__name__)
 
 plt.title("Clustering measures for 2 random uniform labelings\n"
@@ -102,7 +103,7 @@ plt.figure(2)
 
 plots = []
 names = []
-for score_func in score_funcs:
+for score_func, color in score_funcs:
     print("Computing %s for %d values of n_clusters and n_samples=%d"
           % (score_func.__name__, len(n_clusters_range), n_samples))
 
@@ -111,7 +112,8 @@ for score_func in score_funcs:
                                       fixed_n_classes=n_classes)
     print("done in %0.3fs" % (time() - t0))
     plots.append(plt.errorbar(
-        n_clusters_range, scores.mean(axis=1), scores.std(axis=1))[0])
+        n_clusters_range, scores.mean(axis=1), scores.std(axis=1),
+        color=color, lw=2)[0])
     names.append(score_func.__name__)
 
 plt.title("Clustering measures for random uniform labeling\n"
