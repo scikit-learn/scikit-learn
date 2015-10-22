@@ -3,6 +3,7 @@ import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
 import scipy
 
+
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -20,11 +21,13 @@ from sklearn.linear_model.logistic import (
     LogisticRegression,
     logistic_regression_path, LogisticRegressionCV,
     _logistic_loss_and_grad, _logistic_grad_hess,
-    _multinomial_grad_hess, _logistic_loss,
-    )
+    _multinomial_grad_hess, _logistic_loss,)
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
+from sklearn.datasets import load_digits
+from sklearn.metrics import roc_auc_score
+from sklearn.preprocessing import StandardScaler
 
 
 X = [[-1, 0], [0, 1], [1, 1]]
@@ -308,20 +311,17 @@ def test_logistic_loss_and_grad():
         # First check that our derivation of the grad is correct
         loss, grad = _logistic_loss_and_grad(w, X, y, alpha=1.)
         approx_grad = optimize.approx_fprime(
-            w, lambda w: _logistic_loss_and_grad(w, X, y, alpha=1.)[0], 1e-3
-            )
+            w, lambda w: _logistic_loss_and_grad(w, X, y, alpha=1.)[0], 1e-3)
         assert_array_almost_equal(grad, approx_grad, decimal=2)
 
         # Second check that our intercept implementation is good
         w = np.zeros(n_features + 1)
         loss_interp, grad_interp = _logistic_loss_and_grad(
-            w, X, y, alpha=1.
-            )
+            w, X, y, alpha=1.)
         assert_array_almost_equal(loss, loss_interp)
 
         approx_grad = optimize.approx_fprime(
-            w, lambda w: _logistic_loss_and_grad(w, X, y, alpha=1.)[0], 1e-3
-            )
+            w, lambda w: _logistic_loss_and_grad(w, X, y, alpha=1.)[0], 1e-3)
         assert_array_almost_equal(grad_interp, approx_grad, decimal=2)
 
 
@@ -357,8 +357,7 @@ def test_logistic_grad_hess():
         d_x = np.linspace(-e, e, 30)
         d_grad = np.array([
             _logistic_loss_and_grad(w + t * vector, X, y, alpha=1.)[1]
-            for t in d_x
-            ])
+            for t in d_x])
 
         d_grad -= d_grad.mean(axis=0)
         approx_hess_col = linalg.lstsq(d_x[:, np.newaxis], d_grad)[0].ravel()
@@ -479,8 +478,7 @@ def test_ovr_multinomial_iris():
     # Test that for the iris data multinomial gives a better accuracy than OvR
     for solver in ['lbfgs', 'newton-cg']:
         clf_multi = LogisticRegressionCV(
-            solver=solver, multi_class='multinomial', max_iter=15
-            )
+            solver=solver, multi_class='multinomial', max_iter=15)
         clf_multi.fit(train, target)
         multi_score = clf_multi.score(train, target)
         ovr_score = clf.score(train, target)
@@ -691,8 +689,7 @@ def test_multinomial_grad_hess():
     d_grad = np.array([
         _multinomial_grad_hess(w + t * vec, X, Y, alpha=1.,
                                sample_weight=sample_weights)[0]
-        for t in d_x
-        ])
+        for t in d_x])
     d_grad -= d_grad.mean(axis=0)
     approx_hess_col = linalg.lstsq(d_x[:, np.newaxis], d_grad)[0].ravel()
     assert_array_almost_equal(hess_col, approx_hess_col)
@@ -875,3 +872,53 @@ def test_warm_start():
                         assert_greater(2.0, cum_diff, msg)
                     else:
                         assert_greater(cum_diff, 2.0, msg)
+
+
+def test_logistic_slicing_weirdness():
+
+    digits = load_digits()
+    X, y = digits.data, digits.target
+    X = StandardScaler().fit_transform(X)
+    data = np.hstack((np.reshape(y.astype(float), (y.size, 1)), X))
+
+    X = data[:, 1:]
+    y = data[:, 0]
+
+    # classify small against large digits
+    y = (y > 4).astype(np.int)
+
+    train_percent = 0.5
+    nTrains = train_percent * y.size
+    X_train = X[:nTrains, :]
+    y_train = y[:nTrains]
+    X_test = X[nTrains:, :]
+    y_test = y[nTrains:]
+
+    # This has problems if using 'liblinear' as the solver. See below.
+    logistic_reg = LogisticRegressionCV(cv=10, penalty='l2', tol=0.01, solver="liblinear")
+
+    # Three different choices below
+
+    # Safe: use a copy of the sliced data. This produces a good (as expected) AUC.
+    model = logistic_reg.fit(np.copy(X_train), y_train)
+    y_pred = model.predict_proba(X_test)
+    roc_auc = roc_auc_score(y_test, y_pred[:, 1])
+    assert_greater(roc_auc, 0.7)
+
+    # # Dodgy 1. use the data sliced from the data matrix directly (reference).
+    #This produces an AUC = 0.5.
+    model = logistic_reg.fit(X_train, y_train)
+    y_pred = model.predict_proba(X_test)
+    roc_auc = roc_auc_score(y_test, y_pred[:, 1])
+    assert_greater(roc_auc, 0.7)
+
+    # # Dodgy 2. make a copy of the original data matrix, slice X_train from the copy,
+    # # but also change the other part in the copy that's not sliced.
+    # # This makes the result AUC < 0.5
+    data_copy = np.copy(data)
+    X_train = data_copy[:nTrains, 1:]
+    data_copy[:, 0].fill(0)
+    model = logistic_reg.fit(X_train, y_train)
+    y_pred = model.predict_proba(X_test)
+    roc_auc = roc_auc_score(y_test, y_pred[:, 1])
+    assert_greater(roc_auc, 0.7)
