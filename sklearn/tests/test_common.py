@@ -229,7 +229,7 @@ def test_get_params_invariance():
                     yield check_get_params_invariance, name, Estimator
             else:
                 yield check_get_params_invariance, name, Estimator
-            yield check_transformer_n_iter, name, estimator
+            yield check_transformer_n_iter, name, Estimator
 
 
 def test_sample_weight_consistency(random_state=42):
