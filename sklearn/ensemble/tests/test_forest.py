@@ -138,7 +138,7 @@ def check_boston_criterion(name, criterion):
     # Check consistency on dataset boston house prices.
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    clf = ForestRegressor(n_estimators=5, criterion=criterion, 
+    clf = ForestRegressor(n_estimators=5, criterion=criterion,
                           random_state=1)
     clf.fit(boston.data, boston.target)
     score = clf.score(boston.data, boston.target)
@@ -1098,3 +1098,32 @@ def test_dtype_convert(n_classes=15):
     result = classifier.fit(X, y).predict(X)
     assert_array_equal(classifier.classes_, y)
     assert_array_equal(result, y)
+
+
+def check_decision_path(name):
+    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    n_samples = X.shape[0]
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    est = ForestEstimator(n_estimators=5, max_depth=1, warm_start=False,
+                          random_state=1)
+    est.fit(X, y)
+    indicator, n_nodes_ptr = est.decision_path(X)
+
+    assert_equal(indicator.shape[1], n_nodes_ptr[-1])
+    assert_equal(indicator.shape[0], n_samples)
+    assert_array_equal(np.diff(n_nodes_ptr),
+                       [e.tree_.node_count for e in est.estimators_])
+
+    # Assert that leaves index are correct
+    leaves = est.apply(X)
+    for est_id in range(leaves.shape[1]):
+        leave_indicator = [indicator[i, n_nodes_ptr[est_id] + j]
+                           for i, j in enumerate(leaves[:, est_id])]
+        assert_array_almost_equal(leave_indicator, np.ones(shape=n_samples))
+
+
+def test_decision_path():
+    for name in FOREST_CLASSIFIERS:
+        yield check_decision_path, name
+    for name in FOREST_REGRESSORS:
+        yield check_decision_path, name

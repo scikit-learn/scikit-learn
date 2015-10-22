@@ -25,6 +25,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import raises
@@ -1221,6 +1222,14 @@ def check_explicit_sparse_zeros(tree, max_depth=3,
         assert_array_almost_equal(s.tree_.apply(X1), d.tree_.apply(X2))
         assert_array_almost_equal(s.apply(X1), d.apply(X2))
         assert_array_almost_equal(s.apply(X1), s.tree_.apply(X1))
+
+        assert_array_almost_equal(s.tree_.decision_path(X1).toarray(),
+                                  d.tree_.decision_path(X2).toarray())
+        assert_array_almost_equal(s.decision_path(X1).toarray(),
+                                  d.decision_path(X2).toarray())
+        assert_array_almost_equal(s.decision_path(X1).toarray(),
+                                  s.tree_.decision_path(X1).toarray())
+
         assert_array_almost_equal(s.predict(X1), d.predict(X2))
 
         if tree in CLF_TREES:
@@ -1310,7 +1319,8 @@ def test_public_apply():
 
 
 def check_presort_sparse(est, X, y):
-    assert_raises(ValueError, est.fit, X, y )
+    assert_raises(ValueError, est.fit, X, y)
+
 
 def test_presort_sparse():
     ests = (DecisionTreeClassifier(presort=True),
@@ -1325,3 +1335,44 @@ def test_presort_sparse():
 
     for est, sparse_matrix in product(ests, sparse_matrices):
         yield check_presort_sparse, est, sparse_matrix(X), y
+
+
+def test_decision_path_hardcoded():
+    X = iris.data
+    y = iris.target
+    est = DecisionTreeClassifier(random_state=0, max_depth=1).fit(X, y)
+    node_indicator = est.decision_path(X[:2]).toarray()
+    assert_array_equal(node_indicator, [[1, 1, 0], [1, 0, 1]])
+
+
+def check_decision_path(name):
+    X = iris.data
+    y = iris.target
+    n_samples = X.shape[0]
+
+    TreeEstimator = ALL_TREES[name]
+    est = TreeEstimator(random_state=0, max_depth=2)
+    est.fit(X, y)
+
+    node_indicator_csr = est.decision_path(X)
+    node_indicator = node_indicator_csr.toarray()
+    assert_equal(node_indicator.shape, (n_samples, est.tree_.node_count))
+
+    # Assert that leaves index are correct
+    leaves = est.apply(X)
+    leave_indicator = [node_indicator[i, j] for i, j in enumerate(leaves)]
+    assert_array_almost_equal(leave_indicator, np.ones(shape=n_samples))
+
+    # Ensure only one leave node per sample
+    all_leaves = est.tree_.children_left == TREE_LEAF
+    assert_array_almost_equal(np.dot(node_indicator, all_leaves),
+                              np.ones(shape=n_samples))
+
+    # Ensure max depth is consistent with sum of indicator
+    max_depth = node_indicator.sum(axis=1).max()
+    assert_less_equal(est.tree_.max_depth, max_depth)
+
+
+def test_decision_path():
+    for name in ALL_TREES:
+        yield (check_decision_path, name)
