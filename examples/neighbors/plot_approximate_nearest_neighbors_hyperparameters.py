@@ -102,13 +102,15 @@ for i, n_estimators in enumerate(n_estimators_values):
 ###############################################################################
 # Plot the accuracy variation with `n_candidates`
 plt.figure()
-colors = ['c', 'm', 'y']
+colors = ['navy', 'cornflowerblue', 'darkorange']
+lines = ['-', '.', '--']
+lw = 2
 for i, n_estimators in enumerate(n_estimators_for_candidate_value):
     label = 'n_estimators = %d ' % n_estimators
     plt.plot(n_candidates_values, accuracies_c[i, :],
-             'o-', c=colors[i], label=label)
+             color=colors[i], lw=lw, marker='o', label=label)
     plt.errorbar(n_candidates_values, accuracies_c[i, :],
-                 stds_accuracies[i, :], c=colors[i])
+                 stds_accuracies[i, :], color=colors[i], lw=lw)
 
 plt.legend(loc='upper left', prop=dict(size='small'))
 plt.ylim([0, 1.2])
