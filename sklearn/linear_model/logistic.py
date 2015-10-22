@@ -594,11 +594,11 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         sample_weight = np.ones(X.shape[0])
 
     # If class_weights is a dict (provided by the user), the weights
-    # are assigned to the original labels. If it is "auto", then
+    # are assigned to the original labels. If it is "balanced", then
     # the class_weights are assigned after masking the labels with a OvR.
     le = LabelEncoder()
 
-    if isinstance(class_weight, dict):
+    if isinstance(class_weight, dict) or multi_class == 'multinomial':
         if solver == "liblinear":
             if classes.size == 2:
                 # Reconstruct the weights with keys 1 and -1
@@ -610,7 +610,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                                  "solver cannot handle multiclass with "
                                  "class_weight of type dict. Use the lbfgs, "
                                  "newton-cg or sag solvers or set "
-                                 "class_weight='auto'")
+                                 "class_weight='balanced'")
         else:
             class_weight_ = compute_class_weight(class_weight, classes, y)
             sample_weight *= class_weight_[le.fit_transform(y)]
@@ -623,20 +623,21 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         mask = (y == pos_class)
         y_bin = np.ones(y.shape, dtype=np.float64)
         y_bin[~mask] = -1.
+        # for compute_class_weight
+
+        # 'auto' is deprecated and will be removed in 0.19
+        if class_weight in ("auto", "balanced"):
+            class_weight_ = compute_class_weight(class_weight, mask_classes,
+                                                 y_bin)
+            sample_weight *= class_weight_[le.fit_transform(y_bin)]
 
     else:
         lbin = LabelBinarizer()
-        Y_bin = lbin.fit_transform(y)
-        if Y_bin.shape[1] == 1:
-            Y_bin = np.hstack([1 - Y_bin, Y_bin])
-        w0 = np.zeros((Y_bin.shape[1], n_features + int(fit_intercept)),
+        Y_binarized = lbin.fit_transform(y)
+        if Y_binarized.shape[1] == 1:
+            Y_binarized = np.hstack([1 - Y_binarized, Y_binarized])
+        w0 = np.zeros((Y_binarized.shape[1], n_features + int(fit_intercept)),
                       order='F')
-        mask_classes = classes
-
-    if class_weight == "auto":
-        class_weight_ = compute_class_weight(class_weight, mask_classes,
-                                             y_bin)
-        sample_weight *= class_weight_[le.fit_transform(y_bin)]
 
     if coef is not None:
         # it must work both giving the bias term and not
@@ -665,7 +666,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     if multi_class == 'multinomial':
         # fmin_l_bfgs_b and newton-cg accepts only ravelled parameters.
         w0 = w0.ravel()
-        target = Y_bin
+        target = Y_binarized
         if solver == 'lbfgs':
             func = lambda x, *args: _multinomial_loss_grad(x, *args)[0:2]
         elif solver == 'newton-cg':
@@ -1535,8 +1536,17 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         if self.class_weight and not(isinstance(self.class_weight, dict) or
                                      self.class_weight in
                                      ['balanced', 'auto']):
+            # 'auto' is deprecated and will be removed in 0.19
             raise ValueError("class_weight provided should be a "
                              "dict or 'balanced'")
+
+        # compute the class weights for the entire dataset y
+        if self.class_weight in ("auto", "balanced"):
+            classes = np.unique(y)
+            class_weight = compute_class_weight(self.class_weight, classes, y)
+            class_weight = dict(zip(classes, class_weight))
+        else:
+            class_weight = self.class_weight
 
         path_func = delayed(_log_reg_scoring_path)
 
@@ -1549,7 +1559,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                       fit_intercept=self.fit_intercept, penalty=self.penalty,
                       dual=self.dual, solver=self.solver, tol=self.tol,
                       max_iter=self.max_iter, verbose=self.verbose,
-                      class_weight=self.class_weight, scoring=self.scoring,
+                      class_weight=class_weight, scoring=self.scoring,
                       multi_class=self.multi_class,
                       intercept_scaling=self.intercept_scaling,
                       random_state=self.random_state,
@@ -1621,7 +1631,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol,
                     penalty=self.penalty, copy=False,
-                    class_weight=self.class_weight,
+                    class_weight=class_weight,
                     multi_class=self.multi_class,
                     verbose=max(0, self.verbose - 1),
                     random_state=self.random_state,
