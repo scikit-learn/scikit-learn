@@ -132,7 +132,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         if n_folds and \
            np.any([np.sum(y == class_) < n_folds for class_ in self.classes_]):
             raise ValueError("Requesting %d-fold cross-validation but provided"
-                             " less than %d examples for at least one class."
+                             " less than %d samples for at least one class."
                              % (n_folds, n_folds))
 
         self.calibrated_classifiers_ = []

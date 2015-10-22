@@ -541,7 +541,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'mixing_')
 
-        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
+        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES,
+                        ensure_min_samples=2)
         if self.whiten:
             X -= self.mean_
 
