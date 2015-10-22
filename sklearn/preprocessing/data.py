@@ -1840,8 +1840,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                 train_classes = set(self.unique_samples_[i])
 
                 if not found_classes.issubset(train_classes):
-                    total_set = found_classes.union(train_classes)
-                    new_classes = total_set.difference(train_classes)
+                    new_classes = found_classes.difference(train_classes)
 
                     msg = ("unknown categorical feature(s) present"
                                 "during transform : %s" % str(new_classes))
