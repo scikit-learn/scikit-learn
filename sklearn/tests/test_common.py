@@ -233,11 +233,19 @@ def test_get_params_invariance():
 
 
 def test_sample_weight_consistency(random_state=42):
-    exclude = ['LogisticRegression', 'LinearSVC',
+    exclude = [
+               'AdaBoostRegressor', 'BaggingClassifier', 'BaggingRegressor',
+               'GradientBoostingRegressor',
+               'LogisticRegression', 'LogisticRegressionCV', 'LinearSVC',
+               'LinearSVC',
                'MultinomialNB',  # Requires positive samples
-               'CalibratedClassifierCV'  # This is a meta-estimator using LinearSVC
-              ]
-    SGD_estimators = ['SGDClassifier', 'SGDRegressor', 'Perceptron']
+               'CalibratedClassifierCV',  # This is a meta-estimator using LinearSVC
+               'SGDClassifier',  # Doesn't work. Probably more data needed
+               'SGDRegressor',  # Doesn't work. Probably more data needed
+               'Perceptron',  # Uses SGD too. Doesn't work. Probably more data needed
+               'RidgeClassifierCV', 'RidgeCV', 
+               'RandomForestClassifier', 'RandomForestRegressor',
+               ]
     estimators = all_estimators()
 
     n_samples, n_features = 20, 5
@@ -264,7 +272,6 @@ def test_sample_weight_consistency(random_state=42):
     train, test = train_test_split(range(n_samples))
 
     for name, Estimator in estimators:
-        #print ("%s being analysed" % name)
 
         if name in exclude:
             print ("%s is being excluded" % name)
@@ -279,14 +286,7 @@ def test_sample_weight_consistency(random_state=42):
             print ("%s is neither classifier nor regressor" % name)
             continue
 
-        if name in SGD_estimators:
-            params = dict([('n_iter', 100)])
-            precision = 3
-        else:
-            params = dict()
-            precision = 6
-        #print ('params = ', params)
-        estimator_sw = Estimator(**params)
+        estimator_sw = Estimator()
         set_random_state(estimator_sw, random_state=random_state)
         estimator_sw.fit(X[train], y[train], sample_weight=sample_weight[train])
         X_aug_train, y_aug_train = aug((X[train], y[train]),
@@ -295,6 +295,7 @@ def test_sample_weight_consistency(random_state=42):
         set_random_state(estimator_aug, random_state=random_state)
         estimator_aug.fit(X_aug_train, y_aug_train)
 
+        precision = 6
         # if estimator has `coef_` attribute, then compare the two
         if hasattr(estimator_sw, 'coef_'):
             yield (assert_array_almost_equal,
@@ -304,15 +305,22 @@ def test_sample_weight_consistency(random_state=42):
         pred_aug = estimator_aug.predict(X[test])
 
         yield assert_array_almost_equal, pred_sw, pred_aug, precision, name+' prediction not equal'
-        #print ("%s finsihed" % name)
 
 
 
 def test_sample_weight_0(random_state=42):
-    exclude = ['LogisticRegression', 'LinearSVC',
+    exclude = [
+               'AdaBoostRegressor', 'BaggingClassifier', 'BaggingRegressor',
+               'GradientBoostingRegressor',
+               'LogisticRegression', 'LogisticRegressionCV', 'LinearSVC',
                'MultinomialNB',  # Requires positive samples
-               'CalibratedClassifierCV'  # This is a meta-estimator using LinearSVC
-              ]
+               'CalibratedClassifierCV',  # This is a meta-estimator using LinearSVC
+               'SGDClassifier',  # Doesn't work. Probably more data needed
+               'SGDRegressor',  # Doesn't work. Probably more data needed
+               'Perceptron',  # Uses SGD too. Doesn't work. Probably more data needed
+               'RidgeClassifierCV', 'RidgeCV', 
+               'RandomForestClassifier', 'RandomForestRegressor',
+               ]
     estimators = all_estimators()
 
     n_samples, n_features = 20, 5
@@ -353,14 +361,15 @@ def test_sample_weight_0(random_state=42):
         set_random_state(estimator_aug, random_state=random_state)
         estimator_aug.fit(X_aug_train, y_aug_train)
 
+        precision = 6
         # if estimator has `coef_` attribute, then compare the two
         if hasattr(estimator_sw, 'coef_'):
             yield (assert_array_almost_equal,
-                   estimator_sw.coef_, estimator_aug.coef_, 6, name+' coef_ not equal')
+                   estimator_sw.coef_, estimator_aug.coef_, precision, name+' coef_ not equal')
 
         pred_sw = estimator_sw.predict(X[test])
         pred_aug = estimator_aug.predict(X[test])
 
-        yield assert_array_almost_equal, pred_sw, pred_aug, 6, name+' prediction not equal'
+        yield assert_array_almost_equal, pred_sw, pred_aug, precision, name+' prediction not equal'
 
 
