@@ -234,10 +234,10 @@ def test_get_params_invariance():
 
 def test_sample_weight_consistency(random_state=42):
     exclude = [
-               'AdaBoostRegressor', 'BaggingClassifier', 'BaggingRegressor',
-               'GradientBoostingRegressor',
+               'AdaBoostClassifier', 'AdaBoostRegressor', 
+               'BaggingClassifier', 'BaggingRegressor',
+               'GradientBoostingRegressor', 'ExtraTreesRegressor',
                'LogisticRegression', 'LogisticRegressionCV', 'LinearSVC',
-               'LinearSVC',
                'MultinomialNB',  # Requires positive samples
                'CalibratedClassifierCV',  # This is a meta-estimator using LinearSVC
                'SGDClassifier',  # Doesn't work. Probably more data needed
@@ -310,8 +310,9 @@ def test_sample_weight_consistency(random_state=42):
 
 def test_sample_weight_0(random_state=42):
     exclude = [
-               'AdaBoostRegressor', 'BaggingClassifier', 'BaggingRegressor',
-               'GradientBoostingRegressor',
+               'AdaBoostClassifier', 'AdaBoostRegressor', 
+               'BaggingClassifier', 'BaggingRegressor',
+               'GradientBoostingRegressor', 'ExtraTreesRegressor',
                'LogisticRegression', 'LogisticRegressionCV', 'LinearSVC',
                'MultinomialNB',  # Requires positive samples
                'CalibratedClassifierCV',  # This is a meta-estimator using LinearSVC
