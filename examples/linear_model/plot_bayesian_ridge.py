@@ -52,27 +52,29 @@ ols.fit(X, y)
 
 ###############################################################################
 # Plot true weights, estimated weights and histogram of the weights
+lw = 2
 plt.figure(figsize=(6, 5))
 plt.title("Weights of the model")
-plt.plot(clf.coef_, 'b-', label="Bayesian Ridge estimate")
-plt.plot(w, 'g-', label="Ground truth")
-plt.plot(ols.coef_, 'r--', label="OLS estimate")
+plt.plot(clf.coef_, color='lightgreen', linewidth=lw,
+         label="Bayesian Ridge estimate")
+plt.plot(w, color='gold', linewidth=lw, label="Ground truth")
+plt.plot(ols.coef_, color='navy', linestyle='--', label="OLS estimate")
 plt.xlabel("Features")
 plt.ylabel("Values of the weights")
 plt.legend(loc="best", prop=dict(size=12))
 
 plt.figure(figsize=(6, 5))
 plt.title("Histogram of the weights")
-plt.hist(clf.coef_, bins=n_features, log=True)
+plt.hist(clf.coef_, bins=n_features, color='gold', log=True)
 plt.plot(clf.coef_[relevant_features], 5 * np.ones(len(relevant_features)),
-         'ro', label="Relevant features")
+         'bo', label="Relevant features")
 plt.ylabel("Features")
 plt.xlabel("Values of the weights")
-plt.legend(loc="lower left")
+plt.legend(loc="upper left")
 
 plt.figure(figsize=(6, 5))
 plt.title("Marginal log-likelihood")
-plt.plot(clf.scores_)
+plt.plot(clf.scores_, color='navy', linewidth=lw)
 plt.ylabel("Score")
 plt.xlabel("Iterations")
 plt.show()
