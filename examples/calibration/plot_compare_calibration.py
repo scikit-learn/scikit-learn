@@ -89,10 +89,11 @@ ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2)
 ax2 = plt.subplot2grid((3, 1), (2, 0))
 
 ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
-for clf, name in [(lr, 'Logistic'),
-                  (gnb, 'Naive Bayes'),
-                  (svc, 'Support Vector Classification'),
-                  (rfc, 'Random Forest')]:
+plot_values = [(lr, 'Logistic', 'indigo'),
+               (gnb, 'Naive Bayes', 'cornflowerblue'),
+               (svc,  'Support Vector Classification', 'yellowgreen'),
+               (rfc,  'Random Forest', 'gold')]
+for clf, name, color in plot_values:
     clf.fit(X_train, y_train)
     if hasattr(clf, "predict_proba"):
         prob_pos = clf.predict_proba(X_test)[:, 1]
@@ -103,10 +104,10 @@ for clf, name in [(lr, 'Logistic'),
     fraction_of_positives, mean_predicted_value = \
         calibration_curve(y_test, prob_pos, n_bins=10)
 
-    ax1.plot(mean_predicted_value, fraction_of_positives, "s-",
+    ax1.plot(mean_predicted_value, fraction_of_positives, color=color, lw=2,
              label="%s" % (name, ))
 
-    ax2.hist(prob_pos, range=(0, 1), bins=10, label=name,
+    ax2.hist(prob_pos, range=(0, 1), bins=10, color=color, label=name,
              histtype="step", lw=2)
 
 ax1.set_ylabel("Fraction of positives")

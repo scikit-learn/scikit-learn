@@ -30,7 +30,6 @@ print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
 
 from sklearn.datasets import make_blobs
 from sklearn.naive_bayes import GaussianNB
@@ -87,7 +86,7 @@ print("With sigmoid calibration: %1.3f" % clf_sigmoid_score)
 # Plot the data and the predicted probabilities
 plt.figure()
 y_unique = np.unique(y)
-colors = cm.rainbow(np.linspace(0.0, 1.0, y_unique.size))
+colors = ['navy', 'darkorange']
 for this_y, color in zip(y_unique, colors):
     this_X = X_train[y_train == this_y]
     this_sw = sw_train[y_train == this_y]
@@ -98,14 +97,15 @@ plt.title("Data")
 
 plt.figure()
 order = np.lexsort((prob_pos_clf, ))
-plt.plot(prob_pos_clf[order], 'r', label='No calibration (%1.3f)' % clf_score)
-plt.plot(prob_pos_isotonic[order], 'g', linewidth=3,
+plt.plot(prob_pos_clf[order], color='navy', linewidth=2,
+         label='No calibration (%1.3f)' % clf_score)
+plt.plot(prob_pos_isotonic[order], color='cornflowerblue', linewidth=3,
          label='Isotonic calibration (%1.3f)' % clf_isotonic_score)
-plt.plot(prob_pos_sigmoid[order], 'b', linewidth=3,
+plt.plot(prob_pos_sigmoid[order], color='yellowgreen', linewidth=3,
          label='Sigmoid calibration (%1.3f)' % clf_sigmoid_score)
 plt.plot(np.linspace(0, y_test.size, 51)[1::2],
          y_test[order].reshape(25, -1).mean(1),
-         'k', linewidth=3, label=r'Empirical')
+         color='gold', linewidth=3, label=r'Empirical')
 plt.ylim([-0.05, 1.05])
 plt.xlabel("Instances sorted according to predicted probability "
            "(uncalibrated GNB)")

@@ -65,7 +65,7 @@ sig_score = log_loss(y_test, sig_clf_probs)
 
 # Plot changes in predicted probabilities via arrows
 plt.figure(0)
-colors = ["r", "g", "b"]
+colors = ['indigo', 'yellowgreen', 'gold']
 for i in range(clf_probs.shape[0]):
     plt.arrow(clf_probs[i, 0], clf_probs[i, 1],
               sig_clf_probs[i, 0] - clf_probs[i, 0],
@@ -73,9 +73,9 @@ for i in range(clf_probs.shape[0]):
               color=colors[y_test[i]], head_width=1e-2)
 
 # Plot perfect predictions
-plt.plot([1.0], [0.0], 'ro', ms=20, label="Class 1")
-plt.plot([0.0], [1.0], 'go', ms=20, label="Class 2")
-plt.plot([0.0], [0.0], 'bo', ms=20, label="Class 3")
+plt.plot([1.0], [0.0], colors[0], lw=2, ms=20, label="Class 1")
+plt.plot([0.0], [1.0], colors[1], lw=2, ms=20, label="Class 2")
+plt.plot([0.0], [0.0], colors[2], lw=2, ms=20, label="Class 3")
 
 # Plot boundaries of unit simplex
 plt.plot([0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], 'k', label="Simplex")

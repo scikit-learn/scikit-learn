@@ -85,10 +85,11 @@ def plot_calibration_curve(est, name, fig_index):
     ax2 = plt.subplot2grid((3, 1), (2, 0))
 
     ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
-    for clf, name in [(lr, 'Logistic'),
-                      (est, name),
-                      (isotonic, name + ' + Isotonic'),
-                      (sigmoid, name + ' + Sigmoid')]:
+    plot_values = [(lr, 'Logistic', 'indigo'),
+                   (est, name, 'cornflowerblue'),
+                   (isotonic, name + ' + Isotonic', 'yellowgreen'),
+                   (sigmoid, name + ' + Sigmoid', 'gold')]
+    for clf, name, color in plot_values:
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         if hasattr(clf, "predict_proba"):
@@ -108,10 +109,11 @@ def plot_calibration_curve(est, name, fig_index):
         fraction_of_positives, mean_predicted_value = \
             calibration_curve(y_test, prob_pos, n_bins=10)
 
-        ax1.plot(mean_predicted_value, fraction_of_positives, "s-",
+        ax1.plot(mean_predicted_value, fraction_of_positives, color=color,
+                 marker='s', linewidth=2,
                  label="%s (%1.3f)" % (name, clf_score))
 
-        ax2.hist(prob_pos, range=(0, 1), bins=10, label=name,
+        ax2.hist(prob_pos, range=(0, 1), bins=10, color=color, label=name,
                  histtype="step", lw=2)
 
     ax1.set_ylabel("Fraction of positives")
