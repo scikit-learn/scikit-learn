@@ -1632,7 +1632,7 @@ class MultiTaskElasticNet(Lasso):
         # X and y must be of type float64
         X = check_array(X, dtype=np.float64, order='F',
                         copy=self.copy_X and self.fit_intercept)
-        y = np.asarray(y, dtype=np.float64)
+        y = check_array(y, dtype=np.float64, ensure_2d=False)
 
         if hasattr(self, 'l1_ratio'):
             model_str = 'ElasticNet'

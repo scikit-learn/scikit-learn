@@ -131,6 +131,26 @@ def _yield_classifier_checks(name, Classifier):
     if 'class_weight' in Classifier().get_params().keys():
         yield check_class_weight_classifiers
 
+def check_supervised_y_no_nan(name, Estimator):
+    # Checks that the Estimator targets are not NaN.
+
+    rng = np.random.RandomState(888)
+    X = rng.randn(10, 5)
+    y = np.ones(10) * np.inf
+    y = multioutput_estimator_convert_y_2d(name, y)
+
+    errmsg = "Input contains NaN, infinity or a value too large for " \
+             "dtype('float64')."
+    try:
+        Estimator().fit(X, y)
+    except ValueError as e:
+        if str(e) != errmsg:
+            raise ValueError("Estimator {0} raised warning as expected, but "
+                             "does not match expected error message" \
+                             .format(name))
+    else:
+        raise ValueError("Estimator {0} should have raised error on fitting "
+                         "array y with NaN value.".format(name))
 
 def _yield_regressor_checks(name, Regressor):
     # TODO: test with intercept
@@ -141,6 +161,7 @@ def _yield_regressor_checks(name, Regressor):
     yield check_estimators_partial_fit_n_features
     yield check_regressors_no_decision_function
     yield check_supervised_y_2d
+    yield check_supervised_y_no_nan
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
@@ -207,10 +228,10 @@ def check_estimator(Estimator):
     Parameters
     ----------
     Estimator : class
-        Class to check.
+        Class to check. Estimator is a class object (not an instance).
 
     """
-    name = Estimator.__class__.__name__
+    name = Estimator.__name__
     check_parameters_default_constructible(name, Estimator)
     for check in _yield_all_checks(name, Estimator):
         check(name, Estimator)
@@ -695,6 +716,7 @@ def check_estimators_empty_data_messages(name, Estimator):
 
 
 def check_estimators_nan_inf(name, Estimator):
+    # Checks that Estimator X's do not contain NaN or inf.
     rnd = np.random.RandomState(0)
     X_train_finite = rnd.uniform(size=(10, 3))
     X_train_nan = rnd.uniform(size=(10, 3))
@@ -1431,9 +1453,8 @@ def check_parameters_default_constructible(name, Estimator):
 def multioutput_estimator_convert_y_2d(name, y):
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
     # Convert into a 2-D y for those estimators.
-    if name in (['MultiTaskElasticNetCV', 'MultiTaskLassoCV',
-                 'MultiTaskLasso', 'MultiTaskElasticNet']):
-        return y[:, np.newaxis]
+    if "MultiTask" in name:
+        return np.reshape(y, (-1, 1))
     return y
 
 
@@ -1445,7 +1466,7 @@ def check_non_transformer_estimators_n_iter(name, estimator,
     X, y_ = iris.data, iris.target
 
     if multi_output:
-        y_ = y_[:, np.newaxis]
+        y_ = np.reshape(y_, (-1, 1))
 
     set_random_state(estimator, 0)
     if name == 'AffinityPropagation':

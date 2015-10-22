@@ -28,7 +28,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import check_array
+from ..utils import check_array, check_X_y
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
@@ -151,6 +151,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         random_state = check_random_state(self.random_state)
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csc")
+            y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
             if issparse(X):
                 X.sort_indices()
 
