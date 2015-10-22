@@ -328,6 +328,11 @@ Bug fixes
       platform dependent output, and failed on `fit_transform`.
        By `Arthur Mensch`_.
 
+    - Fixed a bug in :class:`linear_model.LogisticRegression` and
+      :class:`linear_model.LogisticRegressionCV` when using
+      ``class_weight='balanced'```or ``class_weight='auto'``.
+      By `Tom Dupre la Tour`_.
+
 API changes summary
 -------------------
     - Attribute `data_min`, `data_max` and `data_range` in
