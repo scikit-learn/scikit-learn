@@ -32,6 +32,7 @@ from sklearn.datasets import make_regression
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
 
+from sklearn.utils import check_random_state
 
 diabetes = datasets.load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
@@ -711,3 +712,45 @@ def test_ridge_fit_intercept_sparse():
     assert_warns(UserWarning, sparse.fit, X_csr, y)
     assert_almost_equal(dense.intercept_, sparse.intercept_)
     assert_array_almost_equal(dense.coef_, sparse.coef_)
+
+
+def test_errors_and_values_helper():
+    ridgecv = _RidgeGCV()
+    rng = check_random_state(42)
+    alpha = 1.
+    n = 5
+    y = rng.randn(n)
+    v = rng.randn(n)
+    Q = rng.randn(len(v), len(v))
+    QT_y = Q.T.dot(y)
+    G_diag, c = ridgecv._errors_and_values_helper(alpha, y, v, Q, QT_y)
+
+    # test that helper function behaves as expected
+    out, c_ = ridgecv._errors(alpha, y, v, Q, QT_y)
+    np.testing.assert_array_equal(out, (c / G_diag) ** 2)
+    np.testing.assert_array_equal(c, c)
+
+    out, c_ = ridgecv._values(alpha, y, v, Q, QT_y)
+    np.testing.assert_array_equal(out, y - (c / G_diag))
+    np.testing.assert_array_equal(c_, c)
+
+
+def test_errors_and_values_svd_helper():
+    ridgecv = _RidgeGCV()
+    rng = check_random_state(42)
+    alpha = 1.
+    for n, p in zip((5, 10), (12, 6)):
+        y = rng.randn(n)
+        v = rng.randn(p)
+        U = rng.randn(n, p)
+        UT_y = U.T.dot(y)
+        G_diag, c = ridgecv._errors_and_values_svd_helper(alpha, y, v, U, UT_y)
+
+        # test that helper function behaves as expected
+        out, c_ = ridgecv._errors_svd(alpha, y, v, U, UT_y)
+        np.testing.assert_array_equal(out, (c / G_diag) ** 2)
+        np.testing.assert_array_equal(c, c)
+
+        out, c_ = ridgecv._values_svd(alpha, y, v, U, UT_y)
+        np.testing.assert_array_equal(out, y - (c / G_diag))
+        np.testing.assert_array_equal(c_, c)
