@@ -875,7 +875,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             random_state=random_state,
             verbose=verbose)
 
-    def predict(self, X, with_std=False):
+    def predict(self, X, return_std=False):
         """Predict regression target for X.
 
         The predicted regression target of an input sample is computed as the
@@ -889,7 +889,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
-        with_std : boolean, optional, default=False
+        return_std : boolean, optional, default=False
             When True, the standard deviation of the predictions of the
             ensemble's estimators is returned in addition to the mean.
 
@@ -898,7 +898,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         y_mean : array of shape = [n_samples]
             The mean of the predicted values.
 
-        y_std : array of shape = [n_samples], optional (if with_std == True)
+        y_std : array of shape = [n_samples], optional (if return_std == True)
             The standard deviation of the ensemble's predicted values.
         """
         check_is_fitted(self, "estimators_features_")
@@ -919,7 +919,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         # Reduce
         all_y_hat = np.array(all_y_hat).reshape(self.n_estimators, -1)
         y_mean = np.mean(all_y_hat, axis=0)
-        if with_std:
+        if return_std:
             return y_mean, np.std(all_y_hat, axis=0)
         else:
             return y_mean

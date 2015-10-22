@@ -30,7 +30,7 @@ print(__doc__)
 
 import numpy as np
 from scipy.stats import norm
-from sklearn.gaussian_process import GaussianProcess
+from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.ensemble import RandomForestRegressor, BaggingRegressor
 from sklearn.metrics import mean_squared_error
 from matplotlib import pyplot as pl
@@ -55,10 +55,7 @@ y += noise
 # its standard deviation
 x = np.atleast_2d(np.linspace(0, 10, 1000)).T
 
-regrs = {"Gaussian Process": GaussianProcess(corr='squared_exponential',
-                                             theta0=1e-1, thetaL=1e-3,
-                                             thetaU=1, nugget=(dy / y) ** 2,
-                                             random_start=100),
+regrs = {"Gaussian Process": GaussianProcessRegressor(alpha=(dy / y) ** 2),
          "Random Forest": RandomForestRegressor(n_estimators=250),
          "Bagging": BaggingRegressor(n_estimators=250)}
 
@@ -80,7 +77,7 @@ for name, regr in regrs.items():
 
     # Make the prediction on the meshed x-axis (ask for standard deviation
     # as well)
-    y_pred, sigma = regr.predict(x, with_std=True)
+    y_pred, sigma = regr.predict(x, return_std=True)
 
     # Compute mean-squared error and log predictive loss
     mse[name] = mean_squared_error(f(x), y_pred)
@@ -94,7 +91,7 @@ for name, regr in regrs.items():
     pl.plot(x, y_pred, colors[name], label=name)
     pl.fill(np.concatenate([x, x[::-1]]),
             np.concatenate([y_pred - 1.9600 * sigma,
-                           (y_pred + 1.9600 * sigma)[::-1]]),
+                            (y_pred + 1.9600 * sigma)[::-1]]),
             alpha=.3, fc=colors[name], ec='None')
 
 
@@ -103,21 +100,21 @@ pl.ylabel('$f(x)$')
 pl.ylim(-10, 20)
 pl.legend(loc='upper left')
 
-print "Mean-squared error of predictors on 1000 equidistant noise-less test " \
-    "datapoints:\n\tRandom Forest: %.2f\n\tBagging: %.2f" \
-    "\n\tGaussian Process: %.2f" \
-    % (mse["Random Forest"], mse["Bagging"], mse["Gaussian Process"])
+print("Mean-squared error of predictors on 1000 equidistant noise-less test "
+      "datapoints:\n\tRandom Forest: %.2f\n\tBagging: %.2f"
+      "\n\tGaussian Process: %.2f"
+      % (mse["Random Forest"], mse["Bagging"], mse["Gaussian Process"]))
 
-print "Mean log-probability of 1000 equidistant noise-less test datapoints " \
-    "under the (normal) predictive distribution of the predictors, i.e., " \
-    "log N(y_true| y_pred_mean, y_pred_std) [less is better]:"\
-    "\n\tRandom Forest: %.2f\n\tBagging: %.2f\n\tGaussian Process: %.2f" \
-    % (log_pdf_loss["Random Forest"], log_pdf_loss["Bagging"],
-       log_pdf_loss["Gaussian Process"])
+print("Mean log-probability of 1000 equidistant noise-less test datapoints "
+      "under the (normal) predictive distribution of the predictors, i.e., "
+      "log N(y_true| y_pred_mean, y_pred_std) [less is better]:"
+      "\n\tRandom Forest: %.2f\n\tBagging: %.2f\n\tGaussian Process: %.2f"
+      % (log_pdf_loss["Random Forest"], log_pdf_loss["Bagging"],
+         log_pdf_loss["Gaussian Process"]))
 
-print "In summary, the mean predictions of the Gaussian Process are slightly "\
-    "better than those of Random Forest and Bagging. The predictive " \
-    "distributions (taking into account also the predictive variance) " \
-    "of the Gaussian Process are considerably better."
+print("In summary, the mean predictions of the Gaussian Process are slightly "
+      "better than those of Random Forest and Bagging. The predictive "
+      "distributions (taking into account also the predictive variance) "
+      "of the Gaussian Process are considerably better.")
 
 pl.show()

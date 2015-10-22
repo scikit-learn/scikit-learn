@@ -662,7 +662,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             verbose=verbose,
             warm_start=warm_start)
 
-    def predict(self, X, with_std=False):
+    def predict(self, X, return_std=False):
         """Predict regression target for X.
 
         The predicted regression target of an input sample is computed as the
@@ -677,7 +677,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        with_std : boolean, optional, default=False
+        return_std : boolean, optional, default=False
             When True, the standard deviation of the predictions of the
             ensemble's estimators is returned in addition to the mean.
 
@@ -686,7 +686,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         y_mean: array of shape = [n_samples] or [n_samples, n_outputs]
             The mean of the predicted values.
 
-        y_std : array of shape = [n_samples], optional (if with_std == True)
+        y_std : array of shape = [n_samples], optional (if return_std == True)
             The standard deviation of the predicted values.
         """
         # Check data
@@ -702,7 +702,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             for e in self.estimators_)
 
         y_mean = np.mean(all_y_hat, axis=0)
-        if with_std:
+        if return_std:
             return y_mean, np.std(all_y_hat, axis=0)
         else:
             return y_mean
