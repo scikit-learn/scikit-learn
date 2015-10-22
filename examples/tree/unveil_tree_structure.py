@@ -87,8 +87,9 @@ for i in range(n_nodes):
 print()
 
 # First let's retrieve the decision path of each sample. The decision_path
-# method allows to retrieve the node indicator function. A non zero elements at
-# position (i, j) indicates that the sample i goes sthrough the node j.
+# method allows to retrieve the node indicator functions. A non zero element of
+# indicator matrix at the position (i, j) indicates that the sample i goes
+# through the node j.
 
 node_indicator = estimator.decision_path(X_test)
 
@@ -97,7 +98,7 @@ node_indicator = estimator.decision_path(X_test)
 leave_id = estimator.apply(X_test)
 
 # Now, it's possible to get the tests that were used to predict a sample or
-# a group of samples. First, let's make it for the  sample.
+# a group of samples. First, let's make it for the sample.
 
 sample_id = 0
 node_index = node_indicator.indices[node_indicator.indptr[sample_id]:
@@ -105,7 +106,7 @@ node_index = node_indicator.indices[node_indicator.indptr[sample_id]:
 
 print('Rules used to predict sample %s: ' % sample_id)
 for node_id in node_index:
-    if is_leaves[node_id]:
+    if leave_id[sample_id] != node_id:
         continue
 
     if (X_test[sample_id, feature[node_id]] <= threshold[node_id]):
@@ -128,6 +129,6 @@ common_nodes = (node_indicator.toarray()[sample_ids].sum(axis=0) ==
 
 common_node_id = np.arange(n_nodes)[common_nodes]
 
-print("\nThe following samples %s share the node %s  in the tree"
+print("\nThe following samples %s share the node %s in the tree"
       % (sample_ids, common_node_id))
 print("It is %s %% of all nodes." % (100 * len(common_node_id) / n_nodes,))
