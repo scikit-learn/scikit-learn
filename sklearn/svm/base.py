@@ -538,7 +538,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         dec = self._decision_function(X)
         if self.decision_function_shape is None and len(self.classes_) > 2:
             warnings.warn("The decision_function_shape default value will "
-                          "change from 'ovo' to 'ovr' in 0.18. This will change "
+                          "change from 'ovo' to 'ovr' in 0.19. This will change "
                           "the shape of the decision function returned by "
                           "SVC.", ChangedBehaviorWarning)
         if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:
