@@ -5,6 +5,7 @@ machine:
 dependencies:
   cache_directories:
     - "~/scikit_learn_data"
+    - "~/scikit-learn.github.io"
   # Various dependencies
   pre:
     - sudo apt-get update
@@ -22,6 +23,11 @@ test:
   # Grep error on the documentation
   override:
     - cat ~/log.txt && if grep -q "Traceback (most recent call last):" ~/log.txt; then false; else true; fi
+deployment:
+  push:
+    branch: master
+    commands:
+      - bash continuous_integration/push_doc.sh
 general:
   # Open the doc to the API
   artifacts:
