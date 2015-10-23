@@ -434,8 +434,19 @@ def check_fit2d_1sample(name, Estimator):
     set_random_state(estimator, 1)
     try:
         estimator.fit(X, y)
-    except ValueError:
-        pass
+    except ValueError as e:
+        if 'sample' not in repr(e) and 'class' not in repr(e):
+            print("Estimator %s doesn't seem to fail gracefully when fitting "
+                  "an array containing only one sample: error message state "
+                  "explicitly that fitting with only one sample is not "
+                  "supported." % name)
+            raise
+    except Exception:
+        print("Estimator %s doesn't seem to fail gracefully when fitting an "
+              "array containing only one feature: it should raise a "
+              "ValueError if fitting with only one sample is explicitly "
+              "not supported" % name)
+        raise
 
 
 @ignore_warnings
@@ -456,8 +467,19 @@ def check_fit2d_1feature(name, Estimator):
     set_random_state(estimator, 1)
     try:
         estimator.fit(X, y)
-    except ValueError:
-        pass
+    except ValueError as e:
+        if 'feature' not in repr(e):
+            print("Estimator %s doesn't seem to fail gracefully when fitting "
+                  "an array with samples consisting of only one feature: "
+                  "error message state explicitly that fitting samples with "
+                  "only one feature is not supported." % name)
+            raise
+    except Exception:
+        print("Estimator %s doesn't seem to fail gracefully when fitting an "
+              "array with samples consisting of only one feature: it should "
+              "raise a ValueError if fitting samples with only one feature is "
+              "explicitly not supported" % name)
+        raise
 
 
 @ignore_warnings
