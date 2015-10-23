@@ -732,6 +732,11 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.y_type_.startswith('multilabel'):
             y = column_or_1d(y, warn=True)
+        else:
+            # we don't (yet) support multi-label classification in Ridge
+            raise ValueError(
+                "%s doesn't support multi-label classification" % (
+                    self.__class__.__name__))
 
         if self.class_weight:
             if sample_weight is None:
