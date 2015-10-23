@@ -615,7 +615,7 @@ cdef class Tree:
     def __getstate__(self):
         """Getstate re-implementation, for pickling."""
         d = {}
-        d["capacity"] = self.capacity
+        # capacity is infered during the __setstate__ using nodes
         d["max_depth"] = self.max_depth
         d["node_count"] = self.node_count
         d["nodes"] = self._get_node_ndarray()
@@ -624,7 +624,6 @@ cdef class Tree:
 
     def __setstate__(self, d):
         """Setstate re-implementation, for unpickling."""
-        self.capacity = d["capacity"]
         self.max_depth = d["max_depth"]
         self.node_count = d["node_count"]
 
