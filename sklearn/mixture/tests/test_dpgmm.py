@@ -216,3 +216,11 @@ class TestVBGMMWithTiedCovars(unittest.TestCase, VBGMMTester):
 class TestVBGMMWithFullCovars(unittest.TestCase, VBGMMTester):
     covariance_type = 'full'
     setUp = GMMTester._setUp
+
+
+def test_vbgmm_no_modify_alpha():
+    alpha = 2.
+    n_components = 3
+    vbgmm = VBGMM(n_components=n_components, alpha=alpha)
+    assert_equal(vbgmm.alpha, alpha)
+    assert_equal(vbgmm.alpha_, float(alpha) / n_components)

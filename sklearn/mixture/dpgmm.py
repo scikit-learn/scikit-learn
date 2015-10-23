@@ -725,7 +725,11 @@ class VBGMM(_DPGMMBase):
             n_components, covariance_type, random_state=random_state,
             tol=tol, verbose=verbose, min_covar=min_covar,
             n_iter=n_iter, params=params, init_params=init_params)
-        self.alpha = float(alpha) / n_components
+        self.alpha = alpha
+
+    @property
+    def alpha_(self):
+        return float(self.alpha) / self.n_components
 
     def score_samples(self, X):
         """Return the likelihood of the data under the model.
@@ -772,10 +776,10 @@ class VBGMM(_DPGMMBase):
 
     def _update_concentration(self, z):
         for i in range(self.n_components):
-            self.gamma_[i] = self.alpha + np.sum(z.T[i])
+            self.gamma_[i] = self.alpha_ + np.sum(z.T[i])
 
     def _initialize_gamma(self):
-        self.gamma_ = self.alpha * np.ones(self.n_components)
+        self.gamma_ = self.alpha_ * np.ones(self.n_components)
 
     def _bound_proportions(self, z):
         logprior = 0.
@@ -789,10 +793,10 @@ class VBGMM(_DPGMMBase):
     def _bound_concentration(self):
         logprior = 0.
         logprior = gammaln(np.sum(self.gamma_)) - gammaln(self.n_components
-                                                          * self.alpha)
-        logprior -= np.sum(gammaln(self.gamma_) - gammaln(self.alpha))
+                                                          * self.alpha_)
+        logprior -= np.sum(gammaln(self.gamma_) - gammaln(self.alpha_))
         sg = digamma(np.sum(self.gamma_))
-        logprior += np.sum((self.gamma_ - self.alpha)
+        logprior += np.sum((self.gamma_ - self.alpha_)
                            * (digamma(self.gamma_) - sg))
         return logprior
 
