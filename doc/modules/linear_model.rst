@@ -305,13 +305,11 @@ The objective function to minimize is:
 
 .. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro} ^ 2 + \alpha ||W||_{21}}
 
-where;
-
-:math:`Fro` indicates the Frobenius norm:
+where :math:`Fro` indicates the Frobenius norm:
 
 .. math:: ||A||_{Fro} = \sqrt{\sum_{ij} a_{ij}^2}
 
-and
+and :math:`\ell_1` :math:`\ell_2` reads:
 
 .. math:: ||A||_{2 1} = \sum_i \sqrt{\sum_j a_{ij}^2}
 
@@ -366,18 +364,18 @@ Multi-task Elastic Net
 ======================
 
 The :class:`MultiTaskElasticNet` is an elastic-net model that estimates sparse
-coefficients for multiple regression problems jointly: ``y`` is a 2D array,
+coefficients for multiple regression problems jointly: ``Y`` is a 2D array,
 of shape ``(n_samples, n_tasks)``. The constraint is that the selected
 features are the same for all the regression problems, also called tasks.
 
 Mathematically, it consists of a linear model trained with a mixed
-:math:`\ell_1` :math:`\ell_2` prior as regularizer.
+:math:`\ell_1` :math:`\ell_2` prior and :math:`\ell_2` prior as regularizer.
 The objective function to minimize is:
 
 .. math::
 
-    \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_{Fro}^2 + \alpha \rho ||w||_{2 1} +
-    \frac{\alpha(1-\rho)}{2} ||w||_{Fro}^2}
+    \underset{W}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro}^2 + \alpha \rho ||W||_{2 1} +
+    \frac{\alpha(1-\rho)}{2} ||W||_{Fro}^2}
 
 The implementation in the class :class:`MultiTaskElasticNet` uses coordinate descent as
 the algorithm to fit the coefficients.
