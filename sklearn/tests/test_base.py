@@ -257,13 +257,9 @@ def test_score_sample_weight():
 
 
 def test_clone_pandas_dataframe():
-    class MockDataFrameWithEq(MockDataFrame):
-        """implemenets __eq__ operator to leverage the current test."""
-        def __eq__(self, other):
-            return self.array == other.array
 
     class DummyEstimator(BaseEstimator, TransformerMixin):
-        """This is a dummpy class for generating numerical features
+        """This is a dummy class for generating numerical features
 
         This feature extractor extracts numerical features from pandas data
         frame.
@@ -277,9 +273,9 @@ def test_clone_pandas_dataframe():
         Notes
         -----
         """
-        def __init__(self, df, toto):
+        def __init__(self, df=None, scalar_param=1):
             self.df = df
-            self.toto = toto
+            self.scalar_param = scalar_param
 
         def fit(self, X, y=None):
             pass
@@ -289,9 +285,10 @@ def test_clone_pandas_dataframe():
 
     # build and clone estimator
     d = np.arange(10)
-    df = MockDataFrameWithEq(d)
-    e = DummyEstimator(df, toto=1)
+    df = MockDataFrame(d)
+    e = DummyEstimator(df, scalar_param=1)
     cloned_e = clone(e)
 
     # the test
-    assert_equal(e.toto, cloned_e.toto)
+    assert_true((e.df == cloned_e.df).values.all())
+    assert_equal(e.scalar_param, cloned_e.scalar_param)
