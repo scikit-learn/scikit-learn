@@ -4,7 +4,7 @@
 # Licence: BSD 3 clause
 
 from collections import Hashable
-import inspect
+from sklearn.externals.funcsigs import signature
 
 import numpy as np
 
@@ -81,8 +81,8 @@ def test_kernel_theta():
         _, K_gradient = kernel(X, eval_gradient=True)
 
         # Determine kernel parameters that contribute to theta
-        args, varargs, kw, default = \
-            inspect.getargspec(kernel.__class__.__init__)
+        init_sign = signature(kernel.__class__.__init__).parameters.values()
+        args = [p.name for p in init_sign if p.name != 'self']
         theta_vars = map(lambda s: s.rstrip("_bounds"),
                          filter(lambda s: s.endswith("_bounds"), args))
         assert_equal(

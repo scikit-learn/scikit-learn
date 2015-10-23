@@ -31,7 +31,7 @@ from scipy.spatial.distance import pdist, cdist, squareform
 from ..metrics.pairwise import pairwise_kernels
 from ..externals import six
 from ..base import clone
-
+from sklearn.externals.funcsigs import signature
 
 class Hyperparameter(namedtuple('Hyperparameter',
                                 ('name', 'value_type', 'bounds',
@@ -116,15 +116,21 @@ class Kernel(six.with_metaclass(ABCMeta)):
         # to represent
         cls = self.__class__
         init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
-        args, varargs, kw, default = inspect.getargspec(init)
-        if varargs is not None:
+        init_sign = signature(init)
+        args, varargs = [], []
+        for parameter in init_sign.parameters.values():
+            if (parameter.kind != parameter.VAR_KEYWORD and
+                    parameter.name != 'self'):
+                args.append(parameter.name)
+            if parameter.kind == parameter.VAR_POSITIONAL:
+                varargs.append(parameter.name)
+
+        if len(varargs) != 0:
             raise RuntimeError("scikit-learn kernels should always "
                                "specify their parameters in the signature"
                                " of their __init__ (no varargs)."
                                " %s doesn't follow this convention."
                                % (cls, ))
-        # Remove 'self' and store remaining arguments in params
-        args = args[1:]
         for arg in args:
             params[arg] = getattr(self, arg, None)
         return params
