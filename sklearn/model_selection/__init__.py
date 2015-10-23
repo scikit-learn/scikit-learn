@@ -49,10 +49,3 @@ __all__ = ('BaseCrossValidator',
            'permutation_test_score',
            'train_test_split',
            'validation_curve')
-
-
-ALL_CVS = (KFold, LabelKFold, LeaveOneLabelOut, LeaveOneOut, LeavePLabelOut,
-           LeavePOut, ShuffleSplit, LabelShuffleSplit, StratifiedKFold,
-           StratifiedShuffleSplit, PredefinedSplit)
-
-LABEL_CVS = (LabelKFold, LeaveOneLabelOut, LeavePLabelOut, LabelShuffleSplit,)
