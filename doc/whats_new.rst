@@ -43,6 +43,10 @@ Bug fixes
     - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized
       Laplacian matrix was incorrectly set to 1. By `Peter Fischer`_.
 
+    - Fixed incorrect initialization of :func:`utils.arpack.eigsh` on all 
+      occurrences. Affects :class:`cluster.SpectralBiclustering`,
+      :class:`decomposition.KernelPCA`, :class:`manifold.LocallyLinearEmbedding`,
+      and :class:`manifold.SpectralEmbedding`. By `Peter Fischer`_.
 
 API changes summary
 -------------------
