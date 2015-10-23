@@ -229,7 +229,7 @@ def test_get_params_invariance():
                     yield check_get_params_invariance, name, Estimator
             else:
                 yield check_get_params_invariance, name, Estimator
-            yield check_transformer_n_iter, name, Estimator()
+            #yield check_transformer_n_iter, name, Estimator()
 
 
 def test_sample_weight_consistency(random_state=42):
@@ -275,7 +275,7 @@ def test_sample_weight_consistency(random_state=42):
     train, test = train_test_split(range(n_samples))
 
     for name, Estimator in estimators:
-
+        
         if name in exclude:
             print ("%s is being excluded" % name)
             continue
@@ -310,7 +310,6 @@ def test_sample_weight_consistency(random_state=42):
         pred_aug = estimator_aug.predict(X[test])
 
         yield assert_array_almost_equal, pred_sw, pred_aug, precision, name+' prediction not equal'
-
 
 
 def test_sample_weight_0(random_state=42):
