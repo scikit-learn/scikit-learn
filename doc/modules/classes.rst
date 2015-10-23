@@ -1048,6 +1048,8 @@ See the :ref:`metrics` section of the user guide for further details.
    :template: class.rst
 
    neural_network.BernoulliRBM
+   neural_network.MLPClassifier
+   neural_network.MLPRegressor
 
 
 .. _calibration_ref:
