@@ -245,7 +245,7 @@ size (n_classes,). Instead of passing through logistic function, it passes
 through the softmax function, which is written as,
 
 .. math::
-      \text{Softmax(z)_i} = \frac{\exp(z_i)}{\sum_{l=1}^k\exp(z_l)} 
+      \text{softmax}(z)_i = \frac{\exp(z_i)}{\sum_{l=1}^k\exp(z_l)}
 
 where :math:`z_i` represents the :math:`i` th element of the input to softmax,
 which corresponds to class :math:`i`, and :math:`K` is the number of classes.
