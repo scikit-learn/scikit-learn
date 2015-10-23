@@ -541,7 +541,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
                           "change from 'ovo' to 'ovr' in 0.18. This will change "
                           "the shape of the decision function returned by "
                           "SVC.", ChangedBehaviorWarning)
-        if self.decision_function_shape == 'ovr':
+        if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:
             return _ovr_decision_function(dec < 0, dec, len(self.classes_))
         return dec
 
