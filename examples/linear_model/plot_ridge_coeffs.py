@@ -36,18 +36,12 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import Ridge
-from matplotlib import pyplot
 from sklearn.metrics import mean_squared_error
-
-
-def generate_test_data(N, p):
-    """Generate N samples of p dimensions with fixed bias"""
-    bias = np.random.randn()
-    return make_regression(N, p, coef=True, bias=bias)
+from sklearn.datasets import make_regression
 
 clf = Ridge()
 
-features, Y, b = generate_test_data(N = 10, p = 10)
+features, Y, b = make_regression(n_samples=10, n_features=10, coef=True, random_state=1, bias=3.5)
 
 coefs = []
 err = []
@@ -60,6 +54,7 @@ for a in alphas:
     clf.fit(features, Y)
     coefs.append(clf.coef_)
     err.append(mean_squared_error(clf.coef_, b))
+
 
 # Display results
 plt.figure(figsize=(20, 6))
