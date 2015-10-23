@@ -124,7 +124,7 @@ static struct feature_node **csr_to_sparse(double *values,
     return sparse;
 }
 
-struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias, double* sample_weight)
+struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias, char* sample_weight)
 {
     struct problem *problem;
     /* not performant but simple */
@@ -139,6 +139,7 @@ struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias, doubl
     }
 
     problem->y = (double *) Y;
+    problem->sample_weight = (double *) sample_weight;
     problem->x = dense_to_sparse((double *) X, dims, bias);
     problem->bias = bias;
     problem->sample_weight = sample_weight;
@@ -152,12 +153,13 @@ struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias, doubl
 
 struct problem * csr_set_problem (char *values, npy_intp *n_indices,
 	char *indices, npy_intp *n_indptr, char *indptr, char *Y,
-        npy_intp n_features, double bias, double *sample_weight) {
+        npy_intp n_features, double bias, char *sample_weight) {
 
     struct problem *problem;
     problem = malloc (sizeof (struct problem));
     if (problem == NULL) return NULL;
     problem->l = (int) n_indptr[0] -1;
+    problem->sample_weight = (double *) sample_weight;
 
     if (bias > 0){
         problem->n = (int) n_features + 1;
