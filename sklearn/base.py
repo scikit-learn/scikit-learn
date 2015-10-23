@@ -73,6 +73,11 @@ def clone(estimator, safe=True):
     for name in new_object_params:
         param1 = new_object_params[name]
         param2 = params_set[name]
+        if param1 is param2:
+            # this should always happen
+            continue
+        # if we reach this, we should raise a deprecation warning
+        # once we fixed #5549 (GP kernels) and #5547 (VBGMM)
         if isinstance(param1, np.ndarray):
             # For most ndarrays, we do not test for complete equality
             if not isinstance(param2, type(param1)):
@@ -109,14 +114,8 @@ def clone(estimator, safe=True):
                     and param1.shape == param2.shape
                 )
         else:
-            new_obj_val = new_object_params[name]
-            params_set_val = params_set[name]
-            # The following construct is required to check equality on special
-            # singletons such as np.nan that are not equal to them-selves:
-            if new_obj_val is params_set_val:
-                equality_test = True
-            else:
-                equality_test = new_obj_val == params_set_val
+            # fall back on standard equality
+            equality_test = param1 == param2
         if not equality_test:
             raise RuntimeError('Cannot clone object %s, as the constructor '
                                'does not seem to set parameter %s' %
