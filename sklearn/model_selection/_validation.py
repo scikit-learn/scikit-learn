@@ -27,38 +27,8 @@ from ..externals.joblib import Parallel, delayed, logger
 from ..metrics.scorer import check_scoring
 from ..exceptions import FitFailedWarning
 
-from ._split import KFold
-from ._split import LabelKFold
-from ._split import LeaveOneLabelOut
-from ._split import LeaveOneOut
-from ._split import LeavePLabelOut
-from ._split import LeavePOut
-from ._split import ShuffleSplit
-from ._split import LabelShuffleSplit
-from ._split import StratifiedKFold
-from ._split import StratifiedShuffleSplit
-from ._split import PredefinedSplit
-from ._split import check_cv, _safe_split
-
 __all__ = ['cross_val_score', 'cross_val_predict', 'permutation_test_score',
            'learning_curve', 'validation_curve']
-
-ALL_CVS = {'KFold': KFold,
-           'LabelKFold': LabelKFold,
-           'LeaveOneLabelOut': LeaveOneLabelOut,
-           'LeaveOneOut': LeaveOneOut,
-           'LeavePLabelOut': LeavePLabelOut,
-           'LeavePOut': LeavePOut,
-           'ShuffleSplit': ShuffleSplit,
-           'LabelShuffleSplit': LabelShuffleSplit,
-           'StratifiedKFold': StratifiedKFold,
-           'StratifiedShuffleSplit': StratifiedShuffleSplit,
-           'PredefinedSplit': PredefinedSplit}
-
-LABEL_CVS = {'LabelKFold': LabelKFold,
-             'LeaveOneLabelOut': LeaveOneLabelOut,
-             'LeavePLabelOut': LeavePLabelOut,
-             'LabelShuffleSplit': LabelShuffleSplit}
 
 
 def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
