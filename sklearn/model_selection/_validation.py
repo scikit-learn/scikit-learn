@@ -6,7 +6,6 @@ functions to validate the model.
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>,
 #         Olivier Grisel <olivier.grisel@ensta.org>
-#         Raghav R V <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
 
