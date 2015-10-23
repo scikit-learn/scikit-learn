@@ -143,7 +143,7 @@ class Pipeline(BaseEstimator):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X
-        for name, transform in self.steps[:-1]:
+        for i, (name, transform) in enumerate(self.steps[:-1]):
             start_time = time.time()
             if hasattr(transform, "fit_transform"):
                 Xt = transform.fit_transform(Xt, y, **fit_params_steps[name])
@@ -153,7 +153,8 @@ class Pipeline(BaseEstimator):
             if self.verbose:
                 elapsed = time.time() - start_time
                 time_str = logger.short_format_time(elapsed)
-                print('[Pipeline] %s ... %s' % (name, time_str))
+                print('[Pipeline] (step %d of %d) %s ... %s' % (i,
+                    len(self.steps[:-1]), name, time_str))
 
         return Xt, fit_params_steps[self.steps[-1][0]]
 
@@ -176,7 +177,9 @@ class Pipeline(BaseEstimator):
         if self.verbose:
             elapsed = time.time() - start_time
             time_str = logger.short_format_time(elapsed)
-            print('[Pipeline] %s ... %s' % (self.steps[-1][0], time_str))
+            print('[Pipeline] (step %d of %d) %s ... %s' %
+                    (len(self.steps[:-1]), len(self.steps[:-1]),
+                        self.steps[-1][0], time_str))
 
         return self
 
@@ -205,7 +208,9 @@ class Pipeline(BaseEstimator):
         if self.verbose:
             elapsed = time.time() - start_time
             time_str = logger.short_format_time(elapsed)
-            print('[Pipeline] %s ... %s' % (self.steps[-1][0], time_str))
+            print('[Pipeline] (step %d of %d) %s ... %s' %
+                    (len(self.steps[:-1]), len(self.steps[:-1]),
+                        self.steps[-1][0], time_str))
         return ret
 
     @if_delegate_has_method(delegate='_final_estimator')
