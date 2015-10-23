@@ -424,6 +424,8 @@ class GMM(BaseEstimator):
         Warning: due to the final maximization step in the EM algorithm,
         with low iterations the prediction may not be 100% accurate
 
+        .. versionadded:: 0.17
+
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]

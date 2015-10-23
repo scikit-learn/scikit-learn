@@ -162,6 +162,8 @@ class GaussianNB(BaseNB):
         sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples (1. for unweighted).
 
+            .. versionadded:: 0.17
+
         Returns
         -------
         self : object
@@ -278,6 +280,8 @@ class GaussianNB(BaseNB):
 
         sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples (1. for unweighted).
+
+            .. versionadded:: 0.17
 
         Returns
         -------

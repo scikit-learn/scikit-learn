@@ -1009,6 +1009,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         scaler from sklearn.preprocessing.
 
         .. versionadded:: 0.17
+           solver == 'sag'
 
     tol : float, optional
         Tolerance for stopping criteria.
@@ -1308,6 +1309,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
+
+        .. versionadded:: 0.17
+           class_weight == 'balanced'
 
     cv : integer or cross-validation generator
         The default cross-validation generator used is Stratified K-Folds.

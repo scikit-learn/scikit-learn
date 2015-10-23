@@ -42,6 +42,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
           the user. This is useful for metrics that evaluate a non-majority
           class
 
+          .. versionadded:: 0.17
+             strategy == prior
+
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use.
 

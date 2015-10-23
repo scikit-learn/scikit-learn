@@ -222,6 +222,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         Individual weights for each sample. If sample_weight is not None and
         solver='auto', the solver will be set to 'cholesky'.
 
+        .. versionadded:: 0.17
+
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational routines:
 
@@ -674,6 +676,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         - 'sag' uses a Stochastic Average Gradient descent. It also uses an
           iterative procedure, and is faster than other solvers when both
           n_samples and n_features are large.
+
+          .. versionadded:: 0.17
+             solver == 'sag'
 
     tol : float
         Precision of the solution.

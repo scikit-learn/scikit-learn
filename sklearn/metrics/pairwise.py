@@ -866,6 +866,8 @@ def cosine_similarity(X, Y=None, dense_output=True):
         Whether to return dense output even when the input is sparse. If
         ``False``, the output is sparse if both input arrays are sparse.
 
+        .. versionadded:: 0.17
+
     Returns
     -------
     kernel matrix : array

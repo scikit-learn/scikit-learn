@@ -678,6 +678,8 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
 
     Read more in the :ref:`User Guide <label_ranking_loss>`.
 
+    .. versionadded:: 0.17
+
     Parameters
     ----------
     y_true : array or sparse matrix, shape = [n_samples, n_labels]

@@ -1832,6 +1832,8 @@ def train_test_split(*arrays, **options):
         If not None, data is split in a stratified fashion, using this as
         the labels array.
 
+        .. versionadded:: 0.17
+
     Returns
     -------
     splitting : list, length = 2 * len(arrays),

@@ -115,12 +115,16 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
     impurity : bool, optional (default=True)
         When set to ``True``, show the impurity at each node.
 
+        .. versionadded:: 0.17
+
     node_ids : bool, optional (default=False)
         When set to ``True``, show the ID number on each node.
 
     proportion : bool, optional (default=False)
         When set to ``True``, change the display of 'values' and/or 'samples'
         to be proportions and percentages respectively.
+
+        .. versionadded:: 0.17
 
     rotate : bool, optional (default=False)
         When set to ``True``, orient tree left to right rather than top-down.

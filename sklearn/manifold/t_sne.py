@@ -585,6 +585,9 @@ class TSNE(BaseEstimator):
         to be better than 3%. However, the exact method cannot scale to
         millions of examples.
 
+        .. versionadded:: 0.17
+           method == 'barnes_hut'
+
     angle : float (default: 0.5)
         Only used if method='barnes_hut'
         This is the trade-off between speed and accuracy for Barnes-Hut T-SNE.
