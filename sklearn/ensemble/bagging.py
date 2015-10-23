@@ -17,7 +17,6 @@ from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..linear_model import LogisticRegression
 from ..utils import check_random_state, check_X_y, check_array, column_or_1d
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted
@@ -54,13 +53,6 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
     bootstrap_features = ensemble.bootstrap_features
     support_sample_weight = has_fit_parameter(ensemble.base_estimator_,
                                               "sample_weight")
-    # Logistic regression does not support sample weights with liblinear
-    # TODO: Remove this check when liblinear is patched to support
-    #       sample weights
-    if (isinstance(ensemble.base_estimator_, LogisticRegression) and
-            (ensemble.base_estimator_.solver == 'liblinear')):
-        support_sample_weight = False
-
     if not support_sample_weight and sample_weight is not None:
         raise ValueError("The base estimator doesn't support sample weight")
 

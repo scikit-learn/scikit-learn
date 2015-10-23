@@ -10,7 +10,8 @@ from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..multiclass import _ovr_decision_function
-from ..utils import check_array, check_random_state, column_or_1d, check_X_y
+from ..utils import check_array, check_consistent_length, check_random_state
+from ..utils import column_or_1d, check_X_y
 from ..utils import compute_class_weight, deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
@@ -765,7 +766,8 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
 def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                    penalty, dual, verbose, max_iter, tol,
                    random_state=None, multi_class='ovr',
-                   loss='logistic_regression', epsilon=0.1):
+                   loss='logistic_regression', epsilon=0.1,
+                   sample_weight=None):
     """Used by Logistic Regression (and CV) and LinearSVC.
 
     Preprocessing is done in this function before supplying it to liblinear.
@@ -840,6 +842,8 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         that the value of this parameter depends on the scale of the target
         variable y. If unsure, set epsilon=0.
 
+    sample_weight: array-like, optional
+        Weights assigned to each sample.
 
     Returns
     -------
@@ -886,11 +890,17 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
 
     # LibLinear wants targets as doubles, even for classification
     y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
+    if sample_weight is None:
+        sample_weight = np.ones(X.shape[0])
+    else:
+        sample_weight = np.array(sample_weight, dtype=np.float64, order='C')
+        check_consistent_length(sample_weight, X)
+
     solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)
     raw_coef_, n_iter_ = liblinear.train_wrap(
         X, y_ind, sp.isspmatrix(X), solver_type, tol, bias, C,
         class_weight_, max_iter, rnd.randint(np.iinfo('i').max),
-        epsilon)
+        epsilon, sample_weight)
     # Regarding rnd.randint(..) in the above signature:
     # seed for srand in range [0..INT_MAX); due to limitations in Numpy
     # on 32-bit platforms, we can't get to the UINT_MAX limit that

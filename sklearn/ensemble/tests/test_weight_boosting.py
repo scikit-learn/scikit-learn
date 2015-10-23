@@ -290,9 +290,6 @@ def test_sample_weight_missing():
     from sklearn.linear_model import LogisticRegression
     from sklearn.cluster import KMeans
 
-    clf = AdaBoostClassifier(LogisticRegression(), algorithm="SAMME")
-    assert_raises(ValueError, clf.fit, X, y_regr)
-
     clf = AdaBoostClassifier(KMeans(), algorithm="SAMME")
     assert_raises(ValueError, clf.fit, X, y_regr)
 

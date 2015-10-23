@@ -254,6 +254,7 @@ Enhancements
 
    - Added ``sample_weight`` support to :class:`linear_model.LogisticRegression` for
      the ``lbfgs``, ``newton-cg``, and ``sag`` solvers. By `Valentin Stolbunov`_.
+     Support added to the ``liblinear`` solver. By `Manoj Kumar`_.
 
    - Added optional parameter ``presort`` to :class:`ensemble.GradientBoostingRegressor`
      and :class:`ensemble.GradientBoostingClassifier`, keeping default behavior

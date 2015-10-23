@@ -399,7 +399,7 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
     return grad, hessp
 
 
-def _check_solver_option(solver, multi_class, penalty, dual, sample_weight):
+def _check_solver_option(solver, multi_class, penalty, dual):
     if solver not in ['liblinear', 'newton-cg', 'lbfgs', 'sag']:
         raise ValueError("Logistic Regression supports only liblinear,"
                          " newton-cg, lbfgs and sag solvers, got %s" % solver)
@@ -419,10 +419,6 @@ def _check_solver_option(solver, multi_class, penalty, dual, sample_weight):
         if dual:
             raise ValueError("Solver %s supports only "
                              "dual=False, got dual=%s" % (solver, dual))
-
-    if solver == 'liblinear' and sample_weight is not None:
-        raise ValueError("Solver %s does not support "
-                         "sample weights." % solver)
 
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
@@ -567,7 +563,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
 
-    _check_solver_option(solver, multi_class, penalty, dual, sample_weight)
+    _check_solver_option(solver, multi_class, penalty, dual)
 
     # Preprocessing.
     if check_input or copy:
@@ -712,7 +708,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         elif solver == 'liblinear':
             coef_, intercept_, n_iter_i, = _fit_liblinear(
                 X, target, C, fit_intercept, intercept_scaling, class_weight,
-                penalty, dual, verbose, max_iter, tol, random_state)
+                penalty, dual, verbose, max_iter, tol, random_state,
+                sample_weight=sample_weight)
             if fit_intercept:
                 w0 = np.concatenate([coef_.ravel(), intercept_])
             else:
@@ -864,7 +861,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     n_iter : array, shape(n_cs,)
         Actual number of iteration for each Cs.
     """
-    _check_solver_option(solver, multi_class, penalty, dual, sample_weight)
+    _check_solver_option(solver, multi_class, penalty, dual)
 
     X_train = X[train]
     X_test = X[test]
@@ -1134,13 +1131,14 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         n_samples, n_features = X.shape
 
         _check_solver_option(self.solver, self.multi_class, self.penalty,
-                             self.dual, sample_weight)
+                             self.dual)
 
         if self.solver == 'liblinear':
             self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
                 X, y, self.C, self.fit_intercept, self.intercept_scaling,
                 self.class_weight, self.penalty, self.dual, self.verbose,
-                self.max_iter, self.tol, self.random_state)
+                self.max_iter, self.tol, self.random_state,
+                sample_weight=sample_weight)
             self.n_iter_ = np.array([n_iter_])
             return self
 
@@ -1482,7 +1480,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             Returns self.
         """
         _check_solver_option(self.solver, self.multi_class, self.penalty,
-                             self.dual, sample_weight)
+                             self.dual)
 
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
             raise ValueError("Maximum number of iteration must be positive;"
