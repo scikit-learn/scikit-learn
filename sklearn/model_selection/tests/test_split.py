@@ -7,7 +7,7 @@ from scipy.sparse import coo_matrix
 from scipy import stats
 from scipy.misc import comb
 from itertools import combinations
-from itertools import combinations_with_replacement
+from sklearn.utils.fixes import combinations_with_replacement
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
