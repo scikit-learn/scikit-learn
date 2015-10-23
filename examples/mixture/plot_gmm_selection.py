@@ -49,7 +49,8 @@ for cv_type in cv_types:
             best_gmm = gmm
 
 bic = np.array(bic)
-color_iter = itertools.cycle(['k', 'r', 'g', 'b', 'c', 'm', 'y'])
+color_iter = itertools.cycle(['navy', 'turquoise', 'cornflowerblue',
+                              'darkorange'])
 clf = best_gmm
 bars = []
 
