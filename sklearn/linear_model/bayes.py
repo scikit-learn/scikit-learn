@@ -328,6 +328,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
 
+
     def fit(self, X, y):
         """Fit the ARDRegression model according to the given training data
         and parameters.
@@ -346,7 +347,8 @@ class ARDRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
+        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True,
+                         ensure_min_samples=2)
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)

@@ -418,7 +418,7 @@ def check_fit2d_predict1d(name, Estimator):
 
 @ignore_warnings
 def check_fit2d_1sample(name, Estimator):
-    # check by fitting a 2d array and prediting with a 1d array
+    # check by fitting a 2d array with only one sample
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(1, 10))
     y = X[:, 0].astype(np.int)
@@ -432,15 +432,26 @@ def check_fit2d_1sample(name, Estimator):
         estimator.n_clusters = 1
 
     set_random_state(estimator, 1)
+
     try:
         estimator.fit(X, y)
-    except ValueError:
-        pass
+    except ValueError as e:
+        if ('sample' not  in repr(e)) and ('class' not in repr(e)):
+            print("Estimator %s doesn't seem to fail gracefully when fitting "
+                  "an array with only one sample: error message state "
+                  "explicitly that fitting with only one sample is not "
+                  "supported." % name)
+            raise
+    except Exception:
+        print("Estimator %s doesn't seem to fail gracefully when fitting an "
+              "array with only one sample: it should raise a ValueError if "
+              "fitting with only one sample is explicitly not supported")
+        raise
 
 
 @ignore_warnings
 def check_fit2d_1feature(name, Estimator):
-    # check by fitting a 2d array and prediting with a 1d array
+    # check by fitting a 2d array with only one feature
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(10, 1))
     y = X[:, 0].astype(np.int)
@@ -454,10 +465,22 @@ def check_fit2d_1feature(name, Estimator):
         estimator.n_clusters = 1
 
     set_random_state(estimator, 1)
+
     try:
         estimator.fit(X, y)
-    except ValueError:
-        pass
+    except ValueError as e:
+        # The message should say something about only one feature
+        if 'feature' not in repr(e):
+            print("Estimator %s doesn't seem to fail gracefully when fitting "
+                  "an array with only one feature: error message state "
+                  "explicitly that fitting with only one feature is not "
+                  "supported." % name)
+            raise
+    except Exception:
+        print("Estimator %s doesn't seem to fail gracefully when fitting an "
+              "array with only one feature: it should raise a ValueError if "
+              "fitting with only one feature is explicitly not supported")
+        raise
 
 
 @ignore_warnings
