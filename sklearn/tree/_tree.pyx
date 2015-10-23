@@ -615,6 +615,8 @@ cdef class Tree:
     def __getstate__(self):
         """Getstate re-implementation, for pickling."""
         d = {}
+        # capacity is infered during the __setstate__ using nodes
+        d["max_depth"] = self.max_depth
         d["node_count"] = self.node_count
         d["nodes"] = self._get_node_ndarray()
         d["values"] = self._get_value_ndarray()
@@ -622,6 +624,7 @@ cdef class Tree:
 
     def __setstate__(self, d):
         """Setstate re-implementation, for unpickling."""
+        self.max_depth = d["max_depth"]
         self.node_count = d["node_count"]
 
         if 'nodes' not in d:
