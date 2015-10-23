@@ -629,32 +629,34 @@ def test_min_weight_fraction_leaf():
 
 
 def test_pickle():
-    # Check that tree estimator are pickable
-    for name, TreeClassifier in CLF_TREES.items():
-        clf = TreeClassifier(random_state=0)
-        clf.fit(iris.data, iris.target)
-        score = clf.score(iris.data, iris.target)
 
-        serialized_object = pickle.dumps(clf)
-        clf2 = pickle.loads(serialized_object)
-        assert_equal(type(clf2), clf.__class__)
-        score2 = clf2.score(iris.data, iris.target)
-        assert_equal(score, score2, "Failed to generate same score "
-                                    "after pickling (classification) "
-                                    "with {0}".format(name))
+    for name, TreeEstimator in ALL_TREES.items():
+        if "Classifier" in name:
+            X, y = iris.data, iris.target
+        else:
+            X, y = boston.data, boston.target
 
-    for name, TreeRegressor in REG_TREES.items():
-        reg = TreeRegressor(random_state=0)
-        reg.fit(boston.data, boston.target)
-        score = reg.score(boston.data, boston.target)
+        est = TreeEstimator(random_state=0)
+        est.fit(X, y)
+        score = est.score(X, y)
+        fitted_attribute = dict()
+        for attribute in ["max_depth", "node_count", "capacity"]:
+            fitted_attribute[attribute] = getattr(est.tree_, attribute)
 
-        serialized_object = pickle.dumps(reg)
-        reg2 = pickle.loads(serialized_object)
-        assert_equal(type(reg2), reg.__class__)
-        score2 = reg2.score(boston.data, boston.target)
-        assert_equal(score, score2, "Failed to generate same score "
-                                    "after pickling (regression) "
-                                    "with {0}".format(name))
+        serialized_object = pickle.dumps(est)
+        est2 = pickle.loads(serialized_object)
+        assert_equal(type(est2), est.__class__)
+        score2 = est2.score(X, y)
+        assert_equal(score, score2,
+                     "Failed to generate same score  after pickling "
+                     "with {0}".format(name))
+
+        for attribute in fitted_attribute:
+            assert_equal(getattr(est2.tree_, attribute),
+                         fitted_attribute[attribute],
+                         "Failed to generate same attribute {0} after "
+                         "pickling with {1}".format(attribute, name))
+
 
 
 def test_multioutput():
