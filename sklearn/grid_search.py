@@ -23,6 +23,7 @@ from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .cross_validation import _fit_and_score
+from sklearn.grid_search_default import _DEFAULT_PARAM_GRIDS
 from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import check_random_state
@@ -805,6 +806,20 @@ class GridSearchCV(BaseSearchCV):
 
         """
         return self._fit(X, y, ParameterGrid(self.param_grid))
+
+
+class AutomaticGridSearchCV(GridSearchCV):
+    """ GridSearchCV with default paramters for each classifier.
+    """
+
+    def __init__(self, estimator, scoring=None, fit_params=None,
+                 n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
+                 pre_dispatch='2*n_jobs', error_score='raise'):
+
+        param_grid = _DEFAULT_PARAM_GRIDS[estimator.__class__.__name__]
+        super(AutomaticGridSearchCV, self).__init__(
+                estimator, param_grid, scoring, fit_params, n_jobs, iid,
+                refit, cv, verbose, pre_dispatch, error_score)
 
 
 class RandomizedSearchCV(BaseSearchCV):
