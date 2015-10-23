@@ -1468,10 +1468,10 @@ def check_transformer_n_iter(name, estimator):
 
     # These return a n_iter per component.
     if name in CROSS_DECOMPOSITION:
-        for iter_ in estimator.n_iter_:
+        for iter_ in estimator.n_iter:
             assert_greater(iter_, 1)
     else:
-        assert_greater(estimator.n_iter_, 1)
+        assert_greater(estimator.n_iter, 1)
 
 
 def check_get_params_invariance(name, estimator):
