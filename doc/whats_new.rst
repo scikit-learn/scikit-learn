@@ -21,8 +21,8 @@ New features
      implementation supports kernel engineering, gradient-based hyperparameter optimization or
      sampling of functions from GP prior and GP posterior. Extensive documentation and
      examples are provided. By `Jan Hendrik Metzen`_.
-     
-   - Added the :class:`ensemble.IsolationForest` class for anomaly detection based on 
+
+   - Added the :class:`ensemble.IsolationForest` class for anomaly detection based on
      random forests. By `Nicolas Goix`_.
 
 Enhancements
@@ -39,8 +39,18 @@ Enhancements
      method ``decision_path`` which returns the decision path of samples in
      the tree. By `Arnaud Joly`_
 
-   - A new example has been added unveling the decision tree structure.
-     By `Arnaud Joly`_
+
+    - The random forest, extra tree and decision tree estimators now has a
+      method ``decision_path`` which returns the decision path of samples in
+      the tree. By `Arnaud Joly`_
+
+    - A new example has been added unveling the decision tree structure.
+      By `Arnaud Joly`_
+
+    - Random forest, extra trees, decision trees and gradient boosting estimator
+      accept the parameter ``min_samples_split`` and ``min_samples_leaf``
+      provided as a percentage of the training samples. By
+      `yelite`_ and `Arnaud Joly`_
 
 Bug fixes
 .........
@@ -64,6 +74,10 @@ Bug fixes
       occurrences. Affects :class:`cluster.SpectralBiclustering`,
       :class:`decomposition.KernelPCA`, :class:`manifold.LocallyLinearEmbedding`,
       and :class:`manifold.SpectralEmbedding`. By `Peter Fischer`_.
+
+    - Random forest, extra trees, decision trees and gradient boosting
+      won't accept anymore ``min_samples_split=1`` as at least 2 samples
+      are required to split a decision tree node. By `Arnaud Joly`_
 
 API changes summary
 -------------------
@@ -3854,3 +3868,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Graham Clenaghan: https://github.com/gclenaghan
 .. _Giorgio Patrini: https://github.com/giorgiop
 .. _Elvis Dohmatob: https://github.com/dohmatob
+.. _yelite https://github.com/yelite
