@@ -1,6 +1,6 @@
 """
-The :mod:`sklearn.grid_search` includes utilities to fine-tune the parameters
-of an estimator.
+The :mod:`sklearn.model_selection._search` includes utilities to fine-tune the
+parameters of an estimator.
 """
 from __future__ import print_function
 
@@ -19,28 +19,21 @@ import warnings
 
 import numpy as np
 
-from .base import BaseEstimator, is_classifier, clone
-from .base import MetaEstimatorMixin
-from .cross_validation import check_cv
-from .cross_validation import _fit_and_score
-from .externals.joblib import Parallel, delayed
-from .externals import six
-from .utils import check_random_state
-from .utils.random import sample_without_replacement
-from .utils.validation import _num_samples, indexable
-from .utils.metaestimators import if_delegate_has_method
-from .metrics.scorer import check_scoring
-from .exceptions import ChangedBehaviorWarning
+from ..base import BaseEstimator, is_classifier, clone
+from ..base import MetaEstimatorMixin, ChangedBehaviorWarning
+from ._split import check_cv
+from ._validation import _fit_and_score
+from ..externals.joblib import Parallel, delayed
+from ..externals import six
+from ..utils import check_random_state
+from ..utils.random import sample_without_replacement
+from ..utils.validation import _num_samples, indexable
+from ..utils.metaestimators import if_delegate_has_method
+from ..metrics.scorer import check_scoring
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']
-
-
-warnings.warn("This module has been deprecated in favor of the "
-              "model_selection module into which all the refactored classes "
-              "and functions are moved. This module will be removed in 0.19.",
-              DeprecationWarning)
 
 
 class ParameterGrid(object):
@@ -49,7 +42,7 @@ class ParameterGrid(object):
     Can be used to iterate over parameter value combinations with the
     Python built-in function iter.
 
-    Read more in the :ref:`User Guide <grid_search>`.
+    Read more in the :ref:`User Guide <search>`.
 
     Parameters
     ----------
@@ -65,7 +58,7 @@ class ParameterGrid(object):
 
     Examples
     --------
-    >>> from sklearn.grid_search import ParameterGrid
+    >>> from sklearn.model_selection import ParameterGrid
     >>> param_grid = {'a': [1, 2], 'b': [True, False]}
     >>> list(ParameterGrid(param_grid)) == (
     ...    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
@@ -83,7 +76,8 @@ class ParameterGrid(object):
     See also
     --------
     :class:`GridSearchCV`:
-        uses ``ParameterGrid`` to perform a full parallelized parameter search.
+        Uses :class:`ParameterGrid` to perform a full parallelized parameter
+        search.
     """
 
     def __init__(self, param_grid):
@@ -178,7 +172,7 @@ class ParameterSampler(object):
     deterministic iteration whenever ``scipy.stats`` distributions are used to
     define the parameter search space.
 
-    Read more in the :ref:`User Guide <grid_search>`.
+    Read more in the :ref:`User Guide <search>`.
 
     Parameters
     ----------
@@ -204,7 +198,7 @@ class ParameterSampler(object):
 
     Examples
     --------
-    >>> from sklearn.grid_search import ParameterSampler
+    >>> from sklearn.model_selection import ParameterSampler
     >>> from scipy.stats.distributions import expon
     >>> import numpy as np
     >>> np.random.seed(0)
@@ -509,8 +503,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def inverse_transform(self, Xt):
         """Call inverse_transform on the estimator with the best found parameters.
 
-        Only available if the underlying estimator implements ``inverse_transform`` and
-        ``refit=True``.
+        Only available if the underlying estimator implements
+        ``inverse_transform`` and ``refit=True``.
 
         Parameters
         -----------
@@ -521,29 +515,28 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         return self.best_estimator_.transform(Xt)
 
-    def _fit(self, X, y, parameter_iterable):
+    def _fit(self, X, y, labels, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
 
         estimator = self.estimator
-        cv = self.cv
+        cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
         self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
 
         n_samples = _num_samples(X)
-        X, y = indexable(X, y)
+        X, y, labels = indexable(X, y, labels)
 
         if y is not None:
             if len(y) != n_samples:
                 raise ValueError('Target variable (y) has a different number '
                                  'of samples (%i) than data (X: %i samples)'
                                  % (len(y), n_samples))
-        cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
+        n_splits = cv.get_n_splits(X, y, labels)
 
-        if self.verbose > 0:
-            if isinstance(parameter_iterable, Sized):
-                n_candidates = len(parameter_iterable)
-                print("Fitting {0} folds for each of {1} candidates, totalling"
-                      " {2} fits".format(len(cv), n_candidates,
-                                         n_candidates * len(cv)))
+        if self.verbose > 0 and isinstance(parameter_iterable, Sized):
+            n_candidates = len(parameter_iterable)
+            print("Fitting {0} folds for each of {1} candidates, totalling"
+                  " {2} fits".format(n_splits, n_candidates,
+                                     n_candidates * n_splits))
 
         base_estimator = clone(self.estimator)
 
@@ -552,26 +545,24 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch
-        )(
-            delayed(_fit_and_score)(clone(base_estimator), X, y, self.scorer_,
-                                    train, test, self.verbose, parameters,
-                                    self.fit_params, return_parameters=True,
-                                    error_score=self.error_score)
-                for parameters in parameter_iterable
-                for train, test in cv)
+        )(delayed(_fit_and_score)(clone(base_estimator), X, y, self.scorer_,
+                                  train, test, self.verbose, parameters,
+                                  self.fit_params, return_parameters=True,
+                                  error_score=self.error_score)
+          for parameters in parameter_iterable
+          for train, test in cv.split(X, y, labels))
 
         # Out is a list of triplet: score, estimator, n_test_samples
         n_fits = len(out)
-        n_folds = len(cv)
 
         scores = list()
         grid_scores = list()
-        for grid_start in range(0, n_fits, n_folds):
+        for grid_start in range(0, n_fits, n_splits):
             n_test_samples = 0
             score = 0
             all_scores = []
             for this_score, this_n_test_samples, _, parameters in \
-                    out[grid_start:grid_start + n_folds]:
+                    out[grid_start:grid_start + n_splits]:
                 all_scores.append(this_score)
                 if self.iid:
                     this_score *= this_n_test_samples
@@ -580,7 +571,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             if self.iid:
                 score /= float(n_test_samples)
             else:
-                score /= float(n_folds)
+                score /= float(n_splits)
             scores.append((score, parameters))
             # TODO: shall we also store the test_fold_sizes?
             grid_scores.append(_CVScoreTuple(
@@ -628,7 +619,6 @@ class GridSearchCV(BaseSearchCV):
     Parameters
     ----------
     estimator : estimator object.
-        A object of that type is instantiated for each grid point.
         This is assumed to implement the scikit-learn estimator interface.
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
@@ -677,17 +667,18 @@ class GridSearchCV(BaseSearchCV):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
+          - None, to use the default 3-fold cross validation,
+          - integer, to specify the number of folds in a `(Stratified)KFold`,
           - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+          - An iterable yielding train, test splits.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier
-        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        For integer/None inputs, ``StratifiedKFold`` is used for classification
+        tasks, when ``y`` is binary or multiclass.
 
-        Refer :ref:`User Guide <cross_validation>` for the various
+        See the :mod:`sklearn.model_selection` module for the list of
         cross-validation strategies that can be used here.
+
+        Also refer :ref:`cross-validation documentation <cross_validation>`
 
     refit : boolean, default=True
         Refit the best estimator with the entire dataset.
@@ -706,11 +697,12 @@ class GridSearchCV(BaseSearchCV):
 
     Examples
     --------
-    >>> from sklearn import svm, grid_search, datasets
+    >>> from sklearn import svm, datasets
+    >>> from sklearn.model_selection import GridSearchCV
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     >>> svr = svm.SVC()
-    >>> clf = grid_search.GridSearchCV(svr, parameters)
+    >>> clf = GridSearchCV(svr, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None, error_score=...,
@@ -769,7 +761,7 @@ class GridSearchCV(BaseSearchCV):
     :class:`ParameterGrid`:
         generates all the combinations of a an hyperparameter grid.
 
-    :func:`sklearn.cross_validation.train_test_split`:
+    :func:`sklearn.model_selection.train_test_split`:
         utility function to split the data into a development set usable
         for fitting a GridSearchCV instance and an evaluation set for
         its final evaluation.
@@ -784,12 +776,13 @@ class GridSearchCV(BaseSearchCV):
                  pre_dispatch='2*n_jobs', error_score='raise'):
 
         super(GridSearchCV, self).__init__(
-            estimator, scoring, fit_params, n_jobs, iid,
-            refit, cv, verbose, pre_dispatch, error_score)
+            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch, error_score=error_score)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, labels=None):
         """Run fit with all sets of parameters.
 
         Parameters
@@ -803,13 +796,15 @@ class GridSearchCV(BaseSearchCV):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
+        labels : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
         """
-        return self._fit(X, y, ParameterGrid(self.param_grid))
+        return self._fit(X, y, labels, ParameterGrid(self.param_grid))
 
 
 class RandomizedSearchCV(BaseSearchCV):
     """Randomized search on hyper parameters.
-
 
     RandomizedSearchCV implements a "fit" and a "score" method.
     It also implements "predict", "predict_proba", "decision_function",
@@ -887,17 +882,18 @@ class RandomizedSearchCV(BaseSearchCV):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
+          - None, to use the default 3-fold cross validation,
+          - integer, to specify the number of folds in a `(Stratified)KFold`,
           - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+          - An iterable yielding train, test splits.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier
-        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        For integer/None inputs, ``StratifiedKFold`` is used for classification
+        tasks, when ``y`` is binary or multiclass.
 
-        Refer :ref:`User Guide <cross_validation>` for the various
+        See the :mod:`sklearn.model_selection` module for the list of
         cross-validation strategies that can be used here.
+
+        Also refer :ref:`cross-validation documentation <cross_validation>`
 
     refit : boolean, default=True
         Refit the best estimator with the entire dataset.
@@ -916,7 +912,6 @@ class RandomizedSearchCV(BaseSearchCV):
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
-
 
     Attributes
     ----------
@@ -978,7 +973,7 @@ class RandomizedSearchCV(BaseSearchCV):
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, labels=None):
         """Run fit on the estimator with randomly drawn parameters.
 
         Parameters
@@ -991,8 +986,11 @@ class RandomizedSearchCV(BaseSearchCV):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
+        labels : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
         """
         sampled_params = ParameterSampler(self.param_distributions,
                                           self.n_iter,
                                           random_state=self.random_state)
-        return self._fit(X, y, sampled_params)
+        return self._fit(X, y, labels, sampled_params)

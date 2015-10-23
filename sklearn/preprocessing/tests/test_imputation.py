@@ -10,7 +10,7 @@ from sklearn.utils.testing import assert_true
 
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.pipeline import Pipeline
-from sklearn import grid_search
+from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
  
@@ -269,7 +269,7 @@ def test_imputation_pipeline_grid_search():
     l = 100
     X = sparse_random_matrix(l, l, density=0.10)
     Y = sparse_random_matrix(l, 1, density=0.10).toarray()
-    gs = grid_search.GridSearchCV(pipeline, parameters)
+    gs = GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
 
 

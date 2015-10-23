@@ -151,7 +151,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         random_state = check_random_state(self.random_state)
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csc")
-            y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
+            y = check_array(y, ensure_2d=False, dtype=None)
             if issparse(X):
                 X.sort_indices()
 
@@ -634,7 +634,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     Examples
     --------
     >>> from sklearn.datasets import load_iris
-    >>> from sklearn.cross_validation import cross_val_score
+    >>> from sklearn.model_selection import cross_val_score
     >>> from sklearn.tree import DecisionTreeClassifier
     >>> clf = DecisionTreeClassifier(random_state=0)
     >>> iris = load_iris()
@@ -854,7 +854,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     Examples
     --------
     >>> from sklearn.datasets import load_boston
-    >>> from sklearn.cross_validation import cross_val_score
+    >>> from sklearn.model_selection import cross_val_score
     >>> from sklearn.tree import DecisionTreeRegressor
     >>> boston = load_boston()
     >>> regressor = DecisionTreeRegressor(random_state=0)

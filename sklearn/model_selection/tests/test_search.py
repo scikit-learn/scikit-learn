@@ -1,14 +1,10 @@
-"""
-Testing for grid search module (sklearn.grid_search)
-
-"""
+"""Test the search module"""
 
 from collections import Iterable, Sized
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals.six.moves import xrange
 from itertools import chain, product
 import pickle
-import warnings
 import sys
 
 import numpy as np
@@ -34,6 +30,23 @@ from sklearn.base import BaseEstimator
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
+
+from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import LeaveOneLabelOut
+from sklearn.model_selection import LeavePLabelOut
+from sklearn.model_selection import LabelKFold
+from sklearn.model_selection import LabelShuffleSplit
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import ParameterGrid
+from sklearn.model_selection import ParameterSampler
+
+# TODO Import from sklearn.exceptions once merged.
+from sklearn.base import ChangedBehaviorWarning
+from sklearn.model_selection._validation import FitFailedWarning
+
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
@@ -42,16 +55,6 @@ from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
-
-from sklearn.exceptions import ChangedBehaviorWarning
-from sklearn.exceptions import FitFailedWarning
-
-with warnings.catch_warnings():
-    warnings.simplefilter('ignore')
-    from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
-                                     ParameterGrid, ParameterSampler)
-    from sklearn.cross_validation import KFold, StratifiedKFold
-
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
@@ -59,7 +62,7 @@ from sklearn.pipeline import Pipeline
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
 class MockClassifier(object):
-    """Dummy classifier to test the cross-validation"""
+    """Dummy classifier to test the parameter search algorithms"""
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
@@ -124,7 +127,6 @@ def test_parameter_grid():
         assert_equal(points,
                      set(("bar", x, "foo", y)
                          for x, y in product(params2["bar"], params2["foo"])))
-
     assert_grid_iter_equals_getitem(grid2)
 
     # Special case: empty grid (useful to get default estimator settings)
@@ -219,6 +221,34 @@ def test_grid_search_score_method():
 
     assert_almost_equal(score_accuracy, score_no_scoring)
     assert_almost_equal(score_auc, score_no_score_auc)
+
+
+def test_grid_search_labels():
+    # Check if ValueError (when labels is None) propagates to GridSearchCV
+    # And also check if labels is correctly passed to the cv object
+    rng = np.random.RandomState(0)
+
+    X, y = make_classification(n_samples=15, n_classes=2, random_state=0)
+    labels = rng.randint(0, 3, 15)
+
+    clf = LinearSVC(random_state=0)
+    grid = {'C': [1]}
+
+    label_cvs = [LeaveOneLabelOut(), LeavePLabelOut(2), LabelKFold(),
+                 LabelShuffleSplit()]
+    for cv in label_cvs:
+        gs = GridSearchCV(clf, grid, cv=cv)
+        assert_raise_message(ValueError,
+                             "The labels parameter should not be None",
+                             gs.fit, X, y)
+        gs.fit(X, y, labels)
+
+    non_label_cvs = [StratifiedKFold(), StratifiedShuffleSplit()]
+    for cv in non_label_cvs:
+        print(cv)
+        gs = GridSearchCV(clf, grid, cv=cv)
+        # Should not raise an error
+        gs.fit(X, y)
 
 
 def test_trivial_grid_scores():
@@ -467,7 +497,7 @@ def test_X_as_list():
     y = np.array([0] * 5 + [1] * 5)
 
     clf = CheckingClassifier(check_X=lambda x: isinstance(x, list))
-    cv = KFold(n=len(X), n_folds=3)
+    cv = KFold(n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
     assert_true(hasattr(grid_search, "grid_scores_"))
@@ -479,12 +509,13 @@ def test_y_as_list():
     y = np.array([0] * 5 + [1] * 5)
 
     clf = CheckingClassifier(check_y=lambda x: isinstance(x, list))
-    cv = KFold(n=len(X), n_folds=3)
+    cv = KFold(n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X, y.tolist()).score(X, y)
     assert_true(hasattr(grid_search, "grid_scores_"))
 
 
+@ignore_warnings
 def test_pandas_input():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -605,12 +636,12 @@ def test_grid_search_score_consistency():
     for score in ['f1', 'roc_auc']:
         grid_search = GridSearchCV(clf, {'C': Cs}, scoring=score)
         grid_search.fit(X, y)
-        cv = StratifiedKFold(n_folds=3, y=y)
+        cv = StratifiedKFold(n_folds=3)
         for C, scores in zip(Cs, grid_search.grid_scores_):
             clf.set_params(C=C)
             scores = scores[2]  # get the separate runs from grid scores
             i = 0
-            for train, test in cv:
+            for train, test in cv.split(X, y):
                 clf.fit(X[train], y[train])
                 if score == "f1":
                     correct_score = f1_score(y[test], clf.predict(X[test]))
@@ -637,10 +668,11 @@ def test_pickle():
 def test_grid_search_with_multioutput_data():
     # Test search with multi-output estimator
 
-    X, y = make_multilabel_classification(random_state=0)
+    X, y = make_multilabel_classification(return_indicator=True,
+                                          random_state=0)
 
     est_parameters = {"max_depth": [1, 2, 3, 4]}
-    cv = KFold(y.shape[0], random_state=0)
+    cv = KFold(random_state=0)
 
     estimators = [DecisionTreeRegressor(random_state=0),
                   DecisionTreeClassifier(random_state=0)]
@@ -652,7 +684,7 @@ def test_grid_search_with_multioutput_data():
         for parameters, _, cv_validation_scores in grid_search.grid_scores_:
             est.set_params(**parameters)
 
-            for i, (train, test) in enumerate(cv):
+            for i, (train, test) in enumerate(cv.split(X, y)):
                 est.fit(X[train], y[train])
                 correct_score = est.score(X[test], y[test])
                 assert_almost_equal(correct_score,
@@ -666,7 +698,7 @@ def test_grid_search_with_multioutput_data():
         for parameters, _, cv_validation_scores in random_search.grid_scores_:
             est.set_params(**parameters)
 
-            for i, (train, test) in enumerate(cv):
+            for i, (train, test) in enumerate(cv.split(X, y)):
                 est.fit(X[train], y[train])
                 correct_score = est.score(X[test], y[test])
                 assert_almost_equal(correct_score,

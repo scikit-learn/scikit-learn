@@ -22,7 +22,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import arrayfuncs, as_float_array, check_X_y
-from ..cross_validation import check_cv
+from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
@@ -1079,7 +1079,7 @@ class LarsCV(Lars):
         y = as_float_array(y, copy=self.copy_X)
 
         # init cross-validation generator
-        cv = check_cv(self.cv, X, y, classifier=False)
+        cv = check_cv(self.cv, classifier=False)
 
         Gram = 'auto' if self.precompute else None
 
@@ -1089,7 +1089,7 @@ class LarsCV(Lars):
                 method=self.method, verbose=max(0, self.verbose - 1),
                 normalize=self.normalize, fit_intercept=self.fit_intercept,
                 max_iter=self.max_iter, eps=self.eps, positive=self.positive)
-            for train, test in cv)
+            for train, test in cv.split(X, y))
         all_alphas = np.concatenate(list(zip(*cv_paths))[0])
         # Unique also sorts
         all_alphas = np.unique(all_alphas)

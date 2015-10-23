@@ -22,7 +22,7 @@ from .utils.validation import check_is_fitted
 from .utils.fixes import signature
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
-from .cross_validation import check_cv
+from .model_selection import check_cv
 from .metrics.classification import _check_binary_probabilistic_predictions
 
 
@@ -152,7 +152,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                 calibrated_classifier.fit(X, y)
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
-            cv = check_cv(self.cv, X, y, classifier=True)
+            cv = check_cv(self.cv, y, classifier=True)
             fit_parameters = signature(base_estimator.fit).parameters
             estimator_name = type(base_estimator).__name__
             if (sample_weight is not None
@@ -163,7 +163,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                 base_estimator_sample_weight = None
             else:
                 base_estimator_sample_weight = sample_weight
-            for train, test in cv:
+            for train, test in cv.split(X, y):
                 this_estimator = clone(base_estimator)
                 if base_estimator_sample_weight is not None:
                     this_estimator.fit(

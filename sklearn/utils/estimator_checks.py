@@ -43,7 +43,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import NMF, ProjectedGradientNMF
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import DataConversionWarning
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 
 from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature

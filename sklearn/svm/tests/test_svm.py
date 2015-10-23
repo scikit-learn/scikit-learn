@@ -13,7 +13,7 @@ from scipy import sparse
 from nose.tools import assert_raises, assert_true, assert_equal, assert_false
 
 from sklearn import svm, linear_model, datasets, metrics, base
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
