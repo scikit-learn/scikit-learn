@@ -75,7 +75,26 @@ def test_affinity_propagation_deprecation_warning():
     # Test DeprecationWarning for default damping=0.5
     af = AffinityPropagation()
     assert_warns(DeprecationWarning, af.fit, X)
+
+def test_affinity_propagation_convergence_warning():
+    # Test ConvergenceWarning in affinity_propagation
+    S = -euclidean_distances(X, squared=False)
     
+    af = AffinityPropagation(affinity='precomputed', damping=0.5,
+                             convergence_iter=15)
+    af.fit(S)
+    n_iter = af.n_iter_
+    
+    # Not enough iters
+    p = np.median(S)
+    assert_warns(ConvergenceWarning, affinity_propagation, S, preference=p,
+                 max_iter=n_iter-1, damping=0.5, convergence_iter=15)
+    
+    # Bad preferences
+    p = np.median(S) * 10000
+    assert_warns(ConvergenceWarning, affinity_propagation, S, preference=p,
+                 damping=0.5, convergence_iter=15)
+
 def test_affinity_propagation_predict_error():
     # Test exception in AffinityPropagation.predict
     # Not fitted.

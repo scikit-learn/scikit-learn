@@ -159,9 +159,14 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
                            != n_samples)
             if (not unconverged and (K > 0)) or (it == max_iter):
                 if verbose:
-                    print("Converged after %d iterations." % it)
+                    print("Converged after %d iterations." % (it+1))
                 break
     else:
+        msg = ('After {max_iter} iterations, affinity_propagation did not '
+               'converge according to the given criterion '
+               'convergence_iter={convergence_iter}')
+        msg = msg.format(max_iter=max_iter, convergence_iter=convergence_iter)
+        warnings.warn(msg, ConvergenceWarning)                     
         if verbose:
             print("Did not converge")
 
@@ -184,10 +189,9 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         cluster_centers_indices = np.unique(labels)
         labels = np.searchsorted(cluster_centers_indices, labels)
     else:
-        warnings.warn('affinity_propagation did not converge. '
-                      'No exemplars identified. You might '
-                      'want to increase the damping factor and/or '
-                      'number of iterations',
+        msg = ('affinity_propagation did not find any exemplars. You might '
+               'want to modify the given parameter settings. ')
+        warnings.warn(msg,
                       ConvergenceWarning)
         labels = np.empty((n_samples, 1))
         cluster_centers_indices = []
