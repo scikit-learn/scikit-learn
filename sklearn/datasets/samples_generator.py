@@ -337,6 +337,9 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     def sample_example():
         _, n_classes = p_w_c.shape
 
+        if n_labels == 0:
+            raise ValueError("n_labels should be more than 0")
+
         # pick a nonzero number of labels per document by rejection sampling
         y_size = n_classes + 1
         while (not allow_unlabeled and y_size == 0) or y_size > n_classes:
