@@ -796,6 +796,7 @@ details.
    :template: function.rst
 
    metrics.accuracy_score
+   metrics.balanced_accuracy_score
    metrics.auc
    metrics.average_precision_score
    metrics.brier_score_loss

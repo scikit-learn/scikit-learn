@@ -60,6 +60,7 @@ Scoring                      Function                                    Comment
 **Classification**
 'accuracy'                   :func:`metrics.accuracy_score`
 'average_precision'          :func:`metrics.average_precision_score`
+'balanced_accuracy_score'    :func:`metrics.balanced_accuracy_score`     for binary targets
 'f1'                         :func:`metrics.f1_score`                    for binary targets
 'f1_micro'                   :func:`metrics.f1_score`                    micro-averaged
 'f1_macro'                   :func:`metrics.f1_score`                    macro-averaged
@@ -221,6 +222,7 @@ Some of these are restricted to the binary classification case:
 .. autosummary::
    :template: function.rst
 
+   balanced_accuracy_score
    matthews_corrcoef
    precision_recall_curve
    roc_curve
@@ -621,7 +623,15 @@ In this context, we can define the notions of precision, recall and F-measure:
 
 .. math::
 
-   \text{recall} = \frac{tp}{tp + fn},
+   \text{recall (also called sensitivity)} = \frac{tp}{tp + fn},
+
+.. math::
+
+   \text{specificity} = \frac{tn}{tn + fp},
+
+.. math::
+
+   \text{balanced accuracy} = 0.5 * \text{sensitivity} + 0.5 * \text{specificity},
 
 .. math::
 
@@ -636,6 +646,12 @@ Here are some small examples in binary classification::
   1.0
   >>> metrics.recall_score(y_true, y_pred)
   0.5
+  >>> metrics.balanced_accuracy_score(y_true, y_pred)
+  0.75
+  >>> metrics.balanced_accuracy_score(y_true, y_pred, weight=1)
+  0.5
+  >>> metrics.balanced_accuracy_score(y_true, y_pred, weight=0)
+  1.0
   >>> metrics.f1_score(y_true, y_pred)  # doctest: +ELLIPSIS
   0.66...
   >>> metrics.fbeta_score(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS

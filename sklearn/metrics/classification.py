@@ -178,6 +178,81 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
+def balanced_accuracy_score(y_true, y_pred, weight=0.5):
+    """Balanced accuracy classification score.
+
+    The formula for the balanced accuracy score ::
+
+        balanced accuracy = weight * TP/(TP + FP) + (1 - weight) * TN/(TN + FN)
+
+    Because it needs true/false negative/positive notion it only
+    supports binary classification.
+
+
+    Read more in the :ref:`User Guide <balanced_accuracy_score>`.
+
+    Parameters
+    ----------
+    y_true : 1d array-like, or label indicator array / sparse matrix
+        Ground truth (correct) labels.
+
+    y_pred : 1d array-like, or label indicator array / sparse matrix
+        Predicted labels, as returned by a classifier.
+
+    weight : float between 0 and 1. Cost associated with the misclassification
+        of a positive example (i-e sensitivity or recall)
+
+    Returns
+    -------
+    score : float
+
+    See also
+    --------
+    accuracy_score
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the accuracy and precision
+           <http://en.wikipedia.org/wiki/Accuracy_and_precision>`
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import balanced_accuracy_score
+    >>> y_pred = [0, 0, 1]
+    >>> y_true = [0, 1, 1]
+    >>> balanced_accuracy_score(y_true, y_pred)
+    0.75
+
+    >>> y_pred = ["cat", "cat", "ant"]
+    >>> y_true = ["cat", "ant", "ant"]
+    >>> balanced_accuracy_score(y_true, y_pred)
+    0.75
+
+    """
+
+    if weight < 0. or 1. < weight:
+        raise ValueError("weight has to be between 0 and 1")
+
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    if y_type is not "binary":
+        raise ValueError("%s is not supported" % y_type)
+
+    labels = unique_labels(y_true, y_pred)
+    n_labels = labels.size
+    label_to_ind = dict((y, x) for x, y in enumerate(labels))
+
+    # convert yt, yp into index
+    y_pred = np.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
+    y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
+
+    # assume that negative class is first label return by unique_labels
+    sensitivity = np.count_nonzero(y_pred * y_true != 0) / np.sum(y_true != 0)
+    specificity = np.count_nonzero(y_pred + y_true == 0) / np.sum(y_true == 0)
+
+    return np.average([sensitivity,specificity], weights=[weight,1-weight])
+
+
 def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 

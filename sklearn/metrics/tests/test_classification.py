@@ -28,6 +28,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import MockDataFrame
 
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import classification_report
 from sklearn.metrics import cohen_kappa_score
@@ -115,6 +116,41 @@ def test_multilabel_accuracy_score_subset_accuracy():
     assert_equal(accuracy_score(y1, np.logical_not(y1)), 0)
     assert_equal(accuracy_score(y1, np.zeros(y1.shape)), 0)
     assert_equal(accuracy_score(y2, np.zeros(y1.shape)), 0)
+
+
+def test_balanced_accuracy_score_binary():
+    # Test balanced accuracy score for binary classification task
+
+    # with numeric labels
+    y_pred = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    y_true = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+
+    assert_equal(balanced_accuracy_score(y_true,y_pred), 0.5)
+
+    # with string labels
+    y_pred = ["ant", "cat", "ant", "cat", "ant"]
+    y_true = ["cat", "cat", "ant", "ant", "ant"]
+
+    assert_equal(balanced_accuracy_score(y_true,y_pred), 0.5*2/3 + 0.5*1/2)
+
+    # with specific weight
+    y_pred = [0, 0, 1]
+    y_true = [0, 1, 1]
+    assert_equal(balanced_accuracy_score(y_true, y_pred, weight=0.75), 0.625)
+
+    # with wrong weight
+    assert_raise_message(ValueError, "weight has to be between 0 and 1",
+            balanced_accuracy_score, y_true, y_pred, weight=2)
+
+
+def test_balanced_accuracy_score_no_binary():
+    # Test balanced_accuracy_score returns an error when trying to
+    # compute score for multiclass
+    y_pred = [0, 2, 1, 3]
+    y_true = [0, 1, 2, 3]
+
+    assert_raise_message(ValueError, "multiclass is not supported",
+                         balanced_accuracy_score, y_true, y_pred)
 
 
 def test_precision_recall_f1_score_binary():
