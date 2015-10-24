@@ -45,8 +45,7 @@ from sklearn.tree.tree import SPARSE_SPLITTERS
 from sklearn.tree._tree import TREE_LEAF
 from sklearn import datasets
 
-from sklearn.preprocessing._weights import _balance_weights
-
+from sklearn.utils import compute_sample_weight
 
 CLF_CRITERIONS = ("gini", "entropy")
 REG_CRITERIONS = ("mse", )
@@ -739,7 +738,7 @@ def test_unbalanced_iris():
     # Check class rebalancing.
     unbalanced_X = iris.data[:125]
     unbalanced_y = iris.target[:125]
-    sample_weight = _balance_weights(unbalanced_y)
+    sample_weight = compute_sample_weight("balanced", unbalanced_y)
 
     for name, TreeClassifier in CLF_TREES.items():
         clf = TreeClassifier(random_state=0)
