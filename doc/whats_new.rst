@@ -21,6 +21,9 @@ New features
      implementation supports kernel engineering, gradient-based hyperparameter optimization or
      sampling of functions from GP prior and GP posterior. Extensive documentation and
      examples are provided. By `Jan Hendrik Metzen`_.
+     
+   - Added the :class:`ensemble.IsolationForest` class for anomaly detection based on 
+     random forests. By `Nicolas Goix`_.
 
 Enhancements
 ............
