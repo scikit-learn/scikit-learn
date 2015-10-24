@@ -25,14 +25,12 @@ New features
 Enhancements
 ............
 
-   - The cross-validation iterators are now modified as cross-validation splitters
-     which expose a ``split`` method that takes in the data and yields a generator
-     for the different splits. This change makes it possible to do nested cross-validation
-     with ease. (`#4294 https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by `Raghav R V`_.
-
-   - The :mod:`cross_validation`, :mod:`grid_search` and :mod:`learning_curve`
-     have been deprecated and the classes and functions have been reorganized into
-     the :mod:`model_selection` module. (`#4294 https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by `Raghav R V`_.
+   - The cross-validation iterators are replaced by cross-validation splitters
+     available from :mod:`model_selection`. These expose a ``split`` method
+     that takes in the data and yields a generator for the different splits.
+     This change makes it possible to do nested cross-validation with ease,
+     facilitated by :class:`model_selection.GridSearchCV` and similar
+     utilities.  (`#4294 https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by `Raghav R V`_.
 
    - The random forest, extra trees and decision tree estimators now has a
      method ``decision_path`` which returns the decision path of samples in
@@ -66,6 +64,11 @@ Bug fixes
 
 API changes summary
 -------------------
+
+   - The :mod:`cross_validation`, :mod:`grid_search` and :mod:`learning_curve`
+     have been deprecated and the classes and functions have been reorganized into
+     the :mod:`model_selection` module.
+     (`#4294 https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by `Raghav R V`_.
 
 
 .. _changes_0_17:
