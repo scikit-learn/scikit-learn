@@ -247,8 +247,8 @@ def balanced_accuracy_score(y_true, y_pred, weight=0.5):
     y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
 
     # assume that negative class is first label return by unique_labels
-    sensitivity = np.count_nonzero(y_pred * y_true != 0) / np.sum(y_true != 0)
-    specificity = np.count_nonzero(y_pred + y_true == 0) / np.sum(y_true == 0)
+    sensitivity = np.sum(y_pred * y_true != 0) / np.sum(y_true != 0)
+    specificity = np.sum(y_pred + y_true == 0) / np.sum(y_true == 0)
 
     return np.average([sensitivity,specificity], weights=[weight,1-weight])
 
