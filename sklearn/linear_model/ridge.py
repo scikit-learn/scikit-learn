@@ -251,7 +251,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
           same scale. You can preprocess the data with a scaler from
           sklearn.preprocessing.
 
-        All last four solvers support both dense and sparse data.
+        All last four solvers support both dense and sparse data. However,
+        only 'sag' supports sparse input when `fit_intercept` is True.
 
     tol : float
         Precision of the solution.
@@ -539,7 +540,8 @@ class Ridge(_BaseRidge, RegressorMixin):
           same scale. You can preprocess the data with a scaler from
           sklearn.preprocessing.
 
-        All last four solvers support both dense and sparse data.
+        All last four solvers support both dense and sparse data. However,
+        only 'sag' supports sparse input when `fit_intercept` is True.
 
     tol : float
         Precision of the solution.
