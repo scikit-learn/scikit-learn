@@ -34,12 +34,12 @@ Enhancements
      have been deprecated and the classes and functions have been reorganized into
      the :mod:`model_selection` module. (`#4294 https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by `Raghav R V`_.
 
-    - The random forest, extra trees and decision tree estimators now has a
-      method ``decision_path`` which returns the decision path of samples in
-      the tree. By `Arnaud Joly`_
+   - The random forest, extra trees and decision tree estimators now has a
+     method ``decision_path`` which returns the decision path of samples in
+     the tree. By `Arnaud Joly`_
 
-    - A new example has been added unveling the decision tree structure.
-      By `Arnaud Joly`_
+   - A new example has been added unveling the decision tree structure.
+     By `Arnaud Joly`_
 
 Bug fixes
 .........
