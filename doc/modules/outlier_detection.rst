@@ -192,4 +192,45 @@ multiple modes.
      an outlier detection method) and a covariance-based outlier
      detection with :class:`covariance.MinCovDet`.
 
+Isolation Forest
+----------------------------
 
+One efficient way of performing outlier detection in high-dimensional datasets
+is to use random forests.
+:class:`ensemble.IsolationForest` consists in 'isolating' the observations
+by randomly selecting a feature and then randomly selecting a split value
+between the maximum and minimum values of the selected feature.
+
+Since recursive partitioning can be represented by a tree structure, the
+number of splitting required to isolate a point is equivalent to the path
+length from the root node to a terminating node.
+
+This path length, averaged among a forest of such random trees, is a
+measure of abnormality and our decision function.
+
+Indeed random partitioning produces noticeable shorter paths for anomalies.
+Hence, when a forest of random trees collectively produce shorter path
+lengths for some particular points, then they are highly likely to be
+anomalies.
+
+This strategy is illustrated below.
+
+.. figure:: ../auto_examples/ensemble/images/plot_isolation_forest_001.png
+   :target: ../auto_examples/ensemble/plot_isolation_forest.html
+   :align: center
+   :scale: 75%
+
+.. topic:: Examples:
+
+   * See :ref:`example_ensemble_plot_isolation_forest.py` for
+     an illustration of the use of IsolationForest.
+
+   * See :ref:`example_covariance_plot_outlier_detection.py` for a
+     comparison of :class:`ensemble.IsolationForest` with
+     :class:`svm.OneClassSVM` (tuned to perform like an outlier detection
+     method) and a covariance-based outlier detection with
+     :class:`covariance.MinCovDet`.
+
+.. topic:: References:
+    .. [LTZ2008] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
+           Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.

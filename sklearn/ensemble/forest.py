@@ -45,7 +45,6 @@ import warnings
 from warnings import warn
 
 from abc import ABCMeta, abstractmethod
-
 import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
