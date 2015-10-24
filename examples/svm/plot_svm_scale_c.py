@@ -93,7 +93,6 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.utils import check_random_state
 from sklearn import datasets
 
-
 rnd = check_random_state(1)
 
 # set up dataset
@@ -117,7 +116,8 @@ clf_sets = [(LinearSVC(penalty='l1', loss='squared_hinge', dual=False,
                        tol=1e-4),
              np.logspace(-4.5, -2, 10), X_2, y_2)]
 
-colors = ['b', 'g', 'r', 'c']
+colors = ['navy', 'cyan', 'darkorange']
+lw = 2
 
 for fignum, (clf, cs, X, y) in enumerate(clf_sets):
     # set up the plot for each regressor
@@ -143,7 +143,7 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
             plt.ylabel('CV Score')
             grid_cs = cs * float(scaler)  # scale the C's
             plt.semilogx(grid_cs, scores, label="fraction %.2f" %
-                         train_size)
+                         train_size, color=colors[k], lw=lw)
             plt.title('scaling=%s, penalty=%s, loss=%s' %
                       (name, clf.penalty, clf.loss))
 

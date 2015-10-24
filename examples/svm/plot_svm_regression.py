@@ -32,11 +32,12 @@ y_poly = svr_poly.fit(X, y).predict(X)
 
 ###############################################################################
 # look at the results
-plt.scatter(X, y, c='k', label='data')
+lw = 2
+plt.scatter(X, y, color='darkorange', label='data')
 plt.hold('on')
-plt.plot(X, y_rbf, c='g', label='RBF model')
-plt.plot(X, y_lin, c='r', label='Linear model')
-plt.plot(X, y_poly, c='b', label='Polynomial model')
+plt.plot(X, y_rbf, color='navy', lw=lw, label='RBF model')
+plt.plot(X, y_lin, color='c', lw=lw, label='Linear model')
+plt.plot(X, y_poly, color='cornflowerblue', lw=lw, label='Polynomial model')
 plt.xlabel('data')
 plt.ylabel('target')
 plt.title('Support Vector Regression')
