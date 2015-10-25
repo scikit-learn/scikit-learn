@@ -60,9 +60,9 @@ for i, n_samples in enumerate(n_samples_range):
 # plot MSE
 plt.subplot(2, 1, 1)
 plt.errorbar(n_samples_range, lw_mse.mean(1), yerr=lw_mse.std(1),
-             label='Ledoit-Wolf', color='g')
+             label='Ledoit-Wolf', color='navy', lw=2)
 plt.errorbar(n_samples_range, oa_mse.mean(1), yerr=oa_mse.std(1),
-             label='OAS', color='r')
+             label='OAS', color='darkorange', lw=2)
 plt.ylabel("Squared error")
 plt.legend(loc="upper right")
 plt.title("Comparison of covariance estimators")
@@ -71,9 +71,9 @@ plt.xlim(5, 31)
 # plot shrinkage coefficient
 plt.subplot(2, 1, 2)
 plt.errorbar(n_samples_range, lw_shrinkage.mean(1), yerr=lw_shrinkage.std(1),
-             label='Ledoit-Wolf', color='g')
+             label='Ledoit-Wolf', color='navy', lw=2)
 plt.errorbar(n_samples_range, oa_shrinkage.mean(1), yerr=oa_shrinkage.std(1),
-             label='OAS', color='r')
+             label='OAS', color='darkorange', lw=2)
 plt.xlabel("n_samples")
 plt.ylabel("Shrinkage")
 plt.legend(loc="lower right")
