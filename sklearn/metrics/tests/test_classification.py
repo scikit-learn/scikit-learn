@@ -133,14 +133,17 @@ def test_balanced_accuracy_score_binary():
 
     assert_equal(balanced_accuracy_score(y_true,y_pred), 0.5*2/3 + 0.5*1/2)
 
-    # with specific weight
+    # with specific balance
     y_pred = [0, 0, 1]
     y_true = [0, 1, 1]
-    assert_equal(balanced_accuracy_score(y_true, y_pred, weight=0.75), 0.625)
 
-    # with wrong weight
-    assert_raise_message(ValueError, "weight has to be between 0 and 1",
-            balanced_accuracy_score, y_true, y_pred, weight=2)
+    assert_equal(balanced_accuracy_score(y_true, y_pred, balance=0.75), 0.625)
+
+    # with wrong balance
+    assert_raise_message(ValueError, "balance has to be between 0 and 1",
+            balanced_accuracy_score, y_true, y_pred, balance=2)
+    assert_raise_message(ValueError, "balance has to be between 0 and 1",
+            balanced_accuracy_score, y_true, y_pred, balance=-1)
 
 
 def test_balanced_accuracy_score_no_binary():

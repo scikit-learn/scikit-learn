@@ -648,9 +648,9 @@ Here are some small examples in binary classification::
   0.5
   >>> metrics.balanced_accuracy_score(y_true, y_pred)
   0.75
-  >>> metrics.balanced_accuracy_score(y_true, y_pred, weight=1)
+  >>> metrics.balanced_accuracy_score(y_true, y_pred, balance=1)
   0.5
-  >>> metrics.balanced_accuracy_score(y_true, y_pred, weight=0)
+  >>> metrics.balanced_accuracy_score(y_true, y_pred, balance=0)
   1.0
   >>> metrics.f1_score(y_true, y_pred)  # doctest: +ELLIPSIS
   0.66...
