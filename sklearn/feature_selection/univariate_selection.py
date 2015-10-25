@@ -203,7 +203,7 @@ def chi2(X, y):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     """
 
@@ -262,7 +262,7 @@ def f_regression(X, y, center=True):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     """
     if issparse(X) and center:
@@ -369,7 +369,7 @@ class SelectPercentile(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     SelectKBest: Select features based on the k highest scores.
@@ -439,7 +439,7 @@ class SelectKBest(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     SelectPercentile: Select features based on percentile of the highest scores.
@@ -503,7 +503,7 @@ class SelectFpr(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     SelectPercentile: Select features based on percentile of the highest scores.
@@ -555,7 +555,7 @@ class SelectFdr(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     SelectPercentile: Select features based on percentile of the highest scores.
@@ -605,7 +605,7 @@ class SelectFwe(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     SelectPercentile: Select features based on percentile of the highest scores.
@@ -658,7 +658,7 @@ class GenericUnivariateSelect(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     SelectPercentile: Select features based on percentile of the highest scores.
