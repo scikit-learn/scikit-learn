@@ -26,6 +26,7 @@ from ._validation import _fit_and_score
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..utils import check_random_state
+from ..utils.fixes import sp_version
 from ..utils.random import sample_without_replacement
 from ..utils.validation import _num_samples, indexable
 from ..utils.metaestimators import if_delegate_has_method
@@ -166,11 +167,12 @@ class ParameterSampler(object):
     It is highly recommended to use continuous distributions for continuous
     parameters.
 
-    Note that as of SciPy 0.12, the ``scipy.stats.distributions`` do not accept
-    a custom RNG instance and always use the singleton RNG from
+    Note that before SciPy 0.16, the ``scipy.stats.distributions`` do not
+    accept a custom RNG instance and always use the singleton RNG from
     ``numpy.random``. Hence setting ``random_state`` will not guarantee a
     deterministic iteration whenever ``scipy.stats`` distributions are used to
-    define the parameter search space.
+    define the parameter search space. Deterministic behavior is however
+    guaranteed from SciPy 0.16 onwards.
 
     Read more in the :ref:`User Guide <search>`.
 
@@ -245,7 +247,10 @@ class ParameterSampler(object):
                 params = dict()
                 for k, v in items:
                     if hasattr(v, "rvs"):
-                        params[k] = v.rvs()
+                        if sp_version < (0, 16):
+                            params[k] = v.rvs()
+                        else:
+                            params[k] = v.rvs(random_state=rnd)
                     else:
                         params[k] = v[rnd.randint(len(v))]
                 yield params

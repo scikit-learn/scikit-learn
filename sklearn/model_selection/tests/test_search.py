@@ -10,6 +10,7 @@ import sys
 import numpy as np
 import scipy.sparse as sp
 
+from sklearn.utils.fixes import sp_version
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
@@ -583,6 +584,18 @@ def test_param_sampler():
     for sample in samples:
         assert_true(sample["kernel"] in ["rbf", "linear"])
         assert_true(0 <= sample["C"] <= 1)
+
+    # test that repeated calls yield identical parameters
+    param_distributions = {"C": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+    sampler = ParameterSampler(param_distributions=param_distributions,
+                               n_iter=3, random_state=0)
+    assert_equal([x for x in sampler], [x for x in sampler])
+
+    if sp_version >= (0, 16):
+        param_distributions = {"C": uniform(0, 1)}
+        sampler = ParameterSampler(param_distributions=param_distributions,
+                                   n_iter=10, random_state=0)
+        assert_equal([x for x in sampler], [x for x in sampler])
 
 
 def test_randomized_search_grid_scores():
