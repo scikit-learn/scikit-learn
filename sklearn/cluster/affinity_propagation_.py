@@ -308,7 +308,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
                           "sqeuclidean for squared and euclidean for "
                           "for non-squared distances.",
                           DeprecationWarning)
-            self.affinity_matrix_ = -euclidean_distances(X, squared=False)
+            self.affinity_matrix_ = -euclidean_distances(X, squared=True)
         elif self.affinity == "sqeuclidean":
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
         else:
