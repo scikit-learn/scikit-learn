@@ -197,21 +197,20 @@ Isolation Forest
 
 One efficient way of performing outlier detection in high-dimensional datasets
 is to use random forests.
-:class:`ensemble.IsolationForest` consists in 'isolating' the observations
-by randomly selecting a feature and then randomly selecting a split value
-between the maximum and minimum values of the selected feature.
+The :class:`ensemble.IsolationForest` 'isolates' observations by randomly selecting
+a feature and then randomly selecting a split value between the maximum and
+minimum values of the selected feature.
 
 Since recursive partitioning can be represented by a tree structure, the
-number of splitting required to isolate a point is equivalent to the path
-length from the root node to a terminating node.
+number of splittings required to isolate a sample is equivalent to the path
+length from the root node to the terminating node.
 
-This path length, averaged among a forest of such random trees, is a
+This path length, averaged over a forest of such random trees, is a
 measure of abnormality and our decision function.
 
-Indeed random partitioning produces noticeable shorter paths for anomalies.
+Random partitioning produces noticeably shorter paths for anomalies.
 Hence, when a forest of random trees collectively produce shorter path
-lengths for some particular points, then they are highly likely to be
-anomalies.
+lengths for particular samples, they are highly likely to be anomalies.
 
 This strategy is illustrated below.
 
