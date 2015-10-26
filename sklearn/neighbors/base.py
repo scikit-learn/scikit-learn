@@ -128,6 +128,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                 alg_check = 'brute'
             else:
                 alg_check = 'ball_tree'
+                if metric not in VALID_METRICS[alg_check]:
+                    alg_check = 'brute'
         else:
             alg_check = algorithm
 
@@ -229,8 +231,10 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                     self.metric != 'precomputed'):
                 if self.effective_metric_ in VALID_METRICS['kd_tree']:
                     self._fit_method = 'kd_tree'
-                else:
+                elif self.effective_metric_ in VALID_METRICS['ball_tree']:
                     self._fit_method = 'ball_tree'
+                else:
+                    self._fit_method = 'brute'
             else:
                 self._fit_method = 'brute'
 
