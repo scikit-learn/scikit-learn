@@ -126,7 +126,7 @@ def f_classif(X, y):
     Parameters
     ----------
     X : {array-like, sparse matrix} shape = [n_samples, n_features]
-        The set of regressors that will tested sequentially.
+        The set of regressors that will be tested sequentially.
 
     y : array of shape(n_samples)
         The data matrix.
@@ -244,7 +244,7 @@ def f_regression(X, y, center=True):
     Parameters
     ----------
     X : {array-like, sparse matrix}  shape = (n_samples, n_features)
-        The set of regressors that will tested sequentially.
+        The set of regressors that will be tested sequentially.
 
     y : array of shape(n_samples).
         The data matrix
