@@ -62,6 +62,9 @@ cdef struct StackRecord:
     SIZE_t parent
     bint is_left
     double impurity
+    double weighted_n_node_samples
+    double* sum_total
+    double sq_sum_total
     SIZE_t n_constant_features
 
 cdef class Stack:
@@ -71,7 +74,8 @@ cdef class Stack:
 
     cdef bint is_empty(self) nogil
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
-                  bint is_left, double impurity,
+                  bint is_left, double impurity, double weighted_n_node_samples,
+                  double* sum_total, double sq_sum_total,
                   SIZE_t n_constant_features) nogil
     cdef int pop(self, StackRecord* res) nogil
 
@@ -91,6 +95,12 @@ cdef struct PriorityHeapRecord:
     double impurity
     double impurity_left
     double impurity_right
+    double weighted_n_left
+    double weighted_n_right
+    double* sum_left
+    double* sum_right
+    double sq_sum_left
+    double sq_sum_right
     double improvement
 
 cdef class PriorityHeap:
@@ -102,5 +112,8 @@ cdef class PriorityHeap:
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
                   SIZE_t depth, bint is_leaf, double improvement,
                   double impurity, double impurity_left,
-                  double impurity_right) nogil
+                  double impurity_right, double weighted_n_left,
+                  double weighted_n_right, double* sum_left,
+                  double* sum_right, double sq_sum_left,
+                  double sq_sum_right) nogil
     cdef int pop(self, PriorityHeapRecord* res) nogil

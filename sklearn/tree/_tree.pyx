@@ -53,8 +53,6 @@ from numpy import float64 as DOUBLE
 cdef double INFINITY = np.inf
 
 # Some handy constants (BestFirstTreeBuilder)
-cdef int IS_FIRST = 1
-cdef int IS_NOT_FIRST = 0
 cdef int IS_LEFT = 1
 cdef int IS_NOT_LEFT = 0
 
@@ -168,32 +166,38 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_split = self.min_samples_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
+        cdef SIZE_t n_node_samples
+        cdef double weighted_n_node_samples
+        cdef double* sum_total
+        cdef double sq_sum_total
+        cdef double impurity
+        splitter.init(X, y, sample_weight_ptr, X_idx_sorted, 
+                      &n_node_samples, &weighted_n_node_samples, &sum_total,
+                      &sq_sum_total, &impurity)
 
         cdef SIZE_t start
         cdef SIZE_t end
         cdef SIZE_t depth
         cdef SIZE_t parent
         cdef bint is_left
-        cdef SIZE_t n_node_samples = splitter.n_samples
-        cdef double weighted_n_samples = splitter.weighted_n_samples
-        cdef double weighted_n_node_samples
         cdef SplitRecord split
         cdef SIZE_t node_id
 
         cdef double threshold
-        cdef double impurity = INFINITY
         cdef SIZE_t n_constant_features
         cdef bint is_leaf
         cdef bint first = 1
         cdef SIZE_t max_depth_seen = -1
         cdef int rc = 0
 
+        cdef double derp
+
         cdef Stack stack = Stack(INITIAL_STACK_SIZE)
         cdef StackRecord stack_record
 
         # push root node onto stack
-        rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY, 0)
+        rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, impurity, 
+                        weighted_n_node_samples, sum_total, sq_sum_total, 0)
         if rc == -1:
             # got return code -1 - out-of-memory
             raise MemoryError()
@@ -208,21 +212,19 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 parent = stack_record.parent
                 is_left = stack_record.is_left
                 impurity = stack_record.impurity
+                weighted_n_node_samples = stack_record.weighted_n_node_samples
+                sum_total = stack_record.sum_total
+                sq_sum_total = stack_record.sq_sum_total
                 n_constant_features = stack_record.n_constant_features
 
                 n_node_samples = end - start
-                splitter.node_reset(start, end, &weighted_n_node_samples)
+                splitter.node_reset(start, end, weighted_n_node_samples, sum_total, sq_sum_total)
 
                 is_leaf = ((depth >= max_depth) or
                            (n_node_samples < min_samples_split) or
                            (n_node_samples < 2 * min_samples_leaf) or
-                           (weighted_n_node_samples < min_weight_leaf))
-
-                if first:
-                    impurity = splitter.node_impurity()
-                    first = 0
-
-                is_leaf = is_leaf or (impurity <= MIN_IMPURITY_SPLIT)
+                           (weighted_n_node_samples < min_weight_leaf) or
+                           (impurity <= MIN_IMPURITY_SPLIT))
 
                 if not is_leaf:
                     splitter.node_split(impurity, &split, &n_constant_features)
@@ -243,13 +245,15 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 if not is_leaf:
                     # Push right child on stack
                     rc = stack.push(split.pos, end, depth + 1, node_id, 0,
-                                    split.impurity_right, n_constant_features)
+                                    split.impurity_right, split.weighted_n_right, 
+                                    split.sum_right, split.sq_sum_right, n_constant_features)
                     if rc == -1:
                         break
 
                     # Push left child on stack
                     rc = stack.push(start, split.pos, depth + 1, node_id, 1,
-                                    split.impurity_left, n_constant_features)
+                                    split.impurity_left, split.weighted_n_left, 
+                                    split.sum_left, split.sq_sum_left, n_constant_features)
                     if rc == -1:
                         break
 
@@ -273,7 +277,9 @@ cdef inline int _add_to_frontier(PriorityHeapRecord* rec,
     on memory-error. """
     return frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
                          rec.is_leaf, rec.improvement, rec.impurity,
-                         rec.impurity_left, rec.impurity_right)
+                         rec.impurity_left, rec.impurity_right, rec.weighted_n_left,
+                         rec.weighted_n_right, rec.sum_left, rec.sum_right, rec.sq_sum_left,
+                         rec.sq_sum_right)
 
 
 cdef class BestFirstTreeBuilder(TreeBuilder):
@@ -316,14 +322,21 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_split = self.min_samples_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
+        cdef SIZE_t n_node_samples
+        cdef double weighted_n_node_samples
+        cdef double* sum_total
+        cdef double impurity
+        cdef double sq_sum_total
+        splitter.init(X, y, sample_weight_ptr, X_idx_sorted, 
+                      &n_node_samples, &weighted_n_node_samples, &sum_total,
+                      &sq_sum_total, &impurity)
+
 
         cdef PriorityHeap frontier = PriorityHeap(INITIAL_STACK_SIZE)
         cdef PriorityHeapRecord record
         cdef PriorityHeapRecord split_node_left
         cdef PriorityHeapRecord split_node_right
 
-        cdef SIZE_t n_node_samples = splitter.n_samples
         cdef SIZE_t max_split_nodes = max_leaf_nodes - 1
         cdef bint is_leaf
         cdef SIZE_t max_depth_seen = -1
@@ -337,8 +350,9 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         with nogil:
             # add root to frontier
             rc = self._add_split_node(splitter, tree, 0, n_node_samples,
-                                      INFINITY, IS_FIRST, IS_LEFT, NULL, 0,
-                                      &split_node_left)
+                                      impurity, weighted_n_node_samples,
+                                      sum_total, sq_sum_total, IS_LEFT, NULL, 
+                                      0, &split_node_left)
             if rc >= 0:
                 rc = _add_to_frontier(&split_node_left, frontier)
         if rc == -1:
@@ -368,7 +382,10 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     rc = self._add_split_node(splitter, tree,
                                               record.start, record.pos,
                                               record.impurity_left,
-                                              IS_NOT_FIRST, IS_LEFT, node,
+                                              record.weighted_n_left,
+                                              record.sum_left,
+                                              record.sq_sum_left,
+                                              IS_LEFT, node,
                                               record.depth + 1,
                                               &split_node_left)
                     if rc == -1:
@@ -381,7 +398,10 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     rc = self._add_split_node(splitter, tree, record.pos,
                                               record.end,
                                               record.impurity_right,
-                                              IS_NOT_FIRST, IS_NOT_LEFT, node,
+                                              record.weighted_n_right,
+                                              record.sum_right,
+                                              record.sq_sum_right,
+                                              IS_NOT_LEFT, node,
                                               record.depth + 1,
                                               &split_node_right)
                     if rc == -1:
@@ -410,8 +430,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
     cdef inline int _add_split_node(self, Splitter splitter, Tree tree,
                                     SIZE_t start, SIZE_t end, double impurity,
-                                    bint is_first, bint is_left, Node* parent,
-                                    SIZE_t depth,
+                                    double weighted_n_node_samples, double* sum_total,
+                                    double sq_sum_total, bint is_left, Node* parent, SIZE_t depth,
                                     PriorityHeapRecord* res) nogil:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
@@ -419,15 +439,11 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t n_node_samples
         cdef SIZE_t n_constant_features = 0
         cdef double weighted_n_samples = splitter.weighted_n_samples
-        cdef double weighted_n_node_samples
         cdef bint is_leaf
         cdef SIZE_t n_left, n_right
         cdef double imp_diff
 
-        splitter.node_reset(start, end, &weighted_n_node_samples)
-
-        if is_first:
-            impurity = splitter.node_impurity()
+        splitter.node_reset(start, end, weighted_n_node_samples, sum_total, sq_sum_total)
 
         n_node_samples = end - start
         is_leaf = ((depth > self.max_depth) or
@@ -465,6 +481,12 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             res.improvement = split.improvement
             res.impurity_left = split.impurity_left
             res.impurity_right = split.impurity_right
+            res.weighted_n_left = split.weighted_n_left
+            res.weighted_n_right = split.weighted_n_right
+            res.sum_left = split.sum_left
+            res.sum_right = split.sum_right
+            res.sq_sum_left = split.sq_sum_left
+            res.sq_sum_right = split.sq_sum_right
 
         else:
             # is leaf => 0 improvement

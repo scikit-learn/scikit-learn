@@ -880,10 +880,13 @@ struct __pyx_t_7sklearn_4tree_6_utils_StackRecord {
   __pyx_t_7sklearn_4tree_6_utils_SIZE_t parent;
   int is_left;
   double impurity;
+  double weighted_n_node_samples;
+  double *sum_total;
+  double sq_sum_total;
   __pyx_t_7sklearn_4tree_6_utils_SIZE_t n_constant_features;
 };
 
-/* "sklearn/tree/_utils.pxd":84
+/* "sklearn/tree/_utils.pxd":88
  * 
  * # A record on the frontier for best-first tree growing
  * cdef struct PriorityHeapRecord:             # <<<<<<<<<<<<<<
@@ -900,10 +903,16 @@ struct __pyx_t_7sklearn_4tree_6_utils_PriorityHeapRecord {
   double impurity;
   double impurity_left;
   double impurity_right;
+  double weighted_n_left;
+  double weighted_n_right;
+  double *sum_left;
+  double *sum_right;
+  double sq_sum_left;
+  double sq_sum_right;
   double improvement;
 };
 
-/* "sklearn/tree/_utils.pxd":67
+/* "sklearn/tree/_utils.pxd":70
  *     SIZE_t n_constant_features
  * 
  * cdef class Stack:             # <<<<<<<<<<<<<<
@@ -919,7 +928,7 @@ struct __pyx_obj_7sklearn_4tree_6_utils_Stack {
 };
 
 
-/* "sklearn/tree/_utils.pxd":96
+/* "sklearn/tree/_utils.pxd":106
  *     double improvement
  * 
  * cdef class PriorityHeap:             # <<<<<<<<<<<<<<
@@ -958,13 +967,17 @@ struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion {
   double weighted_n_node_samples;
   double weighted_n_left;
   double weighted_n_right;
+  __pyx_t_7sklearn_4tree_10_criterion_SIZE_t sum_stride;
   double *sum_total;
   double *sum_left;
   double *sum_right;
+  double sq_sum_total;
+  double sq_sum_right;
+  double sq_sum_left;
 };
 
 
-/* "sklearn/tree/_criterion.pyx":207
+/* "sklearn/tree/_criterion.pyx":205
  * 
  * 
  * cdef class ClassificationCriterion(Criterion):             # <<<<<<<<<<<<<<
@@ -974,11 +987,10 @@ struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion {
 struct __pyx_obj_7sklearn_4tree_10_criterion_ClassificationCriterion {
   struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion __pyx_base;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t *n_classes;
-  __pyx_t_7sklearn_4tree_10_criterion_SIZE_t sum_stride;
 };
 
 
-/* "sklearn/tree/_criterion.pyx":498
+/* "sklearn/tree/_criterion.pyx":499
  * 
  * 
  * cdef class Entropy(ClassificationCriterion):             # <<<<<<<<<<<<<<
@@ -990,7 +1002,7 @@ struct __pyx_obj_7sklearn_4tree_10_criterion_Entropy {
 };
 
 
-/* "sklearn/tree/_criterion.pyx":579
+/* "sklearn/tree/_criterion.pyx":580
  * 
  * 
  * cdef class Gini(ClassificationCriterion):             # <<<<<<<<<<<<<<
@@ -1002,7 +1014,7 @@ struct __pyx_obj_7sklearn_4tree_10_criterion_Gini {
 };
 
 
-/* "sklearn/tree/_criterion.pyx":673
+/* "sklearn/tree/_criterion.pyx":674
  * 
  * 
  * cdef class RegressionCriterion(Criterion):             # <<<<<<<<<<<<<<
@@ -1011,11 +1023,10 @@ struct __pyx_obj_7sklearn_4tree_10_criterion_Gini {
  */
 struct __pyx_obj_7sklearn_4tree_10_criterion_RegressionCriterion {
   struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion __pyx_base;
-  double sq_sum_total;
 };
 
 
-/* "sklearn/tree/_criterion.pyx":873
+/* "sklearn/tree/_criterion.pyx":875
  * 
  * 
  * cdef class MSE(RegressionCriterion):             # <<<<<<<<<<<<<<
@@ -1027,7 +1038,7 @@ struct __pyx_obj_7sklearn_4tree_10_criterion_MSE {
 };
 
 
-/* "sklearn/tree/_criterion.pyx":966
+/* "sklearn/tree/_criterion.pyx":967
  * 
  * 
  * cdef class FriedmanMSE(MSE):             # <<<<<<<<<<<<<<
@@ -1040,7 +1051,7 @@ struct __pyx_obj_7sklearn_4tree_10_criterion_FriedmanMSE {
 
 
 
-/* "sklearn/tree/_utils.pxd":67
+/* "sklearn/tree/_utils.pxd":70
  *     SIZE_t n_constant_features
  * 
  * cdef class Stack:             # <<<<<<<<<<<<<<
@@ -1050,13 +1061,13 @@ struct __pyx_obj_7sklearn_4tree_10_criterion_FriedmanMSE {
 
 struct __pyx_vtabstruct_7sklearn_4tree_6_utils_Stack {
   int (*is_empty)(struct __pyx_obj_7sklearn_4tree_6_utils_Stack *);
-  int (*push)(struct __pyx_obj_7sklearn_4tree_6_utils_Stack *, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, int, double, __pyx_t_7sklearn_4tree_6_utils_SIZE_t);
+  int (*push)(struct __pyx_obj_7sklearn_4tree_6_utils_Stack *, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, int, double, double, double *, double, __pyx_t_7sklearn_4tree_6_utils_SIZE_t);
   int (*pop)(struct __pyx_obj_7sklearn_4tree_6_utils_Stack *, struct __pyx_t_7sklearn_4tree_6_utils_StackRecord *);
 };
 static struct __pyx_vtabstruct_7sklearn_4tree_6_utils_Stack *__pyx_vtabptr_7sklearn_4tree_6_utils_Stack;
 
 
-/* "sklearn/tree/_utils.pxd":96
+/* "sklearn/tree/_utils.pxd":106
  *     double improvement
  * 
  * cdef class PriorityHeap:             # <<<<<<<<<<<<<<
@@ -1066,7 +1077,7 @@ static struct __pyx_vtabstruct_7sklearn_4tree_6_utils_Stack *__pyx_vtabptr_7skle
 
 struct __pyx_vtabstruct_7sklearn_4tree_6_utils_PriorityHeap {
   int (*is_empty)(struct __pyx_obj_7sklearn_4tree_6_utils_PriorityHeap *);
-  int (*push)(struct __pyx_obj_7sklearn_4tree_6_utils_PriorityHeap *, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, int, double, double, double, double);
+  int (*push)(struct __pyx_obj_7sklearn_4tree_6_utils_PriorityHeap *, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, __pyx_t_7sklearn_4tree_6_utils_SIZE_t, int, double, double, double, double, double, double, double *, double *, double, double);
   int (*pop)(struct __pyx_obj_7sklearn_4tree_6_utils_PriorityHeap *, struct __pyx_t_7sklearn_4tree_6_utils_PriorityHeapRecord *);
 };
 static struct __pyx_vtabstruct_7sklearn_4tree_6_utils_PriorityHeap *__pyx_vtabptr_7sklearn_4tree_6_utils_PriorityHeap;
@@ -1094,7 +1105,7 @@ struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_Criterion {
 static struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_Criterion *__pyx_vtabptr_7sklearn_4tree_10_criterion_Criterion;
 
 
-/* "sklearn/tree/_criterion.pyx":207
+/* "sklearn/tree/_criterion.pyx":205
  * 
  * 
  * cdef class ClassificationCriterion(Criterion):             # <<<<<<<<<<<<<<
@@ -1108,7 +1119,7 @@ struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_ClassificationCriterion {
 static struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_ClassificationCriterion *__pyx_vtabptr_7sklearn_4tree_10_criterion_ClassificationCriterion;
 
 
-/* "sklearn/tree/_criterion.pyx":498
+/* "sklearn/tree/_criterion.pyx":499
  * 
  * 
  * cdef class Entropy(ClassificationCriterion):             # <<<<<<<<<<<<<<
@@ -1122,7 +1133,7 @@ struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_Entropy {
 static struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_Entropy *__pyx_vtabptr_7sklearn_4tree_10_criterion_Entropy;
 
 
-/* "sklearn/tree/_criterion.pyx":579
+/* "sklearn/tree/_criterion.pyx":580
  * 
  * 
  * cdef class Gini(ClassificationCriterion):             # <<<<<<<<<<<<<<
@@ -1136,7 +1147,7 @@ struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_Gini {
 static struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_Gini *__pyx_vtabptr_7sklearn_4tree_10_criterion_Gini;
 
 
-/* "sklearn/tree/_criterion.pyx":673
+/* "sklearn/tree/_criterion.pyx":674
  * 
  * 
  * cdef class RegressionCriterion(Criterion):             # <<<<<<<<<<<<<<
@@ -1150,7 +1161,7 @@ struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_RegressionCriterion {
 static struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_RegressionCriterion *__pyx_vtabptr_7sklearn_4tree_10_criterion_RegressionCriterion;
 
 
-/* "sklearn/tree/_criterion.pyx":873
+/* "sklearn/tree/_criterion.pyx":875
  * 
  * 
  * cdef class MSE(RegressionCriterion):             # <<<<<<<<<<<<<<
@@ -1164,7 +1175,7 @@ struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_MSE {
 static struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_MSE *__pyx_vtabptr_7sklearn_4tree_10_criterion_MSE;
 
 
-/* "sklearn/tree/_criterion.pyx":966
+/* "sklearn/tree/_criterion.pyx":967
  * 
  * 
  * cdef class FriedmanMSE(MSE):             # <<<<<<<<<<<<<<
@@ -1842,7 +1853,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_9Criterion_init(CYTHON_UNUSED st
  * 
  *     cdef void reset(self) nogil:             # <<<<<<<<<<<<<<
  *         """Reset the criterion at pos=start.
- * 
+ *         This method must be implemented by the subclass.
  */
 
 static void __pyx_f_7sklearn_4tree_10_criterion_9Criterion_reset(CYTHON_UNUSED struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *__pyx_v_self) {
@@ -1850,12 +1861,12 @@ static void __pyx_f_7sklearn_4tree_10_criterion_9Criterion_reset(CYTHON_UNUSED s
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":87
+/* "sklearn/tree/_criterion.pyx":86
  *         pass
  * 
  *     cdef void reverse_reset(self) nogil:             # <<<<<<<<<<<<<<
  *         """Reset the criterion at pos=end.
- * 
+ *         This method must be implemented by the subclass.
  */
 
 static void __pyx_f_7sklearn_4tree_10_criterion_9Criterion_reverse_reset(CYTHON_UNUSED struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *__pyx_v_self) {
@@ -1863,7 +1874,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_9Criterion_reverse_reset(CYTHON_
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":94
+/* "sklearn/tree/_criterion.pyx":92
  *         pass
  * 
  *     cdef void update(self, SIZE_t new_pos) nogil:             # <<<<<<<<<<<<<<
@@ -1876,7 +1887,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_9Criterion_update(CYTHON_UNUSED 
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":109
+/* "sklearn/tree/_criterion.pyx":107
  *         pass
  * 
  *     cdef double node_impurity(self) nogil:             # <<<<<<<<<<<<<<
@@ -1892,7 +1903,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_9Criterion_node_impurity(CYTHO
   return __pyx_r;
 }
 
-/* "sklearn/tree/_criterion.pyx":119
+/* "sklearn/tree/_criterion.pyx":117
  *         pass
  * 
  *     cdef void children_impurity(self, double* impurity_left,             # <<<<<<<<<<<<<<
@@ -1905,7 +1916,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_9Criterion_children_impurity(CYT
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":139
+/* "sklearn/tree/_criterion.pyx":137
  *         pass
  * 
  *     cdef void node_value(self, double* dest) nogil:             # <<<<<<<<<<<<<<
@@ -1918,7 +1929,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_9Criterion_node_value(CYTHON_UNU
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":153
+/* "sklearn/tree/_criterion.pyx":151
  *         pass
  * 
  *     cdef double proxy_impurity_improvement(self) nogil:             # <<<<<<<<<<<<<<
@@ -1931,7 +1942,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_9Criterion_proxy_impurity_impr
   double __pyx_v_impurity_right;
   double __pyx_r;
 
-  /* "sklearn/tree/_criterion.pyx":166
+  /* "sklearn/tree/_criterion.pyx":164
  *         cdef double impurity_left
  *         cdef double impurity_right
  *         self.children_impurity(&impurity_left, &impurity_right)             # <<<<<<<<<<<<<<
@@ -1940,7 +1951,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_9Criterion_proxy_impurity_impr
  */
   ((struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_Criterion *)__pyx_v_self->__pyx_vtab)->children_impurity(__pyx_v_self, (&__pyx_v_impurity_left), (&__pyx_v_impurity_right));
 
-  /* "sklearn/tree/_criterion.pyx":169
+  /* "sklearn/tree/_criterion.pyx":167
  * 
  *         return (- self.weighted_n_right * impurity_right
  *                 - self.weighted_n_left * impurity_left)             # <<<<<<<<<<<<<<
@@ -1950,7 +1961,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_9Criterion_proxy_impurity_impr
   __pyx_r = (((-__pyx_v_self->weighted_n_right) * __pyx_v_impurity_right) - (__pyx_v_self->weighted_n_left * __pyx_v_impurity_left));
   goto __pyx_L0;
 
-  /* "sklearn/tree/_criterion.pyx":153
+  /* "sklearn/tree/_criterion.pyx":151
  *         pass
  * 
  *     cdef double proxy_impurity_improvement(self) nogil:             # <<<<<<<<<<<<<<
@@ -1963,7 +1974,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_9Criterion_proxy_impurity_impr
   return __pyx_r;
 }
 
-/* "sklearn/tree/_criterion.pyx":171
+/* "sklearn/tree/_criterion.pyx":169
  *                 - self.weighted_n_left * impurity_left)
  * 
  *     cdef double impurity_improvement(self, double impurity) nogil:             # <<<<<<<<<<<<<<
@@ -1976,7 +1987,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_9Criterion_impurity_improvemen
   double __pyx_v_impurity_right;
   double __pyx_r;
 
-  /* "sklearn/tree/_criterion.pyx":198
+  /* "sklearn/tree/_criterion.pyx":196
  *         cdef double impurity_right
  * 
  *         self.children_impurity(&impurity_left, &impurity_right)             # <<<<<<<<<<<<<<
@@ -1985,7 +1996,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_9Criterion_impurity_improvemen
  */
   ((struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_Criterion *)__pyx_v_self->__pyx_vtab)->children_impurity(__pyx_v_self, (&__pyx_v_impurity_left), (&__pyx_v_impurity_right));
 
-  /* "sklearn/tree/_criterion.pyx":200
+  /* "sklearn/tree/_criterion.pyx":198
  *         self.children_impurity(&impurity_left, &impurity_right)
  * 
  *         return ((self.weighted_n_node_samples / self.weighted_n_samples) *             # <<<<<<<<<<<<<<
@@ -1995,7 +2006,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_9Criterion_impurity_improvemen
   __pyx_r = ((__pyx_v_self->weighted_n_node_samples / __pyx_v_self->weighted_n_samples) * ((__pyx_v_impurity - ((__pyx_v_self->weighted_n_right / __pyx_v_self->weighted_n_node_samples) * __pyx_v_impurity_right)) - ((__pyx_v_self->weighted_n_left / __pyx_v_self->weighted_n_node_samples) * __pyx_v_impurity_left)));
   goto __pyx_L0;
 
-  /* "sklearn/tree/_criterion.pyx":171
+  /* "sklearn/tree/_criterion.pyx":169
  *                 - self.weighted_n_left * impurity_left)
  * 
  *     cdef double impurity_improvement(self, double impurity) nogil:             # <<<<<<<<<<<<<<
@@ -2008,8 +2019,8 @@ static double __pyx_f_7sklearn_4tree_10_criterion_9Criterion_impurity_improvemen
   return __pyx_r;
 }
 
-/* "sklearn/tree/_criterion.pyx":213
- *     cdef SIZE_t sum_stride
+/* "sklearn/tree/_criterion.pyx":210
+ *     cdef SIZE_t* n_classes
  * 
  *     def __cinit__(self, SIZE_t n_outputs,             # <<<<<<<<<<<<<<
  *                   np.ndarray[SIZE_t, ndim=1] n_classes):
@@ -2047,11 +2058,11 @@ static int __pyx_pw_7sklearn_4tree_10_criterion_23ClassificationCriterion_1__cin
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_n_classes)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 213; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 210; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 213; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 210; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -2059,18 +2070,18 @@ static int __pyx_pw_7sklearn_4tree_10_criterion_23ClassificationCriterion_1__cin
       values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
       values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
     }
-    __pyx_v_n_outputs = __Pyx_PyInt_As_Py_intptr_t(values[0]); if (unlikely((__pyx_v_n_outputs == (npy_intp)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 213; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_n_outputs = __Pyx_PyInt_As_Py_intptr_t(values[0]); if (unlikely((__pyx_v_n_outputs == (npy_intp)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 210; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_n_classes = ((PyArrayObject *)values[1]);
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 213; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 210; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("sklearn.tree._criterion.ClassificationCriterion.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_n_classes), __pyx_ptype_5numpy_ndarray, 1, "n_classes", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 214; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_n_classes), __pyx_ptype_5numpy_ndarray, 1, "n_classes", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 211; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_r = __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cinit__(((struct __pyx_obj_7sklearn_4tree_10_criterion_ClassificationCriterion *)__pyx_v_self), __pyx_v_n_outputs, __pyx_v_n_classes);
 
   /* function exit code */
@@ -2107,11 +2118,11 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
   __pyx_pybuffernd_n_classes.rcbuffer = &__pyx_pybuffer_n_classes;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_n_classes.rcbuffer->pybuffer, (PyObject*)__pyx_v_n_classes, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_4tree_10_criterion_SIZE_t, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 213; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_n_classes.rcbuffer->pybuffer, (PyObject*)__pyx_v_n_classes, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_4tree_10_criterion_SIZE_t, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 210; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_pybuffernd_n_classes.diminfo[0].strides = __pyx_pybuffernd_n_classes.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_n_classes.diminfo[0].shape = __pyx_pybuffernd_n_classes.rcbuffer->pybuffer.shape[0];
 
-  /* "sklearn/tree/_criterion.pyx":225
+  /* "sklearn/tree/_criterion.pyx":222
  *         """
  * 
  *         self.y = NULL             # <<<<<<<<<<<<<<
@@ -2120,7 +2131,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.y = NULL;
 
-  /* "sklearn/tree/_criterion.pyx":226
+  /* "sklearn/tree/_criterion.pyx":223
  * 
  *         self.y = NULL
  *         self.y_stride = 0             # <<<<<<<<<<<<<<
@@ -2129,7 +2140,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.y_stride = 0;
 
-  /* "sklearn/tree/_criterion.pyx":227
+  /* "sklearn/tree/_criterion.pyx":224
  *         self.y = NULL
  *         self.y_stride = 0
  *         self.sample_weight = NULL             # <<<<<<<<<<<<<<
@@ -2138,7 +2149,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.sample_weight = NULL;
 
-  /* "sklearn/tree/_criterion.pyx":229
+  /* "sklearn/tree/_criterion.pyx":226
  *         self.sample_weight = NULL
  * 
  *         self.samples = NULL             # <<<<<<<<<<<<<<
@@ -2147,7 +2158,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.samples = NULL;
 
-  /* "sklearn/tree/_criterion.pyx":230
+  /* "sklearn/tree/_criterion.pyx":227
  * 
  *         self.samples = NULL
  *         self.start = 0             # <<<<<<<<<<<<<<
@@ -2156,7 +2167,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.start = 0;
 
-  /* "sklearn/tree/_criterion.pyx":231
+  /* "sklearn/tree/_criterion.pyx":228
  *         self.samples = NULL
  *         self.start = 0
  *         self.pos = 0             # <<<<<<<<<<<<<<
@@ -2165,7 +2176,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.pos = 0;
 
-  /* "sklearn/tree/_criterion.pyx":232
+  /* "sklearn/tree/_criterion.pyx":229
  *         self.start = 0
  *         self.pos = 0
  *         self.end = 0             # <<<<<<<<<<<<<<
@@ -2174,7 +2185,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.end = 0;
 
-  /* "sklearn/tree/_criterion.pyx":234
+  /* "sklearn/tree/_criterion.pyx":231
  *         self.end = 0
  * 
  *         self.n_outputs = n_outputs             # <<<<<<<<<<<<<<
@@ -2183,7 +2194,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.n_outputs = __pyx_v_n_outputs;
 
-  /* "sklearn/tree/_criterion.pyx":235
+  /* "sklearn/tree/_criterion.pyx":232
  * 
  *         self.n_outputs = n_outputs
  *         self.n_node_samples = 0             # <<<<<<<<<<<<<<
@@ -2192,7 +2203,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.n_node_samples = 0;
 
-  /* "sklearn/tree/_criterion.pyx":236
+  /* "sklearn/tree/_criterion.pyx":233
  *         self.n_outputs = n_outputs
  *         self.n_node_samples = 0
  *         self.weighted_n_node_samples = 0.0             # <<<<<<<<<<<<<<
@@ -2201,7 +2212,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.weighted_n_node_samples = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":237
+  /* "sklearn/tree/_criterion.pyx":234
  *         self.n_node_samples = 0
  *         self.weighted_n_node_samples = 0.0
  *         self.weighted_n_left = 0.0             # <<<<<<<<<<<<<<
@@ -2210,7 +2221,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.weighted_n_left = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":238
+  /* "sklearn/tree/_criterion.pyx":235
  *         self.weighted_n_node_samples = 0.0
  *         self.weighted_n_left = 0.0
  *         self.weighted_n_right = 0.0             # <<<<<<<<<<<<<<
@@ -2219,7 +2230,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.weighted_n_right = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":241
+  /* "sklearn/tree/_criterion.pyx":238
  * 
  *         # Count labels for each output
  *         self.sum_total = NULL             # <<<<<<<<<<<<<<
@@ -2228,7 +2239,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.sum_total = NULL;
 
-  /* "sklearn/tree/_criterion.pyx":242
+  /* "sklearn/tree/_criterion.pyx":239
  *         # Count labels for each output
  *         self.sum_total = NULL
  *         self.sum_left = NULL             # <<<<<<<<<<<<<<
@@ -2237,7 +2248,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.sum_left = NULL;
 
-  /* "sklearn/tree/_criterion.pyx":243
+  /* "sklearn/tree/_criterion.pyx":240
  *         self.sum_total = NULL
  *         self.sum_left = NULL
  *         self.sum_right = NULL             # <<<<<<<<<<<<<<
@@ -2246,7 +2257,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.sum_right = NULL;
 
-  /* "sklearn/tree/_criterion.pyx":244
+  /* "sklearn/tree/_criterion.pyx":241
  *         self.sum_left = NULL
  *         self.sum_right = NULL
  *         self.n_classes = NULL             # <<<<<<<<<<<<<<
@@ -2255,16 +2266,16 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->n_classes = NULL;
 
-  /* "sklearn/tree/_criterion.pyx":246
+  /* "sklearn/tree/_criterion.pyx":243
  *         self.n_classes = NULL
  * 
  *         safe_realloc(&self.n_classes, n_outputs)             # <<<<<<<<<<<<<<
  * 
  *         cdef SIZE_t k = 0
  */
-  __pyx_fuse_1__pyx_f_7sklearn_4tree_6_utils_safe_realloc((&__pyx_v_self->n_classes), __pyx_v_n_outputs); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_fuse_1__pyx_f_7sklearn_4tree_6_utils_safe_realloc((&__pyx_v_self->n_classes), __pyx_v_n_outputs); if (unlikely(PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 243; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "sklearn/tree/_criterion.pyx":248
+  /* "sklearn/tree/_criterion.pyx":245
  *         safe_realloc(&self.n_classes, n_outputs)
  * 
  *         cdef SIZE_t k = 0             # <<<<<<<<<<<<<<
@@ -2273,7 +2284,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_k = 0;
 
-  /* "sklearn/tree/_criterion.pyx":249
+  /* "sklearn/tree/_criterion.pyx":246
  * 
  *         cdef SIZE_t k = 0
  *         cdef SIZE_t sum_stride = 0             # <<<<<<<<<<<<<<
@@ -2282,7 +2293,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_sum_stride = 0;
 
-  /* "sklearn/tree/_criterion.pyx":253
+  /* "sklearn/tree/_criterion.pyx":250
  *         # For each target, set the number of unique classes in that target,
  *         # and also compute the maximal stride of all targets
  *         for k in range(n_outputs):             # <<<<<<<<<<<<<<
@@ -2293,7 +2304,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_k = __pyx_t_2;
 
-    /* "sklearn/tree/_criterion.pyx":254
+    /* "sklearn/tree/_criterion.pyx":251
  *         # and also compute the maximal stride of all targets
  *         for k in range(n_outputs):
  *             self.n_classes[k] = n_classes[k]             # <<<<<<<<<<<<<<
@@ -2303,7 +2314,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
     __pyx_t_3 = __pyx_v_k;
     (__pyx_v_self->n_classes[__pyx_v_k]) = (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_4tree_10_criterion_SIZE_t *, __pyx_pybuffernd_n_classes.rcbuffer->pybuffer.buf, __pyx_t_3, __pyx_pybuffernd_n_classes.diminfo[0].strides));
 
-    /* "sklearn/tree/_criterion.pyx":256
+    /* "sklearn/tree/_criterion.pyx":253
  *             self.n_classes[k] = n_classes[k]
  * 
  *             if n_classes[k] > sum_stride:             # <<<<<<<<<<<<<<
@@ -2314,7 +2325,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
     __pyx_t_5 = (((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_4tree_10_criterion_SIZE_t *, __pyx_pybuffernd_n_classes.rcbuffer->pybuffer.buf, __pyx_t_4, __pyx_pybuffernd_n_classes.diminfo[0].strides)) > __pyx_v_sum_stride) != 0);
     if (__pyx_t_5) {
 
-      /* "sklearn/tree/_criterion.pyx":257
+      /* "sklearn/tree/_criterion.pyx":254
  * 
  *             if n_classes[k] > sum_stride:
  *                 sum_stride = n_classes[k]             # <<<<<<<<<<<<<<
@@ -2328,16 +2339,16 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
     __pyx_L5:;
   }
 
-  /* "sklearn/tree/_criterion.pyx":259
+  /* "sklearn/tree/_criterion.pyx":256
  *                 sum_stride = n_classes[k]
  * 
  *         self.sum_stride = sum_stride             # <<<<<<<<<<<<<<
  * 
  *         cdef SIZE_t n_elements = n_outputs * sum_stride
  */
-  __pyx_v_self->sum_stride = __pyx_v_sum_stride;
+  __pyx_v_self->__pyx_base.sum_stride = __pyx_v_sum_stride;
 
-  /* "sklearn/tree/_criterion.pyx":261
+  /* "sklearn/tree/_criterion.pyx":258
  *         self.sum_stride = sum_stride
  * 
  *         cdef SIZE_t n_elements = n_outputs * sum_stride             # <<<<<<<<<<<<<<
@@ -2346,7 +2357,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_n_elements = (__pyx_v_n_outputs * __pyx_v_sum_stride);
 
-  /* "sklearn/tree/_criterion.pyx":262
+  /* "sklearn/tree/_criterion.pyx":259
  * 
  *         cdef SIZE_t n_elements = n_outputs * sum_stride
  *         self.sum_total = <double*> calloc(n_elements, sizeof(double))             # <<<<<<<<<<<<<<
@@ -2355,7 +2366,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.sum_total = ((double *)calloc(__pyx_v_n_elements, (sizeof(double))));
 
-  /* "sklearn/tree/_criterion.pyx":263
+  /* "sklearn/tree/_criterion.pyx":260
  *         cdef SIZE_t n_elements = n_outputs * sum_stride
  *         self.sum_total = <double*> calloc(n_elements, sizeof(double))
  *         self.sum_left = <double*> calloc(n_elements, sizeof(double))             # <<<<<<<<<<<<<<
@@ -2364,17 +2375,44 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
  */
   __pyx_v_self->__pyx_base.sum_left = ((double *)calloc(__pyx_v_n_elements, (sizeof(double))));
 
-  /* "sklearn/tree/_criterion.pyx":264
+  /* "sklearn/tree/_criterion.pyx":261
  *         self.sum_total = <double*> calloc(n_elements, sizeof(double))
  *         self.sum_left = <double*> calloc(n_elements, sizeof(double))
  *         self.sum_right = <double*> calloc(n_elements, sizeof(double))             # <<<<<<<<<<<<<<
  * 
- *         if (self.sum_total == NULL or
+ *         self.sq_sum_total = 0.
  */
   __pyx_v_self->__pyx_base.sum_right = ((double *)calloc(__pyx_v_n_elements, (sizeof(double))));
 
-  /* "sklearn/tree/_criterion.pyx":266
+  /* "sklearn/tree/_criterion.pyx":263
  *         self.sum_right = <double*> calloc(n_elements, sizeof(double))
+ * 
+ *         self.sq_sum_total = 0.             # <<<<<<<<<<<<<<
+ *         self.sq_sum_left = 0.
+ *         self.sq_sum_right = 0.
+ */
+  __pyx_v_self->__pyx_base.sq_sum_total = 0.;
+
+  /* "sklearn/tree/_criterion.pyx":264
+ * 
+ *         self.sq_sum_total = 0.
+ *         self.sq_sum_left = 0.             # <<<<<<<<<<<<<<
+ *         self.sq_sum_right = 0.
+ * 
+ */
+  __pyx_v_self->__pyx_base.sq_sum_left = 0.;
+
+  /* "sklearn/tree/_criterion.pyx":265
+ *         self.sq_sum_total = 0.
+ *         self.sq_sum_left = 0.
+ *         self.sq_sum_right = 0.             # <<<<<<<<<<<<<<
+ * 
+ *         if (self.sum_total == NULL or
+ */
+  __pyx_v_self->__pyx_base.sq_sum_right = 0.;
+
+  /* "sklearn/tree/_criterion.pyx":267
+ *         self.sq_sum_right = 0.
  * 
  *         if (self.sum_total == NULL or             # <<<<<<<<<<<<<<
  *                 self.sum_left == NULL or
@@ -2387,7 +2425,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
     goto __pyx_L7_bool_binop_done;
   }
 
-  /* "sklearn/tree/_criterion.pyx":267
+  /* "sklearn/tree/_criterion.pyx":268
  * 
  *         if (self.sum_total == NULL or
  *                 self.sum_left == NULL or             # <<<<<<<<<<<<<<
@@ -2401,7 +2439,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
     goto __pyx_L7_bool_binop_done;
   }
 
-  /* "sklearn/tree/_criterion.pyx":268
+  /* "sklearn/tree/_criterion.pyx":269
  *         if (self.sum_total == NULL or
  *                 self.sum_left == NULL or
  *                 self.sum_right == NULL):             # <<<<<<<<<<<<<<
@@ -2413,18 +2451,18 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
   __pyx_L7_bool_binop_done:;
   if (__pyx_t_5) {
 
-    /* "sklearn/tree/_criterion.pyx":269
+    /* "sklearn/tree/_criterion.pyx":270
  *                 self.sum_left == NULL or
  *                 self.sum_right == NULL):
  *             raise MemoryError()             # <<<<<<<<<<<<<<
  * 
  *     def __dealloc__(self):
  */
-    PyErr_NoMemory(); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    PyErr_NoMemory(); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
 
-  /* "sklearn/tree/_criterion.pyx":213
- *     cdef SIZE_t sum_stride
+  /* "sklearn/tree/_criterion.pyx":210
+ *     cdef SIZE_t* n_classes
  * 
  *     def __cinit__(self, SIZE_t n_outputs,             # <<<<<<<<<<<<<<
  *                   np.ndarray[SIZE_t, ndim=1] n_classes):
@@ -2449,7 +2487,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion___cini
   return __pyx_r;
 }
 
-/* "sklearn/tree/_criterion.pyx":271
+/* "sklearn/tree/_criterion.pyx":272
  *             raise MemoryError()
  * 
  *     def __dealloc__(self):             # <<<<<<<<<<<<<<
@@ -2472,7 +2510,7 @@ static void __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion_2__de
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__dealloc__", 0);
 
-  /* "sklearn/tree/_criterion.pyx":274
+  /* "sklearn/tree/_criterion.pyx":275
  *         """Destructor."""
  * 
  *         free(self.n_classes)             # <<<<<<<<<<<<<<
@@ -2481,7 +2519,7 @@ static void __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion_2__de
  */
   free(__pyx_v_self->n_classes);
 
-  /* "sklearn/tree/_criterion.pyx":271
+  /* "sklearn/tree/_criterion.pyx":272
  *             raise MemoryError()
  * 
  *     def __dealloc__(self):             # <<<<<<<<<<<<<<
@@ -2493,7 +2531,7 @@ static void __pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion_2__de
   __Pyx_RefNannyFinishContext();
 }
 
-/* "sklearn/tree/_criterion.pyx":276
+/* "sklearn/tree/_criterion.pyx":277
  *         free(self.n_classes)
  * 
  *     def __reduce__(self):             # <<<<<<<<<<<<<<
@@ -2526,7 +2564,7 @@ static PyObject *__pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__reduce__", 0);
 
-  /* "sklearn/tree/_criterion.pyx":277
+  /* "sklearn/tree/_criterion.pyx":278
  * 
  *     def __reduce__(self):
  *         return (ClassificationCriterion,             # <<<<<<<<<<<<<<
@@ -2535,34 +2573,34 @@ static PyObject *__pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion_
  */
   __Pyx_XDECREF(__pyx_r);
 
-  /* "sklearn/tree/_criterion.pyx":278
+  /* "sklearn/tree/_criterion.pyx":279
  *     def __reduce__(self):
  *         return (ClassificationCriterion,
  *                 (self.n_outputs,             # <<<<<<<<<<<<<<
  *                  sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),
  *                 self.__getstate__())
  */
-  __pyx_t_1 = __Pyx_PyInt_From_Py_intptr_t(__pyx_v_self->__pyx_base.n_outputs); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 278; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyInt_From_Py_intptr_t(__pyx_v_self->__pyx_base.n_outputs); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 279; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
 
-  /* "sklearn/tree/_criterion.pyx":279
+  /* "sklearn/tree/_criterion.pyx":280
  *         return (ClassificationCriterion,
  *                 (self.n_outputs,
  *                  sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),             # <<<<<<<<<<<<<<
  *                 self.__getstate__())
  * 
  */
-  __pyx_t_2 = ((PyObject *)__pyx_f_7sklearn_4tree_6_utils_sizet_ptr_to_ndarray(__pyx_v_self->n_classes, __pyx_v_self->__pyx_base.n_outputs)); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 279; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = ((PyObject *)__pyx_f_7sklearn_4tree_6_utils_sizet_ptr_to_ndarray(__pyx_v_self->n_classes, __pyx_v_self->__pyx_base.n_outputs)); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 280; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
 
-  /* "sklearn/tree/_criterion.pyx":278
+  /* "sklearn/tree/_criterion.pyx":279
  *     def __reduce__(self):
  *         return (ClassificationCriterion,
  *                 (self.n_outputs,             # <<<<<<<<<<<<<<
  *                  sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),
  *                 self.__getstate__())
  */
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 278; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 279; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
@@ -2571,14 +2609,14 @@ static PyObject *__pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion_
   __pyx_t_1 = 0;
   __pyx_t_2 = 0;
 
-  /* "sklearn/tree/_criterion.pyx":280
+  /* "sklearn/tree/_criterion.pyx":281
  *                 (self.n_outputs,
  *                  sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),
  *                 self.__getstate__())             # <<<<<<<<<<<<<<
  * 
  *     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride,
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_getstate); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 280; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_getstate); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 281; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_4 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && likely(PyMethod_Check(__pyx_t_1))) {
@@ -2591,22 +2629,22 @@ static PyObject *__pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion_
     }
   }
   if (__pyx_t_4) {
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_4); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 280; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_4); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 281; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   } else {
-    __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 280; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 281; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "sklearn/tree/_criterion.pyx":277
+  /* "sklearn/tree/_criterion.pyx":278
  * 
  *     def __reduce__(self):
  *         return (ClassificationCriterion,             # <<<<<<<<<<<<<<
  *                 (self.n_outputs,
  *                  sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),
  */
-  __pyx_t_1 = PyTuple_New(3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 277; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 278; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(((PyObject *)((PyObject*)__pyx_ptype_7sklearn_4tree_10_criterion_ClassificationCriterion)));
   __Pyx_GIVEREF(((PyObject *)((PyObject*)__pyx_ptype_7sklearn_4tree_10_criterion_ClassificationCriterion)));
@@ -2621,7 +2659,7 @@ static PyObject *__pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion_
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "sklearn/tree/_criterion.pyx":276
+  /* "sklearn/tree/_criterion.pyx":277
  *         free(self.n_classes)
  * 
  *     def __reduce__(self):             # <<<<<<<<<<<<<<
@@ -2643,12 +2681,12 @@ static PyObject *__pyx_pf_7sklearn_4tree_10_criterion_23ClassificationCriterion_
   return __pyx_r;
 }
 
-/* "sklearn/tree/_criterion.pyx":282
+/* "sklearn/tree/_criterion.pyx":283
  *                 self.__getstate__())
  * 
  *     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride,             # <<<<<<<<<<<<<<
  *                    DOUBLE_t* sample_weight, double weighted_n_samples,
- *                    SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
+ *                    SIZE_t* samples, SIZE_t start, SIZE_t end, ) nogil:
  */
 
 static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(struct __pyx_obj_7sklearn_4tree_10_criterion_ClassificationCriterion *__pyx_v_self, __pyx_t_7sklearn_4tree_10_criterion_DOUBLE_t *__pyx_v_y, __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_v_y_stride, __pyx_t_7sklearn_4tree_10_criterion_DOUBLE_t *__pyx_v_sample_weight, double __pyx_v_weighted_n_samples, __pyx_t_7sklearn_4tree_10_criterion_SIZE_t *__pyx_v_samples, __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_v_start, __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_v_end) {
@@ -2669,7 +2707,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_7;
   int __pyx_t_8;
 
-  /* "sklearn/tree/_criterion.pyx":307
+  /* "sklearn/tree/_criterion.pyx":308
  *         """
  * 
  *         self.y = y             # <<<<<<<<<<<<<<
@@ -2678,7 +2716,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
  */
   __pyx_v_self->__pyx_base.y = __pyx_v_y;
 
-  /* "sklearn/tree/_criterion.pyx":308
+  /* "sklearn/tree/_criterion.pyx":309
  * 
  *         self.y = y
  *         self.y_stride = y_stride             # <<<<<<<<<<<<<<
@@ -2687,7 +2725,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
  */
   __pyx_v_self->__pyx_base.y_stride = __pyx_v_y_stride;
 
-  /* "sklearn/tree/_criterion.pyx":309
+  /* "sklearn/tree/_criterion.pyx":310
  *         self.y = y
  *         self.y_stride = y_stride
  *         self.sample_weight = sample_weight             # <<<<<<<<<<<<<<
@@ -2696,7 +2734,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
  */
   __pyx_v_self->__pyx_base.sample_weight = __pyx_v_sample_weight;
 
-  /* "sklearn/tree/_criterion.pyx":310
+  /* "sklearn/tree/_criterion.pyx":311
  *         self.y_stride = y_stride
  *         self.sample_weight = sample_weight
  *         self.samples = samples             # <<<<<<<<<<<<<<
@@ -2705,7 +2743,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
  */
   __pyx_v_self->__pyx_base.samples = __pyx_v_samples;
 
-  /* "sklearn/tree/_criterion.pyx":311
+  /* "sklearn/tree/_criterion.pyx":312
  *         self.sample_weight = sample_weight
  *         self.samples = samples
  *         self.start = start             # <<<<<<<<<<<<<<
@@ -2714,7 +2752,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
  */
   __pyx_v_self->__pyx_base.start = __pyx_v_start;
 
-  /* "sklearn/tree/_criterion.pyx":312
+  /* "sklearn/tree/_criterion.pyx":313
  *         self.samples = samples
  *         self.start = start
  *         self.end = end             # <<<<<<<<<<<<<<
@@ -2723,35 +2761,35 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
  */
   __pyx_v_self->__pyx_base.end = __pyx_v_end;
 
-  /* "sklearn/tree/_criterion.pyx":313
+  /* "sklearn/tree/_criterion.pyx":314
  *         self.start = start
  *         self.end = end
  *         self.n_node_samples = end - start             # <<<<<<<<<<<<<<
  *         self.weighted_n_samples = weighted_n_samples
- *         self.weighted_n_node_samples = 0.0
+ *         self.weighted_n_node_samples = 0
  */
   __pyx_v_self->__pyx_base.n_node_samples = (__pyx_v_end - __pyx_v_start);
 
-  /* "sklearn/tree/_criterion.pyx":314
+  /* "sklearn/tree/_criterion.pyx":315
  *         self.end = end
  *         self.n_node_samples = end - start
  *         self.weighted_n_samples = weighted_n_samples             # <<<<<<<<<<<<<<
- *         self.weighted_n_node_samples = 0.0
+ *         self.weighted_n_node_samples = 0
  * 
  */
   __pyx_v_self->__pyx_base.weighted_n_samples = __pyx_v_weighted_n_samples;
 
-  /* "sklearn/tree/_criterion.pyx":315
+  /* "sklearn/tree/_criterion.pyx":316
  *         self.n_node_samples = end - start
  *         self.weighted_n_samples = weighted_n_samples
- *         self.weighted_n_node_samples = 0.0             # <<<<<<<<<<<<<<
+ *         self.weighted_n_node_samples = 0             # <<<<<<<<<<<<<<
  * 
  *         cdef SIZE_t* n_classes = self.n_classes
  */
   __pyx_v_self->__pyx_base.weighted_n_node_samples = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":317
- *         self.weighted_n_node_samples = 0.0
+  /* "sklearn/tree/_criterion.pyx":318
+ *         self.weighted_n_node_samples = 0
  * 
  *         cdef SIZE_t* n_classes = self.n_classes             # <<<<<<<<<<<<<<
  *         cdef double* sum_total = self.sum_total
@@ -2760,7 +2798,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
   __pyx_t_1 = __pyx_v_self->n_classes;
   __pyx_v_n_classes = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":318
+  /* "sklearn/tree/_criterion.pyx":319
  * 
  *         cdef SIZE_t* n_classes = self.n_classes
  *         cdef double* sum_total = self.sum_total             # <<<<<<<<<<<<<<
@@ -2770,7 +2808,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
   __pyx_t_2 = __pyx_v_self->__pyx_base.sum_total;
   __pyx_v_sum_total = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":324
+  /* "sklearn/tree/_criterion.pyx":325
  *         cdef SIZE_t k
  *         cdef SIZE_t c
  *         cdef DOUBLE_t w = 1.0             # <<<<<<<<<<<<<<
@@ -2779,7 +2817,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
  */
   __pyx_v_w = 1.0;
 
-  /* "sklearn/tree/_criterion.pyx":325
+  /* "sklearn/tree/_criterion.pyx":326
  *         cdef SIZE_t c
  *         cdef DOUBLE_t w = 1.0
  *         cdef SIZE_t offset = 0             # <<<<<<<<<<<<<<
@@ -2788,7 +2826,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
  */
   __pyx_v_offset = 0;
 
-  /* "sklearn/tree/_criterion.pyx":327
+  /* "sklearn/tree/_criterion.pyx":328
  *         cdef SIZE_t offset = 0
  * 
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -2799,7 +2837,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
   for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
     __pyx_v_k = __pyx_t_4;
 
-    /* "sklearn/tree/_criterion.pyx":328
+    /* "sklearn/tree/_criterion.pyx":329
  * 
  *         for k in range(self.n_outputs):
  *             memset(sum_total + offset, 0, n_classes[k] * sizeof(double))             # <<<<<<<<<<<<<<
@@ -2808,17 +2846,17 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
  */
     memset((__pyx_v_sum_total + __pyx_v_offset), 0, ((__pyx_v_n_classes[__pyx_v_k]) * (sizeof(double))));
 
-    /* "sklearn/tree/_criterion.pyx":329
+    /* "sklearn/tree/_criterion.pyx":330
  *         for k in range(self.n_outputs):
  *             memset(sum_total + offset, 0, n_classes[k] * sizeof(double))
  *             offset += self.sum_stride             # <<<<<<<<<<<<<<
  * 
  *         for p in range(start, end):
  */
-    __pyx_v_offset = (__pyx_v_offset + __pyx_v_self->sum_stride);
+    __pyx_v_offset = (__pyx_v_offset + __pyx_v_self->__pyx_base.sum_stride);
   }
 
-  /* "sklearn/tree/_criterion.pyx":331
+  /* "sklearn/tree/_criterion.pyx":332
  *             offset += self.sum_stride
  * 
  *         for p in range(start, end):             # <<<<<<<<<<<<<<
@@ -2829,7 +2867,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
   for (__pyx_t_4 = __pyx_v_start; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
     __pyx_v_p = __pyx_t_4;
 
-    /* "sklearn/tree/_criterion.pyx":332
+    /* "sklearn/tree/_criterion.pyx":333
  * 
  *         for p in range(start, end):
  *             i = samples[p]             # <<<<<<<<<<<<<<
@@ -2838,7 +2876,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
  */
     __pyx_v_i = (__pyx_v_samples[__pyx_v_p]);
 
-    /* "sklearn/tree/_criterion.pyx":336
+    /* "sklearn/tree/_criterion.pyx":337
  *             # w is originally set to be 1.0, meaning that if no sample weights
  *             # are given, the default weight of each sample is 1.0
  *             if sample_weight != NULL:             # <<<<<<<<<<<<<<
@@ -2848,7 +2886,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
     __pyx_t_5 = ((__pyx_v_sample_weight != NULL) != 0);
     if (__pyx_t_5) {
 
-      /* "sklearn/tree/_criterion.pyx":337
+      /* "sklearn/tree/_criterion.pyx":338
  *             # are given, the default weight of each sample is 1.0
  *             if sample_weight != NULL:
  *                 w = sample_weight[i]             # <<<<<<<<<<<<<<
@@ -2860,7 +2898,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
     }
     __pyx_L7:;
 
-    /* "sklearn/tree/_criterion.pyx":340
+    /* "sklearn/tree/_criterion.pyx":341
  * 
  *             # Count weighted class frequency for each target
  *             for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -2871,7 +2909,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
     for (__pyx_t_7 = 0; __pyx_t_7 < __pyx_t_6; __pyx_t_7+=1) {
       __pyx_v_k = __pyx_t_7;
 
-      /* "sklearn/tree/_criterion.pyx":341
+      /* "sklearn/tree/_criterion.pyx":342
  *             # Count weighted class frequency for each target
  *             for k in range(self.n_outputs):
  *                 c = <SIZE_t> y[i * y_stride + k]             # <<<<<<<<<<<<<<
@@ -2880,18 +2918,18 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
  */
       __pyx_v_c = ((__pyx_t_7sklearn_4tree_10_criterion_SIZE_t)(__pyx_v_y[((__pyx_v_i * __pyx_v_y_stride) + __pyx_v_k)]));
 
-      /* "sklearn/tree/_criterion.pyx":342
+      /* "sklearn/tree/_criterion.pyx":343
  *             for k in range(self.n_outputs):
  *                 c = <SIZE_t> y[i * y_stride + k]
  *                 sum_total[k * self.sum_stride + c] += w             # <<<<<<<<<<<<<<
  * 
  *             self.weighted_n_node_samples += w
  */
-      __pyx_t_8 = ((__pyx_v_k * __pyx_v_self->sum_stride) + __pyx_v_c);
+      __pyx_t_8 = ((__pyx_v_k * __pyx_v_self->__pyx_base.sum_stride) + __pyx_v_c);
       (__pyx_v_sum_total[__pyx_t_8]) = ((__pyx_v_sum_total[__pyx_t_8]) + __pyx_v_w);
     }
 
-    /* "sklearn/tree/_criterion.pyx":344
+    /* "sklearn/tree/_criterion.pyx":345
  *                 sum_total[k * self.sum_stride + c] += w
  * 
  *             self.weighted_n_node_samples += w             # <<<<<<<<<<<<<<
@@ -2901,7 +2939,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
     __pyx_v_self->__pyx_base.weighted_n_node_samples = (__pyx_v_self->__pyx_base.weighted_n_node_samples + __pyx_v_w);
   }
 
-  /* "sklearn/tree/_criterion.pyx":347
+  /* "sklearn/tree/_criterion.pyx":348
  * 
  *         # Reset to pos=start
  *         self.reset()             # <<<<<<<<<<<<<<
@@ -2910,18 +2948,18 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_init(s
  */
   ((struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_ClassificationCriterion *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.reset(((struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *)__pyx_v_self));
 
-  /* "sklearn/tree/_criterion.pyx":282
+  /* "sklearn/tree/_criterion.pyx":283
  *                 self.__getstate__())
  * 
  *     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride,             # <<<<<<<<<<<<<<
  *                    DOUBLE_t* sample_weight, double weighted_n_samples,
- *                    SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
+ *                    SIZE_t* samples, SIZE_t start, SIZE_t end, ) nogil:
  */
 
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":349
+/* "sklearn/tree/_criterion.pyx":350
  *         self.reset()
  * 
  *     cdef void reset(self) nogil:             # <<<<<<<<<<<<<<
@@ -2941,7 +2979,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_reset(
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t *__pyx_t_4;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_5;
 
-  /* "sklearn/tree/_criterion.pyx":352
+  /* "sklearn/tree/_criterion.pyx":353
  *         """Reset the criterion at pos=start."""
  * 
  *         self.pos = self.start             # <<<<<<<<<<<<<<
@@ -2951,7 +2989,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_reset(
   __pyx_t_1 = __pyx_v_self->__pyx_base.start;
   __pyx_v_self->__pyx_base.pos = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":354
+  /* "sklearn/tree/_criterion.pyx":355
  *         self.pos = self.start
  * 
  *         self.weighted_n_left = 0.0             # <<<<<<<<<<<<<<
@@ -2960,7 +2998,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_reset(
  */
   __pyx_v_self->__pyx_base.weighted_n_left = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":355
+  /* "sklearn/tree/_criterion.pyx":356
  * 
  *         self.weighted_n_left = 0.0
  *         self.weighted_n_right = self.weighted_n_node_samples             # <<<<<<<<<<<<<<
@@ -2970,7 +3008,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_reset(
   __pyx_t_2 = __pyx_v_self->__pyx_base.weighted_n_node_samples;
   __pyx_v_self->__pyx_base.weighted_n_right = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":357
+  /* "sklearn/tree/_criterion.pyx":358
  *         self.weighted_n_right = self.weighted_n_node_samples
  * 
  *         cdef double* sum_total = self.sum_total             # <<<<<<<<<<<<<<
@@ -2980,7 +3018,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_reset(
   __pyx_t_3 = __pyx_v_self->__pyx_base.sum_total;
   __pyx_v_sum_total = __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":358
+  /* "sklearn/tree/_criterion.pyx":359
  * 
  *         cdef double* sum_total = self.sum_total
  *         cdef double* sum_left = self.sum_left             # <<<<<<<<<<<<<<
@@ -2990,7 +3028,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_reset(
   __pyx_t_3 = __pyx_v_self->__pyx_base.sum_left;
   __pyx_v_sum_left = __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":359
+  /* "sklearn/tree/_criterion.pyx":360
  *         cdef double* sum_total = self.sum_total
  *         cdef double* sum_left = self.sum_left
  *         cdef double* sum_right = self.sum_right             # <<<<<<<<<<<<<<
@@ -3000,7 +3038,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_reset(
   __pyx_t_3 = __pyx_v_self->__pyx_base.sum_right;
   __pyx_v_sum_right = __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":361
+  /* "sklearn/tree/_criterion.pyx":362
  *         cdef double* sum_right = self.sum_right
  * 
  *         cdef SIZE_t* n_classes = self.n_classes             # <<<<<<<<<<<<<<
@@ -3010,7 +3048,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_reset(
   __pyx_t_4 = __pyx_v_self->n_classes;
   __pyx_v_n_classes = __pyx_t_4;
 
-  /* "sklearn/tree/_criterion.pyx":364
+  /* "sklearn/tree/_criterion.pyx":365
  *         cdef SIZE_t k
  * 
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -3021,7 +3059,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_reset(
   for (__pyx_t_5 = 0; __pyx_t_5 < __pyx_t_1; __pyx_t_5+=1) {
     __pyx_v_k = __pyx_t_5;
 
-    /* "sklearn/tree/_criterion.pyx":365
+    /* "sklearn/tree/_criterion.pyx":366
  * 
  *         for k in range(self.n_outputs):
  *             memset(sum_left, 0, n_classes[k] * sizeof(double))             # <<<<<<<<<<<<<<
@@ -3030,7 +3068,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_reset(
  */
     memset(__pyx_v_sum_left, 0, ((__pyx_v_n_classes[__pyx_v_k]) * (sizeof(double))));
 
-    /* "sklearn/tree/_criterion.pyx":366
+    /* "sklearn/tree/_criterion.pyx":367
  *         for k in range(self.n_outputs):
  *             memset(sum_left, 0, n_classes[k] * sizeof(double))
  *             memcpy(sum_right, sum_total, n_classes[k] * sizeof(double))             # <<<<<<<<<<<<<<
@@ -3039,35 +3077,35 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_reset(
  */
     memcpy(__pyx_v_sum_right, __pyx_v_sum_total, ((__pyx_v_n_classes[__pyx_v_k]) * (sizeof(double))));
 
-    /* "sklearn/tree/_criterion.pyx":368
+    /* "sklearn/tree/_criterion.pyx":369
  *             memcpy(sum_right, sum_total, n_classes[k] * sizeof(double))
  * 
  *             sum_total += self.sum_stride             # <<<<<<<<<<<<<<
  *             sum_left += self.sum_stride
  *             sum_right += self.sum_stride
  */
-    __pyx_v_sum_total = (__pyx_v_sum_total + __pyx_v_self->sum_stride);
+    __pyx_v_sum_total = (__pyx_v_sum_total + __pyx_v_self->__pyx_base.sum_stride);
 
-    /* "sklearn/tree/_criterion.pyx":369
+    /* "sklearn/tree/_criterion.pyx":370
  * 
  *             sum_total += self.sum_stride
  *             sum_left += self.sum_stride             # <<<<<<<<<<<<<<
  *             sum_right += self.sum_stride
  * 
  */
-    __pyx_v_sum_left = (__pyx_v_sum_left + __pyx_v_self->sum_stride);
+    __pyx_v_sum_left = (__pyx_v_sum_left + __pyx_v_self->__pyx_base.sum_stride);
 
-    /* "sklearn/tree/_criterion.pyx":370
+    /* "sklearn/tree/_criterion.pyx":371
  *             sum_total += self.sum_stride
  *             sum_left += self.sum_stride
  *             sum_right += self.sum_stride             # <<<<<<<<<<<<<<
  * 
  *     cdef void reverse_reset(self) nogil:
  */
-    __pyx_v_sum_right = (__pyx_v_sum_right + __pyx_v_self->sum_stride);
+    __pyx_v_sum_right = (__pyx_v_sum_right + __pyx_v_self->__pyx_base.sum_stride);
   }
 
-  /* "sklearn/tree/_criterion.pyx":349
+  /* "sklearn/tree/_criterion.pyx":350
  *         self.reset()
  * 
  *     cdef void reset(self) nogil:             # <<<<<<<<<<<<<<
@@ -3078,7 +3116,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_reset(
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":372
+/* "sklearn/tree/_criterion.pyx":373
  *             sum_right += self.sum_stride
  * 
  *     cdef void reverse_reset(self) nogil:             # <<<<<<<<<<<<<<
@@ -3098,7 +3136,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_revers
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t *__pyx_t_4;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_5;
 
-  /* "sklearn/tree/_criterion.pyx":374
+  /* "sklearn/tree/_criterion.pyx":375
  *     cdef void reverse_reset(self) nogil:
  *         """Reset the criterion at pos=end."""
  *         self.pos = self.end             # <<<<<<<<<<<<<<
@@ -3108,7 +3146,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_revers
   __pyx_t_1 = __pyx_v_self->__pyx_base.end;
   __pyx_v_self->__pyx_base.pos = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":376
+  /* "sklearn/tree/_criterion.pyx":377
  *         self.pos = self.end
  * 
  *         self.weighted_n_left = self.weighted_n_node_samples             # <<<<<<<<<<<<<<
@@ -3118,7 +3156,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_revers
   __pyx_t_2 = __pyx_v_self->__pyx_base.weighted_n_node_samples;
   __pyx_v_self->__pyx_base.weighted_n_left = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":377
+  /* "sklearn/tree/_criterion.pyx":378
  * 
  *         self.weighted_n_left = self.weighted_n_node_samples
  *         self.weighted_n_right = 0.0             # <<<<<<<<<<<<<<
@@ -3127,7 +3165,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_revers
  */
   __pyx_v_self->__pyx_base.weighted_n_right = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":379
+  /* "sklearn/tree/_criterion.pyx":380
  *         self.weighted_n_right = 0.0
  * 
  *         cdef double* sum_total = self.sum_total             # <<<<<<<<<<<<<<
@@ -3137,7 +3175,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_revers
   __pyx_t_3 = __pyx_v_self->__pyx_base.sum_total;
   __pyx_v_sum_total = __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":380
+  /* "sklearn/tree/_criterion.pyx":381
  * 
  *         cdef double* sum_total = self.sum_total
  *         cdef double* sum_left = self.sum_left             # <<<<<<<<<<<<<<
@@ -3147,7 +3185,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_revers
   __pyx_t_3 = __pyx_v_self->__pyx_base.sum_left;
   __pyx_v_sum_left = __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":381
+  /* "sklearn/tree/_criterion.pyx":382
  *         cdef double* sum_total = self.sum_total
  *         cdef double* sum_left = self.sum_left
  *         cdef double* sum_right = self.sum_right             # <<<<<<<<<<<<<<
@@ -3157,7 +3195,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_revers
   __pyx_t_3 = __pyx_v_self->__pyx_base.sum_right;
   __pyx_v_sum_right = __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":383
+  /* "sklearn/tree/_criterion.pyx":384
  *         cdef double* sum_right = self.sum_right
  * 
  *         cdef SIZE_t* n_classes = self.n_classes             # <<<<<<<<<<<<<<
@@ -3167,7 +3205,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_revers
   __pyx_t_4 = __pyx_v_self->n_classes;
   __pyx_v_n_classes = __pyx_t_4;
 
-  /* "sklearn/tree/_criterion.pyx":386
+  /* "sklearn/tree/_criterion.pyx":387
  *         cdef SIZE_t k
  * 
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -3178,7 +3216,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_revers
   for (__pyx_t_5 = 0; __pyx_t_5 < __pyx_t_1; __pyx_t_5+=1) {
     __pyx_v_k = __pyx_t_5;
 
-    /* "sklearn/tree/_criterion.pyx":387
+    /* "sklearn/tree/_criterion.pyx":388
  * 
  *         for k in range(self.n_outputs):
  *             memset(sum_right, 0, n_classes[k] * sizeof(double))             # <<<<<<<<<<<<<<
@@ -3187,7 +3225,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_revers
  */
     memset(__pyx_v_sum_right, 0, ((__pyx_v_n_classes[__pyx_v_k]) * (sizeof(double))));
 
-    /* "sklearn/tree/_criterion.pyx":388
+    /* "sklearn/tree/_criterion.pyx":389
  *         for k in range(self.n_outputs):
  *             memset(sum_right, 0, n_classes[k] * sizeof(double))
  *             memcpy(sum_left, sum_total, n_classes[k] * sizeof(double))             # <<<<<<<<<<<<<<
@@ -3196,35 +3234,35 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_revers
  */
     memcpy(__pyx_v_sum_left, __pyx_v_sum_total, ((__pyx_v_n_classes[__pyx_v_k]) * (sizeof(double))));
 
-    /* "sklearn/tree/_criterion.pyx":390
+    /* "sklearn/tree/_criterion.pyx":391
  *             memcpy(sum_left, sum_total, n_classes[k] * sizeof(double))
  * 
  *             sum_total += self.sum_stride             # <<<<<<<<<<<<<<
  *             sum_left += self.sum_stride
  *             sum_right += self.sum_stride
  */
-    __pyx_v_sum_total = (__pyx_v_sum_total + __pyx_v_self->sum_stride);
+    __pyx_v_sum_total = (__pyx_v_sum_total + __pyx_v_self->__pyx_base.sum_stride);
 
-    /* "sklearn/tree/_criterion.pyx":391
+    /* "sklearn/tree/_criterion.pyx":392
  * 
  *             sum_total += self.sum_stride
  *             sum_left += self.sum_stride             # <<<<<<<<<<<<<<
  *             sum_right += self.sum_stride
  * 
  */
-    __pyx_v_sum_left = (__pyx_v_sum_left + __pyx_v_self->sum_stride);
+    __pyx_v_sum_left = (__pyx_v_sum_left + __pyx_v_self->__pyx_base.sum_stride);
 
-    /* "sklearn/tree/_criterion.pyx":392
+    /* "sklearn/tree/_criterion.pyx":393
  *             sum_total += self.sum_stride
  *             sum_left += self.sum_stride
  *             sum_right += self.sum_stride             # <<<<<<<<<<<<<<
  * 
  *     cdef void update(self, SIZE_t new_pos) nogil:
  */
-    __pyx_v_sum_right = (__pyx_v_sum_right + __pyx_v_self->sum_stride);
+    __pyx_v_sum_right = (__pyx_v_sum_right + __pyx_v_self->__pyx_base.sum_stride);
   }
 
-  /* "sklearn/tree/_criterion.pyx":372
+  /* "sklearn/tree/_criterion.pyx":373
  *             sum_right += self.sum_stride
  * 
  *     cdef void reverse_reset(self) nogil:             # <<<<<<<<<<<<<<
@@ -3235,7 +3273,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_revers
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":394
+/* "sklearn/tree/_criterion.pyx":395
  *             sum_right += self.sum_stride
  * 
  *     cdef void update(self, SIZE_t new_pos) nogil:             # <<<<<<<<<<<<<<
@@ -3270,7 +3308,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_9;
   long __pyx_t_10;
 
-  /* "sklearn/tree/_criterion.pyx":403
+  /* "sklearn/tree/_criterion.pyx":404
  *             child to the left child.
  *         """
  *         cdef DOUBLE_t* y = self.y             # <<<<<<<<<<<<<<
@@ -3280,7 +3318,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   __pyx_t_1 = __pyx_v_self->__pyx_base.y;
   __pyx_v_y = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":404
+  /* "sklearn/tree/_criterion.pyx":405
  *         """
  *         cdef DOUBLE_t* y = self.y
  *         cdef SIZE_t pos = self.pos             # <<<<<<<<<<<<<<
@@ -3290,7 +3328,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   __pyx_t_2 = __pyx_v_self->__pyx_base.pos;
   __pyx_v_pos = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":405
+  /* "sklearn/tree/_criterion.pyx":406
  *         cdef DOUBLE_t* y = self.y
  *         cdef SIZE_t pos = self.pos
  *         cdef SIZE_t end = self.end             # <<<<<<<<<<<<<<
@@ -3300,7 +3338,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   __pyx_t_2 = __pyx_v_self->__pyx_base.end;
   __pyx_v_end = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":407
+  /* "sklearn/tree/_criterion.pyx":408
  *         cdef SIZE_t end = self.end
  * 
  *         cdef double* sum_left = self.sum_left             # <<<<<<<<<<<<<<
@@ -3310,7 +3348,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   __pyx_t_3 = __pyx_v_self->__pyx_base.sum_left;
   __pyx_v_sum_left = __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":408
+  /* "sklearn/tree/_criterion.pyx":409
  * 
  *         cdef double* sum_left = self.sum_left
  *         cdef double* sum_right = self.sum_right             # <<<<<<<<<<<<<<
@@ -3320,7 +3358,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   __pyx_t_3 = __pyx_v_self->__pyx_base.sum_right;
   __pyx_v_sum_right = __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":409
+  /* "sklearn/tree/_criterion.pyx":410
  *         cdef double* sum_left = self.sum_left
  *         cdef double* sum_right = self.sum_right
  *         cdef double* sum_total = self.sum_total             # <<<<<<<<<<<<<<
@@ -3330,7 +3368,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   __pyx_t_3 = __pyx_v_self->__pyx_base.sum_total;
   __pyx_v_sum_total = __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":411
+  /* "sklearn/tree/_criterion.pyx":412
  *         cdef double* sum_total = self.sum_total
  * 
  *         cdef SIZE_t* n_classes = self.n_classes             # <<<<<<<<<<<<<<
@@ -3340,7 +3378,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   __pyx_t_4 = __pyx_v_self->n_classes;
   __pyx_v_n_classes = __pyx_t_4;
 
-  /* "sklearn/tree/_criterion.pyx":412
+  /* "sklearn/tree/_criterion.pyx":413
  * 
  *         cdef SIZE_t* n_classes = self.n_classes
  *         cdef SIZE_t* samples = self.samples             # <<<<<<<<<<<<<<
@@ -3350,7 +3388,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   __pyx_t_4 = __pyx_v_self->__pyx_base.samples;
   __pyx_v_samples = __pyx_t_4;
 
-  /* "sklearn/tree/_criterion.pyx":413
+  /* "sklearn/tree/_criterion.pyx":414
  *         cdef SIZE_t* n_classes = self.n_classes
  *         cdef SIZE_t* samples = self.samples
  *         cdef DOUBLE_t* sample_weight = self.sample_weight             # <<<<<<<<<<<<<<
@@ -3360,7 +3398,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   __pyx_t_1 = __pyx_v_self->__pyx_base.sample_weight;
   __pyx_v_sample_weight = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":420
+  /* "sklearn/tree/_criterion.pyx":421
  *         cdef SIZE_t c
  *         cdef SIZE_t label_index
  *         cdef DOUBLE_t w = 1.0             # <<<<<<<<<<<<<<
@@ -3369,7 +3407,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
  */
   __pyx_v_w = 1.0;
 
-  /* "sklearn/tree/_criterion.pyx":430
+  /* "sklearn/tree/_criterion.pyx":431
  *         # of computations, i.e. from pos to new_pos or from end to new_po.
  * 
  *         if (new_pos - pos) <= (end - new_pos):             # <<<<<<<<<<<<<<
@@ -3379,7 +3417,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   __pyx_t_5 = (((__pyx_v_new_pos - __pyx_v_pos) <= (__pyx_v_end - __pyx_v_new_pos)) != 0);
   if (__pyx_t_5) {
 
-    /* "sklearn/tree/_criterion.pyx":431
+    /* "sklearn/tree/_criterion.pyx":432
  * 
  *         if (new_pos - pos) <= (end - new_pos):
  *             for p in range(pos, new_pos):             # <<<<<<<<<<<<<<
@@ -3390,7 +3428,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
     for (__pyx_t_6 = __pyx_v_pos; __pyx_t_6 < __pyx_t_2; __pyx_t_6+=1) {
       __pyx_v_p = __pyx_t_6;
 
-      /* "sklearn/tree/_criterion.pyx":432
+      /* "sklearn/tree/_criterion.pyx":433
  *         if (new_pos - pos) <= (end - new_pos):
  *             for p in range(pos, new_pos):
  *                 i = samples[p]             # <<<<<<<<<<<<<<
@@ -3399,7 +3437,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
  */
       __pyx_v_i = (__pyx_v_samples[__pyx_v_p]);
 
-      /* "sklearn/tree/_criterion.pyx":434
+      /* "sklearn/tree/_criterion.pyx":435
  *                 i = samples[p]
  * 
  *                 if sample_weight != NULL:             # <<<<<<<<<<<<<<
@@ -3409,7 +3447,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
       __pyx_t_5 = ((__pyx_v_sample_weight != NULL) != 0);
       if (__pyx_t_5) {
 
-        /* "sklearn/tree/_criterion.pyx":435
+        /* "sklearn/tree/_criterion.pyx":436
  * 
  *                 if sample_weight != NULL:
  *                     w = sample_weight[i]             # <<<<<<<<<<<<<<
@@ -3421,7 +3459,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
       }
       __pyx_L6:;
 
-      /* "sklearn/tree/_criterion.pyx":437
+      /* "sklearn/tree/_criterion.pyx":438
  *                     w = sample_weight[i]
  * 
  *                 for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -3432,16 +3470,16 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
       for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_7; __pyx_t_8+=1) {
         __pyx_v_k = __pyx_t_8;
 
-        /* "sklearn/tree/_criterion.pyx":438
+        /* "sklearn/tree/_criterion.pyx":439
  * 
  *                 for k in range(self.n_outputs):
  *                     label_index = (k * self.sum_stride +             # <<<<<<<<<<<<<<
  *                                    <SIZE_t> y[i * self.y_stride + k])
  *                     sum_left[label_index] += w
  */
-        __pyx_v_label_index = ((__pyx_v_k * __pyx_v_self->sum_stride) + ((__pyx_t_7sklearn_4tree_10_criterion_SIZE_t)(__pyx_v_y[((__pyx_v_i * __pyx_v_self->__pyx_base.y_stride) + __pyx_v_k)])));
+        __pyx_v_label_index = ((__pyx_v_k * __pyx_v_self->__pyx_base.sum_stride) + ((__pyx_t_7sklearn_4tree_10_criterion_SIZE_t)(__pyx_v_y[((__pyx_v_i * __pyx_v_self->__pyx_base.y_stride) + __pyx_v_k)])));
 
-        /* "sklearn/tree/_criterion.pyx":440
+        /* "sklearn/tree/_criterion.pyx":441
  *                     label_index = (k * self.sum_stride +
  *                                    <SIZE_t> y[i * self.y_stride + k])
  *                     sum_left[label_index] += w             # <<<<<<<<<<<<<<
@@ -3452,7 +3490,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
         (__pyx_v_sum_left[__pyx_t_9]) = ((__pyx_v_sum_left[__pyx_t_9]) + __pyx_v_w);
       }
 
-      /* "sklearn/tree/_criterion.pyx":442
+      /* "sklearn/tree/_criterion.pyx":443
  *                     sum_left[label_index] += w
  * 
  *                 self.weighted_n_left += w             # <<<<<<<<<<<<<<
@@ -3465,7 +3503,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   }
   /*else*/ {
 
-    /* "sklearn/tree/_criterion.pyx":445
+    /* "sklearn/tree/_criterion.pyx":446
  * 
  *         else:
  *             self.reverse_reset()             # <<<<<<<<<<<<<<
@@ -3474,7 +3512,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
  */
     ((struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_ClassificationCriterion *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.reverse_reset(((struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *)__pyx_v_self));
 
-    /* "sklearn/tree/_criterion.pyx":447
+    /* "sklearn/tree/_criterion.pyx":448
  *             self.reverse_reset()
  * 
  *             for p in range(end - 1, new_pos - 1, -1):             # <<<<<<<<<<<<<<
@@ -3485,7 +3523,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
     for (__pyx_t_2 = (__pyx_v_end - 1); __pyx_t_2 > __pyx_t_10; __pyx_t_2-=1) {
       __pyx_v_p = __pyx_t_2;
 
-      /* "sklearn/tree/_criterion.pyx":448
+      /* "sklearn/tree/_criterion.pyx":449
  * 
  *             for p in range(end - 1, new_pos - 1, -1):
  *                 i = samples[p]             # <<<<<<<<<<<<<<
@@ -3494,7 +3532,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
  */
       __pyx_v_i = (__pyx_v_samples[__pyx_v_p]);
 
-      /* "sklearn/tree/_criterion.pyx":450
+      /* "sklearn/tree/_criterion.pyx":451
  *                 i = samples[p]
  * 
  *                 if sample_weight != NULL:             # <<<<<<<<<<<<<<
@@ -3504,7 +3542,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
       __pyx_t_5 = ((__pyx_v_sample_weight != NULL) != 0);
       if (__pyx_t_5) {
 
-        /* "sklearn/tree/_criterion.pyx":451
+        /* "sklearn/tree/_criterion.pyx":452
  * 
  *                 if sample_weight != NULL:
  *                     w = sample_weight[i]             # <<<<<<<<<<<<<<
@@ -3516,7 +3554,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
       }
       __pyx_L11:;
 
-      /* "sklearn/tree/_criterion.pyx":453
+      /* "sklearn/tree/_criterion.pyx":454
  *                     w = sample_weight[i]
  * 
  *                 for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -3527,16 +3565,16 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
       for (__pyx_t_7 = 0; __pyx_t_7 < __pyx_t_6; __pyx_t_7+=1) {
         __pyx_v_k = __pyx_t_7;
 
-        /* "sklearn/tree/_criterion.pyx":454
+        /* "sklearn/tree/_criterion.pyx":455
  * 
  *                 for k in range(self.n_outputs):
  *                     label_index = (k * self.sum_stride +             # <<<<<<<<<<<<<<
  *                                    <SIZE_t> y[i * self.y_stride + k])
  *                     sum_left[label_index] -= w
  */
-        __pyx_v_label_index = ((__pyx_v_k * __pyx_v_self->sum_stride) + ((__pyx_t_7sklearn_4tree_10_criterion_SIZE_t)(__pyx_v_y[((__pyx_v_i * __pyx_v_self->__pyx_base.y_stride) + __pyx_v_k)])));
+        __pyx_v_label_index = ((__pyx_v_k * __pyx_v_self->__pyx_base.sum_stride) + ((__pyx_t_7sklearn_4tree_10_criterion_SIZE_t)(__pyx_v_y[((__pyx_v_i * __pyx_v_self->__pyx_base.y_stride) + __pyx_v_k)])));
 
-        /* "sklearn/tree/_criterion.pyx":456
+        /* "sklearn/tree/_criterion.pyx":457
  *                     label_index = (k * self.sum_stride +
  *                                    <SIZE_t> y[i * self.y_stride + k])
  *                     sum_left[label_index] -= w             # <<<<<<<<<<<<<<
@@ -3547,7 +3585,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
         (__pyx_v_sum_left[__pyx_t_8]) = ((__pyx_v_sum_left[__pyx_t_8]) - __pyx_v_w);
       }
 
-      /* "sklearn/tree/_criterion.pyx":458
+      /* "sklearn/tree/_criterion.pyx":459
  *                     sum_left[label_index] -= w
  * 
  *                 self.weighted_n_left -= w             # <<<<<<<<<<<<<<
@@ -3559,7 +3597,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   }
   __pyx_L3:;
 
-  /* "sklearn/tree/_criterion.pyx":461
+  /* "sklearn/tree/_criterion.pyx":462
  * 
  *         # Update right part statistics
  *         self.weighted_n_right = self.weighted_n_node_samples - self.weighted_n_left             # <<<<<<<<<<<<<<
@@ -3568,7 +3606,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
  */
   __pyx_v_self->__pyx_base.weighted_n_right = (__pyx_v_self->__pyx_base.weighted_n_node_samples - __pyx_v_self->__pyx_base.weighted_n_left);
 
-  /* "sklearn/tree/_criterion.pyx":462
+  /* "sklearn/tree/_criterion.pyx":463
  *         # Update right part statistics
  *         self.weighted_n_right = self.weighted_n_node_samples - self.weighted_n_left
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -3579,7 +3617,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_2; __pyx_t_6+=1) {
     __pyx_v_k = __pyx_t_6;
 
-    /* "sklearn/tree/_criterion.pyx":463
+    /* "sklearn/tree/_criterion.pyx":464
  *         self.weighted_n_right = self.weighted_n_node_samples - self.weighted_n_left
  *         for k in range(self.n_outputs):
  *             for c in range(n_classes[k]):             # <<<<<<<<<<<<<<
@@ -3590,7 +3628,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
     for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_7; __pyx_t_8+=1) {
       __pyx_v_c = __pyx_t_8;
 
-      /* "sklearn/tree/_criterion.pyx":464
+      /* "sklearn/tree/_criterion.pyx":465
  *         for k in range(self.n_outputs):
  *             for c in range(n_classes[k]):
  *                 sum_right[c] = sum_total[c] - sum_left[c]             # <<<<<<<<<<<<<<
@@ -3600,35 +3638,35 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
       (__pyx_v_sum_right[__pyx_v_c]) = ((__pyx_v_sum_total[__pyx_v_c]) - (__pyx_v_sum_left[__pyx_v_c]));
     }
 
-    /* "sklearn/tree/_criterion.pyx":466
+    /* "sklearn/tree/_criterion.pyx":467
  *                 sum_right[c] = sum_total[c] - sum_left[c]
  * 
  *             sum_right += self.sum_stride             # <<<<<<<<<<<<<<
  *             sum_left += self.sum_stride
  *             sum_total += self.sum_stride
  */
-    __pyx_v_sum_right = (__pyx_v_sum_right + __pyx_v_self->sum_stride);
+    __pyx_v_sum_right = (__pyx_v_sum_right + __pyx_v_self->__pyx_base.sum_stride);
 
-    /* "sklearn/tree/_criterion.pyx":467
+    /* "sklearn/tree/_criterion.pyx":468
  * 
  *             sum_right += self.sum_stride
  *             sum_left += self.sum_stride             # <<<<<<<<<<<<<<
  *             sum_total += self.sum_stride
  * 
  */
-    __pyx_v_sum_left = (__pyx_v_sum_left + __pyx_v_self->sum_stride);
+    __pyx_v_sum_left = (__pyx_v_sum_left + __pyx_v_self->__pyx_base.sum_stride);
 
-    /* "sklearn/tree/_criterion.pyx":468
+    /* "sklearn/tree/_criterion.pyx":469
  *             sum_right += self.sum_stride
  *             sum_left += self.sum_stride
  *             sum_total += self.sum_stride             # <<<<<<<<<<<<<<
  * 
  *         self.pos = new_pos
  */
-    __pyx_v_sum_total = (__pyx_v_sum_total + __pyx_v_self->sum_stride);
+    __pyx_v_sum_total = (__pyx_v_sum_total + __pyx_v_self->__pyx_base.sum_stride);
   }
 
-  /* "sklearn/tree/_criterion.pyx":470
+  /* "sklearn/tree/_criterion.pyx":471
  *             sum_total += self.sum_stride
  * 
  *         self.pos = new_pos             # <<<<<<<<<<<<<<
@@ -3637,7 +3675,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
  */
   __pyx_v_self->__pyx_base.pos = __pyx_v_new_pos;
 
-  /* "sklearn/tree/_criterion.pyx":394
+  /* "sklearn/tree/_criterion.pyx":395
  *             sum_right += self.sum_stride
  * 
  *     cdef void update(self, SIZE_t new_pos) nogil:             # <<<<<<<<<<<<<<
@@ -3648,7 +3686,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_update
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":472
+/* "sklearn/tree/_criterion.pyx":473
  *         self.pos = new_pos
  * 
  *     cdef double node_impurity(self) nogil:             # <<<<<<<<<<<<<<
@@ -3664,7 +3702,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_node
   return __pyx_r;
 }
 
-/* "sklearn/tree/_criterion.pyx":475
+/* "sklearn/tree/_criterion.pyx":476
  *         pass
  * 
  *     cdef void children_impurity(self, double* impurity_left,             # <<<<<<<<<<<<<<
@@ -3677,7 +3715,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_childr
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":479
+/* "sklearn/tree/_criterion.pyx":480
  *         pass
  * 
  *     cdef void node_value(self, double* dest) nogil:             # <<<<<<<<<<<<<<
@@ -3694,7 +3732,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_node_v
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_3;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_4;
 
-  /* "sklearn/tree/_criterion.pyx":488
+  /* "sklearn/tree/_criterion.pyx":489
  *         """
  * 
  *         cdef double* sum_total = self.sum_total             # <<<<<<<<<<<<<<
@@ -3704,7 +3742,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_node_v
   __pyx_t_1 = __pyx_v_self->__pyx_base.sum_total;
   __pyx_v_sum_total = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":489
+  /* "sklearn/tree/_criterion.pyx":490
  * 
  *         cdef double* sum_total = self.sum_total
  *         cdef SIZE_t* n_classes = self.n_classes             # <<<<<<<<<<<<<<
@@ -3714,7 +3752,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_node_v
   __pyx_t_2 = __pyx_v_self->n_classes;
   __pyx_v_n_classes = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":492
+  /* "sklearn/tree/_criterion.pyx":493
  *         cdef SIZE_t k
  * 
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -3725,7 +3763,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_node_v
   for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
     __pyx_v_k = __pyx_t_4;
 
-    /* "sklearn/tree/_criterion.pyx":493
+    /* "sklearn/tree/_criterion.pyx":494
  * 
  *         for k in range(self.n_outputs):
  *             memcpy(dest, sum_total, n_classes[k] * sizeof(double))             # <<<<<<<<<<<<<<
@@ -3734,26 +3772,26 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_node_v
  */
     memcpy(__pyx_v_dest, __pyx_v_sum_total, ((__pyx_v_n_classes[__pyx_v_k]) * (sizeof(double))));
 
-    /* "sklearn/tree/_criterion.pyx":494
+    /* "sklearn/tree/_criterion.pyx":495
  *         for k in range(self.n_outputs):
  *             memcpy(dest, sum_total, n_classes[k] * sizeof(double))
  *             dest += self.sum_stride             # <<<<<<<<<<<<<<
  *             sum_total += self.sum_stride
  * 
  */
-    __pyx_v_dest = (__pyx_v_dest + __pyx_v_self->sum_stride);
+    __pyx_v_dest = (__pyx_v_dest + __pyx_v_self->__pyx_base.sum_stride);
 
-    /* "sklearn/tree/_criterion.pyx":495
+    /* "sklearn/tree/_criterion.pyx":496
  *             memcpy(dest, sum_total, n_classes[k] * sizeof(double))
  *             dest += self.sum_stride
  *             sum_total += self.sum_stride             # <<<<<<<<<<<<<<
  * 
  * 
  */
-    __pyx_v_sum_total = (__pyx_v_sum_total + __pyx_v_self->sum_stride);
+    __pyx_v_sum_total = (__pyx_v_sum_total + __pyx_v_self->__pyx_base.sum_stride);
   }
 
-  /* "sklearn/tree/_criterion.pyx":479
+  /* "sklearn/tree/_criterion.pyx":480
  *         pass
  * 
  *     cdef void node_value(self, double* dest) nogil:             # <<<<<<<<<<<<<<
@@ -3764,7 +3802,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_node_v
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":514
+/* "sklearn/tree/_criterion.pyx":515
  *     """
  * 
  *     cdef double node_impurity(self) nogil:             # <<<<<<<<<<<<<<
@@ -3788,7 +3826,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_7Entropy_node_impurity(struct 
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_6;
   int __pyx_t_7;
 
-  /* "sklearn/tree/_criterion.pyx":518
+  /* "sklearn/tree/_criterion.pyx":519
  *         samples[start:end], using the cross-entropy criterion."""
  * 
  *         cdef SIZE_t* n_classes = self.n_classes             # <<<<<<<<<<<<<<
@@ -3798,7 +3836,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_7Entropy_node_impurity(struct 
   __pyx_t_1 = __pyx_v_self->__pyx_base.n_classes;
   __pyx_v_n_classes = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":519
+  /* "sklearn/tree/_criterion.pyx":520
  * 
  *         cdef SIZE_t* n_classes = self.n_classes
  *         cdef double* sum_total = self.sum_total             # <<<<<<<<<<<<<<
@@ -3808,7 +3846,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_7Entropy_node_impurity(struct 
   __pyx_t_2 = __pyx_v_self->__pyx_base.__pyx_base.sum_total;
   __pyx_v_sum_total = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":520
+  /* "sklearn/tree/_criterion.pyx":521
  *         cdef SIZE_t* n_classes = self.n_classes
  *         cdef double* sum_total = self.sum_total
  *         cdef double entropy = 0.0             # <<<<<<<<<<<<<<
@@ -3817,7 +3855,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_7Entropy_node_impurity(struct 
  */
   __pyx_v_entropy = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":525
+  /* "sklearn/tree/_criterion.pyx":526
  *         cdef SIZE_t c
  * 
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -3828,7 +3866,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_7Entropy_node_impurity(struct 
   for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
     __pyx_v_k = __pyx_t_4;
 
-    /* "sklearn/tree/_criterion.pyx":526
+    /* "sklearn/tree/_criterion.pyx":527
  * 
  *         for k in range(self.n_outputs):
  *             for c in range(n_classes[k]):             # <<<<<<<<<<<<<<
@@ -3839,7 +3877,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_7Entropy_node_impurity(struct 
     for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
       __pyx_v_c = __pyx_t_6;
 
-      /* "sklearn/tree/_criterion.pyx":527
+      /* "sklearn/tree/_criterion.pyx":528
  *         for k in range(self.n_outputs):
  *             for c in range(n_classes[k]):
  *                 count_k = sum_total[c]             # <<<<<<<<<<<<<<
@@ -3848,7 +3886,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_7Entropy_node_impurity(struct 
  */
       __pyx_v_count_k = (__pyx_v_sum_total[__pyx_v_c]);
 
-      /* "sklearn/tree/_criterion.pyx":528
+      /* "sklearn/tree/_criterion.pyx":529
  *             for c in range(n_classes[k]):
  *                 count_k = sum_total[c]
  *                 if count_k > 0.0:             # <<<<<<<<<<<<<<
@@ -3858,7 +3896,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_7Entropy_node_impurity(struct 
       __pyx_t_7 = ((__pyx_v_count_k > 0.0) != 0);
       if (__pyx_t_7) {
 
-        /* "sklearn/tree/_criterion.pyx":529
+        /* "sklearn/tree/_criterion.pyx":530
  *                 count_k = sum_total[c]
  *                 if count_k > 0.0:
  *                     count_k /= self.weighted_n_node_samples             # <<<<<<<<<<<<<<
@@ -3867,7 +3905,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_7Entropy_node_impurity(struct 
  */
         __pyx_v_count_k = (__pyx_v_count_k / __pyx_v_self->__pyx_base.__pyx_base.weighted_n_node_samples);
 
-        /* "sklearn/tree/_criterion.pyx":530
+        /* "sklearn/tree/_criterion.pyx":531
  *                 if count_k > 0.0:
  *                     count_k /= self.weighted_n_node_samples
  *                     entropy -= count_k * log(count_k)             # <<<<<<<<<<<<<<
@@ -3880,17 +3918,17 @@ static double __pyx_f_7sklearn_4tree_10_criterion_7Entropy_node_impurity(struct 
       __pyx_L7:;
     }
 
-    /* "sklearn/tree/_criterion.pyx":532
+    /* "sklearn/tree/_criterion.pyx":533
  *                     entropy -= count_k * log(count_k)
  * 
  *             sum_total += self.sum_stride             # <<<<<<<<<<<<<<
  * 
  *         return entropy / self.n_outputs
  */
-    __pyx_v_sum_total = (__pyx_v_sum_total + __pyx_v_self->__pyx_base.sum_stride);
+    __pyx_v_sum_total = (__pyx_v_sum_total + __pyx_v_self->__pyx_base.__pyx_base.sum_stride);
   }
 
-  /* "sklearn/tree/_criterion.pyx":534
+  /* "sklearn/tree/_criterion.pyx":535
  *             sum_total += self.sum_stride
  * 
  *         return entropy / self.n_outputs             # <<<<<<<<<<<<<<
@@ -3900,7 +3938,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_7Entropy_node_impurity(struct 
   __pyx_r = (__pyx_v_entropy / __pyx_v_self->__pyx_base.__pyx_base.n_outputs);
   goto __pyx_L0;
 
-  /* "sklearn/tree/_criterion.pyx":514
+  /* "sklearn/tree/_criterion.pyx":515
  *     """
  * 
  *     cdef double node_impurity(self) nogil:             # <<<<<<<<<<<<<<
@@ -3913,7 +3951,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_7Entropy_node_impurity(struct 
   return __pyx_r;
 }
 
-/* "sklearn/tree/_criterion.pyx":536
+/* "sklearn/tree/_criterion.pyx":537
  *         return entropy / self.n_outputs
  * 
  *     cdef void children_impurity(self, double* impurity_left,             # <<<<<<<<<<<<<<
@@ -3938,7 +3976,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_6;
   int __pyx_t_7;
 
-  /* "sklearn/tree/_criterion.pyx":551
+  /* "sklearn/tree/_criterion.pyx":552
  *         """
  * 
  *         cdef SIZE_t* n_classes = self.n_classes             # <<<<<<<<<<<<<<
@@ -3948,7 +3986,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
   __pyx_t_1 = __pyx_v_self->__pyx_base.n_classes;
   __pyx_v_n_classes = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":552
+  /* "sklearn/tree/_criterion.pyx":553
  * 
  *         cdef SIZE_t* n_classes = self.n_classes
  *         cdef double* sum_left = self.sum_left             # <<<<<<<<<<<<<<
@@ -3958,7 +3996,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
   __pyx_t_2 = __pyx_v_self->__pyx_base.__pyx_base.sum_left;
   __pyx_v_sum_left = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":553
+  /* "sklearn/tree/_criterion.pyx":554
  *         cdef SIZE_t* n_classes = self.n_classes
  *         cdef double* sum_left = self.sum_left
  *         cdef double* sum_right = self.sum_right             # <<<<<<<<<<<<<<
@@ -3968,7 +4006,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
   __pyx_t_2 = __pyx_v_self->__pyx_base.__pyx_base.sum_right;
   __pyx_v_sum_right = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":554
+  /* "sklearn/tree/_criterion.pyx":555
  *         cdef double* sum_left = self.sum_left
  *         cdef double* sum_right = self.sum_right
  *         cdef double entropy_left = 0.0             # <<<<<<<<<<<<<<
@@ -3977,7 +4015,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
  */
   __pyx_v_entropy_left = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":555
+  /* "sklearn/tree/_criterion.pyx":556
  *         cdef double* sum_right = self.sum_right
  *         cdef double entropy_left = 0.0
  *         cdef double entropy_right = 0.0             # <<<<<<<<<<<<<<
@@ -3986,7 +4024,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
  */
   __pyx_v_entropy_right = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":560
+  /* "sklearn/tree/_criterion.pyx":561
  *         cdef SIZE_t c
  * 
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -3997,7 +4035,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
   for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
     __pyx_v_k = __pyx_t_4;
 
-    /* "sklearn/tree/_criterion.pyx":561
+    /* "sklearn/tree/_criterion.pyx":562
  * 
  *         for k in range(self.n_outputs):
  *             for c in range(n_classes[k]):             # <<<<<<<<<<<<<<
@@ -4008,7 +4046,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
     for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
       __pyx_v_c = __pyx_t_6;
 
-      /* "sklearn/tree/_criterion.pyx":562
+      /* "sklearn/tree/_criterion.pyx":563
  *         for k in range(self.n_outputs):
  *             for c in range(n_classes[k]):
  *                 count_k = sum_left[c]             # <<<<<<<<<<<<<<
@@ -4017,7 +4055,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
  */
       __pyx_v_count_k = (__pyx_v_sum_left[__pyx_v_c]);
 
-      /* "sklearn/tree/_criterion.pyx":563
+      /* "sklearn/tree/_criterion.pyx":564
  *             for c in range(n_classes[k]):
  *                 count_k = sum_left[c]
  *                 if count_k > 0.0:             # <<<<<<<<<<<<<<
@@ -4027,7 +4065,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
       __pyx_t_7 = ((__pyx_v_count_k > 0.0) != 0);
       if (__pyx_t_7) {
 
-        /* "sklearn/tree/_criterion.pyx":564
+        /* "sklearn/tree/_criterion.pyx":565
  *                 count_k = sum_left[c]
  *                 if count_k > 0.0:
  *                     count_k /= self.weighted_n_left             # <<<<<<<<<<<<<<
@@ -4036,7 +4074,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
  */
         __pyx_v_count_k = (__pyx_v_count_k / __pyx_v_self->__pyx_base.__pyx_base.weighted_n_left);
 
-        /* "sklearn/tree/_criterion.pyx":565
+        /* "sklearn/tree/_criterion.pyx":566
  *                 if count_k > 0.0:
  *                     count_k /= self.weighted_n_left
  *                     entropy_left -= count_k * log(count_k)             # <<<<<<<<<<<<<<
@@ -4048,7 +4086,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
       }
       __pyx_L7:;
 
-      /* "sklearn/tree/_criterion.pyx":567
+      /* "sklearn/tree/_criterion.pyx":568
  *                     entropy_left -= count_k * log(count_k)
  * 
  *                 count_k = sum_right[c]             # <<<<<<<<<<<<<<
@@ -4057,7 +4095,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
  */
       __pyx_v_count_k = (__pyx_v_sum_right[__pyx_v_c]);
 
-      /* "sklearn/tree/_criterion.pyx":568
+      /* "sklearn/tree/_criterion.pyx":569
  * 
  *                 count_k = sum_right[c]
  *                 if count_k > 0.0:             # <<<<<<<<<<<<<<
@@ -4067,7 +4105,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
       __pyx_t_7 = ((__pyx_v_count_k > 0.0) != 0);
       if (__pyx_t_7) {
 
-        /* "sklearn/tree/_criterion.pyx":569
+        /* "sklearn/tree/_criterion.pyx":570
  *                 count_k = sum_right[c]
  *                 if count_k > 0.0:
  *                     count_k /= self.weighted_n_right             # <<<<<<<<<<<<<<
@@ -4076,7 +4114,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
  */
         __pyx_v_count_k = (__pyx_v_count_k / __pyx_v_self->__pyx_base.__pyx_base.weighted_n_right);
 
-        /* "sklearn/tree/_criterion.pyx":570
+        /* "sklearn/tree/_criterion.pyx":571
  *                 if count_k > 0.0:
  *                     count_k /= self.weighted_n_right
  *                     entropy_right -= count_k * log(count_k)             # <<<<<<<<<<<<<<
@@ -4089,26 +4127,26 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
       __pyx_L8:;
     }
 
-    /* "sklearn/tree/_criterion.pyx":572
+    /* "sklearn/tree/_criterion.pyx":573
  *                     entropy_right -= count_k * log(count_k)
  * 
  *             sum_left += self.sum_stride             # <<<<<<<<<<<<<<
  *             sum_right += self.sum_stride
  * 
  */
-    __pyx_v_sum_left = (__pyx_v_sum_left + __pyx_v_self->__pyx_base.sum_stride);
+    __pyx_v_sum_left = (__pyx_v_sum_left + __pyx_v_self->__pyx_base.__pyx_base.sum_stride);
 
-    /* "sklearn/tree/_criterion.pyx":573
+    /* "sklearn/tree/_criterion.pyx":574
  * 
  *             sum_left += self.sum_stride
  *             sum_right += self.sum_stride             # <<<<<<<<<<<<<<
  * 
  *         impurity_left[0] = entropy_left / self.n_outputs
  */
-    __pyx_v_sum_right = (__pyx_v_sum_right + __pyx_v_self->__pyx_base.sum_stride);
+    __pyx_v_sum_right = (__pyx_v_sum_right + __pyx_v_self->__pyx_base.__pyx_base.sum_stride);
   }
 
-  /* "sklearn/tree/_criterion.pyx":575
+  /* "sklearn/tree/_criterion.pyx":576
  *             sum_right += self.sum_stride
  * 
  *         impurity_left[0] = entropy_left / self.n_outputs             # <<<<<<<<<<<<<<
@@ -4117,7 +4155,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
  */
   (__pyx_v_impurity_left[0]) = (__pyx_v_entropy_left / __pyx_v_self->__pyx_base.__pyx_base.n_outputs);
 
-  /* "sklearn/tree/_criterion.pyx":576
+  /* "sklearn/tree/_criterion.pyx":577
  * 
  *         impurity_left[0] = entropy_left / self.n_outputs
  *         impurity_right[0] = entropy_right / self.n_outputs             # <<<<<<<<<<<<<<
@@ -4126,7 +4164,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
  */
   (__pyx_v_impurity_right[0]) = (__pyx_v_entropy_right / __pyx_v_self->__pyx_base.__pyx_base.n_outputs);
 
-  /* "sklearn/tree/_criterion.pyx":536
+  /* "sklearn/tree/_criterion.pyx":537
  *         return entropy / self.n_outputs
  * 
  *     cdef void children_impurity(self, double* impurity_left,             # <<<<<<<<<<<<<<
@@ -4137,7 +4175,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity(struc
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":596
+/* "sklearn/tree/_criterion.pyx":597
  *     """
  * 
  *     cdef double node_impurity(self) nogil:             # <<<<<<<<<<<<<<
@@ -4161,7 +4199,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_4Gini_node_impurity(struct __p
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_5;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_6;
 
-  /* "sklearn/tree/_criterion.pyx":601
+  /* "sklearn/tree/_criterion.pyx":602
  * 
  * 
  *         cdef SIZE_t* n_classes = self.n_classes             # <<<<<<<<<<<<<<
@@ -4171,7 +4209,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_4Gini_node_impurity(struct __p
   __pyx_t_1 = __pyx_v_self->__pyx_base.n_classes;
   __pyx_v_n_classes = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":602
+  /* "sklearn/tree/_criterion.pyx":603
  * 
  *         cdef SIZE_t* n_classes = self.n_classes
  *         cdef double* sum_total = self.sum_total             # <<<<<<<<<<<<<<
@@ -4181,7 +4219,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_4Gini_node_impurity(struct __p
   __pyx_t_2 = __pyx_v_self->__pyx_base.__pyx_base.sum_total;
   __pyx_v_sum_total = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":603
+  /* "sklearn/tree/_criterion.pyx":604
  *         cdef SIZE_t* n_classes = self.n_classes
  *         cdef double* sum_total = self.sum_total
  *         cdef double gini = 0.0             # <<<<<<<<<<<<<<
@@ -4190,7 +4228,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_4Gini_node_impurity(struct __p
  */
   __pyx_v_gini = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":609
+  /* "sklearn/tree/_criterion.pyx":610
  *         cdef SIZE_t c
  * 
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -4201,7 +4239,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_4Gini_node_impurity(struct __p
   for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
     __pyx_v_k = __pyx_t_4;
 
-    /* "sklearn/tree/_criterion.pyx":610
+    /* "sklearn/tree/_criterion.pyx":611
  * 
  *         for k in range(self.n_outputs):
  *             sq_count = 0.0             # <<<<<<<<<<<<<<
@@ -4210,7 +4248,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_4Gini_node_impurity(struct __p
  */
     __pyx_v_sq_count = 0.0;
 
-    /* "sklearn/tree/_criterion.pyx":612
+    /* "sklearn/tree/_criterion.pyx":613
  *             sq_count = 0.0
  * 
  *             for c in range(n_classes[k]):             # <<<<<<<<<<<<<<
@@ -4221,7 +4259,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_4Gini_node_impurity(struct __p
     for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
       __pyx_v_c = __pyx_t_6;
 
-      /* "sklearn/tree/_criterion.pyx":613
+      /* "sklearn/tree/_criterion.pyx":614
  * 
  *             for c in range(n_classes[k]):
  *                 count_k = sum_total[c]             # <<<<<<<<<<<<<<
@@ -4230,7 +4268,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_4Gini_node_impurity(struct __p
  */
       __pyx_v_count_k = (__pyx_v_sum_total[__pyx_v_c]);
 
-      /* "sklearn/tree/_criterion.pyx":614
+      /* "sklearn/tree/_criterion.pyx":615
  *             for c in range(n_classes[k]):
  *                 count_k = sum_total[c]
  *                 sq_count += count_k * count_k             # <<<<<<<<<<<<<<
@@ -4240,7 +4278,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_4Gini_node_impurity(struct __p
       __pyx_v_sq_count = (__pyx_v_sq_count + (__pyx_v_count_k * __pyx_v_count_k));
     }
 
-    /* "sklearn/tree/_criterion.pyx":616
+    /* "sklearn/tree/_criterion.pyx":617
  *                 sq_count += count_k * count_k
  * 
  *             gini += 1.0 - sq_count / (self.weighted_n_node_samples *             # <<<<<<<<<<<<<<
@@ -4249,17 +4287,17 @@ static double __pyx_f_7sklearn_4tree_10_criterion_4Gini_node_impurity(struct __p
  */
     __pyx_v_gini = (__pyx_v_gini + (1.0 - (__pyx_v_sq_count / (__pyx_v_self->__pyx_base.__pyx_base.weighted_n_node_samples * __pyx_v_self->__pyx_base.__pyx_base.weighted_n_node_samples))));
 
-    /* "sklearn/tree/_criterion.pyx":619
+    /* "sklearn/tree/_criterion.pyx":620
  *                                       self.weighted_n_node_samples)
  * 
  *             sum_total += self.sum_stride             # <<<<<<<<<<<<<<
  * 
  *         return gini / self.n_outputs
  */
-    __pyx_v_sum_total = (__pyx_v_sum_total + __pyx_v_self->__pyx_base.sum_stride);
+    __pyx_v_sum_total = (__pyx_v_sum_total + __pyx_v_self->__pyx_base.__pyx_base.sum_stride);
   }
 
-  /* "sklearn/tree/_criterion.pyx":621
+  /* "sklearn/tree/_criterion.pyx":622
  *             sum_total += self.sum_stride
  * 
  *         return gini / self.n_outputs             # <<<<<<<<<<<<<<
@@ -4269,7 +4307,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_4Gini_node_impurity(struct __p
   __pyx_r = (__pyx_v_gini / __pyx_v_self->__pyx_base.__pyx_base.n_outputs);
   goto __pyx_L0;
 
-  /* "sklearn/tree/_criterion.pyx":596
+  /* "sklearn/tree/_criterion.pyx":597
  *     """
  * 
  *     cdef double node_impurity(self) nogil:             # <<<<<<<<<<<<<<
@@ -4282,7 +4320,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_4Gini_node_impurity(struct __p
   return __pyx_r;
 }
 
-/* "sklearn/tree/_criterion.pyx":623
+/* "sklearn/tree/_criterion.pyx":624
  *         return gini / self.n_outputs
  * 
  *     cdef void children_impurity(self, double* impurity_left,             # <<<<<<<<<<<<<<
@@ -4308,7 +4346,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_5;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_6;
 
-  /* "sklearn/tree/_criterion.pyx":638
+  /* "sklearn/tree/_criterion.pyx":639
  *         """
  * 
  *         cdef SIZE_t* n_classes = self.n_classes             # <<<<<<<<<<<<<<
@@ -4318,7 +4356,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
   __pyx_t_1 = __pyx_v_self->__pyx_base.n_classes;
   __pyx_v_n_classes = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":639
+  /* "sklearn/tree/_criterion.pyx":640
  * 
  *         cdef SIZE_t* n_classes = self.n_classes
  *         cdef double* sum_left = self.sum_left             # <<<<<<<<<<<<<<
@@ -4328,7 +4366,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
   __pyx_t_2 = __pyx_v_self->__pyx_base.__pyx_base.sum_left;
   __pyx_v_sum_left = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":640
+  /* "sklearn/tree/_criterion.pyx":641
  *         cdef SIZE_t* n_classes = self.n_classes
  *         cdef double* sum_left = self.sum_left
  *         cdef double* sum_right = self.sum_right             # <<<<<<<<<<<<<<
@@ -4338,7 +4376,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
   __pyx_t_2 = __pyx_v_self->__pyx_base.__pyx_base.sum_right;
   __pyx_v_sum_right = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":641
+  /* "sklearn/tree/_criterion.pyx":642
  *         cdef double* sum_left = self.sum_left
  *         cdef double* sum_right = self.sum_right
  *         cdef double gini_left = 0.0             # <<<<<<<<<<<<<<
@@ -4347,7 +4385,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
  */
   __pyx_v_gini_left = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":642
+  /* "sklearn/tree/_criterion.pyx":643
  *         cdef double* sum_right = self.sum_right
  *         cdef double gini_left = 0.0
  *         cdef double gini_right = 0.0             # <<<<<<<<<<<<<<
@@ -4356,7 +4394,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
  */
   __pyx_v_gini_right = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":649
+  /* "sklearn/tree/_criterion.pyx":650
  *         cdef SIZE_t c
  * 
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -4367,7 +4405,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
   for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
     __pyx_v_k = __pyx_t_4;
 
-    /* "sklearn/tree/_criterion.pyx":650
+    /* "sklearn/tree/_criterion.pyx":651
  * 
  *         for k in range(self.n_outputs):
  *             sq_count_left = 0.0             # <<<<<<<<<<<<<<
@@ -4376,7 +4414,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
  */
     __pyx_v_sq_count_left = 0.0;
 
-    /* "sklearn/tree/_criterion.pyx":651
+    /* "sklearn/tree/_criterion.pyx":652
  *         for k in range(self.n_outputs):
  *             sq_count_left = 0.0
  *             sq_count_right = 0.0             # <<<<<<<<<<<<<<
@@ -4385,7 +4423,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
  */
     __pyx_v_sq_count_right = 0.0;
 
-    /* "sklearn/tree/_criterion.pyx":653
+    /* "sklearn/tree/_criterion.pyx":654
  *             sq_count_right = 0.0
  * 
  *             for c in range(n_classes[k]):             # <<<<<<<<<<<<<<
@@ -4396,7 +4434,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
     for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
       __pyx_v_c = __pyx_t_6;
 
-      /* "sklearn/tree/_criterion.pyx":654
+      /* "sklearn/tree/_criterion.pyx":655
  * 
  *             for c in range(n_classes[k]):
  *                 count_k = sum_left[c]             # <<<<<<<<<<<<<<
@@ -4405,7 +4443,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
  */
       __pyx_v_count_k = (__pyx_v_sum_left[__pyx_v_c]);
 
-      /* "sklearn/tree/_criterion.pyx":655
+      /* "sklearn/tree/_criterion.pyx":656
  *             for c in range(n_classes[k]):
  *                 count_k = sum_left[c]
  *                 sq_count_left += count_k * count_k             # <<<<<<<<<<<<<<
@@ -4414,7 +4452,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
  */
       __pyx_v_sq_count_left = (__pyx_v_sq_count_left + (__pyx_v_count_k * __pyx_v_count_k));
 
-      /* "sklearn/tree/_criterion.pyx":657
+      /* "sklearn/tree/_criterion.pyx":658
  *                 sq_count_left += count_k * count_k
  * 
  *                 count_k = sum_right[c]             # <<<<<<<<<<<<<<
@@ -4423,7 +4461,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
  */
       __pyx_v_count_k = (__pyx_v_sum_right[__pyx_v_c]);
 
-      /* "sklearn/tree/_criterion.pyx":658
+      /* "sklearn/tree/_criterion.pyx":659
  * 
  *                 count_k = sum_right[c]
  *                 sq_count_right += count_k * count_k             # <<<<<<<<<<<<<<
@@ -4433,7 +4471,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
       __pyx_v_sq_count_right = (__pyx_v_sq_count_right + (__pyx_v_count_k * __pyx_v_count_k));
     }
 
-    /* "sklearn/tree/_criterion.pyx":660
+    /* "sklearn/tree/_criterion.pyx":661
  *                 sq_count_right += count_k * count_k
  * 
  *             gini_left += 1.0 - sq_count_left / (self.weighted_n_left *             # <<<<<<<<<<<<<<
@@ -4442,7 +4480,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
  */
     __pyx_v_gini_left = (__pyx_v_gini_left + (1.0 - (__pyx_v_sq_count_left / (__pyx_v_self->__pyx_base.__pyx_base.weighted_n_left * __pyx_v_self->__pyx_base.__pyx_base.weighted_n_left))));
 
-    /* "sklearn/tree/_criterion.pyx":663
+    /* "sklearn/tree/_criterion.pyx":664
  *                                                 self.weighted_n_left)
  * 
  *             gini_right += 1.0 - sq_count_right / (self.weighted_n_right *             # <<<<<<<<<<<<<<
@@ -4451,26 +4489,26 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
  */
     __pyx_v_gini_right = (__pyx_v_gini_right + (1.0 - (__pyx_v_sq_count_right / (__pyx_v_self->__pyx_base.__pyx_base.weighted_n_right * __pyx_v_self->__pyx_base.__pyx_base.weighted_n_right))));
 
-    /* "sklearn/tree/_criterion.pyx":666
+    /* "sklearn/tree/_criterion.pyx":667
  *                                                   self.weighted_n_right)
  * 
  *             sum_left += self.sum_stride             # <<<<<<<<<<<<<<
  *             sum_right += self.sum_stride
  * 
  */
-    __pyx_v_sum_left = (__pyx_v_sum_left + __pyx_v_self->__pyx_base.sum_stride);
+    __pyx_v_sum_left = (__pyx_v_sum_left + __pyx_v_self->__pyx_base.__pyx_base.sum_stride);
 
-    /* "sklearn/tree/_criterion.pyx":667
+    /* "sklearn/tree/_criterion.pyx":668
  * 
  *             sum_left += self.sum_stride
  *             sum_right += self.sum_stride             # <<<<<<<<<<<<<<
  * 
  *         impurity_left[0] = gini_left / self.n_outputs
  */
-    __pyx_v_sum_right = (__pyx_v_sum_right + __pyx_v_self->__pyx_base.sum_stride);
+    __pyx_v_sum_right = (__pyx_v_sum_right + __pyx_v_self->__pyx_base.__pyx_base.sum_stride);
   }
 
-  /* "sklearn/tree/_criterion.pyx":669
+  /* "sklearn/tree/_criterion.pyx":670
  *             sum_right += self.sum_stride
  * 
  *         impurity_left[0] = gini_left / self.n_outputs             # <<<<<<<<<<<<<<
@@ -4479,7 +4517,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
  */
   (__pyx_v_impurity_left[0]) = (__pyx_v_gini_left / __pyx_v_self->__pyx_base.__pyx_base.n_outputs);
 
-  /* "sklearn/tree/_criterion.pyx":670
+  /* "sklearn/tree/_criterion.pyx":671
  * 
  *         impurity_left[0] = gini_left / self.n_outputs
  *         impurity_right[0] = gini_right / self.n_outputs             # <<<<<<<<<<<<<<
@@ -4488,7 +4526,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
  */
   (__pyx_v_impurity_right[0]) = (__pyx_v_gini_right / __pyx_v_self->__pyx_base.__pyx_base.n_outputs);
 
-  /* "sklearn/tree/_criterion.pyx":623
+  /* "sklearn/tree/_criterion.pyx":624
  *         return gini / self.n_outputs
  * 
  *     cdef void children_impurity(self, double* impurity_left,             # <<<<<<<<<<<<<<
@@ -4499,8 +4537,8 @@ static void __pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity(struct _
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":687
- *     cdef double sq_sum_total
+/* "sklearn/tree/_criterion.pyx":686
+ *     """
  * 
  *     def __cinit__(self, SIZE_t n_outputs):             # <<<<<<<<<<<<<<
  *         """Initialize parameters for this criterion.
@@ -4535,18 +4573,18 @@ static int __pyx_pw_7sklearn_4tree_10_criterion_19RegressionCriterion_1__cinit__
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 687; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 686; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 1) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
     }
-    __pyx_v_n_outputs = __Pyx_PyInt_As_Py_intptr_t(values[0]); if (unlikely((__pyx_v_n_outputs == (npy_intp)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 687; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_n_outputs = __Pyx_PyInt_As_Py_intptr_t(values[0]); if (unlikely((__pyx_v_n_outputs == (npy_intp)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 686; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 687; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 686; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("sklearn.tree._criterion.RegressionCriterion.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -4569,7 +4607,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "sklearn/tree/_criterion.pyx":697
+  /* "sklearn/tree/_criterion.pyx":696
  * 
  *         # Default values
  *         self.y = NULL             # <<<<<<<<<<<<<<
@@ -4578,7 +4616,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
  */
   __pyx_v_self->__pyx_base.y = NULL;
 
-  /* "sklearn/tree/_criterion.pyx":698
+  /* "sklearn/tree/_criterion.pyx":697
  *         # Default values
  *         self.y = NULL
  *         self.y_stride = 0             # <<<<<<<<<<<<<<
@@ -4587,7 +4625,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
  */
   __pyx_v_self->__pyx_base.y_stride = 0;
 
-  /* "sklearn/tree/_criterion.pyx":699
+  /* "sklearn/tree/_criterion.pyx":698
  *         self.y = NULL
  *         self.y_stride = 0
  *         self.sample_weight = NULL             # <<<<<<<<<<<<<<
@@ -4596,7 +4634,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
  */
   __pyx_v_self->__pyx_base.sample_weight = NULL;
 
-  /* "sklearn/tree/_criterion.pyx":701
+  /* "sklearn/tree/_criterion.pyx":700
  *         self.sample_weight = NULL
  * 
  *         self.samples = NULL             # <<<<<<<<<<<<<<
@@ -4605,7 +4643,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
  */
   __pyx_v_self->__pyx_base.samples = NULL;
 
-  /* "sklearn/tree/_criterion.pyx":702
+  /* "sklearn/tree/_criterion.pyx":701
  * 
  *         self.samples = NULL
  *         self.start = 0             # <<<<<<<<<<<<<<
@@ -4614,7 +4652,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
  */
   __pyx_v_self->__pyx_base.start = 0;
 
-  /* "sklearn/tree/_criterion.pyx":703
+  /* "sklearn/tree/_criterion.pyx":702
  *         self.samples = NULL
  *         self.start = 0
  *         self.pos = 0             # <<<<<<<<<<<<<<
@@ -4623,7 +4661,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
  */
   __pyx_v_self->__pyx_base.pos = 0;
 
-  /* "sklearn/tree/_criterion.pyx":704
+  /* "sklearn/tree/_criterion.pyx":703
  *         self.start = 0
  *         self.pos = 0
  *         self.end = 0             # <<<<<<<<<<<<<<
@@ -4632,7 +4670,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
  */
   __pyx_v_self->__pyx_base.end = 0;
 
-  /* "sklearn/tree/_criterion.pyx":706
+  /* "sklearn/tree/_criterion.pyx":705
  *         self.end = 0
  * 
  *         self.n_outputs = n_outputs             # <<<<<<<<<<<<<<
@@ -4641,7 +4679,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
  */
   __pyx_v_self->__pyx_base.n_outputs = __pyx_v_n_outputs;
 
-  /* "sklearn/tree/_criterion.pyx":707
+  /* "sklearn/tree/_criterion.pyx":706
  * 
  *         self.n_outputs = n_outputs
  *         self.n_node_samples = 0             # <<<<<<<<<<<<<<
@@ -4650,7 +4688,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
  */
   __pyx_v_self->__pyx_base.n_node_samples = 0;
 
-  /* "sklearn/tree/_criterion.pyx":708
+  /* "sklearn/tree/_criterion.pyx":707
  *         self.n_outputs = n_outputs
  *         self.n_node_samples = 0
  *         self.weighted_n_node_samples = 0.0             # <<<<<<<<<<<<<<
@@ -4659,7 +4697,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
  */
   __pyx_v_self->__pyx_base.weighted_n_node_samples = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":709
+  /* "sklearn/tree/_criterion.pyx":708
  *         self.n_node_samples = 0
  *         self.weighted_n_node_samples = 0.0
  *         self.weighted_n_left = 0.0             # <<<<<<<<<<<<<<
@@ -4668,25 +4706,43 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
  */
   __pyx_v_self->__pyx_base.weighted_n_left = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":710
+  /* "sklearn/tree/_criterion.pyx":709
  *         self.weighted_n_node_samples = 0.0
  *         self.weighted_n_left = 0.0
  *         self.weighted_n_right = 0.0             # <<<<<<<<<<<<<<
  * 
- *         self.sq_sum_total = 0.0
+ *         self.sq_sum_total = 0.
  */
   __pyx_v_self->__pyx_base.weighted_n_right = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":712
+  /* "sklearn/tree/_criterion.pyx":711
  *         self.weighted_n_right = 0.0
  * 
- *         self.sq_sum_total = 0.0             # <<<<<<<<<<<<<<
+ *         self.sq_sum_total = 0.             # <<<<<<<<<<<<<<
+ *         self.sq_sum_left = 0.
+ *         self.sq_sum_right = 0.
+ */
+  __pyx_v_self->__pyx_base.sq_sum_total = 0.;
+
+  /* "sklearn/tree/_criterion.pyx":712
+ * 
+ *         self.sq_sum_total = 0.
+ *         self.sq_sum_left = 0.             # <<<<<<<<<<<<<<
+ *         self.sq_sum_right = 0.
+ * 
+ */
+  __pyx_v_self->__pyx_base.sq_sum_left = 0.;
+
+  /* "sklearn/tree/_criterion.pyx":713
+ *         self.sq_sum_total = 0.
+ *         self.sq_sum_left = 0.
+ *         self.sq_sum_right = 0.             # <<<<<<<<<<<<<<
  * 
  *         # Allocate accumulators. Make sure they are NULL, not uninitialized,
  */
-  __pyx_v_self->sq_sum_total = 0.0;
+  __pyx_v_self->__pyx_base.sq_sum_right = 0.;
 
-  /* "sklearn/tree/_criterion.pyx":716
+  /* "sklearn/tree/_criterion.pyx":717
  *         # Allocate accumulators. Make sure they are NULL, not uninitialized,
  *         # before an exception can be raised (which triggers __dealloc__).
  *         self.sum_total = NULL             # <<<<<<<<<<<<<<
@@ -4695,25 +4751,34 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
  */
   __pyx_v_self->__pyx_base.sum_total = NULL;
 
-  /* "sklearn/tree/_criterion.pyx":717
+  /* "sklearn/tree/_criterion.pyx":718
  *         # before an exception can be raised (which triggers __dealloc__).
  *         self.sum_total = NULL
  *         self.sum_left = NULL             # <<<<<<<<<<<<<<
  *         self.sum_right = NULL
- * 
+ *         self.sum_stride = 1
  */
   __pyx_v_self->__pyx_base.sum_left = NULL;
 
-  /* "sklearn/tree/_criterion.pyx":718
+  /* "sklearn/tree/_criterion.pyx":719
  *         self.sum_total = NULL
  *         self.sum_left = NULL
  *         self.sum_right = NULL             # <<<<<<<<<<<<<<
+ *         self.sum_stride = 1
  * 
- *         # Allocate memory for the accumulators
  */
   __pyx_v_self->__pyx_base.sum_right = NULL;
 
-  /* "sklearn/tree/_criterion.pyx":721
+  /* "sklearn/tree/_criterion.pyx":720
+ *         self.sum_left = NULL
+ *         self.sum_right = NULL
+ *         self.sum_stride = 1             # <<<<<<<<<<<<<<
+ * 
+ *         # Allocate memory for the accumulators
+ */
+  __pyx_v_self->__pyx_base.sum_stride = 1;
+
+  /* "sklearn/tree/_criterion.pyx":723
  * 
  *         # Allocate memory for the accumulators
  *         self.sum_total = <double*> calloc(n_outputs, sizeof(double))             # <<<<<<<<<<<<<<
@@ -4722,7 +4787,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
  */
   __pyx_v_self->__pyx_base.sum_total = ((double *)calloc(__pyx_v_n_outputs, (sizeof(double))));
 
-  /* "sklearn/tree/_criterion.pyx":722
+  /* "sklearn/tree/_criterion.pyx":724
  *         # Allocate memory for the accumulators
  *         self.sum_total = <double*> calloc(n_outputs, sizeof(double))
  *         self.sum_left = <double*> calloc(n_outputs, sizeof(double))             # <<<<<<<<<<<<<<
@@ -4731,7 +4796,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
  */
   __pyx_v_self->__pyx_base.sum_left = ((double *)calloc(__pyx_v_n_outputs, (sizeof(double))));
 
-  /* "sklearn/tree/_criterion.pyx":723
+  /* "sklearn/tree/_criterion.pyx":725
  *         self.sum_total = <double*> calloc(n_outputs, sizeof(double))
  *         self.sum_left = <double*> calloc(n_outputs, sizeof(double))
  *         self.sum_right = <double*> calloc(n_outputs, sizeof(double))             # <<<<<<<<<<<<<<
@@ -4740,7 +4805,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
  */
   __pyx_v_self->__pyx_base.sum_right = ((double *)calloc(__pyx_v_n_outputs, (sizeof(double))));
 
-  /* "sklearn/tree/_criterion.pyx":725
+  /* "sklearn/tree/_criterion.pyx":727
  *         self.sum_right = <double*> calloc(n_outputs, sizeof(double))
  * 
  *         if (self.sum_total == NULL or             # <<<<<<<<<<<<<<
@@ -4754,7 +4819,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
     goto __pyx_L4_bool_binop_done;
   }
 
-  /* "sklearn/tree/_criterion.pyx":726
+  /* "sklearn/tree/_criterion.pyx":728
  * 
  *         if (self.sum_total == NULL or
  *                 self.sum_left == NULL or             # <<<<<<<<<<<<<<
@@ -4768,7 +4833,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
     goto __pyx_L4_bool_binop_done;
   }
 
-  /* "sklearn/tree/_criterion.pyx":727
+  /* "sklearn/tree/_criterion.pyx":729
  *         if (self.sum_total == NULL or
  *                 self.sum_left == NULL or
  *                 self.sum_right == NULL):             # <<<<<<<<<<<<<<
@@ -4780,18 +4845,18 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
   __pyx_L4_bool_binop_done:;
   if (__pyx_t_1) {
 
-    /* "sklearn/tree/_criterion.pyx":728
+    /* "sklearn/tree/_criterion.pyx":730
  *                 self.sum_left == NULL or
  *                 self.sum_right == NULL):
  *             raise MemoryError()             # <<<<<<<<<<<<<<
  * 
  *     def __reduce__(self):
  */
-    PyErr_NoMemory(); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 728; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    PyErr_NoMemory(); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 730; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
 
-  /* "sklearn/tree/_criterion.pyx":687
- *     cdef double sq_sum_total
+  /* "sklearn/tree/_criterion.pyx":686
+ *     """
  * 
  *     def __cinit__(self, SIZE_t n_outputs):             # <<<<<<<<<<<<<<
  *         """Initialize parameters for this criterion.
@@ -4809,7 +4874,7 @@ static int __pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion___cinit__(
   return __pyx_r;
 }
 
-/* "sklearn/tree/_criterion.pyx":730
+/* "sklearn/tree/_criterion.pyx":732
  *             raise MemoryError()
  * 
  *     def __reduce__(self):             # <<<<<<<<<<<<<<
@@ -4842,7 +4907,7 @@ static PyObject *__pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion_2__r
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__reduce__", 0);
 
-  /* "sklearn/tree/_criterion.pyx":731
+  /* "sklearn/tree/_criterion.pyx":733
  * 
  *     def __reduce__(self):
  *         return (RegressionCriterion, (self.n_outputs,), self.__getstate__())             # <<<<<<<<<<<<<<
@@ -4850,14 +4915,14 @@ static PyObject *__pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion_2__r
  *     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyInt_From_Py_intptr_t(__pyx_v_self->__pyx_base.n_outputs); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyInt_From_Py_intptr_t(__pyx_v_self->__pyx_base.n_outputs); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 733; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 733; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_getstate); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_getstate); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 733; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_4 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && likely(PyMethod_Check(__pyx_t_3))) {
@@ -4870,14 +4935,14 @@ static PyObject *__pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion_2__r
     }
   }
   if (__pyx_t_4) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 733; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   } else {
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 733; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 731; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 733; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_INCREF(((PyObject *)((PyObject*)__pyx_ptype_7sklearn_4tree_10_criterion_RegressionCriterion)));
   __Pyx_GIVEREF(((PyObject *)((PyObject*)__pyx_ptype_7sklearn_4tree_10_criterion_RegressionCriterion)));
@@ -4892,7 +4957,7 @@ static PyObject *__pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion_2__r
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "sklearn/tree/_criterion.pyx":730
+  /* "sklearn/tree/_criterion.pyx":732
  *             raise MemoryError()
  * 
  *     def __reduce__(self):             # <<<<<<<<<<<<<<
@@ -4914,7 +4979,7 @@ static PyObject *__pyx_pf_7sklearn_4tree_10_criterion_19RegressionCriterion_2__r
   return __pyx_r;
 }
 
-/* "sklearn/tree/_criterion.pyx":733
+/* "sklearn/tree/_criterion.pyx":735
  *         return (RegressionCriterion, (self.n_outputs,), self.__getstate__())
  * 
  *     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,             # <<<<<<<<<<<<<<
@@ -4936,7 +5001,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_5;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_6;
 
-  /* "sklearn/tree/_criterion.pyx":739
+  /* "sklearn/tree/_criterion.pyx":741
  *            children samples[start:start] and samples[start:end]."""
  *         # Initialize fields
  *         self.y = y             # <<<<<<<<<<<<<<
@@ -4945,7 +5010,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
  */
   __pyx_v_self->__pyx_base.y = __pyx_v_y;
 
-  /* "sklearn/tree/_criterion.pyx":740
+  /* "sklearn/tree/_criterion.pyx":742
  *         # Initialize fields
  *         self.y = y
  *         self.y_stride = y_stride             # <<<<<<<<<<<<<<
@@ -4954,7 +5019,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
  */
   __pyx_v_self->__pyx_base.y_stride = __pyx_v_y_stride;
 
-  /* "sklearn/tree/_criterion.pyx":741
+  /* "sklearn/tree/_criterion.pyx":743
  *         self.y = y
  *         self.y_stride = y_stride
  *         self.sample_weight = sample_weight             # <<<<<<<<<<<<<<
@@ -4963,7 +5028,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
  */
   __pyx_v_self->__pyx_base.sample_weight = __pyx_v_sample_weight;
 
-  /* "sklearn/tree/_criterion.pyx":742
+  /* "sklearn/tree/_criterion.pyx":744
  *         self.y_stride = y_stride
  *         self.sample_weight = sample_weight
  *         self.samples = samples             # <<<<<<<<<<<<<<
@@ -4972,7 +5037,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
  */
   __pyx_v_self->__pyx_base.samples = __pyx_v_samples;
 
-  /* "sklearn/tree/_criterion.pyx":743
+  /* "sklearn/tree/_criterion.pyx":745
  *         self.sample_weight = sample_weight
  *         self.samples = samples
  *         self.start = start             # <<<<<<<<<<<<<<
@@ -4981,7 +5046,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
  */
   __pyx_v_self->__pyx_base.start = __pyx_v_start;
 
-  /* "sklearn/tree/_criterion.pyx":744
+  /* "sklearn/tree/_criterion.pyx":746
  *         self.samples = samples
  *         self.start = start
  *         self.end = end             # <<<<<<<<<<<<<<
@@ -4990,7 +5055,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
  */
   __pyx_v_self->__pyx_base.end = __pyx_v_end;
 
-  /* "sklearn/tree/_criterion.pyx":745
+  /* "sklearn/tree/_criterion.pyx":747
  *         self.start = start
  *         self.end = end
  *         self.n_node_samples = end - start             # <<<<<<<<<<<<<<
@@ -4999,7 +5064,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
  */
   __pyx_v_self->__pyx_base.n_node_samples = (__pyx_v_end - __pyx_v_start);
 
-  /* "sklearn/tree/_criterion.pyx":746
+  /* "sklearn/tree/_criterion.pyx":748
  *         self.end = end
  *         self.n_node_samples = end - start
  *         self.weighted_n_samples = weighted_n_samples             # <<<<<<<<<<<<<<
@@ -5008,7 +5073,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
  */
   __pyx_v_self->__pyx_base.weighted_n_samples = __pyx_v_weighted_n_samples;
 
-  /* "sklearn/tree/_criterion.pyx":747
+  /* "sklearn/tree/_criterion.pyx":749
  *         self.n_node_samples = end - start
  *         self.weighted_n_samples = weighted_n_samples
  *         self.weighted_n_node_samples = 0.             # <<<<<<<<<<<<<<
@@ -5017,7 +5082,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
  */
   __pyx_v_self->__pyx_base.weighted_n_node_samples = 0.;
 
-  /* "sklearn/tree/_criterion.pyx":754
+  /* "sklearn/tree/_criterion.pyx":756
  *         cdef DOUBLE_t y_ik
  *         cdef DOUBLE_t w_y_ik
  *         cdef DOUBLE_t w = 1.0             # <<<<<<<<<<<<<<
@@ -5026,16 +5091,16 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
  */
   __pyx_v_w = 1.0;
 
-  /* "sklearn/tree/_criterion.pyx":756
+  /* "sklearn/tree/_criterion.pyx":758
  *         cdef DOUBLE_t w = 1.0
  * 
  *         self.sq_sum_total = 0.0             # <<<<<<<<<<<<<<
  *         memset(self.sum_total, 0, self.n_outputs * sizeof(double))
  * 
  */
-  __pyx_v_self->sq_sum_total = 0.0;
+  __pyx_v_self->__pyx_base.sq_sum_total = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":757
+  /* "sklearn/tree/_criterion.pyx":759
  * 
  *         self.sq_sum_total = 0.0
  *         memset(self.sum_total, 0, self.n_outputs * sizeof(double))             # <<<<<<<<<<<<<<
@@ -5044,7 +5109,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
  */
   memset(__pyx_v_self->__pyx_base.sum_total, 0, (__pyx_v_self->__pyx_base.n_outputs * (sizeof(double))));
 
-  /* "sklearn/tree/_criterion.pyx":759
+  /* "sklearn/tree/_criterion.pyx":761
  *         memset(self.sum_total, 0, self.n_outputs * sizeof(double))
  * 
  *         for p in range(start, end):             # <<<<<<<<<<<<<<
@@ -5055,7 +5120,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
   for (__pyx_t_2 = __pyx_v_start; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_p = __pyx_t_2;
 
-    /* "sklearn/tree/_criterion.pyx":760
+    /* "sklearn/tree/_criterion.pyx":762
  * 
  *         for p in range(start, end):
  *             i = samples[p]             # <<<<<<<<<<<<<<
@@ -5064,7 +5129,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
  */
     __pyx_v_i = (__pyx_v_samples[__pyx_v_p]);
 
-    /* "sklearn/tree/_criterion.pyx":762
+    /* "sklearn/tree/_criterion.pyx":764
  *             i = samples[p]
  * 
  *             if sample_weight != NULL:             # <<<<<<<<<<<<<<
@@ -5074,7 +5139,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
     __pyx_t_3 = ((__pyx_v_sample_weight != NULL) != 0);
     if (__pyx_t_3) {
 
-      /* "sklearn/tree/_criterion.pyx":763
+      /* "sklearn/tree/_criterion.pyx":765
  * 
  *             if sample_weight != NULL:
  *                 w = sample_weight[i]             # <<<<<<<<<<<<<<
@@ -5086,7 +5151,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
     }
     __pyx_L5:;
 
-    /* "sklearn/tree/_criterion.pyx":765
+    /* "sklearn/tree/_criterion.pyx":767
  *                 w = sample_weight[i]
  * 
  *             for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -5097,7 +5162,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
     for (__pyx_t_5 = 0; __pyx_t_5 < __pyx_t_4; __pyx_t_5+=1) {
       __pyx_v_k = __pyx_t_5;
 
-      /* "sklearn/tree/_criterion.pyx":766
+      /* "sklearn/tree/_criterion.pyx":768
  * 
  *             for k in range(self.n_outputs):
  *                 y_ik = y[i * y_stride + k]             # <<<<<<<<<<<<<<
@@ -5106,7 +5171,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
  */
       __pyx_v_y_ik = (__pyx_v_y[((__pyx_v_i * __pyx_v_y_stride) + __pyx_v_k)]);
 
-      /* "sklearn/tree/_criterion.pyx":767
+      /* "sklearn/tree/_criterion.pyx":769
  *             for k in range(self.n_outputs):
  *                 y_ik = y[i * y_stride + k]
  *                 w_y_ik = w * y_ik             # <<<<<<<<<<<<<<
@@ -5115,7 +5180,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
  */
       __pyx_v_w_y_ik = (__pyx_v_w * __pyx_v_y_ik);
 
-      /* "sklearn/tree/_criterion.pyx":768
+      /* "sklearn/tree/_criterion.pyx":770
  *                 y_ik = y[i * y_stride + k]
  *                 w_y_ik = w * y_ik
  *                 self.sum_total[k] += w_y_ik             # <<<<<<<<<<<<<<
@@ -5125,17 +5190,17 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
       __pyx_t_6 = __pyx_v_k;
       (__pyx_v_self->__pyx_base.sum_total[__pyx_t_6]) = ((__pyx_v_self->__pyx_base.sum_total[__pyx_t_6]) + __pyx_v_w_y_ik);
 
-      /* "sklearn/tree/_criterion.pyx":769
+      /* "sklearn/tree/_criterion.pyx":771
  *                 w_y_ik = w * y_ik
  *                 self.sum_total[k] += w_y_ik
  *                 self.sq_sum_total += w_y_ik * y_ik             # <<<<<<<<<<<<<<
  * 
  *             self.weighted_n_node_samples += w
  */
-      __pyx_v_self->sq_sum_total = (__pyx_v_self->sq_sum_total + (__pyx_v_w_y_ik * __pyx_v_y_ik));
+      __pyx_v_self->__pyx_base.sq_sum_total = (__pyx_v_self->__pyx_base.sq_sum_total + (__pyx_v_w_y_ik * __pyx_v_y_ik));
     }
 
-    /* "sklearn/tree/_criterion.pyx":771
+    /* "sklearn/tree/_criterion.pyx":773
  *                 self.sq_sum_total += w_y_ik * y_ik
  * 
  *             self.weighted_n_node_samples += w             # <<<<<<<<<<<<<<
@@ -5145,7 +5210,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
     __pyx_v_self->__pyx_base.weighted_n_node_samples = (__pyx_v_self->__pyx_base.weighted_n_node_samples + __pyx_v_w);
   }
 
-  /* "sklearn/tree/_criterion.pyx":774
+  /* "sklearn/tree/_criterion.pyx":776
  * 
  *         # Reset to pos=start
  *         self.reset()             # <<<<<<<<<<<<<<
@@ -5154,7 +5219,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
  */
   ((struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_RegressionCriterion *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.reset(((struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *)__pyx_v_self));
 
-  /* "sklearn/tree/_criterion.pyx":733
+  /* "sklearn/tree/_criterion.pyx":735
  *         return (RegressionCriterion, (self.n_outputs,), self.__getstate__())
  * 
  *     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,             # <<<<<<<<<<<<<<
@@ -5165,7 +5230,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_init(struc
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":776
+/* "sklearn/tree/_criterion.pyx":778
  *         self.reset()
  * 
  *     cdef void reset(self) nogil:             # <<<<<<<<<<<<<<
@@ -5178,7 +5243,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reset(stru
   double __pyx_t_1;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":778
+  /* "sklearn/tree/_criterion.pyx":780
  *     cdef void reset(self) nogil:
  *         """Reset the criterion at pos=start."""
  *         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)             # <<<<<<<<<<<<<<
@@ -5187,7 +5252,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reset(stru
  */
   __pyx_v_n_bytes = (__pyx_v_self->__pyx_base.n_outputs * (sizeof(double)));
 
-  /* "sklearn/tree/_criterion.pyx":779
+  /* "sklearn/tree/_criterion.pyx":781
  *         """Reset the criterion at pos=start."""
  *         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
  *         memset(self.sum_left, 0, n_bytes)             # <<<<<<<<<<<<<<
@@ -5196,7 +5261,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reset(stru
  */
   memset(__pyx_v_self->__pyx_base.sum_left, 0, __pyx_v_n_bytes);
 
-  /* "sklearn/tree/_criterion.pyx":780
+  /* "sklearn/tree/_criterion.pyx":782
  *         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
  *         memset(self.sum_left, 0, n_bytes)
  *         memcpy(self.sum_right, self.sum_total, n_bytes)             # <<<<<<<<<<<<<<
@@ -5205,7 +5270,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reset(stru
  */
   memcpy(__pyx_v_self->__pyx_base.sum_right, __pyx_v_self->__pyx_base.sum_total, __pyx_v_n_bytes);
 
-  /* "sklearn/tree/_criterion.pyx":782
+  /* "sklearn/tree/_criterion.pyx":784
  *         memcpy(self.sum_right, self.sum_total, n_bytes)
  * 
  *         self.weighted_n_left = 0.0             # <<<<<<<<<<<<<<
@@ -5214,7 +5279,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reset(stru
  */
   __pyx_v_self->__pyx_base.weighted_n_left = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":783
+  /* "sklearn/tree/_criterion.pyx":785
  * 
  *         self.weighted_n_left = 0.0
  *         self.weighted_n_right = self.weighted_n_node_samples             # <<<<<<<<<<<<<<
@@ -5224,7 +5289,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reset(stru
   __pyx_t_1 = __pyx_v_self->__pyx_base.weighted_n_node_samples;
   __pyx_v_self->__pyx_base.weighted_n_right = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":784
+  /* "sklearn/tree/_criterion.pyx":786
  *         self.weighted_n_left = 0.0
  *         self.weighted_n_right = self.weighted_n_node_samples
  *         self.pos = self.start             # <<<<<<<<<<<<<<
@@ -5234,7 +5299,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reset(stru
   __pyx_t_2 = __pyx_v_self->__pyx_base.start;
   __pyx_v_self->__pyx_base.pos = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":776
+  /* "sklearn/tree/_criterion.pyx":778
  *         self.reset()
  * 
  *     cdef void reset(self) nogil:             # <<<<<<<<<<<<<<
@@ -5245,7 +5310,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reset(stru
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":786
+/* "sklearn/tree/_criterion.pyx":788
  *         self.pos = self.start
  * 
  *     cdef void reverse_reset(self) nogil:             # <<<<<<<<<<<<<<
@@ -5258,7 +5323,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reverse_re
   double __pyx_t_1;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":788
+  /* "sklearn/tree/_criterion.pyx":790
  *     cdef void reverse_reset(self) nogil:
  *         """Reset the criterion at pos=end."""
  *         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)             # <<<<<<<<<<<<<<
@@ -5267,7 +5332,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reverse_re
  */
   __pyx_v_n_bytes = (__pyx_v_self->__pyx_base.n_outputs * (sizeof(double)));
 
-  /* "sklearn/tree/_criterion.pyx":789
+  /* "sklearn/tree/_criterion.pyx":791
  *         """Reset the criterion at pos=end."""
  *         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
  *         memset(self.sum_right, 0, n_bytes)             # <<<<<<<<<<<<<<
@@ -5276,7 +5341,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reverse_re
  */
   memset(__pyx_v_self->__pyx_base.sum_right, 0, __pyx_v_n_bytes);
 
-  /* "sklearn/tree/_criterion.pyx":790
+  /* "sklearn/tree/_criterion.pyx":792
  *         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
  *         memset(self.sum_right, 0, n_bytes)
  *         memcpy(self.sum_left, self.sum_total, n_bytes)             # <<<<<<<<<<<<<<
@@ -5285,7 +5350,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reverse_re
  */
   memcpy(__pyx_v_self->__pyx_base.sum_left, __pyx_v_self->__pyx_base.sum_total, __pyx_v_n_bytes);
 
-  /* "sklearn/tree/_criterion.pyx":792
+  /* "sklearn/tree/_criterion.pyx":794
  *         memcpy(self.sum_left, self.sum_total, n_bytes)
  * 
  *         self.weighted_n_right = 0.0             # <<<<<<<<<<<<<<
@@ -5294,7 +5359,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reverse_re
  */
   __pyx_v_self->__pyx_base.weighted_n_right = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":793
+  /* "sklearn/tree/_criterion.pyx":795
  * 
  *         self.weighted_n_right = 0.0
  *         self.weighted_n_left = self.weighted_n_node_samples             # <<<<<<<<<<<<<<
@@ -5304,7 +5369,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reverse_re
   __pyx_t_1 = __pyx_v_self->__pyx_base.weighted_n_node_samples;
   __pyx_v_self->__pyx_base.weighted_n_left = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":794
+  /* "sklearn/tree/_criterion.pyx":796
  *         self.weighted_n_right = 0.0
  *         self.weighted_n_left = self.weighted_n_node_samples
  *         self.pos = self.end             # <<<<<<<<<<<<<<
@@ -5314,7 +5379,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reverse_re
   __pyx_t_2 = __pyx_v_self->__pyx_base.end;
   __pyx_v_self->__pyx_base.pos = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":786
+  /* "sklearn/tree/_criterion.pyx":788
  *         self.pos = self.start
  * 
  *     cdef void reverse_reset(self) nogil:             # <<<<<<<<<<<<<<
@@ -5325,7 +5390,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_reverse_re
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":796
+/* "sklearn/tree/_criterion.pyx":798
  *         self.pos = self.end
  * 
  *     cdef void update(self, SIZE_t new_pos) nogil:             # <<<<<<<<<<<<<<
@@ -5358,7 +5423,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_9;
   long __pyx_t_10;
 
-  /* "sklearn/tree/_criterion.pyx":799
+  /* "sklearn/tree/_criterion.pyx":801
  *         """Updated statistics by moving samples[pos:new_pos] to the left."""
  * 
  *         cdef double* sum_left = self.sum_left             # <<<<<<<<<<<<<<
@@ -5368,7 +5433,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
   __pyx_t_1 = __pyx_v_self->__pyx_base.sum_left;
   __pyx_v_sum_left = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":800
+  /* "sklearn/tree/_criterion.pyx":802
  * 
  *         cdef double* sum_left = self.sum_left
  *         cdef double* sum_right = self.sum_right             # <<<<<<<<<<<<<<
@@ -5378,7 +5443,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
   __pyx_t_1 = __pyx_v_self->__pyx_base.sum_right;
   __pyx_v_sum_right = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":801
+  /* "sklearn/tree/_criterion.pyx":803
  *         cdef double* sum_left = self.sum_left
  *         cdef double* sum_right = self.sum_right
  *         cdef double* sum_total = self.sum_total             # <<<<<<<<<<<<<<
@@ -5388,7 +5453,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
   __pyx_t_1 = __pyx_v_self->__pyx_base.sum_total;
   __pyx_v_sum_total = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":803
+  /* "sklearn/tree/_criterion.pyx":805
  *         cdef double* sum_total = self.sum_total
  * 
  *         cdef double* sample_weight = self.sample_weight             # <<<<<<<<<<<<<<
@@ -5398,7 +5463,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
   __pyx_t_2 = __pyx_v_self->__pyx_base.sample_weight;
   __pyx_v_sample_weight = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":804
+  /* "sklearn/tree/_criterion.pyx":806
  * 
  *         cdef double* sample_weight = self.sample_weight
  *         cdef SIZE_t* samples = self.samples             # <<<<<<<<<<<<<<
@@ -5408,7 +5473,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
   __pyx_t_3 = __pyx_v_self->__pyx_base.samples;
   __pyx_v_samples = __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":806
+  /* "sklearn/tree/_criterion.pyx":808
  *         cdef SIZE_t* samples = self.samples
  * 
  *         cdef DOUBLE_t* y = self.y             # <<<<<<<<<<<<<<
@@ -5418,7 +5483,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
   __pyx_t_2 = __pyx_v_self->__pyx_base.y;
   __pyx_v_y = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":807
+  /* "sklearn/tree/_criterion.pyx":809
  * 
  *         cdef DOUBLE_t* y = self.y
  *         cdef SIZE_t pos = self.pos             # <<<<<<<<<<<<<<
@@ -5428,7 +5493,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
   __pyx_t_4 = __pyx_v_self->__pyx_base.pos;
   __pyx_v_pos = __pyx_t_4;
 
-  /* "sklearn/tree/_criterion.pyx":808
+  /* "sklearn/tree/_criterion.pyx":810
  *         cdef DOUBLE_t* y = self.y
  *         cdef SIZE_t pos = self.pos
  *         cdef SIZE_t end = self.end             # <<<<<<<<<<<<<<
@@ -5438,7 +5503,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
   __pyx_t_4 = __pyx_v_self->__pyx_base.end;
   __pyx_v_end = __pyx_t_4;
 
-  /* "sklearn/tree/_criterion.pyx":812
+  /* "sklearn/tree/_criterion.pyx":814
  *         cdef SIZE_t p
  *         cdef SIZE_t k
  *         cdef DOUBLE_t w = 1.0             # <<<<<<<<<<<<<<
@@ -5447,7 +5512,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
  */
   __pyx_v_w = 1.0;
 
-  /* "sklearn/tree/_criterion.pyx":823
+  /* "sklearn/tree/_criterion.pyx":825
  *         # of computations, i.e. from pos to new_pos or from end to new_po.
  * 
  *         if (new_pos - pos) <= (end - new_pos):             # <<<<<<<<<<<<<<
@@ -5457,7 +5522,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
   __pyx_t_5 = (((__pyx_v_new_pos - __pyx_v_pos) <= (__pyx_v_end - __pyx_v_new_pos)) != 0);
   if (__pyx_t_5) {
 
-    /* "sklearn/tree/_criterion.pyx":824
+    /* "sklearn/tree/_criterion.pyx":826
  * 
  *         if (new_pos - pos) <= (end - new_pos):
  *             for p in range(pos, new_pos):             # <<<<<<<<<<<<<<
@@ -5468,7 +5533,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
     for (__pyx_t_6 = __pyx_v_pos; __pyx_t_6 < __pyx_t_4; __pyx_t_6+=1) {
       __pyx_v_p = __pyx_t_6;
 
-      /* "sklearn/tree/_criterion.pyx":825
+      /* "sklearn/tree/_criterion.pyx":827
  *         if (new_pos - pos) <= (end - new_pos):
  *             for p in range(pos, new_pos):
  *                 i = samples[p]             # <<<<<<<<<<<<<<
@@ -5477,7 +5542,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
  */
       __pyx_v_i = (__pyx_v_samples[__pyx_v_p]);
 
-      /* "sklearn/tree/_criterion.pyx":827
+      /* "sklearn/tree/_criterion.pyx":829
  *                 i = samples[p]
  * 
  *                 if sample_weight != NULL:             # <<<<<<<<<<<<<<
@@ -5487,7 +5552,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
       __pyx_t_5 = ((__pyx_v_sample_weight != NULL) != 0);
       if (__pyx_t_5) {
 
-        /* "sklearn/tree/_criterion.pyx":828
+        /* "sklearn/tree/_criterion.pyx":830
  * 
  *                 if sample_weight != NULL:
  *                     w = sample_weight[i]             # <<<<<<<<<<<<<<
@@ -5499,7 +5564,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
       }
       __pyx_L6:;
 
-      /* "sklearn/tree/_criterion.pyx":830
+      /* "sklearn/tree/_criterion.pyx":832
  *                     w = sample_weight[i]
  * 
  *                 for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -5510,7 +5575,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
       for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_7; __pyx_t_8+=1) {
         __pyx_v_k = __pyx_t_8;
 
-        /* "sklearn/tree/_criterion.pyx":831
+        /* "sklearn/tree/_criterion.pyx":833
  * 
  *                 for k in range(self.n_outputs):
  *                     y_ik = y[i * self.y_stride + k]             # <<<<<<<<<<<<<<
@@ -5519,7 +5584,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
  */
         __pyx_v_y_ik = (__pyx_v_y[((__pyx_v_i * __pyx_v_self->__pyx_base.y_stride) + __pyx_v_k)]);
 
-        /* "sklearn/tree/_criterion.pyx":832
+        /* "sklearn/tree/_criterion.pyx":834
  *                 for k in range(self.n_outputs):
  *                     y_ik = y[i * self.y_stride + k]
  *                     sum_left[k] += w * y_ik             # <<<<<<<<<<<<<<
@@ -5530,7 +5595,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
         (__pyx_v_sum_left[__pyx_t_9]) = ((__pyx_v_sum_left[__pyx_t_9]) + (__pyx_v_w * __pyx_v_y_ik));
       }
 
-      /* "sklearn/tree/_criterion.pyx":834
+      /* "sklearn/tree/_criterion.pyx":836
  *                     sum_left[k] += w * y_ik
  * 
  *                 self.weighted_n_left += w             # <<<<<<<<<<<<<<
@@ -5543,7 +5608,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
   }
   /*else*/ {
 
-    /* "sklearn/tree/_criterion.pyx":836
+    /* "sklearn/tree/_criterion.pyx":838
  *                 self.weighted_n_left += w
  *         else:
  *             self.reverse_reset()             # <<<<<<<<<<<<<<
@@ -5552,7 +5617,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
  */
     ((struct __pyx_vtabstruct_7sklearn_4tree_10_criterion_RegressionCriterion *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.reverse_reset(((struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *)__pyx_v_self));
 
-    /* "sklearn/tree/_criterion.pyx":838
+    /* "sklearn/tree/_criterion.pyx":840
  *             self.reverse_reset()
  * 
  *             for p in range(end - 1, new_pos - 1, -1):             # <<<<<<<<<<<<<<
@@ -5563,7 +5628,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
     for (__pyx_t_4 = (__pyx_v_end - 1); __pyx_t_4 > __pyx_t_10; __pyx_t_4-=1) {
       __pyx_v_p = __pyx_t_4;
 
-      /* "sklearn/tree/_criterion.pyx":839
+      /* "sklearn/tree/_criterion.pyx":841
  * 
  *             for p in range(end - 1, new_pos - 1, -1):
  *                 i = samples[p]             # <<<<<<<<<<<<<<
@@ -5572,7 +5637,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
  */
       __pyx_v_i = (__pyx_v_samples[__pyx_v_p]);
 
-      /* "sklearn/tree/_criterion.pyx":841
+      /* "sklearn/tree/_criterion.pyx":843
  *                 i = samples[p]
  * 
  *                 if sample_weight != NULL:             # <<<<<<<<<<<<<<
@@ -5582,7 +5647,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
       __pyx_t_5 = ((__pyx_v_sample_weight != NULL) != 0);
       if (__pyx_t_5) {
 
-        /* "sklearn/tree/_criterion.pyx":842
+        /* "sklearn/tree/_criterion.pyx":844
  * 
  *                 if sample_weight != NULL:
  *                     w = sample_weight[i]             # <<<<<<<<<<<<<<
@@ -5594,7 +5659,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
       }
       __pyx_L11:;
 
-      /* "sklearn/tree/_criterion.pyx":844
+      /* "sklearn/tree/_criterion.pyx":846
  *                     w = sample_weight[i]
  * 
  *                 for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -5605,7 +5670,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
       for (__pyx_t_7 = 0; __pyx_t_7 < __pyx_t_6; __pyx_t_7+=1) {
         __pyx_v_k = __pyx_t_7;
 
-        /* "sklearn/tree/_criterion.pyx":845
+        /* "sklearn/tree/_criterion.pyx":847
  * 
  *                 for k in range(self.n_outputs):
  *                     y_ik = y[i * self.y_stride + k]             # <<<<<<<<<<<<<<
@@ -5614,7 +5679,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
  */
         __pyx_v_y_ik = (__pyx_v_y[((__pyx_v_i * __pyx_v_self->__pyx_base.y_stride) + __pyx_v_k)]);
 
-        /* "sklearn/tree/_criterion.pyx":846
+        /* "sklearn/tree/_criterion.pyx":848
  *                 for k in range(self.n_outputs):
  *                     y_ik = y[i * self.y_stride + k]
  *                     sum_left[k] -= w * y_ik             # <<<<<<<<<<<<<<
@@ -5625,7 +5690,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
         (__pyx_v_sum_left[__pyx_t_8]) = ((__pyx_v_sum_left[__pyx_t_8]) - (__pyx_v_w * __pyx_v_y_ik));
       }
 
-      /* "sklearn/tree/_criterion.pyx":848
+      /* "sklearn/tree/_criterion.pyx":850
  *                     sum_left[k] -= w * y_ik
  * 
  *                 self.weighted_n_left -= w             # <<<<<<<<<<<<<<
@@ -5637,7 +5702,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
   }
   __pyx_L3:;
 
-  /* "sklearn/tree/_criterion.pyx":850
+  /* "sklearn/tree/_criterion.pyx":852
  *                 self.weighted_n_left -= w
  * 
  *         self.weighted_n_right = (self.weighted_n_node_samples -             # <<<<<<<<<<<<<<
@@ -5646,7 +5711,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
  */
   __pyx_v_self->__pyx_base.weighted_n_right = (__pyx_v_self->__pyx_base.weighted_n_node_samples - __pyx_v_self->__pyx_base.weighted_n_left);
 
-  /* "sklearn/tree/_criterion.pyx":852
+  /* "sklearn/tree/_criterion.pyx":854
  *         self.weighted_n_right = (self.weighted_n_node_samples -
  *                                  self.weighted_n_left)
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -5657,7 +5722,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
   for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_4; __pyx_t_6+=1) {
     __pyx_v_k = __pyx_t_6;
 
-    /* "sklearn/tree/_criterion.pyx":853
+    /* "sklearn/tree/_criterion.pyx":855
  *                                  self.weighted_n_left)
  *         for k in range(self.n_outputs):
  *             sum_right[k] = sum_total[k] - sum_left[k]             # <<<<<<<<<<<<<<
@@ -5667,7 +5732,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
     (__pyx_v_sum_right[__pyx_v_k]) = ((__pyx_v_sum_total[__pyx_v_k]) - (__pyx_v_sum_left[__pyx_v_k]));
   }
 
-  /* "sklearn/tree/_criterion.pyx":855
+  /* "sklearn/tree/_criterion.pyx":857
  *             sum_right[k] = sum_total[k] - sum_left[k]
  * 
  *         self.pos = new_pos             # <<<<<<<<<<<<<<
@@ -5676,7 +5741,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
  */
   __pyx_v_self->__pyx_base.pos = __pyx_v_new_pos;
 
-  /* "sklearn/tree/_criterion.pyx":796
+  /* "sklearn/tree/_criterion.pyx":798
  *         self.pos = self.end
  * 
  *     cdef void update(self, SIZE_t new_pos) nogil:             # <<<<<<<<<<<<<<
@@ -5687,7 +5752,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_update(str
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":857
+/* "sklearn/tree/_criterion.pyx":859
  *         self.pos = new_pos
  * 
  *     cdef double node_impurity(self) nogil:             # <<<<<<<<<<<<<<
@@ -5703,7 +5768,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_node_imp
   return __pyx_r;
 }
 
-/* "sklearn/tree/_criterion.pyx":860
+/* "sklearn/tree/_criterion.pyx":862
  *         pass
  * 
  *     cdef void children_impurity(self, double* impurity_left,             # <<<<<<<<<<<<<<
@@ -5716,7 +5781,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_children_i
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":864
+/* "sklearn/tree/_criterion.pyx":866
  *         pass
  * 
  *     cdef void node_value(self, double* dest) nogil:             # <<<<<<<<<<<<<<
@@ -5729,7 +5794,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_node_value
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_1;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":869
+  /* "sklearn/tree/_criterion.pyx":871
  *         cdef SIZE_t k
  * 
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -5740,7 +5805,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_node_value
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_k = __pyx_t_2;
 
-    /* "sklearn/tree/_criterion.pyx":870
+    /* "sklearn/tree/_criterion.pyx":872
  * 
  *         for k in range(self.n_outputs):
  *             dest[k] = self.sum_total[k] / self.weighted_n_node_samples             # <<<<<<<<<<<<<<
@@ -5750,7 +5815,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_node_value
     (__pyx_v_dest[__pyx_v_k]) = ((__pyx_v_self->__pyx_base.sum_total[__pyx_v_k]) / __pyx_v_self->__pyx_base.weighted_n_node_samples);
   }
 
-  /* "sklearn/tree/_criterion.pyx":864
+  /* "sklearn/tree/_criterion.pyx":866
  *         pass
  * 
  *     cdef void node_value(self, double* dest) nogil:             # <<<<<<<<<<<<<<
@@ -5761,7 +5826,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_node_value
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":878
+/* "sklearn/tree/_criterion.pyx":880
  *         MSE = var_left + var_right
  *     """
  *     cdef double node_impurity(self) nogil:             # <<<<<<<<<<<<<<
@@ -5778,7 +5843,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_node_impurity(struct __py
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_2;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":882
+  /* "sklearn/tree/_criterion.pyx":884
  *            samples[start:end]."""
  * 
  *         cdef double* sum_total = self.sum_total             # <<<<<<<<<<<<<<
@@ -5788,16 +5853,16 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_node_impurity(struct __py
   __pyx_t_1 = __pyx_v_self->__pyx_base.__pyx_base.sum_total;
   __pyx_v_sum_total = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":886
+  /* "sklearn/tree/_criterion.pyx":888
  *         cdef SIZE_t k
  * 
  *         impurity = self.sq_sum_total / self.weighted_n_node_samples             # <<<<<<<<<<<<<<
  *         for k in range(self.n_outputs):
  *             impurity -= (sum_total[k] / self.weighted_n_node_samples)**2.0
  */
-  __pyx_v_impurity = (__pyx_v_self->__pyx_base.sq_sum_total / __pyx_v_self->__pyx_base.__pyx_base.weighted_n_node_samples);
+  __pyx_v_impurity = (__pyx_v_self->__pyx_base.__pyx_base.sq_sum_total / __pyx_v_self->__pyx_base.__pyx_base.weighted_n_node_samples);
 
-  /* "sklearn/tree/_criterion.pyx":887
+  /* "sklearn/tree/_criterion.pyx":889
  * 
  *         impurity = self.sq_sum_total / self.weighted_n_node_samples
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -5808,7 +5873,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_node_impurity(struct __py
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_k = __pyx_t_3;
 
-    /* "sklearn/tree/_criterion.pyx":888
+    /* "sklearn/tree/_criterion.pyx":890
  *         impurity = self.sq_sum_total / self.weighted_n_node_samples
  *         for k in range(self.n_outputs):
  *             impurity -= (sum_total[k] / self.weighted_n_node_samples)**2.0             # <<<<<<<<<<<<<<
@@ -5818,7 +5883,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_node_impurity(struct __py
     __pyx_v_impurity = (__pyx_v_impurity - pow(((__pyx_v_sum_total[__pyx_v_k]) / __pyx_v_self->__pyx_base.__pyx_base.weighted_n_node_samples), 2.0));
   }
 
-  /* "sklearn/tree/_criterion.pyx":890
+  /* "sklearn/tree/_criterion.pyx":892
  *             impurity -= (sum_total[k] / self.weighted_n_node_samples)**2.0
  * 
  *         return impurity / self.n_outputs             # <<<<<<<<<<<<<<
@@ -5828,7 +5893,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_node_impurity(struct __py
   __pyx_r = (__pyx_v_impurity / __pyx_v_self->__pyx_base.__pyx_base.n_outputs);
   goto __pyx_L0;
 
-  /* "sklearn/tree/_criterion.pyx":878
+  /* "sklearn/tree/_criterion.pyx":880
  *         MSE = var_left + var_right
  *     """
  *     cdef double node_impurity(self) nogil:             # <<<<<<<<<<<<<<
@@ -5841,7 +5906,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_node_impurity(struct __py
   return __pyx_r;
 }
 
-/* "sklearn/tree/_criterion.pyx":892
+/* "sklearn/tree/_criterion.pyx":894
  *         return impurity / self.n_outputs
  * 
  *     cdef double proxy_impurity_improvement(self) nogil:             # <<<<<<<<<<<<<<
@@ -5860,7 +5925,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_proxy_impurity_improvemen
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_2;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":904
+  /* "sklearn/tree/_criterion.pyx":906
  *         """
  * 
  *         cdef double* sum_left = self.sum_left             # <<<<<<<<<<<<<<
@@ -5870,7 +5935,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_proxy_impurity_improvemen
   __pyx_t_1 = __pyx_v_self->__pyx_base.__pyx_base.sum_left;
   __pyx_v_sum_left = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":905
+  /* "sklearn/tree/_criterion.pyx":907
  * 
  *         cdef double* sum_left = self.sum_left
  *         cdef double* sum_right = self.sum_right             # <<<<<<<<<<<<<<
@@ -5880,7 +5945,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_proxy_impurity_improvemen
   __pyx_t_1 = __pyx_v_self->__pyx_base.__pyx_base.sum_right;
   __pyx_v_sum_right = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":908
+  /* "sklearn/tree/_criterion.pyx":910
  * 
  *         cdef SIZE_t k
  *         cdef double proxy_impurity_left = 0.0             # <<<<<<<<<<<<<<
@@ -5889,7 +5954,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_proxy_impurity_improvemen
  */
   __pyx_v_proxy_impurity_left = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":909
+  /* "sklearn/tree/_criterion.pyx":911
  *         cdef SIZE_t k
  *         cdef double proxy_impurity_left = 0.0
  *         cdef double proxy_impurity_right = 0.0             # <<<<<<<<<<<<<<
@@ -5898,7 +5963,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_proxy_impurity_improvemen
  */
   __pyx_v_proxy_impurity_right = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":911
+  /* "sklearn/tree/_criterion.pyx":913
  *         cdef double proxy_impurity_right = 0.0
  * 
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -5909,7 +5974,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_proxy_impurity_improvemen
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_k = __pyx_t_3;
 
-    /* "sklearn/tree/_criterion.pyx":912
+    /* "sklearn/tree/_criterion.pyx":914
  * 
  *         for k in range(self.n_outputs):
  *             proxy_impurity_left += sum_left[k] * sum_left[k]             # <<<<<<<<<<<<<<
@@ -5918,7 +5983,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_proxy_impurity_improvemen
  */
     __pyx_v_proxy_impurity_left = (__pyx_v_proxy_impurity_left + ((__pyx_v_sum_left[__pyx_v_k]) * (__pyx_v_sum_left[__pyx_v_k])));
 
-    /* "sklearn/tree/_criterion.pyx":913
+    /* "sklearn/tree/_criterion.pyx":915
  *         for k in range(self.n_outputs):
  *             proxy_impurity_left += sum_left[k] * sum_left[k]
  *             proxy_impurity_right += sum_right[k] * sum_right[k]             # <<<<<<<<<<<<<<
@@ -5928,7 +5993,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_proxy_impurity_improvemen
     __pyx_v_proxy_impurity_right = (__pyx_v_proxy_impurity_right + ((__pyx_v_sum_right[__pyx_v_k]) * (__pyx_v_sum_right[__pyx_v_k])));
   }
 
-  /* "sklearn/tree/_criterion.pyx":915
+  /* "sklearn/tree/_criterion.pyx":917
  *             proxy_impurity_right += sum_right[k] * sum_right[k]
  * 
  *         return (proxy_impurity_left / self.weighted_n_left +             # <<<<<<<<<<<<<<
@@ -5938,7 +6003,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_proxy_impurity_improvemen
   __pyx_r = ((__pyx_v_proxy_impurity_left / __pyx_v_self->__pyx_base.__pyx_base.weighted_n_left) + (__pyx_v_proxy_impurity_right / __pyx_v_self->__pyx_base.__pyx_base.weighted_n_right));
   goto __pyx_L0;
 
-  /* "sklearn/tree/_criterion.pyx":892
+  /* "sklearn/tree/_criterion.pyx":894
  *         return impurity / self.n_outputs
  * 
  *     cdef double proxy_impurity_improvement(self) nogil:             # <<<<<<<<<<<<<<
@@ -5951,7 +6016,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_3MSE_proxy_impurity_improvemen
   return __pyx_r;
 }
 
-/* "sklearn/tree/_criterion.pyx":918
+/* "sklearn/tree/_criterion.pyx":920
  *                 proxy_impurity_right / self.weighted_n_right)
  * 
  *     cdef void children_impurity(self, double* impurity_left,             # <<<<<<<<<<<<<<
@@ -5967,8 +6032,6 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_v_start;
   double *__pyx_v_sum_left;
   double *__pyx_v_sum_right;
-  double __pyx_v_sq_sum_left;
-  double __pyx_v_sq_sum_right;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_v_i;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_v_p;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_v_k;
@@ -5984,7 +6047,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_8;
   long __pyx_t_9;
 
-  /* "sklearn/tree/_criterion.pyx":925
+  /* "sklearn/tree/_criterion.pyx":927
  * 
  * 
  *         cdef DOUBLE_t* y = self.y             # <<<<<<<<<<<<<<
@@ -5994,7 +6057,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
   __pyx_t_1 = __pyx_v_self->__pyx_base.__pyx_base.y;
   __pyx_v_y = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":926
+  /* "sklearn/tree/_criterion.pyx":928
  * 
  *         cdef DOUBLE_t* y = self.y
  *         cdef DOUBLE_t* sample_weight = self.sample_weight             # <<<<<<<<<<<<<<
@@ -6004,7 +6067,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
   __pyx_t_1 = __pyx_v_self->__pyx_base.__pyx_base.sample_weight;
   __pyx_v_sample_weight = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":927
+  /* "sklearn/tree/_criterion.pyx":929
  *         cdef DOUBLE_t* y = self.y
  *         cdef DOUBLE_t* sample_weight = self.sample_weight
  *         cdef SIZE_t* samples = self.samples             # <<<<<<<<<<<<<<
@@ -6014,7 +6077,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
   __pyx_t_2 = __pyx_v_self->__pyx_base.__pyx_base.samples;
   __pyx_v_samples = __pyx_t_2;
 
-  /* "sklearn/tree/_criterion.pyx":928
+  /* "sklearn/tree/_criterion.pyx":930
  *         cdef DOUBLE_t* sample_weight = self.sample_weight
  *         cdef SIZE_t* samples = self.samples
  *         cdef SIZE_t pos = self.pos             # <<<<<<<<<<<<<<
@@ -6024,7 +6087,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
   __pyx_t_3 = __pyx_v_self->__pyx_base.__pyx_base.pos;
   __pyx_v_pos = __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":929
+  /* "sklearn/tree/_criterion.pyx":931
  *         cdef SIZE_t* samples = self.samples
  *         cdef SIZE_t pos = self.pos
  *         cdef SIZE_t start = self.start             # <<<<<<<<<<<<<<
@@ -6034,7 +6097,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
   __pyx_t_3 = __pyx_v_self->__pyx_base.__pyx_base.start;
   __pyx_v_start = __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":931
+  /* "sklearn/tree/_criterion.pyx":933
  *         cdef SIZE_t start = self.start
  * 
  *         cdef double* sum_left = self.sum_left             # <<<<<<<<<<<<<<
@@ -6044,26 +6107,17 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
   __pyx_t_4 = __pyx_v_self->__pyx_base.__pyx_base.sum_left;
   __pyx_v_sum_left = __pyx_t_4;
 
-  /* "sklearn/tree/_criterion.pyx":932
+  /* "sklearn/tree/_criterion.pyx":934
  * 
  *         cdef double* sum_left = self.sum_left
  *         cdef double* sum_right = self.sum_right             # <<<<<<<<<<<<<<
  * 
- *         cdef double sq_sum_left = 0.0
+ *         cdef SIZE_t i
  */
   __pyx_t_4 = __pyx_v_self->__pyx_base.__pyx_base.sum_right;
   __pyx_v_sum_right = __pyx_t_4;
 
-  /* "sklearn/tree/_criterion.pyx":934
- *         cdef double* sum_right = self.sum_right
- * 
- *         cdef double sq_sum_left = 0.0             # <<<<<<<<<<<<<<
- *         cdef double sq_sum_right
- * 
- */
-  __pyx_v_sq_sum_left = 0.0;
-
-  /* "sklearn/tree/_criterion.pyx":940
+  /* "sklearn/tree/_criterion.pyx":939
  *         cdef SIZE_t p
  *         cdef SIZE_t k
  *         cdef DOUBLE_t w = 1.0             # <<<<<<<<<<<<<<
@@ -6072,8 +6126,17 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
  */
   __pyx_v_w = 1.0;
 
-  /* "sklearn/tree/_criterion.pyx":943
+  /* "sklearn/tree/_criterion.pyx":942
  *         cdef DOUBLE_t y_ik
+ * 
+ *         self.sq_sum_left = 0.             # <<<<<<<<<<<<<<
+ * 
+ *         for p in range(start, pos):
+ */
+  __pyx_v_self->__pyx_base.__pyx_base.sq_sum_left = 0.;
+
+  /* "sklearn/tree/_criterion.pyx":944
+ *         self.sq_sum_left = 0.
  * 
  *         for p in range(start, pos):             # <<<<<<<<<<<<<<
  *             i = samples[p]
@@ -6083,7 +6146,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
   for (__pyx_t_5 = __pyx_v_start; __pyx_t_5 < __pyx_t_3; __pyx_t_5+=1) {
     __pyx_v_p = __pyx_t_5;
 
-    /* "sklearn/tree/_criterion.pyx":944
+    /* "sklearn/tree/_criterion.pyx":945
  * 
  *         for p in range(start, pos):
  *             i = samples[p]             # <<<<<<<<<<<<<<
@@ -6092,7 +6155,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
  */
     __pyx_v_i = (__pyx_v_samples[__pyx_v_p]);
 
-    /* "sklearn/tree/_criterion.pyx":946
+    /* "sklearn/tree/_criterion.pyx":947
  *             i = samples[p]
  * 
  *             if sample_weight != NULL:             # <<<<<<<<<<<<<<
@@ -6102,7 +6165,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
     __pyx_t_6 = ((__pyx_v_sample_weight != NULL) != 0);
     if (__pyx_t_6) {
 
-      /* "sklearn/tree/_criterion.pyx":947
+      /* "sklearn/tree/_criterion.pyx":948
  * 
  *             if sample_weight != NULL:
  *                 w = sample_weight[i]             # <<<<<<<<<<<<<<
@@ -6114,66 +6177,66 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
     }
     __pyx_L5:;
 
-    /* "sklearn/tree/_criterion.pyx":949
+    /* "sklearn/tree/_criterion.pyx":950
  *                 w = sample_weight[i]
  * 
  *             for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
  *                 y_ik = y[i * self.y_stride + k]
- *                 sq_sum_left += w * y_ik * y_ik
+ *                 self.sq_sum_left += w * y_ik * y_ik
  */
     __pyx_t_7 = __pyx_v_self->__pyx_base.__pyx_base.n_outputs;
     for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_7; __pyx_t_8+=1) {
       __pyx_v_k = __pyx_t_8;
 
-      /* "sklearn/tree/_criterion.pyx":950
+      /* "sklearn/tree/_criterion.pyx":951
  * 
  *             for k in range(self.n_outputs):
  *                 y_ik = y[i * self.y_stride + k]             # <<<<<<<<<<<<<<
- *                 sq_sum_left += w * y_ik * y_ik
+ *                 self.sq_sum_left += w * y_ik * y_ik
  * 
  */
       __pyx_v_y_ik = (__pyx_v_y[((__pyx_v_i * __pyx_v_self->__pyx_base.__pyx_base.y_stride) + __pyx_v_k)]);
 
-      /* "sklearn/tree/_criterion.pyx":951
+      /* "sklearn/tree/_criterion.pyx":952
  *             for k in range(self.n_outputs):
  *                 y_ik = y[i * self.y_stride + k]
- *                 sq_sum_left += w * y_ik * y_ik             # <<<<<<<<<<<<<<
+ *                 self.sq_sum_left += w * y_ik * y_ik             # <<<<<<<<<<<<<<
  * 
- *         sq_sum_right = self.sq_sum_total - sq_sum_left
+ *         self.sq_sum_right = self.sq_sum_total - self.sq_sum_left
  */
-      __pyx_v_sq_sum_left = (__pyx_v_sq_sum_left + ((__pyx_v_w * __pyx_v_y_ik) * __pyx_v_y_ik));
+      __pyx_v_self->__pyx_base.__pyx_base.sq_sum_left = (__pyx_v_self->__pyx_base.__pyx_base.sq_sum_left + ((__pyx_v_w * __pyx_v_y_ik) * __pyx_v_y_ik));
     }
   }
 
-  /* "sklearn/tree/_criterion.pyx":953
- *                 sq_sum_left += w * y_ik * y_ik
+  /* "sklearn/tree/_criterion.pyx":954
+ *                 self.sq_sum_left += w * y_ik * y_ik
  * 
- *         sq_sum_right = self.sq_sum_total - sq_sum_left             # <<<<<<<<<<<<<<
+ *         self.sq_sum_right = self.sq_sum_total - self.sq_sum_left             # <<<<<<<<<<<<<<
  * 
- *         impurity_left[0] = sq_sum_left / self.weighted_n_left
+ *         impurity_left[0] = self.sq_sum_left / self.weighted_n_left
  */
-  __pyx_v_sq_sum_right = (__pyx_v_self->__pyx_base.sq_sum_total - __pyx_v_sq_sum_left);
-
-  /* "sklearn/tree/_criterion.pyx":955
- *         sq_sum_right = self.sq_sum_total - sq_sum_left
- * 
- *         impurity_left[0] = sq_sum_left / self.weighted_n_left             # <<<<<<<<<<<<<<
- *         impurity_right[0] = sq_sum_right / self.weighted_n_right
- * 
- */
-  (__pyx_v_impurity_left[0]) = (__pyx_v_sq_sum_left / __pyx_v_self->__pyx_base.__pyx_base.weighted_n_left);
+  __pyx_v_self->__pyx_base.__pyx_base.sq_sum_right = (__pyx_v_self->__pyx_base.__pyx_base.sq_sum_total - __pyx_v_self->__pyx_base.__pyx_base.sq_sum_left);
 
   /* "sklearn/tree/_criterion.pyx":956
+ *         self.sq_sum_right = self.sq_sum_total - self.sq_sum_left
  * 
- *         impurity_left[0] = sq_sum_left / self.weighted_n_left
- *         impurity_right[0] = sq_sum_right / self.weighted_n_right             # <<<<<<<<<<<<<<
+ *         impurity_left[0] = self.sq_sum_left / self.weighted_n_left             # <<<<<<<<<<<<<<
+ *         impurity_right[0] = self.sq_sum_right / self.weighted_n_right
+ * 
+ */
+  (__pyx_v_impurity_left[0]) = (__pyx_v_self->__pyx_base.__pyx_base.sq_sum_left / __pyx_v_self->__pyx_base.__pyx_base.weighted_n_left);
+
+  /* "sklearn/tree/_criterion.pyx":957
+ * 
+ *         impurity_left[0] = self.sq_sum_left / self.weighted_n_left
+ *         impurity_right[0] = self.sq_sum_right / self.weighted_n_right             # <<<<<<<<<<<<<<
  * 
  *         for k in range(self.n_outputs):
  */
-  (__pyx_v_impurity_right[0]) = (__pyx_v_sq_sum_right / __pyx_v_self->__pyx_base.__pyx_base.weighted_n_right);
+  (__pyx_v_impurity_right[0]) = (__pyx_v_self->__pyx_base.__pyx_base.sq_sum_right / __pyx_v_self->__pyx_base.__pyx_base.weighted_n_right);
 
-  /* "sklearn/tree/_criterion.pyx":958
- *         impurity_right[0] = sq_sum_right / self.weighted_n_right
+  /* "sklearn/tree/_criterion.pyx":959
+ *         impurity_right[0] = self.sq_sum_right / self.weighted_n_right
  * 
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
  *             impurity_left[0] -= (sum_left[k] / self.weighted_n_left) ** 2.0
@@ -6183,7 +6246,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
   for (__pyx_t_5 = 0; __pyx_t_5 < __pyx_t_3; __pyx_t_5+=1) {
     __pyx_v_k = __pyx_t_5;
 
-    /* "sklearn/tree/_criterion.pyx":959
+    /* "sklearn/tree/_criterion.pyx":960
  * 
  *         for k in range(self.n_outputs):
  *             impurity_left[0] -= (sum_left[k] / self.weighted_n_left) ** 2.0             # <<<<<<<<<<<<<<
@@ -6193,7 +6256,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
     __pyx_t_9 = 0;
     (__pyx_v_impurity_left[__pyx_t_9]) = ((__pyx_v_impurity_left[__pyx_t_9]) - pow(((__pyx_v_sum_left[__pyx_v_k]) / __pyx_v_self->__pyx_base.__pyx_base.weighted_n_left), 2.0));
 
-    /* "sklearn/tree/_criterion.pyx":960
+    /* "sklearn/tree/_criterion.pyx":961
  *         for k in range(self.n_outputs):
  *             impurity_left[0] -= (sum_left[k] / self.weighted_n_left) ** 2.0
  *             impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0             # <<<<<<<<<<<<<<
@@ -6204,7 +6267,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
     (__pyx_v_impurity_right[__pyx_t_9]) = ((__pyx_v_impurity_right[__pyx_t_9]) - pow(((__pyx_v_sum_right[__pyx_v_k]) / __pyx_v_self->__pyx_base.__pyx_base.weighted_n_right), 2.0));
   }
 
-  /* "sklearn/tree/_criterion.pyx":962
+  /* "sklearn/tree/_criterion.pyx":963
  *             impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0
  * 
  *         impurity_left[0] /= self.n_outputs             # <<<<<<<<<<<<<<
@@ -6214,7 +6277,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
   __pyx_t_9 = 0;
   (__pyx_v_impurity_left[__pyx_t_9]) = ((__pyx_v_impurity_left[__pyx_t_9]) / __pyx_v_self->__pyx_base.__pyx_base.n_outputs);
 
-  /* "sklearn/tree/_criterion.pyx":963
+  /* "sklearn/tree/_criterion.pyx":964
  * 
  *         impurity_left[0] /= self.n_outputs
  *         impurity_right[0] /= self.n_outputs             # <<<<<<<<<<<<<<
@@ -6224,7 +6287,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
   __pyx_t_9 = 0;
   (__pyx_v_impurity_right[__pyx_t_9]) = ((__pyx_v_impurity_right[__pyx_t_9]) / __pyx_v_self->__pyx_base.__pyx_base.n_outputs);
 
-  /* "sklearn/tree/_criterion.pyx":918
+  /* "sklearn/tree/_criterion.pyx":920
  *                 proxy_impurity_right / self.weighted_n_right)
  * 
  *     cdef void children_impurity(self, double* impurity_left,             # <<<<<<<<<<<<<<
@@ -6235,7 +6298,7 @@ static void __pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity(struct __
   /* function exit code */
 }
 
-/* "sklearn/tree/_criterion.pyx":975
+/* "sklearn/tree/_criterion.pyx":976
  *     """
  * 
  *     cdef double proxy_impurity_improvement(self) nogil:             # <<<<<<<<<<<<<<
@@ -6255,7 +6318,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_proxy_impurity_i
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_2;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":987
+  /* "sklearn/tree/_criterion.pyx":988
  *         """
  * 
  *         cdef double* sum_left = self.sum_left             # <<<<<<<<<<<<<<
@@ -6265,7 +6328,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_proxy_impurity_i
   __pyx_t_1 = __pyx_v_self->__pyx_base.__pyx_base.__pyx_base.sum_left;
   __pyx_v_sum_left = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":988
+  /* "sklearn/tree/_criterion.pyx":989
  * 
  *         cdef double* sum_left = self.sum_left
  *         cdef double* sum_right = self.sum_right             # <<<<<<<<<<<<<<
@@ -6275,7 +6338,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_proxy_impurity_i
   __pyx_t_1 = __pyx_v_self->__pyx_base.__pyx_base.__pyx_base.sum_right;
   __pyx_v_sum_right = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":990
+  /* "sklearn/tree/_criterion.pyx":991
  *         cdef double* sum_right = self.sum_right
  * 
  *         cdef double total_sum_left = 0.0             # <<<<<<<<<<<<<<
@@ -6284,7 +6347,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_proxy_impurity_i
  */
   __pyx_v_total_sum_left = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":991
+  /* "sklearn/tree/_criterion.pyx":992
  * 
  *         cdef double total_sum_left = 0.0
  *         cdef double total_sum_right = 0.0             # <<<<<<<<<<<<<<
@@ -6293,7 +6356,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_proxy_impurity_i
  */
   __pyx_v_total_sum_right = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":994
+  /* "sklearn/tree/_criterion.pyx":995
  * 
  *         cdef SIZE_t k
  *         cdef double diff = 0.0             # <<<<<<<<<<<<<<
@@ -6302,7 +6365,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_proxy_impurity_i
  */
   __pyx_v_diff = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":996
+  /* "sklearn/tree/_criterion.pyx":997
  *         cdef double diff = 0.0
  * 
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -6313,7 +6376,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_proxy_impurity_i
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_k = __pyx_t_3;
 
-    /* "sklearn/tree/_criterion.pyx":997
+    /* "sklearn/tree/_criterion.pyx":998
  * 
  *         for k in range(self.n_outputs):
  *             total_sum_left += sum_left[k]             # <<<<<<<<<<<<<<
@@ -6322,7 +6385,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_proxy_impurity_i
  */
     __pyx_v_total_sum_left = (__pyx_v_total_sum_left + (__pyx_v_sum_left[__pyx_v_k]));
 
-    /* "sklearn/tree/_criterion.pyx":998
+    /* "sklearn/tree/_criterion.pyx":999
  *         for k in range(self.n_outputs):
  *             total_sum_left += sum_left[k]
  *             total_sum_right += sum_right[k]             # <<<<<<<<<<<<<<
@@ -6332,7 +6395,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_proxy_impurity_i
     __pyx_v_total_sum_right = (__pyx_v_total_sum_right + (__pyx_v_sum_right[__pyx_v_k]));
   }
 
-  /* "sklearn/tree/_criterion.pyx":1000
+  /* "sklearn/tree/_criterion.pyx":1001
  *             total_sum_right += sum_right[k]
  * 
  *         diff = (self.weighted_n_right * total_sum_left -             # <<<<<<<<<<<<<<
@@ -6341,7 +6404,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_proxy_impurity_i
  */
   __pyx_v_diff = ((__pyx_v_self->__pyx_base.__pyx_base.__pyx_base.weighted_n_right * __pyx_v_total_sum_left) - (__pyx_v_self->__pyx_base.__pyx_base.__pyx_base.weighted_n_left * __pyx_v_total_sum_right));
 
-  /* "sklearn/tree/_criterion.pyx":1003
+  /* "sklearn/tree/_criterion.pyx":1004
  *                 self.weighted_n_left * total_sum_right)
  * 
  *         return diff * diff / (self.weighted_n_left * self.weighted_n_right)             # <<<<<<<<<<<<<<
@@ -6351,7 +6414,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_proxy_impurity_i
   __pyx_r = ((__pyx_v_diff * __pyx_v_diff) / (__pyx_v_self->__pyx_base.__pyx_base.__pyx_base.weighted_n_left * __pyx_v_self->__pyx_base.__pyx_base.__pyx_base.weighted_n_right));
   goto __pyx_L0;
 
-  /* "sklearn/tree/_criterion.pyx":975
+  /* "sklearn/tree/_criterion.pyx":976
  *     """
  * 
  *     cdef double proxy_impurity_improvement(self) nogil:             # <<<<<<<<<<<<<<
@@ -6364,7 +6427,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_proxy_impurity_i
   return __pyx_r;
 }
 
-/* "sklearn/tree/_criterion.pyx":1005
+/* "sklearn/tree/_criterion.pyx":1006
  *         return diff * diff / (self.weighted_n_left * self.weighted_n_right)
  * 
  *     cdef double impurity_improvement(self, double impurity) nogil:             # <<<<<<<<<<<<<<
@@ -6384,7 +6447,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_impurity_improve
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_2;
   __pyx_t_7sklearn_4tree_10_criterion_SIZE_t __pyx_t_3;
 
-  /* "sklearn/tree/_criterion.pyx":1006
+  /* "sklearn/tree/_criterion.pyx":1007
  * 
  *     cdef double impurity_improvement(self, double impurity) nogil:
  *         cdef double* sum_left = self.sum_left             # <<<<<<<<<<<<<<
@@ -6394,7 +6457,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_impurity_improve
   __pyx_t_1 = __pyx_v_self->__pyx_base.__pyx_base.__pyx_base.sum_left;
   __pyx_v_sum_left = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":1007
+  /* "sklearn/tree/_criterion.pyx":1008
  *     cdef double impurity_improvement(self, double impurity) nogil:
  *         cdef double* sum_left = self.sum_left
  *         cdef double* sum_right = self.sum_right             # <<<<<<<<<<<<<<
@@ -6404,7 +6467,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_impurity_improve
   __pyx_t_1 = __pyx_v_self->__pyx_base.__pyx_base.__pyx_base.sum_right;
   __pyx_v_sum_right = __pyx_t_1;
 
-  /* "sklearn/tree/_criterion.pyx":1009
+  /* "sklearn/tree/_criterion.pyx":1010
  *         cdef double* sum_right = self.sum_right
  * 
  *         cdef double total_sum_left = 0.0             # <<<<<<<<<<<<<<
@@ -6413,7 +6476,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_impurity_improve
  */
   __pyx_v_total_sum_left = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":1010
+  /* "sklearn/tree/_criterion.pyx":1011
  * 
  *         cdef double total_sum_left = 0.0
  *         cdef double total_sum_right = 0.0             # <<<<<<<<<<<<<<
@@ -6422,7 +6485,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_impurity_improve
  */
   __pyx_v_total_sum_right = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":1013
+  /* "sklearn/tree/_criterion.pyx":1014
  * 
  *         cdef SIZE_t k
  *         cdef double diff = 0.0             # <<<<<<<<<<<<<<
@@ -6431,7 +6494,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_impurity_improve
  */
   __pyx_v_diff = 0.0;
 
-  /* "sklearn/tree/_criterion.pyx":1015
+  /* "sklearn/tree/_criterion.pyx":1016
  *         cdef double diff = 0.0
  * 
  *         for k in range(self.n_outputs):             # <<<<<<<<<<<<<<
@@ -6442,7 +6505,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_impurity_improve
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_k = __pyx_t_3;
 
-    /* "sklearn/tree/_criterion.pyx":1016
+    /* "sklearn/tree/_criterion.pyx":1017
  * 
  *         for k in range(self.n_outputs):
  *             total_sum_left += sum_left[k]             # <<<<<<<<<<<<<<
@@ -6451,7 +6514,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_impurity_improve
  */
     __pyx_v_total_sum_left = (__pyx_v_total_sum_left + (__pyx_v_sum_left[__pyx_v_k]));
 
-    /* "sklearn/tree/_criterion.pyx":1017
+    /* "sklearn/tree/_criterion.pyx":1018
  *         for k in range(self.n_outputs):
  *             total_sum_left += sum_left[k]
  *             total_sum_right += sum_right[k]             # <<<<<<<<<<<<<<
@@ -6461,7 +6524,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_impurity_improve
     __pyx_v_total_sum_right = (__pyx_v_total_sum_right + (__pyx_v_sum_right[__pyx_v_k]));
   }
 
-  /* "sklearn/tree/_criterion.pyx":1020
+  /* "sklearn/tree/_criterion.pyx":1021
  * 
  *         diff = (self.weighted_n_right * total_sum_left -
  *                 self.weighted_n_left * total_sum_right) / self.n_outputs             # <<<<<<<<<<<<<<
@@ -6470,7 +6533,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_impurity_improve
  */
   __pyx_v_diff = (((__pyx_v_self->__pyx_base.__pyx_base.__pyx_base.weighted_n_right * __pyx_v_total_sum_left) - (__pyx_v_self->__pyx_base.__pyx_base.__pyx_base.weighted_n_left * __pyx_v_total_sum_right)) / __pyx_v_self->__pyx_base.__pyx_base.__pyx_base.n_outputs);
 
-  /* "sklearn/tree/_criterion.pyx":1022
+  /* "sklearn/tree/_criterion.pyx":1023
  *                 self.weighted_n_left * total_sum_right) / self.n_outputs
  * 
  *         return (diff * diff / (self.weighted_n_left * self.weighted_n_right *             # <<<<<<<<<<<<<<
@@ -6480,7 +6543,7 @@ static double __pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_impurity_improve
   __pyx_r = ((__pyx_v_diff * __pyx_v_diff) / ((__pyx_v_self->__pyx_base.__pyx_base.__pyx_base.weighted_n_left * __pyx_v_self->__pyx_base.__pyx_base.__pyx_base.weighted_n_right) * __pyx_v_self->__pyx_base.__pyx_base.__pyx_base.weighted_n_node_samples));
   goto __pyx_L0;
 
-  /* "sklearn/tree/_criterion.pyx":1005
+  /* "sklearn/tree/_criterion.pyx":1006
  *         return diff * diff / (self.weighted_n_left * self.weighted_n_right)
  * 
  *     cdef double impurity_improvement(self, double impurity) nogil:             # <<<<<<<<<<<<<<
@@ -9071,8 +9134,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 253; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_builtin_MemoryError = __Pyx_GetBuiltinName(__pyx_n_s_MemoryError); if (!__pyx_builtin_MemoryError) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 250; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_builtin_MemoryError = __Pyx_GetBuiltinName(__pyx_n_s_MemoryError); if (!__pyx_builtin_MemoryError) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 218; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_builtin_RuntimeError = __Pyx_GetBuiltinName(__pyx_n_s_RuntimeError); if (!__pyx_builtin_RuntimeError) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 802; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   return 0;
@@ -9269,30 +9332,30 @@ PyMODINIT_FUNC PyInit__criterion(void)
   __pyx_vtable_7sklearn_4tree_10_criterion_ClassificationCriterion.__pyx_base.children_impurity = (void (*)(struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *, double *, double *))__pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_children_impurity;
   __pyx_vtable_7sklearn_4tree_10_criterion_ClassificationCriterion.__pyx_base.node_value = (void (*)(struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *, double *))__pyx_f_7sklearn_4tree_10_criterion_23ClassificationCriterion_node_value;
   __pyx_type_7sklearn_4tree_10_criterion_ClassificationCriterion.tp_base = __pyx_ptype_7sklearn_4tree_10_criterion_Criterion;
-  if (PyType_Ready(&__pyx_type_7sklearn_4tree_10_criterion_ClassificationCriterion) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 207; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyType_Ready(&__pyx_type_7sklearn_4tree_10_criterion_ClassificationCriterion) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 205; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_type_7sklearn_4tree_10_criterion_ClassificationCriterion.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_7sklearn_4tree_10_criterion_ClassificationCriterion.tp_dict, __pyx_vtabptr_7sklearn_4tree_10_criterion_ClassificationCriterion) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 207; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (PyObject_SetAttrString(__pyx_m, "ClassificationCriterion", (PyObject *)&__pyx_type_7sklearn_4tree_10_criterion_ClassificationCriterion) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 207; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_SetVtable(__pyx_type_7sklearn_4tree_10_criterion_ClassificationCriterion.tp_dict, __pyx_vtabptr_7sklearn_4tree_10_criterion_ClassificationCriterion) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 205; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttrString(__pyx_m, "ClassificationCriterion", (PyObject *)&__pyx_type_7sklearn_4tree_10_criterion_ClassificationCriterion) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 205; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_7sklearn_4tree_10_criterion_ClassificationCriterion = &__pyx_type_7sklearn_4tree_10_criterion_ClassificationCriterion;
   __pyx_vtabptr_7sklearn_4tree_10_criterion_Entropy = &__pyx_vtable_7sklearn_4tree_10_criterion_Entropy;
   __pyx_vtable_7sklearn_4tree_10_criterion_Entropy.__pyx_base = *__pyx_vtabptr_7sklearn_4tree_10_criterion_ClassificationCriterion;
   __pyx_vtable_7sklearn_4tree_10_criterion_Entropy.__pyx_base.__pyx_base.node_impurity = (double (*)(struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *))__pyx_f_7sklearn_4tree_10_criterion_7Entropy_node_impurity;
   __pyx_vtable_7sklearn_4tree_10_criterion_Entropy.__pyx_base.__pyx_base.children_impurity = (void (*)(struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *, double *, double *))__pyx_f_7sklearn_4tree_10_criterion_7Entropy_children_impurity;
   __pyx_type_7sklearn_4tree_10_criterion_Entropy.tp_base = __pyx_ptype_7sklearn_4tree_10_criterion_ClassificationCriterion;
-  if (PyType_Ready(&__pyx_type_7sklearn_4tree_10_criterion_Entropy) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 498; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyType_Ready(&__pyx_type_7sklearn_4tree_10_criterion_Entropy) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 499; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_type_7sklearn_4tree_10_criterion_Entropy.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_7sklearn_4tree_10_criterion_Entropy.tp_dict, __pyx_vtabptr_7sklearn_4tree_10_criterion_Entropy) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 498; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (PyObject_SetAttrString(__pyx_m, "Entropy", (PyObject *)&__pyx_type_7sklearn_4tree_10_criterion_Entropy) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 498; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_SetVtable(__pyx_type_7sklearn_4tree_10_criterion_Entropy.tp_dict, __pyx_vtabptr_7sklearn_4tree_10_criterion_Entropy) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 499; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttrString(__pyx_m, "Entropy", (PyObject *)&__pyx_type_7sklearn_4tree_10_criterion_Entropy) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 499; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_7sklearn_4tree_10_criterion_Entropy = &__pyx_type_7sklearn_4tree_10_criterion_Entropy;
   __pyx_vtabptr_7sklearn_4tree_10_criterion_Gini = &__pyx_vtable_7sklearn_4tree_10_criterion_Gini;
   __pyx_vtable_7sklearn_4tree_10_criterion_Gini.__pyx_base = *__pyx_vtabptr_7sklearn_4tree_10_criterion_ClassificationCriterion;
   __pyx_vtable_7sklearn_4tree_10_criterion_Gini.__pyx_base.__pyx_base.node_impurity = (double (*)(struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *))__pyx_f_7sklearn_4tree_10_criterion_4Gini_node_impurity;
   __pyx_vtable_7sklearn_4tree_10_criterion_Gini.__pyx_base.__pyx_base.children_impurity = (void (*)(struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *, double *, double *))__pyx_f_7sklearn_4tree_10_criterion_4Gini_children_impurity;
   __pyx_type_7sklearn_4tree_10_criterion_Gini.tp_base = __pyx_ptype_7sklearn_4tree_10_criterion_ClassificationCriterion;
-  if (PyType_Ready(&__pyx_type_7sklearn_4tree_10_criterion_Gini) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 579; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyType_Ready(&__pyx_type_7sklearn_4tree_10_criterion_Gini) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 580; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_type_7sklearn_4tree_10_criterion_Gini.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_7sklearn_4tree_10_criterion_Gini.tp_dict, __pyx_vtabptr_7sklearn_4tree_10_criterion_Gini) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 579; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (PyObject_SetAttrString(__pyx_m, "Gini", (PyObject *)&__pyx_type_7sklearn_4tree_10_criterion_Gini) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 579; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_SetVtable(__pyx_type_7sklearn_4tree_10_criterion_Gini.tp_dict, __pyx_vtabptr_7sklearn_4tree_10_criterion_Gini) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 580; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttrString(__pyx_m, "Gini", (PyObject *)&__pyx_type_7sklearn_4tree_10_criterion_Gini) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 580; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_7sklearn_4tree_10_criterion_Gini = &__pyx_type_7sklearn_4tree_10_criterion_Gini;
   __pyx_vtabptr_7sklearn_4tree_10_criterion_RegressionCriterion = &__pyx_vtable_7sklearn_4tree_10_criterion_RegressionCriterion;
   __pyx_vtable_7sklearn_4tree_10_criterion_RegressionCriterion.__pyx_base = *__pyx_vtabptr_7sklearn_4tree_10_criterion_Criterion;
@@ -9304,10 +9367,10 @@ PyMODINIT_FUNC PyInit__criterion(void)
   __pyx_vtable_7sklearn_4tree_10_criterion_RegressionCriterion.__pyx_base.children_impurity = (void (*)(struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *, double *, double *))__pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_children_impurity;
   __pyx_vtable_7sklearn_4tree_10_criterion_RegressionCriterion.__pyx_base.node_value = (void (*)(struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *, double *))__pyx_f_7sklearn_4tree_10_criterion_19RegressionCriterion_node_value;
   __pyx_type_7sklearn_4tree_10_criterion_RegressionCriterion.tp_base = __pyx_ptype_7sklearn_4tree_10_criterion_Criterion;
-  if (PyType_Ready(&__pyx_type_7sklearn_4tree_10_criterion_RegressionCriterion) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 673; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyType_Ready(&__pyx_type_7sklearn_4tree_10_criterion_RegressionCriterion) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 674; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_type_7sklearn_4tree_10_criterion_RegressionCriterion.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_7sklearn_4tree_10_criterion_RegressionCriterion.tp_dict, __pyx_vtabptr_7sklearn_4tree_10_criterion_RegressionCriterion) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 673; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (PyObject_SetAttrString(__pyx_m, "RegressionCriterion", (PyObject *)&__pyx_type_7sklearn_4tree_10_criterion_RegressionCriterion) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 673; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_SetVtable(__pyx_type_7sklearn_4tree_10_criterion_RegressionCriterion.tp_dict, __pyx_vtabptr_7sklearn_4tree_10_criterion_RegressionCriterion) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 674; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttrString(__pyx_m, "RegressionCriterion", (PyObject *)&__pyx_type_7sklearn_4tree_10_criterion_RegressionCriterion) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 674; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_7sklearn_4tree_10_criterion_RegressionCriterion = &__pyx_type_7sklearn_4tree_10_criterion_RegressionCriterion;
   __pyx_vtabptr_7sklearn_4tree_10_criterion_MSE = &__pyx_vtable_7sklearn_4tree_10_criterion_MSE;
   __pyx_vtable_7sklearn_4tree_10_criterion_MSE.__pyx_base = *__pyx_vtabptr_7sklearn_4tree_10_criterion_RegressionCriterion;
@@ -9315,20 +9378,20 @@ PyMODINIT_FUNC PyInit__criterion(void)
   __pyx_vtable_7sklearn_4tree_10_criterion_MSE.__pyx_base.__pyx_base.children_impurity = (void (*)(struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *, double *, double *))__pyx_f_7sklearn_4tree_10_criterion_3MSE_children_impurity;
   __pyx_vtable_7sklearn_4tree_10_criterion_MSE.__pyx_base.__pyx_base.proxy_impurity_improvement = (double (*)(struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *))__pyx_f_7sklearn_4tree_10_criterion_3MSE_proxy_impurity_improvement;
   __pyx_type_7sklearn_4tree_10_criterion_MSE.tp_base = __pyx_ptype_7sklearn_4tree_10_criterion_RegressionCriterion;
-  if (PyType_Ready(&__pyx_type_7sklearn_4tree_10_criterion_MSE) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 873; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyType_Ready(&__pyx_type_7sklearn_4tree_10_criterion_MSE) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 875; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_type_7sklearn_4tree_10_criterion_MSE.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_7sklearn_4tree_10_criterion_MSE.tp_dict, __pyx_vtabptr_7sklearn_4tree_10_criterion_MSE) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 873; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (PyObject_SetAttrString(__pyx_m, "MSE", (PyObject *)&__pyx_type_7sklearn_4tree_10_criterion_MSE) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 873; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_SetVtable(__pyx_type_7sklearn_4tree_10_criterion_MSE.tp_dict, __pyx_vtabptr_7sklearn_4tree_10_criterion_MSE) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 875; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttrString(__pyx_m, "MSE", (PyObject *)&__pyx_type_7sklearn_4tree_10_criterion_MSE) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 875; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_7sklearn_4tree_10_criterion_MSE = &__pyx_type_7sklearn_4tree_10_criterion_MSE;
   __pyx_vtabptr_7sklearn_4tree_10_criterion_FriedmanMSE = &__pyx_vtable_7sklearn_4tree_10_criterion_FriedmanMSE;
   __pyx_vtable_7sklearn_4tree_10_criterion_FriedmanMSE.__pyx_base = *__pyx_vtabptr_7sklearn_4tree_10_criterion_MSE;
   __pyx_vtable_7sklearn_4tree_10_criterion_FriedmanMSE.__pyx_base.__pyx_base.__pyx_base.impurity_improvement = (double (*)(struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *, double))__pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_impurity_improvement;
   __pyx_vtable_7sklearn_4tree_10_criterion_FriedmanMSE.__pyx_base.__pyx_base.__pyx_base.proxy_impurity_improvement = (double (*)(struct __pyx_obj_7sklearn_4tree_10_criterion_Criterion *))__pyx_f_7sklearn_4tree_10_criterion_11FriedmanMSE_proxy_impurity_improvement;
   __pyx_type_7sklearn_4tree_10_criterion_FriedmanMSE.tp_base = __pyx_ptype_7sklearn_4tree_10_criterion_MSE;
-  if (PyType_Ready(&__pyx_type_7sklearn_4tree_10_criterion_FriedmanMSE) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 966; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyType_Ready(&__pyx_type_7sklearn_4tree_10_criterion_FriedmanMSE) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 967; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_type_7sklearn_4tree_10_criterion_FriedmanMSE.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_7sklearn_4tree_10_criterion_FriedmanMSE.tp_dict, __pyx_vtabptr_7sklearn_4tree_10_criterion_FriedmanMSE) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 966; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (PyObject_SetAttrString(__pyx_m, "FriedmanMSE", (PyObject *)&__pyx_type_7sklearn_4tree_10_criterion_FriedmanMSE) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 966; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (__Pyx_SetVtable(__pyx_type_7sklearn_4tree_10_criterion_FriedmanMSE.tp_dict, __pyx_vtabptr_7sklearn_4tree_10_criterion_FriedmanMSE) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 967; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttrString(__pyx_m, "FriedmanMSE", (PyObject *)&__pyx_type_7sklearn_4tree_10_criterion_FriedmanMSE) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 967; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_7sklearn_4tree_10_criterion_FriedmanMSE = &__pyx_type_7sklearn_4tree_10_criterion_FriedmanMSE;
   /*--- Type import code ---*/
   __pyx_ptype_7cpython_4type_type = __Pyx_ImportType(__Pyx_BUILTIN_MODULE_NAME, "type", 
@@ -9343,10 +9406,10 @@ PyMODINIT_FUNC PyInit__criterion(void)
   __pyx_ptype_5numpy_broadcast = __Pyx_ImportType("numpy", "broadcast", sizeof(PyArrayMultiIterObject), 0); if (unlikely(!__pyx_ptype_5numpy_broadcast)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 172; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_5numpy_ndarray = __Pyx_ImportType("numpy", "ndarray", sizeof(PyArrayObject), 0); if (unlikely(!__pyx_ptype_5numpy_ndarray)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 181; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_5numpy_ufunc = __Pyx_ImportType("numpy", "ufunc", sizeof(PyUFuncObject), 0); if (unlikely(!__pyx_ptype_5numpy_ufunc)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 864; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_ptype_7sklearn_4tree_6_utils_Stack = __Pyx_ImportType("sklearn.tree._utils", "Stack", sizeof(struct __pyx_obj_7sklearn_4tree_6_utils_Stack), 1); if (unlikely(!__pyx_ptype_7sklearn_4tree_6_utils_Stack)) {__pyx_filename = __pyx_f[3]; __pyx_lineno = 67; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_vtabptr_7sklearn_4tree_6_utils_Stack = (struct __pyx_vtabstruct_7sklearn_4tree_6_utils_Stack*)__Pyx_GetVtable(__pyx_ptype_7sklearn_4tree_6_utils_Stack->tp_dict); if (unlikely(!__pyx_vtabptr_7sklearn_4tree_6_utils_Stack)) {__pyx_filename = __pyx_f[3]; __pyx_lineno = 67; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_ptype_7sklearn_4tree_6_utils_PriorityHeap = __Pyx_ImportType("sklearn.tree._utils", "PriorityHeap", sizeof(struct __pyx_obj_7sklearn_4tree_6_utils_PriorityHeap), 1); if (unlikely(!__pyx_ptype_7sklearn_4tree_6_utils_PriorityHeap)) {__pyx_filename = __pyx_f[3]; __pyx_lineno = 96; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_vtabptr_7sklearn_4tree_6_utils_PriorityHeap = (struct __pyx_vtabstruct_7sklearn_4tree_6_utils_PriorityHeap*)__Pyx_GetVtable(__pyx_ptype_7sklearn_4tree_6_utils_PriorityHeap->tp_dict); if (unlikely(!__pyx_vtabptr_7sklearn_4tree_6_utils_PriorityHeap)) {__pyx_filename = __pyx_f[3]; __pyx_lineno = 96; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_ptype_7sklearn_4tree_6_utils_Stack = __Pyx_ImportType("sklearn.tree._utils", "Stack", sizeof(struct __pyx_obj_7sklearn_4tree_6_utils_Stack), 1); if (unlikely(!__pyx_ptype_7sklearn_4tree_6_utils_Stack)) {__pyx_filename = __pyx_f[3]; __pyx_lineno = 70; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_vtabptr_7sklearn_4tree_6_utils_Stack = (struct __pyx_vtabstruct_7sklearn_4tree_6_utils_Stack*)__Pyx_GetVtable(__pyx_ptype_7sklearn_4tree_6_utils_Stack->tp_dict); if (unlikely(!__pyx_vtabptr_7sklearn_4tree_6_utils_Stack)) {__pyx_filename = __pyx_f[3]; __pyx_lineno = 70; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_ptype_7sklearn_4tree_6_utils_PriorityHeap = __Pyx_ImportType("sklearn.tree._utils", "PriorityHeap", sizeof(struct __pyx_obj_7sklearn_4tree_6_utils_PriorityHeap), 1); if (unlikely(!__pyx_ptype_7sklearn_4tree_6_utils_PriorityHeap)) {__pyx_filename = __pyx_f[3]; __pyx_lineno = 106; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_vtabptr_7sklearn_4tree_6_utils_PriorityHeap = (struct __pyx_vtabstruct_7sklearn_4tree_6_utils_PriorityHeap*)__Pyx_GetVtable(__pyx_ptype_7sklearn_4tree_6_utils_PriorityHeap->tp_dict); if (unlikely(!__pyx_vtabptr_7sklearn_4tree_6_utils_PriorityHeap)) {__pyx_filename = __pyx_f[3]; __pyx_lineno = 106; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   /*--- Variable import code ---*/
   /*--- Function import code ---*/
   __pyx_t_1 = __Pyx_ImportModule("sklearn.tree._utils"); if (!__pyx_t_1) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}

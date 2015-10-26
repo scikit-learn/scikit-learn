@@ -78,7 +78,6 @@ cdef class Criterion:
 
     cdef void reset(self) nogil:
         """Reset the criterion at pos=start.
-
         This method must be implemented by the subclass.
         """
 
@@ -86,7 +85,6 @@ cdef class Criterion:
 
     cdef void reverse_reset(self) nogil:
         """Reset the criterion at pos=end.
-
         This method must be implemented by the subclass.
         """
         pass
@@ -208,7 +206,6 @@ cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
 
     cdef SIZE_t* n_classes
-    cdef SIZE_t sum_stride
 
     def __cinit__(self, SIZE_t n_outputs,
                   np.ndarray[SIZE_t, ndim=1] n_classes):
@@ -263,6 +260,10 @@ cdef class ClassificationCriterion(Criterion):
         self.sum_left = <double*> calloc(n_elements, sizeof(double))
         self.sum_right = <double*> calloc(n_elements, sizeof(double))
 
+        self.sq_sum_total = 0.
+        self.sq_sum_left = 0.
+        self.sq_sum_right = 0.
+
         if (self.sum_total == NULL or 
                 self.sum_left == NULL or
                 self.sum_right == NULL):
@@ -281,7 +282,7 @@ cdef class ClassificationCriterion(Criterion):
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride,
                    DOUBLE_t* sample_weight, double weighted_n_samples,
-                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
+                   SIZE_t* samples, SIZE_t start, SIZE_t end, ) nogil:
         """Initialize the criterion at node samples[start:end] and
         children samples[start:start] and samples[start:end].
 
@@ -312,7 +313,7 @@ cdef class ClassificationCriterion(Criterion):
         self.end = end
         self.n_node_samples = end - start
         self.weighted_n_samples = weighted_n_samples
-        self.weighted_n_node_samples = 0.0
+        self.weighted_n_node_samples = 0
 
         cdef SIZE_t* n_classes = self.n_classes
         cdef double* sum_total = self.sum_total
@@ -682,8 +683,6 @@ cdef class RegressionCriterion(Criterion):
             = (\sum_i^n y_i ** 2) - n_samples * y_bar ** 2
     """
 
-    cdef double sq_sum_total
-
     def __cinit__(self, SIZE_t n_outputs):
         """Initialize parameters for this criterion.
 
@@ -709,13 +708,16 @@ cdef class RegressionCriterion(Criterion):
         self.weighted_n_left = 0.0
         self.weighted_n_right = 0.0
 
-        self.sq_sum_total = 0.0
+        self.sq_sum_total = 0.
+        self.sq_sum_left = 0.
+        self.sq_sum_right = 0.
 
         # Allocate accumulators. Make sure they are NULL, not uninitialized,
         # before an exception can be raised (which triggers __dealloc__).
         self.sum_total = NULL
         self.sum_left = NULL
         self.sum_right = NULL
+        self.sum_stride = 1
 
         # Allocate memory for the accumulators
         self.sum_total = <double*> calloc(n_outputs, sizeof(double))
@@ -931,14 +933,13 @@ cdef class MSE(RegressionCriterion):
         cdef double* sum_left = self.sum_left
         cdef double* sum_right = self.sum_right
 
-        cdef double sq_sum_left = 0.0
-        cdef double sq_sum_right
-
         cdef SIZE_t i
         cdef SIZE_t p
         cdef SIZE_t k
         cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t y_ik
+
+        self.sq_sum_left = 0.
 
         for p in range(start, pos):
             i = samples[p]
@@ -948,12 +949,12 @@ cdef class MSE(RegressionCriterion):
 
             for k in range(self.n_outputs):
                 y_ik = y[i * self.y_stride + k]
-                sq_sum_left += w * y_ik * y_ik
+                self.sq_sum_left += w * y_ik * y_ik
 
-        sq_sum_right = self.sq_sum_total - sq_sum_left
+        self.sq_sum_right = self.sq_sum_total - self.sq_sum_left
 
-        impurity_left[0] = sq_sum_left / self.weighted_n_left
-        impurity_right[0] = sq_sum_right / self.weighted_n_right
+        impurity_left[0] = self.sq_sum_left / self.weighted_n_left
+        impurity_right[0] = self.sq_sum_right / self.weighted_n_right
 
         for k in range(self.n_outputs):
             impurity_left[0] -= (sum_left[k] / self.weighted_n_left) ** 2.0

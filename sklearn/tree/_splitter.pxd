@@ -30,6 +30,12 @@ cdef struct SplitRecord:
     double improvement     # Impurity improvement given parent node.
     double impurity_left   # Impurity of the left split.
     double impurity_right  # Impurity of the right split.
+    double weighted_n_left
+    double weighted_n_right
+    double* sum_left
+    double* sum_right
+    double sq_sum_left
+    double sq_sum_right
 
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
@@ -81,12 +87,15 @@ cdef class Splitter:
     # This allows optimization with depth-based tree building.
 
     # Methods
-    cdef void init(self, object X, np.ndarray y,
-                   DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=*) except *
+    cdef void init(self, object X,
+                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                   DOUBLE_t* sample_weight, np.ndarray X_idx_sorted,
+                   SIZE_t* n_samples_total, double* weighted_n_samples_total, 
+                   double** sum_total, double* sq_sum_total, double* impurity)
 
-    cdef void node_reset(self, SIZE_t start, SIZE_t end,
-                         double* weighted_n_node_samples) nogil
+    cdef void node_reset(self, SIZE_t start, SIZE_t end, 
+                         double weighted_n_node_samples, 
+                         double* sum_total, double sq_sum_total) nogil
 
     cdef void node_split(self,
                          double impurity,   # Impurity of the node
@@ -94,5 +103,3 @@ cdef class Splitter:
                          SIZE_t* n_constant_features) nogil
 
     cdef void node_value(self, double* dest) nogil
-
-    cdef double node_impurity(self) nogil
