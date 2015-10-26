@@ -678,8 +678,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             to a sparse ``csr_matrix``.
 
         return_std : boolean, optional, default=False
-            When True, the standard deviation of the predictions of the
-            ensemble's estimators is returned in addition to the mean.
+            When True, the sampling standard deviation of the predictions of
+            the ensemble is returned in addition to the predicted values.
 
         Returns
         -------
@@ -687,9 +687,9 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             The mean of the predicted values.
 
         y_std : array of shape = [n_samples], optional (if return_std == True)
-            The standard deviation of the predicted values.
+            The sampling standard deviation of the predicted values.
         """
-        # Check data
+        # Checks
         X = self._validate_X_predict(X)
 
         # Assign chunk of trees to jobs
