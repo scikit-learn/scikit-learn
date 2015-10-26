@@ -9,6 +9,7 @@ import numpy as np
 from scipy import sparse
 from math import sqrt
 
+from . import estimate_bandwidth
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..externals.six.moves import xrange
@@ -333,10 +334,15 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
     Parameters
     ----------
-    threshold : float, default 0.5
+    threshold : float, default 0.5 or "auto"
         The radius of the subcluster obtained by merging a new sample and the
         closest subcluster should be lesser than the threshold. Otherwise a new
         subcluster is started.
+
+        If `threshold="auto"` is provided, the threshold is set to be the mean
+        of the distances between every sample and its nearest neighbor at the
+        third quantile. Note that this will be expensive since a pass through
+        every sample is made.
 
     branching_factor : int, default 50
         Maximum number of CF subclusters in each node. If a new samples enters
@@ -426,7 +432,16 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
     def _fit(self, X):
         X = check_array(X, accept_sparse='csr', copy=self.copy)
-        threshold = self.threshold
+
+        if isinstance(self.threshold, str):
+            if self.threshold == "auto":
+                threshold = estimate_bandwidth(X)
+            else:
+                raise ValueError("Threshold should be 'auto' or float, "
+                                 "got %s" % self.threshold)
+        else:
+            threshold = self.threshold
+
         branching_factor = self.branching_factor
 
         if branching_factor <= 1:

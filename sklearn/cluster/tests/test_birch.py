@@ -11,12 +11,15 @@ from sklearn.cluster.hierarchical import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.linear_model import ElasticNet
 from sklearn.metrics import pairwise_distances_argmin, v_measure_score
+from sklearn.metrics import euclidean_distances
+from sklearn.neighbors import kneighbors_graph
 
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 
@@ -158,3 +161,21 @@ def test_threshold():
     brc = Birch(threshold=5.0, n_clusters=None)
     brc.fit(X)
     check_threshold(brc, 5.)
+
+
+def test_threhold_auto():
+    n_samples = 80
+    X, y = make_blobs(n_samples=n_samples, centers=4, random_state=0)
+    brc_auto = Birch(threshold="auto", n_clusters=None)
+    brc_auto.fit(X)
+
+    # Pre calculate threshold.
+    # Internally the threshold corresponds to the mean of the samples at the
+    # third quantile.
+    kng = kneighbors_graph(
+        X, int(0.3 * n_samples), include_self=False, mode='distance')
+    thresh = kng.max(axis=1).sum() / n_samples
+    brc = Birch(threshold=thresh, n_clusters=None)
+    brc.fit(X)
+    assert_array_almost_equal(
+        brc_auto.subcluster_centers_, brc.subcluster_centers_)
