@@ -19,7 +19,6 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
 
-from sklearn.utils import warnings
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -66,6 +65,10 @@ boston = datasets.load_boston()
 perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
+
+# also make a hastie_10_2 dataset
+hastie_X, hastie_y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+hastie_X = hastie_X.astype(np.float32)
 
 FOREST_CLASSIFIERS = {
     "ExtraTreesClassifier": ExtraTreesClassifier,
@@ -115,7 +118,8 @@ def check_iris_criterion(name, criterion):
     # Check consistency on dataset iris.
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
-    clf = ForestClassifier(n_estimators=10, criterion=criterion, random_state=1)
+    clf = ForestClassifier(n_estimators=10, criterion=criterion,
+                           random_state=1)
     clf.fit(iris.data, iris.target)
     score = clf.score(iris.data, iris.target)
     assert_greater(score, 0.9, "Failed with criterion %s and score = %f"
@@ -664,50 +668,99 @@ def test_distribution():
     assert_equal(len(uniques), 8)
 
 
-def check_max_leaf_nodes_max_depth(name, X, y):
+def check_max_leaf_nodes_max_depth(name):
+    X, y = hastie_X, hastie_y
+
     # Test precedence of max_leaf_nodes over max_depth.
     ForestEstimator = FOREST_ESTIMATORS[name]
     est = ForestEstimator(max_depth=1, max_leaf_nodes=4,
-                          n_estimators=1).fit(X, y)
+                          n_estimators=1, random_state=0).fit(X, y)
     assert_greater(est.estimators_[0].tree_.max_depth, 1)
 
-    est = ForestEstimator(max_depth=1, n_estimators=1).fit(X, y)
+    est = ForestEstimator(max_depth=1, n_estimators=1,
+                          random_state=0).fit(X, y)
     assert_equal(est.estimators_[0].tree_.max_depth, 1)
 
 
 def test_max_leaf_nodes_max_depth():
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     for name in FOREST_ESTIMATORS:
-        yield check_max_leaf_nodes_max_depth, name, X, y
+        yield check_max_leaf_nodes_max_depth, name
 
 
-def check_min_samples_leaf(name, X, y):
+def check_min_samples_split(name):
+    X, y = hastie_X, hastie_y
+    ForestEstimator = FOREST_ESTIMATORS[name]
+
+    # test boundary value
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_split=-1).fit, X, y)
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_split=0).fit, X, y)
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_split=1.1).fit, X, y)
+
+    est = ForestEstimator(min_samples_split=10, n_estimators=1, random_state=0)
+    est.fit(X, y)
+    node_idx = est.estimators_[0].tree_.children_left != -1
+    node_samples = est.estimators_[0].tree_.n_node_samples[node_idx]
+
+    assert_greater(np.min(node_samples), len(X) * 0.5 - 1,
+                   "Failed with {0}".format(name))
+
+    est = ForestEstimator(min_samples_split=0.5, n_estimators=1, random_state=0)
+    est.fit(X, y)
+    node_idx = est.estimators_[0].tree_.children_left != -1
+    node_samples = est.estimators_[0].tree_.n_node_samples[node_idx]
+
+    assert_greater(np.min(node_samples), len(X) * 0.5 - 1,
+                   "Failed with {0}".format(name))
+
+
+def test_min_samples_split():
+    for name in FOREST_ESTIMATORS:
+        yield check_min_samples_split, name
+
+
+def check_min_samples_leaf(name):
+    X, y = hastie_X, hastie_y
+
     # Test if leaves contain more than leaf_count training examples
     ForestEstimator = FOREST_ESTIMATORS[name]
 
-    # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
-    # by setting max_leaf_nodes
-    for max_leaf_nodes in (None, 1000):
-        est = ForestEstimator(min_samples_leaf=5,
-                              max_leaf_nodes=max_leaf_nodes,
-                              random_state=0)
-        est.fit(X, y)
-        out = est.estimators_[0].tree_.apply(X)
-        node_counts = bincount(out)
-        # drop inner nodes
-        leaf_count = node_counts[node_counts != 0]
-        assert_greater(np.min(leaf_count), 4,
-                       "Failed with {0}".format(name))
+    # test boundary value
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_leaf=-1).fit, X, y)
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_leaf=0).fit, X, y)
+
+    est = ForestEstimator(min_samples_leaf=5, n_estimators=1, random_state=0)
+    est.fit(X, y)
+    out = est.estimators_[0].tree_.apply(X)
+    node_counts = bincount(out)
+    # drop inner nodes
+    leaf_count = node_counts[node_counts != 0]
+    assert_greater(np.min(leaf_count), 4,
+                   "Failed with {0}".format(name))
+
+    est = ForestEstimator(min_samples_leaf=0.25, n_estimators=1,
+                          random_state=0)
+    est.fit(X, y)
+    out = est.estimators_[0].tree_.apply(X)
+    node_counts = np.bincount(out)
+    # drop inner nodes
+    leaf_count = node_counts[node_counts != 0]
+    assert_greater(np.min(leaf_count), len(X) * 0.25 - 1,
+                   "Failed with {0}".format(name))
 
 
 def test_min_samples_leaf():
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    X = X.astype(np.float32)
     for name in FOREST_ESTIMATORS:
-        yield check_min_samples_leaf, name, X, y
+        yield check_min_samples_leaf, name
 
 
-def check_min_weight_fraction_leaf(name, X, y):
+def check_min_weight_fraction_leaf(name):
+    X, y = hastie_X, hastie_y
+
     # Test if leaves contain at least min_weight_fraction_leaf of the
     # training set
     ForestEstimator = FOREST_ESTIMATORS[name]
@@ -717,32 +770,28 @@ def check_min_weight_fraction_leaf(name, X, y):
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
-    for max_leaf_nodes in (None, 1000):
-        for frac in np.linspace(0, 0.5, 6):
-            est = ForestEstimator(min_weight_fraction_leaf=frac,
-                                  max_leaf_nodes=max_leaf_nodes,
-                                  random_state=0)
-            if isinstance(est, (RandomForestClassifier,
-                                RandomForestRegressor)):
-                est.bootstrap = False
-            est.fit(X, y, sample_weight=weights)
-            out = est.estimators_[0].tree_.apply(X)
-            node_weights = bincount(out, weights=weights)
-            # drop inner nodes
-            leaf_weights = node_weights[node_weights != 0]
-            assert_greater_equal(
-                np.min(leaf_weights),
-                total_weight * est.min_weight_fraction_leaf,
-                "Failed with {0} "
-                "min_weight_fraction_leaf={1}".format(
-                    name, est.min_weight_fraction_leaf))
+    for frac in np.linspace(0, 0.5, 6):
+        est = ForestEstimator(min_weight_fraction_leaf=frac, n_estimators=1,
+                              random_state=0)
+        if "RandomForest" in name:
+            est.bootstrap = False
+
+        est.fit(X, y, sample_weight=weights)
+        out = est.estimators_[0].tree_.apply(X)
+        node_weights = bincount(out, weights=weights)
+        # drop inner nodes
+        leaf_weights = node_weights[node_weights != 0]
+        assert_greater_equal(
+            np.min(leaf_weights),
+            total_weight * est.min_weight_fraction_leaf,
+            "Failed with {0} "
+            "min_weight_fraction_leaf={1}".format(
+                name, est.min_weight_fraction_leaf))
 
 
 def test_min_weight_fraction_leaf():
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    X = X.astype(np.float32)
     for name in FOREST_ESTIMATORS:
-        yield check_min_weight_fraction_leaf, name, X, y
+        yield check_min_weight_fraction_leaf, name
 
 
 def check_sparse_input(name, X, X_sparse, y):
@@ -838,7 +887,8 @@ def test_memory_layout():
 @ignore_warnings
 def check_1d_input(name, X, X_2d, y):
     ForestEstimator = FOREST_ESTIMATORS[name]
-    assert_raises(ValueError, ForestEstimator(random_state=0).fit, X, y)
+    assert_raises(ValueError, ForestEstimator(n_estimators=1,
+                                              random_state=0).fit, X, y)
 
     est = ForestEstimator(random_state=0)
     est.fit(X_2d, y)
@@ -920,6 +970,7 @@ def check_class_weight_balanced_and_bootstrap_multi_output(name):
     clf = ForestClassifier(class_weight='subsample', random_state=0)
     ignore_warnings(clf.fit)(X, _y)
 
+
 def test_class_weight_balanced_and_bootstrap_multi_output():
     for name in FOREST_CLASSIFIERS:
         yield check_class_weight_balanced_and_bootstrap_multi_output, name
@@ -958,7 +1009,7 @@ def test_class_weight_errors():
 def check_warm_start(name, random_state=42):
     # Test if fitting incrementally with warm start gives a forest of the
     # right size and the same results as a normal fit.
-    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    X, y = hastie_X, hastie_y
     ForestEstimator = FOREST_ESTIMATORS[name]
     clf_ws = None
     for n_estimators in [5, 10]:
@@ -989,7 +1040,7 @@ def test_warm_start():
 
 def check_warm_start_clear(name):
     # Test if fit clears state and grows a new forest when warm_start==False.
-    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    X, y = hastie_X, hastie_y
     ForestEstimator = FOREST_ESTIMATORS[name]
     clf = ForestEstimator(n_estimators=5, max_depth=1, warm_start=False,
                           random_state=1)
@@ -1011,7 +1062,7 @@ def test_warm_start_clear():
 
 def check_warm_start_smaller_n_estimators(name):
     # Test if warm start second fit with smaller n_estimators raises error.
-    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    X, y = hastie_X, hastie_y
     ForestEstimator = FOREST_ESTIMATORS[name]
     clf = ForestEstimator(n_estimators=5, max_depth=1, warm_start=True)
     clf.fit(X, y)
@@ -1027,7 +1078,7 @@ def test_warm_start_smaller_n_estimators():
 def check_warm_start_equal_n_estimators(name):
     # Test if warm start with equal n_estimators does nothing and returns the
     # same forest and raises a warning.
-    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    X, y = hastie_X, hastie_y
     ForestEstimator = FOREST_ESTIMATORS[name]
     clf = ForestEstimator(n_estimators=5, max_depth=3, warm_start=True,
                           random_state=1)
@@ -1052,7 +1103,7 @@ def test_warm_start_equal_n_estimators():
 
 def check_warm_start_oob(name):
     # Test that the warm start computes oob score when asked.
-    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    X, y = hastie_X, hastie_y
     ForestEstimator = FOREST_ESTIMATORS[name]
     # Use 15 estimators to avoid 'some inputs do not have OOB scores' warning.
     clf = ForestEstimator(n_estimators=15, max_depth=3, warm_start=False,
@@ -1101,7 +1152,7 @@ def test_dtype_convert(n_classes=15):
 
 
 def check_decision_path(name):
-    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    X, y = hastie_X, hastie_y
     n_samples = X.shape[0]
     ForestEstimator = FOREST_ESTIMATORS[name]
     est = ForestEstimator(n_estimators=5, max_depth=1, warm_start=False,
