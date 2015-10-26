@@ -275,7 +275,7 @@ def test_sample_weight_consistency(random_state=42):
     train, test = train_test_split(range(n_samples))
 
     for name, Estimator in estimators:
-        
+        print ("%s is being analysed" % name)
         if name in exclude:
             print ("%s is being excluded" % name)
             continue
@@ -302,7 +302,10 @@ def test_sample_weight_consistency(random_state=42):
 
         precision = 6
         # if estimator has `coef_` attribute, then compare the two
-        if hasattr(estimator_sw, 'coef_'):
+        if hasattr(estimator_sw, 'dual_coef_'):
+            yield (assert_array_almost_equal,
+                   estimator_sw.dual_coef_, estimator_aug.dual_coef_, precision, name+' dual_coef_ not equal')
+        elif hasattr(estimator_sw, 'coef_'):
             yield (assert_array_almost_equal,
                    estimator_sw.coef_, estimator_aug.coef_, precision, name+' coef_ not equal')
 
@@ -346,7 +349,7 @@ def test_sample_weight_0(random_state=42):
     train, test = train_test_split(range(n_samples))
 
     for name, Estimator in estimators:
-
+        print ("%s is being analysed" % name)
         if name in exclude:
             print ("%s is being excluded" % name)
             continue
@@ -371,7 +374,10 @@ def test_sample_weight_0(random_state=42):
 
         precision = 6
         # if estimator has `coef_` attribute, then compare the two
-        if hasattr(estimator_sw, 'coef_'):
+        if hasattr(estimator_sw, 'dual_coef_'):
+            yield (assert_array_almost_equal,
+                   estimator_sw.dual_coef_, estimator_aug.dual_coef_, precision, name+' dual_coef_ not equal')
+        elif hasattr(estimator_sw, 'coef_'):
             yield (assert_array_almost_equal,
                    estimator_sw.coef_, estimator_aug.coef_, precision, name+' coef_ not equal')
 
