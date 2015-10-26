@@ -26,7 +26,7 @@ Standards-Version: 3.9.6
 X-Python-Version: >= 2.6
 Homepage: http://scikit-learn.sourceforge.net
 Vcs-Browser: http://github.com/yarikoptic/scikit-learn
-Vcs-Git: git://github.com/yarikoptic/scikit-learn.git
+Vcs-Git: git://github.com/yarikoptic/scikit-learn.git -b debian
 
 Package: python-sklearn
 Replaces: python-scikits-learn (<< 0.9~)
