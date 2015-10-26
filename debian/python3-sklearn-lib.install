@@ -1,0 +1,4 @@
+usr/lib/python3/dist-packages/sklearn/*.so
+usr/lib/python3/dist-packages/sklearn/*/*.so
+usr/lib/python3/dist-packages/sklearn/*/*/*.so
+usr/lib/python3/dist-packages/sklearn/*/*/*/*.so
