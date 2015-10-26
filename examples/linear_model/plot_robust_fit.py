@@ -82,7 +82,7 @@ for title, this_X, this_y in [
 
     legend_title = 'Error of Mean\nAbsolute Deviation\nto Non-corrupt Data'
     legend = plt.legend(loc='upper right', frameon=False, title=legend_title,
-                        fontsize='x-small')
+                        prop=dict(size='x-small'))
     plt.xlim(-4, 10.2)
     plt.ylim(-2, 10.2)
     plt.title(title)
