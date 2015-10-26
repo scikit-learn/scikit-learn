@@ -15,7 +15,8 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.validation import check_random_state
-from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import (pairwise_distances,
+                                      PAIRWISE_DISTANCE_FUNCTIONS)
 from sklearn import neighbors, datasets
 from sklearn.exceptions import DataConversionWarning
 
@@ -986,6 +987,22 @@ def test_callable_metric():
     dist2, ind2 = nbrs2.kneighbors(X)
 
     assert_array_almost_equal(dist1, dist2)
+
+
+def test_algo_auto_metrics():
+    X = rng.rand(12, 3)
+    Xcsr = csr_matrix(X)
+    Valid_Metrics = dict(dense = ['precomputed', 'sqeuclidean',
+                             'yule', 'cosine', 'correlation'],
+                         sparse=PAIRWISE_DISTANCE_FUNCTIONS.keys())
+    for metric in Valid_Metrics['dense']:
+        nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                        metric=metric).fit(X)
+        assert_true(nn._fit_method, 'brute')
+    for metric in Valid_Metrics['sparse']:
+        nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                        metric=metric).fit(Xcsr)
+        assert_true(nn._fit_method, 'brute')
 
 
 def test_metric_params_interface():
