@@ -24,23 +24,22 @@ __all__ = ["IsolationForest"]
 class IsolationForest(BaseBagging):
     """Isolation Forest Algorithm
 
-    Return the anomaly score of each sample with the IsolationForest algorithm
+    Return the anomaly score of each sample using the IsolationForest algorithm
 
-    IsolationForest consists in 'isolate' the observations by randomly
-    selecting a feature and then randomly selecting a split value
-    between the maximum and minimum values of the selected feature.
+    The IsolationForest 'isolates' observations by randomly selecting a feature
+    and then randomly selecting a split value between the maximum and minimum
+    values of the selected feature.
 
     Since recursive partitioning can be represented by a tree structure, the
-    number of splitting required to isolate a point is equivalent to the path
-    length from the root node to a terminating node.
+    number of splittings required to isolate a sample is equivalent to the path
+    length from the root node to the terminating node.
 
-    This path length, averaged among a forest of such random trees, is a
+    This path length, averaged over a forest of such random trees, is a
     measure of abnormality and our decision function.
 
-    Indeed random partitioning produces noticeable shorter paths for anomalies.
+    Random partitioning produces noticeably shorter paths for anomalies.
     Hence, when a forest of random trees collectively produce shorter path
-    lengths for some particular points, then they are highly likely to be
-    anomalies.
+    lengths for particular samples, they are highly likely to be anomalies.
 
 
     Parameters
@@ -52,8 +51,8 @@ class IsolationForest(BaseBagging):
         The number of samples to draw from X to train each base estimator.
             - If int, then draw `max_samples` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
-        If max_samples is larger than number of samples provided,
-        all samples with be used for all trees (no sampling).
+        If max_samples is larger than the number of samples provided,
+        all samples will be used for all trees (no sampling).
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
@@ -169,12 +168,12 @@ class IsolationForest(BaseBagging):
         """Predict anomaly score of X with the IsolationForest algorithm.
 
         The anomaly score of an input sample is computed as
-        the mean anomaly scores of the trees in the forest.
+        the mean anomaly score of the trees in the forest.
 
         The measure of normality of an observation given a tree is the depth
         of the leaf containing this observation, which is equivalent to
-        the number of splitting required to isolate this point. In case of
-        several observations n_left in the leaf, the average length path of
+        the number of splittings required to isolate this point. In case of
+        several observations n_left in the leaf, the average path length of
         a n_left samples isolation tree is added.
 
         Parameters

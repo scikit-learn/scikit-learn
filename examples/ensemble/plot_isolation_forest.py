@@ -5,20 +5,20 @@ IsolationForest example
 
 An example using IsolationForest for anomaly detection.
 
-IsolationForest consists in 'isolating' the observations by randomly selecting
-a feature and then randomly selecting a split value between the maximum and
-minimum values of the selected feature.
+The IsolationForest 'isolates' observations by randomly selecting a feature
+and then randomly selecting a split value between the maximum and minimum
+values of the selected feature.
 
 Since recursive partitioning can be represented by a tree structure, the
-number of splitting required to isolate a sample is equivalent to the path
-length from the root node to a terminating node.
+number of splittings required to isolate a sample is equivalent to the path
+length from the root node to the terminating node.
 
-This path length, averaged among a forest of such random trees, is a measure
+This path length, averaged over a forest of such random trees, is a measure
 of abnormality and our decision function.
 
-Indeed random partitioning produces noticeable shorter paths for anomalies.
+Random partitioning produces noticeable shorter paths for anomalies.
 Hence, when a forest of random trees collectively produce shorter path lengths
-for some particular samples, then they are highly likely to be anomalies.
+for particular samples, they are highly likely to be anomalies.
 
 .. [1] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
     Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
