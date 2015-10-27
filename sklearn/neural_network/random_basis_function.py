@@ -29,9 +29,6 @@ class RandomBasisFunction(BaseEstimator, TransformerMixin):
         the uniform distribution; otherwise, between +weight_scale and 
         -weight_scale.
 
-    intercept : boolean, default True
-        Whether to randomly generate an intercept. 
-
     activation : {'logistic', 'tanh', 'relu'}, default 'tanh'
         Activation function for the output features.
 
@@ -43,6 +40,9 @@ class RandomBasisFunction(BaseEstimator, TransformerMixin):
 
          - 'relu', the rectified linear unit function,
             returns f(x) = max(0, x).
+
+    intercept : boolean, default True
+        Whether to randomly generate an intercept. 
 
     random_state : int or RandomState, optional, default None
         State of or seed for random number generator.
@@ -61,10 +61,15 @@ class RandomBasisFunction(BaseEstimator, TransformerMixin):
         training deep feedforward neural networks." International Conference
         on Artificial Intelligence and Statistics. 2010.
 
+    Schmidt, Wouter F., Martin A. Kraaijveld, and Robert PW Duin.
+        "Feedforward neural networks with random weights." Pattern Recognition,
+        1992. Vol. II. Conference B: Pattern Recognition Methodology and Systems,
+        Proceedings., 11th IAPR International Conference on. IEEE, 1992.
+
     See also
     --------
-    `sklearn.random_projection` contains algorithms that are similar to
-    `RandomBasisFunction` in that they transform the input features to another
+    `sklearn.random_projection` and `sklearn.kernel_approximation` contains algorithms
+    that are similar to `RandomBasisFunction` in that they transform the input features to another
     dimensional space. However, `RandomBasisFunction` is more general in that
     the user defines the number of features to generate and the function to 
     apply on these output features.
