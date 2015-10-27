@@ -24,7 +24,7 @@ import scipy.sparse as sp
 from .base import is_classifier, clone
 from .utils import indexable, check_random_state, safe_indexing
 from .utils.validation import (_is_arraylike, _num_samples,
-                               check_array, column_or_1d)
+                               column_or_1d)
 from .utils.multiclass import type_of_target
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
@@ -361,13 +361,6 @@ class LabelKFold(_BaseKFold):
     n_folds : int, default=3
         Number of folds. Must be at least 2.
 
-    shuffle : boolean, optional
-        Whether to shuffle the data before splitting into batches.
-
-    random_state : None, int or RandomState
-        When shuffle=True, pseudo-random number generator state used for
-        shuffling. If None, use default numpy RNG for shuffling.
-
     Examples
     --------
     >>> from sklearn.cross_validation import LabelKFold
@@ -399,9 +392,9 @@ class LabelKFold(_BaseKFold):
     LeaveOneLabelOut for splitting the data according to explicit,
     domain-specific stratification of the dataset.
     """
-    def __init__(self, labels, n_folds=3, shuffle=False, random_state=None):
-        super(LabelKFold, self).__init__(len(labels), n_folds, shuffle,
-                                         random_state)
+    def __init__(self, labels, n_folds=3):
+        super(LabelKFold, self).__init__(len(labels), n_folds,
+                                         shuffle=False, random_state=None)
 
         unique_labels, labels = np.unique(labels, return_inverse=True)
         n_labels = len(unique_labels)
@@ -411,16 +404,6 @@ class LabelKFold(_BaseKFold):
                     ("Cannot have number of folds n_folds={0} greater"
                      " than the number of labels: {1}.").format(n_folds,
                                                                 n_labels))
-
-        if shuffle:
-            # In case of ties in label weights, label names are indirectly
-            # used to assign samples to folds. When shuffle=True, label names
-            # are randomized to obtain random fold assigments.
-            rng = check_random_state(self.random_state)
-            unique_labels = np.arange(n_labels, dtype=np.int)
-            rng.shuffle(unique_labels)
-            labels = unique_labels[labels]
-            unique_labels, labels = np.unique(labels, return_inverse=True)
 
         # Weight labels by their number of occurences
         n_samples_per_label = np.bincount(labels)
@@ -1875,29 +1858,10 @@ def train_test_split(*arrays, **options):
     test_size = options.pop('test_size', None)
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
-    dtype = options.pop('dtype', None)
-    if dtype is not None:
-        warnings.warn("dtype option is ignored and will be removed in 0.18.",
-                      DeprecationWarning)
-
-    allow_nd = options.pop('allow_nd', None)
-    allow_lists = options.pop('allow_lists', None)
     stratify = options.pop('stratify', None)
-
-    if allow_lists is not None:
-        warnings.warn("The allow_lists option is deprecated and will be "
-                      "assumed True in 0.18 and removed.", DeprecationWarning)
 
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
-    if allow_nd is not None:
-        warnings.warn("The allow_nd option is deprecated and will be "
-                      "assumed True in 0.18 and removed.", DeprecationWarning)
-    if allow_lists is False or allow_nd is False:
-        arrays = [check_array(x, 'csr', allow_nd=allow_nd,
-                              force_all_finite=False, ensure_2d=False)
-                  if x is not None else x
-                  for x in arrays]
 
     if test_size is None and train_size is None:
         test_size = 0.25
