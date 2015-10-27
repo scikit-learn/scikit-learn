@@ -11,9 +11,6 @@ from ..base import TransformerMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 
-import warnings
-
-
 ###############################################################################
 # Mixin class for feature agglomeration.
 
@@ -24,7 +21,7 @@ class AgglomerationTransform(TransformerMixin):
 
     pooling_func = np.mean
 
-    def transform(self, X, pooling_func=None):
+    def transform(self, X):
         """
         Transform a new matrix using the built clustering
 
@@ -34,11 +31,6 @@ class AgglomerationTransform(TransformerMixin):
             A M by N array of M observations in N dimensions or a length
             M array of M one-dimensional observations.
 
-        pooling_func : callable, default=np.mean
-            This combines the values of agglomerated features into a single
-            value, and should accept an array of shape [M, N] and the keyword
-            argument `axis=1`, and reduce it to an array of size [M].
-
         Returns
         -------
         Y : array, shape = [n_samples, n_clusters] or [n_clusters]
@@ -46,13 +38,7 @@ class AgglomerationTransform(TransformerMixin):
         """
         check_is_fitted(self, "labels_")
 
-        if pooling_func is not None:
-            warnings.warn("The pooling_func parameter is deprecated since 0.15 "
-                          "and will be removed in 0.18. "
-                          "Pass it to the constructor instead.",
-                          DeprecationWarning)
-        else:
-            pooling_func = self.pooling_func
+        pooling_func = self.pooling_func
         X = check_array(X)
         nX = []
         if len(self.labels_) != X.shape[1]:

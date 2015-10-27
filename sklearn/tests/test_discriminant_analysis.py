@@ -1,10 +1,6 @@
-try:
-    # Python 2 compat
-    reload
-except NameError:
-    # Regular Python 3+ import
-    from importlib import reload
+import sys
 import numpy as np
+from nose import SkipTest
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -20,6 +16,15 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+
+
+# import reload
+version = sys.version_info
+if version[0] == 3:
+    # Python 3+ import for reload. Builtin in Python2
+    if version[1] == 3:
+        reload = None
+    from importlib import reload
 
 
 # Data is just 6 separable points in the plane
@@ -298,6 +303,9 @@ def test_qda_regularization():
 
 
 def test_deprecated_lda_qda_deprecation():
+    if reload is None:
+        SkipTest("Can't reload module on Python3.3")
+
     def import_lda_module():
         import sklearn.lda
         # ensure that we trigger DeprecationWarning even if the sklearn.lda
