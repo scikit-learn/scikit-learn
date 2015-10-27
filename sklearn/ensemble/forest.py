@@ -251,7 +251,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             X.sort_indices()
 
         # Remap output
-        n_samples, self.n_features_ = X.shape
+        self.n_samples_, self.n_features_ = X.shape
 
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
@@ -549,10 +549,10 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
     def predict_proba(self, X):
         """Predict class probabilities for X.
 
-        The predicted class probabilities of an input sample is computed as
-        the mean predicted class probabilities of the trees in the forest. The
-        class probability of a single tree is the fraction of samples of the same
-        class in a leaf.
+        The predicted class probabilities of an input sample is computed as the
+        mean predicted class probabilities of the trees in the forest. The
+        class probability of a single tree is the fraction of samples of the
+        same class in a leaf.
 
         Parameters
         ----------
@@ -680,6 +680,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         return_std : boolean, optional, default=False
             When True, the sampling standard deviation of the predictions of
             the ensemble is returned in addition to the predicted values.
+            Standard deviations are computed using bias-corrected
+            Jacknife-after-bootstrap estimates, as decribed in arXiv:1311.4555.
 
         Returns
         -------
@@ -692,6 +694,11 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         # Checks
         X = self._validate_X_predict(X)
 
+        if return_std and not self.bootstrap:
+            raise ValueError("The sampling standard deviation of the "
+                             "predicted values can be computed only when "
+                             "bootstrap=True.")
+
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
@@ -701,11 +708,35 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             delayed(_parallel_helper)(e, 'predict', X, check_input=False)
             for e in self.estimators_)
 
+        all_y_hat = np.array(all_y_hat)
         y_mean = np.mean(all_y_hat, axis=0)
-        if return_std:
-            return y_mean, np.std(all_y_hat, axis=0)
-        else:
+
+        if not return_std:
             return y_mean
+
+        else:
+            # Jacknife-after-bootstrap estimate of the sampling variance
+            var_J = np.zeros(len(X))
+            N_bi = np.zeros((self.n_estimators, self.n_samples_))
+
+            for b, estimator in enumerate(self.estimators_):
+                samples = _generate_sample_indices(estimator.random_state,
+                                                   self.n_samples_)
+                N_bi[b, samples] += 1
+
+            out_of_bag = (N_bi == 0)
+
+            for i in range(self.n_samples_):
+                if np.any(out_of_bag[:, i]):
+                    delta_i = all_y_hat[out_of_bag[:, i]].mean(axis=0) - y_mean
+                    var_J += delta_i ** 2
+
+            var_J *= (self.n_samples_ - 1.) / self.n_samples_
+            correction = (self.n_samples_ * np.var(all_y_hat, axis=0) /
+                          self.n_estimators)
+            var_J[correction < var_J] -= correction[correction < var_J]
+
+            return y_mean, var_J ** 0.5
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag scores"""

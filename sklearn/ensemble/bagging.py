@@ -892,6 +892,8 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         return_std : boolean, optional, default=False
             When True, the sampling standard deviation of the predictions of
             the ensemble is returned in addition to the predicted values.
+            Standard deviations are computed using bias-corrected
+            Jacknife-after-bootstrap estimates, as decribed in arXiv:1311.4555.
 
         Returns
         -------
@@ -904,6 +906,11 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         # Checks
         check_is_fitted(self, "estimators_features_")
         X = check_array(X, accept_sparse=['csr', 'csc'])
+
+        if return_std and not self.bootstrap:
+            raise ValueError("The sampling standard deviation of the "
+                             "predicted values can be computed only when "
+                             "bootstrap=True.")
 
         # Parallel loop
         n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
@@ -924,22 +931,26 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             return y_mean
 
         else:
-            # Infinitesimal jacknife (IJ) estimate of the sampling variance
-
-            # TODO: check correctness
-            # TODO: bias correction (compare with R code)
-
-            var_IJ = np.zeros(len(X))
+            # Jacknife-after-bootstrap estimate of the sampling variance
+            var_J = np.zeros(len(X))
             N_bi = np.zeros((self.n_estimators, self.n_samples_))
 
             for b, samples in enumerate(self.estimators_samples_):
                 N_bi[b, samples] += 1
 
-            var_IJ = np.dot((N_bi - np.mean(N_bi, axis=0)).T,
-                            all_y_hat - y_mean)
-            var_IJ = (var_IJ ** 2).sum(axis=0) / self.n_estimators ** 2
+            out_of_bag = (N_bi == 0)
 
-            return y_mean, var_IJ ** 0.5
+            for i in range(self.n_samples_):
+                if np.any(out_of_bag[:, i]):
+                    delta_i = all_y_hat[out_of_bag[:, i]].mean(axis=0) - y_mean
+                    var_J += delta_i ** 2
+
+            var_J *= (self.n_samples_ - 1.) / self.n_samples_
+            correction = (self.n_samples_ * np.var(all_y_hat, axis=0) /
+                          self.n_estimators)
+            var_J[correction < var_J] -= correction[correction < var_J]
+
+            return y_mean, var_J ** 0.5
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""

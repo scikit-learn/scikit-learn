@@ -15,12 +15,11 @@ both the mean and the pointwise 95% confidence interval of the predictions.
 The mean predictions are evaluated on noise-less test data using the mean
 squared error. The mean log probabilities of the noise-less test data are used
 to evaluate the predictive distributions (a normal distribution with the
-predicted mean and standard deviation) of the three regressors.
+predicted mean and standard deviation) of the two regressors.
 
 The mean predictions of the Gaussian Process are slightly better than those of
 Random Forest. The predictive distribution (taking into account
-also the predictive variance) of Bagging is however
-more likely for this example.
+also the predictive variance) of Bagging is however better.
 """
 print(__doc__)
 
@@ -40,6 +39,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.utils import check_random_state
 
 rng = check_random_state(1)
+
 
 # Observations and noise
 def f(x):
@@ -66,7 +66,7 @@ regressors = [
         random_state=rng), "b"),
     ("Bagging", BaggingRegressor(
         base_estimator=ExtraTreeRegressor(),
-        n_estimators=250,
+        n_estimators=1000,
         random_state=rng), "g")
 ]
 
@@ -107,14 +107,14 @@ plt.ylim(-10, 20)
 plt.legend(loc='upper left')
 
 print("Mean-squared error of predictors on 1000 equidistant noise-less test "
-      "datapoints:\n\tBagging: %.2f\n\tGaussian Process: %.2f\n"
-      % (mse["Bagging"], mse["Gaussian Process"]))
+      "datapoints:")
+for name, _, _ in regressors:
+    print("\t%s: %.2f" % (name, mse[name]))
 
 print("Mean log-probability of 1000 equidistant noise-less test datapoints\n"
       "under the (normal) predictive distribution of the predictors, i.e.,\n"
-      "log N(y_true| y_pred_mean, y_pred_std) [less is better]:"
-      "\n\tBagging: %.2f\n\tGaussian Process: %.2f\n"
-      % (log_pdf_loss["Bagging"],
-         log_pdf_loss["Gaussian Process"]))
+      "log N(y_true| y_pred_mean, y_pred_std) [less is better]:")
+for name, _, _ in regressors:
+    print("\t%s: %.2f" % (name, log_pdf_loss[name]))
 
 plt.show()
