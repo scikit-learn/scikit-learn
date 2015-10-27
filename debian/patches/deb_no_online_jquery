@@ -1,11 +1,15 @@
 --- a/doc/tutorial/machine_learning_map/index.rst
 +++ b/doc/tutorial/machine_learning_map/index.rst
-@@ -64,7 +64,7 @@ Click on any estimator in the chart belo
+@@ -64,9 +64,9 @@ Click on any estimator in the chart belo
      </style>
  
      <body>
 -        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+-	<script type="text/javascript" src="../../_static/jquery.maphilight.min.js"></script>
+-	<script type="text/javascript" src="../../_static/jquery.min.js"></script>
 +    <!-- jquery.min.js ref from online was removed to satisfy Debian policy and in favor of below local copy -->
- 	<script type="text/javascript" src="../../_static/jquery.maphilight.min.js"></script>
- 	<script type="text/javascript" src="../../_static/jquery.min.js"></script>
++	<script type="text/javascript" src="../../_static/jquery.maphilight.js"></script>
++	<script type="text/javascript" src="../../_static/jquery.js"></script>
  	<script type="text/javascript">$(function() {
+ 		$('.map').maphilight({
+ 	            fade: true
