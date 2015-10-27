@@ -327,6 +327,9 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         Only returned if ``return_distributions=True``.
 
     """
+    if n_labels == 0:
+        raise ValueError("n_labels should be more than 0")
+
     generator = check_random_state(random_state)
     p_c = generator.rand(n_classes)
     p_c /= p_c.sum()
@@ -336,9 +339,6 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
 
     def sample_example():
         _, n_classes = p_w_c.shape
-
-        if n_labels == 0:
-            raise ValueError("n_labels should be more than 0")
 
         # pick a nonzero number of labels per document by rejection sampling
         y_size = n_classes + 1
