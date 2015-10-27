@@ -1833,18 +1833,22 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
 
-        if (self.handle_unknown == 'error' and
-            self.n_values == 'auto'):
+        if (self.n_values == 'auto'):
             for i in range(n_features):
                 found_classes = set(np.unique(X[:, i]))
                 train_classes = set(self.unique_samples_[i])
 
                 if not found_classes.issubset(train_classes):
-                    new_classes = found_classes.difference(train_classes)
+                    if self.handle_unknown not in ['error', 'ignore']:
+                        template = ("handle_unknown should be either error or "
+                                    "unknown, got %s")
+                        raise ValueError(template % self.handle_unknown)
 
-                    msg = ("unknown categorical feature(s) present"
-                                "during transform : %s" % str(new_classes))
-                    raise ValueError(msg)
+                    if self.handle_unknown == 'error':
+                        new_classes = found_classes.difference(train_classes)
+                        msg = ("unknown categorical feature(s) present"
+                               "during transform : %s" % str(new_classes))
+                        raise ValueError(msg)
 
         indices = self.feature_indices_
         if n_features != indices.shape[0] - 1:
@@ -1859,9 +1863,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         # ignored.
         mask = (X < self.n_values_).ravel()
         if np.any(~mask):
-            if self.handle_unknown not in ['error', 'ignore']:
-                raise ValueError("handle_unknown should be either error or "
-                                 "unknown got %s" % self.handle_unknown)
+
             if self.handle_unknown == 'error':
                 raise ValueError("unknown categorical feature present %s "
                                  "during transform." % X.ravel()[~mask])
