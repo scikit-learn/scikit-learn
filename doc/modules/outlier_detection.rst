@@ -128,69 +128,7 @@ This strategy is illustrated below.
 
     ..  [RD1999] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the minimum
         covariance determinant estimator" Technometrics 41(3), 212 (1999)
-     
-One-class SVM versus elliptic envelope
---------------------------------------
 
-Strictly-speaking, the One-class SVM is not an outlier-detection method,
-but a novelty-detection method: its training set should not be
-contaminated by outliers as it may fit them. That said, outlier detection
-in high-dimension, or without any assumptions on the distribution of the
-inlying data is very challenging, and a One-class SVM gives useful
-results in these situations.
-
-The examples below illustrate how the performance of the
-:class:`covariance.EllipticEnvelope` degrades as the data is less and
-less unimodal.  :class:`svm.OneClassSVM` works better on data with
-multiple modes.
-
-.. |outlier1| image:: ../auto_examples/covariance/images/plot_outlier_detection_001.png
-   :target: ../auto_examples/covariance/plot_outlier_detection.html
-   :scale: 50%
-
-.. |outlier2| image:: ../auto_examples/covariance/images/plot_outlier_detection_002.png
-   :target: ../auto_examples/covariance/plot_outlier_detection.html
-   :scale: 50%
-
-.. |outlier3| image:: ../auto_examples/covariance/images/plot_outlier_detection_003.png
-   :target: ../auto_examples/covariance/plot_outlier_detection.html
-   :scale: 50%
-
-.. list-table:: **Comparing One-class SVM approach, and elliptic envelope**
-   :widths: 40 60
-
-   *
-      - For a inlier mode well-centered and elliptic, the
-        :class:`svm.OneClassSVM` is not able to benefit from the
-        rotational symmetry of the inlier population. In addition, it
-        fits a bit the outliers present in the training set. On the
-        opposite, the decision rule based on fitting an
-        :class:`covariance.EllipticEnvelope` learns an ellipse, which
-        fits well the inlier distribution.
-      - |outlier1| 
-
-   * 
-      - As the inlier distribution becomes bimodal, the
-        :class:`covariance.EllipticEnvelope` does not fit well the
-        inliers. However, we can see that the :class:`svm.OneClassSVM`
-        tends to overfit: because it has not model of inliers, it
-        interprets a region where, by chance some outliers are
-        clustered, as inliers.
-      - |outlier2| 
-
-   * 
-      - If the inlier distribution is strongly non Gaussian, the
-        :class:`svm.OneClassSVM` is able to recover a reasonable
-        approximation, whereas the :class:`covariance.EllipticEnvelope`
-        completely fails.
-      - |outlier3|
-
-.. topic:: Examples:
-
-   * See :ref:`example_covariance_plot_outlier_detection.py` for a
-     comparison of the :class:`svm.OneClassSVM` (tuned to perform like
-     an outlier detection method) and a covariance-based outlier
-     detection with :class:`covariance.MinCovDet`.
 
 Isolation Forest
 ----------------------------
@@ -233,3 +171,71 @@ This strategy is illustrated below.
 .. topic:: References:
     .. [LTZ2008] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
            Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
+
+     
+One-class SVM versus Elliptic Envelope versus Isolation Forest
+--------------------------------------------------------------
+
+Strictly-speaking, the One-class SVM is not an outlier-detection method,
+but a novelty-detection method: its training set should not be
+contaminated by outliers as it may fit them. That said, outlier detection
+in high-dimension, or without any assumptions on the distribution of the
+inlying data is very challenging, and a One-class SVM gives useful
+results in these situations.
+
+The examples below illustrate how the performance of the
+:class:`covariance.EllipticEnvelope` degrades as the data is less and
+less unimodal. The :class:`svm.OneClassSVM` works better on data with
+multiple modes and :class:`ensemble.IsolationForest` performs well in every cases.
+
+.. |outlier1| image:: ../auto_examples/covariance/images/plot_outlier_detection_001.png
+   :target: ../auto_examples/covariance/plot_outlier_detection.html
+   :scale: 50%
+
+.. |outlier2| image:: ../auto_examples/covariance/images/plot_outlier_detection_002.png
+   :target: ../auto_examples/covariance/plot_outlier_detection.html
+   :scale: 50%
+
+.. |outlier3| image:: ../auto_examples/covariance/images/plot_outlier_detection_003.png
+   :target: ../auto_examples/covariance/plot_outlier_detection.html
+   :scale: 50%
+
+.. list-table:: **Comparing One-class SVM approach, and elliptic envelope**
+   :widths: 40 60
+
+   *
+      - For a inlier mode well-centered and elliptic, the
+        :class:`svm.OneClassSVM` is not able to benefit from the
+        rotational symmetry of the inlier population. In addition, it
+        fits a bit the outliers present in the training set. On the
+        opposite, the decision rule based on fitting an
+        :class:`covariance.EllipticEnvelope` learns an ellipse, which
+        fits well the inlier distribution. The :class:`ensemble.IsolationForest`
+	performs as well.
+      - |outlier1| 
+
+   * 
+      - As the inlier distribution becomes bimodal, the
+        :class:`covariance.EllipticEnvelope` does not fit well the
+        inliers. However, we can see that both :class:`ensemble.IsolationForest`
+	and :class:`svm.OneClassSVM` have difficulties to detect the two modes,
+	and that the :class:`svm.OneClassSVM`
+        tends to overfit: because it has not model of inliers, it
+        interprets a region where, by chance some outliers are
+        clustered, as inliers. 
+      - |outlier2| 
+
+   * 
+      - If the inlier distribution is strongly non Gaussian, the
+        :class:`svm.OneClassSVM` is able to recover a reasonable
+        approximation as well as :class:`ensemble.IsolationForest`,
+	whereas the :class:`covariance.EllipticEnvelope` completely fails.
+      - |outlier3|
+
+.. topic:: Examples:
+
+   * See :ref:`example_covariance_plot_outlier_detection.py` for a
+     comparison of the :class:`svm.OneClassSVM` (tuned to perform like
+     an outlier detection method), the :class:`ensemble.IsolationForest`
+     and a covariance-based outlier
+     detection with :class:`covariance.MinCovDet`.
