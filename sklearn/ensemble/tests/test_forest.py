@@ -196,7 +196,7 @@ def test_probability():
         yield check_probability, name
 
 
-def check_importances(X, y, name, criterion):
+def check_importances(name, criterion, X, y):
     ForestEstimator = FOREST_ESTIMATORS[name]
 
     est = ForestEstimator(n_estimators=20, criterion=criterion,
@@ -240,10 +240,10 @@ def test_importances():
                                         random_state=0)
 
     for name, criterion in product(FOREST_CLASSIFIERS, ["gini", "entropy"]):
-        yield check_importances, X, y, name, criterion
+        yield check_importances, name, criterion, X, y
 
     for name, criterion in product(FOREST_REGRESSORS, ["mse", "friedman_mse"]):
-        yield check_importances, X, y, name, criterion
+        yield check_importances, name, criterion, X, y
 
 
 def test_importances_asymptotic():
