@@ -33,7 +33,7 @@ import matplotlib as mpl
 import numpy as np
 
 from sklearn import datasets
-from sklearn.cross_validation import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.externals.six.moves import xrange
 from sklearn.mixture import GMM
 
@@ -56,9 +56,9 @@ iris = datasets.load_iris()
 
 # Break up the dataset into non-overlapping training (75%) and testing
 # (25%) sets.
-skf = StratifiedKFold(iris.target, n_folds=4)
+skf = StratifiedKFold(n_folds=4)
 # Only take the first fold.
-train_index, test_index = next(iter(skf))
+train_index, test_index = next(iter(skf.split(iris.data, iris.target)))
 
 
 X_train = iris.data[train_index]

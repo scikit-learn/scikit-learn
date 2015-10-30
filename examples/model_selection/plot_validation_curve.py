@@ -18,7 +18,7 @@ import numpy as np
 
 from sklearn.datasets import load_digits
 from sklearn.svm import SVC
-from sklearn.learning_curve import validation_curve
+from sklearn.model_selection import validation_curve
 
 digits = load_digits()
 X, y = digits.data, digits.target
