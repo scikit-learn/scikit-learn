@@ -411,6 +411,18 @@ Then we fit the estimator, and transform a data point.
 In the result, the first two numbers encode the gender, the next set of three
 numbers the continent and the last four the web browser.
 
+Note that, if there is a possibilty that the training data might have missing categorical
+features, one has to explicitly set ``n_values``. For example,
+
+    >>> enc = preprocessing.OneHotEncoder(n_values=[2, 3, 4])
+    >>> # Note that for there are missing categorical values for the 2nd and 3rd
+    >>> # feature
+    >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
+    OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
+           handle_unknown='error', n_values=[2, 3, 4], sparse=True)
+    >>> enc.transform([[1, 0, 0]]).toarray()
+    array([[ 0.,  1.,  1.,  0.,  0.,  1.,  0.,  0.,  0.]])
+
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as integers.
 
