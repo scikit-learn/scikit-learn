@@ -37,7 +37,7 @@ def test_consensus_score():
 
 
 def test_consensus_score_issue2445():
-    ''' Different number of biclusters in A and B'''
+    """ Different number of biclusters in A and B"""
     a_rows = np.array([[True, True, False, False],
                        [False, False, True, True],
                        [False, False, False, True]])

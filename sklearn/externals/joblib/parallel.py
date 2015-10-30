@@ -230,7 +230,7 @@ class BatchCompletionCallBack(object):
 
 ###############################################################################
 class Parallel(Logger):
-    ''' Helper class for readable parallel mapping.
+    """ Helper class for readable parallel mapping.
 
         Parameters
         -----------
@@ -416,7 +416,7 @@ class Parallel(Logger):
          [Parallel(n_jobs=2)]: Done   4 jobs       | elapsed:    0.0s
          [Parallel(n_jobs=2)]: Done   5 out of   6 | elapsed:    0.0s remaining:    0.0s
          [Parallel(n_jobs=2)]: Done   6 out of   6 | elapsed:    0.0s finished
-    '''
+    """
     def __init__(self, n_jobs=1, backend='multiprocessing', verbose=0,
                  pre_dispatch='2 * n_jobs', batch_size='auto',
                  temp_folder=None, max_nbytes='1M', mmap_mode='r'):
