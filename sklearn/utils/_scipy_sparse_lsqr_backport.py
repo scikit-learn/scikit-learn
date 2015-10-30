@@ -347,7 +347,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
 
     # Main iteration loop.
     while itn < iter_lim:
-        itn = itn + 1
+        itn += 1
         """
         %     Perform the next step of the bidiagonalization to obtain the
         %     next  beta, u, alfa, v.  These satisfy the relations
@@ -371,7 +371,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         cs1 = rhobar / rhobar1
         sn1 = damp / rhobar1
         psi = sn1 * phibar
-        phibar = cs1 * phibar
+        phibar *= cs1
 
         # Use a plane rotation to eliminate the subdiagonal element (beta)
         # of the lower-bidiagonal matrix, giving an upper-bidiagonal matrix.
@@ -388,12 +388,12 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         t2 = -theta / rho
         dk = (1 / rho) * w
 
-        x = x + t1 * w
+        x += t1 * w
         w = v + t2 * w
-        ddnorm = ddnorm + np.linalg.norm(dk)**2
+        ddnorm += np.linalg.norm(dk) ** 2
 
         if calc_var:
-            var = var + dk**2
+            var += dk ** 2
 
         # Use a plane rotation on the right to eliminate the
         # super-diagonal element (theta) of the upper-bidiagonal matrix.
@@ -407,14 +407,14 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         cs2 = gambar / gamma
         sn2 = theta / gamma
         z = rhs / gamma
-        xxnorm = xxnorm + z**2
+        xxnorm += z ** 2
 
         # Test for convergence.
         # First, estimate the condition of the matrix  Abar,
         # and the norms of  rbar  and  Abar'rbar.
         acond = anorm * sqrt(ddnorm)
         res1 = phibar**2
-        res2 = res2 + psi**2
+        res2 += psi ** 2
         rnorm = sqrt(res1 + res2)
         arnorm = alfa * abs(tau)
 

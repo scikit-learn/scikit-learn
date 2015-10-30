@@ -331,7 +331,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
                                         distances[:m])
             ratio_within_radius = (total_neighbors.shape[0] /
                                    float(total_candidates.shape[0]))
-            max_depth = max_depth - 1
+            max_depth -= 1
         return total_neighbors, total_distances
 
     def fit(self, X, y=None):
