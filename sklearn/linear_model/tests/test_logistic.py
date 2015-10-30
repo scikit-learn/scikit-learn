@@ -671,7 +671,7 @@ def test_logistic_regression_class_weights():
                                   class_weight=class_weight_dict)
         clf1.fit(X, y)
         clf2.fit(X, y)
-        assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=6)
+        assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=4)
 
     # Binary case: remove 90% of class 0 and 100% of class 2
     X = iris.data[45:100, :]
