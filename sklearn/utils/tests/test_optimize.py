@@ -15,7 +15,7 @@ def test_newton_cg():
 
     def func(x):
         Ax = A.dot(x)
-        return .5 * (Ax).dot(Ax)
+        return .5 * Ax.dot(Ax)
 
     def grad(x):
         return A.T.dot(A.dot(x))

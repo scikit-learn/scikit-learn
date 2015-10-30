@@ -718,7 +718,7 @@ def check_lrap_error_raised(lrap_score):
                   [0, 1, 0], [0.25, 0.3, 0.2])
     assert_raises(ValueError, lrap_score, [0, 1, 2],
                   [[0.25, 0.75, 0.0], [0.7, 0.3, 0.0], [0.8, 0.2, 0.0]])
-    assert_raises(ValueError, lrap_score, [(0), (1), (2)],
+    assert_raises(ValueError, lrap_score, [0, 1, 2],
                   [[0.25, 0.75, 0.0], [0.7, 0.3, 0.0], [0.8, 0.2, 0.0]])
 
     # Check that that y_true.shape != y_score.shape raise the proper exception

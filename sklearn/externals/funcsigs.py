@@ -659,7 +659,7 @@ class Signature(object):
             # See 'functools.partial' case in 'signature()' implementation
             # for details.
             for param_name, param in self.parameters.items():
-                if (param._partial_kwarg and param_name not in kwargs):
+                if param._partial_kwarg and param_name not in kwargs:
                     # Simulating 'functools.partial' behavior
                     kwargs[param_name] = param.default
 

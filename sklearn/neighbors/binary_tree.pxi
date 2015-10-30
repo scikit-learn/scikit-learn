@@ -177,9 +177,9 @@ cdef struct NodeHeapData_t:
 #     cdef NodeHeapData_t nhd_tmp
 #     NodeHeapData = np.asarray(<NodeHeapData_t[:1]>(&nhd_tmp)).dtype
 cdef NodeHeapData_t nhd_tmp
-offsets = [<np.intp_t>&(nhd_tmp.val) - <np.intp_t>&nhd_tmp,
-           <np.intp_t>&(nhd_tmp.i1) - <np.intp_t>&nhd_tmp,
-           <np.intp_t>&(nhd_tmp.i2) - <np.intp_t>&nhd_tmp]
+offsets = [<np.intp_t>& nhd_tmp.val - <np.intp_t>&nhd_tmp,
+           <np.intp_t>& nhd_tmp.i1 - <np.intp_t>&nhd_tmp,
+           <np.intp_t>& nhd_tmp.i2 - <np.intp_t>&nhd_tmp]
 NodeHeapData = np.dtype({'names': ['val', 'i1', 'i2'],
                          'formats': [DTYPE, ITYPE, ITYPE],
                          'offsets': offsets,
@@ -197,10 +197,10 @@ cdef struct NodeData_t:
 #     cdef NodeData_t nd_tmp
 #     NodeData = np.asarray(<NodeData_t[:1]>(&nd_tmp)).dtype
 cdef NodeData_t nd_tmp
-offsets = [<np.intp_t>&(nd_tmp.idx_start) - <np.intp_t>&nd_tmp,
-           <np.intp_t>&(nd_tmp.idx_end) - <np.intp_t>&nd_tmp,
-           <np.intp_t>&(nd_tmp.is_leaf) - <np.intp_t>&nd_tmp,
-           <np.intp_t>&(nd_tmp.radius) - <np.intp_t>&nd_tmp]
+offsets = [<np.intp_t>& nd_tmp.idx_start - <np.intp_t>&nd_tmp,
+           <np.intp_t>& nd_tmp.idx_end - <np.intp_t>&nd_tmp,
+           <np.intp_t>& nd_tmp.is_leaf - <np.intp_t>&nd_tmp,
+           <np.intp_t>& nd_tmp.radius - <np.intp_t>&nd_tmp]
 NodeData = np.dtype({'names': ['idx_start', 'idx_end', 'is_leaf', 'radius'],
                      'formats': [ITYPE, ITYPE, ITYPE, DTYPE],
                      'offsets': offsets,
@@ -956,7 +956,7 @@ cdef class NodeHeap:
 
         i = 0
 
-        while (i < self.n):
+        while i < self.n:
             i_child1 = 2 * i + 1
             i_child2 = 2 * i + 2
             i_swap = 0
@@ -1097,7 +1097,7 @@ cdef class BinaryTree:
         """
         reduce method used for pickling
         """
-        return (newObj, (BinaryTree,), self.__getstate__())
+        return newObj, (BinaryTree,), self.__getstate__()
 
     def __getstate__(self):
         """
@@ -1142,7 +1142,7 @@ cdef class BinaryTree:
                           == 'EuclideanDistance')
 
     def get_tree_stats(self):
-        return (self.n_trims, self.n_leaves, self.n_splits)
+        return self.n_trims, self.n_leaves, self.n_splits
 
     def reset_n_calls(self):
         self.n_calls = 0

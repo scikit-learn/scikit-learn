@@ -147,7 +147,7 @@ def test_GMM_attributes():
                   covariance_type='badcovariance_type')
 
 
-class GMMTester():
+class GMMTester:
     do_test_eval = True
 
     def _setUp(self):

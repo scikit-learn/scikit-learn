@@ -130,7 +130,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
             norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + EPS
             suff_stats[:, ids] += np.outer(exp_doc_topic_d, cnts / norm_phi)
 
-    return (doc_topic_distr, suff_stats)
+    return doc_topic_distr, suff_stats
 
 
 class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
@@ -370,7 +370,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         else:
             suff_stats = None
 
-        return (doc_topic_distr, suff_stats)
+        return doc_topic_distr, suff_stats
 
     def _em_step(self, X, total_samples, batch_update, parallel=None):
         """EM update for 1 iteration.

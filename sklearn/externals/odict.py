@@ -221,7 +221,7 @@ class OrderedDict(dict):
         for k in vars(OrderedDict()):
             inst_dict.pop(k, None)
         if inst_dict:
-            return (self.__class__, (items,), inst_dict)
+            return self.__class__, (items,), inst_dict
         return self.__class__, (items,)
 
     def copy(self):

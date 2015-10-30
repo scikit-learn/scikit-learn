@@ -887,7 +887,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
         # do oob?
         if self.subsample < 1.0:
-            self.oob_improvement_ = np.zeros((self.n_estimators),
+            self.oob_improvement_ = np.zeros(self.n_estimators,
                                              dtype=np.float64)
 
     def _clear_state(self):
@@ -911,7 +911,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         self.estimators_.resize((total_n_estimators, self.loss_.K))
         self.train_score_.resize(total_n_estimators)
-        if (self.subsample < 1 or hasattr(self, 'oob_improvement_')):
+        if self.subsample < 1 or hasattr(self, 'oob_improvement_'):
             # if do oob resize arrays or create new if not available
             if hasattr(self, 'oob_improvement_'):
                 self.oob_improvement_.resize(total_n_estimators)

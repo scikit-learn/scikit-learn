@@ -220,15 +220,15 @@ cdef class DistanceMetric:
         """
         reduce method used for pickling
         """
-        return (newObj, (self.__class__,), self.__getstate__())
+        return newObj, (self.__class__,), self.__getstate__()
 
     def __getstate__(self):
         """
         get state for pickling
         """
         if self.__class__.__name__ == "PyFuncDistance":
-            return (float(self.p), self.vec, self.mat, self.func, self.kwargs)
-        return (float(self.p), self.vec, self.mat)
+            return float(self.p), self.vec, self.mat, self.func, self.kwargs
+        return float(self.p), self.vec, self.mat
 
     def __setstate__(self, state):
         """
@@ -984,7 +984,7 @@ cdef class HaversineDistance(DistanceMetric):
                                  "in 2 dimensions")
         cdef DTYPE_t sin_0 = sin(0.5 * (x1[0] - x2[0]))
         cdef DTYPE_t sin_1 = sin(0.5 * (x1[1] - x2[1]))
-        return (sin_0 * sin_0 + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1)
+        return sin_0 * sin_0 + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:

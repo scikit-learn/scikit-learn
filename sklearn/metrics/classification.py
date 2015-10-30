@@ -84,7 +84,7 @@ def _check_targets(y_true, y_pred):
     y_type = y_type.pop()
 
     # No metrics support "multiclass-multioutput" format
-    if (y_type not in ["binary", "multiclass", "multilabel-indicator"]):
+    if y_type not in ["binary", "multiclass", "multilabel-indicator"]:
         raise ValueError("{0} is not supported".format(y_type))
 
     if y_type in ["binary", "multiclass"]:
@@ -973,7 +973,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             if pos_label not in present_labels:
                 if len(present_labels) < 2:
                     # Only negative labels
-                    return (0., 0., 0., 0)
+                    return 0., 0., 0., 0
                 else:
                     raise ValueError("pos_label=%r is not a valid label: %r" %
                                      (pos_label, present_labels))
@@ -1474,7 +1474,7 @@ def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
 
     if y_type.startswith('multilabel'):
         n_differences = count_nonzero(y_true - y_pred, sample_weight=sample_weight)
-        return (n_differences / (y_true.shape[0] * len(classes) * weight_average))
+        return n_differences / (y_true.shape[0] * len(classes) * weight_average)
 
     elif y_type in ["binary", "multiclass"]:
         return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)

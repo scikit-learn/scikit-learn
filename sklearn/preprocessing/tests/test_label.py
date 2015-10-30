@@ -392,7 +392,7 @@ def test_label_binarize_with_class_order():
 
 def check_binarized_results(y, classes, pos_label, neg_label, expected):
     for sparse_output in [True, False]:
-        if ((pos_label == 0 or neg_label != 0) and sparse_output):
+        if (pos_label == 0 or neg_label != 0) and sparse_output:
             assert_raises(ValueError, label_binarize, y, classes,
                           neg_label=neg_label, pos_label=pos_label,
                           sparse_output=sparse_output)

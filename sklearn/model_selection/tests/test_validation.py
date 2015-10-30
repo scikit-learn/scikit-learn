@@ -467,7 +467,7 @@ def test_cross_val_predict():
     preds = cross_val_predict(KMeans(), X)
     assert_equal(len(preds), len(y))
 
-    class BadCV():
+    class BadCV:
         def split(self, X, y=None, labels=None):
             for i in range(4):
                 yield np.array([0, 1, 2, 3]), np.array([4, 5, 6, 7, 8])

@@ -227,10 +227,10 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
     all_patches = n_h * n_w
 
     if max_patches:
-        if (isinstance(max_patches, (numbers.Integral))
+        if (isinstance(max_patches, numbers.Integral)
                 and max_patches < all_patches):
             return max_patches
-        elif (isinstance(max_patches, (numbers.Real))
+        elif (isinstance(max_patches, numbers.Real)
                 and 0 < max_patches < 1):
             return int(max_patches * all_patches)
         else:

@@ -126,7 +126,7 @@ def construct_grids(batch):
     # y coordinates of the grid cells
     ygrid = np.arange(ymin, ymax, batch.grid_size)
 
-    return (xgrid, ygrid)
+    return xgrid, ygrid
 
 
 def fetch_species_distributions(data_home=None,

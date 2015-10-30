@@ -153,7 +153,7 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
         # c_step procedure converged
         if verbose:
             print("Optimal couple (location, covariance) found before"
-                  " ending iterations (%d left)" % (remaining_iterations))
+                  " ending iterations (%d left)" % remaining_iterations)
         results = location, covariance, det, support, dist
     elif det > previous_det:
         # determinant has increased (should not happen)
@@ -389,7 +389,7 @@ def fast_mcd(X, support_fraction=None,
             location = np.array([location])
             # get precision matrix in an optimized way
             precision = pinvh(covariance)
-            dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
+            dist = (np.dot(X_centered, precision) * X_centered).sum(axis=1)
         else:
             support = np.ones(n_samples, dtype=bool)
             covariance = np.asarray([[np.var(X)]])
@@ -397,7 +397,7 @@ def fast_mcd(X, support_fraction=None,
             X_centered = X - location
             # get precision matrix in an optimized way
             precision = pinvh(covariance)
-            dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
+            dist = (np.dot(X_centered, precision) * X_centered).sum(axis=1)
 # Starting FastMCD algorithm for p-dimensional case
     if (n_samples > 500) and (n_features > 1):
         # 1. Find candidate supports on subsets

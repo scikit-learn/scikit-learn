@@ -824,7 +824,7 @@ class Exponentiation(Kernel):
     def __eq__(self, b):
         if type(self) != type(b):
             return False
-        return (self.kernel == b.kernel and self.exponent == b.exponent)
+        return self.kernel == b.kernel and self.exponent == b.exponent
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.

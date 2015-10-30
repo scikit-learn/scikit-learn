@@ -680,7 +680,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             norm2.append(np.sum(X2 ** 2, 1))
         norm2 = np.array(norm2).T   # shape = [len(X), n_classes]
         u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
-        return (-0.5 * (norm2 + u) + np.log(self.priors_))
+        return -0.5 * (norm2 + u) + np.log(self.priors_)
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.

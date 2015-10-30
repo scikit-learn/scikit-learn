@@ -41,7 +41,7 @@ def short_format_time(t):
     if t > 60:
         return "%4.1fmin" % (t / 60.)
     else:
-        return " %5.1fs" % (t)
+        return " %5.1fs" % t
 
 
 def pformat(obj, indent=0, depth=3):

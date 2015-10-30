@@ -183,7 +183,7 @@ def filter_args(func, ignore_lst, args=(), kwargs=dict()):
         raise ValueError('ignore_lst must be a list of parameters to ignore '
             '%s (type %s) was given' % (ignore_lst, type(ignore_lst)))
     # Special case for functools.partial objects
-    if (not inspect.ismethod(func) and not inspect.isfunction(func)):
+    if not inspect.ismethod(func) and not inspect.isfunction(func):
         if ignore_lst:
             warnings.warn('Cannot inspect object %s, ignore list will '
                 'not work.' % func, stacklevel=2)

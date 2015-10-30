@@ -136,7 +136,7 @@ def test_linear_regression_multiple_outcome(random_state=0):
     n_features = X.shape[1]
 
     clf = LinearRegression(fit_intercept=True)
-    clf.fit((X), Y)
+    clf.fit(X, Y)
     assert_equal(clf.coef_.shape, (2, n_features))
     Y_pred = clf.predict(X)
     clf.fit(X, y)
