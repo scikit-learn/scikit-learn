@@ -613,8 +613,7 @@ class Parallel(Logger):
         elif self.batch_size == 'auto':
             old_batch_size = self._effective_batch_size
             batch_duration = self._smoothed_batch_duration
-            if (batch_duration > 0 and
-                    batch_duration < MIN_IDEAL_BATCH_DURATION):
+            if (0 < batch_duration < MIN_IDEAL_BATCH_DURATION):
                 # The current batch size is too small: the duration of the
                 # processing of a batch of task is not large enough to hide
                 # the scheduling overhead.
