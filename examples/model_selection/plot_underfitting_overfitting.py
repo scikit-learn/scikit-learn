@@ -39,11 +39,11 @@ X = np.sort(np.random.rand(n_samples))
 y = true_fun(X) + np.random.randn(n_samples) * 0.1
 
 plt.figure(figsize=(14, 5))
-for i in range(len(degrees)):
+for i, d_i in enumerate(degrees):
     ax = plt.subplot(1, len(degrees), i + 1)
     plt.setp(ax, xticks=(), yticks=())
 
-    polynomial_features = PolynomialFeatures(degree=degrees[i],
+    polynomial_features = PolynomialFeatures(degree=d_i,
                                              include_bias=False)
     linear_regression = LinearRegression()
     pipeline = Pipeline([("polynomial_features", polynomial_features),

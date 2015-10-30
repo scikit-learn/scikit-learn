@@ -109,12 +109,12 @@ def _average_precision(y_true, y_score):
     y_true = y_true[order]
 
     score = 0
-    for i in range(len(y_score)):
+    for i, _ in enumerate(y_score):
         if y_true[i] == pos_label:
             # Compute precision up to document i
             # i.e, percentage of relevant documents up to document i.
             prec = 0
-            for j in range(0, i + 1):
+            for j in range(i + 1):
                 if y_true[j] == pos_label:
                     prec += 1.0
             prec /= (i + 1.0)

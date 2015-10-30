@@ -108,7 +108,7 @@ def test_make_classification_informative_features():
                                               "per class")
 
             # Ensure on vertices of hypercube
-            for cluster in range(len(unique_signs)):
+            for cluster, _ in enumerate(unique_signs):
                 centroid = X[cluster_index == cluster].mean(axis=0)
                 if hypercube:
                     assert_array_almost_equal(np.abs(centroid),

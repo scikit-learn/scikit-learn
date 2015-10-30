@@ -149,7 +149,7 @@ def most_common(d):
 
 
 bicluster_ncuts = list(bicluster_ncut(i)
-                       for i in range(len(newsgroups.target_names)))
+                       for i, _ in enumerate(newsgroups.target_names))
 best_idx = np.argsort(bicluster_ncuts)[:5]
 
 print()

@@ -462,8 +462,8 @@ class CompoundKernel(Kernel):
     def __eq__(self, b):
         if type(self) != type(b) or len(self.kernels) != len(b.kernels):
             return False
-        return np.all([self.kernels[i] == b.kernels[i]
-                       for i in range(len(self.kernels))])
+        return np.all([k_i == b.kernels[i]
+                       for i, k_i in enumerate(self.kernels)])
 
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
@@ -1660,7 +1660,7 @@ def _approx_fprime(xk, f, epsilon, args=()):
     f0 = f(*((xk,) + args))
     grad = np.zeros((f0.shape[0], f0.shape[1], len(xk)), float)
     ei = np.zeros((len(xk), ), float)
-    for k in range(len(xk)):
+    for k, _ in enumerate(xk):
         ei[k] = 1.0
         d = epsilon * ei
         grad[:, :, k] = (f(*((xk + d,) + args)) - f0) / d[k]
