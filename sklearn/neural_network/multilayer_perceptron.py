@@ -658,8 +658,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             [self.n_outputs_]
 
         # Initialize layers
-        activations = []
-        activations.append(X)
+        activations = [X]
 
         for i in range(self.n_layers_ - 1):
             activations.append(np.empty((X.shape[0],
