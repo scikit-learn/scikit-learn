@@ -574,6 +574,7 @@ def test_logistic_regressioncv_class_weights():
 def test_logistic_regression_sample_weights():
     X, y = make_classification(n_samples=20, n_features=5, n_informative=3,
                                n_classes=2, random_state=0)
+    sample_weight = y + 1
 
     for LR in [LogisticRegression, LogisticRegressionCV]:
         # Test that liblinear fails when sample weights are provided
@@ -592,14 +593,17 @@ def test_logistic_regression_sample_weights():
         # Test that sample weights work the same with the lbfgs,
         # newton-cg, and 'sag' solvers
         clf_sw_lbfgs = LR(solver='lbfgs', fit_intercept=False)
-        clf_sw_lbfgs.fit(X, y, sample_weight=y + 1)
+        clf_sw_lbfgs.fit(X, y, sample_weight=sample_weight)
         clf_sw_n = LR(solver='newton-cg', fit_intercept=False)
-        clf_sw_n.fit(X, y, sample_weight=y + 1)
-        clf_sw_sag = LR(solver='sag', fit_intercept=False,
-                        max_iter=2000, tol=1e-7)
-        clf_sw_sag.fit(X, y, sample_weight=y + 1)
-        assert_array_almost_equal(clf_sw_lbfgs.coef_, clf_sw_n.coef_, decimal=4)
-        assert_array_almost_equal(clf_sw_lbfgs.coef_, clf_sw_sag.coef_, decimal=4)
+        clf_sw_n.fit(X, y, sample_weight=sample_weight)
+        clf_sw_sag = LR(solver='sag', fit_intercept=False, tol=1e-10)
+        # ignore convergence warning due to small dataset
+        with ignore_warnings():
+            clf_sw_sag.fit(X, y, sample_weight=sample_weight)
+        assert_array_almost_equal(
+            clf_sw_lbfgs.coef_, clf_sw_n.coef_, decimal=4)
+        assert_array_almost_equal(
+            clf_sw_lbfgs.coef_, clf_sw_sag.coef_, decimal=4)
 
         # Test that passing class_weight as [1,2] is the same as
         # passing class weight = [1,1] but adjusting sample weights
