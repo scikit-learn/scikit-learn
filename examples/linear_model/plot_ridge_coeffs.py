@@ -1,6 +1,6 @@
 """
 ==============================================================
-Plot Ridge coefficients as a function of the regularization II
+Plot Ridge coefficients as a function of the L2 regularization
 ==============================================================
 
 .. currentmodule:: sklearn.linear_model
@@ -8,25 +8,30 @@ Plot Ridge coefficients as a function of the regularization II
 :class:`Ridge` Regression is the estimator used in this example.
 Each color in the left plot represents a different feature of the
 coefficient vector, and this is displayed as a function of the
-regularization parameter.
+regularization parameter. The right plot shows how exact the solution
+is.
 
 In this example the dependent variable Y is set as a function
-of the input features: Y = Xa + bias. The coefficient vector a is
-randomly sampled from a normal distribution, as well as the bias
-term.
+of the input features: Y = X*w + c. The coefficient vector w is
+randomly sampled from a normal distribution, whereas the bias term c is
+set to a constant.
 
 As alpha tends toward zero the coefficients found by Ridge
-regression stabilize towards the randomly sampled vector a.
+regression stabilize towards the randomly sampled vector w.
 For big alpha (strong regularisation) the coefficients
 are smaller (eventually converging at 0) leading to a
 simpler and biased solution.
 These dependencies can be observed on the left plot.
 
 The right plot shows the mean squared error between the
-coefficients found by the model and the chosen vector a.
-Less regularised models find the coefficients without
-trouble (error is equal to 0), stronger regularised
+coefficients found by the model and the chosen vector w.
+Less regularised models retrieve the exact
+coefficients (error is equal to 0), stronger regularised
 models increase the error.
+
+Please note that in this example the data is non-noisy, hence
+it is possible to extract the exact coefficients and regularization
+increases the error. This is only the case for such non-noisy data.
 """
 
 # Author: Kornel Kielczewski -- <kornel.k@plusnet.pl>
