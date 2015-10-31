@@ -4,7 +4,7 @@ machine:
     PYTHONPATH: "/usr/lib/python2.7/dist-packages"
 dependencies:
   cache_directories:
-    - "~/scikit_learn_data"
+    - "~/sklearn_data_home"
     - "~/scikit-learn.github.io"
   # Various dependencies
   pre:
