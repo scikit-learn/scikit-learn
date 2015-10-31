@@ -624,7 +624,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # 0.7. The economy transform will then be available through the
             # mode='economic' argument.
             Q, G = linalg.qr(Ft, mode='economic')
-            pass
 
         sv = linalg.svd(G, compute_uv=False)
         rcondG = sv[-1] / sv[0]
