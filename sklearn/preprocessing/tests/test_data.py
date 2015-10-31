@@ -1312,7 +1312,7 @@ def test_center_kernel():
 def test_fit_transform():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
-    for obj in ((StandardScaler(), Normalizer(), Binarizer())):
+    for obj in (StandardScaler(), Normalizer(), Binarizer()):
         X_transformed = obj.fit(X).transform(X)
         X_transformed2 = obj.fit_transform(X)
         assert_array_equal(X_transformed, X_transformed2)

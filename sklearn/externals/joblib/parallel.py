@@ -104,7 +104,7 @@ def _verbosity_filter(index, verbose):
     verbose = .5 * (11 - verbose) ** 2
     scale = sqrt(index / verbose)
     next_scale = sqrt((index + 1) / verbose)
-    return (int(next_scale) == int(scale))
+    return int(next_scale) == int(scale)
 
 
 ###############################################################################
@@ -703,7 +703,7 @@ class Parallel(Logger):
                           - self._pre_dispatch_amount)
                 frequency = (total_tasks // self.verbose) + 1
                 is_last_item = (index + 1 == total_tasks)
-                if (is_last_item or cursor % frequency):
+                if is_last_item or cursor % frequency:
                     return
             remaining_time = (elapsed_time / (index + 1) *
                               (self.n_dispatched_tasks - index - 1.))

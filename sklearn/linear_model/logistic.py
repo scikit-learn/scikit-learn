@@ -576,7 +576,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     random_state = check_random_state(random_state)
 
     if pos_class is None and multi_class != 'multinomial':
-        if (classes.size > 2):
+        if classes.size > 2:
             raise ValueError('To fit OvR, use the pos_class argument')
         # np.unique(y) gives labels in sorted order.
         pos_class = classes[1]

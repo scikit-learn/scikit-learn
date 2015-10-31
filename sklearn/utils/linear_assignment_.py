@@ -80,7 +80,7 @@ class _HungarianState(object):
         # remember to swap the result columns back later.
         transposed = (cost_matrix.shape[1] < cost_matrix.shape[0])
         if transposed:
-            self.C = (cost_matrix.T).copy()
+            self.C = cost_matrix.T.copy()
         else:
             self.C = cost_matrix.copy()
         self.transposed = transposed

@@ -467,7 +467,7 @@ def check_fit2d_1feature(name, Estimator):
 def check_fit1d_1feature(name, Estimator):
     # check fitting 1d array with 1 feature
     rnd = np.random.RandomState(0)
-    X = 3 * rnd.uniform(size=(20))
+    X = 3 * rnd.uniform(size=20)
     y = X.astype(np.int)
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()
@@ -490,7 +490,7 @@ def check_fit1d_1feature(name, Estimator):
 def check_fit1d_1sample(name, Estimator):
     # check fitting 1d array with 1 feature
     rnd = np.random.RandomState(0)
-    X = 3 * rnd.uniform(size=(20))
+    X = 3 * rnd.uniform(size=20)
     y = np.array([1])
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()

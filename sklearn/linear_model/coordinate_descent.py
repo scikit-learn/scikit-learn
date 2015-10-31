@@ -1037,7 +1037,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                 model = Lasso()
             if y.ndim > 1 and y.shape[1] > 1:
                 raise ValueError("For multi-task outputs, use "
-                                 "MultiTask%sCV" % (model_str))
+                                 "MultiTask%sCV" % model_str)
             y = column_or_1d(y, warn=True)
         else:
             if sparse.isspmatrix(X):
@@ -1045,7 +1045,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                                 "passed")
             elif y.ndim == 1:
                 raise ValueError("For mono-task outputs, use "
-                                 "%sCV" % (model_str))
+                                 "%sCV" % model_str)
             if model_str == 'ElasticNet':
                 model = MultiTaskElasticNet()
             else:

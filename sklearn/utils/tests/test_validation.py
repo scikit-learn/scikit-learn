@@ -208,7 +208,7 @@ def test_check_array():
             assert_false(X is X_checked)
         else:
             # doesn't copy if it was already good
-            if (X.dtype == X_checked.dtype and X.format == X_checked.format):
+            if X.dtype == X_checked.dtype and X.format == X_checked.format:
                 assert_true(X is X_checked)
 
     # other input formats

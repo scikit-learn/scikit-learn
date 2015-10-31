@@ -448,7 +448,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
         raise ValueError("neg_label={0} must be strictly less than "
                          "pos_label={1}.".format(neg_label, pos_label))
 
-    if (sparse_output and (pos_label == 0 or neg_label != 0)):
+    if sparse_output and (pos_label == 0 or neg_label != 0):
         raise ValueError("Sparse binarization is only supported with non "
                          "zero pos_label and zero neg_label, got "
                          "pos_label={0} and neg_label={1}"
@@ -479,7 +479,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
             y_type = "multiclass"
 
     sorted_class = np.sort(classes)
-    if (y_type == "multilabel-indicator" and classes.size != y.shape[1]):
+    if y_type == "multilabel-indicator" and classes.size != y.shape[1]:
         raise ValueError("classes {0} missmatch with the labels {1}"
                          "found in the data".format(classes, unique_labels(y)))
 

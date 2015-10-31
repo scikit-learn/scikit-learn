@@ -695,7 +695,7 @@ def test_raise_value_error_multilabel_sequences():
     multilabel_sequences = [
         [[0, 1]],
         [[1], [2], [0, 1]],
-        [(), (2), (0, 1)],
+        [(), 2, (0, 1)],
         [[]],
         [()],
         np.array([[], [1, 2]], dtype='object')]

@@ -286,7 +286,7 @@ class NotMemorizedFunc(object):
         return NotMemorizedResult(self.func(*args, **kwargs))
 
     def __reduce__(self):
-        return (self.__class__, (self.func,))
+        return self.__class__, (self.func,)
 
     def __repr__(self):
         return '%s(func=%s)' % (
@@ -456,7 +456,7 @@ class MemorizedFunc(Logger):
                 shutil.rmtree(output_dir, ignore_errors=True)
                 out, metadata = self.call(*args, **kwargs)
                 argument_hash = None
-        return (out, argument_hash, metadata)
+        return out, argument_hash, metadata
 
     def call_and_shelve(self, *args, **kwargs):
         """Call wrapped function, cache result and return a reference.

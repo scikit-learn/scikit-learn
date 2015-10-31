@@ -108,7 +108,7 @@ def f_oneway(*args):
     msb = ssbn / float(dfbn)
     msw = sswn / float(dfwn)
     constant_features_idx = np.where(msw == 0.)[0]
-    if (np.nonzero(msb)[0].size != msb.size and constant_features_idx.size):
+    if np.nonzero(msb)[0].size != msb.size and constant_features_idx.size:
         warnings.warn("Features %s are constant." % constant_features_idx,
                       UserWarning)
     f = msb / msw
@@ -622,7 +622,7 @@ class SelectFwe(_BaseFilter):
     def _get_support_mask(self):
         check_is_fitted(self, 'scores_')
 
-        return (self.pvalues_ < self.alpha / len(self.pvalues_))
+        return self.pvalues_ < self.alpha / len(self.pvalues_)
 
 
 ######################################################################

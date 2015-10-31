@@ -289,7 +289,7 @@ def test_imputation_pickle():
         assert_array_equal(imputer.transform(X.copy()),
                            imputer_pickled.transform(X.copy()),
                            "Fail to transform the data after pickling "
-                           "(strategy = %s)" % (strategy))
+                           "(strategy = %s)" % strategy)
 
 
 def test_imputation_copy():

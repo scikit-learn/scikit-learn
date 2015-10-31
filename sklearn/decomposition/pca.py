@@ -314,7 +314,7 @@ class PCA(BaseEstimator, TransformerMixin):
         self.explained_variance_ratio_ = explained_variance_ratio_
         self.n_components_ = n_components
 
-        return (U, S, V)
+        return U, S, V
 
     def get_covariance(self):
         """Compute data covariance with the generative model.

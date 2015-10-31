@@ -291,7 +291,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     if n_components is None:
         n_components = min(n, p)
-    if (n_components > min(n, p)):
+    if n_components > min(n, p):
         n_components = min(n, p)
         print("n_components is too large: it will be set to %s" % n_components)
 

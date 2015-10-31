@@ -149,7 +149,7 @@ def _pprint(params, offset=0, printer=repr):
         if len(this_repr) > 500:
             this_repr = this_repr[:300] + '...' + this_repr[-100:]
         if i > 0:
-            if (this_line_length + len(this_repr) >= 75 or '\n' in this_repr):
+            if this_line_length + len(this_repr) >= 75 or '\n' in this_repr:
                 params_list.append(line_sep)
                 this_line_length = len(line_sep)
             else:

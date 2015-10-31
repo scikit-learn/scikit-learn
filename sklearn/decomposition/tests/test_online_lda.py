@@ -27,7 +27,7 @@ def _build_sparse_mtx():
     blocks = [block] * n_topics
     X = block_diag(*blocks)
     X = csr_matrix(X)
-    return (n_topics, X)
+    return n_topics, X
 
 
 def test_lda_default_prior_params():

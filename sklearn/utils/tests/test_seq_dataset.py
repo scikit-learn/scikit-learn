@@ -27,7 +27,7 @@ def test_seq_dataset():
         for i in range(5):
             # next sample
             xi_, yi, swi, idx = dataset._next_py()
-            xi = sp.csr_matrix((xi_), shape=(1, X.shape[1]))
+            xi = sp.csr_matrix(xi_, shape=(1, X.shape[1]))
 
             assert_array_equal(xi.data, X_csr[idx].data)
             assert_array_equal(xi.indices, X_csr[idx].indices)
@@ -37,7 +37,7 @@ def test_seq_dataset():
 
             # random sample
             xi_, yi, swi, idx = dataset._random_py()
-            xi = sp.csr_matrix((xi_), shape=(1, X.shape[1]))
+            xi = sp.csr_matrix(xi_, shape=(1, X.shape[1]))
 
             assert_array_equal(xi.data, X_csr[idx].data)
             assert_array_equal(xi.indices, X_csr[idx].indices)

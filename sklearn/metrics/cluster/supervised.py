@@ -208,7 +208,7 @@ def adjusted_rand_score(labels_true, labels_pred, max_n_classes=5000):
     sum_comb = sum(comb2(n_ij) for n_ij in contingency.flatten())
     prod_comb = (sum_comb_c * sum_comb_k) / float(comb(n_samples, 2))
     mean_comb = (sum_comb_k + sum_comb_c) / 2.
-    return ((sum_comb - prod_comb) / (mean_comb - prod_comb))
+    return (sum_comb - prod_comb) / (mean_comb - prod_comb)
 
 
 def homogeneity_completeness_v_measure(labels_true, labels_pred,
@@ -279,8 +279,8 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred,
     MI = mutual_info_score(labels_true, labels_pred,
                            max_n_classes=max_n_classes)
 
-    homogeneity = MI / (entropy_C) if entropy_C else 1.0
-    completeness = MI / (entropy_K) if entropy_K else 1.0
+    homogeneity = MI / entropy_C if entropy_C else 1.0
+    completeness = MI / entropy_K if entropy_K else 1.0
 
     if homogeneity + completeness == 0.0:
         v_measure_score = 0.0

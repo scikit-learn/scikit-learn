@@ -101,7 +101,7 @@ def unique_labels(*ys):
     ys_labels = set(chain.from_iterable(_unique_labels(y) for y in ys))
 
     # Check that we don't mix string type with number type
-    if (len(set(isinstance(label, string_types) for label in ys_labels)) > 1):
+    if len(set(isinstance(label, string_types) for label in ys_labels)) > 1:
         raise ValueError("Mix of label input types (string and number)")
 
     return np.array(sorted(ys_labels))
@@ -385,4 +385,4 @@ def class_distribution(y, sample_weight=None):
             class_prior_k = bincount(y_k, weights=sample_weight)
             class_prior.append(class_prior_k / class_prior_k.sum())
 
-    return (classes, n_classes, class_prior)
+    return classes, n_classes, class_prior

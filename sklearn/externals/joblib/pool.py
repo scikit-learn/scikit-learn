@@ -156,7 +156,7 @@ def reduce_memmap(a):
         # This memmap instance is actually backed by a regular in-memory
         # buffer: this can happen when using binary operators on numpy.memmap
         # instances
-        return (loads, (dumps(np.asarray(a), protocol=HIGHEST_PROTOCOL),))
+        return loads, (dumps(np.asarray(a), protocol=HIGHEST_PROTOCOL),)
 
 
 class ArrayMemmapReducer(object):
@@ -256,7 +256,7 @@ class ArrayMemmapReducer(object):
             if self.verbose > 1:
                 print("Pickling array (shape=%r, dtype=%s)." % (
                     a.shape, a.dtype))
-            return (loads, (dumps(a, protocol=HIGHEST_PROTOCOL),))
+            return loads, (dumps(a, protocol=HIGHEST_PROTOCOL),)
 
 
 ###############################################################################
