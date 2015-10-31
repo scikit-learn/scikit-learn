@@ -310,7 +310,7 @@ def set_testing_parameters(estimator):
 
 
 class NotAnArray(object):
-    " An object that is convertable to an array"
+    """ An object that is convertable to an array"""
 
     def __init__(self, data):
         self.data = data

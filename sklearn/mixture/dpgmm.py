@@ -54,7 +54,7 @@ def wishart_log_det(a, b, detB, n_features):
 
 
 def wishart_logz(v, s, dets, n_features):
-    "The logarithm of the normalization constant for the wishart distribution"
+    """The logarithm of the normalization constant for the wishart distribution"""
     z = 0.
     z += 0.5 * v * n_features * np.log(2)
     z += (0.25 * (n_features * (n_features - 1)) * np.log(np.pi))
@@ -389,7 +389,7 @@ class DPGMM(GMM):
         self._monitor(X, z, "a and b", end=True)
 
     def _initialize_gamma(self):
-        "Initializes the concentration parameters"
+        """Initializes the concentration parameters"""
         self.gamma_ = self.alpha * np.ones((self.n_components, 3))
 
     def _bound_concentration(self):
@@ -410,7 +410,7 @@ class DPGMM(GMM):
         return logprior
 
     def _bound_means(self):
-        "The variational lower bound for the mean parameters"
+        """The variational lower bound for the mean parameters"""
         logprior = 0.
         logprior -= 0.5 * squared_norm(self.means_)
         logprior -= 0.5 * self.means_.shape[1] * self.n_components

@@ -907,7 +907,7 @@ class ShuffleSplit(BaseShuffleSplit):
 
 
 class LabelShuffleSplit(ShuffleSplit):
-    '''Shuffle-Labels-Out cross-validation iterator
+    """Shuffle-Labels-Out cross-validation iterator
 
     Provides randomized train/test indices to split data according to a
     third-party provided label. This label information can be used to encode
@@ -948,7 +948,7 @@ class LabelShuffleSplit(ShuffleSplit):
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
-    '''
+    """
 
     def __init__(self, n_iter=5, test_size=0.2, train_size=None,
                  random_state=None):

@@ -53,7 +53,7 @@ class DeprecatedAttributeEstimator(BaseEstimator):
 
 
 class Buggy(BaseEstimator):
-    " A buggy estimator that does not set its parameters right. "
+    """ A buggy estimator that does not set its parameters right. """
 
     def __init__(self, a=None):
         self.a = 1

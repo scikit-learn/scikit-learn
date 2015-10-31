@@ -510,7 +510,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 ###############################################################################
 # Stability paths
 def _lasso_stability_path(X, y, mask, weights, eps):
-    "Inner loop of lasso_stability_path"
+    """Inner loop of lasso_stability_path"""
     X = X * weights[np.newaxis, :]
     X = X[safe_mask(X, mask), :]
     y = y[mask]

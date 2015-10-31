@@ -59,9 +59,9 @@ DEPRECATION_MSG_1D = (
 
 
 def _handle_zeros_in_scale(scale, copy=True):
-    ''' Makes sure that whenever scale is zero, we handle it correctly.
+    """ Makes sure that whenever scale is zero, we handle it correctly.
 
-    This happens in most scalers when we have constant features.'''
+    This happens in most scalers when we have constant features."""
 
     # if we are fitting on 1D arrays, scale might be a scalar
     if np.isscalar(scale):

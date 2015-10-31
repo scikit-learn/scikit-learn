@@ -122,13 +122,13 @@ class NDArrayWrapper(object):
         the array has been persisted, and the array subclass.
     """
     def __init__(self, filename, subclass, allow_mmap=True):
-        "Store the useful information for later"
+        """Store the useful information for later"""
         self.filename = filename
         self.subclass = subclass
         self.allow_mmap = allow_mmap
 
     def read(self, unpickler):
-        "Reconstruct the array"
+        """Reconstruct the array"""
         filename = os.path.join(unpickler._dirname, self.filename)
         # Load the array from the disk
         np_ver = [int(x) for x in unpickler.np.__version__.split('.', 2)[:2]]
@@ -171,13 +171,13 @@ class ZNDArrayWrapper(NDArrayWrapper):
     large arrays.
     """
     def __init__(self, filename, init_args, state):
-        "Store the useful information for later"
+        """Store the useful information for later"""
         self.filename = filename
         self.state = state
         self.init_args = init_args
 
     def read(self, unpickler):
-        "Reconstruct the array from the meta-information and the z-file"
+        """Reconstruct the array from the meta-information and the z-file"""
         # Here we a simply reproducing the unpickling mechanism for numpy
         # arrays
         filename = os.path.join(unpickler._dirname, self.filename)

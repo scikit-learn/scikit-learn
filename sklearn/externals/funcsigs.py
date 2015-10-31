@@ -53,7 +53,7 @@ def _get_user_defined_method(cls, method_name, *nested):
 
 
 def signature(obj):
-    '''Get a signature object for the passed callable.'''
+    """Get a signature object for the passed callable."""
 
     if not callable(obj):
         raise TypeError('{0!r} is not a callable object'.format(obj))
@@ -177,7 +177,7 @@ def signature(obj):
 
 
 class _void(object):
-    '''A private marker - used in Parameter & Signature'''
+    """A private marker - used in Parameter & Signature"""
 
 
 class _empty(object):
@@ -205,7 +205,7 @@ _VAR_KEYWORD            = _ParameterKind(4, name='VAR_KEYWORD')
 
 
 class Parameter(object):
-    '''Represents a parameter in a function signature.
+    """Represents a parameter in a function signature.
 
     Has the following public attributes:
 
@@ -222,7 +222,7 @@ class Parameter(object):
         Possible values: `Parameter.POSITIONAL_ONLY`,
         `Parameter.POSITIONAL_OR_KEYWORD`, `Parameter.VAR_POSITIONAL`,
         `Parameter.KEYWORD_ONLY`, `Parameter.VAR_KEYWORD`.
-    '''
+    """
 
     __slots__ = ('_name', '_kind', '_default', '_annotation', '_partial_kwarg')
 
@@ -281,7 +281,7 @@ class Parameter(object):
 
     def replace(self, name=_void, kind=_void, annotation=_void,
                 default=_void, _partial_kwarg=_void):
-        '''Creates a customized copy of the Parameter.'''
+        """Creates a customized copy of the Parameter."""
 
         if name is _void:
             name = self._name
@@ -345,7 +345,7 @@ class Parameter(object):
 
 
 class BoundArguments(object):
-    '''Result of `Signature.bind` call.  Holds the mapping of arguments
+    """Result of `Signature.bind` call.  Holds the mapping of arguments
     to the function's parameters.
 
     Has the following public attributes:
@@ -359,7 +359,7 @@ class BoundArguments(object):
         Tuple of positional arguments values.
     * kwargs : dict
         Dict of keyword arguments values.
-    '''
+    """
 
     def __init__(self, signature, arguments):
         self.arguments = arguments
@@ -442,7 +442,7 @@ class BoundArguments(object):
 
 
 class Signature(object):
-    '''A Signature object represents the overall signature of a function.
+    """A Signature object represents the overall signature of a function.
     It stores a Parameter object for each parameter accepted by the
     function, as well as information specific to the function itself.
 
@@ -462,7 +462,7 @@ class Signature(object):
     * bind_partial(*args, **kwargs) -> BoundArguments
         Creates a partial mapping from positional and keyword arguments
         to parameters (simulating 'functools.partial' behavior.)
-    '''
+    """
 
     __slots__ = ('_return_annotation', '_parameters')
 
@@ -473,9 +473,9 @@ class Signature(object):
 
     def __init__(self, parameters=None, return_annotation=_empty,
                  __validate_parameters__=True):
-        '''Constructs Signature from the given list of Parameter
+        """Constructs Signature from the given list of Parameter
         objects and 'return_annotation'.  All arguments are optional.
-        '''
+        """
 
         if parameters is None:
             params = OrderedDict()
@@ -511,7 +511,7 @@ class Signature(object):
 
     @classmethod
     def from_function(cls, func):
-        '''Constructs Signature for the given python function'''
+        """Constructs Signature for the given python function"""
 
         if not isinstance(func, types.FunctionType):
             raise TypeError('{0!r} is not a Python function'.format(func))
@@ -594,10 +594,10 @@ class Signature(object):
         return self._return_annotation
 
     def replace(self, parameters=_void, return_annotation=_void):
-        '''Creates a customized copy of the Signature.
+        """Creates a customized copy of the Signature.
         Pass 'parameters' and/or 'return_annotation' arguments
         to override them in the new copy.
-        '''
+        """
 
         if parameters is _void:
             parameters = self.parameters.values()
@@ -646,7 +646,7 @@ class Signature(object):
         return not self.__eq__(other)
 
     def _bind(self, args, kwargs, partial=False):
-        '''Private method.  Don't use directly.'''
+        """Private method.  Don't use directly."""
 
         arguments = OrderedDict()
 
@@ -774,17 +774,17 @@ class Signature(object):
         return self._bound_arguments_cls(self, arguments)
 
     def bind(self, *args, **kwargs):
-        '''Get a BoundArguments object, that maps the passed `args`
+        """Get a BoundArguments object, that maps the passed `args`
         and `kwargs` to the function's signature.  Raises `TypeError`
         if the passed arguments can not be bound.
-        '''
+        """
         return self._bind(args, kwargs)
 
     def bind_partial(self, *args, **kwargs):
-        '''Get a BoundArguments object, that partially maps the
+        """Get a BoundArguments object, that partially maps the
         passed `args` and `kwargs` to the function's signature.
         Raises `TypeError` if the passed arguments can not be bound.
-        '''
+        """
         return self._bind(args, kwargs, partial=True)
 
     def __str__(self):

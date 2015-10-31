@@ -114,7 +114,7 @@ def test_fit_intercept():
 
 
 def test_linear_regression_sparse(random_state=0):
-    "Test that linear regression also works with sparse data"
+    """Test that linear regression also works with sparse data"""
     random_state = check_random_state(random_state)
     for i in range(10):
         n = 100
@@ -129,7 +129,7 @@ def test_linear_regression_sparse(random_state=0):
 
 
 def test_linear_regression_multiple_outcome(random_state=0):
-    "Test multiple-outcome linear regressions"
+    """Test multiple-outcome linear regressions"""
     X, y = make_regression(random_state=random_state)
 
     Y = np.vstack((y, y)).T
@@ -145,7 +145,7 @@ def test_linear_regression_multiple_outcome(random_state=0):
 
 
 def test_linear_regression_sparse_multiple_outcome(random_state=0):
-    "Test multiple-outcome linear regressions with sparse data"
+    """Test multiple-outcome linear regressions with sparse data"""
     random_state = check_random_state(random_state)
     X, y = make_sparse_uncorrelated(random_state=random_state)
     X = sparse.coo_matrix(X)
