@@ -1799,14 +1799,15 @@ def train_test_split(*arrays, **options):
 
     Parameters
     ----------
-    *arrays : Sequence of arrays, scipy.sparse matrices or
-        Pandas DataFrames with same shape[0]. 
-        .. versionadded:: 0.6
-        Preserves input type instead of always casting to numpy array.
-        
-        Output type is the same as the input type.
-        
- 
+    *arrays : sequence of indexables with same length / shape[0]
+
+        allowed inputs are lists, numpy arrays, scipy-sparse
+        matrices or pandas dataframes.
+
+        .. versionadded:: 0.16
+            preserves input type instead of always casting to numpy array.
+
+
     test_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split. If
@@ -1829,12 +1830,11 @@ def train_test_split(*arrays, **options):
 
     Returns
     -------
-    splitting : length = 2 * len(arrays),
+    splitting : list, length = 2 * len(arrays),
+        List containing train-test split of inputs.
+
         .. versionadded:: 0.16
-        Preserves input type instead of always casting to numpy array.
-        
-        Output type is the same as the input type. 
-        The output will contain the train-test split.
+            Output type is the same as the input type.
 
     Examples
     --------
