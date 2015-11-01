@@ -1006,7 +1006,7 @@ class RandomForestRegressor(ForestRegressor):
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
-    oob_score : bool
+    oob_score : bool, optional (default=False)
         whether to use out-of-bag samples to estimate
         the generalization error.
 
@@ -1165,7 +1165,7 @@ class ExtraTreesClassifier(ForestClassifier):
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
 
-    oob_score : bool
+    oob_score : bool, optional (default=False)
         Whether to use out-of-bag samples to estimate
         the generalization error.
 
@@ -1358,7 +1358,7 @@ class ExtraTreesRegressor(ForestRegressor):
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
 
-    oob_score : bool
+    oob_score : bool, optional (default=False)
         Whether to use out-of-bag samples to estimate the generalization error.
 
     n_jobs : integer, optional (default=1)
