@@ -214,7 +214,7 @@ Easy Issues
 
 A great way to start contributing to scikit-learn is to pick an item from the
 list of `Easy issues
-<https://github.com/scikit-learn/scikit-learn/labels/Easy>`_
+<https://github.com/scikit-learn/scikit-learn/issues?q=is%3Aopen+label%3AEasy+is%3Aissue>`_
 in the issue tracker. Resolving these issues allow you to start contributing
 to the project without much prior knowledge. Your assistance in this area will
 be greatly appreciated by the more experienced developers as it helps free up
