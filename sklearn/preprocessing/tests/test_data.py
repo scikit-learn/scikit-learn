@@ -29,6 +29,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import skip_if_32bit
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.preprocessing.data import _transform_selected
@@ -171,6 +172,7 @@ def test_scale_1d():
         assert_array_equal(scale(X, with_mean=False, with_std=False), X)
 
 
+@skip_if_32bit
 def test_standard_scaler_numerical_stability():
     """Test numerical stability of scaling"""
     # np.log(1e-5) is taken because of its floating point representation
@@ -436,7 +438,7 @@ def test_standard_scaler_trasform_with_partial_fit():
     scaler_incr = StandardScaler()
     for i, batch in enumerate(gen_batches(X.shape[0], 1)):
 
-        X_sofar = X[:(i+1), :]
+        X_sofar = X[:(i + 1), :]
         chunks_copy = X_sofar.copy()
         scaled_batch = StandardScaler().fit_transform(X_sofar)
 

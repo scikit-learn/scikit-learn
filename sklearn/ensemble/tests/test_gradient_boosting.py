@@ -26,6 +26,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import skip_if_32bit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
 
@@ -1030,6 +1031,7 @@ def test_non_uniform_weights_toy_edge_case_clf():
         gb.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(gb.predict([[1, 0]]), [1])
 
+
 def check_sparse_input(EstimatorClass, X, X_sparse, y):
     dense = EstimatorClass(n_estimators=10, random_state=0,
                            max_depth=2).fit(X, y)
@@ -1060,6 +1062,7 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
                                   auto.predict_log_proba(X))
 
 
+@skip_if_32bit
 def test_sparse_input():
     ests = (GradientBoostingClassifier, GradientBoostingRegressor)
     sparse_matrices = (csr_matrix, csc_matrix, coo_matrix)
