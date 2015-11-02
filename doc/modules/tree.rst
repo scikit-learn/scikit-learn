@@ -343,7 +343,8 @@ Tips on practical use
   * Use ``min_samples_split`` or ``min_samples_leaf`` to control the number of
     samples at a leaf node.  A very small number will usually mean the tree
     will overfit, whereas a large number will prevent the tree from learning
-    the data.  Try ``min_samples_leaf=5`` as an initial value.
+    the data. Try ``min_samples_leaf=5`` as an initial value. If the sample size
+    varies greatly, a float number can be used as percentage in these two parameters.
     The main difference between the two is that ``min_samples_leaf`` guarantees
     a minimum number of samples in a leaf, while ``min_samples_split`` can
     create arbitrary small leaves, though ``min_samples_split`` is more common
@@ -367,7 +368,7 @@ Tips on practical use
     If training data is not in this format, a copy of the dataset will be made.
 
   * If the input matrix X is very sparse, it is recommended to convert to sparse
-    ``csc_matrix` before calling fit and sparse ``csr_matrix`` before calling
+    ``csc_matrix`` before calling fit and sparse ``csr_matrix`` before calling
     predict. Training time can be orders of magnitude faster for a sparse
     matrix input compared to a dense matrix when features have zero values in
     most of the samples.

@@ -28,7 +28,7 @@ from ..utils import check_consistent_length
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
-from ..grid_search import GridSearchCV
+from ..model_selection import GridSearchCV
 from ..externals import six
 from ..metrics.scorer import check_scoring
 
@@ -251,7 +251,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
           same scale. You can preprocess the data with a scaler from
           sklearn.preprocessing.
 
-        All last four solvers support both dense and sparse data.
+        All last four solvers support both dense and sparse data. However,
+        only 'sag' supports sparse input when `fit_intercept` is True.
 
     tol : float
         Precision of the solution.
@@ -529,7 +530,7 @@ class Ridge(_BaseRidge, RegressorMixin):
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fatest but may not be available
+          scipy.sparse.linalg.lsqr. It is the fastest but may not be available
           in old scipy versions. It also uses an iterative procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent. It also uses an
@@ -539,7 +540,8 @@ class Ridge(_BaseRidge, RegressorMixin):
           same scale. You can preprocess the data with a scaler from
           sklearn.preprocessing.
 
-        All last four solvers support both dense and sparse data.
+        All last four solvers support both dense and sparse data. However,
+        only 'sag' supports sparse input when `fit_intercept` is True.
 
     tol : float
         Precision of the solution.
@@ -815,24 +817,28 @@ class _RidgeGCV(LinearModel):
             D = D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)]
         return D * B
 
-    def _errors(self, alpha, y, v, Q, QT_y):
-        # don't construct matrix G, instead compute action on y & diagonal
+    def _errors_and_values_helper(self, alpha, y, v, Q, QT_y):
+        """Helper function to avoid code duplication between self._errors and
+        self._values.
+
+        Notes
+        -----
+        We don't construct matrix G, instead compute action on y & diagonal.
+        """
         w = 1.0 / (v + alpha)
         c = np.dot(Q, self._diag_dot(w, QT_y))
         G_diag = self._decomp_diag(w, Q)
         # handle case where y is 2-d
         if len(y.shape) != 1:
             G_diag = G_diag[:, np.newaxis]
+        return G_diag, c
+
+    def _errors(self, alpha, y, v, Q, QT_y):
+        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y)
         return (c / G_diag) ** 2, c
 
     def _values(self, alpha, y, v, Q, QT_y):
-        # don't construct matrix G, instead compute action on y & diagonal
-        w = 1.0 / (v + alpha)
-        c = np.dot(Q, self._diag_dot(w, QT_y))
-        G_diag = self._decomp_diag(w, Q)
-        # handle case where y is 2-d
-        if len(y.shape) != 1:
-            G_diag = G_diag[:, np.newaxis]
+        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y)
         return y - (c / G_diag), c
 
     def _pre_compute_svd(self, X, y):
@@ -843,22 +849,24 @@ class _RidgeGCV(LinearModel):
         UT_y = np.dot(U.T, y)
         return v, U, UT_y
 
-    def _errors_svd(self, alpha, y, v, U, UT_y):
+    def _errors_and_values_svd_helper(self, alpha, y, v, U, UT_y):
+        """Helper function to avoid code duplication between self._errors_svd
+        and self._values_svd.
+        """
         w = ((v + alpha) ** -1) - (alpha ** -1)
         c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
         G_diag = self._decomp_diag(w, U) + (alpha ** -1)
         if len(y.shape) != 1:
             # handle case where y is 2-d
             G_diag = G_diag[:, np.newaxis]
+        return G_diag, c
+
+    def _errors_svd(self, alpha, y, v, U, UT_y):
+        G_diag, c = self._errors_and_values_svd_helper(alpha, y, v, U, UT_y)
         return (c / G_diag) ** 2, c
 
     def _values_svd(self, alpha, y, v, U, UT_y):
-        w = ((v + alpha) ** -1) - (alpha ** -1)
-        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
-        G_diag = self._decomp_diag(w, U) + (alpha ** -1)
-        if len(y.shape) != 1:
-            # handle case when y is 2-d
-            G_diag = G_diag[:, np.newaxis]
+        G_diag, c = self._errors_and_values_svd_helper(alpha, y, v, U, UT_y)
         return y - (c / G_diag), c
 
     def fit(self, X, y, sample_weight=None):

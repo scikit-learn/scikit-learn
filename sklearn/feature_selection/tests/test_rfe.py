@@ -12,7 +12,7 @@ from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
 from sklearn.svm import SVC, SVR
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.cross_validation import cross_val_score
+from sklearn.model_selection import cross_val_score
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings

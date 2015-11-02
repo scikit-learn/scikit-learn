@@ -874,8 +874,3 @@ class TSNE(BaseEstimator):
         """
         self.fit_transform(X)
         return self
-
-    def _check_fitted(self):
-        if self.embedding_ is None:
-            raise ValueError("Cannot call `transform` unless `fit` has"
-                             "already been called")

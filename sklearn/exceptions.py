@@ -85,7 +85,7 @@ class FitFailedWarning(RuntimeWarning):
 
     Examples
     --------
-    >>> from sklearn.grid_search import GridSearchCV
+    >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
     >>> from sklearn.exceptions import FitFailedWarning
     >>> import warnings

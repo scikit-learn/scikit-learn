@@ -73,7 +73,6 @@ class FitParamT(object):
 
     def __init__(self):
         self.successful = False
-        pass
 
     def fit(self, X, y, should_succeed=False):
         self.successful = should_succeed

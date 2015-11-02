@@ -46,7 +46,7 @@ class Bunch(dict):
     """
 
     def __init__(self, **kwargs):
-        dict.__init__(self, kwargs)
+        super(Bunch, self).__init__(kwargs)
 
     def __setattr__(self, key, value):
         self[key] = value

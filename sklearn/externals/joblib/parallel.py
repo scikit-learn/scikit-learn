@@ -49,14 +49,13 @@ MIN_IDEAL_BATCH_DURATION = .2
 # on a single worker while other workers have no work to process any more.
 MAX_IDEAL_BATCH_DURATION = 2
 
-# Under Python 3.4+ use the 'forkserver' start method by default: this makes it
-# possible to avoid crashing 3rd party libraries that manage an internal thread
-# pool that does not tolerate forking
-if hasattr(mp, 'get_start_method'):
-    method = os.environ.get('JOBLIB_START_METHOD')
-    if (method is None and mp.get_start_method() == 'fork'
-            and 'forkserver' in mp.get_all_start_methods()):
-        method = 'forkserver'
+# Under Linux or OS X the default start method of multiprocessing
+# can cause third party libraries to crash. Under Python 3.4+ it is possible
+# to set an environment variable to switch the default start method from
+# 'fork' to 'forkserver' or 'spawn' to avoid this issue albeit at the cost
+# of causing semantic changes and some additional pool instanciation overhead.
+if hasattr(mp, 'get_context'):
+    method = os.environ.get('JOBLIB_START_METHOD', '').strip() or None
     DEFAULT_MP_CONTEXT = mp.get_context(method=method)
 else:
     DEFAULT_MP_CONTEXT = None
@@ -614,8 +613,7 @@ class Parallel(Logger):
         elif self.batch_size == 'auto':
             old_batch_size = self._effective_batch_size
             batch_duration = self._smoothed_batch_duration
-            if (batch_duration > 0 and
-                    batch_duration < MIN_IDEAL_BATCH_DURATION):
+            if (0 < batch_duration < MIN_IDEAL_BATCH_DURATION):
                 # The current batch size is too small: the duration of the
                 # processing of a batch of task is not large enough to hide
                 # the scheduling overhead.

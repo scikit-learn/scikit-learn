@@ -2,7 +2,7 @@ Documentation for scikit-learn
 -------------------------------
 
 This section contains the full manual and web page as displayed in
-http://scikit-learn.sf.net. To generate the full web page, including
+http://scikit-learn.org. To generate the full web page, including
 the example gallery (this might take a while):
 
     make html

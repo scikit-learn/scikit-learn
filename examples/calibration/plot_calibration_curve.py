@@ -56,7 +56,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (brier_score_loss, precision_score, recall_score,
                              f1_score)
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 
 
 # Create dataset of classification task with many redundant and few

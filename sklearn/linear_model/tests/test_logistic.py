@@ -11,10 +11,12 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_raise_message
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils import compute_class_weight
 
 from sklearn.linear_model.logistic import (
     LogisticRegression,
@@ -22,10 +24,9 @@ from sklearn.linear_model.logistic import (
     _logistic_loss_and_grad, _logistic_grad_hess,
     _multinomial_grad_hess, _logistic_loss,
     )
-from sklearn.cross_validation import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
-
 
 X = [[-1, 0], [0, 1], [1, 1]]
 X_sp = sp.csr_matrix(X)
@@ -453,16 +454,24 @@ def test_ovr_multinomial_iris():
     train, target = iris.data, iris.target
     n_samples, n_features = train.shape
 
-    # Use pre-defined fold as folds generated for different y
-    cv = StratifiedKFold(target, 3)
-    clf = LogisticRegressionCV(cv=cv)
+    # The cv indices from stratified kfold (where stratification is done based
+    # on the fine-grained iris classes, i.e, before the classes 0 and 1 are
+    # conflated) is used for both clf and clf1
+    cv = StratifiedKFold(3)
+    precomputed_folds = list(cv.split(train, target))
+
+    # Train clf on the original dataset where classes 0 and 1 are separated
+    clf = LogisticRegressionCV(cv=precomputed_folds)
     clf.fit(train, target)
 
-    clf1 = LogisticRegressionCV(cv=cv)
+    # Conflate classes 0 and 1 and train clf1 on this modifed dataset
+    clf1 = LogisticRegressionCV(cv=precomputed_folds)
     target_copy = target.copy()
     target_copy[target_copy == 0] = 1
     clf1.fit(train, target_copy)
 
+    # Ensure that what OvR learns for class2 is same regardless of whether
+    # classes 0 and 1 are separated or not
     assert_array_almost_equal(clf.scores_[2], clf1.scores_[2])
     assert_array_almost_equal(clf.intercept_[2:], clf1.intercept_)
     assert_array_almost_equal(clf.coef_[2][np.newaxis, :], clf1.coef_)
@@ -542,12 +551,12 @@ def test_logistic_regressioncv_class_weights():
     X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
                                n_classes=3, random_state=0)
 
-    # Test the liblinear fails when class_weight of type dict is
-    # provided, when it is multiclass. However it can handle
-    # binary problems.
+    msg = ("In LogisticRegressionCV the liblinear solver cannot handle "
+           "multiclass with class_weight of type dict. Use the lbfgs, "
+           "newton-cg or sag solvers or set class_weight='balanced'")
     clf_lib = LogisticRegressionCV(class_weight={0: 0.1, 1: 0.2},
                                    solver='liblinear')
-    assert_raises(ValueError, clf_lib.fit, X, y)
+    assert_raise_message(ValueError, msg, clf_lib.fit, X, y)
     y_ = y.copy()
     y_[y == 2] = 1
     clf_lib.fit(X, y_)
@@ -573,44 +582,120 @@ def test_logistic_regressioncv_class_weights():
 def test_logistic_regression_sample_weights():
     X, y = make_classification(n_samples=20, n_features=5, n_informative=3,
                                n_classes=2, random_state=0)
+    sample_weight = y + 1
 
     for LR in [LogisticRegression, LogisticRegressionCV]:
-        # Test that liblinear fails when sample weights are provided
-        clf_lib = LR(solver='liblinear')
-        assert_raises(ValueError, clf_lib.fit, X, y,
-                      sample_weight=np.ones(y.shape[0]))
 
         # Test that passing sample_weight as ones is the same as
         # not passing them at all (default None)
-        clf_sw_none = LR(solver='lbfgs', fit_intercept=False)
-        clf_sw_none.fit(X, y)
-        clf_sw_ones = LR(solver='lbfgs', fit_intercept=False)
-        clf_sw_ones.fit(X, y, sample_weight=np.ones(y.shape[0]))
-        assert_array_almost_equal(clf_sw_none.coef_, clf_sw_ones.coef_, decimal=4)
+        for solver in ['lbfgs', 'liblinear']:
+            clf_sw_none = LR(solver=solver, fit_intercept=False)
+            clf_sw_none.fit(X, y)
+            clf_sw_ones = LR(solver=solver, fit_intercept=False)
+            clf_sw_ones.fit(X, y, sample_weight=np.ones(y.shape[0]))
+            assert_array_almost_equal(
+                clf_sw_none.coef_, clf_sw_ones.coef_, decimal=4)
 
         # Test that sample weights work the same with the lbfgs,
         # newton-cg, and 'sag' solvers
         clf_sw_lbfgs = LR(solver='lbfgs', fit_intercept=False)
-        clf_sw_lbfgs.fit(X, y, sample_weight=y + 1)
+        clf_sw_lbfgs.fit(X, y, sample_weight=sample_weight)
         clf_sw_n = LR(solver='newton-cg', fit_intercept=False)
-        clf_sw_n.fit(X, y, sample_weight=y + 1)
-        clf_sw_sag = LR(solver='sag', fit_intercept=False,
-                        max_iter=2000, tol=1e-7)
-        clf_sw_sag.fit(X, y, sample_weight=y + 1)
-        assert_array_almost_equal(clf_sw_lbfgs.coef_, clf_sw_n.coef_, decimal=4)
-        assert_array_almost_equal(clf_sw_lbfgs.coef_, clf_sw_sag.coef_, decimal=4)
+        clf_sw_n.fit(X, y, sample_weight=sample_weight)
+        clf_sw_sag = LR(solver='sag', fit_intercept=False, tol=1e-10)
+        # ignore convergence warning due to small dataset
+        with ignore_warnings():
+            clf_sw_sag.fit(X, y, sample_weight=sample_weight)
+        clf_sw_liblinear = LR(solver='liblinear', fit_intercept=False)
+        clf_sw_liblinear.fit(X, y, sample_weight=sample_weight)
+        assert_array_almost_equal(
+            clf_sw_lbfgs.coef_, clf_sw_n.coef_, decimal=4)
+        assert_array_almost_equal(
+            clf_sw_lbfgs.coef_, clf_sw_sag.coef_, decimal=4)
+        assert_array_almost_equal(
+            clf_sw_lbfgs.coef_, clf_sw_liblinear.coef_, decimal=4)
 
         # Test that passing class_weight as [1,2] is the same as
         # passing class weight = [1,1] but adjusting sample weights
         # to be 2 for all instances of class 2
-        clf_cw_12 = LR(solver='lbfgs', fit_intercept=False,
-                       class_weight={0: 1, 1: 2})
-        clf_cw_12.fit(X, y)
-        sample_weight = np.ones(y.shape[0])
-        sample_weight[y == 1] = 2
-        clf_sw_12 = LR(solver='lbfgs', fit_intercept=False)
-        clf_sw_12.fit(X, y, sample_weight=sample_weight)
-        assert_array_almost_equal(clf_cw_12.coef_, clf_sw_12.coef_, decimal=4)
+        for solver in ['lbfgs', 'liblinear']:
+            clf_cw_12 = LR(solver=solver, fit_intercept=False,
+                           class_weight={0: 1, 1: 2})
+            clf_cw_12.fit(X, y)
+            clf_sw_12 = LR(solver=solver, fit_intercept=False)
+            clf_sw_12.fit(X, y, sample_weight=sample_weight)
+            assert_array_almost_equal(
+                clf_cw_12.coef_, clf_sw_12.coef_, decimal=4)
+
+    # Test the above for l1 penalty and l2 penalty with dual=True.
+    # since the patched liblinear code is different.
+    clf_cw = LogisticRegression(
+        solver="liblinear", fit_intercept=False, class_weight={0: 1, 1: 2},
+        penalty="l1")
+    clf_cw.fit(X, y)
+    clf_sw = LogisticRegression(
+        solver="liblinear", fit_intercept=False, penalty="l1")
+    clf_sw.fit(X, y, sample_weight)
+    assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
+
+    clf_cw = LogisticRegression(
+        solver="liblinear", fit_intercept=False, class_weight={0: 1, 1: 2},
+        penalty="l2", dual=True)
+    clf_cw.fit(X, y)
+    clf_sw = LogisticRegression(
+        solver="liblinear", fit_intercept=False, penalty="l2", dual=True)
+    clf_sw.fit(X, y, sample_weight)
+    assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
+
+
+def _compute_class_weight_dictionary(y):
+    # helper for returning a dictionary instead of an array
+    classes = np.unique(y)
+    class_weight = compute_class_weight("balanced", classes, y)
+    class_weight_dict = dict(zip(classes, class_weight))
+    return class_weight_dict
+
+
+def test_logistic_regression_class_weights():
+    # Multinomial case: remove 90% of class 0
+    X = iris.data[45:, :]
+    y = iris.target[45:]
+    solvers = ("lbfgs", "newton-cg")
+    class_weight_dict = _compute_class_weight_dictionary(y)
+
+    for solver in solvers:
+        clf1 = LogisticRegression(solver=solver, multi_class="multinomial",
+                                  class_weight="balanced")
+        clf2 = LogisticRegression(solver=solver, multi_class="multinomial",
+                                  class_weight=class_weight_dict)
+        clf1.fit(X, y)
+        clf2.fit(X, y)
+        assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=4)
+
+    # Binary case: remove 90% of class 0 and 100% of class 2
+    X = iris.data[45:100, :]
+    y = iris.target[45:100]
+    solvers = ("lbfgs", "newton-cg", "liblinear")
+    class_weight_dict = _compute_class_weight_dictionary(y)
+
+    for solver in solvers:
+        clf1 = LogisticRegression(solver=solver, multi_class="ovr",
+                                  class_weight="balanced")
+        clf2 = LogisticRegression(solver=solver, multi_class="ovr",
+                                  class_weight=class_weight_dict)
+        clf1.fit(X, y)
+        clf2.fit(X, y)
+        assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=6)
+
+
+def test_multinomial_logistic_regression_with_classweight_auto():
+    X, y = iris.data, iris.target
+    model = LogisticRegression(multi_class='multinomial',
+                               class_weight='auto', solver='lbfgs')
+    # 'auto' is deprecated and will be removed in 0.19
+    assert_warns_message(DeprecationWarning,
+                         "class_weight='auto' heuristic is deprecated",
+                         model.fit, X, y)
 
 
 def test_logistic_regression_convergence_warnings():

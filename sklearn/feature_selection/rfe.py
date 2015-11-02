@@ -14,8 +14,8 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
-from ..cross_validation import check_cv
-from ..cross_validation import _safe_split, _score
+from ..model_selection import check_cv
+from ..model_selection._validation import _safe_split, _score
 from ..metrics.scorer import check_scoring
 from .base import SelectorMixin
 
@@ -373,7 +373,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         X, y = check_X_y(X, y, "csr")
 
         # Initialization
-        cv = check_cv(self.cv, X, y, is_classifier(self.estimator))
+        cv = check_cv(self.cv, y, is_classifier(self.estimator))
         scorer = check_scoring(self.estimator, scoring=self.scoring)
         n_features = X.shape[1]
         n_features_to_select = 1
@@ -382,7 +382,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         scores = []
 
         # Cross-validation
-        for n, (train, test) in enumerate(cv):
+        for n, (train, test) in enumerate(cv.split(X, y)):
             X_train, y_train = _safe_split(self.estimator, X, y, train)
             X_test, y_test = _safe_split(self.estimator, X, y, test, train)
 
@@ -414,7 +414,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(self.transform(X), y)
 
-        # Fixing a normalization error, n is equal to len(cv) - 1
-        # here, the scores are normalized by len(cv)
-        self.grid_scores_ = scores / len(cv)
+        # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
+        # here, the scores are normalized by get_n_splits(X, y)
+        self.grid_scores_ = scores / cv.get_n_splits(X, y)
         return self

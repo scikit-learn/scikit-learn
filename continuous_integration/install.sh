@@ -14,6 +14,13 @@ export CC=gcc
 export CXX=g++
 
 
+echo 'List files from cached directories'
+echo 'pip:'
+ls $HOME/.cache/pip
+echo 'download'
+ls $HOME/download
+
+
 if [[ "$DISTRIB" == "conda" ]]; then
     # Deactivate the travis-provided virtual environment and setup a
     # conda-based environment instead
@@ -21,11 +28,23 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     # Use the miniconda installer for faster download / install of conda
     # itself
-    wget http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh \
-        -O miniconda.sh
+    pushd .
+    cd
+    mkdir -p download
+    cd download
+    echo "Cached in $HOME/download :"
+    ls -l
+    echo
+    if [[ ! -f miniconda.sh ]]
+        then
+        wget http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh \
+            -O miniconda.sh
+        fi
     chmod +x miniconda.sh && ./miniconda.sh -b
+    cd ..
     export PATH=/home/travis/miniconda/bin:$PATH
     conda update --yes conda
+    popd
 
     # Configure the conda environment and put it in the path using the
     # provided versions
@@ -33,11 +52,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
         numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION
     source activate testenv
 
+    # Resolve MKL usage
     if [[ "$INSTALL_MKL" == "true" ]]; then
-        # Make sure that MKL is used
         conda install --yes mkl
     else
-        # Make sure that MKL is not used
         conda remove --yes --features mkl || echo "MKL not installed"
     fi
 

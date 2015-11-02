@@ -13,7 +13,7 @@ from scipy import sparse
 from nose.tools import assert_raises, assert_true, assert_equal, assert_false
 
 from sklearn import svm, linear_model, datasets, metrics, base
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
@@ -25,6 +25,8 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError
+
+from sklearn.multiclass import OneVsRestClassifier
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -852,3 +854,12 @@ def test_hasattr_predict_proba():
     assert_true(hasattr(G, 'predict_proba'))
     msg = "predict_proba is not available when fitted with probability=False"
     assert_raise_message(NotFittedError, msg, G.predict_proba, iris.data)
+
+
+def test_decision_function_shape_two_class():
+    for n_classes in [2, 3]:
+        X, y = make_blobs(centers=n_classes, random_state=0)
+        for estimator in [svm.SVC, svm.NuSVC]:
+            clf = OneVsRestClassifier(estimator(
+                decision_function_shape="ovr")).fit(X, y)
+            assert_equal(len(clf.predict(X)), len(y))

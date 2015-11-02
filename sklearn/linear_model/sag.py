@@ -57,7 +57,7 @@ def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept):
 def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
                max_iter=1000, tol=0.001, verbose=0, random_state=None,
                check_input=True, max_squared_sum=None,
-               warm_start_mem=dict()):
+               warm_start_mem=None):
     """SAG solver for Ridge and LogisticRegression
 
     SAG stands for Stochastic Average Gradient: the gradient of the loss is
@@ -170,6 +170,8 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
     Ridge, SGDRegressor, ElasticNet, Lasso, SVR, and
     LogisticRegression, SGDClassifier, LinearSVC, Perceptron
     """
+    if warm_start_mem is None:
+        warm_start_mem = {}
     # Ridge default max_iter is None
     if max_iter is None:
         max_iter = 1000

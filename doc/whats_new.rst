@@ -22,8 +22,35 @@ New features
      sampling of functions from GP prior and GP posterior. Extensive documentation and
      examples are provided. By `Jan Hendrik Metzen`_.
 
+   - Added the :class:`ensemble.IsolationForest` class for anomaly detection based on
+     random forests. By `Nicolas Goix`_.
+
 Enhancements
 ............
+
+   - The cross-validation iterators are replaced by cross-validation splitters
+     available from :mod:`model_selection`. These expose a ``split`` method
+     that takes in the data and yields a generator for the different splits.
+     This change makes it possible to do nested cross-validation with ease,
+     facilitated by :class:`model_selection.GridSearchCV` and similar
+     utilities.  (`#4294 https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by `Raghav R V`_.
+
+   - The random forest, extra trees and decision tree estimators now has a
+     method ``decision_path`` which returns the decision path of samples in
+     the tree. By `Arnaud Joly`_
+
+
+    - The random forest, extra tree and decision tree estimators now has a
+      method ``decision_path`` which returns the decision path of samples in
+      the tree. By `Arnaud Joly`_
+
+    - A new example has been added unveling the decision tree structure.
+      By `Arnaud Joly`_
+
+    - Random forest, extra trees, decision trees and gradient boosting estimator
+      accept the parameter ``min_samples_split`` and ``min_samples_leaf``
+      provided as a percentage of the training samples. By
+      `yelite`_ and `Arnaud Joly`_
 
 Bug fixes
 .........
@@ -43,9 +70,22 @@ Bug fixes
     - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized
       Laplacian matrix was incorrectly set to 1. By `Peter Fischer`_.
 
+    - Fixed incorrect initialization of :func:`utils.arpack.eigsh` on all
+      occurrences. Affects :class:`cluster.SpectralBiclustering`,
+      :class:`decomposition.KernelPCA`, :class:`manifold.LocallyLinearEmbedding`,
+      and :class:`manifold.SpectralEmbedding`. By `Peter Fischer`_.
+
+    - Random forest, extra trees, decision trees and gradient boosting
+      won't accept anymore ``min_samples_split=1`` as at least 2 samples
+      are required to split a decision tree node. By `Arnaud Joly`_
 
 API changes summary
 -------------------
+
+   - The :mod:`cross_validation`, :mod:`grid_search` and :mod:`learning_curve`
+     have been deprecated and the classes and functions have been reorganized into
+     the :mod:`model_selection` module.
+     (`#4294 https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by `Raghav R V`_.
 
 
 .. _changes_0_17:
@@ -107,6 +147,10 @@ New features
      ``l1_ratio`` control L1 and L2 regularization, and ``shuffle`` adds a
      shuffling step in the ``cd`` solver.
      By `Tom Dupre la Tour`_ and `Mathieu Blondel`_.
+
+   - **IndexError** bug `#5495
+     <https://github.com/scikit-learn/scikit-learn/issues/5495>`_ when
+     doing OVR(SVC(decision_function_shape="ovr")). Fixed by `Elvis Dohmatob`_.
 
 Enhancements
 ............
@@ -183,20 +227,15 @@ Enhancements
    - RCV1 dataset loader (:func:`sklearn.datasets.fetch_rcv1`).
      By `Tom Dupre la Tour`_.
 
-   - Upgraded to joblib 0.9.2 to benefit from the new automatic batching of
+   - Upgraded to joblib 0.9.3 to benefit from the new automatic batching of
      short tasks. This makes it possible for scikit-learn to benefit from
      parallelism when many very short tasks are executed in parallel, for
      instance by the :class:`grid_search.GridSearchCV` meta-estimator
      with ``n_jobs > 1`` used with a large grid of parameters on a small
      dataset. By `Vlad Niculae`_, `Olivier Grisel`_ and `Loic Esteve`_.
 
-   - Joblib 0.9.2 also enables the ``forkserver`` start method for
-     multiprocessing by default under non-Windows platforms for Python 3.4
-     and later in order to avoid possible crash with some version of BLAS such
-     as vecLib / Accelerate under OSX for instance. By `Olivier Grisel`_.
-
-   - For more details about changes in joblib 0.9.2 see the release notes:
-     https://github.com/joblib/joblib/blob/master/CHANGES.rst#release-092
+   - For more details about changes in joblib 0.9.3 see the release notes:
+     https://github.com/joblib/joblib/blob/master/CHANGES.rst#release-093
 
    - Improved speed (3 times per iteration) of
      :class:`decomposition.DictLearning` with coordinate descent method
@@ -250,6 +289,7 @@ Enhancements
 
    - Added ``sample_weight`` support to :class:`linear_model.LogisticRegression` for
      the ``lbfgs``, ``newton-cg``, and ``sag`` solvers. By `Valentin Stolbunov`_.
+     Support added to the ``liblinear`` solver. By `Manoj Kumar`_.
 
    - Added optional parameter ``presort`` to :class:`ensemble.GradientBoostingRegressor`
      and :class:`ensemble.GradientBoostingClassifier`, keeping default behavior
@@ -323,6 +363,15 @@ Bug fixes
       with a large number of features and fewer samples. (`#4478
       <https://github.com/scikit-learn/scikit-learn/pull/4478>`_)
       By `Andreas Müller`_, `Loic Esteve`_ and `Giorgio Patrini`_.
+
+    - Fixed bug in :class:`cross_decomposition.PLS` that yielded unstable and
+      platform dependent output, and failed on `fit_transform`.
+       By `Arthur Mensch`_.
+
+    - Fixed a bug in :class:`linear_model.LogisticRegression` and
+      :class:`linear_model.LogisticRegressionCV` when using
+      ``class_weight='balanced'```or ``class_weight='auto'``.
+      By `Tom Dupre la Tour`_.
 
 API changes summary
 -------------------
@@ -3813,3 +3862,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Andrew Lamb: https://github.com/andylamb
 .. _Graham Clenaghan: https://github.com/gclenaghan
 .. _Giorgio Patrini: https://github.com/giorgiop
+.. _Elvis Dohmatob: https://github.com/dohmatob
+.. _yelite https://github.com/yelite

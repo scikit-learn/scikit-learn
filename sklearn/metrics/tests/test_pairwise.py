@@ -233,8 +233,7 @@ def test_pairwise_kernels():    # Test the pairwise_kernels helper function.
         assert_array_almost_equal(K1, K2)
     # Test with a callable function, with given keywords.
     metric = callable_rbf_kernel
-    kwds = {}
-    kwds['gamma'] = 0.1
+    kwds = {'gamma': 0.1}
     K1 = pairwise_kernels(X, Y=Y, metric=metric, **kwds)
     K2 = rbf_kernel(X, Y=Y, **kwds)
     assert_array_almost_equal(K1, K2)

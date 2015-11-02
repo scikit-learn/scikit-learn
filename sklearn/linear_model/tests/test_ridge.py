@@ -29,10 +29,10 @@ from sklearn.linear_model.ridge import _solve_cholesky
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
 from sklearn.datasets import make_regression
 
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import KFold
 
-from sklearn.cross_validation import KFold
-
+from sklearn.utils import check_random_state
 
 diabetes = datasets.load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
@@ -358,8 +358,6 @@ def _test_ridge_loo(filter_):
 
 
 def _test_ridge_cv(filter_):
-    n_samples = X_diabetes.shape[0]
-
     ridge_cv = RidgeCV()
     ridge_cv.fit(filter_(X_diabetes), y_diabetes)
     ridge_cv.predict(filter_(X_diabetes))
@@ -367,7 +365,7 @@ def _test_ridge_cv(filter_):
     assert_equal(len(ridge_cv.coef_.shape), 1)
     assert_equal(type(ridge_cv.intercept_), np.float64)
 
-    cv = KFold(n_samples, 5)
+    cv = KFold(5)
     ridge_cv.set_params(cv=cv)
     ridge_cv.fit(filter_(X_diabetes), y_diabetes)
     ridge_cv.predict(filter_(X_diabetes))
@@ -406,8 +404,7 @@ def _test_ridge_classifiers(filter_):
         y_pred = clf.predict(filter_(X_iris))
         assert_greater(np.mean(y_iris == y_pred), .79)
 
-    n_samples = X_iris.shape[0]
-    cv = KFold(n_samples, 5)
+    cv = KFold(5)
     clf = RidgeClassifierCV(cv=cv)
     clf.fit(filter_(X_iris), y_iris)
     y_pred = clf.predict(filter_(X_iris))
@@ -571,7 +568,7 @@ def test_ridgecv_sample_weight():
         X = rng.randn(n_samples, n_features)
         sample_weight = 1 + rng.rand(n_samples)
 
-        cv = KFold(n_samples, 5)
+        cv = KFold(5)
         ridgecv = RidgeCV(alphas=alphas, cv=cv)
         ridgecv.fit(X, y, sample_weight=sample_weight)
 
@@ -715,3 +712,45 @@ def test_ridge_fit_intercept_sparse():
     assert_warns(UserWarning, sparse.fit, X_csr, y)
     assert_almost_equal(dense.intercept_, sparse.intercept_)
     assert_array_almost_equal(dense.coef_, sparse.coef_)
+
+
+def test_errors_and_values_helper():
+    ridgecv = _RidgeGCV()
+    rng = check_random_state(42)
+    alpha = 1.
+    n = 5
+    y = rng.randn(n)
+    v = rng.randn(n)
+    Q = rng.randn(len(v), len(v))
+    QT_y = Q.T.dot(y)
+    G_diag, c = ridgecv._errors_and_values_helper(alpha, y, v, Q, QT_y)
+
+    # test that helper function behaves as expected
+    out, c_ = ridgecv._errors(alpha, y, v, Q, QT_y)
+    np.testing.assert_array_equal(out, (c / G_diag) ** 2)
+    np.testing.assert_array_equal(c, c)
+
+    out, c_ = ridgecv._values(alpha, y, v, Q, QT_y)
+    np.testing.assert_array_equal(out, y - (c / G_diag))
+    np.testing.assert_array_equal(c_, c)
+
+
+def test_errors_and_values_svd_helper():
+    ridgecv = _RidgeGCV()
+    rng = check_random_state(42)
+    alpha = 1.
+    for n, p in zip((5, 10), (12, 6)):
+        y = rng.randn(n)
+        v = rng.randn(p)
+        U = rng.randn(n, p)
+        UT_y = U.T.dot(y)
+        G_diag, c = ridgecv._errors_and_values_svd_helper(alpha, y, v, U, UT_y)
+
+        # test that helper function behaves as expected
+        out, c_ = ridgecv._errors_svd(alpha, y, v, U, UT_y)
+        np.testing.assert_array_equal(out, (c / G_diag) ** 2)
+        np.testing.assert_array_equal(c, c)
+
+        out, c_ = ridgecv._values_svd(alpha, y, v, U, UT_y)
+        np.testing.assert_array_equal(out, y - (c / G_diag))
+        np.testing.assert_array_equal(c_, c)

@@ -70,7 +70,8 @@ def check_classification_toy(presort, loss):
 
 
 def test_classification_toy():
-    for presort, loss in product(('auto', True, False), ('deviance', 'exponential')):
+    for presort, loss in product(('auto', True, False),
+                                 ('deviance', 'exponential')):
         yield check_classification_toy, presort, loss
 
 
@@ -94,11 +95,13 @@ def test_parameter_checks():
                   GradientBoostingClassifier(min_samples_split=0.0).fit, X, y)
     assert_raises(ValueError,
                   GradientBoostingClassifier(min_samples_split=-1.0).fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(min_samples_split=1.1).fit, X, y)
 
     assert_raises(ValueError,
                   GradientBoostingClassifier(min_samples_leaf=0).fit, X, y)
     assert_raises(ValueError,
-                  GradientBoostingClassifier(min_samples_leaf=-1.).fit, X, y)
+                  GradientBoostingClassifier(min_samples_leaf=-1.0).fit, X, y)
 
     assert_raises(ValueError,
                   GradientBoostingClassifier(min_weight_fraction_leaf=-1.).fit,
@@ -156,16 +159,15 @@ def check_classification_synthetic(presort, loss):
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]
 
-    gbrt = GradientBoostingClassifier(n_estimators=100, min_samples_split=1,
+    gbrt = GradientBoostingClassifier(n_estimators=100, min_samples_split=2,
                                       max_depth=1, loss=loss,
-                                      learning_rate=1.0, random_state=0,
-                                      presort=presort)
+                                      learning_rate=1.0, random_state=0)
     gbrt.fit(X_train, y_train)
     error_rate = (1.0 - gbrt.score(X_test, y_test))
     assert_less(error_rate, 0.09)
 
-    gbrt = GradientBoostingClassifier(n_estimators=200, min_samples_split=1,
-                                      max_depth=1,
+    gbrt = GradientBoostingClassifier(n_estimators=200, min_samples_split=2,
+                                      max_depth=1, loss=loss,
                                       learning_rate=1.0, subsample=0.5,
                                       random_state=0,
                                       presort=presort)
@@ -184,12 +186,12 @@ def check_boston(presort, loss, subsample):
     # and least absolute deviation.
     ones = np.ones(len(boston.target))
     last_y_pred = None
-    for sample_weight in None, ones, 2*ones:
-        clf = GradientBoostingRegressor(n_estimators=100, 
+    for sample_weight in None, ones, 2 * ones:
+        clf = GradientBoostingRegressor(n_estimators=100,
                                         loss=loss,
-                                        max_depth=4, 
+                                        max_depth=4,
                                         subsample=subsample,
-                                        min_samples_split=1,
+                                        min_samples_split=2,
                                         random_state=1,
                                         presort=presort)
 
@@ -198,10 +200,10 @@ def check_boston(presort, loss, subsample):
                 sample_weight=sample_weight)
         leaves = clf.apply(boston.data)
         assert_equal(leaves.shape, (506, 100))
-        
+
         y_pred = clf.predict(boston.data)
         mse = mean_squared_error(boston.target, y_pred)
-        assert_less( mse, 6.0 )
+        assert_less(mse, 6.0)
 
         if last_y_pred is not None:
             assert_array_almost_equal(last_y_pred, y_pred)
@@ -210,17 +212,17 @@ def check_boston(presort, loss, subsample):
 
 
 def test_boston():
-    for presort, loss, subsample in product(('auto', True, False), 
-                                            ('ls', 'lad', 'huber'), 
+    for presort, loss, subsample in product(('auto', True, False),
+                                            ('ls', 'lad', 'huber'),
                                             (1.0, 0.5)):
         yield check_boston, presort, loss, subsample
 
 
 def check_iris(presort, subsample, sample_weight):
     # Check consistency on dataset iris.
-    clf = GradientBoostingClassifier(n_estimators=100, 
+    clf = GradientBoostingClassifier(n_estimators=100,
                                      loss='deviance',
-                                     random_state=1, 
+                                     random_state=1,
                                      subsample=subsample,
                                      presort=presort)
     clf.fit(iris.data, iris.target, sample_weight=sample_weight)
@@ -233,8 +235,8 @@ def check_iris(presort, subsample, sample_weight):
 
 def test_iris():
     ones = np.ones(len(iris.target))
-    for presort, subsample, sample_weight in product(('auto', True, False), 
-                                                     (1.0, 0.5), 
+    for presort, subsample, sample_weight in product(('auto', True, False),
+                                                     (1.0, 0.5),
                                                      (None, ones)):
         yield check_iris, presort, subsample, sample_weight
 
@@ -244,12 +246,12 @@ def test_regression_synthetic():
     # `Bagging Predictors?. Machine Learning 24(2): 123-140 (1996).
     random_state = check_random_state(1)
     regression_params = {'n_estimators': 100, 'max_depth': 4,
-                         'min_samples_split': 1, 'learning_rate': 0.1,
+                         'min_samples_split': 2, 'learning_rate': 0.1,
                          'loss': 'ls'}
 
     # Friedman1
     X, y = datasets.make_friedman1(n_samples=1200,
-                                   random_state=random_state, 
+                                   random_state=random_state,
                                    noise=1.0)
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
@@ -291,7 +293,7 @@ def test_feature_importances():
 
     for presort in True, False:
         clf = GradientBoostingRegressor(n_estimators=100, max_depth=5,
-                                        min_samples_split=1, random_state=1,
+                                        min_samples_split=2, random_state=1,
                                         presort=presort)
         clf.fit(X, y)
         assert_true(hasattr(clf, 'feature_importances_'))
@@ -1009,7 +1011,8 @@ def test_non_uniform_weights_toy_edge_case_reg():
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
     for loss in ('huber', 'ls', 'lad', 'quantile'):
-        gb = GradientBoostingRegressor(learning_rate=1.0, n_estimators=2, loss=loss)
+        gb = GradientBoostingRegressor(learning_rate=1.0, n_estimators=2,
+                                       loss=loss)
         gb.fit(X, y, sample_weight=sample_weight)
         assert_greater(gb.predict([[1, 0]])[0], 0.5)
 
@@ -1028,20 +1031,21 @@ def test_non_uniform_weights_toy_edge_case_clf():
         assert_array_equal(gb.predict([[1, 0]]), [1])
 
 def check_sparse_input(EstimatorClass, X, X_sparse, y):
-    dense = EstimatorClass(n_estimators=10, random_state=0, max_depth=2).fit(X, y)
-    sparse = EstimatorClass(n_estimators=10, random_state=0, max_depth=2, 
-                 presort=False).fit(X_sparse, y)
-    auto = EstimatorClass(n_estimators=10, random_state=0, max_depth=2, 
-                 presort='auto').fit(X_sparse, y)
+    dense = EstimatorClass(n_estimators=10, random_state=0,
+                           max_depth=2).fit(X, y)
+    sparse = EstimatorClass(n_estimators=10, random_state=0, max_depth=2,
+                            presort=False).fit(X_sparse, y)
+    auto = EstimatorClass(n_estimators=10, random_state=0, max_depth=2,
+                          presort='auto').fit(X_sparse, y)
 
     assert_array_almost_equal(sparse.apply(X), dense.apply(X))
     assert_array_almost_equal(sparse.predict(X), dense.predict(X))
-    assert_array_almost_equal(sparse.feature_importances_, 
+    assert_array_almost_equal(sparse.feature_importances_,
                               dense.feature_importances_)
 
     assert_array_almost_equal(sparse.apply(X), auto.apply(X))
     assert_array_almost_equal(sparse.predict(X), auto.predict(X))
-    assert_array_almost_equal(sparse.feature_importances_, 
+    assert_array_almost_equal(sparse.feature_importances_,
                               auto.feature_importances_)
 
     if isinstance(EstimatorClass, GradientBoostingClassifier):

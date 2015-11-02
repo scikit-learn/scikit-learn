@@ -20,6 +20,7 @@ import platform
 import scipy as sp
 import scipy.io
 from functools import wraps
+from operator import itemgetter
 try:
     # Python 2
     from urllib2 import urlopen
@@ -604,7 +605,7 @@ def all_estimators(include_meta_estimators=False,
     path = sklearn.__path__
     for importer, modname, ispkg in pkgutil.walk_packages(
             path=path, prefix='sklearn.', onerror=lambda x: None):
-        if ".tests." in modname:
+        if (".tests." in modname):
             continue
         module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
@@ -648,7 +649,9 @@ def all_estimators(include_meta_estimators=False,
                              " %s." % repr(type_filter))
 
     # drop duplicates, sort for reproducibility
-    return sorted(set(estimators))
+    # itemgetter is used to ensure the sort does not extend to the 2nd item of
+    # the tuple
+    return sorted(set(estimators), key=itemgetter(0))
 
 
 def set_random_state(estimator, random_state=0):
@@ -708,26 +711,28 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
 def if_safe_multiprocessing_with_blas(func):
     """Decorator for tests involving both BLAS calls and multiprocessing
 
-    Under Python < 3.4 and POSIX (e.g. Linux or OSX), using multiprocessing in
-    conjunction with some implementation of BLAS (or other libraries that
-    manage an internal posix thread pool) can cause a crash or a freeze of the
-    Python process.
-
-    Under Python 3.4 and later, joblib uses the forkserver mode of
-    multiprocessing which does not trigger this problem.
+    Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction with
+    some implementation of BLAS (or other libraries that manage an internal
+    posix thread pool) can cause a crash or a freeze of the Python process.
 
     In practice all known packaged distributions (from Linux distros or
     Anaconda) of BLAS under Linux seems to be safe. So we this problem seems to
     only impact OSX users.
 
     This wrapper makes it possible to skip tests that can possibly cause
-    this crash under OSX with.
+    this crash under OS X with.
+
+    Under Python 3.4+ it is possible to use the `forkserver` start method
+    for multiprocessing to avoid this issue. However it can cause pickling
+    errors on interactively defined functions. It therefore not enabled by
+    default.
+
     """
     @wraps(func)
     def run_test(*args, **kwargs):
-        if sys.platform == 'darwin' and sys.version_info[:2] < (3, 4):
+        if sys.platform == 'darwin':
             raise SkipTest(
-                "Possible multi-process bug with some BLAS under Python < 3.4")
+                "Possible multi-process bug with some BLAS")
         return func(*args, **kwargs)
     return run_test
 
