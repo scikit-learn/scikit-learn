@@ -585,7 +585,7 @@ class GMM(BaseEstimator):
         return self
 
     def _do_mstep(self, X, responsibilities, params, min_covar=0):
-        """ Perform the Mstep of the EM algorithm and return the class weights
+        """ Perform the Mstep of the EM algorithm and return the cluster weights
         """
         weights = responsibilities.sum(axis=0)
         weighted_X_sum = np.dot(responsibilities.T, X)
