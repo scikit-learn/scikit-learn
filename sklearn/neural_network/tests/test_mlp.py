@@ -479,6 +479,22 @@ def test_verbose_sgd():
     assert 'Iteration' in output.getvalue()
 
 
+def test_verbose_lbfgs():
+    # Test verbose.
+    X = [[3, 2], [1, 6]]
+    y = [1, 0]
+    clf = MLPClassifier(algorithm='l-bfgs', max_iter=2, verbose=10,
+                        hidden_layer_sizes=2)
+    old_stdout = sys.stdout
+    sys.stdout = output = StringIO()
+
+    clf.fit(X, y)
+    clf.partial_fit(X, y)
+
+    sys.stdout = old_stdout
+    assert 'Iteration' in output.getvalue()
+
+
 def test_early_stopping():
     X = X_digits_binary[:100]
     y = y_digits_binary[:100]
