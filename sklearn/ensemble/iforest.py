@@ -47,10 +47,11 @@ class IsolationForest(BaseBagging):
     n_estimators : int, optional (default=100)
         The number of base estimators in the ensemble.
 
-    max_samples : int or float, optional (default=256)
+    max_samples : int or float, optional (default="auto")
         The number of samples to draw from X to train each base estimator.
             - If int, then draw `max_samples` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
+            - If "auto", then `max_samples=256`.
         If max_samples is larger than the number of samples provided,
         all samples will be used for all trees (no sampling).
 
@@ -99,7 +100,7 @@ class IsolationForest(BaseBagging):
 
     def __init__(self,
                  n_estimators=100,
-                 max_samples=256,
+                 max_samples="auto",
                  max_features=1.,
                  bootstrap=False,
                  n_jobs=1,
@@ -107,7 +108,6 @@ class IsolationForest(BaseBagging):
                  verbose=0):
         super(IsolationForest, self).__init__(
             base_estimator=ExtraTreeRegressor(
-                max_depth=int(np.ceil(np.log2(max(max_samples, 2)))),
                 max_features=1,
                 splitter='random',
                 random_state=random_state),
@@ -151,15 +151,28 @@ class IsolationForest(BaseBagging):
         y = rnd.uniform(size=X.shape[0])
 
         # ensure that max_sample is in [1, n_samples]:
-        max_samples = self.max_samples
         n_samples = X.shape[0]
-        if max_samples > n_samples:
-            warn("max_samples (%s) is greater than the "
-                 "total number of samples (%s). max_samples "
-                 "will be set to n_samples for estimation."
-                 % (self.max_samples, n_samples))
-            max_samples = n_samples
+        max_samples = min(256, n_samples)
 
+        if self.max_samples != 'auto':
+            if isinstance(self.max_samples, (numbers.Integral, np.integer)):
+                if self.max_samples < 1:
+                    raise ValueError("max_features must be larger than zero.")
+
+                if self.max_samples > n_samples:
+                    warn("max_samples (%s) is greater than the "
+                         "total number of samples (%s). max_samples "
+                         "will be set to n_samples for estimation."
+                         % (self.max_samples, n_samples))
+                    max_samples = n_samples
+
+            else: # float
+                if 0. < self.max_samples <= 1.:
+                    max_samples = self.max_samples * n_samples
+                else:
+                    raise ValueError('max_samples must be in (0, 1]')
+
+        self.base_estimator.max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
         super(IsolationForest, self)._fit(X, y, max_samples,
                                           sample_weight=sample_weight)
         return self
@@ -206,7 +219,9 @@ class IsolationForest(BaseBagging):
 
         depths += _average_path_length(n_samples_leaf)
 
-        if not isinstance(self.max_samples, (numbers.Integral, np.integer)):
+        if self.max_samples == 'auto':
+            max_samples = min(256, X.shape[0])
+        elif not isinstance(self.max_samples, (numbers.Integral, np.integer)):
             max_samples = int(self.max_samples * X.shape[0])
         else:
             max_samples = self.max_samples
