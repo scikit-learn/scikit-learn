@@ -12,7 +12,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.base import center_data, sparse_center_data, _rescale_data
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.datasets.samples_generator import make_sparse_uncorrelated
 from sklearn.datasets.samples_generator import make_regression
@@ -114,7 +113,7 @@ def test_fit_intercept():
 
 
 def test_linear_regression_sparse(random_state=0):
-    "Test that linear regression also works with sparse data"
+    # Test that linear regression also works with sparse data
     random_state = check_random_state(random_state)
     for i in range(10):
         n = 100
@@ -125,11 +124,12 @@ def test_linear_regression_sparse(random_state=0):
         ols = LinearRegression()
         ols.fit(X, y.ravel())
         assert_array_almost_equal(beta, ols.coef_ + ols.intercept_)
-        assert_array_almost_equal(ols.residues_, 0)
+
+        assert_array_almost_equal(ols.predict(X) - y.ravel(), 0)
 
 
 def test_linear_regression_multiple_outcome(random_state=0):
-    "Test multiple-outcome linear regressions"
+    # Test multiple-outcome linear regressions
     X, y = make_regression(random_state=random_state)
 
     Y = np.vstack((y, y)).T
@@ -145,7 +145,7 @@ def test_linear_regression_multiple_outcome(random_state=0):
 
 
 def test_linear_regression_sparse_multiple_outcome(random_state=0):
-    "Test multiple-outcome linear regressions with sparse data"
+    # Test multiple-outcome linear regressions with sparse data
     random_state = check_random_state(random_state)
     X, y = make_sparse_uncorrelated(random_state=random_state)
     X = sparse.coo_matrix(X)
@@ -321,4 +321,3 @@ def test_rescale_data():
     rescaled_y2 = y * np.sqrt(sample_weight)
     assert_array_almost_equal(rescaled_X, rescaled_X2)
     assert_array_almost_equal(rescaled_y, rescaled_y2)
-
