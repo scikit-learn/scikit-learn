@@ -1,19 +1,19 @@
 """
-==============
-GMM clustering
-==============
+===============
+GMM covariances
+===============
 
-Demonstration of Gaussian mixture models for clustering.
+Demonstration of several covariances types for Gaussian mixture models.
 
 See :ref:`gmm` for more information on the estimator.
 
-Although GMM are usually used for clustering, we can compare the obtained
+Although GMM are often used for clustering, we can compare the obtained
 clusters with the actual classes from the dataset. We initialize the means
 of the Gaussians with the means of the classes from the training set to make
 this comparison valid.
 
 We plot predicted labels on both training and held out test data using a
-variety of GMM clustering algorithms on the iris dataset.
+variety of GMM covariance types on the iris dataset.
 We compare GMMs with spherical, diagonal, full, and tied covariance
 matrices in increasing order of performance. Although one would
 expect full covariance to perform best in general, it is prone to

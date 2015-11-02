@@ -55,14 +55,14 @@ The :class:`GMM` comes with different options to constrain the covariance
 of the difference classes estimated: spherical, diagonal, tied or full
 covariance.
 
-.. figure:: ../auto_examples/mixture/images/plot_gmm_clustering_001.png
-   :target: ../auto_examples/mixture/plot_gmm_clustering.html
+.. figure:: ../auto_examples/mixture/images/plot_gmm_covariances_001.png
+   :target: ../auto_examples/mixture/plot_gmm_covariances.html
    :align: center
    :scale: 75%
 
 .. topic:: Examples:
 
-    * See :ref:`example_mixture_plot_gmm_clustering.py` for an example of
+    * See :ref:`example_mixture_plot_gmm_covariances.py` for an example of
       using a GMM for clustering on the iris dataset.
 
     * See :ref:`example_mixture_plot_gmm_pdf.py` for an example on plotting the 
