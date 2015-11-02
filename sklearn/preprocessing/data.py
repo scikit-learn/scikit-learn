@@ -1650,8 +1650,10 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         Number of values per feature.
 
         - 'auto' : determine value range from training data.
-        - int : maximum value for all features.
-        - array : maximum value per feature.
+        - int : number of categorical values per feature.
+                Each feature value should be in ``range(n_values)``
+        - array : ``n_values[i]`` is the number of categorical values in
+                  ``X[:, i]``. Each feature value should be in ``range(n_values[i])``
 
     categorical_features: "all" or array of indices or mask
         Specify what features are treated as categorical.
