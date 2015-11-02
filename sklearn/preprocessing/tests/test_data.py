@@ -1391,6 +1391,8 @@ def test_one_hot_encoder_sparse():
     # test that an error is raised when out of bounds:
     X_too_large = [[0, 2, 1], [0, 1, 1]]
     assert_raises(ValueError, enc.transform, X_too_large)
+    error_msg = "unknown categorical feature present \[2\] during transform."
+    assert_raises_regex(ValueError, error_msg, enc.transform, X_too_large)
     assert_raises(ValueError, OneHotEncoder(n_values=2).fit_transform, X)
 
     # test that error is raised when wrong number of features

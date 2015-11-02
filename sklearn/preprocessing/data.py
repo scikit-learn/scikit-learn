@@ -1816,7 +1816,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                  "unknown got %s" % self.handle_unknown)
             if self.handle_unknown == 'error':
                 raise ValueError("unknown categorical feature present %s "
-                                 "during transform." % X[~mask])
+                                 "during transform." % X.ravel()[~mask])
 
         column_indices = (X + indices[:-1]).ravel()[mask]
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
