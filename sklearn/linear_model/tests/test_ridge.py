@@ -423,6 +423,9 @@ def _test_tolerance(filter_):
     assert_true(score >= score2)
 
 
+# ignore warning that solvers are changed to SAG for
+# temporary fix
+@ignore_warnings
 def test_dense_sparse():
     for test_func in (_test_ridge_loo,
                       _test_ridge_cv,

@@ -293,9 +293,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     This function won't compute the intercept.
     """
     if return_intercept and sparse.issparse(X) and solver != 'sag':
-        warnings.warn("In Ridge, only 'sag' solver can currently fit the "
-                      "intercept when X is sparse. Solver has been "
-                      "automatically changed into 'sag'.")
+        if solver != 'auto':
+            warnings.warn("In Ridge, only 'sag' solver can currently fit the "
+                          "intercept when X is sparse. Solver has been "
+                          "automatically changed into 'sag'.")
         solver = 'sag'
 
     # SAG needs X and y columns to be C-contiguous and np.float64
