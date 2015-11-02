@@ -30,8 +30,7 @@ coefficients (error is equal to 0), stronger regularised
 models increase the error.
 
 Please note that in this example the data is non-noisy, hence
-it is possible to extract the exact coefficients and regularization
-increases the error. This is only the case for such non-noisy data.
+it is possible to extract the exact coefficients.
 """
 
 # Author: Kornel Kielczewski -- <kornel.k@plusnet.pl>
