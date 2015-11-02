@@ -33,8 +33,8 @@ Scikit-learn implements different classes to estimate Gaussian
 mixture models, that correspond to different estimation strategies,
 detailed below.
 
-GMM clustering
-==============
+Gaussian Mixture Model
+======================
 
 The :class:`GMM` object implements the 
 :ref:`expectation-maximization <expectation_maximization>` (EM)
@@ -135,8 +135,8 @@ to a local optimum.
 
 .. _vbgmm:
 
-VBGMM clustering: variational Gaussian mixtures
-===============================================
+VBGMM: variational Gaussian mixtures
+====================================
 
 The :class:`VBGMM` object implements a variant of the Gaussian mixture
 model with :ref:`variational inference <variational_inference>` algorithms. The API is identical to
@@ -200,8 +200,8 @@ points.
 
 .. _dpgmm:
 
-DPGMM clustering: Infinite Gaussian mixtures
-============================================
+DPGMM: Infinite Gaussian mixtures
+=================================
 
 The :class:`DPGMM` object implements a variant of the Gaussian mixture
 model with a variable (but bounded) number of components using the
