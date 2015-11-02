@@ -51,7 +51,7 @@ class IsolationForest(BaseBagging):
         The number of samples to draw from X to train each base estimator.
             - If int, then draw `max_samples` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
-            - If "auto", then `max_samples=256`.
+            - If "auto", then `max_samples=min(256, n_samples)`.
         If max_samples is larger than the number of samples provided,
         all samples will be used for all trees (no sampling).
 
@@ -152,25 +152,19 @@ class IsolationForest(BaseBagging):
 
         # ensure that max_sample is in [1, n_samples]:
         n_samples = X.shape[0]
-        max_samples = min(256, n_samples)
+        max_samples = -1
 
-        if self.max_samples != 'auto':
-            if isinstance(self.max_samples, (numbers.Integral, np.integer)):
-                if self.max_samples < 1:
-                    raise ValueError("max_features must be larger than zero.")
-
-                if self.max_samples > n_samples:
-                    warn("max_samples (%s) is greater than the "
-                         "total number of samples (%s). max_samples "
-                         "will be set to n_samples for estimation."
-                         % (self.max_samples, n_samples))
-                    max_samples = n_samples
-
-            else: # float
-                if 0. < self.max_samples <= 1.:
-                    max_samples = self.max_samples * n_samples
-                else:
-                    raise ValueError('max_samples must be in (0, 1]')
+        if self.max_samples == 'auto':
+            max_samples = min(256, n_samples)
+        else:
+            if self.max_samples > n_samples:
+                warn("max_samples (%s) is greater than the "
+                     "total number of samples (%s). max_samples "
+                     "will be set to n_samples for estimation."
+                     % (self.max_samples, n_samples))
+                max_samples = n_samples
+            else:
+                max_samples = self.max_samples
 
         self.base_estimator.max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
         super(IsolationForest, self)._fit(X, y, max_samples,
