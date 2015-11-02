@@ -66,8 +66,7 @@ if you're using one of these unless you want custom multiclass behavior:
     setting ``multi_class='multinomial'`` in
     :class:`sklearn.linear_model.LogisticRegression`.
   - Support multilabel: :ref:`Decision Trees <tree>`,
-    :ref:`Random Forests <forest>`, :ref:`Nearest Neighbors <neighbors>`,
-    :ref:`Ridge Regression <ridge_regression>`.
+    :ref:`Random Forests <forest>`, :ref:`Nearest Neighbors <neighbors>`.
   - One-Vs-One: :class:`sklearn.svm.SVC`.
   - One-Vs-All: all linear models except :class:`sklearn.svm.SVC`.
 

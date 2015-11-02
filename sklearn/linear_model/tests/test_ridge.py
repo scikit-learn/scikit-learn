@@ -33,6 +33,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
 
 from sklearn.utils import check_random_state
+from sklearn.datasets import make_multilabel_classification
 
 diabetes = datasets.load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
@@ -757,3 +758,8 @@ def test_errors_and_values_svd_helper():
         out, c_ = ridgecv._values_svd(alpha, y, v, U, UT_y)
         np.testing.assert_array_equal(out, y - (c / G_diag))
         np.testing.assert_array_equal(c_, c)
+
+
+def test_ridge_classifier_no_support_multilabel():
+    X, y = make_multilabel_classification(n_samples=10, random_state=0)
+    assert_raises(ValueError, RidgeClassifier().fit, X, y)
