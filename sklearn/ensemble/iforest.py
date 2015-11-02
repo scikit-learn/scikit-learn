@@ -152,6 +152,8 @@ class IsolationForest(BaseBagging):
 
         # ensure that max_sample is in [1, n_samples]:
         n_samples = X.shape[0]
+        # initialise here for scoping reasons, should always be set to
+        # a legal value in the following lines
         max_samples = -1
 
         if self.max_samples == 'auto':
