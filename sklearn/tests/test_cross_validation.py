@@ -842,7 +842,9 @@ def train_test_split_mock_pandas():
     X_train, X_test = cval.train_test_split(X_df)
     assert_true(isinstance(X_train, MockDataFrame))
     assert_true(isinstance(X_test, MockDataFrame))
-    X_train_arr, X_test_arr = cval.train_test_split(X_df, allow_lists=False)
+    with warnings.catch_warnings(record=True):
+        # deprecated
+        X_train_arr, X_test_arr = cval.train_test_split(X_df, allow_lists=False)
     assert_true(isinstance(X_train_arr, np.ndarray))
     assert_true(isinstance(X_test_arr, np.ndarray))
 
