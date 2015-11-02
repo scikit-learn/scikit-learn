@@ -390,7 +390,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
                                      "in a 2 dimensional array-like input"
                                      % estimator_name)
                 warnings.warn(
-                    "Passing 1d arrays as data is deprecated in 0.17 and will"
+                    "Passing 1d arrays as data is deprecated in 0.17 and will "
                     "raise ValueError in 0.19. Reshape your data either using "
                     "X.reshape(-1, 1) if your data has a single feature or "
                     "X.reshape(1, -1) if it contains a single sample.",
