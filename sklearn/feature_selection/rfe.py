@@ -6,7 +6,6 @@
 
 """Recursive feature elimination for feature ranking"""
 
-import warnings
 import numpy as np
 from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
@@ -129,7 +128,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
-            n_features_to_select = n_features / 2
+            n_features_to_select = n_features // 2
         else:
             n_features_to_select = self.n_features_to_select
 
@@ -282,7 +281,7 @@ class RFECV(RFE, MetaEstimatorMixin):
           - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier 
+        :class:`StratifiedKFold` used. If the estimator is a classifier
         or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
