@@ -521,7 +521,8 @@ class PLSRegression(_PLS):
 
     Notes
     -----
-    Matrices :
+    Matrices::
+
         T: x_scores_
         U: y_scores_
         W: x_weights_
@@ -529,16 +530,17 @@ class PLSRegression(_PLS):
         P: x_loadings_
         Q: y_loadings__
 
-    Are computed such that:
+    Are computed such that::
+
         X = T P.T + Err and Y = U Q.T + Err
         T[:, k] = Xk W[:, k] for k in range(n_components)
         U[:, k] = Yk C[:, k] for k in range(n_components)
         x_rotations_ = W (P.T W)^(-1)
         y_rotations_ = C (Q.T C)^(-1)
+
     where Xk and Yk are residual matrices at iteration k.
 
-    Slides explaining PLS
-    :ref:http://www.eigenvector.com/Docs/Wise_pls_properties.pdf
+    `Slides explaining PLS <http://www.eigenvector.com/Docs/Wise_pls_properties.pdf>`
 
     For each component k, find weights u, v that optimizes:
     ``max corr(Xk u, Yk v) * std(Xk u) std(Yk u)``, such that ``|u| = 1``
@@ -656,7 +658,8 @@ class PLSCanonical(_PLS):
 
     Notes
     -----
-    Matrices :
+    Matrices::
+
         T: x_scores_
         U: y_scores_
         W: x_weights_
@@ -664,19 +667,21 @@ class PLSCanonical(_PLS):
         P: x_loadings_
         Q: y_loadings__
 
-    Are computed such that:
+    Are computed such that::
+
         X = T P.T + Err and Y = U Q.T + Err
         T[:, k] = Xk W[:, k] for k in range(n_components)
         U[:, k] = Yk C[:, k] for k in range(n_components)
         x_rotations_ = W (P.T W)^(-1)
         y_rotations_ = C (Q.T C)^(-1)
+
     where Xk and Yk are residual matrices at iteration k.
 
-    Slides explaining PLS
-    :ref:http://www.eigenvector.com/Docs/Wise_pls_properties.pdf
+    `Slides explaining PLS <http://www.eigenvector.com/Docs/Wise_pls_properties.pdf>`
 
     For each component k, find weights u, v that optimize::
-    max corr(Xk u, Yk v) * std(Xk u) std(Yk u), such that ``|u| = |v| = 1``
+
+        max corr(Xk u, Yk v) * std(Xk u) std(Yk u), such that ``|u| = |v| = 1``
 
     Note that it maximizes both the correlations between the scores and the
     intra-block variances.

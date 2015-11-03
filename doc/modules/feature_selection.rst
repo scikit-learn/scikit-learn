@@ -153,6 +153,8 @@ For examples on how it is to be used refer to the sections below.
       most important features from the Boston dataset without knowing the
       threshold beforehand.
 
+.. _l1_feature_selection:
+
 L1-based feature selection
 --------------------------
 

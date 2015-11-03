@@ -169,6 +169,7 @@ This strategy is illustrated below.
      :class:`covariance.MinCovDet`.
 
 .. topic:: References:
+
     .. [LTZ2008] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
            Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
 

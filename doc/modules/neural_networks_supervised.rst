@@ -153,7 +153,7 @@ See the examples below and the doc string of
 
 .. topic:: Examples:
 
- * :ref:`example_plot_mlp_alpha.py`
+ * :ref:`example_neural_networks_plot_mlp_alpha.py`
 
 
 Regression
@@ -175,7 +175,7 @@ Algorithms
 MLP trains using `Stochastic Gradient Descent
 <http://en.wikipedia.org/wiki/Stochastic_gradient_descent>`_,
 `Adam <http://arxiv.org/abs/1412.6980>`_, or
-`L-BFGS <http://en.wikipedia.org/wiki/Limited-memory_BFGS>`_.
+`L-BFGS <http://en.wikipedia.org/wiki/Limited-memory_BFGS>`__.
 Stochastic Gradient Descent (SGD) updates parameters using the gradient of the
 loss function with respect to a parameter that needs adaptation, i.e.
 
@@ -201,7 +201,7 @@ L-BFGS is a fast learning algorithm that approximates the Hessian matrix which
 represents the second-order partial derivative of a function. Further it
 approximates the inverse of the Hessian matrix to perform parameter updates.
 The implementation uses the Scipy version of
-`L-BFGS <http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html>`_..
+`L-BFGS <http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html>`__..
 
 If the selected algorithm is 'L-BFGS', training does not support online nor
 mini-batch learning.

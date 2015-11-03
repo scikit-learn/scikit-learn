@@ -956,13 +956,13 @@ def test_deprecation_minmax_scaler():
     scaler = MinMaxScaler().fit(X)
 
     depr_message = ("Attribute data_range will be removed in "
-                    "0.19. Use data_range_ instead")
+                    "0.19. Use ``data_range_`` instead")
     data_range = assert_warns_message(DeprecationWarning, depr_message,
                                       getattr, scaler, "data_range")
     assert_array_equal(data_range, scaler.data_range)
 
     depr_message = ("Attribute data_min will be removed in "
-                    "0.19. Use data_min_ instead")
+                    "0.19. Use ``data_min_`` instead")
     data_min = assert_warns_message(DeprecationWarning, depr_message,
                                     getattr, scaler, "data_min")
     assert_array_equal(data_min, scaler.data_min)
@@ -1322,8 +1322,8 @@ def test_deprecation_standard_scaler():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     scaler = StandardScaler().fit(X)
-    depr_message = ("Function std_ is deprecated; Attribute std_ will be "
-                    "removed in 0.19. Use scale_ instead")
+    depr_message = ("Function std_ is deprecated; Attribute ``std_`` will be "
+                    "removed in 0.19. Use ``scale_`` instead")
     std_ = assert_warns_message(DeprecationWarning, depr_message, getattr,
                                 scaler, "std_")
     assert_array_equal(std_, scaler.scale_)

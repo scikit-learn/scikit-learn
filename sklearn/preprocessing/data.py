@@ -233,7 +233,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         Per feature maximum seen in the data
 
     data_range_ : ndarray, shape (n_features,)
-        Per feature range (data_max_ - data_min_) seen in the data
+        Per feature range ``(data_max_ - data_min_)`` seen in the data
     """
 
     def __init__(self, feature_range=(0, 1), copy=True):
@@ -242,13 +242,13 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     @property
     @deprecated("Attribute data_range will be removed in "
-                "0.19. Use data_range_ instead")
+                "0.19. Use ``data_range_`` instead")
     def data_range(self):
         return self.data_range_
 
     @property
     @deprecated("Attribute data_min will be removed in "
-                "0.19. Use data_min_ instead")
+                "0.19. Use ``data_min_`` instead")
     def data_min(self):
         return self.data_min_
 
@@ -290,7 +290,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples_, n_features]
+        X : array-like, shape [n_samples, n_features]
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
@@ -504,7 +504,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     @property
-    @deprecated("Attribute std_ will be removed in 0.19. Use scale_ instead")
+    @deprecated("Attribute ``std_`` will be removed in 0.19. Use ``scale_`` instead")
     def std_(self):
         return self.scale_
 
@@ -551,7 +551,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape [n_samples_, n_features]
+        X : {array-like, sparse matrix}, shape [n_samples, n_features]
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
@@ -742,7 +742,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape [n_samples_, n_features]
+        X : {array-like, sparse matrix}, shape [n_samples, n_features]
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 

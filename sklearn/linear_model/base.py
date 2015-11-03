@@ -403,7 +403,7 @@ class LinearRegression(LinearModel, RegressorMixin):
         self.n_jobs = n_jobs
 
     @property
-    @deprecated("residues_ is deprecated and will be removed in 0.19")
+    @deprecated("``residues_`` is deprecated and will be removed in 0.19")
     def residues_(self):
         """Get the residues of the fitted model."""
         return self._residues

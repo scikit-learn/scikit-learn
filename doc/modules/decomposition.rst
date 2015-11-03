@@ -776,6 +776,7 @@ a corpus with :math:`D` documents and :math:`K` topics:
   2. For each document :math:`d`, draw :math:`\theta_d \sim Dirichlet(\alpha), \: d=1...D`
 
   3. For each word :math:`i` in document :math:`d`:
+
     a. Draw a topic index :math:`z_{di} \sim Multinomial(\theta_d)`
     b. Draw the observed word :math:`w_{ij} \sim Multinomial(beta_{z_{di}}.)`
 
