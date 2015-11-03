@@ -6,6 +6,7 @@
 
 """Recursive feature elimination for feature ranking"""
 
+import warnings
 import numpy as np
 from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
