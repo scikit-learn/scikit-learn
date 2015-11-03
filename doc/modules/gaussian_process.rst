@@ -867,7 +867,7 @@ toolbox.
 
 .. topic:: References:
 
-    * `[RW2006]<http://www.gaussianprocess.org/gpml>` *Gaussian Processes for Machine Learning*, Carl Edward Rasmussen and Christopher K.I. Williams, MIT Press, 2006,
+    * `[RW2006]<http://www.gaussianprocess.org/gpml>`_ *Gaussian Processes for Machine Learning*, Carl Edward Rasmussen and Christopher K.I. Williams, MIT Press, 2006,
 
     * `DACE, A Matlab Kriging Toolbox
       <http://www2.imm.dtu.dk/~hbn/dace/>`_ S Lophaven, HB Nielsen, J
