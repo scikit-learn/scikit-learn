@@ -436,7 +436,7 @@ def test_standard_scaler_trasform_with_partial_fit():
     scaler_incr = StandardScaler()
     for i, batch in enumerate(gen_batches(X.shape[0], 1)):
 
-        X_sofar = X[:(i+1), :]
+        X_sofar = X[:(i + 1), :]
         chunks_copy = X_sofar.copy()
         scaled_batch = StandardScaler().fit_transform(X_sofar)
 
@@ -784,6 +784,20 @@ def test_robust_scaler_2d_arrays():
     assert_array_almost_equal(X_scaled.std(axis=0)[0], 0)
 
 
+def test_robust_scaler_transform_one_row_csr():
+    # Check RobustScaler on transforming csr matrix with one row
+    rng = np.random.RandomState(0)
+    X = rng.randn(4, 5)
+    single_row = np.array([[0.1, 1., 2., 0., -1.]])
+    scaler = RobustScaler(with_centering=False)
+    scaler = scaler.fit(X)
+    row_trans = scaler.transform(sparse.csr_matrix(single_row))
+    row_expected = single_row / scaler.scale_
+    assert_array_almost_equal(row_trans.toarray(), row_expected)
+    row_scaled_back = scaler.inverse_transform(row_trans)
+    assert_array_almost_equal(single_row, row_scaled_back.toarray())
+
+
 def test_robust_scaler_iris():
     X = iris.data
     scaler = RobustScaler()
@@ -922,7 +936,7 @@ def test_maxabs_scaler_zero_variance_features():
 
 
 def test_maxabs_scaler_large_negative_value():
-    """Check MaxAbsScaler on toy data with a large negative value"""
+    # Check MaxAbsScaler on toy data with a large negative value
     X = [[0., 1.,   +0.5, -1.0],
          [0., 1.,   -0.3, -0.5],
          [0., 1., -100.0,  0.0],
@@ -938,7 +952,7 @@ def test_maxabs_scaler_large_negative_value():
 
 
 def test_maxabs_scaler_transform_one_row_csr():
-    """Check MaxAbsScaler on transforming csr matrix with one row"""
+    # Check MaxAbsScaler on transforming csr matrix with one row
     X = sparse.csr_matrix([[0.5, 1., 1.]])
     scaler = MaxAbsScaler()
     scaler = scaler.fit(X)
@@ -1503,8 +1517,7 @@ def test_one_hot_encoder_unknown_transform():
     oh.fit(X)
     assert_array_equal(
         oh.transform(y).toarray(),
-        np.array([[0.,  0.,  0.,  0.,  1.,  0.,  0.]])
-        )
+        np.array([[0.,  0.,  0.,  0.,  1.,  0.,  0.]]))
 
     # Raise error if handle_unknown is neither ignore or error.
     oh = OneHotEncoder(handle_unknown='42')

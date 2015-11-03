@@ -24,7 +24,7 @@ from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
                                  mean_variance_axis, incr_mean_variance_axis,
-                                 min_max_axis, inplace_row_scale)
+                                 min_max_axis)
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 
 
@@ -984,10 +984,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
         if sparse.issparse(X):
             if self.with_scaling:
-                if X.shape[0] == 1:
-                    inplace_row_scale(X, 1.0 / self.scale_)
-                elif self.axis == 0:
-                    inplace_column_scale(X, 1.0 / self.scale_)
+                inplace_column_scale(X, 1.0 / self.scale_)
         else:
             if self.with_centering:
                 X -= self.center_
@@ -1013,10 +1010,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
         if sparse.issparse(X):
             if self.with_scaling:
-                if X.shape[0] == 1:
-                    inplace_row_scale(X, self.scale_)
-                else:
-                    inplace_column_scale(X, self.scale_)
+                inplace_column_scale(X, self.scale_)
         else:
             if self.with_scaling:
                 X *= self.scale_
