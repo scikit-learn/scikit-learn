@@ -163,6 +163,7 @@ class GaussianNB(BaseNB):
             Weights applied to individual samples (1. for unweighted).
 
             .. versionadded:: 0.17
+               Gaussian Naive Bayes supports fitting with *sample_weight*.
 
         Returns
         -------

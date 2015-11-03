@@ -425,6 +425,7 @@ class GMM(BaseEstimator):
         with low iterations the prediction may not be 100% accurate
 
         .. versionadded:: 0.17
+           *fit_predict* method in Gaussian Mixture Model.
 
         Parameters
         ----------

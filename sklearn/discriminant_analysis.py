@@ -140,6 +140,12 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     The fitted model can also be used to reduce the dimensionality of the input
     by projecting it to the most discriminative directions.
 
+    .. versionadded:: 0.17
+       *LinearDiscriminantAnalysis*.
+
+    .. versionchanged:: 0.17
+       Deprecated :class:`lda.LDA` have been moved to *LinearDiscriminantAnalysis*.
+
     Parameters
     ----------
     solver : string, optional
@@ -167,8 +173,12 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     store_covariance : bool, optional
         Additionally compute class covariance matrix (default False).
 
+        .. versionadded:: 0.17
+
     tol : float, optional
         Threshold used for rank estimation in SVD solver.
+
+        .. versionadded:: 0.17
 
     Attributes
     ----------
@@ -399,6 +409,12 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         """Fit LinearDiscriminantAnalysis model according to the given
            training data and parameters.
 
+           .. versionchanged:: 0.17
+              Deprecated *store_covariance* have been moved to main constructor.
+
+           .. versionchanged:: 0.17
+              Deprecated *tol* have been moved to main constructor.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -532,6 +548,12 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
     The model fits a Gaussian density to each class.
 
+    .. versionadded:: 0.17
+       *QuadraticDiscriminantAnalysis*
+
+    .. versionchanged:: 0.17
+       Deprecated :class:`qda.QDA` have been moved to *QuadraticDiscriminantAnalysis*.
+
     Parameters
     ----------
     priors : array, optional, shape = [n_classes]
@@ -567,8 +589,12 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         If True the covariance matrices are computed and stored in the
         `self.covariances_` attribute.
 
+        .. versionadded:: 0.17
+
     tol : float, optional, default 1.0e-4
         Threshold used for rank estimation.
+
+        .. versionadded:: 0.17
 
     Examples
     --------
@@ -599,6 +625,12 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
     def fit(self, X, y, store_covariances=None, tol=None):
         """Fit the model according to the given training data and parameters.
+
+            .. versionchanged:: 0.17
+               Deprecated *store_covariance* have been moved to main constructor.
+
+            .. versionchanged:: 0.17
+               Deprecated *tol* have been moved to main constructor.
 
         Parameters
         ----------

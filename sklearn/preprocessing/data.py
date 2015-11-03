@@ -226,14 +226,26 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     scale_ : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
 
+        .. versionadded:: 0.17
+           *scale_* attribute.
+
     data_min_ : ndarray, shape (n_features,)
         Per feature minimum seen in the data
+
+        .. versionadded:: 0.17
+           *data_min_* instead of deprecated *data_min*.
 
     data_max_ : ndarray, shape (n_features,)
         Per feature maximum seen in the data
 
+        .. versionadded:: 0.17
+           *data_max_* instead of deprecated *data_max*.
+
     data_range_ : ndarray, shape (n_features,)
         Per feature range ``(data_max_ - data_min_)`` seen in the data
+
+        .. versionadded:: 0.17
+           *data_range_* instead of deprecated *data_range*.
     """
 
     def __init__(self, feature_range=(0, 1), copy=True):
@@ -388,6 +400,9 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
+    .. versionadded:: 0.17
+       *minmax_scale* function interface to :class:`sklearn.preprocessing.MinMaxScaler`.
+
     Parameters
     ----------
     feature_range: tuple (min, max), default=(0, 1)
@@ -477,6 +492,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     ----------
     scale_ : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
+
+        .. versionadded:: 0.17
+           *scale_* is recommended instead of deprecated *std_*.
 
     mean_ : array of floats with shape [n_features]
         The mean value for each feature in the training set.
@@ -698,6 +716,9 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
     scale_ : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
 
+        .. versionadded:: 0.17
+           *scale_* attribute.
+
     max_abs_ : ndarray, shape (n_features,)
         Per feature maximum absolute value.
 
@@ -909,6 +930,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     scale_ : array of floats
         The (scaled) interquartile range for each feature in the training set.
+
+        .. versionadded:: 0.17
+           *scale_* attribute.
 
     See also
     --------

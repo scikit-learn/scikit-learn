@@ -548,6 +548,9 @@ class TSNE(BaseEstimator):
         Maximum number of iterations without progress before we abort the
         optimization.
 
+        .. versionadded:: 0.17
+           parameter *n_iter_without_progress* to control stopping criteria.
+
     min_grad_norm : float, optional (default: 1E-7)
         If the gradient norm is below this threshold, the optimization will
         be aborted.
@@ -586,7 +589,7 @@ class TSNE(BaseEstimator):
         millions of examples.
 
         .. versionadded:: 0.17
-           method == 'barnes_hut'
+           Approximate optimization *method* via the Barnes-Hut.
 
     angle : float (default: 0.5)
         Only used if method='barnes_hut'

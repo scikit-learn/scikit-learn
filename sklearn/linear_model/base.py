@@ -423,6 +423,9 @@ class LinearRegression(LinearModel, RegressorMixin):
         sample_weight : numpy array of shape [n_samples]
             Individual weights for each sample
 
+            .. versionadded:: 0.17
+               parameter *sample_weight* support to LinearRegression.
+
         Returns
         -------
         self : returns an instance of self.

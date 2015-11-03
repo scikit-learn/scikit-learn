@@ -43,7 +43,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
           class
 
           .. versionadded:: 0.17
-             strategy == prior
+             Dummy Classifier now supports prior fitting strategy using
+             parameter *prior*.
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use.

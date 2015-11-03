@@ -146,6 +146,8 @@ class _LearntSelectorMixin(TransformerMixin):
 class SelectFromModel(BaseEstimator, SelectorMixin):
     """Meta-transformer for selecting features based on importance weights.
 
+    .. versionadded:: 0.17
+
     Parameters
     ----------
     estimator : object

@@ -822,6 +822,8 @@ def laplacian_kernel(X, Y=None, gamma=None):
     for each pair of rows x in X and y in Y.
     Read more in the :ref:`User Guide <laplacian_kernel>`.
 
+    .. versionadded:: 0.17
+
     Parameters
     ----------
     X : array of shape (n_samples_X, n_features)
@@ -867,6 +869,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
         ``False``, the output is sparse if both input arrays are sparse.
 
         .. versionadded:: 0.17
+           parameter *dense_output* for sparse output.
 
     Returns
     -------

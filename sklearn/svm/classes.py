@@ -461,6 +461,12 @@ class SVC(BaseSVC):
         compatibility and raise a deprecation warning, but will change 'ovr'
         in 0.18.
 
+        .. versionadded:: 0.17
+           *decision_function_shape='ovr'* is recommended.
+
+        .. versionchanged:: 0.17
+           Deprecated *decision_function_shape='ovo' and None*.
+
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data for probability estimation.
@@ -607,6 +613,12 @@ class NuSVC(BaseSVC):
         The default of None will currently behave as 'ovo' for backward
         compatibility and raise a deprecation warning, but will change 'ovr'
         in 0.18.
+
+        .. versionadded:: 0.17
+           *decision_function_shape='ovr'* is recommended.
+
+        .. versionchanged:: 0.17
+           Deprecated *decision_function_shape='ovo' and None*.
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when

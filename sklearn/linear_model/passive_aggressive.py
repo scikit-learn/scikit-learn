@@ -60,6 +60,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         as ``n_samples / (n_classes * np.bincount(y))``
 
         .. versionadded:: 0.17
+           parameter *class_weight* to automatically weight samples.
 
     Attributes
     ----------

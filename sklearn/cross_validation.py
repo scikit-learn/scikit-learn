@@ -1833,6 +1833,7 @@ def train_test_split(*arrays, **options):
         the labels array.
 
         .. versionadded:: 0.17
+           *stratify* splitting
 
     Returns
     -------

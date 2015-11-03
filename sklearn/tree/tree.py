@@ -450,6 +450,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         Returns the index of the leaf that each sample is predicted as.
 
+        .. versionadded:: 0.17
+
         Parameters
         ----------
         X : array_like or sparse matrix, shape = [n_samples, n_features]

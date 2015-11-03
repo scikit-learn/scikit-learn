@@ -652,6 +652,9 @@ class GridSearchCV(BaseSearchCV):
     n_jobs : int, default=1
         Number of jobs to run in parallel.
 
+        .. versionchanged:: 0.17
+           Upgraded to joblib 0.9.3.
+
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an

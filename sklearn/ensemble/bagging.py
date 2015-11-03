@@ -435,6 +435,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         a whole new ensemble.
 
         .. versionadded:: 0.17
+           *warm_start* constructor parameter.
 
     n_jobs : int, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.

@@ -556,6 +556,9 @@ class Ridge(_BaseRidge, RegressorMixin):
         The seed of the pseudo random number generator to use when
         shuffling the data. Used in 'sag' solver.
 
+        .. versionadded:: 0.17
+           *random_state* to support Stochastic Average Gradient.
+
     Attributes
     ----------
     coef_ : array, shape (n_features,) or (n_targets, n_features)
@@ -678,7 +681,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
           n_samples and n_features are large.
 
           .. versionadded:: 0.17
-             solver == 'sag'
+             Stochastic Average Gradient descent solver.
 
     tol : float
         Precision of the solution.
@@ -732,6 +735,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
         sample_weight : float or numpy array of shape (n_samples,)
             Sample weight.
+
+            .. versionadded:: 0.17
+               *sample_weight* support to Classifier.
 
         Returns
         -------

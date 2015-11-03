@@ -148,6 +148,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         are used.
 
         .. versionadded:: 0.17
+           Parallel Execution using *n_jobs*.
 
     Returns
     -------

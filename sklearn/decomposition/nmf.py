@@ -841,13 +841,14 @@ class NMF(BaseEstimator, TransformerMixin):
 
     solver : 'pg' | 'cd'
         Numerical solver to use:
-        'pg' is a (deprecated) Projected Gradient solver.
-
-        .. versionchanged:: 0.17
-
-        'cd' is a Coordinate Descent solver.
+        'pg' is a Projected Gradient solver (deprecated).
+        'cd' is a Coordinate Descent solver (recommended).
 
         .. versionadded:: 0.17
+           Coordinate Descent solver.
+
+        .. versionchanged:: 0.17
+           Deprecated Projected Gradient solver.
 
     tol : double, default: 1e-4
         Tolerance value used in stopping conditions.
@@ -863,6 +864,7 @@ class NMF(BaseEstimator, TransformerMixin):
         have no regularization.
 
         .. versionadded:: 0.17
+           *alpha* used in the Coordinate Descent solver.
 
     l1_ratio : double, default: 0.
         The regularization mixing parameter, with 0 <= l1_ratio <= 1.
@@ -872,27 +874,45 @@ class NMF(BaseEstimator, TransformerMixin):
         For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
 
         .. versionadded:: 0.17
+           Regularization parameter *l1_ratio* used in the Coordinate Descent solver.
 
     shuffle : boolean, default: False
         If true, randomize the order of coordinates in the CD solver.
 
         .. versionadded:: 0.17
+           *shuffle* parameter used in the Coordinate Descent solver.
 
     nls_max_iter : integer, default: 2000
         Number of iterations in NLS subproblem.
         Used only in the deprecated 'pg' solver.
 
+        .. versionchanged:: 0.17
+           Deprecated Projected Gradient solver. Use Coordinate Descent solver
+           instead.
+
     sparseness : 'data' | 'components' | None, default: None
         Where to enforce sparsity in the model.
         Used only in the deprecated 'pg' solver.
+
+        .. versionchanged:: 0.17
+           Deprecated Projected Gradient solver. Use Coordinate Descent solver
+           instead.
 
     beta : double, default: 1
         Degree of sparseness, if sparseness is not None. Larger values mean
         more sparseness. Used only in the deprecated 'pg' solver.
 
+        .. versionchanged:: 0.17
+           Deprecated Projected Gradient solver. Use Coordinate Descent solver
+           instead.
+
     eta : double, default: 0.1
         Degree of correctness to maintain, if sparsity is not None. Smaller
         values mean larger error. Used only in the deprecated 'pg' solver.
+
+        .. versionchanged:: 0.17
+           Deprecated Projected Gradient solver. Use Coordinate Descent solver
+           instead.
 
     Attributes
     ----------
