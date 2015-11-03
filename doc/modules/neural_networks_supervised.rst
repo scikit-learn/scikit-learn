@@ -1,4 +1,4 @@
-.. _neural_network:
+.. _neural_networks_supervised:
 
 ==================================
 Neural network models (supervised)
