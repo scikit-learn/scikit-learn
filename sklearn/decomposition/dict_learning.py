@@ -146,9 +146,10 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
     elif algorithm == 'omp':
         # TODO: Should verbose argument be passed to this?
-        new_code = orthogonal_mp_gram(gram, cov, regularization, None,
-                                      row_norms(X, squared=True),
-                                      copy_Xy=copy_cov).T
+        new_code = orthogonal_mp_gram(
+            Gram=gram, Xy=cov, n_nonzero_coefs=int(regularization),
+            tol=None, norms_squared=row_norms(X, squared=True),
+            copy_Xy=copy_cov).T
     else:
         raise ValueError('Sparse coding method must be "lasso_lars" '
                          '"lasso_cd",  "lasso", "threshold" or "omp", got %s.'
