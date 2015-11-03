@@ -246,7 +246,6 @@ def test_grid_search_labels():
 
     non_label_cvs = [StratifiedKFold(), StratifiedShuffleSplit()]
     for cv in non_label_cvs:
-        print(cv)
         gs = GridSearchCV(clf, grid, cv=cv)
         # Should not raise an error
         gs.fit(X, y)

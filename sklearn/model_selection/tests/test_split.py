@@ -216,6 +216,7 @@ def test_kfold_valueerrors():
     # though all the classes are not necessarily represented at on each
     # side of the split at each split
     with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
         check_cv_coverage(skf_3, X2, y, labels=None, expected_n_iter=3)
 
     # Error when number of folds is <= 1
