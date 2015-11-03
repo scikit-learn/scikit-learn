@@ -281,7 +281,7 @@ Bug fixes
 
     - Fixed bug in :class:`cross_decomposition.PLS` that yielded unstable and
       platform dependent output, and failed on `fit_transform`.
-       By `Arthur Mensch`_.
+      By `Arthur Mensch`_.
 
 API changes summary
 -------------------
@@ -3313,8 +3313,8 @@ Changelog
 
   - New :ref:`gaussian_process` module by Vincent Dubourg. This module
     also has great documentation and some very neat examples. See
-    :ref:`example_gaussian_process_plot_gp_regression.py` or
-    :ref:`example_gaussian_process_plot_gp_probabilistic_classification_after_regression.py`
+    example_gaussian_process_plot_gp_regression.py or
+    example_gaussian_process_plot_gp_probabilistic_classification_after_regression.py
     for a taste of what can be done.
 
   - It is now possible to use liblinear’s Multi-class SVC (option
@@ -3774,3 +3774,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Graham Clenaghan: https://github.com/gclenaghan
 .. _Giorgio Patrini: https://github.com/giorgiop
 .. _Elvis Dohmatob: https://github.com/dohmatob
+.. _yelite: https://github.com/yelite
