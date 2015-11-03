@@ -412,8 +412,11 @@ class BaseDiscreteNB(BaseNB):
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
-            self.class_log_prior_ = (np.log(self.class_count_)
-                                     - np.log(self.class_count_.sum()))
+            class_count = np.where(self.class_count_ != 0, 
+                                    self.class_count_, 1)
+            class_countsum = np.where(self.class_count_.sum() != 0, 
+                                    self.class_count_.sum(), 1)
+            self.class_log_prior_ = (np.log(class_count) - np.log(class_countsum))
         else:
             self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
 
