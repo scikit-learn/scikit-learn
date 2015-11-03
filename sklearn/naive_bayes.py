@@ -416,7 +416,8 @@ class BaseDiscreteNB(BaseNB):
                                     self.class_count_, 1)
             class_countsum = np.where(self.class_count_.sum() != 0, 
                                     self.class_count_.sum(), 1)
-            self.class_log_prior_ = (np.log(class_count) - np.log(class_countsum))
+            self.class_log_prior_ = (np.log(class_count) 
+                - np.log(class_countsum))
         else:
             self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
 
