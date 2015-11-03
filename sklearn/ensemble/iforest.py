@@ -152,22 +152,25 @@ class IsolationForest(BaseBagging):
 
         # ensure that max_sample is in [1, n_samples]:
         n_samples = X.shape[0]
-        # initialise here for scoping reasons, should always be set to
-        # a legal value in the following lines
-        max_samples = -1
 
         if self.max_samples == 'auto':
             max_samples = min(256, n_samples)
         else:
-            if self.max_samples > n_samples:
-                warn("max_samples (%s) is greater than the "
-                     "total number of samples (%s). max_samples "
-                     "will be set to n_samples for estimation."
-                     % (self.max_samples, n_samples))
-                max_samples = n_samples
-            else:
-                max_samples = self.max_samples
+            if isinstance(self.max_samples, (numbers.Integral, np.integer)):
+                if self.max_samples > n_samples:
+                    warn("max_samples (%s) is greater than the "
+                         "total number of samples (%s). max_samples "
+                         "will be set to n_samples for estimation."
+                         % (self.max_samples, n_samples))
+                    max_samples = n_samples
+                else:
+                    max_samples = self.max_samples
+            else: # float
+                if not (0 < self.max_samples <= 1.):
+                    raise ValueError("max_samples must be in (0, 1]")
+                max_samples = int(self.max_samples * X.shape[0])
 
+        self.max_samples_ = max_samples
         self.base_estimator.max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
         super(IsolationForest, self)._fit(X, y, max_samples,
                                           sample_weight=sample_weight)
@@ -215,14 +218,7 @@ class IsolationForest(BaseBagging):
 
         depths += _average_path_length(n_samples_leaf)
 
-        if self.max_samples == 'auto':
-            max_samples = min(256, X.shape[0])
-        elif not isinstance(self.max_samples, (numbers.Integral, np.integer)):
-            max_samples = int(self.max_samples * X.shape[0])
-        else:
-            max_samples = self.max_samples
-
-        scores = 2 ** (-depths.mean(axis=1) / _average_path_length(max_samples))
+        scores = 2 ** (-depths.mean(axis=1) / _average_path_length(self.max_samples_))
 
         return scores
 
