@@ -88,9 +88,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
                                      % (name, n_elements, bounds.shape[0]))
 
         if fixed is None:
-            fixed = False
-            if isinstance(bounds, six.string_types) and bounds == "fixed":
-                fixed = True
+            fixed = isinstance(bounds, six.string_types) and bounds == "fixed"
         return super(Hyperparameter, cls).__new__(
             cls, name, value_type, bounds, n_elements, fixed)
 
