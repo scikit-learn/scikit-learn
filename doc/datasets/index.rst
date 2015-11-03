@@ -267,26 +267,26 @@ features::
 
 .. include:: rcv1.rst
 
-.. _boston_house_prices
+.. _boston_house_prices:
 
 .. include:: ../../sklearn/datasets/descr/boston_house_prices.rst
 
-.. _breast_cancer
+.. _breast_cancer:
 
 .. include:: ../../sklearn/datasets/descr/breast_cancer.rst
 
-.. _diabetes
+.. _diabetes:
 
 .. include:: ../../sklearn/datasets/descr/diabetes.rst
 
-.. _digits
+.. _digits:
 
 .. include:: ../../sklearn/datasets/descr/digits.rst
 
-.. _iris
+.. _iris:
 
 .. include:: ../../sklearn/datasets/descr/iris.rst
 
-.. _linnerud
+.. _linnerud:
 
 .. include:: ../../sklearn/datasets/descr/linnerud.rst

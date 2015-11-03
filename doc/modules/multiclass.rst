@@ -214,7 +214,7 @@ code book. The code size is the dimensionality of the aforementioned space.
 Intuitively, each class should be represented by a code as unique as
 possible and a good code book should be designed to optimize classification
 accuracy. In this implementation, we simply use a randomly-generated code
-book as advocated in [2]_ although more elaborate methods may be added in the
+book as advocated in [3]_ although more elaborate methods may be added in the
 future.
 
 At fitting time, one binary classifier per bit in the code book is fitted.
@@ -261,16 +261,16 @@ Below is an example of multiclass learning using Output-Codes::
 
 .. topic:: References:
 
-    .. [1] "Solving multiclass learning problems via error-correcting output codes",
+    .. [2] "Solving multiclass learning problems via error-correcting output codes",
         Dietterich T., Bakiri G.,
         Journal of Artificial Intelligence Research 2,
         1995.
 
-    .. [2] "The error coding method and PICTs",
+    .. [3] "The error coding method and PICTs",
         James G., Hastie T.,
         Journal of Computational and Graphical statistics 7,
         1998.
 
-    .. [3] "The Elements of Statistical Learning",
+    .. [4] "The Elements of Statistical Learning",
         Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
         2008.

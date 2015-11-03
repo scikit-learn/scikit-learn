@@ -20,8 +20,8 @@ from sklearn.utils.validation import check_X_y, check_array
 class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     """Gaussian process regression (GPR).
 
-    The implementation is based on Algorithm 2.1 of ``Gaussian Processes
-    for Machine Learning'' (GPML) by Rasmussen and Williams.
+    The implementation is based on Algorithm 2.1 of Gaussian Processes
+    for Machine Learning (GPML) by Rasmussen and Williams.
 
     In addition to standard sklearn estimator API, GaussianProcessRegressor:
 
@@ -115,13 +115,13 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         same as the one passed as parameter but with optimized hyperparameters
 
     L_: array-like, shape = (n_samples, n_samples)
-        Lower-triangular Cholesky decomposition of the kernel in X_train_
+        Lower-triangular Cholesky decomposition of the kernel in ``X_train_``
 
     alpha_: array-like, shape = (n_samples,)
         Dual coefficients of training data points in kernel space
 
     log_marginal_likelihood_value_: float
-        The log-marginal-likelihood of self.kernel_.theta
+        The log-marginal-likelihood of ``self.kernel_.theta``
     """
     def __init__(self, kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
@@ -347,7 +347,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         theta : array-like, shape = (n_kernel_params,) or None
             Kernel hyperparameters for which the log-marginal likelihood is
             evaluated. If None, the precomputed log_marginal_likelihood
-            of self.kernel_.theta is returned.
+            of ``self.kernel_.theta`` is returned.
 
         eval_gradient : bool, default: False
             If True, the gradient of the log-marginal likelihood with respect

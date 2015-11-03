@@ -81,6 +81,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     ================      ==========================================
 
     SA structure :
+
     ================      ==========================================
     Samples total         976158
     Dimensionality        41
@@ -89,6 +90,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     ================      ==========================================
 
     SF structure :
+
     ================      ==========================================
     Samples total         699691
     Dimensionality        40
@@ -97,6 +99,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     ================      ==========================================
 
     http structure :
+
     ================      ==========================================
     Samples total         619052
     Dimensionality        39
@@ -105,6 +108,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     ================      ==========================================
 
     smtp structure :
+
     ================      ==========================================
     Samples total         95373
     Dimensionality        39

@@ -33,7 +33,7 @@ Enhancements
      that takes in the data and yields a generator for the different splits.
      This change makes it possible to do nested cross-validation with ease,
      facilitated by :class:`model_selection.GridSearchCV` and similar
-     utilities.  (`#4294 https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by `Raghav R V`_.
+     utilities.  (`#4294 <https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by `Raghav R V`_.
 
    - The random forest, extra trees and decision tree estimators now has a
      method ``decision_path`` which returns the decision path of samples in
@@ -56,16 +56,16 @@ Bug fixes
 .........
 
     - :class:`RandomizedPCA` default number of `iterated_power` is 2 instead of 3.
-      This is a speed up with a minor precision decrease. (`#5141 https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
+      This is a speed up with a minor precision decrease. (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
 
     - :func:`randomized_svd` performs 2 power iterations by default, instead or 0.
       In practice this is often enough for obtaining a good approximation of the
-      true eigenvalues/vectors in the presence of noise. (`#5141 https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
+      true eigenvalues/vectors in the presence of noise. (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
 
     - :func:`randomized_range_finder` is more numerically stable when many
       power iterations are requested, since it applies LU normalization by default.
       If `n_iter<2` numerical issues are unlikely, thus no normalization is applied.
-      Other normalization options are available: 'none', 'LU' and 'QR'. (`#5141 https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
+      Other normalization options are available: 'none', 'LU' and 'QR'. (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
 
     - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized
       Laplacian matrix was incorrectly set to 1. By `Peter Fischer`_.
@@ -85,7 +85,7 @@ API changes summary
    - The :mod:`cross_validation`, :mod:`grid_search` and :mod:`learning_curve`
      have been deprecated and the classes and functions have been reorganized into
      the :mod:`model_selection` module.
-     (`#4294 https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by `Raghav R V`_.
+     (`#4294 <https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by `Raghav R V`_.
 
 
 .. _changes_0_17:
@@ -366,7 +366,7 @@ Bug fixes
 
     - Fixed bug in :class:`cross_decomposition.PLS` that yielded unstable and
       platform dependent output, and failed on `fit_transform`.
-       By `Arthur Mensch`_.
+      By `Arthur Mensch`_.
 
     - Fixed a bug in :class:`linear_model.LogisticRegression` and
       :class:`linear_model.LogisticRegressionCV` when using
@@ -3403,8 +3403,8 @@ Changelog
 
   - New :ref:`gaussian_process` module by Vincent Dubourg. This module
     also has great documentation and some very neat examples. See
-    :ref:`example_gaussian_process_plot_gp_regression.py` or
-    :ref:`example_gaussian_process_plot_gp_probabilistic_classification_after_regression.py`
+    example_gaussian_process_plot_gp_regression.py or
+    example_gaussian_process_plot_gp_probabilistic_classification_after_regression.py
     for a taste of what can be done.
 
   - It is now possible to use liblinear’s Multi-class SVC (option
@@ -3866,4 +3866,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Graham Clenaghan: https://github.com/gclenaghan
 .. _Giorgio Patrini: https://github.com/giorgiop
 .. _Elvis Dohmatob: https://github.com/dohmatob
-.. _yelite https://github.com/yelite
+.. _yelite: https://github.com/yelite
