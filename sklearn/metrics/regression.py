@@ -352,14 +352,15 @@ def explained_variance_score(y_true, y_pred,
     output_scores[valid_score] = 1 - (numerator[valid_score] /
                                       denominator[valid_score])
     output_scores[nonzero_numerator & ~nonzero_denominator] = 0.
-    if multioutput == 'raw_values':
-        # return scores individually
-        return output_scores
-    elif multioutput == 'uniform_average':
-        # passing to np.average() None as weights results is uniform mean
-        avg_weights = None
-    elif multioutput == 'variance_weighted':
-        avg_weights = denominator
+    if isinstance(multioutput, string_types):
+        if multioutput == 'raw_values':
+            # return scores individually
+            return output_scores
+        elif multioutput == 'uniform_average':
+            # passing to np.average() None as weights results is uniform mean
+            avg_weights = None
+        elif multioutput == 'variance_weighted':
+            avg_weights = denominator
     else:
         avg_weights = multioutput
 
@@ -394,7 +395,7 @@ def r2_score(y_true, y_pred,
         Defines aggregating of multiple output scores.
         Array-like value defines weights used to average scores.
         Default value correponds to 'variance_weighted', this behaviour is
-        deprecated since version 0.17 and will be changed to 'uniform_average' 
+        deprecated since version 0.17 and will be changed to 'uniform_average'
         starting from 0.19.
 
         'raw_values' :
