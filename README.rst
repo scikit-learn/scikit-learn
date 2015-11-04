@@ -78,6 +78,8 @@ To install for all users on Unix/Linux::
   python setup.py build
   sudo python setup.py install
 
+For more detailed installation instructions,
+see the web page http://scikit-learn.org/stable/install.html
 
 Development
 ===========
