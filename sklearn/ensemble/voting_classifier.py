@@ -24,6 +24,7 @@ from ..externals import six
 class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
+    .. versionadded:: 0.17
     Read more in the :ref:`User Guide <voting_classifier>`.
 
     Parameters

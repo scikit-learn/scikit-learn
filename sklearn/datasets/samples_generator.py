@@ -294,6 +294,9 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     sparse : bool, optional (default=False)
         If ``True``, return a sparse feature matrix
 
+        .. versionadded:: 0.17
+           parameter to allow *sparse* output.
+
     return_indicator : 'dense' (default) | 'sparse' | False
         If ``dense`` return ``Y`` in the dense binary indicator format. If
         ``'sparse'`` return ``Y`` in the sparse binary indicator format.

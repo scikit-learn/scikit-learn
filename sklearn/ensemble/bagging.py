@@ -434,6 +434,9 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         and add more estimators to the ensemble, otherwise, just fit
         a whole new ensemble.
 
+        .. versionadded:: 0.17
+           *warm_start* constructor parameter.
+
     n_jobs : int, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.

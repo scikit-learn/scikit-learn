@@ -147,6 +147,9 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
+        .. versionadded:: 0.17
+           Parallel Execution using *n_jobs*.
+
     Returns
     -------
 

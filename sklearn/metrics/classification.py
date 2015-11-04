@@ -568,6 +568,9 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
         labels are column indices. By default, all labels in ``y_true`` and
         ``y_pred`` are used in sorted order.
 
+        .. versionchanged:: 0.17
+           parameter *labels* improved for multiclass problem.
+
     pos_label : str or int, 1 by default
         The class to report if ``average='binary'``. Until version 0.18 it is
         necessary to set ``pos_label=None`` if seeking to use another averaging
@@ -670,6 +673,9 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         result in 0 components in a macro average. For multilabel targets,
         labels are column indices. By default, all labels in ``y_true`` and
         ``y_pred`` are used in sorted order.
+
+        .. versionchanged:: 0.17
+           parameter *labels* improved for multiclass problem.
 
     pos_label : str or int, 1 by default
         The class to report if ``average='binary'``. Until version 0.18 it is
@@ -1126,6 +1132,9 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
         labels are column indices. By default, all labels in ``y_true`` and
         ``y_pred`` are used in sorted order.
 
+        .. versionchanged:: 0.17
+           parameter *labels* improved for multiclass problem.
+
     pos_label : str or int, 1 by default
         The class to report if ``average='binary'``. Until version 0.18 it is
         necessary to set ``pos_label=None`` if seeking to use another averaging
@@ -1224,6 +1233,9 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
         result in 0 components in a macro average. For multilabel targets,
         labels are column indices. By default, all labels in ``y_true`` and
         ``y_pred`` are used in sorted order.
+
+        .. versionchanged:: 0.17
+           parameter *labels* improved for multiclass problem.
 
     pos_label : str or int, 1 by default
         The class to report if ``average='binary'``. Until version 0.18 it is

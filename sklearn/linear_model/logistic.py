@@ -986,6 +986,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
+        .. versionadded:: 0.17
+           *class_weight='balanced'* instead of deprecated *class_weight='auto'*.
+
     max_iter : int
         Useful only for the newton-cg, sag and lbfgs solvers.
         Maximum number of iterations taken for the solvers to converge.
@@ -1008,6 +1011,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         approximately the same scale. You can preprocess the data with a
         scaler from sklearn.preprocessing.
 
+        .. versionadded:: 0.17
+           Stochastic Average Gradient descent solver.
+
     tol : float, optional
         Tolerance for stopping criteria.
 
@@ -1026,6 +1032,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         Useless for liblinear solver.
+
+        .. versionadded:: 0.17
+           *warm_start* to support *lbfgs*, *newton-cg*, *sag* solvers.
 
     n_jobs : int, optional
         Number of CPU cores used during the cross-validation loop. If given
@@ -1109,6 +1118,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         sample_weight : array-like, shape (n_samples,) optional
             Array of weights that are assigned to individual samples.
             If not provided, then each sample is given unit weight.
+
+            .. versionadded:: 0.17
+               *sample_weight* support to LogisticRegression.
 
         Returns
         -------
@@ -1306,6 +1318,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
+
+        .. versionadded:: 0.17
+           class_weight == 'balanced'
 
     cv : integer or cross-validation generator
         The default cross-validation generator used is Stratified K-Folds.

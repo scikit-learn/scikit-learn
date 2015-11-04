@@ -174,6 +174,10 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square. X may be a sparse matrix, in which case only "nonzero"
         elements may be considered neighbors for DBSCAN.
+
+        .. versionadded:: 0.17
+           metric *precomputed* to accept precomputed sparse matrix.
+
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         The algorithm to be used by the NearestNeighbors module
         to compute pointwise distances and find nearest neighbors.

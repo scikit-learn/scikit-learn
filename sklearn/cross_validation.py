@@ -361,6 +361,8 @@ class LabelKFold(_BaseKFold):
     The folds are approximately balanced in the sense that the number of
     distinct labels is approximately the same in each fold.
 
+    .. versionadded:: 0.17
+
     Parameters
     ----------
     labels : array-like with shape (n_samples, )
@@ -1108,6 +1110,8 @@ class LabelShuffleSplit(ShuffleSplit):
     Note: The parameters ``test_size`` and ``train_size`` refer to labels, and
     not to samples, as in ShuffleSplit.
 
+    .. versionadded:: 0.17
+
     Parameters
     ----------
     labels :  array, [n_samples]
@@ -1827,6 +1831,9 @@ def train_test_split(*arrays, **options):
     stratify : array-like or None (default is None)
         If not None, data is split in a stratified fashion, using this as
         the labels array.
+
+        .. versionadded:: 0.17
+           *stratify* splitting
 
     Returns
     -------
