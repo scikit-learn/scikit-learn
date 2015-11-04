@@ -89,7 +89,7 @@ for n_samples in n_samples_values:
 
     for i in range(n_iter):
         # pick one query at random to study query time variability in LSHForest
-        query = queries[rng.randint(0, n_queries)]
+        query = queries[[rng.randint(0, n_queries)]]
 
         t0 = time.time()
         exact_neighbors = nbrs.kneighbors(query, return_distance=False)
