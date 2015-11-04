@@ -348,8 +348,8 @@ class ARDRegression(LinearModel, RegressorMixin):
         """
         X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
         if len(np.unique(y)) == 1:
-            raise ValueError("This solver requires at least two unique target "
-                             "values.")
+            raise ValueError("This solver requires samples with at least two "
+                             "unique target values.")
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
 
