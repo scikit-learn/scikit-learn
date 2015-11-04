@@ -248,9 +248,9 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         self : object
             Returns self.
         """
-        return self._fit(X, y, self.max_samples, sample_weight)
+        return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
 
-    def _fit(self, X, y, max_samples, sample_weight=None):
+    def _fit(self, X, y, max_samples, max_depth=None, sample_weight=None):
         """Build a Bagging ensemble of estimators from the training
            set (X, y).
 
@@ -266,6 +266,9 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
 
         max_samples : int or float, optional (default=None)
             Argument to use instead of self.max_samples.
+
+        max_depth : int, optional (default=None)
+            Maximum depth of the base estimator.
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted.
@@ -288,6 +291,9 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
 
         # Check parameters
         self._validate_estimator()
+
+        if max_depth is not None:
+            self.base_estimator_.max_depth = max_depth
 
         # if max_samples is float:
         if not isinstance(max_samples, (numbers.Integral, np.integer)):

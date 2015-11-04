@@ -171,8 +171,9 @@ class IsolationForest(BaseBagging):
                 max_samples = int(self.max_samples * X.shape[0])
 
         self.max_samples_ = max_samples
-        self.base_estimator.max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
+        max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
         super(IsolationForest, self)._fit(X, y, max_samples,
+                                          max_depth=max_depth,
                                           sample_weight=sample_weight)
         return self
 
