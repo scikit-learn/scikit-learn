@@ -11,3 +11,4 @@ Model selection and evaluation
     modules/grid_search
     modules/model_evaluation
     modules/model_persistence
+    modules/learning_curve
