@@ -1,26 +1,62 @@
 .. _neural_network:
 
-==================================
-Neural network models (supervised)
-==================================
+====================================
+Neural network models (unsupervised)
+====================================
 
 .. currentmodule:: sklearn.neural_network
 
-Randomly weighted neural networks
-=================================
 
-Randomly weighted neural networks (RW-NN) is a supervised learning algorithm
-that trains a single-hidden layer feedforward network with the help of randomization. 
-It computes :math:`\w1 \in R^{d \times h}`, :math:`\w2 \in R^{h \times o}`, and 
-:math:`\b \in R^{d}` to solve the following equation:
+.. _random_basis_function:
+
+Random basis function
+=====================
+
+The Random basis function :math: `f(X): R \rightarrow R` that maps matrix
+:math: `X` into another feature space where the number of features is less, equal
+or higher than the original feature space. The output matrix :math: `H` is
+computed as follows:
 
 .. math::
 
-   g(Xw1 + b)w2 = y
+   H = g(Xw + b)
+
+where :math: `g(\cdot): R \rightarrow R` is the activation function, :math: `w`
+is the weight parameter vector, and :math: `b` is the intercept vector.
+
+:math: `w \in R^{d \times k}`, and :math: `b \in R^{d}` are generated based
+on the uniform distribution scaled between two values, set by the user.
+
+
+The example code below illustrates using this function::
+
+    >>> from sklearn.neural_network import RandomBasisFunction
+    >>> X = [[0, 0], [1, 1]]
+    >>> fe = RandomBasisFunction(random_state=1, n_outputs=2)
+    >>> fe.fit(X)
+    RandomBasisFunction(activation='tanh', intercept=True, n_outputs=2,
+              random_state=1, weight_scale='auto')
+    >>> fe.transform(X)
+    array([[-0.69896184, -0.76098975],
+           [-0.97981807, -0.73662692]])
+
+This function can be used to initialize a single-hidden layer feedforward network.
+
+Randomly weighted single-hidden layer feedforward network
+=========================================================
+
+Randomly weighted neural networks (RW-NN) is a supervised learning algorithm
+that trains a single-hidden layer feedforward network (SLFN) with the help of randomization.
+It computes :math:`\w1 \in R^{d \times h}`, :math:`\w2 \in R^{h \times o}`, and
+:math:`\b \in R^{d}` such that:
+
+.. math::
+
+   g(Xw1 + b)w2 \approx y
 
 where :math:`g(\cdot): R \rightarrow R` is the activation function; :math:`w1 \in R^{d \times k}`
 is the weight parameter vector between the input layer of the network and
-the hidden layer;  :math:`w2 \in R^{k \times o}` is the weight parameter vector between the hidden 
+the hidden layer;  :math:`w2 \in R^{k \times o}` is the weight parameter vector between the hidden
 layer of the network and the output layer;  :math:`b \in R^{d}` is the intercept vector
 for the hidden layer. Figure 1 shows an example of such network.
 
@@ -32,14 +68,14 @@ for the hidden layer. Figure 1 shows an example of such network.
 The algorithm takes the following steps:
 
   *  Generate the matrices :math:`w1 \in R^{d \times k}` and :math:`b \in R^d` with random values using the uniform distribution;
-  *  compute :math:`H = g(Xw1 + b)`; and then
-  *  solve for :math:`w2` using the ridge implementation as :math:`(H^T H + (1 / C) * I)^{-1} H^T y` - where 
+  *  compute :math:`H = g(Xw1 + b)`; and
+  *  solve for :math:`w2` using a linear model, such as, ridge regression which is defined as :math:`(H^T H + (1 / C) * I)^{-1} H^T y` - where
      `C` is the regularization term.
 
-:math:`k` is the number of hidden neurons. Larger :math:`k` allows for higher capacity to learn complex functions. 
-It allows the neural network to have randomly combined features in the hidden layer that characterize the training dataset.
-This technique is shallow (cannot learn highly complex functions) since the errors resulting from solving :math:`w2` using ridge
-are not propagated to the previous layer for better approximation.
+:math:`k` is the number of hidden neurons. Larger :math:`k` allows for higher capacity to learn complex functions.
+:math:`H`, or the values in the hidden neurons, represent random combinations of the training dataset features that are randomly weighted.
+This technique provides an approximation of the solution returned by training SLFN using backpropagation. This is because
+ unlike backpropagation, this technique does not propagate the errors resulting from solving :math:`w2` to the previous layer.
 
 For classification, one can use a pipeline comprising the :class:`RandomBasisFunction` and :class:`RidgeClassifier` as
 shown in the following example::
@@ -78,62 +114,23 @@ shown in the following example::
 
     >>> reg.predict(X)
     array([ 0.5,  0.2])
-     
+
 The references below show examples of how tuning some of the hyper-parameters of the pipeline affect the resulting
 decision function::
 
   * :ref:`example_neural_networks_plot_random_neural_network.py`
 
-  * :ref:`example_neural_networks_plot_random_nn_overfitting.py`
+
 
 .. topic:: References:
 
-  * Schmidt, Wouter F., Martin A. Kraaijveld, and Robert PW Duin. 
-    "Feedforward neural networks with random weights." Pattern Recognition, 
-    1992. Vol. II. Conference B: Pattern Recognition Methodology and Systems, 
-    Proceedings., 11th IAPR International Conference on. IEEE, 1992.
+    * `"Understanding the difficulty of training deep feedforward neural networks."
+      <http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf>`_
+      Schmidt, Wouter F., Martin A. Kraaijveld, and Robert PW Duin.
 
-====================================
-Neural network models (unsupervised)
-====================================
-
-.. currentmodule:: sklearn.neural_network
-
-.. _random_basis_function:
-
-Random basis function
-=====================
-
-Random basis function :math: `f(X): R \rightarrow R` that projects matrix
-:math: `X` into another feature space where the number of features is less, equal
-or higher than the original feature space. The output matrix :math: `H` is
-computed as follows:
-
-.. math::
-
-   H = g(Xw + b)
-
-where :math: `g(\cdot): R \rightarrow R` is the activation function, :math: `w`
-is the weight parameter vector, and :math: `b` is the intercept vector.
-
-:math: `w \in R^{d \times k}`, and :math: `b \in R^{d}` are generated based
-on the uniform distribution scaled between two values, set by the user.
-
-
-The example code below illustrates using this function::
-
-    >>> from sklearn.neural_network import RandomBasisFunction
-    >>> X = [[0, 0], [1, 1]]
-    >>> fe = RandomBasisFunction(random_state=1, n_outputs=2)
-    >>> fe.fit(X)
-    RandomBasisFunction(activation='tanh', intercept=True, n_outputs=2,
-              random_state=1, weight_scale='auto')
-    >>> fe.transform(X)
-    array([[-0.69896184, -0.76098975],
-           [-0.97981807, -0.73662692]])
-
-This function can be useful for training some neural network structures as 
-described in the next section.
+    * `"Feedforward neural networks with random weights."
+      <http://homepage.tudelft.nl/a9p19/papers/icpr_92_random.pdf>`_
+      Schmidt, Wouter F., Martin A. Kraaijveld, and Robert PW Duin.
 
 
 .. _rbm:

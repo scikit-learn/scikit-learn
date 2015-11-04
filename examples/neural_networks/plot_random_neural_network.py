@@ -1,24 +1,22 @@
 """
-=====================================================================
-The impact of varying alpha and weight_scale on the decision function
-=====================================================================
+===========================================
+Effect of parameters in RandomBasisFunction
+===========================================
 
-This illustrates how the random neural network behaves when varying the 
-regularization terms, weight_scale and alpha. Regularization usually
-affects the regularity or smoothness of the decision function.
+This example generates plots that illustrate the impact of varying the RandomBasisFunction parameters on the decision
+function of the random neural network model.
 
-This example generates two plots, corresponding to each of the hyperparameters.
-They control regularization in that they constrain the coefficients of the
-decision function.
+This generates three plots, each corresponding to varying one single parameter. The plots correspond to varying the
+parameter alpha, weight_scale, and n_output, respectively.
 
-If there is high bias - as can be indicated by a high training
-error - decreasing alpha or increasing weight_scale would decrease bias and 
-therefore reduce underfitting. Similarly, if there is high variance - as can be 
-indicated by a low training error - increasing alpha or decreasing weight_scale 
-would decrease variance and therefore reduce overfitting. Therefore, it is best
-to find a balance between bias and variance (or parameter values that are not 
-too high nor too low) by testing a range of values as seen in this example. 
-This can be achieved using cross-validation.
+If there is high bias in the model, which can lead to a high training error, then decreasing alpha,
+increasing weight_scale, and/or increasing n_output decreases bias and therefore reduces underfitting.
+Similarly, if there is high variance in the model, which is when the training error poorly approximates the testing
+error, then increasing alpha, decreasing weight_scale, and/or decreasing n_output would decrease variance and therefore
+reduces overfitting.
+
+One way to find a balance between bias and variance when tuning these parameters is by
+testing a range of values using cross-validation as seen in this example.
 
 """
 print(__doc__)
@@ -32,11 +30,10 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_moons, make_circles, make_classification
 from sklearn.neural_network import RandomBasisFunction
-from sklearn.learning_curve import validation_curve
 from sklearn.linear_model import Ridge
 from sklearn.pipeline import make_pipeline
 from sklearn.utils.fixes import expit as logistic_sigmoid
@@ -51,6 +48,8 @@ rng = np.random.RandomState(1)
 
 alpha_list = np.logspace(-4, 4, 5)
 weight_scale_list = np.logspace(-2, 2, 5)
+n_outputs_list = [2, 10, 100, 200, 500]
+
 
 
 def plot(names, classifiers, title):
@@ -59,7 +58,7 @@ def plot(names, classifiers, title):
 
     linearly_separable = (X, y)
 
-    datasets = [make_moons(noise=0.3, random_state=rng),
+    datasets = [make_moons(noise=1., random_state=rng),
                 make_circles(noise=0.2, factor=0.5, random_state=rng),
                 linearly_separable]
 
@@ -136,7 +135,7 @@ for alpha in alpha_list:
     classifiers.append(clf)
     names.append("alpha = " + str(alpha))
 
-title = "Impact of varying alpha for fixed weight_scale=1"
+title = "Effect of varying alpha for fixed weight_scale=1"
 plot(names, classifiers, title)
 
 classifiers = []
@@ -147,7 +146,18 @@ for weight_scale in weight_scale_list:
     classifiers.append(clf)
     names.append("weight_scale = " + str(weight_scale))
 
-title = "Impact of varying weight_scale for fixed alpha=1"
+title = "Effect of varying weight_scale for fixed alpha=1"
+plot(names, classifiers, title)
+
+classifiers = []
+names = []
+for n_outputs in n_outputs_list:
+    clf = make_pipeline(RandomBasisFunction(n_outputs=n_outputs), Ridge(alpha=1.))
+
+    classifiers.append(clf)
+    names.append("n_output = " + str(n_outputs))
+
+title = "Effect of varying n_output in RandomBasisFunction"
 plot(names, classifiers, title)
 
 plt.show()

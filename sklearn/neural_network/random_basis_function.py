@@ -79,8 +79,8 @@ class RandomBasisFunction(BaseEstimator, TransformerMixin):
                  activation='tanh', intercept=True, random_state=None):
         self.n_outputs = n_outputs
         self.weight_scale = weight_scale
-        self.intercept = intercept
         self.activation = activation
+        self.intercept = intercept
         self.random_state = random_state
 
     def fit(self, X, y=None):
