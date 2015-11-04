@@ -1031,7 +1031,7 @@ See the :ref:`metrics` section of the user guide for further details.
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`neural_network` section for further details.
+**User guide:** See the :ref:`neural_networks_supervised` and :ref:`neural_networks_unsupervised` sections for further details.
 
 .. currentmodule:: sklearn
 
