@@ -51,7 +51,7 @@ yboston = boston.target[:200]
 
 
 def test_alpha():
-    # Test that larger alpha yields weights closer to zero"""
+    # Test that larger alpha yields weights closer to zero
     X = X_digits_binary[:100]
     y = y_digits_binary[:100]
 
@@ -71,7 +71,7 @@ def test_alpha():
 
 
 def test_fit():
-    # Test that the algorithm solution is equal to a worked out example."""
+    # Test that the algorithm solution is equal to a worked out example.
     X = np.array([[0.6, 0.8, 0.7]])
     y = np.array([0])
     mlp = MLPClassifier(algorithm='sgd', learning_rate_init=0.1, alpha=0.1,
@@ -160,7 +160,8 @@ def test_fit():
     #            0.7 * -0.002244 + 0.09626) = 0.572
     #  o1 = h * W2 + b21 = 0.677 * 0.04706 +
     #             0.572 * 0.154089 + 0.9235 = 1.043
-    assert_almost_equal(mlp.decision_function(X), 1.043, decimal=3)
+    #  prob = sigmoid(o1) = 0.739
+    assert_almost_equal(mlp.predict_proba(X)[0, 1], 0.739, decimal=3)
 
 
 def test_gradient():
@@ -248,7 +249,7 @@ def test_lbfgs_classification():
 
 
 def test_lbfgs_regression():
-    # Test lbfgs on the boston dataset, a regression problems."""
+    # Test lbfgs on the boston dataset, a regression problems.
     X = Xboston
     y = yboston
     for activation in ACTIVATION_TYPES:
@@ -264,7 +265,7 @@ def test_lbfgs_regression():
 
 
 def test_learning_rate_warmstart():
-    # Test that warm_start reuses past solution."""
+    # Tests that warm_start reuse past solutions.
     X = [[3, 2], [1, 6], [5, 6], [-2, -4]]
     y = [1, 1, 1, 0]
     for learning_rate in ["invscaling", "constant"]:
@@ -285,7 +286,7 @@ def test_learning_rate_warmstart():
 
 
 def test_multilabel_classification():
-    # Test that multi-label classification works as expected."""
+    # Test that multi-label classification works as expected.
     # test fit method
     X, y = make_multilabel_classification(n_samples=50, random_state=0,
                                           return_indicator=True)
@@ -305,7 +306,7 @@ def test_multilabel_classification():
 
 
 def test_multioutput_regression():
-    # Test that multi-output regression works as expected"""
+    # Test that multi-output regression works as expected
     X, y = make_regression(n_samples=200, n_targets=5)
     mlp = MLPRegressor(algorithm='l-bfgs', hidden_layer_sizes=50, max_iter=200,
                        random_state=1)
@@ -314,7 +315,7 @@ def test_multioutput_regression():
 
 
 def test_partial_fit_classes_error():
-    # Tests that passing different classes to partial_fit raises an error"""
+    # Tests that passing different classes to partial_fit raises an error
     X = [[3, 2]]
     y = [0]
     clf = MLPClassifier(algorithm='sgd')
@@ -371,7 +372,7 @@ def test_partial_fit_regression():
 
 
 def test_partial_fit_errors():
-    # Test partial_fit error handling."""
+    # Test partial_fit error handling.
     X = [[3, 2], [1, 6]]
     y = [1, 0]
 
@@ -387,7 +388,7 @@ def test_partial_fit_errors():
 
 
 def test_params_errors():
-    # Test that invalid parameters raise value error"""
+    # Test that invalid parameters raise value error
     X = [[3, 2], [1, 6]]
     y = [1, 0]
     clf = MLPClassifier
@@ -397,6 +398,17 @@ def test_params_errors():
     assert_raises(ValueError, clf(shuffle='true').fit, X, y)
     assert_raises(ValueError, clf(alpha=-1).fit, X, y)
     assert_raises(ValueError, clf(learning_rate_init=-1).fit, X, y)
+    assert_raises(ValueError, clf(momentum=2).fit, X, y)
+    assert_raises(ValueError, clf(momentum=-0.5).fit, X, y)
+    assert_raises(ValueError, clf(nesterovs_momentum='invalid').fit, X, y)
+    assert_raises(ValueError, clf(early_stopping='invalid').fit, X, y)
+    assert_raises(ValueError, clf(validation_fraction=1).fit, X, y)
+    assert_raises(ValueError, clf(validation_fraction=-0.5).fit, X, y)
+    assert_raises(ValueError, clf(beta_1=1).fit, X, y)
+    assert_raises(ValueError, clf(beta_1=-0.5).fit, X, y)
+    assert_raises(ValueError, clf(beta_2=1).fit, X, y)
+    assert_raises(ValueError, clf(beta_2=-0.5).fit, X, y)
+    assert_raises(ValueError, clf(epsilon=-0.5).fit, X, y)
 
     assert_raises(ValueError, clf(algorithm='hadoken').fit, X, y)
     assert_raises(ValueError, clf(learning_rate='converge').fit, X, y)
@@ -404,7 +416,7 @@ def test_params_errors():
 
 
 def test_predict_proba_binary():
-    # Test that predict_proba works as expected for binary class."""
+    # Test that predict_proba works as expected for binary class.
     X = X_digits_binary[:50]
     y = y_digits_binary[:50]
 
@@ -426,8 +438,8 @@ def test_predict_proba_binary():
     assert_equal(roc_auc_score(y, y_proba[:, 1]), 1.0)
 
 
-def test_predict_proba_multi():
-    # Test that predict_proba works as expected for multi class."""
+def test_predict_proba_multiclass():
+    # Test that predict_proba works as expected for multi class.
     X = X_digits_multi[:10]
     y = y_digits_multi[:10]
 
@@ -447,17 +459,41 @@ def test_predict_proba_multi():
     assert_array_equal(y_log_proba, np.log(y_proba))
 
 
+def test_predict_proba_multilabel():
+    # Test that predict_proba works as expected for multilabel.
+    # Multilabel should not use softmax which makes probabilities sum to 1
+    X, Y = make_multilabel_classification(n_samples=50, random_state=0,
+                                          return_indicator=True)
+    n_samples, n_classes = Y.shape
+
+    clf = MLPClassifier(algorithm='l-bfgs', hidden_layer_sizes=30,
+                        random_state=0)
+    clf.fit(X, Y)
+    y_proba = clf.predict_proba(X)
+
+    assert_equal(y_proba.shape, (n_samples, n_classes))
+    assert_array_equal(y_proba > 0.5, Y)
+
+    y_log_proba = clf.predict_log_proba(X)
+    proba_max = y_proba.argmax(axis=1)
+    proba_log_max = y_log_proba.argmax(axis=1)
+
+    assert_greater((y_proba.sum(1) - 1).dot(y_proba.sum(1) - 1), 1e-10)
+    assert_array_equal(proba_max, proba_log_max)
+    assert_array_equal(y_log_proba, np.log(y_proba))
+
+
 def test_sparse_matrices():
-    # Test that sparse and dense input matrices output the same results."""
+    # Test that sparse and dense input matrices output the same results.
     X = X_digits_binary[:50]
     y = y_digits_binary[:50]
     X_sparse = csr_matrix(X)
-    mlp = MLPClassifier(random_state=1, hidden_layer_sizes=15)
-    with ignore_warnings(category=ConvergenceWarning):
-        mlp.fit(X, y)
-        pred1 = mlp.decision_function(X)
-        mlp.fit(X_sparse, y)
-        pred2 = mlp.decision_function(X_sparse)
+    mlp = MLPClassifier(algorithm='l-bfgs', hidden_layer_sizes=15,
+                        random_state=1)
+    mlp.fit(X, y)
+    pred1 = mlp.predict(X)
+    mlp.fit(X_sparse, y)
+    pred2 = mlp.predict(X_sparse)
     assert_almost_equal(pred1, pred2)
     pred1 = mlp.predict(X)
     pred2 = mlp.predict(X_sparse)
