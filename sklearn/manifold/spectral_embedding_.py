@@ -47,17 +47,18 @@ def _graph_connected_component(graph, node_id):
     nodes_to_explore = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
     nodes_to_explore[node_id] = True
     n_node = graph.shape[0]
-    nodes_to_add = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
     for i in range(n_node):
-        nodes_to_add.fill(False)
-        for i in np.where(nodes_to_explore)[0]:
-            nodes_to_add = np.logical_or(nodes_to_add, graph[i] != 0)
-        connected_components_matrix = np.logical_or(
-            connected_components_matrix, nodes_to_explore)
-        if not nodes_to_add.any():
+        last_num_component = connected_components_matrix.sum()
+        np.logical_or(connected_components_matrix,
+                      nodes_to_explore,
+                      connected_components_matrix)
+        indices = np.where(nodes_to_explore)[0]
+        nodes_to_explore.fill(False)
+        for i in indices:
+            np.logical_or(nodes_to_explore, graph[i], nodes_to_explore)
+
+        if last_num_component >= connected_components_matrix.sum():
             break
-        # Swap arrays
-        nodes_to_explore, nodes_to_add = nodes_to_add, nodes_to_explore
     return connected_components_matrix
 
 
