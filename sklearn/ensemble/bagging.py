@@ -268,7 +268,8 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
             Argument to use instead of self.max_samples.
 
         max_depth : int, optional (default=None)
-            Maximum depth of the base estimator.
+            Override value used when constructing base estimator. Only
+            supported if the base estimator has a max_depth parameter.
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted.

@@ -10,6 +10,7 @@ from warnings import warn
 
 from scipy.sparse import issparse
 
+from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
@@ -153,22 +154,27 @@ class IsolationForest(BaseBagging):
         # ensure that max_sample is in [1, n_samples]:
         n_samples = X.shape[0]
 
-        if self.max_samples == 'auto':
-            max_samples = min(256, n_samples)
-        else:
-            if isinstance(self.max_samples, (numbers.Integral, np.integer)):
-                if self.max_samples > n_samples:
-                    warn("max_samples (%s) is greater than the "
-                         "total number of samples (%s). max_samples "
-                         "will be set to n_samples for estimation."
-                         % (self.max_samples, n_samples))
-                    max_samples = n_samples
-                else:
-                    max_samples = self.max_samples
-            else: # float
-                if not (0 < self.max_samples <= 1.):
-                    raise ValueError("max_samples must be in (0, 1]")
-                max_samples = int(self.max_samples * X.shape[0])
+        if isinstance(self.max_samples, six.string_types):
+            if self.max_samples == 'auto':
+                max_samples = min(256, n_samples)
+            else:
+                raise ValueError('max_samples (%s) is not supported.'
+                                 'Valid choices are: "auto", int or'
+                                 'float' % self.max_samples)
+
+        elif isinstance(self.max_samples, (numbers.Integral, np.integer)):
+            if self.max_samples > n_samples:
+                warn("max_samples (%s) is greater than the "
+                     "total number of samples (%s). max_samples "
+                     "will be set to n_samples for estimation."
+                     % (self.max_samples, n_samples))
+                max_samples = n_samples
+            else:
+                max_samples = self.max_samples
+        else: # float
+            if not (0. < self.max_samples <= 1.):
+                raise ValueError("max_samples must be in (0, 1]")
+            max_samples = int(self.max_samples * X.shape[0])
 
         self.max_samples_ = max_samples
         max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
