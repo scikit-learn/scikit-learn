@@ -226,7 +226,7 @@ def test_randomized_svd_infinite_rank():
 
 
 def test_randomized_svd_transpose_consistency():
-    # Check that transposing the design matrix has limit impact
+    # Check that transposing the design matrix has limited impact
     n_samples = 100
     n_features = 500
     rank = 4
@@ -262,7 +262,7 @@ def test_randomized_svd_power_iteration_normalizer():
     # randomized_svd with power_iteration_normalized='none' diverges for
     # large number of power iterations on this dataset
     rng = np.random.RandomState(42)
-    X = make_low_rank_matrix(300, 1000, effective_rank=50, random_state=rng)
+    X = make_low_rank_matrix(100, 500, effective_rank=50, random_state=rng)
     X += 3 * rng.randint(0, 2, size=X.shape)
     n_components = 50
 
@@ -275,7 +275,6 @@ def test_randomized_svd_power_iteration_normalizer():
                              power_iteration_normalizer='none')
     A = X - U.dot(np.diag(s).dot(V))
     error_20 = linalg.norm(A, ord='fro')
-    print(error_2 - error_20)
     assert_greater(np.abs(error_2 - error_20), 100)
 
     for normalizer in ['LU', 'QR', 'auto']:
@@ -289,7 +288,6 @@ def test_randomized_svd_power_iteration_normalizer():
                                      power_iteration_normalizer=normalizer)
             A = X - U.dot(np.diag(s).dot(V))
             error = linalg.norm(A, ord='fro')
-            print(error_2 - error)
             assert_greater(15, np.abs(error_2 - error))
 
 
@@ -358,8 +356,8 @@ def test_cartesian():
 
 def test_logistic_sigmoid():
     # Check correctness and robustness of logistic sigmoid implementation
-    naive_logistic = lambda x: 1 / (1 + np.exp(-x))
-    naive_log_logistic = lambda x: np.log(naive_logistic(x))
+    def naive_log_logistic(x):
+        return np.log(1 / (1 + np.exp(-x)))
 
     x = np.linspace(-2, 2, 50)
     assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))
