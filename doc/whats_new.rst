@@ -315,7 +315,7 @@ Enhancements
    - :class:`covariance.GraphLasso` allows separate control of the convergence criterion
      for the Elastic-Net subproblem via  the ``enet_tol`` parameter.
 
-   - Improved verbosity in :class:`decomposition.DictinaryLearning`.
+   - Improved verbosity in :class:`decomposition.DictionaryLearning`.
 
    - :class:`ensemble.RandomForestClassifier` and
      :class:`ensemble.RandomForestRegressor` no longer explicitly store the
@@ -400,7 +400,7 @@ Bug fixes
     - Fixed :func:`ensemble.plot_partial_dependence` ignoring the
       ``percentiles`` parameter.
 
-    - Providing a ``dict`` as vocabulary in ``CountVectorizer`` no longer
+    - Providing a ``set`` as vocabulary in ``CountVectorizer`` no longer
       leads to inconsistent results when pickling.
 
     - Fixed the conditions on when a precomputed Gram matrix needs to
@@ -501,20 +501,20 @@ API changes summary
     - Removed deprecated ``class_weight`` parameter from :class:`linear_model.SGDClassifier`'s ``fit``
       method. Use the construction parameter instead.
 
-   - The deprecated support for the sequence of sequences (or list of lists) multilabel
-     format was removed. To convert to and from the supported binary
-     indicator matrix format, use
-     :class:`MultiLabelBinarizer <preprocessing.MultiLabelBinarizer>`.
+    - The deprecated support for the sequence of sequences (or list of lists) multilabel
+      format was removed. To convert to and from the supported binary
+      indicator matrix format, use
+      :class:`MultiLabelBinarizer <preprocessing.MultiLabelBinarizer>`.
 
-   - The behavior of calling the ``inverse_transform`` method of ``Pipeline.pipeline`` will
-     change in 0.19. It will no longer reshape one-dimensional input to two-dimensional input.
+    - The behavior of calling the ``inverse_transform`` method of ``Pipeline.pipeline`` will
+      change in 0.19. It will no longer reshape one-dimensional input to two-dimensional input.
 
-   - The deprecated attributes ``indicator_matrix_``, ``multilabel_`` and ``classes_`` of
-     :class:`preprocessing.LabelBinarizer` were removed.
+    - The deprecated attributes ``indicator_matrix_``, ``multilabel_`` and ``classes_`` of
+      :class:`preprocessing.LabelBinarizer` were removed.
 
-   - Using ``gamma=0`` in :class:`svm.SVC` and :class:`svm.SVR` to automatically set the
-     gamma to ``1. / n_features`` is deprecated and will be removed in 0.19.
-     Use ``gamma="auto"`` instead.
+    - Using ``gamma=0`` in :class:`svm.SVC` and :class:`svm.SVR` to automatically set the
+      gamma to ``1. / n_features`` is deprecated and will be removed in 0.19.
+      Use ``gamma="auto"`` instead.
 
 .. _changes_0_1_16:
 
