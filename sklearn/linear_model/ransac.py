@@ -228,6 +228,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         if self.residual_threshold is None:
             # MAD (median absolute deviation)
             residual_threshold = np.median(np.abs(y - np.median(y)))
+            if residual_threshold == 0.0:
+                raise ValueError("Cannot calculate ''residual_threshold'', "
+                                 "set a value manually or try with different "
+                                 "samples.")
         else:
             residual_threshold = self.residual_threshold
 
