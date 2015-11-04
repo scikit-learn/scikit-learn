@@ -23,8 +23,8 @@ from sklearn.utils.testing import (assert_equal, assert_almost_equal,
                                    assert_array_almost_equal)
 
 
-X = np.random.RandomState(0).normal(0, 1, (10, 2))
-Y = np.random.RandomState(0).normal(0, 1, (11, 2))
+X = np.random.RandomState(0).normal(0, 1, (5, 2))
+Y = np.random.RandomState(0).normal(0, 1, (6, 2))
 
 kernel_white = RBF(length_scale=2.0) + WhiteKernel(noise_level=3.0)
 kernels = [RBF(length_scale=2.0), RBF(length_scale_bounds=(0.5, 2.0)),
