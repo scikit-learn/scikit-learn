@@ -28,7 +28,7 @@ Documentation of scikit-learn 0.17
                 <!-- doc versions -->
                     <h2>Other Versions</h2>
                     <ul>
-                        <li><a href="http://scikit-learn.org/stable/documentation.html">scikit-learn 0.18 (development)</a></li>
+                        <li><a href="http://scikit-learn.org/dev/documentation.html">scikit-learn 0.18 (development)</a></li>
                         <li>scikit-learn 0.17 (stable)</li>
                         <li><a href="http://scikit-learn.org/0.17/documentation.html">scikit-learn 0.16</a></li>
                         <li><a href="http://scikit-learn.org/0.15/documentation.html">scikit-learn 0.15</a></li>
