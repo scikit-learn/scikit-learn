@@ -16,6 +16,7 @@ import warnings
 import sys
 import re
 import platform
+import struct
 
 import scipy as sp
 import scipy.io
@@ -678,6 +679,18 @@ def if_matplotlib(func):
             plt.figure()
         except ImportError:
             raise SkipTest('Matplotlib not available.')
+        else:
+            return func(*args, **kwargs)
+    return run_test
+
+
+def skip_if_32bit(func):
+    """Test decorator that skips tests on 32bit platforms."""
+    @wraps(func)
+    def run_test(*args, **kwargs):
+        bits = 8 * struct.calcsize("P")
+        if bits == 32:
+            raise SkipTest('Test skipped on 32bit platforms.')
         else:
             return func(*args, **kwargs)
     return run_test
