@@ -25,12 +25,13 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
     .. versionadded:: 0.17
+
     Read more in the :ref:`User Guide <voting_classifier>`.
 
     Parameters
     ----------
     estimators : list of (string, estimator) tuples
-        Invoking the `fit` method on the `VotingClassifier` will fit clones
+        Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
         `self.estimators_`.
 

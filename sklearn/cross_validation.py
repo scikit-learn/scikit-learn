@@ -1079,7 +1079,7 @@ class PredefinedSplit(_PartitionIterator):
 
 
 class LabelShuffleSplit(ShuffleSplit):
-    '''Shuffle-Labels-Out cross-validation iterator
+    """Shuffle-Labels-Out cross-validation iterator
 
     Provides randomized train/test indices to split data according to a
     third-party provided label. This label information can be used to encode
@@ -1108,7 +1108,7 @@ class LabelShuffleSplit(ShuffleSplit):
         Labels of samples
 
     n_iter : int (default 5)
-        Number of re-shuffling & splitting iterations.
+        Number of re-shuffling and splitting iterations.
 
     test_size : float (default 0.2), int, or None
         If float, should be between 0.0 and 1.0 and represent the
@@ -1124,7 +1124,8 @@ class LabelShuffleSplit(ShuffleSplit):
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
-    '''
+
+    """
     def __init__(self, labels, n_iter=5, test_size=0.2, train_size=None,
                  random_state=None):
 
