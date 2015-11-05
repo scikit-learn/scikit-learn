@@ -144,6 +144,29 @@ cdef class Splitter:
             The weights of the samples, where higher weighted samples are fit
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight.
+
+        X_idx_sorted: numpy.ndarray, dtype=SIZE_T (optional)
+            The presorting of the X array. This is only done for gradient
+            boosting, where presorting can lead to speed gains.
+
+        n_samples_total: ptr, dtype=SIZE_t
+            The total number of samples covered in this split. This is to be
+            filled out by this method.
+
+        weighted_n_samples_total: ptr, dtype=double
+            The sum of the weights of the samples covered in this split. This is
+            to be filled out by this method.
+
+        sum_total: ptr, dtype=double
+            The total summed summary statistic for the split. On classification
+            problems this is the total number of each class in in this region.
+            This is to be filled out by this method.
+
+        sq_sum_total: ptr, dtype=double
+            The sum of squares. For regression problems, this is just the sum
+            of the y vector squared over the region of interest. This is not
+            used in classification problems. This is to be filled out by this
+            method.
         """
 
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
@@ -217,8 +240,13 @@ cdef class Splitter:
             The index of the first sample to consider
         end: SIZE_t
             The index of the last sample to consider
-        weighted_n_node_samples: numpy.ndarray, dtype=double pointer
+        weighted_n_node_samples: double
             The total weight of those samples
+        sum_total: double ptr
+            The sum of the summary statistic over all points.
+        sq_sum_total: double
+            The sum of squares of the summary statistic over all points.
+            Only relevant for regression problems.
         """
 
         self.start = start

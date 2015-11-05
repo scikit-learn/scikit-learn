@@ -190,8 +190,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t max_depth_seen = -1
         cdef int rc = 0
 
-        cdef double derp
-
         cdef Stack stack = Stack(INITIAL_STACK_SIZE)
         cdef StackRecord stack_record
 

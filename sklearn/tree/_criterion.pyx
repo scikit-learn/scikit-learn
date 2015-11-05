@@ -282,7 +282,7 @@ cdef class ClassificationCriterion(Criterion):
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride,
                    DOUBLE_t* sample_weight, double weighted_n_samples,
-                   SIZE_t* samples, SIZE_t start, SIZE_t end, ) nogil:
+                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
         children samples[start:start] and samples[start:end].
 
