@@ -111,17 +111,23 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
         Method used to initialize the procedure.
         Default: 'nndsvdar' if n_components < n_features, otherwise 'random'.
         Valid options:
-            'random': non-negative random matrices, scaled with:
-                sqrt(X.mean() / n_components)
-            'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
-                initialization (better for sparseness)
-            'nndsvda': NNDSVD with zeros filled with the average of X
-                (better when sparsity is not desired)
-            'nndsvdar': NNDSVD with zeros filled with small random values
-                (generally faster, less accurate alternative to NNDSVDa
-                for when sparsity is not desired)
 
-    eps: float
+        - 'random': non-negative random matrices, scaled with:
+            sqrt(X.mean() / n_components)
+
+        - 'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
+            initialization (better for sparseness)
+
+        - 'nndsvda': NNDSVD with zeros filled with the average of X
+            (better when sparsity is not desired)
+
+        - 'nndsvdar': NNDSVD with zeros filled with small random values
+            (generally faster, less accurate alternative to NNDSVDa
+            for when sparsity is not desired)
+
+        - 'custom': use custom matrices W and H
+
+    eps : float
         Truncate all values less then this in output to zero.
 
     random_state : int seed, RandomState instance, or None (default)
@@ -641,17 +647,22 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     init :  None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
         Default: 'nndsvd' if n_components < n_features, otherwise random.
-        Valid options::
-            'random': non-negative random matrices, scaled with:
-                sqrt(X.mean() / n_components)
-            'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
-                initialization (better for sparseness)
-            'nndsvda': NNDSVD with zeros filled with the average of X
-                (better when sparsity is not desired)
-            'nndsvdar': NNDSVD with zeros filled with small random values
-                (generally faster, less accurate alternative to NNDSVDa
-                for when sparsity is not desired)
-            'custom': use custom matrices W and H
+        Valid options:
+
+        - 'random': non-negative random matrices, scaled with:
+            sqrt(X.mean() / n_components)
+
+        - 'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
+            initialization (better for sparseness)
+
+        - 'nndsvda': NNDSVD with zeros filled with the average of X
+            (better when sparsity is not desired)
+
+        - 'nndsvdar': NNDSVD with zeros filled with small random values
+            (generally faster, less accurate alternative to NNDSVDa
+            for when sparsity is not desired)
+
+        - 'custom': use custom matrices W and H
 
     update_H : boolean, default: True
         Set to True, both W and H will be estimated from initial guesses.
@@ -828,16 +839,22 @@ class NMF(BaseEstimator, TransformerMixin):
     init :  'random' | 'nndsvd' |  'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
         Default: 'nndsvdar' if n_components < n_features, otherwise random.
-        Valid options::
-            'random': non-negative random matrices
-            'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
-                initialization (better for sparseness)
-            'nndsvda': NNDSVD with zeros filled with the average of X
-                (better when sparsity is not desired)
-            'nndsvdar': NNDSVD with zeros filled with small random values
-                (generally faster, less accurate alternative to NNDSVDa
-                for when sparsity is not desired)
-            'custom': use custom matrices W and H, given in 'fit' method.
+        Valid options:
+
+        - 'random': non-negative random matrices, scaled with:
+            sqrt(X.mean() / n_components)
+
+        - 'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
+            initialization (better for sparseness)
+
+        - 'nndsvda': NNDSVD with zeros filled with the average of X
+            (better when sparsity is not desired)
+
+        - 'nndsvdar': NNDSVD with zeros filled with small random values
+            (generally faster, less accurate alternative to NNDSVDa
+            for when sparsity is not desired)
+
+        - 'custom': use custom matrices W and H
 
     solver : 'pg' | 'cd'
         Numerical solver to use:

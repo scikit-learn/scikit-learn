@@ -3,7 +3,7 @@
 Partial Dependence Plots
 ========================
 
-Partial dependence plots show the dependence between the target function [1]_
+Partial dependence plots show the dependence between the target function [2]_
 and a set of 'target' features, marginalizing over the
 values of all other features (the complement features). Due to the limits
 of human perception the size of the target feature set must be small (usually,
@@ -13,7 +13,7 @@ important features
 
 This example shows how to obtain partial dependence plots from a
 :class:`~sklearn.ensemble.GradientBoostingRegressor` trained on the California
-housing dataset. The example is taken from [HTF2009]_.
+housing dataset. The example is taken from [1]_.
 
 The plot shows four one-way and one two-way partial dependence plots.
 The target variables for the one-way PDP are:
@@ -38,10 +38,10 @@ For an avg. occupancy greater than two, the house price is nearly independent
 of the house age, whereas for values less than two there is a strong dependence
 on age.
 
-.. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman,
+.. [1] T. Hastie, R. Tibshirani and J. Friedman,
     "Elements of Statistical Learning Ed. 2", Springer, 2009.
 
-.. [1] For classification you can think of it as the regression score before
+.. [2] For classification you can think of it as the regression score before
        the link function.
 """
 print(__doc__)

@@ -147,7 +147,7 @@ Enhancements
 
    - The "Wisconsin Breast Cancer" classical two-class classification dataset
      is now included in scikit-learn, available with
-     :fun:`sklearn.dataset.load_breast_cancer`.
+     :func:`sklearn.dataset.load_breast_cancer`.
 
    - Upgraded to joblib 0.9.3 to benefit from the new automatic batching of
      short tasks. This makes it possible for scikit-learn to benefit from
@@ -326,7 +326,7 @@ Bug fixes
     - Fixed inconsistent memory layout in the coordinate descent solver
       that affected :class:`linear_model.DictionaryLearning` and
       :class:`covariance.GraphLasso`. (`#5337 <https://github.com/scikit-learn/scikit-learn/pull/5337>`)
-      By `Oliver Grisel`_.
+      By `Olivier Grisel`_.
 
     - :class:`manifold.LocallyLinearEmbedding` no longer ignores the ``reg``
       parameter.

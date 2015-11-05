@@ -390,8 +390,9 @@ def r2_score(y_true, y_pred,
     sample_weight : array-like of shape = (n_samples), optional
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average',
-                'variance_weighted'] or None or array-like of shape (n_outputs)
+    multioutput : string in ['raw_values', 'uniform_average', \
+'variance_weighted'] or None or array-like of shape (n_outputs)
+
         Defines aggregating of multiple output scores.
         Array-like value defines weights used to average scores.
         Default value correponds to 'variance_weighted', this behaviour is
