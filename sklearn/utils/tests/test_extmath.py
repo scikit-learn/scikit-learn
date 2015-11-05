@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import skip_if_32bit
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
@@ -467,6 +468,7 @@ def test_incremental_variance_update_formulas():
     assert_almost_equal(final_count, A.shape[0])
 
 
+@skip_if_32bit
 def test_incremental_variance_numerical_stability():
     # Test Youngs and Cramer incremental variance formulas.
 
