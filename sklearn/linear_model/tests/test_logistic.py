@@ -17,6 +17,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_raise_message
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import compute_class_weight
+from sklearn.utils.fixes import sp_version
 
 from sklearn.linear_model.logistic import (
     LogisticRegression,
@@ -33,8 +34,6 @@ X_sp = sp.csr_matrix(X)
 Y1 = [0, 1, 1]
 Y2 = [2, 1, 0]
 iris = load_iris()
-
-sp_version = tuple([int(s) for s in scipy.__version__.split('.')])
 
 
 def check_predictions(clf, X, y):
