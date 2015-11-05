@@ -53,19 +53,22 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     # Configure the conda environment and put it in the path using the
     # provided versions
-    conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
-        numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION
+    if [[ "$INSTALL_MKL" == "true" ]]; then
+        conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
+            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION numpy scipy \
+            cython=$CYTHON_VERSION libgfortran mkl
+    else
+        conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
+            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION \
+            libgfortran
+    fi
     source activate testenv
 
     # Install nose-timer via pip
     pip install nose-timer
 
     # Resolve MKL usage
-    if [[ "$INSTALL_MKL" == "true" ]]; then
-        conda install --yes mkl
-    else
-        conda remove --yes --features mkl || echo "MKL not installed"
-    fi
+
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
