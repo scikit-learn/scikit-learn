@@ -389,8 +389,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         n_features = X.shape[1]
         if self.n_features_ != n_features:
             raise ValueError("Number of features of the model must "
-                             " match the input. Model n_features is %s and "
-                             " input n_features is %s "
+                             "match the input. Model n_features is %s and "
+                             "input n_features is %s "
                              % (self.n_features_, n_features))
 
         return X
