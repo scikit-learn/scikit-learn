@@ -25,7 +25,8 @@ if version[0] == 3:
     # Python 3+ import for reload. Builtin in Python2
     if version[1] == 3:
         reload = None
-    from importlib import reload
+    else:
+        from importlib import reload
 
 
 # Data is just 6 separable points in the plane
@@ -305,7 +306,7 @@ def test_qda_regularization():
 
 def test_deprecated_lda_qda_deprecation():
     if reload is None:
-        SkipTest("Can't reload module on Python3.3")
+        raise SkipTest("Can't reload module on Python3.3")
 
     def import_lda_module():
         import sklearn.lda
