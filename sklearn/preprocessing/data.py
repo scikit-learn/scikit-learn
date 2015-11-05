@@ -896,6 +896,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     the interquartile range often give better results.
 
     .. versionadded:: 0.17
+
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
     Parameters
