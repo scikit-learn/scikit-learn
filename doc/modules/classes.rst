@@ -915,6 +915,9 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
+   metrics.pairwise.sigmoid_kernel
+   metrics.pairwise.cosine_similarity
+   metrics.pairwise.cosine_distances
    metrics.pairwise.laplacian_kernel
    metrics.pairwise_distances
    metrics.pairwise_distances_argmin
