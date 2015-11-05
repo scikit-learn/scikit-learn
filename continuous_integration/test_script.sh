@@ -23,9 +23,9 @@ python -c "import scipy; print('scipy %s' % scipy.__version__)"
 export SKLEARN_SKIP_NETWORK_TESTS=1
 
 if [[ "$COVERAGE" == "true" ]]; then
-    nosetests -s --with-coverage sklearn
+    nosetests -s --with-coverage --with-timer --timer-top-n 20 sklearn
 else
-    nosetests -s sklearn
+    nosetests -s --with-timer --timer-top-n 20 sklearn
 fi
 
 # Is directory still empty ?
