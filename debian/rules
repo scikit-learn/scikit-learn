@@ -87,7 +87,8 @@ override_dh_installchangelogs:
 ## remove .so libraries from main package, and call dh_numpy*
 ## while removing 2 if not present
 _dh_python%:
-	find debian/python$(*:2=)-sklearn/usr/lib -name "*.so" -delete;
+	[ ! -e debian/python$(*:2=)-sklearn ] \
+	    || find debian/python$(*:2=)-sklearn/usr/lib -name "*.so" -delete;
 	[ -e /usr/bin/dh_numpy$(*:2=) ] && dh_numpy$(*:2=) -ppython$(*:2=)-sklearn-lib || :
 	: # Prune scikits/__init__.py to avoid conflicts
 	find debian -wholename \*scikits/__init__.py -delete
