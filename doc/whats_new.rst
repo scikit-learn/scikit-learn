@@ -86,8 +86,10 @@ Enhancements
    - Added a ``fit_predict`` method for :class:`mixture.GMM` and subclasses.
      By `Cory Lorenz`_.
 
-   - Added the :func:`metrics.label_ranking_loss` metrics.
+   - Added the :func:`metrics.label_ranking_loss` metric.
      By `Arnaud Joly`_.
+
+   - Added the :func:`metrics.cohen_kappa_score` metric.
 
    - Added a ``warm_start`` constructor parameter to the bagging ensemble
      models to increase the size of the ensemble. By
@@ -143,20 +145,19 @@ Enhancements
    - RCV1 dataset loader (:func:`sklearn.datasets.fetch_rcv1`).
      By `Tom Dupre la Tour`_.
 
-   - Upgraded to joblib 0.9.2 to benefit from the new automatic batching of
+   - The "Wisconsin Breast Cancer" classical two-class classification dataset
+     is now included in scikit-learn, available with
+     :func:`sklearn.dataset.load_breast_cancer`.
+
+   - Upgraded to joblib 0.9.3 to benefit from the new automatic batching of
      short tasks. This makes it possible for scikit-learn to benefit from
      parallelism when many very short tasks are executed in parallel, for
      instance by the :class:`grid_search.GridSearchCV` meta-estimator
      with ``n_jobs > 1`` used with a large grid of parameters on a small
      dataset. By `Vlad Niculae`_, `Olivier Grisel`_ and `Loic Esteve`_.
 
-   - Joblib 0.9.2 also enables the ``forkserver`` start method for
-     multiprocessing by default under non-Windows platforms for Python 3.4
-     and later in order to avoid possible crash with some version of BLAS such
-     as vecLib / Accelerate under OSX for instance. By `Olivier Grisel`_.
-
-   - For more details about changes in joblib 0.9.2 see the release notes:
-     https://github.com/joblib/joblib/blob/master/CHANGES.rst#release-092
+   - For more details about changes in joblib 0.9.3 see the release notes:
+     https://github.com/joblib/joblib/blob/master/CHANGES.rst#release-093
 
    - Improved speed (3 times per iteration) of
      :class:`decomposition.DictLearning` with coordinate descent method
@@ -226,6 +227,27 @@ Enhancements
 
    - Added :func:`metrics.pairwise.laplacian_kernel`.  By `Clyde Fare <https://github.com/Clyde-fare>`_.
 
+   - :class:`covariance.GraphLasso` allows separate control of the convergence criterion
+     for the Elastic-Net subproblem via  the ``enet_tol`` parameter.
+
+   - Improved verbosity in :class:`decomposition.DictionaryLearning`.
+
+   - :class:`ensemble.RandomForestClassifier` and
+     :class:`ensemble.RandomForestRegressor` no longer explicitly store the
+     samples used in bagging, resulting in a much reduced memory footprint for
+     storing random forest models.
+
+   - Added ``positive`` option to :class:`linear_model.Lars` and
+     :func:`linear_model.lars_path` to force coefficients to be positive.
+     (`#5131 <https://github.com/scikit-learn/scikit-learn/pull/5131>`)
+
+   - Added the ``X_norm_squared`` parameter to :func:`metrics.pairwise.euclidean_distances`
+     to provide precomputed squared norms for ``X``.
+
+   - Added the ``fit_predict`` method to :class:`pipeline.Pipeline`.
+
+   - Added the :func:`preprocessing.min_max_scale` function.
+
 Bug fixes
 .........
     - Fixed non-determinism in :class:`dummy.DummyClassifier` with sparse
@@ -286,7 +308,39 @@ Bug fixes
 
     - Fixed bug in :class:`cross_decomposition.PLS` that yielded unstable and
       platform dependent output, and failed on `fit_transform`.
-       By `Arthur Mensch`_.
+      By `Arthur Mensch`_.
+
+    - Fixes to the ``Bunch`` class used to store datasets.
+
+    - Fixed :func:`ensemble.plot_partial_dependence` ignoring the
+      ``percentiles`` parameter.
+
+    - Providing a ``set`` as vocabulary in ``CountVectorizer`` no longer
+      leads to inconsistent results when pickling.
+
+    - Fixed the conditions on when a precomputed Gram matrix needs to
+      be recomputed in :class:`linear_model.LinearRegression`,
+      :class:`linear_model.OrthogonalMatchingPursuit`,
+      :class:`linear_model.Lasso` and :class:`linear_model.ElasticNet`.
+
+    - Fixed inconsistent memory layout in the coordinate descent solver
+      that affected :class:`linear_model.DictionaryLearning` and
+      :class:`covariance.GraphLasso`. (`#5337 <https://github.com/scikit-learn/scikit-learn/pull/5337>`)
+      By `Olivier Grisel`_.
+
+    - :class:`manifold.LocallyLinearEmbedding` no longer ignores the ``reg``
+      parameter.
+
+    - Nearest Neighbor estimators with custom distance metrics can now be pickled.
+      (`4362 <https://github.com/scikit-learn/scikit-learn/pull/4362>`)
+
+    - Fixed a bug in :class:`pipeline.FeatureUnion` where ``transformer_weights``
+      were not properly handled when performing grid-searches.
+
+    - Fixed a bug in :class:`linear_model.LogisticRegression` and
+      :class:`linear_model.LogisticRegressionCV` when using
+      ``class_weight='balanced'```or ``class_weight='auto'``.
+      By `Tom Dupre la Tour`_.
 
 API changes summary
 -------------------
@@ -328,6 +382,54 @@ API changes summary
       metatransfomer :class:`feature_selection.SelectFromModel` to remove
       features (according to `coefs_` or `feature_importances_`)
       which are below a certain threshold value instead.
+
+    - :class:`cluster.KMeans` re-runs cluster-assignments in case of non-convergence,
+      to ensure consistency of ``predict(X)`` and ``labels_``. By `Vighnesh Birodkar`_.
+
+    - Classifier and Regressor models are now tagged as such using the
+      ``_estimator_type`` attribute.
+
+    - Cross-validation iterators allways provide indices into training and test set,
+      not boolean masks.
+
+    - The ``decision_function`` on all regressors was deprecated and will be
+      removed in 0.19.  Use ``predict`` instead.
+
+    - :func:`datasets.load_lfw_pairs` is deprecated and will be removed in 0.19.
+      Use :func:`datasets.fetch_lfw_pairs` instead.
+
+    - The deprecated ``hmm`` module was removed.
+
+    - The deprecated ``Bootstrap`` cross-validation iterator was removed.
+
+    - The deprecated ``Ward`` and ``WardAgglomerative`` classes have been removed.
+      Use :class:`clustering.AgglomerativeClustering` instead.
+
+    - :func:`cross_validation.check_cv` is now a public function.
+
+    - The property ``residues_`` of :class:`linear_model.LinearRegression` is deprecated
+      and will be removed in 0.19.
+
+    - The deprecated ``n_jobs`` parameter of :class:`linear_model.LinearRegression` has been moved
+      to the constructor.
+
+    - Removed deprecated ``class_weight`` parameter from :class:`linear_model.SGDClassifier`'s ``fit``
+      method. Use the construction parameter instead.
+
+    - The deprecated support for the sequence of sequences (or list of lists) multilabel
+      format was removed. To convert to and from the supported binary
+      indicator matrix format, use
+      :class:`MultiLabelBinarizer <preprocessing.MultiLabelBinarizer>`.
+
+    - The behavior of calling the ``inverse_transform`` method of ``Pipeline.pipeline`` will
+      change in 0.19. It will no longer reshape one-dimensional input to two-dimensional input.
+
+    - The deprecated attributes ``indicator_matrix_``, ``multilabel_`` and ``classes_`` of
+      :class:`preprocessing.LabelBinarizer` were removed.
+
+    - Using ``gamma=0`` in :class:`svm.SVC` and :class:`svm.SVR` to automatically set the
+      gamma to ``1. / n_features`` is deprecated and will be removed in 0.19.
+      Use ``gamma="auto"`` instead.
 
 .. _changes_0_1_16:
 
@@ -592,6 +694,9 @@ Enhancements
 
    - :class:`svm.SVC` fitted on sparse input now implements ``decision_function``.
      By `Rob Zinkov`_ and `Andreas Müller`_.
+
+   - :func:`cross_validation.train_test_split` now preserves the input type,
+     instead of converting to numpy arrays.
 
 
 Documentation improvements
@@ -3315,8 +3420,8 @@ Changelog
 
   - New :ref:`gaussian_process` module by Vincent Dubourg. This module
     also has great documentation and some very neat examples. See
-    :ref:`example_gaussian_process_plot_gp_regression.py` or
-    :ref:`example_gaussian_process_plot_gp_probabilistic_classification_after_regression.py`
+    example_gaussian_process_plot_gp_regression.py or
+    example_gaussian_process_plot_gp_probabilistic_classification_after_regression.py
     for a taste of what can be done.
 
   - It is now possible to use liblinear’s Multi-class SVC (option
@@ -3776,3 +3881,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Graham Clenaghan: https://github.com/gclenaghan
 .. _Giorgio Patrini: https://github.com/giorgiop
 .. _Elvis Dohmatob: https://github.com/dohmatob
+.. _yelite: https://github.com/yelite

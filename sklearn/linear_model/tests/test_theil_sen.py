@@ -27,13 +27,13 @@ from sklearn.utils.testing import assert_greater, assert_less
 def no_stdout_stderr():
     old_stdout = sys.stdout
     old_stderr = sys.stderr
-    sys.stdout = open(os.devnull, 'w')
-    sys.stderr = open(os.devnull, 'w')
-    yield
-    sys.stdout.flush()
-    sys.stderr.flush()
-    sys.stdout = old_stdout
-    sys.stderr = old_stderr
+    with open(os.devnull, 'w') as devnull:
+        sys.stdout = devnull
+        sys.stderr = devnull
+        yield
+        devnull.flush()
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
 
 
 def gen_toy_problem_1d(intercept=True):
@@ -198,7 +198,7 @@ def test_theil_sen_2d():
 
 def test_calc_breakdown_point():
     bp = _breakdown_point(1e10, 2)
-    assert_less(np.abs(bp - 1 + 1/(np.sqrt(2))), 1.e-6)
+    assert_less(np.abs(bp - 1 + 1 / (np.sqrt(2))), 1.e-6)
 
 
 @raises(ValueError)

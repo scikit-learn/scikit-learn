@@ -222,6 +222,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         Individual weights for each sample. If sample_weight is not None and
         solver='auto', the solver will be set to 'cholesky'.
 
+        .. versionadded:: 0.17
+
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational routines:
 
@@ -251,7 +253,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
           same scale. You can preprocess the data with a scaler from
           sklearn.preprocessing.
 
-        All last four solvers support both dense and sparse data.
+        All last four solvers support both dense and sparse data. However,
+        only 'sag' supports sparse input when `fit_intercept` is True.
 
     tol : float
         Precision of the solution.
@@ -292,9 +295,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     This function won't compute the intercept.
     """
     if return_intercept and sparse.issparse(X) and solver != 'sag':
-        warnings.warn("In Ridge, only 'sag' solver can currently fit the "
-                      "intercept when X is sparse. Solver has been "
-                      "automatically changed into 'sag'.")
+        if solver != 'auto':
+            warnings.warn("In Ridge, only 'sag' solver can currently fit the "
+                          "intercept when X is sparse. Solver has been "
+                          "automatically changed into 'sag'.")
         solver = 'sag'
 
     # SAG needs X and y columns to be C-contiguous and np.float64
@@ -539,7 +543,11 @@ class Ridge(_BaseRidge, RegressorMixin):
           same scale. You can preprocess the data with a scaler from
           sklearn.preprocessing.
 
-        All last four solvers support both dense and sparse data.
+        All last four solvers support both dense and sparse data. However,
+        only 'sag' supports sparse input when `fit_intercept` is True.
+
+        .. versionadded:: 0.17
+           Stochastic Average Gradient descent solver.
 
     tol : float
         Precision of the solution.
@@ -547,6 +555,9 @@ class Ridge(_BaseRidge, RegressorMixin):
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data. Used in 'sag' solver.
+
+        .. versionadded:: 0.17
+           *random_state* to support Stochastic Average Gradient.
 
     Attributes
     ----------
@@ -669,6 +680,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
           iterative procedure, and is faster than other solvers when both
           n_samples and n_features are large.
 
+          .. versionadded:: 0.17
+             Stochastic Average Gradient descent solver.
+
     tol : float
         Precision of the solution.
 
@@ -721,6 +735,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
         sample_weight : float or numpy array of shape (n_samples,)
             Sample weight.
+
+            .. versionadded:: 0.17
+               *sample_weight* support to Classifier.
 
         Returns
         -------
@@ -1057,10 +1074,11 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the efficient Leave-One-Out cross-validation
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the efficient Leave-One-Out cross-validation
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`StratifiedKFold` used, else, :class:`KFold` is used.
@@ -1150,10 +1168,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the efficient Leave-One-Out cross-validation
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the efficient Leave-One-Out cross-validation
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

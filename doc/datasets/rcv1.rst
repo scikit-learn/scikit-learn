@@ -41,10 +41,10 @@ There are 103 topics, each represented by a string. Their corpus frequencies spa
     >>> rcv1.target_names[:3].tolist()  # doctest: +SKIP
     ['E11', 'ECAT', 'M11']
 
-The dataset will be downloaded from the `dataset's homepage`_ if necessary.
+The dataset will be downloaded from the `rcv1 homepage`_ if necessary.
 The compressed size is about 656 MB.
 
-.. _dataset's homepage: http://jmlr.csail.mit.edu/papers/volume5/lewis04a/
+.. _rcv1 homepage: http://jmlr.csail.mit.edu/papers/volume5/lewis04a/
 
 
 .. topic:: References
