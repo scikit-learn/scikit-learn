@@ -136,6 +136,8 @@ class Imputer(BaseEstimator, TransformerMixin):
             Input data, where ``n_samples`` is the number of samples and
             ``n_features`` is the number of features.
 
+        y: Passthrough for ``Pipeline`` compatibility.
+
         Returns
         -------
         self : object
@@ -327,13 +329,15 @@ class Imputer(BaseEstimator, TransformerMixin):
 
             return random
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         """Impute all missing values in X.
 
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             The input data to complete.
+
+        y: Passthrough for ``Pipeline`` compatibility.
         """
         if self.axis == 0:
             check_is_fitted(self, 'statistics_')
