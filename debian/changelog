@@ -3,6 +3,8 @@ scikit-learn (0.17.0-1) unstable; urgency=medium
   * Fresh upstream release
     - should address FTBFS on 32bit and other platforms due to failing
       tests
+  * debian/patches/deb_no_tinyclues_external_image
+    - to not link to external images inthe documentation (privacy concern)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 05 Nov 2015 20:47:00 -0500
 
