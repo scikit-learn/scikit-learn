@@ -394,7 +394,7 @@ class LinearRegression(LinearModel, RegressorMixin):
         self.n_jobs = n_jobs
 
     @property
-    @deprecated("residues_ is deprecated and will be removed in 0.19")
+    @deprecated("``residues_`` is deprecated and will be removed in 0.19")
     def residues_(self):
         """Get the residues of the fitted model."""
         return self._residues
@@ -413,6 +413,9 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         sample_weight : numpy array of shape [n_samples]
             Individual weights for each sample
+
+            .. versionadded:: 0.17
+               parameter *sample_weight* support to LinearRegression.
 
         Returns
         -------

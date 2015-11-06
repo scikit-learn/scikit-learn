@@ -7,6 +7,14 @@ CYTHON ?= cython
 NOSETESTS ?= nosetests
 CTAGS ?= ctags
 
+# skip doctests on 32bit python
+BITS := $(shell python -c 'import struct; print(8 * struct.calcsize("P"))')
+
+ifeq ($(BITS),32)
+  NOSETESTS:=$(NOSETESTS) -c setup32.cfg
+endif
+
+
 all: clean inplace test
 
 clean-ctags:
@@ -28,9 +36,11 @@ test-code: in
 test-sphinxext:
 	$(NOSETESTS) -s -v doc/sphinxext/
 test-doc:
+ifeq ($(BITS),64)
 	$(NOSETESTS) -s -v doc/*.rst doc/modules/ doc/datasets/ \
 	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference \
 	doc/tutorial/text_analytics
+endif
 
 test-coverage:
 	rm -rf coverage .coverage

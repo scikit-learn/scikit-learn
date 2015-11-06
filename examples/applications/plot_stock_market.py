@@ -68,7 +68,10 @@ import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import finance
+try:
+    from matplotlib.finance import quotes_historical_yahoo
+except ImportError:
+    from matplotlib.finance import quotes_historical_yahoo_ochl as quotes_historical_yahoo
 from matplotlib.collections import LineCollection
 
 from sklearn import cluster, covariance, manifold
@@ -146,7 +149,7 @@ symbol_dict = {
 
 symbols, names = np.array(list(symbol_dict.items())).T
 
-quotes = [finance.quotes_historical_yahoo(symbol, d1, d2, asobject=True)
+quotes = [quotes_historical_yahoo(symbol, d1, d2, asobject=True)
           for symbol in symbols]
 
 open = np.array([q.open for q in quotes]).astype(np.float)

@@ -30,6 +30,7 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import skip_if_32bit
 
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
@@ -229,6 +230,7 @@ def check_importances(X, y, name, criterion):
         assert_less(np.abs(importances - importances_bis).mean(), 0.001)
 
 
+@skip_if_32bit
 def test_importances():
     X, y = datasets.make_classification(n_samples=500, n_features=10,
                                         n_informative=3, n_redundant=0,
@@ -919,6 +921,7 @@ def check_class_weight_balanced_and_bootstrap_multi_output(name):
     clf.fit(X, _y)
     clf = ForestClassifier(class_weight='subsample', random_state=0)
     ignore_warnings(clf.fit)(X, _y)
+
 
 def test_class_weight_balanced_and_bootstrap_multi_output():
     for name in FOREST_CLASSIFIERS:

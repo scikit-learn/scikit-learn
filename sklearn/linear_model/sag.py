@@ -76,6 +76,8 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
     The regularizer is a penalty added to the loss function that shrinks model
     parameters towards the zero vector using the squared euclidean norm L2.
 
+    .. versionadded:: 0.17
+
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)

@@ -1226,6 +1226,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
     def apply(self, X):
         """Apply trees in the ensemble to X, return leaf indices.
 
+        .. versionadded:: 0.17
+
         Parameters
         ----------
         X : array-like or sparse matrix, shape = [n_samples, n_features]
@@ -1360,6 +1362,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         fitting. Auto mode by default will use presorting on dense data and
         default to normal sorting on sparse data. Setting presort to true on
         sparse data will raise an error.
+
+        .. versionadded:: 0.17
+           *presort* parameter.
 
     Attributes
     ----------
@@ -1696,6 +1701,9 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         default to normal sorting on sparse data. Setting presort to true on
         sparse data will raise an error.
 
+        .. versionadded:: 0.17
+           optional parameter *presort*.
+
     Attributes
     ----------
     feature_importances_ : array, shape = [n_features]
@@ -1794,6 +1802,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     def apply(self, X):
         """Apply trees in the ensemble to X, return leaf indices.
+
+        .. versionadded:: 0.17
 
         Parameters
         ----------

@@ -58,9 +58,9 @@ y_surf = [X[:, 0].max(), X[:, 0].max(),
           X[:, 0].min(), X[:, 0].min()]
 x_surf = np.array(x_surf)
 y_surf = np.array(y_surf)
-v0 = pca.transform(pca.components_[0])
+v0 = pca.transform(pca.components_[[0]])
 v0 /= v0[-1]
-v1 = pca.transform(pca.components_[1])
+v1 = pca.transform(pca.components_[[1]])
 v1 /= v1[-1]
 
 ax.w_xaxis.set_ticklabels([])

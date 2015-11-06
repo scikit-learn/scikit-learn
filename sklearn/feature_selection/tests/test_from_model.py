@@ -5,11 +5,11 @@ from nose.tools import assert_raises, assert_true
 
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import skip_if_32bit
 
 from sklearn import datasets
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
@@ -21,6 +21,7 @@ from sklearn.linear_model import PassiveAggressiveClassifier
 iris = datasets.load_iris()
 data, y = iris.data, iris.target
 rng = np.random.RandomState(0)
+
 
 def test_transform_linear_model():
     for clf in (LogisticRegression(C=0.1),
@@ -62,6 +63,7 @@ def test_input_estimator_unchanged():
     assert_true(transformer.estimator is est)
 
 
+@skip_if_32bit
 def test_feature_importances():
     X, y = datasets.make_classification(
         n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
@@ -88,7 +90,7 @@ def test_feature_importances():
     transformer = SelectFromModel(estimator=est)
     transformer.fit(X, y, sample_weight=sample_weight)
     importances = transformer.estimator_.feature_importances_
-    transformer.fit(X, y, sample_weight=3*sample_weight)
+    transformer.fit(X, y, sample_weight=3 * sample_weight)
     importances_bis = transformer.estimator_.feature_importances_
     assert_almost_equal(importances, importances_bis)
 
