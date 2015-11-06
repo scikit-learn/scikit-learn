@@ -1,4 +1,5 @@
-# Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>, Pascal van Kooten
+# Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>
+#          Pascal van Kooten <kootenpv@gmail.com>
 # License: BSD 3 clause
 
 import warnings
@@ -220,7 +221,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             with np.errstate(all="ignore"):
                 return np.ravel(sums) / np.ravel(n_non_missing)
 
-        # Median + Most frequent
+        # Median, Most frequent and Random
         else:
             # Remove the missing values, for each column
             columns_all = np.hsplit(X.data, X.indptr[1:-1])
@@ -251,6 +252,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
                 return most_frequent
 
+            # Random
             elif strategy == "random":
                 random = np.empty(len(columns))
 
@@ -310,6 +312,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
             return most_frequent
 
+        # Random
         elif strategy == "random":
             if axis == 0:
                 X = X.transpose()
