@@ -21,6 +21,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
     Note: If a lambda is used as the function, then the resulting
     transformer will not be pickleable.
 
+    .. versionadded:: 0.17
+
     Parameters
     ----------
     func : callable, optional default=None

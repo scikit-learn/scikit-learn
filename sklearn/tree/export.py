@@ -18,7 +18,6 @@ from . import _criterion
 from . import _tree
 
 
-
 def _color_brew(n):
     """Generate n colors with equally spaced hues.
 
@@ -153,13 +152,14 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
             # Classification tree
             color = list(colors['rgb'][np.argmax(value)])
             sorted_values = sorted(value, reverse=True)
-            alpha = int(255 * (sorted_values[0] - sorted_values[1]) /
-                        (1 - sorted_values[1]))
+            alpha = int(np.round(255 * (sorted_values[0] - sorted_values[1]) /
+                                 (1 - sorted_values[1]), 0))
         else:
             # Regression tree or multi-output
             color = list(colors['rgb'][0])
-            alpha = int(255 * ((value - colors['bounds'][0]) /
-                               (colors['bounds'][1] - colors['bounds'][0])))
+            alpha = int(np.round(255 * ((value - colors['bounds'][0]) /
+                                        (colors['bounds'][1] -
+                                         colors['bounds'][0])), 0))
 
         # Return html color code in #RRGGBBAA format
         color.append(alpha)
@@ -270,7 +270,7 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
                                           np.argmax(value),
                                           characters[2])
             node_string += class_name
-            
+
         # Clean up any trailing newlines
         if node_string[-2:] == '\\n':
             node_string = node_string[:-2]

@@ -24,7 +24,7 @@ from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
                                  mean_variance_axis, incr_mean_variance_axis,
-                                 min_max_axis, inplace_row_scale)
+                                 min_max_axis)
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 
 
@@ -226,14 +226,26 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     scale_ : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
 
+        .. versionadded:: 0.17
+           *scale_* attribute.
+
     data_min_ : ndarray, shape (n_features,)
         Per feature minimum seen in the data
+
+        .. versionadded:: 0.17
+           *data_min_* instead of deprecated *data_min*.
 
     data_max_ : ndarray, shape (n_features,)
         Per feature maximum seen in the data
 
+        .. versionadded:: 0.17
+           *data_max_* instead of deprecated *data_max*.
+
     data_range_ : ndarray, shape (n_features,)
-        Per feature range (data_max_ - data_min_) seen in the data
+        Per feature range ``(data_max_ - data_min_)`` seen in the data
+
+        .. versionadded:: 0.17
+           *data_range_* instead of deprecated *data_range*.
     """
 
     def __init__(self, feature_range=(0, 1), copy=True):
@@ -242,13 +254,13 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     @property
     @deprecated("Attribute data_range will be removed in "
-                "0.19. Use data_range_ instead")
+                "0.19. Use ``data_range_`` instead")
     def data_range(self):
         return self.data_range_
 
     @property
     @deprecated("Attribute data_min will be removed in "
-                "0.19. Use data_min_ instead")
+                "0.19. Use ``data_min_`` instead")
     def data_min(self):
         return self.data_min_
 
@@ -290,7 +302,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples_, n_features]
+        X : array-like, shape [n_samples, n_features]
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
@@ -388,6 +400,9 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
+    .. versionadded:: 0.17
+       *minmax_scale* function interface to :class:`sklearn.preprocessing.MinMaxScaler`.
+
     Parameters
     ----------
     feature_range: tuple (min, max), default=(0, 1)
@@ -478,6 +493,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     scale_ : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
 
+        .. versionadded:: 0.17
+           *scale_* is recommended instead of deprecated *std_*.
+
     mean_ : array of floats with shape [n_features]
         The mean value for each feature in the training set.
 
@@ -504,7 +522,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     @property
-    @deprecated("Attribute std_ will be removed in 0.19. Use scale_ instead")
+    @deprecated("Attribute ``std_`` will be removed in 0.19. Use ``scale_`` instead")
     def std_(self):
         return self.scale_
 
@@ -551,7 +569,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape [n_samples_, n_features]
+        X : {array-like, sparse matrix}, shape [n_samples, n_features]
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
@@ -685,6 +703,8 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
 
     This scaler can also be applied to sparse CSR or CSC matrices.
 
+    .. versionadded:: 0.17
+
     Parameters
     ----------
     copy : boolean, optional, default is True
@@ -695,6 +715,9 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
     ----------
     scale_ : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
+
+        .. versionadded:: 0.17
+           *scale_* attribute.
 
     max_abs_ : ndarray, shape (n_features,)
         Per feature maximum absolute value.
@@ -742,7 +765,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape [n_samples_, n_features]
+        X : {array-like, sparse matrix}, shape [n_samples, n_features]
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
@@ -879,6 +902,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     sample mean / variance in a negative way. In such cases, the median and
     the interquartile range often give better results.
 
+    .. versionadded:: 0.17
+
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
     Parameters
@@ -906,6 +931,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     scale_ : array of floats
         The (scaled) interquartile range for each feature in the training set.
+
+        .. versionadded:: 0.17
+           *scale_* attribute.
 
     See also
     --------
@@ -984,10 +1012,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
         if sparse.issparse(X):
             if self.with_scaling:
-                if X.shape[0] == 1:
-                    inplace_row_scale(X, 1.0 / self.scale_)
-                elif self.axis == 0:
-                    inplace_column_scale(X, 1.0 / self.scale_)
+                inplace_column_scale(X, 1.0 / self.scale_)
         else:
             if self.with_centering:
                 X -= self.center_
@@ -1013,10 +1038,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
         if sparse.issparse(X):
             if self.with_scaling:
-                if X.shape[0] == 1:
-                    inplace_row_scale(X, self.scale_)
-                else:
-                    inplace_column_scale(X, self.scale_)
+                inplace_column_scale(X, self.scale_)
         else:
             if self.with_scaling:
                 X *= self.scale_
@@ -1816,7 +1838,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                  "unknown got %s" % self.handle_unknown)
             if self.handle_unknown == 'error':
                 raise ValueError("unknown categorical feature present %s "
-                                 "during transform." % X[~mask])
+                                 "during transform." % X.ravel()[~mask])
 
         column_indices = (X + indices[:-1]).ravel()[mask]
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),

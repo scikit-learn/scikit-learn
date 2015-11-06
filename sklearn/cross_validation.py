@@ -24,7 +24,7 @@ import scipy.sparse as sp
 from .base import is_classifier, clone
 from .utils import indexable, check_random_state, safe_indexing
 from .utils.validation import (_is_arraylike, _num_samples,
-                               column_or_1d)
+                               check_array, column_or_1d)
 from .utils.multiclass import type_of_target
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
@@ -350,6 +350,8 @@ class LabelKFold(_BaseKFold):
 
     The folds are approximately balanced in the sense that the number of
     distinct labels is approximately the same in each fold.
+
+    .. versionadded:: 0.17
 
     Parameters
     ----------
@@ -1077,7 +1079,7 @@ class PredefinedSplit(_PartitionIterator):
 
 
 class LabelShuffleSplit(ShuffleSplit):
-    '''Shuffle-Labels-Out cross-validation iterator
+    """Shuffle-Labels-Out cross-validation iterator
 
     Provides randomized train/test indices to split data according to a
     third-party provided label. This label information can be used to encode
@@ -1098,13 +1100,15 @@ class LabelShuffleSplit(ShuffleSplit):
     Note: The parameters ``test_size`` and ``train_size`` refer to labels, and
     not to samples, as in ShuffleSplit.
 
+    .. versionadded:: 0.17
+
     Parameters
     ----------
     labels :  array, [n_samples]
         Labels of samples
 
     n_iter : int (default 5)
-        Number of re-shuffling & splitting iterations.
+        Number of re-shuffling and splitting iterations.
 
     test_size : float (default 0.2), int, or None
         If float, should be between 0.0 and 1.0 and represent the
@@ -1120,7 +1124,8 @@ class LabelShuffleSplit(ShuffleSplit):
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
-    '''
+
+    """
     def __init__(self, labels, n_iter=5, test_size=0.2, train_size=None,
                  random_state=None):
 
@@ -1194,10 +1199,11 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`StratifiedKFold` used. If the estimator is a classifier
@@ -1368,10 +1374,11 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`StratifiedKFold` used. If the estimator is a classifier
@@ -1632,10 +1639,11 @@ def check_cv(cv, X=None, y=None, classifier=False):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`StratifiedKFold` used. If the estimator is a classifier
@@ -1705,10 +1713,11 @@ def permutation_test_score(estimator, X, y, cv=None,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`StratifiedKFold` used. If the estimator is a classifier
@@ -1792,9 +1801,13 @@ def train_test_split(*arrays, **options):
 
     Parameters
     ----------
-    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
-        Python lists or tuples occurring in arrays are converted to 1D numpy
-        arrays.
+    *arrays : sequence of indexables with same length / shape[0]
+
+        allowed inputs are lists, numpy arrays, scipy-sparse
+        matrices or pandas dataframes.
+
+        .. versionadded:: 0.16
+            preserves input type instead of always casting to numpy array.
 
     test_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
@@ -1816,10 +1829,16 @@ def train_test_split(*arrays, **options):
         If not None, data is split in a stratified fashion, using this as
         the labels array.
 
+        .. versionadded:: 0.17
+           *stratify* splitting
+
     Returns
     -------
-    splitting : list of arrays, length=2 * len(arrays)
-        List containing train-test split of input array.
+    splitting : list, length = 2 * len(arrays),
+        List containing train-test split of inputs.
+
+        .. versionadded:: 0.16
+            Output type is the same as the input type.
 
     Examples
     --------
@@ -1858,10 +1877,29 @@ def train_test_split(*arrays, **options):
     test_size = options.pop('test_size', None)
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
+    dtype = options.pop('dtype', None)
+    if dtype is not None:
+        warnings.warn("dtype option is ignored and will be removed in 0.18.",
+                      DeprecationWarning)
+
+    allow_nd = options.pop('allow_nd', None)
+    allow_lists = options.pop('allow_lists', None)
     stratify = options.pop('stratify', None)
+
+    if allow_lists is not None:
+        warnings.warn("The allow_lists option is deprecated and will be "
+                      "assumed True in 0.18 and removed.", DeprecationWarning)
 
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
+    if allow_nd is not None:
+        warnings.warn("The allow_nd option is deprecated and will be "
+                      "assumed True in 0.18 and removed.", DeprecationWarning)
+    if allow_lists is False or allow_nd is False:
+        arrays = [check_array(x, 'csr', allow_nd=allow_nd,
+                              force_all_finite=False, ensure_2d=False)
+                  if x is not None else x
+                  for x in arrays]
 
     if test_size is None and train_size is None:
         test_size = 0.25

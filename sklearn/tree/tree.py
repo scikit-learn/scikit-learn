@@ -110,7 +110,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.tree_ = None
         self.max_features_ = None
 
-    def fit(self, X, y, sample_weight=None, check_input=True, 
+    def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
         """Build a decision tree from the training set (X, y).
 
@@ -286,7 +286,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         min_samples_split = max(self.min_samples_split,
                                 2 * self.min_samples_leaf)
 
-
         presort = self.presort
         # Allow presort to be 'auto', which means True if the dataset is dense,
         # otherwise it will be False.
@@ -294,12 +293,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             presort = False
         elif self.presort == 'auto':
             presort = True
-        
-        if presort == True and issparse(X):
+
+        if presort is True and issparse(X):
             raise ValueError("Presorting is not supported for sparse matrices.")
 
         # If multiple trees are built on the same dataset, we only want to
-        # presort once. Splitters now can accept presorted indices if desired, 
+        # presort once. Splitters now can accept presorted indices if desired,
         # but do not handle any presorting themselves. Ensemble algorithms which
         # desire presorting must do presorting themselves and pass that matrix
         # into each tree.
@@ -310,7 +309,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         if presort and X_idx_sorted.shape != X.shape:
             raise ValueError("The shape of X (X.shape = {}) doesn't match "
                              "the shape of X_idx_sorted (X_idx_sorted"
-                             ".shape = {})".format(X.shape, 
+                             ".shape = {})".format(X.shape,
                                                    X_idx_sorted.shape))
 
         # Build tree
@@ -433,6 +432,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         Returns the index of the leaf that each sample is predicted as.
 
+        .. versionadded:: 0.17
+
         Parameters
         ----------
         X : array_like or sparse matrix, shape = [n_samples, n_features]
@@ -531,8 +532,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
-    class_weight : dict, list of dicts, "balanced" or None, optional
-                   (default=None)
+    class_weight : dict, list of dicts, "balanced" or None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
