@@ -19,6 +19,7 @@ from ._criterion cimport Criterion
 
 from libc.stdlib cimport free
 from libc.stdlib cimport qsort
+from libc.stdlib cimport calloc
 from libc.string cimport memcpy
 from libc.string cimport memset
 
@@ -43,13 +44,19 @@ cdef DTYPE_t FEATURE_THRESHOLD = 1e-7
 # in SparseSplitter
 cdef DTYPE_t EXTRACT_NNZ_SWITCH = 0.1
 
-cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) nogil:
-    self.impurity_left = INFINITY
-    self.impurity_right = INFINITY
-    self.pos = start_pos
-    self.feature = 0
-    self.threshold = 0.
-    self.improvement = -INFINITY
+cdef inline void _init_split(SplitRecord* split, SIZE_t start_pos, SIZE_t n) nogil:
+    split.feature = 0
+    split.threshold = 0.
+    split.pos = start_pos
+    split.improvement = -INFINITY
+    split.impurity_left = INFINITY
+    split.impurity_right = INFINITY
+    split.weighted_n_left = 0.
+    split.weighted_n_right = 0.
+    split.sum_left = <double*> calloc(n, sizeof(double))
+    split.sum_right = <double*> calloc(n, sizeof(double))
+    split.sq_sum_left = 0.
+    split.sq_sum_right = 0.
 
 cdef class Splitter:
     """Abstract splitter class.
@@ -116,11 +123,11 @@ cdef class Splitter:
     def __setstate__(self, d):
         pass
 
-    cdef void init(self,
-                   object X,
+    cdef void init(self, object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except *:
+                   DOUBLE_t* sample_weight, np.ndarray X_idx_sorted,
+                   SIZE_t* n_samples_total, double* weighted_n_samples_total, 
+                   double** sum_total, double* sq_sum_total, double* impurity):
         """Initialize the splitter.
 
         Take in the input data X, the target Y, and optional sample weights.
@@ -137,6 +144,29 @@ cdef class Splitter:
             The weights of the samples, where higher weighted samples are fit
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight.
+
+        X_idx_sorted: numpy.ndarray, dtype=SIZE_T (optional)
+            The presorting of the X array. This is only done for gradient
+            boosting, where presorting can lead to speed gains.
+
+        n_samples_total: ptr, dtype=SIZE_t
+            The total number of samples covered in this split. This is to be
+            filled out by this method.
+
+        weighted_n_samples_total: ptr, dtype=double
+            The sum of the weights of the samples covered in this split. This is
+            to be filled out by this method.
+
+        sum_total: ptr, dtype=double
+            The total summed summary statistic for the split. On classification
+            problems this is the total number of each class in in this region.
+            This is to be filled out by this method.
+
+        sq_sum_total: ptr, dtype=double
+            The sum of squares. For regression problems, this is just the sum
+            of the y vector squared over the region of interest. This is not
+            used in classification problems. This is to be filled out by this
+            method.
         """
 
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
@@ -146,9 +176,9 @@ cdef class Splitter:
         # samples from the feature of interest
         cdef SIZE_t* samples = safe_realloc(&self.samples, n_samples)
 
-        cdef SIZE_t i, j
+        cdef SIZE_t i
+        cdef SIZE_t j = 0
         cdef double weighted_n_samples = 0.0
-        j = 0
 
         for i in range(n_samples):
             # Only work with positively weighted samples
@@ -181,8 +211,27 @@ cdef class Splitter:
 
         self.sample_weight = sample_weight
 
-    cdef void node_reset(self, SIZE_t start, SIZE_t end,
-                         double* weighted_n_node_samples) nogil:
+        n_samples_total[0] = j
+        weighted_n_samples_total[0] = weighted_n_samples
+
+        self.start = 0
+        self.end = j
+
+        self.criterion.init(self.y,
+                            self.y_stride,
+                            self.sample_weight,
+                            self.weighted_n_samples,
+                            self.samples,
+                            self.start,
+                            self.end)
+
+        sum_total[0] = self.criterion.sum_total
+        sq_sum_total[0] = self.criterion.sq_sum_total
+        impurity[0] = self.criterion.node_impurity()
+
+    cdef void node_reset(self, SIZE_t start, SIZE_t end, 
+                         double weighted_n_node_samples, 
+                         double* sum_total, double sq_sum_total) nogil:
         """Reset splitter on node samples[start:end].
 
         Parameters
@@ -191,22 +240,25 @@ cdef class Splitter:
             The index of the first sample to consider
         end: SIZE_t
             The index of the last sample to consider
-        weighted_n_node_samples: numpy.ndarray, dtype=double pointer
+        weighted_n_node_samples: double
             The total weight of those samples
+        sum_total: double ptr
+            The sum of the summary statistic over all points.
+        sq_sum_total: double
+            The sum of squares of the summary statistic over all points.
+            Only relevant for regression problems.
         """
 
         self.start = start
         self.end = end
 
-        self.criterion.init(self.y,
-                            self.y_stride,
-                            self.sample_weight,
-                            self.weighted_n_samples,
-                            self.samples,
-                            start,
-                            end)
-
-        weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
+        self.criterion.start = start
+        self.criterion.end = end
+        self.criterion.n_node_samples = end - start
+        self.criterion.weighted_n_node_samples = weighted_n_node_samples
+        self.criterion.sum_total = sum_total
+        self.criterion.sq_sum_total = sq_sum_total
+        self.criterion.reset()
 
     cdef void node_split(self, double impurity, SplitRecord* split,
                          SIZE_t* n_constant_features) nogil:
@@ -222,11 +274,6 @@ cdef class Splitter:
         """Copy the value of node samples[start:end] into dest."""
 
         self.criterion.node_value(dest)
-
-    cdef double node_impurity(self) nogil:
-        """Return the impurity of the current node."""
-
-        return self.criterion.node_impurity()
 
 
 cdef class BaseDenseSplitter(Splitter):
@@ -257,15 +304,16 @@ cdef class BaseDenseSplitter(Splitter):
         if self.presort == 1:
             free(self.sample_mask)
 
-    cdef void init(self,
-                   object X,
+    cdef void init(self, object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except *:
+                   DOUBLE_t* sample_weight, np.ndarray X_idx_sorted,
+                   SIZE_t* n_samples_total, double* weighted_n_samples_total, 
+                   double** sum_total, double* sq_sum_total, double* impurity):
         """Initialize the splitter."""
 
         # Call parent init
-        Splitter.init(self, X, y, sample_weight)
+        Splitter.init(self, X, y, sample_weight, X_idx_sorted, n_samples_total,
+                      weighted_n_samples_total, sum_total, sq_sum_total, impurity)
 
         # Initialize X
         cdef np.ndarray X_ndarray = X
@@ -319,9 +367,15 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef INT32_t* X_idx_sorted = self.X_idx_sorted_ptr
         cdef SIZE_t* sample_mask = self.sample_mask
 
-        cdef SplitRecord best, current
+        cdef SplitRecord best
         cdef double current_proxy_improvement = -INFINITY
-        cdef double best_proxy_improvement = -INFINITY
+        cdef SIZE_t current_feature
+        cdef SIZE_t current_pos
+
+        cdef SIZE_t n_l
+        cdef SIZE_t n_r
+        cdef double w_l
+        cdef double w_r
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j
@@ -343,7 +397,8 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
-        _init_split(&best, end)
+        cdef SIZE_t n = self.criterion.n_outputs*self.criterion.sum_stride
+        _init_split(&best, end, n)
 
         if self.presort == 1:
             for p in range(start, end):
@@ -393,8 +448,8 @@ cdef class BestSplitter(BaseDenseSplitter):
                 # f_j in the interval [n_known_constants, f_i - n_found_constants[
                 f_j += n_found_constants
                 # f_j in the interval [n_total_constants, f_i[
-                current.feature = features[f_j]
-                feature_offset = self.X_feature_stride * current.feature
+                current_feature = features[f_j]
+                feature_offset = self.X_feature_stride * current_feature
 
                 # Sort samples along that feature; either by utilizing
                 # presorting, or by copying the values into an array and
@@ -402,7 +457,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                 # effectively.
                 if self.presort == 1:
                     p = start
-                    feature_idx_offset = self.X_idx_sorted_stride * current.feature
+                    feature_idx_offset = self.X_idx_sorted_stride * current_feature
 
                     for i in range(self.n_total_samples): 
                         j = X_idx_sorted[i + feature_idx_offset]
@@ -418,7 +473,7 @@ cdef class BestSplitter(BaseDenseSplitter):
 
                 if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
                     features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = current.feature
+                    features[n_total_constants] = current_feature
 
                     n_found_constants += 1
                     n_total_constants += 1
@@ -429,44 +484,38 @@ cdef class BestSplitter(BaseDenseSplitter):
 
                     # Evaluate all splits
                     self.criterion.reset()
-                    p = start
+                    for p in range(start, end-1):
+                        if Xf[p+1] <= Xf[p] + FEATURE_THRESHOLD:
+                            continue
 
-                    while p < end:
-                        while (p + 1 < end and
-                               Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
-                            p += 1
+                        current_pos = p + 1
 
-                        # (p + 1 >= end) or (X[samples[p + 1], current.feature] >
-                        #                    X[samples[p], current.feature])
-                        p += 1
-                        # (p >= end) or (X[samples[p], current.feature] >
-                        #                X[samples[p - 1], current.feature])
+                        # Reject if min_samples_leaf is not guaranteed
+                        n_l = current_pos - start
+                        n_r = end - current_pos
+                        if n_l < min_samples_leaf or n_r < min_samples_leaf:
+                            continue
 
-                        if p < end:
-                            current.pos = p
+                        self.criterion.update(current_pos)
 
-                            # Reject if min_samples_leaf is not guaranteed
-                            if (((current.pos - start) < min_samples_leaf) or
-                                    ((end - current.pos) < min_samples_leaf)):
-                                continue
+                        # Reject if min_weight_leaf is not satisfied
+                        w_l = self.criterion.weighted_n_left
+                        w_r = self.criterion.weighted_n_right
+                        if w_l < min_weight_leaf or w_r < min_weight_leaf:
+                            continue
 
-                            self.criterion.update(current.pos)
-
-                            # Reject if min_weight_leaf is not satisfied
-                            if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                                    (self.criterion.weighted_n_right < min_weight_leaf)):
-                                continue
-
-                            current_proxy_improvement = self.criterion.proxy_impurity_improvement()
-
-                            if current_proxy_improvement > best_proxy_improvement:
-                                best_proxy_improvement = current_proxy_improvement
-                                current.threshold = (Xf[p - 1] + Xf[p]) / 2.0
-
-                                if current.threshold == Xf[p]:
-                                    current.threshold = Xf[p - 1]
-
-                                best = current  # copy
+                        current_proxy_improvement = self.criterion.proxy_impurity_improvement()
+                        if current_proxy_improvement > best.improvement:
+                            best.improvement = current_proxy_improvement
+                            best.threshold = (Xf[p+1] + Xf[p]) / 2.0
+                            best.feature = current_feature
+                            best.pos = current_pos
+                            
+                            best.weighted_n_left = w_l
+                            best.weighted_n_right = w_r
+                            
+                            memcpy(best.sum_left, self.criterion.sum_left, n*sizeof(double))
+                            memcpy(best.sum_right, self.criterion.sum_right, n*sizeof(double))
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:
@@ -490,6 +539,8 @@ cdef class BestSplitter(BaseDenseSplitter):
             best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
+            best.sq_sum_left = self.criterion.sq_sum_left
+            best.sq_sum_right = self.criterion.sq_sum_right
 
         # Reset sample mask
         if self.presort == 1:
@@ -652,9 +703,12 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
 
-        cdef SplitRecord best, current
-        cdef double current_proxy_improvement = - INFINITY
-        cdef double best_proxy_improvement = - INFINITY
+        cdef SplitRecord best
+        cdef double current_proxy_improvement = -INFINITY
+
+        cdef SIZE_t current_feature
+        cdef SIZE_t current_pos
+        cdef double threshold
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j
@@ -674,7 +728,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
-        _init_split(&best, end)
+        cdef SIZE_t n = self.criterion.n_outputs*self.criterion.sum_stride
+        _init_split(&best, end, n)
 
         # Sample up to max_features without replacement using a
         # Fisher-Yates-based algorithm (using the local variables `f_i` and
@@ -720,8 +775,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
                 f_j += n_found_constants
                 # f_j in the interval [n_total_constants, f_i[
 
-                current.feature = features[f_j]
-                feature_stride = X_feature_stride * current.feature
+                current_feature = features[f_j]
+                feature_stride = X_feature_stride * current_feature
 
                 # Find min, max
                 min_feature_value = X[X_sample_stride * samples[start] + feature_stride]
@@ -739,7 +794,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
 
                 if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
                     features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = current.feature
+                    features[n_total_constants] = current_feature
 
                     n_found_constants += 1
                     n_total_constants += 1
@@ -749,19 +804,19 @@ cdef class RandomSplitter(BaseDenseSplitter):
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
                     # Draw a random threshold
-                    current.threshold = rand_uniform(min_feature_value,
+                    threshold = rand_uniform(min_feature_value,
                                                      max_feature_value,
                                                      random_state)
 
-                    if current.threshold == max_feature_value:
-                        current.threshold = min_feature_value
+                    if threshold == max_feature_value:
+                        threshold = min_feature_value
 
                     # Partition
                     partition_end = end
                     p = start
                     while p < partition_end:
                         current_feature_value = Xf[p]
-                        if current_feature_value <= current.threshold:
+                        if current_feature_value <= threshold:
                             p += 1
                         else:
                             partition_end -= 1
@@ -773,45 +828,53 @@ cdef class RandomSplitter(BaseDenseSplitter):
                             samples[partition_end] = samples[p]
                             samples[p] = tmp
 
-                    current.pos = partition_end
+                    current_pos = partition_end
 
                     # Reject if min_samples_leaf is not guaranteed
-                    if (((current.pos - start) < min_samples_leaf) or
-                            ((end - current.pos) < min_samples_leaf)):
+                    n_l = current_pos - start
+                    n_r = end - current_pos
+                    if n_l < min_samples_leaf or n_r < min_samples_leaf:
                         continue
 
                     # Evaluate split
                     self.criterion.reset()
-                    self.criterion.update(current.pos)
+                    self.criterion.update(current_pos)
 
                     # Reject if min_weight_leaf is not satisfied
-                    if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                            (self.criterion.weighted_n_right < min_weight_leaf)):
+                    w_l = self.criterion.weighted_n_left
+                    w_r = self.criterion.weighted_n_right
+                    if w_l < min_weight_leaf or w_r < min_weight_leaf:
                         continue
 
                     current_proxy_improvement = self.criterion.proxy_impurity_improvement()
-
-                    if current_proxy_improvement > best_proxy_improvement:
-                        best_proxy_improvement = current_proxy_improvement
-                        best = current  # copy
+                    if current_proxy_improvement > best.improvement:
+                        best.improvement = current_proxy_improvement
+                        best.threshold = threshold
+                        best.feature = current_feature
+                        best.pos = current_pos
+                        
+                        best.weighted_n_left = w_l
+                        best.weighted_n_right = w_r
+                        
+                        memcpy(best.sum_left, self.criterion.sum_left, n*sizeof(double))
+                        memcpy(best.sum_right, self.criterion.sum_right, n*sizeof(double))
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         feature_stride = X_feature_stride * best.feature
         if best.pos < end:
-            if current.feature != best.feature:
-                partition_end = end
-                p = start
+            partition_end = end
+            p = start
 
-                while p < partition_end:
-                    if X[X_sample_stride * samples[p] + feature_stride] <= best.threshold:
-                        p += 1
+            while p < partition_end:
+                if X[X_sample_stride * samples[p] + feature_stride] <= best.threshold:
+                    p += 1
 
-                    else:
-                        partition_end -= 1
+                else:
+                    partition_end -= 1
 
-                        tmp = samples[partition_end]
-                        samples[partition_end] = samples[p]
-                        samples[p] = tmp
+                    tmp = samples[partition_end]
+                    samples[partition_end] = samples[p]
+                    samples[p] = tmp
 
 
             self.criterion.reset()
@@ -819,6 +882,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
             best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
+            best.sq_sum_left = self.criterion.sq_sum_left
+            best.sq_sum_right = self.criterion.sq_sum_right
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
@@ -865,15 +930,16 @@ cdef class BaseSparseSplitter(Splitter):
         free(self.index_to_samples)
         free(self.sorted_samples)
 
-    cdef void init(self,
-                   object X,
+    cdef void init(self, object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except *:
+                   DOUBLE_t* sample_weight, np.ndarray X_idx_sorted,
+                   SIZE_t* n_samples_total, double* weighted_n_samples_total, 
+                   double** sum_total, double* sq_sum_total, double* impurity):
         """Initialize the splitter."""
 
         # Call parent init
-        Splitter.init(self, X, y, sample_weight)
+        Splitter.init(self, X, y, sample_weight, X_idx_sorted, n_samples_total,
+                      weighted_n_samples_total, sum_total, sq_sum_total, impurity)
 
         if not isinstance(X, csc_matrix):
             raise ValueError("X should be in csc format")
@@ -1192,10 +1258,12 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
 
-        cdef SplitRecord best, current
-        _init_split(&best, end)
-        cdef double current_proxy_improvement = - INFINITY
-        cdef double best_proxy_improvement = - INFINITY
+        cdef SplitRecord best
+        cdef SIZE_t n = self.criterion.n_outputs*self.criterion.sum_stride
+        _init_split(&best, end, n)
+
+        cdef double current_proxy_improvement = -INFINITY
+        cdef SIZE_t current_feature
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j, p, tmp
@@ -1213,6 +1281,11 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         cdef SIZE_t p_prev
         cdef bint is_samples_sorted = 0  # indicate is sorted_samples is
                                          # inititialized
+
+        cdef SIZE_t n_l
+        cdef SIZE_t n_r
+        cdef double w_l
+        cdef double w_r
 
         # We assume implicitely that end_positive = end and
         # start_negative = start
@@ -1264,8 +1337,8 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                 f_j += n_found_constants
                 # f_j in the interval [n_total_constants, f_i[
 
-                current.feature = features[f_j]
-                self.extract_nnz(current.feature,
+                current_feature = features[f_j]
+                self.extract_nnz(current_feature,
                                  &end_negative, &start_positive,
                                  &is_samples_sorted)
 
@@ -1291,7 +1364,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
                 if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
                     features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = current.feature
+                    features[n_total_constants] = current_feature
 
                     n_found_constants += 1
                     n_total_constants += 1
@@ -1328,30 +1401,32 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
 
                         if p < end:
-                            current.pos = p
-
                             # Reject if min_samples_leaf is not guaranteed
-                            if (((current.pos - start) < min_samples_leaf) or
-                                    ((end - current.pos) < min_samples_leaf)):
+                            n_l = p - start
+                            n_r = end - p
+                            if n_l < min_samples_leaf or n_r < min_samples_leaf:
                                 continue
 
-                            self.criterion.update(current.pos)
+                            self.criterion.update(p)
 
                             # Reject if min_weight_leaf is not satisfied
-                            if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                                    (self.criterion.weighted_n_right < min_weight_leaf)):
+                            w_l = self.criterion.weighted_n_left
+                            w_r = self.criterion.weighted_n_right
+                            if w_l < min_weight_leaf or w_r < min_weight_leaf:
                                 continue
 
                             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
-
-                            if current_proxy_improvement > best_proxy_improvement:
-                                best_proxy_improvement = current_proxy_improvement
-
-                                current.threshold = (Xf[p_prev] + Xf[p]) / 2.0
-                                if current.threshold == Xf[p]:
-                                    current.threshold = Xf[p_prev]
-
-                                best = current
+                            if current_proxy_improvement > best.improvement:
+                                best.improvement = current_proxy_improvement
+                                best.threshold = (Xf[p_prev] + Xf[p]) / 2.0
+                                best.feature = current_feature
+                                best.pos = p
+                                
+                                best.weighted_n_left = w_l
+                                best.weighted_n_right = w_r
+                                
+                                memcpy(best.sum_left, self.criterion.sum_left, n*sizeof(double))
+                                memcpy(best.sum_right, self.criterion.sum_right, n*sizeof(double))
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:
@@ -1366,6 +1441,8 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
             best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
+            best.sq_sum_left = self.criterion.sq_sum_left
+            best.sq_sum_right = self.criterion.sq_sum_right
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
@@ -1419,12 +1496,15 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
 
-        cdef SplitRecord best, current
-        _init_split(&best, end)
-        cdef double current_proxy_improvement = - INFINITY
-        cdef double best_proxy_improvement = - INFINITY
+        cdef SplitRecord best
+        cdef SIZE_t n = self.criterion.n_outputs*self.criterion.sum_stride
+        _init_split(&best, end, n)
 
+        cdef double threshold
+
+        cdef double current_proxy_improvement = -INFINITY
         cdef DTYPE_t current_feature_value
+        cdef SIZE_t current_feature
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j, p, tmp
@@ -1443,6 +1523,11 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 
         cdef bint is_samples_sorted = 0  # indicate that sorted_samples is
                                          # inititialized
+
+        cdef SIZE_t n_l
+        cdef SIZE_t n_r
+        cdef double w_l
+        cdef double w_r
 
         # We assume implicitely that end_positive = end and
         # start_negative = start
@@ -1494,9 +1579,9 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                 f_j += n_found_constants
                 # f_j in the interval [n_total_constants, f_i[
 
-                current.feature = features[f_j]
+                current_feature = features[f_j]
 
-                self.extract_nnz(current.feature,
+                self.extract_nnz(current_feature,
                                  &end_negative, &start_positive,
                                  &is_samples_sorted)
 
@@ -1532,7 +1617,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 
                 if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
                     features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = current.feature
+                    features[n_total_constants] = current_feature
 
                     n_found_constants += 1
                     n_total_constants += 1
@@ -1542,58 +1627,61 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
                     # Draw a random threshold
-                    current.threshold = rand_uniform(min_feature_value,
-                                                     max_feature_value,
-                                                     random_state)
-
-                    if current.threshold == max_feature_value:
-                        current.threshold = min_feature_value
+                    threshold = rand_uniform(min_feature_value,
+                                             max_feature_value,
+                                             random_state)
 
                     # Partition
-                    current.pos = self._partition(current.threshold,
-                                                  end_negative,
-                                                  start_positive,
-                                                  start_positive +
-                                                  (Xf[start_positive] == 0.))
+                    p = self._partition(threshold,
+                                        end_negative,
+                                        start_positive,
+                                        start_positive +
+                                        (Xf[start_positive] == 0.))
 
                     # Reject if min_samples_leaf is not guaranteed
-                    if (((current.pos - start) < min_samples_leaf) or
-                            ((end - current.pos) < min_samples_leaf)):
+                    n_l = p - start
+                    n_r = end - p
+                    if n_l < min_samples_leaf or n_r < min_samples_leaf:
                         continue
 
                     # Evaluate split
                     self.criterion.reset()
-                    self.criterion.update(current.pos)
+                    self.criterion.update(p)
 
                     # Reject if min_weight_leaf is not satisfied
-                    if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                            (self.criterion.weighted_n_right < min_weight_leaf)):
+                    w_l = self.criterion.weighted_n_left
+                    w_r = self.criterion.weighted_n_right
+                    if w_l < min_weight_leaf or w_r < min_weight_leaf:
                         continue
 
                     current_proxy_improvement = self.criterion.proxy_impurity_improvement()
-
-                    if current_proxy_improvement > best_proxy_improvement:
-                        best_proxy_improvement = current_proxy_improvement
-                        current.improvement = self.criterion.impurity_improvement(impurity)
-
-                        self.criterion.children_impurity(&current.impurity_left,
-                                                         &current.impurity_right)
-                        best = current
+                    if current_proxy_improvement > best.improvement:
+                        best.improvement = current_proxy_improvement
+                        best.threshold = threshold
+                        best.feature = current_feature
+                        best.pos = p
+                        
+                        best.weighted_n_left = w_l
+                        best.weighted_n_right = w_r
+                        
+                        memcpy(best.sum_left, self.criterion.sum_left, n*sizeof(double))
+                        memcpy(best.sum_right, self.criterion.sum_right, n*sizeof(double))
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:
-            if current.feature != best.feature:
-                self.extract_nnz(best.feature, &end_negative, &start_positive,
-                                 &is_samples_sorted)
+            self.extract_nnz(best.feature, &end_negative, &start_positive,
+                             &is_samples_sorted)
 
-                self._partition(best.threshold, end_negative, start_positive,
-                                best.pos)
+            self._partition(best.threshold, end_negative, start_positive,
+                            best.pos)
 
-            self.criterion.reset()
-            self.criterion.update(best.pos)
-            best.improvement = self.criterion.impurity_improvement(impurity)
-            self.criterion.children_impurity(&best.impurity_left,
-                                             &best.impurity_right)
+        self.criterion.reset()
+        self.criterion.update(best.pos)
+        best.improvement = self.criterion.impurity_improvement(impurity)
+        self.criterion.children_impurity(&best.impurity_left,
+                                         &best.impurity_right)
+        best.sq_sum_left = self.criterion.sq_sum_left
+        best.sq_sum_right = self.criterion.sq_sum_right
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling

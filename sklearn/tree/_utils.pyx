@@ -117,7 +117,8 @@ cdef class Stack:
         return self.top <= 0
 
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
-                  bint is_left, double impurity,
+                  bint is_left, double impurity, double weighted_n_node_samples,
+                  double* sum_total, double sq_sum_total, 
                   SIZE_t n_constant_features) nogil:
         """Push a new element onto the stack.
 
@@ -143,6 +144,9 @@ cdef class Stack:
         stack[top].parent = parent
         stack[top].is_left = is_left
         stack[top].impurity = impurity
+        stack[top].weighted_n_node_samples = weighted_n_node_samples
+        stack[top].sum_total = sum_total
+        stack[top].sq_sum_total = sq_sum_total
         stack[top].n_constant_features = n_constant_features
 
         # Increment stack pointer
@@ -241,7 +245,10 @@ cdef class PriorityHeap:
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
                   SIZE_t depth, bint is_leaf, double improvement,
                   double impurity, double impurity_left,
-                  double impurity_right) nogil:
+                  double impurity_right, double weighted_n_left,
+                  double weighted_n_right, double* sum_left,
+                  double* sum_right, double sq_sum_left,
+                  double sq_sum_right) nogil:
         """Push record on the priority heap.
 
         Returns 0 if successful; -1 on out of memory error.
@@ -271,13 +278,19 @@ cdef class PriorityHeap:
         heap[heap_ptr].impurity = impurity
         heap[heap_ptr].impurity_left = impurity_left
         heap[heap_ptr].impurity_right = impurity_right
+        heap[heap_ptr].weighted_n_left = weighted_n_left
+        heap[heap_ptr].weighted_n_right = weighted_n_right
+        heap[heap_ptr].sum_left = sum_left
+        heap[heap_ptr].sum_right = sum_right
+        heap[heap_ptr].sq_sum_left = sq_sum_left
+        heap[heap_ptr].sq_sum_right = sq_sum_right
         heap[heap_ptr].improvement = improvement
 
         # Heapify up
         heapify_up(heap, heap_ptr)
 
         # Increase element count
-        self.heap_ptr = heap_ptr + 1
+        self.heap_ptr = heap_ptr + 1 
         return 0
 
     cdef int pop(self, PriorityHeapRecord* res) nogil:
