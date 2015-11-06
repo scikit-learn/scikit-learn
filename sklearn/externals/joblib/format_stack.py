@@ -284,6 +284,7 @@ def format_records(records):   # , print_globals=False):
                   "The following traceback may be corrupted or invalid\n"
                   "The error message is: %s\n" % (file, msg))
             print(_m)
+            raise msg
 
         # prune names list of duplicates, but keep the right order
         unique_names = uniq_stable(names)

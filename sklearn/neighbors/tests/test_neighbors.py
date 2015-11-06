@@ -776,7 +776,7 @@ def test_kneighbors_graph():
     X = np.array([[0, 1], [1.01, 1.], [2, 0]])
 
     # n_neighbors = 1
-    A = neighbors.kneighbors_graph(X, 1, mode='connectivity')
+    A = neighbors.kneighbors_graph(X, 1, mode='connectivity', include_self=True)
     assert_array_equal(A.toarray(), np.eye(A.shape[0]))
 
     A = neighbors.kneighbors_graph(X, 1, mode='distance')
@@ -787,7 +787,7 @@ def test_kneighbors_graph():
          [0.00, 1.40716026, 0.]])
 
     # n_neighbors = 2
-    A = neighbors.kneighbors_graph(X, 2, mode='connectivity')
+    A = neighbors.kneighbors_graph(X, 2, mode='connectivity', include_self=True)
     assert_array_equal(
         A.toarray(),
         [[1., 1., 0.],
@@ -802,7 +802,7 @@ def test_kneighbors_graph():
          [2.23606798, 1.40716026, 0.]])
 
     # n_neighbors = 3
-    A = neighbors.kneighbors_graph(X, 3, mode='connectivity')
+    A = neighbors.kneighbors_graph(X, 3, mode='connectivity', include_self=True)
     assert_array_almost_equal(
         A.toarray(),
         [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
@@ -830,7 +830,8 @@ def test_radius_neighbors_graph():
     # Test radius_neighbors_graph to build the Nearest Neighbor graph.
     X = np.array([[0, 1], [1.01, 1.], [2, 0]])
 
-    A = neighbors.radius_neighbors_graph(X, 1.5, mode='connectivity')
+    A = neighbors.radius_neighbors_graph(X, 1.5, mode='connectivity',
+                                         include_self=True)
     assert_array_equal(
         A.toarray(),
         [[1., 1., 0.],
@@ -976,8 +977,6 @@ def test_callable_metric():
 
 
 def test_metric_params_interface():
-    assert_warns(DeprecationWarning, neighbors.KNeighborsClassifier,
-                 metric='wminkowski', w=np.ones(10))
     assert_warns(SyntaxWarning, neighbors.KNeighborsClassifier,
                  metric_params={'p': 3})
 
@@ -1005,14 +1004,16 @@ def test_non_euclidean_kneighbors():
     # Test kneighbors_graph
     for metric in ['manhattan', 'chebyshev']:
         nbrs_graph = neighbors.kneighbors_graph(
-            X, 3, metric=metric).toarray()
+            X, 3, metric=metric, mode='connectivity',
+            include_self=True).toarray()
         nbrs1 = neighbors.NearestNeighbors(3, metric=metric).fit(X)
         assert_array_equal(nbrs_graph, nbrs1.kneighbors_graph(X).toarray())
 
     # Test radiusneighbors_graph
     for metric in ['manhattan', 'chebyshev']:
         nbrs_graph = neighbors.radius_neighbors_graph(
-            X, radius, metric=metric).toarray()
+            X, radius, metric=metric, mode='connectivity',
+            include_self=True).toarray()
         nbrs1 = neighbors.NearestNeighbors(metric=metric, radius=radius).fit(X)
         assert_array_equal(nbrs_graph, nbrs1.radius_neighbors_graph(X).A)
 
