@@ -1,3 +1,11 @@
+scikit-learn (0.17.0-1) unstable; urgency=medium
+
+  * Fresh upstream release
+    - should address FTBFS on 32bit and other platforms due to failing
+      tests
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 05 Nov 2015 20:47:00 -0500
+
 scikit-learn (0.17.0~b1+git14-g4e6829c-1) unstable; urgency=medium
 
   * Fresh beta release + post-release fixes -- test build
