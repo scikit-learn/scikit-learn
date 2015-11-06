@@ -1,4 +1,4 @@
-# Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>
+# Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>, Pascal van Kooten
 # License: BSD 3 clause
 
 import warnings
@@ -82,6 +82,8 @@ class Imputer(BaseEstimator, TransformerMixin):
           the axis.
         - If "most_frequent", then replace missing using the most frequent
           value along the axis.
+        - If "random", then replace missing using a random non-missing
+          value along the axis.
 
     axis : integer, optional (default=0)
         The axis along which to impute.
@@ -115,6 +117,7 @@ class Imputer(BaseEstimator, TransformerMixin):
       not possible to fill in the missing values (e.g., because they only
       contain missing values).
     """
+
     def __init__(self, missing_values="NaN", strategy="mean",
                  axis=0, verbose=0, copy=True):
         self.missing_values = missing_values
@@ -138,7 +141,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             Returns self.
         """
         # Check parameters
-        allowed_strategies = ["mean", "median", "most_frequent"]
+        allowed_strategies = ["mean", "median", "most_frequent", "random"]
         if self.strategy not in allowed_strategies:
             raise ValueError("Can only use these strategies: {0} "
                              " got strategy={1}".format(allowed_strategies,
@@ -248,6 +251,14 @@ class Imputer(BaseEstimator, TransformerMixin):
 
                 return most_frequent
 
+            elif strategy == "random":
+                random = np.empty(len(columns))
+
+                for i, column in enumerate(columns):
+                    random[i] = np.random.choice(column)
+
+                return random
+
     def _dense_fit(self, X, strategy, missing_values, axis):
         """Fit the transformer on dense data."""
         X = check_array(X, force_all_finite=False)
@@ -298,6 +309,20 @@ class Imputer(BaseEstimator, TransformerMixin):
                 most_frequent[i] = _most_frequent(row, np.nan, 0)
 
             return most_frequent
+
+        elif strategy == "random":
+            if axis == 0:
+                X = X.transpose()
+                mask = mask.transpose()
+
+            random = np.empty(X.shape[0])
+
+            for i, (row, row_mask) in enumerate(zip(X[:], mask[:])):
+                row_mask = np.logical_not(row_mask).astype(np.bool)
+                row = row[row_mask]
+                random[i] = np.random.choice(row)
+
+            return random
 
     def transform(self, X):
         """Impute all missing values in X.
