@@ -17,7 +17,6 @@ from .externals.six.moves import map, range, zip
 from .utils import check_array
 from .tree._tree import DTYPE
 
-from .base import ClassifierMixin, RegressorMixin
 from .ensemble._gradient_boosting import _partial_dependence_tree
 from .ensemble.gradient_boosting import BaseGradientBoosting
 from .ensemble.forest import ForestRegressor
@@ -74,7 +73,7 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     return cartesian(axes), axes
 
 
-def _exact_partial_dependence(est, target_variables, grid, X):
+def _exact_partial_dependence(est, target_variables, grid, X, ouput=None):
     """Calculate the partial dependence of ``target_variables``.
 
     The function will be calculated by calling the ``predict_proba`` method of
@@ -94,6 +93,8 @@ def _exact_partial_dependence(est, target_variables, grid, X):
         must be specified).
     X : array-like, shape=(n_samples, n_features)
         The data on which ``est`` was trained.
+    output : int, optional (default=None)
+        The output index to use for multi-output estimators.
 
     Returns
     -------
@@ -107,13 +108,13 @@ def _exact_partial_dependence(est, target_variables, grid, X):
         X_eval = X.copy()
         for i, variable in enumerate(target_variables):
             X_eval[:, variable] = np.repeat(grid[row, i], n_samples)
-        if isinstance(est, RegressorMixin):
+        if est._estimator_type == 'regressor':
             try:
                 pdp.append(np.mean(est.predict(X_eval)))
             except:
                 raise ValueError('Call %s.fit before partial_dependence' %
                                  est.__class__.__name__)
-        elif isinstance(est, ClassifierMixin):
+        elif est._estimator_type == 'classifier':
             try:
                 pdp_row = est.predict_proba(X_eval)
             except:
@@ -136,7 +137,7 @@ def _exact_partial_dependence(est, target_variables, grid, X):
     return pdp
 
 
-def _estimated_partial_dependence(est, target_variables, grid, X):
+def _estimated_partial_dependence(est, target_variables, grid, X, ouput=None):
     """Calculate the partial dependence of ``target_variables``.
 
     The function will be calculated by calling the ``predict_proba`` method of
@@ -156,6 +157,8 @@ def _estimated_partial_dependence(est, target_variables, grid, X):
         must be specified).
     X : array-like, shape=(n_samples, n_features)
         The data on which ``est`` was trained.
+    output : int, optional (default=None)
+        The output index to use for multi-output estimators.
 
     Returns
     -------
@@ -167,14 +170,14 @@ def _estimated_partial_dependence(est, target_variables, grid, X):
     X_eval = np.tile(X.mean(0), [n_samples, 1])
     for i, variable in enumerate(target_variables):
         X_eval[:, variable] = grid[:, i]
-    if isinstance(est, RegressorMixin):
+    if est._estimator_type == 'regressor':
         try:
             pdp = est.predict(X_eval)
         except:
             raise ValueError('Call %s.fit before partial_dependence' %
                              est.__class__.__name__)
         pdp = pdp[np.newaxis]
-    elif isinstance(est, ClassifierMixin):
+    elif est._estimator_type == 'classifier':
         try:
             pdp = est.predict_proba(X_eval)
         except:
@@ -191,7 +194,7 @@ def _estimated_partial_dependence(est, target_variables, grid, X):
     return pdp
 
 
-def partial_dependence(est, target_variables, grid=None, X=None,
+def partial_dependence(est, target_variables, grid=None, X=None, output=None,
                        percentiles=(0.05, 0.95), grid_resolution=100,
                        method=None):
     """Partial dependence of ``target_variables``.
@@ -218,6 +221,8 @@ def partial_dependence(est, target_variables, grid=None, X=None,
         a ``grid`` for the ``target_variables``. The ``grid`` comprises
         ``grid_resolution`` equally spaced points between the two
         ``percentiles``.
+    output : int, optional (default=None)
+        The output index to use for multi-output estimators.
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used create the extreme values
         for the ``grid``. Only if ``X`` is not None.
@@ -269,11 +274,12 @@ def partial_dependence(est, target_variables, grid=None, X=None,
         raise ValueError('est has to be an instance of BaseGradientBoosting or'
                          ' ForestRegressor for the "recursion" method. Try '
                          'using method="exact" or "estimated".')
-    if (method != 'recursion' and
-            not hasattr(est, 'predict_proba') and
-            isinstance(est, ClassifierMixin)):
+    if (not hasattr(est, '_estimator_type') or
+            est._estimator_type not in ('classifier', 'regressor')):
+        raise ValueError('est must be a fitted regressor or classifier model.')
+    if method != 'recursion' and est._estimator_type == 'classifier':
         raise ValueError('est requires a predict_proba method for '
-                         'method="exact" or "estimated".')
+                         'method="exact" or "estimated" for classification.')
     if method == 'recursion':
         if len(est.estimators_) == 0:
             raise ValueError('Call %s.fit before partial_dependence' %
