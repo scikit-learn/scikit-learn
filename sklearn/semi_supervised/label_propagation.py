@@ -139,9 +139,15 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                                                     mode='connectivity')
             else:
                 return self.nn_fit.kneighbors(y, return_distance=False)
+        elif callable(self.kernel):
+            if y is None:
+                return self.kernel(X, X)
+            else:
+                return self.kernel(X, y)
         else:
             raise ValueError("%s is not a valid kernel. Only rbf and knn"
-                             " are supported at this time" % self.kernel)
+                             " or an explicit function "
+                             " are supported at this time." % self.kernel)
 
     @abstractmethod
     def _build_graph(self):
@@ -280,8 +286,9 @@ class LabelPropagation(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf'}
-        String identifier for kernel function to use.
+    kernel : {'knn', 'rbf', function}
+        String identifier for kernel function to use or the kernel function to calculate
+        the [n_samples, n_samples] sized weight matrix.
         Only 'rbf' and 'knn' kernels are currently supported..
 
     gamma : float
