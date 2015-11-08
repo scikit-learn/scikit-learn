@@ -601,7 +601,11 @@ References
 ----------
 
     * `[RW2006]
-      <http://www.gaussianprocess.org/gpml/chapters/>`_ **Gaussian Processes for Machine Learning**, Carl Eduard Rasmussen and Christopher K.I. Williams, MIT Press 2006. Link to an official complete PDF version of the book `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ . 
+      <http://www.gaussianprocess.org/gpml/chapters/>`_ 
+      **Gaussian Processes for Machine Learning**, 
+      Carl Eduard Rasmussen and Christopher K.I. Williams, MIT Press 2006. 
+      Link to an official complete PDF version of the book 
+      `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ . 
 
 .. currentmodule:: sklearn.gaussian_process
 
