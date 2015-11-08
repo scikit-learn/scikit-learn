@@ -1704,7 +1704,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> enc.n_values_
     array([2, 5, 4])
     >>> enc.feature_indices_
-    array([0, 2, 7, 11])
+    array([ 0,  2,  7, 11])
     >>> enc.active_features_
     array([ 0,  1,  2,  3,  6,  7,  8,  9, 10])
     >>> enc.transform([[0, 0, 3], \
