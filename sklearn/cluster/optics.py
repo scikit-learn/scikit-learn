@@ -3,7 +3,7 @@
 #                                              #
 # Authors:                                     #
 #     Shane Grigsby <refuge@rocktalus.com      #
-#     Amy X. Zhang <amy.xian.zhang@gmail.com>  #
+#     Amy X. Zhang <axz@mit.edu>               #
 #     Sean Freeman                             #
 # Date:             May  2013                  #
 # Updated:          Nov  2014                  #
@@ -65,14 +65,18 @@ def _prep_optics(self, epsilon, min_samples):
     self._nneighbors = self.query_radius(self.data, r=epsilon,
                                          count_only=True)
 
-    # Only core distance lookups for points capable of being core
-    mask_idx = self._nneighbors >= min_samples
-    core_query = self.get_arrays()[0][mask_idx]
-    # Check to see if that there is at least one cluster
-    if len(core_query) >= 1:
-        core_dist = self.query(core_query, k=min_samples)[0][:, -1]
-        self.core_dists_[mask_idx] = core_dist
+    # Depreciated-- not a significant savings; mass lookup of all points
+    # is cleaner, and allows for filter function
+    ## Only core distance lookups for points capable of being core
+    # mask_idx = self._nneighbors >= min_samples
+    # core_query = self.get_arrays()[0][mask_idx]
+    ## Check to see if that there is at least one cluster
+    # if len(core_query) >= 1:
+    #     core_dist = self.query(core_query, k=min_samples)[0][:, -1]
+    #     self.core_dists_[mask_idx] = core_dist
 
+    self.core_dists_[:] = self.query(self.get_arrays()[0], 
+                                     k=min_samples)[0][:, -1]
 
 # Main OPTICS loop #
 
@@ -229,9 +233,28 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.processed = True
         return self  # self.core_sample_indices_, self.labels_
 
-    def extract(self, epsilon_prime, clustering='auto',
-                significant_ratio=0.75, similarity_ratio=0.4, 
-                min_reach_ratio=0.1):
+    def filter(self, epsilon_prime):
+        """Density based filter function
+        Returns indexes of points that will be core at given epsilon.
+        Can be run before 'fit' is called for reduced computation.
+        Note: epsilon_prime is not limited to <= epsilon for this method.
+        
+        Parameters
+        ----------
+        epsilon_prime: float or int, required
+
+        Returns
+        New core_sample_indices_ array
+        """
+
+        if self.processed == False:
+            # epsilon has no impact on this method; set to zero
+            # to speed up _nneighbors query in _prep_optics
+            self._prep_optics(self.tree, epsilson=0, self.min_samples)
+        self.core_sample_indices_ = self._core_dist[:] < epsilon_prime
+        return self.core_sample_indices
+
+    def extract(self, epsilon_prime, clustering='auto'):
         """Performs DBSCAN equivalent extraction for arbitrary epsilon.
         Can be run multiple times.
 
@@ -300,7 +323,7 @@ def _extractDBSCAN(setofobjects, epsilon_prime):
                 setofobjects._is_core[entry] = 0
 
 # Automatic cluster extraction
-# Author:     Amy X. Zhang, 2012-2014
+# Author:     Amy X. Zhang
 # Modified:   Shane Grigsby, 2015
 
 # Extraction wrapper
