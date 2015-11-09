@@ -67,6 +67,7 @@ else:
                'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
                'preprocessing', 'qda', 'random_projection', 'semi_supervised',
                'svm', 'tree', 'discriminant_analysis',
+               'basic_checks', 'powerset', 'utilities',
                # Non-modules:
                'clone']
 
