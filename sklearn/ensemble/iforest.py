@@ -162,7 +162,7 @@ class IsolationForest(BaseBagging):
                                  'Valid choices are: "auto", int or'
                                  'float' % self.max_samples)
 
-        elif isinstance(self.max_samples, (numbers.Integral, np.integer)):
+        elif isinstance(self.max_samples, six.integer_types):
             if self.max_samples > n_samples:
                 warn("max_samples (%s) is greater than the "
                      "total number of samples (%s). max_samples "
@@ -263,7 +263,7 @@ def _average_path_length(n_samples_leaf):
     average_path_length : array, same shape as n_samples_leaf
 
     """
-    if isinstance(n_samples_leaf, int):
+    if isinstance(n_samples_leaf, six.integer_types):
         if n_samples_leaf <= 1:
             return 1.
         else:
