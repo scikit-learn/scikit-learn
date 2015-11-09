@@ -298,7 +298,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
 
         # if max_samples is float:
         if not isinstance(max_samples, (numbers.Integral, np.integer)):
-            max_samples = int(self.max_samples * X.shape[0])
+            max_samples = int(max_samples * X.shape[0])
 
         if not (0 < max_samples <= X.shape[0]):
             raise ValueError("max_samples must be in (0, n_samples]")
