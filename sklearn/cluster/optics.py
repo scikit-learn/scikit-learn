@@ -250,7 +250,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         if self.processed == False:
             # epsilon has no impact on this method; set to zero
             # to speed up _nneighbors query in _prep_optics
-            self._prep_optics(self.tree, epsilson=0, self.min_samples)
+            self._prep_optics(self.tree, 0, self.min_samples)
         self.core_sample_indices_ = self._core_dist[:] < epsilon_prime
         return self.core_sample_indices
 
@@ -328,12 +328,9 @@ def _extractDBSCAN(setofobjects, epsilon_prime):
 
 # Extraction wrapper
 def _extract_auto(setofobjects):
-    RPlot = []
-    RPoints = []
-    for item in setofobjects.ordering_:
-        RPlot.append(setofobjects.reachability_[item])
-        RPoints.append([setofobjects.tree.data[item][0],
-                        setofobjects.tree.data[item][1]])
+    RPlot = setofobjects.reachability_[setofobjects.ordering_].tolist()
+    RPoints = setofobjects.tree.get_arrays()[0][setofobjects.ordering_]
+    RPoints = RPoints.tolist()
     rootNode = _automatic_cluster(RPlot, RPoints)
     leaves = _get_leaves(rootNode, [])
     # Start cluster id's at 1
