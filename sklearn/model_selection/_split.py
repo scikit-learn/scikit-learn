@@ -1514,7 +1514,7 @@ def _build_repr(self):
         args = []
     else:
         init_sign = signature(init).parameters.values()
-        args = [p.name for p in init_sign]
+        args = sorted([p.name for p in init_sign])
     if 'self' in args:
         args.remove('self')
     class_name = self.__class__.__name__
