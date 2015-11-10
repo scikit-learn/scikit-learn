@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
+from sklearn.utils.multiclass import check_classification_targets
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
@@ -46,6 +47,12 @@ def test_ovr_exceptions():
     assert_raises(ValueError, OneVsRestClassifier(MultinomialNB()).fit,
                   np.array([[1, 0], [0, 1]]),
                   np.array([[1.5, 2.4], [3.1, 0.8]]))
+
+
+def test_check_classification_targets():
+    # Test that check_classification_target return correct type. #5782
+    y = np.array([0.0, 1.1, 2.0, 3.0])
+    assert_raises(ValueError, check_classification_targets, y)
 
 
 def test_ovr_fit_predict():
