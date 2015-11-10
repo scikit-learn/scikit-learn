@@ -453,7 +453,7 @@ def check_fit2d_1sample(name, Estimator):
 def check_fit2d_1feature(name, Estimator):
     # check by fitting a 2d array and prediting with a 1d array
     rnd = np.random.RandomState(0)
-    X = 3 * rnd.uniform(size=(10, 1))
+    X = 3 * rnd.uniform(size=(20, 1))
     y = X[:, 0].astype(np.int)
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()
