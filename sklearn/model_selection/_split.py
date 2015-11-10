@@ -14,7 +14,6 @@ from __future__ import print_function
 from __future__ import division
 
 import warnings
-import inspect
 from itertools import chain, combinations
 from collections import Iterable
 from math import ceil, floor
@@ -29,6 +28,7 @@ from ..utils.validation import _num_samples, column_or_1d
 from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
+from ..externals.funcsigs import signature
 from ..utils.fixes import bincount
 from ..base import _pprint
 from ..gaussian_process.kernels import Kernel as GPKernel
@@ -1513,7 +1513,8 @@ def _build_repr(self):
         # No explicit constructor to introspect
         args = []
     else:
-        args = sorted(inspect.getargspec(init)[0])
+        init_sign = signature(init).parameters.values()
+        args = [p.name for p in init_sign]
     if 'self' in args:
         args.remove('self')
     class_name = self.__class__.__name__
