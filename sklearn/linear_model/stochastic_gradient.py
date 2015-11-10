@@ -72,18 +72,18 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self.average = average
 
         if n_iter is not None:
-            warnings.warn("n_iter parameter is deprecated in 0.17 and will be"
-                          " removed in 0.19. Use max_iter and tol instead.",
+            warnings.warn("n_iter parameter is deprecated in 0.18 and will be"
+                          " removed in 0.20. Use max_iter and tol instead.",
                           DeprecationWarning)
             self.max_iter = n_iter
             self.tol = 0.
 
         if tol is None:
-            warnings.warn("tol parameter has been added in 0.17. "
+            warnings.warn("tol parameter has been added in 0.18. "
                           "Set it to a positive value to stop the method "
                           "before maximum number of iteration. "
                           "Set it to 0 to force the number of iteration. "
-                          "In 0.19, default tol value will be changed to 1e-4"
+                          "In 0.20, default tol value will be changed to 1e-4"
                           ", and default max_iter value will be changed to "
                           "100.", DeprecationWarning)
 
@@ -644,11 +644,11 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     max_iter : int, optional
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the `fit` method, and not the
-        `partial_fit`. Defaults to 5. Defaults to 100 in 0.19.
+        `partial_fit`. Defaults to 5. Defaults to 100 in 0.20.
 
     tol : float, optional
         The tolerance for the stopping criterion.
-        Defaults to 0. Defaults to 1e-4 in 0.19.
+        Defaults to 0. Defaults to 1e-4 in 0.20.
 
     shuffle : bool, optional
         Whether or not the training data should be shuffled after each epoch.
@@ -1206,11 +1206,11 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     max_iter : int, optional
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the `fit` method, and not the
-        `partial_fit`. Defaults to 5. Defaults to 100 in 0.19.
+        `partial_fit`. Defaults to 5. Defaults to 100 in 0.20.
 
     tol : float, optional
         The tolerance for the stopping criterion.
-        Defaults to 0. Defaults to 1e-4 in 0.19.
+        Defaults to 0. Defaults to 1e-4 in 0.20.
 
     shuffle : bool, optional
         Whether or not the training data should be shuffled after each epoch.
