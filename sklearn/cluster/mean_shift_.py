@@ -60,8 +60,9 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
         X = X[idx]
     nbrs = NearestNeighbors(n_neighbors=int(X.shape[0] * quantile))
     if nbrs.get_params()['n_neighbors'] == 0:
-        raise ValueError("cannot estimate bandwidth, try setting a value "
-                         "manually or provide more samples.")
+        raise ValueError("cannot estimate bandwidth using quantile = %f and "
+                         "n_samples = %d: try setting a value manually or "
+                         "provide more samples." % (quantile, X.shape[0]))
     nbrs.fit(X)
 
     bandwidth = 0.
