@@ -6,13 +6,18 @@
 
 # License: 3-clause BSD
 
+
+# Travis clone scikit-learn/scikit-learn repository in to a local repository.
+# We use a cached directory with three scikit-learn repositories (one for each
+# matrix entry) from which we pull from local Travis repository. This allows
+# us to keep build artefact for gcc + cython, and gain time
+
 set -e
 
 # Fix the compilers to workaround avoid having the Python 3.4 build
 # lookup for g++44 unexpectedly.
 export CC=gcc
 export CXX=g++
-
 
 echo 'List files from cached directories'
 echo 'pip:'
@@ -49,7 +54,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # Configure the conda environment and put it in the path using the
     # provided versions
     conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
-        numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION
+        numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION
     source activate testenv
 
     # Resolve MKL usage
@@ -68,15 +73,28 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
     pip install nose
+    pip install cython
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
     pip install coverage coveralls
 fi
 
+GIT_TRAVIS_REPO=$(pwd)
+echo $GIT_TRAVIS_REPO
+
+cd $HOME
+if [ ! -d "sklearn_build_$NAME" ]; then
+    mkdir sklearn_build_$NAME
+fi
+
+rsync -av --exclude='.git/' --exclude='testvenv/' $GIT_TRAVIS_REPO \
+    sklearn_build_${NAME}
+cd sklearn_build_${NAME}/scikit-learn
+
 # Build scikit-learn in the install.sh script to collapse the verbose
 # build output in the travis output when it succeeds.
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
-python setup.py build_ext --inplace
+python setup.py develop
