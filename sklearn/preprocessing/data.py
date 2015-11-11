@@ -103,7 +103,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     copy : boolean, optional, default True
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
-        CSR matrix and if axis is 1).
+        CSC matrix and if axis is 1).
 
     Notes
     -----
@@ -113,10 +113,10 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     Instead the caller is expected to either set explicitly
     `with_mean=False` (in that case, only variance scaling will be
-    performed on the features of the CSR matrix) or to call `X.toarray()`
+    performed on the features of the CSC matrix) or to call `X.toarray()`
     if he/she expects the materialized dense array to fit in memory.
 
-    To avoid memory copy the caller should pass a CSR matrix.
+    To avoid memory copy the caller should pass a CSC matrix.
 
     See also
     --------
@@ -124,7 +124,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     scaling using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
-    X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False,
+    X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     warn_on_dtype=True, estimator='the scale function',
                     dtype=FLOAT_DTYPES)
     if sparse.issparse(X):
@@ -135,11 +135,6 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         if axis != 0:
             raise ValueError("Can only scale sparse matrix on axis=0, "
                              " got axis=%d" % axis)
-        if not sparse.isspmatrix_csr(X):
-            X = X.tocsr()
-            copy = False
-        if copy:
-            X = X.copy()
         if with_std:
             _, var = mean_variance_axis(X, axis=0)
             var = _handle_zeros_in_scale(var, copy=False)
@@ -150,8 +145,6 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             mean_ = np.mean(X, axis)
         if with_std:
             scale_ = np.std(X, axis)
-        if copy:
-            X = X.copy()
         # Xr is a view on the original array that enables easy use of
         # broadcasting on the axis in which we are interested in
         Xr = np.rollaxis(X, axis)
