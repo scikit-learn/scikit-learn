@@ -50,7 +50,7 @@ install:
   - "%CMD_IN_ENV% python setup.py bdist_wheel bdist_wininst -b doc/logos/scikit-learn-logo.bmp"
   - ps: "ls dist"
 
-  # Install the genreated wheel package to test it
+  # Install the generated wheel package to test it
   - "pip install --pre --no-index --find-links dist/ scikit-learn"
 
 # Not a .NET project, we build scikit-learn in the install step instead
@@ -62,7 +62,7 @@ test_script:
   - "mkdir empty_folder"
   - "cd empty_folder"
 
-  - "python -c \"import nose; nose.main()\" -s -v sklearn"
+  - "python -c \"import nose; nose.main()\" --with-timer --timer-top-n 20 -s -v sklearn"
 
   # Move back to the project folder
   - "cd .."
@@ -89,4 +89,3 @@ cache:
   # container, speed up the appveyor jobs and reduce bandwidth
   # usage on our rackspace account.
   - '%APPDATA%\pip\Cache'
-

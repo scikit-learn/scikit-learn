@@ -57,6 +57,9 @@ if [[ "$DISTRIB" == "conda" ]]; then
         numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION
     source activate testenv
 
+    # Install nose-timer via pip
+    pip install nose-timer
+
     # Resolve MKL usage
     if [[ "$INSTALL_MKL" == "true" ]]; then
         conda install --yes mkl
@@ -72,7 +75,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # Create a new virtualenv using system site packages for numpy and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
-    pip install nose
+    pip install nose nose-timer
     pip install cython
 fi
 
