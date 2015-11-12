@@ -272,7 +272,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         P = []
         for k in range(self.n_outputs_):
             if self.strategy == "most_frequent":
-                ind = np.ones(n_samples, dtype=int) * class_prior_[k].argmax()
+                ind = class_prior_[k].argmax()
                 out = np.zeros((n_samples, n_classes_[k]), dtype=np.float64)
                 out[:, ind] = 1.0
             elif self.strategy == "prior":
