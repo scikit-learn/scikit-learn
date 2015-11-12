@@ -27,6 +27,11 @@ enhance the functionality of scikit-learn's estimators.
 - `sklearn-pmml <https://github.com/alex-pirozhenko/sklearn-pmml>`_
   Serialization of (some) scikit-learn estimators into PMML.
 
+- `sklearn2pmml <https://github.com/jpmml/sklearn2pmml>`_
+  Serialization of a wide variety of scikit-learn estimators and transformers
+  into PMML with the help of `JPMML-SkLearn <https://github.com/jpmml/jpmml-sklearn>`_
+  library.
+
 Other estimators and tasks
 --------------------------
 
