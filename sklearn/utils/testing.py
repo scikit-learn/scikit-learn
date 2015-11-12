@@ -78,7 +78,7 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_less", "assert_less_equal", "assert_greater",
            "assert_greater_equal", "assert_same_model",
            "assert_not_same_model", "assert_fitted_attributes_almost_equal",
-           "assert_approx_equal"]
+           "assert_approx_equal", "assert_safe_sparse_allclose"]
 
 
 try:
@@ -387,41 +387,72 @@ except ImportError:
     assert_greater = _assert_greater
 
 
-def _sparse_dense_allclose(val1, val2, rtol=1e-7, atol=0):
+if hasattr(np.testing, 'assert_allclose'):
+    assert_allclose = np.testing.assert_allclose
+else:
+    assert_allclose = _assert_allclose
+
+
+def assert_safe_sparse_allclose(val1, val2, rtol=1e-7, atol=0, msg=None):
     """Check if two objects are close up to the preset tolerance.
 
     The objects can be scalars, lists, tuples, ndarrays or sparse matrices.
     """
-    if isinstance(val1, (int, float)) and isinstance(val2, (int, float)):
-        return np.allclose(float(val1), float(val2), rtol, atol)
+    if msg is None:
+        msg = ("The val1,\n%s\nand val2,\n%s\nare not all close"
+               % (val1, val2))
 
-    if type(val1) is not type(val2):
-        return False
+    if isinstance(val1, str) and isinstance(val2, str):
+        assert_true(val1 == val2, msg=msg)
 
-    comparables = (float, list, tuple, np.ndarray, sp.spmatrix)
+    elif np.isscalar(val1) and np.isscalar(val2):
+        assert_allclose(val1, val2, rtol=rtol, atol=atol, err_msg=msg)
 
-    if not (isinstance(val1, comparables) or isinstance(val2, comparables)):
-        raise ValueError("The objects, %s and %s, are neither scalar nor "
+    # To allow mixed formats for sparse matrices alone
+    elif type(val1) is not type(val2) and not (
+            sp.issparse(val1) and sp.issparse(val2)):
+        assert False, msg
+
+    elif not (isinstance(val1, (list, tuple, np.ndarray, sp.spmatrix, dict))):
+        raise ValueError("The objects,\n%s\nand\n%s\n, are neither scalar nor "
                          "array-like." % (val1, val2))
 
-    # list/tuple (or list/tuple of ndarrays/spmatrices)
-    if isinstance(val1, (tuple, list)):
+    # list/tuple/dict (of list/tuple/dict...) of ndarrays/spmatrices/scalars
+    elif isinstance(val1, (tuple, list, dict)):
+        if isinstance(val1, dict):
+            val1, val2 = tuple(val1.iteritems()), tuple(val2.iteritems())
         if (len(val1) == 0) and (len(val2) == 0):
-            return True
-        if len(val1) != len(val2):
-            return False
-        while isinstance(val1[0], (tuple, list, np.ndarray, sp.spmatrix)):
-            return all(_sparse_dense_allclose(val1_i, val2[i], rtol, atol)
-                       for i, val1_i in enumerate(val1))
-        # Compare the lists, if they are not nested or singleton
-        return np.allclose(val1, val2, rtol, atol)
+            assert True
+        elif len(val1) != len(val2):
+            assert False, msg
+        # nested lists/tuples - [array([5, 6]), array([5, ])] and [[1, 3], ]
+        # Or ['str',] and ['str',]
+        elif isinstance(val1[0], (tuple, list, np.ndarray, sp.spmatrix, str)):
+            # Compare them recursively
+            for i, val1_i in enumerate(val1):
+                assert_safe_sparse_allclose(val1_i, val2[i],
+                                            rtol=rtol, atol=atol, msg=msg)
+        # Compare the lists using np.allclose, if they are neither nested nor
+        # contain strings
+        else:
+            assert_allclose(val1, val2, rtol=rtol, atol=atol, err_msg=msg)
 
-    same_shape = val1.shape == val2.shape
-    if sp.issparse(val1) or sp.issparse(val2):
-        return same_shape and np.allclose(val1.toarray(), val2.toarray(),
-                                          rtol, atol)
+    # scipy sparse matrix
+    elif sp.issparse(val1) or sp.issparse(val2):
+        # NOTE: ref np.allclose's note for assymetricity in this testing
+        if val1.shape != val2.shape:
+            assert False, msg
+
+        diff = abs(val1 - val2) - (rtol * abs(val2))
+        assert np.any(diff > atol).size == 0, msg
+
+    # numpy ndarray
+    elif isinstance(val1, (np.ndarray)):
+        if val1.shape != val2.shape:
+            assert False, msg
+        assert_allclose(val1, val2, rtol=rtol, atol=atol, err_msg=msg)
     else:
-        return same_shape and np.allclose(val1, val2, rtol, atol)
+        assert False, msg
 
 
 def _assert_allclose(actual, desired, rtol=1e-7, atol=0,
@@ -433,12 +464,6 @@ def _assert_allclose(actual, desired, rtol=1e-7, atol=0,
         err_msg = ('Array not equal to tolerance rtol=%g, atol=%g: '
                    'actual %s, desired %s') % (rtol, atol, actual, desired)
     raise AssertionError(err_msg)
-
-
-if hasattr(np.testing, 'assert_allclose'):
-    assert_allclose = np.testing.assert_allclose
-else:
-    assert_allclose = _assert_allclose
 
 
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
@@ -488,12 +513,11 @@ def _assert_same_model_method(method, X, estimator1, estimator2, msg=None):
 
     # Check if the method(X) returns the same for both models.
     res1, res2 = getattr(estimator1, method)(X), getattr(estimator2, method)(X)
-    if not _sparse_dense_allclose(res1, res2):
-        if msg is None:
-            msg = ("Models are not equal. \n\n%s method returned different "
-                   "results:\n\n%s\n\n for :\n\n%s and\n\n%s\n\n for :\n\n%s."
-                   % (method, res1, estimator1, res2, estimator2))
-        raise AssertionError(msg)
+    if msg is None:
+        msg = ("Models are not equal. \n\n%s method returned different "
+               "results:\n\n%s\n\n for :\n\n%s and\n\n%s\n\n for :\n\n%s."
+               % (method, res1, estimator1, res2, estimator2))
+    assert_safe_sparse_allclose(res1, res2, msg=msg)
 
 
 def assert_same_model(X, estimator1, estimator2, msg=None):
@@ -579,9 +603,8 @@ def assert_not_same_model(X, estimator1, estimator2, msg=None):
     try:
         assert_same_model(X, estimator1, estimator2)
     except AssertionError:
-        pass
-    else:
-        raise AssertionError(msg)
+        return
+    raise AssertionError(msg)
 
 
 def assert_fitted_attributes_almost_equal(estimator1, estimator2, msg=None):
@@ -616,23 +639,21 @@ def assert_fitted_attributes_almost_equal(estimator1, estimator2, msg=None):
                        "The attributes of both the estimators do not match.")
 
     non_attributes = ("estimators_", "estimator_", "tree_", "base_estimator_",
-                      "random_state_")
+                      "random_state_", "root_", "label_binarizer_", "loss_")
+    non_attr_suffixes = ("leaf_",)
+
     for attr in est1_dict:
         val1, val2 = est1_dict[attr], est2_dict[attr]
 
         # Consider keys that end in ``_`` only as attributes.
-        if (attr.endswith('_') and attr not in non_attributes):
+        if (attr.endswith('_') and attr not in non_attributes and
+                not attr.endswith(non_attr_suffixes)):
             if msg is None:
                 msg = ("Attributes do not match. \nThe attribute, %s, in "
                        "estimator1,\n\n%r\n\n is %r and in estimator2,"
                        "\n\n%r\n\n is %r.\n") % (attr, estimator1, val1,
                                                  estimator2, val2)
-            if isinstance(val1, str) and isinstance(val2, str):
-                attr_similar = val1 == val2
-            else:
-                attr_similar = _sparse_dense_allclose(val1, val2)
-            if not attr_similar:
-                raise AssertionError(msg)
+            assert_safe_sparse_allclose(val1, val2, msg=msg)
 
 
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):

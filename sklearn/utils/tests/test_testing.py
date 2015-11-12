@@ -3,6 +3,7 @@ import unittest
 import sys
 import numpy as np
 from scipy import sparse as sp
+from numpy.testing import assert_allclose
 
 from nose.tools import assert_raises
 from sklearn.utils.testing import (
@@ -197,29 +198,26 @@ def test_ignore_warning():
 
 
 def test_assert_safe_sparse_allclose():
+    # Test Scalars
     x = 1e-3
     y = 1e-9
     assert_safe_sparse_allclose(x, y, atol=1)
     assert_raises(AssertionError, assert_safe_sparse_allclose, x, y)
 
-    a = sp.csc_matrix(np.array([x, y, x, y]))
-    b = sp.coo_matrix(np.array([x, y, x, x]))
+    # Test Sparse matrices
+    a = sp.coo_matrix(np.array([x, y, x, y]))
+    b = sp.csr_matrix(np.array([x, y, x, x]))
     assert_safe_sparse_allclose(a, b, atol=1)
     assert_raises(AssertionError, assert_safe_sparse_allclose, a, b)
 
-    b[-1] = y * (1 + 1e-8)
+    b[0, 3] = y * (1 + 1e-8)
     assert_safe_sparse_allclose(a, b)
-    assert_raises(AssertionError, assert_safe_sparse_allclose, a, b,
-                  rtol=1e-9)
+    assert_raises(AssertionError, assert_safe_sparse_allclose, a, b, rtol=1e-9)
 
     assert_safe_sparse_allclose([np.array([(6, 6)]),], [np.array([(10, 10)]),],
                                 rtol=0.5)
     assert_raises(AssertionError, assert_safe_sparse_allclose,
-                  [np.array([(6, 6)]),], [np.array([(10, 10)]),], rtol=0.5)
-
-    a = sp.csr_matrix(np.array([np.iinfo(np.int_).min], dtype=np.int_))
-    # Should not raise:
-    assert_allclose(a, a)
+                  [np.array([(6, 6)]),], [np.array([(10, 10)]),])
 
     # Test nested lists of scalars
     assert_safe_sparse_allclose([(['a', 'bcd'], ['a'])],
@@ -229,6 +227,23 @@ def test_assert_safe_sparse_allclose():
     assert_raises(AssertionError, assert_safe_sparse_allclose,
                   [(['a', 'bcd'], ['a'])], [(['a', 'bcd'], ['b'])])
 
+    # Test dicts
+    assert_safe_sparse_allclose({}, {})
+    assert_safe_sparse_allclose({'a':'a'}, {'a':'a'})
+    dict_1 = {'a':{'b':{'arr':np.array([1, 2, 3]), 'str':'str', 'int':9}}}
+    dict_2 = {'a':{'b':{'arr':np.array([1, 2, 3]), 'str':'str', 'int':9}}}
+    assert_safe_sparse_allclose(dict_1, dict_2)
+    dict_1['a']['b']['arr'] = np.array([2, 2, 3])
+    assert_safe_sparse_allclose(dict_1, dict_2, atol=1)
+    assert_raises(AssertionError, assert_safe_sparse_allclose, dict_1, dict_2)
+
+    # Test nested list of dicts of spmatrices and ndarrays
+    dict_1['a']['b']['arr1'] = [a, np.array([3, 4.])]
+    assert_raises(AssertionError, assert_safe_sparse_allclose, dict_1, dict_2,
+                  atol=1)
+    dict_2['a']['b']['arr1'] = [b, np.array([3, 4.])]
+    assert_safe_sparse_allclose(dict_1, dict_2, atol=1)
+    assert_raises(AssertionError, assert_safe_sparse_allclose, dict_1, dict_2)
 
     # Test the string comparison
     assert_safe_sparse_allclose('a', 'a')
@@ -241,11 +256,6 @@ def test_assert_safe_sparse_allclose():
     assert_safe_sparse_allclose(6, 6.0)
     assert_safe_sparse_allclose(7, 7.0)
     assert_safe_sparse_allclose(5, np.int32(5))
-
-    # Make sure you don't get infinite recursion with empty nested lists
-    x = []
-    x.append(x)
-    assert_safe_sparse_allclose(x, x)
 
 
 def test_assert_same_not_same_model():
