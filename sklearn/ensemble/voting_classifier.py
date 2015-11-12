@@ -46,11 +46,11 @@ def _parallel_predict_proba(estimators, X):
     return [estimator.predict_proba(X) for estimator in estimators]
 
 
-def _flatten_list(list):
+def _flatten_list(list_):
     """ Flatten first level of list,
         i.e _flatten_list([[1,2,3],[[4,5,6],7]])) == [1,2,3,[4,5,6],7]
     """
-    return sum(list, [])
+    return sum(list_, [])
 
 
 class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
