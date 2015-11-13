@@ -28,7 +28,7 @@ def _parallel_fit_estimators(estimators, X, y, sample_weight):
     """Private function used to fit a batch of estimators within a job."""
     fitted_estimators = []
     for estimator in estimators:
-        if sample_weight and has_fit_parameter(estimator, "sample_weight"):
+        if sample_weight is not None and has_fit_parameter(estimator, "sample_weight"):
             estimator.fit(X, y, sample_weight)
         else:
             estimator.fit(X, y)
