@@ -45,6 +45,12 @@ class IsolationForest(BaseBagging):
 
     Parameters
     ----------
+    base_estimator : object or None, optional (default=None)
+        The base estimator to fit on random subsets of the dataset.
+        If None, then the base estimator is a ExtraTreeRegressor(max_features=1,
+                splitter='random',
+                random_state=self.random_state).
+
     n_estimators : int, optional (default=100)
         The number of base estimators in the ensemble.
 
@@ -98,21 +104,20 @@ class IsolationForest(BaseBagging):
            anomaly detection." ACM Transactions on Knowledge Discovery from
            Data (TKDD) 6.1 (2012): 3.
     """
-
+    
     def __init__(self,
+                 base_estimator=None,
                  n_estimators=100,
                  max_samples="auto",
                  max_features=1.,
+                 max_depth="auto",
                  bootstrap=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0):
+
         super(IsolationForest, self).__init__(
-            base_estimator=ExtraTreeRegressor(
-                max_features=1,
-                splitter='random',
-                random_state=random_state),
-            # here above max_features has no links with self.max_features
+            base_estimator,
             bootstrap=bootstrap,
             bootstrap_features=False,
             n_estimators=n_estimators,
@@ -121,6 +126,40 @@ class IsolationForest(BaseBagging):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
+        self.max_depth = max_depth
+
+    def _validate_estimator(self):
+        """Check the estimator and set the base_estimator_ attribute."""
+
+        super(IsolationForest, self)._validate_estimator(
+            default=ExtraTreeRegressor(max_features=1,
+                splitter='random',
+                random_state=self.random_state))
+
+        if isinstance(self.max_depth, six.string_types):
+            if self.max_depth == 'auto':
+                max_depth = int(np.ceil(np.log2(max(self.max_samples_, 2))))
+            else:
+                raise ValueError('max_depth (%s) is not supported. '
+                                 'Valid choices are: "auto", int or '
+                                 'float' % self.max_depth)
+
+        elif isinstance(self.max_depth, six.integer_types):
+            # ensure that max_depth is in [1, max_samples]
+            if self.max_depth > self.max_samples_:
+                warn("max_depth (%s) is greater than "
+                     "max_samples (%s). max_depth "
+                     "will be set to max_samples for estimation."
+                     % (self.max_depth, self.max_samples_))
+                max_depth = self.max_samples_
+            else:
+                max_depth = self.max_depth
+        else: # float
+            if not (0.0 < self.max_depth <=1.0):
+                raise ValueError("max_depth must be in (0, 1]")
+            max_depth = int(self.max_depth * self.max_samples_)
+
+        ls = self.base_estimator_.set_params(max_depth=max_depth)
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by iforest")
@@ -151,15 +190,15 @@ class IsolationForest(BaseBagging):
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=X.shape[0])
 
-        # ensure that max_sample is in [1, n_samples]:
+        # ensure that max_sample is in [1, n_samples]
         n_samples = X.shape[0]
 
         if isinstance(self.max_samples, six.string_types):
             if self.max_samples == 'auto':
                 max_samples = min(256, n_samples)
             else:
-                raise ValueError('max_samples (%s) is not supported.'
-                                 'Valid choices are: "auto", int or'
+                raise ValueError('max_samples (%s) is not supported. '
+                                 'Valid choices are: "auto", int or '
                                  'float' % self.max_samples)
 
         elif isinstance(self.max_samples, six.integer_types):
@@ -177,11 +216,13 @@ class IsolationForest(BaseBagging):
             max_samples = int(self.max_samples * X.shape[0])
 
         self.max_samples_ = max_samples
-        max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
+
+        self._validate_estimator()
+
         super(IsolationForest, self)._fit(X, y, max_samples,
-                                          max_depth=max_depth,
                                           sample_weight=sample_weight)
         return self
+
 
     def predict(self, X):
         """Predict anomaly score of X with the IsolationForest algorithm.

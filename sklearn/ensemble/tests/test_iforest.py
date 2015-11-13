@@ -21,6 +21,7 @@ from sklearn.utils.testing import ignore_warnings
 
 from sklearn.grid_search import ParameterGrid
 from sklearn.ensemble import IsolationForest
+from sklearn.tree import ExtraTreeRegressor
 from sklearn.cross_validation import train_test_split
 from sklearn.datasets import load_boston, load_iris
 from sklearn.utils import check_random_state
@@ -87,6 +88,22 @@ def test_iforest_sparse():
             assert_array_equal(sparse_results, dense_results)
 
 
+def test_custom_base_estimator():
+    """Test Isolation forest for not None base estimators."""
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
+                                                        boston.target[:50],
+                                                        random_state=rng)
+    grid = ParameterGrid({"max_samples": [0.5, 1.0],
+                          "bootstrap": [True, False]})
+
+    for base_estimator in [None, ExtraTreeRegressor()]:
+        for params in grid:
+            IsolationForest(base_estimator=base_estimator,
+                              random_state=rng,
+                              **params).fit(X_train, y_train).predict(X_test)
+
+
 def test_iforest_error():
     """Test that it gives proper exception on deficient input."""
     X = iris.data
@@ -128,7 +145,18 @@ def test_max_samples_attribute():
     assert_equal(clf.max_samples_, X.shape[0])
 
     clf = IsolationForest(max_samples=0.4).fit(X)
-    assert_equal(clf.max_samples_, 0.4*X.shape[0])
+    assert_equal(clf.max_samples_, 0.4 * X.shape[0])
+
+def test_max_depth_attribute():
+    X = iris.data
+    clf = IsolationForest().fit(X)
+    assert_equal(clf.base_estimator_.max_depth, int(np.ceil(np.log2(max(clf.max_samples_, 2)))))
+
+    clf = IsolationForest(max_depth=500).fit(X)
+    assert_equal(clf.base_estimator_.max_depth, clf.max_samples_)
+
+    clf = IsolationForest(max_depth=0.4).fit(X)
+    assert_equal(clf.base_estimator_.max_depth, 0.4 * clf.max_samples_)
 
 
 def test_iforest_parallel_regression():
