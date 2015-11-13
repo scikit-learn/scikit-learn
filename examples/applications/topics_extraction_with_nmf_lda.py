@@ -76,7 +76,6 @@ print("Fitting the NMF model with tf-idf features,"
       % (n_samples, n_features))
 t0 = time()
 nmf = NMF(n_components=n_topics, random_state=1, alpha=.1, l1_ratio=.5).fit(tfidf)
-exit()
 print("done in %0.3fs." % (time() - t0))
 
 print("\nTopics in NMF model:")
