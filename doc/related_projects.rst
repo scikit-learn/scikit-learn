@@ -94,6 +94,9 @@ and tasks.
 
 - `kmodes <https://github.com/nicodv/kmodes>`_ k-modes clustering algorithm for categorical data, and
   several of its variations.
+  
+- `hdbscan <https://github.com/lmcinnes/hdbscan>`_ HDBSCAN and Robust Single Linkage clustering algorithms 
+  for robust variable density clustering. 
 
 Statistical learning with Python
 --------------------------------
