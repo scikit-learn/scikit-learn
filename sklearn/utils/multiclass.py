@@ -19,10 +19,9 @@ from scipy.sparse import lil_matrix
 import numpy as np
 
 from ..externals.six import string_types
-
 from .validation import check_array
-
 from ..utils.fixes import bincount
+from ..utils.fixes import array_equal
 
 
 def _unique_multiclass(y):
@@ -148,7 +147,7 @@ def is_multilabel(y):
     if issparse(y):
         if isinstance(y, (dok_matrix, lil_matrix)):
             y = y.tocsr()
-        return (len(y.data) == 0 or np.ptp(y.data) == 0 and
+        return (len(y.data) == 0 or np.unique(y.data).size == 1 and
                 (y.dtype.kind in 'biu' or  # bool, int, uint
                  _is_integral_float(np.unique(y.data))))
     else:
@@ -156,6 +155,23 @@ def is_multilabel(y):
 
         return len(labels) < 3 and (y.dtype.kind in 'biu' or  # bool, int, uint
                                     _is_integral_float(labels))
+
+def check_classification_targets(y):
+    """Ensure that target y is of a non-regression type.
+
+    Only the following target types (as defined in type_of_target) are allowed:
+        'binary', 'multiclass', 'multiclass-multioutput', 
+        'multilabel-indicator', 'multilabel-sequences'
+
+    Parameters
+    ----------
+    y : array-like
+    """
+    y_type = type_of_target(y)
+    if y_type not in ['binary', 'multiclass', 'multiclass-multioutput', 
+            'multilabel-indicator', 'multilabel-sequences']:
+        raise ValueError("Unknown label type: %r" % y)
+
 
 
 def type_of_target(y):
@@ -283,7 +299,7 @@ def _check_partial_fit_first_call(clf, classes=None):
 
     elif classes is not None:
         if getattr(clf, 'classes_', None) is not None:
-            if not np.all(clf.classes_ == unique_labels(classes)):
+            if not array_equal(clf.classes_, unique_labels(classes)):
                 raise ValueError(
                     "`classes=%r` is not the same as on last call "
                     "to partial_fit, was: %r" % (classes, clf.classes_))

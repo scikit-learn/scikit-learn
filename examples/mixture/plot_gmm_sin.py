@@ -37,9 +37,8 @@ for i in xrange(X.shape[0]):
     X[i, 0] = x + np.random.normal(0, 0.1)
     X[i, 1] = 3 * (np.sin(x) + np.random.normal(0, .2))
 
-
-color_iter = itertools.cycle(['r', 'g', 'b', 'c', 'm'])
-
+color_iter = itertools.cycle(['navy', 'turquoise', 'cornflowerblue',
+                              'darkorange'])
 
 for i, (clf, title) in enumerate([
         (mixture.GMM(n_components=10, covariance_type='full', n_iter=100),
@@ -63,7 +62,7 @@ for i, (clf, title) in enumerate([
         # components.
         if not np.any(Y_ == i):
             continue
-        plt.scatter(X[Y_ == i, 0], X[Y_ == i, 1], .8, color=color)
+        plt.scatter(X[Y_ == i, 0], X[Y_ == i, 1], color=color, s=4)
 
         # Plot an ellipse to show the Gaussian component
         angle = np.arctan(u[1] / u[0])

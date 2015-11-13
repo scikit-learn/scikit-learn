@@ -8,6 +8,7 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals.six.moves import xrange
 from itertools import chain, product
 import pickle
+import warnings
 import sys
 
 import numpy as np
@@ -33,9 +34,6 @@ from sklearn.base import BaseEstimator
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
-from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
-                                 ParameterGrid, ParameterSampler,
-                                 ChangedBehaviorWarning)
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
@@ -44,7 +42,16 @@ from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
-from sklearn.cross_validation import KFold, StratifiedKFold, FitFailedWarning
+
+from sklearn.exceptions import ChangedBehaviorWarning
+from sklearn.exceptions import FitFailedWarning
+
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
+                                     ParameterGrid, ParameterSampler)
+    from sklearn.cross_validation import KFold, StratifiedKFold
+
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
@@ -429,6 +436,7 @@ class BrokenClassifier(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
+@ignore_warnings
 def test_refit():
     # Regression test for bug in refitting
     # Simulates re-fitting a broken estimator; this used to break with

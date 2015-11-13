@@ -58,7 +58,6 @@ Main features
    inputs and  outputs: Python functions. Joblib can save their
    computation to disk and rerun it only if necessary::
 
-      >>> import numpy as np
       >>> from sklearn.externals.joblib import Memory
       >>> mem = Memory(cachedir='/tmp/joblib')
       >>> import numpy as np
@@ -116,7 +115,7 @@ Main features
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.9.0b3'
+__version__ = '0.9.3'
 
 
 from .memory import Memory, MemorizedResult

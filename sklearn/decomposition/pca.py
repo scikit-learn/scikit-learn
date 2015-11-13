@@ -300,7 +300,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
-        if n_components < n_features:
+        if n_components < min(n_features, n_samples):
             self.noise_variance_ = explained_variance_[n_components:].mean()
         else:
             self.noise_variance_ = 0.
@@ -488,7 +488,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         use fit_transform(X) instead.
 
     iterated_power : int, optional
-        Number of iterations for the power method. 3 by default.
+        Number of iterations for the power method. 2 by default.
+
+        .. versionchanged:: 0.18
 
     whiten : bool, optional
         When True (False by default) the `components_` vectors are divided
@@ -510,8 +512,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         Components with maximum variance.
 
     explained_variance_ratio_ : array, [n_components]
-        Percentage of variance explained by each of the selected components. \
-        k is not set then all components are stored and the sum of explained \
+        Percentage of variance explained by each of the selected components.
+        k is not set then all components are stored and the sum of explained
         variances is equal to 1.0
 
     mean_ : array, [n_features]
@@ -524,7 +526,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = RandomizedPCA(n_components=2)
     >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    RandomizedPCA(copy=True, iterated_power=3, n_components=2,
+    RandomizedPCA(copy=True, iterated_power=2, n_components=2,
            random_state=None, whiten=False)
     >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
@@ -546,7 +548,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_components=None, copy=True, iterated_power=3,
+    def __init__(self, n_components=None, copy=True, iterated_power=2,
                  whiten=False, random_state=None):
         self.n_components = n_components
         self.copy = copy

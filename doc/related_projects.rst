@@ -27,6 +27,11 @@ enhance the functionality of scikit-learn's estimators.
 - `sklearn-pmml <https://github.com/alex-pirozhenko/sklearn-pmml>`_
   Serialization of (some) scikit-learn estimators into PMML.
 
+- `sklearn2pmml <https://github.com/jpmml/sklearn2pmml>`_
+  Serialization of a wide variety of scikit-learn estimators and transformers
+  into PMML with the help of `JPMML-SkLearn <https://github.com/jpmml/jpmml-sklearn>`_
+  library.
+
 Other estimators and tasks
 --------------------------
 
@@ -52,6 +57,9 @@ and tasks.
 
 - `PyStruct <https://pystruct.github.io>`_ General conditional random fields
   and structured prediction.
+
+- `pomegranate <https://github.com/jmschrei/pomegranate>`_ Probabilistic modelling
+  for Python, with an emphasis on hidden Markov models.
 
 - `py-earth <https://github.com/jcrudy/py-earth>`_ Multivariate adaptive
   regression splines
@@ -83,6 +91,9 @@ and tasks.
 
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
   estimators as well as model visualization utilities.
+
+- `kmodes <https://github.com/nicodv/kmodes>`_ k-modes clustering algorithm for categorical data, and
+  several of its variations.
 
 Statistical learning with Python
 --------------------------------

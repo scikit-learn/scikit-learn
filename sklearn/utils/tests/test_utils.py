@@ -3,11 +3,13 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 from scipy.linalg import pinv2
+from scipy.linalg import eigh
 from itertools import chain
 
 from sklearn.utils.testing import (assert_equal, assert_raises, assert_true,
                                    assert_almost_equal, assert_array_equal,
-                                   SkipTest, assert_raises_regex)
+                                   SkipTest, assert_raises_regex,
+                                   assert_greater_equal)
 
 from sklearn.utils import check_random_state
 from sklearn.utils import deprecated
@@ -18,7 +20,9 @@ from sklearn.utils import safe_indexing
 from sklearn.utils import shuffle
 from sklearn.utils import gen_even_slices
 from sklearn.utils.extmath import pinvh
+from sklearn.utils.arpack import eigsh
 from sklearn.utils.mocking import MockDataFrame
+from sklearn.utils.graph import graph_laplacian
 
 
 def test_make_rng():
@@ -124,6 +128,26 @@ def test_pinvh_simple_complex():
     a = np.dot(a, a.conj().T)
     a_pinv = pinvh(a)
     assert_almost_equal(np.dot(a, a_pinv), np.eye(3))
+
+
+def test_arpack_eigsh_initialization():
+    # Non-regression test that shows null-space computation is better with 
+    # initialization of eigsh from [-1,1] instead of [0,1]
+    random_state = check_random_state(42)
+
+    A = random_state.rand(50, 50)
+    A = np.dot(A.T, A)  # create s.p.d. matrix
+    A = graph_laplacian(A) + 1e-7 * np.identity(A.shape[0])
+    k = 5
+
+    # Test if eigsh is working correctly
+    # New initialization [-1,1] (as in original ARPACK)
+    # Was [0,1] before, with which this test could fail
+    v0 = random_state.uniform(-1,1, A.shape[0])
+    w, _ = eigsh(A, k=k, sigma=0.0, v0=v0)
+
+    # Eigenvalues of s.p.d. matrix should be nonnegative, w[0] is smallest
+    assert_greater_equal(w[0], 0)
 
 
 def test_column_or_1d():

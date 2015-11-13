@@ -1,3 +1,4 @@
+
 import numpy as np
 from scipy import sparse
 
@@ -9,10 +10,10 @@ from sklearn.utils.testing import assert_true
 
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.pipeline import Pipeline
-from sklearn import grid_search
+from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
-
+ 
 
 def _check_statistics(X, X_true,
                       strategy, statistics, missing_values):
@@ -121,6 +122,18 @@ def test_imputation_mean_median_only_zero():
                       statistics_median, 0)
 
 
+def safe_median(arr, *args, **kwargs):
+    # np.median([]) raises a TypeError for numpy >= 1.10.1
+    length = arr.size if hasattr(arr, 'size') else len(arr)
+    return np.nan if length == 0 else np.median(arr, *args, **kwargs)
+
+
+def safe_mean(arr, *args, **kwargs):
+    # np.mean([]) raises a RuntimeWarning for numpy >= 1.10.1
+    length = arr.size if hasattr(arr, 'size') else len(arr)
+    return np.nan if length == 0 else np.mean(arr, *args, **kwargs)
+
+
 def test_imputation_mean_median():
     # Test imputation using the mean and median strategies, when
     # missing_values != 0.
@@ -134,9 +147,9 @@ def test_imputation_mean_median():
     values = np.arange(1, shape[0]+1)
     values[4::2] = - values[4::2]
 
-    tests = [("mean", "NaN", lambda z, v, p: np.mean(np.hstack((z, v)))),
+    tests = [("mean", "NaN", lambda z, v, p: safe_mean(np.hstack((z, v)))),
              ("mean", 0, lambda z, v, p: np.mean(v)),
-             ("median", "NaN", lambda z, v, p: np.median(np.hstack((z, v)))),
+             ("median", "NaN", lambda z, v, p: safe_median(np.hstack((z, v)))),
              ("median", 0, lambda z, v, p: np.median(v))]
 
     for strategy, test_missing_values, true_value_fun in tests:
@@ -256,7 +269,7 @@ def test_imputation_pipeline_grid_search():
     l = 100
     X = sparse_random_matrix(l, l, density=0.10)
     Y = sparse_random_matrix(l, 1, density=0.10).toarray()
-    gs = grid_search.GridSearchCV(pipeline, parameters)
+    gs = GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
 
 

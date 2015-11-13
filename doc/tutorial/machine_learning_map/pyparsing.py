@@ -1269,8 +1269,8 @@ class ParserElement(object):
 
     def __getattr__(self,aname):
         if aname == "myException":
-            self.myException = ret = self.getException();
-            return ret;
+            self.myException = ret = self.getException()
+            return ret
         else:
             raise AttributeError, "no such attribute " + aname
 

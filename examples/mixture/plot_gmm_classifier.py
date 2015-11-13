@@ -33,13 +33,14 @@ import matplotlib as mpl
 import numpy as np
 
 from sklearn import datasets
-from sklearn.cross_validation import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.externals.six.moves import xrange
 from sklearn.mixture import GMM
 
 
+colors = ['navy', 'turquoise', 'darkorange']
 def make_ellipses(gmm, ax):
-    for n, color in enumerate('rgb'):
+    for n, color in enumerate(colors):
         v, w = np.linalg.eigh(gmm._get_covars()[n][:2, :2])
         u = w[0] / np.linalg.norm(w[0])
         angle = np.arctan2(u[1], u[0])
@@ -55,9 +56,9 @@ iris = datasets.load_iris()
 
 # Break up the dataset into non-overlapping training (75%) and testing
 # (25%) sets.
-skf = StratifiedKFold(iris.target, n_folds=4)
+skf = StratifiedKFold(n_folds=4)
 # Only take the first fold.
-train_index, test_index = next(iter(skf))
+train_index, test_index = next(iter(skf.split(iris.data, iris.target)))
 
 
 X_train = iris.data[train_index]
@@ -91,14 +92,15 @@ for index, (name, classifier) in enumerate(classifiers.items()):
     h = plt.subplot(2, n_classifiers / 2, index + 1)
     make_ellipses(classifier, h)
 
-    for n, color in enumerate('rgb'):
+    for n, color in enumerate(colors):
         data = iris.data[iris.target == n]
-        plt.scatter(data[:, 0], data[:, 1], 0.8, color=color,
+        plt.scatter(data[:, 0], data[:, 1], s=0.8, color=color,
                     label=iris.target_names[n])
     # Plot the test data with crosses
-    for n, color in enumerate('rgb'):
+    for n, color in enumerate(colors):
         data = X_test[y_test == n]
-        plt.plot(data[:, 0], data[:, 1], 'x', color=color)
+        print(color)
+        plt.scatter(data[:, 0], data[:, 1], marker='x', color=color)
 
     y_train_pred = classifier.predict(X_train)
     train_accuracy = np.mean(y_train_pred.ravel() == y_train.ravel()) * 100

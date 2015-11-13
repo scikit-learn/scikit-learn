@@ -4,7 +4,9 @@ import numpy as np
 import scipy.sparse
 
 from sklearn.datasets import load_digits, load_iris
-from sklearn.cross_validation import cross_val_score, train_test_split
+
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
 
 from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_almost_equal
@@ -253,8 +255,8 @@ def test_discretenb_predict_proba():
     for cls, X in zip([BernoulliNB, MultinomialNB],
                       [X_bernoulli, X_multinomial]):
         clf = cls().fit(X, y)
-        assert_equal(clf.predict(X[-1]), 2)
-        assert_equal(clf.predict_proba(X[0]).shape, (1, 2))
+        assert_equal(clf.predict(X[-1:]), 2)
+        assert_equal(clf.predict_proba([X[0]]).shape, (1, 2))
         assert_array_almost_equal(clf.predict_proba(X[:2]).sum(axis=1),
                                   np.array([1., 1.]), 6)
 
@@ -263,10 +265,10 @@ def test_discretenb_predict_proba():
     for cls, X in zip([BernoulliNB, MultinomialNB],
                       [X_bernoulli, X_multinomial]):
         clf = cls().fit(X, y)
-        assert_equal(clf.predict_proba(X[0]).shape, (1, 3))
+        assert_equal(clf.predict_proba(X[0:1]).shape, (1, 3))
         assert_equal(clf.predict_proba(X[:2]).shape, (2, 3))
-        assert_almost_equal(np.sum(clf.predict_proba(X[1])), 1)
-        assert_almost_equal(np.sum(clf.predict_proba(X[-1])), 1)
+        assert_almost_equal(np.sum(clf.predict_proba([X[1]])), 1)
+        assert_almost_equal(np.sum(clf.predict_proba([X[-1]])), 1)
         assert_almost_equal(np.sum(np.exp(clf.class_log_prior_)), 1)
         assert_almost_equal(np.sum(np.exp(clf.intercept_)), 1)
 
@@ -332,7 +334,7 @@ def check_sample_weight_multiclass(cls):
         [1, 0, 0],
     ]
     y = [0, 0, 1, 2]
-    sample_weight = np.array([1, 1, 2, 2], dtype=np.float)
+    sample_weight = np.array([1, 1, 2, 2], dtype=np.float64)
     sample_weight /= sample_weight.sum()
     clf = cls().fit(X, y, sample_weight=sample_weight)
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
@@ -351,7 +353,7 @@ def test_sample_weight_mnb():
     clf.fit([[1, 2], [1, 2], [1, 0]],
             [0, 0, 1],
             sample_weight=[1, 1, 4])
-    assert_array_equal(clf.predict([1, 0]), [1])
+    assert_array_equal(clf.predict([[1, 0]]), [1])
     positive_prior = np.exp(clf.intercept_[0])
     assert_array_almost_equal([1 - positive_prior, positive_prior],
                               [1 / 3., 2 / 3.])
@@ -459,10 +461,20 @@ def test_bnb():
 
     # Testing data point is:
     # Chinese Chinese Chinese Tokyo Japan
-    X_test = np.array([0, 1, 1, 0, 0, 1])
+    X_test = np.array([[0, 1, 1, 0, 0, 1]])
 
     # Check the predictive probabilities are correct
     unnorm_predict_proba = np.array([[0.005183999999999999,
                                       0.02194787379972565]])
     predict_proba = unnorm_predict_proba / np.sum(unnorm_predict_proba)
     assert_array_almost_equal(clf.predict_proba(X_test), predict_proba)
+
+
+def test_naive_bayes_scale_invariance():
+    # Scaling the data should not change the prediction results
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    labels = [GaussianNB().fit(f * X, y).predict(f * X)
+              for f in [1E-10, 1, 1E10]]
+    assert_array_equal(labels[0], labels[1])
+    assert_array_equal(labels[1], labels[2])

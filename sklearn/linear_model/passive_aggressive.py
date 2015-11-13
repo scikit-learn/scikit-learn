@@ -59,6 +59,9 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
+		.. versionadded:: 0.17
+           parameter *class_weight* to automatically weight samples.
+
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
@@ -90,7 +93,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     def __init__(self, C=1.0, fit_intercept=True, n_iter=5, shuffle=True,
                  verbose=0, loss="hinge", n_jobs=1, random_state=None,
                  warm_start=False, class_weight=None, average=False):
-        BaseSGDClassifier.__init__(self,
+        super(PassiveAggressiveClassifier, self).__init__(
                                    penalty=None,
                                    fit_intercept=fit_intercept,
                                    n_iter=n_iter,
@@ -245,7 +248,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
                  verbose=0, loss="epsilon_insensitive",
                  epsilon=DEFAULT_EPSILON, random_state=None, warm_start=False,
                  average=False):
-        BaseSGDRegressor.__init__(self,
+        super(PassiveAggressiveRegressor, self).__init__(
                                   penalty=None,
                                   l1_ratio=0,
                                   epsilon=epsilon,

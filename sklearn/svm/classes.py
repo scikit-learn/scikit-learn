@@ -8,6 +8,7 @@ from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_X_y
 from ..utils.validation import _num_samples
+from ..utils.multiclass import check_classification_targets
 
 
 class LinearSVC(BaseEstimator, LinearClassifierMixin,
@@ -202,6 +203,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
         X, y = check_X_y(X, y, accept_sparse='csr',
                          dtype=np.float64, order="C")
+        check_classification_targets(y)
         self.classes_ = np.unique(y)
 
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
@@ -451,13 +453,19 @@ class SVC(BaseSVC):
         Hard limit on iterations within solver, or -1 for no limit.
 
     decision_function_shape : 'ovo', 'ovr' or None, default=None
-        Whether to return a one-vs-rest ('ovr') ecision function of shape
+        Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
         (n_samples, n_classes * (n_classes - 1) / 2).
         The default of None will currently behave as 'ovo' for backward
         compatibility and raise a deprecation warning, but will change 'ovr'
         in 0.18.
+
+        .. versionadded:: 0.17
+           *decision_function_shape='ovr'* is recommended.
+
+        .. versionchanged:: 0.17
+           Deprecated *decision_function_shape='ovo' and None*.
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
@@ -598,13 +606,19 @@ class NuSVC(BaseSVC):
         Hard limit on iterations within solver, or -1 for no limit.
 
     decision_function_shape : 'ovo', 'ovr' or None, default=None
-        Whether to return a one-vs-rest ('ovr') ecision function of shape
+        Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
         (n_samples, n_classes * (n_classes - 1) / 2).
         The default of None will currently behave as 'ovo' for backward
         compatibility and raise a deprecation warning, but will change 'ovr'
         in 0.18.
+
+        .. versionadded:: 0.17
+           *decision_function_shape='ovr'* is recommended.
+
+        .. versionchanged:: 0.17
+           Deprecated *decision_function_shape='ovo' and None*.
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when

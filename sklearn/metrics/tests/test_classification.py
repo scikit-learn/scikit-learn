@@ -46,8 +46,9 @@ from sklearn.metrics import brier_score_loss
 
 
 from sklearn.metrics.classification import _check_targets
-from sklearn.metrics.base import UndefinedMetricWarning
+from sklearn.exceptions import UndefinedMetricWarning
 
+from scipy.spatial.distance import hamming as sp_hamming
 
 ###############################################################################
 # Utilities for testing
@@ -161,8 +162,7 @@ def test_precision_recall_f_binary_single_class():
 
 @ignore_warnings
 def test_precision_recall_f_extra_labels():
-    """Test handling of explicit additional (not in input) labels to PRF
-    """
+    # Test handling of explicit additional (not in input) labels to PRF
     y_true = [1, 3, 3, 2]
     y_pred = [1, 1, 3, 2]
     y_true_bin = label_binarize(y_true, classes=np.arange(5))
@@ -202,7 +202,7 @@ def test_precision_recall_f_extra_labels():
 
 @ignore_warnings
 def test_precision_recall_f_ignored_labels():
-    """Test a subset of labels may be requested for PRF"""
+    # Test a subset of labels may be requested for PRF
     y_true = [1, 1, 2, 3]
     y_pred = [1, 3, 3, 3]
     y_true_bin = label_binarize(y_true, classes=np.arange(5))
@@ -323,6 +323,7 @@ def test_cohen_kappa():
     assert_almost_equal(cohen_kappa_score(y1, y2), .8013, decimal=4)
 
 
+@ignore_warnings
 def test_matthews_corrcoef_nan():
     assert_equal(matthews_corrcoef([0], [1]), 0.0)
     assert_equal(matthews_corrcoef([0, 0], [0, 1]), 0.0)
@@ -643,14 +644,20 @@ def test_multilabel_hamming_loss():
     # Dense label indicator matrix format
     y1 = np.array([[0, 1, 1], [1, 0, 1]])
     y2 = np.array([[0, 0, 1], [1, 0, 1]])
+    w = np.array([1, 3])
 
     assert_equal(hamming_loss(y1, y2), 1 / 6)
     assert_equal(hamming_loss(y1, y1), 0)
     assert_equal(hamming_loss(y2, y2), 0)
-    assert_equal(hamming_loss(y2, np.logical_not(y2)), 1)
-    assert_equal(hamming_loss(y1, np.logical_not(y1)), 1)
+    assert_equal(hamming_loss(y2, 1 - y2), 1)
+    assert_equal(hamming_loss(y1, 1 - y1), 1)
     assert_equal(hamming_loss(y1, np.zeros(y1.shape)), 4 / 6)
     assert_equal(hamming_loss(y2, np.zeros(y1.shape)), 0.5)
+    assert_equal(hamming_loss(y1, y2, sample_weight=w), 1. / 12)
+    assert_equal(hamming_loss(y1, 1-y2, sample_weight=w), 11. / 12)
+    assert_equal(hamming_loss(y1, np.zeros_like(y1), sample_weight=w), 2. / 3)
+    # sp_hamming only works with 1-D arrays
+    assert_equal(hamming_loss(y1[0], y2[0]), sp_hamming(y1[0], y2[0]))
 
 
 def test_multilabel_jaccard_similarity_score():
@@ -807,6 +814,7 @@ def test_precision_recall_f1_score_multilabel_2():
                         0.1666, 2)
 
 
+@ignore_warnings
 def test_precision_recall_f1_score_with_an_empty_prediction():
     y_true = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]])
     y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
@@ -1142,11 +1150,11 @@ def test_hinge_loss_binary():
 
 def test_hinge_loss_multiclass():
     pred_decision = np.array([
-        [0.36, -0.17, -0.58, -0.99],
+        [+0.36, -0.17, -0.58, -0.99],
         [-0.54, -0.37, -0.48, -0.58],
         [-1.45, -0.58, -0.38, -0.17],
         [-0.54, -0.38, -0.48, -0.58],
-        [-2.36, -0.79, -0.27,  0.24],
+        [-2.36, -0.79, -0.27, +0.24],
         [-1.45, -0.58, -0.38, -0.17]
     ])
     y_true = np.array([0, 1, 2, 1, 3, 2])
@@ -1167,10 +1175,10 @@ def test_hinge_loss_multiclass():
 def test_hinge_loss_multiclass_missing_labels_with_labels_none():
     y_true = np.array([0, 1, 2, 2])
     pred_decision = np.array([
-        [1.27, 0.034, -0.68, -1.40],
+        [+1.27, 0.034, -0.68, -1.40],
         [-1.45, -0.58, -0.38, -0.17],
-        [-2.36, -0.79, -0.27,  0.24],
-        [-2.36, -0.79, -0.27,  0.24]
+        [-2.36, -0.79, -0.27, +0.24],
+        [-2.36, -0.79, -0.27, +0.24]
     ])
     error_message = ("Please include all labels in y_true "
                      "or pass labels as third argument")
@@ -1181,7 +1189,7 @@ def test_hinge_loss_multiclass_missing_labels_with_labels_none():
 
 def test_hinge_loss_multiclass_with_missing_labels():
     pred_decision = np.array([
-        [0.36, -0.17, -0.58, -0.99],
+        [+0.36, -0.17, -0.58, -0.99],
         [-0.55, -0.38, -0.48, -0.58],
         [-1.45, -0.58, -0.38, -0.17],
         [-0.55, -0.38, -0.48, -0.58],
@@ -1209,12 +1217,12 @@ def test_hinge_loss_multiclass_invariance_lists():
     y_true = ['blue', 'green', 'red',
               'green', 'white', 'red']
     pred_decision = [
-        [0.36, -0.17, -0.58, -0.99],
+        [+0.36, -0.17, -0.58, -0.99],
         [-0.55, -0.38, -0.48, -0.58],
-        [-1.45, -0.58, -0.38,  -0.17],
+        [-1.45, -0.58, -0.38, -0.17],
         [-0.55, -0.38, -0.48, -0.58],
-        [-2.36, -0.79, -0.27,  0.24],
-        [-1.45, -0.58, -0.38,  -0.17]]
+        [-2.36, -0.79, -0.27, +0.24],
+        [-1.45, -0.58, -0.38, -0.17]]
     dummy_losses = np.array([
         1 - pred_decision[0][0] + pred_decision[0][1],
         1 - pred_decision[1][1] + pred_decision[1][2],

@@ -341,8 +341,9 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
         Training vectors, where n_samples is the number of samples and
         n_features is the number of features.
 
-    y : array-like, shape = [n_samples]
-        Target values.
+    y : array-like, shape = [n_samples] or [n_samples, n_labels]
+        Target values. Class labels must be an integer or float, or array-like
+        objects of integer or float for multilabel classifications.
 
     f : string or file-like in binary mode
         If string, specifies the path that will contain the data.
@@ -368,6 +369,9 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
     multilabel: boolean, optional
         Samples may have several labels each (see
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
+
+        .. versionadded:: 0.17
+           parameter *multilabel* to support multilabel datasets.
     """
     if comment is not None:
         # Convert comment string to list of lines in UTF-8.

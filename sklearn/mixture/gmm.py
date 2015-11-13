@@ -211,7 +211,7 @@ class GMM(BaseEstimator):
     >>> g.fit(obs) # doctest: +NORMALIZE_WHITESPACE
     GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
-            random_state=None, thresh=None, tol=0.001, verbose=0)
+            random_state=None, tol=0.001, verbose=0)
     >>> np.round(g.weights_, 2)
     array([ 0.75,  0.25])
     >>> np.round(g.means_, 2)
@@ -229,23 +229,18 @@ class GMM(BaseEstimator):
     >>> g.fit(20 * [[0]] +  20 * [[10]]) # doctest: +NORMALIZE_WHITESPACE
     GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
-            random_state=None, thresh=None, tol=0.001, verbose=0)
+            random_state=None, tol=0.001, verbose=0)
     >>> np.round(g.weights_, 2)
     array([ 0.5,  0.5])
 
     """
 
     def __init__(self, n_components=1, covariance_type='diag',
-                 random_state=None, thresh=None, tol=1e-3, min_covar=1e-3,
+                 random_state=None, tol=1e-3, min_covar=1e-3,
                  n_iter=100, n_init=1, params='wmc', init_params='wmc',
                  verbose=0):
-        if thresh is not None:
-            warnings.warn("'thresh' has been replaced by 'tol' in 0.16 "
-                          " and will be removed in 0.18.",
-                          DeprecationWarning)
         self.n_components = n_components
         self.covariance_type = covariance_type
-        self.thresh = thresh
         self.tol = tol
         self.min_covar = min_covar
         self.random_state = random_state
@@ -429,6 +424,9 @@ class GMM(BaseEstimator):
         Warning: due to the final maximization step in the EM algorithm,
         with low iterations the prediction may not be 100% accurate
 
+        .. versionadded:: 0.17
+           *fit_predict* method in Gaussian Mixture Model.
+
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
@@ -462,7 +460,8 @@ class GMM(BaseEstimator):
         """
 
         # initialization step
-        X = check_array(X, dtype=np.float64)
+        X = check_array(X, dtype=np.float64, ensure_min_samples=2,
+                        estimator=self)
         if X.shape[0] < self.n_components:
             raise ValueError(
                 'GMM estimation with %s components, but got only %s samples' %
@@ -506,10 +505,6 @@ class GMM(BaseEstimator):
             # reset self.converged_ to False
             self.converged_ = False
 
-            # this line should be removed when 'thresh' is removed in v0.18
-            tol = (self.tol if self.thresh is None
-                   else self.thresh / float(X.shape[0]))
-
             for i in range(self.n_iter):
                 if self.verbose > 0:
                     print('\tEM iteration ' + str(i + 1))
@@ -520,13 +515,11 @@ class GMM(BaseEstimator):
                 current_log_likelihood = log_likelihoods.mean()
 
                 # Check for convergence.
-                # (should compare to self.tol when deprecated 'thresh' is
-                # removed in v0.18)
                 if prev_log_likelihood is not None:
                     change = abs(current_log_likelihood - prev_log_likelihood)
                     if self.verbose > 1:
                         print('\t\tChange: ' + str(change))
-                    if change < tol:
+                    if change < self.tol:
                         self.converged_ = True
                         if self.verbose > 0:
                             print('\t\tEM algorithm converged.')
