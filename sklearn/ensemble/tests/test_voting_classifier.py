@@ -1,7 +1,7 @@
 """Testing for the boost module (sklearn.ensemble.boost)."""
 
 import numpy as np
-from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.exceptions import NotFittedError
@@ -225,8 +225,8 @@ def test_predict_proba_on_toy_problem():
         ('lr', clone(clf1)), ('rf', clone(clf2)), ('gnb', clone(clf3))],
         voting='soft', n_jobs=-1, backend='multiprocessing').fit(X, y)
 
-    assert_equal(eclf1.predict(X), eclf2.predict(X))
-    assert_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+    assert_array_equal(eclf1.predict(X), eclf2.predict(X))
+    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 def test_multiprocessing_majority_label_iris():
     """
@@ -242,7 +242,7 @@ def test_multiprocessing_majority_label_iris():
     eclf2 = VotingClassifier(estimators=[
         ('lr', clone(clf1)), ('rf', clone(clf2)), ('gnb', clone(clf3))],
         voting='hard', n_jobs=-1).fit(X, y)
-    assert_equal(eclf1.predict(X), eclf2.predict(X))
+    assert_array_equal(eclf1.predict(X), eclf2.predict(X))
 
 
 def test_multithreading_majority_label_iris():
@@ -259,8 +259,8 @@ def test_multithreading_majority_label_iris():
     eclf2 = VotingClassifier(estimators=[
         ('lr', clone(clf1)), ('rf', clone(clf2)), ('gnb', clone(clf3))],
         voting='soft', n_jobs=-1, backend='multiprocessing').fit(X, y)
-    assert_equal(eclf1.predict(X), eclf2.predict(X))
-    assert_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+    assert_array_equal(eclf1.predict(X), eclf2.predict(X))
+    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 def test_sample_weight():
     """
@@ -276,12 +276,12 @@ def test_sample_weight():
     eclf2 = VotingClassifier(estimators=[
         ('lr', clone(clf1)), ('rf', clone(clf2)), ('gnb', clone(clf3)), ('svc', clone(clf4))],
         voting='soft', n_jobs=-1).fit(X, y)
-    assert_equal(eclf1.predict(X), eclf2.predict(X))
-    assert_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+    assert_array_equal(eclf1.predict(X), eclf2.predict(X))
+    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
     sample_weight_ = np.RandomState(123).uniform(size=(len(y),))
     eclf3 = VotingClassifier(estimators=[('lr', clone(clf1))],
                              voting='hard', n_jobs=-1).fit(X, y, sample_weight_)
     clf1.fit(X, y, sample_weight_)
-    assert_equal(eclf3.predict(X), clf1.predict(X))
-    assert_equal(eclf3.predict_proba(X), clf1.predict_proba(X))
+    assert_array_equal(eclf3.predict(X), clf1.predict(X))
+    assert_array_equal(eclf3.predict_proba(X), clf1.predict_proba(X))
