@@ -100,6 +100,7 @@ class VectorizerMixin(object):
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")
+    _replace_white_spaces = _white_spaces.sub
 
     def decode(self, doc):
         """Decode the input into a string of unicode symbols
@@ -144,7 +145,7 @@ class VectorizerMixin(object):
     def _char_ngrams(self, text_document):
         """Tokenize text_document into a sequence of character n-grams"""
         # normalize white spaces
-        text_document = self._white_spaces.sub(" ", text_document)
+        text_document = self._replace_white_spaces(" ", text_document)
 
         text_len = len(text_document)
         ngrams = []
@@ -160,7 +161,7 @@ class VectorizerMixin(object):
         Tokenize text_document into a sequence of character n-grams
         excluding any whitespace (operating only inside word boundaries)"""
         # normalize white spaces
-        text_document = self._white_spaces.sub(" ", text_document)
+        text_document = self._replace_white_spaces(" ", text_document)
 
         min_n, max_n = self.ngram_range
         ngrams = []
