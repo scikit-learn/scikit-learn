@@ -75,13 +75,14 @@ def strip_accents_ascii(s):
     return nkfd_form.encode('ASCII', 'ignore').decode('ASCII')
 
 
+_replace_tags = re.compile(r"<([^>]+)>", flags=re.UNICODE).sub
 def strip_tags(s):
     """Basic regexp based HTML / XML tag stripper function
 
     For serious HTML/XML preprocessing you should rather use an external
     library such as lxml or BeautifulSoup.
     """
-    return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub(" ", s)
+    return _replace_tags(" ", s)
 
 
 def _check_stop_list(stop):
