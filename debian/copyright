@@ -5,11 +5,11 @@ Source: http://github.com/scikit-learn/scikit-learn
 
 Files: *
 Copyright: 2007-2015, Scikit-Learn Developers
-License: BSD-3
+License: BSD-3-clause
 
 Files: doc/sphinxext/*
 Copyright: 2008, Stefan van der Walt <stefan@mentat.za.net>, Pauli Virtanen <pav@iki.fi>
-License: BSD-2
+License: BSD-2-clause
   1. Redistributions of source code must retain the above copyright
      notice, this list of conditions and the following disclaimer.
   2. Redistributions in binary form must reproduce the above copyright
@@ -28,24 +28,32 @@ Copyright: 1996-2006 R. Clint Whaley
            2003 Camm Maguire
            1999 The Australian National University
            2000 Antoine P. Petitet, University of Tennessee,
-License: BSD-3
+License: BSD-3-clause
 Comment: Extract from 3.9.25 atlas
 
 Files: sklearn/svm/src/libsvm
        sklearn/svm/src/liblinear
 Copyright: 2000-2010, Chih-Chung Chang and Chih-Jen Lin
-License: BSD-3
+License: BSD-3-clause
 Comment: Partial fork of the LIBSVM package.
 
 Files: doc/themes/scikit-learn/static/jquery.maphilight.js
 Copyright: 2008 David Lynch, http://davidlynch.org/
 License: Expat
 
+Files: doc/themes/scikit-learn/static/*/bootstrap*
+Copyright: 2012 Twitter, Inc
+License: Apache-2.0
+
+Files: doc/themes/scikit-learn/static/nature.css_t
+Copyright: 2007-2010, Sphinx team
+License: BSD-3-clause
+
 Files: debian/*
 Copyright: 2010-2015, Yaroslav Halchenko <debian@onerussian.com>
-License: BSD-3
+License: BSD-3-clause
 
-License: BSD-3
+License: BSD-3-clause
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
   .
@@ -79,7 +87,7 @@ License: Expat
   distribute, sublicense, and/or sell copies of the Software, and to
   permit persons to whom the Software is furnished to do so, subject to
   the following conditions:
-  . 
+  .
   The above copyright notice and this permission notice shall be
   included in all copies or substantial portions of the Software.
   .
@@ -90,3 +98,15 @@ License: Expat
   LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
   OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+License: Apache-2.0
+ This file is licensed under the terms of the Apache License Version 2.0
+ http://www.apache.org/licenses. This notice must appear in modified or not
+ redistributions of this file.
+ .
+ Redistributions of this Software, with or without modification, must
+ reproduce the Apache License in: (1) the Software, or (2) the Documentation
+ or some other similar material which is provided with the Software (if any).
+ .
+ On Debian systems, the full text of the Apache License version 2 can be found
+ in the file `/usr/share/common-licenses/Apache-2.0'.
