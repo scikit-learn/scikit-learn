@@ -46,7 +46,7 @@ def strip_accents_unicode(s):
     """Transform accentuated unicode symbols into their simple counterpart
 
     Warning: the python-level loop and join operations make this
-    implementation 20 times slower than the strip_accents_ascii basic
+    implementation 10 times slower than the strip_accents_ascii basic
     normalization.
 
     See also
@@ -55,8 +55,9 @@ def strip_accents_unicode(s):
         Remove accentuated char for any unicode symbol that has a direct
         ASCII equivalent.
     """
-    return ''.join([c for c in unicodedata.normalize('NFKD', s)
-                    if not unicodedata.combining(c)])
+    _normalize = unicodedata.normalize
+    _combining = unicodedata.combining
+    return ''.join([c for c in _normalize('NFKD', s) if not _combining(c)])
 
 
 def strip_accents_ascii(s):
