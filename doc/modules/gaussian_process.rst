@@ -164,8 +164,8 @@ than just predicting the mean.
 GPR on Mauna Loa CO2 data
 -------------------------
 
-This example is based on Section 5.4.3 of "Gaussian Processes for Machine
-Learning" [RW2006]_. It illustrates an example of complex kernel engineering and
+This example is based on Section 5.4.3 of [RW2006]_. 
+It illustrates an example of complex kernel engineering and
 hyperparameter optimization using gradient ascent on the
 log-marginal-likelihood. The data consists of the monthly average atmospheric
 CO2 concentrations (in parts per million by volume (ppmv)) collected at the
@@ -598,8 +598,20 @@ shown in the following figure:
    :target: ../auto_examples/gaussian_process/plot_gpr_prior_posterior.html
    :align: center
 
+References
+----------
+
+    * `[RW2006]
+      <http://www.gaussianprocess.org/gpml/chapters/>`_ 
+      **Gaussian Processes for Machine Learning**, 
+      Carl Eduard Rasmussen and Christopher K.I. Williams, MIT Press 2006. 
+      Link to an official complete PDF version of the book 
+      `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ . 
 
 .. currentmodule:: sklearn.gaussian_process
+
+
+
 
 Legacy Gaussian Processes
 =========================
