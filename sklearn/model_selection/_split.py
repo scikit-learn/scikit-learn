@@ -1321,9 +1321,9 @@ def check_cv(cv=3, y=None, classifier=False):
           - An object to be used as a cross-validation generator.
           - An iterable yielding train/test splits.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If classifier is False or if ``y`` is
-        neither binary nor multiclass, :class:`KFold` is used.
+        For integer/None inputs, if classifier is True and ``y`` is either
+        binary or multiclass, :class:`StratifiedKFold` used. In all other
+        cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
