@@ -6,6 +6,11 @@
 import operator
 import numpy as np
 
+try:
+    basestring
+except NameError:
+    basestring = (str, bytes)
+
 __all__ = [
     "CheckFalseError",
     "check_all_in",
@@ -97,7 +102,10 @@ def check_is_binary_01(obj, launch_exception=False,
                               exception_type=CheckFalseError)
     if not check:
         return False
-    uniques = np.unique(obj)
+    try:
+        uniques = np.unique(obj)
+    except TypeError as e:
+        return wrapper(False, e)
     contains0 = 0 in uniques
     contains1 = 1 in uniques
     containsboth = contains0 and contains1 and (len(uniques) == 2)
@@ -498,7 +506,10 @@ def check_is_in_range(elem=0.0, lower_bound=None,
     high = operator.lt if high_exclusive else operator.le
     wrapper = __get_wrapper(launch_exception=launch_exception,
                             exception_type=exception_type)
-    return wrapper(((lower_bound is None) or
-                    low(lower_bound, elem)) and
-                   ((higher_bound is None) or
-                    high(elem, higher_bound)), msg=msg)
+    try:
+        return wrapper(((lower_bound is None) or
+                        low(lower_bound, elem)) and
+                       ((higher_bound is None) or
+                        high(elem, higher_bound)), msg=msg)
+    except TypeError as e:
+        return wrapper(False, msg=e)

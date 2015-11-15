@@ -4,7 +4,10 @@
 # License: BSD 3 clause
 
 import numpy as np
-from itertools import izip_longest
+try:
+    from itertools import izip_longest
+except ImportError:
+    from itertools import zip_longest as izip_longest
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils.validation import check_random_state
@@ -198,7 +201,7 @@ def test_get_random_numbers():
 
 def test_iterize():
     testing.assert_array_equal(
-        list(xrange(10)), util.iterize(list(xrange(10))))
+        list(range(10)), util.iterize(list(range(10))))
     elem = "should not be equal"
     testing.assert_not_equal(elem, util.iterize(elem))
     for i in util.iterize(10):
@@ -648,12 +651,12 @@ def test_round_nearest():
 
 def test_shuffle_array():
     random_state = 0
-    original_array = np.array(list(xrange(0, 100)))
+    original_array = np.array(list(range(0, 100)))
     array = original_array.copy()
     check_random_state(random_state).shuffle(array)
     testing.assert_array_equal(util.shuffle_array(
         original_array, inplace=False, random_state=random_state), array)
-    testing.assert_array_equal(original_array, np.array(list(xrange(0, 100))))
+    testing.assert_array_equal(original_array, np.array(list(range(0, 100))))
     testing.assert_array_equal(util.shuffle_array(
         original_array, inplace=True, random_state=random_state), array)
     testing.assert_array_equal(original_array, array)

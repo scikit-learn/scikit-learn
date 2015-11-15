@@ -8,6 +8,11 @@ from warnings import warn
 
 from .basic_checks import check_is_in_range
 
+try:
+    long(5)
+except NameError:
+    long = int
+
 __all__ = [
     "Powerset",
 ]
@@ -256,7 +261,7 @@ class Powerset:
         sum(P(dict(i)[0] = 0) * P(i))
         """
         n_labels = len(uncompressed[0])
-        retv = [np.zeros((n_odds,), dtype=float) for _ in xrange(n_labels)]
+        retv = [np.zeros((n_odds,), dtype=float) for _ in range(n_labels)]
         for label, odd in enumerate(retv):
             for cls, cls_odd in enumerate(cls_probas_array):
                 odd[uncompressed[cls][label]] += cls_odd
@@ -320,7 +325,7 @@ class Powerset:
             used_array = [probas_array]
 
         uncompressed = {}
-        for i in xrange(n_classes):
+        for i in range(n_classes):
             tmp = self.unpowerize(np.array([i]))[0]
             if self.uni:
                 tmp = [tmp]
@@ -329,7 +334,7 @@ class Powerset:
         n_odds = 2
 
         retv = [np.empty((n_samples, n_odds), dtype=float)
-                for _ in xrange(self.nb_cols)]
+                for _ in range(self.nb_cols)]
         for idx_label, label in enumerate(used_array):
             for idx_sample, sample in enumerate(label):
                 tmp = self._probas_aux(uncompressed, sample, n_odds=n_odds)
@@ -396,19 +401,19 @@ class Powerset:
         if len(used_array) != 1:
             raise ValueError('Currently only supports single label.')
         uncompressed = {}
-        for i in xrange(n_classes):
+        for i in range(n_classes):
             tmp = self.unpowerize(np.array([i]))[0]
             if self.uni:
                 tmp = [tmp]
             uncompressed.update({i: tmp})
 
-        retv = [np.array([0 for _ in xrange(n_samples)])
-                for i in xrange(self.nb_cols)]
+        retv = [np.array([0 for _ in range(n_samples)])
+                for i in range(self.nb_cols)]
         for idx, b in enumerate(used_array):
             r = np.argmax(b, axis=1)
             for idx_sample, sample in enumerate(r):
                 l = uncompressed[sample]
-                for x in xrange(len(l)):
+                for x in range(len(l)):
                     retv[x][idx_sample] = l[x]
 
         if self.uni:
@@ -501,7 +506,7 @@ class Powerset:
                 ((len(uniques) == 1) and ((0 in uniques) or (1 in uniques)))):
             raise ValueError("Only binary arrays (0 and 1) are supported.")
 
-        for line in xrange(0, view.shape[0]):
+        for line in range(0, view.shape[0]):
             l = ''
             for elem in view[line, :]:
                 l += str(elem)
@@ -549,8 +554,8 @@ class Powerset:
         view = np.reshape(array_, (array_.shape[0],))
         result = np.zeros((view.shape[0], len(view[0])), dtype=int)
 
-        for line in xrange(result.shape[0]):
-            for col in xrange(result.shape[1]):
+        for line in range(result.shape[0]):
+            for col in range(result.shape[1]):
                 result[line, col] = int(view[line][col], base=2)
 
         return result
