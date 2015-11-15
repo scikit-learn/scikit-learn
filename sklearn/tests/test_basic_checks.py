@@ -199,7 +199,7 @@ def test_check_is_iterable():
     """
     testing.assert_true(bc.check_is_iterable([42]))
     testing.assert_false(bc.check_is_iterable(42))
-    testing.assert_true(bc.check_is_iterable(xrange(10)))
+    testing.assert_true(bc.check_is_iterable(iter(range(10))))
     testing.assert_true(bc.check_is_iterable(["42"]))
     testing.assert_false(bc.check_is_iterable("42", string_allowed=False))
     testing.assert_true(bc.check_is_iterable("42", string_allowed=True))

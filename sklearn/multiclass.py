@@ -40,8 +40,11 @@ import numpy as np
 import warnings
 import scipy.sparse as sp
 import copy as cp
-
-from itertools import izip
+from functools import cmp_to_key
+try:
+    from itertools import izip
+except ImportError:
+    from builtins import zip as izip
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MetaEstimatorMixin, is_regressor
@@ -662,11 +665,11 @@ def _cmp_fct(val1, val2):
     """
     Comparing function between 2 arrays of same size.
     """
-    retv_ = 0
     for i1, i2 in izip(val1, val2):
-        retv_ = cmp(i1, i2)
-        if (retv_ != 0):
-            return retv_
+        if (i1 < i2):
+            return -1
+        elif (i1 > i2):
+            return 1
     return 0
 
 
@@ -808,18 +811,18 @@ class RakelClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                  "force the generation of duplicates.")
 
         retv = [np.zeros((n_labels,), dtype=np.int8)
-                for _ in xrange(n_labelsets)]
+                for _ in range(int(n_labelsets))]
         if (size_labelsets == 0):
             return retv
 
         rnd = check_random_state(seed=random_state)
 
         r = [rnd.choice(n_labels, size=size_labelsets, replace=False)
-             for _ in xrange(n_labelsets)]
+             for _ in range(int(n_labelsets))]
         for idx, arr in izip(r, retv):
             arr[idx] = 1
 
-        retv.sort(cmp=_cmp_fct)
+        retv.sort(key=cmp_to_key(_cmp_fct))
         if not uniqueness:
             return retv
 
@@ -843,7 +846,7 @@ class RakelClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                     # Good chances of collisions, so use deterministic way
                     possibility = _get_possibility(retv[idx+1], n_max, retv)
                 retv[idx+1] = np.asarray(possibility, dtype=np.int8)
-                retv.sort(cmp=_cmp_fct)
+                retv.sort(key=cmp_to_key(_cmp_fct))
             else:
                 idx = idx + 1
         return retv
@@ -916,7 +919,7 @@ class RakelClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                    uniqueness=self.uniqueness)
         if self.no_hole:
             retv = self._force_no_hole(retv)
-        retv.sort(cmp=_cmp_fct)
+        retv.sort(key=cmp_to_key(_cmp_fct))
         return retv
 
     def fit(self, X, y, copy=False):
@@ -985,7 +988,7 @@ class RakelClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             def get_most_freqs():
                 frequencies1 = np.array(
                     [float((self.view_[:, i] == 1).sum())
-                        for i in xrange(self.n_labels_)])
+                        for i in range(int(self.n_labels_))])
                 frequencies1 /= float(self.view_.shape[0])
                 return frequencies1
             fill_vals = get_most_freqs()
@@ -997,7 +1000,7 @@ class RakelClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                               launch_exception=True,
                               msg="Error: invalid fill_method.",
                               exception_type=ValueError)
-            fill_vals = [self.fill_method for _ in xrange(self.n_labels_)]
+            fill_vals = [self.fill_method for _ in range(int(self.n_labels_))]
 
         if (self.verbose > 1):
             print("Number of estimators: {0}.".format(str(self.n_estimators)))
@@ -1006,7 +1009,8 @@ class RakelClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             avg = np.zeros((X.shape[0], self.n_labels_))
             retv = np.zeros((X.shape[0], self.n_labels_))
         else:
-            retv = [np.zeros((X.shape[0], 2)) for _ in xrange(self.n_labels_)]
+            retv = [np.zeros((X.shape[0], 2))
+                    for _ in range(int(self.n_labels_))]
 
         rnds = get_random_numbers(shape=(self.n_estimators, ),
                                   random_state=cp.copy(self.random_state))
@@ -1035,25 +1039,25 @@ class RakelClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                 if self.powerset == "probabilities":
                     odd = power.probas_unpowerize(r)
                     for idx_label, label in enumerate(odd):
-                        for i in xrange(label.shape[0]):
+                        for i in range(label.shape[0]):
                             retv[labelset[idx_label]][i, :] += label[i, :]
                             votes[i, labelset[idx_label]] += 1
                 else:
-                    # odd = [[0 for _ in xrange(n_samples)]
-                    #        for i in xrange(n_labels)]
+                    # odd = [[0 for _ in range(n_samples)]
+                    #        for i in range(n_labels)]
                     odd = power.majority_unpowerize(r)
                     for idx_label, label in enumerate(odd):
                         retv[labelset[idx_label]][:, 1] += label
                         votes[:, labelset[idx_label]] += 1
-                    for idx_label in xrange(self.n_labels_):
+                    for idx_label in range(int(self.n_labels_)):
                         retv[idx_label][:, 0] = (votes[:, idx_label] -
                                                  retv[idx_label][:, 1])
 
             del estim
 
         if predict_only:
-            for i in xrange(votes.shape[0]):
-                for j in xrange(votes.shape[1]):
+            for i in range(votes.shape[0]):
+                for j in range(votes.shape[1]):
                     if votes[i, j] == 0:
                         if (self.verbose > 0):
                             print(("The label {0} of the sample {1} "
@@ -1065,8 +1069,8 @@ class RakelClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                     if (avg[i, j] > self.threshold):
                         retv[i, j] = 1
         else:
-            for i in xrange(votes.shape[0]):
-                for j in xrange(votes.shape[1]):
+            for i in range(votes.shape[0]):
+                for j in range(votes.shape[1]):
                     if votes[i, j] == 0:
                         if (self.verbose > 0):
                             print(("The label {0} of the sample {1} "

@@ -207,12 +207,18 @@ def test_values():
     def _ampl(t):
         amplified[:] = []
         amplified.append(powerset.amplified_powerize(t))
+
     try:
-        testing.assert_warns_message(UserWarning, "Overflow", _ampl, test)
-    except AssertionError:
-        test = np.random.random_integers(0, 1, (10, 64))
-        test[0, 0] = 1
-        testing.assert_warns_message(UserWarning, "Overflow", _ampl, test)
+        long(5)
+    except NameError:
+        _ampl(test)
+    else:
+        try:
+            testing.assert_warns_message(UserWarning, "Overflow", _ampl, test)
+        except AssertionError:
+            test = np.random.random_integers(0, 1, (10, 64))
+            test[0, 0] = 1
+            testing.assert_warns_message(UserWarning, "Overflow", _ampl, test)
 
     amplified = amplified[0]
     amplified_un = powerset.unpowerize(amplified)

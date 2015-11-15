@@ -4,6 +4,17 @@
 # License: BSD 3 clause
 
 import numpy as np
+try:
+    from builtins import cmp, xrange
+except ImportError:
+    from builtins import range as xrange
+
+    def cmp(a, b):
+        if (a < b):
+            return -1
+        elif (a > b):
+            return 1
+        return 0
 
 from .utils.validation import check_random_state
 
