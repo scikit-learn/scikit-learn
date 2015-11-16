@@ -869,6 +869,7 @@ details.
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
    metrics.mutual_info_score
+   metrics.cluster.contingency_matrix
    metrics.normalized_mutual_info_score
    metrics.silhouette_score
    metrics.silhouette_samples
