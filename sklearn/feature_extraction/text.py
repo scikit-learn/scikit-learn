@@ -524,7 +524,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         object) that is called to fetch the bytes in memory.
 
         Otherwise the input is expected to be the sequence strings or
-        bytes items are expected to be analyzed directly.
+        bytes items that are passed into the analyzer.
 
     encoding : string, 'utf-8' by default.
         If bytes or files are given to analyze, this encoding is used to
@@ -548,9 +548,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         Option 'char_wb' creates character n-grams only from text inside
         word boundaries.
 
-        If a callable is passed it is used to extract the sequence of features
-        out of the raw, unprocessed input.
-        Only applies if ``analyzer == 'word'``.
+        If analyzer is a callable, data from fit is directly passed to the 
+        callable. The expected output being a sequence of features. All
+        preprocessing steps like reading from files and preprocessing is 
+        skipped.
 
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
