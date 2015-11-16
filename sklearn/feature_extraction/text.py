@@ -219,8 +219,9 @@ class VectorizerMixin(object):
     def build_analyzer(self):
         """Return a callable that handles preprocessing and tokenization
 
-        If a callable is passed as init paramater, no preprocessing or tokenization
-        is added"""
+        If a callable is passed as init paramater, additional preprocessing 
+        and tokenization is not applied.
+        """
 
         if callable(self.analyzer):
             return self.analyzer
