@@ -5,17 +5,24 @@
 
 from __future__ import division
 import numpy as np
-from six.moves import xrange
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import column_or_1d
+from ..externals import six
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.utils import column_or_1d
 from sklearn.utils.validation import check_is_fitted
+
+xrange = six.moves.xrange
+
+__all__ = [
+    "FixedWidthDiscretizer"
+]
+
 
 class FixedWidthDiscretizer(BaseEstimator, TransformerMixin):
     """Bins continuous data into k equal width intervals.
 
     Parameters
     ----------
-    numBins : int (default=2)
+    n_bins : int (default=2)
         The number of bins to produce. The intervals for the bins are
         determined by the minimum and maximum of the input data.
 
@@ -31,22 +38,29 @@ class FixedWidthDiscretizer(BaseEstimator, TransformerMixin):
         Contains the boundaries for which the data lies. Each interval
         has an open left boundary, and a closed right boundary.
 
+    spacing_ : float
+        The spacing between each one of the cut points. Calculated as
+
+            (max - min) / n_bins.
+
     Example
     -------
-    >>> X = [1, 2, 3, 4, 5, 6]
-    >>> discretizer = FixedWidthDiscretizer(nbins=3)
-    >>> discretizer.fit(X) # DOCTEST +DONT_ACCEPT_BLANKLINE
+    >>> from sklearn.preprocessing import FixedWidthDiscretizer
+    >>> X = [0, 1, 2, 3, 4, 5, 6]
+    >>> discretizer = FixedWidthDiscretizer(n_bins=3)
+    >>> discretizer.fit(X)
+    FixedWidthDiscretizer(n_bins=3)
     >>> discretizer.cut_points_
-    array([2., 4.]...)
+    array([2., 4.])
     >>> discretizer.transform(X)
-    array([0, 0, 1, 1, 2, 2])
+    array([0, 0, 0, 1, 1, 2, 2])
     """
 
-    def __init__(self, numBins=2):
-        if numBins < 2:
+    def __init__(self, n_bins=2):
+        if n_bins < 2:
             raise ValueError("FixedWidthDiscretizer received an invalid number "
                              "of bins")
-        self.numBins = numBins
+        self.n_bins = n_bins
 
         # Attributes
         self.min_ = None
@@ -69,8 +83,9 @@ class FixedWidthDiscretizer(BaseEstimator, TransformerMixin):
 
         self.min_ = X.min()
         self.max_ = X.max()
-        self.spacing_ = (self.max_ - self.min_) / self.numBins
-        cut_points = (self.min_ + self.spacing_ * i for i in xrange(1, self.numBins))
+        self.spacing_ = (self.max_ - self.min_) / self.n_bins
+        cut_points = (self.min_ + self.spacing_ * i
+                      for i in xrange(1, self.n_bins))
         self.cut_points_ = np.array(list(cut_points))
         return self
 
