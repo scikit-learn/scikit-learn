@@ -217,7 +217,11 @@ class VectorizerMixin(object):
         return _check_stop_list(self.stop_words)
 
     def build_analyzer(self):
-        """Return a callable that handles preprocessing and tokenization"""
+        """Return a callable that handles preprocessing and tokenization
+
+        If a callable is passed as init paramater, no preprocessing or tokenization
+        is added"""
+        
         if callable(self.analyzer):
             return self.analyzer
 
