@@ -520,6 +520,185 @@ API changes summary
       gamma to ``1. / n_features`` is deprecated and will be removed in 0.19.
       Use ``gamma="auto"`` instead.
 
+      People
+      ------
+
+      List of contributors for release 0.17 ordered alphabetically.
+
+      * akitty
+      * Angermueller, Christof
+      * Ankan, Ankur
+      * Baharev, Ali
+      * banilo
+      * Barmaley.exe
+      * Batchkarov, Miroslav
+      * Bayer, Immanuel
+      * benjaminirving
+      * Besson, Lilian
+      * Birodkar, Vighnesh
+      * Blanchard, Dan
+      * Blondel, Mathieu
+      * Bourguignat, Christophe
+      * Brown, Kyler
+      * Buitinck, Lars
+      * C., Frank
+      * Carey, CJ
+      * Caro, Eduardo
+      * Carrillo, Fernando
+      * Chang, Chih-Wei
+      * Choudhary, Saket
+      * Clenaghan, Graham
+      * Clyde-fare
+      * D, David
+      * Data1010
+      * David
+      * De, Steven
+      * Deng, Boyuan
+      * Deshpande, Jaidev
+      * djipey
+      * DLT, Tom
+      * Dotson, David
+      * duarte, edson
+      * Dupré, Tom
+      * Erick, Christopher
+      * Erlinger, Anthony
+      * Esteve, Loic
+      * Fischer, Peter
+      * Freitas, Tiago
+      * Galvez, Daniel
+      * Ganesh, Adithya
+      * giorgiop
+      * Gohlke, Christoph
+      * Goodman, Keith
+      * Gramfort, Alexandre
+      * Grigorev, Alexey
+      * Grisel, Olivier
+      * Gulati, Ishank
+      * gwulfs
+      * Head, Tim
+      * Heilman, Michael
+      * Hendrik, Jan
+      * hlin117
+      * Ho, Kian
+      * Hoover, Stephen
+      * Hopper, Timothy
+      * Hu, Sonny
+      * Ibraim, Ganiev
+      * J., Dougal
+      * Jeffrey04
+      * Jeremy
+      * Jevnik, Joe
+      * jfraj
+      * jnothman
+      * Joly, Arnaud
+      * Joseph
+      * KamalakerDadi
+      * Katz, Omer
+      * Kirkham, John
+      * Kolganov, Maxim
+      * Kossaifi, Jean
+      * Kronovet, Daniel
+      * Krump, Matt
+      * Ku, Martin
+      * Kumar, Manoj
+      * Lamb, Andrew
+      * Larson, Eric
+      * Layton, Robert
+      * Lin, Hsuan-Tien
+      * Lorenz, Cory
+      * Louppe, Gilles
+      * Low, Yucheng
+      * Loyal, Joshua
+      * Lyra, Matti
+      * maheshakya
+      * marktab.net, MarkTab
+      * Martin, Donne
+      * Martin, Eric
+      * Martin, Jack
+      * MartinBpr
+      * martinosorb
+      * MaryanMorel
+      * Mayorov, Nikolay
+      * mbillinger
+      * McFee, Brian
+      * Mehta, Vinayak
+      * Mei, Jiali
+      * Mensch, Arthur
+      * mhg
+      * Michel, Vincent
+      * Mueller, Andreas
+      * Naul, Brett
+      * Nicolas
+      * Nothman, Joel
+      * Nájera, Óscar
+      * Oyamada, Masafumi
+      * Park, Jungkook
+      * Parry, Preston
+      * Patrini, Giorgio
+      * Patterson, Michael
+      * pianomania
+      * Prakash, Buddha
+      * Prettenhofer, Peter
+      * Prokopis, Gryllos
+      * R, Raghav
+      * Rachez, Arnaud
+      * Raghav
+      * Ramanath, Rohan
+      * rasbt
+      * Rasul, Kashif
+      * Riddell, Allen
+      * Roth, Phil
+      * Rouvinen, Ari
+      * Saabas, Ando
+      * Saeger, Sebastian
+      * santi
+      * saurabh.bansod
+      * Schreiber, Jacob
+      * Schubert, Erich
+      * Schumacher, Aaron
+      * scls19fr
+      * Seabold, Skipper
+      * Seguin, Steven
+      * Shah, Anish
+      * Shmelkov, Konstantin
+      * SimonPL
+      * sinhrks
+      * Sornarajah, Shivan
+      * Spacek, Martin
+      * Spikhalskiy, Dmitry
+      * Sridharan, Cindy
+      * sseg
+      * Stewart, Zac
+      * Stolbunov, Valentin
+      * Sullivan, Danny
+      * Sutherland, Dougal
+      * Tiao, Louis
+      * tokoroten
+      * TomDLT
+      * trevorstephens
+      * unknown
+      * Unterthiner, Thomas
+      * VanderPlas, Jake
+      * Varoquaux, Gael
+      * Varoquaux, Nelle
+      * Vasiloudis, Theodore
+      * Vincent
+      * Virtanen, Pauli
+      * vstolbunov
+      * Wang, Tian
+      * Wang, Zichen
+      * wangz10
+      * Wijewardena, Maheshakya
+      * Wittenauer, John
+      * Xue, Wei
+      * Yau, Chyi-Kwei
+      * Zalkow, Frank
+      * zhai_pro
+      * Zhang, Chi
+      * Zhang, Sam
+      * Zhauniarovich, Yury
+      * Zinkov, Rob
+
 .. _changes_0_1_16:
 
 Version 0.16.1
@@ -1017,6 +1196,176 @@ API changes summary
 
     - :class:`cluster.DBSCAN` now uses a deterministic initialization. The
       `random_state` parameter is deprecated. By `Erich Schubert`_.
+
+      People
+      ------
+
+      List of contributors for release 0.16 ordered alphabetically.
+
+      * Aagaard, Anders
+      * Akshay
+      * akshayah3
+      * Alsalhi, Hamzeh
+      * Aminaka, Daiki
+      * Angermueller, Christof
+      * Ayerdi, Borja
+      * banilo
+      * Barmaley.exe
+      * Beauchamp, Kyle
+      * Bengtsson, Hampus
+      * bhsu
+      * Billinger, Martin
+      * Billy, Okal
+      * Blanchard, Dan
+      * Blondel, Mathieu
+      * Bommarito, Michael
+      * Bradshaw, Robert
+      * Bredin, Herve
+      * Brunner, Clemens
+      * Buitinck, Lars
+      * Carey, CJ
+      * Carrascosa, Rafael
+      * Celeo
+      * cgohlke
+      * Charron, Samuel
+      * chebee7i
+      * Cherti, Mehdi
+      * Choudhary, Saket
+      * danfrankj
+      * Davies, Ben
+      * Dawe, Noel
+      * Delteil, Thomas
+      * Deng, Boyuan
+      * Deng, Cathy
+      * Direr, Laurent
+      * Dlabal, Jan
+      * Dubourg, Vincent
+      * Eickenberg, Michael
+      * Esteve, Loic
+      * Fabisch, Alexander
+      * Feld, Boris
+      * Flaxman, A.
+      * Fletcher, David
+      * floydsoft
+      * Fortin, Félix-Antoine
+      * Garrett-R
+      * Giles, Calvin
+      * Gilmore, Ian
+      * gpassino
+      * Gramfort, Alexandre
+      * Grisel, Olivier
+      * gwulfs
+      * Hammerbacher, Jeff
+      * Haque, Imran
+      * Helder
+      * Helmus, Jonathan
+      * Hendrik, Jan
+      * isms
+      * J., Dougal
+      * jdcaballero
+      * Jha, Saurabh
+      * Jiang, Wu
+      * Joly, Arnaud
+      * Joseph
+      * Kanniah, Ilambharathi
+      * Kasim, Rahiel
+      * Kastner, Kyle
+      * Kazmar, Tomas
+      * Koehler, Benedikt
+      * Kossaifi, Jean
+      * Ku, Martin
+      * Kumar, Manoj
+      * Kuo, Tzu-Ming
+      * Lamond, Will
+      * Lee, Antony
+      * leepei
+      * Linke, Max
+      * Louppe, Gilles
+      * López, Javier
+      * Lyra, Matti
+      * maheshakya
+      * Manuel
+      * Markham, Kevin
+      * Martin
+      * Mason, Randall
+      * Matthieu, Lagacherie
+      * Mavroforakis, Harry
+      * Mayorov, Nikolay
+      * Mehta, Vinayak
+      * Meng, Xinfan
+      * Michael, Mario
+      * Michelbacher, Lukas
+      * Mignon, Alexis
+      * Milajevs, Dmitrijs
+      * MLG
+      * Montecchio, Nicola
+      * mr.Shu
+      * Mueller, Andreas
+      * Murashkin, Vjacheslav
+      * Nicholls, Sam
+      * Nicolas
+      * Niculae, Vlad
+      * Nothman, Joel
+      * Nájera, Óscar
+      * Obaja, Aldrian
+      * Osborn, Brooke
+      * Otte, Stefan
+      * Pedersen, Brent
+      * Pedregosa, Fabian
+      * Pedro, Luis
+      * Pico, Matt
+      * Prettenhofer, Peter
+      * Puggioni, Paolo
+      * pvnguyen
+      * queqichao
+      * R, Raghav
+      * Romaniuk, Michal
+      * SALAMIN, Hugues
+      * Schubert, Erich
+      * Schumacher, Aaron
+      * sethdandridge
+      * Shah, Jatin
+      * Sharma, Hasil
+      * sinhrks
+      * snuderl
+      * Stade-Schuldt, Christian
+      * Staple, Aaron
+      * Sullivan, Danny
+      * Susik, Mateusz
+      * swu
+      * tejesh95
+      * Terry, Matt
+      * terrycojones
+      * thakur, abhishek
+      * Tjoa, Steve
+      * trevorstephens
+      * tttthomasssss
+      * Tulloch, Andrew
+      * ugurcaliskan
+      * ugurthemaster
+      * Unterthiner, Thomas
+      * van, Andreas
+      * van, Stefan
+      * VanderPlas, Jake
+      * Vardhan, Pratap
+      * Varoquaux, Gael
+      * Varoquaux, Nelle
+      * Visconti, Matteo
+      * wadawson
+      * Walker, Andrew
+      * Wallach, Hanna
+      * Wignall, Brian
+      * Wilhelm, Florian
+      * x0l
+      * Xue, Wei
+      * Yau, Chyi-Kwei
+      * Yi, Yan
+      * Yu, Hsiang-Fu
+      * Yu-Chin
+      * Zhang, Kaicheng
+      * Zimmer, Sylvain
+      * Zinkov, Rob
+
 
 .. _changes_0_15_2:
 
