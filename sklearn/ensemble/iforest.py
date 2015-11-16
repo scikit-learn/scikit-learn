@@ -6,6 +6,7 @@ from __future__ import division
 
 import numbers
 import numpy as np
+import scipy as sp
 from warnings import warn
 
 from scipy.sparse import issparse
@@ -56,6 +57,11 @@ class IsolationForest(BaseBagging):
         If max_samples is larger than the number of samples provided,
         all samples will be used for all trees (no sampling).
 
+    contamination : float in ]0., 0.5[, optional (default=0.1)
+        The amount of contamination of the data set, i.e. the proportion
+        of outliers in the data set. Used when fitting to define the threshold
+        on the decision function.
+
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
             - If int, then draw `max_features` features.
@@ -102,6 +108,7 @@ class IsolationForest(BaseBagging):
     def __init__(self,
                  n_estimators=100,
                  max_samples="auto",
+                 contamination=0.1,
                  max_features=1.,
                  bootstrap=False,
                  n_jobs=1,
@@ -121,6 +128,7 @@ class IsolationForest(BaseBagging):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
+        self.contamination = contamination
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by iforest")
@@ -181,7 +189,12 @@ class IsolationForest(BaseBagging):
         super(IsolationForest, self)._fit(X, y, max_samples,
                                           max_depth=max_depth,
                                           sample_weight=sample_weight)
+
+        self.threshold_ = sp.stats.scoreatpercentile(
+            -self.decision_function(X), 100. * (1. - self.contamination))
+
         return self
+
 
     def predict(self, X):
         """Predict anomaly score of X with the IsolationForest algorithm.
@@ -208,6 +221,28 @@ class IsolationForest(BaseBagging):
             The anomaly score of the input samples.
             The lower, the more normal.
         """
+        X = check_array(X, accept_sparse='csr')
+        is_inlier = -np.ones(X.shape[0], dtype=int)
+        is_inlier[self.decision_function(X) <= self.threshold_] = 1
+
+        return is_inlier
+
+
+    def decision_function(self, X):
+        """Average of the decision functions of the base classifiers.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The training input samples. Sparse matrices are accepted only if
+            they are supported by the base estimator.
+
+        Returns
+        -------
+        score : array, shape (n_samples,)
+            The decision function of the input samples.
+
+        """
         # code structure from ForestClassifier/predict_proba
         # Check data
         X = self.estimators_[0]._validate_X_predict(X, check_input=True)
@@ -227,25 +262,8 @@ class IsolationForest(BaseBagging):
 
         scores = 2 ** (-depths.mean(axis=1) / _average_path_length(self.max_samples_))
 
-        return scores
-
-    def decision_function(self, X):
-        """Average of the decision functions of the base classifiers.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The training input samples. Sparse matrices are accepted only if
-            they are supported by the base estimator.
-
-        Returns
-        -------
-        score : array, shape (n_samples,)
-            The decision function of the input samples.
-
-        """
         # minus as bigger is better (here less abnormal):
-        return - self.predict(X)
+        return 0.5 - scores
 
 
 def _average_path_length(n_samples_leaf):
