@@ -29,7 +29,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     """Bernoulli Restricted Boltzmann Machine (RBM).
 
     A Restricted Boltzmann Machine with binary visible units and
-    binary hiddens. Parameters are estimated using Stochastic Maximum
+    binary hidden units. Parameters are estimated using Stochastic Maximum
     Likelihood (SML), also known as Persistent Contrastive Divergence (PCD)
     [2].
 
