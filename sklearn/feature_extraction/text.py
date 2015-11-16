@@ -221,7 +221,7 @@ class VectorizerMixin(object):
 
         If a callable is passed as init paramater, no preprocessing or tokenization
         is added"""
-        
+
         if callable(self.analyzer):
             return self.analyzer
 
@@ -554,7 +554,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         If analyzer is a callable, data from fit is directly passed to the 
         callable. The expected output being a sequence of features. All
-        preprocessing steps like reading from files and preprocessing is 
+        preprocessing steps like reading from files and preprocessing are 
         skipped.
 
     preprocessor : callable or None (default)
