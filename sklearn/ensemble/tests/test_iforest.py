@@ -172,7 +172,7 @@ def test_iforest_performance():
     clf = IsolationForest(max_samples=100, random_state=rng).fit(X_train)
 
     # predict scores (the lower, the more normal)
-    y_pred = clf.predict(X_test)
+    y_pred = - clf.decision_function(X_test)
 
     # check that there is at most 6 errors (false positive or false negative)
     assert_greater(roc_auc_score(y_test, y_pred), 0.98)
@@ -185,7 +185,9 @@ def test_iforest_works():
     # Test LOF
     clf = IsolationForest(random_state=rng)
     clf.fit(X)
+    decision_func = - clf.decision_function(X)
     pred = clf.predict(X)
 
     # assert detect outliers:
-    assert_greater(np.min(pred[-2:]), np.max(pred[:-2]))
+    assert_greater(np.min(decision_func[-2:]), np.max(decision_func[:-2]))
+    assert_array_equal(pred, 6 * [-1] + 2 * [1])
