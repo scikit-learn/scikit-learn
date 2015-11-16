@@ -73,7 +73,7 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     return cartesian(axes), axes
 
 
-def _exact_partial_dependence(est, target_variables, grid, X, ouput=None):
+def _exact_partial_dependence(est, target_variables, grid, X, output=None):
     """Calculate the partial dependence of ``target_variables``.
 
     The function will be calculated by calling the ``predict_proba`` method of
@@ -110,16 +110,29 @@ def _exact_partial_dependence(est, target_variables, grid, X, ouput=None):
             X_eval[:, variable] = np.repeat(grid[row, i], n_samples)
         if est._estimator_type == 'regressor':
             try:
-                pdp.append(np.mean(est.predict(X_eval)))
+                pdp_row = est.predict(X_eval)
             except:
                 raise ValueError('Call %s.fit before partial_dependence' %
                                  est.__class__.__name__)
+            if pdp_row.ndim != 1 and pdp_row.shape[1] != 1:
+                # Multi-output
+                if not 0 <= output < pdp_row.shape[1]:
+                    raise ValueError('Valid output must be specified for '
+                                     'multi-output models.')
+                pdp_row = pdp_row[:, output]
+            pdp.append(np.mean(pdp_row))
         elif est._estimator_type == 'classifier':
             try:
                 pdp_row = est.predict_proba(X_eval)
             except:
                 raise ValueError('Call %s.fit before partial_dependence' %
                                  est.__class__.__name__)
+            if isinstance(pdp_row, list):
+                # Multi-output
+                if not 0 <= output < len(pdp_row):
+                    raise ValueError('Valid output must be specified for '
+                                     'multi-output models.')
+                pdp_row = pdp_row[output]
             pdp_row = np.log(np.clip(pdp_row, 1e-16, 1))
             pdp_row = np.subtract(pdp_row,
                                   np.mean(pdp_row, 1)[:, np.newaxis])
@@ -137,7 +150,7 @@ def _exact_partial_dependence(est, target_variables, grid, X, ouput=None):
     return pdp
 
 
-def _estimated_partial_dependence(est, target_variables, grid, X, ouput=None):
+def _estimated_partial_dependence(est, target_variables, grid, X, output=None):
     """Calculate the partial dependence of ``target_variables``.
 
     The function will be calculated by calling the ``predict_proba`` method of
@@ -176,6 +189,15 @@ def _estimated_partial_dependence(est, target_variables, grid, X, ouput=None):
         except:
             raise ValueError('Call %s.fit before partial_dependence' %
                              est.__class__.__name__)
+        if pdp.ndim != 1 and pdp.shape[1] == 1:
+            # Column output
+            pdp = pdp.ravel()
+        if pdp.ndim != 1 and pdp.shape[1] != 1:
+            # Multi-output
+            if not 0 <= output < pdp.shape[1]:
+                raise ValueError('Valid output must be specified for '
+                                 'multi-output models.')
+            pdp = pdp[:, output]
         pdp = pdp[np.newaxis]
     elif est._estimator_type == 'classifier':
         try:
@@ -183,6 +205,12 @@ def _estimated_partial_dependence(est, target_variables, grid, X, ouput=None):
         except:
             raise ValueError('Call %s.fit before partial_dependence' %
                              est.__class__.__name__)
+        if isinstance(pdp, list):
+            # Multi-output
+            if not 0 <= output < len(pdp):
+                raise ValueError('Valid output must be specified for '
+                                 'multi-output models.')
+            pdp = pdp[output]
         pdp = np.log(np.clip(pdp, 1e-16, 1))
         pdp = np.subtract(pdp, np.mean(pdp, 1)[:, np.newaxis])
         pdp = pdp.transpose()
@@ -341,9 +369,10 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
         if isinstance(est, ForestRegressor):
             pdp /= n_estimators
     elif method == 'exact':
-        pdp = _exact_partial_dependence(est, target_variables, grid, X)
+        pdp = _exact_partial_dependence(est, target_variables, grid, X, output)
     elif method == 'estimated':
-        pdp = _estimated_partial_dependence(est, target_variables, grid, X)
+        pdp = _estimated_partial_dependence(est, target_variables, grid, X,
+                                            output)
     else:
         raise ValueError('method "%s" is invalid. Use "recursion", "exact", '
                          '"estimated", or None.' % method)
