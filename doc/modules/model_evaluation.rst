@@ -1033,6 +1033,7 @@ the more accurate the prediction is.
 where : :math:`N` is the total number of predictions, :math:`f_t` is the predicted probablity of the actual outcome :math:`o_t` 
 
   >>> import numpy as np
+  >>> from sklearn.metrics import brier_score_loss
   >>> from sklearn.metrics import zero_one_loss
   >>> y_true = np.array([0, 1, 1, 0])
   >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
