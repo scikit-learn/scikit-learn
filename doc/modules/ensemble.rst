@@ -133,7 +133,7 @@ built from a sample drawn with replacement (i.e., a bootstrap sample)
 from the training set. In addition, when splitting a node during the
 construction of the tree, the split that is chosen is no longer the
 best split among all features. Instead, the split that is picked is the
-best split among a random subset of the features. As a result of this
+best split among a random subset of the features (although this is not necessarily true for RandomForestRegressor, see :ref:`Parameters <ensemble_parameters>`). As a result of this
 randomness, the bias of the forest usually slightly increases (with
 respect to the bias of a single non-random tree) but, due to averaging,
 its variance also decreases, usually more than compensating for the
@@ -188,6 +188,8 @@ in bias::
     :align: center
     :scale: 75%
 
+.. _ensemble_parameters:
+
 Parameters
 ----------
 
@@ -201,7 +203,7 @@ greater the reduction of variance, but also the greater the increase in
 bias. Empirical good default values are ``max_features=n_features``
 for regression problems, and ``max_features=sqrt(n_features)`` for
 classification tasks (where ``n_features`` is the number of features
-in the data). Good results are often achieved when setting ``max_depth=None``
+in the data). It should be noted that using the default value of ``max_features=n_features`` for a Random Forest Regressor means that the model is not truly a "random forest" but is actually a bagged ensemble of ordinary regression trees. Good results are often achieved when setting ``max_depth=None``
 in combination with ``min_samples_split=1`` (i.e., when fully developing the
 trees). Bear in mind though that these values are usually not optimal, and
 might result in models that consume a lot of ram. The best parameter values
