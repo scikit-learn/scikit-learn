@@ -95,10 +95,10 @@ def main():
     fig = plt.figure()
 
     target_feature = (1, 5)
-    pdp, (x_axis, y_axis) = partial_dependence(clf, target_feature,
-                                               X=X_train, grid_resolution=50)
-    XX, YY = np.meshgrid(x_axis, y_axis)
-    Z = pdp.T.reshape(XX.shape).T
+    pdp, axes = partial_dependence(clf, target_feature,
+                                   X=X_train, grid_resolution=50)
+    XX, YY = np.meshgrid(axes[0], axes[1])
+    Z = pdp[0].reshape(list(map(np.size, axes))).T
     ax = Axes3D(fig)
     surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=plt.cm.BuPu)
     ax.set_xlabel(names[target_feature[0]])
