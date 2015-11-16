@@ -337,7 +337,7 @@ or want to do additional monitoring, using ``warm_start=True`` and
 
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
-    >>> clf = MLPClassifier(hidden_layer_sizes=(15,), random_state=1, max_iter=1)
+    >>> clf = MLPClassifier(hidden_layer_sizes=(15,), random_state=1, max_iter=1, warm_start=True)
     >>> for i in range(10):
     ...     clf.fit(X, y)
     ...     # additional monitoring / inspection # doctest: +ELLIPSIS
