@@ -68,39 +68,39 @@ class FixedWidthDiscretizer(BaseEstimator, TransformerMixin):
         self.cut_points_ = None
         self.spacing_ = None
 
-    def fit(self, X, y=None):
+    def fit(self, y):
         """Finds the intervals of interest from the input data.
 
         Parameters
         ----------
-        X : array-like, shape [n_samples]
+        y : array-like, shape [n_samples]
             The array containing continuous features to be discretized.
             Input must be 1d arrays.
 
         """
 
-        X = column_or_1d(X)
+        y = column_or_1d(y)
 
-        self.min_ = X.min()
-        self.max_ = X.max()
+        self.min_ = y.min()
+        self.max_ = y.max()
         self.spacing_ = (self.max_ - self.min_) / self.n_bins
         cut_points = (self.min_ + self.spacing_ * i
                       for i in xrange(1, self.n_bins))
         self.cut_points_ = np.array(list(cut_points))
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, y):
         """Discretizes the input data.
 
         Parameters
         ----------
-        X : array-like, shape [n_samples]
+        y : array-like, shape [n_samples]
             The array containing continuous features to be discretized.
             Input must be 1d arrays.
 
         """
         check_is_fitted(self, ["cut_points_"])
-        X = column_or_1d(X)
-        output = np.searchsorted(self.cut_points_, X)
+        y = column_or_1d(y)
+        output = np.searchsorted(self.cut_points_, y)
         return output
 
