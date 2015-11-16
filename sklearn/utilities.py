@@ -5,7 +5,7 @@
 
 import numpy as np
 try:
-    from builtins import cmp, xrange
+    from __builtin__ import cmp, xrange
 except ImportError:
     from builtins import range as xrange
 

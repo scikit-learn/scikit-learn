@@ -10,14 +10,6 @@ from sklearn import basic_checks as bc
 
 
 def test__get_wrapper():
-    """
-    Tests if the function `__get_wrapper` behaves correctly.
-
-    Raises
-    ------
-    AssertionError
-        If the method `__get_wrapper` failed the test.
-    """
     wrap_fct = bc.__get_wrapper
     wrap_raises = wrap_fct(
         launch_exception=True, exception_type=AssertionError)
@@ -32,14 +24,6 @@ def test__get_wrapper():
 
 
 def test_check_all_in():
-    """
-    Tests if the function `check_all_in` behaves correctly.
-
-    Raises
-    ------
-    AssertionError
-        If the method `check_all_in` failed the test.
-    """
     testing.assert_true(bc.check_all_in(42, 42, both=True))
     testing.assert_true(bc.check_all_in("test", ("test",), both=True))
     testing.assert_true(
@@ -93,14 +77,6 @@ def test_check_all_in():
 
 
 def test_check_is_binary_01():
-    """
-    Tests if the function `check_is_binary_01` behaves correctly.
-
-    Raises
-    ------
-    AssertionError
-        If the method `check_is_binary_01` failed the test.
-    """
     testing.assert_true(bc.check_is_binary_01(
         (0,), launch_exception=False))
     testing.assert_true(bc.check_is_binary_01(
@@ -125,14 +101,6 @@ def test_check_is_binary_01():
 
 
 def test_check_is_in():
-    """
-    Tests if the function `check_is_in` behaves correctly.
-
-    Raises
-    ------
-    AssertionError
-        If the method `check_is_in` failed the test.
-    """
     testing.assert_true(bc.check_is_in(None, None))
     testing.assert_true(bc.check_is_in(42, 42))
     testing.assert_true(bc.check_is_in(42, [42]))
@@ -151,14 +119,6 @@ def test_check_is_in():
 
 
 def test_check_is_in_list():
-    """
-    Tests if the function `check_is_in_list` behaves correctly.
-
-    Raises
-    ------
-    AssertionError
-        If the method `check_is_in_list` failed the test.
-    """
     testing.assert_false(bc.check_is_in_list(42, None, False))
     testing.assert_raise_message(
         bc.CheckFalseError, "Error:", bc.check_is_in_list, 42, (41, 43), True)
@@ -166,14 +126,6 @@ def test_check_is_in_list():
 
 
 def test_check_is_in_range():
-    """
-    Tests if the function `check_is_in_range` behaves correctly.
-
-    Raises
-    ------
-    AssertionError
-        If the method `check_is_in_range` failed the test.
-    """
     testing.assert_false(bc.check_is_in_range(
         42, lower_bound=42, low_exclusive=True, launch_exception=False))
     testing.assert_true(bc.check_is_in_range(
@@ -189,14 +141,6 @@ def test_check_is_in_range():
 
 
 def test_check_is_iterable():
-    """
-    Tests if the function `check_is_iterable` behaves correctly.
-
-    Raises
-    ------
-    AssertionError
-        If the method `check_is_iterable` failed the test.
-    """
     testing.assert_true(bc.check_is_iterable([42]))
     testing.assert_false(bc.check_is_iterable(42))
     testing.assert_true(bc.check_is_iterable(iter(range(10))))
@@ -214,14 +158,6 @@ def test_check_is_iterable():
 
 
 def test_check_is_list_or_tuple():
-    """
-    Tests if the function `check_is_list_or_tuple` behaves correctly.
-
-    Raises
-    ------
-    AssertionError
-        If the method `check_is_list_or_tuple` failed the test.
-    """
     testing.assert_false(bc.check_is_list_or_tuple(None, False, None))
     testing.assert_raise_message(
         bc.CheckFalseError, "not a list", bc.check_is_list_or_tuple,
