@@ -405,8 +405,8 @@ for cross-validation against time-based splits.
 
 .. warning::
 
-  Contrary to :class:`StratifiedKFold`, **the ``labels`` of
-  :class:`LeaveOneLabelOut` should not encode the target class to predict**:
+  Contrary to :class:`StratifiedKFold`, the ``labels`` of
+  :class:`LeaveOneLabelOut` should not encode the target class to predict:
   the goal of :class:`StratifiedKFold` is to rebalance dataset classes across
   the train / test split to ensure that the train and test folds have
   approximately the same percentage of samples of each class while
