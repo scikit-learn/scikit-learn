@@ -90,6 +90,9 @@ and tasks.
 - `kmodes <https://github.com/nicodv/kmodes>`_ k-modes clustering algorithm for categorical data, and
   several of its variations.
 
+- `lasagne <https://github.com/Lasagne/Lasagne>`_  a lightweight library to build and train neural networks in Theano.
+
+
 Statistical learning with Python
 --------------------------------
 Other packages useful for data analysis and machine learning.
