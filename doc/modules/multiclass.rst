@@ -32,13 +32,13 @@ by decomposing such problems into binary classification problems.
     means that a single estimator has to handle
     several joint classification tasks. This is both a generalization
     of the multi-label classification task, where the set of classification
-    problems is restricted to binary classification, as well as a generalization of the multi-class
-    classification task. *The output format is a 2d numpy array or sparse
-    matrix.*
+    problems is restricted to binary classification, 
+    as well as a generalization of the multi-class classification task. 
+    *The output format is a 2d numpy array or sparse matrix.*
 
     The set of labels can be different for each output variable.
     For instance, a sample could be assigned "pear" for an output variable that
-    takes possible values in a finite set of species such as "pear" and "apple", 
+    takes possible values in a finite set of species such as "pear" or "apple", 
     and "orange" or "green" for a second output variable that takes possible values
     in a finite set of colors such as "green", "red", "orange", "yellow"...
 
@@ -83,7 +83,7 @@ Multilabel classification format
 ================================
 
 In multilabel learning, the joint set of binary classification tasks is
-expressed with a label binary indicator array: each sample is one row in a 2d
+expressed with a binary label indicator array: each sample is one row in a 2d
 array of shape (n_samples, n_classes) with binary values: the "1" elements, i.e. the non
 zero elements, correspond to the subset of labels. An array such as
 ``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0]])`` represents label 0 in the first
