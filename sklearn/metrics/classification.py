@@ -1425,6 +1425,8 @@ def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+        .. versionadded:: 0.18
+
     Returns
     -------
     loss : float or int,

@@ -96,6 +96,8 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     [2] Tieleman, T. Training Restricted Boltzmann Machines using
         Approximations to the Likelihood Gradient. International Conference
         on Machine Learning (ICML) 2008
+
+    .. versionadded:: 0.18
     """
     def __init__(self, n_components=256, learning_rate=0.1, batch_size=10,
                  n_iter=10, verbose=0, random_state=None):

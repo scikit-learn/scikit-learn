@@ -136,6 +136,9 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
     -------
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.learning_curve
     """
     X, y, labels = indexable(X, y, labels)
 
@@ -216,6 +219,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     parameters : dict or None, optional
         The parameters that have been evaluated.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.learning_curve
     """
     if verbose > 1:
         if parameters is None:
@@ -280,7 +286,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
 
 def _score(estimator, X_test, y_test, scorer):
-    """Compute the score of an estimator on a given test set."""
+    """Compute the score of an estimator on a given test set.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.learning_curve
+    """
     if y_test is None:
         score = scorer(estimator, X_test)
     else:
@@ -360,6 +370,9 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
     -------
     predictions : ndarray
         This is the result of calling 'predict'
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.learning_curve
     """
     X, y, labels = indexable(X, y, labels)
 
@@ -427,6 +440,9 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
 
     test : array-like
         This is the value of the test parameter
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.learning_curve
     """
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
@@ -458,6 +474,9 @@ def _check_is_permutation(indices, n_samples):
     -------
     is_partition : bool
         True iff sorted(locs) is range(n)
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.learning_curve
     """
     if len(indices) != n_samples:
         return False
@@ -559,6 +578,8 @@ def permutation_test_score(estimator, X, y, labels=None, cv=None,
         Performance.  The Journal of Machine Learning Research (2010)
         vol. 11
 
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.learning_curve
     """
     X, y, labels = indexable(X, y, labels)
 
@@ -583,7 +604,11 @@ permutation_test_score.__test__ = False  # to avoid a pb with nosetests
 
 
 def _permutation_test_score(estimator, X, y, labels, cv, scorer):
-    """Auxiliary function for permutation_test_score"""
+    """Auxiliary function for permutation_test_score
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.learning_curve
+    """
     avg_score = []
     for train, test in cv.split(X, y, labels):
         estimator.fit(X[train], y[train])
@@ -592,7 +617,11 @@ def _permutation_test_score(estimator, X, y, labels, cv, scorer):
 
 
 def _shuffle(y, labels, random_state):
-    """Return a shuffled copy of y eventually shuffle among same labels."""
+    """Return a shuffled copy of y eventually shuffle among same labels.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.learning_curve
+    """
     if labels is None:
         indices = random_state.permutation(len(y))
     else:
@@ -700,6 +729,9 @@ def learning_curve(estimator, X, y, labels=None,
     -----
     See :ref:`examples/model_selection/plot_learning_curve.py
     <example_model_selection_plot_learning_curve.py>`
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.learning_curve
     """
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
         raise ValueError("An estimator must support the partial_fit interface "
@@ -767,6 +799,9 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
         Numbers of training examples that will be used to generate the
         learning curve. Note that the number of ticks might be less
         than n_ticks because duplicate entries will be removed.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.learning_curve
     """
     train_sizes_abs = np.asarray(train_sizes)
     n_ticks = train_sizes_abs.shape[0]
@@ -805,7 +840,11 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
 def _incremental_fit_estimator(estimator, X, y, classes, train, test,
                                train_sizes, scorer, verbose):
-    """Train estimator on training subsets incrementally and compute scores."""
+    """Train estimator on training subsets incrementally and compute scores.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.learning_curve
+    """
     train_scores, test_scores = [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
     for n_train_samples, partial_train in partitions:
@@ -906,6 +945,9 @@ def validation_curve(estimator, X, y, param_name, param_range, labels=None,
     See
     :ref:`examples/model_selection/plot_validation_curve.py
     <example_model_selection_plot_validation_curve.py>`
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.learning_curve
     """
     X, y, labels = indexable(X, y, labels)
 

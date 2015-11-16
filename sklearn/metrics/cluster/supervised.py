@@ -65,6 +65,8 @@ def contingency_matrix(labels_true, labels_pred, eps=None, max_n_classes=5000):
         This help to avoid Memory error with regression target
         for mutual_information.
 
+        .. versionadded:: 0.18
+
     Returns
     -------
     contingency: array, shape=[n_classes_true, n_classes_pred]
@@ -136,6 +138,8 @@ def adjusted_rand_score(labels_true, labels_pred, max_n_classes=5000):
         Maximal number of classes handled by the adjusted_rand_score
         metric. Setting it too high can lead to MemoryError or OS
         freeze
+
+        .. versionadded:: 0.18
 
     Returns
     -------
@@ -251,6 +255,8 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred,
         metric. Setting it too high can lead to MemoryError or OS
         freeze
 
+        .. versionadded:: 0.18
+
     Returns
     -------
     homogeneity: float
@@ -319,6 +325,8 @@ def homogeneity_score(labels_true, labels_pred, max_n_classes=5000):
         Maximal number of classes handled by the adjusted_rand_score
         metric. Setting it too high can lead to MemoryError or OS
         freeze
+
+        .. versionadded:: 0.18
 
     Returns
     -------
@@ -400,6 +408,8 @@ def completeness_score(labels_true, labels_pred, max_n_classes=5000):
         metric. Setting it too high can lead to MemoryError or OS
         freeze
 
+        .. versionadded:: 0.18
+
     Returns
     -------
     completeness: float
@@ -479,6 +489,8 @@ def v_measure_score(labels_true, labels_pred, max_n_classes=5000):
         Maximal number of classes handled by the adjusted_rand_score
         metric. Setting it too high can lead to MemoryError or OS
         freeze
+
+        .. versionadded:: 0.18
 
     Returns
     -------
@@ -594,6 +606,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None,
         metric. Setting it too high can lead to MemoryError or OS
         freeze
 
+        .. versionadded:: 0.18
+
     Returns
     -------
     mi: float
@@ -663,6 +677,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred, max_n_classes=5000):
         Maximal number of classes handled by the adjusted_rand_score
         metric. Setting it too high can lead to MemoryError or OS
         freeze
+
+        .. versionadded:: 0.18
 
     Returns
     -------
@@ -762,6 +778,8 @@ def normalized_mutual_info_score(labels_true, labels_pred, max_n_classes=5000):
         Maximal number of classes handled by the adjusted_rand_score
         metric. Setting it too high can lead to MemoryError or OS
         freeze
+
+        .. versionadded:: 0.18
 
     Returns
     -------

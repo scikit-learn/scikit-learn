@@ -53,6 +53,9 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
     """Base class for all cross-validators
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
 
     def split(self, X, y=None, labels=None):
@@ -154,6 +157,9 @@ class LeaveOneOut(BaseCrossValidator):
         stratification of the dataset.
 
     LabelKFold: K-fold iterator variant with non-overlapping labels.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
 
     def _iter_test_indices(self, X, y=None, labels=None):
@@ -226,6 +232,9 @@ class LeavePOut(BaseCrossValidator):
     TRAIN: [0 3] TEST: [1 2]
     TRAIN: [0 2] TEST: [1 3]
     TRAIN: [0 1] TEST: [2 3]
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
 
     def __init__(self, p):
@@ -391,6 +400,9 @@ class KFold(_BaseKFold):
         classification tasks).
 
     LabelKFold: K-fold iterator variant with non-overlapping labels.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
 
     def __init__(self, n_folds=3, shuffle=False,
@@ -459,6 +471,9 @@ class LabelKFold(_BaseKFold):
     LeaveOneLabelOut
         For splitting the data according to explicit domain-specific
         stratification of the dataset.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
     def __init__(self, n_folds=3):
         super(LabelKFold, self).__init__(n_folds, shuffle=False,
@@ -547,6 +562,8 @@ class StratifiedKFold(_BaseKFold):
     All the folds have size ``trunc(n_samples / n_folds)``, the last one has
     the complementary.
 
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
 
     def __init__(self, n_folds=3, shuffle=False, random_state=None):
@@ -639,6 +656,8 @@ class LeaveOneLabelOut(BaseCrossValidator):
      [3 4]] [[5 6]
      [7 8]] [1 2] [1 2]
 
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
 
     def _iter_test_masks(self, X, y, labels):
@@ -726,6 +745,9 @@ class LeavePLabelOut(BaseCrossValidator):
     See also
     --------
     LabelKFold: K-fold iterator variant with non-overlapping labels.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
 
     def __init__(self, n_labels):
@@ -769,7 +791,11 @@ class LeavePLabelOut(BaseCrossValidator):
 
 
 class BaseShuffleSplit(with_metaclass(ABCMeta)):
-    """Base class for ShuffleSplit and StratifiedShuffleSplit"""
+    """Base class for ShuffleSplit and StratifiedShuffleSplit
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
+    """
 
     def __init__(self, n_iter=10, test_size=0.1, train_size=None,
                  random_state=None):
@@ -891,6 +917,9 @@ class ShuffleSplit(BaseShuffleSplit):
     TRAIN: [3 1] TEST: [2]
     TRAIN: [2 1] TEST: [0]
     TRAIN: [0 2] TEST: [3]
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
 
     def _iter_indices(self, X, y=None, labels=None):
@@ -1025,6 +1054,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     TRAIN: [1 2] TEST: [3 0]
     TRAIN: [0 2] TEST: [1 3]
     TRAIN: [0 2] TEST: [3 1]
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
 
     def __init__(self, n_iter=10, test_size=0.1, train_size=None,
@@ -1094,6 +1126,9 @@ def _validate_shuffle_split_init(test_size, train_size):
 
     NOTE This does not take into account the number of samples which is known
     only at split
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
     if test_size is None and train_size is None:
         raise ValueError('test_size and train_size can not both be None')
@@ -1128,6 +1163,9 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
     """
     Validation helper to check if the test/test sizes are meaningful wrt to the
     size of the data (n_samples)
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
     if (test_size is not None and np.asarray(test_size).dtype.kind == 'i'
             and test_size >= n_samples):
@@ -1189,6 +1227,9 @@ class PredefinedSplit(BaseCrossValidator):
     ...    y_train, y_test = y[train_index], y[test_index]
     TRAIN: [1 2 3] TEST: [0]
     TRAIN: [0 2] TEST: [1 3]
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
 
     def __init__(self, test_fold):
@@ -1256,7 +1297,11 @@ class PredefinedSplit(BaseCrossValidator):
 
 
 class _CVIterableWrapper(BaseCrossValidator):
-    """Wrapper class for old style cv objects and iterables."""
+    """Wrapper class for old style cv objects and iterables.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
+    """
     def __init__(self, cv):
         self.cv = cv
 
@@ -1339,6 +1384,9 @@ def check_cv(cv=3, y=None, classifier=False):
     checked_cv : a cross-validator instance.
         The return value is a cross-validator which generates the train/test
         splits via the ``split`` method.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
     if cv is None:
         cv = 3
@@ -1437,6 +1485,8 @@ def train_test_split(*arrays, **options):
     >>> y_test
     [1, 4]
 
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
     n_arrays = len(arrays)
     if n_arrays == 0:
@@ -1472,7 +1522,11 @@ train_test_split.__test__ = False  # to avoid a pb with nosetests
 
 
 def _safe_split(estimator, X, y, indices, train_indices=None):
-    """Create subset of dataset and properly handle kernels."""
+    """Create subset of dataset and properly handle kernels.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
+    """
     if (hasattr(estimator, 'kernel') and callable(estimator.kernel) and
             not isinstance(estimator.kernel, GPKernel)):
         # cannot compute the kernel values with custom function
