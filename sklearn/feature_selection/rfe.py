@@ -44,9 +44,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         algorithms such as Support Vector Classifiers and Generalized
         Linear Models from the `svm` and `linear_model` modules.
 
-        Rather than having a coef_ attribute, the estimator can have a 
-        feature_importances_ attribute as an array. This attribute is contained in 
-        ensemble estimators such as the RandomForestClassifier.  
+        The estimator can also have a feature_importances_ attribute as an array. 
+        This attribute is contained in ensemble estimators such as the RandomForestClassifier.  
 
     n_features_to_select : int or None (default=None)
         The number of features to select. If `None`, half of the features
