@@ -25,6 +25,9 @@ New features
    - Added the :class:`ensemble.IsolationForest` class for anomaly detection based on
      random forests. By `Nicolas Goix`_.
 
+   - Added new supervised learning algorithm: :ref:`Multi-layer Perceptron <multilayer_perceptron>`
+     (`#3204 <https://github.com/scikit-learn/scikit-learn/pull/3204>`_) by `Issam H. Laradji`_
+
 Enhancements
 ............
 
@@ -3974,3 +3977,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Giorgio Patrini: https://github.com/giorgiop
 .. _Elvis Dohmatob: https://github.com/dohmatob
 .. _yelite: https://github.com/yelite
+.. _Issam H. Laradji: https://github.com/IssamLaradji
