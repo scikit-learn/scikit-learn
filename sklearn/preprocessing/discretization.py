@@ -4,74 +4,88 @@
 #==============================================================================
 
 from __future__ import division
-from math import log
 import numpy as np
-from scipy.stats import entropy
-from ..base import BaseEstimator
-from ..utils import check_array, check_consistent_length, column_or_1d
-import abc
+from six.moves import xrange
+from ..base import BaseEstimator, TransformerMixin
+from ..utils import column_or_1d
+from sklearn.utils.validation import check_is_fitted
 
-class KBins(TransformerMixin):
-    """TODO
+class FixedWidthDiscretizer(BaseEstimator, TransformerMixin):
+    """Bins continuous data into k equal width intervals.
+
+    Parameters
+    ----------
+    numBins : int (default=2)
+        The number of bins to produce. The intervals for the bins are
+        determined by the minimum and maximum of the input data.
+
+    Attributes
+    ----------
+    min_ : float
+        The minimum value of the input data.
+
+    max_ : float
+        The maximum value of the input data.
+
+    cut_points_ : array, shape [numBins - 1]
+        Contains the boundaries for which the data lies. Each interval
+        has an open left boundary, and a closed right boundary.
+
+    Example
+    -------
+    >>> X = [1, 2, 3, 4, 5, 6]
+    >>> discretizer = FixedWidthDiscretizer(nbins=3)
+    >>> discretizer.fit(X) # DOCTEST +DONT_ACCEPT_BLANKLINE
+    >>> discretizer.cut_points_
+    array([2., 4.]...)
+    >>> discretizer.transform(X)
+    array([0, 0, 1, 1, 2, 2])
     """
 
-    def __init__(self, numBins, continuous_features=None):
+    def __init__(self, numBins=2):
         if numBins < 2:
-            raise ValueError("KBins discretizer received an invalid number "
+            raise ValueError("FixedWidthDiscretizer received an invalid number "
                              "of bins")
         self.numBins = numBins
-        self.continuous_features_ = continuous_features
+
+        # Attributes
+        self.min_ = None
+        self.max_ = None
+        self.cut_points_ = None
+        self.spacing_ = None
 
     def fit(self, X, y=None):
         """Finds the intervals of interest from the input data.
 
         Parameters
         ----------
-        X : The array containing features to be discretized. Continuous
-        features should be specified by the `continuous_features`
-        attribute.
+        X : array-like, shape [n_samples]
+            The array containing continuous features to be discretized.
+            Input must be 1d arrays.
 
-        y : A list or array of class labels corresponding to `X`.
         """
-        X = check_array(X, force_all_finite=True, ensure_2d=False)
-        if self.continuous_features_ is None:
-            self.continuous_features_ = range(X.shape[1])
 
-        self.cut_points_ = dict()
+        X = column_or_1d(X)
 
-        for index, col in enumerate(X.T):
-            if index not in self.continuous_features_:
-                continue
-            cut_points = self._split_intervals(col, y)
-            self.cut_points_[index] = cut_points
+        self.min_ = X.min()
+        self.max_ = X.max()
+        self.spacing_ = (self.max_ - self.min_) / self.numBins
+        cut_points = (self.min_ + self.spacing_ * i for i in xrange(1, self.numBins))
+        self.cut_points_ = np.array(list(cut_points))
         return self
 
     def transform(self, X, y=None):
-        """Converts the continuous features in X into integers from
-        0... k-1 (`k` is the number of intervals the discretizer created
-        from a given continuous feature.)
-        """
-        if self.continuous_features_ is None:
-            raise ValueError("You must fit the discretizer before "
-                             "transforming data.")
+        """Discretizes the input data.
 
-        output = X.copy()
-        for i in self.continuous_features_:
-            output[:, i] = np.searchsorted(self.cut_points_[i], X[:, i])
+        Parameters
+        ----------
+        X : array-like, shape [n_samples]
+            The array containing continuous features to be discretized.
+            Input must be 1d arrays.
+
+        """
+        check_is_fitted(self, ["cut_points_"])
+        X = column_or_1d(X)
+        output = np.searchsorted(self.cut_points_, X)
         return output
 
-    def _split_intervals(self, col, y=None):
-        """Fixed length binning.
-
-        Returns
-        -------
-        A python list of cut points, representing the boundaries
-        of each interval.
-        """
-        # Create the intervals
-        maxVal = max(col)
-        minVal = min(col)
-        spacing = (maxVal - minVal) / (self.numBins)
-        cut_points = np.array([(minVal + spacing * i)
-                                for i in range(1, self.numBins)])
-        return cut_points
