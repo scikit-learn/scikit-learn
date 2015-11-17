@@ -1307,7 +1307,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,
-                          sample_weight=None, digits=2):
+                          sample_weight=None, digits=2, sort_lables=True):
     """Build a text report showing the main classification metrics
 
     Read more in the :ref:`User Guide <classification_report>`.
@@ -1384,7 +1384,11 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                                                   average=None,
                                                   sample_weight=sample_weight)
 
-    for i, label in enumerate(labels):
+    if sort_lables:
+        labels = sorted(((i, target_names[i]) for i, l in enumerate(labels)), key=lambda x: x[1])
+    else:
+        labels = enumerate(labels)
+    for i, label in labels:
         values = [target_names[i]]
         for v in (p[i], r[i], f1[i]):
             values += ["{0:0.{1}f}".format(v, digits)]
