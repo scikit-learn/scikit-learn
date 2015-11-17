@@ -1423,7 +1423,7 @@ Here is an example:
 	>>> x=["male","male","male","female","female","female"]
 	>>> y=["right_handed","right_handed","left_handed","left_handed",
 	... "ambidextrous","ambidextrous"]
-	>>> contingency_matrix(x,y)
+	>>> contingency_matrix(x,y) # doctest: +ELLIPSIS
 	array([[2, 1, 0],
 	       [0, 1, 2]])
 
