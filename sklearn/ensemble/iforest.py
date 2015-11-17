@@ -4,7 +4,6 @@
 
 from __future__ import division
 
-import numbers
 import numpy as np
 import scipy as sp
 from warnings import warn
@@ -12,12 +11,10 @@ from warnings import warn
 from scipy.sparse import issparse
 
 from ..externals import six
-from ..externals.joblib import Parallel, delayed
 from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
 
 from .bagging import BaseBagging
-from .base import _partition_estimators
 
 __all__ = ["IsolationForest"]
 
@@ -179,7 +176,7 @@ class IsolationForest(BaseBagging):
                 max_samples = n_samples
             else:
                 max_samples = self.max_samples
-        else: # float
+        else:  # float
             if not (0. < self.max_samples <= 1.):
                 raise ValueError("max_samples must be in (0, 1]")
             max_samples = int(self.max_samples * X.shape[0])
@@ -194,7 +191,6 @@ class IsolationForest(BaseBagging):
             -self.decision_function(X), 100. * (1. - self.contamination))
 
         return self
-
 
     def predict(self, X):
         """Predict anomaly score of X with the IsolationForest algorithm.
@@ -227,7 +223,6 @@ class IsolationForest(BaseBagging):
 
         return is_inlier
 
-
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
 
@@ -248,7 +243,6 @@ class IsolationForest(BaseBagging):
         X = self.estimators_[0]._validate_X_predict(X, check_input=True)
         n_samples = X.shape[0]
 
-
         n_samples_leaf = np.zeros((n_samples, self.n_estimators), order="f")
         depths = np.zeros((n_samples, self.n_estimators), order="f")
 
@@ -262,7 +256,8 @@ class IsolationForest(BaseBagging):
 
         scores = 2 ** (-depths.mean(axis=1) / _average_path_length(self.max_samples_))
 
-        # minus as bigger is better (here less abnormal):
+        # minus as bigger is better (here less abnormal)
+        # and add 0.5 to give a sense to scores = 0:
         return 0.5 - scores
 
 
@@ -275,7 +270,7 @@ def _average_path_length(n_samples_leaf):
     n_samples_leaf : array-like of shape (n_samples, n_estimators), or int.
         The number of training samples in each test sample leaf, for
         each estimators.
-    
+
     Returns
     -------
     average_path_length : array, same shape as n_samples_leaf
