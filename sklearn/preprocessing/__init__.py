@@ -5,7 +5,7 @@ normalization, binarization and imputation methods.
 
 from ._function_transformer import FunctionTransformer
 
-from .discretization import FixedWidthDiscretizer
+from .discretization import Discretizer
 from .data import Binarizer
 from .data import KernelCenterer
 from .data import MinMaxScaler
@@ -35,7 +35,7 @@ from .imputation import Imputer
 __all__ = [
     'Binarizer',
     'FunctionTransformer',
-    'FixedWidthDiscretizer',
+    'Discretizer',
     'Imputer',
     'KernelCenterer',
     'LabelBinarizer',

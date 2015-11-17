@@ -13,11 +13,11 @@ from sklearn.utils.validation import check_is_fitted
 xrange = six.moves.xrange
 
 __all__ = [
-    "FixedWidthDiscretizer"
+    "Discretizer"
 ]
 
 
-class FixedWidthDiscretizer(BaseEstimator, TransformerMixin):
+class Discretizer(BaseEstimator, TransformerMixin):
     """Bins continuous data into k equal width intervals.
 
     Parameters
@@ -45,11 +45,11 @@ class FixedWidthDiscretizer(BaseEstimator, TransformerMixin):
 
     Example
     -------
-    >>> from sklearn.preprocessing import FixedWidthDiscretizer
+    >>> from sklearn.preprocessing import Discretizer
     >>> X = [0, 1, 2, 3, 4, 5, 6]
-    >>> discretizer = FixedWidthDiscretizer(n_bins=3)
+    >>> discretizer = Discretizer(n_bins=3)
     >>> discretizer.fit(X)
-    FixedWidthDiscretizer(n_bins=3)
+    Discretizer(n_bins=3)
     >>> discretizer.cut_points_
     array([2., 4.])
     >>> discretizer.transform(X)
@@ -58,7 +58,7 @@ class FixedWidthDiscretizer(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_bins=2):
         if n_bins < 2:
-            raise ValueError("FixedWidthDiscretizer received an invalid number "
+            raise ValueError("Discretizer received an invalid number "
                              "of bins")
         self.n_bins = n_bins
 
