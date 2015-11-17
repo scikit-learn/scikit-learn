@@ -39,6 +39,7 @@ import array
 import numpy as np
 import warnings
 import scipy.sparse as sp
+from scipy.special import comb
 import copy as cp
 from functools import cmp_to_key
 try:
@@ -651,16 +652,6 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         return self.classes_[pred]
 
 
-def _binomialCoeff(n, k):
-    # see http://rosettacode.org/wiki/Evaluate_binomial_coefficients
-    result = 1
-    if (n <= k):
-        return result
-    for i in range(1, k+1):
-        result = result * (n-i+1) / i
-    return result
-
-
 def _cmp_fct(val1, val2):
     """
     Comparing function between 2 arrays of same size.
@@ -805,7 +796,7 @@ class RakelClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                 (n_labels < 1)):
             return []
         if (uniqueness):
-            n_max = _binomialCoeff(n_labels, size_labelsets)
+            n_max = comb(n_labels, size_labelsets, exact=True)
             if (n_max < n_labelsets):
                 raise ValueError("The combination of the arguments will "
                                  "force the generation of duplicates.")
@@ -901,7 +892,7 @@ class RakelClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             safe_m_ = int(self.n_estimators)
             if not self.uniqueness:
                 return safe_m_
-            return min(safe_m_, _binomialCoeff(self.n_labels_, safe_k))
+            return min(safe_m_, comb(self.n_labels_, safe_k, exact=True))
         safe_m = get_m()
 
         check_is_in_range(safe_m, lower_bound=1,
@@ -951,7 +942,7 @@ class RakelClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                      allow_nd=False)
 
         if copy:
-            self.y_ = cp.deepcopy(self.y_)
+            self.y_ = self.y_.copy()
         try:
             n_labels = self.y_.shape[1]
         except IndexError:
