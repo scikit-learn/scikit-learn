@@ -3,7 +3,7 @@
 #
 # License: BSD 3 clause
 
-from sklearn.utils import testing as testing
+from sklearn.utils import testing
 from sklearn import basic_checks as bc
 
 # Test private methods

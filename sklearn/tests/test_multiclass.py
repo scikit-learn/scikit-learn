@@ -24,7 +24,7 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utilities import convert_probabilities, probs_to_class
 from sklearn.utilities import get_random_numbers
 from sklearn.multiclass import RakelClassifier, _get_possibility
-from sklearn.multiclass import _valid_possibility, _binomialCoeff
+from sklearn.multiclass import _valid_possibility
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.powerset import Powerset
@@ -588,19 +588,6 @@ def assert_labelsets(rak):
     if rak.uniqueness:
         for l in rak.labelsets_:
             assert_equal(1, count_identical(l, rak.labelsets_))
-
-
-def test_rakel_binomialCoeff():
-    assert_equal(1, _binomialCoeff(0, 0))
-    assert_equal(1, _binomialCoeff(1, 1))
-    assert_equal(1, _binomialCoeff(1, 0))
-    assert_equal(1, _binomialCoeff(5, 10))
-    assert_equal((10 * 9 * 8 * 7 * 6) / (5 * 4 * 3 * 2),
-                 _binomialCoeff(10, 5))
-    assert_equal((10 * 9 * 8 * 7) / (4 * 3 * 2),
-                 _binomialCoeff(10, 6))
-    assert_equal((10 * 9 * 8 * 7 * 6 * 5) / (6 * 5 * 4 * 3 * 2),
-                 _binomialCoeff(10, 4))
 
 
 def test_rakel_get_possibility():

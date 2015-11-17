@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from sklearn.utils import testing as testing
+from sklearn.utils import testing
 from sklearn.datasets import make_multilabel_classification
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.powerset import Powerset

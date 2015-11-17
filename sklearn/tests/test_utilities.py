@@ -11,7 +11,7 @@ except ImportError:
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils.validation import check_random_state
-from sklearn.utils import testing as testing
+from sklearn.utils import testing
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import ExtraTreesClassifier
