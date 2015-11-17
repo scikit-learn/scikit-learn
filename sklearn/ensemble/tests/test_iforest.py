@@ -97,8 +97,9 @@ def test_iforest_error():
                   IsolationForest(max_samples=0.0).fit, X)
     assert_raises(ValueError,
                   IsolationForest(max_samples=2.0).fit, X)
-    # The dataset has less than 256 samples, explicitly setting max_samples > n_samples
-    # should result in a warning. If not set explicitly there should be no warning
+    # The dataset has less than 256 samples, explicitly setting
+    # max_samples > n_samples should result in a warning. If not set
+    # explicitly there should be no warning
     assert_warns_message(UserWarning,
                          "max_samples will be set to n_samples for estimation",
                          IsolationForest(max_samples=1000).fit, X)
@@ -108,7 +109,7 @@ def test_iforest_error():
 
 
 def test_recalculate_max_depth():
-    """Check that max_depth is recalculated when max_samples is reset to n_samples"""
+    """Check max_depth recalculation when max_samples is reset to n_samples"""
     X = iris.data
     clf = IsolationForest().fit(X)
     for est in clf.estimators_:
