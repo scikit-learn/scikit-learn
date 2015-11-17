@@ -73,7 +73,8 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
         additional keyword arguments for the metric function.
 
     n_jobs : int, optional (default = 1)
-        The number of parallel jobs to run when constructing the neighborhood graph.
+        The number of parallel jobs to run when constructing the
+        neighborhood graph.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
     Returns
@@ -156,7 +157,8 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
     --------
     >>> X = [[0], [3], [1]]
     >>> from sklearn.neighbors import radius_neighbors_graph
-    >>> A = radius_neighbors_graph(X, 1.5, mode='connectivity', include_self=True)
+    >>> A = radius_neighbors_graph(X, 1.5, mode='connectivity',
+                                   include_self=True)
     >>> A.toarray()
     array([[ 1.,  0.,  1.],
            [ 0.,  1.,  0.],
