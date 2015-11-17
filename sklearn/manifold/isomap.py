@@ -203,14 +203,14 @@ class Isomap(BaseEstimator, TransformerMixin):
         X = check_array(X)
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
 
-        #Create the graph of shortest distances from X to self.training_data_
+        # Create the graph of shortest distances from X to self.training_data_
         # via the nearest neighbors of X.
-        #This can be done as a single array operation, but it potentially
+        # This can be done as a single array operation, but it potentially
         # takes a lot of memory.  To avoid that, use a loop:
         G_X = np.zeros((X.shape[0], self.training_data_.shape[0]))
         for i in range(X.shape[0]):
-            G_X[i] = np.min((self.dist_matrix_[indices[i]]
-                             + distances[i][:, None]), 0)
+            G_X[i] = np.min((self.dist_matrix_[indices[i]] +
+                             distances[i][:, None]), 0)
 
         G_X **= 2
         G_X *= -0.5
