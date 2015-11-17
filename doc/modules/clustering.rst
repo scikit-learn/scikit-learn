@@ -1424,8 +1424,7 @@ Here is an example:
 	>>> y=["right_handed","right_handed","left_handed","left_handed",
 	... "ambidextrous","ambidextrous"]
 	>>> contingency_matrix(x,y)
-	array([[2, 1, 0],
-	   [0, 1, 2]])
+	array([[2, 1, 0],[0, 1, 2]])
 
 The Contingency Matrix is different from the Confusion Matrix
 (:func:`confusion_matrix`) in that the :math:`X` and :math:`Y` 
