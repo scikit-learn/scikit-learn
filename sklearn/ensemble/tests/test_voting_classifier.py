@@ -1,4 +1,4 @@
-"""Testing for the boost module (sklearn.ensemble.boost)."""
+"""Testing for the VotingClassifier"""
 
 import numpy as np
 from sklearn.utils.testing import assert_almost_equal, assert_array_equal
@@ -210,7 +210,7 @@ def test_gridsearch():
     grid.fit(iris.data, iris.target)
 
 
-def test_predict_proba_on_toy_problem():
+def test_threading_predict_proba_on_toy_problem():
     """Check multithreading backend of VotingClassifier on toy dataset."""
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
@@ -227,6 +227,7 @@ def test_predict_proba_on_toy_problem():
 
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+
 
 def test_multiprocessing_majority_label_iris():
     """
@@ -262,6 +263,7 @@ def test_multithreading_majority_label_iris():
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
+
 def test_sample_weight():
     """
         Tests sample_weight parameter of VotingClassifier
@@ -271,7 +273,7 @@ def test_sample_weight():
     clf3 = SVC(probability=True, random_state=123)
     eclf1 = VotingClassifier(estimators=[
         ('lr', clf1), ('rf', clf2), ('svc', clf3)],
-        voting='soft', n_jobs=1).fit(X, y, sample_weight = np.ones((len(y),)))
+        voting='soft', n_jobs=1).fit(X, y, sample_weight=np.ones((len(y),)))
     eclf2 = VotingClassifier(estimators=[
         ('lr', clone(clf1)), ('rf', clone(clf2)), ('svc', clone(clf3))],
         voting='soft', n_jobs=-1).fit(X, y)
@@ -280,7 +282,8 @@ def test_sample_weight():
 
     sample_weight_ = np.random.RandomState(123).uniform(size=(len(y),))
     eclf3 = VotingClassifier(estimators=[('lr', clone(clf1))],
-                             voting='soft', n_jobs=-1).fit(X, y, sample_weight_)
+                             voting='soft', n_jobs=-1)
+    eclf3.fit(X, y, sample_weight_)
     clf1.fit(X, y, sample_weight_)
     assert_array_equal(eclf3.predict(X), clf1.predict(X))
     assert_array_equal(eclf3.predict_proba(X), clf1.predict_proba(X))

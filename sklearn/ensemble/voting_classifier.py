@@ -11,6 +11,7 @@ classification estimators.
 #
 # License: BSD 3 clause
 
+import itertools
 import numpy as np
 
 from .base import _partition_estimators
@@ -28,7 +29,8 @@ def _parallel_fit_estimators(estimators, X, y, sample_weight):
     """Private function used to fit a batch of estimators within a job."""
     fitted_estimators = []
     for estimator in estimators:
-        if sample_weight is not None and has_fit_parameter(estimator, "sample_weight"):
+        if (sample_weight is not None and
+                has_fit_parameter(estimator, "sample_weight")):
             estimator.fit(X, y, sample_weight)
         else:
             estimator.fit(X, y)
@@ -182,14 +184,18 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         cloned = [clone(clf) for _, clf in self.estimators]
         transformed_y = self.le_.transform(y)
 
-        n_jobs, _, starts = _partition_estimators(len(self.estimators), self.n_jobs)
-        self.estimators_ = _flatten_list(
-            Parallel(n_jobs=self.n_jobs, backend = self.backend)(
+        n_jobs, _, starts = _partition_estimators(len(self.estimators),
+                                                  self.n_jobs)
+        self.estimators_ = list(itertools.chain.from_iterable(
+            Parallel(n_jobs=self.n_jobs, backend=self.backend)(
                 delayed(_parallel_fit_estimators)(
-                    cloned[starts[i]:starts[i + 1]], X, transformed_y, sample_weight
+                    cloned[starts[i]:starts[i + 1]],
+                    X,
+                    transformed_y,
+                    sample_weight
                 ) for i in range(n_jobs)
             )
-        )
+        ))
 
         return self
 
@@ -226,14 +232,15 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     def _collect_probas(self, X):
         """Collect results from clf.predict calls. """
-        n_jobs, _, starts = _partition_estimators(len(self.estimators_), self.n_jobs)
-        probas = _flatten_list(
-            Parallel(n_jobs=self.n_jobs, backend = self.backend)(
+        n_jobs, _, starts = _partition_estimators(len(self.estimators_),
+                                                  self.n_jobs)
+        probas = list(itertools.chain.from_iterable(
+            Parallel(n_jobs=self.n_jobs, backend=self.backend)(
                 delayed(_parallel_predict_proba)(
                     self.estimators_[starts[i]:starts[i + 1]], X
                 ) for i in range(n_jobs)
             )
-        )
+        ))
         return np.asarray(probas)
 
     def _predict_proba(self, X):
@@ -277,7 +284,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
           array-like = [n_classifiers, n_samples, n_classes]
             Class probabilities calculated by each classifier.
         If `voting='hard'`:
-          array-like = [n_classifiers, n_samples]
+          array-like = [n_samples, n_classifiers]
             Class labels predicted by each classifier.
         """
         check_is_fitted(self, 'estimators_')
@@ -300,12 +307,13 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
-        n_jobs, _, starts = _partition_estimators(len(self.estimators_), self.n_jobs)
-        predictions = _flatten_list(
-            Parallel(n_jobs=self.n_jobs, backend = self.backend)(
+        n_jobs, _, starts = _partition_estimators(len(self.estimators_),
+                                                  self.n_jobs)
+        predictions = list(itertools.chain.from_iterable(
+            Parallel(n_jobs=self.n_jobs, backend=self.backend)(
                 delayed(_parallel_predict)(
                     self.estimators_[starts[i]:starts[i + 1]], X
                 ) for i in range(n_jobs)
             )
-        )
+        ))
         return np.asarray(predictions).T
