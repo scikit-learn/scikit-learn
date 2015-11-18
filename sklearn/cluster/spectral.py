@@ -370,6 +370,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
         np.exp(- X ** 2 / (2. * delta ** 2))
 
+    Where ``X`` is the distance matrix and ``delta`` is a free parameter
+    that controls the size of the kernel.
+
     Another alternative is to take a symmetric version of the k
     nearest neighbors connectivity matrix of the points.
 
