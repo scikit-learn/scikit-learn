@@ -1,5 +1,6 @@
 __author__ = "Henry Lin <hlin117@gmail.com>"
 
+import scipy.sparse as sp
 from sklearn.preprocessing.discretization import Discretizer
 from sklearn.utils.testing import assert_array_almost_equal, assert_array_equal
 
@@ -22,6 +23,17 @@ def test_discretizer_fit_transform():
                 [0, 1, 0],
                 [1, 0, 1]]
     assert_array_equal(expected, discretized)
+
+def test_discretizer_fit_transform_sparse():
+    sparse_formats = [sp.bsr_matrix, sp.coo_matrix, sp.csc_matrix,
+                      sp.csr_matrix, sp.dia_matrix, sp.dok_matrix, sp.lil_matrix]
+    for format in sparse_formats:
+        sparse_X = format(X)
+        discretized = Discretizer(n_bins=2).fit_transform(sparse_X)
+        expected = [[0, 0, 0],
+                    [0, 1, 0],
+                    [1, 0, 1]]
+        assert_array_equal(expected, discretized)
 
 def test_discretizer_fit_transform_cat():
     dis = Discretizer(n_bins=3, categorical_features=[0])

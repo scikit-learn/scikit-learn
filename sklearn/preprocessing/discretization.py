@@ -3,6 +3,7 @@ from __future__ import division
 __author__ = "Henry Lin <hlin117@gmail.com>"
 
 import numpy as np
+import scipy.sparse as sp
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import column_or_1d, check_array
 from sklearn.utils.validation import check_is_fitted
@@ -63,6 +64,7 @@ class Discretizer(BaseEstimator, TransformerMixin):
     array([[0, 0, 0, 0],
            [2, 2, 2, 1]])
     """
+    sparse_formats = ['csr', 'csc']
 
     def __init__(self, n_bins=2, categorical_features="all"):
         if n_bins < 2:
@@ -77,6 +79,11 @@ class Discretizer(BaseEstimator, TransformerMixin):
         self.cut_points_ = None
         self.n_features_ = None
         self.continuous_mask_ = None
+
+    def _check_sparse(self, X, ravel=True):
+        if ravel:
+            return X.toarray().ravel() if sp.issparse(X) else X
+        return X.toarray() if sp.issparse(X) else X
 
     def _set_continuous_mask(self):
         """Sets a boolean array that determines which columns are
@@ -106,7 +113,7 @@ class Discretizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : {array-like, sparse-matrix}, shape [n_samples, n_features]
             The input data containing continuous features to be
             discretized. Categorical columns are indicated by
             categorical_columns from the constructor.
@@ -116,7 +123,7 @@ class Discretizer(BaseEstimator, TransformerMixin):
         self
         """
 
-        X = check_array(X)
+        X = check_array(X, accept_sparse=self.sparse_formats)
         self.n_features_ = X.shape[1]
 
         # Set the mask for the continuous features in the array
@@ -124,8 +131,8 @@ class Discretizer(BaseEstimator, TransformerMixin):
 
         continuous = X[:, self.continuous_mask_]
 
-        self.min_ = continuous.min(axis=0)
-        self.max_ = continuous.max(axis=0)
+        self.min_ = self._check_sparse(continuous.min(axis=0))
+        self.max_ = self._check_sparse(continuous.max(axis=0))
         cut_points = list()
         for min_, max_ in zip(self.min_, self.max_):
             points = np.linspace(min_, max_, num=self.n_bins, endpoint=False)[1:]
@@ -138,7 +145,7 @@ class Discretizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : {array-like, sparse-matrix}, shape [n_samples, n_features]
             The input data containing continuous features to be
             discretized. Categorical columns are indicated by
             categorical_columns from the constructor.
@@ -152,7 +159,7 @@ class Discretizer(BaseEstimator, TransformerMixin):
 
         """
         check_is_fitted(self, ["cut_points_", "continuous_mask_"])
-        X = check_array(X)
+        X = check_array(X, accept_sparse=self.sparse_formats)
         if X.shape[1] != self.n_features_:
             raise ValueError("Transformed array does not have currect number "
                              "of features. Expecting {0}, received {1}"
@@ -161,11 +168,11 @@ class Discretizer(BaseEstimator, TransformerMixin):
         continuous = X[:, self.continuous_mask_]
         discretized = list()
         for cut_points, cont in zip(self.cut_points_.T, continuous.T):
+            cont = self._check_sparse(cont)  # np.searchsorted can't handle sparse
             dis_features = np.searchsorted(cut_points, cont)
             discretized.append(dis_features.reshape(-1, 1))
 
         discretized = np.hstack(discretized)
-        categorical = X[:, ~self.continuous_mask_]
-
+        categorical = self._check_sparse(X[:, ~self.continuous_mask_], ravel=False)
         return np.hstack((discretized, categorical))
 
