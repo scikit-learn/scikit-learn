@@ -27,12 +27,6 @@ class Discretizer(BaseEstimator, TransformerMixin):
         be discretized. If None, assumes that all columns are continuous
         features.
 
-    strategy : str (default="uniform")
-        Specifies what discretization strategy should be used.
-
-        - Uniform: Intervals are spaced uniformly between the minimum
-        and maximum of a feature.
-
     Attributes
     ----------
     min_ : float
@@ -58,8 +52,7 @@ class Discretizer(BaseEstimator, TransformerMixin):
     >>> X = [[0, 1, 0, 4], \
              [6, 7, 1, 5]]
     >>> from sklearn.preprocessing import Discretizer
-    >>> discretizer = Discretizer(n_bins=3, strategy="uniform", \
-                                  categorical_features=[2])
+    >>> discretizer = Discretizer(n_bins=3, categorical_features=[2])
     >>> discretizer.fit(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     Discretizer(...)
     >>> discretizer.cut_points_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
@@ -71,13 +64,12 @@ class Discretizer(BaseEstimator, TransformerMixin):
            [2, 2, 2, 1]])
     """
 
-    def __init__(self, n_bins=2, categorical_features="all", strategy="uniform"):
+    def __init__(self, n_bins=2, categorical_features="all"):
         if n_bins < 2:
             raise ValueError("Discretizer received an invalid number "
                              "of bins")
         self.n_bins = n_bins
         self.categorical_features = categorical_features
-        self.strategy = strategy  # TODO: Add more strategies!
 
         # Attributes
         self.min_ = None
