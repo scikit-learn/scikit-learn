@@ -216,6 +216,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
         #  Checks for sparse matrices
         X = check_array(X)
 
+        # Check for valid n_samples relative to min_samples
+        if self.min_samples > len(X):
+            print("Number of training samples must be greater than") 
+            print("min_samples used for clustering")
+            return
+
         self.tree = setOfObjects(X)  # ,self.metric)
         _prep_optics(self.tree, self.eps * 5.0, self.min_samples)
         _build_optics(self.tree, self.eps * 5.0)
@@ -233,26 +239,33 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.processed = True
         return self  # self.core_sample_indices_, self.labels_
 
-    def filter(self, epsilon_prime):
+    def filter(self, X, distance_threshold, index_type='bool'):
         """Density based filter function
-        Returns indexes of points that will be core at given epsilon.
+        Returns index of which points will be core at given epsilon.
         Can be run before 'fit' is called for reduced computation.
         Note: epsilon_prime is not limited to <= epsilon for this method.
         
         Parameters
         ----------
-        epsilon_prime: float or int, required
+        X : array [n_samples, n_features]
+        distance_threshold: float or int, required
+        index_type: 'bool' or 'idx', optional
 
         Returns
-        New core_sample_indices_ array
+        Either boolean or indexed array of core / not core points
         """
 
         if self.processed == False:
             # epsilon has no impact on this method; set to zero
             # to speed up _nneighbors query in _prep_optics
-            self._prep_optics(self.tree, 0, self.min_samples)
-        self.core_sample_indices_ = self._core_dist[:] < epsilon_prime
-        return self.core_sample_indices
+            X = check_array(X)
+            self.tree = setOfObjects(X)  # ,self.metric)
+            _prep_optics(self.tree, 0, self.min_samples)
+        filtered_pts_bool = self.tree.core_dists_[:] < distance_threshold
+        if index_type=='bool':
+            return filtered_pts_bool
+        if index_type=='idx':
+            return self._index[filtered_pts_bool]
 
     def extract(self, epsilon_prime, clustering='auto'):
         """Performs DBSCAN equivalent extraction for arbitrary epsilon.
@@ -329,8 +342,9 @@ def _extractDBSCAN(setofobjects, epsilon_prime):
 # Extraction wrapper
 def _extract_auto(setofobjects):
     RPlot = setofobjects.reachability_[setofobjects.ordering_].tolist()
-    RPoints = setofobjects.tree.get_arrays()[0][setofobjects.ordering_]
-    RPoints = RPoints.tolist()
+    # RPoints = setofobjects.tree.get_arrays()[0][setofobjects.ordering_]
+    # RPoints = RPoints.tolist()
+    RPoints = setofobjects.ordering_
     rootNode = _automatic_cluster(RPlot, RPoints)
     leaves = _get_leaves(rootNode, [])
     # Start cluster id's at 1
