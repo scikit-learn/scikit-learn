@@ -98,6 +98,9 @@ and tasks.
 - `hdbscan <https://github.com/lmcinnes/hdbscan>`_ HDBSCAN and Robust Single Linkage clustering algorithms 
   for robust variable density clustering. 
 
+- `lasagne <https://github.com/Lasagne/Lasagne>`_  a lightweight library to build and train neural networks in Theano.
+
+
 Statistical learning with Python
 --------------------------------
 Other packages useful for data analysis and machine learning.
