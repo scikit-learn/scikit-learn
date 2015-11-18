@@ -150,7 +150,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
                                       np.argmax(np.bincount(x,
                                                 weights=self.weights)),
                                       axis=1,
-                                      arr=predictions)
+                                      arr=predictions.astype('int'))
 
         maj = self.le_.inverse_transform(maj)
 

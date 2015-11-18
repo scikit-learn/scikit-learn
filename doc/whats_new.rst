@@ -358,7 +358,8 @@ Bug fixes
       oob_score and X is a sparse.csc_matrix. By `Ankur Ankan`_.
 
     - All regressors now consistently handle and warn when given ``y`` that is of
-      shape ``(n_samples, 1)``. By `Andreas Müller`_.
+      shape ``(n_samples, 1)``. By `Andreas Müller`_ and Henry Lin.
+      (`#5431 <https://github.com/scikit-learn/scikit-learn/pull/5431>`_)
 
     - Fix in :class:`cluster.KMeans` cluster reassignment for sparse input by
       `Lars Buitinck`_.
@@ -414,14 +415,14 @@ Bug fixes
 
     - Fixed inconsistent memory layout in the coordinate descent solver
       that affected :class:`linear_model.DictionaryLearning` and
-      :class:`covariance.GraphLasso`. (`#5337 <https://github.com/scikit-learn/scikit-learn/pull/5337>`)
+      :class:`covariance.GraphLasso`. (`#5337 <https://github.com/scikit-learn/scikit-learn/pull/5337>`_)
       By `Oliver Grisel`_.
 
     - :class:`manifold.LocallyLinearEmbedding` no longer ignores the ``reg``
       parameter.
 
     - Nearest Neighbor estimators with custom distance metrics can now be pickled.
-      (`4362 <https://github.com/scikit-learn/scikit-learn/pull/4362>`)
+      (`4362 <https://github.com/scikit-learn/scikit-learn/pull/4362>`_)
 
     - Fixed a bug in :class:`pipeline.FeatureUnion` where ``transformer_weights``
       were not properly handled when performing grid-searches.

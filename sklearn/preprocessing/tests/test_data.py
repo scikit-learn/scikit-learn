@@ -843,7 +843,7 @@ def test_scale_function_without_centering():
 
     # null scale
     X_csr_scaled = scale(X_csr, with_mean=False, with_std=False, copy=True)
-    assert_array_almost_equal(X_csr.data, X_csr_scaled.data)
+    assert_array_almost_equal(X_csr.toarray(), X_csr_scaled.toarray())
 
 
 def test_robust_scale_axis1():
