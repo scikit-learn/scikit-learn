@@ -138,6 +138,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
     .. versionadded:: 0.17
 
+    Read more in the :ref:`User Guide <LatentDirichletAllocation>`.
+
     Parameters
     ----------
     n_topics : int, optional (default=10)
