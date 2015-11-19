@@ -1,7 +1,7 @@
 # coding=utf8
 """
 Label propagation in the context of this module refers to a set of
-semisupervised classification algorithms. In the high level, these algorithms
+semi-supervised classification algorithms. At a high level, these algorithms
 work by forming a fully-connected graph between all points given and solving
 for the steady-state distribution of labels at each point.
 
@@ -22,7 +22,7 @@ Label clamping:
 
 Kernel:
   A function which projects a vector into some higher dimensional space. This
-  implementation supprots RBF and KNN kernels. Using the RBF kernel generates
+  implementation supports RBF and KNN kernels. Using the RBF kernel generates
   a dense matrix of size O(N^2). KNN kernel will generate a sparse matrix of
   size O(k*N) which will run much faster. See the documentation for SVMs for
   more info on kernels.
@@ -83,7 +83,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
     ----------
     kernel : {'knn', 'rbf'}
         String identifier for kernel function to use.
-        Only 'rbf' and 'knn' kernels are currently supported..
+        Only 'rbf' and 'knn' kernels are currently supported.
 
     gamma : float
         Parameter for rbf kernel
@@ -287,9 +287,10 @@ class LabelPropagation(BaseLabelPropagation):
     Parameters
     ----------
     kernel : {'knn', 'rbf', function}
-        String identifier for kernel function to use or the kernel function to calculate
-        the [n_samples, n_samples] sized weight matrix.
-        Only 'rbf' and 'knn' kernels are currently supported..
+        String identifier for kernel function to use or the kernel function
+        itself. Only 'rbf' and 'knn' strings are valid inputs. The function
+        passed should take two inputs, each of size [n_samples, n_features],
+        and return a [n_samples, n_samples] sized weight matrix.
 
     gamma : float
         Parameter for rbf kernel
