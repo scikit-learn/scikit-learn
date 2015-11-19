@@ -31,21 +31,24 @@ class NotFittedError(ValueError, AttributeError):
     ...                        # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     NotFittedError('This LinearSVC instance is not fitted yet',)
 
-    .. versionadded:: 0.18
+    .. versionchanged:: 0.18
+       Moved from sklearn.utils.validation.
     """
 
 
 class ChangedBehaviorWarning(UserWarning):
     """Warning class used to notify the user of any change in the behavior.
 
-    .. versionadded:: 0.18
+    .. versionchanged:: 0.18
+       Moved from sklearn.base.
     """
 
 
 class ConvergenceWarning(UserWarning):
     """Custom warning to capture convergence problems
 
-    .. versionadded:: 0.18
+    .. versionchanged:: 0.18
+       Moved from sklearn.utils.
     """
 
 
@@ -62,7 +65,8 @@ class DataConversionWarning(UserWarning):
           implementation's data-type expectations;
         - passes an input whose shape can be interpreted ambiguously.
 
-    .. versionadded:: 0.18
+    .. versionchanged:: 0.18
+       Moved from sklearn.utils.validation.
     """
 
 
@@ -75,7 +79,8 @@ class DataDimensionalityWarning(UserWarning):
     the dimensionality of the original source space, to imply that the
     dimensionality of the problem will not be reduced.
 
-    .. versionadded:: 0.18
+    .. versionchanged:: 0.18
+       Moved from sklearn.utils.
     """
 
 
@@ -117,7 +122,8 @@ class FitFailedWarning(RuntimeWarning):
     partition for these parameters will be set to 0.000000. Details:
     \\nValueError('Penalty term must be positive; got (C=-2)',)",)
 
-    .. versionadded:: 0.18
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
 
 
@@ -127,12 +133,14 @@ class NonBLASDotWarning(EfficiencyWarning):
     This warning is used to notify the user that BLAS was not used for dot
     operation and hence the efficiency may be affected.
 
-    .. versionadded:: 0.18
+    .. versionchanged:: 0.18
+       Moved from sklearn.utils.validation, extends EfficiencyWarning.
     """
 
 
 class UndefinedMetricWarning(UserWarning):
     """Warning used when the metric is invalid
 
-    .. versionadded:: 0.18
+    .. versionchanged:: 0.18
+       Moved from sklearn.base.
     """
