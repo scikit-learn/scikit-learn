@@ -922,7 +922,13 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise_distances
    metrics.pairwise_distances_argmin
    metrics.pairwise_distances_argmin_min
-
+   metrics.pairwise.check_pairwise_arrays
+   metrics.pairwise.check_paired_arrays
+   metrics.pairwise.paired_euclidean_distances
+   metrics.pairwise.paired_manhattan_distances
+   metrics.pairwise.paired_cosine_distances
+   metrics.pairwise.paired_distances
+   
 
 .. _mixture_ref:
 
