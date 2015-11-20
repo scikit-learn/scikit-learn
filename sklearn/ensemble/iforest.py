@@ -193,7 +193,30 @@ class IsolationForest(BaseBagging):
         return self
 
     def predict(self, X):
-        """Predict anomaly score of X with the IsolationForest algorithm.
+        """Outlyingness of observations in X according to the fitted model.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        is_outliers : array, shape = (n_samples, )
+            For each observations, tells whether or not (+1 or -1) it should
+            be considered as an outlier according to the fitted model.
+
+        """
+        X = check_array(X, accept_sparse='csr')
+        is_inlier = -np.ones(X.shape[0], dtype=int)
+        is_inlier[self.decision_function(X) <= self.threshold_] = 1
+
+        return is_inlier
+
+    def decision_function(self, X):
+        """Average anomaly score of X of the base classifiers.
 
         The anomaly score of an input sample is computed as
         the mean anomaly score of the trees in the forest.
@@ -206,36 +229,15 @@ class IsolationForest(BaseBagging):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features)
-            The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
-
-        Returns
-        -------
-        scores : array of shape (n_samples,)
-            The anomaly score of the input samples.
-            The lower, the more normal.
-        """
-        X = check_array(X, accept_sparse='csr')
-        is_inlier = -np.ones(X.shape[0], dtype=int)
-        is_inlier[self.decision_function(X) <= self.threshold_] = 1
-
-        return is_inlier
-
-    def decision_function(self, X):
-        """Average of the decision functions of the base classifiers.
-
-        Parameters
-        ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
         Returns
         -------
-        score : array, shape (n_samples,)
-            The decision function of the input samples.
+        scores : array of shape (n_samples,)
+            The anomaly score of the input samples.
+            The lower, the more abnormal.
 
         """
         # code structure from ForestClassifier/predict_proba
