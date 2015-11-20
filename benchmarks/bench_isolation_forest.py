@@ -93,7 +93,7 @@ for dat in datasets:
     fit_time = time() - tstart
     tstart = time()
 
-    scoring = model.predict(X_test)  # the lower, the more normal
+    scoring = - model.decision_function(X_test)  # the lower, the more normal
     predict_time = time() - tstart
     fpr, tpr, thresholds = roc_curve(y_test, scoring)
     AUC = auc(fpr, tpr)
