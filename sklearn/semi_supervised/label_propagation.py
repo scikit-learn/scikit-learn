@@ -67,6 +67,7 @@ from ..neighbors.unsupervised import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_X_y, check_is_fitted, check_array
+from ..exceptions import ConvergenceWarning
 
 
 # Helper functions
@@ -286,6 +287,12 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                 self.label_distributions_ = np.multiply(
                     alpha, self.label_distributions_) + y_static
             remaining_iter -= 1
+
+        if remaining_iter <= 1:
+            warnings.warn(
+                'max_iter=%d was reached without convergence.' % self.max_iter,
+                category=ConvergenceWarning
+            )
 
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         self.label_distributions_ /= normalizer
