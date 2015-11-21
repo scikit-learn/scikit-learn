@@ -66,10 +66,7 @@ class Discretizer(BaseEstimator, TransformerMixin):
     """
     sparse_formats = ['csr', 'csc']
 
-    def __init__(self, n_bins=2, categorical_features="all"):
-        if n_bins < 2:
-            raise ValueError("Discretizer received an invalid number "
-                             "of bins")
+    def __init__(self, n_bins=2, categorical_features=None):
         self.n_bins = n_bins
         self.categorical_features = categorical_features
 
@@ -89,7 +86,7 @@ class Discretizer(BaseEstimator, TransformerMixin):
         """Sets a boolean array that determines which columns are
         continuous features.
         """
-        if self.categorical_features == "all":
+        if self.categorical_features is None:
             self.n_continuous_features_ = self.n_features_
             self.continuous_mask_ = np.ones(self.n_features_, dtype=bool)
             return
@@ -122,6 +119,11 @@ class Discretizer(BaseEstimator, TransformerMixin):
         -------
         self
         """
+
+        if self.n_bins < 2:
+            raise ValueError("Discretizer received an invalid number "
+                             "of bins. Received {0}, expected at least 2"
+                             .format(self.n_bins))
 
         X = check_array(X, accept_sparse=self.sparse_formats)
         self.n_features_ = X.shape[1]
