@@ -335,7 +335,7 @@ def locally_linear_embedding(
             Gi = X[neighbors[i]]
             Gi -= Gi.mean(0)
 
-            #build Hessian estimator
+            # build Hessian estimator
             if use_svd:
                 U = svd(Gi, full_matrices=0)[0]
             else:
@@ -346,8 +346,8 @@ def locally_linear_embedding(
 
             j = 1 + n_components
             for k in range(n_components):
-                Yi[:, j:j + n_components - k] = (U[:, k:k + 1]
-                                                 * U[:, k:n_components])
+                Yi[:, j:j + n_components - k] = (U[:, k:k + 1] *
+                                                 U[:, k:n_components])
                 j += n_components - k
 
             Q, R = qr(Yi)
@@ -373,14 +373,14 @@ def locally_linear_embedding(
                                     return_distance=False)
         neighbors = neighbors[:, 1:]
 
-        #find the eigenvectors and eigenvalues of each local covariance
+        # find the eigenvectors and eigenvalues of each local covariance
         # matrix. We want V[i] to be a [n_neighbors x n_neighbors] matrix,
         # where the columns are eigenvectors
         V = np.zeros((N, n_neighbors, n_neighbors))
         nev = min(d_in, n_neighbors)
         evals = np.zeros([N, nev])
 
-        #choose the most efficient way to find the eigenvectors
+        # choose the most efficient way to find the eigenvectors
         use_svd = (n_neighbors > d_in)
 
         if use_svd:
@@ -397,7 +397,7 @@ def locally_linear_embedding(
                 evals[i] = evi[::-1]
                 V[i] = vi[:, ::-1]
 
-        #find regularized weights: this is like normal LLE.
+        # find regularized weights: this is like normal LLE.
         # because we've already computed the SVD of each covariance matrix,
         # it's faster to use this rather than np.linalg.solve
         reg = 1E-3 * evals.sum(1)
@@ -411,12 +411,12 @@ def locally_linear_embedding(
             w_reg[i] = np.dot(V[i], tmp[i])
         w_reg /= w_reg.sum(1)[:, None]
 
-        #calculate eta: the median of the ratio of small to large eigenvalues
+        # calculate eta: the median of the ratio of small to large eigenvalues
         # across the points.  This is used to determine s_i, below
         rho = evals[:, n_components:].sum(1) / evals[:, :n_components].sum(1)
         eta = np.median(rho)
 
-        #find s_i, the size of the "almost null space" for each point:
+        # find s_i, the size of the "almost null space" for each point:
         # this is the size of the largest set of eigenvalues
         # such that Sum[v; v in set]/Sum[v; v not in set] < eta
         s_range = np.zeros(N, dtype=int)
@@ -426,17 +426,17 @@ def locally_linear_embedding(
             s_range[i] = np.searchsorted(eta_range[i, ::-1], eta)
         s_range += n_neighbors - nev  # number of zero eigenvalues
 
-        #Now calculate M.
+        # Now calculate M.
         # This is the [N x N] matrix whose null space is the desired embedding
         M = np.zeros((N, N), dtype=np.float64)
         for i in range(N):
             s_i = s_range[i]
 
-            #select bottom s_i eigenvectors and calculate alpha
+            # select bottom s_i eigenvectors and calculate alpha
             Vi = V[i, :, n_neighbors - s_i:]
             alpha_i = np.linalg.norm(Vi.sum(0)) / np.sqrt(s_i)
 
-            #compute Householder matrix which satisfies
+            # compute Householder matrix which satisfies
             #  Hi*Vi.T*ones(n_neighbors) = alpha_i*ones(s)
             # using prescription from paper
             h = alpha_i * np.ones(s_i) - np.dot(Vi.T, np.ones(n_neighbors))
@@ -447,20 +447,20 @@ def locally_linear_embedding(
             else:
                 h /= norm_h
 
-            #Householder matrix is
+            # Householder matrix is
             #  >> Hi = np.identity(s_i) - 2*np.outer(h,h)
-            #Then the weight matrix is
+            # Then the weight matrix is
             #  >> Wi = np.dot(Vi,Hi) + (1-alpha_i) * w_reg[i,:,None]
-            #We do this much more efficiently:
-            Wi = (Vi - 2 * np.outer(np.dot(Vi, h), h)
-                  + (1 - alpha_i) * w_reg[i, :, None])
+            # We do this much more efficiently:
+            Wi = (Vi - 2 * np.outer(np.dot(Vi, h), h) +
+                  (1 - alpha_i) * w_reg[i, :, None])
 
-            #Update M as follows:
+            # Update M as follows:
             # >> W_hat = np.zeros( (N,s_i) )
             # >> W_hat[neighbors[i],:] = Wi
             # >> W_hat[i] -= 1
             # >> M += np.dot(W_hat,W_hat.T)
-            #We can do this much more efficiently:
+            # We can do this much more efficiently:
             nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
             M[nbrs_x, nbrs_y] += np.dot(Wi, Wi.T)
             Wi_sum1 = Wi.sum(1)
@@ -607,7 +607,6 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
                  eigen_solver='auto', tol=1E-6, max_iter=100,
                  method='standard', hessian_tol=1E-4, modified_tol=1E-12,
                  neighbors_algorithm='auto', random_state=None, n_jobs=1):
-
         self.n_neighbors = n_neighbors
         self.n_components = n_components
         self.reg = reg
