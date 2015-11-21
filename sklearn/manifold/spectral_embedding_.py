@@ -6,11 +6,9 @@
 
 import warnings
 import numpy as np
-
 from scipy import sparse
 from scipy.linalg import eigh
 from scipy.sparse.linalg import lobpcg
-
 from ..base import BaseEstimator
 from ..externals import six
 from ..utils import check_random_state, check_array, check_symmetric
@@ -229,10 +227,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     laplacian, dd = graph_laplacian(adjacency,
                                     normed=norm_laplacian, return_diag=True)
-    if (eigen_solver == 'arpack'
-        or eigen_solver != 'lobpcg' and
-            (not sparse.isspmatrix(laplacian)
-             or n_nodes < 5 * n_components)):
+    if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
+       (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
         # for details see the source code in scipy:
         # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen
