@@ -162,7 +162,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                              "X has %s samples, but y has %s." %
                              (X.shape[0], y.shape[0]))
 
-        if (self.kernel == "precomputed" and solver_type == 5):
+        if self.kernel == "precomputed" and solver_type == 5:
             raise TypeError("SVDD does not support precomputed kernels")
 
         if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:

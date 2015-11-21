@@ -994,8 +994,7 @@ class OneClassSVM(BaseLibSVM):
     See also
     --------
     SVDD
-             Builds the smallest sphere around data set.
-
+        Build a compact envelope around the data.
     """
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
@@ -1053,27 +1052,29 @@ class OneClassSVM(BaseLibSVM):
 class SVDD(BaseLibSVM):
     """Support vectors data description.
 
-    Builds data envelope.
+    Build a compact envelope around the data.
 
     The implementation is based on libsvm.
 
     Parameters
     ----------
     C : float, optional (default=1.0)
-        penalty parameter C of the error term. Should be in interval [1/l, 1]. 
+        Penalty parameter C in the error term.
+        Should be within [1/n_samples, 1].
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
          It must be one of 'linear', 'poly', 'rbf' or 'sigmoid'.
-         If none is given, 'linear' will be used. Precomputed and callable kernels aren't supported.
+         If none is given, 'rbf' will be used. Precomputed and callable
+         kernels are not supported.
 
     degree : int, optional (default=3)
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default=0.0)
+    gamma : float, optional (default='auto')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
-        If gamma is 0.0 then 1/n_features will be used instead.
+        If gamma is 'auto' then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -1126,32 +1127,29 @@ class SVDD(BaseLibSVM):
     --------
     >>> from sklearn.svm import SVDD
     >>> import numpy as np
-    >>> train_x = np.array([[1, 1], [1, -1], [-1, 1], [-1, -1]])
+    >>> X_train = np.array([[1, 1], [1, -1], [-1, 1], [-1, -1]])
     >>> clf = SVDD(kernel='linear')
-    >>> clf.fit(train_x)
-    SVDD(C=1, cache_size=200, coef0=0.0, degree=3, gamma=0.0, kernel='linear',
-       max_iter=-1, random_state=None, shrinking=True, tol=0.001,
-       verbose=False)
-    >>> test_x = np.array([[0, 0], [4, 4]])
-    >>> clf.predict(test_x)
+    >>> clf.fit(X_train)
+    SVDD(C=1, cache_size=200, coef0=0.0, degree=3, gamma='auto',
+         kernel='linear', max_iter=-1, random_state=None, shrinking=True,
+         tol=0.001, verbose=False)
+    >>> X_test = np.array([[0, 0], [4, 4]])
+    >>> clf.predict(X_test)
     array([ 1., -1.])
 
     See also
     --------
     OneClassSVM
-             Estimate the support of a high-dimensional distribution.
-
-
+        Estimate the support of a high-dimensional distribution.
     """
-    def __init__(self, kernel='linear', degree=3, gamma=0.0,
-                 coef0=0.0, tol=1e-3, C=1, shrinking=True, cache_size=200, 
+    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
+                 tol=1e-3, C=1, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1, random_state=None):
         super(SVDD, self).__init__(
-                'svdd', kernel, degree, gamma, coef0, tol, C, 0.0, 0.0,
-                shrinking, False, cache_size, None, verbose, max_iter,
-                random_state)
+            'svdd', kernel, degree, gamma, coef0, tol, C, 0.0, 0.0, shrinking,
+            False, cache_size, None, verbose, max_iter, random_state)
 
-    def fit(self, X, sample_weight=None, **params):
+    def fit(self, X, y=None, sample_weight=None, **params):
         """
         Builds data envelope.
 
@@ -1161,18 +1159,33 @@ class SVDD(BaseLibSVM):
             Set of samples, where n_samples is the number of samples and
             n_features is the number of features.
 
+        sample_weight : array-like, shape (n_samples,)
+            Per-sample weights. Rescale C per sample. Higher weights
+            force the classifier to put more emphasis on these points.
+
         Returns
         -------
         self : object
-            Returns self.
 
         Notes
         -----
         If X is not a C-ordered contiguous array it is copied.
-
         """
-
-        super(SVDD, self).fit(X, [], sample_weight=sample_weight,
-                                     **params)
+        super(SVDD, self).fit(X, np.ones(_num_samples(X)),
+                              sample_weight=sample_weight, **params)
         return self
-        
+
+    def decision_function(self, X):
+        """Compute distances from samples to the separation bound.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Samples to evaluate.
+
+        Returns
+        -------
+        df : ndarray, shape (n_samples,)
+            The decision function for each sample.
+        """
+        return self._decision_function(X).ravel()
