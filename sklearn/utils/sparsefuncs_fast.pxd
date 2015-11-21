@@ -10,4 +10,4 @@ cdef inline double double_min(double a, double b):
     return b if b < a else a
 
 cdef inline double double_max(double a, double b):
-    return a
+    return b if b > a else a

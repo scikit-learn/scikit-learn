@@ -142,6 +142,11 @@ class Discretizer(BaseEstimator, TransformerMixin):
         self.cut_points_ = np.hstack(cut_points)
         return self
 
+    def _check_sparse(self, X, ravel=True):
+        if ravel:
+            return X.toarray().ravel() if sp.issparse(X) else X
+        return X.toarray() if sp.issparse(X) else X
+
     def transform(self, X, y=None):
         """Discretizes the input data.
 

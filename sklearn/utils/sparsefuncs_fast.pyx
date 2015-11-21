@@ -3,6 +3,7 @@
 #          Peter Prettenhofer
 #          Lars Buitinck
 #          Giorgio Patrini
+#          Henry Lin
 #
 # Licence: BSD 3 clause
 
@@ -15,7 +16,6 @@ cimport cython
 np.import_array()
 
 ctypedef np.float64_t DOUBLE
-ctypedef np.npy_uint32 UINT  # unsigned int
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -24,20 +24,18 @@ def csc_min_axis0(X):
     """Minimum of each element of X down axis 0.
     Equivalent to calling X.min(axis=0)
     """
-    cdef:
-        UINT n_features = X.shape[1]
 
-        # TODO: Use a memoryview
-        UINT[::1] col_ptr = X.indptr
-        double[::1] data = X.data
-        double[::1] minimum = np.zeros(n_features)
+    cdef:
+        unsigned int n_features = X.shape[1]
+        int[::1] col_ptr = X.indptr
+        np.ndarray[DOUBLE, ndim=1, mode="c"] minimum = np.zeros(n_features)
+        np.ndarray[DOUBLE, ndim=1, mode="c"] data = X.data
 
         unsigned int i, j
 
-    for i in range(X.nnz - 1):
+    for i in range(n_features):
         start = col_ptr[i]
         end = col_ptr[i + 1]
-
         # Iterate downwards through matrix
         for j in range(start, end):
             minimum[i] = double_min(minimum[i], data[j])
@@ -51,15 +49,16 @@ def csc_max_axis0(X):
     """Minimum of each element of X down axis 0.
     Equivalent to calling X.min(axis=0)
     """
+
     cdef:
-        UINT n_features = X.shape[1]
-        UINT[::1] col_ptr = X.indptr
-        double[::1] data = X.data
-        double[::1] maximum = np.zeros(n_features)
+        int n_features = X.shape[1]
+        col_ptr = X.indptr
+        np.ndarray[DOUBLE, ndim=1, mode="c"] maximum = np.zeros(n_features)
+        np.ndarray[DOUBLE, ndim=1, mode="c"] data = X.data
 
         unsigned int i, j
 
-    for i in range(X.nnz - 1):
+    for i in range(n_features):
         start = col_ptr[i]
         end = col_ptr[i + 1]
 
@@ -77,10 +76,12 @@ def csr_min_axis0(X):
     Equivalent to calling X.min(axis=0)
     """
     cdef:
-        UINT n_features = X.shape[1]
-        UINT[::1] col_indices = X.indices
-        double[::1] data = X.data
-        double[::1] minimum = np.zeros(n_features)
+        int n_features = X.shape[1]
+        col_indices = X.indices
+        np.ndarray[DOUBLE, ndim=1, mode="c"] minimum = np.zeros(n_features)
+        np.ndarray[DOUBLE, ndim=1, mode="c"] data = X.data
+        #DOUBLE[::1] data = X.data
+        #DOUBLE[::1] minimum = np.zeros(n_features)
 
         int col_ind, index
         double num
@@ -99,10 +100,12 @@ def csr_max_axis0(X):
     Equivalent to calling X.min(axis=0)
     """
     cdef:
-        UINT n_features = X.shape[1]
-        UINT[::1] col_indices = X.indices
-        double[::1] data = X.data
-        double[::1] maximum = np.zeros(n_features)
+        int n_features = X.shape[1]
+        int[::1] col_indices = X.indices
+        #DOUBLE[::1] data = X.data
+        #DOUBLE[::1] maximum = np.zeros(n_features)
+        np.ndarray[DOUBLE, ndim=1, mode="c"] maximum = np.zeros(n_features)
+        np.ndarray[DOUBLE, ndim=1, mode="c"] data = X.data
 
         int col_ind, index
         double num
