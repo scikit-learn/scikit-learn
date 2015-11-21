@@ -360,6 +360,10 @@ class SpectralEmbedding(BaseEstimator):
     n_neighbors : int, default : max(n_samples/10 , 1)
         Number of nearest neighbors for nearest_neighbors graph building.
 
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
     Attributes
     ----------
 
@@ -387,13 +391,14 @@ class SpectralEmbedding(BaseEstimator):
 
     def __init__(self, n_components=2, affinity="nearest_neighbors",
                  gamma=None, random_state=None, eigen_solver=None,
-                 n_neighbors=None):
+                 n_neighbors=None, n_jobs=1):
         self.n_components = n_components
         self.affinity = affinity
         self.gamma = gamma
         self.random_state = random_state
         self.eigen_solver = eigen_solver
         self.n_neighbors = n_neighbors
+        self.n_jobs = n_jobs
 
     @property
     def _pairwise(self):
@@ -430,7 +435,8 @@ class SpectralEmbedding(BaseEstimator):
                                      if self.n_neighbors is not None
                                      else max(int(X.shape[0] / 10), 1))
                 self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors_,
-                                                         include_self=True)
+                                                         include_self=True,
+                                                         n_jobs=self.n_jobs)
                 # currently only symmetric affinity_matrix supported
                 self.affinity_matrix_ = 0.5 * (self.affinity_matrix_ +
                                                self.affinity_matrix_.T)
