@@ -28,7 +28,8 @@ from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 
 
-def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0, n_jobs=1):
+def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
+                       n_jobs=1):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
     That this function takes time at least quadratic in n_samples. For large
@@ -62,7 +63,8 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0, n_jobs=1
     if n_samples is not None:
         idx = random_state.permutation(X.shape[0])[:n_samples]
         X = X[idx]
-    nbrs = NearestNeighbors(n_neighbors=int(X.shape[0] * quantile), n_jobs=n_jobs)
+    nbrs = NearestNeighbors(n_neighbors=int(X.shape[0] * quantile),
+                            n_jobs=n_jobs)
     nbrs.fit(X)
 
     bandwidth = 0.
@@ -207,7 +209,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                                  key=lambda tup: tup[1], reverse=True)
     sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
     unique = np.ones(len(sorted_centers), dtype=np.bool)
-    nbrs = NearestNeighbors(radius=bandwidth, n_jobs=n_jobs).fit(sorted_centers)
+    nbrs = NearestNeighbors(radius=bandwidth,
+                            n_jobs=n_jobs).fit(sorted_centers)
     for i, center in enumerate(sorted_centers):
         if unique[i]:
             neighbor_idxs = nbrs.radius_neighbors([center],

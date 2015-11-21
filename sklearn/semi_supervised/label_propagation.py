@@ -100,10 +100,14 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
     n_neighbors : integer > 0
         Parameter for knn kernel
 
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-                 alpha=1, max_iter=30, tol=1e-3):
+                 alpha=1, max_iter=30, tol=1e-3, n_jobs=1):
 
         self.max_iter = max_iter
         self.tol = tol
@@ -116,6 +120,8 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         # clamping factor
         self.alpha = alpha
 
+        self.n_jobs = n_jobs
+
     def _get_kernel(self, X, y=None):
         if self.kernel == "rbf":
             if y is None:
@@ -124,7 +130,8 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                 return rbf_kernel(X, y, gamma=self.gamma)
         elif self.kernel == "knn":
             if self.nn_fit is None:
-                self.nn_fit = NearestNeighbors(self.n_neighbors).fit(X)
+                self.nn_fit = NearestNeighbors(self.n_neighbors,
+                                               n_jobs=self.n_jobs).fit(X)
             if y is None:
                 return self.nn_fit.kneighbors_graph(self.nn_fit._fit_X,
                                                     self.n_neighbors,
