@@ -1050,7 +1050,7 @@ class OneClassSVM(BaseLibSVM):
 
 
 class SVDD(BaseLibSVM):
-    """Support vectors data description.
+    """Support Vector Data Description.
 
     Build a compact envelope around the data.
 
@@ -1122,6 +1122,16 @@ class SVDD(BaseLibSVM):
     `intercept_` : array, shape = [1]
         Constants in decision function.
 
+    See also
+    --------
+    OneClassSVM
+        Estimate the support of a high-dimensional distribution.
+
+    References
+    ----------
+    David M. J. Tax and Robert P. W. Duin, `Support vector data description
+    <http://dl.acm.org/citation.cfm?id=960109>`_, Machine Learning,
+    54(1):45-66, 2004.
 
     Examples
     --------
@@ -1136,11 +1146,6 @@ class SVDD(BaseLibSVM):
     >>> X_test = np.array([[0, 0], [4, 4]])
     >>> clf.predict(X_test)
     array([ 1., -1.])
-
-    See also
-    --------
-    OneClassSVM
-        Estimate the support of a high-dimensional distribution.
     """
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, C=1, shrinking=True, cache_size=200,

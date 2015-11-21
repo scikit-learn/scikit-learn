@@ -1,7 +1,7 @@
 """
-==========================================
-Outlier detection with several methods.
-==========================================
+======================================
+Outlier detection with several methods
+======================================
 
 When the amount of contamination is known, this example illustrates three
 different ways of performing :ref:`outlier_detection`:
@@ -45,10 +45,13 @@ n_samples = 200
 outliers_fraction = 0.25
 clusters_separation = [0, 1, 2]
 
+nu = 1.25 * outliers_fraction
+C = 1 / (nu * n_samples)
+
 # define two outlier detection tools to be compared
 classifiers = {
-    "One-Class SVM": svm.OneClassSVM(nu=0.95 * outliers_fraction + 0.05,
-                                     kernel="rbf", gamma=0.1),
+    "One-Class SVM": svm.OneClassSVM(nu=nu, kernel="rbf", gamma=0.1),
+    "SVDD": svm.SVDD(C=C, kernel='rbf', gamma=0.1),
     "robust covariance estimator": EllipticEnvelope(contamination=.1),
     "Isolation Forest": IsolationForest(max_samples=n_samples, random_state=rng)}
 
@@ -82,8 +85,7 @@ for i, offset in enumerate(clusters_separation):
         # plot the levels lines and the points
         Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
         Z = Z.reshape(xx.shape)
-        subplot = plt.subplot(1, 3, i + 1)
-        subplot.set_title("Outlier detection")
+        subplot = plt.subplot(1, 4, i + 1)
         subplot.contourf(xx, yy, Z, levels=np.linspace(Z.min(), threshold, 7),
                          cmap=plt.cm.Blues_r)
         a = subplot.contour(xx, yy, Z, levels=[threshold],
@@ -95,11 +97,13 @@ for i, offset in enumerate(clusters_separation):
         subplot.axis('tight')
         subplot.legend(
             [a.collections[0], b, c],
-            ['learned decision function', 'true inliers', 'true outliers'],
+            ['Decision function', 'True inliers', 'True outliers'],
             prop=matplotlib.font_manager.FontProperties(size=11))
-        subplot.set_xlabel("%d. %s (errors: %d)" % (i + 1, clf_name, n_errors))
+        subplot.set_xlabel("%s\n(errors: %d)" % (clf_name, n_errors))
         subplot.set_xlim((-7, 7))
         subplot.set_ylim((-7, 7))
-    plt.subplots_adjust(0.04, 0.1, 0.96, 0.94, 0.1, 0.26)
+    plt.suptitle("Outlier detection")
+    plt.subplots_adjust(left=0.04, bottom=0.15, right=0.96, top=0.94,
+                        wspace=0.1, hspace=0.26)
 
 plt.show()

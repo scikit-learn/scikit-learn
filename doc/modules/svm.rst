@@ -325,32 +325,53 @@ floating point values instead of integer values::
  * :ref:`example_svm_plot_svm_regression.py`
 
 
-
 .. _svm_outlier_detection:
 
-Density estimation, novelty detection
-=======================================
+Outlier and novelty detection
+=============================
 
-One-class SVM is used for novelty detection, that is, given a set of
-samples, it will detect the soft boundary of that set so as to
-classify new points as belonging to that set or not. The class that
-implements this is called :class:`OneClassSVM`.
+Support vector machines can be used for detecting novely and outliers in
+unlabeled data sets. That is, given a set of samples, detect the soft boundary
+of that set so as to classify new points as belonging to that set or not.
 
-In this case, as it is a type of unsupervised learning, the fit method
-will only take as input an array X, as there are no class labels.
+There are two SVM-based approaches to this problem:
 
-See, section :ref:`outlier_detection` for more details on this usage.
+1. :class:`OneClassSVM` finds a hyperplane which separates the data from
+   the origin by the largest margin.
+2. :class:`SVDD` finds a sphere with a minimum radius which encloses
+   the data.
+
+Both methods can be tuned for the optimal trade-off between number of outliers
+and the margin/radius of a separation bound.
+
+See section :ref:`outlier_detection` for more details on their usage.
 
 .. figure:: ../auto_examples/svm/images/plot_oneclass_001.png
    :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
    :scale: 75
 
+.. figure:: ../auto_examples/svm/images/plot_oneclass_vs_svdd_001.png
+   :target: ../auto_examples/svm/plot_oneclass_vs_svdd.html
+   :align: center
+   :scale: 75
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_oneclass.py`
- * :ref:`example_applications_plot_species_distribution_modeling.py`
+   * See :ref:`example_svm_plot_oneclass.py` for visualizing the
+     frontier learned around some data by :class:`svm.OneClassSVM`.
+   * See :ref:`example_svm_plot_oneclass_vs_svdd.py` to get the idea about
+     the difference between the two approaches.
+   * :ref:`example_applications_plot_species_distribution_modeling.py`
+
+.. topic:: References:
+
+    * Bernhard Schölkopf et al, `Estimating the support of a high-dimensional
+      distribution <http://dl.acm.org/citation.cfm?id=1119749>`_, Neural
+      computation 13.7 (2001): 1443-1471.
+    * David M. J. Tax and Robert P. W. Duin, `Support vector data description
+      <http://dl.acm.org/citation.cfm?id=960109>`_, Machine Learning,
+      54(1):45-66, 2004.
 
 
 Complexity
@@ -686,40 +707,6 @@ term :math:`\rho`
    Volume 14 Issue 3, August 2004, p. 199-222  
 
 
-SVDD
-----
-
-Given vectors :math:`x_1, \cdots, x_l`, :class:`SVDD` build the smallest sphere
-around them solvng the problem:
-
-.. math:: 
-    
-    \min R^2 + C\sum_{i = 1}^l\xi_i
-
-    \textrm {subject to } & \|x_i - a\| \leq R^2 + \xi_i\\
-    & \xi_i \geq 0, i=1, ..., n
-
-This problem is not convex, but it can be refolmulated as convex one:
-
-.. math:: 
-    
-    \min \bar{R} + C\sum_{i = 1}^l\xi_i
-
-    \textrm {subject to } & \|x_i - a\| \leq \bar{R} + \xi_i\\
-    & \xi_i \geq 0, i=1, ..., n\\
-    & \bar{R} \geq 0
-
-.. note::
-    
-    :math:`\frac{1}{C}` is approximate number of outliers in train set. 
-
-.. topic:: References:
-    
-    * `"Support Vector Data Description"
-      <http://mediamatica.ewi.tudelft.nl/sites/default/files/ML_SVDD_04.pdf>`_
-      D. Tax, R. Duin, Machine Learning, 54, 45–66, 2004
-
-
 .. _svm_implementation_details:
 
 Implementation details
@@ -741,5 +728,3 @@ computations. These libraries are wrapped using C and Cython.
 
     - `LIBLINEAR -- A Library for Large Linear Classification
       <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_
-
-
