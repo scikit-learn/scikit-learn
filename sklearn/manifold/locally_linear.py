@@ -301,7 +301,7 @@ def locally_linear_embedding(
 
     if method == 'standard':
         W = barycenter_kneighbors_graph(
-            nbrs, n_neighbors=n_neighbors, reg=reg)
+            nbrs, n_neighbors=n_neighbors, reg=reg, n_jobs=n_jobs)
 
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
@@ -572,7 +572,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         iterations.  Defaults to numpy.random.
 
     n_jobs : int, optional (default = 1)
-        The number of parallel jobs to run for neighbors search.
+        The number of parallel jobs to run.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
     Attributes
@@ -634,7 +634,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
                 eigen_solver=self.eigen_solver, tol=self.tol,
                 max_iter=self.max_iter, method=self.method,
                 hessian_tol=self.hessian_tol, modified_tol=self.modified_tol,
-                random_state=random_state, reg=self.reg)
+                random_state=random_state, reg=self.reg, n_jobs=self.n_jobs)
 
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X
