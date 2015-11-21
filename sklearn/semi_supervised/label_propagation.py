@@ -54,20 +54,21 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 # Authors: Clay Woolam <clay@woolam.org>
 # Licence: BSD
 from abc import ABCMeta, abstractmethod
-from scipy import sparse
+
 import numpy as np
+from scipy import sparse
 
 from ..base import BaseEstimator, ClassifierMixin
-from ..metrics.pairwise import rbf_kernel
-from ..utils.graph import graph_laplacian
-from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_X_y, check_is_fitted, check_array
-from ..utils.multiclass import check_classification_targets
 from ..externals import six
+from ..metrics.pairwise import rbf_kernel
 from ..neighbors.unsupervised import NearestNeighbors
+from ..utils.extmath import safe_sparse_dot
+from ..utils.graph import graph_laplacian
+from ..utils.multiclass import check_classification_targets
+from ..utils.validation import check_X_y, check_is_fitted, check_array
 
 
-### Helper functions
+# Helper functions
 
 def _not_converged(y_truth, y_prediction, tol=1e-3):
     """basic convergence check"""
@@ -101,7 +102,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         Parameter for knn kernel
 
     n_jobs : int, optional (default = 1)
-        The number of parallel jobs to run for neighbors search.
+        The number of parallel jobs to run.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
     """
@@ -181,8 +182,8 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         check_is_fitted(self, 'X_')
 
-        X_2d = check_array(X, accept_sparse = ['csc', 'csr', 'coo', 'dok',
-                        'bsr', 'lil', 'dia'])
+        X_2d = check_array(X, accept_sparse=['csc', 'csr', 'coo', 'dok',
+                                             'bsr', 'lil', 'dia'])
         weight_matrices = self._get_kernel(self.X_, X_2d)
         if self.kernel == 'knn':
             probabilities = []
@@ -253,7 +254,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         if sparse.isspmatrix(graph_matrix):
             graph_matrix = graph_matrix.tocsr()
         while (_not_converged(self.label_distributions_, l_previous, self.tol)
-                and remaining_iter > 1):
+               and remaining_iter > 1):
             l_previous = self.label_distributions_
             self.label_distributions_ = safe_sparse_dot(
                 graph_matrix, self.label_distributions_)
@@ -340,6 +341,7 @@ class LabelPropagation(BaseLabelPropagation):
     --------
     LabelSpreading : Alternate label propagation strategy more robust to noise
     """
+
     def _build_graph(self):
         """Matrix representing a fully connected graph between each sample
 
@@ -388,6 +390,10 @@ class LabelSpreading(BaseLabelPropagation):
       Convergence tolerance: threshold to consider the system at steady
       state
 
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
     Attributes
     ----------
     X_ : array, shape = [n_samples, n_features]
@@ -431,13 +437,14 @@ class LabelSpreading(BaseLabelPropagation):
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
-                 max_iter=30, tol=1e-3):
+                 max_iter=30, tol=1e-3, n_jobs=1):
 
         # this one has different base parameters
         super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
                                              n_neighbors=n_neighbors,
                                              alpha=alpha, max_iter=max_iter,
-                                             tol=tol)
+                                             tol=tol,
+                                             n_jobs=n_jobs)
 
     def _build_graph(self):
         """Graph matrix for Label Spreading computes the graph laplacian"""
