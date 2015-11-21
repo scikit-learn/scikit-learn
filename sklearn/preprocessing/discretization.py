@@ -5,8 +5,9 @@ __author__ = "Henry Lin <hlin117@gmail.com>"
 import numpy as np
 import scipy.sparse as sp
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.utils import column_or_1d, check_array
+from sklearn.utils import check_array
 from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.sparsefuncs import csr_csc_min_axis0, csr_csc_max_axis0
 
 __all__ = [
     "Discretizer"
@@ -77,11 +78,6 @@ class Discretizer(BaseEstimator, TransformerMixin):
         self.n_features_ = None
         self.continuous_mask_ = None
 
-    def _check_sparse(self, X, ravel=True):
-        if ravel:
-            return X.toarray().ravel() if sp.issparse(X) else X
-        return X.toarray() if sp.issparse(X) else X
-
     def _set_continuous_mask(self):
         """Sets a boolean array that determines which columns are
         continuous features.
@@ -133,8 +129,12 @@ class Discretizer(BaseEstimator, TransformerMixin):
 
         continuous = X[:, self.continuous_mask_]
 
-        self.min_ = self._check_sparse(continuous.min(axis=0))
-        self.max_ = self._check_sparse(continuous.max(axis=0))
+        if sp.issparse(X):
+            self.min_ = csr_csc_min_axis0(continuous)
+            self.max_ = csr_csc_max_axis0(continuous)
+        else:
+            self.min_ = continuous.min(axis=0)
+            self.max_ = continuous.max(axis=0)
         cut_points = list()
         for min_, max_ in zip(self.min_, self.max_):
             points = np.linspace(min_, max_, num=self.n_bins, endpoint=False)[1:]
