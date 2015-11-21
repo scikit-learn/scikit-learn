@@ -14,9 +14,40 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis,
                                        inplace_swap_row, inplace_swap_column,
                                        min_max_axis,
                                        count_nonzero, csc_median_axis_0)
+from sklearn.utils.sparsefuncs import csr_csc_min_axis0, csr_csc_max_axis0
+
 from sklearn.utils.sparsefuncs_fast import assign_rows_csr
 from sklearn.utils.testing import assert_raises
 
+X = np.array([[-67.8,  71. ,   0. ,   0. ,   0. ,  74.5],
+              [  0. ,   0. ,  -2. ,   0. ,   4. ,   0. ],
+              [ 99.8,   0. ,   0. ,   0. ,   4.5,   0. ],
+              [  0. ,   0. ,   0. ,   0. ,   0. ,   0. ],
+              [ 72. ,  -1. ,   0. ,   0. ,   0. ,  73. ]])
+def test_csr_csc_col_min():
+    expected = [-67.8, -1, -2, 0, 4.5, 0]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X)
+        minimum = csr_csc_min_axis0(sparse)
+        assert_array_equal(expected, minimum)
+
+def test_csr_csc_col_max():
+    expected = [99.8, 71, 0, 0, 4.5, 74.5]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X)
+        maximum = csr_csc_max_axis0(sparse)
+        assert_array_equal(expected, maximum)
+
+def test_csr_col_max_error():
+    try:
+        sparse = sp.csc_matrix(X)
+    except ValueError:
+        pass
+    else:
+        raise ValueError("Error wasn't thrown for bad csr_matrix input "
+                         "to csr_col_max.")
 
 def test_mean_variance_axis0():
     X, _ = make_classification(5, 4, random_state=0)

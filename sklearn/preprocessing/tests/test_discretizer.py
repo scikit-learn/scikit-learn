@@ -10,7 +10,7 @@ X = [[0, 0, 1],
 
 def test_discretizer_bad_n_bins():
     try:
-        dis = Discretizer(n_bins=1)
+        dis = Discretizer(n_bins=1).fit(X)
     except:
         return
     else:

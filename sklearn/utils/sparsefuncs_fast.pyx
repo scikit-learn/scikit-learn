@@ -20,6 +20,111 @@ ctypedef np.float64_t DOUBLE
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
+def csc_min_axis0(X):
+    """Minimum of each element of X down axis 0.
+    Equivalent to calling X.min(axis=0)
+    """
+    if type(X) is not sp.csc_matrix:
+        raise ValueError("Invalid matrix format being used for csc_col_min.")
+
+    cdef:
+        unsigned int n_features = X.shape[1]
+        unsigned int[::1] col_ptr = X.indptr
+        double[::1] data = X.data
+        double[::1] minimum = np.zeros(n_features)
+
+        unsigned int i, j
+
+    for i in range(X.nnz - 1):
+        start = col_ptr[i]
+        end = col_ptr[i + 1]
+
+        # Iterate downwards through matrix
+        for j in range(start, end):
+            minimum[i] = double_min(minimum[i], data[j])
+
+    return minimum
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csc_max_axis0(X):
+    """Minimum of each element of X down axis 0.
+    Equivalent to calling X.min(axis=0)
+    """
+    if type(X) is not sp.csc_matrix:
+        raise ValueError("Invalid matrix format being used for csc_col_min.")
+
+    cdef:
+        unsigned int n_features = X.shape[1]
+        unsigned int[::1] col_ptr = X.indptr
+        double[::1] data = X.data
+        double[::1] maximum = np.zeros(n_features)
+
+        unsigned int i, j
+
+    for i in range(X.nnz - 1):
+        start = col_ptr[i]
+        end = col_ptr[i + 1]
+
+        # Iterate downwards through matrix
+        for j in range(start, end):
+            maximum[i] = double_max(maximum[i], data[j])
+
+    return maximum
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csr_min_axis0(X):
+    """Minimum of each element of X down axis 0.
+    Equivalent to calling X.min(axis=0)
+    """
+    if type(X) is not sp.csr_matrix:
+        raise ValueError("Invalid matrix format being used for csr_col_min.")
+
+    cdef:
+        unsigned int n_features = X.shape[1]
+        unsigned int[::1] col_indices = X.indices
+        double[::1] data = X.data
+        double[::1] minimum = np.zeros(n_features)
+
+        int col_ind, index
+        double num
+    for index in range(X.nnz):
+        col_ind = col_indices[index]
+        num = data[index]
+        minimum[col_ind] = double_min(num, minimum[col_ind])
+    return minimum
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csr_max_axis0(X):
+    """Minimum of each element of X down axis 0.
+    Equivalent to calling X.min(axis=0)
+    """
+    if type(X) is not sp.csr_matrix:
+        raise ValueError("Invalid matrix format being used for csr_col_max.")
+
+    cdef:
+        unsigned int n_features = X.shape[1]
+        unsigned int[::1] col_indices = X.indices
+        double[::1] data = X.data
+        double[::1] maximum = np.zeros(n_features)
+
+        int col_ind, index
+        double num
+    for index in range(X.nnz):
+        col_ind = col_indices[index]
+        num = data[index]
+        maximum[col_ind] = double_max(num, maximum[col_ind])
+    return maximum
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def csr_row_norms(X):
     """L2 norm of each row in CSR matrix X."""
     cdef:
