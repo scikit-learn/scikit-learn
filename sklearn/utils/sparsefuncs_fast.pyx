@@ -14,8 +14,8 @@ cimport cython
 
 np.import_array()
 
-
 ctypedef np.float64_t DOUBLE
+ctypedef np.npy_uint32 UINT  # unsigned int
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -24,12 +24,11 @@ def csc_min_axis0(X):
     """Minimum of each element of X down axis 0.
     Equivalent to calling X.min(axis=0)
     """
-    if type(X) is not sp.csc_matrix:
-        raise ValueError("Invalid matrix format being used for csc_col_min.")
-
     cdef:
-        unsigned int n_features = X.shape[1]
-        unsigned int[::1] col_ptr = X.indptr
+        UINT n_features = X.shape[1]
+
+        # TODO: Use a memoryview
+        UINT[::1] col_ptr = X.indptr
         double[::1] data = X.data
         double[::1] minimum = np.zeros(n_features)
 
@@ -52,12 +51,9 @@ def csc_max_axis0(X):
     """Minimum of each element of X down axis 0.
     Equivalent to calling X.min(axis=0)
     """
-    if type(X) is not sp.csc_matrix:
-        raise ValueError("Invalid matrix format being used for csc_col_min.")
-
     cdef:
-        unsigned int n_features = X.shape[1]
-        unsigned int[::1] col_ptr = X.indptr
+        UINT n_features = X.shape[1]
+        UINT[::1] col_ptr = X.indptr
         double[::1] data = X.data
         double[::1] maximum = np.zeros(n_features)
 
@@ -80,12 +76,9 @@ def csr_min_axis0(X):
     """Minimum of each element of X down axis 0.
     Equivalent to calling X.min(axis=0)
     """
-    if type(X) is not sp.csr_matrix:
-        raise ValueError("Invalid matrix format being used for csr_col_min.")
-
     cdef:
-        unsigned int n_features = X.shape[1]
-        unsigned int[::1] col_indices = X.indices
+        UINT n_features = X.shape[1]
+        UINT[::1] col_indices = X.indices
         double[::1] data = X.data
         double[::1] minimum = np.zeros(n_features)
 
@@ -105,12 +98,9 @@ def csr_max_axis0(X):
     """Minimum of each element of X down axis 0.
     Equivalent to calling X.min(axis=0)
     """
-    if type(X) is not sp.csr_matrix:
-        raise ValueError("Invalid matrix format being used for csr_col_max.")
-
     cdef:
-        unsigned int n_features = X.shape[1]
-        unsigned int[::1] col_indices = X.indices
+        UINT n_features = X.shape[1]
+        UINT[::1] col_indices = X.indices
         double[::1] data = X.data
         double[::1] maximum = np.zeros(n_features)
 
