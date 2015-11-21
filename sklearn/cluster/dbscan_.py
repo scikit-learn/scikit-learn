@@ -260,7 +260,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         """
         X = check_array(X, accept_sparse='csr')
         clust = dbscan(X, sample_weight=sample_weight,
-                       n_jobs=self.n_jobs, **self.get_params())
+                       **self.get_params())
         self.core_sample_indices_, self.labels_ = clust
         if len(self.core_sample_indices_):
             # fix for scipy sparse indexing issue
