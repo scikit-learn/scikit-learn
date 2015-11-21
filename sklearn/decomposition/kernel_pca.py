@@ -81,6 +81,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         A pseudo random number generator used for the initialization of the
         residuals when eigen_solver == 'arpack'.
 
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
     Attributes
     ----------
 
@@ -109,7 +113,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                  gamma=None, degree=3, coef0=1, kernel_params=None,
                  alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
                  tol=0, max_iter=None, remove_zero_eig=False,
-                 random_state=None):
+                 random_state=None, n_jobs=1):
         if fit_inverse_transform and kernel == 'precomputed':
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
@@ -127,6 +131,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self._centerer = KernelCenterer()
         self.random_state = random_state
+        self.n_jobs = n_jobs
 
     @property
     def _pairwise(self):
@@ -140,7 +145,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                       "degree": self.degree,
                       "coef0": self.coef0}
         return pairwise_kernels(X, Y, metric=self.kernel,
-                                filter_params=True, **params)
+                                filter_params=True, n_jobs=self.n_jobs,
+                                **params)
 
     def _fit_transform(self, K):
         """ Fit's using kernel K"""
