@@ -327,10 +327,10 @@ floating point values instead of integer values::
 
 .. _svm_outlier_detection:
 
-Outlier and novelty detection
+Novelty and outlier detection
 =============================
 
-Support vector machines can be used for detecting novely and outliers in
+Support vector machines can be used for detecting novelty and outliers in
 unlabeled data sets. That is, given a set of samples, detect the soft boundary
 of that set so as to classify new points as belonging to that set or not.
 
@@ -359,19 +359,20 @@ See section :ref:`outlier_detection` for more details on their usage.
 .. topic:: Examples:
 
    * See :ref:`example_svm_plot_oneclass.py` for visualizing the
-     frontier learned around some data by :class:`svm.OneClassSVM`.
+     frontier learned around some data by :class:`OneClassSVM`.
    * See :ref:`example_svm_plot_oneclass_vs_svdd.py` to get the idea about
      the difference between the two approaches.
    * :ref:`example_applications_plot_species_distribution_modeling.py`
 
 .. topic:: References:
 
-    * Bernhard Schölkopf et al, `Estimating the support of a high-dimensional
-      distribution <http://dl.acm.org/citation.cfm?id=1119749>`_, Neural
+    * Bernhard Schölkopf et al, `Estimating the Support of a High-Dimensional
+      Distribution <http://dl.acm.org/citation.cfm?id=1119749>`_, Neural
       computation 13.7 (2001): 1443-1471.
-    * David M. J. Tax and Robert P. W. Duin, `Support vector data description
+    * David M. J. Tax and Robert P. W. Duin, `Support Vector Data Description
       <http://dl.acm.org/citation.cfm?id=960109>`_, Machine Learning,
       54(1):45-66, 2004.
+
 
 
 Complexity
