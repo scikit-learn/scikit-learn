@@ -39,6 +39,10 @@ def csr_csc_min_axis0(X):
     minimum : array, shape [n_features]
         The minimum of elements along axis 0.
     """
+
+    # TODO: I don't know how to avoid this call to `astype()`;
+    # my test cases don't pass with integers otherwise.
+    X = X.astype(float)
     if isinstance(X, sp.csr_matrix):
         return csr_min_axis0(X)
     elif isinstance(X, sp.csc_matrix):
@@ -59,6 +63,10 @@ def csr_csc_max_axis0(X):
     maximum : array, shape [n_features]
         The maximum of elements along axis 0.
     """
+
+    # TODO: I don't know how to avoid this call to `astype()`;
+    # my test cases don't pass with integers otherwise.
+    X = X.astype(float)
     if isinstance(X, sp.csr_matrix):
         return csr_max_axis0(X)
     elif isinstance(X, sp.csc_matrix):

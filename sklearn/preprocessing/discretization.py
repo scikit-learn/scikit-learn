@@ -101,6 +101,8 @@ class Discretizer(BaseEstimator, TransformerMixin):
             raise ValueError("Duplicate indices detected from input "
                              "categorical indices.")
 
+        self.n_continuous_features_ = self.continuous_mask_.sum()
+
     def fit(self, X, y=None):
         """Finds the intervals of interest from the input data.
 
@@ -180,6 +182,9 @@ class Discretizer(BaseEstimator, TransformerMixin):
             discretized.append(dis_features.reshape(-1, 1))
 
         discretized = np.hstack(discretized)
-        categorical = self._check_sparse(X[:, ~self.continuous_mask_], ravel=False)
-        return np.hstack((discretized, categorical))
+        if self.n_continuous_features_ == self.n_features_:
+            return discretized
+        else:
+            categorical = self._check_sparse(X[:, ~self.continuous_mask_], ravel=False)
+            return np.hstack((discretized, categorical))
 

@@ -18,7 +18,11 @@ def test_discretizer_bad_n_bins():
                          "bins is too low.")
 
 def test_discretizer_fit_transform():
-    discretized = Discretizer(n_bins=2).fit_transform(X)
+    dis = Discretizer(n_bins=2)
+    discretized = dis.fit_transform(X)
+
+    expected_cut_points = [[1.0, 0.5, 2.0]]
+    assert_array_equal(expected_cut_points, dis.cut_points_)
     expected = [[0, 0, 0],
                 [0, 1, 0],
                 [1, 0, 1]]
@@ -29,11 +33,18 @@ def test_discretizer_fit_transform_sparse():
                       sp.csr_matrix, sp.dia_matrix, sp.dok_matrix, sp.lil_matrix]
     for format in sparse_formats:
         sparse_X = format(X)
-        discretized = Discretizer(n_bins=2).fit_transform(sparse_X)
+        dis = Discretizer(n_bins=2)
+        discretized = dis.fit_transform(sparse_X)
+
+        expected_cut_points = [[1.0, 0.5, 2.0]]
+        assert_array_equal(expected_cut_points, dis.cut_points_, "Failing with "
+                           "format {0}".format(format.__name__))
+
         expected = [[0, 0, 0],
                     [0, 1, 0],
                     [1, 0, 1]]
-        assert_array_equal(expected, discretized)
+        assert_array_equal(expected, discretized, "Failing with format {0}"\
+                           .format(format.__name__))
 
 def test_discretizer_fit_transform_cat():
     dis = Discretizer(n_bins=3, categorical_features=[0])
@@ -73,4 +84,3 @@ def test_discretizer_bad_cat_features():
             raise ValueError("Discretizer should have failed to fit with bad "
                              "input categories. Failed to fail on {0}" \
                              .format(cats))
-

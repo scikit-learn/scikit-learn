@@ -24,6 +24,73 @@ X = np.array([[-67.8,  71. ,   0. ,   0. ,   0. ,  74.5],
               [ 99.8,   0. ,   0. ,   0. ,   4.5,  -2. ],
               [  0. ,   0. ,   0. ,   0. ,   0. ,   0. ],
               [ 72. ,  -1. ,   0. ,   0. ,   0. ,  73. ]])
+
+X_int = np.array([[  0,  -1, 666],
+                  [-10,   5,   0],
+                  [  4,   0,   2]])
+
+X_nozeros = [[3, 2, -1],
+             [1, 1, -2],
+             [2, 2, -3]]
+
+X_2 = [[0,   0,   1],
+       [-2, -4,   2],
+       [3,   0,   0]]
+
+def test_csr_csc_min_axis0_2():
+    expected = [-2, -4, 0]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X_2)
+        minimum = csr_csc_min_axis0(sparse)
+        assert_array_equal(expected, minimum, "Arrays are not equal for {0}" \
+                           .format(format.__name__))
+
+def test_csr_csc_max_axis0_2():
+    expected = [3, 0, 2]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X_2)
+        minimum = csr_csc_max_axis0(sparse)
+        assert_array_equal(expected, minimum, "Arrays are not equal for {0}" \
+                           .format(format.__name__))
+
+def test_csr_csc_min_axis0_nozeros():
+    expected = [1, 1, -3]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X_nozeros)
+        minimum = csr_csc_min_axis0(sparse)
+        assert_array_equal(expected, minimum, "Arrays are not equal for {0}" \
+                           .format(format.__name__))
+
+def test_csr_csc_max_axis0_nozeros():
+    expected = [3, 2, -1]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X_nozeros)
+        maximum = csr_csc_max_axis0(sparse)
+        assert_array_equal(expected, maximum, "Arrays are not equal for {0}" \
+                           .format(format.__name__))
+
+def test_csr_csc_min_axis0_int():
+    expected = [-10, -1, 0]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X_int)
+        minimum = csr_csc_min_axis0(sparse)
+        assert_array_equal(expected, minimum, "Arrays are not equal for {0}" \
+                           .format(format.__name__))
+
+def test_csr_csc_max_axis0_int():
+    expected = [4, 5, 666]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X_int)
+        minimum = csr_csc_max_axis0(sparse)
+        assert_array_equal(expected, minimum, "Arrays are not equal for {0}" \
+                           .format(format.__name__))
+
 def test_csr_csc_min_axis0():
     expected = [-67.8, -1, -2, 0, 0, -2]
 
