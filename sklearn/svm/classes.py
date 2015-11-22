@@ -1062,11 +1062,12 @@ class SVDD(BaseLibSVM):
         Penalty parameter C in the error term.
         Should be within [1/n_samples, 1].
 
-    kernel : string, optional (default='rbf')
+    kernel : string, optional (default='linear')
          Specifies the kernel type to be used in the algorithm.
          It must be one of 'linear', 'poly', 'rbf' or 'sigmoid'.
-         If none is given, 'rbf' will be used. Precomputed and callable
-         kernels are not supported.
+         If none is given, 'linear' will be used, note that it is different
+         from all other classes based on libsvm.
+         Precomputed and callable kernels are not supported.
 
     degree : int, optional (default=3)
         Degree of the polynomial kernel function ('poly').
@@ -1138,7 +1139,7 @@ class SVDD(BaseLibSVM):
     >>> from sklearn.svm import SVDD
     >>> import numpy as np
     >>> X_train = np.array([[1, 1], [1, -1], [-1, 1], [-1, -1]])
-    >>> clf = SVDD(kernel='linear')
+    >>> clf = SVDD()
     >>> clf.fit(X_train)
     SVDD(C=1, cache_size=200, coef0=0.0, degree=3, gamma='auto',
          kernel='linear', max_iter=-1, random_state=None, shrinking=True,
@@ -1147,7 +1148,7 @@ class SVDD(BaseLibSVM):
     >>> clf.predict(X_test)
     array([ 1., -1.])
     """
-    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
+    def __init__(self, kernel='linear', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, C=1, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1, random_state=None):
         super(SVDD, self).__init__(
