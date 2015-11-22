@@ -1405,7 +1405,7 @@ Dummy estimators
 
 When doing supervised learning, a simple sanity check consists of comparing
 one's estimator against simple rules of thumb. :class:`DummyClassifier`
-implements three such simple strategies for classification:
+implements several such simple strategies for classification:
 
 - ``stratified`` generates random predictions by respecting the training
   set class distribution.

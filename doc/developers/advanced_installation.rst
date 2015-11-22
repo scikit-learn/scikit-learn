@@ -366,7 +366,8 @@ bleeding edge
 =============
 
 see section :ref:`git_repo` on how to get the development version. then follow
-the previous instructions to build from source depending on your platform.
+the previous instructions to build from source depending on your platform. 
+You will also require Cython >=0.23 in order to build the development version.
 
 
 .. _testing:

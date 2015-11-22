@@ -19,7 +19,7 @@ In general, a learning problem considers a set of n
 data and then tries to predict properties of unknown data. If each sample is
 more than a single number and, for instance, a multi-dimensional entry
 (aka `multivariate <http://en.wikipedia.org/wiki/Multivariate_random_variable>`_
-data), is it said to have several attributes or **features**.
+data), it is said to have several attributes or **features**.
 
 We can separate learning problems in a few large categories:
 

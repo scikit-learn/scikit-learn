@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
+from itertools import product
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_almost_equal
@@ -112,7 +113,7 @@ def test_ridge_singular():
     assert_greater(ridge.score(X, y), 0.9)
 
 
-def test_ridge_sample_weights():
+def test_ridge_regression_sample_weights():
     rng = np.random.RandomState(0)
 
     for solver in ("cholesky", ):
@@ -120,12 +121,13 @@ def test_ridge_sample_weights():
             for alpha in (1.0, 1e-2):
                 y = rng.randn(n_samples)
                 X = rng.randn(n_samples, n_features)
-                sample_weight = 1 + rng.rand(n_samples)
+                sample_weight = 1.0 + rng.rand(n_samples)
 
                 coefs = ridge_regression(X, y,
                                          alpha=alpha,
                                          sample_weight=sample_weight,
                                          solver=solver)
+
                 # Sample weight can be implemented via a simple rescaling
                 # for the square loss.
                 coefs2 = ridge_regression(
@@ -134,32 +136,48 @@ def test_ridge_sample_weights():
                     alpha=alpha, solver=solver)
                 assert_array_almost_equal(coefs, coefs2)
 
-                # Test for fit_intercept = True
-                est = Ridge(alpha=alpha, solver=solver)
-                est.fit(X, y, sample_weight=sample_weight)
 
-                # Check using Newton's Method
-                # Quadratic function should be solved in a single step.
-                # Initialize
-                sample_weight = np.sqrt(sample_weight)
-                X_weighted = sample_weight[:, np.newaxis] * (
-                    np.column_stack((np.ones(n_samples), X)))
-                y_weighted = y * sample_weight
+def test_ridge_sample_weights():
+    # TODO: loop over sparse data as well
 
-                # Gradient is (X*coef-y)*X + alpha*coef_[1:]
-                # Remove coef since it is initialized to zero.
-                grad = -np.dot(y_weighted, X_weighted)
+    rng = np.random.RandomState(0)
+    param_grid = product((1.0, 1e-2), (True, False),
+                         ('svd', 'cholesky', 'lsqr', 'sparse_cg'))
 
-                # Hessian is (X.T*X) + alpha*I except that the first
-                # diagonal element should be zero, since there is no
-                # penalization of intercept.
-                diag = alpha * np.ones(n_features + 1)
-                diag[0] = 0.
-                hess = np.dot(X_weighted.T, X_weighted)
-                hess.flat[::n_features + 2] += diag
-                coef_ = - np.dot(linalg.inv(hess), grad)
-                assert_almost_equal(coef_[0], est.intercept_)
-                assert_array_almost_equal(coef_[1:], est.coef_)
+    for n_samples, n_features in ((6, 5), (5, 10)):
+
+        y = rng.randn(n_samples)
+        X = rng.randn(n_samples, n_features)
+        sample_weight = 1.0 + rng.rand(n_samples)
+
+        for (alpha, intercept, solver) in param_grid:
+
+            # Ridge with explicit sample_weight
+            est = Ridge(alpha=alpha, fit_intercept=intercept, solver=solver)
+            est.fit(X, y, sample_weight=sample_weight)
+            coefs = est.coef_
+            inter = est.intercept_
+
+            # Closed form of the weighted regularized least square
+            # theta = (X^T W X + alpha I)^(-1) * X^T W y
+            W = np.diag(sample_weight)
+            if intercept is False:
+                X_aug = X
+                I = np.eye(n_features)
+            else:
+                dummy_column = np.ones(shape=(n_samples, 1))
+                X_aug = np.concatenate((dummy_column, X), axis=1)
+                I = np.eye(n_features + 1)
+                I[0, 0] = 0
+
+            cf_coefs = linalg.solve(X_aug.T.dot(W).dot(X_aug) + alpha * I,
+                                    X_aug.T.dot(W).dot(y))
+
+            if intercept is False:
+                assert_array_almost_equal(coefs, cf_coefs)
+            else:
+                assert_array_almost_equal(coefs, cf_coefs[1:])
+                assert_almost_equal(inter, cf_coefs[0])
 
 
 def test_ridge_shapes():
@@ -570,7 +588,7 @@ def test_ridgecv_sample_weight():
     for n_samples, n_features in ((6, 5), (5, 10)):
         y = rng.randn(n_samples)
         X = rng.randn(n_samples, n_features)
-        sample_weight = 1 + rng.rand(n_samples)
+        sample_weight = 1.0 + rng.rand(n_samples)
 
         cv = KFold(5)
         ridgecv = RidgeCV(alphas=alphas, cv=cv)

@@ -4,11 +4,21 @@ Utilities useful during the build.
 # author: Andy Mueller, Gael Varoquaux
 # license: BSD
 
+from __future__ import division, print_function, absolute_import
+
+HASH_FILE = 'cythonize.dat'
+DEFAULT_ROOT = 'sklearn'
+
+# WindowsError is not defined on unix systems
+try:
+    WindowsError
+except NameError:
+    WindowsError = None
+
 from numpy.distutils.system_info import get_info
 
 
 def get_blas_info():
-
     def atlas_not_found(blas_info_):
         def_macros = blas_info.get('define_macros', [])
         for x in def_macros:

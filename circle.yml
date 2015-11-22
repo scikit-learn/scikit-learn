@@ -13,6 +13,7 @@ dependencies:
     - sudo apt-get install python-numpy python-scipy python-dev python-matplotlib
     - sudo apt-get install python-nose python-coverage
     - sudo apt-get install python-sphinx
+    - pip install cython
   # The --user is needed to let sphinx see the source and the binaries
   # The pipefail is requested to propagate exit code
   override:
