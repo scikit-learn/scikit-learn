@@ -16,17 +16,14 @@ from .validation import (as_float_array,
 from .deprecation import deprecated
 from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
-from ..exceptions import ConvergenceWarning as ConvergenceWarning_
-from ..exceptions import DataConversionWarning as DataConversionWarning_
+from ..exceptions import ConvergenceWarning as _ConvergenceWarning
+from ..exceptions import DataConversionWarning
 
 
-class ConvergenceWarning(ConvergenceWarning_):
+@deprecated("ConvergenceWarning has been moved into the sklearn.exceptions "
+            "module. It will not be available here from version 0.19")
+class ConvergenceWarning(_ConvergenceWarning):
     pass
-
-ConvergenceWarning = deprecated("ConvergenceWarning has been moved "
-                                "into the sklearn.exceptions module. "
-                                "It will not be available here from "
-                                "version 0.19")(ConvergenceWarning)
 
 
 __all__ = ["murmurhash3_32", "as_float_array",
@@ -84,7 +81,7 @@ def safe_indexing(X, indices):
             # Cython typed memoryviews internally used in pandas do not support
             # readonly buffers.
             warnings.warn("Copying input dataframe for slicing.",
-                          DataConversionWarning_)
+                          DataConversionWarning)
             return X.copy().iloc[indices]
     elif hasattr(X, "shape"):
         if hasattr(X, 'take') and (hasattr(indices, 'dtype') and
