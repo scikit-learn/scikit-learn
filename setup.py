@@ -3,8 +3,6 @@
 # Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 # License: 3-clause BSD
-import subprocess
-
 descr = """A set of python modules for machine learning and data mining"""
 
 import sys
@@ -12,6 +10,7 @@ import os
 import shutil
 from distutils.command.clean import clean as Clean
 from pkg_resources import parse_version
+import traceback
 
 if sys.version_info[0] < 3:
     import __builtin__ as builtins
@@ -151,6 +150,7 @@ def get_scipy_status():
             scipy_version) >= parse_version(scipy_min_version)
         scipy_status['version'] = scipy_version
     except ImportError:
+        traceback.print_exc()
         scipy_status['up_to_date'] = False
         scipy_status['version'] = ""
     return scipy_status
@@ -170,6 +170,7 @@ def get_numpy_status():
             numpy_version) >= parse_version(numpy_min_version)
         numpy_status['version'] = numpy_version
     except ImportError:
+        traceback.print_exc()
         numpy_status['up_to_date'] = False
         numpy_status['version'] = ""
     return numpy_status
