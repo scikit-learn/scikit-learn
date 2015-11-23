@@ -44,9 +44,9 @@ class Discretizer(BaseEstimator, TransformerMixin):
     n_features_ : int
         The number of features from the original dataset.
 
-    continuous_mask_ : array, shape [n_continuous_features_]
-        An array of booleans, representing columns for which there are
-        continuous features.
+    continuous_features_ : list
+        Contains the indices of continuous columns in the dataset.
+        This list is sorted.
 
     Example
     -------
@@ -76,32 +76,33 @@ class Discretizer(BaseEstimator, TransformerMixin):
         self.max_ = None
         self.cut_points_ = None
         self.n_features_ = None
-        self.continuous_mask_ = None
+        self.continuous_features_ = categorical_features
 
-    def _set_continuous_mask(self):
+    def _set_continuous_features(self):
         """Sets a boolean array that determines which columns are
         continuous features.
         """
         if self.categorical_features is None:
             self.n_continuous_features_ = self.n_features_
-            self.continuous_mask_ = np.ones(self.n_features_, dtype=bool)
+            self.continuous_features_ = range(self.n_features_)
             return
 
         if len(self.categorical_features) > self.n_features_:
             raise ValueError("The number of categorical indices is more than "
                              "the number of features in the dataset.")
 
-        self.continuous_mask_ = np.ones(self.n_features_, dtype=bool)
-        self.continuous_mask_[self.categorical_features] = False
+        self.continuous_features_ = [i for i in range(self.n_features_)
+                                     if i not in set(self.categorical_features)]
 
         # Checks if there are duplicate columns from self.categorical_features,
         # such as [-1, 0, 0, self.n_features - 1]
         if self.n_features_ - len(self.categorical_features) \
-                != self.continuous_mask_.sum():
+                != len(self.continuous_features_):
             raise ValueError("Duplicate indices detected from input "
-                             "categorical indices.")
+                             "categorical indices. Input was: {0}" \
+                             .format(self.continuous_features_))
 
-        self.n_continuous_features_ = self.continuous_mask_.sum()
+        self.n_continuous_features_ = len(self.continuous_features_)
 
     def fit(self, X, y=None):
         """Finds the intervals of interest from the input data.
@@ -126,10 +127,10 @@ class Discretizer(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse=self.sparse_formats)
         self.n_features_ = X.shape[1]
 
-        # Set the mask for the continuous features in the array
-        self._set_continuous_mask()
+        # Set the indices of continuous features
+        self._set_continuous_features()
 
-        continuous = X[:, self.continuous_mask_]
+        continuous = X[:, self.continuous_features_]
 
         if sp.issparse(X):
             self.min_ = csr_csc_min_axis0(continuous)
@@ -167,14 +168,14 @@ class Discretizer(BaseEstimator, TransformerMixin):
             as the last features of the output.
 
         """
-        check_is_fitted(self, ["cut_points_", "continuous_mask_"])
+        check_is_fitted(self, ["cut_points_", "continuous_features_"])
         X = check_array(X, accept_sparse=self.sparse_formats)
         if X.shape[1] != self.n_features_:
             raise ValueError("Transformed array does not have currect number "
                              "of features. Expecting {0}, received {1}"
                              .format(self.n_features_, X.shape[1]))
 
-        continuous = X[:, self.continuous_mask_]
+        continuous = X[:, self.continuous_features_]
         discretized = list()
         for cut_points, cont in zip(self.cut_points_.T, continuous.T):
             cont = self._check_sparse(cont)  # np.searchsorted can't handle sparse
@@ -185,6 +186,7 @@ class Discretizer(BaseEstimator, TransformerMixin):
         if self.n_continuous_features_ == self.n_features_:
             return discretized
         else:
-            categorical = self._check_sparse(X[:, ~self.continuous_mask_], ravel=False)
+            cat_features = sorted(self.categorical_features)
+            categorical = self._check_sparse(X[:, cat_features], ravel=False)
             return np.hstack((discretized, categorical))
 

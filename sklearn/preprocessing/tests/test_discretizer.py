@@ -3,6 +3,7 @@ __author__ = "Henry Lin <hlin117@gmail.com>"
 import scipy.sparse as sp
 from sklearn.preprocessing.discretization import Discretizer
 from sklearn.utils.testing import assert_array_almost_equal, assert_array_equal
+from sklearn.utils.testing import assert_equal
 
 X = [[0, 0, 1],
      [1, 1, 2],
@@ -59,8 +60,8 @@ def test_discretizer_fit_transform_cat():
 def test_discretizer_fit():
     dis = Discretizer(n_bins=3, categorical_features=[1]).fit(X)
 
-    expected = [True, False, True]
-    assert_array_almost_equal(expected, dis.continuous_mask_)
+    expected = [0, 2]
+    assert_equal(expected, dis.continuous_features_)
 
     expected = [[0.666666, 1.666666],
                 [1.333333, 2.333333]]
