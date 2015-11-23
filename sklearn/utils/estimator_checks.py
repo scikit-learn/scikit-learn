@@ -84,8 +84,9 @@ def _yield_non_meta_checks(name, Estimator):
     # trained on empty datasets
     yield check_estimators_empty_data_messages
 
-    if name not in CROSS_DECOMPOSITION + ['SpectralEmbedding']:
-        # SpectralEmbedding is non-deterministic,
+    # FIXME Remove "SpectralEmbedding" alone in 0.20
+    if name not in CROSS_DECOMPOSITION + ['LaplacianEigenmap', 'SpectralEmbedding']:
+        # LaplacianEigenmap is non-deterministic,
         # see issue #4236
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
