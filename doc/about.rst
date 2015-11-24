@@ -80,6 +80,14 @@ funded one year for a developer to work on the project full-time
    :width: 200pt
    :align: center
 
+`NYU Moore-Sloan Data Science Environment <http://cds.nyu.edu/mooresloan/>`_
+funds Andreas Mueller (2014-2015) to work on this project. The Moore-Sloan Data Science
+Environment also funds several students to work on the project part-time.
+
+.. image:: images/nyu_short_color.png
+   :width: 200pt
+   :align: center
+
 The following students were sponsored by `Google <http://code.google.com/opensource/>`_
 to work on scikit-learn through the
 `Google Summer of Code <http://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
