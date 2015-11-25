@@ -5,6 +5,7 @@
 import numpy as np
 import scipy as sp
 from scipy import ndimage
+from scipy import misc
 
 from nose.tools import assert_equal, assert_true
 from numpy.testing import assert_raises
@@ -56,7 +57,7 @@ def test_grid_to_graph():
 
 
 def test_connect_regions():
-    face = sp.misc.face(gray=True)
+    face = misc.face(gray=True)
     for thr in (50, 150):
         mask = face > thr
         graph = img_to_graph(face, mask)
@@ -64,7 +65,7 @@ def test_connect_regions():
 
 
 def test_connect_regions_with_grid():
-    face = sp.misc.face(gray=True)
+    face = misc.face(gray=True)
     mask = face > 50
     graph = grid_to_graph(*face.shape, mask=mask)
     assert_equal(ndimage.label(mask)[1], connected_components(graph)[0])
@@ -75,7 +76,7 @@ def test_connect_regions_with_grid():
 
 
 def _downsampled_face():
-    face = sp.misc.face(gray=True).astype(np.float32)
+    face = misc.face(gray=True).astype(np.float32)
     face = (face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2]
             + face[1::2, 1::2])
     face = (face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2]
