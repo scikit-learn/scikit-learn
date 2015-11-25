@@ -162,6 +162,9 @@ class GaussianNB(BaseNB):
         sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples (1. for unweighted).
 
+            .. versionadded:: 0.17
+               Gaussian Naive Bayes supports fitting with *sample_weight*.
+
         Returns
         -------
         self : object
@@ -279,6 +282,8 @@ class GaussianNB(BaseNB):
         sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples (1. for unweighted).
 
+            .. versionadded:: 0.17
+
         Returns
         -------
         self : object
@@ -318,9 +323,13 @@ class GaussianNB(BaseNB):
         self : object
             Returns self.
         """
-
         X, y = check_X_y(X, y)
-        epsilon = 1e-9
+
+        # If the ratio of data variance between dimensions is too small, it
+        # will cause numerical errors. To address this, we artificially
+        # boost the variance by epsilon, a small fraction of the standard
+        # deviation of the largest dimension.
+        epsilon = 1e-9 * np.var(X, axis=0).max()
 
         if _refit:
             self.classes_ = None

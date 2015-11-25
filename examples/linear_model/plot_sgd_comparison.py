@@ -14,7 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
 
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import SGDClassifier, Perceptron
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.linear_model import LogisticRegression

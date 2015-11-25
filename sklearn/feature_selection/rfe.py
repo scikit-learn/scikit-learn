@@ -6,7 +6,6 @@
 
 """Recursive feature elimination for feature ranking"""
 
-import warnings
 import numpy as np
 from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
@@ -14,8 +13,8 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
-from ..cross_validation import check_cv
-from ..cross_validation import _safe_split, _score
+from ..model_selection import check_cv
+from ..model_selection._validation import _safe_split, _score
 from ..metrics.scorer import check_scoring
 from .base import SelectorMixin
 
@@ -54,11 +53,6 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         number of features to remove at each iteration.
         If within (0.0, 1.0), then `step` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
-
-    estimator_params : dict
-        Parameters for the external estimator.
-        This attribute is deprecated as of version 0.16 and will be removed in
-        0.18. Use estimator initialisation or set_params method instead.
 
     verbose : int, default=0
         Controls verbosity of output.
@@ -105,11 +99,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, n_features_to_select=None, step=1,
-                 estimator_params=None, verbose=0):
+                 verbose=0):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
-        self.estimator_params = estimator_params
         self.verbose = verbose
 
     @property
@@ -135,7 +128,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
-            n_features_to_select = n_features / 2
+            n_features_to_select = n_features // 2
         else:
             n_features_to_select = self.n_features_to_select
 
@@ -145,13 +138,6 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             step = int(self.step)
         if step <= 0:
             raise ValueError("Step must be >0")
-
-        if self.estimator_params is not None:
-            warnings.warn("The parameter 'estimator_params' is deprecated as "
-                          "of version 0.16 and will be removed in 0.18. The "
-                          "parameter is no longer necessary because the value "
-                          "is set via the estimator initialisation or "
-                          "set_params method.", DeprecationWarning)
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
@@ -166,8 +152,6 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
             # Rank the remaining features
             estimator = clone(self.estimator)
-            if self.estimator_params:
-                estimator.set_params(**self.estimator_params)
             if self.verbose > 0:
                 print("Fitting estimator with %d features." % np.sum(support_))
 
@@ -206,8 +190,6 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         # Set final attributes
         features = np.arange(n_features)[support_]
         self.estimator_ = clone(self.estimator)
-        if self.estimator_params:
-            self.estimator_.set_params(**self.estimator_params)
         self.estimator_.fit(X[:, features], y)
 
         # Compute step score when only n_features_to_select features left
@@ -293,13 +275,14 @@ class RFECV(RFE, MetaEstimatorMixin):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier 
+        :class:`StratifiedKFold` used. If the estimator is a classifier
         or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -309,11 +292,6 @@ class RFECV(RFE, MetaEstimatorMixin):
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
-
-    estimator_params : dict
-        Parameters for the external estimator.
-        This attribute is deprecated as of version 0.16 and will be removed in
-        0.18. Use estimator initialisation or set_params method instead.
 
     verbose : int, default=0
         Controls verbosity of output.
@@ -371,13 +349,11 @@ class RFECV(RFE, MetaEstimatorMixin):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, cv=None, scoring=None,
-                 estimator_params=None, verbose=0):
+    def __init__(self, estimator, step=1, cv=None, scoring=None, verbose=0):
         self.estimator = estimator
         self.step = step
         self.cv = cv
         self.scoring = scoring
-        self.estimator_params = estimator_params
         self.verbose = verbose
 
     def fit(self, X, y):
@@ -395,14 +371,9 @@ class RFECV(RFE, MetaEstimatorMixin):
             regression).
         """
         X, y = check_X_y(X, y, "csr")
-        if self.estimator_params is not None:
-            warnings.warn("The parameter 'estimator_params' is deprecated as "
-                          "of version 0.16 and will be removed in 0.18. "
-                          "The parameter is no longer necessary because the "
-                          "value is set via the estimator initialisation or "
-                          "set_params method.", DeprecationWarning)
+
         # Initialization
-        cv = check_cv(self.cv, X, y, is_classifier(self.estimator))
+        cv = check_cv(self.cv, y, is_classifier(self.estimator))
         scorer = check_scoring(self.estimator, scoring=self.scoring)
         n_features = X.shape[1]
         n_features_to_select = 1
@@ -411,14 +382,13 @@ class RFECV(RFE, MetaEstimatorMixin):
         scores = []
 
         # Cross-validation
-        for n, (train, test) in enumerate(cv):
+        for n, (train, test) in enumerate(cv.split(X, y)):
             X_train, y_train = _safe_split(self.estimator, X, y, train)
             X_test, y_test = _safe_split(self.estimator, X, y, test, train)
 
             rfe = RFE(estimator=self.estimator,
                       n_features_to_select=n_features_to_select,
-                      step=self.step, estimator_params=self.estimator_params,
-                      verbose=self.verbose - 1)
+                      step=self.step, verbose=self.verbose - 1)
 
             rfe._fit(X_train, y_train, lambda estimator, features:
                      _score(estimator, X_test[:, features], y_test, scorer))
@@ -433,8 +403,7 @@ class RFECV(RFE, MetaEstimatorMixin):
                                                  self.step))
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=n_features_to_select,
-                  step=self.step, estimator_params=self.estimator_params)
+                  n_features_to_select=n_features_to_select, step=self.step)
 
         rfe.fit(X, y)
 
@@ -443,11 +412,9 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.n_features_ = rfe.n_features_
         self.ranking_ = rfe.ranking_
         self.estimator_ = clone(self.estimator)
-        if self.estimator_params:
-            self.estimator_.set_params(**self.estimator_params)
         self.estimator_.fit(self.transform(X), y)
 
-        # Fixing a normalization error, n is equal to len(cv) - 1
-        # here, the scores are normalized by len(cv)
-        self.grid_scores_ = scores / len(cv)
+        # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
+        # here, the scores are normalized by get_n_splits(X, y)
+        self.grid_scores_ = scores / cv.get_n_splits(X, y)
         return self

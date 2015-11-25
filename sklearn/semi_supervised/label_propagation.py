@@ -62,6 +62,7 @@ from ..metrics.pairwise import rbf_kernel
 from ..utils.graph import graph_laplacian
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_X_y, check_is_fitted, check_array
+from ..utils.multiclass import check_classification_targets
 from ..externals import six
 from ..neighbors.unsupervised import NearestNeighbors
 
@@ -211,6 +212,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         X, y = check_X_y(X, y)
         self.X_ = X
+        check_classification_targets(y)
 
         # actual graph construction (implementations should override this)
         graph_matrix = self._build_graph()

@@ -10,7 +10,6 @@ at which the fixe is no longer needed.
 #
 # License: BSD 3 clause
 
-import inspect
 import warnings
 import sys
 import functools
@@ -20,6 +19,11 @@ import errno
 import numpy as np
 import scipy.sparse as sp
 import scipy
+
+try:
+    from inspect import signature
+except ImportError:
+    from ..externals.funcsigs import signature
 
 
 def _parse_version(version_string):
@@ -63,7 +67,7 @@ except ImportError:
 
 
 # little danse to see if np.copy has an 'order' keyword argument
-if 'order' in inspect.getargspec(np.copy)[0]:
+if 'order' in signature(np.copy).parameters:
     def safe_copy(X):
         # Copy, but keep the order
         return np.copy(X, order='K')
@@ -74,7 +78,7 @@ else:
 
 try:
     if (not np.allclose(np.divide(.4, 1, casting="unsafe"),
-                        np.divide(.4, 1, casting="unsafe", dtype=np.float))
+                        np.divide(.4, 1, casting="unsafe", dtype=np.float64))
             or not np.allclose(np.divide(.4, 1), .4)):
         raise TypeError('Divide not working with dtype: '
                         'https://github.com/numpy/numpy/issues/3484')
@@ -355,7 +359,7 @@ else:
     from numpy import bincount
 
 
-if 'exist_ok' in inspect.getargspec(os.makedirs).args:
+if 'exist_ok' in signature(os.makedirs).parameters:
     makedirs = os.makedirs
 else:
     def makedirs(name, mode=0o777, exist_ok=False):
@@ -375,3 +379,17 @@ else:
             if (not exist_ok or e.errno != errno.EEXIST
                     or not os.path.isdir(name)):
                 raise
+
+
+if np_version < (1, 8, 1):
+    def array_equal(a1, a2):
+        # copy-paste from numpy 1.8.1
+        try:
+            a1, a2 = np.asarray(a1), np.asarray(a2)
+        except:
+            return False
+        if a1.shape != a2.shape:
+            return False
+        return bool(np.asarray(a1 == a2).all())
+else:
+    from numpy import array_equal

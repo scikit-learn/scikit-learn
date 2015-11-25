@@ -93,7 +93,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                min_bin_freq=1, cluster_all=True, max_iter=300,
-               max_iterations=None, n_jobs=1):
+               n_jobs=1):
     """Perform mean shift clustering of data using a flat kernel.
 
     Read more in the :ref:`User Guide <mean_shift>`.
@@ -147,6 +147,9 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
+        .. versionadded:: 0.17
+           Parallel Execution using *n_jobs*.
+
     Returns
     -------
 
@@ -161,12 +164,6 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     See examples/cluster/plot_meanshift.py for an example.
 
     """
-    # FIXME To be removed in 0.18
-    if max_iterations is not None:
-        warnings.warn("The `max_iterations` parameter has been renamed to "
-                      "`max_iter` from version 0.16. The `max_iterations` "
-                      "parameter will be removed in 0.18", DeprecationWarning)
-        max_iter = max_iterations
 
     if bandwidth is None:
         bandwidth = estimate_bandwidth(X)

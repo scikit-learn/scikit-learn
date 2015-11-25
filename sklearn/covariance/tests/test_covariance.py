@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_greater
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, EmpiricalCovariance, \
@@ -42,8 +43,7 @@ def test_covariance():
                   cov.error_norm, emp_cov, norm='foo')
     # Mahalanobis distances computation test
     mahal_dist = cov.mahalanobis(X)
-    print(np.amin(mahal_dist), np.amax(mahal_dist))
-    assert(np.amin(mahal_dist) > 0)
+    assert_greater(np.amin(mahal_dist), 0)
 
     # test with n_features = 1
     X_1d = X[:, 0].reshape((-1, 1))

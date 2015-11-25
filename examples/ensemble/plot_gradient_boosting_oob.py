@@ -33,8 +33,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn import ensemble
-from sklearn.cross_validation import KFold
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import KFold
+from sklearn.model_selection import train_test_split
 
 
 # Generate data (adapted from G. Ridgeway's gbm example)
@@ -75,10 +75,10 @@ def heldout_score(clf, X_test, y_test):
 
 
 def cv_estimate(n_folds=3):
-    cv = KFold(n=X_train.shape[0], n_folds=n_folds)
+    cv = KFold(n_folds=n_folds)
     cv_clf = ensemble.GradientBoostingClassifier(**params)
     val_scores = np.zeros((n_estimators,), dtype=np.float64)
-    for train, test in cv:
+    for train, test in cv.split(X_train, y_train):
         cv_clf.fit(X_train[train], y_train[train])
         val_scores += heldout_score(cv_clf, X_train[test], y_train[test])
     val_scores /= n_folds

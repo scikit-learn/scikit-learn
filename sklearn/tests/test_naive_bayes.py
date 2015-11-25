@@ -4,7 +4,9 @@ import numpy as np
 import scipy.sparse
 
 from sklearn.datasets import load_digits, load_iris
-from sklearn.cross_validation import cross_val_score, train_test_split
+
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
 
 from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_almost_equal
@@ -332,7 +334,7 @@ def check_sample_weight_multiclass(cls):
         [1, 0, 0],
     ]
     y = [0, 0, 1, 2]
-    sample_weight = np.array([1, 1, 2, 2], dtype=np.float)
+    sample_weight = np.array([1, 1, 2, 2], dtype=np.float64)
     sample_weight /= sample_weight.sum()
     clf = cls().fit(X, y, sample_weight=sample_weight)
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
@@ -466,3 +468,13 @@ def test_bnb():
                                       0.02194787379972565]])
     predict_proba = unnorm_predict_proba / np.sum(unnorm_predict_proba)
     assert_array_almost_equal(clf.predict_proba(X_test), predict_proba)
+
+
+def test_naive_bayes_scale_invariance():
+    # Scaling the data should not change the prediction results
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    labels = [GaussianNB().fit(f * X, y).predict(f * X)
+              for f in [1E-10, 1, 1E10]]
+    assert_array_equal(labels[0], labels[1])
+    assert_array_equal(labels[1], labels[2])

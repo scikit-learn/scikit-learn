@@ -21,7 +21,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.grid_search import GridSearchCV, ParameterGrid
+from sklearn.model_selection import GridSearchCV, ParameterGrid
 from sklearn.ensemble import BaggingClassifier, BaggingRegressor
 from sklearn.linear_model import Perceptron, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
@@ -29,7 +29,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC, SVR
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SelectKBest
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
 
@@ -114,7 +114,7 @@ def test_sparse_classification():
             for f in ['predict', 'predict_proba', 'predict_log_proba', 'decision_function']:
                 # Trained on sparse format
                 sparse_classifier = BaggingClassifier(
-                    base_estimator=CustomSVC(),
+                    base_estimator=CustomSVC(decision_function_shape='ovr'),
                     random_state=1,
                     **params
                 ).fit(X_train_sparse, y_train)
@@ -122,7 +122,7 @@ def test_sparse_classification():
 
                 # Trained on dense format
                 dense_classifier = BaggingClassifier(
-                    base_estimator=CustomSVC(),
+                    base_estimator=CustomSVC(decision_function_shape='ovr'),
                     random_state=1,
                     **params
                 ).fit(X_train, y_train)
@@ -439,7 +439,7 @@ def test_parallel_classification():
     assert_array_almost_equal(y1, y3)
 
     # decision_function
-    ensemble = BaggingClassifier(SVC(),
+    ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
@@ -449,7 +449,7 @@ def test_parallel_classification():
     decisions2 = ensemble.decision_function(X_test)
     assert_array_almost_equal(decisions1, decisions2)
 
-    ensemble = BaggingClassifier(SVC(),
+    ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=1,
                                  random_state=0).fit(X_train, y_train)
 

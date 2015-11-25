@@ -41,8 +41,8 @@ import time
 import numpy as np
 
 from sklearn.svm import SVR
-from sklearn.grid_search import GridSearchCV
-from sklearn.learning_curve import learning_curve
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import learning_curve
 from sklearn.kernel_ridge import KernelRidge
 import matplotlib.pyplot as plt
 

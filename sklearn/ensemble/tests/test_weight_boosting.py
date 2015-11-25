@@ -7,8 +7,8 @@ from sklearn.utils.testing import assert_equal, assert_true
 from sklearn.utils.testing import assert_raises, assert_raises_regexp
 
 from sklearn.base import BaseEstimator
-from sklearn.cross_validation import train_test_split
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.ensemble import weight_boosting
@@ -289,9 +289,6 @@ def test_base_estimator():
 def test_sample_weight_missing():
     from sklearn.linear_model import LogisticRegression
     from sklearn.cluster import KMeans
-
-    clf = AdaBoostClassifier(LogisticRegression(), algorithm="SAMME")
-    assert_raises(ValueError, clf.fit, X, y_regr)
 
     clf = AdaBoostClassifier(KMeans(), algorithm="SAMME")
     assert_raises(ValueError, clf.fit, X, y_regr)

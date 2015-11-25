@@ -93,7 +93,7 @@ REGRESSION_METRICS = {
     "mean_squared_error": mean_squared_error,
     "median_absolute_error": median_absolute_error,
     "explained_variance_score": explained_variance_score,
-    "r2_score": r2_score,
+    "r2_score": partial(r2_score, multioutput='variance_weighted'),
 }
 
 CLASSIFICATION_METRICS = {
@@ -346,7 +346,6 @@ NOT_SYMMETRIC_METRICS = [
 METRICS_WITHOUT_SAMPLE_WEIGHT = [
     "cohen_kappa_score",
     "confusion_matrix",
-    "hamming_loss",
     "matthews_corrcoef_score",
     "median_absolute_error",
 ]

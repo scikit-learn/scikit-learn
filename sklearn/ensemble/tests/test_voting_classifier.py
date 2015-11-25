@@ -7,9 +7,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import VotingClassifier
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn import datasets
-from sklearn import cross_validation
+from sklearn.model_selection import cross_val_score
 from sklearn.datasets import make_multilabel_classification
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
@@ -27,11 +27,7 @@ def test_majority_label_iris():
     eclf = VotingClassifier(estimators=[
                 ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                 voting='hard')
-    scores = cross_validation.cross_val_score(eclf,
-                                              X,
-                                              y,
-                                              cv=5,
-                                              scoring='accuracy')
+    scores = cross_val_score(eclf, X, y, cv=5, scoring='accuracy')
     assert_almost_equal(scores.mean(), 0.95, decimal=2)
 
 
@@ -55,11 +51,7 @@ def test_weights_iris():
                             ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                             voting='soft',
                             weights=[1, 2, 10])
-    scores = cross_validation.cross_val_score(eclf,
-                                              X,
-                                              y,
-                                              cv=5,
-                                              scoring='accuracy')
+    scores = cross_val_score(eclf, X, y, cv=5, scoring='accuracy')
     assert_almost_equal(scores.mean(), 0.93, decimal=2)
 
 

@@ -35,8 +35,8 @@ from scipy import linalg
 
 from sklearn.decomposition import PCA, FactorAnalysis
 from sklearn.covariance import ShrunkCovariance, LedoitWolf
-from sklearn.cross_validation import cross_val_score
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
 
 ###############################################################################
 # Create the data

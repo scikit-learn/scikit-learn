@@ -12,7 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_blobs
-from sklearn.lda import LDA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
 n_train = 20  # samples for training
@@ -45,8 +45,8 @@ for n_features in n_features_range:
     for _ in range(n_averages):
         X, y = generate_data(n_train, n_features)
 
-        clf1 = LDA(solver='lsqr', shrinkage='auto').fit(X, y)
-        clf2 = LDA(solver='lsqr', shrinkage=None).fit(X, y)
+        clf1 = LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto').fit(X, y)
+        clf2 = LinearDiscriminantAnalysis(solver='lsqr', shrinkage=None).fit(X, y)
 
         X, y = generate_data(n_test, n_features)
         score_clf1 += clf1.score(X, y)
@@ -58,13 +58,14 @@ for n_features in n_features_range:
 features_samples_ratio = np.array(n_features_range) / n_train
 
 plt.plot(features_samples_ratio, acc_clf1, linewidth=2,
-         label="LDA with shrinkage", color='r')
+         label="Linear Discriminant Analysis with shrinkage", color='navy')
 plt.plot(features_samples_ratio, acc_clf2, linewidth=2,
-         label="LDA", color='g')
+         label="Linear Discriminant Analysis", color='gold')
 
 plt.xlabel('n_features / n_samples')
 plt.ylabel('Classification accuracy')
 
 plt.legend(loc=1, prop={'size': 12})
-plt.suptitle('LDA vs. shrinkage LDA (1 discriminative feature)')
+plt.suptitle('Linear Discriminant Analysis vs. \
+shrinkage Linear Discriminant Analysis (1 discriminative feature)')
 plt.show()

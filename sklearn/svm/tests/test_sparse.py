@@ -8,7 +8,7 @@ from numpy.testing import (assert_array_almost_equal, assert_array_equal,
 from sklearn import datasets, svm, linear_model, base
 from sklearn.datasets import make_classification, load_digits, make_blobs
 from sklearn.svm.tests import test_svm
-from sklearn.utils import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.testing import assert_warns, assert_raise_message
 
@@ -63,7 +63,7 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
         msg = "cannot use sparse input in 'OneClassSVM' trained on dense data"
     else:
         assert_array_almost_equal(dense_svm.predict_proba(X_test_dense),
-            sparse_svm.predict_proba(X_test), 4)
+                                  sparse_svm.predict_proba(X_test), 4)
         msg = "cannot use sparse input in 'SVC' trained on dense data"
     if sparse.isspmatrix(X_test):
         assert_raise_message(ValueError, msg, dense_svm.predict, X_test)
@@ -81,8 +81,10 @@ def test_svc():
     kernels = ["linear", "poly", "rbf", "sigmoid"]
     for dataset in datasets:
         for kernel in kernels:
-            clf = svm.SVC(kernel=kernel, probability=True, random_state=0)
-            sp_clf = svm.SVC(kernel=kernel, probability=True, random_state=0)
+            clf = svm.SVC(kernel=kernel, probability=True, random_state=0,
+                          decision_function_shape='ovo')
+            sp_clf = svm.SVC(kernel=kernel, probability=True, random_state=0,
+                             decision_function_shape='ovo')
             check_svm_model_equal(clf, sp_clf, *dataset)
 
 
@@ -148,7 +150,8 @@ def test_sparse_decision_function():
     #returns the same as the one in libsvm
 
     # multi class:
-    clf = svm.SVC(kernel='linear', C=0.1).fit(iris.data, iris.target)
+    svc = svm.SVC(kernel='linear', C=0.1, decision_function_shape='ovo')
+    clf = svc.fit(iris.data, iris.target)
 
     dec = safe_sparse_dot(iris.data, clf.coef_.T) + clf.intercept_
 

@@ -35,8 +35,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import (RandomTreesEmbedding, RandomForestClassifier,
                               GradientBoostingClassifier)
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve
+from sklearn.pipeline import make_pipeline
 
 n_estimator = 10
 X, y = make_classification(n_samples=80000)
@@ -50,14 +51,14 @@ X_train, X_train_lr, y_train, y_train_lr = train_test_split(X_train,
                                                             test_size=0.5)
 
 # Unsupervised transformation based on totally random trees
-rt = RandomTreesEmbedding(max_depth=3, n_estimators=n_estimator)
+rt = RandomTreesEmbedding(max_depth=3, n_estimators=n_estimator,
+	random_state=0)
+
 rt_lm = LogisticRegression()
-rt.fit(X_train, y_train)
-rt_lm.fit(rt.transform(X_train_lr), y_train_lr)
-
-y_pred_rt = rt_lm.predict_proba(rt.transform(X_test))[:, 1]
+pipeline = make_pipeline(rt, rt_lm)
+pipeline.fit(X_train, y_train)
+y_pred_rt = pipeline.predict_proba(X_test)[:, 1]
 fpr_rt_lm, tpr_rt_lm, _ = roc_curve(y_test, y_pred_rt)
-
 
 # Supervised transformation based on random forests
 rf = RandomForestClassifier(max_depth=3, n_estimators=n_estimator)

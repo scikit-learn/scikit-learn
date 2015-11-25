@@ -528,8 +528,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
 
 
 def cosine_distances(X, Y=None):
-    """
-    Compute cosine distance between samples in X and Y.
+    """Compute cosine distance between samples in X and Y.
 
     Cosine distance is defined as 1.0 minus the cosine similarity.
 
@@ -813,6 +812,37 @@ def rbf_kernel(X, Y=None, gamma=None):
     return K
 
 
+def laplacian_kernel(X, Y=None, gamma=None):
+    """Compute the laplacian kernel between X and Y.
+
+    The laplacian kernel is defined as::
+
+        K(x, y) = exp(-gamma ||x-y||_1)
+
+    for each pair of rows x in X and y in Y.
+    Read more in the :ref:`User Guide <laplacian_kernel>`.
+
+    .. versionadded:: 0.17
+
+    Parameters
+    ----------
+    X : array of shape (n_samples_X, n_features)
+    Y : array of shape (n_samples_Y, n_features)
+    gamma : float
+
+    Returns
+    -------
+    kernel_matrix : array of shape (n_samples_X, n_samples_Y)
+    """
+    X, Y = check_pairwise_arrays(X, Y)
+    if gamma is None:
+        gamma = 1.0 / X.shape[1]
+
+    K = -gamma * manhattan_distances(X, Y)
+    np.exp(K, K)    # exponentiate K in-place
+    return K
+
+
 def cosine_similarity(X, Y=None, dense_output=True):
     """Compute cosine similarity between samples in X and Y.
 
@@ -837,6 +867,9 @@ def cosine_similarity(X, Y=None, dense_output=True):
     dense_output : boolean (optional), default True
         Whether to return dense output even when the input is sparse. If
         ``False``, the output is sparse if both input arrays are sparse.
+
+        .. versionadded:: 0.17
+           parameter *dense_output* for sparse output.
 
     Returns
     -------
@@ -895,7 +928,7 @@ def additive_chi2_kernel(X, Y=None):
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
-      http://eprints.pascal-network.org/archive/00002309/01/Zhang06-IJCV.pdf
+      http://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
 
 
     See also
@@ -953,7 +986,7 @@ def chi2_kernel(X, Y=None, gamma=1.):
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
-      http://eprints.pascal-network.org/archive/00002309/01/Zhang06-IJCV.pdf
+      http://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
 
     See also
     --------
@@ -1184,6 +1217,7 @@ PAIRWISE_KERNEL_FUNCTIONS = {
     'polynomial': polynomial_kernel,
     'poly': polynomial_kernel,
     'rbf': rbf_kernel,
+    'laplacian': laplacian_kernel,
     'sigmoid': sigmoid_kernel,
     'cosine': cosine_similarity, }
 
@@ -1205,6 +1239,7 @@ def kernel_metrics():
       'poly'            sklearn.pairwise.polynomial_kernel
       'polynomial'      sklearn.pairwise.polynomial_kernel
       'rbf'             sklearn.pairwise.rbf_kernel
+      'laplacian'       sklearn.pairwise.laplacian_kernel
       'sigmoid'         sklearn.pairwise.sigmoid_kernel
       'cosine'          sklearn.pairwise.cosine_similarity
       ===============   ========================================
@@ -1223,6 +1258,7 @@ KERNEL_PARAMS = {
     "poly": frozenset(["gamma", "degree", "coef0"]),
     "polynomial": frozenset(["gamma", "degree", "coef0"]),
     "rbf": frozenset(["gamma"]),
+    "laplacian": frozenset(["gamma"]),
     "sigmoid": frozenset(["gamma", "coef0"]),
 }
 
@@ -1295,9 +1331,14 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     If metric is 'precomputed', Y is ignored and X is returned.
 
     """
+    # import GPKernel locally to prevent circular imports
+    from ..gaussian_process.kernels import Kernel as GPKernel
+
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(X, Y, precomputed=True)
         return X
+    elif isinstance(metric, GPKernel):
+        func = metric.__call__
     elif metric in PAIRWISE_KERNEL_FUNCTIONS:
         if filter_params:
             kwds = dict((k, kwds[k]) for k in kwds

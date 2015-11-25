@@ -42,6 +42,10 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
           the user. This is useful for metrics that evaluate a non-majority
           class
 
+          .. versionadded:: 0.17
+             Dummy Classifier now supports prior fitting strategy using
+             parameter *prior*.
+
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use.
 
@@ -268,7 +272,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         P = []
         for k in range(self.n_outputs_):
             if self.strategy == "most_frequent":
-                ind = np.ones(n_samples, dtype=int) * class_prior_[k].argmax()
+                ind = class_prior_[k].argmax()
                 out = np.zeros((n_samples, n_classes_[k]), dtype=np.float64)
                 out[:, ind] = 1.0
             elif self.strategy == "prior":
