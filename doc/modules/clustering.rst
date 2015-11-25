@@ -4,7 +4,7 @@
 Clustering
 ==========
 
-`Clustering <https://en.wikipedia.org/wiki/Cluster_analysis>`_ of
+`Clustering <https://en.wikipedia.org/wiki/Cluster_analysis>`__ of
 unlabeled data can be performed with the module :mod:`sklearn.cluster`.
 
 Each clustering algorithm comes in two variants: a class, that implements

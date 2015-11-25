@@ -25,6 +25,9 @@ New features
    - Added the :class:`ensemble.IsolationForest` class for anomaly detection based on
      random forests. By `Nicolas Goix`_.
 
+   - Added new supervised learning algorithm: :ref:`Multi-layer Perceptron <multilayer_perceptron>`
+     (`#3204 <https://github.com/scikit-learn/scikit-learn/pull/3204>`_) by `Issam H. Laradji`_
+
 Enhancements
 ............
 
@@ -235,7 +238,7 @@ Enhancements
 
    - The "Wisconsin Breast Cancer" classical two-class classification dataset
      is now included in scikit-learn, available with
-     :fun:`sklearn.dataset.load_breast_cancer`.
+     :func:`sklearn.dataset.load_breast_cancer`.
 
    - Upgraded to joblib 0.9.3 to benefit from the new automatic batching of
      short tasks. This makes it possible for scikit-learn to benefit from
@@ -358,7 +361,8 @@ Bug fixes
       oob_score and X is a sparse.csc_matrix. By `Ankur Ankan`_.
 
     - All regressors now consistently handle and warn when given ``y`` that is of
-      shape ``(n_samples, 1)``. By `Andreas Müller`_.
+      shape ``(n_samples, 1)``. By `Andreas Müller`_ and Henry Lin.
+      (`#5431 <https://github.com/scikit-learn/scikit-learn/pull/5431>`_)
 
     - Fix in :class:`cluster.KMeans` cluster reassignment for sparse input by
       `Lars Buitinck`_.
@@ -414,14 +418,14 @@ Bug fixes
 
     - Fixed inconsistent memory layout in the coordinate descent solver
       that affected :class:`linear_model.DictionaryLearning` and
-      :class:`covariance.GraphLasso`. (`#5337 <https://github.com/scikit-learn/scikit-learn/pull/5337>`)
+      :class:`covariance.GraphLasso`. (`#5337 <https://github.com/scikit-learn/scikit-learn/pull/5337>`_)
       By `Oliver Grisel`_.
 
     - :class:`manifold.LocallyLinearEmbedding` no longer ignores the ``reg``
       parameter.
 
     - Nearest Neighbor estimators with custom distance metrics can now be pickled.
-      (`4362 <https://github.com/scikit-learn/scikit-learn/pull/4362>`)
+      (`4362 <https://github.com/scikit-learn/scikit-learn/pull/4362>`_)
 
     - Fixed a bug in :class:`pipeline.FeatureUnion` where ``transformer_weights``
       were not properly handled when performing grid-searches.
@@ -3973,3 +3977,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Giorgio Patrini: https://github.com/giorgiop
 .. _Elvis Dohmatob: https://github.com/dohmatob
 .. _yelite: https://github.com/yelite
+.. _Issam H. Laradji: https://github.com/IssamLaradji

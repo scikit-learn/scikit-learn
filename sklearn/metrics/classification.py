@@ -616,8 +616,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
     References
     ----------
-    .. [1] `Wikipedia entry for the F1-score
-           <http://en.wikipedia.org/wiki/F1_score>`_
+    .. [1] `Wikipedia entry for the F1-score <http://en.wikipedia.org/wiki/F1_score>`_
 
     Examples
     --------
@@ -992,7 +991,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         labels = np.hstack([labels, np.setdiff1d(present_labels, labels,
                                                  assume_unique=True)])
 
-    ### Calculate tp_sum, pred_sum, true_sum ###
+    # Calculate tp_sum, pred_sum, true_sum ###
 
     if y_type.startswith('multilabel'):
         sum_axis = 1 if average == 'samples' else 0
@@ -1063,7 +1062,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         pred_sum = np.array([pred_sum.sum()])
         true_sum = np.array([true_sum.sum()])
 
-    ### Finally, we have all our sufficient statistics. Divide! ###
+    # Finally, we have all our sufficient statistics. Divide! #
 
     beta2 = beta ** 2
     with np.errstate(divide='ignore', invalid='ignore'):
@@ -1081,7 +1080,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                    (beta2 * precision + recall))
         f_score[tp_sum == 0] = 0.0
 
-    ## Average the results ##
+    # Average the results
 
     if average == 'weighted':
         weights = true_sum

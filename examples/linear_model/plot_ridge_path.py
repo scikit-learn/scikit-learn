@@ -47,7 +47,6 @@ for a in alphas:
 # Display results
 
 ax = plt.gca()
-ax.set_color_cycle(['b', 'r', 'g', 'c', 'k', 'y', 'm'])
 
 ax.plot(alphas, coefs)
 ax.set_xscale('log')

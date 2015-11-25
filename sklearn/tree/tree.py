@@ -311,7 +311,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         elif self.presort == 'auto':
             presort = True
 
-        if presort == True and issparse(X):
+        if presort is True and issparse(X):
             raise ValueError("Presorting is not supported for sparse "
                              "matrices.")
 
@@ -585,8 +585,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
-    class_weight : dict, list of dicts, "balanced" or None, optional
-                   (default=None)
+    class_weight : dict, list of dicts, "balanced" or None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same

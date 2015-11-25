@@ -1014,7 +1014,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         elif presort == 'auto':
             presort = True
 
-        if self.presort == True:
+        if presort == True:
             if issparse(X):
                 raise ValueError("Presorting is not supported for sparse matrices.")
             else:
@@ -1787,7 +1787,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             max_features=max_features,
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            presort='auto')
+            presort=presort)
 
     def predict(self, X):
         """Predict regression target for X.
