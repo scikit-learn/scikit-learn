@@ -46,20 +46,21 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         to offer more accurate predict_proba outputs. If cv=prefit, the
         classifier must have been fit already on data.
 
-    method : 'sigmoid' | 'isotonic'
+    method : 'sigmoid' or 'isotonic'
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
         non-parameteric approach. It is not advised to use isotonic calibration
-        with too few calibration samples (<<1000) since it tends to overfit.
+        with too few calibration samples ``(<<1000)`` since it tends to overfit.
         Use sigmoids (Platt's calibration) in this case.
 
-    cv : integer/cross-validation generator/iterable or "prefit", optional
+    cv : integer, cross-validation generator, iterable or "prefit", optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`StratifiedKFold` used. If ``y`` is neither binary nor

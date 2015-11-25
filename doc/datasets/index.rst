@@ -255,6 +255,20 @@ features::
  _`Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
 
 
+.. make sure everything is in a toc tree
+
+.. toctree::
+    :maxdepth: 2
+    :hidden:
+
+    olivetti_faces
+    twenty_newsgroups
+    mldata
+    labeled_faces
+    covtype
+    rcv1
+
+
 .. include:: olivetti_faces.rst
 
 .. include:: twenty_newsgroups.rst
