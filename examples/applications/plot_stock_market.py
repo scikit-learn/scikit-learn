@@ -146,7 +146,7 @@ symbol_dict = {
 
 symbols, names = np.array(list(symbol_dict.items())).T
 
-quotes = [finance.quotes_historical_yahoo(symbol, d1, d2, asobject=True)
+quotes = [finance.quotes_historical_yahoo_ochl(symbol, d1, d2, asobject=True)
           for symbol in symbols]
 
 open = np.array([q.open for q in quotes]).astype(np.float)
