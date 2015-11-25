@@ -451,7 +451,7 @@ sparse coding step that shares the same implementation with all dictionary
 learning objects (see :ref:`SparseCoder`).
 
 The following image shows how a dictionary learned from 4x4 pixel image patches
-extracted from part of the image of Lena looks like.
+extracted from part of the image of a raccoon face looks like.
 
 
 .. figure:: ../auto_examples/decomposition/images/plot_image_denoising_001.png
