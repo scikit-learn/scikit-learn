@@ -8,8 +8,8 @@ if the proper environment variable is configured (see the source code of
 check_skip_network for more details).
 
 """
-from sklearn.utils.testing import check_skip_network
+from sklearn.utils.testing import SkipTest
 
 
 def setup_module():
-    check_skip_network()
+    raise SkipTest("Skipping dataset loading doctests")
