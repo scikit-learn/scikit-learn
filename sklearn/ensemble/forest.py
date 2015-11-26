@@ -815,7 +815,7 @@ class RandomForestClassifier(ForestClassifier):
 
     oob_score : bool
         Whether to use out-of-bag samples to estimate
-        the generalization error.
+        the generalization accuracy.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -1008,7 +1008,7 @@ class RandomForestRegressor(ForestRegressor):
 
     oob_score : bool, optional (default=False)
         whether to use out-of-bag samples to estimate
-        the generalization error.
+        the R^2 on unseen data.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -1167,7 +1167,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
     oob_score : bool, optional (default=False)
         Whether to use out-of-bag samples to estimate
-        the generalization error.
+        the generalization accuracy.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -1359,7 +1359,7 @@ class ExtraTreesRegressor(ForestRegressor):
         Whether bootstrap samples are used when building trees.
 
     oob_score : bool, optional (default=False)
-        Whether to use out-of-bag samples to estimate the generalization error.
+        Whether to use out-of-bag samples to estimate the R^2 on unseen data.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
