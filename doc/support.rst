@@ -93,6 +93,7 @@ Documentation resources
 This documentation is relative to |release|. Documentation for other
 versions can be found here:
 
+    * `0.16 <http://scikit-learn.org/0.16/>`_
     * `0.15 <http://scikit-learn.org/0.15/>`_
     * `0.14 <http://scikit-learn.org/0.14/>`_
     * `0.13 <http://scikit-learn.org/0.13/>`_
