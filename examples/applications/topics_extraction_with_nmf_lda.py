@@ -3,8 +3,8 @@
 Topic extraction with Non-negative Matrix Factorization and Latent Dirichlet Allocation
 =======================================================================================
 
-This is an example of applying Non-negative Matrix Factorization
-and Latent Dirichlet Allocation on a corpus of documents and
+This is an example of applying :class:`sklearn.decomposition.NMF`
+and :class:`sklearn.decomposition.LatentDirichletAllocation` on a corpus of documents and
 extract additive models of the topic structure of the corpus.
 The output is a list of topics, each represented as a list of terms
 (weights are not shown).
