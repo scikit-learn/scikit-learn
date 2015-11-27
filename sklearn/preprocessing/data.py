@@ -897,8 +897,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     """Scale features using statistics that are robust to outliers.
 
     This Scaler removes the median and scales the data according to
-    the Interquartile Range (IQR). The IQR is the range between the 1st
-    quartile (25th quantile) and the 3rd quartile (75th quantile).
+    the quantile range (defaults to IQR: Interquartile Range).
+    The IQR is the range between the 1st quartile (25th quantile)
+    and the 3rd quartile (75th quantile).
 
     Centering and scaling happen independently on each feature (or each
     sample, depending on the `axis` argument) by computing the relevant
@@ -927,6 +928,16 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     with_scaling : boolean, True by default
         If True, scale the data to interquartile range.
+
+    quantile_low : float
+        Default 25. (1st quantile). Low quantile in quantile range.
+
+        .. versionadded:: 0.18
+
+    quantile_high: float
+        Default 75. (3rd quantile). High quantile in quantile range.
+
+        .. versionadded:: 0.18
 
     copy : boolean, optional, default is True
         If False, try to avoid a copy and do inplace scaling instead.
@@ -960,9 +971,12 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     https://en.wikipedia.org/wiki/Interquartile_range
     """
 
-    def __init__(self, with_centering=True, with_scaling=True, copy=True):
+    def __init__(self, with_centering=True, with_scaling=True,
+                 quantile_low=25, quantile_high=75, copy=True):
         self.with_centering = with_centering
         self.with_scaling = with_scaling
+        self.quantile_low = quantile_low
+        self.quantile_high = quantile_high
         self.copy = copy
 
     def _check_array(self, X, copy):
@@ -998,7 +1012,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             self.center_ = np.median(X, axis=0)
 
         if self.with_scaling:
-            q = np.percentile(X, (25, 75), axis=0)
+            q = np.percentile(X, (self.quantile_low, self.quantile_high),
+                              axis=0)
             self.scale_ = (q[1] - q[0])
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
         return self
@@ -1056,7 +1071,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         return X
 
 
-def robust_scale(X, axis=0, with_centering=True, with_scaling=True, copy=True):
+def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
+                 quantile_low=25, quantile_high=75, copy=True):
     """Standardize a dataset along any axis
 
     Center to the median and component wise scale
@@ -1080,6 +1096,16 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True, copy=True):
     with_scaling : boolean, True by default
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
+
+    quantile_low : float
+        Default 25. (1st quantile). Low quantile in quantile range.
+
+        .. versionadded:: 0.18
+
+    quantile_high: float
+        Default 75. (3rd quantile). High quantile in quantile range.
+
+        .. versionadded:: 0.18
 
     copy : boolean, optional, default is True
         set to False to perform inplace row normalization and avoid a
@@ -1105,6 +1131,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True, copy=True):
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     s = RobustScaler(with_centering=with_centering, with_scaling=with_scaling,
+                     quantile_low=quantile_low, quantile_high=quantile_high,
                      copy=copy)
     if axis == 0:
         return s.fit_transform(X)
