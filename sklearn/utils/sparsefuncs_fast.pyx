@@ -368,7 +368,7 @@ def assign_rows_csr(X,
     """Densify selected rows of a CSR matrix into a preallocated array.
 
     Like out[out_rows] = X[X_rows].toarray() but without copying.
-    Only supported for dtype=np.float64.
+    No-copy only supported for dtype=np.float64.
 
     Parameters
     ----------
