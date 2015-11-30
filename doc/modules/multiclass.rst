@@ -39,8 +39,8 @@ by decomposing such problems into binary classification problems.
     The set of labels can be different for each output variable.
     For instance, a sample could be assigned "pear" for an output variable that
     takes possible values in a finite set of species such as "pear" or "apple", 
-    and "orange" or "green" for a second output variable that takes possible values
-    in a finite set of colors such as "green", "red", "orange", "yellow"...
+    and "blue" or "green" for a second output variable that takes possible values
+    in a finite set of colors such as "green", "red", "blue", "yellow"...
 
     This means that any classifiers handling multi-output
     multiclass or multi-task classification tasks,
@@ -84,10 +84,13 @@ Multilabel classification format
 
 In multilabel learning, the joint set of binary classification tasks is
 expressed with a binary label indicator array: each sample is one row in a 2d
-array of shape (n_samples, n_classes) with binary values: the "1" elements, i.e. the non
-zero elements, correspond to the subset of labels. An array such as
-``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0]])`` represents label 0 in the first
-sample, labels 1 and 2 in the second sample, and no labels in the third sample.
+array of shape (n_samples, n_classes) with binary values: the "1" elements 
+indicate the presence of a label for that sample, and the zero-elements indicate 
+the absence of a label. 
+For example, an array such as ``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0]])`` 
+represents the presence of only label 0 in the first sample, 
+ labels 1 and 2 in the second sample, and the absence of all three labels 
+in the third sample.
 
 Producing multilabel data as a list of sets of labels may be more intuitive.
 The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>`
@@ -109,7 +112,7 @@ One-Vs-The-Rest
 ===============
 
 This strategy, also known as **one-vs-all**, is implemented in
-:class:`OneVsRestClassifier`.  The strategy consists of fitting one classifier
+:class:`OneVsRestClassifier`.  The strategy consists in fitting one classifier
 per class. For each classifier, the class is fitted against all the other
 classes. In addition to its computational efficiency (only `n_classes`
 classifiers are needed), one advantage of this approach is its
