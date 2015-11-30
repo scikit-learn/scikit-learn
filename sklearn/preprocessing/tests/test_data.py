@@ -842,7 +842,7 @@ def test_robust_scaler_iris():
 
 def test_robust_scaler_iris_quantiles():
     X = iris.data
-    scaler = RobustScaler(quantile_low=10, quantile_high=90)
+    scaler = RobustScaler(quantile_range=(10, 90))
     X_trans = scaler.fit_transform(X)
     assert_array_almost_equal(np.median(X_trans, axis=0), 0)
     X_trans_inv = scaler.inverse_transform(X_trans)
@@ -850,6 +850,20 @@ def test_robust_scaler_iris_quantiles():
     q = np.percentile(X_trans, q=(10, 90), axis=0)
     q_range = q[1] - q[0]
     assert_array_almost_equal(q_range, 1)
+
+
+def test_robust_scaler_invalid_range():
+    for range_ in [
+        (-1, 90),
+        (-2, -3),
+        (10, 101),
+        (100.5, 101),
+        (90, 50),
+    ]:
+        scaler = RobustScaler(quantile_range=range_)
+
+        assert_raises_regex(ValueError, 'Invalid quantile range: \(',
+                            scaler.fit, iris.data)
 
 
 def test_scale_function_without_centering():
