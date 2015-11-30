@@ -25,7 +25,8 @@ if version[0] == 3:
     # Python 3+ import for reload. Builtin in Python2
     if version[1] == 3:
         reload = None
-    from importlib import reload
+    else :
+        from importlib import reload
 
 
 # Data is just 6 separable points in the plane
