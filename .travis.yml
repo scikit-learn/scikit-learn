@@ -22,26 +22,26 @@ addons:
       - python-scipy
 
 env:
+  global:
+    # Directory where tests are run from
+    - TEST_DIR=/tmp/sklearn
   matrix:
     # This environment tests that scikit-learn can be built against
     # versions of numpy, scipy with ATLAS that comes with Ubuntu Precise 12.04
     - DISTRIB="ubuntu" PYTHON_VERSION="2.7" COVERAGE="true"
-      CYTHON_VERSION="0.23.4" NAME="ubuntu"
+      CYTHON_VERSION="0.23.4" CACHED_BUILD_DIR="$HOME/sklearn_build_ubuntu"
     # This environment tests the oldest supported anaconda env
     - DISTRIB="conda" PYTHON_VERSION="2.6" INSTALL_MKL="false"
       NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0" CYTHON_VERSION="0.21"
-      NAME="oldest"
+      CACHED_BUILD_DIR="$HOME/sklearn_build_oldest"
     # This environment tests the newest supported anaconda env
     - DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
       NUMPY_VERSION="1.10.1" SCIPY_VERSION="0.16.0" CYTHON_VERSION="0.23.4"
-      NAME="latest"
+      CACHED_BUILD_DIR="$HOME/sklearn_build_latest"
+
 install: source continuous_integration/install.sh
 script: bash continuous_integration/test_script.sh
-after_success:
-    # Ignore coveralls failures as the coveralls server is not very reliable
-    # but we don't want travis to report a failure in the github UI just
-    # because the coverage report failed to be published.
-    - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
+after_success: source continuous_integration/after_success.sh
 notifications:
   webhooks:
     urls:
