@@ -67,6 +67,12 @@ class IsolationForest(BaseBagging):
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
 
+    max_depth : int or float, optional (default="auto")
+        The max_depth of the tree.
+            - If int, then maximum depth is `max_depth`.
+            - If float, then maximum depth is  `max_depth * max_samples`.
+            - If "auto", then `max_depth = ceiling(log2 max_samples).
+
     bootstrap : boolean, optional (default=False)
         Whether samples are drawn with replacement.
 
