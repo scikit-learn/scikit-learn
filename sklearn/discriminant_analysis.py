@@ -195,7 +195,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         Percentage of variance explained by each of the selected components.
         If ``n_components`` is not set then all components are stored and the
         sum of explained variances is equal to 1.0. Only available when eigen
-        solver is used.
+        or svd solver is used.
 
     means_ : array-like, shape (n_classes, n_features)
         Class means.
@@ -397,6 +397,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         # (n_classes) centers
         _, S, V = linalg.svd(X, full_matrices=0)
 
+        self.explained_variance_ratio_ = S[:self.n_components] / S.sum()
         rank = np.sum(S > self.tol * S[0])
         self.scalings_ = np.dot(scalings, V.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)

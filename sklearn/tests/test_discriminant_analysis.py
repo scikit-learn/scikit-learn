@@ -158,7 +158,10 @@ def test_lda_transform():
 
 
 def test_lda_explained_variance_ratio():
-    # Test if the sum of the normalized eigen vectors values equals 1
+    # Test if the sum of the normalized eigen vectors values equals 1,
+    # Also tests whether the explained_variance_ratio_ formed by the
+    # eigen solver is the same as the explained_variance_ratio_ formed
+    # by the svd solver
     n_features = 2
     n_classes = 2
     n_samples = 1000
@@ -168,6 +171,12 @@ def test_lda_explained_variance_ratio():
     clf_lda_eigen = LinearDiscriminantAnalysis(solver="eigen")
     clf_lda_eigen.fit(X, y)
     assert_almost_equal(clf_lda_eigen.explained_variance_ratio_.sum(), 1.0, 3)
+
+    clf_lda_svd = LinearDiscriminantAnalysis(solver="svd")
+    clf_lda_svd.fit(X, y)
+    assert_almost_equal(clf_lda_svd.explained_variance_ratio_.sum(), 1.0, 3)
+    assert_array_almost_equal(clf_lda_svd.explained_variance_ratio_,
+                              clf_lda_eigen.explained_variance_ratio_)
 
 
 def test_lda_orthogonality():
