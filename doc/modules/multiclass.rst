@@ -82,15 +82,12 @@ tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
 Multilabel classification format
 ================================
 
-In multilabel learning, the joint set of binary classification tasks is 
-expressed with a binary label indicator array: each sample is one row in a 2d 
-array of shape (n_samples, n_classes) with binary values: the "1" elements 
-indicate the presence of a label for that sample, and the zero-elements indicate 
-the absence of a label. 
-For example, an array such as ``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0]])`` 
-represents the presence of only label 0 in the first sample, 
-labels 1 and 2 in the second sample, and the absence of all three labels 
-in the third sample.
+In multilabel learning, the joint set of binary classification tasks is
+expressed with label binary indicator array: each sample is one row of a 2d
+array of shape (n_samples, n_classes) with binary values: the one, i.e. the non
+zero elements, corresponds to the subset of labels. An array such as
+``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0]])`` represents label 0 in the first
+sample, labels 1 and 2 in the second sample, and no labels in the third sample.
 
 Producing multilabel data as a list of sets of labels may be more intuitive.
 The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>`
