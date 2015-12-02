@@ -369,8 +369,8 @@ def make_pipeline(*steps):
     """Construct a Pipeline from the given estimators.
 
     This is a shorthand for the Pipeline constructor; it does not require, and
-    does not permit, naming the estimators. Instead, they will be given names
-    automatically based on their types.
+    does not permit, naming the estimators. Instead, they will be given lowercase 
+    names automatically based on their types.
 
     Examples
     --------
