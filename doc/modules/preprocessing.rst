@@ -259,7 +259,7 @@ such as the dot-product or any other kernel to quantify the similarity
 of any pair of samples.
 
 This assumption is the base of the `Vector Space Model
-<http://en.wikipedia.org/wiki/Vector_Space_Model>`_ often used in text
+<https://en.wikipedia.org/wiki/Vector_Space_Model>`_ often used in text
 classification and clustering contexts.
 
 The function :func:`normalize` provides a quick and easy way to perform this
@@ -322,7 +322,7 @@ Feature binarization
 features to get boolean values**. This can be useful for downstream
 probabilistic estimators that make assumption that the input data
 is distributed according to a multi-variate `Bernoulli distribution
-<http://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
+<https://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
 this is the case for the :class:`sklearn.neural_network.BernoulliRBM`.
 
 It is also common among the text processing community to use binary
@@ -517,7 +517,7 @@ In some cases, only interaction terms among features are required, and it can be
 
 The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
 
-Note that polynomial features are used implicitily in `kernel methods <http://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
+Note that polynomial features are used implicitily in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
 See :ref:`example_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
 

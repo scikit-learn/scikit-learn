@@ -649,7 +649,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     References
     ----------
 
-    .. [1] http://en.wikipedia.org/wiki/Decision_tree_learning
+    .. [1] https://en.wikipedia.org/wiki/Decision_tree_learning
 
     .. [2] L. Breiman, J. Friedman, R. Olshen, and C. Stone, "Classification
            and Regression Trees", Wadsworth, Belmont, CA, 1984.
@@ -880,7 +880,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     References
     ----------
 
-    .. [1] http://en.wikipedia.org/wiki/Decision_tree_learning
+    .. [1] https://en.wikipedia.org/wiki/Decision_tree_learning
 
     .. [2] L. Breiman, J. Friedman, R. Olshen, and C. Stone, "Classification
            and Regression Trees", Wadsworth, Belmont, CA, 1984.

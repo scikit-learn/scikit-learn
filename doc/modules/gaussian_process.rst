@@ -887,7 +887,7 @@ toolbox.
 .. topic:: References:
 
     * `DACE, A Matlab Kriging Toolbox
-      <http://www2.imm.dtu.dk/~hbn/dace/>`_ S Lophaven, HB Nielsen, J
+      <http://imedea.uib-csic.es/master/cambioglobal/Modulo_V_cod101615/Lab/lab_maps/krigging/DACE-krigingsoft/dace/dace.pdf>`_ S Lophaven, HB Nielsen, J
       Sondergaard 2002,
 
     * W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell, and M.D.

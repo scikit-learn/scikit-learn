@@ -732,7 +732,7 @@ and the regularized objective function is:
 .. topic:: References:
 
     * `"Learning the parts of objects by non-negative matrix factorization"
-      <http://hebb.mit.edu/people/seung/papers/ls-lponm-99.pdf>`_
+      <http://www.columbia.edu/~jwp2128/Teaching/W4721/papers/nmf_nature.pdf>`_
       D. Lee, S. Seung, 1999
 
     * `"Non-negative Matrix Factorization with Sparseness Constraints"

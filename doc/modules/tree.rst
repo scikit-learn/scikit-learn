@@ -410,8 +410,8 @@ and threshold that yield the largest information gain at each node.
 
 scikit-learn uses an optimised version of the CART algorithm.
 
-.. _ID3: http://en.wikipedia.org/wiki/ID3_algorithm
-.. _CART: http://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees
+.. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
+.. _CART: https://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees
 
 
 .. _tree_mathematical_formulation:
@@ -500,9 +500,9 @@ criterion to minimise is the Mean Squared Error
 
 .. topic:: References:
 
-    * http://en.wikipedia.org/wiki/Decision_tree_learning
+    * https://en.wikipedia.org/wiki/Decision_tree_learning
 
-    * http://en.wikipedia.org/wiki/Predictive_analytics
+    * https://en.wikipedia.org/wiki/Predictive_analytics
 
     * L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
       Regression Trees. Wadsworth, Belmont, CA, 1984.

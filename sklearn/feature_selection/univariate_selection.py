@@ -562,7 +562,7 @@ class SelectFdr(_BaseFilter):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/False_discovery_rate
+    https://en.wikipedia.org/wiki/False_discovery_rate
 
     See also
     --------

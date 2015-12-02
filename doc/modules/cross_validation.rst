@@ -66,7 +66,7 @@ and the results can depend on a particular random choice for the pair of
 (train, validation) sets.
 
 A solution to this problem is a procedure called
-`cross-validation <http://en.wikipedia.org/wiki/Cross-validation_(statistics)>`_
+`cross-validation <https://en.wikipedia.org/wiki/Cross-validation_(statistics)>`_
 (CV for short).
 A test set should still be held out for final evaluation,
 but the validation set is no longer needed when doing CV.
@@ -337,11 +337,11 @@ fold cross validation should be preferred to LOO.
 
  * `<http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html>`_;
  * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
-   <http://www-stat.stanford.edu/~tibs/ElemStatLearn>`_, Springer 2009;
+   <http://statweb.stanford.edu/~tibs/ElemStatLearn>`_, Springer 2009
  * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
    <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
  * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
-   <http://www.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI;
+   <http://web.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI
  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
    <http://www.siam.org/proceedings/datamining/2008/dm08_54_Rao.pdf>`_, SIAM 2008;
  * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to

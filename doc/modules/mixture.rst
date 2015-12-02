@@ -122,7 +122,7 @@ data is that it is one usually doesn't know which points came from
 which latent component (if one has access to this information it gets
 very easy to fit a separate Gaussian distribution to each set of
 points). `Expectation-maximization
-<http://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm>`_
+<https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm>`_
 is a well-founded statistical
 algorithm to get around this problem by an iterative process. First
 one assumes random components (randomly centered on data points,
@@ -287,7 +287,7 @@ An important question is how can the Dirichlet process use an
 infinite, unbounded number of clusters and still be consistent. While
 a full explanation doesn't fit this manual, one can think of its
 `chinese restaurant process
-<http://en.wikipedia.org/wiki/Chinese_restaurant_process>`_ 
+<https://en.wikipedia.org/wiki/Chinese_restaurant_process>`_
 analogy to help understanding it. The
 chinese restaurant process is a generative story for the Dirichlet
 process. Imagine a chinese restaurant with an infinite number of

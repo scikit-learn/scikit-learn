@@ -941,8 +941,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     -----
     See examples/preprocessing/plot_robust_scaling.py for an example.
 
-    http://en.wikipedia.org/wiki/Median_(statistics)
-    http://en.wikipedia.org/wiki/Interquartile_range
+    https://en.wikipedia.org/wiki/Median_(statistics)
+    https://en.wikipedia.org/wiki/Interquartile_range
     """
 
     def __init__(self, with_centering=True, with_scaling=True, copy=True):

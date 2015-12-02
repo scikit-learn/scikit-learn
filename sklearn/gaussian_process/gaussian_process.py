@@ -203,7 +203,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
     .. [NLNS2002] `H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J.
         Sondergaard.  DACE - A MATLAB Kriging Toolbox.` (2002)
-        http://www2.imm.dtu.dk/~hbn/dace/dace.pdf
+        http://imedea.uib-csic.es/master/cambioglobal/Modulo_V_cod101615/Lab/lab_maps/krigging/DACE-krigingsoft/dace/dace.pdf
 
     .. [WBSWM1992] `W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell,
         and M.D.  Morris (1992). Screening, predicting, and computer

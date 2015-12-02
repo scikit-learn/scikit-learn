@@ -1010,7 +1010,7 @@ random labelings by defining the adjusted Rand index as follows:
 .. topic:: References
 
  * `Comparing Partitions
-   <http://www.springerlink.com/content/x64124718341j1j0/>`_
+   <http://link.springer.com/article/10.1007%2FBF01908075>`_
    L. Hubert and P. Arabie, Journal of Classification 1985
 
  * `Wikipedia entry for the adjusted Rand index
@@ -1170,7 +1170,7 @@ calculated using a similar form to that of the adjusted Rand index:
  * Vinh, Epps, and Bailey, (2009). "Information theoretic measures
    for clusterings comparison". Proceedings of the 26th Annual International
    Conference on Machine Learning - ICML '09.
-   `doi:10.1145/1553374.1553511 <http://dx.doi.org/10.1145/1553374.1553511>`_.
+   `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
    ISBN 9781605585161.
 
  * Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
