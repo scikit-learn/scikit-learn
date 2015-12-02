@@ -1158,7 +1158,7 @@ calculated using a similar form to that of the adjusted Rand index:
  * Vinh, Epps, and Bailey, (2009). "Information theoretic measures
    for clusterings comparison". Proceedings of the 26th Annual International
    Conference on Machine Learning - ICML '09.
-   `doi:10.1145/1553374.1553511 <http://dx.doi.org/10.1145/1553374.1553511>`_.
+   `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
    ISBN 9781605585161.
 
  * Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for

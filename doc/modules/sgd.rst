@@ -212,7 +212,7 @@ Stochastic Gradient Descent for sparse data
   intercept.
 
 There is built-in support for sparse data given in any matrix in a format
-supported by `scipy.sparse <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.html>`_. For maximum efficiency, however, use the CSR
+supported by `scipy.sparse <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_. For maximum efficiency, however, use the CSR
 matrix format as defined in `scipy.sparse.csr_matrix
 <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
 

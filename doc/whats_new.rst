@@ -3788,27 +3788,27 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Vlad Niculae: http://vene.ro
 
-.. _Edouard Duchesnay: http://www.lnao.fr/spip.php?rubrique30
+.. _Edouard Duchesnay: https://sites.google.com/site/duchesnay/home
 
 .. _Peter Prettenhofer: http://sites.google.com/site/peterprettenhofer/
 
 .. _Alexandre Passos: http://atpassos.me
 
-.. _Nicolas Pinto: http://pinto.scripts.mit.edu/
+.. _Nicolas Pinto: https://twitter.com/npinto
 
-.. _Virgile Fritsch: http://parietal.saclay.inria.fr/Members/virgile-fritsch
+.. _Virgile Fritsch: https://github.com/VirgileFritsch
 
-.. _Bertrand Thirion: http://parietal.saclay.inria.fr/Members/bertrand-thirion
+.. _Bertrand Thirion: https://team.inria.fr/parietal/bertrand-thirions-page
 
 .. _Andreas Müller: http://peekaboo-vision.blogspot.com
 
-.. _Matthieu Perrot: http://www.lnao.fr/spip.php?rubrique19
+.. _Matthieu Perrot: http://brainvisa.info/biblio/lnao/en/Author/PERROT-M.html
 
 .. _Jake Vanderplas: http://www.astro.washington.edu/users/vanderplas/
 
 .. _Gilles Louppe: http://www.montefiore.ulg.ac.be/~glouppe/
 
-.. _INRIA: http://inria.fr
+.. _INRIA: http://www.inria.fr
 
 .. _Parietal Team: http://parietal.saclay.inria.fr/
 
@@ -3890,7 +3890,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Nikolay Mayorov: https://github.com/nmayorov
 
-.. _Jatin Shah: http://jatinshah.org/
+.. _Jatin Shah: https://github.com/jatinshah
 
 .. _Dougal Sutherland: https://github.com/dougalsutherland
 
@@ -3904,7 +3904,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Florian Wilhelm: https://github.com/FlorianWilhelm
 
-.. _Fares Hedyati: https://github.com/fareshedyati
+.. _Fares Hedyati: http://www.eecs.berkeley.edu/~fareshed
 
 .. _Matt Pico: https://github.com/MattpSoftware
 
@@ -3914,7 +3914,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Clemens Brunner: https://github.com/cle1109
 
-.. _Martin Billinger: https://github.com/kazemakase
+.. _Martin Billinger: http://tnsre.embs.org/author/martinbillinger
 
 .. _Matteo Visconti di Oleggio Castello: http://www.mvdoc.me
 

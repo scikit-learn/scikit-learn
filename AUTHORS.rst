@@ -51,7 +51,7 @@ People
   * Ron Weiss
 
   * `Virgile Fritsch
-    <http://parietal.saclay.inria.fr/Members/virgile-fritsch>`_
+    <https://team.inria.fr/parietal/vfritsch>`_
 
   * `Mathieu Blondel <http://mblondel.org>`_
 
@@ -90,4 +90,4 @@ People
 
   * `Kemal Eren <http://www.kemaleren.com>`_
 
-  * `Michael Becker <http://beckerfuffle.com>`_
+  * `Michael Becker <https://mdbecker.github.io>`_

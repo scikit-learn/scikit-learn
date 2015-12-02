@@ -401,7 +401,7 @@ project.
 TODO: html report, type declarations, bound checks, division by zero checks,
 memory alignment, direct blas calls...
 
-- http://www.euroscipy.org/file/3696?vid=download
+- https://www.youtube.com/watch?v=gMvkiQ-gOW8
 - http://conference.scipy.org/proceedings/SciPy2009/paper_1/
 - http://conference.scipy.org/proceedings/SciPy2009/paper_2/
 

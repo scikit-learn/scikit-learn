@@ -944,7 +944,7 @@ operating characteristic (ROC) curve, which is also denoted by
 AUC or AUROC.  By computing the
 area under the roc curve, the curve information is summarized in one number.
 For more information see the `Wikipedia article on AUC
-<http://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_curve>`_.
+<https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve>`_.
 
   >>> import numpy as np
   >>> from sklearn.metrics import roc_auc_score

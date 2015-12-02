@@ -20,7 +20,7 @@ There are several online tutorials available which are geared toward
 specific subject areas:
 
 - `Machine Learning for NeuroImaging in Python <http://nilearn.github.io/>`_
-- `Machine Learning for Astronomical Data Analysis <http://astroml.github.com/sklearn_tutorial/>`_
+- `Machine Learning for Astronomical Data Analysis <https://github.com/astroML/sklearn_tutorial>`_
 
 .. _videos:
 
@@ -50,7 +50,7 @@ Videos
     section :ref:`stat_learn_tut_index`.
 
 - `Statistical Learning for Text Classification with scikit-learn and NLTK
-  <http://blip.tv/pycon-us-videos-2009-2010-2011/pycon-2011-statistical-machine-learning-for-text-classification-with-scikit-learn-4898362>`_
+  <http://www.pyvideo.org/video/417/pycon-2011--statistical-machine-learning-for-text>`_
   (and `slides <http://www.slideshare.net/ogrisel/statistical-machine-learning-for-text-classification-with-scikitlearn-and-nltk>`_)
   by `Olivier Grisel`_ at PyCon 2011
 

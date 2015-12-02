@@ -604,7 +604,7 @@ the internal structure of the data.
     van der Maaten, L.J.P.
 
   * `"Accelerating t-SNE using Tree-Based Algorithms."
-    <http://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf>`_
+    <https://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf>`_
     L.J.P. van der Maaten.  Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
 
 Tips on practical use

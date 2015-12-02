@@ -63,7 +63,7 @@ High quality PNG and SVG logos are available in the `doc/logos/ <https://github.
 Funding
 -------
 
-`INRIA <http://inria.fr>`_ actively supports this project. It has
+`INRIA <https://www.inria.fr>`_ actively supports this project. It has
 provided funding for Fabian Pedregosa (2010-2012), Jaques Grobler
 (2012-2013) and Olivier Grisel (2013-2015) to work on this project
 full-time. It also hosts coding sprints and other events.
@@ -121,10 +121,10 @@ Donating to the project
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 If you are interested in donating to the project or to one of our code-sprints, you can use
-the *Paypal* button below or the `NumFOCUS Donations Page <http://numfocus.org/donatejoin/>`_ (if you use the latter, please indicate that you are donating for the scikit-learn project).
+the *Paypal* button below or the `NumFOCUS Donations Page <http://www.numfocus.org/support-numfocus.html>`_ (if you use the latter, please indicate that you are donating for the scikit-learn project).
 
 All donations will be handled by `NumFOCUS
-<http://numfocus.org/donations>`_, a non-profit-organization which is
+<http://numfocus.org>`_, a non-profit-organization which is
 managed by a board of `Scipy community members
 <http://numfocus.org/board>`_. NumFOCUS's mission is to foster
 scientific computing software, in particular in Python. As a fiscal home

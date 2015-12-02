@@ -168,7 +168,7 @@ first, you need to install `numpy <http://numpy.scipy.org/>`_ and `scipy
 
 wheel packages (.whl files) for scikit-learn from `pypi
 <https://pypi.python.org/pypi/scikit-learn/>`_ can be installed with the `pip
-<http://pip.readthedocs.org/en/latest/installing.html>`_ utility.
+<https://pip.readthedocs.org/en/stable/installing>`_ utility.
 open a console and type the following to install or upgrade scikit-learn to the
 latest stable release::
 
@@ -379,7 +379,7 @@ testing scikit-learn once installed
 -----------------------------------
 
 testing requires having the `nose
-<http://somethingaboutorange.com/mrl/projects/nose/>`_ library. after
+<https://nose.readthedocs.org/en/latest>`_ library. after
 installation, the package can be tested by executing *from outside* the
 source directory::
 
