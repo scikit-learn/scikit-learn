@@ -1,3 +1,4 @@
+
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
@@ -398,7 +399,8 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
     .. versionadded:: 0.17
-       *minmax_scale* function interface to :class:`sklearn.preprocessing.MinMaxScaler`.
+       *minmax_scale* function interface
+       to :class:`sklearn.preprocessing.MinMaxScaler`.
 
     Parameters
     ----------
@@ -523,7 +525,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     @property
-    @deprecated("Attribute ``std_`` will be removed in 0.19. Use ``scale_`` instead")
+    @deprecated("Attribute ``std_`` will be removed in 0.19. "
+                "Use ``scale_`` instead")
     def std_(self):
         return self.scale_
 
@@ -929,13 +932,11 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     with_scaling : boolean, True by default
         If True, scale the data to interquartile range.
 
-
     quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
         Default: (25.0, 75.0) = (1st quantile, 3rd quantile) = IQR
         Quantile range used to calculate scale_
 
         .. versionadded:: 0.18
-
 
     copy : boolean, optional, default is True
         If False, try to avoid a copy and do inplace scaling instead.
@@ -1747,7 +1748,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         - int : number of categorical values per feature.
                 Each feature value should be in ``range(n_values)``
         - array : ``n_values[i]`` is the number of categorical values in
-                  ``X[:, i]``. Each feature value should be in ``range(n_values[i])``
+                  ``X[:, i]``. Each feature value should be
+                  in ``range(n_values[i])``
 
     categorical_features: "all" or array of indices or mask
         Specify what features are treated as categorical.
