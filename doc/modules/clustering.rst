@@ -998,7 +998,7 @@ random labelings by defining the adjusted Rand index as follows:
 .. topic:: References
 
  * `Comparing Partitions
-   <http://www.springerlink.com/content/x64124718341j1j0/>`_
+   <http://link.springer.com/article/10.1007%2FBF01908075>`_
    L. Hubert and P. Arabie, Journal of Classification 1985
 
  * `Wikipedia entry for the adjusted Rand index

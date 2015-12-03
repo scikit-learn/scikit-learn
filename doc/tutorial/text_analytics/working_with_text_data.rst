@@ -251,7 +251,7 @@ corpus.
 This downscaling is called `tf–idf`_ for "Term Frequency times
 Inverse Document Frequency".
 
-.. _`tf–idf`: http://en.wikipedia.org/wiki/Tf–idf
+.. _`tf–idf`: https://en.wikipedia.org/wiki/Tf–idf
 
 
 Both **tf** and **tf–idf** can be computed as follows::
@@ -553,7 +553,7 @@ upon the completion of this tutorial:
   at the :ref:`Multiclass and multilabel section <multiclass>`
 
 * Try using :ref:`Truncated SVD <LSA>` for
-  `latent semantic analysis <http://en.wikipedia.org/wiki/Latent_semantic_analysis>`_.
+  `latent semantic analysis <https://en.wikipedia.org/wiki/Latent_semantic_analysis>`_.
 
 * Have a look at using
   :ref:`Out-of-core Classification

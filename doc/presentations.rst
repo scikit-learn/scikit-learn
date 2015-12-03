@@ -9,7 +9,7 @@ New to Scientific Python?
 ==========================
 For those that are still new to the scientific Python ecosystem, we highly
 recommend the `Python Scientific Lecture Notes
-<http://scipy-lectures.github.io/>`_. This will help you find your footing a
+<http://scipy-lectures.org>`_. This will help you find your footing a
 bit and will definitely improve your scikit-learn experience.  A basic
 understanding of NumPy arrays is recommended to make the most of scikit-learn.
 
@@ -58,21 +58,21 @@ Videos
     use NLTK and scikit-learn to solve real-world text classification
     tasks and compares against cloud-based solutions.
 
-- `Introduction to Interactive Predictive Analytics in Python with scikit-learn <http://www.youtube.com/watch?v=Zd5dfooZWG4>`_
+- `Introduction to Interactive Predictive Analytics in Python with scikit-learn <https://www.youtube.com/watch?v=Zd5dfooZWG4>`_
   by `Olivier Grisel`_ at PyCon 2012
 
     3-hours long introduction to prediction tasks using scikit-learn.
 
-- `scikit-learn - Machine Learning in Python <http://marakana.com/s/scikit-learn_machine_learning_in_python,1152/index.html>`_
+- `scikit-learn - Machine Learning in Python <https://newcircle.com/s/post/1152/scikit-learn_machine_learning_in_python>`_
   by `Jake Vanderplas`_ at the 2012 PyData workshop at Google
 
     Interactive demonstration of some scikit-learn features. 75 minutes.
 
-- `scikit-learn tutorial <http://vimeo.com/53062607>`_ by `Jake Vanderplas`_ at PyData NYC 2012
+- `scikit-learn tutorial <https://vimeo.com/53062607>`_ by `Jake Vanderplas`_ at PyData NYC 2012
 
     Presentation using the online tutorial, 45 minutes.
 
 
 .. _Gael Varoquaux: http://gael-varoquaux.info
-.. _Jake Vanderplas: http://www.astro.washington.edu/users/vanderplas/
-.. _Olivier Grisel: http://twitter.com/ogrisel
+.. _Jake Vanderplas: http://staff.washington.edu/jakevdp
+.. _Olivier Grisel: https://twitter.com/ogrisel

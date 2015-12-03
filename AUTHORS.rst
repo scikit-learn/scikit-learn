@@ -28,15 +28,15 @@ People
 
   * `Matthieu Brucher <http://matt.eifelle.com/>`_
 
-  * `Fabian Pedregosa <http://fseoane.net/blog/>`_
+  * `Fabian Pedregosa <http://fa.bianp.net/blog/>`_
 
-  * `Gael Varoquaux <http://gael-varoquaux.info/blog/>`_
+  * `Gael Varoquaux <http://gael-varoquaux.info/>`_
 
-  * `Jake VanderPlas <http://www.astro.washington.edu/users/vanderplas/>`_
+  * `Jake VanderPlas <http://staff.washington.edu/jakevdp>`_
 
   * `Alexandre Gramfort <http://alexandre.gramfort.net>`_
 
-  * `Olivier Grisel <http://twitter.com/ogrisel>`_
+  * `Olivier Grisel <https://twitter.com/ogrisel>`_
 
   * Bertrand Thirion
 
@@ -56,7 +56,7 @@ People
   * `Mathieu Blondel <http://mblondel.org>`_
 
   * `Peter Prettenhofer
-    <http://sites.google.com/site/peterprettenhofer/>`_
+    <https://sites.google.com/site/peterprettenhofer/>`_
 
   * Vincent Dubourg
 
@@ -74,7 +74,7 @@ People
 
   * Nelle Varoquaux
 
-  * `Brian Holt <http://info.ee.surrey.ac.uk/Personal/B.Holt/>`_
+  * `Brian Holt <http://personal.ee.surrey.ac.uk/Personal/B.Holt/>`_
 
   * Robert Layton
 
@@ -84,7 +84,7 @@ People
 
   * `Satra Ghosh <http://www.mit.edu/~satra>`_
 
-  * `Wei Li <http://kuantkid.github.com>`_
+  * `Wei Li <https://kuantkid.github.io>`_
 
   * `Arnaud Joly <http://www.ajoly.org>`_
 

@@ -3077,7 +3077,7 @@ as well as several new algorithms and documentation improvements.
 
 This release also includes the dictionary-learning work developed by
 `Vlad Niculae`_ as part of the `Google Summer of Code
-<http://code.google.com/soc/>`_ program.
+<https://developers.google.com/open-source/gsoc>`_ program.
 
 
 
@@ -3770,7 +3770,7 @@ Earlier versions
 Earlier versions included contributions by Fred Mailhot, David Cooke,
 David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
-.. _Olivier Grisel: http://twitter.com/ogrisel
+.. _Olivier Grisel: https://twitter.com/ogrisel
 
 .. _Gael Varoquaux: http://gael-varoquaux.info
 
@@ -3790,7 +3790,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Edouard Duchesnay: https://sites.google.com/site/duchesnay/home
 
-.. _Peter Prettenhofer: http://sites.google.com/site/peterprettenhofer/
+.. _Peter Prettenhofer: https://sites.google.com/site/peterprettenhofer/
 
 .. _Alexandre Passos: http://atpassos.me
 
@@ -3804,7 +3804,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Matthieu Perrot: http://brainvisa.info/biblio/lnao/en/Author/PERROT-M.html
 
-.. _Jake Vanderplas: http://www.astro.washington.edu/users/vanderplas/
+.. _Jake Vanderplas: http://staff.washington.edu/jakevdp/
 
 .. _Gilles Louppe: http://www.montefiore.ulg.ac.be/~glouppe/
 
@@ -3816,23 +3816,23 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _David Warde-Farley: http://www-etud.iro.umontreal.ca/~wardefar/
 
-.. _Brian Holt: http://info.ee.surrey.ac.uk/Personal/B.Holt/
+.. _Brian Holt: http://personal.ee.surrey.ac.uk/Personal/B.Holt
 
 .. _Satrajit Ghosh: http://www.mit.edu/~satra/
 
-.. _Robert Layton: http://www.twitter.com/robertlayton
+.. _Robert Layton: https://twitter.com/robertlayton
 
-.. _Scott White: http://twitter.com/scottblanc
+.. _Scott White: https://twitter.com/scottblanc
 
 .. _Jaques Grobler: https://github.com/jaquesgrobler/scikit-learn/wiki/Jaques-Grobler
 
 .. _David Marek: http://www.davidmarek.cz/
 
-.. _@kernc: http://github.com/kernc
+.. _@kernc: https://github.com/kernc
 
-.. _Christian Osendorfer: http://osdf.github.com
+.. _Christian Osendorfer: https://osdf.github.io
 
-.. _Noel Dawe: http://noel.dawe.me
+.. _Noel Dawe: https://github.com/ndawe
 
 .. _Arnaud Joly: http://www.ajoly.org
 
@@ -3926,7 +3926,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Cathy Deng: https://github.com/cathydeng
 
-.. _Will Dawson: http://dawsonresearch.com
+.. _Will Dawson: http://www.dawsonresearch.com
 
 .. _Balazs Kegl: https://github.com/kegl
 
@@ -3938,7 +3938,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Hanna Wallach: http://dirichlet.net/
 
-.. _Yan Yi: http://www.seowyanyi.org
+.. _Yan Yi: http://seowyanyi.org
 
 .. _Kyle Beauchamp: https://github.com/kyleabeauchamp
 
@@ -3948,7 +3948,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Dan Blanchard: https://github.com/dan-blanchard
 
-.. _Eric Martin: http://ericmart.in
+.. _Eric Martin: http://www.ericmart.in
 
 .. _Nicolas Goix: https://webperso.telecom-paristech.fr/front/frontoffice.php?SP_ID=241
 
@@ -3977,7 +3977,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Daniel Galvez: https://github.com/galv
 .. _Jacob Schreiber: https://github.com/jmschrei
 .. _Ankur Ankan: https://github.com/ankurankan
-.. _Valentin Stolbunov: http://vstolbunov.com
+.. _Valentin Stolbunov: http://www.vstolbunov.com
 .. _Jean Kossaifi: https://github.com/JeanKossaifi
 .. _Andrew Lamb: https://github.com/andylamb
 .. _Graham Clenaghan: https://github.com/gclenaghan

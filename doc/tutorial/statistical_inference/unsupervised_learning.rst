@@ -106,7 +106,7 @@ algorithms. The simplest clustering algorithm is
     Clustering in general and KMeans, in particular, can be seen as a way
     of choosing a small number of exemplars to compress the information.
     The problem is sometimes known as 
-    `vector quantization <http://en.wikipedia.org/wiki/Vector_quantization>`_. 
+    `vector quantization <https://en.wikipedia.org/wiki/Vector_quantization>`_.
     For instance, this can be used to posterize an image::
 
         >>> import scipy as sp

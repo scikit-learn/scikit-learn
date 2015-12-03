@@ -88,9 +88,9 @@ Environment also funds several students to work on the project part-time.
    :width: 200pt
    :align: center
 
-The following students were sponsored by `Google <http://code.google.com/opensource/>`_
+The following students were sponsored by `Google <https://developers.google.com/open-source/>`_
 to work on scikit-learn through the
-`Google Summer of Code <http://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
+`Google Summer of Code <https://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
 program.
 
 - 2007 - David Cournapeau
@@ -102,14 +102,14 @@ program.
 It also provided funding for sprints and events around scikit-learn. If
 you would like to participate in the next Google Summer of code
 program, please see `this page
-<http://github.com/scikit-learn/scikit-learn/wiki/SummerOfCode>`_
+<https://github.com/scikit-learn/scikit-learn/wiki/SummerOfCode>`_
 
 The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
 <http://www.debian.org>`_ packaging and contributions is supported by
 `Dr. James V. Haxby <http://haxbylab.dartmouth.edu/>`_ (`Dartmouth
-College <http://www.dartmouth.edu/~psych/>`_).
+College <http://pbs.dartmouth.edu>`_).
 
-The `PSF <http://www.python.org/psf/>`_ helped find and manage funding for our
+The `PSF <https://www.python.org/psf/>`_ helped find and manage funding for our
 2011 Granada sprint. More information can be found `here
 <https://github.com/scikit-learn/scikit-learn/wiki/Past-sprints#granada-19th-21th-dec-2011>`__
 
@@ -124,9 +124,9 @@ If you are interested in donating to the project or to one of our code-sprints, 
 the *Paypal* button below or the `NumFOCUS Donations Page <http://www.numfocus.org/support-numfocus.html>`_ (if you use the latter, please indicate that you are donating for the scikit-learn project).
 
 All donations will be handled by `NumFOCUS
-<http://numfocus.org>`_, a non-profit-organization which is
+<http://www.numfocus.org>`_, a non-profit-organization which is
 managed by a board of `Scipy community members
-<http://numfocus.org/board>`_. NumFOCUS's mission is to foster
+<http://www.numfocus.org/board>`_. NumFOCUS's mission is to foster
 scientific computing software, in particular in Python. As a fiscal home
 of scikit-learn, it ensures that money is available when needed to keep
 the project funded and available while in compliance with tax regulations.

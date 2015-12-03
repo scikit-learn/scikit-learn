@@ -241,8 +241,8 @@ Linear algebra libraries
 As scikit-learn relies heavily on Numpy/Scipy and linear algebra in general it
 makes sense to take explicit care of the versions of these libraries.
 Basically, you ought to make sure that Numpy is built using an optimized `BLAS
-<http://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms>`_ /
-`LAPACK <http://en.wikipedia.org/wiki/LAPACK>`_ library.
+<https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms>`_ /
+`LAPACK <https://en.wikipedia.org/wiki/LAPACK>`_ library.
 
 Not all models benefit from optimized BLAS and Lapack implementations. For
 instance models based on (randomized) decision trees typically do not rely on
@@ -308,7 +308,7 @@ compromise between model compactness and prediction power. One can also
 further tune the ``l1_ratio`` parameter (in combination with the
 regularization strength ``alpha``) to control this tradeoff.
 
-A typical `benchmark <https://github.com/scikit-learn/scikit-learn/tree/master/benchmarks/bench_sparsify.py>`_
+A typical `benchmark <https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_sparsify.py>`_
 on synthetic data yields a >30% decrease in latency when both the model and
 input are sparse (with 0.000024 and 0.027400 non-zero coefficients ratio
 respectively). Your mileage may vary depending on the sparsity and size of

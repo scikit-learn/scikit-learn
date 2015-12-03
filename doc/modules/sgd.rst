@@ -9,8 +9,8 @@ Stochastic Gradient Descent
 **Stochastic Gradient Descent (SGD)** is a simple yet very efficient
 approach to discriminative learning of linear classifiers under
 convex loss functions such as (linear) `Support Vector Machines
-<http://en.wikipedia.org/wiki/Support_vector_machine>`_ and `Logistic
-Regression <http://en.wikipedia.org/wiki/Logistic_regression>`_.
+<https://en.wikipedia.org/wiki/Support_vector_machine>`_ and `Logistic
+Regression <https://en.wikipedia.org/wiki/Logistic_regression>`_.
 Even though SGD has been around in the machine learning community for
 a long time, it has received a considerable amount of attention just
 recently in the context of large-scale learning.

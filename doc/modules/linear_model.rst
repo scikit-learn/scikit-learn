@@ -474,7 +474,7 @@ column is always zero.
 .. topic:: References:
 
  * Original Algorithm is detailed in the paper `Least Angle Regression
-   <http://www-stat.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
+   <http://www.stanford.edu/~hastie/Papers/LARS/LeastAngle_2002.pdf>`_
    by Hastie et al.
 
 
@@ -530,7 +530,7 @@ parameters in the estimation procedure: the regularization parameter is
 not set in a hard sense but tuned to the data at hand.
 
 This can be done by introducing `uninformative priors
-<http://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__
+<https://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__
 over the hyper parameters of the model.
 The :math:`\ell_{2}` regularization used in `Ridge Regression`_ is equivalent
 to finding a maximum a-postiori solution under a Gaussian prior over the
@@ -579,7 +579,7 @@ The prior for the parameter :math:`w` is given by a spherical Gaussian:
     \mathcal{N}(w|0,\lambda^{-1}\bold{I_{p}})
 
 The priors over :math:`\alpha` and :math:`\lambda` are chosen to be `gamma
-distributions <http://en.wikipedia.org/wiki/Gamma_distribution>`__, the
+distributions <https://en.wikipedia.org/wiki/Gamma_distribution>`__, the
 conjugate prior for the precision of the Gaussian.
 
 The resulting model is called *Bayesian Ridge Regression*, and is similar to the
@@ -674,7 +674,7 @@ hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
     .. [1] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 7.2.1
 
-    .. [2] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination. <http://books.nips.cc/papers/files/nips20/NIPS2007_0976.pdf>`_
+    .. [2] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination. <http://papers.nips.cc/book/advances-in-neural-information-processing-systems-20-2007>`_
 
 .. _Logistic_regression:
 
@@ -683,10 +683,8 @@ Logistic regression
 
 Logistic regression, despite its name, is a linear model for classification
 rather than regression. Logistic regression is also known in the literature as
-logit regression, maximum-entropy classification (MaxEnt) or the log-linear
-classifier. In this model, the probabilities describing the possible outcomes
-of a single trial are modeled using a `logistic function
-<http://en.wikipedia.org/wiki/Logistic_function>`_.
+logit regression, maximum-entropy classification (MaxEnt)
+or the log-linear classifier. In this model, the probabilities describing the possible outcomes of a single trial are modeled using a `logistic function <https://en.wikipedia.org/wiki/Logistic_function>`_.
 
 The implementation of logistic regression in scikit-learn can be accessed from
 class :class:`LogisticRegression`. This implementation can fit binary, One-vs-
@@ -778,9 +776,7 @@ entropy loss.
 
 .. topic:: References:
 
-    .. [3] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 4.3.4
-
-    .. [4] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <http://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf>`_
+    .. [3] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf>`_
 
 Stochastic Gradient Descent - SGD
 =================================
@@ -978,7 +974,7 @@ performance.
 
 .. topic:: References:
 
- * http://en.wikipedia.org/wiki/RANSAC
+ * https://en.wikipedia.org/wiki/RANSAC
  * `"Random Sample Consensus: A Paradigm for Model Fitting with Applications to
    Image Analysis and Automated Cartography"
    <http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf>`_
@@ -1005,7 +1001,7 @@ better than an ordinary least squares in high dimension.
 
 .. topic:: References:
 
- * http://en.wikipedia.org/wiki/Theil%E2%80%93Sen_estimator
+ * https://en.wikipedia.org/wiki/Theil%E2%80%93Sen_estimator
 
 Theoretical considerations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

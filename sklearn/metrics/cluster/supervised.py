@@ -177,9 +177,9 @@ def adjusted_rand_score(labels_true, labels_pred, max_n_classes=5000):
 
     .. [Hubert1985] `L. Hubert and P. Arabie, Comparing Partitions,
       Journal of Classification 1985`
-      http://www.springerlink.com/content/x64124718341j1j0/
+      http://link.springer.com/article/10.1007%2FBF01908075
 
-    .. [wk] http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
+    .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
 
     See also
     --------
@@ -702,7 +702,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred, max_n_classes=5000):
        <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>`_
 
     .. [2] `Wikipedia entry for the Adjusted Mutual Information
-       <http://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
+       <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
 
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)

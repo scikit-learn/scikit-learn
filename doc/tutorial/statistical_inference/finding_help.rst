@@ -26,7 +26,7 @@ Q&A communities with Machine Learning practitioners
 
     Quora has a topic for Machine Learning related questions that
     also features some interesting discussions:
-    http://quora.com/Machine-Learning
+    https://www.quora.com/topic/Machine-Learning
 
     Have a look at the best questions section, eg: `What are some
     good resources for learning about machine learning`_.

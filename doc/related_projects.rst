@@ -148,7 +148,7 @@ Domain specific packages
 
 - `AstroML <http://www.astroml.org/>`_  Machine learning for astronomy.
 
-- `MSMBuilder <http://www.msmbuilder.org/>`_  Machine learning for protein
+- `MSMBuilder <http://msmbuilder.org/>`_  Machine learning for protein
   conformational dynamics time series.
 
 Snippets and tidbits

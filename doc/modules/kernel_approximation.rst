@@ -13,7 +13,7 @@ algorithms.
 .. currentmodule:: sklearn.linear_model
 
 The advantage of using approximate explicit feature maps compared to the
-`kernel trick <http://en.wikipedia.org/wiki/Kernel_trick>`_,
+`kernel trick <https://en.wikipedia.org/wiki/Kernel_trick>`_,
 which makes use of feature maps implicitly, is that explicit mappings
 can be better suited for online learning and can significantly reduce the cost
 of learning with very large datasets.
