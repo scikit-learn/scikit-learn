@@ -7,6 +7,7 @@ This module implements multiclass learning algorithms:
     - one-vs-one
     - error correcting output codes
     - rakel (multilabel)
+    - (ensemble) classifier chain (multilabel)
 
 The estimators provided in this module are meta-estimators: they require a base
 estimator to be provided in their constructor. For example, it is possible to
@@ -57,7 +58,8 @@ from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
-from .utilities import get_random_numbers, cycle_permutations
+from .utilities import get_random_numbers, cycle_permutations, shuffle_array
+from .utilities import get_most_probable_class, round_nearest, iterize
 from .basic_checks import check_is_in_range, check_is_binary_01
 from .powerset import Powerset
 
@@ -66,6 +68,7 @@ __all__ = [
     "OneVsOneClassifier",
     "OutputCodeClassifier",
     "RakelClassifier",
+    "ClassifierChain",
 ]
 
 
@@ -1118,3 +1121,348 @@ class RakelClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             the one from the y used for fitting.
         """
         return self.__predict(X, predict_only=False)
+
+
+class BaseClassifierChain(BaseEstimator):
+
+    """
+    Base classifier chain estimator.
+
+    It manages the different operations common to the various
+    classifier chains, and allow to determine a custom order
+    by being inherited.
+
+    Classifier chains are similar to the binary relevance for
+    the multilabel, but the output of each estimator is introduced
+    in the inputs of the following steps.
+
+    The implementation is lazy in order to spare memory.
+
+    Parameters
+    ----------
+    estimator : sklearn.base.BaseEstimator
+        The underlying estimator of this meta-classifier that
+        will be used to compute the predictions.
+        It must be able to classify multilabel data
+        if the steps are multilabel, or multiclass data
+        if the steps are multiclass.
+
+    n_jobs : int
+        The number of jobs to run the estimator.
+        No support for multithreading implemented yet,
+        rendering this parameter useless.
+
+    n_estimators : int
+        The number of classifier chains in the ensemble.
+
+    shuffle : bool
+        If the order should be randomized for each classifier
+        chain of the ensemble
+
+    random_state : int or RandomState
+        RNGseed.
+
+    estimators_random_state_level : int
+        Boolean mask allowing to tune at which level the
+        randomness applies. The different masks available are:
+
+            `ESTIMATOR_SAME_RND` : if set, the random seed of
+            the underlying estimator will not be modified,
+            leading to the same random seed for each step of the
+            chain.
+
+            `CLASSIFIERCHAIN_FOREST_SAME_RND` : if set, the
+            classifier chains from the forest will have the
+            same random seed. In case of a random order CC
+            with a seed not None, this will result into
+            different classifiers chains with the exact same
+            steps.
+
+            `ALL_SAME_RND` : if set, is the same as setting the 2
+            other masks.
+
+    mode:string
+        Mode of the classifier chain.
+
+    verbose:integer
+        Controls the verbosity of the classifier.
+
+    References
+    ----------
+    .. [1]  J. Read, B. Pfahringer, G. Holmes, E. Frank
+            "Classifier chains for multi-label classification".
+            Machine learning, vol. 85(3), pp. 333-359, 2011.
+    """
+    ESTIMATOR_SAME_RND = 1
+    CLASSIFIERCHAIN_FOREST_SAME_RND = 2
+    ALL_SAME_RND = ESTIMATOR_SAME_RND | CLASSIFIERCHAIN_FOREST_SAME_RND
+
+    def __init__(self, estimator, n_jobs=1, n_estimators=1,
+                 shuffle=True, random_state=None,
+                 estimators_random_state_level=0,
+                 mode="normal", verbose=0):
+        self.n_estimators = n_estimators
+        self.estimator = estimator
+        self.n_jobs = n_jobs
+        self.shuffle = shuffle
+        self.random_state = random_state
+        self.estimators_random_state_level = estimators_random_state_level
+        self.mode = mode
+        self.verbose = verbose
+        self.X_ = None
+        self.y_ = None
+        self.view_ = None
+        self.n_labels_ = 0
+        self.labelsets_ = None
+        self.results_ = None
+
+    def fit(self, X, y, copy=False):
+        """
+        Fits the data.
+
+        Parameters
+        ----------
+        X : array-like
+            The array of features
+
+        y : array-like
+            The array of labels
+
+        copy : bool
+            Whether these data should be copied or not.
+            Copying allows to make the classifier independent
+            of modifications on the data later, but
+            delaying the method.
+
+            Not copying does only copy reference, thus modifying
+            `X` or `y` afterwards will modify the internal
+            arrays.
+
+        Returns
+        -------
+        BaseClassifierChain
+            The fitted classifier chain
+
+        :warning:
+            IF COPY = FALSE:
+            This estimator will use the X and y arrays for the
+            prediction part, but those will not be copied. Thus, a
+            modification in one of those will have as effect to fit
+            and predict on the modified datas.
+        """
+        self.X_, self.y_ = check_X_y(X, y, multi_output=True,
+                                     accept_sparse=None, copy=copy,
+                                     force_all_finite=True,
+                                     allow_nd=False)
+        if copy:
+            self.y_ = self.y_.copy()
+        try:
+            n_labels = self.y_.shape[1]
+        except IndexError:
+            n_labels = 1
+            self.view_ = np.reshape(self.y_, (len(self.y_), 1))
+        else:
+            self.view_ = self.y_
+
+        self.n_labels_ = n_labels
+        try:
+            self.labelsets_ = self.make_labelsets(
+                order=range(self.n_labels_),
+                rnd=check_random_state(seed=cp.copy(self.random_state)))
+        except Exception:
+            self.X_ = None
+            self.y_ = None
+            self.view_ = None
+            self.n_labels = 0
+            raise
+
+        return self
+
+    def _check_fit(self):
+        if ((self.X_ is None) or (self.y_ is None)):
+            raise Exception("Classifier not initialized. "
+                            "Perform a fit first.")
+
+    def make_labelsets(self, order=None, rnd=None):
+        """
+        Defines the various labelsets.
+
+        Parameters
+        ----------
+        order : list or array
+            The list of the indexes of the labels to iterate on.
+
+        rnd : int or RandomState
+            The random state that is the origin of the estimators.
+            In case a RandomState is passed, this one will get
+            updated (modified) at each call to this method.
+
+            This argument is only used if the mode needs to fit
+            the data, in which case a previous fit must have
+            been done.
+
+        Returns
+        -------
+        list of list of int
+            The various labelsets.
+        """
+        raise NotImplementedError("make_labelsets must be overriden to "
+                                  "generate a correct labelset order.")
+
+    # TODO: not checked from here
+    def __predict_method_aux(self, X, random_state=None, predict_only=True):
+        n_labels = self.view_.shape[1]
+        order = np.arange(n_labels, dtype=int)
+        rnd = check_random_state(seed=random_state)
+        # http://stackoverflow.com/questions/8486294/how-to-add-an-extra-column-to-an-numpy-array
+        nextXfit = self.X_
+        nextX = X
+
+        predicted = np.empty((X.shape[0], self.view_.shape[1]))
+        retv = None
+
+        for current_range in self.iter_level_range(order, copy.copy(rnd)):
+            estimator = clone(self.estimator)
+            if ((self.estimators_random_state_level &
+                 self.ESTIMATOR_SAME_RND) == 0):
+                try:
+                    estimator.set_params(
+                        **{"random_state": get_random_numbers(
+                            random_state=rnd)})
+                except ValueError:
+                    pass
+            currentXfit = nextXfit
+            currentX = nextX
+            estimator.fit(currentXfit, self.view_[:, current_range].ravel())
+            if predict_only:
+                o = estimator.predict(currentX)
+            else:
+                o = estimator.predict_proba(currentX)
+            del estimator
+            try:
+                o.shape
+                o = [o]
+            except AttributeError:
+                pass
+            odds = o
+            if predict_only:
+                odds = odds[0]
+            else:
+                if (retv is None):
+                    try:
+                        n_samples, n_odds = odds[0].shape
+                    except AttributeError:
+                        n_samples, n_odds = odds.shape
+                    retv = [np.empty((n_samples, n_odds), dtype=float)
+                            for _ in xrange(n_labels)]
+
+                odd = np.empty((n_samples, 1), dtype=float)
+                for idx, elem in enumerate(current_range):
+                    try:
+                        odds.shape
+                    except AttributeError:
+                        retv[elem] = odds[idx]
+                        odd[:, idx] = get_most_probable_class(odds[idx])
+                    else:
+                        retv[elem] = odds
+                        odd[:, idx] = get_most_probable_class(odds)
+                odds = odd
+            nextX = np.empty((currentX.shape[0], currentX.shape[1] + 1))
+            nextX[:, :-1] = currentX
+            nextXfit = np.empty((currentXfit.shape[0],
+                                 currentXfit.shape[1] + 1))
+            nextXfit[:, :-1] = currentXfit
+            predicted[:, current_range] = odds.ravel()
+            nextXfit[:, -1] = self.view_[:, current_range]
+            nextX[:, -1] = predicted[:, current_range]
+
+        if predict_only:
+            if self.results_ is None:
+                self.results_ = predicted
+            else:
+                self.results_ += predicted
+        else:
+            if self.results_ is None:
+                self.results_ = retv
+            else:
+                for idx_label in xrange(len(retv)):
+                    self.results_[idx_label] += retv[idx_label]
+
+    def __predict_method(self, X, predict_only=True):
+        self._check_fit()
+        random = check_random_state(seed=copy.copy(self.random_state))
+
+        for _ in self.iter_level_range(order=None):
+            pass
+        self.results_ = None
+        rnd = [random for _ in xrange(self.n_estimators)]
+        if ((self.estimators_random_state_level &
+             self.CLASSIFIERCHAIN_FOREST_SAME_RND) == 0):
+            rnd = get_random_numbers(
+                shape=self.n_estimators,
+                random_state=random)
+        for idx, rnd_ in enumerate(rnd):
+            self.__predict_method_aux(
+                        X, random_state=copy.copy(rnd_),
+                        predict_only=predict_only)
+            if self.verbose > 1:
+                r = str(len(str(self.n_estimators)))
+                r = "".join(("{:0>", r, "d}"))
+                r = r.format(idx + 1)
+                print(("Predicted {0} / {1}.").format(r, self.n_estimators))
+        retv = self.results_
+        self.results_ = None
+
+        if predict_only:
+            retv /= self.n_estimators
+            retv = round_nearest(retv, inplace=True)
+        else:
+            for idx_label in xrange(len(retv)):
+                retv[idx_label] /= self.n_estimators
+
+        return retv
+
+    def predict(self, X):
+        """
+        Predict class for X.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape =
+        [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        array of shape = [n_samples] or [n_samples, n_outputs]
+            The predicted classes.
+        """
+        retv = self.__predict_method(X, True)
+        return retv
+
+    def predict_proba(self, X):
+        """
+        Predict class probabilities for X.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape =
+        [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        array of shape = [n_samples, n_classes], or a list of
+        n_outputs
+        """
+        retv = self.__predict_method(X, False)
+        return retv
+
+
+class ClassifierChain(BaseClassifierChain):
+    def make_labelsets(self, order=None, rnd=None):
+        if order is None:
+            return order
+        elif self.shuffle:
+            return shuffle_array(order, inplace=False, random_state=rnd)
+        return order
