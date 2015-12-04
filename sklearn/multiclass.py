@@ -1266,9 +1266,7 @@ class BaseClassifierChain(BaseEstimator):
 
         self.n_labels_ = n_labels
         try:
-            self.labelsets_ = self.make_labelsets(
-                order=range(self.n_labels_),
-                rnd=check_random_state(seed=cp.copy(self.random_state)))
+            self.labelsets_ = self.make_labelsets()
         except Exception:
             self.X_ = None
             self.y_ = None
@@ -1283,7 +1281,7 @@ class BaseClassifierChain(BaseEstimator):
             raise Exception("Classifier not initialized. "
                             "Perform a fit first.")
 
-    def make_labelsets(self, order=None, rnd=None):
+    def make_labelsets(self):
         """
         Defines the various labelsets.
 
@@ -1309,19 +1307,21 @@ class BaseClassifierChain(BaseEstimator):
         raise NotImplementedError("make_labelsets must be overriden to "
                                   "generate a correct labelset order.")
 
-    # TODO: not checked from here
-    def __predict_method_aux(self, X, random_state=None, predict_only=True):
-        n_labels = self.view_.shape[1]
-        order = np.arange(n_labels, dtype=int)
+    def iter_labelset(self, labelset):
+        for index in labelset:
+            yield [index]
+
+    def __predict_method_aux(self, X, index,
+                             random_state=None, predict_only=True):
+        order = self.labelsets_[index]
         rnd = check_random_state(seed=random_state)
-        # http://stackoverflow.com/questions/8486294/how-to-add-an-extra-column-to-an-numpy-array
         nextXfit = self.X_
         nextX = X
 
-        predicted = np.empty((X.shape[0], self.view_.shape[1]))
+        predicted = np.empty((X.shape[0], self.n_labels_))
         retv = None
 
-        for current_range in self.iter_level_range(order, copy.copy(rnd)):
+        for current_range in self.iter_labelset(order):
             estimator = clone(self.estimator)
             if ((self.estimators_random_state_level &
                  self.ESTIMATOR_SAME_RND) == 0):
@@ -1333,48 +1333,51 @@ class BaseClassifierChain(BaseEstimator):
                     pass
             currentXfit = nextXfit
             currentX = nextX
-            estimator.fit(currentXfit, self.view_[:, current_range].ravel())
+            estimator.fit(currentXfit, self.view_[:, current_range]) # .ravel())
             if predict_only:
-                o = estimator.predict(currentX)
+                sub_predicted = estimator.predict(currentX)
             else:
-                o = estimator.predict_proba(currentX)
+                sub_predicted = estimator.predict_proba(currentX)
             del estimator
             try:
-                o.shape
-                o = [o]
+                sub_predicted.shape
+                sub_predicted = [sub_predicted]
             except AttributeError:
                 pass
-            odds = o
             if predict_only:
-                odds = odds[0]
+                sub_predicted = sub_predicted[0]
             else:
                 if (retv is None):
                     try:
-                        n_samples, n_odds = odds[0].shape
+                        n_samples, n_odds = sub_predicted[0].shape
                     except AttributeError:
-                        n_samples, n_odds = odds.shape
+                        n_samples, n_odds = sub_predicted.shape
                     retv = [np.empty((n_samples, n_odds), dtype=float)
                             for _ in xrange(n_labels)]
 
-                odd = np.empty((n_samples, 1), dtype=float)
+                sub_predicted_tmp = np.empty((n_samples, 1), dtype=float)
                 for idx, elem in enumerate(current_range):
                     try:
-                        odds.shape
+                        sub_predicted.shape
                     except AttributeError:
-                        retv[elem] = odds[idx]
-                        odd[:, idx] = get_most_probable_class(odds[idx])
+                        retv[elem] = sub_predicted[idx]
+                        sub_predicted_tmp[:, idx] =
+                            get_most_probable_class(sub_predicted[idx])
                     else:
-                        retv[elem] = odds
-                        odd[:, idx] = get_most_probable_class(odds)
-                odds = odd
-            nextX = np.empty((currentX.shape[0], currentX.shape[1] + 1))
-            nextX[:, :-1] = currentX
+                        retv[elem] = sub_predicted
+                        sub_predicted_tmp[:, idx] =
+                            get_most_probable_class(sub_predicted)
+                sub_predicted = sub_predicted_tmp
+            nextX = np.empty((currentX.shape[0],
+                              currentX.shape[1] + len(current_range)))
+            nextX[:, :-len(current_range)] = currentX
             nextXfit = np.empty((currentXfit.shape[0],
                                  currentXfit.shape[1] + 1))
-            nextXfit[:, :-1] = currentXfit
-            predicted[:, current_range] = odds.ravel()
-            nextXfit[:, -1] = self.view_[:, current_range]
-            nextX[:, -1] = predicted[:, current_range]
+            nextXfit[:, :-len(current_range)] = currentXfit
+            predicted[:, current_range] = sub_predicted # .ravel()
+            for idx, j in enumerate(current_range):
+                nextXfit[:, -len(current_range)] = self.view_[:, current_range]
+                nextX[:, -len(current_range)] = predicted[:, current_range]
 
         if predict_only:
             if self.results_ is None:
@@ -1392,8 +1395,6 @@ class BaseClassifierChain(BaseEstimator):
         self._check_fit()
         random = check_random_state(seed=copy.copy(self.random_state))
 
-        for _ in self.iter_level_range(order=None):
-            pass
         self.results_ = None
         rnd = [random for _ in xrange(self.n_estimators)]
         if ((self.estimators_random_state_level &
@@ -1403,7 +1404,7 @@ class BaseClassifierChain(BaseEstimator):
                 random_state=random)
         for idx, rnd_ in enumerate(rnd):
             self.__predict_method_aux(
-                        X, random_state=copy.copy(rnd_),
+                        X, idx, random_state=copy.copy(rnd_),
                         predict_only=predict_only)
             if self.verbose > 1:
                 r = str(len(str(self.n_estimators)))
@@ -1460,9 +1461,11 @@ class BaseClassifierChain(BaseEstimator):
 
 
 class ClassifierChain(BaseClassifierChain):
-    def make_labelsets(self, order=None, rnd=None):
-        if order is None:
-            return order
-        elif self.shuffle:
-            return shuffle_array(order, inplace=False, random_state=rnd)
-        return order
+    def make_labelsets(self):
+        base = np.arange(self.n_labels_, dtype=int)
+        rnd = check_random_state(seed=cp.copy(self.random_state))
+        if (self.shuffle):
+            return [shuffle_array(base, inplace=False, random_state=rnd)
+                    for _ in range(self.n_labels_)]
+        return [np.arange(self.n_labels_, dtype=int)
+                for _ in range(self.n_labels_)]
