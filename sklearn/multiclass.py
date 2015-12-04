@@ -1243,7 +1243,7 @@ class BaseClassifierChain(BaseEstimator):
         BaseClassifierChain
             The fitted classifier chain
 
-        :warning:
+        WARNING
             IF COPY = FALSE:
             This estimator will use the X and y arrays for the
             prediction part, but those will not be copied. Thus, a
@@ -1361,12 +1361,12 @@ class BaseClassifierChain(BaseEstimator):
                         sub_predicted.shape
                     except AttributeError:
                         retv[elem] = sub_predicted[idx]
-                        sub_predicted_tmp[:, idx] =
-                            get_most_probable_class(sub_predicted[idx])
+                        sub_predicted_tmp[:, idx] = (
+                            get_most_probable_class(sub_predicted[idx]))
                     else:
                         retv[elem] = sub_predicted
-                        sub_predicted_tmp[:, idx] =
-                            get_most_probable_class(sub_predicted)
+                        sub_predicted_tmp[:, idx] = (
+                            get_most_probable_class(sub_predicted))
                 sub_predicted = sub_predicted_tmp
             nextX = np.empty((currentX.shape[0],
                               currentX.shape[1] + len(current_range)))
@@ -1462,10 +1462,10 @@ class BaseClassifierChain(BaseEstimator):
 
 class ClassifierChain(BaseClassifierChain):
     def make_labelsets(self):
-        base = np.arange(self.n_labels_, dtype=int)
         rnd = check_random_state(seed=cp.copy(self.random_state))
         if (self.shuffle):
+            base = np.arange(self.n_labels_, dtype=int)
             return [shuffle_array(base, inplace=False, random_state=rnd)
-                    for _ in range(self.n_labels_)]
+                    for _ in range(self.n_estimators)]
         return [np.arange(self.n_labels_, dtype=int)
-                for _ in range(self.n_labels_)]
+                for _ in range(self.n_estimators)]
