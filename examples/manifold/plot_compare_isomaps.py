@@ -52,7 +52,8 @@ for i, (n_samples, *methods) in enumerate(comparisons):
             Y = method(**params).fit_transform(X)
             t1 = time()
 
-            print("%s(%s): %.6g sec." % (method.__name__, str(params), (t1 - t0)))
+            print("%s(%s): %.6g sec." % (method.__name__,
+                                         str(params), (t1 - t0)))
 
             ax = fig.add_subplot(n_comparisons, 3, i * 3 + 2 + j)
             plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral)
