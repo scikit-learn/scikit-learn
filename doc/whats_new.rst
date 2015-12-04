@@ -79,13 +79,13 @@ Bug fixes
       If `n_iter<2` numerical issues are unlikely, thus no normalization is applied.
       Other normalization options are available: 'none', 'LU' and 'QR'. (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
 
-    - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized
+    - Fixed bug in :func:`manifold.laplacian_eigenmap` where diagonal of unnormalized
       Laplacian matrix was incorrectly set to 1. By `Peter Fischer`_.
 
     - Fixed incorrect initialization of :func:`utils.arpack.eigsh` on all
       occurrences. Affects :class:`cluster.SpectralBiclustering`,
       :class:`decomposition.KernelPCA`, :class:`manifold.LocallyLinearEmbedding`,
-      and :class:`manifold.SpectralEmbedding`. By `Peter Fischer`_.
+      and :class:`manifold.LaplacianEigenmap`. By `Peter Fischer`_.
 
     - Random forest, extra trees, decision trees and gradient boosting
       won't accept anymore ``min_samples_split=1`` as at least 2 samples
@@ -2120,10 +2120,10 @@ New Estimator Classes
      sparse representations using ensembles of totally random trees by  `Andreas Müller`_.
      See :ref:`random_trees_embedding` in the user guide.
 
-   - :class:`manifold.SpectralEmbedding` and function
-     :func:`manifold.spectral_embedding`, implementing the "laplacian
-     eigenmaps" transformation for non-linear dimensionality reduction by Wei
-     Li. See :ref:`spectral_embedding` in the user guide.
+   - :class:`manifold.LaplacianEigenmap` and function
+     :func:`manifold.LaplacianEigenmap`, implementing the "laplacian
+     eigenmap" transformation for non-linear dimensionality reduction by Wei
+     Li. See :ref:`laplacian eigenmap` in the user guide.
 
    - :class:`isotonic.IsotonicRegression` by `Fabian Pedregosa`_, `Alexandre Gramfort`_
      and `Nelle Varoquaux`_,

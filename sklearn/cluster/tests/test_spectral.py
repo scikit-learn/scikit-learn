@@ -15,7 +15,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns_message
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
-from sklearn.cluster.spectral import spectral_embedding
+from sklearn.cluster.spectral import laplacian_eigenmap
 from sklearn.cluster.spectral import discretize
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
@@ -77,7 +77,7 @@ def test_spectral_amg_mode():
         # There does have to be some lower limit on the performance though.
         assert_greater(np.mean(labels == true_labels), .3)
     else:
-        assert_raises(ValueError, spectral_embedding, S,
+        assert_raises(ValueError, laplacian_eigenmap, S,
                       n_components=len(centers),
                       random_state=0, eigen_solver="amg")
 

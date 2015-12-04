@@ -748,7 +748,7 @@ Kernels:
     manifold.LocallyLinearEmbedding
     manifold.Isomap
     manifold.MDS
-    manifold.SpectralEmbedding
+    manifold.LaplacianEigenmap
     manifold.TSNE
 
 .. autosummary::
@@ -756,7 +756,7 @@ Kernels:
     :template: function.rst
 
     manifold.locally_linear_embedding
-    manifold.spectral_embedding
+    manifold.laplacian_eigenmap
 
 
 .. _metrics_ref:

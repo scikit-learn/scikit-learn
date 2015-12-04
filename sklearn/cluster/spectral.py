@@ -15,7 +15,7 @@ from ..utils.validation import check_array
 from ..utils.extmath import norm
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph
-from ..manifold import spectral_embedding
+from ..manifold import laplacian_eigenmap
 from .k_means_ import k_means
 
 
@@ -252,7 +252,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
-    maps = spectral_embedding(affinity, n_components=n_components,
+    maps = laplacian_eigenmap(affinity, n_components=n_components,
                               eigen_solver=eigen_solver,
                               random_state=random_state,
                               eigen_tol=eigen_tol, drop_first=False)

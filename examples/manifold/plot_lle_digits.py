@@ -206,8 +206,8 @@ plot_embedding(X_reduced,
 
 #----------------------------------------------------------------------
 # Spectral embedding of the digits dataset
-print("Computing Spectral embedding")
-embedder = manifold.SpectralEmbedding(n_components=2, random_state=0,
+print("Computing Laplacian Eigenmap")
+embedder = manifold.LaplacianEigenmap(n_components=2, random_state=0,
                                       eigen_solver="arpack")
 t0 = time()
 X_se = embedder.fit_transform(X)

@@ -125,7 +125,7 @@ plt.axis('tight')
 
 # Perform Spectral Embedding.
 t0 = time()
-se = manifold.SpectralEmbedding(n_components=2,
+se = manifold.LaplacianEigenmap(n_components=2,
                                 n_neighbors=n_neighbors)
 trans_data = se.fit_transform(sphere_data).T
 t1 = time()

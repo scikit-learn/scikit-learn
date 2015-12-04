@@ -96,14 +96,14 @@ plt.axis('tight')
 
 
 t0 = time()
-se = manifold.SpectralEmbedding(n_components=n_components,
+se = manifold.LaplacianEigenmap(n_components=n_components,
                                 n_neighbors=n_neighbors)
 Y = se.fit_transform(X)
 t1 = time()
-print("SpectralEmbedding: %.2g sec" % (t1 - t0))
+print("LaplacianEigenmap: %.2g sec" % (t1 - t0))
 ax = fig.add_subplot(259)
 plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral)
-plt.title("SpectralEmbedding (%.2g sec)" % (t1 - t0))
+plt.title("Laplacian Eigenmap (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis('tight')
