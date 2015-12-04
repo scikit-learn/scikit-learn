@@ -15,7 +15,8 @@ from ..preprocessing import KernelCenterer
 class Isomap(BaseEstimator, TransformerMixin):
     """Isomap Embedding
 
-    Non-linear dimensionality reduction through Isometric Mapping
+    Non-linear dimensionality reduction through Isometric
+    Feature Mapping
 
     Read more in the :ref:`User Guide <isomap>`.
 
@@ -218,26 +219,124 @@ class Isomap(BaseEstimator, TransformerMixin):
 
 
 class LandmarkIsomap(Isomap):
+    """Landmark Isomap (L-Isomap) Embedding
+
+    Non-linear dimensionality reduction through Landmark
+    Isometric Feature Mapping
+
+    Parameters
+    ----------
+    n_neighbors : integer
+        number of neighbors to consider for each point.
+
+    n_components : integer
+        number of coordinates for the manifold
+
+    eigen_solver : ['auto'|'arpack'|'dense']
+        'auto' : Attempt to choose the most efficient solver
+        for the given problem.
+
+        'arpack' : Use Arnoldi decomposition to find the eigenvalues
+        and eigenvectors.
+
+        'dense' : Use a direct solver (i.e. LAPACK)
+        for the eigenvalue decomposition.
+
+    tol : float
+        Convergence tolerance passed to arpack or lobpcg.
+        not used if eigen_solver == 'dense'.
+
+    max_iter : integer
+        Maximum number of iterations for the arpack solver.
+        not used if eigen_solver == 'dense'.
+
+    path_method : string ['auto'|'FW'|'D']
+        Method to use in finding shortest path.
+
+        'auto' : attempt to choose the best algorithm automatically.
+
+        'FW' : Floyd-Warshall algorithm.
+
+        'D' : Dijkstra's algorithm.
+
+    neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree']
+        Algorithm to use for nearest neighbors search,
+        passed to neighbors.NearestNeighbors instance.
+
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
+    n_landmarks : int, optional (default = 'auto' )
+        The number of landmarks used when embedding the data set.
+        Must be a value between n_components + 1 and n_samples.
+
+    Attributes
+    ----------
+    embedding_ : array-like, shape (n_samples, n_components)
+        Stores the embedding vectors.
+
+    kernel_pca_ : object
+        `KernelPCA` object used to implement the embedding.
+
+    training_data_ : array-like, shape (n_samples, n_features)
+        Stores the training data.
+
+    nbrs_ : sklearn.neighbors.NearestNeighbors instance
+        Stores nearest neighbors instance, including BallTree or KDtree
+        if applicable.
+
+    dist_matrix_ : array-like, shape (n_samples, n_samples)
+        Stores the geodesic distance matrix of training data.
+
+    References
+    ----------
+
+    .. [1] Silva, V. D., & Tenenbaum, J. B. (2002). Global versus local
+           methods in nonlinear dimensionality reduction. In Advances
+           in neural information processing systems (pp. 705-712).
+    """
+
     def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',
                  tol=0, max_iter=None, path_method='auto',
                  neighbors_algorithm='auto', n_jobs=1,
-                 n_landmarks='auto'):
+                 n_landmarks='auto', landmarks=None):
         super().__init__(
             n_neighbors, n_components, eigen_solver, tol, max_iter,
             path_method, neighbors_algorithm, n_jobs)
 
         self.n_landmarks = n_landmarks
+        self.landmarks_ = landmarks
 
-    def _get_landmarkers(self, X):
-        landmarks = self.n_landmarks
+    def _get_landmarks(self, X):
+        """Get the landmarks from a data set X.
 
-        if landmarks == 'auto':
-            landmarks = self.n_components + 1 + min(int(.5 * X.shape[0]), 2000)
+        If the landmarks were passed in the constructor, returns them. Otherwise,
+        randomly selects n_landmarks (contained in the interval [0, |X|)).
 
-        if isinstance(landmarks, int):
-            landmarks = np.random.randint(X.shape[0], size=landmarks)
+        If n_landmarks is 'auto', selects n_components + 1 (the necessary landmarks
+        required to triangulate a samples' position in the n_components-dimensional
+        embedding plus a security margin (1% of the size of the data set X).
 
-        return landmarks
+        Parameters
+        ----------
+        X
+            The data set containing the samples from where the landmarks
+            should be inferred.
+
+        Returns
+        -------
+        landmarks: array-like, shape (n_landmarks,)
+        """
+        if self.landmarks_ is None:
+            n_landmarks = self.n_landmarks
+
+            if n_landmarks == 'auto':
+                n_landmarks = self.n_components + 1 + int(.01 * X.shape[0])
+
+            self.landmarks_ = np.random.randint(X.shape[0], size=n_landmarks)
+
+        return self.landmarks_
 
     def _fit_transform(self, X):
         X = check_array(X)
@@ -250,7 +349,7 @@ class LandmarkIsomap(Isomap):
                                      tol=self.tol, max_iter=self.max_iter,
                                      n_jobs=self.n_jobs)
 
-        self.landmarks_ = self._get_landmarkers(X)
+        self.landmarks_ = self._get_landmarks(X)
 
         kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
                                mode='distance', n_jobs=self.n_jobs)
