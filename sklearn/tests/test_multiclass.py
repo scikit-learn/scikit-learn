@@ -1054,7 +1054,7 @@ def test_classifier_chain_fit():
     n_labels = 2
     length = 1
     for n_classes, n_samples in [[1, 1], [1, 10], [5, 1], [5, 10]]:
-        X, y = make_multilabel_classification(
+        X, y = datasets.make_multilabel_classification(
             n_samples=n_samples, n_features=n_features, length=length,
             n_classes=n_classes, n_labels=n_labels,
             allow_unlabeled=False,
@@ -1104,7 +1104,7 @@ def test_classifier_chain_iter_labelset():
     n_samples = 10
     length = 1
     n_classes = 5
-    X, y = make_multilabel_classification(
+    X, y = datasets.make_multilabel_classification(
         n_samples=n_samples, n_features=n_features, length=length,
         n_classes=n_classes, n_labels=n_labels,
         allow_unlabeled=False,
@@ -1128,7 +1128,7 @@ def test_classifier_chain_make_labelsets():
     n_samples = 10
     length = 1
     n_classes = 5
-    X, y = make_multilabel_classification(
+    X, y = datasets.make_multilabel_classification(
         n_samples=n_samples, n_features=n_features, length=length,
         n_classes=n_classes, n_labels=n_labels,
         allow_unlabeled=False,
@@ -1193,12 +1193,12 @@ def test_classifier_chain_predicts():
     n_samples = 10
     length = 1
     n_classes = 5
-    X, y = make_multilabel_classification(
+    X, y = datasets.make_multilabel_classification(
         n_samples=n_samples, n_features=n_features, length=length,
         n_classes=n_classes, n_labels=n_labels,
         allow_unlabeled=False,
         random_state=random_state, return_indicator=True)
-    Xt, yt = make_multilabel_classification(
+    Xt, yt = datasets.make_multilabel_classification(
         n_samples=n_samples, n_features=n_features, length=length,
         n_classes=n_classes, n_labels=n_labels,
         allow_unlabeled=False,
@@ -1317,12 +1317,12 @@ def test_classifier_chain_compare():
     n_samples = 10
     length = 1
     n_classes = 5
-    X, y = make_multilabel_classification(
+    X, y = datasets.make_multilabel_classification(
         n_samples=n_samples, n_features=n_features, length=length,
         n_classes=n_classes, n_labels=n_labels,
         allow_unlabeled=False,
         random_state=random_state, return_indicator=True)
-    Xt, yt = make_multilabel_classification(
+    Xt, yt = datasets.make_multilabel_classification(
         n_samples=n_samples, n_features=n_features, length=length,
         n_classes=n_classes, n_labels=n_labels,
         allow_unlabeled=False,
