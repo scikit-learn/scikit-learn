@@ -1332,7 +1332,7 @@ class BaseClassifierChain(BaseEstimator):
                     except AttributeError:
                         n_samples, n_odds = sub_predicted.shape
                     retv = [np.empty((n_samples, n_odds), dtype=float)
-                            for _ in xrange(self.n_labels_)]
+                            for _ in range(self.n_labels_)]
 
                 sub_predicted_tmp = np.empty((n_samples, len(current_range)),
                                              dtype=float)
@@ -1370,7 +1370,7 @@ class BaseClassifierChain(BaseEstimator):
             if self.results_ is None:
                 self.results_ = retv
             else:
-                for idx_label in xrange(len(retv)):
+                for idx_label in range(len(retv)):
                     self.results_[idx_label] += retv[idx_label]
 
     def __predict_method(self, X, predict_only=True):
@@ -1378,7 +1378,7 @@ class BaseClassifierChain(BaseEstimator):
         random = check_random_state(seed=cp.copy(self.random_state))
 
         self.results_ = None
-        rnd = [random for _ in xrange(self.n_estimators)]
+        rnd = [random for _ in range(self.n_estimators)]
         if ((self.estimators_random_state_level &
              self.CLASSIFIERCHAIN_FOREST_SAME_RND) == 0):
             rnd = get_random_numbers(
@@ -1400,7 +1400,7 @@ class BaseClassifierChain(BaseEstimator):
             retv /= self.n_estimators
             retv = round_nearest(retv, inplace=True)
         else:
-            for idx_label in xrange(len(retv)):
+            for idx_label in range(len(retv)):
                 retv[idx_label] /= self.n_estimators
 
         return retv
