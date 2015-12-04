@@ -215,3 +215,70 @@ class Isomap(BaseEstimator, TransformerMixin):
         G_X *= -0.5
 
         return self.kernel_pca_.transform(G_X)
+
+
+class LandmarkIsomap(Isomap):
+    def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',
+                 tol=0, max_iter=None, path_method='auto',
+                 neighbors_algorithm='auto', n_jobs=1,
+                 n_landmarks='auto'):
+        super().__init__(
+            n_neighbors, n_components, eigen_solver, tol, max_iter,
+            path_method, neighbors_algorithm, n_jobs)
+
+        self.n_landmarks = n_landmarks
+
+    def _get_landmarkers(self, X):
+        landmarks = self.n_landmarks
+
+        if landmarks == 'auto':
+            landmarks = self.n_components + 1 + min(int(.5 * X.shape[0]), 2000)
+
+        if isinstance(landmarks, int):
+            landmarks = np.random.randint(X.shape[0], size=landmarks)
+
+        return landmarks
+
+    def _fit_transform(self, X):
+        X = check_array(X)
+        self.nbrs_.fit(X)
+        self.training_data_ = self.nbrs_._fit_X
+
+        self.kernel_pca_ = KernelPCA(n_components=self.n_components,
+                                     kernel="precomputed",
+                                     eigen_solver=self.eigen_solver,
+                                     tol=self.tol, max_iter=self.max_iter,
+                                     n_jobs=self.n_jobs)
+
+        self.landmarks_ = self._get_landmarkers(X)
+
+        kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
+                               mode='distance', n_jobs=self.n_jobs)
+
+        self.dist_matrix_ = graph_shortest_path(kng,
+                                                method=self.path_method,
+                                                directed=True)
+
+        G = self.dist_matrix_[self.landmarks_, :][:, self.landmarks_]
+        G **= 2
+        G *= -0.5
+
+        self.kernel_pca_.fit(G)
+        self.embedding_ = self.transform(X)
+
+        return self.embedding_
+
+    def transform(self, X):
+        X = check_array(X)
+        distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
+
+        G_X = np.zeros((X.shape[0], self.training_data_.shape[0]))
+        for i in range(X.shape[0]):
+            G_X[i] = np.min(self.dist_matrix_[indices[i]] +
+                            distances[i][:, None], 0)
+
+        G_X = G_X[:, self.landmarks_]
+        G_X **= 2
+        G_X *= -0.5
+
+        return self.kernel_pca_.transform(G_X)
