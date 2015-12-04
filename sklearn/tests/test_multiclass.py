@@ -1066,3 +1066,132 @@ def test_rakel_predicts():
     resp2 = rm1.predict_proba(Xt)
     assert_array_equal(res1, res2)
     assert_allclose(resp1, resp2, rtol=1e-10)
+
+
+def test_classifier_chain_fit():
+    random_state = 0
+    n_features = 10
+    n_labels = 2
+    length = 1
+    for n_classes, n_samples in [[1, 1], [1, 10], [5, 1], [5, 10]]:
+        X, y = make_multilabel_classification(
+            n_samples=n_samples, n_features=n_features, length=length,
+            n_classes=n_classes, n_labels=n_labels,
+            allow_unlabeled=False,
+            random_state=random_state, return_indicator=True)
+        X[0, :] = 0
+        y[0, :] = 0
+
+        classif = ClassifierChain(
+            estimator=DecisionTreeClassifier(random_state=random_state),
+            shuffle=False, random_state=random_state, n_estimators=6,
+            estimators_random_state_level=(
+                ClassifierChain.ESTIMATOR_SAME_RND |
+                ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+        assert_equal(classif.fit(X, y, copy=False), classif)
+        assert_equal(classif.n_labels_, n_classes)
+        assert_array_equal(classif.X_, X)
+        assert_array_equal(classif.y_, y)
+        X[0, :] = 1
+        y[0, :] = 1
+        assert_array_equal(classif.X_, X)
+        assert_array_equal(classif.y_, y)
+        assert_equal(len(classif.labelsets_), classif.n_estimators)
+        assert_equal(len(classif.labelsets_[0]), classif.n_labels_)
+        assert_true(classif._check_fit() is None)
+
+        assert_raises(Exception, classif.fit, X, [20, 10])
+        assert_raises(Exception, classif._check_fit())
+
+        assert_equal(classif.fit(X, y, copy=True), classif)
+        assert_equal(classif.n_labels_, n_classes)
+        assert_array_equal(classif.X_, X)
+        assert_array_equal(classif.y_, y)
+        assert_true(classif._check_fit() is None)
+        X[0, :] = 0
+        y[0, :] = 0
+        assert_equal(len(classif.labelsets_), classif.n_estimators)
+        assert_equal(len(classif.labelsets_[0]), classif.n_labels_)
+        assert_raises(AssertionError, assert_array_equal, classif.X_, X)
+        assert_raises(AssertionError, assert_array_equal, classif.y_, y)
+        assert_true(classif._check_fit() is None)
+
+
+def test_classifier_chain_iter_labelset():
+    random_state = 0
+    n_features = 10
+    n_labels = 2
+    n_samples = 10
+    length = 1
+    n_classes = 5
+    X, y = make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state, return_indicator=True)
+    classif = ClassifierChain(
+        estimator=DecisionTreeClassifier(random_state=random_state),
+        shuffle=False, random_state=random_state,
+        estimators_random_state_level=(
+            ClassifierChain.ESTIMATOR_SAME_RND |
+            ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+    classif.fit(X, y)
+    labelset = classif.labelsets_[0]
+    for idx, l in enumerate(classif.iter_labelset(labelset)):
+        assert_array_equal([labelset[idx]], l)
+
+
+def test_classifier_chain_make_labelsets():
+    random_state = 0
+    n_features = 10
+    n_labels = 2
+    n_samples = 10
+    length = 1
+    n_classes = 5
+    X, y = make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state, return_indicator=True)
+    classif = ClassifierChain(
+        estimator=DecisionTreeClassifier(random_state=random_state),
+        shuffle=False, random_state=random_state,
+        n_estimators = 6,
+        estimators_random_state_level=(
+            ClassifierChain.ESTIMATOR_SAME_RND |
+            ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+    classif.fit(X, y)
+    labelsets = classif.make_labelsets()
+    assert_equal(len(labelsets), classif.n_estimators)
+    assert_equal(len(labelsets[0]), classif.n_labels_)
+    assert_equal(classif.n_labels_, n_classes)
+    for labelset in labelsets:
+        assert_array_equal(labelset, labelsets[0])
+        assert_array_equal(np.unique(labelset),
+                           np.arange(classif.n_labels_, dtype=int))
+    classif.shuffle = True
+    labelsets = classif.make_labelsets()
+    assert_equal(len(labelsets), classif.n_estimators)
+    assert_equal(len(labelsets[0]), classif.n_labels_)
+    assert_equal(classif.n_labels_, n_classes)
+    diff = False
+    for labelset in labelsets:
+        diff = diff or not np.array_equal(labelset, labelsets[0])
+        assert_array_equal(np.unique(labelset),
+                           np.arange(classif.n_labels_, dtype=int))
+    assert_true(diff)
+
+    classif = ClassifierChain(
+        estimator=DecisionTreeClassifier(random_state=random_state),
+        shuffle=False, random_state=random_state,
+        n_estimators = 1,
+        estimators_random_state_level=(
+            ClassifierChain.ESTIMATOR_SAME_RND |
+            ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+    classif.fit(X, y)
+    labelsets = classif.make_labelsets()
+    assert_equal(len(labelsets), classif.n_estimators)
+    assert_equal(len(labelsets[0]), classif.n_labels_)
+    assert_equal(classif.n_labels_, n_classes)
+    assert_array_equal(np.unique(labelsets[0]),
+                       np.arange(classif.n_labels_, dtype=int))
