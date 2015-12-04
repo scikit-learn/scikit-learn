@@ -18,15 +18,17 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_allclose
 from sklearn.utilities import convert_probabilities, probs_to_class
-from sklearn.utilities import get_random_numbers
+from sklearn.utilities import get_random_numbers, get_most_probable_class
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 from sklearn.multiclass import RakelClassifier, _get_possibility
 from sklearn.multiclass import _valid_possibility
+from sklearn.multiclass import ClassifierChain, BaseClassifierChain
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.powerset import Powerset
+from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
@@ -741,18 +743,8 @@ def test_rakel_fit():
     assert_equal(len(rakel.labelsets_), 10)
     X[0, 0] = 1 - X[0, 0]
     y[0, 0] = 1 - y[0, 0]
-    try:
-        assert_array_equal(rakel.X_, X)
-    except AssertionError:
-        pass
-    else:
-        raise AssertionError("The X copy did not work.")
-    try:
-        assert_array_equal(rakel.y_, y)
-    except AssertionError:
-        pass
-    else:
-        raise AssertionError("The y copy did not work.")
+    assert_raises(AssertionError, assert_array_equal, rakel.X_, X)
+    assert_raises(AssertionError, assert_array_equal, rakel.y_, y)
 
 
 def test_rakel_predicts():
@@ -826,10 +818,8 @@ def test_rakel_predicts():
         rm1.verbose = 5
         res1 = rm1.predict(Xt)
         output = out.getvalue().strip()
-        if not re.compile("Number of estimators: \\d+.").search(output):
-            raise AssertionError("Did not print number of estimators.")
-        if not re.compile("labelset: ").search(output):
-            raise AssertionError("Did not print labelsets.")
+        assert_true(re.compile("Number of estimators: \\d+.").search(output))
+        assert_true(re.compile("labelset: ").search(output))
         rl = RakelClassifier(tree, k=1, n_estimators=1,
                              threshold=0.5, no_hole=False,
                              powerset="probabilities",
@@ -839,14 +829,12 @@ def test_rakel_predicts():
         sys.stdout = out
         res1 = rl.predict(Xt)
         output = out.getvalue().strip()
-        if not re.compile("cannot be estimated").search(output):
-            raise AssertionError("Did not print not estimated (predict).")
+        assert_true(re.compile("cannot be estimated").search(output))
         out = StringIO()
         sys.stdout = out
         res1 = rl.predict_proba(Xt)
         output = out.getvalue().strip()
-        if not re.compile("cannot be estimated").search(output):
-            raise AssertionError("Did not print not estimated (probas).")
+        assert_true(re.compile("cannot be estimated").search(output))
     finally:
         sys.stdout = saved_stdout
     rm1.verbose = 0
@@ -1093,7 +1081,7 @@ def test_classifier_chain_fit():
         assert_true(classif._check_fit() is None)
 
         assert_raises(Exception, classif.fit, X, [20, 10])
-        assert_raises(Exception, classif._check_fit())
+        assert_raises(Exception, classif._check_fit)
 
         assert_equal(classif.fit(X, y, copy=True), classif)
         assert_equal(classif.n_labels_, n_classes)
@@ -1145,10 +1133,19 @@ def test_classifier_chain_make_labelsets():
         n_classes=n_classes, n_labels=n_labels,
         allow_unlabeled=False,
         random_state=random_state, return_indicator=True)
+    classif = BaseClassifierChain(
+        estimator=DecisionTreeClassifier(random_state=random_state),
+        shuffle=False, random_state=random_state,
+        n_estimators=6,
+        estimators_random_state_level=(
+            ClassifierChain.ESTIMATOR_SAME_RND |
+            ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+    assert_raises(NotImplementedError, classif.make_labelsets)
+    assert_raises(NotImplementedError, classif.fit, X, y)
     classif = ClassifierChain(
         estimator=DecisionTreeClassifier(random_state=random_state),
         shuffle=False, random_state=random_state,
-        n_estimators = 6,
+        n_estimators=6,
         estimators_random_state_level=(
             ClassifierChain.ESTIMATOR_SAME_RND |
             ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
@@ -1176,7 +1173,7 @@ def test_classifier_chain_make_labelsets():
     classif = ClassifierChain(
         estimator=DecisionTreeClassifier(random_state=random_state),
         shuffle=False, random_state=random_state,
-        n_estimators = 1,
+        n_estimators=1,
         estimators_random_state_level=(
             ClassifierChain.ESTIMATOR_SAME_RND |
             ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
@@ -1187,3 +1184,177 @@ def test_classifier_chain_make_labelsets():
     assert_equal(classif.n_labels_, n_classes)
     assert_array_equal(np.unique(labelsets[0]),
                        np.arange(classif.n_labels_, dtype=int))
+
+
+def test_classifier_chain_predicts():
+    random_state = 0
+    n_features = 10
+    n_labels = 2
+    n_samples = 10
+    length = 1
+    n_classes = 5
+    X, y = make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state, return_indicator=True)
+    Xt, yt = make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state + n_samples, return_indicator=True)
+
+    tree = DecisionTreeClassifier(random_state=random_state)
+    tree.fit(X, y[:, 0])
+    tree_predict = tree.predict(Xt)
+    tree_proba = tree.predict_proba(Xt)
+
+    trees = ExtraTreesClassifier(random_state=random_state)
+    trees.fit(X, y[:, 0])
+    trees_predict = trees.predict(Xt)
+    trees_proba = trees.predict_proba(Xt)
+
+    classif = ClassifierChain(
+        estimator=tree, shuffle=True, random_state=random_state,
+        n_estimators=3,
+        estimators_random_state_level=(
+            ClassifierChain.ESTIMATOR_SAME_RND |
+            ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+
+    assert_raises(Exception, classif.predict, Xt)
+    assert_raises(Exception, classif.predict_proba, Xt)
+    classif.fit(X, y)
+    pr = classif.predict(Xt)
+    assert_array_equal(pr, probs_to_class(classif.predict_proba(Xt)))
+    assert_array_equal(pr.shape, (n_samples, n_classes))
+    pr = classif.predict_proba(Xt)
+    assert_equal(len(pr), n_classes)
+    for p in pr:
+        assert_array_equal(p.shape, (n_samples, n_labels))
+    classif.fit(X, y[:, 0])
+    pr = classif.predict_proba(Xt)
+    assert_array_equal(classif.predict(Xt),
+                       probs_to_class(pr).ravel())
+    assert_allclose(pr, tree_proba, rtol=1e-10)
+    assert_array_equal(classif.predict(Xt), tree_predict)
+    classif.estimator = trees
+    classif.fit(X, y)
+    pr = classif.predict(Xt)
+    assert_array_equal(pr, probs_to_class(classif.predict_proba(Xt)))
+    assert_array_equal(pr.shape, (n_samples, n_classes))
+    prl = classif.predict_proba(Xt)
+    assert_equal(len(prl), n_classes)
+    for p in prl:
+        assert_array_equal(p.shape, (n_samples, n_labels))
+    classif.fit(X, y[:, 0])
+    pr = classif.predict_proba(Xt)
+    assert_array_equal(classif.predict(Xt),
+                       probs_to_class(pr).ravel())
+    assert_allclose(pr, trees_proba, rtol=1e-10)
+    assert_array_equal(classif.predict(Xt), trees_predict)
+
+    classif.estimators_random_state_level = 0
+    classif.fit(X, y)
+    pr = classif.predict_proba(Xt)
+    assert_raises(AssertionError, assert_allclose, pr, prl, rtol=1e-10)
+
+    # Test no error with absence of random_state
+    classif.estimator = OneVsRestClassifier(tree)
+    classif.fit(X, y)
+    assert_array_equal(classif.predict(Xt),
+                       probs_to_class(classif.predict_proba(Xt)))
+    classif.estimator = tree
+
+    # Test verbosity
+    saved_stdout = sys.stdout
+    try:
+        out = StringIO()
+        sys.stdout = out
+        classif.verbose = 5
+        res1 = classif.predict(Xt)
+        output = out.getvalue().strip()
+        assert_equal(len(re.split("Predicted \\d+ / \\d+", output)),
+                     1 + classif.n_estimators)
+    finally:
+        sys.stdout = saved_stdout
+
+    class ClassifierChainExp(ClassifierChain):
+        def iter_labelset(self, labelset):
+            retv = None
+            for index in labelset:
+                if (retv is None):
+                    retv = [index]
+                else:
+                    retv.append(index)
+                    yield retv
+                    retv = None
+            if (retv is not None):
+                yield retv
+
+    classif = ClassifierChainExp(
+        estimator=tree, shuffle=True, random_state=random_state,
+        n_estimators=1,
+        estimators_random_state_level=(
+            ClassifierChain.ESTIMATOR_SAME_RND |
+            ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+
+    assert_raises(Exception, classif.predict, Xt)
+    assert_raises(Exception, classif.predict_proba, Xt)
+    classif.fit(X, y)
+    pr = classif.predict(Xt)
+    assert_array_equal(pr, probs_to_class(classif.predict_proba(Xt)))
+    assert_array_equal(pr.shape, (n_samples, n_classes))
+    pr = classif.predict_proba(Xt)
+    assert_equal(len(pr), n_classes)
+    for p in pr:
+        assert_array_equal(p.shape, (n_samples, n_labels))
+
+
+def test_classifier_chain_compare():
+    random_state = 0
+    n_features = 10
+    n_labels = 2
+    n_samples = 10
+    length = 1
+    n_classes = 5
+    X, y = make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state, return_indicator=True)
+    Xt, yt = make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state + n_samples, return_indicator=True)
+
+    tree = DecisionTreeClassifier(random_state=random_state)
+
+    classif = ClassifierChain(
+        estimator=tree, shuffle=False, random_state=random_state,
+        n_estimators=1,
+        estimators_random_state_level=(
+            ClassifierChain.ESTIMATOR_SAME_RND |
+            ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+
+    tree_probas = [np.empty((n_samples, n_labels), dtype=float)
+                   for _ in range(n_classes)]
+    Xfit = X
+    Xtpred = Xt
+    for idx in range(n_classes - 1):
+        tree.fit(Xfit, y[:, idx])
+        tree_probas[idx] = tree.predict_proba(Xtpred)
+        Xfit = np.hstack((Xfit, y[:, idx].reshape((-1, 1))))
+        Xtpred = np.hstack((Xtpred, get_most_probable_class(
+            tree_probas[idx]).reshape((-1, 1))))
+    tree.fit(Xfit, y[:, n_classes - 1])
+    tree_probas[n_classes - 1] = tree.predict_proba(Xtpred)
+
+    classif.fit(X, y)
+    classif_probas = classif.predict_proba(Xt)
+    assert_allclose(tree_probas, classif_probas, rtol=1e-10)
+
+    classif.n_estimators = 3
+    classif.fit(X, y)
+    classif_probas = classif.predict_proba(Xt)
+    assert_allclose(tree_probas, classif_probas, rtol=1e-10)

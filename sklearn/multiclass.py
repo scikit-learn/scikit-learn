@@ -59,7 +59,7 @@ from .utils.validation import check_is_fitted
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
 from .utilities import get_random_numbers, cycle_permutations, shuffle_array
-from .utilities import get_most_probable_class, round_nearest, iterize
+from .utilities import get_most_probable_class, round_nearest
 from .basic_checks import check_is_in_range, check_is_binary_01
 from .powerset import Powerset
 
@@ -1173,16 +1173,13 @@ class BaseClassifierChain(BaseEstimator):
 
             `CLASSIFIERCHAIN_FOREST_SAME_RND` : if set, the
             classifier chains from the forest will have the
-            same random seed. In case of a random order CC
+            same random seed. In case of a random order ECC
             with a seed not None, this will result into
-            different classifiers chains with the exact same
-            steps.
+            classifiers chains with the exact same
+            labels order.
 
             `ALL_SAME_RND` : if set, is the same as setting the 2
             other masks.
-
-    mode:string
-        Mode of the classifier chain.
 
     verbose:integer
         Controls the verbosity of the classifier.
@@ -1199,15 +1196,13 @@ class BaseClassifierChain(BaseEstimator):
 
     def __init__(self, estimator, n_jobs=1, n_estimators=1,
                  shuffle=True, random_state=None,
-                 estimators_random_state_level=0,
-                 mode="normal", verbose=0):
+                 estimators_random_state_level=0, verbose=0):
         self.n_estimators = n_estimators
         self.estimator = estimator
         self.n_jobs = n_jobs
         self.shuffle = shuffle
         self.random_state = random_state
         self.estimators_random_state_level = estimators_random_state_level
-        self.mode = mode
         self.verbose = verbose
         self.X_ = None
         self.y_ = None
@@ -1250,6 +1245,8 @@ class BaseClassifierChain(BaseEstimator):
             modification in one of those will have as effect to fit
             and predict on the modified datas.
         """
+        self.X_ = None
+        self.y_ = None
         self.X_, self.y_ = check_X_y(X, y, multi_output=True,
                                      accept_sparse=None, copy=copy,
                                      force_all_finite=True,
@@ -1265,14 +1262,7 @@ class BaseClassifierChain(BaseEstimator):
             self.view_ = self.y_
 
         self.n_labels_ = n_labels
-        try:
-            self.labelsets_ = self.make_labelsets()
-        except Exception:
-            self.X_ = None
-            self.y_ = None
-            self.view_ = None
-            self.n_labels = 0
-            raise
+        self.labelsets_ = self.make_labelsets()
 
         return self
 
@@ -1285,24 +1275,10 @@ class BaseClassifierChain(BaseEstimator):
         """
         Defines the various labelsets.
 
-        Parameters
-        ----------
-        order : list or array
-            The list of the indexes of the labels to iterate on.
-
-        rnd : int or RandomState
-            The random state that is the origin of the estimators.
-            In case a RandomState is passed, this one will get
-            updated (modified) at each call to this method.
-
-            This argument is only used if the mode needs to fit
-            the data, in which case a previous fit must have
-            been done.
-
         Returns
         -------
-        list of list of int
-            The various labelsets.
+        list of np.array of int
+            The various labelsets for each estimator.
         """
         raise NotImplementedError("make_labelsets must be overriden to "
                                   "generate a correct labelset order.")
@@ -1333,7 +1309,10 @@ class BaseClassifierChain(BaseEstimator):
                     pass
             currentXfit = nextXfit
             currentX = nextX
-            estimator.fit(currentXfit, self.view_[:, current_range]) # .ravel())
+            data = self.view_[:, current_range]
+            if (len(current_range) == 1):
+                data = data.ravel()
+            estimator.fit(currentXfit, data)
             if predict_only:
                 sub_predicted = estimator.predict(currentX)
             else:
@@ -1353,9 +1332,10 @@ class BaseClassifierChain(BaseEstimator):
                     except AttributeError:
                         n_samples, n_odds = sub_predicted.shape
                     retv = [np.empty((n_samples, n_odds), dtype=float)
-                            for _ in xrange(n_labels)]
+                            for _ in xrange(self.n_labels_)]
 
-                sub_predicted_tmp = np.empty((n_samples, 1), dtype=float)
+                sub_predicted_tmp = np.empty((n_samples, len(current_range)),
+                                             dtype=float)
                 for idx, elem in enumerate(current_range):
                     try:
                         sub_predicted.shape
@@ -1372,12 +1352,14 @@ class BaseClassifierChain(BaseEstimator):
                               currentX.shape[1] + len(current_range)))
             nextX[:, :-len(current_range)] = currentX
             nextXfit = np.empty((currentXfit.shape[0],
-                                 currentXfit.shape[1] + 1))
+                                 currentXfit.shape[1] + len(current_range)))
             nextXfit[:, :-len(current_range)] = currentXfit
-            predicted[:, current_range] = sub_predicted # .ravel()
+            if (len(current_range) == 1):
+                sub_predicted = sub_predicted.reshape((-1, 1))
+            predicted[:, current_range] = sub_predicted
             for idx, j in enumerate(current_range):
-                nextXfit[:, -len(current_range)] = self.view_[:, current_range]
-                nextX[:, -len(current_range)] = predicted[:, current_range]
+                nextXfit[:, -len(current_range) + idx] = self.view_[:, j]
+                nextX[:, -len(current_range) + idx] = predicted[:, j]
 
         if predict_only:
             if self.results_ is None:
@@ -1393,7 +1375,7 @@ class BaseClassifierChain(BaseEstimator):
 
     def __predict_method(self, X, predict_only=True):
         self._check_fit()
-        random = check_random_state(seed=copy.copy(self.random_state))
+        random = check_random_state(seed=cp.copy(self.random_state))
 
         self.results_ = None
         rnd = [random for _ in xrange(self.n_estimators)]
@@ -1404,7 +1386,7 @@ class BaseClassifierChain(BaseEstimator):
                 random_state=random)
         for idx, rnd_ in enumerate(rnd):
             self.__predict_method_aux(
-                        X, idx, random_state=copy.copy(rnd_),
+                        X, idx, random_state=cp.copy(rnd_),
                         predict_only=predict_only)
             if self.verbose > 1:
                 r = str(len(str(self.n_estimators)))
@@ -1439,6 +1421,8 @@ class BaseClassifierChain(BaseEstimator):
             The predicted classes.
         """
         retv = self.__predict_method(X, True)
+        if (retv.shape[0] == 1 or retv.shape[0] == retv.size):
+            return retv.ravel()
         return retv
 
     def predict_proba(self, X):
@@ -1457,6 +1441,8 @@ class BaseClassifierChain(BaseEstimator):
         n_outputs
         """
         retv = self.__predict_method(X, False)
+        if (len(retv) == 1):
+            return retv[0]
         return retv
 
 
