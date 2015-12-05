@@ -309,7 +309,7 @@ class LandmarkIsomap(Isomap):
                  tol=0, max_iter=None, path_method='auto',
                  neighbors_algorithm='auto', n_jobs=1,
                  n_landmarks='auto', landmarks=None):
-        super().__init__(
+        super(LandmarkIsomap, self).__init__(
             n_neighbors, n_components, eigen_solver, tol, max_iter,
             path_method, neighbors_algorithm, n_jobs)
 
