@@ -187,7 +187,8 @@ def test_transformer_n_iter():
             estimator = Estimator()
         # Dependent on external solvers and hence accessing the iter
         # param is non-trivial.
-        external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
+        external_solver = ['Isomap', 'LandmarkIsomap',
+                           'KernelPCA', 'LocallyLinearEmbedding',
                            'RandomizedLasso', 'LogisticRegressionCV']
 
         if hasattr(estimator, "max_iter") and name not in external_solver:

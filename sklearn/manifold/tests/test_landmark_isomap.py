@@ -1,5 +1,4 @@
 import numpy as np
-
 from sklearn import datasets
 from sklearn import manifold
 from sklearn import neighbors
@@ -71,3 +70,21 @@ def test_pipeline():
          ('clf', neighbors.KNeighborsClassifier())])
     clf.fit(X, y)
     testing.assert_less(.9, clf.score(X, y))
+
+
+def test_fit_transform_and_transform_consistency():
+    n_samples = 100
+
+    X, y = datasets.make_swiss_roll(n_samples=n_samples, random_state=0)
+    landmarks = list(range(0, n_samples, n_samples // 10))
+
+    i = manifold.LandmarkIsomap(landmarks=landmarks)
+    fit_transform_result = i.fit_transform(X)
+
+    i = manifold.LandmarkIsomap(landmarks=landmarks)
+    transform_result = i.fit(X).transform(X)
+
+    testing.assert_array_almost_equal(
+        fit_transform_result,
+        transform_result
+    )
