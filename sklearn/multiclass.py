@@ -1123,7 +1123,7 @@ class RakelClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         return self.__predict(X, predict_only=False)
 
 
-class BaseClassifierChain(BaseEstimator):
+class BaseClassifierChain(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     """
     Base classifier chain estimator.
