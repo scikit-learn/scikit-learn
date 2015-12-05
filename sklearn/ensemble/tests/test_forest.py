@@ -91,16 +91,16 @@ FOREST_ESTIMATORS.update(FOREST_REGRESSORS)
 FOREST_ESTIMATORS.update(FOREST_TRANSFORMERS)
 
 
-def check_classification_toy(name):
+def check_classification_toy(name, max_samples):
     """Check classification on a toy dataset."""
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
-    clf = ForestClassifier(n_estimators=10, random_state=1)
+    clf = ForestClassifier(n_estimators=10, random_state=1, max_samples=max_samples)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
 
-    clf = ForestClassifier(n_estimators=10, max_features=1, random_state=1)
+    clf = ForestClassifier(n_estimators=10, max_features=1, random_state=1, max_samples=max_samples)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
@@ -111,8 +111,8 @@ def check_classification_toy(name):
 
 
 def test_classification_toy():
-    for name in FOREST_CLASSIFIERS:
-        yield check_classification_toy, name
+    for name, max_samples in product(FOREST_CLASSIFIERS, (1.0, 3, 0.5)):
+        yield check_classification_toy, name, max_samples
 
 
 def check_iris_criterion(name, criterion):
