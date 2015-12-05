@@ -267,9 +267,14 @@ class LandmarkIsomap(Isomap):
         The number of parallel jobs to run.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
-    n_landmarks : int, optional (default = 'auto' )
+    n_landmarks : int, optional (default = 'auto')
         The number of landmarks used when embedding the data set.
         Must be a value between n_components + 1 and n_samples.
+        This parameter will be ignored if landmarks was passed.
+
+    landmarks : array-like, optional (default = None)
+        The list of landmarks. If none was passed, a list of size
+        n_landmarks will be randomly generate.
 
     Attributes
     ----------
@@ -288,6 +293,9 @@ class LandmarkIsomap(Isomap):
 
     dist_matrix_ : array-like, shape (n_samples, n_samples)
         Stores the geodesic distance matrix of training data.
+
+    landmarks_ : array-like, shape (n_landmarks,)
+        Stores the indices of the selected landmarks.
 
     References
     ----------
@@ -311,12 +319,14 @@ class LandmarkIsomap(Isomap):
     def _get_landmarks(self, X):
         """Get the landmarks from a data set X.
 
-        If the landmarks were passed in the constructor, returns them. Otherwise,
-        randomly selects n_landmarks (contained in the interval [0, |X|)).
+        If the landmarks were passed in the constructor, returns them.
+        Otherwise, randomly selects n_landmarks (contained in the
+        interval [0, |X|)).
 
-        If n_landmarks is 'auto', selects n_components + 1 (the necessary landmarks
-        required to triangulate a samples' position in the n_components-dimensional
-        embedding plus a security margin (1% of the size of the data set X).
+        If n_landmarks is 'auto', selects n_components + 1 (the necessary
+        landmarks required to triangulate a samples' position in the
+        n_components-dimensional embedding plus a security margin (1% of
+        the size of the data set X).
 
         Parameters
         ----------
