@@ -349,8 +349,6 @@ class LandmarkIsomap(Isomap):
                                      tol=self.tol, max_iter=self.max_iter,
                                      n_jobs=self.n_jobs)
 
-        self.landmarks_ = self._get_landmarks(X)
-
         kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
                                mode='distance', n_jobs=self.n_jobs)
 
@@ -358,7 +356,9 @@ class LandmarkIsomap(Isomap):
                                                 method=self.path_method,
                                                 directed=True)
 
-        G = self.dist_matrix_[self.landmarks_, :][:, self.landmarks_]
+        landmarks = self._get_landmarks(X)
+
+        G = self.dist_matrix_[landmarks, :][:, landmarks]
         G **= 2
         G *= -0.5
 
