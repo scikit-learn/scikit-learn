@@ -796,7 +796,7 @@ def rbf_kernel(X, Y=None, gamma=None):
 
     Y : array of shape (n_samples_Y, n_features)
 
-    gamma : float
+    gamma : float (default = 1.0 / n_samples_X)
 
     Returns
     -------
@@ -828,7 +828,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
     ----------
     X : array of shape (n_samples_X, n_features)
     Y : array of shape (n_samples_Y, n_features)
-    gamma : float
+    gamma : float (default = 1.0 / n_samples_X)
 
     Returns
     -------
