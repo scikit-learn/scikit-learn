@@ -113,6 +113,13 @@ def test_pipeline():
     clf.fit(X, y)
     assert_less(.9, clf.score(X, y))
 
+    # Check L-Isomap does not raise errors.
+    clf = pipeline.Pipeline(
+        [('isomap', manifold.Isomap(n_landmarks='auto')),
+         ('clf', neighbors.KNeighborsClassifier())])
+    clf.fit(X, y)
+    assert_less(.9, clf.score(X, y))
+
 
 def test_isomap_clone_bug():
     # regression test for bug reported in #6062

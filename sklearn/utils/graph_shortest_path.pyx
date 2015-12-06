@@ -27,7 +27,8 @@ ITYPE = np.int32
 ctypedef np.int32_t ITYPE_t
 
 
-def graph_shortest_path(dist_matrix, directed=True, method='auto'):
+def graph_shortest_path(dist_matrix, directed=True, method='auto',
+                        only_vertices=None):
     """
     Perform a shortest-path graph search on a positive directed or
     undirected graph.
@@ -49,12 +50,18 @@ def graph_shortest_path(dist_matrix, directed=True, method='auto'):
         'auto' : attempt to choose the best method for the current problem
         'FW' : Floyd-Warshall algorithm.  O[N^3]
         'D' : Dijkstra's algorithm with Fibonacci stacks.  O[(k+log(N))N^2]
+    only_vertices : array-line, (default=None).
+        Contains the sources of the shortest-paths that should be computed.
+        If None, assumes that all vertices [0, N) should be used as sources,
+        and all shortest-paths should be calculated.
 
     Returns
     -------
-    G : np.ndarray, float, shape = [N,N]
-        G[i,j] gives the shortest distance from point i to point j
-        along the graph.
+    G : np.ndarray, float, shape = [len(only_vertices),N]
+        G[i,j] gives the shortest distance from point only_vertices[i]
+        in the dist_matrix to point j.
+        If only_vertices is None, G[i, :] represents the shortest distances
+        from point i to all the other points along the graph.
 
     Notes
     -----
@@ -74,8 +81,12 @@ def graph_shortest_path(dist_matrix, directed=True, method='auto'):
     N = dist_matrix.shape[0]
     Nk = len(dist_matrix.data)
 
+    if only_vertices is None:
+        # All shortest-paths should be computed.
+        only_vertices = list(range(N))
+
     if method == 'auto':
-        if Nk < N * N / 4:
+        if Nk * len(only_vertices) / N < N * N / 4:
             method = 'D'
         else:
             method = 'FW'
@@ -83,9 +94,15 @@ def graph_shortest_path(dist_matrix, directed=True, method='auto'):
     if method == 'FW':
         graph = np.asarray(dist_matrix.toarray(), dtype=DTYPE, order='C')
         floyd_warshall(graph, directed)
+
+        if len(only_vertices) < N:
+            # Keep only the requested shortest-paths.
+            graph = graph[only_vertices]
+
     elif method == 'D':
-        graph = np.zeros((N, N), dtype=DTYPE, order='C')
-        dijkstra(dist_matrix, graph, directed)
+        graph = np.zeros((len(only_vertices), N), dtype=DTYPE, order='C')
+
+        dijkstra(dist_matrix, only_vertices, graph, directed)
     else:
         raise ValueError("unrecognized method '%s'" % method)
 
@@ -116,7 +133,7 @@ cdef np.ndarray floyd_warshall(np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
         the matrix of shortest paths between points.
         If no path exists, the path length is zero
     """
-    cdef int N = graph.shape[0]
+    cdef int N = graph.shape[1]
     assert graph.shape[1] == N
 
     cdef unsigned int i, j, k, m
@@ -156,6 +173,7 @@ cdef np.ndarray floyd_warshall(np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
 
 @cython.boundscheck(False)
 cdef np.ndarray dijkstra(dist_matrix,
+                         vertices,
                          np.ndarray[DTYPE_t, ndim=2] graph,
                          int directed=0):
     """
@@ -163,10 +181,12 @@ cdef np.ndarray dijkstra(dist_matrix,
 
     Parameters
     ----------
-    graph : array or sparse matrix
+    dist_matrix : array-like or sparse matrix
         dist_matrix is the matrix of distances betweeen connected points.
         unconnected points have distance=0.  It will be converted to
         a csr_matrix internally
+    vertices : array-like
+        The vertices which should have their shortest-path trees computed.
     indptr :
         These arrays encode a distance matrix in compressed-sparse-row
         format.
@@ -186,7 +206,7 @@ cdef np.ndarray dijkstra(dist_matrix,
         the matrix of shortest paths between points.
         If no path exists, the path length is zero
     """
-    cdef unsigned int N = graph.shape[0]
+    cdef unsigned int N = graph.shape[1]
     cdef unsigned int i
 
     cdef FibonacciHeap heap
@@ -210,12 +230,12 @@ cdef np.ndarray dijkstra(dist_matrix,
     heap.min_node = NULL
 
     if directed:
-        for i from 0 <= i < N:
-            dijkstra_directed_one_row(i, neighbors, distances, indptr,
-                                      graph, &heap, nodes)
+        for pos_in_graph, vertex in enumerate(vertices):
+            dijkstra_directed_one_row(vertex, pos_in_graph, neighbors,
+                                      distances, indptr, graph, &heap, nodes)
     else:
-        #use the csr -> csc sparse matrix conversion to quickly get
-        # both directions of neigbors
+        # Use the csr -> csc sparse matrix conversion to quickly get
+        # both directions of neighbors.
         dist_matrix_T = dist_matrix.T.tocsr()
 
         distances2 = np.asarray(dist_matrix_T.data,
@@ -225,9 +245,9 @@ cdef np.ndarray dijkstra(dist_matrix,
         indptr2 = np.asarray(dist_matrix_T.indptr,
                              dtype=ITYPE, order='C')
 
-        for i from 0 <= i < N:
-            dijkstra_one_row(i, neighbors, distances, indptr,
-                             neighbors2, distances2, indptr2,
+        for pos_in_graph, vertex in enumerate(vertices):
+            dijkstra_one_row(vertex, pos_in_graph, neighbors, distances,
+                             indptr, neighbors2, distances2, indptr2,
                              graph, &heap, nodes)
 
     free(nodes)
@@ -469,8 +489,8 @@ cdef FibonacciNode* remove_min(FibonacciHeap* heap):
 
 
 @cython.boundscheck(False)
-cdef void dijkstra_directed_one_row(
-                    unsigned int i_node,
+cdef void dijkstra_directed_one_row(unsigned int i_node,
+                    unsigned int pos_in_graph,
                     np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors,
                     np.ndarray[DTYPE_t, ndim=1, mode='c'] distances,
                     np.ndarray[ITYPE_t, ndim=1, mode='c'] indptr,
@@ -484,6 +504,10 @@ cdef void dijkstra_directed_one_row(
     Parameters
     ----------
     i_node : index of source point
+    pos_in_graph : int
+        index of source point in graph matrix.
+        This might differ from i_node value if some
+        shortest-path doesn't need to be computed.
     neighbors : array, shape = [N,]
         indices of neighbors for each point
     distances : array, shape = [N,]
@@ -497,7 +521,7 @@ cdef void dijkstra_directed_one_row(
     heap : the Fibonacci heap object to use
     nodes : the array of nodes to use
     """
-    cdef unsigned int N = graph.shape[0]
+    cdef unsigned int N = graph.shape[1]
     cdef unsigned int i
     cdef FibonacciNode *v
     cdef FibonacciNode *current_neighbor
@@ -527,11 +551,12 @@ cdef void dijkstra_directed_one_row(
                                  v.val + dist)
 
         #v has now been scanned: add the distance to the results
-        graph[i_node, v.index] = v.val
+        graph[pos_in_graph, v.index] = v.val
 
 
 @cython.boundscheck(False)
 cdef void dijkstra_one_row(unsigned int i_node,
+                    unsigned int pos_in_graph,
                     np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors1,
                     np.ndarray[DTYPE_t, ndim=1, mode='c'] distances1,
                     np.ndarray[ITYPE_t, ndim=1, mode='c'] indptr1,
@@ -548,6 +573,10 @@ cdef void dijkstra_one_row(unsigned int i_node,
     Parameters
     ----------
     i_node : index of source point
+    pos_in_graph : int
+        index of source point in graph matrix.
+        This might differ from i_node value if some
+        shortest-path doesn't need to be computed.
     neighbors[1,2] : array, shape = [N,]
         indices of neighbors for each point
     distances[1,2] : array, shape = [N,]
@@ -557,12 +586,12 @@ cdef void dijkstra_one_row(unsigned int i_node,
         neighbors1[indptr1[i]:indptr1[i+1]] and
         neighbors2[indptr2[i]:indptr2[i+1]]
     graph : array, shape = (N,)
-        on return, graph[i_node] contains the path lengths from
+        on return, graph[i_node_in_graph] contains the path lengths from
         i_node to each target
     heap : the Fibonacci heap object to use
     nodes : the array of nodes to use
     """
-    cdef unsigned int N = graph.shape[0]
+    cdef unsigned int N = graph.shape[1]
     cdef unsigned int i
     cdef FibonacciNode *v
     cdef FibonacciNode *current_neighbor
@@ -607,4 +636,4 @@ cdef void dijkstra_one_row(unsigned int i_node,
                                  v.val + dist)
 
         #v has now been scanned: add the distance to the results
-        graph[i_node, v.index] = v.val
+        graph[pos_in_graph, v.index] = v.val
