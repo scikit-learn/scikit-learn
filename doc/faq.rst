@@ -280,18 +280,20 @@ How do I set a random_state for an entire execution?
 ----------------------------------------------------
 
 For testing and replicability, it is often important to have the entire execution
-controlled by a single seed for the pseudo-random number generator used in algorithms
-that have a randomized component. Scikit-learn does not use its own global random state;
-whenever a RandomState instance or an integer random seed is not provided as an argument,
-it relies on the numpy global random state, which can be set using :func:`numpy.random.seed`.
-For example, to set an execution's numpy global random state to 42, one could execute
-the following in his or her script::
+controlled by a single seed for the pseudo-random number generator used in
+algorithms that have a randomized component. Scikit-learn does not use its own
+global random state; whenever a RandomState instance or an integer random seed
+is not provided as an argument, it relies on the numpy global random state,
+which can be set using :func:`numpy.random.seed`.
+For example, to set an execution's numpy global random state to 42, one could
+execute the following in his or her script::
 
     import numpy as np
     np.random.seed(42)
 
-However, a global random state is prone to modification by other code during execution. Thus, the only
-way to ensure replicability is to pass ``RandomState`` instances everywhere. In ``cross_val_score``
-function, there's no option to provide a ``RandomState`` instance, so replicability can only be
-ensured by creating a cross-validation generator or an iterable and passing it to ``cross_val_score``
-through the ``cv`` parameter.
+However, a global random state is prone to modification by other code during
+execution. Thus, the only way to ensure replicability is to pass ``RandomState``
+instances everywhere. In the ``cross_val_score`` function, there's no option
+to provide a ``RandomState`` instance, so replicability can only be ensured by
+creating a cross-validation generator or an iterable and passing it to
+``cross_val_score``through the ``cv`` parameter.
