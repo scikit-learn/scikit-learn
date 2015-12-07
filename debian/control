@@ -63,7 +63,7 @@ Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends}, python3-numpy, python3-scipy, python3-sklearn-lib(>= ${source:Version}),
          python3-joblib (>= 0.9.2),
 Provides: ${python:Provides}
-Recommends: python-nose, python-matplotlib
+Recommends: python3-nose, python3-matplotlib
 Suggests: python3-dap, python-sklearn-doc, ipython3
 Enhances: python3-mvpa2, python3-mdp
 Description: Python modules for machine learning and data mining

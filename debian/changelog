@@ -1,3 +1,11 @@
+scikit-learn (0.17.0-3) UNRELEASED; urgency=medium
+
+  * debian/control
+    - recommend python3- versions of packages for python3-sklearn. Thanks
+      Christopher Baines
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 06 Dec 2015 20:18:45 -0500
+
 scikit-learn (0.17.0-2) unstable; urgency=medium
 
   * debian/copyright
