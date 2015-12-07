@@ -179,7 +179,7 @@ def _format_traceback_lines(lnum, index, lines, lvals=None):
         res.append(line)
         if lvals and i == lnum:
             res.append(lvals + '\n')
-        i = i + 1
+        i += 1
     return res
 
 

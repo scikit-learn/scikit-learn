@@ -1,4 +1,4 @@
-"""This test for the LFW require medium-size data dowloading and processing
+"""This test for the LFW require medium-size data downloading and processing
 
 If the data has not been already downloaded by running the examples,
 the tests won't run (skipped).

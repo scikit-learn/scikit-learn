@@ -10,7 +10,7 @@ extern "C" {
 struct svm_node
 {
 	int dim;
-	int ind; /* index. A bit redundanat, but needed if using a
+	int ind; /* index. A bit redundant, but needed if using a
                     precomputed kernel */
 	double *values;
 };

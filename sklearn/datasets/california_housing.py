@@ -119,7 +119,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     data[:, 5] = data[:, 4] / data[:, 5]
 
     # target in units of 100,000
-    target = target / 100000.0
+    target /= 100000.0
 
     return Bunch(data=data,
                  target=target,

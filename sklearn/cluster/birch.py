@@ -21,7 +21,7 @@ from .hierarchical import AgglomerativeClustering
 
 def _iterate_sparse_X(X):
     """This little hack returns a densified row when iterating over a sparse
-    matrix, insted of constructing a sparse matrix for every row that is
+    matrix, instead of constructing a sparse matrix for every row that is
     expensive.
     """
     n_samples = X.shape[0]

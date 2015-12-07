@@ -82,6 +82,6 @@ for name, penalty in (('unreg', 1), ('reg', 0.05)):
 
     plt.xticks(())
     plt.yticks(())
-    fignum = fignum + 1
+    fignum += 1
 
 plt.show()
