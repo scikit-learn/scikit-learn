@@ -476,7 +476,7 @@ class LabelKFold(_BaseKFold):
                              " than the number of labels: %d."
                              % (self.n_folds, n_labels))
 
-        # Weight labels by their number of occurences
+        # Weight labels by their number of occurrences
         n_samples_per_label = np.bincount(labels)
 
         # Distribute the most frequent labels first

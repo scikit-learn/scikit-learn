@@ -32,7 +32,7 @@ np.random.seed(0)
 n_samples, n_features = 100, 100
 # Create Gaussian data
 X = np.random.randn(n_samples, n_features)
-# Create weigts with a precision lambda_ of 4.
+# Create weights with a precision lambda_ of 4.
 lambda_ = 4.
 w = np.zeros(n_features)
 # Only keep 10 weights of interest

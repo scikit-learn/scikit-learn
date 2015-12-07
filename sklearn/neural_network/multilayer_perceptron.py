@@ -1074,7 +1074,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
         Learning rate schedule for weight updates.
 
-        -'constant', is a constant learnign rate given by
+        -'constant', is a constant learning rate given by
          'learning_rate_init'.
 
         -'invscaling' gradually decreases the learning rate ``learning_rate_`` at

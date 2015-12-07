@@ -322,7 +322,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
         This option is valid only when specifying a connectivity matrix.
 
     linkage : {"average", "complete"}, optional, default: "complete"
-        Which linkage critera to use. The linkage criterion determines which
+        Which linkage criteria to use. The linkage criterion determines which
         distance to use between sets of observation.
             - average uses the average of the distances of each observation of
               the two sets

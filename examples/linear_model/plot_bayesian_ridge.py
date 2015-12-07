@@ -25,11 +25,11 @@ from scipy import stats
 from sklearn.linear_model import BayesianRidge, LinearRegression
 
 ###############################################################################
-# Generating simulated data with Gaussian weigthts
+# Generating simulated data with Gaussian weights
 np.random.seed(0)
 n_samples, n_features = 100, 100
 X = np.random.randn(n_samples, n_features)  # Create Gaussian data
-# Create weigts with a precision lambda_ of 4.
+# Create weights with a precision lambda_ of 4.
 lambda_ = 4.
 w = np.zeros(n_features)
 # Only keep 10 weights of interest

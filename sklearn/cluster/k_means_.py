@@ -1047,7 +1047,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
 def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
                             n_samples, centers_squared_diff, batch_inertia,
                             context, verbose=0):
-    """Helper function to encapsulte the early stopping logic"""
+    """Helper function to encapsulate the early stopping logic"""
     # Normalize inertia to be able to compare values when
     # batch_size changes
     batch_inertia /= model.batch_size

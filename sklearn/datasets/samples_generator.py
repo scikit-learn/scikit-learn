@@ -177,7 +177,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     for i in range(n_samples - sum(n_samples_per_cluster)):
         n_samples_per_cluster[i % n_clusters] += 1
 
-    # Intialize X and y
+    # Initialize X and y
     X = np.zeros((n_samples, n_features))
     y = np.zeros(n_samples, dtype=np.int)
 

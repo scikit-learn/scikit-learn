@@ -182,7 +182,7 @@ class NumpyHasher(Hasher):
             # the array is Fortran rather than C contiguous
             except (ValueError, BufferError):
                 # Cater for non-single-segment arrays: this creates a
-                # copy, and thus aleviates this issue.
+                # copy, and thus alleviates this issue.
                 # XXX: There might be a more efficient way of doing this
                 obj_bytes_view = obj.flatten().view(self.np.uint8)
                 self._hash.update(self._getbuffer(obj_bytes_view))

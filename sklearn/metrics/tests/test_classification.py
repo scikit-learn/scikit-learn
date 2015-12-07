@@ -242,7 +242,7 @@ def test_average_precision_score_duplicate_values():
     # Duplicate values with precision-recall require a different
     # processing than when computing the AUC of a ROC, because the
     # precision-recall curve is a decreasing curve
-    # The following situtation corresponds to a perfect
+    # The following situation corresponds to a perfect
     # test statistic, the average_precision_score should be 1
     y_true = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1]
     y_score = [0, .1, .1, .4, .5, .6, .6, .9, .9, 1, 1]

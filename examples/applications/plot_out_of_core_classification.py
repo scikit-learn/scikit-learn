@@ -284,7 +284,7 @@ minibatch_size = 1000
 minibatch_iterators = iter_minibatches(data_stream, minibatch_size)
 total_vect_time = 0.0
 
-# Main loop : iterate on mini-batchs of examples
+# Main loop : iterate on mini-batches of examples
 for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
 
     tick = time.time()

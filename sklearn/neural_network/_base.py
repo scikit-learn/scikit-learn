@@ -211,7 +211,7 @@ def log_loss(y_true, y_prob):
 def binary_log_loss(y_true, y_prob):
     """Compute binary logistic loss for classification.
 
-    This is identitical to log_loss in binary classification case,
+    This is identical to log_loss in binary classification case,
     but is kept for its use in multilabel case.
 
     Parameters

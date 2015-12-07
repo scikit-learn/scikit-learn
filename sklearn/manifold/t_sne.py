@@ -520,7 +520,7 @@ class TSNE(BaseEstimator):
     perplexity : float, optional (default: 30)
         The perplexity is related to the number of nearest neighbors that
         is used in other manifold learning algorithms. Larger datasets
-        usually require a larger perplexity. Consider selcting a value
+        usually require a larger perplexity. Consider selecting a value
         between 5 and 50. The choice is not extremely critical since t-SNE
         is quite insensitive to this parameter.
 
@@ -664,7 +664,7 @@ class TSNE(BaseEstimator):
         Note that sparse arrays can only be handled by method='exact'.
         It is recommended that you convert your sparse array to dense
         (e.g. `X.toarray()`) if it fits in memory, or otherwise using a
-        dimensionality reduction technique (e.g. TrucnatedSVD).
+        dimensionality reduction technique (e.g. TruncatedSVD).
 
         Parameters
         ----------

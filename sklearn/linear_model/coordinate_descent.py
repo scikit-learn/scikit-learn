@@ -1984,7 +1984,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     alphas : array-like, optional
         List of alphas where to compute the models.
-        If not provided, set automaticlly.
+        If not provided, set automatically.
 
     n_alphas : int, optional
         Number of alphas along the regularization path

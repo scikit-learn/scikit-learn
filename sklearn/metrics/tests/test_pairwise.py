@@ -111,7 +111,7 @@ def test_pairwise_distances():
     assert_raises(TypeError, pairwise_distances, X, Y_sparse,
                   metric="minkowski")
 
-    # Test that a value error is raised if the metric is unkown
+    # Test that a value error is raised if the metric is unknown
     assert_raises(ValueError, pairwise_distances, X, Y, metric="blah")
 
 

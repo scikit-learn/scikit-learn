@@ -137,7 +137,7 @@ def _num_samples(x):
 
 
 def _shape_repr(shape):
-    """Return a platform independent reprensentation of an array shape
+    """Return a platform independent representation of an array shape
 
     Under Python 2, the `long` type introduces an 'L' suffix when using the
     default %r format for tuples of integers (typically used to store the shape
@@ -399,7 +399,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)
 
-        # make sure we acually converted to numeric:
+        # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind == "O":
             array = array.astype(np.float64)
         if not allow_nd and array.ndim >= 3:
