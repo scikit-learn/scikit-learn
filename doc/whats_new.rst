@@ -42,7 +42,6 @@ Enhancements
      method ``decision_path`` which returns the decision path of samples in
      the tree. By `Arnaud Joly`_.
 
-
    - The random forest, extra tree and decision tree estimators now has a
      method ``decision_path`` which returns the decision path of samples in
      the tree. By `Arnaud Joly`_.
@@ -63,6 +62,9 @@ Enhancements
      available in the multinomial case.
      (`#5251 <https://github.com/scikit-learn/scikit-learn/pull/5251>`_)
      By `Tom Dupre la Tour`_.
+
+   - Added ``n_jobs`` parameter to :class:`feature_selection.RFECV` to compute
+     the score on the test folds in parallel. By `Manoj Kumar`_
 
 Bug fixes
 .........
