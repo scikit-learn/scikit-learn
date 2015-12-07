@@ -1041,7 +1041,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     def _iter_indices(self, X, y=None, labels=None):
         n_samples = _num_samples(X)
         n_train, n_test, train_size, test_size = _validate_shuffle_split(n_samples, self.test_size,
-                                                  self.train_size, self.stratify_across_classes)
+                                                  self.train_size)
         classes, y_indices = np.unique(y, return_inverse=True)
         n_classes = classes.shape[0]
 
@@ -1145,7 +1145,7 @@ def _validate_shuffle_split_init(test_size, train_size,stratify_across_classes):
                         stratify_across_classes.__class__)
 
 
-def _validate_shuffle_split(n_samples, test_size, train_size, stratify_across_classes):
+def _validate_shuffle_split(n_samples, test_size, train_size):
     """
     Validation helper to check if the test/test sizes are meaningful wrt to the
     size of the data (n_samples)
