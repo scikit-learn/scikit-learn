@@ -772,11 +772,12 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
     def __init__(self, n_iter=10, test_size=0.1, train_size=None,
-                 random_state=None):
-        _validate_shuffle_split_init(test_size, train_size)
+                stratify_across_classes=False, random_state=None):
+        _validate_shuffle_split_init(test_size, train_size,stratify_across_classes)
         self.n_iter = n_iter
         self.test_size = test_size
         self.train_size = train_size
+        self.stratify_across_classes = stratify_across_classes
         self.random_state = random_state
 
     def split(self, X, y=None, labels=None):
@@ -1005,6 +1006,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
+    stratify_across_classes : bool (default is False)
+        If True, the sizes for the different classes in the training set
+        are made equal to the fixed percentage (or number) from the smallest class.
+        The underlying motivation is to avoid class-imbalance during training phase.
+
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
 
@@ -1028,14 +1034,14 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     """
 
     def __init__(self, n_iter=10, test_size=0.1, train_size=None,
-                 random_state=None):
+                 random_state=None, stratify_across_classes=False):
         super(StratifiedShuffleSplit, self).__init__(
-            n_iter, test_size, train_size, random_state)
+            n_iter, test_size, train_size, stratify_across_classes, random_state)
 
-    def _iter_indices(self, X, y, labels=None):
+    def _iter_indices(self, X, y=None, labels=None):
         n_samples = _num_samples(X)
-        n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
-                                                  self.train_size)
+        n_train, n_test, train_size, test_size = _validate_shuffle_split(n_samples, self.test_size,
+                                                  self.train_size, self.stratify_across_classes)
         classes, y_indices = np.unique(y, return_inverse=True)
         n_classes = classes.shape[0]
 
@@ -1057,8 +1063,14 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
         rng = check_random_state(self.random_state)
         p_i = class_counts / float(n_samples)
-        n_i = np.round(n_train * p_i).astype(int)
-        t_i = np.minimum(class_counts - n_i,
+        if self.stratify_across_classes:
+            n_train_per_class = np.round(class_counts*train_size)
+            smallest_size = np.max([1,np.min(n_train_per_class)])
+            n_i = np.tile(smallest_size,class_counts.shape).astype(int)
+            t_i = (class_counts - n_i).astype(int)
+        else:
+            n_i = np.round(n_train * p_i).astype(int)
+            t_i = np.minimum(class_counts - n_i,
                          np.round(n_test * p_i).astype(int))
 
         for _ in range(self.n_iter):
@@ -1089,14 +1101,19 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             yield train, test
 
 
-def _validate_shuffle_split_init(test_size, train_size):
-    """Validation helper to check the test_size and train_size at init
+def _validate_shuffle_split_init(test_size, train_size,stratify_across_classes):
+    """Validation helper to check the test_size, train_size and stratify_across_classes at init
 
     NOTE This does not take into account the number of samples which is known
     only at split
     """
     if test_size is None and train_size is None:
         raise ValueError('test_size and train_size can not both be None')
+
+    if test_size is not None and train_size is not None\
+            and (np.asarray(train_size).dtype.kind == 'f' and np.asarray(test_size).dtype.kind == 'f') \
+            and ( train_size + test_size != 1. ):
+        raise ValueError('test_size and train_size must sum to 1. Got %f' % np.sum(test_size+train_size) )
 
     if test_size is not None:
         if np.asarray(test_size).dtype.kind == 'f':
@@ -1123,8 +1140,12 @@ def _validate_shuffle_split_init(test_size, train_size):
             # int values are checked during split based on the input
             raise ValueError("Invalid value for train_size: %r" % train_size)
 
+    if not isinstance(stratify_across_classes,bool):
+        raise TypeError('stratify_across_classes must be a boolean flag. Got %s' %
+                        stratify_across_classes.__class__)
 
-def _validate_shuffle_split(n_samples, test_size, train_size):
+
+def _validate_shuffle_split(n_samples, test_size, train_size, stratify_across_classes):
     """
     Validation helper to check if the test/test sizes are meaningful wrt to the
     size of the data (n_samples)
@@ -1139,20 +1160,34 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
         raise ValueError("train_size=%d should be smaller than the number of"
                          " samples %d" % (train_size, n_samples))
 
+    # this check is necessary to ensure expected behaviour
+    if (np.asarray(test_size).dtype.kind == 'f' and np.asarray(train_size).dtype.kind == 'f'
+        and test_size+train_size>1.0):
+        raise ValueError("Sum of train and test size percentages must be 1. Got %f" % test_size+train_size)
+
     if np.asarray(test_size).dtype.kind == 'f':
         n_test = ceil(test_size * n_samples)
+        if train_size is None:
+            train_size = 1.0 - test_size
+            n_train = n_samples - n_test
     elif np.asarray(test_size).dtype.kind == 'i':
         n_test = float(test_size)
-
-    if train_size is None:
-        n_train = n_samples - n_test
+        if train_size is None:
+            train_size = 1.0 - test_size
+            n_train = n_samples - n_test
     elif np.asarray(train_size).dtype.kind == 'f':
         n_train = floor(train_size * n_samples)
-    else:
+        if test_size is None:
+            test_size = 1.0 - train_size
+            n_test = n_samples - n_train
+    elif np.asarray(train_size).dtype.kind == 'i':
         n_train = float(train_size)
-
-    if test_size is None:
         n_test = n_samples - n_train
+    else:
+        raise TypeError('Unexpected specification of train_size and test_size.'
+                        'Only one of test_size or train_size must be specified.'
+                        ' either as percentage p such that 0.0 < p < 1.0, '
+                        '     or as an integer n such that 0 < n < #samples.')
 
     if n_train + n_test > n_samples:
         raise ValueError('The sum of train_size and test_size = %d, '
@@ -1160,7 +1195,12 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
                          'samples %d. Reduce test_size and/or '
                          'train_size.' % (n_train + n_test, n_samples))
 
-    return int(n_train), int(n_test)
+    if n_train < 1 or n_test < 1:
+        raise ValueError('There must be at least one data point for training'
+                            'and one data point for testing. Got {0:d} training'
+                            'and {1:d} testing points.'.format(n_train, n_test))
+
+    return int(n_train), int(n_test), float(train_size), float(test_size)
 
 
 class PredefinedSplit(BaseCrossValidator):
