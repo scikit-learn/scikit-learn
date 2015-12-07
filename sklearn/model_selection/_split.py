@@ -896,7 +896,7 @@ class ShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self, X, y=None, labels=None):
         n_samples = _num_samples(X)
-        n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
+        n_train, n_test, train_size, test_size = _validate_shuffle_split(n_samples, self.test_size,
                                                   self.train_size)
         rng = check_random_state(self.random_state)
         for i in range(self.n_iter):
