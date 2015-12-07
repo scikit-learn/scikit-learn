@@ -53,7 +53,7 @@ MAX_IDEAL_BATCH_DURATION = 2
 # can cause third party libraries to crash. Under Python 3.4+ it is possible
 # to set an environment variable to switch the default start method from
 # 'fork' to 'forkserver' or 'spawn' to avoid this issue albeit at the cost
-# of causing semantic changes and some additional pool instanciation overhead.
+# of causing semantic changes and some additional pool instantiation overhead.
 if hasattr(mp, 'get_context'):
     method = os.environ.get('JOBLIB_START_METHOD', '').strip() or None
     DEFAULT_MP_CONTEXT = mp.get_context(method=method)

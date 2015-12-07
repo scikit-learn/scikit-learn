@@ -194,7 +194,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
                       "You may want to reshape your data array")
     n_samples, n_features = X.shape
 
-    # optionaly center data
+    # optionally center data
     if not assume_centered:
         X = X - X.mean(0)
 

@@ -50,7 +50,7 @@ def test_pca():
 def test_no_empty_slice_warning():
     # test if we avoid numpy warnings for computing over empty arrays
     n_components = 10
-    n_features = n_components + 2  # anything > n_comps triggerred it in 0.16
+    n_features = n_components + 2  # anything > n_comps triggered it in 0.16
     X = np.random.uniform(-1, 1, size=(n_components, n_features))
     pca = PCA(n_components=n_components)
     assert_no_warnings(pca.fit, X)
@@ -69,7 +69,7 @@ def test_whitening():
                np.dot(np.diag(np.linspace(10.0, 1.0, rank)),
                       rng.randn(rank, n_features)))
     # the component-wise variance of the first 50 features is 3 times the
-    # mean component-wise variance of the remaingin 30 features
+    # mean component-wise variance of the remaining 30 features
     X[:, :50] *= 3
 
     assert_equal(X.shape, (n_samples, n_features))

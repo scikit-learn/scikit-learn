@@ -175,7 +175,7 @@ def test_random_choice_csc_errors():
     assert_raises(ValueError, random_choice_csc, 4, classes,
                   class_probabilites, 1)
 
-    # Given proabilites don't sum to 1
+    # Given probabilities don't sum to 1
     classes = [np.array([0, 1]),  np.array([0, 1, 2])]
     class_probabilites = [np.array([0.5, 0.6]), np.array([0.6, 0.1, 0.3])]
     assert_raises(ValueError, random_choice_csc, 4, classes,

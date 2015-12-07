@@ -25,7 +25,7 @@ def test_additive_chi2_sampler():
     # test that AdditiveChi2Sampler approximates kernel on random data
 
     # compute exact kernel
-    # appreviations for easier formular
+    # abbreviations for easier formula
     X_ = X[:, np.newaxis, :]
     Y_ = Y[np.newaxis, :, :]
 

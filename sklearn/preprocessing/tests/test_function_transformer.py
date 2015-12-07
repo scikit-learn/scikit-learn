@@ -26,7 +26,7 @@ def test_delegate_to_func():
         'transform should have returned X unchanged',
     )
 
-    # The function should only have recieved X.
+    # The function should only have received X.
     assert_equal(
         args_store,
         [X],
