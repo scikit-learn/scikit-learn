@@ -339,7 +339,7 @@ class PCA(BaseEstimator, TransformerMixin):
         components_ = self.components_
         exp_var = self.explained_variance_
         if self.whiten:
-            components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
+            components_ *= np.sqrt(exp_var[:, np.newaxis])
         exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
         cov = np.dot(components_.T * exp_var_diff, components_)
         cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace

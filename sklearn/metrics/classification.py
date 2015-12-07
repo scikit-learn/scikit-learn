@@ -1,4 +1,4 @@
-"""Metrics to assess performance on classification task given classe prediction
+"""Metrics to assess performance on classification task given class prediction
 
 Functions named as ``*_score`` return a scalar value to maximize: the higher
 the better

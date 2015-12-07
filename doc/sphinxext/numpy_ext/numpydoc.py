@@ -19,8 +19,7 @@ It will:
 
 from __future__ import unicode_literals
 
-import sys # Only needed to check Python version
-import os
+import sys  # Only needed to check Python version
 import re
 import pydoc
 from .docscrape_sphinx import get_doc_object

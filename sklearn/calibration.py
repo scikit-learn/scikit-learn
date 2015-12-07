@@ -49,7 +49,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     method : 'sigmoid' or 'isotonic'
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
-        non-parameteric approach. It is not advised to use isotonic calibration
+        non-parametric approach. It is not advised to use isotonic calibration
         with too few calibration samples ``(<<1000)`` since it tends to overfit.
         Use sigmoids (Platt's calibration) in this case.
 

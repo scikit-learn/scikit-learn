@@ -69,7 +69,7 @@ def load_data(dtype=np.float32, order='F'):
     y = data["target"]
 
     # Normalize features
-    X = X / 255
+    X /= 255
 
     ## Create train-test split (as [Joachims, 2006])
     print("Creating train-test split...")

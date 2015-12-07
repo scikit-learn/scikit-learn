@@ -80,5 +80,5 @@ for kernel in ('linear', 'poly', 'rbf'):
 
     plt.xticks(())
     plt.yticks(())
-    fignum = fignum + 1
+    fignum += 1
 plt.show()
