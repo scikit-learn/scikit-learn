@@ -1160,6 +1160,10 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
         raise ValueError("train_size=%d should be smaller than the number of"
                          " samples %d" % (train_size, n_samples))
 
+    # to work around UnboundLocalError
+    n_train = None
+    n_test = None
+
     # this check is necessary to ensure expected behaviour
     if (np.asarray(test_size).dtype.kind == 'f' and np.asarray(train_size).dtype.kind == 'f'
         and test_size+train_size>1.0):
