@@ -842,8 +842,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     It can also have a regularization term added to the loss function
     that shrinks model parameters to prevent overfitting.
 
-    This implementation works with data represented as dense and sparse numpy
-    arrays of floating point values.
+    This implementation works with data represented as dense numpy arrays or
+    sparse scipy arrays of floating point values.
 
     References
     ----------
