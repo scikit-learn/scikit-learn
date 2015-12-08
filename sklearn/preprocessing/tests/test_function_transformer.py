@@ -84,7 +84,7 @@ def test_np_log():
 
 
 def test_kw_arg():
-    X = np.arange(10).reshape((5, 2))
+    X = np.linspace(0, 1, num=10).reshape((5, 2))
 
     F = FunctionTransformer(np.around, kw_args=dict(decimals=3))
 
@@ -94,7 +94,7 @@ def test_kw_arg():
 
 
 def test_kw_arg_update():
-    X = np.arange(10).reshape((5, 2))
+    X = np.linspace(0, 1, num=10).reshape((5, 2))
 
     F = FunctionTransformer(np.around, kw_args=dict(decimals=3))
 
@@ -106,7 +106,7 @@ def test_kw_arg_update():
 
 
 def test_kw_arg_reset():
-    X = np.arange(10).reshape((5, 2))
+    X = np.linspace(0, 1, num=10).reshape((5, 2))
 
     F = FunctionTransformer(np.around, kw_args=dict(decimals=3))
 
