@@ -550,7 +550,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
-        Only applies if ``analyzer == 'word'``.
 
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
