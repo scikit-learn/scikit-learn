@@ -3,22 +3,20 @@
 Early stopping of Gradient Boosting
 ===================================
 
-Gradient boosting works by fitting a classifier at each stage to improve
-prediction over the training data. The improvement in prediction succesively
-reduces as more classifiers are added. The
-:class:`~sklearn.ensemble.GradientBoostingClassifierCV` halts the training
-when no there is no significant improvement in the last few iterations. This
-example illustrates how the GradientBoostingClassifierCV class can acheive
-almost the same accuracy as compared to the GradientBoostingClassifier class
-with significantly lesser number of estimators. This can save memory and
-prediction time.
+Gradient boosting works by fitting a classifier at each iteration to improve
+its prediction over the training data. The improvement in prediction
+succesively reduces as more classifiers are added. The
+:class:`~sklearn.ensemble.GradientBoostingClassifierCV` class halts the
+training when no there is no significant improvement in the last few
+iterations. This example illustrates how the GradientBoostingClassifierCV class
+can acheive almost the same accuracy as compared to the
+GradientBoostingClassifier class with significantly lesser number of
+estimators. This can save memory and prediction time. Moreover, the class can
+be used as a drop-in replacement for the GradientBoostingClassifier class.
 
 """
 
 print(__doc__)
-
-import time
-import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -53,20 +51,17 @@ for X, y in data_list:
     n_gb.append(gb.n_estimators)
     n_gbcv.append(gbcv.best_estimator_.n_estimators)
 
-
 plt.figure(figsize=(9, 5))
 bar_width = 0.2
 n = len(data_list)
 index = np.arange(0, n*bar_width, bar_width)*2.5
 index = index[0:n]
 
-
-
 plt.subplot(121)
 
 plt.bar(index, n_gb, bar_width, label='Gradient Boosting', color='teal')
-plt.bar(index + bar_width, n_gbcv, bar_width, 
-                 label='Gradient Boosting CV', color='cyan')
+plt.bar(index + bar_width, n_gbcv, bar_width,
+        label='Gradient Boosting CV', color='cyan')
 
 max_y = np.amax(np.maximum(n_gb, n_gbcv))
 
@@ -83,8 +78,8 @@ plt.ylabel('Number of Estimators')
 plt.subplot(122)
 
 plt.bar(index, score_gb, bar_width, label='Gradient Boosting', color='crimson')
-plt.bar(index + bar_width, score_gbcv, bar_width, 
-                 label='Gradient Boosting CV', color='coral')
+plt.bar(index + bar_width, score_gbcv, bar_width,
+        label='Gradient Boosting CV', color='coral')
 max_y = np.amax(np.maximum(score_gb, score_gbcv))
 
 plt.xticks(index + bar_width, names)
