@@ -559,10 +559,13 @@ def test_stratified_shuffle_split_even():
                     counter[id] += 1
         assert_equal(n_splits, n_iter)
 
-        n_train, n_test = _validate_shuffle_split(n_samples,
+        n_train, n_test, _, _ = _validate_shuffle_split(n_samples,
                                                   test_size=1./n_folds,
                                                   train_size=1.-(1./n_folds))
 
+        # TODO need to revise this test for the proposed modification of StratifiedShuffleSplit
+        # TODO this is also to do with ensuring train_size + test_size = 1.0 when they are float
+        # TODO and similary when they are int, train_size + test_size = n_samples
         assert_equal(len(train), n_train)
         assert_equal(len(test), n_test)
         assert_equal(len(set(train).intersection(test)), 0)

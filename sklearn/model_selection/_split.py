@@ -1160,38 +1160,63 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
         raise ValueError("train_size=%d should be smaller than the number of"
                          " samples %d" % (train_size, n_samples))
 
-    # to work around UnboundLocalError
-    n_train = None
-    n_test = None
+    if (np.asarray(test_size).dtype.kind == 'f' and np.asarray(train_size).dtype.kind == 'i' ) or \
+            (np.asarray(test_size).dtype.kind == 'i' and np.asarray(train_size).dtype.kind == 'f' ):
+        raise ValueError("Data types of train and test sizes mixed up. Choose either float or int, only one.")
 
     # this check is necessary to ensure expected behaviour
     if (np.asarray(test_size).dtype.kind == 'f' and np.asarray(train_size).dtype.kind == 'f'
-        and test_size+train_size>1.0):
+        and test_size+train_size!=1.0):
         raise ValueError("Sum of train and test size percentages must be 1. Got %f" % test_size+train_size)
+
+    if (np.asarray(test_size).dtype.kind == 'i' and np.asarray(train_size).dtype.kind == 'i'
+        and test_size+train_size != n_samples):
+        raise ValueError("Sum of train and test size must be n_samples. Got %f" % np.sum([test_size,train_size]))
+
+    # to work around the UnboundLocalError
+    n_test = None
+    n_train = None
 
     if np.asarray(test_size).dtype.kind == 'f':
         n_test = ceil(test_size * n_samples)
         if train_size is None:
             train_size = 1.0 - test_size
             n_train = n_samples - n_test
+        else:
+            # TODO probably incorrect way to handle this situation - need to discuss with core-dev and community
+            n_train = n_samples - n_test
     elif np.asarray(test_size).dtype.kind == 'i':
         n_test = float(test_size)
         if train_size is None:
-            train_size = 1.0 - test_size
+            train_size = n_samples - n_test
+            n_train = n_samples - n_test
+        else:
+            # assert ((np.asarray(train_size).dtype.kind == 'i') and (train_size+test_size == n_samples)), \
+            #     'when test_size is int, train_size also must be int and the sum must be n_samples'
+            # TODO assert np.asarray(train_size).dtype.kind == 'i', 'when test_size is int, train_size also must be int.'
             n_train = n_samples - n_test
     elif np.asarray(train_size).dtype.kind == 'f':
         n_train = floor(train_size * n_samples)
         if test_size is None:
             test_size = 1.0 - train_size
             n_test = n_samples - n_train
+        else:
+            # TODO assert ( (np.asarray(test_size).dtype.kind == 'f') and (train_size+test_size == 1.0)), \
+            #     'when train_size is float, test_size also must be float and they must sum to 1.0'
+            # assert np.asarray(test_size).dtype.kind == 'f', 'when train_size is float, test_size also must be float.'
+            n_test = n_samples - n_train
     elif np.asarray(train_size).dtype.kind == 'i':
         n_train = float(train_size)
         n_test = n_samples - n_train
+        test_size = int(n_test)
     else:
         raise TypeError('Unexpected specification of train_size and test_size.'
                         'Only one of test_size or train_size must be specified.'
                         ' either as percentage p such that 0.0 < p < 1.0, '
                         '     or as an integer n such that 0 < n < #samples.')
+
+    if n_test is None or n_train is None:
+        raise ValueError('Combination of various inputs led to invalid calculations.')
 
     if n_train + n_test > n_samples:
         raise ValueError('The sum of train_size and test_size = %d, '
@@ -1199,10 +1224,11 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
                          'samples %d. Reduce test_size and/or '
                          'train_size.' % (n_train + n_test, n_samples))
 
-    if n_train < 1 or n_test < 1:
-        raise ValueError('There must be at least one data point for training'
-                            'and one data point for testing. Got {0:d} training'
-                            'and {1:d} testing points.'.format(n_train, n_test))
+    # TODO find a way to handle the sticky situation in which float & int are mixed to specify train_size and test_size
+    # if n_train < 1 or n_test < 1:
+    #     raise ValueError('There must be at least one data point for training'
+    #                         'and one data point for testing. Got {0:d} training'
+    #                         'and {1:d} testing points.'.format(n_train, n_test))
 
     return int(n_train), int(n_test), float(train_size), float(test_size)
 
