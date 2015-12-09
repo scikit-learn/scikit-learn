@@ -1436,10 +1436,10 @@ def test_decision_path():
 def check_no_sparse_y_support(name):
     X, y = X_multilabel, csr_matrix(y_multilabel)
     TreeEstimator = ALL_TREES[name]
-    assert_raises(ValueError, TreeEstimator(random_state=0).fit, X, y)
+    assert_raises(TypeError, TreeEstimator(random_state=0).fit, X, y)
 
 
 def test_no_sparse_y_support():
     # Currently we don't support sparse y
     for name in ALL_TREES:
-        yield (check_decision_path, name)
+        yield (check_no_sparse_y_support, name)
