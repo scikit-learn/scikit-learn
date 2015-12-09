@@ -3792,7 +3792,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Peter Prettenhofer: http://sites.google.com/site/peterprettenhofer/
 
-.. _Alexandre Passos: <http://atpassos.posterous.com>
+.. _Alexandre Passos: http://atpassos.me
 
 .. _Nicolas Pinto: http://pinto.scripts.mit.edu/
 
