@@ -332,7 +332,7 @@ def test_fit():
 
 
 def test_partial_fit():
-    # Checks whether inserting array is consitent with fitted data.
+    # Checks whether inserting array is consistent with fitted data.
     # `partial_fit` method should set all attribute values correctly.
     n_samples = 12
     n_samples_partial_fit = 3

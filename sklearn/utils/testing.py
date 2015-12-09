@@ -111,7 +111,7 @@ except ImportError:
                                   callable_obj.__name__))
 
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
-# assert_raises_regex but lets keep the bacward compat in scikit-learn with
+# assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
 

@@ -110,7 +110,7 @@ for n_clusters in range_n_clusters:
     ax1.set_xlabel("The silhouette coefficient values")
     ax1.set_ylabel("Cluster label")
 
-    # The vertical line for average silhoutte score of all the values
+    # The vertical line for average silhouette score of all the values
     ax1.axvline(x=silhouette_avg, color="red", linestyle="--")
 
     ax1.set_yticks([])  # Clear the yaxis labels / ticks
