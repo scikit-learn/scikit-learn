@@ -96,7 +96,7 @@ In the case of QDA, there are no assumptions on the covariance matrices
 .. note:: **Relation with Gaussian Naive Bayes**
 
 	  If in the QDA model one assumes that the covariance matrices are diagonal,
-	  then this means that we assume the classes are conditionally independent,
+	  then this means that we assume the input features are conditionally independent given the label,
 	  and the resulting classifier is equivalent to the Gaussian Naive Bayes
 	  classifier :class:`naive_bayes.GaussianNB`.
 
