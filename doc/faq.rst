@@ -65,27 +65,19 @@ optimized file format such as HDF5 to reduce data load times. Various libraries
 such as H5Py, PyTables and pandas provides a Python interface for reading and
 writing data in that format.
 
-Can I add this new algorithm that I (or someone else) just published?
--------------------------------------------------------------------------
-No. As a rule we only add well-established algorithms. A rule of thumb is at least
+What are the inclusion criteria for algorithms ?
+-----------------------------------------------------
+As a rule we only add well-established algorithms. The minimal criterion is
 3 years since publications, 200+ citations and wide use and usefullness. A
 technique that provides a clear-cut improvement (e.g. an enhanced  data
-structure or efficient approximation) on a widely-used method will also be
-considered for inclusion.
-Your implementation doesn't need to be in scikit-learn to be used together
+structure or efficient approximation or both) on a widely-used method will also be considered for inclusion.
+Some exceptions may exist when an algorithm is not included  even if it does satisfy the above points. These may occur where constraints such as API's current ability to hold the algorithm, the amount of help needed to solve the future bugs and the hardness it creates for the current users' are not justified. 
+On top of this it is suggested that the contributor demonstrate the usefulness of the proposed algorithm/implementation with research papers, articles, some applications, use-cases and any other evidence to support the importance of the algorithm
+The implementation doesn't need to be in scikit-learn to be used together
 with scikit-learn tools, though. Implement your favorite algorithm
 in a scikit-learn compatible way, upload it to github and we will list
 it under :ref:`related_projects`.
 Also see selectiveness_.
-
-
-Can I add this classical algorithm from the 80s?
----------------------------------------------------
-Depends. If there is a common usecase within the scope of scikit-learn, such
-as classification, regression or clustering, where it outperforms methods
-that are already implemented in scikit-learn, we will consider it.
-
-.. _selectiveness:
 
 Why are you so selective on what algorithms you include in scikit-learn?
 ------------------------------------------------------------------------
