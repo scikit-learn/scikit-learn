@@ -1443,3 +1443,44 @@ def test_no_sparse_y_support():
     # Currently we don't support sparse y
     for name in ALL_TREES:
         yield (check_no_sparse_y_support, name)
+
+
+def test_invalid_categorical_str():
+    check = lambda nm: assert_raises(ValueError, ALL_TREES[nm]().fit, X, y,
+                                     categorical='example invalid string')
+    for name in ALL_TREES:
+        yield check, name
+
+
+def test_invalid_categorical_bool():
+    check = lambda nm: assert_raises(ValueError, ALL_TREES[nm]().fit, X, y,
+                                     categorical=[False, False, False])
+    for name in ALL_TREES:
+        yield check, name
+
+
+def check_invalid_categorical_idx(name):
+    Tree = ALL_TREES[name]
+    bad_catvals = [[1, 2], [-3], [[0]], [0, 0, 1]]
+    for catval in bad_catvals:
+        assert_raises(ValueError, Tree().fit, X, y, categorical=catval)
+
+
+def test_invalid_categorical_idx():
+    for name in ALL_TREES:
+        yield check_invalid_categorical_idx, name
+
+
+def check_no_sparse_with_categorical(name):
+    X, y, X_sparse = [DATASETS['toy'][z] for z in
+                      ['X', 'y', 'X_sparse']]
+    Tree = ALL_TREES[name]
+    assert_raises(NotImplementedError, Tree().fit, X_sparse, y,
+                  categorical='All')
+    assert_raises(NotImplementedError,
+                  Tree().fit(X, y, categorical='All').predict, X_sparse)
+
+
+def test_no_sparse_with_categorical():
+    for name in SPARSE_TREES:
+        yield check_no_sparse_with_categorical, name
