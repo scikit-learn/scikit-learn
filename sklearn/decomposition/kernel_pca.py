@@ -70,7 +70,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         maximum number of iterations for arpack
         Default: None (optimal value will be chosen by arpack)
 
-    remove_zero_eig : boolean, default=True
+    remove_zero_eig : boolean, default=False
         If True, then all components with zero eigenvalues are removed, so
         that the number of components in the output may be < n_components
         (and sometimes even zero due to numerical instability).
