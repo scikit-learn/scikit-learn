@@ -969,16 +969,16 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     Parameters
     ----------
-    penalty : str, 'l1' or 'l2'
+    penalty : str, 'l1' or 'l2', default: 'l2'
         Used to specify the norm used in the penalization. The newton-cg, sag
         and lbfgs solvers support only l2 penalties.
 
-    dual : bool
+    dual : bool, default: False
         Dual or primal formulation. Dual formulation is only implemented for
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    C : float, optional (default=1.0)
+    C : float, default: 1.0
         Inverse of regularization strength; must be a positive float.
         Like in support vector machines, smaller values specify stronger
         regularization.
@@ -999,7 +999,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    class_weight : dict or 'balanced', optional
+    class_weight : dict or 'balanced', default: None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one.
 
@@ -1014,15 +1014,15 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
            *class_weight='balanced'* instead of deprecated
            *class_weight='auto'*.
 
-    max_iter : int
+    max_iter : int, default: 100
         Useful only for the newton-cg, sag and lbfgs solvers.
         Maximum number of iterations taken for the solvers to converge.
 
-    random_state : int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, default: None
         The seed of the pseudo random number generator to use when
         shuffling the data. Used only in solvers 'sag' and 'liblinear'.
 
-    solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag'}
+    solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag'}, default: 'liblinear'
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' is
@@ -1039,21 +1039,21 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
 
-    tol : float, optional
+    tol : float, default: 1e-4
         Tolerance for stopping criteria.
 
-    multi_class : str, {'ovr', 'multinomial'}
+    multi_class : str, {'ovr', 'multinomial'}, default: 'ovr'
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
         the entire probability distribution. Works only for the 'newton-cg',
         'sag' and 'lbfgs' solver.
 
-    verbose : int
+    verbose : int, default: 0
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
 
-    warm_start : bool, optional
+    warm_start : bool, default: False
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         Useless for liblinear solver.
@@ -1061,7 +1061,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionadded:: 0.17
            *warm_start* to support *lbfgs*, *newton-cg*, *sag* solvers.
 
-    n_jobs : int, optional
+    n_jobs : int, default: 1
         Number of CPU cores used during the cross-validation loop. If given
         a value of -1, all cores are used.
 
