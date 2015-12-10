@@ -113,7 +113,7 @@ Other packages useful for data analysis and machine learning.
 - `theano <http://deeplearning.net/software/theano/>`_ A CPU/GPU array
   processing framework geared towards deep learning research.
 
-- `Statsmodel <http://statsmodels.sourceforge.net/>`_ Estimating and analysing
+- `statsmodels <http://statsmodels.sourceforge.net/>`_ Estimating and analysing
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 
