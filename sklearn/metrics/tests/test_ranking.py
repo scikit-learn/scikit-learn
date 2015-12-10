@@ -306,14 +306,16 @@ def test_roc_curve_toydata():
 
     y_true = [0, 0]
     y_score = [0.25, 0.75]
-    tpr, fpr, _ = roc_curve(y_true, y_score)
+    # assert UndefinedMetricWarning because of no positive sample in y_true
+    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
     assert_array_almost_equal(tpr, [0., 0.5, 1.])
     assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
 
     y_true = [1, 1]
     y_score = [0.25, 0.75]
-    tpr, fpr, _ = roc_curve(y_true, y_score)
+    # assert UndefinedMetricWarning because of no negative sample in y_true
+    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
     assert_array_almost_equal(tpr, [np.nan, np.nan])
     assert_array_almost_equal(fpr, [0.5, 1.])
