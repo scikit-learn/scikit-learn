@@ -288,7 +288,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     code = np.empty((n_samples, n_components))
     slices = list(gen_even_slices(n_samples, _get_n_jobs(n_jobs)))
 
-    code_views = Parallel(n_jobs=n_jobs, verbose=verbose)(
+    code_views = Parallel(n_jobs=n_jobs, verbose=verbose, mmap_mode='c')(
         delayed(_sparse_encode)(
             X[this_slice], dictionary, gram,
             cov[:, this_slice] if cov is not None else None,

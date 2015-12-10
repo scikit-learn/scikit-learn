@@ -238,3 +238,14 @@ def test_sparse_coder_estimator():
                        transform_alpha=0.001).transform(X)
     assert_true(not np.all(code == 0))
     assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
+
+
+def test_sparse_coder_mmap():
+    # Test that SparseCoder does not error by passing reading only
+    # arrays to child processes
+
+    rng = np.random.RandomState(777)
+    init_dict = rng.rand(500, 64)
+    data = np.random.rand(8096, 64)
+    sc = SparseCoder(init_dict, transform_algorithm='omp', n_jobs=2)
+    sc.fit_transform(data)
