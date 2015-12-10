@@ -2112,7 +2112,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
                             pre_dispatch=self.pre_dispatch)
     
         out = parallel(delayed(_fit_single_param)
-                       (_estimator_class, X, y, train, test, params,
+                       (self._estimator_class, X, y, train, test, params,
                         self.n_stop_rounds, self.max_iterations, self.scoring,
                         self.score_precision)
                        for train, test in cv.split(X)
@@ -2149,7 +2149,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
         
         if self.refit:
             self.best_params_['random_state'] = self.random_state
-            gb = self.estimator_class(**self.best_params_)
+            gb = self._estimator_class(**self.best_params_)
             gb.fit(X, y)
             self.best_estimator_ = gb
     
