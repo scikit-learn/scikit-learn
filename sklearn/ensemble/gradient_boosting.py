@@ -2057,7 +2057,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
 
     """
 
-    estimator_class = GradientBoostingClassifier
+    _estimator_class = GradientBoostingClassifier
 
     def __init__(self, n_stop_rounds=10, score_precision=2,
                  max_iterations=10000, cv=3, scoring=None, refit=True,
@@ -2112,7 +2112,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
                             pre_dispatch=self.pre_dispatch)
     
         out = parallel(delayed(_fit_single_param)
-                       (GradientBoostingClassifier, X, y, train, test, params,
+                       (_estimator_class, X, y, train, test, params,
                         self.n_stop_rounds, self.max_iterations, self.scoring,
                         self.score_precision)
                        for train, test in cv.split(X)
