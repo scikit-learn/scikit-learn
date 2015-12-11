@@ -61,7 +61,7 @@ from sklearn.feature_extraction.image import reconstruct_from_patches_2d
 patch_size = (12, 12)
 n_components = 14**2
 transform_algorithm = 'omp'
-n_iter = 5000
+n_iter = 10000
 
 ###############################################################################
 # Load a natural image and extract patches
