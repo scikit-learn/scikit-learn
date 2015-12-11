@@ -67,18 +67,17 @@ writing data in that format.
 
 What are the inclusion criteria for new algorithms ?
 -----------------------------------------------------
-As a rule we only add well-established algorithms. A rule of thumb is at least
-3 years since publications, 200+ citations and wide use and usefullness. A 
-technique that provides a clear-cut improvement (e.g. an enhanced  data
+Generally we only add well-established algorithms. A rule of thumb is at least
+3 years since publications, 200+ citations and wide use and usefullness. A
+technique that provides a clear-cut improvement (e.g. an enhanced data
 structure or efficient approximation or both) on a widely-used method will 
 also be considered for inclusion. In general we only accept algorithms that
-fit well within the current API of scikit-learn, that is a ``fit``, 
-``predict/transform`` interface.
-On top of this it is suggested that the contributor demonstrate the 
-usefulness of the proposed algorithm/implementation with research papers, 
-articles, some applications, use-cases and any other evidence to support the
-importance of the algorithm.
-The proposed algorithm should outperform the methods that are already implemented in scikit-learn in at least some areas.
+fit well within the current API of scikit-learn, that is a ``fit``,
+``predict/transform`` interface. On top of this it is suggested that the
+contributor demonstrate the usefulness of the proposed addition with research
+papers and common use-cases to support the importance of the algorithm. The 
+proposed algorithm should outperform the methods that are already implemented
+in scikit-learn in at least some areas.
 Your implementation doesn't need to be in scikit-learn to be used together
 with scikit-learn tools, though. Implement your favorite algorithm
 in a scikit-learn compatible way, upload it to github and we will list
