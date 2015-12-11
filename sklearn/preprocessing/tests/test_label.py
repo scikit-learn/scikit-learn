@@ -12,6 +12,7 @@ from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.label import LabelBinarizer
@@ -43,6 +44,8 @@ def test_label_binarizer():
     assert_array_equal(lb.classes_, ["pos"])
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
+    w = "Only one label in y and this label will be regarded as negitive one."
+    assert_warns_message(UserWarning, w, lb.fit, inp)
 
     # two-class case
     inp = ["neg", "pos", "pos", "neg"]
