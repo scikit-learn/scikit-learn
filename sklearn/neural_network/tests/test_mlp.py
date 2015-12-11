@@ -472,11 +472,12 @@ def test_verbose():
                             hidden_layer_sizes=2)
         old_stdout = sys.stdout
         try:
-            sys.stdout = StringIO()
+            sys.stdout = output = StringIO()
             clf.fit(X, y)
             clf.partial_fit(X, y)
         finally:
             sys.stdout = old_stdout
+            assert 'Iteration' in output.getvalue()
 
 
 def test_early_stopping():
