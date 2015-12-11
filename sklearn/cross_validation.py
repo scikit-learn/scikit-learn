@@ -1189,7 +1189,7 @@ def _index_param_value(X, v, indices):
 
 
 def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
-                      verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+                      verbose=0, fit_params=None, pre_dispatch='2*n_jobs', proba=False):
     """Generate cross-validated estimates for each input data point
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -1249,10 +1249,16 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
+    proba : boolean, optional, default: False
+        Whether to return the probability prediction, i.e. calling 
+        'predict_proba' instead of 'predict'.
+        
+
     Returns
     -------
     preds : ndarray
-        This is the result of calling 'predict'
+        This is the result of calling 'predict', or 'predict_proba'
+        in case of proba=True.
     """
     X, y = indexable(X, y)
 
@@ -1263,7 +1269,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
                         pre_dispatch=pre_dispatch)
     preds_blocks = parallel(delayed(_fit_and_predict)(clone(estimator), X, y,
                                                       train, test, verbose,
-                                                      fit_params)
+                                                      fit_params, proba)
                             for train, test in cv)
 
     preds = [p for p, _ in preds_blocks]
@@ -1281,7 +1287,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     return preds[inv_locs]
 
 
-def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
+def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params, proba):
     """Fit estimator and predict values for a given dataset split.
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -1309,11 +1315,14 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
 
     fit_params : dict or None
         Parameters that will be passed to ``estimator.fit``.
+    
+    proba : boolean
 
     Returns
     -------
     preds : sequence
-        Result of calling 'estimator.predict'
+        Result of calling 'estimator.predict', or 'estimator.predict_proba' 
+        in case of proba=True.
 
     test : array-like
         This is the value of the test parameter
@@ -1330,7 +1339,8 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
         estimator.fit(X_train, **fit_params)
     else:
         estimator.fit(X_train, y_train, **fit_params)
-    preds = estimator.predict(X_test)
+    preds = estimator.predict(X_test)   if proba == False 
+                                        else estimator.predict_proba(X_test)
     return preds, test
 
 
