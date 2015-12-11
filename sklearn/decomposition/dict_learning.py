@@ -146,9 +146,10 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
     elif algorithm == 'omp':
         # TODO: Should verbose argument be passed to this?
-        new_code = orthogonal_mp_gram(gram, cov, regularization, None,
-                                      row_norms(X, squared=True),
-                                      copy_Xy=copy_cov).T
+        new_code = orthogonal_mp_gram(
+            Gram=gram, Xy=cov, n_nonzero_coefs=int(regularization),
+            tol=None, norms_squared=row_norms(X, squared=True),
+            copy_Xy=copy_cov).T
     else:
         raise ValueError('Sparse coding method must be "lasso_lars" '
                          '"lasso_cd",  "lasso", "threshold" or "omp", got %s.'
@@ -1171,6 +1172,9 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
+        .. versionadded:: 0.17
+           *cd* coordinate descent method to improve speed.
+
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
     'threshold'}
         Algorithm used to transform the data
@@ -1182,6 +1186,9 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
         the projection ``dictionary * X'``
+
+        .. versionadded:: 0.17
+           *lasso_cd* coordinate descent method to improve speed.
 
     transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
         Number of nonzero coefficients to target in each column of the

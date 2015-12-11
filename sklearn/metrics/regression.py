@@ -352,14 +352,15 @@ def explained_variance_score(y_true, y_pred,
     output_scores[valid_score] = 1 - (numerator[valid_score] /
                                       denominator[valid_score])
     output_scores[nonzero_numerator & ~nonzero_denominator] = 0.
-    if multioutput == 'raw_values':
-        # return scores individually
-        return output_scores
-    elif multioutput == 'uniform_average':
-        # passing to np.average() None as weights results is uniform mean
-        avg_weights = None
-    elif multioutput == 'variance_weighted':
-        avg_weights = denominator
+    if isinstance(multioutput, string_types):
+        if multioutput == 'raw_values':
+            # return scores individually
+            return output_scores
+        elif multioutput == 'uniform_average':
+            # passing to np.average() None as weights results is uniform mean
+            avg_weights = None
+        elif multioutput == 'variance_weighted':
+            avg_weights = denominator
     else:
         avg_weights = multioutput
 
@@ -389,12 +390,14 @@ def r2_score(y_true, y_pred,
     sample_weight : array-like of shape = (n_samples), optional
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average',
-                'variance_weighted'] or None or array-like of shape (n_outputs)
+    multioutput : string in ['raw_values', 'uniform_average', \
+'variance_weighted'] or None or array-like of shape (n_outputs)
+
         Defines aggregating of multiple output scores.
         Array-like value defines weights used to average scores.
-        Default value correponds to 'variance_weighted', but
-        will be changed to 'uniform_average' in next versions.
+        Default value correponds to 'variance_weighted', this behaviour is
+        deprecated since version 0.17 and will be changed to 'uniform_average'
+        starting from 0.19.
 
         'raw_values' :
             Returns a full set of scores in case of multioutput input.
@@ -461,10 +464,10 @@ def r2_score(y_true, y_pred,
     # y_true is not interesting for scoring a regression anyway
     output_scores[nonzero_numerator & ~nonzero_denominator] = 0.
     if multioutput is None and y_true.shape[1] != 1:
-        # @FIXME change in 0.18
         warnings.warn("Default 'multioutput' behavior now corresponds to "
-                      "'variance_weighted' value, it will be changed "
-                      "to 'uniform_average' in 0.18.",
+                      "'variance_weighted' value which is deprecated since "
+                      "0.17, it will be changed to 'uniform_average' "
+                      "starting from 0.19.",
                       DeprecationWarning)
         multioutput = 'variance_weighted'
     if isinstance(multioutput, string_types):

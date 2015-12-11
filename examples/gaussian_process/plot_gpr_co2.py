@@ -13,34 +13,40 @@ model the CO2 concentration as a function of the time t.
 
 The kernel is composed of several terms that are responsible for explaining
 different properties of the signal:
- - a long term, smooth rising trend is to be explained by an RBF kernel. The
-   RBF kernel with a large length-scale enforces this component to be smooth;
-   it is not enforced that the trend is rising which leaves this choice to the
-   GP. The specific length-scale and the amplitude are free hyperparameters.
- - a seasonal component, which is to be explained by the periodic
-   ExpSineSquared kernel with a fixed periodicity of 1 year. The length-scale
-   of this periodic component, controlling its smoothness, is a free parameter.
-   In order to allow decaying away from exact periodicity, the product with an
-   RBF kernel is taken. The length-scale of this RBF component controls the
-   decay time and is a further free parameter.
- - smaller, medium term irregularities are to be explained by a
-   RationalQuadratic kernel component, whose length-scale and alpha parameter,
-   which determines the diffuseness of the length-scales, are to be determined.
-   According to [RW2006], these irregularities can better be explained by
-   a RationalQuadratic than an RBF kernel component, probably because it can
-   accommodate several length-scales.
- - a "noise" term, consisting of an RBF kernel contribution, which shall
-   explain the correlated noise components such as local weather phenomena,
-   and a WhiteKernel contribution for the white noise. The relative amplitudes
-   and the RBF's length scale are further free parameters.
+
+- a long term, smooth rising trend is to be explained by an RBF kernel. The
+  RBF kernel with a large length-scale enforces this component to be smooth;
+  it is not enforced that the trend is rising which leaves this choice to the
+  GP. The specific length-scale and the amplitude are free hyperparameters.
+
+- a seasonal component, which is to be explained by the periodic
+  ExpSineSquared kernel with a fixed periodicity of 1 year. The length-scale
+  of this periodic component, controlling its smoothness, is a free parameter.
+  In order to allow decaying away from exact periodicity, the product with an
+  RBF kernel is taken. The length-scale of this RBF component controls the
+  decay time and is a further free parameter.
+
+- smaller, medium term irregularities are to be explained by a
+  RationalQuadratic kernel component, whose length-scale and alpha parameter,
+  which determines the diffuseness of the length-scales, are to be determined.
+  According to [RW2006], these irregularities can better be explained by
+  a RationalQuadratic than an RBF kernel component, probably because it can
+  accommodate several length-scales.
+
+- a "noise" term, consisting of an RBF kernel contribution, which shall
+  explain the correlated noise components such as local weather phenomena,
+  and a WhiteKernel contribution for the white noise. The relative amplitudes
+  and the RBF's length scale are further free parameters.
 
 Maximizing the log-marginal-likelihood after subtracting the target's mean
-yields the following kernel with an LML of -83.214:
+yields the following kernel with an LML of -83.214::
+
    34.4**2 * RBF(length_scale=41.8)
    + 3.27**2 * RBF(length_scale=180) * ExpSineSquared(length_scale=1.44,
                                                       periodicity=1)
    + 0.446**2 * RationalQuadratic(alpha=17.7, length_scale=0.957)
    + 0.197**2 * RBF(length_scale=0.138) + WhiteKernel(noise_level=0.0336)
+
 Thus, most of the target signal (34.4ppm) is explained by a long-term rising
 trend (length-scale 41.8 years). The periodic component has an amplitude of
 3.27ppm, a decay time of 180 years and a length-scale of 1.44. The long decay

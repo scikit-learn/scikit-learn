@@ -730,9 +730,12 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
 
     Y : ndarray of shape (n_samples_2, n_features)
 
-    coef0 : int, default 1
-
     degree : int, default 3
+
+    gamma : float, default None
+        if None, defaults to 1.0 / n_samples_1
+
+    coef0 : int, default 1
 
     Returns
     -------
@@ -762,6 +765,9 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     X : ndarray of shape (n_samples_1, n_features)
 
     Y : ndarray of shape (n_samples_2, n_features)
+
+    gamma : float, default None
+        If None, defaults to 1.0 / n_samples_1
 
     coef0 : int, default 1
 
@@ -796,7 +802,8 @@ def rbf_kernel(X, Y=None, gamma=None):
 
     Y : array of shape (n_samples_Y, n_features)
 
-    gamma : float
+    gamma : float, default None
+        If None, defaults to 1.0 / n_samples_X
 
     Returns
     -------
@@ -822,11 +829,16 @@ def laplacian_kernel(X, Y=None, gamma=None):
     for each pair of rows x in X and y in Y.
     Read more in the :ref:`User Guide <laplacian_kernel>`.
 
+    .. versionadded:: 0.17
+
     Parameters
     ----------
     X : array of shape (n_samples_X, n_features)
+
     Y : array of shape (n_samples_Y, n_features)
-    gamma : float
+
+    gamma : float, default None
+        If None, defaults to 1.0 / n_samples_X
 
     Returns
     -------
@@ -865,6 +877,9 @@ def cosine_similarity(X, Y=None, dense_output=True):
     dense_output : boolean (optional), default True
         Whether to return dense output even when the input is sparse. If
         ``False``, the output is sparse if both input arrays are sparse.
+
+        .. versionadded:: 0.17
+           parameter *dense_output* for sparse output.
 
     Returns
     -------

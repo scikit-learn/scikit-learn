@@ -22,7 +22,7 @@ from .utils.validation import check_is_fitted
 from .utils.fixes import signature
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
-from .cross_validation import check_cv
+from .model_selection import check_cv
 from .metrics.classification import _check_binary_probabilistic_predictions
 
 
@@ -46,20 +46,21 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         to offer more accurate predict_proba outputs. If cv=prefit, the
         classifier must have been fit already on data.
 
-    method : 'sigmoid' | 'isotonic'
+    method : 'sigmoid' or 'isotonic'
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
         non-parameteric approach. It is not advised to use isotonic calibration
-        with too few calibration samples (<<1000) since it tends to overfit.
+        with too few calibration samples ``(<<1000)`` since it tends to overfit.
         Use sigmoids (Platt's calibration) in this case.
 
-    cv : integer/cross-validation generator/iterable or "prefit", optional
+    cv : integer, cross-validation generator, iterable or "prefit", optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`StratifiedKFold` used. If ``y`` is neither binary nor
@@ -152,7 +153,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                 calibrated_classifier.fit(X, y)
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
-            cv = check_cv(self.cv, X, y, classifier=True)
+            cv = check_cv(self.cv, y, classifier=True)
             fit_parameters = signature(base_estimator.fit).parameters
             estimator_name = type(base_estimator).__name__
             if (sample_weight is not None
@@ -163,7 +164,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                 base_estimator_sample_weight = None
             else:
                 base_estimator_sample_weight = sample_weight
-            for train, test in cv:
+            for train, test in cv.split(X, y):
                 this_estimator = clone(base_estimator)
                 if base_estimator_sample_weight is not None:
                     this_estimator.fit(

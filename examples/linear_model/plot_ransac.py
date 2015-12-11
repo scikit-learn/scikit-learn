@@ -45,9 +45,14 @@ line_y_ransac = model_ransac.predict(line_X[:, np.newaxis])
 print("Estimated coefficients (true, normal, RANSAC):")
 print(coef, model.coef_, model_ransac.estimator_.coef_)
 
-plt.plot(X[inlier_mask], y[inlier_mask], '.g', label='Inliers')
-plt.plot(X[outlier_mask], y[outlier_mask], '.r', label='Outliers')
-plt.plot(line_X, line_y, '-k', label='Linear regressor')
-plt.plot(line_X, line_y_ransac, '-b', label='RANSAC regressor')
+lw = 2
+plt.scatter(X[inlier_mask], y[inlier_mask], color='yellowgreen', marker='.',
+            label='Inliers')
+plt.scatter(X[outlier_mask], y[outlier_mask], color='gold', marker='.',
+            label='Outliers')
+plt.plot(line_X, line_y, color='navy', linestyle='-', linewidth=lw,
+         label='Linear regressor')
+plt.plot(line_X, line_y_ransac, color='cornflowerblue', linestyle='-',
+         linewidth=lw, label='RANSAC regressor')
 plt.legend(loc='lower right')
 plt.show()

@@ -17,7 +17,7 @@ from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
 from ..utils import check_array, check_X_y, deprecated
 from ..utils.validation import check_random_state
-from ..cross_validation import check_cv
+from ..model_selection import check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
@@ -531,13 +531,11 @@ class ElasticNet(LinearModel, RegressorMixin):
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
-        WARNING : The ``'auto'`` option is deprecated and will
-        be removed in 0.18.
 
     max_iter : int, optional
         The maximum number of iterations
@@ -644,12 +642,6 @@ class ElasticNet(LinearModel, RegressorMixin):
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
 
-        if (isinstance(self.precompute, six.string_types)
-                and self.precompute == 'auto'):
-            warnings.warn("Setting precompute to 'auto', was found to be "
-                          "slower even when n_samples > n_features. Hence "
-                          "it will be removed in 0.18.",
-                          DeprecationWarning, stacklevel=2)
         # We expect X and y to be already float64 Fortran ordered arrays
         # when bypassing checks
         if check_input:
@@ -790,13 +782,11 @@ class Lasso(ElasticNet):
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | array-like, default=False
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
-        WARNING : The ``'auto'`` option is deprecated and will
-        be removed in 0.18.
 
     max_iter : int, optional
         The maximum number of iterations
@@ -1130,10 +1120,10 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             path_params['copy_X'] = False
 
         # init cross-validation generator
-        cv = check_cv(self.cv, X)
+        cv = check_cv(self.cv)
 
         # Compute path for all folds and compute MSE to get the best alpha
-        folds = list(cv)
+        folds = list(cv.split(X))
         best_mse = np.inf
 
         # We do a double for loop folded in one, in order to be able to
@@ -1228,10 +1218,11 @@ class LassoCV(LinearModelCV, RegressorMixin):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -1374,10 +1365,11 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -1642,7 +1634,7 @@ class MultiTaskElasticNet(Lasso):
         # X and y must be of type float64
         X = check_array(X, dtype=np.float64, order='F',
                         copy=self.copy_X and self.fit_intercept)
-        y = np.asarray(y, dtype=np.float64)
+        y = check_array(y, dtype=np.float64, ensure_2d=False)
 
         if hasattr(self, 'l1_ratio'):
             model_str = 'ElasticNet'
@@ -1862,10 +1854,11 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -2019,10 +2012,11 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, :class:`KFold` is used.
 

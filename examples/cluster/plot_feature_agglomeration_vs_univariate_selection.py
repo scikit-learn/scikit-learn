@@ -30,9 +30,9 @@ from sklearn import feature_selection
 from sklearn.cluster import FeatureAgglomeration
 from sklearn.linear_model import BayesianRidge
 from sklearn.pipeline import Pipeline
-from sklearn.grid_search import GridSearchCV
 from sklearn.externals.joblib import Memory
-from sklearn.cross_validation import KFold
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import KFold
 
 ###############################################################################
 # Generate data
@@ -60,7 +60,7 @@ y += noise_coef * noise  # add noise
 
 ###############################################################################
 # Compute the coefs of a Bayesian Ridge with GridSearch
-cv = KFold(len(y), 2)  # cross-validation generator for model selection
+cv = KFold(2)  # cross-validation generator for model selection
 ridge = BayesianRidge()
 cachedir = tempfile.mkdtemp()
 mem = Memory(cachedir=cachedir, verbose=1)

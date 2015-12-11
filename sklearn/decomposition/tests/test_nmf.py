@@ -1,6 +1,8 @@
 import numpy as np
 from scipy import linalg
-from sklearn.decomposition import nmf
+from sklearn.decomposition import (NMF, ProjectedGradientNMF,
+                                   non_negative_factorization)
+from sklearn.decomposition import nmf   # For testing internals
 from scipy.sparse import csc_matrix
 
 from sklearn.utils.testing import assert_true
@@ -30,17 +32,17 @@ def test_parameter_checking():
     A = np.ones((2, 2))
     name = 'spam'
     msg = "Invalid solver parameter: got 'spam' instead of one of"
-    assert_raise_message(ValueError, msg, nmf.NMF(solver=name).fit, A)
+    assert_raise_message(ValueError, msg, NMF(solver=name).fit, A)
     msg = "Invalid init parameter: got 'spam' instead of one of"
-    assert_raise_message(ValueError, msg, nmf.NMF(init=name).fit, A)
+    assert_raise_message(ValueError, msg, NMF(init=name).fit, A)
     msg = "Invalid sparseness parameter: got 'spam' instead of one of"
-    assert_raise_message(ValueError, msg, nmf.NMF(sparseness=name).fit, A)
+    assert_raise_message(ValueError, msg, NMF(sparseness=name).fit, A)
 
     msg = "Negative values in data passed to"
-    assert_raise_message(ValueError, msg, nmf.NMF().fit, -A)
+    assert_raise_message(ValueError, msg, NMF().fit, -A)
     assert_raise_message(ValueError, msg, nmf._initialize_nmf, -A,
                          2, 'nndsvd')
-    clf = nmf.NMF(2, tol=0.1).fit(A)
+    clf = NMF(2, tol=0.1).fit(A)
     assert_raise_message(ValueError, msg, clf.transform, -A)
 
 
@@ -76,8 +78,8 @@ def test_nmf_fit_nn_output():
               5 * np.ones(5) + np.arange(1, 6)]
     for solver in ('pg', 'cd'):
         for init in (None, 'nndsvd', 'nndsvda', 'nndsvdar'):
-            model = nmf.NMF(n_components=2, solver=solver, init=init,
-                            random_state=0)
+            model = NMF(n_components=2, solver=solver, init=init,
+                        random_state=0)
             transf = model.fit_transform(A)
             assert_false((model.components_ < 0).any() or
                          (transf < 0).any())
@@ -87,7 +89,7 @@ def test_nmf_fit_nn_output():
 def test_nmf_fit_close():
     # Test that the fit is not too far away
     for solver in ('pg', 'cd'):
-        pnmf = nmf.NMF(5, solver=solver, init='nndsvd', random_state=0)
+        pnmf = NMF(5, solver=solver, init='nndsvd', random_state=0)
         X = np.abs(random_state.randn(6, 5))
         assert_less(pnmf.fit(X).reconstruction_err_, 0.05)
 
@@ -112,8 +114,7 @@ def test_nmf_transform():
     # Test that NMF.transform returns close values
     A = np.abs(random_state.randn(6, 5))
     for solver in ('pg', 'cd'):
-        m = nmf.NMF(solver=solver, n_components=4, init='nndsvd',
-                    random_state=0)
+        m = NMF(solver=solver, n_components=4, init='nndsvd', random_state=0)
         ft = m.fit_transform(A)
         t = m.transform(A)
         assert_array_almost_equal(ft, t, decimal=2)
@@ -123,7 +124,7 @@ def test_nmf_transform():
 def test_n_components_greater_n_features():
     # Smoke test for the case of more components than features.
     A = np.abs(random_state.randn(30, 10))
-    nmf.NMF(n_components=15, random_state=0, tol=1e-2).fit(A)
+    NMF(n_components=15, random_state=0, tol=1e-2).fit(A)
 
 
 @ignore_warnings
@@ -133,14 +134,13 @@ def test_projgrad_nmf_sparseness():
     # part where they are applied.
     tol = 1e-2
     A = np.abs(random_state.randn(10, 10))
-    m = nmf.ProjectedGradientNMF(n_components=5, random_state=0,
-                                 tol=tol).fit(A)
-    data_sp = nmf.ProjectedGradientNMF(n_components=5, sparseness='data',
-                                       random_state=0,
-                                       tol=tol).fit(A).data_sparseness_
-    comp_sp = nmf.ProjectedGradientNMF(n_components=5, sparseness='components',
-                                       random_state=0,
-                                       tol=tol).fit(A).comp_sparseness_
+    m = ProjectedGradientNMF(n_components=5, random_state=0, tol=tol).fit(A)
+    data_sp = ProjectedGradientNMF(n_components=5, sparseness='data',
+                                   random_state=0,
+                                   tol=tol).fit(A).data_sparseness_
+    comp_sp = ProjectedGradientNMF(n_components=5, sparseness='components',
+                                   random_state=0,
+                                   tol=tol).fit(A).comp_sparseness_
     assert_greater(data_sp, m.data_sparseness_)
     assert_greater(comp_sp, m.comp_sparseness_)
 
@@ -155,8 +155,8 @@ def test_sparse_input():
     A_sparse = csc_matrix(A)
 
     for solver in ('pg', 'cd'):
-        est1 = nmf.NMF(solver=solver, n_components=5, init='random',
-                       random_state=0, tol=1e-2)
+        est1 = NMF(solver=solver, n_components=5, init='random',
+                   random_state=0, tol=1e-2)
         est2 = clone(est1)
 
         W1 = est1.fit_transform(A)
@@ -177,8 +177,7 @@ def test_sparse_transform():
     A = csc_matrix(A)
 
     for solver in ('pg', 'cd'):
-        model = nmf.NMF(solver=solver, random_state=0, tol=1e-4,
-                        n_components=2)
+        model = NMF(solver=solver, random_state=0, tol=1e-4, n_components=2)
         A_fit_tr = model.fit_transform(A)
         A_tr = model.transform(A)
         assert_array_almost_equal(A_fit_tr, A_tr, decimal=1)
@@ -192,12 +191,12 @@ def test_non_negative_factorization_consistency():
     A[:, 2 * np.arange(5)] = 0
 
     for solver in ('pg', 'cd'):
-        W_nmf, H, _ = nmf.non_negative_factorization(
+        W_nmf, H, _ = non_negative_factorization(
             A, solver=solver, random_state=1, tol=1e-2)
-        W_nmf_2, _, _ = nmf.non_negative_factorization(
+        W_nmf_2, _, _ = non_negative_factorization(
             A, H=H, update_H=False, solver=solver, random_state=1, tol=1e-2)
 
-        model_class = nmf.NMF(solver=solver, random_state=1, tol=1e-2)
+        model_class = NMF(solver=solver, random_state=1, tol=1e-2)
         W_cls = model_class.fit_transform(A)
         W_cls_2 = model_class.transform(A)
         assert_array_almost_equal(W_nmf, W_cls, decimal=10)
@@ -208,7 +207,7 @@ def test_non_negative_factorization_consistency():
 def test_non_negative_factorization_checking():
     A = np.ones((2, 2))
     # Test parameters checking is public function
-    nnmf = nmf.non_negative_factorization
+    nnmf = non_negative_factorization
     msg = "Number of components must be positive; got (n_components='2')"
     assert_raise_message(ValueError, msg, nnmf, A, A, A, '2')
     msg = "Negative values in data passed to NMF (input H)"

@@ -1,25 +1,26 @@
-.. currentmodule:: sklearn.grid_search
+
+
+.. currentmodule:: sklearn.model_selection
 
 .. _grid_search:
 
-===============================================
-Grid Search: Searching for estimator parameters
-===============================================
+===========================================
+Tuning the hyper-parameters of an estimator
+===========================================
 
-Parameters that are not directly learnt within estimators can be set by
-searching a parameter space for the best :ref:`cross_validation` score.
-Typical examples include ``C``, ``kernel`` and ``gamma`` for Support Vector
-Classifier, ``alpha`` for Lasso, etc.
+Hyper-parameters are parameters that are not directly learnt within estimators.
+In scikit-learn they are passed as arguments to the constructor of the
+estimator classes. Typical examples include ``C``, ``kernel`` and ``gamma``
+for Support Vector Classifier, ``alpha`` for Lasso, etc.
+
+It is possible and recommended to search the hyper-parameter space for the
+best :ref:`cross_validation` score.
 
 Any parameter provided when constructing an estimator may be optimized in this
-manner.  Specifically, to find the names and current values for all parameters
+manner. Specifically, to find the names and current values for all parameters
 for a given estimator, use::
 
   estimator.get_params()
-
-Such parameters are often referred to as *hyperparameters* (particularly in
-Bayesian learning), distinguishing them from the parameters optimised in a
-machine learning procedure.
 
 A search consists of:
 
@@ -37,6 +38,12 @@ all parameter combinations, while :class:`RandomizedSearchCV` can sample a
 given number of candidates from a parameter space with a specified
 distribution. After describing these tools we detail
 :ref:`best practice <grid_search_tips>` applicable to both approaches.
+
+Note that it is common that a small subset of those parameters can have a large
+impact on the predictive or computation performance of the model while others
+can be left to their default values. It is recommend to read the docstring of
+the estimator class to get a finer understanding of their expected behavior,
+possibly by reading the enclosed reference to the literature.  
 
 Exhaustive Grid Search
 ======================
@@ -59,7 +66,7 @@ The :class:`GridSearchCV` instance implements the usual estimator API: when
 "fitting" it on a dataset all the possible combinations of parameter values are
 evaluated and the best combination is retained.
 
-.. currentmodule:: sklearn.grid_search
+.. currentmodule:: sklearn.model_selection
 
 .. topic:: Examples:
 
@@ -164,7 +171,7 @@ it is recommended to split the data into a **development set** (to
 be fed to the ``GridSearchCV`` instance) and an **evaluation set**
 to compute performance metrics.
 
-This can be done by using the :func:`cross_validation.train_test_split`
+This can be done by using the :func:`train_test_split`
 utility function.
 
 Parallelism

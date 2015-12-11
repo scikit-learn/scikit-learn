@@ -143,7 +143,7 @@ def test_binary_search_neighbors():
     for k in np.linspace(80, n_samples, 10):
         k = int(k)
         topn = k * 10  # check the top 10 *k entries out of k * k entries
-        neighbors_nn = np.argsort(distances, axis=1)[:, :k]
+        neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64)
         P2k = _binary_search_perplexity(distances, neighbors_nn,
                                         desired_perplexity, verbose=0)
         idx = np.argsort(P1.ravel())[::-1]
@@ -164,7 +164,7 @@ def test_binary_perplexity_stability():
     distances = np.abs(distances.dot(distances.T))
     np.fill_diagonal(distances, 0.0)
     last_P = None
-    neighbors_nn = np.argsort(distances, axis=1)[:, :k]
+    neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64)
     for _ in range(100):
         P = _binary_search_perplexity(distances.copy(), neighbors_nn.copy(),
                                       3, verbose=0)

@@ -266,6 +266,58 @@ They also tend to break when the problem is badly conditioned
 
   * :ref:`example_linear_model_plot_lasso_model_selection.py`
 
+
+.. _multi_task_lasso:
+
+Multi-task Lasso
+================
+
+The :class:`MultiTaskLasso` is a linear model that estimates sparse
+coefficients for multiple regression problems jointly: ``y`` is a 2D array,
+of shape ``(n_samples, n_tasks)``. The constraint is that the selected
+features are the same for all the regression problems, also called tasks.
+
+The following figure compares the location of the non-zeros in W obtained
+with a simple Lasso or a MultiTaskLasso. The Lasso estimates yields
+scattered non-zeros while the non-zeros of the MultiTaskLasso are full
+columns.
+
+.. |multi_task_lasso_1| image:: ../auto_examples/linear_model/images/plot_multi_task_lasso_support_001.png
+    :target: ../auto_examples/linear_model/plot_multi_task_lasso_support.html
+    :scale: 48%
+
+.. |multi_task_lasso_2| image:: ../auto_examples/linear_model/images/plot_multi_task_lasso_support_002.png
+    :target: ../auto_examples/linear_model/plot_multi_task_lasso_support.html
+    :scale: 48%
+
+.. centered:: |multi_task_lasso_1| |multi_task_lasso_2|
+
+.. centered:: Fitting a time-series model, imposing that any active feature be active at all times.
+
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_multi_task_lasso_support.py`
+
+
+Mathematically, it consists of a linear model trained with a mixed
+:math:`\ell_1` :math:`\ell_2` prior as regularizer.
+The objective function to minimize is:
+
+.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro} ^ 2 + \alpha ||W||_{21}}
+
+where :math:`Fro` indicates the Frobenius norm:
+
+.. math:: ||A||_{Fro} = \sqrt{\sum_{ij} a_{ij}^2}
+
+and :math:`\ell_1` :math:`\ell_2` reads:
+
+.. math:: ||A||_{2 1} = \sum_i \sqrt{\sum_j a_{ij}^2}
+
+
+The implementation in the class :class:`MultiTaskLasso` uses coordinate descent as
+the algorithm to fit the coefficients.
+
+
 .. _elastic_net:
 
 Elastic Net
@@ -305,52 +357,32 @@ The class :class:`ElasticNetCV` can be used to set the parameters
   * :ref:`example_linear_model_plot_lasso_coordinate_descent_path.py`
 
 
-.. _multi_task_lasso:
 
-Multi-task Lasso
-================
+.. _multi_task_elastic_net:
 
-The :class:`MultiTaskLasso` is a linear model that estimates sparse
-coefficients for multiple regression problems jointly: ``y`` is a 2D array,
-of shape (n_samples, n_tasks). The constraint is that the selected
+Multi-task Elastic Net
+======================
+
+The :class:`MultiTaskElasticNet` is an elastic-net model that estimates sparse
+coefficients for multiple regression problems jointly: ``Y`` is a 2D array,
+of shape ``(n_samples, n_tasks)``. The constraint is that the selected
 features are the same for all the regression problems, also called tasks.
 
-The following figure compares the location of the non-zeros in W obtained
-with a simple Lasso or a MultiTaskLasso. The Lasso estimates yields
-scattered non-zeros while the non-zeros of the MultiTaskLasso are full
-columns.
-
-.. |multi_task_lasso_1| image:: ../auto_examples/linear_model/images/plot_multi_task_lasso_support_001.png
-    :target: ../auto_examples/linear_model/plot_multi_task_lasso_support.html
-    :scale: 48%
-
-.. |multi_task_lasso_2| image:: ../auto_examples/linear_model/images/plot_multi_task_lasso_support_002.png
-    :target: ../auto_examples/linear_model/plot_multi_task_lasso_support.html
-    :scale: 48%
-
-.. centered:: |multi_task_lasso_1| |multi_task_lasso_2|
-
-.. centered:: Fitting a time-series model, imposing that any active feature be active at all times.
-
-.. topic:: Examples:
-
-  * :ref:`example_linear_model_plot_multi_task_lasso_support.py`
-
-
-
 Mathematically, it consists of a linear model trained with a mixed
-:math:`\ell_1` :math:`\ell_2` prior as regularizer.
+:math:`\ell_1` :math:`\ell_2` prior and :math:`\ell_2` prior as regularizer.
 The objective function to minimize is:
 
-.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_2 ^ 2 + \alpha ||W||_{21}}
+.. math::
 
-where;
+    \underset{W}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro}^2 + \alpha \rho ||W||_{2 1} +
+    \frac{\alpha(1-\rho)}{2} ||W||_{Fro}^2}
 
-.. math:: ||W||_{2 1} = \sum_i \sqrt{\sum_j w_{ij}^2}
-
-
-The implementation in the class :class:`MultiTaskLasso` uses coordinate descent as
+The implementation in the class :class:`MultiTaskElasticNet` uses coordinate descent as
 the algorithm to fit the coefficients.
+
+The class :class:`MultiTaskElasticNetCV` can be used to set the parameters
+``alpha`` (:math:`\alpha`) and ``l1_ratio`` (:math:`\rho`) by cross-validation.
+
 
 .. _least_angle_regression:
 
@@ -651,64 +683,62 @@ Logistic regression
 
 Logistic regression, despite its name, is a linear model for classification
 rather than regression. Logistic regression is also known in the literature as
-logit regression, maximum-entropy classification (MaxEnt)
-or the log-linear classifier. In this model, the probabilities describing the possible outcomes of a single trial are modeled using a `logistic function <http://en.wikipedia.org/wiki/Logistic_function>`_.
+logit regression, maximum-entropy classification (MaxEnt) or the log-linear
+classifier. In this model, the probabilities describing the possible outcomes
+of a single trial are modeled using a `logistic function
+<http://en.wikipedia.org/wiki/Logistic_function>`_.
 
 The implementation of logistic regression in scikit-learn can be accessed from
-class :class:`LogisticRegression`. This
-implementation can fit a multiclass (one-vs-rest) logistic regression with optional
-L2 or L1 regularization.
+class :class:`LogisticRegression`. This implementation can fit binary, One-vs-
+Rest, or multinomial logistic regression with optional L2 or L1
+regularization.
 
-As an optimization problem, binary class L2 penalized logistic regression minimizes
-the following cost function:
+As an optimization problem, binary class L2 penalized logistic regression
+minimizes the following cost function:
 
 .. math:: \underset{w, c}{min\,} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
-Similarly, L1 regularized logistic regression solves the following optimization problem
+Similarly, L1 regularized logistic regression solves the following
+optimization problem
 
 .. math:: \underset{w, c}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
 The solvers implemented in the class :class:`LogisticRegression`
-are "liblinear" (which is a wrapper around the C++ library,
-LIBLINEAR), "newton-cg", "lbfgs" and "sag".
+are "liblinear", "newton-cg", "lbfgs" and "sag":
 
-The "lbfgs" and "newton-cg" solvers only support L2 penalization and are found
-to converge faster for some high dimensional data. L1 penalization yields
-sparse predicting weights.
+The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies
+on the excellent C++ `LIBLINEAR library
+<http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_, which is shipped with
+scikit-learn. However, the CD algorithm implemented in liblinear cannot learn
+a true multinomial (multiclass) model; instead, the optimization problem is
+decomposed in a "one-vs-rest" fashion so separate binary classifiers are
+trained for all classes. This happens under the hood, so
+:class:`LogisticRegression` instances using this solver behave as multiclass
+classifiers. For L1 penalization :func:`sklearn.svm.l1_min_c` allows to
+calculate the lower bound for C in order to get a non "null" (all feature
+weights to zero) model.
 
-The solver "liblinear" uses a coordinate descent (CD) algorithm based on
-Liblinear. For L1 penalization :func:`sklearn.svm.l1_min_c` allows to
-calculate the lower bound for C in order to get a non "null" (all feature weights to
-zero) model. This relies on the excellent
-`LIBLINEAR library <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_,
-which is shipped with scikit-learn. However, the CD algorithm implemented in
-liblinear cannot learn a true multinomial (multiclass) model;
-instead, the optimization problem is decomposed in a "one-vs-rest" fashion
-so separate binary classifiers are trained for all classes.
-This happens under the hood, so :class:`LogisticRegression` instances
-using this solver behave as multiclass classifiers.
+The "lbfgs", "sag" and "newton-cg" solvers only support L2 penalization and
+are found to converge faster for some high dimensional data. Setting
+`multi_class` to "multinomial" with these solvers learns a true multinomial
+logistic regression model [3]_, which means that its probability estimates
+should be better calibrated than the default "one-vs-rest" setting. The
+"lbfgs", "sag" and "newton-cg"" solvers cannot optimize L1-penalized models,
+therefore the "multinomial" setting does not learn sparse models.
 
-Setting `multi_class` to "multinomial" with the "lbfgs" or "newton-cg" solver
-in :class:`LogisticRegression` learns a true multinomial logistic
-regression model, which means that its probability estimates should
-be better calibrated than the default "one-vs-rest" setting.
-"lbfgs", "newton-cg" and "sag" solvers cannot optimize L1-penalized models, though, so the "multinomial" setting does not learn sparse models.
-
-The solver "sag" uses a Stochastic Average Gradient descent [3]_. It does not
-handle "multinomial" case, and is limited to L2-penalized models, yet it is
-often faster than other solvers for large datasets, when both the number of
-samples and the number of features are large.
+The solver "sag" uses a Stochastic Average Gradient descent [4]_. It is faster
+than other solvers for large datasets, when both the number of samples and the
+number of features are large.
 
 In a nutshell, one may choose the solver with the following rules:
 
-===========================   ======================
-Case                          Solver
-===========================   ======================
-Small dataset or L1 penalty   "liblinear"
-Multinomial loss              "lbfgs" or newton-cg"
-Large dataset                 "sag"
-===========================   ======================
-
+=================================  =============================
+Case                               Solver
+=================================  =============================
+Small dataset or L1 penalty        "liblinear"
+Multinomial loss or large dataset  "lbfgs", "sag" or newton-cg"
+Very Large dataset                 "sag"
+=================================  =============================
 For large dataset, you may also consider using :class:`SGDClassifier` with 'log' loss.
 
 .. topic:: Examples:
@@ -738,18 +768,19 @@ For large dataset, you may also consider using :class:`SGDClassifier` with 'log'
    thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
 
-:class:`LogisticRegressionCV` implements Logistic Regression with
-builtin cross-validation to find out the optimal C parameter.
-"newton-cg", "sag" and "lbfgs" solvers are found to be faster
-for high-dimensional dense data, due to warm-starting.
-For the multiclass case, if `multi_class`
-option is set to "ovr", an optimal C is obtained for each class and if
-the `multi_class` option is set to "multinomial", an optimal C is
-obtained that minimizes the cross-entropy loss.
+:class:`LogisticRegressionCV` implements Logistic Regression with builtin
+cross-validation to find out the optimal C parameter. "newton-cg", "sag" and
+"lbfgs" solvers are found to be faster for high-dimensional dense data, due to
+warm-starting. For the multiclass case, if `multi_class` option is set to
+"ovr", an optimal C is obtained for each class and if the `multi_class` option
+is set to "multinomial", an optimal C is obtained by minimizing the cross-
+entropy loss.
 
 .. topic:: References:
 
-    .. [3] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <http://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf>`_
+    .. [3] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 4.3.4
+
+    .. [4] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <http://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf>`_
 
 Stochastic Gradient Descent - SGD
 =================================

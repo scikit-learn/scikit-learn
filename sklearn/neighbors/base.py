@@ -108,16 +108,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _init_params(self, n_neighbors=None, radius=None,
                      algorithm='auto', leaf_size=30, metric='minkowski',
-                     p=2, metric_params=None, n_jobs=1, **kwargs):
-        if kwargs:
-            warnings.warn("Passing additional arguments to the metric "
-                          "function as **kwargs is deprecated "
-                          "and will no longer be supported in 0.18. "
-                          "Use metric_params instead.",
-                          DeprecationWarning, stacklevel=3)
-            if metric_params is None:
-                metric_params = {}
-            metric_params.update(kwargs)
+                     p=2, metric_params=None, n_jobs=1):
 
         self.n_neighbors = n_neighbors
         self.radius = radius

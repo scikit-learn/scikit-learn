@@ -441,7 +441,11 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
 
     drop_intermediate : boolean, optional (default=True)
         Whether to drop some suboptimal thresholds which would not appear
-        on a plotted ROC curve.
+        on a plotted ROC curve. This is useful in order to create lighter
+        ROC curves.
+
+        .. versionadded:: 0.17
+           parameter *drop_intermediate*.
 
     Returns
     -------
@@ -676,6 +680,9 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
     a ranking loss of zero.
 
     Read more in the :ref:`User Guide <label_ranking_loss>`.
+
+    .. versionadded:: 0.17
+       A function *label_ranking_loss*
 
     Parameters
     ----------

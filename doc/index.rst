@@ -207,6 +207,8 @@
                     <li><em>On-going development:</em>
                     <a href="whats_new.html"><em>What's new</em> (changelog)</a>
                     </li>
+                    <li><em>November 2015.</em> scikit-learn 0.17.0 is available for download (<a href="whats_new.html">Changelog</a>).
+                    </li>
                     <li><em>March 2015.</em> scikit-learn 0.16.0 is available for download (<a href="whats_new.html">Changelog</a>).
                     </li>
                     <li><em>July 2014.</em> scikit-learn 0.15.0 is available for download (<a href="whats_new.html">Changelog</a>).
@@ -315,19 +317,20 @@
         <div class="container index-upper" >
         <div class="row-fluid">
           <div class="footer">
-              <div class="span4">
-                Generous funding provided by INRIA, Google and others.
+              <div class="span3">
+                Funding provided by INRIA and others.
               </div>
-              <div class="span4">
+              <div class="span6">
                  <a class="reference internal" href="about.html#funding" style="text-decoration: none" >
                        <img id="index-funding-logo-big" src="_static/img/inria-small.png" title="INRIA">
                    <img id="index-funding-logo-small" src="_static/img/google.png" title="Google">
                    <!--Due to Télécom ParisTech's logo text being smaller, a style has been added to improve readability-->
                    <img id="index-funding-logo-small" src="_static/img/telecom.png" title="Télécom ParisTech" style="max-height: 36px">
                    <img id="index-funding-logo-small" src="_static/img/FNRS-logo.png" title="FNRS">
+                   <img id="index-funding-logo-small" src="_static/img/nyu_short_color.png" title="NYU CDS">
                  </a>
              </div>
-             <div class="span4">
+             <div class="span3">
                 <a class="reference internal" href="about.html#funding">
                    More information on our contributors
                 </a>

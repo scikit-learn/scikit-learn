@@ -19,16 +19,16 @@ from scipy.sparse import linalg as sp_linalg
 
 from .base import LinearClassifierMixin, LinearModel, _rescale_data
 from .sag import sag_solver
-from .sag_fast import get_max_squared_sum
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import row_norms
 from ..utils import check_X_y
 from ..utils import check_array
 from ..utils import check_consistent_length
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
-from ..grid_search import GridSearchCV
+from ..model_selection import GridSearchCV
 from ..externals import six
 from ..metrics.scorer import check_scoring
 
@@ -222,6 +222,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         Individual weights for each sample. If sample_weight is not None and
         solver='auto', the solver will be set to 'cholesky'.
 
+        .. versionadded:: 0.17
+
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational routines:
 
@@ -251,7 +253,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
           same scale. You can preprocess the data with a scaler from
           sklearn.preprocessing.
 
-        All last four solvers support both dense and sparse data.
+        All last four solvers support both dense and sparse data. However,
+        only 'sag' supports sparse input when `fit_intercept` is True.
 
     tol : float
         Precision of the solution.
@@ -262,7 +265,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
-        shuffling the data. Used in 'sag' solver.
+        shuffling the data. Used only in 'sag' solver.
 
     return_n_iter : boolean, default False
         If True, the method also returns `n_iter`, the actual number of
@@ -292,9 +295,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     This function won't compute the intercept.
     """
     if return_intercept and sparse.issparse(X) and solver != 'sag':
-        warnings.warn("In Ridge, only 'sag' solver can currently fit the "
-                      "intercept when X is sparse. Solver has been "
-                      "automatically changed into 'sag'.")
+        if solver != 'auto':
+            warnings.warn("In Ridge, only 'sag' solver can currently fit the "
+                          "intercept when X is sparse. Solver has been "
+                          "automatically changed into 'sag'.")
         solver = 'sag'
 
     # SAG needs X and y columns to be C-contiguous and np.float64
@@ -387,17 +391,17 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     elif solver == 'sag':
         # precompute max_squared_sum for all targets
-        max_squared_sum = get_max_squared_sum(X)
+        max_squared_sum = row_norms(X, squared=True).max()
 
         coef = np.empty((y.shape[1], n_features))
         n_iter = np.empty(y.shape[1], dtype=np.int32)
         intercept = np.zeros((y.shape[1], ))
         for i, (alpha_i, target) in enumerate(zip(alpha, y.T)):
-            start = {'coef': np.zeros(n_features + int(return_intercept))}
+            init = {'coef': np.zeros((n_features + int(return_intercept), 1))}
             coef_, n_iter_, _ = sag_solver(
                 X, target.ravel(), sample_weight, 'squared', alpha_i,
                 max_iter, tol, verbose, random_state, False, max_squared_sum,
-                start)
+                init)
             if return_intercept:
                 coef[i] = coef_[:-1]
                 intercept[i] = coef_[-1]
@@ -529,7 +533,7 @@ class Ridge(_BaseRidge, RegressorMixin):
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fatest but may not be available
+          scipy.sparse.linalg.lsqr. It is the fastest but may not be available
           in old scipy versions. It also uses an iterative procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent. It also uses an
@@ -539,14 +543,21 @@ class Ridge(_BaseRidge, RegressorMixin):
           same scale. You can preprocess the data with a scaler from
           sklearn.preprocessing.
 
-        All last four solvers support both dense and sparse data.
+        All last four solvers support both dense and sparse data. However,
+        only 'sag' supports sparse input when `fit_intercept` is True.
+
+        .. versionadded:: 0.17
+           Stochastic Average Gradient descent solver.
 
     tol : float
         Precision of the solution.
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
-        shuffling the data. Used in 'sag' solver.
+        shuffling the data. Used only in 'sag' solver.
+
+        .. versionadded:: 0.17
+           *random_state* to support Stochastic Average Gradient.
 
     Attributes
     ----------
@@ -669,6 +680,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
           iterative procedure, and is faster than other solvers when both
           n_samples and n_features are large.
 
+          .. versionadded:: 0.17
+             Stochastic Average Gradient descent solver.
+
     tol : float
         Precision of the solution.
 
@@ -722,6 +736,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         sample_weight : float or numpy array of shape (n_samples,)
             Sample weight.
 
+            .. versionadded:: 0.17
+               *sample_weight* support to Classifier.
+
         Returns
         -------
         self : returns an instance of self.
@@ -730,6 +747,11 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.y_type_.startswith('multilabel'):
             y = column_or_1d(y, warn=True)
+        else:
+            # we don't (yet) support multi-label classification in Ridge
+            raise ValueError(
+                "%s doesn't support multi-label classification" % (
+                    self.__class__.__name__))
 
         if self.class_weight:
             if sample_weight is None:
@@ -815,24 +837,28 @@ class _RidgeGCV(LinearModel):
             D = D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)]
         return D * B
 
-    def _errors(self, alpha, y, v, Q, QT_y):
-        # don't construct matrix G, instead compute action on y & diagonal
+    def _errors_and_values_helper(self, alpha, y, v, Q, QT_y):
+        """Helper function to avoid code duplication between self._errors and
+        self._values.
+
+        Notes
+        -----
+        We don't construct matrix G, instead compute action on y & diagonal.
+        """
         w = 1.0 / (v + alpha)
         c = np.dot(Q, self._diag_dot(w, QT_y))
         G_diag = self._decomp_diag(w, Q)
         # handle case where y is 2-d
         if len(y.shape) != 1:
             G_diag = G_diag[:, np.newaxis]
+        return G_diag, c
+
+    def _errors(self, alpha, y, v, Q, QT_y):
+        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y)
         return (c / G_diag) ** 2, c
 
     def _values(self, alpha, y, v, Q, QT_y):
-        # don't construct matrix G, instead compute action on y & diagonal
-        w = 1.0 / (v + alpha)
-        c = np.dot(Q, self._diag_dot(w, QT_y))
-        G_diag = self._decomp_diag(w, Q)
-        # handle case where y is 2-d
-        if len(y.shape) != 1:
-            G_diag = G_diag[:, np.newaxis]
+        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y)
         return y - (c / G_diag), c
 
     def _pre_compute_svd(self, X, y):
@@ -843,22 +869,24 @@ class _RidgeGCV(LinearModel):
         UT_y = np.dot(U.T, y)
         return v, U, UT_y
 
-    def _errors_svd(self, alpha, y, v, U, UT_y):
+    def _errors_and_values_svd_helper(self, alpha, y, v, U, UT_y):
+        """Helper function to avoid code duplication between self._errors_svd
+        and self._values_svd.
+        """
         w = ((v + alpha) ** -1) - (alpha ** -1)
         c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
         G_diag = self._decomp_diag(w, U) + (alpha ** -1)
         if len(y.shape) != 1:
             # handle case where y is 2-d
             G_diag = G_diag[:, np.newaxis]
+        return G_diag, c
+
+    def _errors_svd(self, alpha, y, v, U, UT_y):
+        G_diag, c = self._errors_and_values_svd_helper(alpha, y, v, U, UT_y)
         return (c / G_diag) ** 2, c
 
     def _values_svd(self, alpha, y, v, U, UT_y):
-        w = ((v + alpha) ** -1) - (alpha ** -1)
-        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
-        G_diag = self._decomp_diag(w, U) + (alpha ** -1)
-        if len(y.shape) != 1:
-            # handle case when y is 2-d
-            G_diag = G_diag[:, np.newaxis]
+        G_diag, c = self._errors_and_values_svd_helper(alpha, y, v, U, UT_y)
         return y - (c / G_diag), c
 
     def fit(self, X, y, sample_weight=None):
@@ -1057,10 +1085,11 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the efficient Leave-One-Out cross-validation
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the efficient Leave-One-Out cross-validation
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`StratifiedKFold` used, else, :class:`KFold` is used.
@@ -1150,10 +1179,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the efficient Leave-One-Out cross-validation
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the efficient Leave-One-Out cross-validation
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

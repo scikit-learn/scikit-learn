@@ -136,6 +136,10 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
 class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     """Latent Dirichlet Allocation with online variational Bayes algorithm
 
+    .. versionadded:: 0.17
+
+    Read more in the :ref:`User Guide <LatentDirichletAllocation>`.
+
     Parameters
     ----------
     n_topics : int, optional (default=10)
