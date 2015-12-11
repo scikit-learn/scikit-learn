@@ -46,10 +46,12 @@ on age.
 """
 print(__doc__)
 
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
 from mpl_toolkits.mplot3d import Axes3D
+from six.moves.urllib.error import HTTPError
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingRegressor
@@ -58,7 +60,12 @@ from sklearn.ensemble.partial_dependence import partial_dependence
 from sklearn.datasets.california_housing import fetch_california_housing
 
 # fetch California housing dataset
-cal_housing = fetch_california_housing()
+try:
+    cal_housing = fetch_california_housing()
+except HTTPError:
+    print("Failed downloading california housing data.")
+    sys.exit()
+
 
 # split 80/20 train-test
 X_train, X_test, y_train, y_test = train_test_split(cal_housing.data,
@@ -105,7 +112,7 @@ ax.set_zlabel('Partial dependence')
 ax.view_init(elev=22, azim=122)
 plt.colorbar(surf)
 plt.suptitle('Partial dependence of house value on median age and '
-            'average occupancy')
+             'average occupancy')
 plt.subplots_adjust(top=0.9)
 
 plt.show()
