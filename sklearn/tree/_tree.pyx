@@ -193,7 +193,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef StackRecord stack_record
 
         # push root node onto stack
-        rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY, 0)
+        rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, IS_NOT_LEFT,
+                        INFINITY, 0)
         if rc == -1:
             # got return code -1 - out-of-memory
             raise MemoryError()
@@ -228,8 +229,9 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     splitter.node_split(impurity, &split, &n_constant_features)
                     is_leaf = is_leaf or (split.pos >= end)
 
-                node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
-                                         split.threshold, impurity, n_node_samples,
+                node_id = tree._add_node(parent, is_left, is_leaf,
+                                         split.feature, split.threshold,
+                                         impurity, n_node_samples,
                                          weighted_n_node_samples)
 
                 if node_id == <SIZE_t>(-1):
@@ -242,14 +244,16 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 if not is_leaf:
                     # Push right child on stack
-                    rc = stack.push(split.pos, end, depth + 1, node_id, 0,
-                                    split.impurity_right, n_constant_features)
+                    rc = stack.push(split.pos, end, depth + 1, node_id,
+                                    IS_NOT_LEFT, split.impurity_right,
+                                    n_constant_features)
                     if rc == -1:
                         break
 
                     # Push left child on stack
-                    rc = stack.push(start, split.pos, depth + 1, node_id, 1,
-                                    split.impurity_left, n_constant_features)
+                    rc = stack.push(start, split.pos, depth + 1, node_id,
+                                    IS_LEFT, split.impurity_left,
+                                    n_constant_features)
                     if rc == -1:
                         break
 
