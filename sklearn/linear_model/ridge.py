@@ -256,6 +256,9 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         All last four solvers support both dense and sparse data. However,
         only 'sag' supports sparse input when `fit_intercept` is True.
 
+        .. versionadded:: 0.17
+           Stochastic Average Gradient descent solver.
+
     tol : float
         Precision of the solution.
 
@@ -271,11 +274,15 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         If True, the method also returns `n_iter`, the actual number of
         iteration performed by the solver.
 
+        .. versionadded:: 0.17
+
     return_intercept : boolean, default False
         If True and if X is sparse, the method also returns the intercept,
         and the solver is automatically changed to 'sag'. This is only a
         temporary fix for fitting the intercept with sparse data. For dense
         data, use sklearn.linear_model.center_data before your regression.
+
+        .. versionadded:: 0.17
 
     Returns
     -------
@@ -571,6 +578,8 @@ class Ridge(_BaseRidge, RegressorMixin):
     n_iter_ : array or None, shape (n_targets,)
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
+
+        .. versionadded:: 0.17
 
     See also
     --------
