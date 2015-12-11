@@ -79,9 +79,6 @@ usefulness of the proposed algorithm/implementation with research papers,
 articles, some applications, use-cases and any other evidence to support the
 importance of the algorithm.
 The proposed algorithm should outperform the methods that are already implemented in scikit-learn in at least some areas.
-If there is a common usecase within the scope of scikit-learn, such
-as classification, regression or clustering,  outperforms methods
-that are already implemented in scikit-learn, we will consider it.
 Your implementation doesn't need to be in scikit-learn to be used together
 with scikit-learn tools, though. Implement your favorite algorithm
 in a scikit-learn compatible way, upload it to github and we will list
