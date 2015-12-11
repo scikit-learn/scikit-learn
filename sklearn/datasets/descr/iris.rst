@@ -1,4 +1,5 @@
 Iris Plants Database
+====================
 
 Notes
 -----
@@ -15,6 +16,7 @@ Data Set Characteristics:
                 - Iris-Versicolour
                 - Iris-Virginica
     :Summary Statistics:
+
     ============== ==== ==== ======= ===== ====================
                     Min  Max   Mean    SD   Class Correlation
     ============== ==== ==== ======= ===== ====================
@@ -23,6 +25,7 @@ Data Set Characteristics:
     petal length:   1.0  6.9   3.76   1.76    0.9490  (high!)
     petal width:    0.1  2.5   1.20  0.76     0.9565  (high!)
     ============== ==== ==== ======= ===== ====================
+
     :Missing Attribute Values: None
     :Class Distribution: 33.3% for each of 3 classes.
     :Creator: R.A. Fisher

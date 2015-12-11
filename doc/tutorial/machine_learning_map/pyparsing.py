@@ -305,8 +305,8 @@ class ParseResults(object):
         else:
             del self.__tokdict[i]
 
-    def __contains__( self, k ):
-        return self.__tokdict.has_key(k)
+    def __contains__(self, k):
+        return k in self.__tokdict
 
     def __len__( self ): return len( self.__toklist )
     def __bool__(self): return len( self.__toklist ) > 0
@@ -1269,8 +1269,8 @@ class ParserElement(object):
 
     def __getattr__(self,aname):
         if aname == "myException":
-            self.myException = ret = self.getException();
-            return ret;
+            self.myException = ret = self.getException()
+            return ret
         else:
             raise AttributeError, "no such attribute " + aname
 

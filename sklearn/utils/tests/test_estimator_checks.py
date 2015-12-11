@@ -7,7 +7,8 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_raises_regex, assert_true
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_estimators_unfitted
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.utils.validation import check_X_y, check_array
 
 
@@ -75,7 +76,8 @@ def test_check_estimator():
     msg = "Estimator doesn't check for NaN and inf in predict"
     assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)
     # check for sparse matrix input handling
-    msg = "Estimator type doesn't seem to fail gracefully on sparse data"
+    name = NoSparseClassifier.__name__
+    msg = "Estimator " + name + " doesn't seem to fail gracefully on sparse data"
     # the check for sparse input handling prints to the stdout,
     # instead of raising an error, so as not to remove the original traceback.
     # that means we need to jump through some hoops to catch it.
@@ -91,7 +93,8 @@ def test_check_estimator():
     assert_true(msg in string_buffer.getvalue())
 
     # doesn't error on actual estimator
-    check_estimator(LogisticRegression)
+    check_estimator(AdaBoostClassifier)
+    check_estimator(MultiTaskElasticNet)
 
 
 def test_check_estimators_unfitted():

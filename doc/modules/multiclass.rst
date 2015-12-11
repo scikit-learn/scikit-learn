@@ -33,7 +33,7 @@ by decomposing such problems into binary classification problems.
     several joint classification tasks. This is a generalization
     of the multi-label classification task, where the set of classification
     problem is restricted to binary classification, and of the multi-class
-    classification task. *The output format is a 2d numpy array or sparse 
+    classification task. *The output format is a 2d numpy array or sparse
     matrix.*
 
     The set of labels can be different for each output variable.
@@ -60,11 +60,13 @@ grouped by strategy; you don't need the meta-estimators in this class
 if you're using one of these unless you want custom multiclass behavior:
 
   - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
-    :class:`sklearn.lda.LDA`,
+    :ref:`LDA and QDA <lda_qda>`,
     :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
     :ref:`Nearest Neighbors <neighbors>`,
-    setting "multi_class=multinomial" in
+    setting ``multi_class='multinomial'`` in
     :class:`sklearn.linear_model.LogisticRegression`.
+  - Support multilabel: :ref:`Decision Trees <tree>`,
+    :ref:`Random Forests <forest>`, :ref:`Nearest Neighbors <neighbors>`.
   - One-Vs-One: :class:`sklearn.svm.SVC`.
   - One-Vs-All: all linear models except :class:`sklearn.svm.SVC`.
 
@@ -88,17 +90,13 @@ zero elements, corresponds to the subset of labels. An array such as
 sample, labels 1 and 2 in the second sample, and no labels in the third sample.
 
 Producing multilabel data as a list of sets of labels may be more intuitive.
-The transformer :class:`MultiLabelBinarizer <preprocessing.MultiLabelBinarizer>`
-will convert between a collection of collections of labels and the indicator
-format.
+The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>`
+transformer can be used to convert between a collection of collections of
+labels and the indicator format.
 
-  >>> from sklearn.datasets import make_multilabel_classification
   >>> from sklearn.preprocessing import MultiLabelBinarizer
-  >>> X, Y = make_multilabel_classification(n_samples=5, random_state=0,
-  ...                                       return_indicator=False)
-  >>> Y
-  [[2, 3, 4], [2], [0, 1, 3], [0, 1, 2, 3, 4], [0, 1, 2]]
-  >>> MultiLabelBinarizer().fit_transform(Y)
+  >>> y = [[2, 3, 4], [2], [0, 1, 3], [0, 1, 2, 3, 4], [0, 1, 2]]
+  >>> MultiLabelBinarizer().fit_transform(y)
   array([[0, 0, 1, 1, 1],
          [0, 0, 1, 0, 0],
          [1, 1, 0, 1, 0],
@@ -216,7 +214,7 @@ code book. The code size is the dimensionality of the aforementioned space.
 Intuitively, each class should be represented by a code as unique as
 possible and a good code book should be designed to optimize classification
 accuracy. In this implementation, we simply use a randomly-generated code
-book as advocated in [2]_ although more elaborate methods may be added in the
+book as advocated in [3]_ although more elaborate methods may be added in the
 future.
 
 At fitting time, one binary classifier per bit in the code book is fitted.
@@ -263,16 +261,16 @@ Below is an example of multiclass learning using Output-Codes::
 
 .. topic:: References:
 
-    .. [1] "Solving multiclass learning problems via error-correcting output codes",
+    .. [2] "Solving multiclass learning problems via error-correcting output codes",
         Dietterich T., Bakiri G.,
         Journal of Artificial Intelligence Research 2,
         1995.
 
-    .. [2] "The error coding method and PICTs",
+    .. [3] "The error coding method and PICTs",
         James G., Hastie T.,
         Journal of Computational and Graphical statistics 7,
         1998.
 
-    .. [3] "The Elements of Statistical Learning",
+    .. [4] "The Elements of Statistical Learning",
         Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
         2008.

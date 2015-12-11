@@ -14,6 +14,7 @@ import numpy as np
 
 from ..externals import six
 
+from . import _criterion
 from . import _tree
 
 
@@ -151,13 +152,14 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
             # Classification tree
             color = list(colors['rgb'][np.argmax(value)])
             sorted_values = sorted(value, reverse=True)
-            alpha = int(255 * (sorted_values[0] - sorted_values[1]) /
-                        (1 - sorted_values[1]))
+            alpha = int(np.round(255 * (sorted_values[0] - sorted_values[1]) /
+                                 (1 - sorted_values[1]), 0))
         else:
             # Regression tree or multi-output
             color = list(colors['rgb'][0])
-            alpha = int(255 * ((value - colors['bounds'][0]) /
-                               (colors['bounds'][1] - colors['bounds'][0])))
+            alpha = int(np.round(255 * ((value - colors['bounds'][0]) /
+                                        (colors['bounds'][1] -
+                                         colors['bounds'][0])), 0))
 
         # Return html color code in #RRGGBBAA format
         color.append(alpha)
@@ -169,7 +171,6 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
 
     def node_to_str(tree, node_id, criterion):
         # Generate the node content string
-
         if tree.n_outputs == 1:
             value = tree.value[node_id][0, :]
         else:
@@ -208,7 +209,9 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
 
         # Write impurity
         if impurity:
-            if not isinstance(criterion, six.string_types):
+            if isinstance(criterion, _criterion.FriedmanMSE):
+                criterion = "friedman_mse"
+            elif not isinstance(criterion, six.string_types):
                 criterion = "impurity"
             if labels:
                 node_string += '%s = ' % criterion

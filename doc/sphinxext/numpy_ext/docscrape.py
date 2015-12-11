@@ -461,7 +461,7 @@ class FunctionDoc(NumpyDocString):
                  'meth': 'method'}
 
         if self._role:
-            if not roles.has_key(self._role):
+            if self._role not in roles:
                 print("Warning: invalid role %s" % self._role)
             out += '.. %s:: %s\n    \n\n' % (roles.get(self._role, ''),
                                              func_name)

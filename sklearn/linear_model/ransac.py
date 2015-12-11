@@ -60,7 +60,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     A detailed description of the algorithm can be found in the documentation
     of the ``linear_model`` sub-package.
 
-    Read more in the :ref:`User Guide <RansacRegression>`.
+    Read more in the :ref:`User Guide <ransac_regression>`.
 
     Parameters
     ----------
@@ -290,6 +290,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             # less inliers -> skip current random sample
             if n_inliers_subset < n_inliers_best:
                 continue
+            if n_inliers_subset == 0:
+                raise ValueError("No inliers found, possible cause is "
+                    "setting residual_threshold ({0}) too low.".format(
+                    self.residual_threshold))
 
             # extract inlier data set
             inlier_idxs_subset = sample_idxs[inlier_mask_subset]

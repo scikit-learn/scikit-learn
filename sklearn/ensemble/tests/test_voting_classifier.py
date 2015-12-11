@@ -7,9 +7,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import VotingClassifier
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn import datasets
-from sklearn import cross_validation
+from sklearn.model_selection import cross_val_score
 from sklearn.datasets import make_multilabel_classification
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
@@ -27,11 +27,7 @@ def test_majority_label_iris():
     eclf = VotingClassifier(estimators=[
                 ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                 voting='hard')
-    scores = cross_validation.cross_val_score(eclf,
-                                              X,
-                                              y,
-                                              cv=5,
-                                              scoring='accuracy')
+    scores = cross_val_score(eclf, X, y, cv=5, scoring='accuracy')
     assert_almost_equal(scores.mean(), 0.95, decimal=2)
 
 
@@ -55,11 +51,7 @@ def test_weights_iris():
                             ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                             voting='soft',
                             weights=[1, 2, 10])
-    scores = cross_validation.cross_val_score(eclf,
-                                              X,
-                                              y,
-                                              cv=5,
-                                              scoring='accuracy')
+    scores = cross_val_score(eclf, X, y, cv=5, scoring='accuracy')
     assert_almost_equal(scores.mean(), 0.93, decimal=2)
 
 
@@ -151,7 +143,6 @@ def test_multilabel():
     """Check if error is raised for multilabel classification."""
     X, y = make_multilabel_classification(n_classes=2, n_labels=1,
                                           allow_unlabeled=False,
-                                          return_indicator=True,
                                           random_state=123)
     clf = OneVsRestClassifier(SVC(kernel='linear'))
 
@@ -173,12 +164,8 @@ def test_gridsearch():
                 voting='soft')
 
     params = {'lr__C': [1.0, 100.0],
-              'rf__n_estimators': [20, 200]}
+              'voting': ['soft', 'hard'],
+              'weights': [[0.5, 0.5, 0.5], [1.0, 0.5, 0.5]]}
 
     grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
     grid.fit(iris.data, iris.target)
-
-    expect = [0.953, 0.960, 0.960, 0.953]
-    scores = [mean_score for params, mean_score, scores in grid.grid_scores_]
-    for e, s in zip(expect, scores):
-        assert_almost_equal(e, s, decimal=3)

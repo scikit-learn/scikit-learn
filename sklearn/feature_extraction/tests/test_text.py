@@ -12,9 +12,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
-from sklearn.cross_validation import train_test_split
-from sklearn.cross_validation import cross_val_score
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
@@ -30,6 +30,7 @@ from nose.tools import assert_almost_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
+from sklearn.utils.random import choice
 from sklearn.utils.testing import (assert_in, assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry)
@@ -280,7 +281,7 @@ def test_countvectorizer_stop_words():
     assert_raises(ValueError, cv.get_stop_words)
     stoplist = ['some', 'other', 'words']
     cv.set_params(stop_words=stoplist)
-    assert_equal(cv.get_stop_words(), stoplist)
+    assert_equal(cv.get_stop_words(), set(stoplist))
 
 
 def test_countvectorizer_empty_vocabulary():
@@ -857,6 +858,38 @@ def test_pickling_vectorizer():
         assert_array_equal(
             copy.fit_transform(JUNK_FOOD_DOCS).toarray(),
             orig.fit_transform(JUNK_FOOD_DOCS).toarray())
+
+
+def test_countvectorizer_vocab_sets_when_pickling():
+    # ensure that vocabulary of type set is coerced to a list to
+    # preserve iteration ordering after deserialization
+    rng = np.random.RandomState(0)
+    vocab_words = np.array(['beer', 'burger', 'celeri', 'coke', 'pizza',
+                            'salad', 'sparkling', 'tomato', 'water'])
+    for x in range(0, 100):
+        vocab_set = set(choice(vocab_words, size=5, replace=False,
+                        random_state=rng))
+        cv = CountVectorizer(vocabulary=vocab_set)
+        unpickled_cv = pickle.loads(pickle.dumps(cv))
+        cv.fit(ALL_FOOD_DOCS)
+        unpickled_cv.fit(ALL_FOOD_DOCS)
+        assert_equal(cv.get_feature_names(), unpickled_cv.get_feature_names())
+
+
+def test_countvectorizer_vocab_dicts_when_pickling():
+    rng = np.random.RandomState(0)
+    vocab_words = np.array(['beer', 'burger', 'celeri', 'coke', 'pizza',
+                            'salad', 'sparkling', 'tomato', 'water'])
+    for x in range(0, 100):
+        vocab_dict = dict()
+        words = choice(vocab_words, size=5, replace=False, random_state=rng)
+        for y in range(0, 5):
+            vocab_dict[words[y]] = y
+        cv = CountVectorizer(vocabulary=vocab_dict)
+        unpickled_cv = pickle.loads(pickle.dumps(cv))
+        cv.fit(ALL_FOOD_DOCS)
+        unpickled_cv.fit(ALL_FOOD_DOCS)
+        assert_equal(cv.get_feature_names(), unpickled_cv.get_feature_names())
 
 
 def test_stop_words_removal():

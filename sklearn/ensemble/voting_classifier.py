@@ -24,12 +24,14 @@ from ..externals import six
 class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
+    .. versionadded:: 0.17
+
     Read more in the :ref:`User Guide <voting_classifier>`.
 
     Parameters
     ----------
     estimators : list of (string, estimator) tuples
-        Invoking the `fit` method on the `VotingClassifier` will fit clones
+        Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
         `self.estimators_`.
 
@@ -149,7 +151,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
                                       np.argmax(np.bincount(x,
                                                 weights=self.weights)),
                                       axis=1,
-                                      arr=predictions)
+                                      arr=predictions.astype('int'))
 
         maj = self.le_.inverse_transform(maj)
 
@@ -212,7 +214,8 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         if not deep:
             return super(VotingClassifier, self).get_params(deep=False)
         else:
-            out = self.named_estimators.copy()
+            out = super(VotingClassifier, self).get_params(deep=False)
+            out.update(self.named_estimators.copy())
             for name, step in six.iteritems(self.named_estimators):
                 for key, value in six.iteritems(step.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value

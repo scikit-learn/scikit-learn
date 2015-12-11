@@ -9,6 +9,10 @@ contribute.
 
 The project is hosted on http://github.com/scikit-learn/scikit-learn
 
+Scikit-learn is somewhat :ref:`selective <selectiveness>` when it comes to
+adding new algorithms, and the best way to contribute and to help the project
+is to start working on known issues.
+See :ref:`easy_issues` to get started.
 
 Submitting a bug report
 =======================
@@ -16,7 +20,7 @@ Submitting a bug report
 In case you experience issues using this package, do not hesitate to submit a
 ticket to the
 `Bug Tracker <http://github.com/scikit-learn/scikit-learn/issues>`_. You are
-also welcome to post feature requests or links to pull requests.
+also welcome to post feature requests or pull requests.
 
 
 .. _git_repo:
@@ -203,12 +207,14 @@ and Cython optimizations.
    <http://astropy.readthedocs.org/en/latest/development/workflow/development_workflow.html>`_
    sections.
 
+.. _easy_issues:
+
 Easy Issues
 -----------
 
 A great way to start contributing to scikit-learn is to pick an item from the
 list of `Easy issues
-<https://github.com/scikit-learn/scikit-learn/issues?labels=Easy>`_
+<https://github.com/scikit-learn/scikit-learn/issues?q=is%3Aopen+label%3AEasy+is%3Aissue>`_
 in the issue tracker. Resolving these issues allow you to start contributing
 to the project without much prior knowledge. Your assistance in this area will
 be greatly appreciated by the more experienced developers as it helps free up
@@ -788,7 +794,7 @@ adheres to the scikit-learn interface and standards by running
 
 The main motivation to make a class compatible to the scikit-learn estimator
 interface might be that you want to use it together with model assessment and
-selection tools such as :class:`grid_search.GridSearchCV`.
+selection tools such as :class:`model_selection.GridSearchCV`.
 
 For this to work, you need to implement the following interface.
 If a dependency on scikit-learn is okay for your code,
@@ -850,7 +856,7 @@ implement the interface is::
 
 Parameters and init
 -------------------
-As :class:`grid_search.GridSearchCV` uses ``set_params``
+As :class:`model_selection.GridSearchCV` uses ``set_params``
 to apply parameter setting to estimators,
 it is essential that calling ``set_params`` has the same effect
 as setting parameters using the ``__init__`` method.
@@ -868,9 +874,8 @@ trailing ``_`` is used to check if the estimator has been fitted.
 
 Cloning
 -------
-For using :class:`grid_search.GridSearch` or any functionality of the
-:mod:`cross_validation` module, an estimator must support the ``base.clone``
-function to replicate an estimator.
+For use with the :mod:`model_selection` module,
+an estimator must support the ``base.clone`` function to replicate an estimator.
 This can be done by providing a ``get_params`` method.
 If ``get_params`` is present, then ``clone(estimator)`` will be an instance of
 ``type(estimator)`` on which ``set_params`` has been called with clones of
@@ -895,8 +900,8 @@ accepts an optional ``y``.
 Estimator types
 ---------------
 Some common functionality depends on the kind of estimator passed.
-For example, cross-validation in :class:`grid_search.GridSearchCV` and
-:func:`cross_validation.cross_val_score` defaults to being stratified when used
+For example, cross-validation in :class:`model_selection.GridSearchCV` and
+:func:`model_selection.cross_val_score` defaults to being stratified when used
 on a classifier, but not otherwise. Similarly, scorers for average precision
 that take a continuous prediction need to call ``decision_function`` for classifiers,
 but ``predict`` for regressors. This distinction between classifiers and regressors

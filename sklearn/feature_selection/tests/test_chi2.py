@@ -39,7 +39,7 @@ def test_chi2():
     chi2 = mkchi2(k=2).fit(X, y)
     assert_equal(sorted(chi2.get_support(indices=True)), [0, 2])
 
-    Xsp = csr_matrix(X, dtype=np.float)
+    Xsp = csr_matrix(X, dtype=np.float64)
     chi2 = mkchi2(k=2).fit(Xsp, y)
     assert_equal(sorted(chi2.get_support(indices=True)), [0, 2])
     Xtrans = chi2.transform(Xsp)

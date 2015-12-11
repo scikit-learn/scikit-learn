@@ -1,6 +1,7 @@
 """Incremental Principal Components Analysis."""
 
 # Author: Kyle Kastner <kastnerkyle@gmail.com>
+#         Giorgio Patrini
 # License: BSD 3 clause
 
 import numpy as np
@@ -8,7 +9,7 @@ from scipy import linalg
 
 from .base import _BasePCA
 from ..utils import check_array, gen_batches
-from ..utils.extmath import svd_flip, _batch_mean_variance_update
+from ..utils.extmath import svd_flip, _incremental_mean_and_var
 
 
 class IncrementalPCA(_BasePCA):
@@ -76,7 +77,8 @@ class IncrementalPCA(_BasePCA):
         Per-feature empirical mean, aggregate over calls to ``partial_fit``.
 
     var_ : array, shape (n_features,)
-        Per-feature empirical variance, aggregate over calls to ``partial_fit``.
+        Per-feature empirical variance, aggregate over calls to
+        ``partial_fit``.
 
     noise_variance_ : float
         The estimated noise covariance following the Probabilistic PCA model
@@ -85,7 +87,8 @@ class IncrementalPCA(_BasePCA):
         http://www.miketipping.com/papers/met-mppca.pdf.
 
     n_components_ : int
-        The estimated number of components. Relevant when ``n_components=None``.
+        The estimated number of components. Relevant when
+        ``n_components=None``.
 
     n_samples_seen_ : int
         The number of samples processed by the estimator. Will be reset on
@@ -157,14 +160,15 @@ class IncrementalPCA(_BasePCA):
             Returns the instance itself.
         """
         self.components_ = None
-        self.mean_ = None
+        self.n_samples_seen_ = 0
+        self.mean_ = .0
+        self.var_ = .0
         self.singular_values_ = None
         self.explained_variance_ = None
         self.explained_variance_ratio_ = None
         self.noise_variance_ = None
-        self.var_ = None
-        self.n_samples_seen_ = 0
-        X = check_array(X, dtype=np.float)
+
+        X = check_array(X, copy=self.copy, dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
 
         if self.batch_size is None:
@@ -173,10 +177,11 @@ class IncrementalPCA(_BasePCA):
             self.batch_size_ = self.batch_size
 
         for batch in gen_batches(n_samples, self.batch_size_):
-            self.partial_fit(X[batch])
+            self.partial_fit(X[batch], check_input=False)
+
         return self
 
-    def partial_fit(self, X, y=None):
+    def partial_fit(self, X, y=None, check_input=True):
         """Incremental fit with X. All of X is processed as a single batch.
 
         Parameters
@@ -190,7 +195,8 @@ class IncrementalPCA(_BasePCA):
         self: object
             Returns the instance itself.
         """
-        X = check_array(X, copy=self.copy, dtype=np.float)
+        if check_input:
+            X = check_array(X, copy=self.copy, dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
         if not hasattr(self, 'components_'):
             self.components_ = None
@@ -204,42 +210,45 @@ class IncrementalPCA(_BasePCA):
         else:
             self.n_components_ = self.n_components
 
-        if (self.components_ is not None) and (self.components_.shape[0]
-                                               != self.n_components_):
+        if (self.components_ is not None) and (self.components_.shape[0] !=
+                                               self.n_components_):
             raise ValueError("Number of input features has changed from %i "
                              "to %i between calls to partial_fit! Try "
-                             "setting n_components to a fixed value." % (
-                                 self.components_.shape[0], self.n_components_))
+                             "setting n_components to a fixed value." %
+                             (self.components_.shape[0], self.n_components_))
 
-        if self.components_ is None:
-            # This is the first pass through partial_fit
+        # This is the first partial_fit
+        if not hasattr(self, 'n_samples_seen_'):
             self.n_samples_seen_ = 0
-            col_var = X.var(axis=0)
-            col_mean = X.mean(axis=0)
+            self.mean_ = .0
+            self.var_ = .0
+
+        # Update stats - they are 0 if this is the fisrt step
+        col_mean, col_var, n_total_samples = \
+            _incremental_mean_and_var(X, last_mean=self.mean_,
+                                      last_variance=self.var_,
+                                      last_sample_count=self.n_samples_seen_)
+
+        # Whitening
+        if self.n_samples_seen_ == 0:
+            # If it is the first step, simply whiten X
             X -= col_mean
-            U, S, V = linalg.svd(X, full_matrices=False)
-            U, V = svd_flip(U, V, u_based_decision=False)
-            explained_variance = S ** 2 / n_samples
-            explained_variance_ratio = S ** 2 / np.sum(col_var *
-                                                       n_samples)
         else:
-            col_batch_mean = X.mean(axis=0)
-            col_mean, col_var, n_total_samples = _batch_mean_variance_update(
-                X, self.mean_, self.var_, self.n_samples_seen_)
+            col_batch_mean = np.mean(X, axis=0)
             X -= col_batch_mean
             # Build matrix of combined previous basis and new data
-            mean_correction = np.sqrt((self.n_samples_seen_ * n_samples) /
-                                      n_total_samples) * (self.mean_ -
-                                                          col_batch_mean)
-            X_combined = np.vstack((self.singular_values_.reshape((-1, 1)) *
-                                    self.components_, X,
-                                    mean_correction))
-            U, S, V = linalg.svd(X_combined, full_matrices=False)
-            U, V = svd_flip(U, V, u_based_decision=False)
-            explained_variance = S ** 2 / n_total_samples
-            explained_variance_ratio = S ** 2 / np.sum(col_var *
-                                                       n_total_samples)
-        self.n_samples_seen_ += n_samples
+            mean_correction = \
+                np.sqrt((self.n_samples_seen_ * n_samples) /
+                        n_total_samples) * (self.mean_ - col_batch_mean)
+            X = np.vstack((self.singular_values_.reshape((-1, 1)) *
+                          self.components_, X, mean_correction))
+
+        U, S, V = linalg.svd(X, full_matrices=False)
+        U, V = svd_flip(U, V, u_based_decision=False)
+        explained_variance = S ** 2 / n_total_samples
+        explained_variance_ratio = S ** 2 / np.sum(col_var * n_total_samples)
+
+        self.n_samples_seen_ = n_total_samples
         self.components_ = V[:self.n_components_]
         self.singular_values_ = S[:self.n_components_]
         self.mean_ = col_mean

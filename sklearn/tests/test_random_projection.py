@@ -20,7 +20,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
-from sklearn.utils import DataDimensionalityWarning
+from sklearn.exceptions import DataDimensionalityWarning
 
 all_sparse_random_matrix = [sparse_random_matrix]
 all_dense_random_matrix = [gaussian_random_matrix]
@@ -211,7 +211,7 @@ def test_sparse_random_projection_transformer_invalid_density():
 def test_random_projection_transformer_invalid_input():
     for RandomProjection in all_RandomProjection:
         assert_raises(ValueError,
-                      RandomProjection(n_components='auto').fit, [0, 1, 2])
+                      RandomProjection(n_components='auto').fit, [[0, 1, 2]])
 
         assert_raises(ValueError,
                       RandomProjection(n_components=-10).fit, data)

@@ -16,6 +16,7 @@ from sklearn.datasets import load_digits
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_linnerud
 from sklearn.datasets import load_iris
+from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
 from sklearn.datasets.base import Bunch
 
@@ -177,6 +178,14 @@ def test_load_iris():
     assert_equal(res.data.shape, (150, 4))
     assert_equal(res.target.size, 150)
     assert_equal(res.target_names.size, 3)
+    assert_true(res.DESCR)
+
+
+def test_load_breast_cancer():
+    res = load_breast_cancer()
+    assert_equal(res.data.shape, (569, 30))
+    assert_equal(res.target.size, 569)
+    assert_equal(res.target_names.size, 2)
     assert_true(res.DESCR)
 
 

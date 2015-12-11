@@ -482,15 +482,17 @@ Using Python functions as kernels
 You can also use your own defined kernels by passing a function to the
 keyword ``kernel`` in the constructor.
 
-Your kernel must take as arguments two matrices and return a third matrix.
+Your kernel must take as arguments two matrices of shape
+``(n_samples_1, n_features)``, ``(n_samples_2, n_features)``
+and return a kernel matrix of shape ``(n_samples_1, n_samples_2)``.
 
 The following code defines a linear kernel and creates a classifier
 instance that will use that kernel::
 
     >>> import numpy as np
     >>> from sklearn import svm
-    >>> def my_kernel(x, y):
-    ...     return np.dot(x, y.T)
+    >>> def my_kernel(X, Y):
+    ...     return np.dot(X, Y.T)
     ...
     >>> clf = svm.SVC(kernel=my_kernel)
 
@@ -533,8 +535,8 @@ correctly.  ``gamma`` defines how much influence a single training example has.
 The larger ``gamma`` is, the closer other examples must be to be affected.
 
 Proper choice of ``C`` and ``gamma`` is critical to the SVM's performance.  One
-is advised to use :class:`sklearn.grid_search.GridSearchCV` with ``C`` and ``gamma`` spaced
-exponentially far apart to choose good values.
+is advised to use :class:`sklearn.model_selection.GridSearchCV` with 
+``C`` and ``gamma`` spaced exponentially far apart to choose good values.
 
 .. topic:: Examples:
 
@@ -586,7 +588,7 @@ Its dual is
 
 where :math:`e` is the vector of all ones, :math:`C > 0` is the upper bound,
 :math:`Q` is an :math:`n` by :math:`n` positive semidefinite matrix,
-:math:`Q_{ij} \equiv K(x_i, x_j) = \phi (x_i)^T \phi (x_j)`
+:math:`Q_{ij} \equiv y_i y_j K(x_i, x_j)` Where :math:`K(x_i, x_j) = \phi (x_i)^T \phi (x_j)`
 is the kernel. Here training vectors are implicitly mapped into a higher
 (maybe infinite) dimensional space by the function :math:`\phi`.
 

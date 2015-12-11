@@ -8,6 +8,13 @@
 
 set -e
 
+# Get into a temp directory to run test from the installed scikit learn and
+# check if we do not leave artifacts
+mkdir -p $TEST_DIR
+# We need the setup.cfg for the nose settings
+cp setup.cfg $TEST_DIR
+cd $TEST_DIR
+
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
@@ -17,12 +24,15 @@ python -c "import scipy; print('scipy %s' % scipy.__version__)"
 # disk caching does not work.
 export SKLEARN_SKIP_NETWORK_TESTS=1
 
-# Do not use "make test" or "make test-coverage" as they enable verbose mode
-# which renders travis output too slow to display in a browser.
 if [[ "$COVERAGE" == "true" ]]; then
-    nosetests -s --with-coverage sklearn
+    nosetests -s --with-coverage --with-timer --timer-top-n 20 sklearn
 else
-    nosetests -s sklearn
+    nosetests -s --with-timer --timer-top-n 20 sklearn
 fi
 
+# Is directory still empty ?
+ls -ltra
+
+# Test doc
+cd $CACHED_BUILD_DIR/scikit-learn
 make test-doc test-sphinxext

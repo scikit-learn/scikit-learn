@@ -5,13 +5,18 @@
 
 import numpy as np
 from scipy import sparse
+from scipy import linalg
 
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
 
 from sklearn.linear_model.base import LinearRegression
-from sklearn.linear_model.base import center_data, sparse_center_data
+from sklearn.linear_model.base import center_data
+from sklearn.linear_model.base import sparse_center_data
+from sklearn.linear_model.base import _rescale_data
 from sklearn.utils import check_random_state
+from sklearn.utils.testing import assert_greater
 from sklearn.datasets.samples_generator import make_sparse_uncorrelated
 from sklearn.datasets.samples_generator import make_regression
 
@@ -22,22 +27,87 @@ def test_linear_regression():
     X = [[1], [2]]
     Y = [1, 2]
 
-    clf = LinearRegression()
-    clf.fit(X, Y)
+    reg = LinearRegression()
+    reg.fit(X, Y)
 
-    assert_array_almost_equal(clf.coef_, [1])
-    assert_array_almost_equal(clf.intercept_, [0])
-    assert_array_almost_equal(clf.predict(X), [1, 2])
+    assert_array_almost_equal(reg.coef_, [1])
+    assert_array_almost_equal(reg.intercept_, [0])
+    assert_array_almost_equal(reg.predict(X), [1, 2])
 
     # test it also for degenerate input
     X = [[1]]
     Y = [0]
 
-    clf = LinearRegression()
-    clf.fit(X, Y)
-    assert_array_almost_equal(clf.coef_, [0])
-    assert_array_almost_equal(clf.intercept_, [0])
-    assert_array_almost_equal(clf.predict(X), [0])
+    reg = LinearRegression()
+    reg.fit(X, Y)
+    assert_array_almost_equal(reg.coef_, [0])
+    assert_array_almost_equal(reg.intercept_, [0])
+    assert_array_almost_equal(reg.predict(X), [0])
+
+
+def test_linear_regression_sample_weights():
+    # TODO: loop over sparse data as well
+
+    rng = np.random.RandomState(0)
+
+    # It would not work with under-determined systems
+    for n_samples, n_features in ((6, 5), ):
+
+        y = rng.randn(n_samples)
+        X = rng.randn(n_samples, n_features)
+        sample_weight = 1.0 + rng.rand(n_samples)
+
+        for intercept in (True, False):
+
+            # LinearRegression with explicit sample_weight
+            reg = LinearRegression(fit_intercept=intercept)
+            reg.fit(X, y, sample_weight=sample_weight)
+            coefs1 = reg.coef_
+            inter1 = reg.intercept_
+
+            assert_equal(reg.coef_.shape, (X.shape[1], ))  # sanity checks
+            assert_greater(reg.score(X, y), 0.5)
+
+            # Closed form of the weighted least square
+            # theta = (X^T W X)^(-1) * X^T W y
+            W = np.diag(sample_weight)
+            if intercept is False:
+                X_aug = X
+            else:
+                dummy_column = np.ones(shape=(n_samples, 1))
+                X_aug = np.concatenate((dummy_column, X), axis=1)
+
+            coefs2 = linalg.solve(X_aug.T.dot(W).dot(X_aug),
+                                  X_aug.T.dot(W).dot(y))
+
+            if intercept is False:
+                assert_array_almost_equal(coefs1, coefs2)
+            else:
+                assert_array_almost_equal(coefs1, coefs2[1:])
+                assert_almost_equal(inter1, coefs2[0])
+
+
+def test_raises_value_error_if_sample_weights_greater_than_1d():
+    # Sample weights must be either scalar or 1D
+
+    n_sampless = [2, 3]
+    n_featuress = [3, 2]
+
+    rng = np.random.RandomState(42)
+
+    for n_samples, n_features in zip(n_sampless, n_featuress):
+        X = rng.randn(n_samples, n_features)
+        y = rng.randn(n_samples)
+        sample_weights_OK = rng.randn(n_samples) ** 2 + 1
+        sample_weights_OK_1 = 1.
+        sample_weights_OK_2 = 2.
+
+        reg = LinearRegression()
+
+        # make sure the "OK" sample weights actually work
+        reg.fit(X, y, sample_weights_OK)
+        reg.fit(X, y, sample_weights_OK_1)
+        reg.fit(X, y, sample_weights_OK_2)
 
 
 def test_fit_intercept():
@@ -63,7 +133,7 @@ def test_fit_intercept():
 
 
 def test_linear_regression_sparse(random_state=0):
-    "Test that linear regression also works with sparse data"
+    # Test that linear regression also works with sparse data
     random_state = check_random_state(random_state)
     for i in range(10):
         n = 100
@@ -74,27 +144,28 @@ def test_linear_regression_sparse(random_state=0):
         ols = LinearRegression()
         ols.fit(X, y.ravel())
         assert_array_almost_equal(beta, ols.coef_ + ols.intercept_)
-        assert_array_almost_equal(ols.residues_, 0)
+
+        assert_array_almost_equal(ols.predict(X) - y.ravel(), 0)
 
 
 def test_linear_regression_multiple_outcome(random_state=0):
-    "Test multiple-outcome linear regressions"
+    # Test multiple-outcome linear regressions
     X, y = make_regression(random_state=random_state)
 
     Y = np.vstack((y, y)).T
     n_features = X.shape[1]
 
-    clf = LinearRegression(fit_intercept=True)
-    clf.fit((X), Y)
-    assert_equal(clf.coef_.shape, (2, n_features))
-    Y_pred = clf.predict(X)
-    clf.fit(X, y)
-    y_pred = clf.predict(X)
+    reg = LinearRegression(fit_intercept=True)
+    reg.fit((X), Y)
+    assert_equal(reg.coef_.shape, (2, n_features))
+    Y_pred = reg.predict(X)
+    reg.fit(X, y)
+    y_pred = reg.predict(X)
     assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
 
 
 def test_linear_regression_sparse_multiple_outcome(random_state=0):
-    "Test multiple-outcome linear regressions with sparse data"
+    # Test multiple-outcome linear regressions with sparse data
     random_state = check_random_state(random_state)
     X, y = make_sparse_uncorrelated(random_state=random_state)
     X = sparse.coo_matrix(X)
@@ -255,3 +326,18 @@ def test_csr_sparse_center_data():
     csr = sparse.csr_matrix(X)
     csr_, y, _, _, _ = sparse_center_data(csr, y, True)
     assert_equal(csr_.getformat(), 'csr')
+
+
+def test_rescale_data():
+    n_samples = 200
+    n_features = 2
+
+    rng = np.random.RandomState(0)
+    sample_weight = 1.0 + rng.rand(n_samples)
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
+    rescaled_X, rescaled_y = _rescale_data(X, y, sample_weight)
+    rescaled_X2 = X * np.sqrt(sample_weight)[:, np.newaxis]
+    rescaled_y2 = y * np.sqrt(sample_weight)
+    assert_array_almost_equal(rescaled_X, rescaled_X2)
+    assert_array_almost_equal(rescaled_y, rescaled_y2)

@@ -144,18 +144,25 @@ class PCA(BaseEstimator, TransformerMixin):
     ----------
     components_ : array, [n_components, n_features]
         Principal axes in feature space, representing the directions of
-        maximum variance in the data.
+        maximum variance in the data. The components are sorted by
+        explained_variance_.
+
+    explained_variance_ : array, [n_components]
+        The amount of variance explained by each of the selected components.
 
     explained_variance_ratio_ : array, [n_components]
         Percentage of variance explained by each of the selected components.
+
         If ``n_components`` is not set then all components are stored and the
-        sum of explained variances is equal to 1.0
+        sum of explained variances is equal to 1.0.
 
     mean_ : array, [n_features]
         Per-feature empirical mean, estimated from the training set.
 
+        Equal to `X.mean(axis=1)`.
+
     n_components_ : int
-        The estimated number of components. Relevant when n_components is set
+        The estimated number of components. Relevant when `n_components` is set
         to 'mle' or a number between 0 and 1 to select using explained
         variance.
 
@@ -192,6 +199,8 @@ class PCA(BaseEstimator, TransformerMixin):
     >>> pca = PCA(n_components=2)
     >>> pca.fit(X)
     PCA(copy=True, n_components=2, whiten=False)
+    >>> print(pca.explained_variance_) # doctest: +ELLIPSIS
+    [ 6.6162...  0.05038...]
     >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
 
@@ -300,7 +309,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
-        if n_components < n_features:
+        if n_components < min(n_features, n_samples):
             self.noise_variance_ = explained_variance_[n_components:].mean()
         else:
             self.noise_variance_ = 0.
@@ -395,14 +404,16 @@ class PCA(BaseEstimator, TransformerMixin):
         return X_transformed
 
     def inverse_transform(self, X):
-        """Transform data back to its original space, i.e.,
-        return an input X_original whose transform would be X
+        """Transform data back to its original space using `n_components_`.
+
+        Returns an input X_original whose transform would be X.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_components)
             New data, where n_samples is the number of samples
-            and n_components is the number of components.
+            and n_components is the number of components. X represents
+            data from the projection on to the principal components.
 
         Returns
         -------
@@ -419,7 +430,7 @@ class PCA(BaseEstimator, TransformerMixin):
             return fast_dot(X, self.components_) + self.mean_
 
     def score_samples(self, X):
-        """Return the log-likelihood of each sample
+        """Return the log-likelihood of each sample.
 
         See. "Pattern Recognition and Machine Learning"
         by C. Bishop, 12.2.1 p. 574
@@ -448,7 +459,7 @@ class PCA(BaseEstimator, TransformerMixin):
         return log_like
 
     def score(self, X, y=None):
-        """Return the average log-likelihood of all samples
+        """Return the average log-likelihood of all samples.
 
         See. "Pattern Recognition and Machine Learning"
         by C. Bishop, 12.2.1 p. 574
@@ -488,7 +499,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         use fit_transform(X) instead.
 
     iterated_power : int, optional
-        Number of iterations for the power method. 3 by default.
+        Number of iterations for the power method. 2 by default.
+
+        .. versionchanged:: 0.18
 
     whiten : bool, optional
         When True (False by default) the `components_` vectors are divided
@@ -510,8 +523,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         Components with maximum variance.
 
     explained_variance_ratio_ : array, [n_components]
-        Percentage of variance explained by each of the selected components. \
-        k is not set then all components are stored and the sum of explained \
+        Percentage of variance explained by each of the selected components.
+        k is not set then all components are stored and the sum of explained
         variances is equal to 1.0
 
     mean_ : array, [n_features]
@@ -524,7 +537,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = RandomizedPCA(n_components=2)
     >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    RandomizedPCA(copy=True, iterated_power=3, n_components=2,
+    RandomizedPCA(copy=True, iterated_power=2, n_components=2,
            random_state=None, whiten=False)
     >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
@@ -546,7 +559,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_components=None, copy=True, iterated_power=3,
+    def __init__(self, n_components=None, copy=True, iterated_power=2,
                  whiten=False, random_state=None):
         self.n_components = n_components
         self.copy = copy

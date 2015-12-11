@@ -26,7 +26,8 @@ from time import time
 from operator import itemgetter
 from scipy.stats import randint as sp_randint
 
-from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.datasets import load_digits
 from sklearn.ensemble import RandomForestClassifier
 

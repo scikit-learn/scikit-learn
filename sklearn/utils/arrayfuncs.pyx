@@ -37,7 +37,7 @@ cdef float _float_min_pos(float *X, Py_ssize_t size):
    cdef Py_ssize_t i
    cdef float min_val = DBL_MAX
    for i in range(size):
-      if X[i] > 0. and X[i] < min_val:
+      if 0. < X[i] < min_val:
          min_val = X[i]
    return min_val
 
@@ -46,7 +46,7 @@ cdef double _double_min_pos(double *X, Py_ssize_t size):
    cdef Py_ssize_t i
    cdef np.float64_t min_val = FLT_MAX
    for i in range(size):
-      if X[i] > 0. and X[i] < min_val:
+      if 0. < X[i] < min_val:
          min_val = X[i]
    return min_val
 
