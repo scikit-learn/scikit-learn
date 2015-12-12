@@ -67,8 +67,8 @@ as objects that implement the ``transform`` method:
    :class:`SelectFdr`, or family wise error :class:`SelectFwe`.
 
  * :class:`GenericUnivariateSelect` allows to perform univariate feature
-    selection with a configurable strategy. This allows to select the best
-    univariate selection strategy with hyper-parameter search estimator.
+   selection with a configurable strategy. This allows to select the best
+   univariate selection strategy with hyper-parameter search estimator.
 
 For instance, we can perform a :math:`\chi^2` test to the samples
 to retrieve only the two best features as follows:
@@ -84,17 +84,19 @@ to retrieve only the two best features as follows:
   >>> X_new.shape
   (150, 2)
 
-These objects take as input a scoring function that returns
-univariate p-values:
+These objects take as input a scoring function that returns univariate scores
+and p-values (or only scores for :class:`SelectKBest` and
+:class:`SelectPercentile`):
 
- * For regression: :func:`f_regression`
+ * For regression: :func:`f_regression`, :func:`mutual_info`
 
- * For classification: :func:`chi2` or :func:`f_classif`
+ * For classification: :func:`chi2`, :func:`f_classif`, :func:`mutual_info`
 
 .. topic:: Feature selection with sparse data
 
    If you use sparse data (i.e. data represented as sparse matrices),
-   only :func:`chi2` will deal with the data without making it dense.
+   :func:`chi2` and :func:`mutual_info` will deal with the data without making
+   it dense.
 
 .. warning::
 
