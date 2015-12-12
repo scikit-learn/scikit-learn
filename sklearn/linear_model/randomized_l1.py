@@ -330,7 +330,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     def _make_estimator_and_params(self, X, y):
         assert self.precompute in (True, False, None, 'auto')
         alpha = self.alpha
-        if alpha in ('aic', 'bic'):
+        if isinstance(alpha, six.string_types) and alpha in ('aic', 'bic'):
             model = LassoLarsIC(precompute=self.precompute,
                                 criterion=self.alpha,
                                 max_iter=self.max_iter,
