@@ -576,7 +576,7 @@ def _thumbnail_div(subdir, full_dir, fname, snippet, is_backref=False):
 
 .. raw:: html
 
-    <div class="thumbnailContainer" tooltip="{}">
+    <div class="thumbnailContainer" tooltip="{0}">
 
 """.format(snippet))
 
