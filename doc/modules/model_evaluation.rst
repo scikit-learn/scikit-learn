@@ -51,7 +51,7 @@ For the most common use cases, you can designate a scorer object with the
 All scorer ojects follow the convention that higher return values are better
 than lower return values.  Thus the returns from mean_absolute_error
 and mean_squared_error, which measure the distance between the model
-and the data, are negated.
+and the data, are negated. 
 
 
 ========================     =======================================     ==================================
@@ -65,7 +65,7 @@ Scoring                      Function                                    Comment
 'f1_macro'                   :func:`metrics.f1_score`                    macro-averaged
 'f1_weighted'                :func:`metrics.f1_score`                    weighted average
 'f1_samples'                 :func:`metrics.f1_score`                    by multilabel sample
-'log_loss'                   :func:`metrics.log_loss`                    requires ``predict_proba`` support
+'neg_log_loss'               :func:`metrics.log_loss`                    requires ``predict_proba`` support. Negative value returned so greater=better
 'precision' etc.             :func:`metrics.precision_score`             suffixes apply as with 'f1'
 'recall' etc.                :func:`metrics.recall_score`                suffixes apply as with 'f1'
 'roc_auc'                    :func:`metrics.roc_auc_score`
@@ -74,9 +74,9 @@ Scoring                      Function                                    Comment
 'adjusted_rand_score'        :func:`metrics.adjusted_rand_score`
 
 **Regression**
-'mean_absolute_error'        :func:`metrics.mean_absolute_error`
-'mean_squared_error'         :func:`metrics.mean_squared_error`
-'median_absolute_error'      :func:`metrics.median_absolute_error`
+'neg_mean_absolute_error'    :func:`metrics.mean_absolute_error`         Negative MAE returned so greater=better
+'neg_mean_squared_error'     :func:`metrics.mean_squared_error`          Negative MSE returned so greater=better
+'neg_median_absolute_error'  :func:`metrics.median_absolute_error`       Negative MedAE returned so greater=better
 'r2'                         :func:`metrics.r2_score`
 ========================     =======================================     ==================================
 
@@ -92,7 +92,7 @@ Usage examples:
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'log_loss', 'mean_absolute_error', 'mean_squared_error', 'median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
+    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
 
 .. note::
 
@@ -246,7 +246,7 @@ Some also work in the multilabel case:
    fbeta_score
    hamming_loss
    jaccard_similarity_score
-   log_loss
+   neg_log_loss
    precision_recall_fscore_support
    precision_score
    recall_score
