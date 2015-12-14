@@ -3,7 +3,7 @@ from nose.tools import assert_true
 
 
 class Prefix(object):
-    def func():
+    def func(self):
         pass
 
 
