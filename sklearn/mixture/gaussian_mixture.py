@@ -464,7 +464,11 @@ class GaussianMixture(MixtureBase):
 
     covariance_type : string, defaults to 'full'.
         String describing the type of covariance parameters to
-        use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
+        use.  Must be one of
+        'spherical' (each component has its own single variance),
+        'tied' (all components share the same general covariance matrix),
+        'diag' (each component has its own diagonal covariance matrix),
+        'full' (each component has its own general covariance matrix).
 
     reg_covar : float, defaults to 0.
         Non-negative regularization to the diagonal of covariance.
@@ -501,7 +505,7 @@ class GaussianMixture(MixtureBase):
         are initialized by `init_params`.
 
     covars: array-like, defaults to None.
-        User-provided iitial covariances. Defaults to None. If it None, covars
+        User-provided initial covariances. Defaults to None. If it None, covars
         are initialized by `init_params`. The shape
         depends on `covariance_type`::
             (n_components,)                        if 'spherical',
