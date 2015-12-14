@@ -22,7 +22,7 @@ from .rfe import RFECV
 
 from .from_model import SelectFromModel
 
-from .mutual_info import mutual_info
+from .mutual_info_ import mutual_info
 
 
 __all__ = ['GenericUnivariateSelect',
@@ -32,7 +32,7 @@ __all__ = ['GenericUnivariateSelect',
            'SelectFpr',
            'SelectFwe',
            'SelectKBest',
-           'SelectFromModel'
+           'SelectFromModel',
            'SelectPercentile',
            'VarianceThreshold',
            'chi2',

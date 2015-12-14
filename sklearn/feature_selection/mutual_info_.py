@@ -200,10 +200,10 @@ def mutual_info(X, y, discrete_features='auto', discrete_target=False,
 
     Mutual information (MI) [1]_ between two random variables is a non-negative
     value, which measures the dependency between the variables. It is equal
-    to zero if and only if two random variables are independent, higher values
-    mean higher dependency.
+    to zero if and only if two random variables are independent, and higher
+    values mean higher dependency.
 
-    The function is capable of estimating MI between continuous and discrete
+    This function is capable of estimating MI between continuous and discrete
     variables as described in [1]_ and [2]_.
     It can be used for univariate features selection, read more in the
     :ref:`User Guide <univariate_feature_selection>`.
@@ -218,13 +218,14 @@ def mutual_info(X, y, discrete_features='auto', discrete_target=False,
         If bool, then determines whether to consider all features discrete
         or continuous. If array, then it should be either a boolean mask
         with shape (n_features,) or array with indices of discrete features.
-        If 'auto', assigned to False for dense `X` and to True for sparse `X`.
+        If 'auto', it is assigned to False for dense `X` and to True for
+        sparse `X`.
     discrete_target : bool, default False
         Whether to consider `y` as a discrete variable.
     n_neighbors : int, default 3
         Number of neighbors to use for MI estimation for continuous variables,
         see [2]_ and [3]_. Higher values reduce variance of the estimation, but
-        could increase a bias.
+        could introduce a bias.
     copy : bool, default True
         Whether to make a copy of the given data. If set to False, the initial
         data will be overwritten.
@@ -244,7 +245,7 @@ def mutual_info(X, y, discrete_features='auto', discrete_target=False,
        accurately. For example, pixel intensities of an image are discrete
        features (but hardly categorical) and you will get better results if
        mark them as such. Also note, that treating a continuous variable as
-       discrete and vice versa will usually give meaningless results, so be
+       discrete and vice versa will usually give incorrect results, so be
        attentive about that.
     2. True mutual information can't be negative. If its estimate turns out
        to be negative, it is replaced by zero.

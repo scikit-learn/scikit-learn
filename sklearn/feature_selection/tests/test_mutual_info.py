@@ -6,7 +6,7 @@ from scipy.sparse import csr_matrix
 
 from sklearn.utils.testing import (assert_array_equal, assert_almost_equal,
                                    assert_false, assert_true, assert_raises)
-from sklearn.feature_selection.mutual_info import mutual_info, _compute_mi
+from sklearn.feature_selection.mutual_info_ import mutual_info, _compute_mi
 
 
 class TestMIComputation(object):
@@ -106,7 +106,7 @@ class TestMutualInfo(object):
 
     def test_continuous(self):
         # We generate sample from multivariate normal distribution, using
-        # transformation from initially uncorrelated variables. The first
+        # transformation from initially uncorrelated variables. The zero
         # variables after transformation is selected as the target vector,
         # it has the strongest correlation with the variable 2, and
         # the weakest correlation with the variable 1.
