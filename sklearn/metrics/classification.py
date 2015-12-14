@@ -1330,10 +1330,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         Sample weights.
 
     digits : int
-        Number of digits for formatting output floating point values
+        Number of digits for formatting output floating point values.
     
-    sort_by_name : bool, False by default 
-        If Ture, prints the target_names is an alphabetic order
+    sort_by_name : bool, optional (default=False)
+        If True, the labels or the target_names are printed in alphabetic order.
 
     Returns
     -------
