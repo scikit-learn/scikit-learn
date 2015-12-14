@@ -397,7 +397,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         # (n_classes) centers
         _, S, V = linalg.svd(X, full_matrices=0)
 
-        self.explained_variance_ratio_ = np.sort(S**2 / np.sum(S**2))[::-1]
+        self.explained_variance_ratio_ = np.sort(S**2 / np.sum(S**2))[::-1][:
+                self.n_components]
         rank = np.sum(S > self.tol * S[0])
         self.scalings_ = np.dot(scalings, V.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)
