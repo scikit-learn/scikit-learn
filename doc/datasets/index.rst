@@ -267,6 +267,7 @@ features::
     labeled_faces
     covtype
     rcv1
+    kddcup99
 
 
 .. include:: olivetti_faces.rst

@@ -257,7 +257,7 @@ def _average_path_length(n_samples_leaf):
     n_samples_leaf : array-like of shape (n_samples, n_estimators), or int.
         The number of training samples in each test sample leaf, for
         each estimators.
-    
+
     Returns
     -------
     average_path_length : array, same shape as n_samples_leaf
