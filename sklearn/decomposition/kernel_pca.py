@@ -8,7 +8,7 @@ from scipy import linalg
 
 from ..utils import check_random_state
 from ..utils.arpack import eigsh
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
@@ -99,6 +99,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
     X_transformed_fit_ :
         Projection of the fitted data on the kernel principal components
+
+    X_fit_ : (n_samples, n_features)
+        A copy of the original fitted data.
+
 
     References
     ----------
@@ -217,6 +221,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
+        X = check_array(X, accept_sparse='csr')
         K = self._get_kernel(X)
         self._fit_transform(K)
 
@@ -225,7 +230,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             X_transformed = np.dot(self.alphas_, sqrt_lambdas)
             self._fit_inverse_transform(X_transformed, X)
 
-        self.X_fit_ = X
+        self.X_fit_ = X.copy()
         return self
 
     def fit_transform(self, X, y=None, **params):
