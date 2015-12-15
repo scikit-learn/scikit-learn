@@ -158,13 +158,13 @@ and ``value`` is an estimator object::
     >>> estimators = [('linear_pca', PCA()), ('kernel_pca', KernelPCA())]
     >>> combined = FeatureUnion(estimators)
     >>> combined # doctest: +NORMALIZE_WHITESPACE
-    FeatureUnion(n_jobs=1, transformer_list=[('linear_pca',  PCA(copy=True,
+    FeatureUnion(n_jobs=1, transformer_list=[('linear_pca', PCA(copy=True,
         iterated_power=4, n_components=None, random_state=None,
         svd_solver='auto', tol=0.0, whiten=False)), ('kernel_pca',
-        KernelPCA(alpha=1.0, coef0=1, degree=3, eigen_solver='auto',
-        fit_inverse_transform=False, gamma=None, kernel='linear',
-        kernel_params=None, max_iter=None, n_components=None, n_jobs=1,
-        random_state=None, remove_zero_eig=False, tol=0))],
+        KernelPCA(alpha=1.0, coef0=1, copy_X=True, degree=3,
+        eigen_solver='auto', fit_inverse_transform=False, gamma=None,
+        kernel='linear', kernel_params=None, max_iter=None, n_components=None,
+        n_jobs=1, random_state=None, remove_zero_eig=False, tol=0))],
         transformer_weights=None)
 
 
