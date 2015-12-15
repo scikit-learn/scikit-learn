@@ -48,7 +48,7 @@ from sklearn import datasets
 from sklearn.utils import compute_sample_weight
 
 CLF_CRITERIONS = ("gini", "entropy")
-REG_CRITERIONS = ("mse", )
+REG_CRITERIONS = ("mse", "mae", )
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
