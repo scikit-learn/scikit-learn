@@ -37,6 +37,7 @@ import tarfile
 import time
 
 import numpy as np
+import matplotlib as mlp
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
@@ -321,7 +322,7 @@ for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
 ###############################################################################
 
 #Get matplotlib version
-ver = matplotlib.__version__
+ver = mlp.__version__
 
 
 def plot_accuracy(x, y, x_legend):
