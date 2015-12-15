@@ -19,6 +19,7 @@ from libc.stdlib cimport calloc
 from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
+from libc.math cimport exp, fabs, log
 
 import numpy as np
 cimport numpy as np
@@ -958,6 +959,99 @@ cdef class MSE(RegressionCriterion):
         for k in range(self.n_outputs):
             impurity_left[0] -= (sum_left[k] / self.weighted_n_left) ** 2.0
             impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0 
+
+        impurity_left[0] /= self.n_outputs
+        impurity_right[0] /= self.n_outputs
+
+
+cdef class MAE(RegressionCriterion):
+    """Mean absolute error impurity criterion.
+
+        MAE = mae_left + mae_right
+    """
+    cdef double node_impurity(self) nogil:
+        """Evaluate the impurity of the current node, i.e. the impurity of
+           samples[start:end]."""
+
+        cdef double* sum_total = self.sum_total
+        cdef double impurity
+        cdef SIZE_t k
+
+        impurity = self.sq_sum_total / self.weighted_n_node_samples
+        for k in range(self.n_outputs):
+            impurity -= fabs(sum_total[k] / self.weighted_n_node_samples)
+
+        return impurity / self.n_outputs
+
+    cdef double proxy_impurity_improvement(self) nogil:
+        """Compute a proxy of the impurity reduction
+
+        This method is used to speed up the search for the best split.
+        It is a proxy quantity such that the split that maximizes this value
+        also maximizes the impurity improvement. It neglects all constant terms
+        of the impurity decrease for a given split.
+
+        The absolute impurity improvement is only computed by the
+        impurity_improvement method once the best split has been found.
+        """
+
+        cdef double* sum_left = self.sum_left
+        cdef double* sum_right = self.sum_right
+
+        cdef SIZE_t k
+        cdef double proxy_impurity_left = 0.0
+        cdef double proxy_impurity_right = 0.0
+
+        for k in range(self.n_outputs):
+            proxy_impurity_left += fabs(sum_left[k])
+            proxy_impurity_right += fabs(sum_right[k])
+
+        return (proxy_impurity_left / self.weighted_n_left +
+                proxy_impurity_right / self.weighted_n_right)
+
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil:
+        """Evaluate the impurity in children nodes, i.e. the impurity of the
+           left child (samples[start:pos]) and the impurity the right child
+           (samples[pos:end])."""
+
+
+        cdef DOUBLE_t* y = self.y
+        cdef DOUBLE_t* sample_weight = self.sample_weight
+        cdef SIZE_t* samples = self.samples
+        cdef SIZE_t pos = self.pos
+        cdef SIZE_t start = self.start
+
+        cdef double* sum_left = self.sum_left
+        cdef double* sum_right = self.sum_right
+
+        cdef double sq_sum_left = 0.0
+        cdef double sq_sum_right
+
+        cdef SIZE_t i
+        cdef SIZE_t p
+        cdef SIZE_t k
+        cdef DOUBLE_t w = 1.0
+        cdef DOUBLE_t y_ik
+
+        for p in range(start, pos):
+            i = samples[p]
+
+            if sample_weight != NULL:
+                w = sample_weight[i]
+
+            for k in range(self.n_outputs):
+                y_ik = y[i * self.y_stride + k]
+                sq_sum_left += w * y_ik * y_ik
+
+        sq_sum_right = self.sq_sum_total - sq_sum_left
+
+        impurity_left[0] = sq_sum_left / self.weighted_n_left
+        impurity_right[0] = sq_sum_right / self.weighted_n_right
+
+        for k in range(self.n_outputs):
+            impurity_left[0] -= fabs(sum_left[k] / self.weighted_n_left)
+            impurity_right[0] -= fabs(sum_right[k] / self.weighted_n_right)
 
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
