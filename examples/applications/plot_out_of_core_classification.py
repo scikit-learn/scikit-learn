@@ -320,6 +320,9 @@ for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
 # Plot results
 ###############################################################################
 
+#Get matplotlib version
+ver = matplotlib.__version__
+
 
 def plot_accuracy(x, y, x_legend):
     """Plot accuracy as a function of x."""
@@ -362,7 +365,10 @@ for cls_name, stats in sorted(cls_stats.items()):
 
 cls_runtime.append(total_vect_time)
 cls_names.append('Vectorization')
-bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
+if ver<'1.5.1':
+    bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
+else:
+    bar_colors = rcParams['axes.prop_cycle'][:len(cls_names)]
 
 ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
@@ -398,7 +404,10 @@ cls_runtime.append(parsing_time)
 cls_names.append('Read/Parse\n+Feat.Extr.')
 cls_runtime.append(vectorizing_time)
 cls_names.append('Hashing\n+Vect.')
-bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
+if ver<'1.5.1':
+    bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
+else:
+    bar_colors = rcParams['axes.prop_cycle'][:len(cls_names)]
 
 ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
