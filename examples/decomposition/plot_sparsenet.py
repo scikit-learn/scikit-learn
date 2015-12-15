@@ -65,10 +65,18 @@ n_iter = 10000
 
 ###############################################################################
 # Load a natural image and extract patches
-import imageio
-image = imageio.imread('https://raw.githubusercontent.com/bicv/SLIP/master/database/yelmo512_w.png')
+#import imageio
+#image = imageio.imread('https://raw.githubusercontent.com/bicv/SLIP/master/database/yelmo512_w.png')
+from sklearn.externals.six.moves.urllib.request import urlopen
+opener = urlopen('https://raw.githubusercontent.com/bicv/SLIP/master/database/yelmo512_w.png')
+open('/tmp/yelmo512_w.png', 'wb').write(opener.read())
+try:
+    from scipy.misc import imread
+except ImportError:
+    from scipy.misc.pilutil import imread
+image = imread('/tmp/yelmo512_w.png')
 image = image.astype(np.float)
-
+    
 # Extract all reference patches from the left half of the image
 print('Extracting image patches...')
 t0 = time()
@@ -89,7 +97,7 @@ dt = time() - t0
 print('done in %.2fs.' % dt)
 
 subplotpars = matplotlib.figure.SubplotParams(left=0., right=1., bottom=0., top=1., wspace=0.05, hspace=0.05,)
-fig = plt.figure(figsize=(4.2, 4), subplotpars=subplotpars)
+fig = plt.figure(figsize=(8.4, 8), subplotpars=subplotpars)
 for i, comp in enumerate(V[:n_components]):
     plt.subplot(np.sqrt(n_components), np.sqrt(n_components), i + 1)
     plt.imshow(comp.reshape(patch_size), cmap=plt.cm.gray_r,
@@ -112,7 +120,7 @@ V = dico.fit(data).components_
 dt = time() - t0
 print('done in %.2fs.' % dt)
 
-fig = plt.figure(figsize=(4.2, 4), subplotpars=subplotpars)
+fig = plt.figure(figsize=(8.4, 8), subplotpars=subplotpars)
 for i, comp in enumerate(V[:n_components]):
     plt.subplot(np.sqrt(n_components), np.sqrt(n_components), i + 1)
     plt.imshow(comp.reshape(patch_size), cmap=plt.cm.gray_r,
