@@ -163,11 +163,10 @@ def test_lda_explained_variance_ratio():
     # Also tests whether the explained_variance_ratio_ formed by the
     # eigen solver is the same as the explained_variance_ratio_ formed
     # by the svd solver
-    n_features = 2
-    n_classes = 2
-    n_samples = 1000
-    X, y = make_blobs(n_samples=n_samples, n_features=n_features,
-                      centers=n_classes, random_state=11)
+
+    state = np.random.RandomState(0)
+    X = state.normal(loc=0, scale=100, size=(40, 20))
+    y = state.randint(0, 3, size=(40, 1))
 
     clf_lda_eigen = LinearDiscriminantAnalysis(solver="eigen")
     clf_lda_eigen.fit(X, y)
@@ -176,8 +175,12 @@ def test_lda_explained_variance_ratio():
     clf_lda_svd = LinearDiscriminantAnalysis(solver="svd")
     clf_lda_svd.fit(X, y)
     assert_almost_equal(clf_lda_svd.explained_variance_ratio_.sum(), 1.0, 3)
+
+    # NOTE: clf_lda_eigen.explained_variance_ratio_ is not of n_components
+    # length. Make it the same length as clf_lda_svd.explained_variance_ratio_
+    # before comparison.
     assert_array_almost_equal(clf_lda_svd.explained_variance_ratio_,
-                              clf_lda_eigen.explained_variance_ratio_)
+            clf_lda_eigen.explained_variance_ratio_[:3])
 
 
 def test_lda_orthogonality():
