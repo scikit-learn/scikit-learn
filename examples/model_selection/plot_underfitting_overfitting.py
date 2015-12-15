@@ -52,7 +52,7 @@ for i in range(len(degrees)):
 
     # Evaluate the models using crossvalidation
     scores = cross_val_score(pipeline, X[:, np.newaxis], y,
-                             scoring="mean_squared_error", cv=10)
+                             scoring="neg_mean_squared_error", cv=10)
 
     X_test = np.linspace(0, 1, 100)
     plt.plot(X_test, pipeline.predict(X_test[:, np.newaxis]), label="Model")

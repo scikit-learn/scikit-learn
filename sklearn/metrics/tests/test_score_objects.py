@@ -9,6 +9,7 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
+from sklearn.utils.testing import assert_warns
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -32,7 +33,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 
 
-REGRESSION_SCORERS = ['r2', 'mean_absolute_error', 'mean_squared_error',
+REGRESSION_SCORERS = ['r2', 'neg_mean_absolute_error', 'neg_mean_squared_error',
+                      'neg_median_absolute_error','mean_absolute_error', 'mean_squared_error',
                       'median_absolute_error']
 
 CLF_SCORERS = ['accuracy', 'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
@@ -355,3 +357,14 @@ def test_scorer_sample_weight():
             assert_true("sample_weight" in str(e),
                         "scorer {0} raises unhelpful exception when called "
                         "with sample weights: {1}".format(name, str(e)))
+
+def test_scorer_neg():
+    #test that neg_scorers for scorers in [mean_squared_error, mean_absolute_error, 
+    #median_absolute_error, log_loss] return same result as original scorers, 
+    #also test that original scorers return error message
+    X, y = make_classification(random_state=0)
+    _, y_ml = make_multilabel_classification(n_samples=X.shape[0],
+                                             random_state=0)
+    split = train_test_split(X, y, y_ml, random_state=0)
+    X_train, X_test, y_train, y_test, y_ml_train, y_ml_test = split
+
