@@ -60,12 +60,7 @@ from sklearn.datasets.california_housing import fetch_california_housing
 
 
 def main():
-    # fetch California housing dataset
-    try:
-        cal_housing = fetch_california_housing()
-    except HTTPError:
-        print("Failed downloading california housing data.")
-        return
+    cal_housing = fetch_california_housing()
 
     # split 80/20 train-test
     X_train, X_test, y_train, y_test = train_test_split(cal_housing.data,
@@ -87,7 +82,8 @@ def main():
     print
 
     features = [0, 5, 1, 2, (5, 1)]
-    fig, axs = plot_partial_dependence(clf, X_train, features, feature_names=names,
+    fig, axs = plot_partial_dependence(clf, X_train, features,
+                                       feature_names=names,
                                        n_jobs=3, grid_resolution=50)
     fig.suptitle('Partial dependence of house value on nonlocation features\n'
                  'for the California housing dataset')
@@ -118,5 +114,6 @@ def main():
     plt.show()
 
 
-if __name__ == "__main__":
+# Needed on Windows because plot_partial_dependence uses multiprocessing
+if __name__ == '__main__':
     main()
