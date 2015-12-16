@@ -1,6 +1,7 @@
 from nose.tools import assert_equal
 import numpy as np
 
+from sklearn.utils import testing
 from sklearn.preprocessing import FunctionTransformer
 
 
@@ -20,7 +21,7 @@ def test_delegate_to_func():
     args_store = []
     kwargs_store = {}
     X = np.arange(10).reshape((5, 2))
-    np.testing.assert_array_equal(
+    testing.assert_array_equal(
         FunctionTransformer(_make_func(args_store, kwargs_store)).transform(X),
         X,
         'transform should have returned X unchanged',
@@ -47,7 +48,7 @@ def test_delegate_to_func():
     kwargs_store.clear()
     y = object()
 
-    np.testing.assert_array_equal(
+    testing.assert_array_equal(
         FunctionTransformer(
             _make_func(args_store, kwargs_store),
             pass_y=True,
@@ -77,7 +78,7 @@ def test_np_log():
     X = np.arange(10).reshape((5, 2))
 
     # Test that the numpy.log example still works.
-    np.testing.assert_array_equal(
+    testing.assert_array_equal(
         FunctionTransformer(np.log1p).transform(X),
         np.log1p(X),
     )
@@ -89,7 +90,7 @@ def test_kw_arg():
     F = FunctionTransformer(np.around, kw_args=dict(decimals=3))
 
     # Test that rounding is correct
-    np.testing.assert_array_equal(F.transform(X),
+    testing.assert_array_equal(F.transform(X),
                                   np.around(X, decimals=3))
 
 
@@ -101,7 +102,7 @@ def test_kw_arg_update():
     F.kw_args['decimals'] = 1
 
     # Test that rounding is correct
-    np.testing.assert_array_equal(F.transform(X),
+    testing.assert_array_equal(F.transform(X),
                                   np.around(X, decimals=1))
 
 
@@ -113,5 +114,5 @@ def test_kw_arg_reset():
     F.kw_args = dict(decimals=1)
 
     # Test that rounding is correct
-    np.testing.assert_array_equal(F.transform(X),
+    testing.assert_array_equal(F.transform(X),
                                   np.around(X, decimals=1))
